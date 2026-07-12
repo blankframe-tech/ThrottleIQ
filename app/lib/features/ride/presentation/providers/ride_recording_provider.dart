@@ -5,6 +5,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:uuid/uuid.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/entities/ride_point_entity.dart';
 import '../../domain/calculators/motion_calculator.dart';
@@ -89,6 +91,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   StreamSubscription<Position>? _locationSub;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
   Timer? _elapsedTimer;
+  Timer? _flushTimer;
   RidePointEntity? _lastPoint;
   double _totalDistance = 0;
   double _maxSpeed = 0;
@@ -104,17 +107,48 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   // Cooldown to avoid multi-counting same sensor event
   DateTime? _lastSensorEvent;
 
+  // Buffered point writes
+  List<Map<String, dynamic>> _pointBuffer = [];
+  static const int _bufferFlushSize = 20;
+  static const Duration _bufferFlushInterval = Duration(seconds: 10);
+
   Future<bool> _requestPermissions() async {
     LocationPermission perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
+    if (perm == LocationPermission.deniedForever) {
+      await Geolocator.openAppSettings();
+      return false;
+    }
+
+    if (perm == LocationPermission.whileInUse) {
+      final bg = await Geolocator.requestPermission();
+      if (bg == LocationPermission.always) {
+        return true;
+      }
+    }
+
     return perm == LocationPermission.always || perm == LocationPermission.whileInUse;
+  }
+
+  Future<bool> _checkLocationServices() async {
+    final enabled = await Geolocator.isLocationServiceEnabled();
+    if (!enabled) {
+      state = state.copyWith(
+        status: RecordingStatus.idle,
+        error: 'Location services are disabled. Please enable GPS to track rides.',
+      );
+      return false;
+    }
+    return true;
   }
 
   Future<void> startRide() async {
     if (state.status != RecordingStatus.idle) return;
     state = state.copyWith(status: RecordingStatus.starting);
+
+    if (!await _checkLocationServices()) return;
 
     final granted = await _requestPermissions();
     if (!granted) {
@@ -143,6 +177,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     );
 
     await _rideDao.insert(RideModel.toMap(ride));
+
     _totalDistance = 0;
     _maxSpeed = 0;
     _speedSum = 0;
@@ -164,6 +199,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       activeAlert: RideAlert.none,
     );
 
+    await _persistRecordingState(ride);
+    await WakelockPlus.enable();
     await HapticService.rideStart();
     _startLocationStream();
     _startSensorStream();
@@ -172,9 +209,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
   void _startLocationStream() {
     _locationSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
+      locationSettings: AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 5,
+        forceLocationManager: false,
+        intervalDuration: const Duration(seconds: 1),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationText: 'ThrottleIQ is recording your ride in the background',
+          notificationTitle: 'Ride Recording Active',
+          enableWakeLock: true,
+        ),
       ),
     ).listen(_onPosition);
   }
@@ -269,7 +313,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
     _lastPoint = point;
 
-    _pointDao.insert({
+    _pointBuffer.add({
       'ride_id': point.rideId,
       'timestamp': point.timestamp.toIso8601String(),
       'lat': point.lat,
@@ -279,6 +323,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       'jerk': point.jerk,
       'altitude_m': point.altitudeM,
     });
+
+    if (_pointBuffer.length >= _bufferFlushSize) {
+      _flushPointBuffer();
+    }
 
     // GPS-based alert (overspeed + fatigue, since braking/accel handled by sensor)
     final alert = _detector.detect(
@@ -309,10 +357,24 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
         );
       }
     });
+
+    _flushTimer?.cancel();
+    _flushTimer = Timer.periodic(_bufferFlushInterval, (_) {
+      if (state.status == RecordingStatus.active && _pointBuffer.isNotEmpty) {
+        _flushPointBuffer();
+      }
+    });
+  }
+
+  void _flushPointBuffer() {
+    if (_pointBuffer.isEmpty) return;
+    _pointDao.insertBatch(List.from(_pointBuffer));
+    _pointBuffer.clear();
   }
 
   Future<void> pauseRide() async {
     if (state.status != RecordingStatus.active) return;
+    _flushPointBuffer();
     _accumulatedDuration = state.elapsed;
     _activeStart = null;
     _locationSub?.pause();
@@ -336,6 +398,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _locationSub?.cancel();
     _accelSub?.cancel();
     _elapsedTimer?.cancel();
+    _flushTimer?.cancel();
+
+    _flushPointBuffer();
+    await WakelockPlus.disable();
+    await _clearRecordingState();
 
     final ride = state.ride!;
     final finalDuration = state.elapsed.inSeconds;
@@ -362,11 +429,39 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     return rideId;
   }
 
+  Future<void> _persistRecordingState(RideEntity ride) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('active_ride_id', ride.id);
+    await prefs.setString('ride_start_time', ride.startTime.toIso8601String());
+  }
+
+  Future<void> _clearRecordingState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('active_ride_id');
+    await prefs.remove('ride_start_time');
+  }
+
+  Future<void> recoverCrashRide() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rideId = prefs.getString('active_ride_id');
+    if (rideId == null) return;
+
+    await _clearRecordingState();
+    final ride = await _rideDao.getById(rideId);
+    if (ride != null) {
+      await _rideDao.finalizeRide(rideId, {
+        'end_time': DateTime.now().toIso8601String(),
+      });
+    }
+  }
+
   @override
   void dispose() {
     _locationSub?.cancel();
     _accelSub?.cancel();
     _elapsedTimer?.cancel();
+    _flushTimer?.cancel();
+    _flushPointBuffer();
     super.dispose();
   }
 }
