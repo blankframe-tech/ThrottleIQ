@@ -27,4 +27,9 @@ class MaintenanceDao {
     final db = await DatabaseHelper.instance.database;
     await db.update('maintenance_logs', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<void> deleteForBike(String bikeId) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [bikeId]);
+  }
 }

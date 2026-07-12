@@ -14,13 +14,40 @@ class DatabaseHelper {
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
-    return openDatabase(path, version: 2, onCreate: _onCreate, onUpgrade: _onUpgrade);
+    return openDatabase(
+      path,
+      version: 3,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+      onConfigure: _onConfigure,
+    );
+  }
+
+  Future<void> _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE ride_points ADD COLUMN period_type TEXT DEFAULT "moving"');
       await db.execute('ALTER TABLE ride_points ADD COLUMN accuracy_m REAL');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_bikes_user_id ON bikes(user_id)
+      ''');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_rides_user_id_status ON rides(user_id, status)
+      ''');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_rides_bike_id_status ON rides(bike_id, status)
+      ''');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_ride_points_ride_timestamp ON ride_points(ride_id, timestamp)
+      ''');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_maintenance_bike_id ON maintenance_logs(bike_id)
+      ''');
     }
   }
 
@@ -83,6 +110,26 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE INDEX idx_ride_points_ride_id ON ride_points(ride_id)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_bikes_user_id ON bikes(user_id)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_rides_user_id_status ON rides(user_id, status)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_rides_bike_id_status ON rides(bike_id, status)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_ride_points_ride_timestamp ON ride_points(ride_id, timestamp)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_maintenance_bike_id ON maintenance_logs(bike_id)
     ''');
 
     await db.execute('''

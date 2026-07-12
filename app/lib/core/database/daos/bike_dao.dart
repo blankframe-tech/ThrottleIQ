@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import '../database_helper.dart';
+import 'ride_dao.dart';
+import 'maintenance_dao.dart';
 
 class BikeDao {
   Future<void> insert(Map<String, dynamic> bike) async {
@@ -25,7 +27,13 @@ class BikeDao {
 
   Future<void> delete(String id) async {
     final db = await DatabaseHelper.instance.database;
-    await db.delete('bikes', where: 'id = ?', whereArgs: [id]);
+    await db.transaction((txn) async {
+      final rideDao = RideDao();
+      await rideDao.deleteForBike(id);
+      final maintenanceDao = MaintenanceDao();
+      await maintenanceDao.deleteForBike(id);
+      await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
+    });
   }
 
   Future<void> setActive(String id, String userId) async {

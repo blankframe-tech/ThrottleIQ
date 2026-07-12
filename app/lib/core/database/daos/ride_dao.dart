@@ -53,4 +53,23 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     await db.update('rides', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<void> delete(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
+    });
+  }
+
+  Future<void> deleteForBike(String bikeId) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      final rides = await txn.query('rides', where: 'bike_id = ?', whereArgs: [bikeId], columns: ['id']);
+      for (final ride in rides) {
+        await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
+      }
+      await txn.delete('rides', where: 'bike_id = ?', whereArgs: [bikeId]);
+    });
+  }
 }
