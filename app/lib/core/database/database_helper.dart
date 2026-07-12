@@ -16,7 +16,7 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -47,6 +47,17 @@ class DatabaseHelper {
       ''');
       await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_maintenance_bike_id ON maintenance_logs(bike_id)
+      ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_profiles (
+          uid TEXT PRIMARY KEY,
+          display_name TEXT NOT NULL,
+          photo_url TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
       ''');
     }
   }
@@ -143,6 +154,16 @@ class DatabaseHelper {
         notes TEXT,
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE user_profiles (
+        uid TEXT PRIMARY KEY,
+        display_name TEXT NOT NULL,
+        photo_url TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
       )
     ''');
   }

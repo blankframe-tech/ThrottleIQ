@@ -28,6 +28,10 @@ class RidePointDao {
     return getForRide(rideId);
   }
 
+  Future<List<Map<String, dynamic>>> getByRideId(String rideId) async {
+    return getForRide(rideId);
+  }
+
   Future<void> deleteForRide(String rideId) async {
     final db = await DatabaseHelper.instance.database;
     await db.delete('ride_points', where: 'ride_id = ?', whereArgs: [rideId]);

@@ -54,6 +54,11 @@ class RideDao {
     await db.update('rides', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> updateSyncedStatus(String id, bool synced) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('rides', {'synced': synced ? 1 : 0}, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<void> delete(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
