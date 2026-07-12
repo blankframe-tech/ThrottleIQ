@@ -42,6 +42,12 @@ dependencies:
   # Image
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
+  image: ^4.1.0
+  firebase_storage: ^11.6.0
+
+  # Geolocation & Geohashing
+  geoflutterfire_plus: ^0.8.4
+  geohash: ^0.13.0
 
   # Haptics / Feedback
   vibration: ^2.0.0

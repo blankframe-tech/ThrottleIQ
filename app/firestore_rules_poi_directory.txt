@@ -1,0 +1,74 @@
+// Firestore Rules for POI Directory Feature (P7)
+// Add these rules to your firestore.rules file
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Places collection
+    match /places/{placeId} {
+      // Read: Anyone authenticated can read
+      allow read: if request.auth != null;
+
+      // Create: Any authenticated user can create
+      allow create: if request.auth != null &&
+                       request.resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.verified == false;
+
+      // Update: Owner can update, admins can update verification
+      allow update: if request.auth != null && (
+                       (resource.data.createdBy == request.auth.uid &&
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verified'])) ||
+                       (request.auth.token.admin == true &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified']))
+                     );
+
+      // Delete: Only owner can delete
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+
+      // Reviews subcollection
+      match /reviews/{reviewId} {
+        // Read: Anyone authenticated can read
+        allow read: if request.auth != null;
+
+        // Create: Any authenticated user can create
+        allow create: if request.auth != null &&
+                         request.resource.data.userId == request.auth.uid &&
+                         request.resource.data.createdAt == request.time &&
+                         request.resource.data.flagged == false;
+
+        // Update: Only owner can update
+        allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+
+        // Delete: Owner or admin can delete
+        allow delete: if request.auth != null &&
+                        (resource.data.userId == request.auth.uid || request.auth.token.admin == true);
+      }
+    }
+
+    // Reviews collection (standalone)
+    match /reviews/{reviewId} {
+      // Read: Anyone authenticated can read
+      allow read: if request.auth != null;
+
+      // Create: Any authenticated user can create
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.flagged == false;
+
+      // Update: Owner can update (except flagged), admin can flag
+      allow update: if request.auth != null && (
+                       (resource.data.userId == request.auth.uid &&
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['flagged'])) ||
+                       (request.auth.token.admin == true &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flagged']))
+                     );
+
+      // Delete: Owner or admin can delete
+      allow delete: if request.auth != null &&
+                      (resource.data.userId == request.auth.uid || request.auth.token.admin == true);
+    }
+  }
+}
