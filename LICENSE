@@ -1,0 +1,113 @@
+ThrottleIQ Source-Available License (TSAL) v1.0
+Copyright (c) 2026 ThrottleIQ. All Rights Reserved.
+
+1. GRANT OF LIMITED VIEWING RIGHTS
+
+Subject to the terms of this License, the copyright holder ("Licensor")
+grants any person obtaining access to this repository ("You") a
+limited, non-exclusive, non-transferable, revocable right to VIEW and
+READ the source code contained herein, for the sole purpose of
+transparency, security auditing, and evaluation of how the ThrottleIQ
+application handles user data.
+
+This is NOT an open-source license. No rights are granted beyond
+viewing the code as published in this repository.
+
+2. RESTRICTIONS
+
+Except as expressly permitted under Section 1, You may NOT, under any
+circumstances, without prior written permission from the Licensor:
+
+  a. Copy, reproduce, or duplicate this code or any portion of it,
+     in whole or in part, in any form or medium;
+
+  b. Modify, adapt, translate, reverse-engineer, decompile, or create
+     derivative works based on this code or its underlying ideas,
+     concepts, algorithms, data models, or system design;
+
+  c. Distribute, publish, sublicense, rent, lease, or transfer this
+     code or any derivative of it to any third party;
+
+  d. Use this code, in whole or in part, in any other software
+     product or service, whether commercial, non-commercial, or
+     open-source;
+
+  e. Sell, offer for sale, or otherwise commercially exploit this
+     code, this repository, or any derivative work;
+
+  f. Use the name "ThrottleIQ," its logo, branding, UI design system,
+     or any confusingly similar name or mark, in connection with any
+     product, service, app store listing, domain name, or business;
+
+  g. Recreate, clone, or build a substantially similar product based
+     on the concept, feature set, data model, UI/UX design, or
+     branding described or shown in this repository, even if no
+     code is directly copied;
+
+  h. Deploy, host, or run this code, or any modified version of it,
+     for use by any third party, including as a hosted service (SaaS);
+
+  i. Remove or alter any copyright, trademark, or proprietary notice
+     contained in this repository.
+
+3. NO IMPLIED LICENSE
+
+Nothing in this License shall be construed as granting, by
+implication, estoppel, or otherwise, any license or right to any
+patent, trademark, trade name, trade dress, service mark, or other
+intellectual property right of the Licensor, except the limited
+viewing right expressly stated in Section 1.
+
+4. OWNERSHIP
+
+All right, title, and interest in and to this repository, including
+all source code, documentation, designs, data models, concepts, ideas,
+trademarks, and associated intellectual property, remain exclusively
+with the Licensor. This License does not transfer any ownership
+rights whatsoever.
+
+5. NO WARRANTY
+
+THIS CODE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY
+CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF, OR
+INABILITY TO USE, THIS CODE.
+
+6. TERMINATION
+
+This License and the limited viewing right granted herein terminate
+automatically, without notice, if You breach any term of this
+License. Upon termination, You must immediately cease all access to
+and use of this repository and destroy any local copies in Your
+possession.
+
+7. ENFORCEMENT
+
+Any unauthorized copying, modification, distribution, commercial use,
+or use of the ThrottleIQ name, branding, or underlying product concept
+constitutes a material breach of this License and may result in legal
+action, including but not limited to claims for copyright
+infringement, trademark infringement, and misappropriation of trade
+secrets, to the fullest extent permitted by law.
+
+8. CONTACT FOR PERMISSIONS
+
+Any use beyond the limited viewing right granted in Section 1 requires
+prior written permission from the Licensor. To request permission,
+contact: blankframe.technologies@gmail.com
+
+9. GOVERNING LAW
+
+This License shall be governed by and construed in accordance with
+the laws of all states of the USA, India, Cananda, Bangladesh, Europe, Australia and Newzealand, without regard to its conflict of
+law provisions.
+
+---
+
+SUMMARY (non-binding, for human readability):
+You may look at this code to verify how ThrottleIQ works and confirm
+we're not doing anything shady with your data. That's it. You cannot
+copy it, fork it, modify it, sell it, host it, or build a competing
+app using this name, design, or idea. All rights reserved.
