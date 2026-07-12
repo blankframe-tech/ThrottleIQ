@@ -7,6 +7,8 @@ class RidePointEntity {
   final double? acceleration;
   final double? jerk;
   final double? altitudeM;
+  final String periodType;
+  final double? accuracyM;
 
   const RidePointEntity({
     required this.rideId,
@@ -17,5 +19,7 @@ class RidePointEntity {
     this.acceleration,
     this.jerk,
     this.altitudeM,
+    this.periodType = 'moving',
+    this.accuracyM,
   });
 }

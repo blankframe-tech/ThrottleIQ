@@ -29,11 +29,11 @@ class RideRecordingState {
   final RideEntity? ride;
   final List<LatLng> polyline;
   final double currentSpeedMs;
+  final double maxSpeedMs;
   final double distanceM;
   final Duration elapsed;
   final RideAlert activeAlert;
   final String? error;
-  // Live sensor data shown on UI
   final double sensorAccelMs2;
 
   const RideRecordingState({
@@ -41,6 +41,7 @@ class RideRecordingState {
     this.ride,
     this.polyline = const [],
     this.currentSpeedMs = 0,
+    this.maxSpeedMs = 0,
     this.distanceM = 0,
     this.elapsed = Duration.zero,
     this.activeAlert = RideAlert.none,
@@ -53,6 +54,7 @@ class RideRecordingState {
     RideEntity? ride,
     List<LatLng>? polyline,
     double? currentSpeedMs,
+    double? maxSpeedMs,
     double? distanceM,
     Duration? elapsed,
     RideAlert? activeAlert,
@@ -64,6 +66,7 @@ class RideRecordingState {
       ride: ride ?? this.ride,
       polyline: polyline ?? this.polyline,
       currentSpeedMs: currentSpeedMs ?? this.currentSpeedMs,
+      maxSpeedMs: maxSpeedMs ?? this.maxSpeedMs,
       distanceM: distanceM ?? this.distanceM,
       elapsed: elapsed ?? this.elapsed,
       activeAlert: activeAlert ?? this.activeAlert,
@@ -194,6 +197,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       ride: ride,
       polyline: [],
       currentSpeedMs: 0,
+      maxSpeedMs: 0,
       distanceM: 0,
       elapsed: Duration.zero,
       activeAlert: RideAlert.none,
@@ -232,21 +236,18 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   void _onSensor(UserAccelerometerEvent event) {
     if (state.status != RecordingStatus.active) return;
 
-    // Magnitude of linear acceleration vector
     final magnitude = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-    // Signed: positive if accelerating, negative if braking (use x-axis as proxy)
-    final signed = event.x.abs() > event.y.abs() ? event.x : event.y;
+    final dominantAxis = [event.x.abs(), event.y.abs(), event.z.abs()];
+    final dominantIdx = dominantAxis.indexOf(dominantAxis.reduce((a, b) => a > b ? a : b));
+    final signed = [event.x, event.y, event.z][dominantIdx];
     final signedMagnitude = signed < 0 ? -magnitude : magnitude;
 
-    // Low-pass filter to smooth sensor noise
     _filteredAccel = _alpha * signedMagnitude + (1 - _alpha) * _filteredAccel;
 
-    // Update UI with filtered sensor value
     if (mounted) {
       state = state.copyWith(sensorAccelMs2: _filteredAccel);
     }
 
-    // Sensor-based rapid event detection (2-second cooldown)
     final now = DateTime.now();
     final cooldownOk = _lastSensorEvent == null ||
         now.difference(_lastSensorEvent!).inSeconds >= 2;
@@ -274,8 +275,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   void _onPosition(Position pos) {
     if (state.status != RecordingStatus.active) return;
 
-    final now = DateTime.now();
     final speedMs = pos.speed < 0 ? 0.0 : pos.speed;
+    final timestamp = DateTime.fromMillisecondsSinceEpoch(pos.timestamp?.toInt() ?? DateTime.now().millisecondsSinceEpoch);
+
+    if (pos.accuracy > 25) return;
 
     if (speedMs > _maxSpeed) _maxSpeed = speedMs;
     _speedSum += speedMs;
@@ -291,7 +294,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
         currentSpeedMs: speedMs,
         currentLat: pos.latitude,
         currentLng: pos.longitude,
-        currentTime: now,
+        currentTime: timestamp,
       );
       accel = result.acceleration;
       jerk = result.jerk;
@@ -300,9 +303,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
     _totalDistance += distDelta;
 
+    final periodType = speedMs < 1 ? 'idle' : 'moving';
+
     final point = RidePointEntity(
       rideId: state.ride!.id,
-      timestamp: now,
+      timestamp: timestamp,
       lat: pos.latitude,
       lng: pos.longitude,
       speedMs: speedMs,
@@ -322,14 +327,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       'acceleration': point.acceleration,
       'jerk': point.jerk,
       'altitude_m': point.altitudeM,
+      'period_type': periodType,
+      'accuracy_m': pos.accuracy,
     });
 
     if (_pointBuffer.length >= _bufferFlushSize) {
       _flushPointBuffer();
     }
 
-    // GPS-based alert (overspeed + fatigue, since braking/accel handled by sensor)
     final alert = _detector.detect(
+      jerk: jerk,
       speedMs: speedMs,
       elapsedSeconds: state.elapsed.inSeconds,
     );
@@ -342,6 +349,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     final newPolyline = [...state.polyline, LatLng(pos.latitude, pos.longitude)];
     state = state.copyWith(
       currentSpeedMs: speedMs,
+      maxSpeedMs: _maxSpeed,
       distanceM: _totalDistance,
       polyline: newPolyline,
       activeAlert: alertToShow,
