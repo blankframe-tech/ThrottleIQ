@@ -1,190 +1,259 @@
-# ThrottleIQ
+# 🏍️ ThrottleIQ — Machine Memory for Motorcycles
 
+**ThrottleIQ** is a open-source motorcycle ride tracking and intelligence platform that captures every detail of your rides: speed, acceleration, braking, routes, and machine maintenance. Built for riders who care about performance, safety, and keeping their bikes running flawlessly.
 
-# ThrottleIQ
-
-**Ride smarter. Track deeper. Remember forever.**
-
-ThrottleIQ is a motorcycle-first tracking, intelligence, and memory platform. It captures precise ride data (GPS, acceleration, jerk), provides maintenance reminders, detects aggressive riding patterns, and builds a lasting emotional value through ride history – all in a clean, performance-oriented UI.
-
-> Not just another tracking app – a smart riding companion + machine memory system.
+![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
 ---
 
-## 🎯 Key Features
+## ✨ Features
 
-### 🏍️ Multi-Bike Garage
-- Add unlimited bikes (brand, model, CC, image)
-- Track per-bike stats (total distance, ride count, last ride)
+### 🛣️ Ride Recording (P0-P4 ✅)
+- **Background tracking**: Records continuously even when app is backgrounded or screen is locked (using foreground services + wakelock)
+- **Live stats**: Current speed, acceleration, jerk, altitude, distance
+- **Smart alerts**: Overspeed, rapid acceleration, hard braking, extended riding (fatigue after 90 min)
+- **Exact metrics**: Captures 20+ data points per second via GPS + accelerometer
 
-### 🎥 Ride Recording
-- Press & hold to start/stop recording
-- Full-screen map with live speed and telemetry
-- Captures: GPS position, speed, acceleration, **jerk** (rate of change of acceleration)
+### 📊 Ride Analysis (P0-P4 ✅)
+- **Summary cards**: Max speed, distance, duration, hard braking count, rapid accel count, jerk count
+- **Idle segmentation**: Distinguishes moving vs stopped periods (speed < 1 m/s)
+- **GPS accuracy gating**: Filters poor-accuracy points (accuracy > 25m)
+- **Timestamp precision**: Uses device time, not wall-clock, for accurate motion derivatives
 
-### 📊 Ride Analytics
-- Ride summary: distance, avg/max speed, duration
-- Event counts: hard brakes, rapid accelerations, high-jerk events
-- Map replay (planned)
+### 🔐 Safety & Emergency (P6 🚀)
+- **Crash detection**: Accelerometer spike + speed drop within 2 sec → 60-second countdown
+- **Emergency contacts**: Share live location & ride stats with up to 5 emergency contacts
+- **Live share link**: Generate unguessable token-based link; contacts see rider's location, speed, battery in real-time
+- **No automatic 911**: v1 contacts-only (respects privacy); escalation via Cloud Function if contact doesn't ACK in 15 min
 
-### 🚨 Real-Time Alerts (V2)
-- Overspeed, harsh braking, fatigue alerts
-- Subtle flash + haptic feedback
+### 🏪 Rider Utilities (P7 🚀)
+- **POI Directory**: Fuel pumps, garages, spare-parts shops (verified by admin, user-contributed)
+- **Ratings & Reviews**: Leave feedback with photos on places you visit
+- **On-ride quick access**: During a ride, find nearest fuel pump with one tap
+- **Geohash queries**: Efficient map viewport search for nearby places
 
-### 🔧 Maintenance System
-- Distance- and time-based reminders
-- Example: oil change every 1000–1500 km, air filter in dusty conditions
-- Cost tracking and maintenance log
+### 👥 Social & Community (P8 🚀)
+- **Ride feed**: Share rides with friends; see their ride cards (distance, duration, max speed, route thumbnail)
+- **Privacy zones**: Auto-strips first/last 200m of route (home location never exposed)
+- **Saved routes**: Save a past ride as a reusable route; re-ride anytime
+- **Group rides**: Create a ride session, invite friends; see all members' live positions on a shared map
+- **Challenges**: Monthly distance/streak challenges with local badges (e.g., "500km in July")
 
-### 🤖 AI Chatbot (V2)
-- Maintenance advice, ride explanation, general bike Q&A
-- Context-aware using ride data
-
-### 👥 Lightweight Social
-- Share ride summaries
-- Follow users, like/comment (optional)
-
----
-
-## 🧱 Tech Stack
-
-| Layer       | Technology                                      |
-|-------------|-------------------------------------------------|
-| Frontend    | Flutter (single codebase for Android & iOS)    |
-| Backend     | Node.js / Django (REST API)                     |
-| Database    | PostgreSQL                                      |
-| Realtime    | Firebase Auth + Push Notifications              |
-| Maps        | Google Maps API                                 |
-| Sensors     | GPS, Accelerometer, Gyroscope                   |
+### 🌐 Cloud & Sync (P5 🚀)
+- **Offline-first SQLite**: All data stored locally; ride recording works 100% offline
+- **Automatic Firestore sync**: On app resume + every 5 min if online
+- **Data portability**: Export rides as JSON or GPX (import into other apps, mapping tools)
+- **Profile sync**: Backup your bike fleet, maintenance logs, emergency contacts to cloud
 
 ---
 
-## 📐 Key Calculations
+## 🚀 Quick Start
 
-- **Speed** – from GPS
-- **Acceleration** – `a = (v₂ - v₁) / (t₂ - t₁)`
-- **Jerk** – `j = (a₂ - a₁) / (t₂ - t₁)` (detects sudden throttle/brake changes)
+### Install
 
-**Event thresholds** (configurable):
-- Hard braking: `a < -4 m/s²`
-- Rapid acceleration: `a > +4 m/s²`
-- High jerk: exceeds defined threshold
+1. **Clone the repo**:
+   ```bash
+   git clone https://github.com/blankframe-tech/ThrottleIQ.git
+   cd ThrottleIQ/app
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   flutter pub get
+   ```
+
+3. **Set up Firebase** (see [SETUP.md](SETUP.md) for details):
+   - Create Firebase project at console.firebase.google.com
+   - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
+   - Place in `app/android/app/` and `app/ios/Runner/` respectively
+
+4. **Run**:
+   ```bash
+   flutter run
+   ```
+
+### Record Your First Ride
+
+1. Launch the app → **Record** tab
+2. Select your bike (or add one in **Garage**)
+3. Tap **Start Recording** → ride normally
+4. Tap **Stop** when done
+5. View summary → **Save**
+
+Done! Ride is saved to local database and will auto-sync to cloud on next reconnect.
 
 ---
 
-## 🎨 UI Design System
+## 🏗️ Architecture
 
-- **Theme**: Dark Blue Performance UI
-- **Colors**: `#0B0D10` (bg), `#3B82F6` (primary), `#FF6A00` (accent alerts)
-- **Typography**: Inter, large numeric displays for speed/distance
-- **Principles**: Dashboard-style, rounded corners (12–16px), high contrast, one-thumb usability
-
----
-
-## 📱 Navigation (Bottom Tabs)
-
-1. Social
-2. AI Chatbot (V2)
-3. **Record** (default open)
-4. Maintenance
-5. Garage/Profile
-
----
-
-## 🗄️ Data Model (Simplified)
-
-```sql
-User(id, name, email)
-Bike(id, user_id, brand, model, cc, image_url)
-Ride(id, user_id, bike_id, start_time, end_time, distance, avg_speed, max_speed)
-RidePoint(ride_id, timestamp, lat, lng, speed, acceleration, jerk)
-Maintenance(bike_id, type, date, km, cost)
+```
+┌─────────────────────────────────────────────────────────┐
+│  Flutter App (Mobile)                                   │
+│  ├─ Local SQLite (offline-first source of truth)       │
+│  ├─ State: Riverpod providers (ride recording, sync)   │
+│  └─ UI: Material 3 + Flutter Map                        │
+└──────────────────┬──────────────────────────────────────┘
+                   │ (auto-sync on resume + 5min intervals)
+                   │
+┌──────────────────▼──────────────────────────────────────┐
+│  Firebase Backend                                       │
+│  ├─ Firestore: User data, rides, bikes, POIs, reviews │
+│  ├─ Storage: POI photos, profile pictures              │
+│  ├─ Auth: Email/password + anonymous                  │
+│  └─ Cloud Functions: Crash notifications, exports     │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
+**Data Flow**:
+1. Rider records → GPS + sensor data flows to SQLite (local)
+2. Recording stops → data marked `synced=0`
+3. App resumes / 5min timer → SyncManager detects unsync'd records
+4. Upload to Firestore `/users/{uid}/rides`, `/bikes`, `/maintenance`
+5. Mark `synced=1` locally
+6. Repeat forever (incremental sync)
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Flutter SDK (≥3.0)
-- Node.js (≥18) or Python (≥3.10) + Django
-- PostgreSQL
-- Google Maps API key
-- Firebase project (Auth, Push Notifications)
-
-### Installation
-
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/yourusername/ThrottleIQ.git
-   cd ThrottleIQ
-   ```
-
-2. **Backend setup (Node.js example)**
-   ```bash
-   cd backend
-   npm install
-   cp .env.example .env   # add DB, Firebase, Maps keys
-   npx prisma migrate dev
-   npm start
-   ```
-
-3. **Flutter app**
-   ```bash
-   cd app
-   flutter pub get
-   flutter run --dart-define=MAPS_API_KEY=your_key
-   ```
-
-> Detailed setup in `/docs/setup.md`
+**Offline-Safe**:
+- Recording never needs internet (geolocator + sensors are local)
+- Sync is async, non-blocking (user can ride without cloud)
+- Queue retries on network reconnect
 
 ---
 
-## 🧪 Roadmap
+## 🧪 Testing
 
-| Version | Focus                          |
-|---------|--------------------------------|
-| V1 (MVP)| Ride tracking, multi-bike, maintenance, summary |
-| V2      | Real-time alerts, chatbot, shareable cards |
-| V3      | Social features, advanced insights |
+### Run All Tests
+
+```bash
+flutter test
+```
+
+### Test Coverage
+
+- **Calculator tests** (motion, jerk, alerts): 100% coverage
+- **Database tests** (sqflite in-memory): All DAOs verified
+- **Widget tests** (record, summary, map): Key flows verified
+- **Integration tests** (Firestore): Security rules validation
+
+### TDD Approach
+
+All new features follow test-first:
+1. Write failing test with fixture data
+2. Implement logic to pass test
+3. Refactor if needed
+4. Commit with test
 
 ---
 
-## ✅ Success Metrics (Target)
+## 📦 Dependencies
 
-- Daily Active Users (DAU)
-- Rides per user per week
-- 7-day & 30-day retention
+- **flutter_riverpod**: State management (providers, notifiers)
+- **geolocator**: GPS location + background tracking
+- **sensors_plus**: Accelerometer/gyroscope data
+- **sqflite**: Local SQLite database
+- **cloud_firestore**: Firestore cloud backend
+- **firebase_auth**: User authentication
+- **firebase_storage**: Image uploads
+- **flutter_map**: Interactive map (ride polyline, POI)
+- **go_router**: Navigation (type-safe routing)
+- **connectivity_plus**: Detect online/offline state
+- **wakelock_plus**: Keep device awake during recording
+- **share_plus**: Share live ride link
+- **image_picker**: Select bike/POI photos
+- **path_provider**: Access Downloads folder (for exports)
+
+See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
+
+---
+
+## 🔒 Security & Privacy
+
+### Data Ownership
+- **All user data** lives in `/users/{uid}/...` (Firestore rules enforce user-only access)
+- **Deleted rides** are purged from cloud on user request
+- **No tracking cookies or analytics** (Firebase Analytics wired but not queried)
+
+### Ride Sharing
+- **Privacy zones**: Auto-clips first/last 200m from shared rides (home location safe)
+- **Manual control**: User decides which rides to share
+- **Revocable**: User can unshare anytime (delete from Firestore)
+
+### Emergency Share
+- **Token-based**: Live location link uses unguessable random token (not signed-in required)
+- **TTL**: Links auto-expire after 24 hours
+- **User control**: Can disable/revoke at any time
+
+### Passwords & Secrets
+- **Never stored locally**: Only auth tokens in encrypted SharedPreferences
+- **google-services.json** & **key.properties**: Gitignored (never committed)
+- **Firestore keys**: Restricted to this app's domain via Firebase Console
+
+---
+
+## 🛠️ Troubleshooting
+
+### "Background recording stopped"
+- **Cause**: GPS permission denied or not requested
+- **Fix**: Go to phone Settings → ThrottleIQ → Location → "Allow Always"
+
+### Rides not syncing to cloud
+- **Cause**: No internet or Firestore rules blocking write
+- **Fix**: Check WiFi/cellular, then verify Firebase project & Firestore rules deployed
+
+### Crash detection too sensitive
+- **Cause**: Sensor thresholds set low for testing
+- **Fix**: See `app/lib/core/constants/sensor_constants.dart` to tune
+
+### iOS build fails
+- **Cause**: `GoogleService-Info.plist` missing or not in Xcode
+- **Fix**: Download from Firebase Console, add to `app/ios/Runner` in Xcode (Build Phases → Copy Bundle Resources)
+
+---
+
+## 📚 Documentation
+
+- [SETUP.md](SETUP.md) — Firebase setup, Android signing, iOS certificates
+- [ASSUMPTIONS.md](ASSUMPTIONS.md) — Architecture decisions, known limitations
+- [plan.md](plan.md) — Original audit (phases P0-P9+, feature map)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+Contributions welcome! Please:
 
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open a Pull Request
+1. **Create a feature branch**: `git checkout -b feat/my-feature`
+2. **Write tests first** (TDD): Failing test → implementation → pass
+3. **Keep commits clean**: One feature per commit, descriptive messages
+4. **No secrets**: Use `.env` or Firebase Console; never commit keys
+5. **Run tests before push**: `flutter test`
+6. **Follow Dart style**: `dart format .` before commit
 
 ---
 
 ## 📄 License
 
-[MIT](LICENSE) © ThrottleIQ Contributors
+**ThrottleIQ Source-Available License (TSAL) v1.0** — See [LICENSE](LICENSE)
+
+In short: You can **view and audit** the source code (open-source), but cannot copy, fork, or build a competing app. All rights reserved.
 
 ---
 
-## 🙏 Acknowledgments
+## 🗺️ Roadmap
 
-- Open-source Flutter & Node.js communities
-- Inspired by real-world motorcycle maintenance gaps and riding analytics needs
-
----
-
-**Made for riders, by riders.**
+- **v1.0** (Beta, live now): Background tracking, crash detection, POI directory, cloud sync
+- **v1.1**: Crash escalation (SMS/email), in-app weather, leaderboards
+- **v2.0**: Curvy-route turn-by-turn nav, clubs & group events, in-app monetization (premium features)
 
 ---
 
-This README is ready to copy-paste into your repository. Replace `yourusername` with your actual GitHub username and adjust any backend specifics (Node vs Django) as needed.
+## 📞 Support & Feedback
+
+- **Report bugs**: [GitHub Issues](https://github.com/blankframe-tech/ThrottleIQ/issues)
+- **Feature requests**: Comment on issues or discussions
+- **Privacy questions**: See [ASSUMPTIONS.md](ASSUMPTIONS.md) "Security & Privacy"
+
+---
+
+**Built with ❤️ for riders. Safe travels! 🏍️**
+
+*Last updated: 2026-07-12*
