@@ -1,19 +1,20 @@
-import 'package:geohash/geohash.dart';
+import 'package:throttleiq/core/utils/geohash_util.dart';
 
 class GeohashUtils {
   /// Generate geohash from latitude and longitude
   static String encode(double latitude, double longitude, {int precision = 9}) {
-    return GeoHash.encode(latitude, longitude, precision: precision);
+    return GeohashUtil.encode(latitude, longitude, precision: precision);
   }
 
   /// Decode geohash to get bounding box
   static Map<String, double> decode(String geohash) {
-    final decoded = GeoHash.decode(geohash);
+    final bounds = GeohashUtil.decodeBounds(geohash);
+    // Return bounds instead of point + error (matches encoded data format)
     return {
-      'latitude': decoded[0],
-      'longitude': decoded[1],
-      'latitudeError': decoded[2],
-      'longitudeError': decoded[3],
+      'latitude': (bounds['latMin']! + bounds['latMax']!) / 2,
+      'longitude': (bounds['lngMin']! + bounds['lngMax']!) / 2,
+      'latitudeError': (bounds['latMax']! - bounds['latMin']!) / 2,
+      'longitudeError': (bounds['lngMax']! - bounds['lngMin']!) / 2,
     };
   }
 

@@ -46,8 +46,7 @@ dependencies:
   firebase_storage: ^11.6.0
 
   # Geolocation & Geohashing
-  geoflutterfire_plus: ^0.8.4
-  geohash: ^0.13.0
+  geoflutterfire_plus: any
 
   # Haptics / Feedback
   vibration: ^2.0.0
@@ -57,10 +56,10 @@ dependencies:
   wakelock_plus: ^1.2.8
 
   # Sharing
-  share_plus: ^8.1.0
+  share_plus: any
 
   # Battery
-  battery_plus: ^1.4.1
+  battery_plus: any
 
   # UI
   google_fonts: ^6.2.1
