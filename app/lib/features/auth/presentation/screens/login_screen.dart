@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -34,8 +35,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) {
       final err = ref.read(authNotifierProvider).error;
       if (err != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(err.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mapFirebaseAuthError(err))),
+        );
       }
     }
   }

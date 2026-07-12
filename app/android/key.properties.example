@@ -1,0 +1,19 @@
+# Keystore Configuration for Release Signing
+# Copy this file to 'key.properties' and fill in your actual values
+# Do NOT commit key.properties to version control!
+
+# Path to the keystore file (relative to this directory)
+storeFile=../../../throttleiq-release.keystore
+
+# Keystore password
+storePassword=YOUR_KEYSTORE_PASSWORD
+
+# Key alias
+keyAlias=throttleiq-release
+
+# Key password
+keyPassword=YOUR_KEY_PASSWORD
+
+# To generate a new keystore, run:
+# keytool -genkey -v -keystore ../../../throttleiq-release.keystore \
+#   -keyalg RSA -keysize 4096 -validity 10000 -alias throttleiq-release
