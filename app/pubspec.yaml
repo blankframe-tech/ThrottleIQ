@@ -50,6 +50,12 @@ dependencies:
   # Background tracking
   wakelock_plus: ^1.2.8
 
+  # Sharing
+  share_plus: ^8.1.0
+
+  # Battery
+  battery_plus: ^1.4.1
+
   # UI
   google_fonts: ^6.2.1
   fl_chart: ^0.68.0

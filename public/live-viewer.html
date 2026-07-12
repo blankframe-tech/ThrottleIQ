@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThrottleIQ Live Viewer</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px 20px;
+    }
+
+    .loading, .error {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .loading {
+      color: #667eea;
+    }
+
+    .error {
+      color: #e53e3e;
+      background: #fff5f5;
+      border-left: 4px solid #e53e3e;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-banner {
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      text-align: center;
+      font-size: 18px;
+      animation: pulse 2s infinite;
+    }
+
+    .status-riding {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 2px solid #9ae6b4;
+    }
+
+    .status-paused {
+      background: #feebc8;
+      color: #7c2d12;
+      border: 2px solid #fbd38d;
+    }
+
+    .status-crash {
+      background: #fed7d7;
+      color: #742a2a;
+      border: 2px solid #fc8181;
+      animation: crash-pulse 0.5s infinite;
+    }
+
+    .status-completed {
+      background: #bee3f8;
+      color: #2c5282;
+      border: 2px solid #90cdf4;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes crash-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2d3748;
+    }
+
+    .map-container {
+      background: #e0e7ff;
+      border-radius: 8px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .map-placeholder {
+      text-align: center;
+      color: #667eea;
+    }
+
+    .map-pin {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .last-update {
+      text-align: center;
+      color: #718096;
+      font-size: 12px;
+      padding-top: 15px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+
+    .button-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .button-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .button-secondary {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+
+    .battery-indicator {
+      display: inline-block;
+      width: 30px;
+      height: 15px;
+      border: 2px solid #2d3748;
+      border-radius: 3px;
+      position: relative;
+      margin-left: 5px;
+    }
+
+    .battery-indicator::after {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 5px;
+      background: #2d3748;
+      border-radius: 1px;
+      right: -4px;
+      top: 5px;
+    }
+
+    .battery-fill {
+      height: 100%;
+      background: #48bb78;
+      border-radius: 1px;
+      transition: width 0.3s;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏍️ Live Rider</h1>
+      <p>Real-time ride tracking</p>
+    </div>
+
+    <div class="content">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px;">Connecting to rider...</p>
+      </div>
+
+      <div id="error" class="error hidden"></div>
+
+      <div id="viewer" class="hidden">
+        <div id="statusBanner" class="status-banner"></div>
+
+        <div id="mapContainer" class="map-container">
+          <div class="map-placeholder">
+            <div class="map-pin">📍</div>
+            <p>Rider location will appear here</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Speed</div>
+            <div class="stat-value"><span id="speed">--</span> km/h</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Battery</div>
+            <div class="stat-value">
+              <span id="battery">--</span>%
+              <div class="battery-indicator" style="margin-top: 5px;">
+                <div class="battery-fill" id="batteryFill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Latitude</div>
+            <div class="stat-value"><span id="lat">--</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Longitude</div>
+            <div class="stat-value"><span id="lng">--</span></div>
+          </div>
+        </div>
+
+        <div class="last-update">
+          <p>Last updated: <strong id="lastUpdate">--</strong></p>
+          <p id="warningMsg" style="color: #e53e3e; display: none; margin-top: 10px;">
+            ⚠️ No updates for 30+ seconds. Rider may be out of service area.
+          </p>
+        </div>
+
+        <button class="button button-secondary" onclick="copyShareLink()">
+          📋 Copy Share Link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config - update with your project config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4K_qNqZ4X8yL8F_8C_9D_0E_1F_2G_3H",
+      authDomain: "throttleiq-project.firebaseapp.com",
+      projectId: "throttleiq-project",
+      storageBucket: "throttleiq-project.appspot.com",
+      messagingSenderId: "123456789000",
+      appId: "1:123456789000:web:abcdef1234567890"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Extract token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || window.location.pathname.split('/').pop();
+
+    if (!token || token.length < 10) {
+      showError('Invalid or missing session token. Please check the share link.');
+    } else {
+      initializeViewer(token);
+    }
+
+    async function initializeViewer(token) {
+      try {
+        const docRef = db.collection('liveSessions').doc(token);
+        let lastUpdateTime = Date.now();
+        let updateWarningShown = false;
+
+        // Real-time listener
+        docRef.onSnapshot(
+          (doc) => {
+            if (doc.exists) {
+              const session = doc.data();
+              updateUI(session);
+              lastUpdateTime = Date.now();
+              updateWarningShown = false;
+              document.getElementById('warningMsg').style.display = 'none';
+            } else {
+              showError('Session not found or has expired.');
+              document.getElementById('viewer').classList.add('hidden');
+              document.getElementById('loading').classList.add('hidden');
+            }
+          },
+          (error) => {
+            console.error('Firestore error:', error);
+            showError('Failed to connect to session. Please check permissions.');
+          }
+        );
+
+        // Check for stale data every 5 seconds
+        setInterval(() => {
+          const timeSinceUpdate = Date.now() - lastUpdateTime;
+          if (timeSinceUpdate > 30000 && !updateWarningShown) {
+            document.getElementById('warningMsg').style.display = 'block';
+            updateWarningShown = true;
+          } else if (timeSinceUpdate < 30000 && updateWarningShown) {
+            document.getElementById('warningMsg').style.display = 'none';
+            updateWarningShown = false;
+          }
+        }, 5000);
+      } catch (error) {
+        showError(`Error: ${error.message}`);
+      }
+    }
+
+    function updateUI(session) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('viewer').classList.remove('hidden');
+
+      // Status banner
+      const statusBanner = document.getElementById('statusBanner');
+      const statusClass = `status-${session.status}`;
+      statusBanner.className = `status-banner ${statusClass}`;
+      statusBanner.textContent = `🏍️ ${session.status.toUpperCase()}`;
+
+      // Stats
+      const speedKmh = (session.speedMs * 3.6).toFixed(1);
+      document.getElementById('speed').textContent = speedKmh;
+      document.getElementById('battery').textContent = session.batteryPct || '--';
+      document.getElementById('batteryFill').style.width = `${session.batteryPct}%`;
+      document.getElementById('lat').textContent = session.lastLat
+        ? session.lastLat.toFixed(6)
+        : '--';
+      document.getElementById('lng').textContent = session.lastLng
+        ? session.lastLng.toFixed(6)
+        : '--';
+
+      // Last update time
+      const updateTime = new Date(session.updatedAt);
+      const now = new Date();
+      const diffSeconds = Math.floor((now - updateTime) / 1000);
+      if (diffSeconds < 60) {
+        document.getElementById('lastUpdate').textContent = `${diffSeconds}s ago`;
+      } else {
+        document.getElementById('lastUpdate').textContent = updateTime.toLocaleTimeString();
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+      document.getElementById('error').textContent = message;
+    }
+
+    function copyShareLink() {
+      const link = window.location.href;
+      navigator.clipboard.writeText(link).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        alert('Failed to copy link. Please copy manually: ' + link);
+      });
+    }
+  </script>
+</body>
+</html>

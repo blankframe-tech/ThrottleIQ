@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum RideStatus { active, paused, completed }
+enum RideStatus { active, paused, completed, crash }
 
 class RideEntity extends Equatable {
   final String id;

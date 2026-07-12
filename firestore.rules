@@ -19,6 +19,34 @@ service cloud.firestore {
       match /maintenance/{maintenanceId} {
         allow read, write: if request.auth.uid == uid;
       }
+
+      // Emergency contacts subcollection
+      match /emergencyContacts/{contactId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+
+      // False crash positives (for tuning/analytics)
+      match /falseCrashPositives/{documentId} {
+        allow write: if request.auth.uid == uid;
+        allow read: if request.auth.uid == uid;
+      }
+    }
+
+    // Live sessions - readable by anyone with token (capability-based access)
+    // Writable only by ride owner
+    match /liveSessions/{token} {
+      // Anyone can read if they know the token (no auth required)
+      allow read: if true;
+
+      // Only the ride owner (uid) can write
+      allow create: if request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth.uid == resource.data.uid;
+    }
+
+    // Crash notifications - triggered by Cloud Function
+    match /crashNotifications/{documentId} {
+      allow write: if request.auth.uid == request.resource.data.uid;
+      allow read: if request.auth.uid == resource.data.uid;
     }
 
     // Deny all other access
