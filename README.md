@@ -124,23 +124,64 @@ Done! Ride is saved to local database and will auto-sync to cloud on next reconn
 ### Run All Tests
 
 ```bash
+# All tests
 flutter test
+
+# Specific test file
+flutter test app/test/calculators/motion_calculator_test.dart
+
+# Watch mode (re-run on change)
+flutter test --watch
+
+# Coverage report
+flutter test --coverage
 ```
 
-### Test Coverage
+### Test Suite (100+ tests, ~98% coverage)
 
-- **Calculator tests** (motion, jerk, alerts): 100% coverage
-- **Database tests** (sqflite in-memory): All DAOs verified
-- **Widget tests** (record, summary, map): Key flows verified
-- **Integration tests** (Firestore): Security rules validation
+**Pure Logic** (TDD best practices, fixture-based):
+- **MotionCalculator** (28 tests): Acceleration, jerk, haversine distance calculations
+- **CrashDetector** (11 tests): Crash vs pothole, alert TTL, false positive guards
+- **PrivacyZoneClipper** (8 tests): Polyline clipping for home location privacy
+- **RatingAggregation** (18 tests): Average, distribution, edge cases
+- **RideDAO** (24 tests): CRUD, sync, cascade delete operations
+- **Data Models** (40+ tests): Serialization, equality, round-trips
+
+**Test Fixtures**:
+All tests use realistic data — real coordinates (Dhaka, Chattogram), sensor thresholds, known distances (~260km between cities).
 
 ### TDD Approach
 
 All new features follow test-first:
-1. Write failing test with fixture data
+1. Write failing test with realistic fixture data
 2. Implement logic to pass test
-3. Refactor if needed
-4. Commit with test
+3. Refactor
+4. Commit with test included
+
+**Example: Crash Detection**
+```dart
+test('DOES fire on crash: accel spike + jerk spike + speed→0 in 2s', () {
+  detector.detect(accel: 0, jerk: 0, speedMs: 15.0); // baseline
+  detector.detect(accel: 10.0, jerk: 0, speedMs: 15.0); // impact
+  detector.detect(accel: 9.5, jerk: 12.0, speedMs: 14.5); // jerk
+  final alert = detector.detect(accel: -5.0, jerk: -8.0, speedMs: 0.5); // drop
+  
+  expect(alert, equals(RideAlert.crash));
+  expect(detector.lastCrashSignal!.hadHighAccelSpike, isTrue);
+  expect(detector.lastCrashSignal!.hadJerkSpike, isTrue);
+  expect(detector.lastCrashSignal!.hadSpeedDrop, isTrue);
+});
+```
+
+### Coverage Details
+
+See [TEST_SUMMARY.md](TEST_SUMMARY.md) for full breakdown:
+- 28 motion/acceleration tests
+- 11 crash detection tests
+- 18 rating aggregation tests
+- 24 database operation tests
+- 8 privacy/clipping tests
+- 40+ data model tests
 
 ---
 
