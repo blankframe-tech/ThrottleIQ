@@ -72,14 +72,15 @@ if (Test-Path $CMDLINE_ZIP) {
 # Accept licenses
 Write-Host "`n[3/6] Accepting Android licenses..." -ForegroundColor Yellow
 
-$SDKMANAGER = "$ANDROID_SDK\cmdline-tools\latest\bin\sdkmanager.bat"
+$SDKMANAGER = "$ANDROID_SDK\cmdline-tools\latest\sdkmanager.bat"
 
 if (Test-Path $SDKMANAGER) {
     Write-Host "Accepting licenses..."
-    & "$SDKMANAGER" --licenses --verbose 2>&1 | Where-Object { $_ -notmatch "^[a-zA-Z]" } | Out-Null
+    & cmd /c "$SDKMANAGER --licenses" < <(echo yes | Out-Host)
     Write-Host "[OK] Licenses processed" -ForegroundColor Green
 } else {
     Write-Host "ERROR: sdkmanager not found at $SDKMANAGER" -ForegroundColor Red
+    Write-Host "Checked: $SDKMANAGER" -ForegroundColor Yellow
     exit 1
 }
 
