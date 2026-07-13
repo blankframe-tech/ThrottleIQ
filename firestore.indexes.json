@@ -1,0 +1,75 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "rides",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "Ascending"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "Descending"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "rides",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "public",
+          "order": "Ascending"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "Descending"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "places",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "geohash",
+          "order": "Ascending"
+        },
+        {
+          "fieldPath": "category",
+          "order": "Ascending"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reviews",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "placeId",
+          "order": "Ascending"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "Descending"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "liveSessions",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "Ascending"
+        },
+        {
+          "fieldPath": "expiresAt",
+          "order": "Ascending"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
