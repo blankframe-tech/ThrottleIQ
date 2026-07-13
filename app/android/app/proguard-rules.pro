@@ -2,6 +2,10 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.embedding.** { *; }
 
+# Play Core (deferred components) — referenced by the Flutter engine but not
+# shipped in this app; suppress the R8 missing-class failure.
+-dontwarn com.google.android.play.core.**
+
 # Firestore/Firebase
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
