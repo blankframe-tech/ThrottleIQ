@@ -32,4 +32,18 @@ class HapticService {
       await HapticFeedback.heavyImpact();
     }
   }
+
+  /// Maximum-intensity sustained vibration for crash alerts — must grab
+  /// attention even with the phone in a pocket at highway speed.
+  static Future<void> maxVibration() async {
+    final hasVibrator = await Vibration.hasVibrator();
+    if (hasVibrator) {
+      await Vibration.vibrate(
+        pattern: [0, 800, 200, 800, 200, 800, 200, 1500],
+        intensities: [0, 255, 0, 255, 0, 255, 0, 255],
+      );
+    } else {
+      await HapticFeedback.heavyImpact();
+    }
+  }
 }

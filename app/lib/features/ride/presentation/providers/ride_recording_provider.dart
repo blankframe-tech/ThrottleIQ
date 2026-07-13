@@ -299,7 +299,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     if (state.status != RecordingStatus.active) return;
 
     final speedMs = pos.speed < 0 ? 0.0 : pos.speed;
-    final timestamp = DateTime.fromMillisecondsSinceEpoch(pos.timestamp?.toInt() ?? DateTime.now().millisecondsSinceEpoch);
+    // geolocator >=11 exposes timestamp as a non-nullable DateTime (GPS device time)
+    final timestamp = pos.timestamp;
 
     if (pos.accuracy > 25) return;
 
@@ -366,7 +367,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     );
 
     if (alert == RideAlert.crash) {
-      await _onCrashDetected();
+      // Fire-and-forget: crash handling is async (UI + Firestore) and must not
+      // block the position stream callback.
+      _onCrashDetected();
     } else if (alert != RideAlert.none && alert != state.activeAlert) {
       HapticService.alertPattern();
     }
