@@ -25,13 +25,7 @@ void main() {
   late PlaceRepository placeRepository;
   late MockFirebaseFirestore mockFirestore;
 
-  setUp(() {
-    mockFirestore = MockFirebaseFirestore();
-    placeRepository = PlaceRepository(firestore: mockFirestore);
-  });
-
-  group('PlaceRepository', () {
-    final testPlace = PlaceEntity(
+  final testPlace = PlaceEntity(
       id: 'place1',
       name: 'Test Fuel Station',
       category: PlaceCategory.fuel,
@@ -48,6 +42,14 @@ void main() {
       ratingSum: 0,
       ratingCount: 0,
     );
+
+  setUp(() {
+    mockFirestore = MockFirebaseFirestore();
+    placeRepository = PlaceRepository(firestore: mockFirestore);
+  });
+
+  group('PlaceRepository', () {
+
 
     test('addPlace should add a new place to Firestore', () async {
       // This test demonstrates the expected behavior

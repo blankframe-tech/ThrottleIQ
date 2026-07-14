@@ -3,10 +3,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
+
+/// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
+const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
 
 class ActiveRideScreen extends ConsumerStatefulWidget {
   const ActiveRideScreen({super.key});
@@ -215,6 +219,18 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary),
                   ),
+                  if (rideState.liveSessionToken != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => Share.share(
+                        'Follow my ride live: $_liveShareBaseUrl/${rideState.liveSessionToken}',
+                        subject: 'ThrottleIQ live ride',
+                      ),
+                      icon: const Icon(Icons.share_location,
+                          color: AppColors.textPrimary),
+                      tooltip: 'Share live location',
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -285,7 +301,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                           value: SpeedFormatter.distanceKm(rideState.distanceM)),
                       _RideStat(
                           label: 'Max Speed',
-                          value: '${(rideState.currentSpeedMs * 3.6).toStringAsFixed(0)} km/h'),
+                          value: '${(rideState.maxSpeedMs * 3.6).toStringAsFixed(0)} km/h'),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -323,7 +339,96 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
             ),
           ),
+
+          // ── Crash countdown overlay (topmost) ────────────────────────────
+          if (rideState.crashDetected)
+            _CrashOverlay(
+              countdown: rideState.crashCountdown,
+              onImOk: () =>
+                  ref.read(rideRecordingProvider.notifier).dismissCrashAlert(),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+/// Full-screen "Are you OK?" takeover shown when crash detection fires.
+/// Counts down from 60; if it reaches 0 the provider notifies emergency
+/// contacts. The big I'M OK button dismisses and logs a false positive.
+class _CrashOverlay extends StatelessWidget {
+  final int countdown;
+  final VoidCallback onImOk;
+
+  const _CrashOverlay({required this.countdown, required this.onImOk});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        color: const Color(0xE6B71C1C), // urgent red, ~90% opaque
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  color: Colors.white, size: 72),
+              const SizedBox(height: 16),
+              const Text(
+                'CRASH DETECTED',
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 1.5),
+              ),
+              const SizedBox(height: 8),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Are you OK? Your emergency contacts will be notified when the timer ends.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                '$countdown',
+                style: const TextStyle(
+                    fontSize: 96,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1),
+              ),
+              const Text('seconds',
+                  style: TextStyle(fontSize: 14, color: Colors.white70)),
+              const SizedBox(height: 48),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 72,
+                  child: ElevatedButton(
+                    onPressed: onImOk,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFB71C1C),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text(
+                      "I'M OK",
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

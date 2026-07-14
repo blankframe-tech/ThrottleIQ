@@ -58,7 +58,7 @@ void main() {
       final point1 = LatLng(0.0, 0.0);
       final point2 = LatLng(0.0, 0.0008983); // ~100m at equator
 
-      final distance = PrivacyZoneClipper.testHaversineDistance(point1, point2);
+      final distance = PrivacyZoneClipper.haversineDistance(point1, point2);
 
       // Should be approximately 100m
       expect(distance, greaterThan(90));
@@ -86,11 +86,4 @@ void main() {
       expect(clipped.isEmpty, true);
     });
   });
-}
-
-// Add a testable method to PrivacyZoneClipper for testing
-extension PrivacyZoneClipperTest on PrivacyZoneClipper {
-  static double testHaversineDistance(LatLng point1, LatLng point2) {
-    return PrivacyZoneClipper._haversineDistance(point1, point2);
-  }
 }

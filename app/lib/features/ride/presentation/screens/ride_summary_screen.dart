@@ -4,10 +4,13 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../../core/cloud/export_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/stat_card.dart';
+import '../../domain/entities/ride_entity.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 
@@ -262,7 +265,38 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   highJerk: ride.highJerkCount,
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+
+                // ── Export ───────────────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _exportRide(ride, gpx: false),
+                        icon: const Icon(Icons.data_object, size: 18),
+                        label: const Text('Export JSON'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textPrimary,
+                          side: const BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _exportRide(ride, gpx: true),
+                        icon: const Icon(Icons.route, size: 18),
+                        label: const Text('Export GPX'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textPrimary,
+                          side: const BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
 
                 SizedBox(
                   width: double.infinity,
@@ -276,6 +310,37 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           );
         },
       ),
+    );
+  }
+
+  Future<void> _exportRide(RideEntity ride, {required bool gpx}) async {
+    final service = ExportService();
+    // Map keys match what ExportService/_generateGPX read.
+    final rideMap = {
+      'id': ride.id,
+      'startTime': ride.startTime.toIso8601String(),
+      'endTime': ride.endTime?.toIso8601String(),
+      'distanceM': ride.distanceM,
+      'avgSpeedMs': ride.avgSpeedMs,
+      'maxSpeedMs': ride.maxSpeedMs,
+      'durationSeconds': ride.durationSeconds,
+      'hardBrakeCount': ride.hardBrakeCount,
+      'rapidAccelCount': ride.rapidAccelCount,
+      'highJerkCount': ride.highJerkCount,
+    };
+    final file = gpx
+        ? await service.exportRideToGPX(rideMap)
+        : await service.exportRideToJSON(rideMap);
+    if (!mounted) return;
+    if (file == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Export failed')),
+      );
+      return;
+    }
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      subject: 'ThrottleIQ ride export',
     );
   }
 

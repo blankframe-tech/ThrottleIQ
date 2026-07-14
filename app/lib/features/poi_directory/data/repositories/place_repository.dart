@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
@@ -83,7 +85,7 @@ class PlaceRepository {
     PlaceCategory? category,
     bool? verified,
   }) async {
-    Query query = _firestore.collection(_collection);
+    Query<Map<String, dynamic>> query = _firestore.collection(_collection);
 
     if (category != null) {
       query = query.where('category', isEqualTo: category.name);
@@ -138,9 +140,9 @@ class PlaceRepository {
     const r = 6371; // Earth radius in km
     final dLat = _toRad(lat2 - lat1);
     final dLon = _toRad(lon2 - lon1);
-    final a = (Math.sin(dLat / 2) * Math.sin(dLat / 2)) +
-        (Math.cos(_toRad(lat1)) * Math.cos(_toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2));
-    final c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    final a = (math.sin(dLat / 2) * math.sin(dLat / 2)) +
+        (math.cos(_toRad(lat1)) * math.cos(_toRad(lat2)) * math.sin(dLon / 2) * math.sin(dLon / 2));
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     return r * c;
   }
 
@@ -173,46 +175,4 @@ class PlaceRepository {
   }
 }
 
-class Math {
-  static double sin(double x) => _sin(x);
-  static double cos(double x) => _cos(x);
-  static double atan2(double y, double x) => _atan2(y, x);
-  static double sqrt(double x) => _sqrt(x);
 
-  static double _sin(double x) {
-    // Approximation for sin
-    x = x % (2 * 3.14159265359);
-    if (x > 3.14159265359) x -= 2 * 3.14159265359;
-    if (x < 0) return -_sin(-x);
-    final x2 = x * x;
-    return x - x * x2 / 6 + x * x2 * x2 / 120;
-  }
-
-  static double _cos(double x) {
-    x = x % (2 * 3.14159265359);
-    if (x > 3.14159265359) x -= 2 * 3.14159265359;
-    final x2 = x * x;
-    return 1 - x2 / 2 + x2 * x2 / 24;
-  }
-
-  static double _atan2(double y, double x) {
-    if (x > 0) return (y / (x + 1e-10)).atan();
-    if (x < 0 && y >= 0) return (y / (x + 1e-10)).atan() + 3.14159265359;
-    if (x < 0 && y < 0) return (y / (x + 1e-10)).atan() - 3.14159265359;
-    if (x == 0 && y > 0) return 3.14159265359 / 2;
-    if (x == 0 && y < 0) return -3.14159265359 / 2;
-    return 0;
-  }
-
-  static double _sqrt(double x) {
-    if (x < 0) return double.nan;
-    if (x == 0) return 0;
-    double s = x;
-    double d = x;
-    while (d > 1e-10) {
-      s = (s + x / s) / 2;
-      d = (x / (s * s) - 1).abs();
-    }
-    return s;
-  }
-}

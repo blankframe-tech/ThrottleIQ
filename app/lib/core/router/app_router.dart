@@ -14,6 +14,7 @@ import '../../features/ride/presentation/screens/ride_summary_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/chatbot/presentation/screens/chatbot_screen.dart';
+import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 
@@ -44,6 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/auth/onboarding', builder: (_, __) => const OnboardingScreen()),
       // Full-screen ride routes (no shell)
       GoRoute(path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
       GoRoute(
         path: '/ride/summary/:rideId',
         builder: (_, state) => RideSummaryScreen(rideId: state.pathParameters['rideId']!),

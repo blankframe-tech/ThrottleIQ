@@ -62,7 +62,7 @@ class GroupRideEntity extends Equatable {
   int get joinedMembersCount =>
       members.where((m) => m.status == GroupRideMemberStatus.joined).length;
 
-  bool isFull => joinedMembersCount >= maxParticipants;
+  bool get isFull => joinedMembersCount >= maxParticipants;
 
   GroupRideEntity copyWith({
     GroupRideStatus? status,

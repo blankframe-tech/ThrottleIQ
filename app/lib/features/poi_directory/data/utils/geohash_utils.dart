@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:throttleiq/core/utils/geohash_util.dart';
 
 class GeohashUtils {
@@ -71,19 +73,9 @@ class GeohashUtils {
     return simplified;
   }
 
-  /// Get neighbors of a geohash
-  static List<String> getNeighbors(String geohash) {
-    final neighbors = <String>[];
-
-    // Generate neighbors by modifying the geohash
-    for (int i = geohash.length - 1; i >= 0; i--) {
-      final prefix = geohash.substring(0, i);
-      // This is a simplified approach; a full implementation would use
-      // neighbor tables as in standard geohash algorithms
-    }
-
-    return neighbors;
-  }
+  /// Get neighbors of a geohash (delegates to the core implementation)
+  static List<String> getNeighbors(String geohash) =>
+      GeohashUtil.getNeighbors(geohash);
 
   /// Check if a point is within bounds
   static bool isWithinBounds({
@@ -100,81 +92,27 @@ class GeohashUtils {
         longitude <= maxLng;
   }
 
-  /// Calculate distance between two points (in kilometers)
+  /// Calculate distance between two points (in kilometers, Haversine)
   static double calculateDistance({
     required double lat1,
     required double lng1,
     required double lat2,
     required double lng2,
   }) {
-    const earthRadius = 6371; // Earth radius in kilometers
+    const earthRadius = 6371.0; // km
 
     final dLat = _toRadian(lat2 - lat1);
     final dLng = _toRadian(lng2 - lng1);
 
-    final a = _sin(dLat / 2) * _sin(dLat / 2) +
-        _cos(_toRadian(lat1)) *
-            _cos(_toRadian(lat2)) *
-            _sin(dLng / 2) *
-            _sin(dLng / 2);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadian(lat1)) *
+            math.cos(_toRadian(lat2)) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
 
-    final c = 2 * _atan2(_sqrt(a), _sqrt(1 - a));
-    final distance = earthRadius * c;
-
-    return distance;
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadius * c;
   }
 
-  static double _toRadian(double degree) {
-    return degree * (3.141592653589793 / 180);
-  }
-
-  static double _sin(double rad) {
-    // Taylor series approximation for sin
-    var result = rad;
-    var power = rad;
-    for (int i = 1; i <= 5; i++) {
-      power *= -rad * rad / ((2 * i) * (2 * i + 1));
-      result += power;
-    }
-    return result;
-  }
-
-  static double _cos(double rad) {
-    // Taylor series approximation for cos
-    var result = 1.0;
-    var power = 1.0;
-    for (int i = 1; i <= 5; i++) {
-      power *= -rad * rad / ((2 * i - 1) * (2 * i));
-      result += power;
-    }
-    return result;
-  }
-
-  static double _atan2(double y, double x) {
-    if (x > 0) {
-      return (y / x).atan();
-    } else if (x < 0 && y >= 0) {
-      return (y / x).atan() + 3.141592653589793;
-    } else if (x < 0 && y < 0) {
-      return (y / x).atan() - 3.141592653589793;
-    } else if (x == 0 && y > 0) {
-      return 3.141592653589793 / 2;
-    } else if (x == 0 && y < 0) {
-      return -3.141592653589793 / 2;
-    } else {
-      return 0;
-    }
-  }
-
-  static double _sqrt(double x) {
-    if (x < 0) return double.nan;
-    if (x == 0) return 0;
-    double s = x;
-    double d = x;
-    while (d > 1e-10) {
-      s = (s + x / s) / 2;
-      d = (x / (s * s) - 1).abs();
-    }
-    return s;
-  }
+  static double _toRadian(double degree) => degree * (math.pi / 180);
 }

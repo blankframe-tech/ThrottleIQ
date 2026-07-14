@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:latlong2/latlong.dart';
 
 /// Clips a polyline by removing the first and last ~200m
@@ -41,7 +43,7 @@ class PrivacyZoneClipper {
 
     if (!reverse) {
       while (currentIndex < polyline.length - 1) {
-        final distance = _haversineDistance(
+        final distance = haversineDistance(
           polyline[currentIndex],
           polyline[currentIndex + 1],
         );
@@ -55,7 +57,7 @@ class PrivacyZoneClipper {
       return polyline.length - 1;
     } else {
       while (currentIndex > 0) {
-        final distance = _haversineDistance(
+        final distance = haversineDistance(
           polyline[currentIndex],
           polyline[currentIndex - 1],
         );
@@ -71,80 +73,25 @@ class PrivacyZoneClipper {
   }
 
   /// Haversine distance between two lat/lng points in meters.
-  static double _haversineDistance(LatLng point1, LatLng point2) {
+  static double haversineDistance(LatLng point1, LatLng point2) {
     final lat1Rad = _toRadians(point1.latitude);
     final lat2Rad = _toRadians(point2.latitude);
     final deltaLat = _toRadians(point2.latitude - point1.latitude);
     final deltaLng = _toRadians(point2.longitude - point1.longitude);
 
-    final a = (sin(deltaLat / 2) * sin(deltaLat / 2)) +
-        (cos(lat1Rad) * cos(lat2Rad) * sin(deltaLng / 2) * sin(deltaLng / 2));
+    final a = (math.sin(deltaLat / 2) * math.sin(deltaLat / 2)) +
+        (math.cos(lat1Rad) *
+            math.cos(lat2Rad) *
+            math.sin(deltaLng / 2) *
+            math.sin(deltaLng / 2));
 
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
 
     return earthRadiusMeters * c;
   }
 
   static double _toRadians(double degrees) {
-    return degrees * (3.14159265359 / 180.0);
+    return degrees * (math.pi / 180.0);
   }
 
-  static double sin(double angle) {
-    // Using Taylor series approximation for sin
-    // For acceptable accuracy within our use case
-    angle = angle % (2 * 3.14159265359);
-    double result = 0;
-    double term = angle;
-    for (int i = 1; i < 10; i++) {
-      result += term;
-      term *= -angle * angle / ((2 * i) * (2 * i + 1));
-    }
-    return result;
-  }
-
-  static double cos(double angle) {
-    // Using Taylor series approximation for cos
-    angle = angle % (2 * 3.14159265359);
-    double result = 1;
-    double term = 1;
-    for (int i = 1; i < 10; i++) {
-      term *= -angle * angle / ((2 * i - 1) * (2 * i));
-      result += term;
-    }
-    return result;
-  }
-
-  static double sqrt(double x) {
-    if (x < 0) return 0;
-    if (x == 0) return 0;
-    double root = x / 2;
-    for (int i = 0; i < 20; i++) {
-      root = (root + x / root) / 2;
-    }
-    return root;
-  }
-
-  static double atan2(double y, double x) {
-    if (x > 0) return _atan(y / x);
-    if (x < 0 && y >= 0) return _atan(y / x) + 3.14159265359;
-    if (x < 0 && y < 0) return _atan(y / x) - 3.14159265359;
-    if (x == 0 && y > 0) return 3.14159265359 / 2;
-    if (x == 0 && y < 0) return -3.14159265359 / 2;
-    return 0;
-  }
-
-  static double _atan(double x) {
-    // Using Tailor series for atan
-    double result = 0;
-    double power = x;
-    for (int i = 0; i < 15; i++) {
-      if (i % 2 == 0) {
-        result += power / (2 * i + 1);
-      } else {
-        result -= power / (2 * i + 1);
-      }
-      power *= x * x;
-    }
-    return result;
-  }
 }

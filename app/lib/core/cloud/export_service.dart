@@ -1,27 +1,37 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../database/daos/ride_point_dao.dart';
-import '../database/database_helper.dart';
 
-/// Service for exporting ride data to various formats
+/// Service for exporting ride data to various formats.
+///
+/// Files are written to the app documents directory (Downloads is not
+/// accessible via path_provider on Android); callers surface them with the
+/// system share sheet (share_plus) so the user can save or send anywhere.
 class ExportService {
-  final RidePointDao _ridePointDao = RidePointDao(DatabaseHelper.instance);
+  final RidePointDao _ridePointDao = RidePointDao();
+
+  Future<Directory> _exportDir() async {
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory('${docs.path}/exports');
+    if (!await dir.exists()) await dir.create(recursive: true);
+    return dir;
+  }
 
   /// Export ride data to JSON file
   Future<File?> exportRideToJSON(Map<String, dynamic> ride) async {
     try {
-      final directory = await getDownloadsDirectory();
-      if (directory == null) return null;
+      final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
       final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
-      final points = await _ridePointDao.getByRideId(rideId);
+      final points = await _ridePointDao.getForRide(rideId);
 
       final jsonData = {
         'ride': ride,
@@ -40,15 +50,14 @@ class ExportService {
   /// Export ride polyline to GPX file
   Future<File?> exportRideToGPX(Map<String, dynamic> ride) async {
     try {
-      final directory = await getDownloadsDirectory();
-      if (directory == null) return null;
+      final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
       final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
-      final points = await _ridePointDao.getByRideId(rideId);
+      final points = await _ridePointDao.getForRide(rideId);
 
       final gpxContent = _generateGPX(ride, points);
       await file.writeAsString(gpxContent, flush: true);
@@ -88,19 +97,14 @@ class ExportService {
     buffer.writeln('  <trk>');
     buffer.writeln('    <name>Motorcycle Ride</name>');
     buffer.writeln('    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
-    buffer.writeln('    <extensions>');
-    buffer.writeln('      <gpxtpx:TrackPointExtension>');
-    buffer.writeln(
-        '        <gpxtpx:atemp>${(ride['avgSpeedMs'] != null ? (ride['avgSpeedMs'] as num) * 3.6 : 0).toStringAsFixed(2)}</gpxtpx:atemp>');
-    buffer.writeln('      </gpxtpx:TrackPointExtension>');
-    buffer.writeln('    </extensions>');
     buffer.writeln('    <trkseg>');
 
     for (final point in ridePoints) {
       final lat = point['lat'] as num;
       final lng = point['lng'] as num;
       final timestamp = point['timestamp'] as String;
-      final elevation = point['altitudeM'] as num?;
+      // DB column is snake_case
+      final elevation = point['altitude_m'] as num?;
 
       buffer.write('      <trkpt lat="$lat" lon="$lng">');
       if (elevation != null && elevation != 0) {
@@ -116,16 +120,14 @@ class ExportService {
     return buffer.toString();
   }
 
-  /// Get downloads directory path for display
+  /// Get the export directory path for display
   Future<String?> getDownloadsPath() async {
-    final directory = await getDownloadsDirectory();
-    return directory?.path;
+    final directory = await _exportDir();
+    return directory.path;
   }
 }
 
 /// Riverpod provider for export service
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 final exportServiceProvider = Provider<ExportService>((ref) {
   return ExportService();
 });

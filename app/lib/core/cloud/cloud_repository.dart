@@ -16,8 +16,7 @@ class CloudRepository {
   CloudRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late final RideDao _rideDao = RideDao(DatabaseHelper.instance);
-  late final RidePointDao _ridePointDao = RidePointDao(DatabaseHelper.instance);
+  late final RideDao _rideDao = RideDao();
 
   /// Upload unsynced rides to Firestore and mark them as synced
   Future<void> uploadRides(String uid, List<Map<String, dynamic>> rides) async {
