@@ -17,12 +17,9 @@ void main() {
 
     test('clips first 200m from polyline', () {
       // Create a polyline with points ~100m apart
+      // ~800m ride: clipping 200m from each end must leave a middle.
       final polyline = <LatLng>[
-        LatLng(0.0, 0.0),
-        LatLng(0.0009, 0.0), // ~100m away
-        LatLng(0.0018, 0.0), // ~200m away
-        LatLng(0.0027, 0.0), // ~300m away
-        LatLng(0.0036, 0.0), // ~400m away
+        for (int i = 0; i <= 8; i++) LatLng(0.0009 * i, 0.0), // ~100m apart
       ];
 
       final clipped = PrivacyZoneClipper.clipPolyline(polyline);
@@ -35,12 +32,9 @@ void main() {
 
     test('clips last 200m from polyline', () {
       // Create a polyline
+      // ~800m ride: clipping 200m from each end must leave a middle.
       final polyline = <LatLng>[
-        LatLng(0.0, 0.0),
-        LatLng(0.0009, 0.0),
-        LatLng(0.0018, 0.0),
-        LatLng(0.0027, 0.0),
-        LatLng(0.0036, 0.0),
+        for (int i = 0; i <= 8; i++) LatLng(0.0009 * i, 0.0), // ~100m apart
       ];
 
       final clipped = PrivacyZoneClipper.clipPolyline(polyline);

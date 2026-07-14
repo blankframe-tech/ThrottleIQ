@@ -2,6 +2,19 @@ import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/shared_ride_entity.dart';
 
+/// Accepts a Firestore Timestamp (has toDate()), a DateTime, or an ISO
+/// string — Firestore SDKs and local fixtures disagree on the shape.
+DateTime _parseDate(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+  try {
+    return (value as dynamic).toDate() as DateTime;
+  } catch (_) {
+    return DateTime.now();
+  }
+}
+
 class RideShareModel {
   final String id;
   final String userId;
@@ -96,7 +109,7 @@ class RideShareModel {
       bikeId: data['bikeId'] as String,
       bikeName: data['bikeName'] as String,
       bikeType: data['bikeType'] as String,
-      rideDate: (data['rideDate'] as dynamic).toDate() ?? DateTime.now(),
+      rideDate: _parseDate(data['rideDate']),
       distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0,
       durationSeconds: (data['durationSeconds'] as num?)?.toInt() ?? 0,
       maxSpeedKmh: (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
@@ -104,7 +117,7 @@ class RideShareModel {
       mapSnapshotUrl: data['mapSnapshotUrl'] as String?,
       likes: (data['likes'] as num?)?.toInt() ?? 0,
       comments: (data['comments'] as num?)?.toInt() ?? 0,
-      createdAt: (data['createdAt'] as dynamic).toDate() ?? DateTime.now(),
+      createdAt: _parseDate(data['createdAt']),
       isPrivate: data['isPrivate'] as bool? ?? false,
       allowedUserIds:
           (data['allowedUserIds'] as List<dynamic>?)?.cast<String>() ?? [],

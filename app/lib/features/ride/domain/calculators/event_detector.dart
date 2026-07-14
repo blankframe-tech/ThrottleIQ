@@ -110,6 +110,23 @@ class EventDetector {
       _resetCrashState();
     }
 
+    // Hard braking / rapid acceleration (below the crash threshold).
+    // Counters feed the ride summary; the returned alert drives UI/haptics.
+    if (accel != null && accel.abs() <= _crashAccelThreshold) {
+      if (accel <= SensorConstants.hardBrakingThreshold) {
+        hardBrakeCount++;
+        _lastAlert = RideAlert.hardBraking;
+        _lastAlertTime = now;
+        return RideAlert.hardBraking;
+      }
+      if (accel >= SensorConstants.rapidAccelThreshold) {
+        rapidAccelCount++;
+        _lastAlert = RideAlert.rapidAccel;
+        _lastAlertTime = now;
+        return RideAlert.rapidAccel;
+      }
+    }
+
     // Other alerts
     if (speedMs > SensorConstants.overspeedThreshold) {
       _lastAlert = RideAlert.overspeed;

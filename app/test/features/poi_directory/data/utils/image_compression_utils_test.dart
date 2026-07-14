@@ -105,7 +105,10 @@ void main() {
       }
 
       expect(currentSize, lessThanOrEqualTo(maxSize));
-      expect(quality, equals(50)); // Should reach min quality
+      // Compression stops as soon as the size limit is met — it must NOT
+      // keep degrading quality all the way to the floor (3 steps: 85→70).
+      expect(quality, equals(70));
+      expect(quality, greaterThan(50));
     });
   });
 

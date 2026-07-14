@@ -395,9 +395,10 @@ void main() {
           currentTime: DateTime(2026, 7, 12, 10, 0, 1),
         );
 
-        // Distance Dhaka-Chattogram ≈ 260km
-        expect(result.distanceDeltaM, greaterThan(250000.0));
-        expect(result.distanceDeltaM, lessThan(270000.0));
+        // Great-circle distance Dhaka-Chattogram ≈ 219 km (the oft-quoted
+        // ~250 km figure is the ROAD distance, not straight-line).
+        expect(result.distanceDeltaM, greaterThan(210000.0));
+        expect(result.distanceDeltaM, lessThan(230000.0));
       });
     });
 
