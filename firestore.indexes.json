@@ -2,71 +2,71 @@
   "indexes": [
     {
       "collectionGroup": "rides",
-      "queryScope": "Collection",
+      "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "userId",
-          "order": "Ascending"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "startTime",
-          "order": "Descending"
+          "order": "DESCENDING"
         }
       ]
     },
     {
       "collectionGroup": "rides",
-      "queryScope": "Collection",
+      "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "public",
-          "order": "Ascending"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "startTime",
-          "order": "Descending"
+          "order": "DESCENDING"
         }
       ]
     },
     {
       "collectionGroup": "places",
-      "queryScope": "Collection",
+      "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "geohash",
-          "order": "Ascending"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "category",
-          "order": "Ascending"
+          "order": "ASCENDING"
         }
       ]
     },
     {
       "collectionGroup": "reviews",
-      "queryScope": "Collection",
+      "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "placeId",
-          "order": "Ascending"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
-          "order": "Descending"
+          "order": "DESCENDING"
         }
       ]
     },
     {
       "collectionGroup": "liveSessions",
-      "queryScope": "Collection",
+      "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "userId",
-          "order": "Ascending"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "expiresAt",
-          "order": "Ascending"
+          "order": "ASCENDING"
         }
       ]
     }
