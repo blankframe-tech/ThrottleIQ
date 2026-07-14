@@ -107,3 +107,9 @@ coverage/
 node_modules/
 npm-debug.log
 yarn-error.log
+
+# Firebase hosting deploy cache
+.firebase/
+
+# Local backups of Firebase config (contain API keys)
+google-services.json.*.bak
