@@ -1,6 +1,6 @@
 # ThrottleIQ — Feature Map & UI Flow (as built)
 
-_Last updated: 2026-07-14 · Reflects the actual code on `main`, not the roadmap._
+_Last updated: 2026-07-14 (post-wiring) · Reflects the actual code on `main`, not the roadmap._
 
 This documents what a user actually sees and can do in the app **right now**, screen by screen — plus which features exist only as backend/logic with no UI yet. Verified by reading the router (`lib/core/router/app_router.dart`), the shell, and every screen file.
 
@@ -16,6 +16,7 @@ This documents what a user actually sees and can do in the app **right now**, sc
 
 /ride/active                    ActiveRideScreen        (full-screen, no bottom nav)
 /ride/summary/:rideId           RideSummaryScreen       (full-screen, no bottom nav)
+/settings                       SettingsScreen          (gear icon on Record tab)
 
 AppShell — bottom navigation bar with 5 tabs:
 ├── /home/social                SocialScreen            [tab 1: "Social"]
@@ -55,6 +56,7 @@ Two steps, shown once (until a display name exists):
 2. **Your first bike** — make/model/cc etc. → becomes the active bike
 
 ### ▶ Record tab (`/home/record`) — the landing screen
+- **Settings** gear (AppBar) → `/settings`
 - **Active bike card** (name, cc) with **Change** → Garage; if no bike: "Add Bike" prompt
 - Stat placeholders (distance/duration counters)
 - **Hold-to-start button** (long-press with progress ring — prevents pocket starts). Disabled until a bike exists.
@@ -66,13 +68,21 @@ Two steps, shown once (until a display name exists):
 - **Status pills** (GPS/recording state)
 - **Alert banner** — flashes on hard braking, rapid acceleration, overspeed, fatigue (with haptic pattern)
 - **Pause/Resume** and **End Ride** (with "End Ride?" confirm dialog)
+- **Live-share button** (top bar) — shares `throttleiqfb.web.app/live/{token}` via the system share sheet; the viewer updates every 10 s, no login needed
+- **Crash countdown overlay** — full-screen red "CRASH DETECTED" takeover with a 60 s countdown and a big **I'M OK** button; if it hits 0, emergency contacts are notified
 - Behind the scenes while recording: points buffered to SQLite every 20 samples/10 s, wakelock held, ride state persisted for crash-of-app recovery.
 
 ### Ride Summary (`/ride/summary/:rideId`)
 - Distance, duration, max/avg speed stats
 - **Riding Events** cards — hard brakes, rapid accels, high-jerk counts
 - **Riding Score** (0–100 gauge)
+- **Export JSON / Export GPX** → writes the file and opens the system share sheet
 - **Done** → back to Record tab
+
+### Settings (`/settings`)
+- Profile card (name initial, display name, email)
+- **Emergency Contacts** — add (name/phone/email dialog), list, delete; used by crash escalation
+- **Sign Out**
 
 ### Social tab (`/home/social`)
 **Placeholder.** Icon + "Social Feed — share rides, follow riders…" + a **"Coming in V2"** chip. No functionality.
@@ -122,14 +132,14 @@ These have data models, repositories, providers — and in some cases full scree
 
 | Feature | What exists | What's missing |
 |---|---|---|
-| **Crash countdown ("Are you OK?")** | Detection logic (accel+jerk+speed fusion, tested) and `crashDetected`/`crashCountdown` state in the ride provider | **No widget renders it.** Active Ride screen has no countdown modal / "I'm OK" button. A crash currently changes state invisibly. |
-| **Live ride sharing** | Token generation + 10-s Firestore publishing in the provider; `public/live-viewer.html` viewer page | No "Share ride" button anywhere; viewer page not hosted; share URL points at unregistered `throttleiq.app` |
-| **Emergency contacts** | Entity + Riverpod provider (Firestore CRUD) | No contacts screen; no Settings/Profile page to reach one |
-| **Cloud sync** | `SyncManager` (5-min auto + reconnect), `CloudRepository` | **Never instantiated** — no `main.dart`/app-lifecycle hookup, so rides stay local-only |
-| **Export JSON/GPX** | `ExportService` writes both formats to Downloads | No export/share button on Ride Summary |
+| ~~Crash countdown~~ | **WIRED 2026-07-14** — full-screen overlay + I'M OK button on Active Ride | — |
+| ~~Live ride sharing~~ | **WIRED 2026-07-14** — share button on Active Ride; viewer hosted at `throttleiqfb.web.app/live/{token}` (verified 200) | Real-device tap-through pending |
+| ~~Emergency contacts~~ | **WIRED 2026-07-14** — CRUD UI on the new Settings screen | — |
+| ~~Cloud sync~~ | **WIRED 2026-07-14** — SyncManager starts on login / stops on logout (`app.dart`) | — |
+| ~~Export JSON/GPX~~ | **WIRED 2026-07-14** — buttons on Ride Summary → share sheet (app-docs dir; the Downloads API is desktop-only) | — |
 | **POI directory** (fuel/garages/parts) | Full data layer: entities, geohash utils, place+review repositories, Firestore rules & indexes | **No presentation layer at all** — no map/list screen exists |
-| **Social: feed / routes / group rides / challenges** | Screens exist as files (`feed_screen.dart`, `route_list_screen.dart`, `group_ride_map_screen.dart`, `ride_detail_screen.dart`) + full data layer + privacy-zone clipper | **Screens are orphaned** — no route or navigation reaches them; the Social tab shows the "Coming in V2" placeholder instead |
-| **User profile page** | Profile DAO + Firestore profile storage | No profile/settings screen (no logout button anywhere either) |
+| **Social: feed / routes / group rides / challenges** | Data layer + privacy-zone clipper exist; the four "screens" turned out to be **empty stubs** (static empty-states, zero data wiring) | Real feed/routes/group-ride UI is a feature build, not a wiring task; the Social tab keeps its placeholder |
+| ~~User profile page~~ | **WIRED 2026-07-14** — Settings screen with profile card + sign out | — |
 
 ## 5. Placeholders (intentional)
 
@@ -138,12 +148,8 @@ These have data models, repositories, providers — and in some cases full scree
 
 ---
 
-## 6. Suggested wiring order (highest user value ÷ effort)
+## 6. Wiring status (2026-07-14)
 
-1. **Crash countdown modal** on Active Ride — the detection already runs; this is safety-critical and purely a widget.
-2. **SyncManager bootstrap** in `main.dart` — one hookup makes every recorded ride actually back up.
-3. **Export buttons** on Ride Summary — service is done, needs two buttons.
-4. **Settings/Profile screen** — logout + emergency contacts entry point (both blocked on this page existing).
-5. **Swap the Social placeholder** for the existing `FeedScreen` + route the orphaned social screens.
-6. **POI screens** — the only feature needing genuinely new UI (map + list + detail + review form).
-```
+Items 1–4 of the original wiring plan are **done** (crash overlay, sync bootstrap, export buttons, Settings screen — see §4). The social screens were descoped after inspection: they are empty stubs, so there is nothing real to route — a feed is a genuine feature build. POI UI remains the other genuine build.
+
+Also fixed during wiring: the P6 rewrite of `EventDetector` had silently dropped hard-brake/rapid-accel counting (restored + tested), and a batch of latent errors in never-imported files (hand-rolled Taylor-series trig → `dart:math`, wrong DAO constructors, Android-unsupported Downloads API). **Test suite: 184/184 green.**

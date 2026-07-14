@@ -39,22 +39,22 @@ This is the honest state of the project: **Done & verified** means it was actual
 
 These exist in code/config but have never been exercised against the real backend or a real device. **Treat each as unproven until tested.**
 
-- [ ] **On-device behaviour** — the app has never been installed on a physical phone. Ride recording, background tracking, crash countdown, sync, POI, social: all need a real-device pass.
-- [ ] **Unit/widget test suite** — 50+ test files exist, but the full `flutter test` run hasn't completed on this machine (an environment issue was fixed late; suite needs a clean re-run).
+- [ ] **On-device behaviour** — the app has never been installed on a physical phone. Ride recording, background tracking, crash countdown, sync: all need a real-device pass.
+- [x] ~~Unit/widget test suite~~ **VERIFIED 2026-07-14** — 184/184 green.
 - [ ] **Google sign-in end-to-end** — config + code are in place; needs one real tap-through on a device.
 - [ ] **Firestore rules under real traffic** — rules deployed but only compiler-checked; exercise with a real account (read own rides, fail reading someone else's).
-- [ ] **Live-share viewer** — `public/live-viewer.html` is written but **not hosted anywhere yet**, and the app generates links to `throttleiq.app` which doesn't exist (see TODO).
+- [x] ~~Live-share viewer~~ **HOSTED 2026-07-14** at `throttleiqfb.web.app/live/{token}` (HTTP 200 verified); end-to-end with a live ride still needs a device test.
 
 ---
 
 ## 📋 To do
 
 ### Now (before inviting beta testers)
-- [ ] **Wire the orphaned features** (see [features.md](features.md) §6 for order): crash countdown modal → SyncManager bootstrap in `main.dart` → export buttons on Ride Summary → Settings/Profile screen (logout + emergency contacts) → connect the social screens → build POI UI
+- [x] ~~Wire the orphaned features~~ **DONE 2026-07-14**: crash countdown overlay, SyncManager bootstrap, export buttons, Settings screen (logout + emergency contacts) all wired; live viewer deployed to `throttleiqfb.web.app`. Remaining genuine builds: POI UI and a real social feed (the agent "screens" were empty stubs).
 - [ ] **Back up the signing keystore** — `throttleiq-release.keystore` + `app/android/key.properties` exist ONLY on the dev machine. If lost, the app can never be updated under the same identity. → password manager / secure cloud, never git.
 - [ ] **Install the beta APK on a real phone** and run the smoke test: register → record a ride → stop → summary → confirm the ride appears in Firestore console.
-- [ ] **Run the test suite** — `flutter test` (with `PUB_CACHE=C:\pub_cache` set) and fix anything red.
-- [ ] **Deploy the live-share viewer** — `firebase deploy --only hosting` (works on the free plan → `throttleiqfb.web.app`), then update the share-link base URL in the app from `throttleiq.app` to the hosted URL.
+- [x] ~~Run the test suite~~ **DONE 2026-07-14** — 184/184 green (fixed a real EventDetector regression + bad test expectations found on the first-ever full run).
+- [x] ~~Deploy the live-share viewer~~ **DONE 2026-07-14** — hosted at `throttleiqfb.web.app` (verified 200); the app’s share links point there.
 
 ### Soon (requires Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
 - [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation). Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email) with real credentials via functions config.
