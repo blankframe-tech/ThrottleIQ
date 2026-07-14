@@ -28,12 +28,10 @@ This is the honest state of the project: **Done & verified** means it was actual
 - [x] Ride recording engine — GPS + accelerometer, background-safe (foreground service, wakelock), crash-recovery of interrupted rides
 - [x] Metrics — speed/max/avg, jerk, hard-brake & rapid-accel counters, overspeed + fatigue alerts, GPS-accuracy gating, idle tagging
 - [x] SQLite layer — migrations v1→v4, foreign keys + cascade deletes, composite indexes, buffered point writes
-- [x] Cloud sync — offline-first SyncManager (5-min auto-sync + on-reconnect), JSON/GPX export
-- [x] Crash detection — signal fusion (>8 g spike + jerk >10 m/s³ + speed→0 in 2 s), 60-s countdown UI, max-vibration alert
-- [x] Emergency contacts CRUD + token-based live ride sharing (24 h expiry, viewer needs no login)
-- [x] POI directory — places (fuel/garage/parts), geohash viewport search, ratings & reviews, admin verification
-- [x] Social — ride feed with privacy-zone clipping (first/last 200 m), saved routes, group rides, monthly challenges
+- [x] Crash **detection** — signal fusion (>8 g spike + jerk >10 m/s³ + speed→0 in 2 s), unit-tested — ⚠️ but see below: no countdown UI is wired
 - [x] Google sign-in flow in the app — "Continue with Google" on the login screen
+
+> ⚠️ **Correction (2026-07-14, after a code audit — see [features.md](features.md)):** several P5–P8 features exist as **logic/data layers only, with no UI wired to them**: the crash countdown modal (state exists, no widget renders it), SyncManager (never instantiated → rides stay local-only), JSON/GPX export (no button), emergency contacts (no screen), live-share (no share button; viewer unhosted), the POI directory (no presentation layer at all), and the social feed/routes/group-ride screens (files exist but are orphaned — the Social tab shows a "Coming in V2" placeholder). `features.md` §4 has the full gap table and a suggested wiring order.
 
 ---
 
@@ -52,6 +50,7 @@ These exist in code/config but have never been exercised against the real backen
 ## 📋 To do
 
 ### Now (before inviting beta testers)
+- [ ] **Wire the orphaned features** (see [features.md](features.md) §6 for order): crash countdown modal → SyncManager bootstrap in `main.dart` → export buttons on Ride Summary → Settings/Profile screen (logout + emergency contacts) → connect the social screens → build POI UI
 - [ ] **Back up the signing keystore** — `throttleiq-release.keystore` + `app/android/key.properties` exist ONLY on the dev machine. If lost, the app can never be updated under the same identity. → password manager / secure cloud, never git.
 - [ ] **Install the beta APK on a real phone** and run the smoke test: register → record a ride → stop → summary → confirm the ride appears in Firestore console.
 - [ ] **Run the test suite** — `flutter test` (with `PUB_CACHE=C:\pub_cache` set) and fix anything red.
