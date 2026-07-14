@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
@@ -27,6 +28,21 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    });
+  }
+
+  /// Google sign-in — also creates the account on first use.
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // user dismissed the picker
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await _auth.signInWithCredential(credential);
     });
   }
 

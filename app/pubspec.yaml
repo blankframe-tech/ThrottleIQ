@@ -22,6 +22,7 @@ dependencies:
   firebase_auth: ^4.17.9
   firebase_messaging: ^14.8.5
   cloud_firestore: ^4.14.0
+  google_sign_in: ^6.1.0
 
   # Maps & Location
   flutter_map: ^7.0.2
@@ -53,10 +54,10 @@ dependencies:
   wakelock_plus: ^1.2.8
 
   # Sharing
-  share_plus: any
+  share_plus: ^10.0.0
 
   # Battery
-  battery_plus: any
+  battery_plus: ^6.0.2
 
   # UI
   google_fonts: ^6.2.1
