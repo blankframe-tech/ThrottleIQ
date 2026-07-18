@@ -162,6 +162,15 @@ class PlaceRepository {
         .toList();
   }
 
+  /// Stream a single place's data (real-time) — mirrors
+  /// `ReviewRepository.streamReviewsForPlace` so a place's rating aggregate
+  /// updates live for every viewer, not just the client that just submitted
+  /// a review.
+  Stream<PlaceEntity?> streamPlace(String placeId) {
+    return _firestore.collection(_collection).doc(placeId).snapshots().map(
+        (doc) => doc.exists ? PlaceModel.fromFirestore(doc).toEntity() : null);
+  }
+
   /// Update place ratings
   Future<void> updatePlaceRating(
     String placeId, {

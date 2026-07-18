@@ -113,3 +113,6 @@ yarn-error.log
 
 # Local backups of Firebase config (contain API keys)
 google-services.json.*.bak
+
+# Claude Code local settings (personal permission overrides, not for the team)
+.claude/settings.local.json

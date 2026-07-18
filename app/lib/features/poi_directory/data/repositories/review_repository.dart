@@ -10,13 +10,23 @@ class ReviewRepository {
 
   static const String _collection = 'reviews';
 
-  /// Add or update a review (one per user per place)
+  /// Add a review (one per user per place).
+  ///
+  /// The doc id is deterministic — `{userId}_{placeId}` — rather than a
+  /// random auto-id, mirroring `forum_follows/{uid}_{forumId}`. This is
+  /// what the `reviews/{reviewId}` security rule keys off to reject a
+  /// second review from the same user for the same place: since that
+  /// collection grants no `update` rule, a write targeting an
+  /// already-existing `{userId}_{placeId}` doc (which Firestore evaluates
+  /// as an `update`, not a `create`, because the doc already exists) falls
+  /// through to the deny-all catch-all.
   Future<String> addReview(ReviewEntity review) async {
-    final model = ReviewModel.fromEntity(review);
-    final docRef = await _firestore.collection(_collection).add(
+    final docId = '${review.userId}_${review.placeId}';
+    final model = ReviewModel.fromEntity(review).copyWith(id: docId);
+    await _firestore.collection(_collection).doc(docId).set(
       model.toFirestore(),
     );
-    return docRef.id;
+    return docId;
   }
 
   /// Get or create user's review for a place
@@ -120,6 +130,71 @@ class ReviewRepository {
     return querySnapshot.docs
         .map((doc) => ReviewModel.fromFirestore(doc).toEntity())
         .toList();
+  }
+
+  /// Adds a review, then updates the place's aggregate rating.
+  ///
+  /// This used to do both writes inside a single Firestore [Transaction].
+  /// It no longer does, and that's deliberate: the `places/{placeId}`
+  /// security rule now requires
+  /// `exists(reviews/{uid}_{placeId})` (and a matching `stars` value) to
+  /// authorize the rating bump, so that an attacker can't call that update
+  /// directly with no real review behind it. Firestore evaluates
+  /// `get()`/`exists()` calls made during security-rules evaluation of a
+  /// transaction's writes against the database state as of the *start* of
+  /// that transaction — they do not see the effects of sibling writes
+  /// still in flight within that same transaction/batch. If the review
+  /// `set()` and the place `update()` were still both queued on the same
+  /// [Transaction], the rating-update write's `exists()` check would never
+  /// see the review being created alongside it, and every legitimate
+  /// review submission would fail its own security rule.
+  ///
+  /// So: the review doc is written first, as its own request (still safely
+  /// idempotent against "one review per user per place" — see [addReview]'s
+  /// doc comment) — and only once that's genuinely committed does the
+  /// rating-bump transaction run, by which point `exists()` correctly sees
+  /// it. The new rating totals are computed from a fresh in-transaction
+  /// read of the place doc (not from a caller-supplied snapshot), so two
+  /// concurrent submissions for the same place still can't race on a stale
+  /// aggregate — Firestore automatically retries that transaction against
+  /// the latest server value if it detects contention.
+  ///
+  /// Trade-off versus the old single-transaction version: if the rating
+  /// transaction below fails after the review above already committed
+  /// (e.g. the place doc was deleted concurrently), the review is left
+  /// without a matching rating bump rather than neither write landing at
+  /// all. That's a display-only staleness (the review itself, the source
+  /// of truth, is unaffected) rather than a security concern, and is the
+  /// accepted cost of the security rule being able to verify the review's
+  /// existence at all.
+  Future<String> addReviewAndUpdatePlaceRating({
+    required ReviewEntity review,
+  }) async {
+    final reviewId = '${review.userId}_${review.placeId}';
+    final reviewRef = _firestore.collection(_collection).doc(reviewId);
+    // 'places' mirrors PlaceRepository's private `_collection` constant —
+    // duplicated as a literal here (rather than depending on
+    // PlaceRepository) so this stays self-contained.
+    final placeRef = _firestore.collection('places').doc(review.placeId);
+
+    await reviewRef.set(ReviewModel.fromEntity(review).toFirestore());
+
+    await _firestore.runTransaction((transaction) async {
+      final placeSnapshot = await transaction.get(placeRef);
+      if (!placeSnapshot.exists) {
+        throw StateError('Place ${review.placeId} does not exist');
+      }
+      final data = placeSnapshot.data() as Map<String, dynamic>;
+      final currentRatingSum = (data['ratingSum'] as num?)?.toDouble() ?? 0.0;
+      final currentRatingCount = (data['ratingCount'] as num?)?.toInt() ?? 0;
+
+      transaction.update(placeRef, {
+        'ratingSum': currentRatingSum + review.stars,
+        'ratingCount': currentRatingCount + 1,
+      });
+    });
+
+    return reviewId;
   }
 
   /// Stream reviews for a place (real-time)

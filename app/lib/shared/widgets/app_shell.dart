@@ -8,7 +8,7 @@ class AppShell extends StatelessWidget {
 
   static const _tabs = [
     '/home/social',
-    '/home/chatbot',
+    '/home/stats',
     '/home/record',
     '/home/maintenance',
     '/home/garage',
@@ -42,7 +42,7 @@ class AppShell extends StatelessWidget {
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Social'),
-            BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), activeIcon: Icon(Icons.smart_toy), label: 'AI'),
+            BottomNavigationBarItem(icon: Icon(Icons.insights_outlined), activeIcon: Icon(Icons.insights), label: 'Insights'),
             BottomNavigationBarItem(icon: Icon(Icons.radio_button_checked_outlined), activeIcon: Icon(Icons.radio_button_checked), label: 'Record'),
             BottomNavigationBarItem(icon: Icon(Icons.build_outlined), activeIcon: Icon(Icons.build), label: 'Service'),
             BottomNavigationBarItem(icon: Icon(Icons.garage_outlined), activeIcon: Icon(Icons.garage), label: 'Garage'),

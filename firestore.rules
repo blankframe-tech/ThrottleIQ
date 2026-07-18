@@ -49,6 +49,238 @@ service cloud.firestore {
       allow read: if request.auth.uid == resource.data.uid;
     }
 
+    // Shared/public rides (Social feed) — top-level collection
+    match /rides/{rideId} {
+      allow read: if request.auth != null &&
+        (resource.data.isPrivate == false || request.auth.uid == resource.data.userId);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Owner can update/delete the ride freely, but may not reassign
+      // authorship (userId is immutable on this branch).
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == resource.data.userId;
+      // Any authenticated user who can read the ride (public, or their own)
+      // may bump the like/comment counters by exactly one, via the
+      // like/comment actions, but cannot touch any other field or set an
+      // arbitrary value.
+      allow update: if request.auth != null &&
+        (resource.data.isPrivate == false || request.auth.uid == resource.data.userId) &&
+        ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) &&
+          (request.resource.data.likes == resource.data.likes + 1 ||
+           request.resource.data.likes == resource.data.likes - 1)) ||
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments']) &&
+          request.resource.data.comments == resource.data.comments + 1));
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      match /likes/{userId} {
+        allow read: if request.auth != null &&
+          (get(/databases/$(database)/documents/rides/$(rideId)).data.isPrivate == false ||
+           request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.userId);
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /comments/{commentId} {
+        allow read: if request.auth != null &&
+          (get(/databases/$(database)/documents/rides/$(rideId)).data.isPrivate == false ||
+           request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.userId);
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // Bike forums (Phase 3 — per-brand and per-model discussion boards).
+    match /forums/{forumId} {
+      allow read: if request.auth != null;
+      // getOrCreateForum() only ever calls set() on a forum doc's *first*
+      // creation (it re-reads and no-ops if the doc already exists — see
+      // ForumRepository.getOrCreateForum) — the app never edits a forum's
+      // brand/model/displayName/type after creation. So the only two writes
+      // that ever hit an *existing* forums/{forumId} doc are the
+      // followerCount and postCount counter bumps below, and those get their
+      // own narrowly-scoped ±1-delta rule (mirroring the rides/{rideId}
+      // likes/comments counter rule above) rather than being covered by a
+      // broad "any authenticated user can update" rule — that would let an
+      // attacker set an arbitrary counter value directly instead of only
+      // ever incrementing/decrementing by exactly one.
+      allow create: if request.auth != null &&
+        request.resource.data.followerCount == 0 &&
+        request.resource.data.postCount == 0;
+      allow update: if request.auth != null &&
+        // followerCount moves by exactly ±1 via followForum/unfollowForum
+        // (gated separately by the forum_follows/{followId} write rule
+        // below, so this only fires alongside a legitimate follow doc
+        // create/delete)...
+        ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']) &&
+          (request.resource.data.followerCount == resource.data.followerCount + 1 ||
+           request.resource.data.followerCount == resource.data.followerCount - 1)) ||
+         // ...or postCount moves by exactly +1 via createPost.
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['postCount']) &&
+          request.resource.data.postCount == resource.data.postCount + 1));
+
+      match /posts/{postId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+          request.resource.data.replyCount == 0 && request.resource.data.likes == 0;
+        // No editPost exists in ForumRepository today, so the only update
+        // this collection ever sees is addReply's replyCount +1 bump —
+        // scope the rule to exactly that instead of also granting the
+        // post's owner a general edit right for a feature that isn't built.
+        allow update: if request.auth != null &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
+          request.resource.data.replyCount == resource.data.replyCount + 1;
+
+        match /replies/{replyId} {
+          allow read: if request.auth != null;
+          allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        }
+      }
+    }
+
+    // Forum follow/membership docs — id is always `{uid}_{forumId}`, so a
+    // user can only ever create/delete their own membership row, never
+    // someone else's. Split into create/delete (rather than one `write`)
+    // because `request.resource` (and therefore `.data.forumId`) is null on
+    // a delete — checking it there would make every unfollow() call fail;
+    // `resource.data` (the doc being deleted) is what's available instead.
+    match /forum_follows/{followId} {
+      // Scoped to the owning user — a follow list is behavioral/interest
+      // data the app never intends to expose about other users (mirrors the
+      // rides/{rideId}/likes ownership check, not the open-read rules above
+      // that only apply where content is meant to be publicly readable).
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        followId == (request.auth.uid + '_' + request.resource.data.forumId);
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Places directory (Phase 4 — nearby garages/fuel pumps/parts shops).
+    // Standalone top-level collection: `places/{placeId}`. There is
+    // deliberately NO nested `places/{placeId}/reviews` block here — the
+    // draft this was adapted from (app/firestore_rules_poi_directory.txt)
+    // assumed that shape, but ReviewRepository actually reads/writes a
+    // standalone top-level `reviews` collection filtered by `placeId` (see
+    // ReviewRepository._collection = 'reviews' and getReviewsForPlace /
+    // streamReviewsForPlace), so a nested-reviews rule would just be dead
+    // code that never matches any real write.
+    //
+    // Note on `createdAt`: unlike the draft, we do NOT require
+    // `request.resource.data.createdAt == request.time`. PlaceModel/
+    // ReviewModel serialize `createdAt` as `Timestamp.fromDate(<client
+    // DateTime.now()>)`, not `FieldValue.serverTimestamp()` — the client
+    // clock will never exactly equal the server's `request.time`, so that
+    // check would reject every legitimate create. (This mirrors why the
+    // existing rides/{rideId} and forums/{forumId} create rules above also
+    // don't check createdAt.)
+    match /places/{placeId} {
+      allow read: if request.auth != null;
+
+      // addPlace() always creates a place attributed to its creator, not
+      // yet verified, with a fresh (zero) rating aggregate — enforce that
+      // shape so a client can't spoof authorship or seed a fake rating
+      // history for a brand-new place.
+      allow create: if request.auth != null &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.verified == false &&
+        request.resource.data.ratingSum == 0 &&
+        request.resource.data.ratingCount == 0;
+
+      // No screen built in this phase calls updatePlace() /
+      // updateVerification() / deletePlace() on PlaceRepository — they
+      // exist on the repository but aren't wired to any UI, so (mirroring
+      // the forums/{forumId}/posts/{postId} precedent: "no editPost exists
+      // ... so scope the rule to exactly what addReply does") we don't
+      // grant a broad owner-edit or admin-verify rule for features that
+      // aren't built yet. The only update path this phase's UI actually
+      // exercises is PlaceDetailScreen's review-submission flow, which
+      // writes a new reviews/{reviewId} doc and then bumps this place's
+      // ratingSum/ratingCount (ReviewRepository.addReviewAndUpdatePlaceRating
+      // — see that method's doc comment for why those two writes are no
+      // longer a single atomic transaction). Since updatePlaceRating() sets
+      // *absolute* totals (not a FieldValue.increment), a broad "owner can
+      // update ratingSum/ratingCount" rule would let anyone set an
+      // arbitrary rating — instead, bound the transition precisely, the
+      // same way the rides.likes / forums.followerCount ±1-delta rules
+      // above do: ratingCount must move by exactly +1 (one review at a
+      // time) and ratingSum may only grow by between 1 and 5 (a single new
+      // review's star value).
+      //
+      // That alone still isn't enough: without more, any authenticated
+      // user could call this update directly with no review ever having
+      // been written (the fabricated-rating vulnerability this rule used
+      // to have). Reviews are keyed deterministically as `{uid}_{placeId}`
+      // (see reviews/{reviewId} below) specifically so this rule can
+      // require a real, matching review to exist before allowing the bump,
+      // and that its star value is exactly what's being added — so this
+      // update can never fabricate a rating for a place the caller hasn't
+      // actually reviewed, nor apply a delta other than their own review's
+      // real star count.
+      //
+      // Known residual limitation (not fully closed by rules alone): this
+      // does NOT stop a user from calling this update multiple times and
+      // replaying their *own* single real review's delta repeatedly, since
+      // there is deliberately no mutable per-review "already applied"
+      // marker here — flipping such a marker would need to happen in the
+      // same commit as this write (to stay attacker-proof against a client
+      // simply skipping a separate "mark applied" call), which runs into
+      // the same get()-visibility-within-a-transaction question flagged on
+      // addReviewAndUpdatePlaceRating's doc comment. Fully closing that
+      // would need either a live-verified same-transaction get() design or
+      // a trusted server-side (Cloud Function) aggregate update — out of
+      // scope here. This rule still fully closes the original
+      // zero-reviews fabrication case: the bump is impossible without at
+      // least one real, matching review, and is bounded to that review's
+      // actual star value.
+      allow update: if request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingSum', 'ratingCount']) &&
+        request.resource.data.ratingCount == resource.data.ratingCount + 1 &&
+        request.resource.data.ratingSum >= resource.data.ratingSum + 1 &&
+        request.resource.data.ratingSum <= resource.data.ratingSum + 5 &&
+        exists(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
+        get(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)).data.stars
+          == request.resource.data.ratingSum - resource.data.ratingSum;
+    }
+
+    // Reviews — standalone top-level collection (see note above), one doc
+    // per submitted review, referencing its place via `placeId`.
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+
+      // Review ids are deterministic — `{uid}_{placeId}` — mirroring the
+      // forum_follows/{uid}_{forumId} pattern above, rather than a random
+      // auto-id. This closes the "duplicate review" gap: a second
+      // submission attempt by the same user for the same place targets
+      // this SAME document id, and since that doc already exists,
+      // Firestore's rules engine evaluates the write as an `update` (not a
+      // `create`) — request.method is determined purely by whether the
+      // target document already exists, not by which client API was
+      // called. There is deliberately no `allow update` for this
+      // collection (see comment below), so that second write falls
+      // through to the deny-all catch-all and is rejected outright. It
+      // also lets the places/{placeId} rating-update rule above key off
+      // this exact id via exists()/get() to require a real review backing
+      // any rating-aggregate bump.
+      //
+      // reviewId must match the authenticated user's uid + the place being
+      // reviewed — the same way forum_follows's create rule pins followId
+      // to `{auth.uid}_{forumId}` so nobody can create a row keyed to
+      // someone else's uid. Enforce ownership and a valid 1-5 star value
+      // (the UI's star picker only ever offers 1-5, but a rule should not
+      // trust the client for that).
+      allow create: if request.auth != null &&
+        reviewId == (request.auth.uid + '_' + request.resource.data.placeId) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.flagged == false &&
+        request.resource.data.stars >= 1 &&
+        request.resource.data.stars <= 5;
+
+      // updateReview() / deleteReview() / flagReview() exist on
+      // ReviewRepository but — like updatePlace() above — aren't called
+      // from any screen built in this phase, so no update/delete rule is
+      // granted for them; they fall through to the catch-all deny below
+      // until a real edit/moderation UI (and a matching narrowly-scoped
+      // rule) is built. This absence is also load-bearing for the
+      // deterministic-id create rule above: a second `create` attempt at
+      // an existing id has nowhere else to go but that catch-all.
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

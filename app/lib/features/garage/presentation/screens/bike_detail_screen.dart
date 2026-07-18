@@ -7,6 +7,8 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/stat_card.dart';
 import '../providers/garage_provider.dart';
+import '../../domain/entities/bike_entity.dart';
+import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 
 class BikeDetailScreen extends ConsumerWidget {
@@ -30,6 +32,11 @@ class BikeDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(bike.displayName),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.forum_outlined),
+            tooltip: 'Discuss this bike',
+            onPressed: () => _openForum(context, bike),
+          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.go('/home/garage/$bikeId/edit'),
@@ -91,6 +98,20 @@ class BikeDetailScreen extends ConsumerWidget {
                 if (bike.year != null)
                   StatCard(label: 'Year', value: '${bike.year}', icon: Icons.calendar_today_outlined),
               ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _openForum(context, bike),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Icons.forum_outlined),
+                label: const Text('Discuss this bike'),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -168,6 +189,19 @@ class BikeDetailScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _openForum(BuildContext context, BikeEntity bike) async {
+    try {
+      final forum = await ForumRepository().getOrCreateForum(brand: bike.brand, model: bike.model);
+      if (!context.mounted) return;
+      context.push('/forums/${forum.id}');
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open forum: $e')),
+      );
+    }
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {

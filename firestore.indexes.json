@@ -19,11 +19,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "public",
+          "fieldPath": "isPrivate",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "startTime",
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]

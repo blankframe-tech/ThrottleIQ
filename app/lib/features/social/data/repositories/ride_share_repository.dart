@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/ride_comment_entity.dart';
@@ -66,7 +67,15 @@ class RideShareRepository {
     );
 
     final docRef = _firestore.collection('rides').doc(rideId);
-    await docRef.set(sharedRide.toFirestore());
+    final existing = await docRef.get();
+
+    final data = sharedRide.toFirestore();
+    if (existing.exists) {
+      // Don't wipe engagement accumulated since the ride was first shared.
+      data.remove('likes');
+      data.remove('comments');
+    }
+    await docRef.set(data, SetOptions(merge: true));
 
     return rideId;
   }
@@ -125,30 +134,52 @@ class RideShareRepository {
     }
 
     final querySnapshot = await query.get();
-    return querySnapshot.docs
+    final entities = querySnapshot.docs
         .map((doc) =>
             RideShareModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)
                 .toEntity())
         .toList();
+
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return entities;
+
+    // Per-ride existence check for the current user's like doc, in parallel.
+    final likedFlags = await Future.wait(entities.map((ride) => _firestore
+        .collection('rides')
+        .doc(ride.id)
+        .collection('likes')
+        .doc(currentUserId)
+        .get()
+        .then((doc) => doc.exists)));
+
+    return [
+      for (var i = 0; i < entities.length; i++)
+        entities[i].copyWith(isLikedByCurrentUser: likedFlags[i]),
+    ];
   }
 
-  /// Likes or unlikes a ride.
+  /// Likes or unlikes a ride. Idempotent: checks the like doc's existence
+  /// inside a transaction so re-liking/re-unliking never double-counts.
   Future<void> toggleLike(String rideId, String userId, bool like) async {
     final docRef = _firestore.collection('rides').doc(rideId);
-    if (like) {
-      await docRef.collection('likes').doc(userId).set({
-        'userId': userId,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      await docRef.update({
-        'likes': FieldValue.increment(1),
-      });
-    } else {
-      await docRef.collection('likes').doc(userId).delete();
-      await docRef.update({
-        'likes': FieldValue.increment(-1),
-      });
-    }
+    final likeRef = docRef.collection('likes').doc(userId);
+
+    await _firestore.runTransaction((transaction) async {
+      final likeDoc = await transaction.get(likeRef);
+      final alreadyLiked = likeDoc.exists;
+      if (alreadyLiked == like) return; // Already in the desired state.
+
+      if (like) {
+        transaction.set(likeRef, {
+          'userId': userId,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        transaction.update(docRef, {'likes': FieldValue.increment(1)});
+      } else {
+        transaction.delete(likeRef);
+        transaction.update(docRef, {'likes': FieldValue.increment(-1)});
+      }
+    });
   }
 
   /// Adds a comment to a ride.

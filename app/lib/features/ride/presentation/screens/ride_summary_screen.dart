@@ -9,7 +9,11 @@ import '../../../../core/cloud/export_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../core/utils/riding_score.dart';
 import '../../../../shared/widgets/stat_card.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/data/repositories/ride_share_repository.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
@@ -25,6 +29,8 @@ class RideSummaryScreen extends ConsumerStatefulWidget {
 class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   List<LatLng> _polyline = [];
   bool _polylineLoaded = false;
+  bool _sharing = false;
+  bool _shared = false;
 
   @override
   void initState() {
@@ -296,6 +302,29 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   ],
                 ),
 
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: (_sharing || _shared || !_polylineLoaded)
+                        ? null
+                        : () => _shareRide(ride),
+                    icon: _sharing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          )
+                        : Icon(_shared ? Icons.check_circle : Icons.public, size: 18),
+                    label: Text(_shared ? 'Shared to Feed' : 'Share this ride'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 16),
 
                 SizedBox(
@@ -342,6 +371,47 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       [XFile(file.path)],
       subject: 'ThrottleIQ ride export',
     );
+  }
+
+  Future<void> _shareRide(RideEntity ride) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    setState(() => _sharing = true);
+    try {
+      final bikes = ref.read(garageProvider).valueOrNull ?? [];
+      final bike = bikes.where((b) => b.id == ride.bikeId).firstOrNull;
+
+      await RideShareRepository().shareRide(
+        rideId: ride.id,
+        userId: user.uid,
+        userName: user.displayName ?? 'Rider',
+        userPhotoUrl: user.photoURL ?? '',
+        bikeId: ride.bikeId,
+        bikeName: bike?.displayName ?? 'Unknown Bike',
+        bikeType: bike?.cc != null ? '${bike!.cc}cc' : 'Motorcycle',
+        rideDate: ride.startTime,
+        distanceKm: ride.distanceKm,
+        durationSeconds: ride.durationSeconds ?? 0,
+        maxSpeedKmh: ride.maxSpeedKmh,
+        polyline: _polyline,
+        mapSnapshotUrl: null,
+        isPrivate: false,
+        allowedUserIds: const [],
+      );
+      if (!mounted) return;
+      setState(() => _shared = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ride shared to the public feed')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to share ride: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
   }
 
   String _formatDate(DateTime dt) {
@@ -406,14 +476,13 @@ class _RidingScoreCard extends StatelessWidget {
     required this.highJerk,
   });
 
-  int get _score {
-    final deductions = (hardBrakes * 5) + (rapidAccel * 3) + (highJerk * 1);
-    return (100 - deductions).clamp(0, 100);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final score = _score;
+    final score = computeRidingScore(
+      hardBrakes: hardBrakes,
+      rapidAccel: rapidAccel,
+      highJerk: highJerk,
+    );
     final color = score >= 80
         ? AppColors.success
         : score >= 60

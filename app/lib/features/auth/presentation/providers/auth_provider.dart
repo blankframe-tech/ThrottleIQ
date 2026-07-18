@@ -5,7 +5,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
 final authStateProvider = StreamProvider<User?>((ref) {
-  return ref.watch(firebaseAuthProvider).authStateChanges();
+  // userChanges() (not authStateChanges()) is required here: it also fires after
+  // reload()/updateProfile(), which authStateChanges() does not. Onboarding calls
+  // updateDisplayName() then reload() on step 0; without a fresh emission here,
+  // routerProvider's redirect closure keeps a stale `displayName == null` user and
+  // permanently treats the account as "still onboarding", bouncing every later
+  // navigation back to /auth/onboarding (resetting the screen's step) in a loop.
+  return ref.watch(firebaseAuthProvider).userChanges();
 });
 
 final currentUserProvider = Provider<User?>((ref) {
