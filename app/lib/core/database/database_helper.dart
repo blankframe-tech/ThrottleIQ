@@ -14,6 +14,17 @@ class DatabaseHelper {
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
+    try {
+      return await _openDb(path);
+    } catch (_) {
+      // db file left corrupt by the maintenance_logs index-before-table bug
+      // (fixed below) - nuke and rebuild rather than crash forever.
+      await deleteDatabase(path);
+      return _openDb(path);
+    }
+  }
+
+  Future<Database> _openDb(String path) {
     return openDatabase(
       path,
       version: 4,
@@ -44,6 +55,19 @@ class DatabaseHelper {
       ''');
       await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_ride_points_ride_timestamp ON ride_points(ride_id, timestamp)
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS maintenance_logs (
+          id TEXT PRIMARY KEY,
+          bike_id TEXT NOT NULL,
+          service_type TEXT NOT NULL,
+          date TEXT NOT NULL,
+          odometer_km REAL NOT NULL,
+          cost REAL,
+          notes TEXT,
+          synced INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL
+        )
       ''');
       await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_maintenance_bike_id ON maintenance_logs(bike_id)
@@ -140,10 +164,6 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE INDEX idx_maintenance_bike_id ON maintenance_logs(bike_id)
-    ''');
-
-    await db.execute('''
       CREATE TABLE maintenance_logs (
         id TEXT PRIMARY KEY,
         bike_id TEXT NOT NULL,
@@ -155,6 +175,10 @@ class DatabaseHelper {
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_maintenance_bike_id ON maintenance_logs(bike_id)
     ''');
 
     await db.execute('''
