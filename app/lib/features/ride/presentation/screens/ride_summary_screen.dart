@@ -282,8 +282,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         icon: const Icon(Icons.data_object, size: 18),
                         label: const Text('Export JSON'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textPrimary,
-                          side: const BorderSide(color: AppColors.border),
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
                         ),
                       ),
                     ),
@@ -294,8 +294,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         icon: const Icon(Icons.route, size: 18),
                         label: const Text('Export GPX'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textPrimary,
-                          side: const BorderSide(color: AppColors.border),
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
                         ),
                       ),
                     ),

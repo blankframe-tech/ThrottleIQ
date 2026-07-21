@@ -316,8 +316,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                           label: Text(isPaused ? 'Resume' : 'Pause'),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, 52),
-                            foregroundColor: AppColors.textPrimary,
-                            side: const BorderSide(color: AppColors.border),
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
                           ),
                         ),
                       ),
