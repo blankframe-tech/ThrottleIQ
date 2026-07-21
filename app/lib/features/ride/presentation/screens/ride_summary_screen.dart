@@ -245,7 +245,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     Expanded(
                       child: _EventCard(
                         icon: Icons.bolt,
-                        color: AppColors.orange,
+                        color: AppColors.secondary,
                         label: 'Rapid Accel',
                         count: ride.rapidAccelCount,
                       ),

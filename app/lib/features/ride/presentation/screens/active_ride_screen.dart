@@ -49,7 +49,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
         flashColor = AppColors.danger.withValues(alpha: 0.4);
         break;
       case RideAlert.rapidAccel:
-        flashColor = AppColors.orange.withValues(alpha: 0.3);
+        flashColor = AppColors.secondary.withValues(alpha: 0.3);
         break;
       case RideAlert.overspeed:
         flashColor = AppColors.warning.withValues(alpha: 0.3);
@@ -447,7 +447,7 @@ class _GForceBar extends StatelessWidget {
     final color = accelMs2 < -4
         ? AppColors.danger
         : accelMs2 > 4
-            ? AppColors.orange
+            ? AppColors.secondary
             : AppColors.success;
 
     return Column(
@@ -550,7 +550,7 @@ class _AlertBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, message, color) = switch (alert) {
       RideAlert.hardBraking => (Icons.warning_amber, 'Hard Braking Detected', AppColors.danger),
-      RideAlert.rapidAccel => (Icons.bolt, 'Rapid Acceleration', AppColors.orange),
+      RideAlert.rapidAccel => (Icons.bolt, 'Rapid Acceleration', AppColors.secondary),
       RideAlert.overspeed => (Icons.speed, 'Overspeed Alert', AppColors.warning),
       RideAlert.fatigue => (Icons.bedtime_outlined, 'Fatigue Alert — Take a break', AppColors.primary),
       _ => (Icons.info_outline, '', AppColors.primary),

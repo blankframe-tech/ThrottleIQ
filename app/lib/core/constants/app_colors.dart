@@ -14,8 +14,9 @@ class AppColors {
   static const Color primaryHighlight = Color(0xFF60A5FA);
   static const Color primaryDark = Color(0xFF1D4ED8);
 
-  // Accent
-  static const Color orange = Color(0xFFFF6A00);
+  // Secondary (Pink)
+  static const Color secondary = Color(0xFFEC4899);
+  static const Color secondaryLight = Color(0xFFF472B6);
 
   // Status
   static const Color success = Color(0xFF22C55E);
