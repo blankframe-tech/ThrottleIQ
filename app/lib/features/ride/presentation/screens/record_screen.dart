@@ -184,7 +184,7 @@ class _QuickStat extends StatelessWidget {
       children: [
         Text(value,
             style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
         const SizedBox(height: 2),
         Text(label,
             style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),

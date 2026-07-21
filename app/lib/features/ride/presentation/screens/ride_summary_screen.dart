@@ -198,6 +198,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       value: ride.distanceKm.toStringAsFixed(2),
                       unit: 'km',
                       icon: Icons.route,
+                      isPrimary: true,
                     ),
                     StatCard(
                       label: 'Duration',
@@ -210,6 +211,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       value: ride.avgSpeedKmh.toStringAsFixed(0),
                       unit: 'km/h',
                       icon: Icons.speed,
+                      isPrimary: true,
                     ),
                     StatCard(
                       label: 'Max Speed',

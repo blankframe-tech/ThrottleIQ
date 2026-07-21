@@ -535,7 +535,7 @@ class _RideStat extends StatelessWidget {
       children: [
         Text(value,
             style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
         Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ],
     );

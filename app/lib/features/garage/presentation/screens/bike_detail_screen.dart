@@ -86,12 +86,14 @@ class BikeDetailScreen extends ConsumerWidget {
                   value: bike.totalDistanceKm.toStringAsFixed(1),
                   unit: 'km',
                   icon: Icons.route,
+                  isPrimary: true,
                 ),
                 StatCard(
                   label: 'Total Rides',
                   value: '${bike.rideCount}',
                   icon: Icons.flag_outlined,
                   valueColor: AppColors.primaryHighlight,
+                  isPrimary: true,
                 ),
                 if (bike.cc != null)
                   StatCard(label: 'Engine', value: '${bike.cc}', unit: 'cc', icon: Icons.settings),

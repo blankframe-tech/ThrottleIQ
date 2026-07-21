@@ -167,10 +167,10 @@ class _ReminderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(reminder.serviceType.label,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
+                        color: color)),
                 Text(
                   '${reminder.kmSinceService.toStringAsFixed(0)} km since last service '
                   '(limit: ${reminder.kmLimit.toStringAsFixed(0)} km)',
@@ -231,7 +231,7 @@ class _LogTile extends ConsumerWidget {
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
+                        color: AppColors.primary)),
                 const SizedBox(height: 4),
                 Text(
                   '${_formatDate(log.date)} · ${log.odometerKm.toStringAsFixed(0)} km'

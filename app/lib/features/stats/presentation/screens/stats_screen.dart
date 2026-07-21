@@ -89,6 +89,7 @@ class StatsScreen extends ConsumerWidget {
                       value: stats.allTimeAvgSpeedKmh.toStringAsFixed(0),
                       unit: 'km/h',
                       icon: Icons.speed,
+                      isPrimary: true,
                     ),
                     StatCard(
                       label: 'Top Speed (all time)',
@@ -96,6 +97,7 @@ class StatsScreen extends ConsumerWidget {
                       unit: 'km/h',
                       icon: Icons.rocket_launch_outlined,
                       valueColor: stats.allTimeTopSpeedKmh > 100 ? AppColors.warning : null,
+                      isPrimary: true,
                     ),
                     StatCard(
                       label: 'Avg Riding Score',
@@ -109,12 +111,14 @@ class StatsScreen extends ConsumerWidget {
                       value: stats.totalDistanceKm.toStringAsFixed(1),
                       unit: 'km',
                       icon: Icons.route,
+                      isPrimary: true,
                     ),
                     StatCard(
                       label: 'Total Rides',
                       value: '${stats.totalRides}',
                       icon: Icons.flag_outlined,
                       valueColor: AppColors.primaryHighlight,
+                      isPrimary: true,
                     ),
                     if (stats.mostUsedBike != null)
                       StatCard(
