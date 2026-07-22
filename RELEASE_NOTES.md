@@ -3,12 +3,27 @@
 ## Unreleased — v2 social/community rework (branch `feat/v2-social`)
 
 **In development** (see `HANDOFF_V2.md`). Not buildable for Android until the
-`com.bft.throttleiq` Firebase reconfiguration is done. Done so far: package
-rename to `com.bft.throttleiq`; user profiles + open follow graph + audience
-tiers (public/followers/mutual) + upvote/downvote backend; fixed the
-ride-sharing error on short/near-home rides. Remaining: social UI, forums
-rework, garage/service restructure, places (map-pin + POI import), Rides tab
-graphs/badges, crash-detection sensitivity.
+`com.bft.throttleiq` Firebase reconfiguration is done (still open as of
+2026-07-23). Done so far, all `flutter analyze`-clean but not runtime-tested:
+- Package rename to `com.bft.throttleiq` (code side).
+- User profiles + open follow graph + audience tiers (public/followers/mutual)
+  + upvote/downvote backend; fixed the ride-sharing error on short/near-home
+  rides.
+- **Social UI**: end→share page (photo + audience picker), feed search+follow,
+  upvote/downvote replacing the like button on ride cards.
+- **Forums**: fixed a slug bug (`mt-15`/`MT 15`/`MT-15` now always resolve to
+  the same forum), added general (non-bike) topic forums, forums home is a
+  list instead of chips, post voting, avatars everywhere (including reply
+  authors, who had none before).
+- **Garage/service**: bike odometer with a real local DB migration, "add
+  bike" moved below the list, the garage header is now a user menu (first
+  Edit Profile screen in the app), maintenance moved into per-bike buttons.
+- **Nav + places**: bottom nav swaps Service for Places, renamed Insights to
+  Rides, added a map-pin location picker for new places, a manual
+  OpenStreetmap import for nearby fuel/repair/dealer POIs, and a "My Places"
+  screen.
+
+Remaining: Rides tab graphs/badges, crash-detection sensitivity fix.
 
 ## v2.0.0-beta.3+5 (2026-07-21) — Editorial BW redesign
 

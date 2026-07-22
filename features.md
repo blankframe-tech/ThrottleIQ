@@ -1,6 +1,14 @@
 # ThrottleIQ — Feature Map & UI Flow (as built)
 
-_Last updated: 2026-07-22 · Reflects the shipped code on `main` (v2 Editorial redesign, released `v2.0.0-beta.3+5`)._
+_Last updated: 2026-07-23 · Reflects the shipped code on `main` (v2 Editorial redesign, released `v2.0.0-beta.3+5`)._
+
+> ⚠️ **Correction (2026-07-23):** the "Social tab" and "AI tab" entries in §2
+> below are stale and describe an app state that predates even the v1 release
+> — on `main` today the chatbot feature doesn't exist at all (removed long
+> ago, replaced by the Stats/Rides tab), and the Social tab has a real
+> Feed/Forums/Places experience, not a "Coming in V2" placeholder. Treat those
+> two subsections as historical only; for the real current+in-progress Social
+> structure see `HANDOFF_V2.md` §2–§5 (which is current through Epic E).
 
 > **v2 rework in progress** on `feat/v2-social` — several flows below are being
 > restructured (feed→search+follow+votes, Service tab→Places, Insights→Rides,

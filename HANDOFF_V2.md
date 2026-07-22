@@ -1,6 +1,6 @@
 # ThrottleIQ v2 — Social/Community Rework: Handoff & Forward Plan
 
-_Last updated: 2026-07-22 · Branch: `feat/v2-social` · App version: `2.0.0-beta.3+5`_
+_Last updated: 2026-07-23 · Branch: `feat/v2-social` · App version: `2.0.0-beta.3+5`_
 
 This is the **single source of truth** for the v2 rework (social feed + follow,
 forums, garage/service, places, rides tab, safety, package rename). It captures
@@ -148,15 +148,17 @@ Rules: `firestore.rules`. Indexes: `firestore.indexes.json`.
 | `users/{uid}/{rides,bikes,maintenance,emergencyContacts,...}` | Owner-only mirrors/contacts | owner | owner |
 | `usernames/{handleLower}` | `{uid}` reservation for unique @handles | any authed | create-if-free / owner delete |
 | `follows/{followerUid}_{followeeUid}` | Follow edge | any authed | follower only |
-| `rides/{rideId}` | Shared-ride feed post + `audience`, `allowedUserIds`, `upvotes`, `downvotes`, `likes`, `comments` | `rideVisibleTo()` | owner + bounded counter bumps |
+| `rides/{rideId}` | Shared-ride feed post + `audience`, `allowedUserIds`, `upvotes`, `downvotes`, `photoUrl`, `likes`*, `comments` | `rideVisibleTo()` | owner + bounded counter bumps |
 | `rides/{rideId}/{likes,votes,comments}` | Engagement | `rideVisibleTo(parent)` | own doc / authed create |
-| `forums/{forumId}` + `/posts/{postId}/replies/...` | Bike/topic forums | authed | owner + bounded counters |
+| `forums/{forumId}` + `/posts/{postId}/{replies,votes}/...` | Bike/topic/general forums (`type`, `topic`) | authed | owner + bounded counters |
 | `forum_follows/{uid}_{forumId}` | Forum membership | owner | owner |
-| `places/{placeId}`, `reviews/{uid}_{placeId}` | POI directory + reviews | authed | owner + bounded rating |
+| `places/{placeId}` (+ `osmId` when OSM-imported), `reviews/{uid}_{placeId}` | POI directory + reviews | authed | owner + bounded rating |
 | `liveSessions/{token}`, `crashNotifications/{id}` | Live share / crash | token / owner | owner |
 
 New indexes added: `rides` (`audience`+`createdAt`), `rides`
-(`allowedUserIds` array-contains + `createdAt`).
+(`allowedUserIds` array-contains + `createdAt`), `rides` (`userId`+`createdAt`).
+
+_*`rides.likes`/`toggleLike()` are now dead — see §6._
 
 ---
 
@@ -325,6 +327,14 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
 - **Dead code** (never wired to UI): `RouteRepository`, `ChallengeRepository`
   (has `earnedBadges` — reuse for Epic F), `GroupRideRepository`. Their
   Firestore rules for `groupRides`/`challenges` don't exist, so they'd be denied.
+- **New dead code from Epic B**: `RideShareRepository.toggleLike`,
+  `RideFeedNotifier.toggleLike`, and the `likes` field on
+  `RideShareModel`/`SharedRideEntity` are no longer called from any screen —
+  `social_screen.dart`'s feed card replaced the heart with the upvote/
+  downvote pair and never called `toggleLike` again. The backend/rules still
+  fully support it (harmless to leave), but it's now orphaned; either wire a
+  caller back in or delete it in a future pass — don't be surprised it's
+  unreachable.
 - Placeholder in AndroidManifest: `com.bft.throttleiq.LocationForegroundService`
   is declared but there is **no matching `.kt` source** — pre-existing; harmless
   unless started.

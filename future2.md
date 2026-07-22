@@ -29,6 +29,14 @@ they choose to share a ride publicly**. Two separate pieces:
 
 ## Why this is a small addition on top of already-planned social work, not a rebuild
 
+> ⚠️ **Note (2026-07-23):** the two code references just below (`isPrivate`
+> and `getFriendsFeed`) no longer exist — Epic B replaced `isPrivate` with
+> `audience` (public/followers/mutual) and removed the dead `getFriendsFeed`
+> in favor of `getPublicRides`/`getSharedToMe`/`getMyRides` (see
+> `HANDOFF_V2.md` §5B). Kept below unedited since this whole doc is already
+> marked shelved/historical — don't go looking for either name in the current
+> code.
+
 - `SharedRideEntity` already has `isPrivate` and `allowedUserIds` — the per-ride
   visibility model this idea needs already exists in the data layer.
 - `RideShareRepository.getFriendsFeed(friendIds)` already expects a list of

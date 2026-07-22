@@ -1,6 +1,6 @@
 # ThrottleIQ — What Works & What's Next
 
-_Last updated: 2026-07-22 · Latest release: [v2.0.0-beta.3+5](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.3+5) · Active branch: `feat/v2-social`_
+_Last updated: 2026-07-23 · Latest release: [v2.0.0-beta.3+5](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.3+5) · Active branch: `feat/v2-social`_
 
 This is the honest state of the project: **Done & verified** means it was actually exercised and confirmed; **Done, not yet verified** means the code/config exists but hasn't been tested end-to-end; **To do** is future work.
 
@@ -18,17 +18,26 @@ released as `v2.0.0-beta.3+5` (signed APK on GitHub).
   audience-tier ride visibility, upvote/downvote + votes rules, username
   reservation — backend + Firestore rules/indexes.
 - ✅ **Fix**: ride sharing no longer errors on short/near-home rides.
+- ✅ **Epic B**: social UI — end→share page (photo + audience picker), feed
+  search+follow, upvote/downvote on ride cards.
+- ✅ **Epic C**: forums — slug bug fixed (hyphen/space/underscore now unify),
+  general (non-bike) topic forums, forums-home is a list, post voting, avatars.
+- ✅ **Epic D**: garage/service — bike odometer (real DB migration v4→v5),
+  add-bike moved below the list, garage header is now a user menu (first-ever
+  Edit Profile screen), maintenance moved into per-bike garage buttons.
+- ✅ **Epic E**: nav + places — bottom nav swaps Service for Places (renamed
+  Insights→Rides), map-pin location picker for adding a place, manual OSM
+  Overpass import (fuel/repair/dealer POIs), "My Places" screen.
 
 **⛔ Blocker:** the rename breaks Android builds until `com.bft.throttleiq` is
 registered in the `throttleiqfb` Firebase project and fresh `google-services.json`
-+ `GoogleService-Info.plist` are pasted in. See `HANDOFF_V2.md` §1.
++ `GoogleService-Info.plist` are pasted in. Still open as of 2026-07-23 — see
+`HANDOFF_V2.md` §1 for the exact steps.
 
-**To do (dependency order):** B) social UI (end→share page w/ photo+audience, feed
-search+follow, vote UI) · C) forums (slug unify, general forums, list UI, votes,
-avatars) · D) garage/service (odometer + DB migration, add-bike placement, user
-menu, service into bike cards) · E) nav+places (Service→Places, Insights→Rides,
-map-pin add, OSM Overpass auto-import) · F) Rides tab (fl_chart graphs, more
-badges) · G) safety (crash threshold fix). Full detail: `HANDOFF_V2.md` §5.
+**To do (dependency order):** F) Rides tab (fl_chart graphs, more badges) ·
+G) safety (crash-detection threshold fix — real bug, not cosmetic: the
+accel-spike threshold is compared in the wrong units and trips ~10x too
+easily). Full detail: `HANDOFF_V2.md` §5.
 
 ---
 
@@ -117,9 +126,9 @@ These exist in code/config but have never been exercised against the real backen
 | Thing | Value |
 |---|---|
 | Firebase project | `throttleiqfb` (asia-south1) |
-| Android package | `com.throttleiq.throttleiq` |
-| Firebase Android app ID | `1:603325098273:android:eca9cb27d75372cffcf660` |
+| Android package (code, `feat/v2-social`) | `com.bft.throttleiq` — **not yet registered in Firebase**, see `HANDOFF_V2.md` §1 |
+| Android package (shipped, `main`) | `com.throttleiq.throttleiq` (matches the currently-registered Firebase app below) |
+| Firebase Android app ID | `1:603325098273:android:eca9cb27d75372cffcf660` — keyed to the *old* package; this id changes once §1's re-registration happens, don't assume it's still current after that |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
-| Local pub cache | `C:\pub_cache` (moved out of the spaced user path; keep `PUB_CACHE` set) |
-| Android SDK | `C:\Android\sdk` (junction; cmdline-tools installed) |
-| Release | `v1.0.0-beta.1` — APK + SHA-256 on the GitHub release |
+| Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
+| Latest release | [`v2.0.0-beta.3+5`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.3+5) — signed APK on `main`; `feat/v2-social` is unreleased |
