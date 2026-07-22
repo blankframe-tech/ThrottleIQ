@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
 
@@ -245,8 +246,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.surface.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
@@ -254,12 +255,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   children: [
                     Text(
                       speedKmh.toStringAsFixed(0),
-                      style: const TextStyle(
-                          fontSize: 64,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -3,
-                          height: 1),
+                      style: display(64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
                     ),
                     const Text('km/h',
                         style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
@@ -501,23 +497,22 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isPaused ? AppColors.warning : AppColors.success;
+    final color = isPaused ? AppColors.attention : AppColors.danger;
     final label = isPaused ? 'PAUSED' : 'RECORDING';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: AppColors.ink,
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
-          const SizedBox(width: 6),
+          Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+          const SizedBox(width: 7),
           Text(label,
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: color)),
+              style: const TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.onInk)),
         ],
       ),
     );
@@ -533,9 +528,7 @@ class _RideStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
+        Text(value, style: display(18, letterSpacing: 0)),
         Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ],
     );
@@ -548,26 +541,33 @@ class _AlertBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, message, color) = switch (alert) {
-      RideAlert.hardBraking => (Icons.warning_amber, 'Hard Braking Detected', AppColors.danger),
-      RideAlert.rapidAccel => (Icons.bolt, 'Rapid Acceleration', AppColors.secondary),
-      RideAlert.overspeed => (Icons.speed, 'Overspeed Alert', AppColors.warning),
-      RideAlert.fatigue => (Icons.bedtime_outlined, 'Fatigue Alert — Take a break', AppColors.primary),
-      _ => (Icons.info_outline, '', AppColors.primary),
+    final (message, color) = switch (alert) {
+      RideAlert.hardBraking => ('Ease on the brakes', AppColors.danger),
+      RideAlert.rapidAccel => ('Smooth on the throttle', AppColors.attention),
+      RideAlert.overspeed => ('Watch your speed', AppColors.attention),
+      RideAlert.fatigue => ('Time for a break', AppColors.primary),
+      _ => ('', AppColors.primary),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(color: AppColors.ink.withValues(alpha: 0.06), blurRadius: 12),
+        ],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
+          Container(width: 8, height: 8,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 10),
-          Text(message,
-              style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: Text(message,
+                style: display(14, letterSpacing: 0)),
+          ),
         ],
       ),
     );
