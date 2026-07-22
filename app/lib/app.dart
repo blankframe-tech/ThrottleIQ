@@ -25,7 +25,7 @@ class ThrottleIQApp extends ConsumerWidget {
       final router = ref.watch(routerProvider);
       return MaterialApp.router(
         title: 'ThrottleIQ',
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         debugShowCheckedModeBanner: false,
         routerConfig: router,
       );
