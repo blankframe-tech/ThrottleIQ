@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Avatars — `avatars/{uid}.jpg`. Public-read (shown on profiles/feed
+    // cards to any authed rider), owner-only write. Wildcards match a whole
+    // path segment, so `filename` captures `{uid}.jpg` as one string and is
+    // compared against the expected name rather than pattern-matched.
+    match /avatars/{filename} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && filename == request.auth.uid + '.jpg';
+    }
+
+    // Ride-share photos — `rideShares/{uid}/{rideId}.jpg`. Same trust model
+    // as the ride doc's own `photoUrl` field: readable by any authed rider
+    // (mirrors the public-read `users/{uid}` profile doc rule — a shared
+    // photo URL is only ever handed out via a ride doc the reader already
+    // passed firestore.rules' rideVisibleTo() to read), owner-only write.
+    match /rideShares/{uid}/{filename} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

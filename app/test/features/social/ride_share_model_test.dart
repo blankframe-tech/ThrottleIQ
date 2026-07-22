@@ -65,7 +65,7 @@ void main() {
         'likes': 5,
         'comments': 2,
         'createdAt': DateTime(2024, 1, 15, 12, 0),
-        'isPrivate': false,
+        'audience': 'public',
         'allowedUserIds': [],
         'routeId': null,
       };
@@ -88,8 +88,8 @@ void main() {
       expect(entity.polyline, model.polyline);
     });
 
-    test('handles private rides with allowed users', () {
-      final privateModel = RideShareModel(
+    test('handles followers-only rides with allowed users', () {
+      final followersModel = RideShareModel(
         id: 'ride2',
         userId: 'user1',
         userName: 'John Doe',
@@ -103,12 +103,12 @@ void main() {
         maxSpeedKmh: 80.0,
         polyline: polyline,
         createdAt: DateTime.now(),
-        isPrivate: true,
+        audience: 'followers',
         allowedUserIds: ['user2', 'user3'],
       );
 
-      final firestoreData = privateModel.toFirestore();
-      expect(firestoreData['isPrivate'], true);
+      final firestoreData = followersModel.toFirestore();
+      expect(firestoreData['audience'], 'followers');
       expect(firestoreData['allowedUserIds'], ['user2', 'user3']);
     });
 
@@ -158,7 +158,7 @@ void main() {
       expect(restored.mapSnapshotUrl, null);
       expect(restored.likes, 0);
       expect(restored.comments, 0);
-      expect(restored.isPrivate, false);
+      expect(restored.audience, 'public');
     });
   });
 }

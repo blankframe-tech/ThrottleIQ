@@ -19,7 +19,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "isPrivate",
+          "fieldPath": "audience",
           "order": "ASCENDING"
         },
         {
@@ -33,7 +33,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "audience",
+          "fieldPath": "userId",
           "order": "ASCENDING"
         },
         {

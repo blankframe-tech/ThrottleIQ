@@ -12,6 +12,7 @@ import '../../features/garage/presentation/screens/bike_detail_screen.dart';
 import '../../features/ride/presentation/screens/record_screen.dart';
 import '../../features/ride/presentation/screens/active_ride_screen.dart';
 import '../../features/ride/presentation/screens/ride_summary_screen.dart';
+import '../../features/social/presentation/screens/ride_share_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
@@ -78,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ride/summary/:rideId',
         builder: (_, state) => RideSummaryScreen(rideId: state.pathParameters['rideId']!),
+      ),
+      GoRoute(
+        path: '/ride/share/:rideId',
+        builder: (_, state) => RideShareScreen(rideId: state.pathParameters['rideId']!),
       ),
       // Forum routes (full-screen, no shell — same treatment as ride/summary)
       GoRoute(

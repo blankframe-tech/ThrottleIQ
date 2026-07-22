@@ -68,14 +68,14 @@ void main() {
       );
     });
 
-    test('ride with private visibility', () {
-      final privateRide = testRide.copyWith(
-        isPrivate: true,
+    test('ride with followers-only visibility', () {
+      final followersRide = testRide.copyWith(
+        audience: 'followers',
         allowedUserIds: ['user2', 'user3'],
       );
 
-      expect(privateRide.isPrivate, true);
-      expect(privateRide.allowedUserIds.length, 2);
+      expect(followersRide.audience, 'followers');
+      expect(followersRide.allowedUserIds.length, 2);
     });
 
     test('ride with zero duration handles division', () {

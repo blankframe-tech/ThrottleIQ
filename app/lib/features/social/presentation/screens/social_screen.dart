@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,9 +7,12 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../forums/presentation/screens/forums_home_screen.dart';
 import '../../../poi_directory/presentation/screens/places_list_screen.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
+import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../providers/follow_providers.dart';
 import '../providers/ride_feed_provider.dart';
 
 /// Social hub: Feed (Phase 2), Forums (Phase 3), Places (this phase).
@@ -51,45 +55,69 @@ class _FeedTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final feedAsync = ref.watch(publicRideFeedProvider);
+    final feedAsync = ref.watch(rideFeedProvider);
 
-    return feedAsync.when(
-      loading: () =>
-          const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      error: (e, _) =>
-          Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
-      data: (_) {
-        final rides = ref.watch(rideFeedNotifierProvider);
-        if (rides.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(AppDimensions.paddingLg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.dynamic_feed_outlined, size: 64, color: AppColors.textTertiary),
-                  SizedBox(height: 16),
-                  Text('No public rides yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                  SizedBox(height: 8),
-                  Text('Share a ride from its summary screen to get things started.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
-                ],
-              ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
+              AppDimensions.paddingMd, AppDimensions.paddingMd, 0),
+          child: OutlinedButton.icon(
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppColors.background,
+              builder: (_) => const _RiderSearchSheet(),
             ),
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: () => ref.refresh(publicRideFeedProvider.future),
-          color: AppColors.primary,
-          child: ListView.separated(
-            padding: const EdgeInsets.all(AppDimensions.paddingMd),
-            itemCount: rides.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _RideCard(ride: rides[i]),
+            icon: const Icon(Icons.person_search_outlined, size: 18),
+            label: const Text('Find riders'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 44),
+              alignment: Alignment.centerLeft,
+            ),
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: feedAsync.when(
+            loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.primary)),
+            error: (e, _) =>
+                Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+            data: (_) {
+              final rides = ref.watch(rideFeedNotifierProvider);
+              if (rides.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppDimensions.paddingLg),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.dynamic_feed_outlined, size: 64, color: AppColors.textTertiary),
+                        SizedBox(height: 16),
+                        Text('No rides yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                        SizedBox(height: 8),
+                        Text('Share a ride from its summary screen to get things started.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: () => ref.refresh(rideFeedProvider.future),
+                color: AppColors.primary,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                  itemCount: rides.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (_, i) => _RideCard(ride: rides[i]),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -211,6 +239,21 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     ],
                   ),
+                  if (ride.photoUrl != null) ...[
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                      child: CachedNetworkImage(
+                        imageUrl: ride.photoUrl!,
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                            height: 160, color: AppColors.background),
+                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -231,15 +274,28 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                         onPressed: () =>
-                            ref.read(rideFeedNotifierProvider.notifier).toggleLike(ride.id),
+                            ref.read(rideFeedNotifierProvider.notifier).vote(ride.id, 1),
                         icon: Icon(
-                          ride.isLikedByCurrentUser ? Icons.favorite : Icons.favorite_border,
-                          color: ride.isLikedByCurrentUser ? AppColors.danger : AppColors.textSecondary,
+                          Icons.arrow_upward,
+                          color: ride.myVote == 1 ? AppColors.primary : AppColors.textSecondary,
                           size: 20,
                         ),
                       ),
-                      Text('${ride.likes}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                      const SizedBox(width: 16),
+                      Text('${ride.netScore}',
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                        onPressed: () =>
+                            ref.read(rideFeedNotifierProvider.notifier).vote(ride.id, -1),
+                        icon: Icon(
+                          Icons.arrow_downward,
+                          color: ride.myVote == -1 ? AppColors.danger : AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 18),
                       const SizedBox(width: 6),
                       Text('${ride.comments}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
@@ -334,4 +390,166 @@ class _RideCardState extends ConsumerState<_RideCard> {
   }
 
   Widget _divider() => Container(width: 1, height: 28, color: AppColors.border);
+}
+
+/// Rider search: find by @username (prefix, as-you-type) or exact email,
+/// with a follow/unfollow toggle per result.
+class _RiderSearchSheet extends ConsumerStatefulWidget {
+  const _RiderSearchSheet();
+
+  @override
+  ConsumerState<_RiderSearchSheet> createState() => _RiderSearchSheetState();
+}
+
+class _RiderSearchSheetState extends ConsumerState<_RiderSearchSheet> {
+  final _controller = TextEditingController();
+  List<UserProfileEntity> _results = const [];
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) {
+      setState(() => _results = const []);
+      return;
+    }
+    setState(() => _loading = true);
+    final repo = ProfileRepository();
+    final looksLikeEmail = q.contains('@') && q.contains('.') && !q.startsWith('@');
+    final results = looksLikeEmail
+        ? await repo.searchByEmail(q)
+        : await repo.searchByUsername(q);
+    if (!mounted) return;
+    final myUid = ref.read(currentUserProvider)?.uid;
+    setState(() {
+      _results = results.where((r) => r.uid != myUid).toList();
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: AppDimensions.paddingMd,
+        right: AppDimensions.paddingMd,
+        top: AppDimensions.paddingMd,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+      ),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Find riders',
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              style: const TextStyle(color: AppColors.textPrimary),
+              decoration: const InputDecoration(
+                hintText: '@username or email',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: _search,
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : _results.isEmpty
+                      ? Center(
+                          child: Text(
+                            _controller.text.trim().isEmpty
+                                ? 'Search by @username or email'
+                                : 'No riders found',
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: _results.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (_, i) => _RiderResultTile(rider: _results[i]),
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RiderResultTile extends ConsumerWidget {
+  final UserProfileEntity rider;
+  const _RiderResultTile({required this.rider});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myUid = ref.watch(currentUserProvider)?.uid;
+    final isFollowingAsync = ref.watch(isFollowingProvider(rider.uid));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.primary.withOpacity(0.15),
+            backgroundImage: rider.photoUrl != null ? CachedNetworkImageProvider(rider.photoUrl!) : null,
+            child: rider.photoUrl == null
+                ? Text(rider.initials,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, color: AppColors.primary))
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(rider.bestName,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                if (rider.username != null)
+                  Text('@${rider.username}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          if (myUid != null)
+            isFollowingAsync.when(
+              loading: () => const SizedBox(width: 80),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (isFollowing) => OutlinedButton(
+                onPressed: () {
+                  final repo = ref.read(followRepositoryProvider);
+                  if (isFollowing) {
+                    repo.unfollow(myUid, rider.uid);
+                  } else {
+                    repo.follow(myUid, rider.uid);
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: Text(isFollowing ? 'Following' : 'Follow'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

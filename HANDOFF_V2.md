@@ -23,9 +23,13 @@ to resume with zero prior conversation context.
   Android** — the package rename intentionally breaks the Gradle build until
   fresh Firebase config lands (see §1). Everything here is `flutter analyze`
   clean but **not runtime-tested**.
-- Two epics complete on this branch: **package rename (code side)** and
-  **Phase A (profile + follow backend + share-bug fix)**.
-- **10 epics remain** (§5). Build order is dependency-first.
+- Three epics complete on this branch: **package rename (code side)**,
+  **Phase A (profile + follow backend + share-bug fix)**, and **Epic B
+  (social UI: share screen, feed rework, voting)**.
+- **9 epics remain** (§5). Build order is dependency-first. §1 (Firebase
+  reconfig) is still open — confirmed still blocked as of this session:
+  `google-services.json` still has the old package name, though
+  `GoogleService-Info.plist` has already been updated to the new bundle id.
 
 ---
 
@@ -158,21 +162,43 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
 
 ### A. Profile + follow backend — ✅ done (§2c)
 
-### B. Social UI — 🔜 NEXT
-- **End→share page**: after a ride, a screen to add ride/bike **photo** (upload
-  to Storage) and pick **audience** (public / followers / mutual). Wire audience
-  → compute `allowedUserIds` (FollowRepository.getFollowers/getMutuals) at share
-  time. Entry: `ride_summary_screen.dart` "Share" button (currently calls
-  `_shareRide` directly).
-- **Feed rework**: search bar/button above the feed → find riders by @username
-  (prefix) / email (exact) via `ProfileRepository.searchBy*` → follow/unfollow.
-  Feed = union of public rides + rides shared to me (`allowedUserIds`
-  array-contains), deduped, **ranked by vote score** (client-side sort).
-- **Upvote/downvote UI** on feed cards (replaces the single heart). Backend rules
-  + `votes` subcollection already exist; add repo methods (`vote(rideId, value)`)
-  + `upvotes`/`downvotes` fields to `RideShareModel`.
-- Files: `features/social/**`, `ride_summary_screen.dart`, new share screen +
-  route. Handle empty polyline in the feed card (share-fix consequence).
+### B. Social UI — ✅ done, analyze-clean (not runtime-tested)
+- `RideShareModel`/`SharedRideEntity` caught up to the rules shape from Phase
+  A: `isPrivate` bool replaced with `audience` (`public`/`followers`/`mutual`,
+  clean cutover — no prod data on this collection yet), plus `photoUrl`,
+  `upvotes`, `downvotes`, and an entity-only `myVote` (hydrated from
+  `votes/{uid}`, never persisted — mirrors `isLikedByCurrentUser`).
+- `RideShareRepository`: `shareRide` now takes `audience` + optional
+  `photoUrl` and materializes `allowedUserIds` internally via
+  `FollowRepository.getFollowers`/`getMutuals`. Added `uploadRidePhoto`
+  (`rideShares/{uid}/{rideId}.jpg`), `getPublicRides`/`getSharedToMe`/
+  `getMyRides` (each lines up with one `rideVisibleTo()` clause, replacing
+  the old single `isPrivate`-filtered query + dead `getFriendsFeed`), and
+  `vote`/`getMyVote` (bounded ±1-per-field transaction matching the rules'
+  vote clause exactly).
+- New `ride_share_screen.dart` (route `/ride/share/:rideId`): optional photo
+  picker (gallery, mirrors `add_edit_bike_screen.dart`'s pattern) + audience
+  pill picker, reached from `ride_summary_screen.dart`'s Share button (its
+  old inline `_shareRide`/sharing state is gone — the button just navigates).
+- `ride_feed_provider.dart`: `rideFeedProvider` unions the three queries
+  above, dedupes by id, sorts by `netScore` desc then `createdAt` desc.
+  `RideFeedNotifier` (renamed from `RideLikeNotifier`) adds an optimistic
+  `vote()` alongside the existing `toggleLike()`.
+- `social_screen.dart`: feed card's single heart replaced with an
+  upvote/downvote arrow pair + net score, shows `photoUrl` when present via
+  `cached_network_image`. Added a "Find riders" entry above the feed opening
+  a search sheet (`ProfileRepository.searchByUsername`/`searchByEmail`,
+  merged on one field) with a follow/unfollow toggle per result
+  (`FollowRepository`/`follow_providers.dart` — no new profile-view screen,
+  out of scope here).
+- `storage.rules` **created** (didn't exist before — avatar upload was
+  running unbacked by any rule) and registered in `firebase.json`: owner-write
+  / any-authed-read for `avatars/{uid}.jpg` and `rideShares/{uid}/{rideId}.jpg`.
+- `firestore.indexes.json`: dropped the stale `isPrivate+createdAt` index,
+  added `userId+createdAt` (for `getMyRides`).
+- Not yet deployed: `firebase deploy --only firestore:rules,firestore:indexes,storage`
+  needs to run before any of this is live (same deploy step §7 already calls
+  out, storage rules are new to that list).
 
 ### C. Forums — ⬜
 - Normalize slugs so `mt-15` / `MT 15` / `MT-15` collapse to one forum: fix
@@ -255,9 +281,9 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
    `firebase_options`, make `currentPlatform` platform-aware, update iOS URL
    scheme.
 2. `cd app && flutter pub get && flutter analyze` (should stay clean).
-3. Deploy backend when convenient: `firebase deploy --only firestore:rules,firestore:indexes`
-   (rules + indexes are updated for Phase A).
+3. Deploy backend when convenient: `firebase deploy --only firestore:rules,firestore:indexes,storage`
+   (rules + indexes updated through Epic B; `storage.rules` is new — first deploy).
 4. Build to verify: `flutter run` (sim) or the signed release APK flow (JAVA_HOME
    = Android Studio JBR, key.properties present).
-5. Continue at **Epic B** (§5). Commit per epic on `feat/v2-social`; do not push
+5. Continue at **Epic C** (§5). Commit per epic on `feat/v2-social`; do not push
    until asked; keep `main` releasable.

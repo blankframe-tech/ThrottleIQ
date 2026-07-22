@@ -19,9 +19,27 @@ class SharedRideEntity extends Equatable {
   final int comments;
   final bool isLikedByCurrentUser;
   final DateTime createdAt;
-  final bool isPrivate;
-  final List<String> allowedUserIds; // Empty = public
+
+  /// Who can see this ride: `public` / `followers` / `mutual`. Followers/
+  /// mutual visibility is materialized into [allowedUserIds] at share time
+  /// (see RideShareRepository.shareRide) since Firestore rules can't run a
+  /// per-doc follow-graph lookup for a list query.
+  final String audience;
+  final List<String> allowedUserIds;
   final String? routeId; // Optional reference to saved route
+
+  /// A rider-taken photo of the ride/bike (distinct from [mapSnapshotUrl],
+  /// which is a rendered map trace).
+  final String? photoUrl;
+
+  final int upvotes;
+  final int downvotes;
+
+  /// The signed-in rider's own vote on this ride: 1, -1, or null (none).
+  /// Entity-only — hydrated from the `votes/{uid}` subcollection at read
+  /// time, never stored on the ride doc itself (mirrors
+  /// [isLikedByCurrentUser]).
+  final int? myVote;
 
   const SharedRideEntity({
     required this.id,
@@ -41,21 +59,35 @@ class SharedRideEntity extends Equatable {
     this.comments = 0,
     this.isLikedByCurrentUser = false,
     required this.createdAt,
-    this.isPrivate = false,
+    this.audience = 'public',
     this.allowedUserIds = const [],
     this.routeId,
+    this.photoUrl,
+    this.upvotes = 0,
+    this.downvotes = 0,
+    this.myVote,
   });
 
   int get durationMinutes => durationSeconds ~/ 60;
   double get avgSpeedKmh =>
       durationSeconds > 0 ? (distanceKm / durationSeconds) * 3600 : 0;
+  int get netScore => upvotes - downvotes;
+
+  /// Sentinel so [copyWith] can distinguish "leave myVote alone" from
+  /// "set myVote to null" (clearing a vote) — a plain `int? myVote` param
+  /// can't tell those apart since both look like `null`.
+  static const _unset = Object();
 
   SharedRideEntity copyWith({
     int? likes,
     int? comments,
     bool? isLikedByCurrentUser,
-    bool? isPrivate,
+    String? audience,
     List<String>? allowedUserIds,
+    String? photoUrl,
+    int? upvotes,
+    int? downvotes,
+    Object? myVote = _unset,
   }) {
     return SharedRideEntity(
       id: id,
@@ -75,9 +107,13 @@ class SharedRideEntity extends Equatable {
       comments: comments ?? this.comments,
       isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
       createdAt: createdAt,
-      isPrivate: isPrivate ?? this.isPrivate,
+      audience: audience ?? this.audience,
       allowedUserIds: allowedUserIds ?? this.allowedUserIds,
       routeId: routeId,
+      photoUrl: photoUrl ?? this.photoUrl,
+      upvotes: upvotes ?? this.upvotes,
+      downvotes: downvotes ?? this.downvotes,
+      myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
     );
   }
 
@@ -88,5 +124,8 @@ class SharedRideEntity extends Equatable {
         rideDate,
         createdAt,
         isLikedByCurrentUser,
+        upvotes,
+        downvotes,
+        myVote,
       ];
 }

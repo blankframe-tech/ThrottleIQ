@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
+import 'follow_repository.dart';
 
 class RideShareRepository {
   static final RideShareRepository _instance =
@@ -16,8 +20,24 @@ class RideShareRepository {
   RideShareRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FollowRepository _followRepository = FollowRepository();
 
-  /// Shares a ride to friends/public and applies privacy zones.
+  /// Uploads a rider-taken ride/bike photo and returns its download URL.
+  /// Stored at `rideShares/{uid}/{rideId}.jpg`; overwrites on re-share.
+  Future<String> uploadRidePhoto(String uid, String rideId, File file) async {
+    final ref = _storage.ref('rideShares/$uid/$rideId.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return ref.getDownloadURL();
+  }
+
+  /// Shares a ride and applies privacy zones.
+  ///
+  /// [audience] is `public` / `followers` / `mutual`. Firestore rules can't
+  /// run a per-doc follow-graph lookup for a list query, so for the latter
+  /// two we materialize the visible uid set into `allowedUserIds` right now
+  /// (a snapshot at share time — new followers don't retroactively gain
+  /// access, which is the accepted trade-off documented in HANDOFF_V2.md §3).
   Future<String> shareRide({
     required String rideId,
     required String userId,
@@ -32,8 +52,8 @@ class RideShareRepository {
     required double maxSpeedKmh,
     required List<LatLng> polyline,
     required String? mapSnapshotUrl,
-    required bool isPrivate,
-    required List<String> allowedUserIds,
+    required String audience,
+    String? photoUrl,
     String? routeId,
   }) async {
     // Apply privacy-zone clipping (strips ~200 m off each end to hide
@@ -43,6 +63,12 @@ class RideShareRepository {
     // privacy-safe outcome anyway: the ride still posts, the feed card just
     // shows stats without a map trace.
     final clippedPolyline = PrivacyZoneClipper.clipPolyline(polyline);
+
+    final allowedUserIds = switch (audience) {
+      'followers' => await _followRepository.getFollowers(userId),
+      'mutual' => await _followRepository.getMutuals(userId),
+      _ => const <String>[],
+    };
 
     final sharedRide = RideShareModel(
       id: rideId,
@@ -62,9 +88,10 @@ class RideShareRepository {
       comments: 0,
       isLikedByCurrentUser: false,
       createdAt: DateTime.now(),
-      isPrivate: isPrivate,
+      audience: audience,
       allowedUserIds: allowedUserIds,
       routeId: routeId,
+      photoUrl: photoUrl,
     );
 
     final docRef = _firestore.collection('rides').doc(rideId);
@@ -75,6 +102,8 @@ class RideShareRepository {
       // Don't wipe engagement accumulated since the ride was first shared.
       data.remove('likes');
       data.remove('comments');
+      data.remove('upvotes');
+      data.remove('downvotes');
     }
     await docRef.set(data, SetOptions(merge: true));
 
@@ -93,58 +122,54 @@ class RideShareRepository {
     return model.toEntity();
   }
 
-  /// Gets feed of shared rides from friends (paginated).
-  Future<List<SharedRideEntity>> getFriendsFeed({
-    required String currentUserId,
-    required List<String> friendIds,
-    int limit = 20,
-    DocumentSnapshot? startAfter,
-  }) async {
-    Query query = _firestore
+  /// Public rides (for discovery). Lines up with the `audience == 'public'`
+  /// clause of `rideVisibleTo()` in firestore.rules.
+  Future<List<SharedRideEntity>> getPublicRides({int limit = 20}) async {
+    final snap = await _firestore
         .collection('rides')
-        .where('userId', whereIn: friendIds)
-        .where('isPrivate', isEqualTo: false)
+        .where('audience', isEqualTo: 'public')
         .orderBy('createdAt', descending: true)
-        .limit(limit + 1);
+        .limit(limit)
+        .get();
+    return _hydrate(_toEntities(snap));
+  }
 
-    if (startAfter != null) {
-      query = query.startAfterDocument(startAfter);
-    }
+  /// Rides materialized as visible to the signed-in rider (followers/mutual
+  /// shares). Lines up with the `allowedUserIds arrayContains me` clause.
+  Future<List<SharedRideEntity>> getSharedToMe(String uid, {int limit = 20}) async {
+    final snap = await _firestore
+        .collection('rides')
+        .where('allowedUserIds', arrayContains: uid)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return _hydrate(_toEntities(snap));
+  }
 
-    final querySnapshot = await query.get();
-    return querySnapshot.docs
-        .map((doc) =>
-            RideShareModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)
-                .toEntity())
+  /// The signed-in rider's own shared rides, regardless of audience. Lines
+  /// up with the `userId == me` (always-visible-to-owner) clause.
+  Future<List<SharedRideEntity>> getMyRides(String uid, {int limit = 20}) async {
+    final snap = await _firestore
+        .collection('rides')
+        .where('userId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return _hydrate(_toEntities(snap));
+  }
+
+  List<SharedRideEntity> _toEntities(QuerySnapshot<Map<String, dynamic>> snap) {
+    return snap.docs
+        .map((doc) => RideShareModel.fromFirestore(doc.data(), doc.id).toEntity())
         .toList();
   }
 
-  /// Gets all public rides (for discovery).
-  Future<List<SharedRideEntity>> getPublicRides({
-    int limit = 20,
-    DocumentSnapshot? startAfter,
-  }) async {
-    Query query = _firestore
-        .collection('rides')
-        .where('isPrivate', isEqualTo: false)
-        .orderBy('createdAt', descending: true)
-        .limit(limit + 1);
-
-    if (startAfter != null) {
-      query = query.startAfterDocument(startAfter);
-    }
-
-    final querySnapshot = await query.get();
-    final entities = querySnapshot.docs
-        .map((doc) =>
-            RideShareModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)
-                .toEntity())
-        .toList();
-
+  /// Hydrates the signed-in rider's like/vote state onto each ride —
+  /// entity-only fields never stored on the ride doc itself.
+  Future<List<SharedRideEntity>> _hydrate(List<SharedRideEntity> entities) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) return entities;
+    if (currentUserId == null || entities.isEmpty) return entities;
 
-    // Per-ride existence check for the current user's like doc, in parallel.
     final likedFlags = await Future.wait(entities.map((ride) => _firestore
         .collection('rides')
         .doc(ride.id)
@@ -153,9 +178,12 @@ class RideShareRepository {
         .get()
         .then((doc) => doc.exists)));
 
+    final votes = await Future.wait(
+        entities.map((ride) => getMyVote(ride.id, currentUserId)));
+
     return [
       for (var i = 0; i < entities.length; i++)
-        entities[i].copyWith(isLikedByCurrentUser: likedFlags[i]),
+        entities[i].copyWith(isLikedByCurrentUser: likedFlags[i], myVote: votes[i]),
     ];
   }
 
@@ -179,6 +207,58 @@ class RideShareRepository {
       } else {
         transaction.delete(likeRef);
         transaction.update(docRef, {'likes': FieldValue.increment(-1)});
+      }
+    });
+  }
+
+  /// The signed-in rider's own vote on a ride, if any (1 upvote / -1
+  /// downvote), read from `votes/{uid}`.
+  Future<int?> getMyVote(String rideId, String uid) async {
+    final doc = await _firestore
+        .collection('rides')
+        .doc(rideId)
+        .collection('votes')
+        .doc(uid)
+        .get();
+    return doc.data()?['value'] as int?;
+  }
+
+  /// Casts, changes, or clears a vote. [value] is 1 (upvote) or -1
+  /// (downvote); calling it again with the same value toggles the vote off.
+  ///
+  /// Writes exactly one of three shapes so every possible write stays within
+  /// firestore.rules' bounded ±1-per-field vote clause: a fresh vote bumps
+  /// only its own tally by 1; toggling off drops the vote doc and un-bumps
+  /// that same tally by 1; flipping (e.g. down→up) moves both tallies by 1
+  /// in the same write.
+  Future<void> vote(String rideId, String uid, int value) async {
+    assert(value == 1 || value == -1);
+    final docRef = _firestore.collection('rides').doc(rideId);
+    final voteRef = docRef.collection('votes').doc(uid);
+
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(voteRef);
+      final previous = existing.data()?['value'] as int?;
+      if (previous == value) {
+        // Toggle off.
+        transaction.delete(voteRef);
+        transaction.update(docRef, {
+          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(-1),
+        });
+        return;
+      }
+
+      transaction.set(voteRef, {'value': value});
+      if (previous == null) {
+        transaction.update(docRef, {
+          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
+        });
+      } else {
+        // Flipping from one vote to the other.
+        transaction.update(docRef, {
+          'upvotes': FieldValue.increment(value == 1 ? 1 : -1),
+          'downvotes': FieldValue.increment(value == 1 ? -1 : 1),
+        });
       }
     });
   }
@@ -262,17 +342,5 @@ class RideShareRepository {
 
     // Delete the ride
     await docRef.delete();
-  }
-
-  /// Updates ride visibility.
-  Future<void> updateRideVisibility({
-    required String rideId,
-    required bool isPrivate,
-    required List<String> allowedUserIds,
-  }) async {
-    await _firestore.collection('rides').doc(rideId).update({
-      'isPrivate': isPrivate,
-      'allowedUserIds': allowedUserIds,
-    });
   }
 }

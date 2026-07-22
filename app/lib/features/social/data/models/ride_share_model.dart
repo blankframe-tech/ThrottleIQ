@@ -33,9 +33,13 @@ class RideShareModel {
   final int comments;
   final bool isLikedByCurrentUser;
   final DateTime createdAt;
-  final bool isPrivate;
+  final String audience;
   final List<String> allowedUserIds;
   final String? routeId;
+  final String? photoUrl;
+  final int upvotes;
+  final int downvotes;
+  final int? myVote;
 
   RideShareModel({
     required this.id,
@@ -55,9 +59,13 @@ class RideShareModel {
     this.comments = 0,
     this.isLikedByCurrentUser = false,
     required this.createdAt,
-    this.isPrivate = false,
+    this.audience = 'public',
     this.allowedUserIds = const [],
     this.routeId,
+    this.photoUrl,
+    this.upvotes = 0,
+    this.downvotes = 0,
+    this.myVote,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -80,9 +88,12 @@ class RideShareModel {
       'likes': likes,
       'comments': comments,
       'createdAt': createdAt,
-      'isPrivate': isPrivate,
+      'audience': audience,
       'allowedUserIds': allowedUserIds,
       'routeId': routeId,
+      'photoUrl': photoUrl,
+      'upvotes': upvotes,
+      'downvotes': downvotes,
     };
   }
 
@@ -118,10 +129,13 @@ class RideShareModel {
       likes: (data['likes'] as num?)?.toInt() ?? 0,
       comments: (data['comments'] as num?)?.toInt() ?? 0,
       createdAt: _parseDate(data['createdAt']),
-      isPrivate: data['isPrivate'] as bool? ?? false,
+      audience: data['audience'] as String? ?? 'public',
       allowedUserIds:
           (data['allowedUserIds'] as List<dynamic>?)?.cast<String>() ?? [],
       routeId: data['routeId'] as String?,
+      photoUrl: data['photoUrl'] as String?,
+      upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
+      downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -144,9 +158,13 @@ class RideShareModel {
       comments: comments,
       isLikedByCurrentUser: isLikedByCurrentUser,
       createdAt: createdAt,
-      isPrivate: isPrivate,
+      audience: audience,
       allowedUserIds: allowedUserIds,
       routeId: routeId,
+      photoUrl: photoUrl,
+      upvotes: upvotes,
+      downvotes: downvotes,
+      myVote: myVote,
     );
   }
 }
