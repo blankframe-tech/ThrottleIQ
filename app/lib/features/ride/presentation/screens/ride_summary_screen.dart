@@ -10,7 +10,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../core/utils/riding_score.dart';
-import '../../../../shared/widgets/stat_card.dart';
+import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/data/repositories/ride_share_repository.dart';
@@ -52,11 +52,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     final rideAsync = ref.watch(rideDetailProvider(widget.rideId));
+    final name = ref.watch(currentUserProvider)?.displayName?.split(' ').first;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Ride Summary'),
+        backgroundColor: AppColors.background,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.go('/home/record'),
@@ -77,264 +78,234 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           final startCenter = _polyline.isNotEmpty
               ? _polyline.first
               : const LatLng(23.8103, 90.4125);
+          final score = computeRidingScore(
+            hardBrakes: ride.hardBrakeCount,
+            rapidAccel: ride.rapidAccelCount,
+            highJerk: ride.highJerkCount,
+          );
+          final scoreColor = score >= 80
+              ? AppColors.success
+              : score >= 60
+                  ? AppColors.attention
+                  : AppColors.danger;
+          final scoreLabel = score >= 80
+              ? 'Smooth op.'
+              : score >= 60
+                  ? 'Steady'
+                  : 'Aggressive';
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.paddingMd),
+            padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0,
+                AppDimensions.paddingMd, AppDimensions.paddingLg),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Map preview ──────────────────────────────────────────
-                if (ride.mapSnapshotPath != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    child: Image.file(File(ride.mapSnapshotPath!),
-                        height: 200, width: double.infinity, fit: BoxFit.cover),
-                  )
-                else if (_polylineLoaded)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    child: SizedBox(
-                      height: 200,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: startCenter,
-                          initialZoom: _polyline.length > 1 ? 13 : 15,
-                          interactionOptions: const InteractionOptions(
-                            flags: InteractiveFlag.none,
-                          ),
+                // ── Black "nice ride" header ─────────────────────────────
+                InkPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name != null ? 'Nice ride, $name!' : 'Nice ride!',
+                          style: display(24, color: AppColors.onInk)),
+                      const SizedBox(height: 4),
+                      Text(_formatDate(ride.startTime),
+                          style: const TextStyle(
+                              fontSize: 13, color: AppColors.onInkMuted)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ── 4-stat row ───────────────────────────────────────────
+                EditorialCard(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: StatCell(
+                          value: ride.distanceKm.toStringAsFixed(1),
+                          label: 'km',
+                          align: CrossAxisAlignment.center,
+                          valueSize: 20,
                         ),
+                      ),
+                      _vDivider(),
+                      Expanded(
+                        child: StatCell(
+                          value: SpeedFormatter.durationFromSeconds(
+                              ride.durationSeconds ?? 0),
+                          label: 'moving',
+                          align: CrossAxisAlignment.center,
+                          valueSize: 20,
+                        ),
+                      ),
+                      _vDivider(),
+                      Expanded(
+                        child: StatCell(
+                          value: ride.avgSpeedKmh.toStringAsFixed(0),
+                          label: 'avg',
+                          align: CrossAxisAlignment.center,
+                          valueSize: 20,
+                        ),
+                      ),
+                      _vDivider(),
+                      Expanded(
+                        child: StatCell(
+                          value: ride.maxSpeedKmh.toStringAsFixed(0),
+                          label: 'max',
+                          align: CrossAxisAlignment.center,
+                          valueSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Score tile + rating ──────────────────────────────────
+                IntrinsicHeight(
+                  child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    InkPanel(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.throttleiq.throttleiq',
-                          ),
-                          if (_polyline.length > 1)
-                            PolylineLayer(
-                              polylines: [
-                                Polyline(
-                                  points: _polyline,
-                                  color: AppColors.primary,
-                                  strokeWidth: 4,
-                                ),
-                              ],
-                            ),
-                          if (_polyline.isNotEmpty)
-                            MarkerLayer(
-                              markers: [
-                                Marker(
-                                  point: _polyline.first,
-                                  width: 16,
-                                  height: 16,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: AppColors.success,
-                                      border: Border.all(color: Colors.white, width: 2),
-                                    ),
-                                  ),
-                                ),
-                                if (_polyline.length > 1)
-                                  Marker(
-                                    point: _polyline.last,
-                                    width: 16,
-                                    height: 16,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: AppColors.danger,
-                                        border: Border.all(color: Colors.white, width: 2),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
+                          Text('$score',
+                              style: display(34, color: AppColors.onInk)),
+                          Text(scoreLabel.toUpperCase(),
+                              style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: AppColors.onInkMuted)),
                         ],
                       ),
                     ),
-                  )
-                else
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  ),
-
-                const SizedBox(height: 20),
-
-                // ── Date & title ─────────────────────────────────────────
-                Text(
-                  _formatDate(ride.startTime),
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Ride Complete',
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── Core stats grid ──────────────────────────────────────
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.5,
-                  children: [
-                    StatCard(
-                      label: 'Distance',
-                      value: ride.distanceKm.toStringAsFixed(2),
-                      unit: 'km',
-                      icon: Icons.route,
-                      isPrimary: true,
-                    ),
-                    StatCard(
-                      label: 'Duration',
-                      value: SpeedFormatter.durationFromSeconds(
-                          ride.durationSeconds ?? 0),
-                      icon: Icons.timer_outlined,
-                    ),
-                    StatCard(
-                      label: 'Avg Speed',
-                      value: ride.avgSpeedKmh.toStringAsFixed(0),
-                      unit: 'km/h',
-                      icon: Icons.speed,
-                      isPrimary: true,
-                    ),
-                    StatCard(
-                      label: 'Max Speed',
-                      value: ride.maxSpeedKmh.toStringAsFixed(0),
-                      unit: 'km/h',
-                      icon: Icons.rocket_launch_outlined,
-                      valueColor:
-                          ride.maxSpeedKmh > 100 ? AppColors.warning : null,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: EditorialCard(
+                        padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const EditorialLabel('Riding score'),
+                            const SizedBox(height: 6),
+                            Text(scoreLabel,
+                                style: display(18, letterSpacing: 0, color: scoreColor)),
+                            const SizedBox(height: 2),
+                            const Text('out of 100',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.textSecondary)),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
+                ),
+                const SizedBox(height: 12),
 
+                // ── Events ───────────────────────────────────────────────
+                EditorialCard(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: StatCell(
+                          value: '${ride.hardBrakeCount}',
+                          label: 'hard brakes',
+                          align: CrossAxisAlignment.center,
+                          valueColor:
+                              ride.hardBrakeCount > 0 ? AppColors.danger : null,
+                          valueSize: 20,
+                        ),
+                      ),
+                      _vDivider(),
+                      Expanded(
+                        child: StatCell(
+                          value: '${ride.rapidAccelCount}',
+                          label: 'rapid accel',
+                          align: CrossAxisAlignment.center,
+                          valueColor: ride.rapidAccelCount > 0
+                              ? AppColors.attention
+                              : null,
+                          valueSize: 20,
+                        ),
+                      ),
+                      _vDivider(),
+                      Expanded(
+                        child: StatCell(
+                          value: '${ride.highJerkCount}',
+                          label: 'high jerk',
+                          align: CrossAxisAlignment.center,
+                          valueColor:
+                              ride.highJerkCount > 0 ? AppColors.attention : null,
+                          valueSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ── Map ──────────────────────────────────────────────────
+                const EditorialLabel('Route'),
+                const SizedBox(height: 10),
+                _buildMap(ride, startCenter),
                 const SizedBox(height: 20),
 
-                // ── Riding events ────────────────────────────────────────
-                const Text('Riding Events',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
+                // ── Actions ──────────────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => context.go('/home/record'),
+                        child: const Text('Save & done'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: (_sharing || _shared || !_polylineLoaded)
+                            ? null
+                            : () => _shareRide(ride),
+                        icon: _sharing
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: AppColors.textPrimary),
+                              )
+                            : Icon(_shared ? Icons.check_circle : Icons.public,
+                                size: 18),
+                        label: Text(_shared ? 'Shared' : 'Share'),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
-                      child: _EventCard(
-                        icon: Icons.warning_amber,
-                        color: AppColors.danger,
-                        label: 'Hard Brakes',
-                        count: ride.hardBrakeCount,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _EventCard(
-                        icon: Icons.bolt,
-                        color: AppColors.secondary,
-                        label: 'Rapid Accel',
-                        count: ride.rapidAccelCount,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _EventCard(
-                        icon: Icons.vibration,
-                        color: AppColors.warning,
-                        label: 'High Jerk',
-                        count: ride.highJerkCount,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── Riding score ─────────────────────────────────────────
-                _RidingScoreCard(
-                  hardBrakes: ride.hardBrakeCount,
-                  rapidAccel: ride.rapidAccelCount,
-                  highJerk: ride.highJerkCount,
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── Export ───────────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
+                      child: TextButton.icon(
                         onPressed: () => _exportRide(ride, gpx: false),
                         icon: const Icon(Icons.data_object, size: 18),
                         label: const Text('Export JSON'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: TextButton.icon(
                         onPressed: () => _exportRide(ride, gpx: true),
                         icon: const Icon(Icons.route, size: 18),
                         label: const Text('Export GPX'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                        ),
                       ),
                     ),
                   ],
-                ),
-
-                const SizedBox(height: 12),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: (_sharing || _shared || !_polylineLoaded)
-                        ? null
-                        : () => _shareRide(ride),
-                    icon: _sharing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                          )
-                        : Icon(_shared ? Icons.check_circle : Icons.public, size: 18),
-                    label: Text(_shared ? 'Shared to Feed' : 'Share this ride'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/home/record'),
-                    child: const Text('Done'),
-                  ),
                 ),
               ],
             ),
@@ -344,9 +315,89 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     );
   }
 
+  Widget _vDivider() =>
+      Container(width: 1, height: 34, color: AppColors.border);
+
+  Widget _buildMap(RideEntity ride, LatLng startCenter) {
+    if (ride.mapSnapshotPath != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        child: Image.file(File(ride.mapSnapshotPath!),
+            height: 200, width: double.infinity, fit: BoxFit.cover),
+      );
+    }
+    if (!_polylineLoaded) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      child: SizedBox(
+        height: 200,
+        child: FlutterMap(
+          options: MapOptions(
+            initialCenter: startCenter,
+            initialZoom: _polyline.length > 1 ? 13 : 15,
+            interactionOptions:
+                const InteractionOptions(flags: InteractiveFlag.none),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.throttleiq.throttleiq',
+            ),
+            if (_polyline.length > 1)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                      points: _polyline, color: AppColors.primary, strokeWidth: 4),
+                ],
+              ),
+            if (_polyline.isNotEmpty)
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: _polyline.first,
+                    width: 16,
+                    height: 16,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.success,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                  if (_polyline.length > 1)
+                    Marker(
+                      point: _polyline.last,
+                      width: 16,
+                      height: 16,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.danger,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _exportRide(RideEntity ride, {required bool gpx}) async {
     final service = ExportService();
-    // Map keys match what ExportService/_generateGPX read.
     final rideMap = {
       'id': ride.id,
       'startTime': ride.startTime.toIso8601String(),
@@ -369,10 +420,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       );
       return;
     }
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      subject: 'ThrottleIQ ride export',
-    );
+    await Share.shareXFiles([XFile(file.path)], subject: 'ThrottleIQ ride export');
   }
 
   Future<void> _shareRide(RideEntity ride) async {
@@ -424,112 +472,5 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${weekdays[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year} · '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _EventCard extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final int count;
-
-  const _EventCard({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.count,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text('$count',
-              style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.w700, color: color)),
-          const SizedBox(height: 2),
-          Text(label,
-              textAlign: TextAlign.center,
-              style:
-                  const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
-}
-
-class _RidingScoreCard extends StatelessWidget {
-  final int hardBrakes;
-  final int rapidAccel;
-  final int highJerk;
-
-  const _RidingScoreCard({
-    required this.hardBrakes,
-    required this.rapidAccel,
-    required this.highJerk,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final score = computeRidingScore(
-      hardBrakes: hardBrakes,
-      rapidAccel: rapidAccel,
-      highJerk: highJerk,
-    );
-    final color = score >= 80
-        ? AppColors.success
-        : score >= 60
-            ? AppColors.warning
-            : AppColors.danger;
-    final label =
-        score >= 80 ? 'Smooth Rider' : score >= 60 ? 'Average' : 'Aggressive';
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Riding Score',
-                    style: TextStyle(
-                        fontSize: 14, color: AppColors.textSecondary)),
-                const SizedBox(height: 4),
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: color)),
-              ],
-            ),
-          ),
-          Text(
-            '$score',
-            style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w800,
-                color: color,
-                letterSpacing: -2),
-          ),
-          const Text('/100',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-        ],
-      ),
-    );
   }
 }
