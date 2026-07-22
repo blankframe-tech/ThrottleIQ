@@ -1,19 +1,29 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../providers/ride_recording_provider.dart';
 
 class RecordScreen extends ConsumerWidget {
   const RecordScreen({super.key});
 
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
+    final name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
 
     // If actively recording, push to active ride screen
     if (rideState.status == RecordingStatus.active ||
@@ -25,41 +35,91 @@ class RecordScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Record Ride'),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/settings'),
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
+              AppDimensions.paddingMd, AppDimensions.paddingLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Active bike card
-              if (activeBike != null) ...[
-                Container(
+              // Top row: settings only (editorial has no chrome title here)
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => context.push('/settings'),
+                  icon: const Icon(Icons.settings_outlined),
+                  tooltip: 'Settings',
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Black hero panel
+              InkPanel(
+                padding: const EdgeInsets.symmetric(vertical: 44, horizontal: 24),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 76,
+                      height: 76,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.onInk, width: 2),
+                      ),
+                      child: const Icon(Icons.speed, color: AppColors.onInk, size: 34),
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Your ride,',
+                        textAlign: TextAlign.center,
+                        style: display(30, color: AppColors.onInk, height: 1.1)),
+                    Text('smarter.',
+                        textAlign: TextAlign.center,
+                        style: display(30, color: AppColors.onInk, height: 1.1)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Greeting card
+              EditorialCard(
+                padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_greeting(),
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppColors.textSecondary)),
+                          const SizedBox(height: 2),
+                          Text(name ?? 'Rider', style: display(22)),
+                        ],
+                      ),
+                    ),
+                    if (activeBike != null && activeBike.rideCount > 0)
+                      EditorialPill('${activeBike.rideCount} rides',
+                          tone: PillTone.accent),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Bike card / no-bike warning
+              if (activeBike != null)
+                EditorialCard(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.4)),
-                  ),
+                  onTap: () => context.go('/home/garage'),
                   child: Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                         ),
-                        child: const Icon(Icons.two_wheeler, color: AppColors.primary, size: 22),
+                        child: const Icon(Icons.two_wheeler,
+                            color: AppColors.textPrimary, size: 24),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -67,40 +127,34 @@ class RecordScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(activeBike.displayName,
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary)),
-                            if (activeBike.cc != null)
-                              Text('${activeBike.cc}cc',
-                                  style: const TextStyle(
-                                      fontSize: 12, color: AppColors.textSecondary)),
+                                style: display(16, letterSpacing: 0)),
+                            const SizedBox(height: 2),
+                            const Text('Ready to ride',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.textSecondary)),
                           ],
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => context.go('/home/garage'),
-                        child: const Text('Change',
-                            style: TextStyle(fontSize: 13, color: AppColors.primary)),
-                      ),
+                      const Text('Change',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary)),
                     ],
                   ),
-                ),
-              ] else ...[
-                Container(
+                )
+              else
+                EditorialCard(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    border: Border.all(color: AppColors.warning.withOpacity(0.4)),
-                  ),
+                  borderColor: AppColors.attention,
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_outlined, color: AppColors.warning),
+                      const Icon(Icons.warning_amber_rounded,
+                          color: AppColors.attention),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text('No active bike selected',
-                            style: TextStyle(color: AppColors.warning)),
+                            style: TextStyle(color: AppColors.textPrimary)),
                       ),
                       TextButton(
                         onPressed: () => context.go('/home/garage/add'),
@@ -109,62 +163,56 @@ class RecordScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-              ],
+              const SizedBox(height: 12),
 
-              const Spacer(),
-
-              // Recent rides summary
-              if (activeBike != null) ...[
+              // Stat chips
+              if (activeBike != null)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _QuickStat(
-                      value: SpeedFormatter.distanceKm(activeBike.totalDistanceM),
-                      label: 'Total km',
+                    Expanded(
+                      child: _StatChip(
+                        value: SpeedFormatter.distanceKm(activeBike.totalDistanceM),
+                        label: 'total km',
+                      ),
                     ),
-                    Container(width: 1, height: 36, color: AppColors.border),
-                    _QuickStat(
-                      value: '${activeBike.rideCount}',
-                      label: 'Rides',
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatChip(
+                        value: '${activeBike.rideCount}',
+                        label: 'rides',
+                      ),
                     ),
-                    Container(width: 1, height: 36, color: AppColors.border),
-                    _QuickStat(
-                      value: activeBike.lastRideAt != null
-                          ? '${DateTime.now().difference(activeBike.lastRideAt!).inDays}d'
-                          : '—',
-                      label: 'Last ride',
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatChip(
+                        value: activeBike.lastRideAt != null
+                            ? '${DateTime.now().difference(activeBike.lastRideAt!).inDays}d'
+                            : '—',
+                        label: 'last ride',
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-              ],
+              const SizedBox(height: 24),
 
-              // Hold to start button
-              Center(child: _HoldToStartButton(enabled: activeBike != null)),
-              const SizedBox(height: 16),
+              // Start ride (hold) button
+              _HoldToStartButton(enabled: activeBike != null),
+              const SizedBox(height: 10),
               const Center(
-                child: Text(
-                  'Hold to start recording',
-                  style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
-                ),
+                child: Text('Hold to start recording',
+                    style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
               ),
 
               if (rideState.error != null) ...[
                 const SizedBox(height: 16),
-                Container(
+                EditorialCard(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    border: Border.all(color: AppColors.danger.withOpacity(0.3)),
-                  ),
+                  borderColor: AppColors.danger,
                   child: Text(rideState.error!,
                       style: const TextStyle(color: AppColors.danger, fontSize: 13),
                       textAlign: TextAlign.center),
                 ),
               ],
-
-              const Spacer(),
             ],
           ),
         ),
@@ -173,22 +221,24 @@ class RecordScreen extends ConsumerWidget {
   }
 }
 
-class _QuickStat extends StatelessWidget {
+class _StatChip extends StatelessWidget {
   final String value;
   final String label;
-  const _QuickStat({required this.value, required this.label});
+  const _StatChip({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
-        const SizedBox(height: 2),
-        Text(label,
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-      ],
+    return EditorialCard(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, style: display(20)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        ],
+      ),
     );
   }
 }
@@ -204,16 +254,12 @@ class _HoldToStartButton extends ConsumerStatefulWidget {
 class _HoldToStartButtonState extends ConsumerState<_HoldToStartButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
-  late Animation<double> _scaleAnim;
   bool _holding = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.12).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _ctrl.addStatusListener((status) {
       if (status == AnimationStatus.completed && _holding) {
         _triggerStart();
@@ -230,6 +276,13 @@ class _HoldToStartButtonState extends ConsumerState<_HoldToStartButton>
     }
   }
 
+  void _cancel() {
+    if (_holding) {
+      setState(() => _holding = false);
+      _ctrl.reset();
+    }
+  }
+
   @override
   void dispose() {
     _ctrl.dispose();
@@ -238,88 +291,58 @@ class _HoldToStartButtonState extends ConsumerState<_HoldToStartButton>
 
   @override
   Widget build(BuildContext context) {
-    final isStarting = ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
+    final isStarting =
+        ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
+    final enabled = widget.enabled && !isStarting;
 
     return GestureDetector(
-      onLongPressStart: widget.enabled
+      onLongPressStart: enabled
           ? (_) {
               setState(() => _holding = true);
               _ctrl.forward();
             }
           : null,
-      onLongPressEnd: (_) {
-        if (_holding) {
-          setState(() => _holding = false);
-          _ctrl.reset();
-        }
-      },
-      onLongPressCancel: () {
-        if (_holding) {
-          setState(() => _holding = false);
-          _ctrl.reset();
-        }
-      },
-      child: AnimatedBuilder(
-        animation: _scaleAnim,
-        builder: (_, child) => Transform.scale(scale: _scaleAnim.value, child: child),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Pulse ring
-            if (_holding)
+      onLongPressEnd: (_) => _cancel(),
+      onLongPressCancel: _cancel,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: SizedBox(
+          height: 60,
+          child: Stack(
+            children: [
+              Container(
+                color: enabled ? AppColors.ink : AppColors.textTertiary,
+              ),
+              // hold progress fill
               AnimatedBuilder(
                 animation: _ctrl,
-                builder: (_, __) => Container(
-                  width: 160 + _ctrl.value * 30,
-                  height: 160 + _ctrl.value * 30,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3 * (1 - _ctrl.value)),
-                      width: 2,
-                    ),
-                  ),
+                builder: (_, __) => FractionallySizedBox(
+                  widthFactor: _ctrl.value,
+                  alignment: Alignment.centerLeft,
+                  child: Container(color: AppColors.primary),
                 ),
               ),
-            // Main button
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.enabled
-                    ? (_holding ? AppColors.primaryDark : AppColors.primary)
-                    : AppColors.textTertiary,
-                boxShadow: widget.enabled
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(_holding ? 0.6 : 0.3),
-                          blurRadius: _holding ? 30 : 16,
-                          spreadRadius: _holding ? 4 : 0,
-                        ),
-                      ]
-                    : null,
+              Center(
+                child: isStarting
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5))
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_holding ? 'Keep holding…' : 'Start Ride',
+                              style: display(17,
+                                  color: AppColors.onInk, letterSpacing: 0.2)),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward,
+                              color: AppColors.onInk, size: 20),
+                        ],
+                      ),
               ),
-              child: isStarting
-                  ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.radio_button_checked,
-                            color: Colors.white, size: 36),
-                        const SizedBox(height: 6),
-                        Text(
-                          _holding ? 'Starting...' : 'HOLD',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.2),
-                        ),
-                      ],
-                    ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

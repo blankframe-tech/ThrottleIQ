@@ -19,18 +19,24 @@ class AppColors {
   static const Color border = Color(0xFFE8E5DF); // warm hairline
   static const Color surfaceVariant = Color(0xFFF0EEE9); // subtle fill
 
-  // Primary (Orange) — attention / action
-  static const Color primary = Color(0xFFF2703C);
-  static const Color primaryHighlight = Color(0xFFF58C5F);
-  static const Color primaryDark = Color(0xFFD8551F);
+  // Ink — bold black panels (hero, headers, icon tiles)
+  static const Color ink = Color(0xFF121212);
+  static const Color onInk = Color(0xFFF4F1EC); // paper text on ink
+  static const Color onInkMuted = Color(0xFFB0B0B0);
 
-  // Secondary (Blue) — minimal accent
-  static const Color secondary = Color(0xFF3B6CF6);
-  static const Color secondaryLight = Color(0xFF6B90F8);
+  // Primary (Blue) — the main accent "pop" (badges, scores, chart lines, CTAs)
+  static const Color primary = Color(0xFF3B6CF6);
+  static const Color primaryHighlight = Color(0xFF6B90F8);
+  static const Color primaryDark = Color(0xFF2952C8);
+
+  // Secondary / attention (Orange) — coaching + warnings
+  static const Color secondary = Color(0xFFF2703C);
+  static const Color secondaryLight = Color(0xFFF58C5F);
+  static const Color attention = Color(0xFFF2703C);
 
   // Status
   static const Color success = Color(0xFF1AA568);
-  static const Color warning = Color(0xFFE8A13B);
+  static const Color warning = Color(0xFFF2703C); // attention orange
   static const Color danger = Color(0xFFE5484D);
 
   // Text — ink on paper

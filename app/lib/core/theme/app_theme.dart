@@ -7,8 +7,8 @@ import '../constants/app_dimensions.dart';
 class AppTheme {
   AppTheme._();
 
-  /// Editorial BW theme — light warm paper, ink text, orange action accent,
-  /// minimal blue accent. Display/heading type uses Space Grotesk; body uses
+  /// Editorial BW theme — light warm paper, ink text, blue accent "pop" and
+  /// orange attention. Display/heading type uses Space Grotesk; body uses
   /// Inter.
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
@@ -72,7 +72,7 @@ class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
         margin: EdgeInsets.zero,
@@ -104,7 +104,7 @@ class AppTheme {
         hintStyle: const TextStyle(color: AppColors.textTertiary),
         labelStyle: const TextStyle(color: AppColors.textSecondary),
       ),
-      // Primary action = orange (attention).
+      // Primary action = blue accent pop.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -137,9 +137,9 @@ class AppTheme {
           ),
         ),
       ),
-      // Links = minimal blue accent.
+      // Links = blue accent.
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.secondary),
+        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
