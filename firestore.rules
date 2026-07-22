@@ -1,9 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profiles - users can read/write their own profile
+    // Whether the requester may see a shared-ride document, given its data.
+    // Used by the ride read rule, the like/comment counter-bump rule, and the
+    // likes/comments subcollection reads so the three stay in lockstep.
+    // Public → anyone authed; followers/mutual → only uids materialized into
+    // allowedUserIds at share time; always the author.
+    function rideVisibleTo(ride) {
+      return request.auth != null && (
+        request.auth.uid == ride.userId ||
+        ride.audience == 'public' ||
+        (ride.audience in ['followers', 'mutual'] &&
+          request.auth.uid in ride.allowedUserIds));
+    }
+
+    // User profiles.
+    //
+    // The root profile DOCUMENT is now readable by any authenticated user —
+    // riders are found by @username prefix / exact email and followed, which
+    // requires cross-user profile reads (see ProfileRepository.searchBy*). The
+    // root doc holds only public-facing fields (displayName, username,
+    // nickname, bio, photoUrl, email — email exposure is intentional, the user
+    // explicitly wants find-by-email). Writes stay owner-only, and every
+    // subcollection below (rides/bikes/maintenance/emergencyContacts/...)
+    // keeps its own owner-only rule, so opening the root doc does not expose
+    // any of them.
     match /users/{uid} {
-      allow read, write: if request.auth.uid == uid;
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == uid;
 
       // User rides subcollection
       match /rides/{rideId} {
@@ -49,38 +73,63 @@ service cloud.firestore {
       allow read: if request.auth.uid == resource.data.uid;
     }
 
-    // Shared/public rides (Social feed) — top-level collection
+    // Shared/public rides (Social feed) — top-level collection.
+    //
+    // Visibility is governed by an `audience` field ∈ {public, followers,
+    // mutual}. Because Firestore rules are NOT query filters — a list query
+    // whose rule needs a per-doc exists()/get() lookup is rejected wholesale —
+    // followers/mutual visibility is materialized at SHARE time into the
+    // `allowedUserIds` array (the author's follower/mutual uids), and the feed
+    // reads it with `where('allowedUserIds', arrayContains: myUid)`. Each of
+    // the three real feed queries lines up with exactly one clause below
+    // (audience=='public' | allowedUserIds array-contains me | userId==me), so
+    // every query is satisfiable without a rule-side document lookup.
     match /rides/{rideId} {
-      allow read: if request.auth != null &&
-        (resource.data.isPrivate == false || request.auth.uid == resource.data.userId);
+      allow read: if rideVisibleTo(resource.data);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       // Owner can update/delete the ride freely, but may not reassign
       // authorship (userId is immutable on this branch).
       allow update: if request.auth != null && resource.data.userId == request.auth.uid &&
         request.resource.data.userId == resource.data.userId;
-      // Any authenticated user who can read the ride (public, or their own)
-      // may bump the like/comment counters by exactly one, via the
-      // like/comment actions, but cannot touch any other field or set an
-      // arbitrary value.
-      allow update: if request.auth != null &&
-        (resource.data.isPrivate == false || request.auth.uid == resource.data.userId) &&
+      // Any authenticated user who can see the ride may bump the engagement
+      // counters, but cannot touch any other field or set an arbitrary value.
+      // Three disjoint shapes:
+      //   - likes: ±1 (legacy heart; kept for back-compat)
+      //   - comments: +1
+      //   - upvotes/downvotes: each moves within ±1. Both may change in one
+      //     write (flipping a downvote to an upvote is upvotes+1 & downvotes-1
+      //     in a single transaction), so this is bounded per-field rather than
+      //     to a single affected key. A voter can only ever nudge each tally by
+      //     one, never set an arbitrary total — same guarantee as the ±1 like
+      //     rule, extended to the two vote tallies. The net score is derived
+      //     client-side (upvotes - downvotes); it is deliberately not stored,
+      //     so there is no orderable score field to spoof.
+      allow update: if request.auth != null && rideVisibleTo(resource.data) &&
         ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) &&
           (request.resource.data.likes == resource.data.likes + 1 ||
            request.resource.data.likes == resource.data.likes - 1)) ||
          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments']) &&
-          request.resource.data.comments == resource.data.comments + 1));
+          request.resource.data.comments == resource.data.comments + 1) ||
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
+          request.resource.data.upvotes >= resource.data.upvotes - 1 &&
+          request.resource.data.upvotes <= resource.data.upvotes + 1 &&
+          request.resource.data.downvotes >= resource.data.downvotes - 1 &&
+          request.resource.data.downvotes <= resource.data.downvotes + 1));
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
       match /likes/{userId} {
-        allow read: if request.auth != null &&
-          (get(/databases/$(database)/documents/rides/$(rideId)).data.isPrivate == false ||
-           request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.userId);
+        allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
         allow write: if request.auth != null && request.auth.uid == userId;
       }
+      // One vote doc per user: { value: 1 | -1 }.
+      match /votes/{userId} {
+        allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
+        allow write: if request.auth != null && request.auth.uid == userId &&
+          (request.method == 'delete' ||
+           request.resource.data.value == 1 || request.resource.data.value == -1);
+      }
       match /comments/{commentId} {
-        allow read: if request.auth != null &&
-          (get(/databases/$(database)/documents/rides/$(rideId)).data.isPrivate == false ||
-           request.auth.uid == get(/databases/$(database)/documents/rides/$(rideId)).data.userId);
+        allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       }
     }
@@ -279,6 +328,36 @@ service cloud.firestore {
       // rule) is built. This absence is also load-bearing for the
       // deterministic-id create rule above: a second `create` attempt at
       // an existing id has nowhere else to go but that catch-all.
+    }
+
+    // Username reservations — `usernames/{handleLower}` → { uid }. Makes
+    // @handles globally unique and gives a cheap handle→uid lookup. A rider
+    // can only ever claim a free handle for themselves (create requires the
+    // doc not exist and uid==self), keep their own (update with uid
+    // unchanged), or release their own (delete). There is no way to overwrite
+    // someone else's handle.
+    match /usernames/{handle} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Follow graph — one edge doc per (follower → followee) at
+    // `follows/{followerUid}_{followeeUid}`. The composite id pins a rider to
+    // only ever creating/deleting edges they originate (mirrors the
+    // forum_follows / reviews deterministic-id pattern). Reads are open to
+    // authed users so follower/following lists and mutual-friend computation
+    // work. Counts are derived via count() aggregation — no counter to spoof.
+    match /follows/{edgeId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.followerUid == request.auth.uid &&
+        edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid);
+      allow delete: if request.auth != null && resource.data.followerUid == request.auth.uid;
     }
 
     // Deny all other access
