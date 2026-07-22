@@ -22,6 +22,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   final _modelCtrl = TextEditingController();
   final _yearCtrl = TextEditingController();
   final _ccCtrl = TextEditingController();
+  final _odometerCtrl = TextEditingController();
   String? _imagePath;
   bool _loading = false;
   BikeEntity? _existingBike;
@@ -42,6 +43,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       _modelCtrl.text = _existingBike!.model;
       _yearCtrl.text = _existingBike!.year?.toString() ?? '';
       _ccCtrl.text = _existingBike!.cc?.toString() ?? '';
+      _odometerCtrl.text = _existingBike!.odometerKm?.toString() ?? '';
       _imagePath = _existingBike!.imagePath;
       setState(() {});
     }
@@ -65,6 +67,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               year: int.tryParse(_yearCtrl.text),
               cc: int.tryParse(_ccCtrl.text),
               imagePath: _imagePath,
+              odometerKm: double.tryParse(_odometerCtrl.text),
             ),
           );
     } else {
@@ -74,6 +77,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             year: int.tryParse(_yearCtrl.text),
             cc: int.tryParse(_ccCtrl.text),
             imagePath: _imagePath,
+            odometerKm: double.tryParse(_odometerCtrl.text),
           );
     }
 
@@ -86,6 +90,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     _modelCtrl.dispose();
     _yearCtrl.dispose();
     _ccCtrl.dispose();
+    _odometerCtrl.dispose();
     super.dispose();
   }
 
@@ -173,6 +178,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _odometerCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                    labelText: 'Odometer reading (km)', hintText: '12000'),
               ),
               const SizedBox(height: 32),
               ElevatedButton(

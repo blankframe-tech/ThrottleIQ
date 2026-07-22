@@ -15,6 +15,7 @@ class BikeModel {
         lastRideAt: m['last_ride_at'] != null
             ? DateTime.parse(m['last_ride_at'] as String)
             : null,
+        odometerKm: (m['odometer_km'] as num?)?.toDouble(),
         createdAt: DateTime.parse(m['created_at'] as String),
       );
 
@@ -30,6 +31,7 @@ class BikeModel {
         'total_distance_m': e.totalDistanceM,
         'ride_count': e.rideCount,
         'last_ride_at': e.lastRideAt?.toIso8601String(),
+        'odometer_km': e.odometerKm,
         'synced': 0,
         'created_at': e.createdAt.toIso8601String(),
       };

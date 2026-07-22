@@ -23,11 +23,12 @@ to resume with zero prior conversation context.
   Android** — the package rename intentionally breaks the Gradle build until
   fresh Firebase config lands (see §1). Everything here is `flutter analyze`
   clean but **not runtime-tested**.
-- Four epics complete on this branch: **package rename (code side)**,
+- Five epics complete on this branch: **package rename (code side)**,
   **Phase A (profile + follow backend + share-bug fix)**, **Epic B (social
-  UI: share screen, feed rework, voting)**, and **Epic C (forums: slug fix,
-  general topics, list UI, post voting, avatars)**.
-- **8 epics remain** (§5). Build order is dependency-first. §1 (Firebase
+  UI: share screen, feed rework, voting)**, **Epic C (forums: slug fix,
+  general topics, list UI, post voting, avatars)**, and **Epic D (garage:
+  odometer, add-bike placement, user menu + profile edit, per-bike service)**.
+- **7 epics remain** (§5). Build order is dependency-first. §1 (Firebase
   reconfig) is still open — confirmed still blocked as of this session:
   `google-services.json` still has the old package name, though
   `GoogleService-Info.plist` has already been updated to the new bundle id.
@@ -235,17 +236,34 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
   now takes it). Also swapped the rider-search tile in `social_screen.dart`
   (Epic B) onto the same widget instead of its ad hoc `CircleAvatar`.
 
-### D. Garage / Service — ⬜
-- **Odometer** optional field on add-bike: new `odometerKm` on `BikeEntity` +
-  `bike_model.dart` + `bikes` table column → **DB migration v4→v5** in
-  `database_helper.dart` `_onUpgrade`; add form field + `addBike` param.
-- **Move "add bike"** below the bike list (currently top round `_InkAddButton`).
-- **Top round "+" → user menu** (avatar/menu opening the profile edit + "my
-  places"). Repurpose `garage_screen.dart` header.
-- **Service moves INTO garage**: a button per bike card; parameterize
-  `MaintenanceScreen` by `bikeId` (currently hard-wired to `activeBikeProvider`)
-  or `setActiveBike` before navigating. Service page to match the design HTML's
-  service page. This frees the bottom-nav "Service" slot for Places (Epic E).
+### D. Garage / Service — ✅ done, analyze-clean (not runtime-tested)
+- **Odometer**: `odometerKm` (nullable) on `BikeEntity`/`BikeModel`/`bikes`
+  table, DB **migration v4→v5** in `database_helper.dart` (`_onUpgrade` +
+  `_onCreate` both updated), optional form field in `AddEditBikeScreen`.
+  `BikeEntity.currentOdometerKm` = baseline + GPS-tracked `totalDistanceKm` —
+  `maintenance_provider.dart`'s reminder math and `maintenance_screen.dart`'s
+  header now use it instead of raw `totalDistanceKm` (the actual bug: a bike
+  with real prior mileage reported intervals from zero). `bike_detail_screen.dart`
+  shows it as its own stat card alongside (not replacing) Total Distance.
+- **"Add bike" moved below the list**: extracted the maintenance screen's
+  dashed-button look into a shared `DashedAddButton`
+  (`shared/widgets/editorial.dart`), used at the end of the bike list (and in
+  the empty state) — the old top-right round `_InkAddButton` is gone.
+- **Header "+" → user menu**: `garage_screen.dart`'s header now shows a
+  `UserAvatar` (from `myProfileProvider`, wired since Phase A but never
+  consumed by any screen) that opens a menu sheet with **Edit Profile**. New
+  `EditProfileScreen` (route `/profile/edit`) is the first UI for
+  `ProfileRepository`'s `updateProfile`/`setUsername`/`uploadAvatar` — none
+  of that had a screen before this. Scope note: the doc's "+ my places" is
+  left for Epic E to add to this same menu (owned-places derivation is
+  explicitly that epic's deliverable — building a placeholder now would
+  duplicate it).
+- **Service moves into garage**: `MaintenanceScreen` takes an optional
+  `bikeId`, falling back to `activeBikeProvider` when absent (bottom-nav tab
+  behavior unchanged — Epic E removes that tab). `garage_screen.dart`'s
+  "Tap for maintenance" now passes its own bike's id
+  (`/home/maintenance?bikeId=...`) instead of silently showing whichever bike
+  happened to be active.
 
 ### E. Nav + Places — ⬜
 - **Bottom nav**: drop **Service** tab, add **Places** tab; rename **Insights →
@@ -307,5 +325,8 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
    B — first deploy for that one).
 4. Build to verify: `flutter run` (sim) or the signed release APK flow (JAVA_HOME
    = Android Studio JBR, key.properties present).
-5. Continue at **Epic D** (§5). Commit per epic on `feat/v2-social`; do not push
-   until asked; keep `main` releasable.
+5. Continue at **Epic E** (§5). Commit per epic on `feat/v2-social`; do not push
+   until asked; keep `main` releasable. Note: Epic D bumped the local SQLite
+   schema to v5 (`bikes.odometer_km`) — no Firebase deploy involved, but a
+   device upgrading from an older installed build exercises `_onUpgrade`,
+   not `_onCreate`, so that path is worth a real device check once builds work.

@@ -95,6 +95,13 @@ class BikeDetailScreen extends ConsumerWidget {
                   valueColor: AppColors.primaryHighlight,
                   isPrimary: true,
                 ),
+                if (bike.odometerKm != null)
+                  StatCard(
+                    label: 'Odometer',
+                    value: bike.currentOdometerKm.toStringAsFixed(0),
+                    unit: 'km',
+                    icon: Icons.speed_outlined,
+                  ),
                 if (bike.cc != null)
                   StatCard(label: 'Engine', value: '${bike.cc}', unit: 'cc', icon: Icons.settings),
                 if (bike.year != null)

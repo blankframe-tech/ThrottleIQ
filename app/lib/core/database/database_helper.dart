@@ -27,7 +27,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -84,6 +84,9 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE bikes ADD COLUMN odometer_km REAL');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -100,6 +103,7 @@ class DatabaseHelper {
         total_distance_m REAL NOT NULL DEFAULT 0,
         ride_count INTEGER NOT NULL DEFAULT 0,
         last_ride_at TEXT,
+        odometer_km REAL,
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )

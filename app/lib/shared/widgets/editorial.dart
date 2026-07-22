@@ -245,6 +245,37 @@ class StatCell extends StatelessWidget {
   }
 }
 
+/// Dashed-look outlined "+ label" button (log a service, add a bike).
+class DashedAddButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const DashedAddButton({super.key, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.6)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(label,
+                style: display(14, letterSpacing: 0, color: AppColors.primary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Thin rounded progress bar (checking-in, maintenance interval).
 class EditorialProgress extends StatelessWidget {
   final double value; // 0..1

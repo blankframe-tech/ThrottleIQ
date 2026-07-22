@@ -9,11 +9,20 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/entities/maintenance_entity.dart';
 
 class MaintenanceScreen extends ConsumerWidget {
-  const MaintenanceScreen({super.key});
+  /// The bike to show service history/reminders for. Falls back to the
+  /// active bike when null — preserves the bottom-nav "Service" tab's
+  /// existing behavior while letting a specific bike card in the garage
+  /// (which knows its own id) open that bike's maintenance instead of
+  /// whichever bike happens to be active.
+  final String? bikeId;
+  const MaintenanceScreen({super.key, this.bikeId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeBike = ref.watch(activeBikeProvider);
+    final bikes = ref.watch(garageProvider).valueOrNull ?? [];
+    final activeBike = bikeId != null
+        ? bikes.where((b) => b.id == bikeId).firstOrNull
+        : ref.watch(activeBikeProvider);
 
     if (activeBike == null) {
       return Scaffold(
@@ -49,7 +58,7 @@ class MaintenanceScreen extends ConsumerWidget {
               Text('Maintenance', style: display(28)),
               const SizedBox(height: 4),
               Text(
-                '${activeBike.displayName} · ${activeBike.totalDistanceKm.toStringAsFixed(0)} km',
+                '${activeBike.displayName} · ${activeBike.currentOdometerKm.toStringAsFixed(0)} km',
                 style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
@@ -74,7 +83,7 @@ class MaintenanceScreen extends ConsumerWidget {
               ],
 
               // Add custom check (dashed)
-              _DashedAddButton(
+              DashedAddButton(
                 label: 'Log a service',
                 onTap: () =>
                     context.go('/home/maintenance/add?bikeId=${activeBike.id}'),
@@ -162,36 +171,6 @@ class _CheckRow extends StatelessWidget {
           const SizedBox(height: 8),
           EditorialProgress(progress, color: barColor),
         ],
-      ),
-    );
-  }
-}
-
-class _DashedAddButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _DashedAddButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.6)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add, size: 18, color: AppColors.primary),
-            const SizedBox(width: 8),
-            Text(label,
-                style: display(14, letterSpacing: 0, color: AppColors.primary)),
-          ],
-        ),
       ),
     );
   }

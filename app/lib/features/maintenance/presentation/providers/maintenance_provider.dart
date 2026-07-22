@@ -54,7 +54,7 @@ final maintenanceRemindersProvider =
   final bike = ref.watch(garageProvider).valueOrNull?.where((b) => b.id == bikeId).firstOrNull;
   final logs = ref.watch(maintenanceProvider(bikeId)).valueOrNull ?? [];
   if (bike == null) return [];
-  return _computeReminders(bike.totalDistanceKm, logs);
+  return _computeReminders(bike.currentOdometerKm, logs);
 });
 
 List<MaintenanceReminder> _computeReminders(

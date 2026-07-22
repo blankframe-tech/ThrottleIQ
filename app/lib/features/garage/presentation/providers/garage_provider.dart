@@ -25,6 +25,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     int? year,
     int? cc,
     String? imagePath,
+    double? odometerKm,
   }) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
@@ -36,6 +37,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
       year: year,
       cc: cc,
       imagePath: imagePath,
+      odometerKm: odometerKm,
       createdAt: DateTime.now(),
     );
     await _dao.insert(BikeModel.toMap(bike));

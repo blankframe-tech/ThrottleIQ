@@ -5,9 +5,11 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 
 class GarageScreen extends ConsumerWidget {
   const GarageScreen({super.key});
@@ -22,20 +24,14 @@ class GarageScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header: "Your Garage" + logout + ink add button
+            // Header: "Your Garage" + user menu
             Padding(
               padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 12,
                   AppDimensions.paddingMd, 8),
               child: Row(
                 children: [
                   Expanded(child: Text('Your Garage', style: display(28))),
-                  IconButton(
-                    icon: const Icon(Icons.logout, size: 20, color: AppColors.textSecondary),
-                    tooltip: 'Sign out',
-                    onPressed: () => ref.read(authNotifierProvider.notifier).signOut(),
-                  ),
-                  const SizedBox(width: 4),
-                  _InkAddButton(onTap: () => context.go('/home/garage/add')),
+                  const _UserMenuButton(),
                 ],
               ),
             ),
@@ -51,9 +47,14 @@ class GarageScreen extends ConsumerWidget {
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
                         AppDimensions.paddingMd, AppDimensions.paddingLg),
-                    itemCount: bikes.length,
+                    itemCount: bikes.length + 1,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _BikeCard(bike: bikes[i]),
+                    itemBuilder: (_, i) => i < bikes.length
+                        ? _BikeCard(bike: bikes[i])
+                        : DashedAddButton(
+                            label: 'Add a bike',
+                            onTap: () => context.go('/home/garage/add'),
+                          ),
                   );
                 },
               ),
@@ -65,22 +66,46 @@ class GarageScreen extends ConsumerWidget {
   }
 }
 
-class _InkAddButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _InkAddButton({required this.onTap});
+/// Avatar/menu button in the garage header — replaces the old round "+"
+/// (add-bike moved below the bike list). Opens the signed-in rider's own
+/// menu: profile edit today, with room for Epic E to add "My places".
+class _UserMenuButton extends ConsumerWidget {
+  const _UserMenuButton();
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.ink,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: const SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(Icons.add, color: AppColors.onInk, size: 24),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final profile = ref.watch(myProfileProvider).valueOrNull;
+
+    return GestureDetector(
+      onTap: () => _showMenu(context),
+      child: UserAvatar(
+        photoUrl: profile?.photoUrl ?? user?.photoURL,
+        name: profile?.bestName ?? user?.displayName ?? 'Rider',
+        radius: 22,
+      ),
+    );
+  }
+
+  void _showMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.background,
+      // More entries land here as later epics need them (Epic E's "My
+      // Places" link, per HANDOFF_V2.md).
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.person_outline, color: AppColors.primary),
+              title: const Text('Edit Profile'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.push('/profile/edit');
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -93,16 +118,24 @@ class _EmptyGarage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.garage_outlined, size: 56, color: AppColors.textTertiary),
-          const SizedBox(height: 16),
-          Text('No bikes yet', style: display(20)),
-          const SizedBox(height: 6),
-          const Text('Tap + to add your first bike',
-              style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.garage_outlined, size: 56, color: AppColors.textTertiary),
+            const SizedBox(height: 16),
+            Text('No bikes yet', style: display(20)),
+            const SizedBox(height: 6),
+            const Text('Add your first bike to get started',
+                style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+            const SizedBox(height: 20),
+            DashedAddButton(
+              label: 'Add a bike',
+              onTap: () => context.go('/home/garage/add'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -196,7 +229,7 @@ class _BikeCard extends ConsumerWidget {
                 const Divider(height: 1),
                 const SizedBox(height: 12),
                 GestureDetector(
-                  onTap: () => context.go('/home/maintenance'),
+                  onTap: () => context.go('/home/maintenance?bikeId=${bike.id}'),
                   child: Row(
                     children: [
                       Text('Tap for maintenance',

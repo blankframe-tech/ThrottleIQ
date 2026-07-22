@@ -17,6 +17,7 @@ import '../../features/maintenance/presentation/screens/maintenance_screen.dart'
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
@@ -76,6 +77,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Full-screen ride routes (no shell)
       GoRoute(path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
       GoRoute(
         path: '/ride/summary/:rideId',
         builder: (_, state) => RideSummaryScreen(rideId: state.pathParameters['rideId']!),
@@ -124,7 +126,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/home/record', builder: (_, __) => const RecordScreen()),
           GoRoute(
             path: '/home/maintenance',
-            builder: (_, __) => const MaintenanceScreen(),
+            builder: (_, state) => MaintenanceScreen(
+              bikeId: state.uri.queryParameters['bikeId'],
+            ),
             routes: [
               GoRoute(
                 path: 'add',
