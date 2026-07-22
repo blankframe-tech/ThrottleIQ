@@ -6,11 +6,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDummyAPIKeyForDevelopment',
-    appId: '1:1234567890:ios:abcdefghijklmnopqr',
-    messagingSenderId: '1234567890',
-    projectId: 'throttleiq-dummy',
-    storageBucket: 'throttleiq-dummy.appspot.com',
+    apiKey: 'AIzaSyDRjGyrJ0RPuQYLegbCZ4_wkpsHB_pfQVA',
+    appId: '1:603325098273:ios:f65fac5586eebda3fcf660',
+    messagingSenderId: '603325098273',
+    projectId: 'throttleiqfb',
+    storageBucket: 'throttleiqfb.firebasestorage.app',
     iosBundleId: 'com.throttleiq.throttleiq',
+    iosClientId:
+        '603325098273-gdefaanvp7u5e2d04f6uva4r888vuncq.apps.googleusercontent.com',
   );
 }
