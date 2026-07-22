@@ -1,5 +1,26 @@
 # ThrottleIQ Release Notes
 
+## Unreleased — v2 social/community rework (branch `feat/v2-social`)
+
+**In development** (see `HANDOFF_V2.md`). Not buildable for Android until the
+`com.bft.throttleiq` Firebase reconfiguration is done. Done so far: package
+rename to `com.bft.throttleiq`; user profiles + open follow graph + audience
+tiers (public/followers/mutual) + upvote/downvote backend; fixed the
+ride-sharing error on short/near-home rides. Remaining: social UI, forums
+rework, garage/service restructure, places (map-pin + POI import), Rides tab
+graphs/badges, crash-detection sensitivity.
+
+## v2.0.0-beta.3+5 (2026-07-21) — Editorial BW redesign
+
+**Status:** ✅ Released (pre-release) · signed APK on GitHub
+
+Full visual + structural redesign to the "Editorial BW" system: warm paper base,
+solid-black ink panels, big rounded cards, Space Grotesk + Inter typography, blue
+primary accent with orange attention color. Seven screens rebuilt against the
+design mockup (Record, Active Ride, Ride Summary, Insights, Garage, Maintenance)
+on a shared editorial component library. Real Firebase (`throttleiqfb`) wired for
+iOS + Android. Signed with the production keystore.
+
 ## v1.0.0 (2026-07-12) — Production Ready
 
 **Status:** ✅ READY FOR RELEASE  

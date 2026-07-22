@@ -1,7 +1,14 @@
 # Future idea 2 — Follow requests + public ride sharing
 
-Status: **idea only, not scoped or scheduled.** Captured here so it isn't lost while
-the social feed / forums / garage-directory work (see the main plan) goes in first.
+Status: **DECIDED & in progress (2026-07-22) — but as OPEN follow, not follow
+requests.** The user chose an open-follow model (follow anyone instantly) with
+per-share **audience tiers (public / followers / mutual)** rather than the
+consent-based request flow this doc proposed. The backend for it landed in
+Phase A on `feat/v2-social` (see `HANDOFF_V2.md`): `FollowRepository`,
+`follows/{follower}_{followee}` edges, `allowedUserIds` materialized at share
+time, username/email search. The "follow request / accept-decline inbox" idea
+below is therefore **shelved** (kept for reference in case a private tier is
+wanted later). The rest of this doc predates that decision.
 
 ## The idea
 

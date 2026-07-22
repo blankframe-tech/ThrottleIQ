@@ -1,6 +1,11 @@
 # ThrottleIQ — Feature Map & UI Flow (as built)
 
-_Last updated: 2026-07-14 (post-wiring) · Reflects the actual code on `main`, not the roadmap._
+_Last updated: 2026-07-22 · Reflects the shipped code on `main` (v2 Editorial redesign, released `v2.0.0-beta.3+5`)._
+
+> **v2 rework in progress** on `feat/v2-social` — several flows below are being
+> restructured (feed→search+follow+votes, Service tab→Places, Insights→Rides,
+> garage user menu + per-bike service, map-pin places). This file describes the
+> **current shipped** app; for the target structure see **`HANDOFF_V2.md`**.
 
 This documents what a user actually sees and can do in the app **right now**, screen by screen — plus which features exist only as backend/logic with no UI yet. Verified by reading the router (`lib/core/router/app_router.dart`), the shell, and every screen file.
 
@@ -19,20 +24,23 @@ This documents what a user actually sees and can do in the app **right now**, sc
 /settings                       SettingsScreen          (gear icon on Record tab)
 
 AppShell — bottom navigation bar with 5 tabs:
-├── /home/social                SocialScreen            [tab 1: "Social"]
-├── /home/chatbot               ChatbotScreen           [tab 2: "AI"]
+├── /home/social                SocialScreen            [tab 1: "Social"] (Feed/Forums/Places sub-tabs)
+├── /home/stats                 StatsScreen             [tab 2: "Insights" — → renaming to "Rides" in v2]
 ├── /home/record                RecordScreen            [tab 3: "Record" — center/default]
-├── /home/maintenance           MaintenanceScreen       [tab 4: "Service"]
+├── /home/maintenance           MaintenanceScreen       [tab 4: "Service" — → moving into Garage; slot becomes "Places" in v2]
 │     └── /home/maintenance/add     AddMaintenanceLogScreen (?bikeId=)
 └── /home/garage                GarageScreen            [tab 5: "Garage"]
       ├── /home/garage/add          AddEditBikeScreen (create)
       └── /home/garage/:bikeId      BikeDetailScreen
             └── /home/garage/:bikeId/edit  AddEditBikeScreen (edit)
+
+Also registered full-screen (no shell): /forums/:forumId (+ /post/:postId),
+/places (+ /add, /:placeId).
 ```
 
 **Auth guard (router redirect):** unauthenticated → `/auth/login` · authenticated but no display name → `/auth/onboarding` · authenticated → `/home/record` (Record is the landing tab).
 
-The whole app is **portrait-locked, dark theme**.
+The whole app is **portrait-locked**, **light Editorial BW theme** (warm paper, black ink panels, Space Grotesk + Inter, blue primary accent + orange attention).
 
 ---
 

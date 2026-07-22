@@ -1,5 +1,12 @@
 # ThrottleIQ — remaining build plan (Phases 2-4)
 
+> ⚠️ **SUPERSEDED for v2 work (2026-07-22).** Phases 2–4 below are built and
+> shipped. Current work is the **v2 social/community rework** — see
+> **`HANDOFF_V2.md`** for the active plan, current state, blockers, and the
+> remaining epics (social UI, forums, garage/service, places, rides tab,
+> safety, package rename). Keep using this file only as historical reference
+> for how the social/forums/places backend was originally built.
+
 This file is the handoff spec for the coder agent. It assumes no prior context
 from the planning conversation — everything needed to implement is below.
 After this is implemented, a separate review pass will validate it against

@@ -4,6 +4,11 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
+> **Status:** latest release `v2.0.0-beta.3+5` (Editorial BW redesign). A v2
+> social/community rework (open follow, audience-tiered sharing, upvote/downvote,
+> forums, places with map pins, per-bike service) is in progress on
+> `feat/v2-social` — see **`HANDOFF_V2.md`**. App id is `com.bft.throttleiq`.
+
 ---
 
 ## ✨ Features

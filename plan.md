@@ -1,5 +1,9 @@
 # ThrottleIQ — Weakness Audit & Forward Plan
 
+> 📌 **Historical (2026-07-12).** This audit predates the `app/` baseline and
+> the v2 rework. For the current state and active plan, see **`HANDOFF_V2.md`**
+> and `todosanddone.md`. Kept for the original weakness analysis.
+
 **Audited:** 2026-07-12 · Codebase: `old_versions/FlutterSpecialistClaude/throttleiq_e` (~4,900 LOC, 47 Dart files)
 
 ---

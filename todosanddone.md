@@ -1,8 +1,34 @@
 # ThrottleIQ — What Works & What's Next
 
-_Last updated: 2026-07-14 · Release: [v1.0.0-beta.1](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v1.0.0-beta.1)_
+_Last updated: 2026-07-22 · Latest release: [v2.0.0-beta.3+5](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.3+5) · Active branch: `feat/v2-social`_
 
 This is the honest state of the project: **Done & verified** means it was actually exercised and confirmed; **Done, not yet verified** means the code/config exists but hasn't been tested end-to-end; **To do** is future work.
+
+---
+
+## 🚧 v2 social rework — in progress (see `HANDOFF_V2.md` for the full plan)
+
+**Shipped & verified on `main`:** the Editorial BW redesign (7 screens rebuilt to
+`designs/ThrottleIQ Editorial BW.html`, blue accent + orange attention) →
+released as `v2.0.0-beta.3+5` (signed APK on GitHub).
+
+**On `feat/v2-social` (analyze-clean, NOT runtime-tested — Android build blocked, see below):**
+- ✅ **Package rename** `com.throttleiq.throttleiq` → `com.bft.throttleiq` (code side).
+- ✅ **Phase A**: user profiles (nickname/bio/photo/@username), open follow graph,
+  audience-tier ride visibility, upvote/downvote + votes rules, username
+  reservation — backend + Firestore rules/indexes.
+- ✅ **Fix**: ride sharing no longer errors on short/near-home rides.
+
+**⛔ Blocker:** the rename breaks Android builds until `com.bft.throttleiq` is
+registered in the `throttleiqfb` Firebase project and fresh `google-services.json`
++ `GoogleService-Info.plist` are pasted in. See `HANDOFF_V2.md` §1.
+
+**To do (dependency order):** B) social UI (end→share page w/ photo+audience, feed
+search+follow, vote UI) · C) forums (slug unify, general forums, list UI, votes,
+avatars) · D) garage/service (odometer + DB migration, add-bike placement, user
+menu, service into bike cards) · E) nav+places (Service→Places, Insights→Rides,
+map-pin add, OSM Overpass auto-import) · F) Rides tab (fl_chart graphs, more
+badges) · G) safety (crash threshold fix). Full detail: `HANDOFF_V2.md` §5.
 
 ---
 
