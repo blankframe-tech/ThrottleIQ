@@ -91,8 +91,6 @@ class _UserMenuButton extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.background,
-      // More entries land here as later epics need them (Epic E's "My
-      // Places" link, per HANDOFF_V2.md).
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -103,6 +101,14 @@ class _UserMenuButton extends ConsumerWidget {
               onTap: () {
                 Navigator.pop(sheetContext);
                 context.push('/profile/edit');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.place_outlined, color: AppColors.primary),
+              title: const Text('My Places'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.push('/places/mine');
               },
             ),
           ],

@@ -24,6 +24,7 @@ import '../../features/forums/presentation/screens/forum_post_detail_screen.dart
 import '../../features/poi_directory/presentation/screens/places_list_screen.dart';
 import '../../features/poi_directory/presentation/screens/add_place_screen.dart';
 import '../../features/poi_directory/presentation/screens/place_detail_screen.dart';
+import '../../features/poi_directory/presentation/screens/my_places_list_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
@@ -100,23 +101,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      // Places routes (Phase 4 — full-screen, no shell, same treatment as
-      // the forums routes above). PlacesListScreen itself is normally
-      // reached as the "Places" tab inside SocialScreen (/home/social), but
-      // it's also registered at /places directly so it's independently
-      // deep-linkable, matching the pattern the spec called for.
-      GoRoute(
-        path: '/places',
-        builder: (_, __) => const PlacesListScreen(),
-        routes: [
-          GoRoute(path: 'add', builder: (_, __) => const AddPlaceScreen()),
-          GoRoute(
-            path: ':placeId',
-            builder: (_, state) =>
-                PlaceDetailScreen(placeId: state.pathParameters['placeId']!),
-          ),
-        ],
-      ),
+      // "My places" — reached from the garage header's user menu, not the
+      // Places tab, so it gets the same full-screen no-shell treatment as
+      // /profile/edit rather than living under /home/places.
+      GoRoute(path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
       // Shell with bottom nav
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),
@@ -124,6 +112,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/home/social', builder: (_, __) => const SocialScreen()),
           GoRoute(path: '/home/stats', builder: (_, __) => const StatsScreen()),
           GoRoute(path: '/home/record', builder: (_, __) => const RecordScreen()),
+          GoRoute(
+            path: '/home/places',
+            builder: (_, __) => const PlacesListScreen(),
+            routes: [
+              GoRoute(path: 'add', builder: (_, __) => const AddPlaceScreen()),
+              GoRoute(
+                path: ':placeId',
+                builder: (_, state) =>
+                    PlaceDetailScreen(placeId: state.pathParameters['placeId']!),
+              ),
+            ],
+          ),
           GoRoute(
             path: '/home/maintenance',
             builder: (_, state) => MaintenanceScreen(

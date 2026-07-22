@@ -17,6 +17,7 @@ class PlaceModel {
   final DateTime createdAt;
   final double ratingSum;
   final int ratingCount;
+  final String? osmId;
 
   const PlaceModel({
     required this.id,
@@ -34,6 +35,7 @@ class PlaceModel {
     required this.createdAt,
     this.ratingSum = 0,
     this.ratingCount = 0,
+    this.osmId,
   });
 
   PlaceEntity toEntity() {
@@ -53,6 +55,7 @@ class PlaceModel {
       createdAt: createdAt,
       ratingSum: ratingSum,
       ratingCount: ratingCount,
+      osmId: osmId,
     );
   }
 
@@ -73,6 +76,7 @@ class PlaceModel {
       createdAt: entity.createdAt,
       ratingSum: entity.ratingSum,
       ratingCount: entity.ratingCount,
+      osmId: entity.osmId,
     );
   }
 
@@ -94,6 +98,7 @@ class PlaceModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       ratingSum: (data['ratingSum'] as num?)?.toDouble() ?? 0.0,
       ratingCount: data['ratingCount'] ?? 0,
+      osmId: data['osmId'],
     );
   }
 
@@ -113,6 +118,7 @@ class PlaceModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'ratingSum': ratingSum,
       'ratingCount': ratingCount,
+      'osmId': osmId,
     };
   }
 
@@ -132,6 +138,7 @@ class PlaceModel {
     DateTime? createdAt,
     double? ratingSum,
     int? ratingCount,
+    String? osmId,
   }) {
     return PlaceModel(
       id: id ?? this.id,
@@ -149,6 +156,7 @@ class PlaceModel {
       createdAt: createdAt ?? this.createdAt,
       ratingSum: ratingSum ?? this.ratingSum,
       ratingCount: ratingCount ?? this.ratingCount,
+      osmId: osmId ?? this.osmId,
     );
   }
 }

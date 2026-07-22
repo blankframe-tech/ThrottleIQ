@@ -106,6 +106,37 @@ class PlaceRepository {
     await _firestore.collection(_collection).doc(placeId).delete();
   }
 
+  /// Places the signed-in rider added themselves ("My places").
+  Future<List<PlaceEntity>> getPlacesByOwner(String uid) async {
+    final querySnapshot = await _firestore
+        .collection(_collection)
+        .where('createdBy', isEqualTo: uid)
+        .get();
+    return querySnapshot.docs
+        .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
+        .toList();
+  }
+
+  /// Which of [osmIds] already exist as places — used by the OSM import
+  /// flow to skip re-creating a place it already pulled in. Chunked into
+  /// ≤30-id batches since Firestore's `whereIn` caps at 30 values.
+  Future<Set<String>> getExistingOsmIds(List<String> osmIds) async {
+    if (osmIds.isEmpty) return {};
+    final found = <String>{};
+    for (var i = 0; i < osmIds.length; i += 30) {
+      final chunk = osmIds.sublist(i, i + 30 > osmIds.length ? osmIds.length : i + 30);
+      final snap = await _firestore
+          .collection(_collection)
+          .where('osmId', whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        final id = doc.data()['osmId'] as String?;
+        if (id != null) found.add(id);
+      }
+    }
+    return found;
+  }
+
   /// Get nearby places (within radius, sorted by distance)
   Future<List<PlaceEntity>> getNearbyPlaces({
     required double latitude,

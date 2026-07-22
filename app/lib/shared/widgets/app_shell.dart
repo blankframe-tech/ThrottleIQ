@@ -10,7 +10,7 @@ class AppShell extends StatelessWidget {
     '/home/social',
     '/home/stats',
     '/home/record',
-    '/home/maintenance',
+    '/home/places',
     '/home/garage',
   ];
 
@@ -42,9 +42,9 @@ class AppShell extends StatelessWidget {
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Social'),
-            BottomNavigationBarItem(icon: Icon(Icons.insights_outlined), activeIcon: Icon(Icons.insights), label: 'Insights'),
+            BottomNavigationBarItem(icon: Icon(Icons.insights_outlined), activeIcon: Icon(Icons.insights), label: 'Rides'),
             BottomNavigationBarItem(icon: Icon(Icons.radio_button_checked_outlined), activeIcon: Icon(Icons.radio_button_checked), label: 'Record'),
-            BottomNavigationBarItem(icon: Icon(Icons.build_outlined), activeIcon: Icon(Icons.build), label: 'Service'),
+            BottomNavigationBarItem(icon: Icon(Icons.place_outlined), activeIcon: Icon(Icons.place), label: 'Places'),
             BottomNavigationBarItem(icon: Icon(Icons.garage_outlined), activeIcon: Icon(Icons.garage), label: 'Garage'),
           ],
         ),

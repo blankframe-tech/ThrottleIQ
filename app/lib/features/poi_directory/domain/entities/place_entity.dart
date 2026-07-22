@@ -52,6 +52,12 @@ class PlaceEntity extends Equatable {
   final double ratingSum;
   final int ratingCount;
 
+  /// OSM node id (e.g. `"node/12345"`) when this place was imported from
+  /// the Overpass API — null for rider-submitted places. Lets the import
+  /// flow check what's already been pulled in without re-creating
+  /// duplicates on a second "Import nearby" tap.
+  final String? osmId;
+
   const PlaceEntity({
     required this.id,
     required this.name,
@@ -68,6 +74,7 @@ class PlaceEntity extends Equatable {
     required this.createdAt,
     this.ratingSum = 0,
     this.ratingCount = 0,
+    this.osmId,
   });
 
   double get averageRating {
@@ -92,5 +99,6 @@ class PlaceEntity extends Equatable {
     createdAt,
     ratingSum,
     ratingCount,
+    osmId,
   ];
 }

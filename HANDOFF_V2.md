@@ -23,12 +23,14 @@ to resume with zero prior conversation context.
   Android** — the package rename intentionally breaks the Gradle build until
   fresh Firebase config lands (see §1). Everything here is `flutter analyze`
   clean but **not runtime-tested**.
-- Five epics complete on this branch: **package rename (code side)**,
+- Six epics complete on this branch: **package rename (code side)**,
   **Phase A (profile + follow backend + share-bug fix)**, **Epic B (social
   UI: share screen, feed rework, voting)**, **Epic C (forums: slug fix,
-  general topics, list UI, post voting, avatars)**, and **Epic D (garage:
-  odometer, add-bike placement, user menu + profile edit, per-bike service)**.
-- **7 epics remain** (§5). Build order is dependency-first. §1 (Firebase
+  general topics, list UI, post voting, avatars)**, **Epic D (garage:
+  odometer, add-bike placement, user menu + profile edit, per-bike service)**,
+  and **Epic E (nav: Places tab replaces Service; map-pin add; OSM Overpass
+  import; owned places)**.
+- **6 epics remain** (§5). Build order is dependency-first. §1 (Firebase
   reconfig) is still open — confirmed still blocked as of this session:
   `google-services.json` still has the old package name, though
   `GoogleService-Info.plist` has already been updated to the new bundle id.
@@ -265,18 +267,33 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
   (`/home/maintenance?bikeId=...`) instead of silently showing whichever bike
   happened to be active.
 
-### E. Nav + Places — ⬜
-- **Bottom nav**: drop **Service** tab, add **Places** tab; rename **Insights →
-  "Rides"** (`app_shell.dart` `_tabs`/items — current order: Social, Insights,
-  Record, Service, Garage). Remove Places from the Social hub tabs.
-- **Map-pin add**: a `flutter_map` location-picker widget (none exists today;
-  `add_place_screen.dart` only captures current GPS). Let user drop/drag a pin.
-- **POI auto-import** (BOTH, per decision): pull nearby fuel/parts/garage POIs
-  from **OSM Overpass API** (net-new data source; OSM is display-tiles only
-  today) and surface/auto-add to `places`.
-- **Owned places**: derive via `places where createdBy == uid` (add an
-  `ownerId`/use `createdBy`); link from the user menu/profile. Don't trust a
-  spoofable array on the profile.
+### E. Nav + Places — ✅ done, analyze-clean (not runtime-tested)
+- **Bottom nav**: dropped Service, added **Places** (`app_shell.dart`); order
+  is now Social, Rides (renamed from Insights), Record, Places, Garage.
+  `/home/maintenance` stays registered (still reached from garage's per-bike
+  links, Epic D) — just not a tab. `social_screen.dart`'s Places tab removed
+  (now 2 tabs: Feed, Forums); `PlacesListScreen` moved from a bare `/places`
+  route into the shell at `/home/places` so it gets bottom-nav chrome, and
+  now owns its own `Scaffold`/`AppBar` (previously borrowed Social's).
+- **Map-pin picker**: new `shared/widgets/map_location_picker.dart` — a
+  fixed center pin with the map panning underneath (Google/Uber-style
+  pin-drop), simpler than drag-marker gestures. `add_place_screen.dart` now
+  centers on GPS but lets the rider move the pin anywhere before submitting.
+- **OSM Overpass import**: manual **"Import nearby"** action in the Places
+  tab's app bar (not automatic — Overpass is a free, rate-limited public
+  API, decided during this epic). New `OverpassService`
+  (`data/services/overpass_service.dart`) queries `amenity=fuel`,
+  `craft=motorcycle_repair`, `shop=motorcycle`; `PlaceEntity`/`Model` gained
+  a nullable `osmId` so re-importing never duplicates
+  (`PlaceRepository.getExistingOsmIds`). **Adaptation from the original
+  plan**: used the already-declared-but-unused `dio` dependency instead of
+  adding a new `http` package — one less dependency, and it retires a dead
+  entry in `pubspec.yaml` instead of adding a new one.
+- **Owned places**: `PlaceRepository.getPlacesByOwner` (`createdBy == uid` —
+  the existing `places` read rule is already "any authed", so no rules
+  change needed) + new `MyPlacesListScreen` at `/places/mine`, linked from
+  the garage header's user menu (`_UserMenuButton`, built in Epic D with
+  this exact slot marked).
 
 ### F. Rides tab (formerly Insights) — ⬜
 - **Graphs**: `fl_chart` is in `pubspec.yaml` but **never imported** — add real
@@ -325,8 +342,10 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
    B — first deploy for that one).
 4. Build to verify: `flutter run` (sim) or the signed release APK flow (JAVA_HOME
    = Android Studio JBR, key.properties present).
-5. Continue at **Epic E** (§5). Commit per epic on `feat/v2-social`; do not push
+5. Continue at **Epic F** (§5). Commit per epic on `feat/v2-social`; do not push
    until asked; keep `main` releasable. Note: Epic D bumped the local SQLite
    schema to v5 (`bikes.odometer_km`) — no Firebase deploy involved, but a
    device upgrading from an older installed build exercises `_onUpgrade`,
    not `_onCreate`, so that path is worth a real device check once builds work.
+   Epic E's OSM import is a live outbound call to overpass-api.de — worth a
+   real-network smoke test once builds work too (untestable from here).

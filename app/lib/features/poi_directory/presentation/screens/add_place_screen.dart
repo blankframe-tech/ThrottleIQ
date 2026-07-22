@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/widgets/map_location_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/place_repository.dart';
 import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 
-/// "Add a place" form — captures the rider's current GPS fix as the place's
-/// location (there's no map-pin-drop UI in this phase), computes its
-/// geohash, and creates it via [PlaceRepository.addPlace].
+/// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
+/// real fix is available yet.
+const _fallbackCenter = LatLng(23.8103, 90.4125);
+
+/// "Add a place" form — the location defaults to the rider's current GPS fix
+/// but can be moved anywhere via the map pin picker, computes its geohash
+/// from wherever the pin ends up, and creates it via [PlaceRepository.addPlace].
 class AddPlaceScreen extends ConsumerStatefulWidget {
   const AddPlaceScreen({super.key});
 
@@ -28,6 +34,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   final _hoursCtrl = TextEditingController();
   PlaceCategory _selectedCategory = PlaceCategory.fuel;
   bool _submitting = false;
+  LatLng? _pickedLocation;
 
   @override
   void dispose() {
@@ -43,17 +50,18 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
 
+    final location = _pickedLocation ?? _fallbackCenter;
+
     setState(() => _submitting = true);
     try {
-      final position = await ref.read(currentPositionProvider.future);
-      final geohash = GeohashUtils.encode(position.latitude, position.longitude);
+      final geohash = GeohashUtils.encode(location.latitude, location.longitude);
 
       final place = PlaceEntity(
         id: '', // Firestore assigns the id via addPlace()'s collection.add().
         name: _nameCtrl.text.trim(),
         category: _selectedCategory,
-        latitude: position.latitude,
-        longitude: position.longitude,
+        latitude: location.latitude,
+        longitude: location.longitude,
         geohash: geohash,
         address: _addressCtrl.text.trim(),
         phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
@@ -83,6 +91,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final positionAsync = ref.watch(currentPositionProvider);
+    final initialCenter = positionAsync.valueOrNull != null
+        ? LatLng(positionAsync.valueOrNull!.latitude, positionAsync.valueOrNull!.longitude)
+        : _fallbackCenter;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Add Place')),
@@ -93,6 +106,18 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Text('Location', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              MapLocationPicker(
+                // Keyed by center so the map remounts (and re-centers) once
+                // a real GPS fix replaces the Dhaka fallback — FlutterMap's
+                // initialCenter is only read once per widget instance, not
+                // reactive to prop changes on an already-mounted map.
+                key: ValueKey(initialCenter),
+                initialCenter: initialCenter,
+                onLocationChanged: (latLng) => _pickedLocation = latLng,
+              ),
+              const SizedBox(height: 20),
               const Text('Category', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
@@ -157,11 +182,6 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   labelText: 'Hours (optional)',
                   hintText: 'e.g. 9am - 9pm, or 24/7',
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Your current location will be saved as this place\'s location.',
-                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
               ),
               const SizedBox(height: 24),
               ElevatedButton(

@@ -10,8 +10,9 @@ import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 
-/// Places tab inside SocialScreen: nearby garages/fuel pumps/parts shops,
-/// filterable by category, with an "Add place" entry point.
+/// Places bottom-nav tab: nearby garages/fuel pumps/parts shops, filterable
+/// by category, with an "Add place" entry point and a manual "Import
+/// nearby" action that pulls fuel/parts/garage POIs from OpenStreetMap.
 class PlacesListScreen extends ConsumerStatefulWidget {
   const PlacesListScreen({super.key});
 
@@ -21,13 +22,55 @@ class PlacesListScreen extends ConsumerStatefulWidget {
 
 class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
   PlaceCategory? _selectedCategory;
+  bool _importing = false;
+
+  Future<void> _importNearby() async {
+    if (_importing) return;
+    setState(() => _importing = true);
+    try {
+      final count = await importNearbyOsmPlaces(ref);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(count == 0
+              ? 'No new places found nearby'
+              : 'Imported $count place${count == 1 ? '' : 's'} from OpenStreetMap'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not import nearby places: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final placesAsync = ref.watch(nearbyPlacesProvider(_selectedCategory));
     final positionAsync = ref.watch(currentPositionProvider);
 
-    return Stack(
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Places'),
+        actions: [
+          IconButton(
+            tooltip: 'Import nearby places from OpenStreetMap',
+            icon: _importing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  )
+                : const Icon(Icons.travel_explore_outlined),
+            onPressed: _importing ? null : _importNearby,
+          ),
+        ],
+      ),
+      body: Stack(
       children: [
         Column(
           children: [
@@ -138,13 +181,14 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
           bottom: AppDimensions.paddingMd,
           child: FloatingActionButton.extended(
             heroTag: 'add_place_fab',
-            onPressed: () => context.push('/places/add'),
+            onPressed: () => context.push('/home/places/add'),
             backgroundColor: AppColors.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Add place', style: TextStyle(color: Colors.white)),
           ),
         ),
       ],
+      ),
     );
   }
 }
@@ -203,7 +247,7 @@ class _PlaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final distanceKm = this.distanceKm;
     return AppCard(
-      onTap: () => context.push('/places/${place.id}'),
+      onTap: () => context.push('/home/places/${place.id}'),
       child: Row(
         children: [
           Container(

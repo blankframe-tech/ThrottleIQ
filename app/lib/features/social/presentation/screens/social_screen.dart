@@ -7,7 +7,6 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../forums/presentation/screens/forums_home_screen.dart';
-import '../../../poi_directory/presentation/screens/places_list_screen.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../data/repositories/ride_share_repository.dart';
@@ -16,14 +15,15 @@ import '../../domain/entities/shared_ride_entity.dart';
 import '../providers/follow_providers.dart';
 import '../providers/ride_feed_provider.dart';
 
-/// Social hub: Feed (Phase 2), Forums (Phase 3), Places (this phase).
+/// Social hub: Feed (Phase 2), Forums (Phase 3). Places moved to its own
+/// bottom-nav tab in Epic E.
 class SocialScreen extends StatelessWidget {
   const SocialScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -35,7 +35,6 @@ class SocialScreen extends StatelessWidget {
             tabs: [
               Tab(text: 'Feed'),
               Tab(text: 'Forums'),
-              Tab(text: 'Places'),
             ],
           ),
         ),
@@ -43,7 +42,6 @@ class SocialScreen extends StatelessWidget {
           children: [
             _FeedTab(),
             ForumsHomeScreen(),
-            PlacesListScreen(),
           ],
         ),
       ),

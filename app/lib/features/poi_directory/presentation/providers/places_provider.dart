@@ -1,13 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/place_repository.dart';
 import '../../data/repositories/review_repository.dart';
+import '../../data/services/overpass_service.dart';
+import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
 
 final _placeRepository = PlaceRepository();
 final _reviewRepository = ReviewRepository();
+final _overpassService = OverpassService();
 
 /// Radius used for the nearby-places query. Not user-configurable in this
 /// phase — the whole list is client-filtered further by category chips.
@@ -74,3 +78,56 @@ final reviewsForPlaceProvider =
     StreamProvider.family<List<ReviewEntity>, String>((ref, placeId) {
   return _reviewRepository.streamReviewsForPlace(placeId);
 });
+
+/// Places the signed-in rider added themselves ("My places", reached from
+/// the garage header's user menu).
+final myPlacesProvider = FutureProvider<List<PlaceEntity>>((ref) async {
+  final uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) return [];
+  return _placeRepository.getPlacesByOwner(uid);
+});
+
+/// Pulls nearby fuel/parts/garage POIs from OpenStreetMap's Overpass API and
+/// imports any not already known (by `osmId`), then invalidates the whole
+/// `nearbyPlacesProvider` family so the Places tab picks them up — mirrors
+/// the stale-cache discipline documented on that provider above. Only ever
+/// called from an explicit "Import nearby" tap (`places_list_screen.dart`):
+/// Overpass is a free, rate-limited public service, not something to hit
+/// automatically on every tab open. Returns how many new places were added.
+Future<int> importNearbyOsmPlaces(WidgetRef ref) async {
+  final uid = ref.read(currentUserProvider)?.uid;
+  if (uid == null) return 0;
+
+  final position = await ref.read(currentPositionProvider.future);
+  final candidates = await _overpassService.fetchNearby(
+    latitude: position.latitude,
+    longitude: position.longitude,
+    radiusMeters: placesSearchRadiusKm * 1000,
+  );
+  if (candidates.isEmpty) return 0;
+
+  final existingOsmIds =
+      await _placeRepository.getExistingOsmIds(candidates.map((c) => c.osmId).toList());
+  final newCandidates = candidates.where((c) => !existingOsmIds.contains(c.osmId)).toList();
+
+  for (final candidate in newCandidates) {
+    await _placeRepository.addPlace(PlaceEntity(
+      id: '', // Firestore assigns the id via addPlace()'s collection.add().
+      name: candidate.name,
+      category: candidate.category,
+      latitude: candidate.latitude,
+      longitude: candidate.longitude,
+      geohash: GeohashUtils.encode(candidate.latitude, candidate.longitude),
+      address: candidate.address,
+      phone: candidate.phone,
+      createdBy: uid,
+      createdAt: DateTime.now(),
+      osmId: candidate.osmId,
+    ));
+  }
+
+  if (newCandidates.isNotEmpty) {
+    ref.invalidate(nearbyPlacesProvider);
+  }
+  return newCandidates.length;
+}
