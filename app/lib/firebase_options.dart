@@ -11,6 +11,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1234567890',
     projectId: 'throttleiq-dummy',
     storageBucket: 'throttleiq-dummy.appspot.com',
-    iosBundleId: 'com.example.throttleiq',
+    iosBundleId: 'com.throttleiq.throttleiq',
   );
 }

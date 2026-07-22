@@ -10,23 +10,34 @@ class ThrottleIQApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Cloud sync lifecycle: start on login, stop on logout. SyncManager itself
-    // no-ops when signed out, so starting is safe; stopping avoids idle timers.
-    ref.listen(authStateProvider, (prev, next) {
-      final sync = ref.read(syncManagerProvider);
-      if (next.valueOrNull != null) {
-        sync.startAutoSync();
-      } else {
-        sync.stopAutoSync();
-      }
-    });
+    try {
+      // Cloud sync lifecycle: start on login, stop on logout. SyncManager itself
+      // no-ops when signed out, so starting is safe; stopping avoids idle timers.
+      ref.listen(authStateProvider, (prev, next) {
+        final sync = ref.read(syncManagerProvider);
+        if (next.valueOrNull != null) {
+          sync.startAutoSync();
+        } else {
+          sync.stopAutoSync();
+        }
+      });
 
-    final router = ref.watch(routerProvider);
-    return MaterialApp.router(
-      title: 'ThrottleIQ',
-      theme: AppTheme.dark,
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-    );
+      final router = ref.watch(routerProvider);
+      return MaterialApp.router(
+        title: 'ThrottleIQ',
+        theme: AppTheme.dark,
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
+      );
+    } catch (e) {
+      print('App initialization error: $e');
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('Error: $e'),
+          ),
+        ),
+      );
+    }
   }
 }
