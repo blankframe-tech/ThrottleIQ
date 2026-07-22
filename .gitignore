@@ -3,7 +3,6 @@
 *.lock
 *.log
 *.pot
-*.properties
 *.pub
 *.pub-cache/
 *.pub-local-cache/
@@ -13,6 +12,9 @@
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
+# Only secret-bearing .properties are ignored (gradle.properties stays tracked)
+local.properties
+key.properties
 .pub/
 /build/
 
