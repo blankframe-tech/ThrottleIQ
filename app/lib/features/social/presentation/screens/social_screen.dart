@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../forums/presentation/screens/forums_home_screen.dart';
 import '../../../poi_directory/presentation/screens/places_list_screen.dart';
@@ -504,16 +505,7 @@ class _RiderResultTile extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.primary.withOpacity(0.15),
-            backgroundImage: rider.photoUrl != null ? CachedNetworkImageProvider(rider.photoUrl!) : null,
-            child: rider.photoUrl == null
-                ? Text(rider.initials,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, color: AppColors.primary))
-                : null,
-          ),
+          UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

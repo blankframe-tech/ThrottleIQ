@@ -29,8 +29,18 @@ String _slugifyPart(String value) {
   return value
       .trim()
       .toLowerCase()
-      .replaceAll(RegExp(r'\s+'), '_')
-      .replaceAll(RegExp(r'[^a-z0-9_-]'), '')
+      // Whitespace, `-`, and `_` are all "word separators" here — collapse
+      // any run of them to one `_` *before* stripping invalid chars, so
+      // 'mt-15', 'MT 15', and 'MT_15' all converge on the same slug instead
+      // of hyphen-vs-space producing two different forum ids for the same
+      // bike.
+      .replaceAll(RegExp(r'[\s_-]+'), '_')
+      .replaceAll(RegExp(r'[^a-z0-9_]'), '')
       .replaceAll(RegExp(r'_+'), '_')
       .replaceAll(RegExp(r'^_+|_+$'), '');
 }
+
+/// Deterministic slug for a general (non-bike) topic forum, e.g.
+/// `generalForumSlug('Two-Strokes')` -> `'two_strokes'`. Single-segment —
+/// no brand/model boundary to protect, so it reuses [_slugifyPart] directly.
+String generalForumSlug(String topic) => _slugifyPart(topic);

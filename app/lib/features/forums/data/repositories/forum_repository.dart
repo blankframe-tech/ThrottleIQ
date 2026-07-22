@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/utils/slugify.dart';
 import '../../domain/entities/forum_entity.dart';
@@ -51,6 +52,37 @@ class ForumRepository {
         'brand': brand,
         'model': model,
         'displayName': displayName,
+        'followerCount': 0,
+        'postCount': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return null;
+    });
+
+    final doc = snapshot ?? await docRef.get();
+    return ForumModel.fromFirestore(doc).toEntity();
+  }
+
+  /// Resolves a general (non-bike) topic forum, creating it on first use.
+  /// Same create-if-missing transaction shape as [getOrCreateForum] — the
+  /// slug is deterministic per topic, so repeated calls (e.g. every rider
+  /// who taps "Maintenance") converge on the same doc.
+  Future<ForumEntity> getOrCreateGeneralForum({required String topic}) async {
+    final slug = generalForumSlug(topic);
+    final docRef = _forums.doc(slug);
+
+    final snapshot = await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(docRef);
+      if (existing.exists) {
+        return existing;
+      }
+
+      transaction.set(docRef, {
+        'type': ForumType.general.name,
+        'brand': '',
+        'model': null,
+        'topic': topic,
+        'displayName': topic,
         'followerCount': 0,
         'postCount': 0,
         'createdAt': FieldValue.serverTimestamp(),
@@ -144,7 +176,8 @@ class ForumRepository {
       'body': body,
       'createdAt': FieldValue.serverTimestamp(),
       'replyCount': 0,
-      'likes': 0,
+      'upvotes': 0,
+      'downvotes': 0,
     });
     await _forums.doc(forumId).update({'postCount': FieldValue.increment(1)});
 
@@ -158,9 +191,10 @@ class ForumRepository {
         .orderBy('createdAt', descending: true)
         .get();
 
-    return snapshot.docs
+    final posts = snapshot.docs
         .map((doc) => ForumPostModel.fromFirestore(doc).toEntity())
         .toList();
+    return _hydrateVotes(forumId, posts);
   }
 
   Future<ForumPostEntity?> getPost({
@@ -169,7 +203,70 @@ class ForumRepository {
   }) async {
     final doc = await _forums.doc(forumId).collection('posts').doc(postId).get();
     if (!doc.exists) return null;
-    return ForumPostModel.fromFirestore(doc).toEntity();
+    final post = ForumPostModel.fromFirestore(doc).toEntity();
+    final hydrated = await _hydrateVotes(forumId, [post]);
+    return hydrated.first;
+  }
+
+  /// Hydrates the signed-in rider's vote state onto each post — entity-only,
+  /// never stored on the post doc itself (mirrors
+  /// RideShareRepository._hydrate's isLikedByCurrentUser/myVote pattern).
+  Future<List<ForumPostEntity>> _hydrateVotes(
+      String forumId, List<ForumPostEntity> posts) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || posts.isEmpty) return posts;
+
+    final votes =
+        await Future.wait(posts.map((p) => getMyPostVote(forumId, p.id, uid)));
+    return [
+      for (var i = 0; i < posts.length; i++) posts[i].copyWith(myVote: votes[i]),
+    ];
+  }
+
+  /// The signed-in rider's own vote on a post, if any, read from
+  /// `forums/{forumId}/posts/{postId}/votes/{uid}`.
+  Future<int?> getMyPostVote(String forumId, String postId, String uid) async {
+    final doc = await _forums
+        .doc(forumId)
+        .collection('posts')
+        .doc(postId)
+        .collection('votes')
+        .doc(uid)
+        .get();
+    return doc.data()?['value'] as int?;
+  }
+
+  /// Casts, changes, or clears a vote on a post. Same bounded ±1-per-field
+  /// transaction shape as RideShareRepository.vote, applied to
+  /// `upvotes`/`downvotes` on the post doc.
+  Future<void> votePost(String forumId, String postId, String uid, int value) async {
+    assert(value == 1 || value == -1);
+    final postRef = _forums.doc(forumId).collection('posts').doc(postId);
+    final voteRef = postRef.collection('votes').doc(uid);
+
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(voteRef);
+      final previous = existing.data()?['value'] as int?;
+      if (previous == value) {
+        transaction.delete(voteRef);
+        transaction.update(postRef, {
+          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(-1),
+        });
+        return;
+      }
+
+      transaction.set(voteRef, {'value': value});
+      if (previous == null) {
+        transaction.update(postRef, {
+          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
+        });
+      } else {
+        transaction.update(postRef, {
+          'upvotes': FieldValue.increment(value == 1 ? 1 : -1),
+          'downvotes': FieldValue.increment(value == 1 ? -1 : 1),
+        });
+      }
+    });
   }
 
   /// Adds a reply to a post and bumps its `replyCount`.
@@ -178,6 +275,7 @@ class ForumRepository {
     required String postId,
     required String userId,
     required String userName,
+    required String userPhotoUrl,
     required String body,
   }) async {
     final postRef = _forums.doc(forumId).collection('posts').doc(postId);
@@ -188,6 +286,7 @@ class ForumRepository {
       'forumId': forumId,
       'userId': userId,
       'userName': userName,
+      'userPhotoUrl': userPhotoUrl,
       'body': body,
       'createdAt': FieldValue.serverTimestamp(),
     });

@@ -11,7 +11,8 @@ class ForumPostModel {
   final String body;
   final DateTime createdAt;
   final int replyCount;
-  final int likes;
+  final int upvotes;
+  final int downvotes;
 
   const ForumPostModel({
     required this.id,
@@ -23,7 +24,8 @@ class ForumPostModel {
     required this.body,
     required this.createdAt,
     this.replyCount = 0,
-    this.likes = 0,
+    this.upvotes = 0,
+    this.downvotes = 0,
   });
 
   ForumPostEntity toEntity() {
@@ -37,7 +39,8 @@ class ForumPostModel {
       body: body,
       createdAt: createdAt,
       replyCount: replyCount,
-      likes: likes,
+      upvotes: upvotes,
+      downvotes: downvotes,
     );
   }
 
@@ -53,7 +56,8 @@ class ForumPostModel {
       body: data['body'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       replyCount: data['replyCount'] ?? 0,
-      likes: data['likes'] ?? 0,
+      upvotes: data['upvotes'] ?? 0,
+      downvotes: data['downvotes'] ?? 0,
     );
   }
 
@@ -67,7 +71,8 @@ class ForumPostModel {
       'body': body,
       'createdAt': Timestamp.fromDate(createdAt),
       'replyCount': replyCount,
-      'likes': likes,
+      'upvotes': upvotes,
+      'downvotes': downvotes,
     };
   }
 }

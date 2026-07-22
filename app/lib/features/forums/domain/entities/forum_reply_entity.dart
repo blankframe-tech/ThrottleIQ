@@ -6,6 +6,7 @@ class ForumReplyEntity extends Equatable {
   final String forumId;
   final String userId;
   final String userName;
+  final String userPhotoUrl;
   final String body;
   final DateTime createdAt;
 
@@ -15,6 +16,7 @@ class ForumReplyEntity extends Equatable {
     required this.forumId,
     required this.userId,
     required this.userName,
+    this.userPhotoUrl = '',
     required this.body,
     required this.createdAt,
   });
@@ -26,6 +28,7 @@ class ForumReplyEntity extends Equatable {
         forumId,
         userId,
         userName,
+        userPhotoUrl,
         body,
         createdAt,
       ];

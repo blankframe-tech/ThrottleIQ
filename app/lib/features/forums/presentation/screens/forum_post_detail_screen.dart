@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
@@ -68,11 +69,14 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
         postId: widget.postId,
         userId: user.uid,
         userName: user.displayName ?? 'Rider',
+        userPhotoUrl: user.photoURL ?? '',
         body: text,
       );
       await _load();
       if (!mounted) return;
-      ref.invalidate(forumPostsProvider(widget.forumId));
+      ref
+          .read(forumPostsNotifierProvider(widget.forumId).notifier)
+          .incrementReplyCount(widget.postId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,9 +141,15 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
-        Text(
-          post.userName,
-          style: const TextStyle(fontSize: 13, color: AppColors.textTertiary),
+        Row(
+          children: [
+            UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 12),
+            const SizedBox(width: 8),
+            Text(
+              post.userName,
+              style: const TextStyle(fontSize: 13, color: AppColors.textTertiary),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Text(
@@ -161,11 +171,17 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            reply.userName,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          Row(
+            children: [
+              UserAvatar(photoUrl: reply.userPhotoUrl, name: reply.userName, radius: 11),
+              const SizedBox(width: 8),
+              Text(
+                reply.userName,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(reply.body, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
         ],
       ),

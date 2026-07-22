@@ -36,6 +36,14 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
     'Hero',
   ];
 
+  static const _generalTopics = [
+    'Maintenance',
+    'Riding Skills',
+    'Two-Strokes',
+    'Dirt Bikes',
+    'Spark Plug Corner',
+  ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -48,6 +56,23 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
     setState(() => _resolving = true);
     try {
       final forum = await ForumRepository().getOrCreateForum(brand: trimmed);
+      if (!mounted) return;
+      context.push('/forums/${forum.id}');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open forum: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _resolving = false);
+    }
+  }
+
+  Future<void> _openGeneralForum(String topic) async {
+    if (_resolving) return;
+    setState(() => _resolving = true);
+    try {
+      final forum = await ForumRepository().getOrCreateGeneralForum(topic: topic);
       if (!mounted) return;
       context.push('/forums/${forum.id}');
     } catch (e) {
@@ -94,6 +119,32 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         ),
         const SizedBox(height: 24),
         const Text(
+          'Topics',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              for (var i = 0; i < _generalTopics.length; i++) ...[
+                if (i > 0) const Divider(height: 1, color: AppColors.border),
+                _DiscoverRow(
+                  icon: Icons.topic_outlined,
+                  label: _generalTopics[i],
+                  enabled: !_resolving,
+                  onTap: () => _openGeneralForum(_generalTopics[i]),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
           'Find a forum',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
@@ -119,21 +170,53 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final brand in _popularBrands)
-              ActionChip(
-                label: Text(brand),
-                backgroundColor: AppColors.surface,
-                side: const BorderSide(color: AppColors.border),
-                labelStyle: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                onPressed: _resolving ? null : () => _openBrandForum(brand),
-              ),
-          ],
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              for (var i = 0; i < _popularBrands.length; i++) ...[
+                if (i > 0) const Divider(height: 1, color: AppColors.border),
+                _DiscoverRow(
+                  icon: Icons.two_wheeler,
+                  label: _popularBrands[i],
+                  enabled: !_resolving,
+                  onTap: () => _openBrandForum(_popularBrands[i]),
+                ),
+              ],
+            ],
+          ),
         ),
       ],
+    );
+  }
+}
+
+/// A plain tappable list row used for forum discovery (popular brands,
+/// general topics) — these forums may not exist yet, so unlike [_ForumCard]
+/// there are no post/follower stats to show.
+class _DiscoverRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+  const _DiscoverRow({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: enabled ? onTap : null,
+      leading: Icon(icon, color: AppColors.primary, size: 22),
+      title: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
     );
   }
 }

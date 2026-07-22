@@ -7,6 +7,7 @@ class ForumReplyModel {
   final String forumId;
   final String userId;
   final String userName;
+  final String userPhotoUrl;
   final String body;
   final DateTime createdAt;
 
@@ -16,6 +17,7 @@ class ForumReplyModel {
     required this.forumId,
     required this.userId,
     required this.userName,
+    this.userPhotoUrl = '',
     required this.body,
     required this.createdAt,
   });
@@ -27,6 +29,7 @@ class ForumReplyModel {
       forumId: forumId,
       userId: userId,
       userName: userName,
+      userPhotoUrl: userPhotoUrl,
       body: body,
       createdAt: createdAt,
     );
@@ -40,6 +43,7 @@ class ForumReplyModel {
       forumId: data['forumId'] ?? '',
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? '',
+      userPhotoUrl: data['userPhotoUrl'] ?? '',
       body: data['body'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -51,6 +55,7 @@ class ForumReplyModel {
       'forumId': forumId,
       'userId': userId,
       'userName': userName,
+      'userPhotoUrl': userPhotoUrl,
       'body': body,
       'createdAt': Timestamp.fromDate(createdAt),
     };

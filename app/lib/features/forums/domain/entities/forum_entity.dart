@@ -2,7 +2,8 @@ import 'package:equatable/equatable.dart';
 
 enum ForumType {
   brand,
-  bikeModel;
+  bikeModel,
+  general;
 
   static ForumType fromString(String value) {
     return ForumType.values.firstWhere(
@@ -17,6 +18,11 @@ class ForumEntity extends Equatable {
   final ForumType type;
   final String brand;
   final String? model;
+
+  /// Set only for [ForumType.general] forums (e.g. "Maintenance",
+  /// "Two-Strokes") — non-bike discussion boards that have no brand/model.
+  final String? topic;
+
   final String displayName;
   final int followerCount;
   final int postCount;
@@ -27,6 +33,7 @@ class ForumEntity extends Equatable {
     required this.type,
     required this.brand,
     this.model,
+    this.topic,
     required this.displayName,
     this.followerCount = 0,
     this.postCount = 0,
@@ -39,6 +46,7 @@ class ForumEntity extends Equatable {
         type,
         brand,
         model,
+        topic,
         displayName,
         followerCount,
         postCount,

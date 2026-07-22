@@ -18,17 +18,20 @@ void main() {
       expect(testPost.forumId, 'yamaha_mt-15');
       expect(testPost.title, 'Chain slack question');
       expect(testPost.replyCount, 0);
-      expect(testPost.likes, 0);
+      expect(testPost.upvotes, 0);
+      expect(testPost.downvotes, 0);
+      expect(testPost.netScore, 0);
     });
 
     test('copyWith preserves unchanged fields', () {
-      final updated = testPost.copyWith(replyCount: 3, likes: 5);
+      final updated = testPost.copyWith(replyCount: 3, upvotes: 5);
 
       expect(updated.id, testPost.id);
       expect(updated.title, testPost.title);
       expect(updated.body, testPost.body);
       expect(updated.replyCount, 3);
-      expect(updated.likes, 5);
+      expect(updated.upvotes, 5);
+      expect(updated.netScore, 5);
     });
 
     test('copyWith with no args returns an equal copy', () {

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
@@ -130,7 +131,8 @@ class ForumThreadScreen extends ConsumerWidget {
       body: postsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) => Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
-        data: (posts) {
+        data: (_) {
+          final posts = ref.watch(forumPostsNotifierProvider(forumId));
           if (posts.isEmpty) {
             return const Center(
               child: Padding(
@@ -166,18 +168,29 @@ class ForumThreadScreen extends ConsumerWidget {
   }
 }
 
-class _PostCard extends StatelessWidget {
+class _PostCard extends ConsumerWidget {
   final String forumId;
   final ForumPostEntity post;
   const _PostCard({required this.forumId, required this.post});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppCard(
       onTap: () => context.push('/forums/$forumId/post/${post.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(post.userName,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Text(
             post.title,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
@@ -192,7 +205,25 @@ class _PostCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Text(post.userName, style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: () =>
+                    ref.read(forumPostsNotifierProvider(forumId).notifier).vote(post.id, 1),
+                icon: Icon(Icons.arrow_upward,
+                    color: post.myVote == 1 ? AppColors.primary : AppColors.textSecondary, size: 18),
+              ),
+              Text('${post.netScore}',
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: () =>
+                    ref.read(forumPostsNotifierProvider(forumId).notifier).vote(post.id, -1),
+                icon: Icon(Icons.arrow_downward,
+                    color: post.myVote == -1 ? AppColors.danger : AppColors.textSecondary, size: 18),
+              ),
               const Spacer(),
               const Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 4),

@@ -8,7 +8,16 @@ void main() {
     });
 
     test('slugifies a brand+model forum', () {
-      expect(bikeForumSlug('Yamaha', model: 'MT-15'), 'yamaha__mt-15');
+      expect(bikeForumSlug('Yamaha', model: 'MT-15'), 'yamaha__mt_15');
+    });
+
+    test('hyphen, space, and underscore in a model all collapse to the same slug', () {
+      final hyphenated = bikeForumSlug('Yamaha', model: 'MT-15');
+      final spaced = bikeForumSlug('Yamaha', model: 'MT 15');
+      final underscored = bikeForumSlug('Yamaha', model: 'MT_15');
+      expect(hyphenated, 'yamaha__mt_15');
+      expect(spaced, hyphenated);
+      expect(underscored, hyphenated);
     });
 
     test('is case-insensitive and trims whitespace', () {
@@ -41,6 +50,18 @@ void main() {
       expect(a, 'royal_enfield__classic_350');
       expect(b, 'royal__enfield_classic_350');
       expect(a, isNot(equals(b)));
+    });
+  });
+
+  group('generalForumSlug', () {
+    test('slugifies a single-word topic', () {
+      expect(generalForumSlug('Maintenance'), 'maintenance');
+    });
+
+    test('collapses hyphens and spaces the same way as bikeForumSlug', () {
+      expect(generalForumSlug('Two-Strokes'), 'two_strokes');
+      expect(generalForumSlug('Dirt Bikes'), 'dirt_bikes');
+      expect(generalForumSlug('Two-Strokes'), generalForumSlug('Two Strokes'));
     });
   });
 }

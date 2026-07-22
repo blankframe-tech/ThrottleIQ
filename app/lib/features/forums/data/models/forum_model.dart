@@ -6,6 +6,7 @@ class ForumModel {
   final String type;
   final String brand;
   final String? model;
+  final String? topic;
   final String displayName;
   final int followerCount;
   final int postCount;
@@ -16,6 +17,7 @@ class ForumModel {
     required this.type,
     required this.brand,
     this.model,
+    this.topic,
     required this.displayName,
     this.followerCount = 0,
     this.postCount = 0,
@@ -28,6 +30,7 @@ class ForumModel {
       type: ForumType.fromString(type),
       brand: brand,
       model: model,
+      topic: topic,
       displayName: displayName,
       followerCount: followerCount,
       postCount: postCount,
@@ -42,6 +45,7 @@ class ForumModel {
       type: data['type'] ?? 'brand',
       brand: data['brand'] ?? '',
       model: data['model'],
+      topic: data['topic'],
       displayName: data['displayName'] ?? '',
       followerCount: data['followerCount'] ?? 0,
       postCount: data['postCount'] ?? 0,
@@ -54,6 +58,7 @@ class ForumModel {
       'type': type,
       'brand': brand,
       'model': model,
+      'topic': topic,
       'displayName': displayName,
       'followerCount': followerCount,
       'postCount': postCount,

@@ -23,10 +23,11 @@ to resume with zero prior conversation context.
   Android** — the package rename intentionally breaks the Gradle build until
   fresh Firebase config lands (see §1). Everything here is `flutter analyze`
   clean but **not runtime-tested**.
-- Three epics complete on this branch: **package rename (code side)**,
-  **Phase A (profile + follow backend + share-bug fix)**, and **Epic B
-  (social UI: share screen, feed rework, voting)**.
-- **9 epics remain** (§5). Build order is dependency-first. §1 (Firebase
+- Four epics complete on this branch: **package rename (code side)**,
+  **Phase A (profile + follow backend + share-bug fix)**, **Epic B (social
+  UI: share screen, feed rework, voting)**, and **Epic C (forums: slug fix,
+  general topics, list UI, post voting, avatars)**.
+- **8 epics remain** (§5). Build order is dependency-first. §1 (Firebase
   reconfig) is still open — confirmed still blocked as of this session:
   `google-services.json` still has the old package name, though
   `GoogleService-Info.plist` has already been updated to the new bundle id.
@@ -200,19 +201,39 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
   needs to run before any of this is live (same deploy step §7 already calls
   out, storage rules are new to that list).
 
-### C. Forums — ⬜
-- Normalize slugs so `mt-15` / `MT 15` / `MT-15` collapse to one forum: fix
-  `lib/core/utils/slugify.dart` `_slugifyPart` to treat `-`, `_`, whitespace as
-  one separator.
-- Add **general (non-bike) forums**: `f/maintenance`, `f/skills`,
-  `f/two-strokes`, `f/dirt-bikes`, `f/spark-plug`… (needs a `general` ForumType
-  or single-segment slug alongside brand/model).
-- Forums home: **list, not buttons/chips** (`forums_home_screen.dart`).
-- **Upvote/downvote on posts** (posts already carry an unused `likes` int; add
-  vote fields + rules mirroring rides).
-- **Avatars**: show `userPhotoUrl` on posts/replies with a **GitHub-style default
-  avatar** (initials) when absent. Use `UserProfileEntity.initials`. Replies
-  currently store no photo — add it.
+### C. Forums — ✅ done, analyze-clean (not runtime-tested)
+- `slugify.dart` `_slugifyPart` now treats any run of whitespace/`-`/`_` as
+  one separator before stripping invalid chars, so `mt-15`/`MT 15`/`MT-15`
+  all collapse to the same forum slug (previously hyphen and whitespace were
+  normalized differently, so `mt-15` and `MT-15` matched but `MT 15` didn't).
+- **General (non-bike) forums**: `ForumType.general` + nullable `topic` field
+  on `ForumEntity`/`ForumModel`; `generalForumSlug()` (single-segment) +
+  `ForumRepository.getOrCreateGeneralForum` (same create-if-missing
+  transaction as the brand path). Curated topics (Maintenance, Riding Skills,
+  Two-Strokes, Dirt Bikes, Spark Plug Corner) live in
+  `forums_home_screen.dart`, lazy-created on tap like brand forums already
+  were — no rules change needed (the `forums/{id}` create rule was already
+  brand/model-agnostic).
+- **Forums home is a list now**: the popular-brands `Wrap` of `ActionChip`s
+  became a plain tappable list (`_DiscoverRow`), plus a matching "Topics"
+  list section for the general forums above.
+- **Upvote/downvote on posts**: dropped the dead unused `likes` int, added
+  `upvotes`/`downvotes` + `netScore` + entity-only `myVote` on
+  `ForumPostEntity` (mirrors `SharedRideEntity`). `ForumRepository.votePost`/
+  `getMyPostVote` use the same bounded ±1-per-field transaction as
+  `RideShareRepository.vote`; `firestore.rules` posts block gets a matching
+  `votes/{uid}` subcollection and update clause (simpler than rides' — no
+  audience tiers to gate reads on). New `forumPostsNotifierProvider` gives
+  `forum_thread_screen.dart`'s post cards optimistic voting, mirroring
+  `RideFeedNotifier`.
+- **Avatars**: extracted `UserProfileEntity.initials`'s algorithm into a
+  shared `initialsFrom()` (`core/utils/initials.dart`) and a new
+  `shared/widgets/user_avatar.dart` (`UserAvatar`) — photo when set, else a
+  GitHub-style initials circle. Wired into forum post cards, the post detail
+  header, and reply tiles; `ForumReplyEntity`/`Model` gained the
+  `userPhotoUrl` field they were missing entirely (`ForumRepository.addReply`
+  now takes it). Also swapped the rider-search tile in `social_screen.dart`
+  (Epic B) onto the same widget instead of its ad hoc `CircleAvatar`.
 
 ### D. Garage / Service — ⬜
 - **Odometer** optional field on add-bike: new `odometerKm` on `BikeEntity` +
@@ -282,8 +303,9 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
    scheme.
 2. `cd app && flutter pub get && flutter analyze` (should stay clean).
 3. Deploy backend when convenient: `firebase deploy --only firestore:rules,firestore:indexes,storage`
-   (rules + indexes updated through Epic B; `storage.rules` is new — first deploy).
+   (rules + indexes updated through Epic C; `storage.rules` is new since Epic
+   B — first deploy for that one).
 4. Build to verify: `flutter run` (sim) or the signed release APK flow (JAVA_HOME
    = Android Studio JBR, key.properties present).
-5. Continue at **Epic C** (§5). Commit per epic on `feat/v2-social`; do not push
+5. Continue at **Epic D** (§5). Commit per epic on `feat/v2-social`; do not push
    until asked; keep `main` releasable.

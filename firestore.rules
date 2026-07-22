@@ -166,14 +166,31 @@ service cloud.firestore {
       match /posts/{postId} {
         allow read: if request.auth != null;
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
-          request.resource.data.replyCount == 0 && request.resource.data.likes == 0;
-        // No editPost exists in ForumRepository today, so the only update
-        // this collection ever sees is addReply's replyCount +1 bump —
-        // scope the rule to exactly that instead of also granting the
-        // post's owner a general edit right for a feature that isn't built.
+          request.resource.data.replyCount == 0 &&
+          request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0;
+        // Two disjoint shapes now: addReply's replyCount +1 bump (as
+        // before), or a votePost bounded upvotes/downvotes change — same
+        // ±1-per-field discipline as the rides/{rideId} vote clause above,
+        // including the single-write "flip" case (both fields move by 1 in
+        // opposite directions at once).
         allow update: if request.auth != null &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
-          request.resource.data.replyCount == resource.data.replyCount + 1;
+          ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
+            request.resource.data.replyCount == resource.data.replyCount + 1) ||
+           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
+            request.resource.data.upvotes >= resource.data.upvotes - 1 &&
+            request.resource.data.upvotes <= resource.data.upvotes + 1 &&
+            request.resource.data.downvotes >= resource.data.downvotes - 1 &&
+            request.resource.data.downvotes <= resource.data.downvotes + 1));
+
+        // One vote doc per user: { value: 1 | -1 }. No rideVisibleTo-style
+        // gate needed — forum posts have no audience tiers, they're readable
+        // by any authed rider same as the post itself.
+        match /votes/{userId} {
+          allow read: if request.auth != null;
+          allow write: if request.auth != null && request.auth.uid == userId &&
+            (request.method == 'delete' ||
+             request.resource.data.value == 1 || request.resource.data.value == -1);
+        }
 
         match /replies/{replyId} {
           allow read: if request.auth != null;

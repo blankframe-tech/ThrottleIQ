@@ -10,7 +10,14 @@ class ForumPostEntity extends Equatable {
   final String body;
   final DateTime createdAt;
   final int replyCount;
-  final int likes;
+  final int upvotes;
+  final int downvotes;
+
+  /// The signed-in rider's own vote on this post: 1, -1, or null (none).
+  /// Entity-only — hydrated from the `votes/{uid}` subcollection at read
+  /// time, never stored on the post doc itself (mirrors
+  /// SharedRideEntity.myVote).
+  final int? myVote;
 
   const ForumPostEntity({
     required this.id,
@@ -22,12 +29,23 @@ class ForumPostEntity extends Equatable {
     required this.body,
     required this.createdAt,
     this.replyCount = 0,
-    this.likes = 0,
+    this.upvotes = 0,
+    this.downvotes = 0,
+    this.myVote,
   });
+
+  int get netScore => upvotes - downvotes;
+
+  /// Sentinel so [copyWith] can distinguish "leave myVote alone" from "set
+  /// myVote to null" (clearing a vote) — see SharedRideEntity.copyWith for
+  /// the same problem/fix.
+  static const _unset = Object();
 
   ForumPostEntity copyWith({
     int? replyCount,
-    int? likes,
+    int? upvotes,
+    int? downvotes,
+    Object? myVote = _unset,
   }) {
     return ForumPostEntity(
       id: id,
@@ -39,7 +57,9 @@ class ForumPostEntity extends Equatable {
       body: body,
       createdAt: createdAt,
       replyCount: replyCount ?? this.replyCount,
-      likes: likes ?? this.likes,
+      upvotes: upvotes ?? this.upvotes,
+      downvotes: downvotes ?? this.downvotes,
+      myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
     );
   }
 
@@ -54,6 +74,8 @@ class ForumPostEntity extends Equatable {
         body,
         createdAt,
         replyCount,
-        likes,
+        upvotes,
+        downvotes,
+        myVote,
       ];
 }
