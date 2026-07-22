@@ -34,12 +34,12 @@ flutter pub get
 
 **Android:**
 1. In Firebase Console → Project Settings → General
-2. Add "com.throttleiq.throttleiq" as Android app
+2. Add "com.bft.throttleiq" as Android app
 3. Download `google-services.json`
 4. Place in `app/android/app/google-services.json`
 
 **iOS:**
-1. Add "com.throttleiq.throttleiq" as iOS app (or add Bundle ID variant)
+1. Add "com.bft.throttleiq" as iOS app (or add Bundle ID variant)
 2. Download `GoogleService-Info.plist`
 3. Place in `app/ios/Runner/GoogleService-Info.plist`
 

@@ -351,7 +351,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.throttleiq.throttleiq',
+              userAgentPackageName: 'com.bft.throttleiq',
             ),
             if (_polyline.length > 1)
               PolylineLayer(

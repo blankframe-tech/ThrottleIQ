@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    namespace = "com.throttleiq.throttleiq"
+    namespace = "com.bft.throttleiq"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -39,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.throttleiq.throttleiq"
+        applicationId = "com.bft.throttleiq"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

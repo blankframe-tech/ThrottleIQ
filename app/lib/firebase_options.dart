@@ -11,7 +11,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '603325098273',
     projectId: 'throttleiqfb',
     storageBucket: 'throttleiqfb.firebasestorage.app',
-    iosBundleId: 'com.throttleiq.throttleiq',
+    iosBundleId: 'com.bft.throttleiq',
     iosClientId:
         '603325098273-gdefaanvp7u5e2d04f6uva4r888vuncq.apps.googleusercontent.com',
   );

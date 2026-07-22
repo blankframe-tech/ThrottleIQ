@@ -5,7 +5,7 @@
 1. Create a Firebase project at console.firebase.google.com
 2. Enable **Authentication** → Email/Password
 3. Enable **Cloud Messaging** for push notifications
-4. Add Android app with package name: `com.throttleiq.throttleiq`
+4. Add Android app with package name: `com.bft.throttleiq`
 5. Download `google-services.json` → place at `android/app/google-services.json`
 6. Add to `android/build.gradle.kts`:
    ```kotlin

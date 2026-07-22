@@ -47,7 +47,7 @@
 
         <!-- Foreground Service for Background GPS Location Tracking -->
         <service
-            android:name="com.throttleiq.throttleiq.LocationForegroundService"
+            android:name="com.bft.throttleiq.LocationForegroundService"
             android:exported="false"
             android:foregroundServiceType="location" />
 

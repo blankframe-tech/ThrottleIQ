@@ -1,4 +1,4 @@
-package com.throttleiq.throttleiq
+package com.bft.throttleiq
 
 import io.flutter.embedding.android.FlutterActivity
 
