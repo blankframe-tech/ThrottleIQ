@@ -195,11 +195,11 @@ class RecordScreen extends ConsumerWidget {
                 ),
               const SizedBox(height: 24),
 
-              // Start ride (hold) button
-              _HoldToStartButton(enabled: activeBike != null),
+              // Start ride (slide) button
+              _SlideToStartButton(enabled: activeBike != null),
               const SizedBox(height: 10),
               const Center(
-                child: Text('Hold to start recording',
+                child: Text('Swipe right to start recording',
                     style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
               ),
 
@@ -243,43 +243,65 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _HoldToStartButton extends ConsumerStatefulWidget {
+/// A "slide to start" gesture: drag anywhere on the button and the fill/
+/// thumb track your finger continuously from 0% to 100% of its width.
+/// Release past [_commitThreshold] (60%) and the ride starts — the fill
+/// animates the rest of the way to 100% first as a "locked in" cue, you
+/// don't have to physically drag all the way to the end. Release short of
+/// the threshold and it snaps back to 0. The whole button is the drag
+/// target (not just the thumb) — more forgiving to grab one-handed, or
+/// with gloves on, than a small precise handle would be.
+class _SlideToStartButton extends ConsumerStatefulWidget {
   final bool enabled;
-  const _HoldToStartButton({required this.enabled});
+  const _SlideToStartButton({required this.enabled});
 
   @override
-  ConsumerState<_HoldToStartButton> createState() => _HoldToStartButtonState();
+  ConsumerState<_SlideToStartButton> createState() => _SlideToStartButtonState();
 }
 
-class _HoldToStartButtonState extends ConsumerState<_HoldToStartButton>
+class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  bool _holding = false;
+  static const double _commitThreshold = 0.6;
+  static const double _trackHeight = 60;
+  static const double _thumbSize = 48;
+
+  late final AnimationController _ctrl;
+  double _trackWidth = 0;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _ctrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed && _holding) {
-        _triggerStart();
-      }
-    });
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
   }
 
-  void _triggerStart() async {
-    setState(() => _holding = false);
-    _ctrl.reset();
-    await ref.read(rideRecordingProvider.notifier).startRide();
-    if (mounted && ref.read(rideRecordingProvider).status == RecordingStatus.active) {
-      context.go('/ride/active');
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (_trackWidth <= 0) return;
+    // Setting .value directly (rather than animateTo) tracks the finger
+    // 1:1 with no easing lag, and implicitly stops any in-flight settle
+    // animation if the user grabs it again mid-snap-back.
+    _ctrl.value = (_ctrl.value + details.delta.dx / _trackWidth).clamp(0.0, 1.0);
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (_ctrl.value >= _commitThreshold) {
+      _ctrl.animateTo(1.0, curve: Curves.easeOut).then((_) => _triggerStart());
+    } else {
+      _ctrl.animateTo(0.0, curve: Curves.easeOut);
     }
   }
 
-  void _cancel() {
-    if (_holding) {
-      setState(() => _holding = false);
-      _ctrl.reset();
+  void _onPanCancel() => _ctrl.animateTo(0.0, curve: Curves.easeOut);
+
+  void _triggerStart() async {
+    await ref.read(rideRecordingProvider.notifier).startRide();
+    if (!mounted) return;
+    if (ref.read(rideRecordingProvider).status == RecordingStatus.active) {
+      context.go('/ride/active');
+    } else {
+      // startRide() didn't actually go active (permission denied, no bike,
+      // GPS disabled, ...) — don't leave the bar stuck full; let the rider
+      // try again. rideState.error (rendered below this widget) explains why.
+      _ctrl.animateTo(0.0, curve: Curves.easeOut);
     }
   }
 
@@ -295,56 +317,68 @@ class _HoldToStartButtonState extends ConsumerState<_HoldToStartButton>
         ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
     final enabled = widget.enabled && !isStarting;
 
-    return GestureDetector(
-      onLongPressStart: enabled
-          ? (_) {
-              setState(() => _holding = true);
-              _ctrl.forward();
-            }
-          : null,
-      onLongPressEnd: (_) => _cancel(),
-      onLongPressCancel: _cancel,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        child: SizedBox(
-          height: 60,
-          child: Stack(
-            children: [
-              Container(
-                color: enabled ? AppColors.ink : AppColors.textTertiary,
-              ),
-              // hold progress fill
-              AnimatedBuilder(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _trackWidth = (constraints.maxWidth - _thumbSize).clamp(1.0, double.infinity);
+
+        return GestureDetector(
+          onPanUpdate: enabled ? _onPanUpdate : null,
+          onPanEnd: enabled ? _onPanEnd : null,
+          onPanCancel: enabled ? _onPanCancel : null,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            child: SizedBox(
+              height: _trackHeight,
+              width: double.infinity,
+              child: AnimatedBuilder(
                 animation: _ctrl,
-                builder: (_, __) => FractionallySizedBox(
-                  widthFactor: _ctrl.value,
-                  alignment: Alignment.centerLeft,
-                  child: Container(color: AppColors.primary),
-                ),
-              ),
-              Center(
-                child: isStarting
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5))
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_holding ? 'Keep holding…' : 'Start Ride',
-                              style: display(17,
-                                  color: AppColors.onInk, letterSpacing: 0.2)),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward,
-                              color: AppColors.onInk, size: 20),
-                        ],
+                builder: (_, __) {
+                  final fraction = _ctrl.value;
+                  return Stack(
+                    children: [
+                      Container(color: enabled ? AppColors.ink : AppColors.textTertiary),
+                      FractionallySizedBox(
+                        widthFactor: fraction,
+                        alignment: Alignment.centerLeft,
+                        child: Container(color: AppColors.primary),
                       ),
+                      Center(
+                        child: isStarting
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2.5))
+                            : Opacity(
+                                opacity: (1 - fraction * 2).clamp(0.0, 1.0),
+                                child: Text('Slide to start ride',
+                                    style: display(16,
+                                        color: AppColors.onInk, letterSpacing: 0.2)),
+                              ),
+                      ),
+                      Positioned(
+                        left: fraction * _trackWidth,
+                        top: (_trackHeight - _thumbSize) / 2,
+                        child: Container(
+                          width: _thumbSize,
+                          height: _thumbSize,
+                          decoration: const BoxDecoration(
+                            color: AppColors.onInk,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.arrow_forward,
+                              color: enabled ? AppColors.ink : AppColors.textTertiary,
+                              size: 22),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
