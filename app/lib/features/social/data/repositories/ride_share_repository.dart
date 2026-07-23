@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../../domain/utilities/privacy_zone_clipper.dart';
@@ -20,15 +20,13 @@ class RideShareRepository {
   RideShareRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final CloudinaryUploadService _uploadService = CloudinaryUploadService();
   final FollowRepository _followRepository = FollowRepository();
 
-  /// Uploads a rider-taken ride/bike photo and returns its download URL.
-  /// Stored at `rideShares/{uid}/{rideId}.jpg`; overwrites on re-share.
-  Future<String> uploadRidePhoto(String uid, String rideId, File file) async {
-    final ref = _storage.ref('rideShares/$uid/$rideId.jpg');
-    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
-    return ref.getDownloadURL();
+  /// Uploads a rider-taken ride/bike photo (via Cloudinary — see
+  /// [CloudinaryUploadService]) and returns its public URL.
+  Future<String> uploadRidePhoto(String uid, String rideId, File file) {
+    return _uploadService.upload(file, folder: 'rideShares/$uid');
   }
 
   /// Shares a ride and applies privacy zones.

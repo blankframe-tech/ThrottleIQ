@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../models/user_profile_model.dart';
 
@@ -16,7 +16,7 @@ class ProfileRepository {
   ProfileRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final CloudinaryUploadService _uploadService = CloudinaryUploadService();
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection('users');
@@ -116,12 +116,11 @@ class ProfileRepository {
     });
   }
 
-  /// Uploads an avatar image and returns its download URL. Stored at
-  /// `avatars/{uid}.jpg`; overwrites the previous avatar.
-  Future<String> uploadAvatar(String uid, File file) async {
-    final ref = _storage.ref('avatars/$uid.jpg');
-    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
-    return ref.getDownloadURL();
+  /// Uploads an avatar image (via Cloudinary — see [CloudinaryUploadService])
+  /// and returns its public URL. Each upload gets a fresh URL; the previous
+  /// avatar image is simply orphaned rather than overwritten in place.
+  Future<String> uploadAvatar(String uid, File file) {
+    return _uploadService.upload(file, folder: 'avatars/$uid');
   }
 
   /// Prefix search on @username (case-insensitive). Empty query → [].

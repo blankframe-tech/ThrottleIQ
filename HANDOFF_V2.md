@@ -36,10 +36,14 @@ to resume with zero prior conversation context.
   sign-in screen — confirms §1's new config actually works at runtime, not
   just analyze-clean). Firestore rules + indexes are **deployed live** to
   `throttleiqfb`.
-- **Still open** (§8): Firebase Storage isn't provisioned on the project yet
-  (console-only one-time step, blocks the `storage:rules` deploy), and no one
-  has walked the signed-in app past the login screen this session — see §8
-  for exactly what that leaves unverified.
+- **Firebase Storage abandoned, replaced with Cloudinary** (2026-07-23, see
+  §1b) — the project owner has no payment card, and Google now requires the
+  Blaze billing plan (card on file) to use Storage at all, even within its
+  free tier. Avatar/ride-photo uploads now go to Cloudinary's cardless free
+  tier instead. `firebase_storage` removed from `pubspec.yaml`,
+  `storage.rules`/`firebase.json`'s `storage` key are dead.
+- **Still open** (§8): no one has walked the signed-in app past the login
+  screen this session — see §8 for exactly what that leaves unverified.
 
 ---
 
@@ -82,6 +86,56 @@ boots to the sign-in screen with no crash — confirms `Firebase.initializeApp()
 succeeds against the new `com.bft.throttleiq` config at runtime. Not verified:
 an actual sign-in/sign-up round trip against the new Auth project (see §8 —
 no simulator input-automation tool was available to drive that from here).
+
+---
+
+## 1b. ✅ RESOLVED — Firebase Storage dropped, Cloudinary added (2026-07-23)
+
+Attempting to provision Firebase Storage (§8's open item) surfaced a harder
+blocker: since Feb 2026 Google requires the **Blaze** (pay-as-you-go) billing
+plan — a payment method on file — to use Cloud Storage for Firebase at all,
+even to stay within its free quota. The project owner has no card to put on
+file. Rather than block avatar/ride-photo uploads on that indefinitely, the
+upload path was swapped to **Cloudinary**, which has a genuinely cardless
+free plan (~25GB/month storage+bandwidth combined — comfortably covers
+beta-tester volume).
+
+- New `CloudinaryUploadService` (`lib/core/services/cloudinary_upload_service.dart`):
+  thin wrapper around an **unsigned** upload to
+  `https://api.cloudinary.com/v1_1/vjvcigkt/image/upload` using Dio (already
+  a dependency — same "reuse what's there" call Epic E made for Overpass).
+  Cloud name `vjvcigkt` and upload preset `throttleiq_unsigned` (created in
+  the Cloudinary console, signing mode Unsigned) are not secrets — unsigned
+  presets are designed to be called directly from a client app, so hardcoding
+  them is the intended usage, not a leak.
+- `ProfileRepository.uploadAvatar` and `RideShareRepository.uploadRidePhoto`
+  now call this service instead of `FirebaseStorage`. Both still return a
+  plain URL string, so **nothing downstream changed** — `photoUrl` is stored
+  and displayed exactly as before.
+- **Judgment call:** did not try to preserve the old fixed-path/overwrite
+  semantics (`avatars/{uid}.jpg` replacing in place). Unsigned Cloudinary
+  presets restrict client-supplied `public_id`/`overwrite` by design; forcing
+  it would mean reconfiguring the preset in ways that weaken the "unsigned is
+  safe to embed" guarantee. Instead every upload gets a fresh auto-generated
+  URL, and the old image is simply orphaned in Cloudinary storage — at this
+  scale that's noise, not a real cost, and far simpler than fighting the
+  preset's restrictions.
+- Removed `firebase_storage` from `pubspec.yaml` (now unused — grepped the
+  whole `lib/` tree first to confirm no other caller). Removed the `storage`
+  key from `firebase.json`. Left `storage.rules` on disk untouched but
+  unwired — harmless dead file, cheaper to leave than to decide right now
+  whether it's worth deleting.
+- **Verified in a follow-up pass** (Flutter SDK available this time):
+  `flutter pub get` updated `pubspec.lock` cleanly — dropped
+  `firebase_storage`, `firebase_storage_platform_interface`,
+  `firebase_storage_web`, no conflicts. `flutter analyze` stayed at the same
+  0 errors / 91 pre-existing lint infos as before this change. `flutter test`
+  stayed at 239/239 passing (no test referenced `FirebaseStorage` directly,
+  so nothing needed updating).
+- If a payment card becomes available later, switching back to Firebase
+  Storage is straightforward: `storage.rules`/`firebase.json` wiring already
+  exist, just re-add the `firebase_storage` pubspec entry and swap
+  `CloudinaryUploadService` calls back to `FirebaseStorage.instance`.
 
 ---
 
@@ -214,11 +268,15 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
 - `storage.rules` **created** (didn't exist before — avatar upload was
   running unbacked by any rule) and registered in `firebase.json`: owner-write
   / any-authed-read for `avatars/{uid}.jpg` and `rideShares/{uid}/{rideId}.jpg`.
+  **Superseded 2026-07-23** — see §1b: Firebase Storage was dropped entirely
+  in favor of Cloudinary, so this file is now dead (left in place, unwired
+  from `firebase.json`, harmless to leave or delete).
 - `firestore.indexes.json`: dropped the stale `isPrivate+createdAt` index,
   added `userId+createdAt` (for `getMyRides`).
 - Not yet deployed: `firebase deploy --only firestore:rules,firestore:indexes,storage`
   needs to run before any of this is live (same deploy step §7 already calls
-  out, storage rules are new to that list).
+  out, storage rules are new to that list). **Superseded** — no `storage`
+  deploy target exists anymore; see §1b.
 
 ### C. Forums — ✅ done, analyze-clean (not runtime-tested)
 - `slugify.dart` `_slugifyPart` now treats any run of whitespace/`-`/`_` as
@@ -399,8 +457,9 @@ implementation:
    ride data, and confirm Auth/Firestore round-trip against the new
    `com.bft.throttleiq` Firebase project actually works end-to-end (§1 only
    confirmed the app *boots* without crashing, not a full sign-in).
-4. Finish the backend deploy: `firebase deploy --only storage` once Storage
-   is provisioned in the console (§8) — rules/indexes are already deployed.
+4. Storage backend deploy step is moot now — Firebase Storage was dropped in
+   favor of Cloudinary (§1b). Firestore rules/indexes are already deployed;
+   nothing else to deploy for storage.
 5. Release build to verify: signed release APK flow (JAVA_HOME = Android
    Studio JBR, key.properties present) or TestFlight for iOS.
 6. Device-upgrade path checks that were never runtime-testable from here:
@@ -415,14 +474,9 @@ implementation:
 
 ## 8. Open items after this session
 
-- **Firebase Storage not provisioned.** `firebase deploy --only storage`
-  failed: *"Firebase Storage has not been set up on project
-  'throttleiqfb'."* This is a one-time manual step — someone needs to open
-  https://console.firebase.google.com/project/throttleiqfb/storage and click
-  "Get Started" (picks a location/pricing tier, which is a real decision the
-  CLI can't make blind). `storage.rules` is already written and correct
-  (from Epic B) and will deploy cleanly the moment Storage exists — just
-  re-run `firebase deploy --only storage` after.
+- ~~`flutter pub get` not re-run after removing `firebase_storage`~~ — done
+  in a follow-up pass: `pubspec.lock` updated cleanly, `flutter analyze`
+  stayed at 0 errors, `flutter test` stayed at 239/239.
 - **No live sign-in walkthrough.** This session confirmed the app boots
   clean against the reconfigured Firebase project (lands on the sign-in
   screen, no crash) but couldn't drive the UI further — no `idb`/simulator
@@ -486,3 +540,19 @@ per-step; logging every judgment call made along the way:
    environment's terminal Accessibility permissions to unblock AppleScript)
    — that's a macOS security setting change with effects beyond this one
    task, not something to flip autonomously for a single verification step.
+10. **Did not upgrade `throttleiqfb` to the Blaze plan on the user's behalf.**
+    Entering a payment method is something an agent should never do even
+    with explicit permission — surfaced the requirement, asked the user, and
+    when they confirmed no card was available, proposed Cloudinary as a
+    concrete alternative rather than leaving the feature blocked indefinitely.
+11. **Cloudinary preset created via console clicks, not blind config** — used
+    the account the user was already logged into, created an *unsigned*
+    preset specifically (never a signed one, which would need the API
+    secret embedded in the client — a real credential, unlike an unsigned
+    preset name).
+12. **Bucket region question asked explicitly rather than assumed** — Firestore
+    was already in `asia-south1` for the stated Dhaka user base; offered the
+    same-region-vs-guaranteed-free-tier-region trade-off as a real choice
+    rather than picking one silently (moot after the Cloudinary pivot, but
+    the reasoning is preserved here since it's exactly the kind of call this
+    log exists to capture).
