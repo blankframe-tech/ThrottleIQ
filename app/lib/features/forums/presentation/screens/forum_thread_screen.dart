@@ -224,6 +224,17 @@ class _PostCard extends ConsumerWidget {
   final ForumPostEntity post;
   const _PostCard({required this.forumId, required this.post});
 
+  Future<void> _castVote(BuildContext context, WidgetRef ref, String postId, int value) async {
+    try {
+      await ref.read(forumPostsNotifierProvider(forumId).notifier).vote(postId, value);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't record your vote — check your connection and try again.")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppCard(
@@ -233,11 +244,25 @@ class _PostCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(post.userName,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              // Opaque + its own tight (non-Expanded) tap target so tapping
+              // the author's name/avatar opens their profile instead of
+              // falling through to the card's own onTap (post detail) —
+              // same nested-GestureDetector hit-testing gotcha fixed in
+              // garage_screen.dart's maintenance link; see that fix's doc
+              // comment for the mechanics. Doubles as "add people from
+              // forum posts": the profile screen has the Follow button.
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.push('/profile/${post.userId}'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
+                    const SizedBox(width: 8),
+                    Text(post.userName,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                  ],
+                ),
               ),
             ],
           ),
@@ -259,8 +284,7 @@ class _PostCard extends ConsumerWidget {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                onPressed: () =>
-                    ref.read(forumPostsNotifierProvider(forumId).notifier).vote(post.id, 1),
+                onPressed: () => _castVote(context, ref, post.id, 1),
                 icon: Icon(Icons.arrow_upward,
                     color: post.myVote == 1 ? AppColors.primary : AppColors.textSecondary, size: 18),
               ),
@@ -270,8 +294,7 @@ class _PostCard extends ConsumerWidget {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                onPressed: () =>
-                    ref.read(forumPostsNotifierProvider(forumId).notifier).vote(post.id, -1),
+                onPressed: () => _castVote(context, ref, post.id, -1),
                 icon: Icon(Icons.arrow_downward,
                     color: post.myVote == -1 ? AppColors.danger : AppColors.textSecondary, size: 18),
               ),

@@ -81,11 +81,16 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
 
     try {
       await _repo.votePost(_forumId, postId, uid, value);
-    } catch (_) {
+    } catch (e) {
       state = [
         for (final p in state)
           if (p.id == postId) post else p,
       ];
+      // Previously swallowed: the optimistic vote would flash then quietly
+      // revert with no feedback at all — reported as "votes are lost" since
+      // there was nothing distinguishing a silent failure from success.
+      // Rethrowing lets the UI show the rider what actually happened.
+      rethrow;
     }
   }
 
