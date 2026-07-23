@@ -1,13 +1,26 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/constants/motorcycle_quotes.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/presentation/providers/notification_providers.dart';
 import '../providers/ride_recording_provider.dart';
+
+/// Picked once per app session (Riverpod `Provider`s are computed lazily and
+/// cached for the container's lifetime, so this stays fixed across rebuilds
+/// within one app open — e.g. RecordScreen re-rendering while a ride's
+/// speed/distance update — but is different again next cold start) rather
+/// than "Your ride, smarter." always being the same line.
+final dashboardQuoteProvider = Provider<(String, String)>((ref) {
+  return motorcycleQuotes[Random().nextInt(motorcycleQuotes.length)];
+});
 
 class RecordScreen extends ConsumerWidget {
   const RecordScreen({super.key});
@@ -24,6 +37,7 @@ class RecordScreen extends ConsumerWidget {
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
     final name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
+    final quote = ref.watch(dashboardQuoteProvider);
 
     // If actively recording, push to active ride screen
     if (rideState.status == RecordingStatus.active ||
@@ -42,14 +56,17 @@ class RecordScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top row: settings only (editorial has no chrome title here)
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: () => context.push('/settings'),
-                  icon: const Icon(Icons.settings_outlined),
-                  tooltip: 'Settings',
-                ),
+              // Top row: notifications + settings (editorial has no chrome title here)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _NotificationBellButton(unreadCount: ref.watch(unreadNotificationCountProvider)),
+                  IconButton(
+                    onPressed: () => context.push('/settings'),
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: 'Settings',
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
 
@@ -68,10 +85,10 @@ class RecordScreen extends ConsumerWidget {
                       child: const Icon(Icons.speed, color: AppColors.onInk, size: 34),
                     ),
                     const SizedBox(height: 24),
-                    Text('Your ride,',
+                    Text(quote.$1,
                         textAlign: TextAlign.center,
                         style: display(30, color: AppColors.onInk, height: 1.1)),
-                    Text('smarter.',
+                    Text(quote.$2,
                         textAlign: TextAlign.center,
                         style: display(30, color: AppColors.onInk, height: 1.1)),
                   ],
@@ -379,6 +396,43 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
           ),
         );
       },
+    );
+  }
+}
+
+class _NotificationBellButton extends StatelessWidget {
+  final int unreadCount;
+  const _NotificationBellButton({required this.unreadCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          onPressed: () => context.push('/notifications'),
+          icon: const Icon(Icons.notifications_outlined),
+          tooltip: 'Notifications',
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.danger,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+              ),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              child: Text(
+                unreadCount > 9 ? '9+' : '$unreadCount',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

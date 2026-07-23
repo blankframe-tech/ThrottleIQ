@@ -1,7 +1,7 @@
 name: throttleiq
 description: Motorcycle tracking, intelligence, and memory platform
 publish_to: 'none'
-version: 2.0.0-beta.3+5
+version: 2.0.0-beta.4+6
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -86,9 +86,6 @@ flutter_launcher_icons:
   image_path_ios: "assets/images/app_icon_ios.png"
   android: true
   ios: true
-  windows: false
-  macos: false
-  web: false
   remove_alpha_ios: true
 
 flutter:
