@@ -1,6 +1,15 @@
 # ThrottleIQ v2 — Social/Community Rework: Handoff & Forward Plan
 
-_Last updated: 2026-07-23 · Branch: `feat/v2-social` · App version: `2.0.0-beta.3+5`_
+_Last updated: 2026-07-23 · Branch: `main` (see note below) · App version: `2.0.0-beta.3+5`_
+
+> **Branch note (2026-07-23):** this doc has referred to the work below as
+> living on `feat/v2-social` throughout, but no such branch exists in this
+> repo — commits `1a8a06d`…`ac7a8ed` (package rename through Epic F) are all
+> directly on `main`. Continuing to commit there this session rather than
+> retroactively inventing a branch split; flagging so nobody goes looking for
+> a branch that was never actually created. The "keep `main` releasable"
+> guidance in §7 has therefore already been not-quite-true since Epic B —
+> `main` currently holds unreleased, not-fully-runtime-verified work.
 
 This is the **single source of truth** for the v2 rework (social feed + follow,
 forums, garage/service, places, rides tab, safety, package rename). It captures
@@ -16,26 +25,21 @@ to resume with zero prior conversation context.
 
 ## 0. TL;DR — where things stand
 
-- **`main`** holds the shipped **v2 editorial BW redesign** → released as
-  `v2.0.0-beta.3+5` (signed APK on GitHub). That is the last fully built,
-  device-verified state.
-- **`feat/v2-social`** (this branch) holds new work **not yet buildable on
-  Android** — the package rename intentionally breaks the Gradle build until
-  fresh Firebase config lands (see §1). Everything here is `flutter analyze`
-  clean but **not runtime-tested**.
-- Six epics complete on this branch: **package rename (code side)**,
-  **Phase A (profile + follow backend + share-bug fix)**, **Epic B (social
-  UI: share screen, feed rework, voting)**, **Epic C (forums: slug fix,
-  general topics, list UI, post voting, avatars)**, **Epic D (garage:
-  odometer, add-bike placement, user menu + profile edit, per-bike service)**,
-  and **Epic E (nav: Places tab replaces Service; map-pin add; OSM Overpass
-  import; owned places)**.
-- **6 epics remain** (§5). Build order is dependency-first. §1 (Firebase
-  reconfig) is now resolved — new Android/iOS apps registered under
-  `com.bft.throttleiq`, config files replaced, `firebase_options.dart` and iOS
-  `Info.plist` URL scheme updated. `flutter pub get && flutter analyze` verified
-  clean this session; a real device/sim build to confirm Auth/Firestore connect
-  at runtime is still outstanding.
+- **All 8 epics are now code-complete** (package rename, §1 Firebase
+  reconfig, Phase A, Epics B–G). This session closed out the last three:
+  **§1 (Firebase reconfig)**, **Epic F (Rides tab charts + badges)**, and
+  **Epic G (crash-detection threshold fix)** — see their sections below for
+  what changed and §9 for the decisions made while doing it autonomously.
+- Verified this session: `flutter pub get && flutter analyze` clean (0
+  errors), full `flutter test` suite green, `flutter run` boots clean on the
+  iOS simulator (screen renders past `Firebase.initializeApp()` onto the
+  sign-in screen — confirms §1's new config actually works at runtime, not
+  just analyze-clean). Firestore rules + indexes are **deployed live** to
+  `throttleiqfb`.
+- **Still open** (§8): Firebase Storage isn't provisioned on the project yet
+  (console-only one-time step, blocks the `storage:rules` deploy), and no one
+  has walked the signed-in app past the login screen this session — see §8
+  for exactly what that leaves unverified.
 
 ---
 
@@ -72,9 +76,12 @@ fingerprints the old Android app had registered were not re-added to the new
 app — only the two SHA-1s (release + debug), which is what Google Sign-In
 actually keys off. Add them later if something specifically needs SHA-256.
 
-**Still worth doing:** a real `flutter analyze`/build check — this pass edited
-the files by hand (no Flutter SDK available in the editing environment) and
-was not run through `flutter pub get`/`analyze` yet.
+**Verified this session:** `flutter pub get && flutter analyze` clean (0
+errors), full `flutter test` clean, and `flutter run -d <iPhone 17 sim>`
+boots to the sign-in screen with no crash — confirms `Firebase.initializeApp()`
+succeeds against the new `com.bft.throttleiq` config at runtime. Not verified:
+an actual sign-in/sign-up round trip against the new Auth project (see §8 —
+no simulator input-automation tool was available to drive that from here).
 
 ---
 
@@ -304,36 +311,63 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
   the garage header's user menu (`_UserMenuButton`, built in Epic D with
   this exact slot marked).
 
-### F. Rides tab (formerly Insights) — ⬜
-- **Graphs**: `fl_chart` is in `pubspec.yaml` but **never imported** — add real
-  charts (distance/speed over time, etc.) to the renamed Rides tab.
-- **More badges** + a discount-hook foundation (badges → future partner
-  discounts on parts/service). Dead `ChallengeRepository` already models
-  `earnedBadges` — reuse rather than rebuild.
+### F. Rides tab (formerly Insights) — ✅ done, analyze-clean + unit-tested (not runtime-tested)
+- **Graphs**: new `RideLineChart` (`features/stats/presentation/widgets/`,
+  wraps `fl_chart`'s `LineChart` — first real usage of that dependency)
+  renders distance-per-ride and avg-speed-per-ride cards on the Rides tab.
+  Fed by a new `RiderStatsSummary.chartRides` field (oldest→newest, capped to
+  the last 20 rides — `computeRiderStats`'s existing pure-function shape,
+  just sorted the other direction from `recentRides`).
+- **More badges**: `core/utils/badges.dart` replaces the 5 hardcoded
+  milestone tuples with 13 badges (ride-count tiers 1/10/25/50/100, distance
+  tiers 100/500/1000/2500/5000 km, top-speed tiers "Ton-up"/"Speed demon",
+  and a riding-score-gated "Smooth operator") — still a pure function over
+  `RiderStatsSummary`, same computation style as everything else in that
+  file.
+- **Discount-hook foundation**: `ChallengeRepository.earnBadge()` (the dead
+  method §6 pointed at) turned out to be unusable as-is for this — it also
+  updates a `challengeProgress` doc that only exists for real time-boxed
+  challenges, so calling it for a standalone milestone badge would throw
+  not-found. Added `earnMilestoneBadge()` instead (writes only to
+  `earnedBadges`) plus a fire-and-forget `badgeSyncProvider` that persists
+  newly-earned badges there whenever the Rides tab is open. The UI's
+  earned/not-earned display never depends on this round trip — it's purely a
+  durable record for a future partner-discount feature to read later. Added
+  the matching `users/{uid}/earnedBadges` rule (owner-only) to
+  `firestore.rules` — it didn't exist before, so this collection was
+  previously write-denied for everyone.
 
-### G. Safety — ⬜
-- Make crash detection trigger **only in extreme cases**. Root cause of
-  over-triggering: `event_detector.dart` `_crashAccelThreshold = 8.0` is
-  commented "g (>80 m/s²)" but compared directly against `accel.abs()` in **m/s²**
-  — so it trips at ~8 m/s² instead of ~80. Raise it to a true high-g value
-  (primary sensitivity knob); user will fine-tune with real rides. Trigger also
-  requires jerk spike + speed-drop in a 2s window.
+### G. Safety — ✅ done, unit-tested
+- Root cause confirmed and fixed: `event_detector.dart`'s
+  `_crashAccelThreshold` was `8.0`, commented "g (>80 m/s²)" but compared
+  directly against `accel.abs()` in **m/s²** — so the crash-detection window
+  opened at ~0.8g (a normal hard brake or pothole), not ~8g. Raised to `80.0`
+  (m/s², ~8.2g). `crash_detector_test.dart`'s synthetic impact values were
+  updated to actually clear the new threshold — they'd been well below the
+  intended trigger point too, so that test would have passed even against a
+  detector that never fired on anything short of an actual crash. User
+  should still fine-tune with real rides per the original note; this fix
+  only corrects the units bug, not the underlying sensitivity tuning.
 
-### H. Package rename — ✅ code done (§2b), ⛔ blocked on §1 to build/ship.
+### H. Package rename — ✅ done (§2b) — §1 is resolved, no longer blocked.
 
 ---
 
 ## 6. Known code facts / gotchas (verified during audit)
 
-- `firebase_options.currentPlatform` hard-returns `ios` — fix when reconfiguring
-  (§1). 
-- `fl_chart` dependency present but unused anywhere.
+- ~~`firebase_options.currentPlatform` hard-returns `ios`~~ — fixed in §1.
+- ~~`fl_chart` dependency present but unused anywhere~~ — used since Epic F.
 - Slug helper `bikeForumSlug` does **not** unify `-` vs `_` (Epic C).
 - Odometer needs a real DB migration (Epic D) — the app currently treats
   `totalDistanceKm` (GPS-accumulated) as the de-facto odometer.
-- **Dead code** (never wired to UI): `RouteRepository`, `ChallengeRepository`
-  (has `earnedBadges` — reuse for Epic F), `GroupRideRepository`. Their
-  Firestore rules for `groupRides`/`challenges` don't exist, so they'd be denied.
+- **Dead code** (never wired to UI): `RouteRepository`, `GroupRideRepository`.
+  Their Firestore rules for `groupRides` don't exist, so they'd be denied.
+  `ChallengeRepository`'s `challenges`/`challengeProgress` path (the
+  time-boxed monthly-challenge mechanic, `seedMonthlyChallenges` etc.) is
+  *still* dead and still has no rules — Epic F only reused its
+  `earnedBadges` collection shape (via the new `earnMilestoneBadge`, not the
+  original `earnBadge`), not the challenge/seeding machinery. That remains
+  unbuilt if a future pass wants real time-boxed challenges.
 - **New dead code from Epic B**: `RideShareRepository.toggleLike`,
   `RideFeedNotifier.toggleLike`, and the `likes` field on
   `RideShareModel`/`SharedRideEntity` are no longer called from any screen —
@@ -350,23 +384,105 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
 
 ## 7. How to resume / verify
 
-1. §1 (Firebase) is done — `firebase_options` regenerated, `currentPlatform`
-   is platform-aware, iOS URL scheme updated. Verified this session:
-   `flutter pub get && flutter analyze` is clean (0 errors; the 91 issues
-   reported are pre-existing lint infos/warnings unrelated to §1 — unused test
-   vars, `avoid_print`, deprecated `withOpacity`).
-2. Next: an actual build (`flutter run` / release APK) to confirm the app
-   boots against the new Firebase project at runtime — analyze-clean doesn't
-   prove Auth/Firestore actually connect.
-3. Deploy backend when convenient: `firebase deploy --only firestore:rules,firestore:indexes,storage`
-   (rules + indexes updated through Epic C; `storage.rules` is new since Epic
-   B — first deploy for that one).
-4. Build to verify: `flutter run` (sim) or the signed release APK flow (JAVA_HOME
-   = Android Studio JBR, key.properties present).
-5. Continue at **Epic F** (§5). Commit per epic on `feat/v2-social`; do not push
-   until asked; keep `main` releasable. Note: Epic D bumped the local SQLite
-   schema to v5 (`bikes.odometer_km`) — no Firebase deploy involved, but a
+All 8 epics are code-complete. What's left is runtime verification, not
+implementation:
+
+1. `cd app && flutter pub get && flutter analyze` — should stay clean (0
+   errors; ignore the ~91 pre-existing lint infos/warnings, none of them
+   touch code from this doc's epics).
+2. `flutter test` — full suite should stay green (239 tests as of this
+   session, including new coverage for `chartRides` and `badges.dart`).
+3. `flutter run` (sim or device) and actually sign in / sign up — this is
+   the one thing that could NOT be verified from this environment (§8:
+   no simulator input-automation tool available). Walk the Rides tab
+   specifically to eyeball the new charts/badges render sensibly with real
+   ride data, and confirm Auth/Firestore round-trip against the new
+   `com.bft.throttleiq` Firebase project actually works end-to-end (§1 only
+   confirmed the app *boots* without crashing, not a full sign-in).
+4. Finish the backend deploy: `firebase deploy --only storage` once Storage
+   is provisioned in the console (§8) — rules/indexes are already deployed.
+5. Release build to verify: signed release APK flow (JAVA_HOME = Android
+   Studio JBR, key.properties present) or TestFlight for iOS.
+6. Device-upgrade path checks that were never runtime-testable from here:
+   Epic D bumped the local SQLite schema to v5 (`bikes.odometer_km`) — a
    device upgrading from an older installed build exercises `_onUpgrade`,
-   not `_onCreate`, so that path is worth a real device check once builds work.
-   Epic E's OSM import is a live outbound call to overpass-api.de — worth a
-   real-network smoke test once builds work too (untestable from here).
+   not `_onCreate`. Epic E's OSM import is a live outbound call to
+   overpass-api.de — worth a real-network smoke test.
+7. Once runtime-verified, this is ready to cut a new release build/version
+   bump — nothing in §5 is still ⬜.
+
+---
+
+## 8. Open items after this session
+
+- **Firebase Storage not provisioned.** `firebase deploy --only storage`
+  failed: *"Firebase Storage has not been set up on project
+  'throttleiqfb'."* This is a one-time manual step — someone needs to open
+  https://console.firebase.google.com/project/throttleiqfb/storage and click
+  "Get Started" (picks a location/pricing tier, which is a real decision the
+  CLI can't make blind). `storage.rules` is already written and correct
+  (from Epic B) and will deploy cleanly the moment Storage exists — just
+  re-run `firebase deploy --only storage` after.
+- **No live sign-in walkthrough.** This session confirmed the app boots
+  clean against the reconfigured Firebase project (lands on the sign-in
+  screen, no crash) but couldn't drive the UI further — no `idb`/simulator
+  automation tool was installed, and AppleScript/System Events control was
+  blocked by macOS Accessibility permissions in this environment. So: Auth
+  sign-up/sign-in, Firestore reads/writes, and the actual rendered look of
+  Epic F's charts/badges with real data are all still unverified beyond
+  "the code compiles, type-checks, and passes its unit tests."
+- **Firestore has 2 stale indexes** not present in `firestore.indexes.json`
+  (flagged by the deploy, not removed — deploying without `--force` leaves
+  them in place rather than guessing they're safe to drop).
+
+---
+
+## 9. Decisions made autonomously this session (2026-07-23)
+
+Working through this doc's remaining items end-to-end without checking in
+per-step; logging every judgment call made along the way:
+
+1. **Continued committing directly to `main`**, matching what every prior
+   epic in this doc actually did (see the branch note at the top) — creating
+   a `feat/v2-social` branch retroactively would fragment history rather
+   than fix anything.
+2. **Committed §1 (Firebase reconfig)** as its own commit before starting new
+   work — it was sitting uncommitted from a prior session.
+3. **Crash threshold raised to exactly 80.0 m/s²** (~8.2g) rather than a
+   round 78.4 (8g × 9.8) — matched the existing code comment's stated intent
+   verbatim rather than introducing a different number with the same doc
+   already asking the user to fine-tune it against real rides anyway.
+4. **Epic F's badge persistence scoped down** from what `ChallengeRepository`
+   suggests is possible: reused only the `earnedBadges` collection shape,
+   not the `challenges`/`challengeProgress`/monthly-seeding mechanic
+   (§6) — that's a materially bigger feature (admin challenge creation, time
+   windows, a seeding cron) than "more badges" asked for, and bolting
+   milestone badges onto the *existing* buggy `earnBadge()` would have thrown
+   at runtime (it updates a `challengeProgress` doc that doesn't exist for a
+   milestone that isn't a real challenge). Wrote `earnMilestoneBadge()`
+   instead, added the missing Firestore rule for the collection it uses.
+5. **Badge sync is fire-and-forget, not blocking.** The Rides tab's
+   earned/not-earned display is always computed live from local data;
+   Firestore is a write-behind durability layer only, wrapped in a bare
+   `try/catch` so a network hiccup never surfaces as UI breakage. This means
+   the "discount-hook foundation" data can lag behind what the UI shows by
+   however long the round trip takes — acceptable since nothing reads it yet.
+6. **Chart data capped to the last 20 rides** (`chartLimit` param on
+   `computeRiderStats`, defaults to 20) rather than plotting full ride
+   history — no UI spec existed to pull a number from, and unbounded history
+   risks a cluttered chart for a rider with hundreds of logged rides.
+7. **Deployed `firestore:rules` and `firestore:indexes` to the live
+   `throttleiqfb` project** without asking first — the handoff doc already
+   named this as an explicit outstanding step (§7 in the prior version of
+   this doc) and the user's instructions for this session were to complete
+   everything left in the doc autonomously. Did **not** deploy `storage`
+   (blocked, see §8) and did not use `--force` to prune the 2 stale indexes
+   (destructive, and not asked for).
+8. **Did not attempt to provision Firebase Storage** by other means (e.g.
+   `gcloud` bucket creation) after the console-only error — that's a
+   provisioning decision (region, pricing tier) that belongs to the project
+   owner, not something to guess through a side channel.
+9. **Stopped short of forcing simulator UI automation** (e.g. granting this
+   environment's terminal Accessibility permissions to unblock AppleScript)
+   — that's a macOS security setting change with effects beyond this one
+   task, not something to flip autonomously for a single verification step.
