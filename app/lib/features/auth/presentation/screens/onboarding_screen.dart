@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 
@@ -16,16 +17,28 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
+  final _usernameCtrl = TextEditingController();
   final _brandCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
   final _yearCtrl = TextEditingController();
   final _ccCtrl = TextEditingController();
   bool _loading = false;
+  String? _usernameError;
   int _step = 0; // 0 = name, 1 = bike
+
+  @override
+  void initState() {
+    super.initState();
+    final email = ref.read(currentUserProvider)?.email;
+    if (email != null) {
+      _usernameCtrl.text = ProfileRepository().suggestUsernameBase(email);
+    }
+  }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _usernameCtrl.dispose();
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _yearCtrl.dispose();
@@ -35,13 +48,34 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _usernameError = null;
+    });
 
     try {
       if (_step == 0) {
-        // Step 1: Save user profile
-        await ref.read(authNotifierProvider.notifier)
-            .updateDisplayName(_nameCtrl.text.trim());
+        // Step 1: Save name + claim @handle (prefilled from email, but
+        // editable — "offer them to create username" per spec — while
+        // AuthNotifier._ensureUsername covers anyone who skips this screen
+        // entirely, so every rider ends up with one regardless).
+        final notifier = ref.read(authNotifierProvider.notifier);
+        try {
+          await notifier.claimUsername(_usernameCtrl.text.trim());
+        } on UsernameTakenException {
+          setState(() {
+            _loading = false;
+            _usernameError = 'That username is taken — try another.';
+          });
+          return;
+        } on InvalidUsernameException catch (e) {
+          setState(() {
+            _loading = false;
+            _usernameError = e.toString();
+          });
+          return;
+        }
+        await notifier.updateDisplayName(_nameCtrl.text.trim());
         setState(() {
           _step = 1;
           _loading = false;
@@ -118,6 +152,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       hintText: 'John Doe',
                     ),
                     validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _usernameCtrl,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: 'Username *',
+                      prefixText: '@',
+                      hintText: 'yourhandle',
+                      errorText: _usernameError,
+                      helperText: 'Your public handle — you can change this later.',
+                    ),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (v) {
+                      final value = v?.trim() ?? '';
+                      if (!RegExp(r'^[a-zA-Z0-9_]{3,20}$').hasMatch(value)) {
+                        return '3-20 characters: letters, numbers, underscore';
+                      }
+                      return null;
+                    },
                   ),
                 ] else ...[
                   TextFormField(

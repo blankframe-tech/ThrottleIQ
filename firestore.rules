@@ -14,6 +14,24 @@ service cloud.firestore {
           request.auth.uid in ride.allowedUserIds));
     }
 
+    // Whether the requester may read a users/{uid} profile doc, given its
+    // data. 'public' (the default — including legacy docs written before
+    // `visibility` existed, so this never regresses pre-existing behavior)
+    // is open to any signed-in rider, same as before this function existed.
+    // 'mutual' additionally requires both follow edges to exist (I follow
+    // them AND they follow me) — a single-doc exists() check works here,
+    // unlike rideVisibleTo's allowedUserIds-materialization trick, because a
+    // profile view is always a single-doc get, never a list query. 'private'
+    // (or anything else) falls through to owner-only.
+    function profileVisibleTo(uid, profile) {
+      return request.auth != null && (
+        request.auth.uid == uid ||
+        !('visibility' in profile) || profile.visibility == 'public' ||
+        (profile.visibility == 'mutual' &&
+          exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + uid)) &&
+          exists(/databases/$(database)/documents/follows/$(uid + '_' + request.auth.uid))));
+    }
+
     // User profiles.
     //
     // The root profile DOCUMENT is now readable by any authenticated user —
@@ -25,8 +43,12 @@ service cloud.firestore {
     // subcollection below (rides/bikes/maintenance/emergencyContacts/...)
     // keeps its own owner-only rule, so opening the root doc does not expose
     // any of them.
+    //
+    // Gated by profileVisibleTo since a rider can now set `visibility` to
+    // 'mutual' or 'private' (see EditProfileScreen) — defaults to the
+    // pre-existing fully-open behavior for anyone who never touches it.
     match /users/{uid} {
-      allow read: if request.auth != null;
+      allow read: if profileVisibleTo(uid, resource.data);
       allow write: if request.auth.uid == uid;
 
       // User rides subcollection
@@ -63,6 +85,19 @@ service cloud.firestore {
       // partner-discount lookup.
       match /earnedBadges/{badgeId} {
         allow read, write: if request.auth.uid == uid;
+      }
+
+      // In-app notifications (e.g. "so-and-so followed you") — the one
+      // subcollection here that ISN'T owner-only to write, by necessity:
+      // the write always happens from the *other* rider's device (following
+      // someone writes a notification into the followee's subcollection).
+      // Bounded so a rider can only ever write a notification claiming to
+      // be from themselves, never spoof another uid as the source. Reads/
+      // updates (marking read)/deletes stay owner-only.
+      match /notifications/{notificationId} {
+        allow read, update, delete: if request.auth.uid == uid;
+        allow create: if request.auth != null &&
+          request.resource.data.fromUid == request.auth.uid;
       }
     }
 

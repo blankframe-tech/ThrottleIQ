@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -9,10 +10,12 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../forums/presentation/screens/forums_home_screen.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../providers/follow_providers.dart';
+import '../providers/notification_providers.dart';
 import '../providers/ride_feed_provider.dart';
 
 /// Social hub: Feed (Phase 2), Forums (Phase 3). Places moved to its own
@@ -503,19 +506,31 @@ class _RiderResultTile extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
-          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(rider.bestName,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                if (rider.username != null)
-                  Text('@${rider.username}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              ],
+            child: InkWell(
+              onTap: () => context.push('/profile/${rider.uid}'),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              child: Row(
+                children: [
+                  UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(rider.bestName,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary)),
+                        if (rider.username != null)
+                          Text('@${rider.username}',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (myUid != null)
@@ -529,6 +544,13 @@ class _RiderResultTile extends ConsumerWidget {
                     repo.unfollow(myUid, rider.uid);
                   } else {
                     repo.follow(myUid, rider.uid);
+                    final me = ref.read(myProfileProvider).valueOrNull;
+                    ref.read(notificationRepositoryProvider).notifyFollow(
+                          toUid: rider.uid,
+                          fromUid: myUid,
+                          fromName: me?.bestName ?? 'A rider',
+                          fromPhotoUrl: me?.photoUrl,
+                        );
                   }
                 },
                 style: OutlinedButton.styleFrom(

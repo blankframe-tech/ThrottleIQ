@@ -21,6 +21,14 @@ class UserProfileModel {
       ownedPlaceIds:
           (data['ownedPlaceIds'] as List?)?.whereType<String>().toList() ??
               const [],
+      visibility: (data['visibility'] as String?) ?? 'public',
+      totalDistanceKm:
+          ((data['publicStats'] as Map?)?['totalDistanceKm'] as num?)?.toDouble() ?? 0,
+      totalRides: ((data['publicStats'] as Map?)?['totalRides'] as num?)?.toInt() ?? 0,
+      badgeIds: ((data['publicStats'] as Map?)?['badgeIds'] as List?)
+              ?.whereType<String>()
+              .toList() ??
+          const [],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -114,6 +115,78 @@ class ProfileRepository {
         txn.delete(_usernames.doc(prev));
       }
     });
+  }
+
+  /// Derives a candidate @handle from an email's local part (before the
+  /// `@`): lowercased, stripped to `[a-z0-9_]`, clamped to setUsername's
+  /// 3-20 length window. Padded with trailing zeros if the sanitized result
+  /// is under 3 chars (e.g. an email like "a@x.com").
+  String suggestUsernameBase(String email) {
+    final local = email.split('@').first.toLowerCase();
+    var base = local.replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    if (base.length > 20) base = base.substring(0, 20);
+    while (base.length < 3) {
+      base += '0';
+    }
+    return base;
+  }
+
+  /// Best-effort: claims [base] for [uid], or [base] with a random numeric
+  /// suffix appended if it's taken, retrying a handful of times. Used both
+  /// to prefill onboarding's username field and as the no-username-chosen
+  /// fallback (see AuthNotifier._seedProfile) so every rider ends up with a
+  /// handle even if they never visit the username field themselves —
+  /// "assigned their email name, and if that's taken, append [something] to
+  /// it," per spec.
+  Future<String?> claimUsernameWithFallback(String uid, String base) async {
+    final rnd = Random();
+    for (var attempt = 0; attempt < 8; attempt++) {
+      final candidate = attempt == 0 ? base : '${base.substring(0, base.length.clamp(0, 16))}${rnd.nextInt(9000) + 100}';
+      try {
+        await setUsername(uid: uid, username: candidate);
+        return candidate;
+      } on UsernameTakenException {
+        continue;
+      } on InvalidUsernameException {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /// Denormalized total-km/total-rides/earned-badge-ids snapshot, written by
+  /// the owner's own device whenever a ride finalizes (see
+  /// RideRecordingNotifier.stopRide). Lets a public profile show real stats
+  /// without opening up the owner-only `rides`/`bikes` subcollections to
+  /// cross-user reads — those can carry more than a viewer should see
+  /// (exact ride times, etc.), whereas this is just three harmless numbers
+  /// gated by the same [visibility] tier as the rest of the profile doc.
+  Future<void> updatePublicStats({
+    required String uid,
+    required double totalDistanceKm,
+    required int totalRides,
+    required List<String> badgeIds,
+  }) async {
+    await _users.doc(uid).set({
+      'publicStats': {
+        'totalDistanceKm': totalDistanceKm,
+        'totalRides': totalRides,
+        'badgeIds': badgeIds,
+      },
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Sets who can view this rider's profile doc (and hence [publicStats]):
+  /// 'public' (default — any signed-in rider), 'mutual' (only riders who
+  /// follow each other), or 'private' (owner only). Enforced by
+  /// firestore.rules, not just the client UI.
+  Future<void> setVisibility({required String uid, required String visibility}) async {
+    assert(['public', 'mutual', 'private'].contains(visibility));
+    await _users.doc(uid).set({
+      'visibility': visibility,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   /// Uploads an avatar image (via Cloudinary — see [CloudinaryUploadService])

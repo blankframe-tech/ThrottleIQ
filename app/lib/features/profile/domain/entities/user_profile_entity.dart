@@ -39,6 +39,21 @@ class UserProfileEntity extends Equatable {
   /// the profile as "My places".
   final List<String> ownedPlaceIds;
 
+  /// Who can view this profile doc (and its [publicStats]): 'public' (any
+  /// signed-in rider — the default, matching pre-existing behavior before
+  /// this field existed), 'mutual' (only riders who follow each other), or
+  /// 'private' (owner only). Enforced by firestore.rules.
+  final String visibility;
+
+  /// Denormalized ride stats, written by the owner's own device on ride
+  /// finalize (see ProfileRepository.updatePublicStats) — kept off the
+  /// owner-only `rides`/`bikes` subcollections so a public/mutual profile
+  /// view can show them without those subcollections needing to open up to
+  /// cross-user reads.
+  final double totalDistanceKm;
+  final int totalRides;
+  final List<String> badgeIds;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -53,6 +68,10 @@ class UserProfileEntity extends Equatable {
     this.followerCount = 0,
     this.followingCount = 0,
     this.ownedPlaceIds = const [],
+    this.visibility = 'public',
+    this.totalDistanceKm = 0,
+    this.totalRides = 0,
+    this.badgeIds = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -82,6 +101,10 @@ class UserProfileEntity extends Equatable {
     int? followerCount,
     int? followingCount,
     List<String>? ownedPlaceIds,
+    String? visibility,
+    double? totalDistanceKm,
+    int? totalRides,
+    List<String>? badgeIds,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -96,6 +119,10 @@ class UserProfileEntity extends Equatable {
       followerCount: followerCount ?? this.followerCount,
       followingCount: followingCount ?? this.followingCount,
       ownedPlaceIds: ownedPlaceIds ?? this.ownedPlaceIds,
+      visibility: visibility ?? this.visibility,
+      totalDistanceKm: totalDistanceKm ?? this.totalDistanceKm,
+      totalRides: totalRides ?? this.totalRides,
+      badgeIds: badgeIds ?? this.badgeIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -113,6 +140,10 @@ class UserProfileEntity extends Equatable {
         followerCount,
         followingCount,
         ownedPlaceIds,
+        visibility,
+        totalDistanceKm,
+        totalRides,
+        badgeIds,
         createdAt,
         updatedAt,
       ];

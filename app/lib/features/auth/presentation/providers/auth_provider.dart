@@ -34,7 +34,25 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     if (user == null) return;
     try {
       await _profiles.ensureProfile(user);
+      await _ensureUsername(user);
     } catch (_) {/* non-fatal */}
+  }
+
+  /// Every rider ends up with an @handle even if they never touch the
+  /// onboarding/edit-profile username field: default to their email's local
+  /// part, falling back to a numeric suffix if that's taken. Runs on every
+  /// login (cheap — one doc read when a username already exists) so it also
+  /// backfills legacy accounts, not just brand-new ones. Onboarding calls
+  /// setUsername directly when the rider picks their own handle, which
+  /// makes this a no-op for them (username already set by the time this
+  /// next runs).
+  Future<void> _ensureUsername(User user) async {
+    final email = user.email;
+    if (email == null || email.isEmpty) return;
+    final uid = user.uid;
+    final existing = await _profiles.getProfile(uid);
+    if (existing?.username != null) return;
+    await _profiles.claimUsernameWithFallback(uid, _profiles.suggestUsernameBase(email));
   }
 
   Future<void> signIn(String email, String password) async {
@@ -67,6 +85,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       await _auth.signInWithCredential(credential);
       await _seedProfile();
     });
+  }
+
+  /// Claims @[username] for the signed-in rider. Lets [UsernameTakenException]/
+  /// [InvalidUsernameException] propagate — unlike updateDisplayName, this
+  /// one the UI needs to react to synchronously (show "that's taken," let
+  /// the rider try another), not just log and move on.
+  Future<void> claimUsername(String username) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    await _profiles.setUsername(uid: uid, username: username);
   }
 
   Future<void> updateDisplayName(String name) async {

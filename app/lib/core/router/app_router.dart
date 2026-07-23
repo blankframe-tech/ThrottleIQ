@@ -18,7 +18,9 @@ import '../../features/maintenance/presentation/screens/add_maintenance_log_scre
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../features/profile/presentation/screens/user_profile_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
+import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
 import '../../features/poi_directory/presentation/screens/places_list_screen.dart';
@@ -78,7 +80,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Full-screen ride routes (no shell)
       GoRoute(path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
       GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
+      // Must come after the literal '/profile/edit' above — go_router tries
+      // routes in listed order, so the exact-match route wins for that one
+      // path and every other uid falls through to this param route.
+      GoRoute(
+        path: '/profile/:uid',
+        builder: (_, state) => UserProfileScreen(uid: state.pathParameters['uid']!),
+      ),
       GoRoute(
         path: '/ride/summary/:rideId',
         builder: (_, state) => RideSummaryScreen(rideId: state.pathParameters['rideId']!),

@@ -32,6 +32,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _loaded = false;
   bool _saving = false;
   String? _usernameError;
+  String _visibility = 'public';
 
   @override
   void dispose() {
@@ -49,6 +50,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _bioCtrl.text = profile.bio ?? '';
     _usernameCtrl.text = profile.username ?? '';
     _photoUrl = profile.photoUrl;
+    _visibility = profile.visibility;
     _loaded = true;
   }
 
@@ -87,6 +89,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         bio: _bioCtrl.text.trim(),
         photoUrl: photoUrl,
       );
+      await repo.setVisibility(uid: uid, visibility: _visibility);
 
       if (!mounted) return;
       context.pop();
@@ -190,6 +193,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 style: const TextStyle(color: AppColors.textPrimary),
                 maxLines: 3,
                 decoration: const InputDecoration(labelText: 'Bio'),
+              ),
+              const SizedBox(height: 20),
+              const Text('Who can see my profile',
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const SizedBox(height: 8),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'public', label: Text('Everyone'), icon: Icon(Icons.public, size: 16)),
+                  ButtonSegment(
+                      value: 'mutual', label: Text('Mutuals'), icon: Icon(Icons.people, size: 16)),
+                  ButtonSegment(value: 'private', label: Text('Only me'), icon: Icon(Icons.lock, size: 16)),
+                ],
+                selected: {_visibility},
+                onSelectionChanged: (s) => setState(() => _visibility = s.first),
               ),
               const SizedBox(height: 32),
               ElevatedButton(
