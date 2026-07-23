@@ -10,9 +10,9 @@ void main() {
     });
 
     test('does NOT fire on pothole (single accel spike only)', () {
-      // Pothole: brief accel spike >8g, but NO jerk spike + NO speed drop
-      // Signal: [accel: 9.0, jerk: 5.0, speed: 10.0] -> [accel: 0, jerk: 0, speed: 9.5]
-      final result1 = detector.detect(accel: 9.0, jerk: 5.0, speedMs: 10.0);
+      // Pothole: brief accel spike >80 m/s² (~8g), but NO jerk spike + NO speed drop
+      // Signal: [accel: 90.0, jerk: 5.0, speed: 10.0] -> [accel: 0, jerk: 0, speed: 9.5]
+      final result1 = detector.detect(accel: 90.0, jerk: 5.0, speedMs: 10.0);
       final result2 = detector.detect(accel: 0, jerk: 0, speedMs: 9.5);
 
       expect(result1, isNot(RideAlert.crash));
@@ -36,21 +36,21 @@ void main() {
 
     test('DOES fire on crash: accel spike + jerk spike + speed→0 in 2s', () {
       // Crash scenario:
-      // t=0: High speed (15 m/s), then accel spike >8g
+      // t=0: High speed (15 m/s), then accel spike >80 m/s² (~8g)
       // t=0.5s: Jerk spike >10 m/s³
       // t=1.5s: Speed drops to near 0
 
       // Initial state: moving at good speed
       detector.detect(accel: 0, jerk: 0, speedMs: 15.0);
 
-      // Impact: accel spike >8g
-      final alert1 = detector.detect(accel: 10.0, jerk: 0, speedMs: 15.0);
+      // Impact: accel spike >80 m/s² (~8g)
+      final alert1 = detector.detect(accel: 90.0, jerk: 0, speedMs: 15.0);
 
       // Jerk spike follows
-      final alert2 = detector.detect(accel: 9.5, jerk: 12.0, speedMs: 14.5);
+      final alert2 = detector.detect(accel: 95.0, jerk: 12.0, speedMs: 14.5);
 
       // Speed drops to 0 within 2s
-      final alert3 = detector.detect(accel: -5.0, jerk: -8.0, speedMs: 0.5);
+      final alert3 = detector.detect(accel: -85.0, jerk: -8.0, speedMs: 0.5);
 
       expect(alert3, equals(RideAlert.crash));
       expect(detector.lastCrashSignal, isNotNull);
@@ -64,7 +64,7 @@ void main() {
       detector.detect(accel: 0, jerk: 0, speedMs: 15.0);
 
       // Accel spike
-      detector.detect(accel: 9.0, jerk: 0, speedMs: 15.0);
+      detector.detect(accel: 90.0, jerk: 0, speedMs: 15.0);
 
       // Wait (simulate) and check window expires
       // After 2.5s, should have reset state
