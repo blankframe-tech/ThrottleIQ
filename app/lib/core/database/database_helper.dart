@@ -27,7 +27,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -87,6 +87,12 @@ class DatabaseHelper {
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE bikes ADD COLUMN odometer_km REAL');
     }
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE ride_points ADD COLUMN heading_deg REAL');
+      await db.execute('ALTER TABLE ride_points ADD COLUMN confidence INTEGER');
+      await db.execute('ALTER TABLE ride_points ADD COLUMN imu_quality INTEGER');
+      await db.execute('ALTER TABLE ride_points ADD COLUMN is_cornering INTEGER');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -143,6 +149,10 @@ class DatabaseHelper {
         altitude_m REAL,
         period_type TEXT NOT NULL DEFAULT 'moving',
         accuracy_m REAL,
+        heading_deg REAL,
+        confidence INTEGER,
+        imu_quality INTEGER,
+        is_cornering INTEGER,
         FOREIGN KEY(ride_id) REFERENCES rides(id)
       )
     ''');

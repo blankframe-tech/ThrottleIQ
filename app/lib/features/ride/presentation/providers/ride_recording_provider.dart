@@ -11,6 +11,7 @@ import '../../domain/entities/ride_entity.dart';
 import '../../domain/entities/ride_point_entity.dart';
 import '../../domain/calculators/motion_calculator.dart';
 import '../../domain/calculators/event_detector.dart';
+import '../../domain/calculators/vehicle_state_estimator.dart';
 import '../../data/models/ride_model.dart';
 import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
@@ -42,6 +43,11 @@ class RideRecordingState {
   final int crashCountdown; // Seconds remaining (60 to 0)
   final String? liveSessionToken;
 
+  /// 0-100, from [VehicleStateEstimator] — how much to trust the current
+  /// fused motion estimate. Plumbing only in this phase; not yet surfaced
+  /// in any screen.
+  final int confidence;
+
   const RideRecordingState({
     this.status = RecordingStatus.idle,
     this.ride,
@@ -56,6 +62,7 @@ class RideRecordingState {
     this.crashDetected = false,
     this.crashCountdown = 60,
     this.liveSessionToken,
+    this.confidence = 0,
   });
 
   RideRecordingState copyWith({
@@ -72,6 +79,7 @@ class RideRecordingState {
     bool? crashDetected,
     int? crashCountdown,
     String? liveSessionToken,
+    int? confidence,
   }) {
     return RideRecordingState(
       status: status ?? this.status,
@@ -87,6 +95,7 @@ class RideRecordingState {
       crashDetected: crashDetected ?? this.crashDetected,
       crashCountdown: crashCountdown ?? this.crashCountdown,
       liveSessionToken: liveSessionToken ?? this.liveSessionToken,
+      confidence: confidence ?? this.confidence,
     );
   }
 }
@@ -105,9 +114,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   final _bikeDao = BikeDao();
   final _calculator = MotionCalculator();
   final _detector = EventDetector();
+  final _estimator = VehicleStateEstimator();
 
   StreamSubscription<Position>? _locationSub;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
+  StreamSubscription<GyroscopeEvent>? _gyroSub;
   Timer? _elapsedTimer;
   Timer? _flushTimer;
   Timer? _crashCountdownTimer;
@@ -212,6 +223,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _filteredAccel = 0;
     _lastSensorEvent = null;
     _detector.reset();
+    _estimator.reset();
     _lastPoint = null;
 
     state = state.copyWith(
@@ -254,10 +266,34 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _accelSub = userAccelerometerEventStream(
       samplingPeriod: const Duration(milliseconds: 50), // ~20 Hz
     ).listen(_onSensor);
+    _gyroSub = gyroscopeEventStream(
+      samplingPeriod: const Duration(milliseconds: 50), // ~20 Hz
+    ).listen(_onGyro);
+  }
+
+  // Feeds VehicleStateEstimator's heading/cornering/imuQuality pipeline.
+  // Does not touch the existing haptic alert logic below.
+  void _onGyro(GyroscopeEvent event) {
+    if (state.status != RecordingStatus.active) return;
+    _estimator.addGyroSample(
+      timestamp: DateTime.now(),
+      gx: event.x,
+      gy: event.y,
+      gz: event.z,
+    );
   }
 
   void _onSensor(UserAccelerometerEvent event) {
     if (state.status != RecordingStatus.active) return;
+
+    // Feeds VehicleStateEstimator's imuQuality pipeline in parallel — the
+    // haptic alert logic below (dominant-axis low-pass filter) is untouched.
+    _estimator.addAccelSample(
+      timestamp: DateTime.now(),
+      ax: event.x,
+      ay: event.y,
+      az: event.z,
+    );
 
     final magnitude = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
     final dominantAxis = [event.x.abs(), event.y.abs(), event.z.abs()];
@@ -302,7 +338,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     // geolocator >=11 exposes timestamp as a non-nullable DateTime (GPS device time)
     final timestamp = pos.timestamp;
 
-    if (pos.accuracy > 25) return;
+    if (pos.accuracy > SensorConstants.maxGpsAccuracyM) return;
 
     if (speedMs > _maxSpeed) _maxSpeed = speedMs;
     _speedSum += speedMs;
@@ -329,6 +365,21 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
     final periodType = speedMs < 1 ? 'idle' : 'moving';
 
+    // Feed the fusion engine the same GPS+derived-accel data this point is
+    // built from, then read back its fused heading/confidence/classification
+    // for this tick.
+    _estimator.addGpsSample(
+      timestamp: timestamp,
+      lat: pos.latitude,
+      lng: pos.longitude,
+      speedMs: speedMs,
+      accuracyM: pos.accuracy,
+      headingDeg: pos.heading.isFinite ? pos.heading : null,
+      altitudeM: pos.altitude,
+      accelerationMs2: accel,
+    );
+    final vehicleState = _estimator.currentState;
+
     final point = RidePointEntity(
       rideId: state.ride!.id,
       timestamp: timestamp,
@@ -338,6 +389,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       acceleration: accel,
       jerk: jerk,
       altitudeM: pos.altitude,
+      headingDeg: vehicleState?.headingDeg,
+      confidence: vehicleState?.confidence,
+      imuQuality: vehicleState?.imuQuality,
+      isCornering: vehicleState?.isCornering,
     );
 
     _lastPoint = point;
@@ -353,6 +408,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       'altitude_m': point.altitudeM,
       'period_type': periodType,
       'accuracy_m': pos.accuracy,
+      'heading_deg': point.headingDeg,
+      'confidence': point.confidence,
+      'imu_quality': point.imuQuality,
+      'is_cornering': point.isCornering == null ? null : (point.isCornering! ? 1 : 0),
     });
 
     if (_pointBuffer.length >= _bufferFlushSize) {
@@ -366,15 +425,27 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       elapsedSeconds: state.elapsed.inSeconds,
     );
 
-    if (alert == RideAlert.crash) {
+    // Crash-alert confidence gate (Epic G follow-up): don't act on a crash
+    // signal derived from garbage sensor data (e.g. mid-tunnel GPS loss).
+    // Falls back to acting on the alert if the estimator hasn't produced a
+    // state yet, so this can only ever suppress a would-be false positive,
+    // never swallow a genuine one that already has good data behind it. A
+    // suppressed crash alert is treated as no alert at all — it's dropped
+    // silently rather than partially surfaced in the UI.
+    final trustworthy =
+        (vehicleState?.confidence ?? 100) >= SensorConstants.minConfidenceForCrashAlert;
+    final effectiveAlert =
+        (alert == RideAlert.crash && !trustworthy) ? RideAlert.none : alert;
+
+    if (effectiveAlert == RideAlert.crash) {
       // Fire-and-forget: crash handling is async (UI + Firestore) and must not
       // block the position stream callback.
       _onCrashDetected();
-    } else if (alert != RideAlert.none && alert != state.activeAlert) {
+    } else if (effectiveAlert != RideAlert.none && effectiveAlert != state.activeAlert) {
       HapticService.alertPattern();
     }
 
-    final alertToShow = alert != RideAlert.none ? alert : state.activeAlert;
+    final alertToShow = effectiveAlert != RideAlert.none ? effectiveAlert : state.activeAlert;
     final newPolyline = [...state.polyline, LatLng(pos.latitude, pos.longitude)];
     state = state.copyWith(
       currentSpeedMs: speedMs,
@@ -382,6 +453,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       distanceM: _totalDistance,
       polyline: newPolyline,
       activeAlert: alertToShow,
+      confidence: vehicleState?.confidence,
     );
   }
 
@@ -431,6 +503,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _activeStart = null;
     _locationSub?.pause();
     _accelSub?.pause();
+    _gyroSub?.pause();
     state = state.copyWith(status: RecordingStatus.paused);
   }
 
@@ -439,6 +512,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _activeStart = DateTime.now();
     _locationSub?.resume();
     _accelSub?.resume();
+    _gyroSub?.resume();
     state = state.copyWith(status: RecordingStatus.active);
   }
 
@@ -449,6 +523,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
     _locationSub?.cancel();
     _accelSub?.cancel();
+    _gyroSub?.cancel();
     _elapsedTimer?.cancel();
     _flushTimer?.cancel();
 
@@ -657,6 +732,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   void dispose() {
     _locationSub?.cancel();
     _accelSub?.cancel();
+    _gyroSub?.cancel();
     _elapsedTimer?.cancel();
     _flushTimer?.cancel();
     _crashCountdownTimer?.cancel();
