@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../database/database_helper.dart';
 import '../database/daos/ride_dao.dart';
@@ -70,6 +71,102 @@ class CloudRepository {
     for (final log in logs) {
       await _updateMaintenanceSyncedStatus(log['id'], true);
     }
+  }
+
+  /// Pulls bikes that exist in this rider's `users/{uid}/bikes` Firestore
+  /// collection but not yet in the local DB, and inserts them locally.
+  ///
+  /// Until this existed, sync was upload-only: uploadBikes() pushed local
+  /// writes to Firestore, but nothing ever pulled them back down. A rider
+  /// signing into a second device (or reinstalling) got an empty local DB
+  /// and this never noticed the cloud copy already had their bikes — the
+  /// bug reported as "added bikes on the simulator, the real device install
+  /// didn't have them." Runs on every sync cycle (see SyncManager), which
+  /// makes it self-healing for reinstalls too, not just first login.
+  ///
+  /// Only inserts ids missing locally — never overwrites a local row, so an
+  /// in-flight local edit that hasn't uploaded yet can't be clobbered by a
+  /// stale cloud copy of the same id (ids are client-generated UUIDs, never
+  /// reused across devices for different bikes).
+  ///
+  /// Returns true if any new bikes were pulled down (so the caller knows to
+  /// invalidate garageProvider).
+  Future<bool> downloadBikes(String uid) async {
+    final db = await DatabaseHelper.instance.database;
+    final localIds = (await db.query('bikes', columns: ['id']))
+        .map((r) => r['id'] as String)
+        .toSet();
+    final snap = await _firestore.collection('users').doc(uid).collection('bikes').get();
+
+    final hasLocalActive = localIds.isNotEmpty &&
+        (await db.query('bikes', where: 'is_active = 1', limit: 1)).isNotEmpty;
+    var pulledAnyActive = false;
+    var pulledAny = false;
+
+    for (final doc in snap.docs) {
+      if (localIds.contains(doc.id)) continue;
+      final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
+      // A local file path from a *different* device is meaningless here —
+      // rather than let the UI try (and fail) to load a nonexistent file.
+      data['image_path'] = null;
+      // Never let a downloaded bike silently become "the" active bike
+      // alongside (or instead of) one already active locally; if nothing is
+      // active locally yet, let exactly the first pulled-down bike take it.
+      final wasActive = data['is_active'] == 1;
+      data['is_active'] =
+          (wasActive && !hasLocalActive && !pulledAnyActive) ? 1 : 0;
+      if (data['is_active'] == 1) pulledAnyActive = true;
+      data['synced'] = 1;
+      await db.insert('bikes', data, conflictAlgorithm: ConflictAlgorithm.replace);
+      pulledAny = true;
+    }
+    return pulledAny;
+  }
+
+  /// Same "pull anything missing locally" shape as [downloadBikes], for
+  /// maintenance logs.
+  Future<bool> downloadMaintenance(String uid) async {
+    final db = await DatabaseHelper.instance.database;
+    final localIds = (await db.query('maintenance_logs', columns: ['id']))
+        .map((r) => r['id'] as String)
+        .toSet();
+    final snap =
+        await _firestore.collection('users').doc(uid).collection('maintenance').get();
+
+    var pulledAny = false;
+    for (final doc in snap.docs) {
+      if (localIds.contains(doc.id)) continue;
+      final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
+      data['synced'] = 1;
+      await db.insert('maintenance_logs', data, conflictAlgorithm: ConflictAlgorithm.replace);
+      pulledAny = true;
+    }
+    return pulledAny;
+  }
+
+  /// Same "pull anything missing locally" shape as [downloadBikes], for ride
+  /// *metadata* rows (the `rides` table). Deliberately does not pull
+  /// `ride_points` (the GPS trail) — those were never uploaded in the first
+  /// place (uploadRides only ever pushed the `rides` row), so a ride
+  /// recovered this way lists in history with its stats but an empty map.
+  /// Fixing that is a real gap but a materially bigger one (GPS trails are
+  /// much larger payloads) — flagged here rather than silently left
+  /// unaddressed.
+  Future<bool> downloadRides(String uid) async {
+    final db = await DatabaseHelper.instance.database;
+    final localIds =
+        (await db.query('rides', columns: ['id'])).map((r) => r['id'] as String).toSet();
+    final snap = await _firestore.collection('users').doc(uid).collection('rides').get();
+
+    var pulledAny = false;
+    for (final doc in snap.docs) {
+      if (localIds.contains(doc.id)) continue;
+      final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
+      data['synced'] = 1;
+      await db.insert('rides', data, conflictAlgorithm: ConflictAlgorithm.replace);
+      pulledAny = true;
+    }
+    return pulledAny;
   }
 
   /// Store user profile data in Firestore

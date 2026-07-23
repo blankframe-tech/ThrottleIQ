@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/garage/presentation/providers/garage_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
 
@@ -13,6 +14,15 @@ enum SyncStatus { idle, syncing, success, failure }
 
 /// Manages automatic sync of local data to Firestore
 class SyncManager {
+  SyncManager([this._ref]) {
+    _initConnectivityListener();
+  }
+
+  /// Nullable: only needed to invalidate providers after a download pulls
+  /// in new rows (see _performSync). Tests/callers that don't care about
+  /// live UI refresh can omit it.
+  final Ref? _ref;
+
   final CloudRepository _cloudRepository = CloudRepository();
   final Connectivity _connectivity = Connectivity();
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,10 +36,6 @@ class SyncManager {
 
   bool get isSyncing => _isSyncing;
   SyncStatus get status => _status;
-
-  SyncManager() {
-    _initConnectivityListener();
-  }
 
   void addListener(VoidCallback callback) {
     _listeners.add(callback);
@@ -98,6 +104,16 @@ class SyncManager {
       final uid = _auth.currentUser!.uid;
       final db = await DatabaseHelper.instance.database;
 
+      // Pull down anything that exists in the cloud but not locally yet —
+      // the case an upload-only sync misses entirely (new device, fresh
+      // install, reinstall). Runs before the upload pass below so a bike
+      // just pulled down can't immediately re-upload as if it were a local
+      // edit. See CloudRepository.downloadBikes's doc comment.
+      final pulledBikes = await _cloudRepository.downloadBikes(uid);
+      await _cloudRepository.downloadMaintenance(uid);
+      await _cloudRepository.downloadRides(uid);
+      if (pulledBikes) _ref?.invalidate(garageProvider);
+
       // Fetch unsynced rides
       final unsyncedRides = await db.query(
         'rides',
@@ -154,7 +170,7 @@ class SyncManager {
 
 /// Riverpod provider for SyncManager
 final syncManagerProvider = Provider<SyncManager>((ref) {
-  final syncManager = SyncManager();
+  final syncManager = SyncManager(ref);
   ref.onDispose(() => syncManager.dispose());
   return syncManager;
 });
