@@ -2,6 +2,17 @@
 
 _Last updated: 2026-07-23 · Reflects the shipped code on `main` (v2 Editorial redesign, released `v2.0.0-beta.3+5`)._
 
+> **Correction (2026-07-24):** several screens/flows shipped after this file
+> was last substantively written and aren't reflected below — a username
+> step in onboarding, a public profile screen (`/profile/:uid`, reachable
+> from search results and forum posts), a notifications screen + dashboard
+> bell icon (follow notifications), a rotating dashboard tagline, and a real
+> app icon. Latest release is `v2.0.0-beta.4+6`; `feat/v2-social` was never
+> an actual branch (see `HANDOFF_V2.md`'s branch note). `HANDOFF_V2.md`
+> §8a–§8c has the full current account — treat this file as a snapshot of
+> the pre-2026-07-23 screen inventory, still broadly accurate for anything
+> it doesn't call out as changed.
+
 > ⚠️ **Correction (2026-07-23):** the "Social tab" and "AI tab" entries in §2
 > below are stale and describe an app state that predates even the v1 release
 > — on `main` today the chatbot feature doesn't exist at all (removed long

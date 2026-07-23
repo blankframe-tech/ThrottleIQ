@@ -1,29 +1,65 @@
 # ThrottleIQ Release Notes
 
-## Unreleased — v2 social/community rework (branch `feat/v2-social`)
+## v2.0.0-beta.4+6 (2026-07-24) — Notifications, sync fixes, and a real app icon
 
-**In development** (see `HANDOFF_V2.md`). Not buildable for Android until the
-`com.bft.throttleiq` Firebase reconfiguration is done (still open as of
-2026-07-23). Done so far, all `flutter analyze`-clean but not runtime-tested:
-- Package rename to `com.bft.throttleiq` (code side).
-- User profiles + open follow graph + audience tiers (public/followers/mutual)
-  + upvote/downvote backend; fixed the ride-sharing error on short/near-home
-  rides.
-- **Social UI**: end→share page (photo + audience picker), feed search+follow,
-  upvote/downvote replacing the like button on ride cards.
-- **Forums**: fixed a slug bug (`mt-15`/`MT 15`/`MT-15` now always resolve to
-  the same forum), added general (non-bike) topic forums, forums home is a
-  list instead of chips, post voting, avatars everywhere (including reply
-  authors, who had none before).
-- **Garage/service**: bike odometer with a real local DB migration, "add
-  bike" moved below the list, the garage header is now a user menu (first
-  Edit Profile screen in the app), maintenance moved into per-bike buttons.
-- **Nav + places**: bottom nav swaps Service for Places, renamed Insights to
-  Rides, added a map-pin location picker for new places, a manual
-  OpenStreetmap import for nearby fuel/repair/dealer POIs, and a "My Places"
-  screen.
+**Status:** ✅ Released (pre-release) · signed APK on GitHub · package
+`com.bft.throttleiq`
 
-Remaining: Rides tab graphs/badges, crash-detection sensitivity fix.
+Everything below shipped on `main` (see `HANDOFF_V2.md` §1–§9 for the full
+technical account — there was never a separate `feat/v2-social` branch,
+despite this file's history of implying one). Two rounds of real live-usage
+testing drove most of this release, on top of the previously-completed v2
+social/community rework (profiles, follow, forums, garage/service, places,
+Rides tab, safety).
+
+### Fixed — the safety-critical one
+- **Ride data lost when the app was killed mid-ride with the screen off.**
+  The ride-recovery path existed but was never actually called, and an
+  interrupted ride's status never flipped to "completed" — so it just
+  vanished from history rather than showing up damaged. Now recovers real
+  stats from whatever GPS points made it to disk, and the write-buffer/
+  screen-off-flush changes shrink how much can be lost in the first place.
+  Also requested Android's battery-optimization exemption, since several
+  OEMs kill background recording even with an active foreground service
+  without it.
+
+### Fixed — sync, navigation, forums
+- Bikes (and rides/maintenance) now sync **both ways** between devices —
+  sync was upload-only before, so a second device signing into the same
+  account never saw data from the first.
+- The garage screen's "Tap for maintenance" link now reliably opens
+  maintenance instead of silently falling through to bike detail.
+- Forum-post creation no longer crashes (`TextEditingController` used after
+  disposal — took three attempts across this and the prior release to
+  actually find the real cause; see `HANDOFF_V2.md` §8a for the account).
+- Forum vote failures now show an error instead of silently reverting with
+  no feedback (looked exactly like "my vote disappeared").
+- Fixed a Navigator crash on the garage user menu and bike delete
+  confirmation, and a Firestore permission-denied error on the Social feed.
+
+### Added
+- **Usernames + public profiles.** Every rider now gets an @handle
+  (auto-assigned from their email, editable at signup and later), and a new
+  profile screen (avatar, bio, follow button, total km/rides, earned
+  badges) reachable from search results or a forum post's author byline.
+  Profile visibility can be set to everyone / mutual followers / only me.
+- **Follow notifications** — in-app (bell icon + notifications screen), not
+  a phone push (that needs Cloud Functions, blocked on the same
+  no-payment-card constraint as Firebase Storage below).
+- Swipe-to-start replaces hold-to-start for beginning a ride recording.
+- Rotating dashboard taglines instead of the same static "Your ride,
+  smarter." every time.
+- A real app icon (the gauge mark), replacing the placeholder — the
+  launcher-icon config pointed at files that didn't exist before this.
+
+### Improved
+- Speed display responsiveness: tightened GPS settings (including a
+  previously-missing iOS-specific tuning branch) and added smooth
+  interpolation between readings on the active-ride screen.
+- Rides tab: distance/speed charts and 13 milestone badges (previously 5).
+- Firebase Storage dropped in favor of Cloudinary for avatar/photo uploads
+  — the project has no payment card, and Storage now requires the Blaze
+  plan even within its free tier.
 
 ## v2.0.0-beta.3+5 (2026-07-21) — Editorial BW redesign
 

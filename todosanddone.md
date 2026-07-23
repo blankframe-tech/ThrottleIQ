@@ -1,6 +1,17 @@
 # ThrottleIQ — What Works & What's Next
 
-_Last updated: 2026-07-23 · Latest release: [v2.0.0-beta.3+5](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.3+5) · Active branch: `feat/v2-social`_
+_Last updated: 2026-07-24 · Latest release: [v2.0.0-beta.4+6](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.4+6) · Active branch: `main`_
+
+> **Correction (2026-07-23):** despite this doc's history of saying
+> `feat/v2-social`, no such branch was ever actually created — everything
+> below is on `main` (see `HANDOFF_V2.md`'s branch note for the full story).
+> The "⛔ Blocker" callout right below is also now resolved: §1 of
+> `HANDOFF_V2.md` re-registered `com.bft.throttleiq` in Firebase and Epics
+> F/G shipped after it, so all 8 epics are code-complete. `HANDOFF_V2.md` is
+> the up-to-date single source of truth, including two more real-usage bug
+> waves (§8a/§8b) that landed after this file was last substantively
+> written — read that doc first; this one is kept mostly for the P0–P8
+> history below, which is still accurate.
 
 This is the honest state of the project: **Done & verified** means it was actually exercised and confirmed; **Done, not yet verified** means the code/config exists but hasn't been tested end-to-end; **To do** is future work.
 
@@ -28,16 +39,38 @@ released as `v2.0.0-beta.3+5` (signed APK on GitHub).
 - ✅ **Epic E**: nav + places — bottom nav swaps Service for Places (renamed
   Insights→Rides), map-pin location picker for adding a place, manual OSM
   Overpass import (fuel/repair/dealer POIs), "My Places" screen.
+- ✅ **Epic F**: Rides tab charts (fl_chart) + 13 milestone badges.
+- ✅ **Epic G**: crash-detection threshold fix (was comparing g-force in the
+  wrong units, tripped ~10x too easily) + a later confidence-gated crash
+  alert (Vehicle State Engine Phase 1, see `VEHICLE_STATE_ARCHITECTURE.md`).
 
-**⛔ Blocker:** the rename breaks Android builds until `com.bft.throttleiq` is
-registered in the `throttleiqfb` Firebase project and fresh `google-services.json`
-+ `GoogleService-Info.plist` are pasted in. Still open as of 2026-07-23 — see
-`HANDOFF_V2.md` §1 for the exact steps.
+**⛔ Blocker — RESOLVED 2026-07-23:** `com.bft.throttleiq` is now registered
+in the `throttleiqfb` Firebase project with fresh config files pasted in —
+see `HANDOFF_V2.md` §1. All 8 epics are code-complete.
 
-**To do (dependency order):** F) Rides tab (fl_chart graphs, more badges) ·
-G) safety (crash-detection threshold fix — real bug, not cosmetic: the
-accel-spike threshold is compared in the wrong units and trips ~10x too
-easily). Full detail: `HANDOFF_V2.md` §5.
+**Since then (2026-07-23, same day — see `HANDOFF_V2.md` §8/§8a/§8b for full
+detail):** the project owner did real live-usage testing for the first time
+this project has had, across three waves. Fixed: a forum-post crash
+(mis-diagnosed twice before the real cause — a disposed `TextEditingController`
+— was found), a Social-feed permission-denied query bug, a Navigator
+key-collision crash, a swipe-to-start gesture replacing hold-to-start, a
+maintenance-page nav dead spot, silently-failing forum votes, and — the most
+serious one — **the app losing ride data when killed mid-ride with the
+screen off**, now mitigated with a smaller write buffer, a screen-off flush
+trigger, an Android battery-optimization exemption request, and a rewritten
+ride-recovery path. Also shipped: bikes/rides/maintenance now sync **both
+ways** between devices (was upload-only before, so a second device never saw
+data from the first), and a new username + public-profile-with-privacy
+feature. None of §8a/§8b has been re-confirmed by a live retest yet — see
+`HANDOFF_V2.md` §7 for the highest-priority things to test next.
+
+**Then (2026-07-24, §8c):** a polish wave — in-app follow notifications
+(bell icon, not a phone push — blocked on the same no-Cloud-Functions
+constraint as the mocked crash-SMS pipeline), tuned GPS settings + smoothed
+speed display for the "speed feels slow" report, a real app icon (the
+launcher-icon config pointed at files that didn't exist), and rotating
+dashboard taglines. Released as `v2.0.0-beta.4+6`, x86_64 build, signed APK
+on GitHub.
 
 ---
 
@@ -74,7 +107,7 @@ easily). Full detail: `HANDOFF_V2.md` §5.
 
 These exist in code/config but have never been exercised against the real backend or a real device. **Treat each as unproven until tested.**
 
-- [ ] **On-device behaviour** — the app has never been installed on a physical phone. Ride recording, background tracking, crash countdown, sync: all need a real-device pass.
+- [x] ~~**On-device behaviour**~~ **PARTIALLY VERIFIED 2026-07-23** — the project owner has now tested the live app directly (see `HANDOFF_V2.md` §8/§8a/§8b), surfacing several real bugs since fixed. Still open specifically: a real ride with the screen off for several minutes, to confirm the mid-ride-kill data-loss fix (§8b) actually holds — see `HANDOFF_V2.md` §7.
 - [x] ~~Unit/widget test suite~~ **VERIFIED 2026-07-14** — 184/184 green.
 - [ ] **Google sign-in end-to-end** — config + code are in place; needs one real tap-through on a device.
 - [ ] **Firestore rules under real traffic** — rules deployed but only compiler-checked; exercise with a real account (read own rides, fail reading someone else's).
@@ -93,8 +126,9 @@ These exist in code/config but have never been exercised against the real backen
 
 ### Soon (requires Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
 - [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation). Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email) with real credentials via functions config.
-- [ ] **Firebase Storage bucket** — new projects require Blaze for Storage; until then review/profile photo uploads fail. Enable bucket + deploy storage rules.
+- [x] ~~Firebase Storage bucket~~ **SUPERSEDED 2026-07-23** — the project owner has no payment card, and Storage now requires Blaze even within its free tier. Avatar/photo uploads moved to Cloudinary instead (`HANDOFF_V2.md` §1b) — no bucket needed.
 - [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete.
+- [ ] **Sync `ride_points` (GPS trails) to Firestore** — bikes/rides-metadata/maintenance sync both ways as of 2026-07-23, but the point-by-point GPS track never has (upload or download) — see `HANDOFF_V2.md` §8b/§6.
 
 ### Play Store
 - [ ] Google Play developer account ($25 one-time)
@@ -126,9 +160,9 @@ These exist in code/config but have never been exercised against the real backen
 | Thing | Value |
 |---|---|
 | Firebase project | `throttleiqfb` (asia-south1) |
-| Android package (code, `feat/v2-social`) | `com.bft.throttleiq` — **not yet registered in Firebase**, see `HANDOFF_V2.md` §1 |
-| Android package (shipped, `main`) | `com.throttleiq.throttleiq` (matches the currently-registered Firebase app below) |
-| Firebase Android app ID | `1:603325098273:android:eca9cb27d75372cffcf660` — keyed to the *old* package; this id changes once §1's re-registration happens, don't assume it's still current after that |
+| Android package (all code, `main`) | `com.bft.throttleiq` — **registered in Firebase** since §1 (2026-07-23): App ID `1:603325098273:android:94694220f44cbf63fcf660` |
+| File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see `HANDOFF_V2.md` §1b for why |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
-| Latest release | [`v2.0.0-beta.3+5`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.3+5) — signed APK on `main`; `feat/v2-social` is unreleased |
+| Latest release | [`v2.0.0-beta.4+6`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/v2.0.0-beta.4+6) — signed x86_64 APK on GitHub |
+| Test suite | 282/282 green as of 2026-07-24 (§8c) |

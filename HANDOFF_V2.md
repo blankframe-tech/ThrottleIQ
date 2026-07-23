@@ -47,6 +47,27 @@ to resume with zero prior conversation context.
   forum-post crash and a Social-feed permission-denied bug that neither
   `flutter analyze` nor the unit suite could have caught. This is the first
   real-world usage signal this doc has had.
+- **Two more real-usage bug waves landed the same day** (see §8a, §8b): a
+  swipe-to-start gesture replaced hold-to-start; a Navigator key-collision
+  crash (garage user menu / bike delete) was fixed; the forum-post crash
+  from the first wave turned out to be **mis-diagnosed twice** before the
+  real root cause (a `TextEditingController` used after disposal) was found
+  from an actual stack trace — see §8a for the full account, it's a useful
+  cautionary tale. §8b covers a much larger second wave: bikes not syncing
+  to a second device (sync was upload-only, never downloaded), a
+  maintenance-page nav dead spot, the app losing ride data when killed
+  mid-ride with the screen off (the most safety-relevant fix this project
+  has had), forum votes failing silently, and a new username +
+  public-profile-with-privacy feature. Test suite: 282/282 green throughout
+  (no new tests added in §8a/§8b — that work is UI-callback/sync-plumbing
+  code with no existing widget-test harness in this repo, same honest gap
+  noted for the first wave in §8).
+- **A polish wave followed the next day (2026-07-24, §8c)**: in-app follow
+  notifications (bell icon + notifications screen — not a phone push, see
+  §8c for why), GPS/speed-display tuning for the "speed feels slow" report,
+  a real app icon (the config previously pointed at files that didn't
+  exist), and rotating dashboard taglines replacing the static "Your ride,
+  smarter." Built and released as `v2.0.0-beta.4+6`.
 
 ---
 
@@ -215,8 +236,8 @@ Rules: `firestore.rules`. Indexes: `firestore.indexes.json`.
 
 | Collection | Purpose | Read | Write |
 |---|---|---|---|
-| `users/{uid}` (root fields) | Public profile: displayName, username, usernameLower, nickname, bio, photoUrl, email, emailLower | any authed | owner |
-| `users/{uid}/{rides,bikes,maintenance,emergencyContacts,...}` | Owner-only mirrors/contacts | owner | owner |
+| `users/{uid}` (root fields) | Public profile: displayName, username, usernameLower, nickname, bio, photoUrl, email, emailLower, **visibility** (`public`\|`mutual`\|`private`, added §8b), **publicStats** (`totalDistanceKm`/`totalRides`/`badgeIds`, denormalized on ride finalize, added §8b) | `profileVisibleTo()` (§8b — defaults to any-authed for every doc that never sets `visibility`) | owner |
+| `users/{uid}/{rides,bikes,maintenance,emergencyContacts,...}` | Owner-only mirrors/contacts. `bikes`/`maintenance`/`rides` metadata now sync **both ways** (§8b — was upload-only before); `ride_points` (GPS trails) still upload-only/not pulled down, a known gap | owner | owner |
 | `usernames/{handleLower}` | `{uid}` reservation for unique @handles | any authed | create-if-free / owner delete |
 | `follows/{followerUid}_{followeeUid}` | Follow edge | any authed | follower only |
 | `rides/{rideId}` | Shared-ride feed post + `audience`, `allowedUserIds`, `upvotes`, `downvotes`, `photoUrl`, `likes`*, `comments` | `rideVisibleTo()` | owner + bounded counter bumps |
@@ -448,6 +469,17 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
 - Placeholder in AndroidManifest: `com.bft.throttleiq.LocationForegroundService`
   is declared but there is **no matching `.kt` source** — pre-existing; harmless
   unless started.
+- **`ride_points` (GPS trails) are not cloud-synced** (§8b) — only the
+  `rides` metadata row and `bikes`/`maintenance` sync both ways now. A ride
+  pulled down to a second device shows correct stats but an empty map.
+- **`SyncManager`'s auto-sync interval (5 min) and the new download pass
+  both run on every cycle** — cheap at this project's per-user data volume,
+  but worth revisiting if a rider ever accumulates hundreds of bikes/rides/
+  maintenance logs (unlikely, but nothing currently bounds the collection
+  size the download step reads).
+- `RideDao`/`BikeDao`/`MaintenanceDao`'s `getUnsynced()`/`markSynced()` and
+  `CloudRepository`'s upload methods predate this doc entirely — §8b only
+  added the missing download half, didn't touch the upload path.
 
 ---
 
@@ -459,8 +491,9 @@ implementation:
 1. `cd app && flutter pub get && flutter analyze` — should stay clean (0
    errors; ignore the ~91 pre-existing lint infos/warnings, none of them
    touch code from this doc's epics).
-2. `flutter test` — full suite should stay green (239 tests as of this
-   session, including new coverage for `chartRides` and `badges.dart`).
+2. `flutter test` — full suite should stay green (282 tests as of §8b,
+   including coverage for `chartRides`/`badges.dart` and the Vehicle State
+   Engine calculators; no new tests from §8a/§8b themselves — see §0).
 3. `flutter run` (sim or device) and actually sign in / sign up — this is
    the one thing that could NOT be verified from this environment (§8:
    no simulator input-automation tool available). Walk the Rides tab
@@ -468,6 +501,18 @@ implementation:
    ride data, and confirm Auth/Firestore round-trip against the new
    `com.bft.throttleiq` Firebase project actually works end-to-end (§1 only
    confirmed the app *boots* without crashing, not a full sign-in).
+3a. **Highest priority real-world test**: go for an actual ride with the
+   screen off for several minutes, then check that (a) the app is still
+   running/recording when you check back, and (b) if it *does* get killed,
+   the ride still shows up in history afterward (§8b's fix). This is the
+   one thing in this doc that most needs a real ride, not a simulator, to
+   confirm — accept the battery-optimization-exemption prompt on Android
+   when asked, that's part of the fix.
+3b. Install the app on a **second device/account combo** and confirm bikes
+   added on the first device appear after a few minutes (sync fires
+   immediately on sign-in, then every 5 minutes after — no manual
+   "refresh" trigger exists in the garage screen today, so this is a wait,
+   not a tap) — confirms §8b's download-sync fix.
 4. Storage backend deploy step is moot now — Firebase Storage was dropped in
    favor of Cloudinary (§1b). Firestore rules/indexes are already deployed;
    nothing else to deploy for storage.
@@ -512,6 +557,275 @@ implementation:
   index above with the corrected 3-field version — the old one is now
   orphaned). Flagged by each deploy, not removed — deploying without
   `--force` leaves them in place rather than guessing they're safe to drop.
+
+---
+
+## 8a. UI/nav bug wave + the forum-crash mis-diagnosis (2026-07-23, same day)
+
+More live-usage reports came in after §8 closed. Most were fixed cleanly;
+one — the forum-post crash — is worth documenting as a cautionary tale
+because two fix attempts were shipped and were **both wrong**.
+
+- **Swipe-to-start replaces hold-to-start.** `record_screen.dart`'s
+  `_HoldToStartButton` (900ms long-press) replaced with `_SlideToStartButton`:
+  a `GestureDetector` driving an `AnimationController` directly off
+  `onPanUpdate` (0→100% tracks the drag continuously, not just on release),
+  committing the start at ≥60% on release (`onPanEnd`) and snapping back to
+  0 otherwise. Not confirmed by the project owner as feeling right yet
+  (drag mechanics/threshold) — flag if it needs tuning.
+- **Navigator key-collision crash** (`keyReservation.contains(key)` —
+  different bug from the InheritedElement one below) in
+  `garage_screen.dart`'s `_UserMenuButton._showMenu`: it called
+  `Navigator.pop(sheetContext)` immediately followed by `context.push(...)`
+  in the same synchronous callback, racing the imperative sheet-pop against
+  go_router's declarative page-list update. Fixed by returning the
+  destination as the sheet's pop *result* and pushing only after that
+  Future resolves — same fix applied to `bike_detail_screen.dart`'s delete
+  confirmation, which had the identical shape.
+- **Forum-post crash — fixed on the third attempt, first two were wrong.**
+  Reported three separate times (same `'_dependents.isEmpty': is not true`
+  assertion each time) before it was actually fixed:
+  1. First attempt: reordered `Navigator.pop(sheetContext)` before
+     `ref.invalidate(...)` in `_showNewPostSheet`. Theory: an
+     invalidate-before-pop race. **Didn't fix it** — crash reproduced again.
+  2. Second attempt: switched to `showModalBottomSheet<bool>`, moved the
+     `ref.invalidate(...)` into `.then((posted) => ...)`. Theory: `.then()`
+     only fires after the sheet's exit animation fully finishes, a
+     "stronger guarantee." **This assumption was wrong** — `.then()` fires
+     as soon as `Navigator.pop` is *called*, not once the animated
+     transition has finished rendering. Crash reproduced a third time.
+  3. Third attempt (the actual fix): pulled the **full stack trace** from
+     the running `flutter run` process's console output instead of just the
+     on-device red-screen summary — the summary only showed the
+     `_dependents.isEmpty` assertion, which is a *cascading symptom*; the
+     full trace revealed the real root exception: `A TextEditingController
+     was used after being disposed` on the sheet's `TextField`. The old
+     code created `titleController`/`bodyController` as locals in
+     `_showNewPostSheet` and disposed them in the `.then()` callback from
+     attempt 2 — which, per the finding above, fires before the exit
+     animation finishes, so it disposed controllers still referenced by
+     widgets mid-transition. Fixed by extracting the sheet into its own
+     `_NewPostSheet extends ConsumerStatefulWidget`, with the controllers as
+     `State` fields disposed in `State.dispose()` — a lifecycle Flutter
+     guarantees runs only once the widget is actually gone, not merely
+     "popped." The same audit found and fixed an identical-shaped (non-crashing,
+     just a leak) case in `settings_screen.dart`'s `_showContactDialog`.
+  - **Lesson for next time a fix "doesn't stick":** get the full stack
+    trace from the running process's own console output before re-theorizing
+    from the on-device summary text — the summary can omit the actual
+    originating exception entirely.
+- **Firestore permission-denied on the Social feed and Navigator/forum
+  fixes above were verified only via `flutter analyze`/`flutter test`/clean
+  simulator boot** — none were re-confirmed by an actual interactive retest
+  before the next bug wave (§8b) arrived, since this environment still has
+  no touch-injection tool.
+
+---
+
+## 8b. Second live-usage bug wave (2026-07-23) — sync, safety, and a new profile feature
+
+A much larger bug/feature report arrived covering real riding usage, not
+just UI interaction. In priority order (most safety-critical first):
+
+### Ride data lost when the app is killed mid-ride, screen off
+The most serious bug reported this project has had: riding with the screen
+off, the app would get killed by the OS after a while (not immediately —
+"kichukkhon pore," matching a background-process kill, not an instant
+crash), and the ride would then be **completely missing from history** —
+not partial, gone. Root-caused to two compounding bugs, both fixed:
+- `RideRecordingNotifier.recoverCrashRide()` — meant to finalize a ride
+  left dangling by an unclean app death — **existed but was never called
+  from anywhere**. Now wired to run on every app startup for a signed-in
+  user (`app.dart`, alongside `startAutoSync()`).
+- `RideDao.getAllForBike`/`getAllForUser` both filter on
+  `status = 'completed'`. A ride killed mid-recording stays at its initial
+  `status = 'active'` forever, so even if `recoverCrashRide()` *had* run
+  historically, an unfinished ride would still never have appeared in
+  history — indistinguishable from data loss.
+- `recoverCrashRide()` was rewritten to actually be useful: it recomputes
+  real distance/avg/max speed from whatever `ride_points` made it to disk
+  (the in-memory running aggregates don't survive process death) using a
+  haversine sum, then finalizes the ride to `status = 'completed'`. Rides
+  with under 2 persisted points are deleted rather than left as
+  zero-everything clutter. Hard-brake/rapid-accel/high-jerk counts can't be
+  reconstructed this way and are left at 0 for a recovered ride — a real,
+  small, and honestly-scoped limitation.
+- **Shrunk the data-loss window itself**: the point-write buffer went from
+  20 points/10s to 5 points/3s (`_bufferFlushSize`/`_bufferFlushInterval` in
+  `ride_recording_provider.dart`), and a `WidgetsBindingObserver` now force-
+  flushes the buffer the instant the app leaves the foreground
+  (`AppLifecycleState.paused`/`inactive`/`detached`/`hidden`) — screen-off is
+  exactly the moment before an unexpected kill becomes likely, so this is
+  the most direct fix for the reported symptom.
+- **Android battery-optimization exemption requested** (`permission_handler`
+  was already a dependency): several OEMs (Xiaomi/MIUI, Samsung, etc.) kill
+  background processes even with an active foreground service unless the
+  app is explicitly whitelisted — the most likely actual cause of the kill
+  itself, as opposed to the data-loss-once-killed problem above. Added
+  `android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` to
+  `AndroidManifest.xml` and a best-effort request in `_requestPermissions()`.
+- **Not yet confirmed by a real ride** — this can only be verified by
+  actually riding with the screen off for a while, which this environment
+  cannot do. Flag as the single highest-priority thing to real-world-test
+  next.
+
+### Bikes (and rides/maintenance) missing on a second device
+Reported as: added bikes on the iOS simulator, installed the Android APK
+under the same account, bikes weren't there. Root cause: `SyncManager`/
+`CloudRepository` (§ existing, pre-dates this doc) only ever **uploaded**
+local SQLite rows to Firestore — nothing ever pulled cloud data back down to
+a device with an empty local DB. Fixed with new `CloudRepository.downloadBikes`/
+`downloadMaintenance`/`downloadRides`, called at the start of every sync
+cycle: pulls any cloud row not present locally by id (never overwrites a
+local row, so an unsynced local edit can't be clobbered). Bikes specifically
+also handle the "which bike is active" conflict (never let more than one
+bike be `is_active` after a pull) and null out `image_path` (a local file
+path from a different device is meaningless here). **Deliberately not
+synced**: `ride_points` (the GPS trail) — `uploadRides` only ever pushed the
+`rides` metadata row, never the point-by-point track, so a ride pulled down
+to a new device shows in history with correct stats but an empty map.
+Flagged, not silently left unaddressed — fixing it is a materially bigger
+change (GPS-trail data volume) than this pass scoped.
+
+### Maintenance page unreachable
+Reported as "I can't find it anywhere," despite `garage_screen.dart` already
+having a "Tap for maintenance" link on every bike card. Root cause: that
+link was a `GestureDetector` **nested inside** the whole card's own tap
+region (which navigates to bike detail). A plain `GestureDetector` only
+hit-tests the *painted pixels* of its child, not the full row — most of
+that row's visual width was empty space that silently fell through to the
+outer card's tap, sending riders to bike detail instead. It looked
+full-width tappable but usually wasn't. Fixed with
+`behavior: HitTestBehavior.opaque` on the inner detector. The exact same
+shape of bug was pre-emptively fixed on the forum post-card's author byline
+(see username/profile section below) rather than waiting for it to be
+reported too.
+
+### Forum upvotes/downvotes "lost"
+Audited the vote code (`forum_providers.dart`'s `ForumPostsNotifier.vote`,
+`ForumRepository.votePost`, and the matching bounded ±1-per-field Firestore
+rule) end-to-end and found no correctness bug — the transaction shape is
+sound and matches the equivalent ride-share vote logic exactly. What *was*
+wrong: a failed vote write was caught and silently reverted with **zero
+user feedback**, which looks exactly like "my vote disappeared" from the
+outside with nothing to distinguish a real failure from a display glitch.
+`vote()` now rethrows after reverting; the call sites in
+`forum_thread_screen.dart` show a SnackBar on failure. If votes are still
+observed disappearing after this, that's a signal the actual write is
+failing (worth checking connectivity/auth state at the time), not a logic
+bug in the vote code itself.
+
+### New: username system + public profile + privacy
+A username system (reservation, search, `EditProfileScreen` field) already
+existed from Phase A but was never surfaced at signup and had no screen to
+view anyone else's profile. Added:
+- **Auto-assigned @handle for every rider**: `AuthNotifier._ensureUsername`
+  runs on every login (register, Google sign-in, or an existing account),
+  best-effort, defaulting to the email's local part with a numeric-suffix
+  retry loop on collision (`ProfileRepository.suggestUsernameBase`/
+  `claimUsernameWithFallback`) — covers legacy accounts and anyone who skips
+  onboarding, not just new signups.
+- **Onboarding step 0 now also offers a username field**, prefilled with the
+  same suggestion, editable, validated inline against the existing
+  `^[a-z0-9_]{3,20}$` rule before continuing.
+- **New `UserProfileScreen`** (route `/profile/:uid` — note `/profile/edit`
+  is a separate literal route that must stay listed *before* this param
+  route so it keeps matching first): avatar, bio, follower/following counts,
+  a Follow button, total km/rides, and earned badges. Reached by tapping a
+  rider's name/avatar in "Find riders" search results (`social_screen.dart`)
+  or a forum post's author byline (`forum_thread_screen.dart`) — this also
+  covers the "add people from their forum posts" request, since the profile
+  screen is where Follow lives.
+- **Privacy tri-state**: `UserProfileEntity.visibility` (`public` default /
+  `mutual` / `private`), set from a `SegmentedButton` in `EditProfileScreen`.
+  Enforced by a **deployed** `firestore.rules` change (`profileVisibleTo()`),
+  not just a UI check — `mutual` checks both follow edges exist via two
+  `exists()` calls (cheap: a profile view is always a single-doc read, never
+  a list query, so this doesn't hit the "rules can't filter list queries"
+  problem that shaped the ride-audience design in §3). Defaults to today's
+  fully-open behavior for every profile that never sets it, so this is
+  backward-compatible, not a regression.
+- **Stats/badges design choice**: rather than opening the owner-only
+  `rides`/`bikes` subcollections to cross-user reads (bigger surface, and
+  those can carry more than a viewer should see), total km/rides/earned
+  badge ids are **denormalized onto `users/{uid}.publicStats`**, recomputed
+  and written by the owner's own device on every `stopRide()` from the
+  already-existing pure `computeRiderStats`/`computeBadges` functions. Gated
+  by the same `visibility` field as the rest of the profile doc. Means a
+  public profile's stats can lag slightly behind reality between rides —
+  same "write-behind, not blocking" trade-off Epic F already made for badge
+  sync.
+
+**Verification for all of §8b**: `flutter analyze` clean (0 new issues over
+the pre-existing baseline), `flutter test` green (282/282 — no new tests
+added this pass, all existing coverage stayed green including
+`sync_manager_test.dart`), `flutter run` boots clean on the iOS simulator
+with no runtime exceptions in the console. `firestore.rules` deployed live
+to `throttleiqfb`. **Not verified**: any of this against real multi-device
+usage, a real kill-mid-ride scenario, or an interactive UI walkthrough —
+same standing limitation as every prior wave (no touch-injection tool in
+this environment).
+
+---
+
+## 8c. Polish wave (2026-07-24) — notifications, speed responsiveness, app icon, dashboard taglines
+
+A round of smaller product asks, done after §8b landed. Test suite stayed at
+282/282 (no new tests — same UI/plumbing-code gap noted for prior waves).
+
+- **Follow notifications, in-app only.** Following someone was completely
+  silent before (no signal to the other rider at all). Added
+  `users/{uid}/notifications/{id}` (new `NotificationRepository`,
+  `AppNotificationEntity`, `notification_providers.dart`), written by the
+  *follower's* device right after `FollowRepository.follow()` — the matching
+  `firestore.rules` clause is the one owner-*write* exception in the whole
+  `users/{uid}` subtree (bounded to `fromUid == request.auth.uid` so nobody
+  can spoof who a notification is from). New bell icon + unread badge on the
+  dashboard, new `NotificationsScreen` (route `/notifications`), tapping a
+  notification opens the follower's profile and marks it read; opening the
+  screen marks everything read in one batch. **Deliberately not a phone
+  push** — real push needs a Cloud Function, and Cloud Functions can't be
+  deployed on this project without the Blaze plan (no payment card, see
+  §1b) — same blocker `functions/src/crash-notifications.ts` already has
+  (it's mocked, never deployed). Documented directly on
+  `AppNotificationEntity` so this doesn't get mistaken for a push system
+  later.
+- **Speed display responsiveness.** Reported as "speed updates feel slow."
+  Two real, separate causes fixed: (1) `_startLocationStream` had no
+  iOS-specific branch at all — it was constructing an `AndroidSettings`
+  object and passing it on every platform, so iOS only picked up the
+  fields it happens to share with the base `LocationSettings` class and
+  silently ignored the rest. Added an `AppleSettings` branch
+  (`ActivityType.automotiveNavigation`, `pauseLocationUpdatesAutomatically:
+  false`). (2) Tightened both platforms' `distanceFilter` (5m→3m) and
+  requested a `bestForNavigation` accuracy profile instead of plain `high`
+  — the profile actually meant for turn-by-turn driving apps. On top of
+  that, wrapped the active-ride speed number in a `TweenAnimationBuilder`
+  (~450ms ease) so it glides between real fixes instead of hard-jumping —
+  real GPS fixes are still discrete events, this just masks the gaps.
+- **New app icon.** `pubspec.yaml`'s `flutter_launcher_icons` config pointed
+  at `assets/images/app_icon*.png` paths that **didn't exist** (a stale
+  placeholder note in `todosanddone.md` had this half-right — the paths
+  were never actually created, not just placeholders). Found the real
+  design source already in the repo (`designs/logo2/throttleiq-icon-v2.svg`
+  — a self-contained 512×512 gauge mark, blue→green→orange, matching the
+  app's actual palette), rasterized it at 1024×1024 via `rsvg-convert`
+  rather than upscaling the small existing PNG, and fixed a transparency
+  issue in the source (the rounded-corner background left the corners at
+  alpha=0, which `remove_alpha_ios: true` would've flattened to an
+  arbitrary/white fill — added an opaque backing rect of the same color
+  first). Also fixed a real bug in the `flutter_launcher_icons` config
+  itself: `windows: false`/`macos: false`/`web: false` crashed the tool
+  outright on this version (0.13.1) — expects a map or omitted key, not a
+  bare `false`. Regenerated both platforms' icon sets via
+  `dart run flutter_launcher_icons`.
+- **Rotating dashboard taglines.** The hero panel always said "Your ride,
+  smarter." — replaced with `motorcycleQuotes` (16 original two-line
+  taglines, not attributed quotes from any named person, to avoid any
+  misattribution risk), picked once via a plain Riverpod `Provider`
+  (`dashboardQuoteProvider`) so it's stable for the whole app session
+  (Riverpod providers are memoized per container) and different again next
+  cold start.
 
 ---
 
@@ -580,3 +894,43 @@ per-step; logging every judgment call made along the way:
     rather than picking one silently (moot after the Cloudinary pivot, but
     the reasoning is preserved here since it's exactly the kind of call this
     log exists to capture).
+
+### 2026-07-23 continued (§8a/§8b — second and third bug waves)
+
+13. **Got the real stack trace before re-theorizing a second time**, after
+    the first forum-crash fix (reordering pop/invalidate) didn't hold —
+    pulled it from the running `flutter run` process's console rather than
+    guessing again from the on-device summary. This is the single most
+    reusable lesson from this session and is written up in full in §8a.
+14. **Buffer flush shrunk from 20pts/10s to 5pts/3s** — a deliberate
+    trade-off of more frequent disk writes (battery/IO cost) for a much
+    smaller data-loss window on an unexpected kill. Not tuned against a real
+    device's actual write latency/battery impact — flagged as something to
+    revisit if it turns out to be too aggressive in practice.
+15. **Requested Android battery-optimization exemption without asking
+    first** — a permission prompt the rider can decline, not a background
+    config change; declining just means the pre-existing (imperfect) kill
+    resistance is all they get, so there's no downside to asking.
+16. **Deployed the `firestore.rules` change for profile `visibility` to the
+    live `throttleiqfb` project** without asking first, same reasoning as
+    decision 7 — it's additive/backward-compatible (defaults every existing
+    profile to today's fully-open read behavior) and directly implements
+    what was asked for.
+17. **Chose to denormalize `publicStats` onto the profile doc rather than
+    opening the `rides`/`bikes` subcollections to cross-user reads** for the
+    new profile screen's stats/badges — smaller new attack surface (three
+    numbers + a badge-id list vs. full ride/bike records), and reuses the
+    existing pure `computeRiderStats`/`computeBadges` functions instead of
+    writing new cross-user aggregation logic.
+18. **Did not attempt to sync `ride_points` (GPS trails) to Firestore** as
+    part of the bike/ride sync fix — recognized it as a materially bigger
+    change (data volume, and no existing upload path even for it) than the
+    reported bug (bikes missing) actually required. Documented as an open
+    gap (§8b) rather than silently left unaddressed.
+19. **Made username selection skippable-but-defaulted rather than a hard
+    onboarding gate** — the router's onboarding redirect only keys off
+    `displayName`, not username; extending that gate to also block on a
+    missing username was available but would have made a rider who
+    legitimately wants to skip get stuck in a redirect loop. The auto-assign
+    fallback (`_ensureUsername`) means every rider ends up with a handle
+    either way, so a hard gate wasn't necessary to guarantee the outcome.
