@@ -12,6 +12,7 @@ import '../../domain/entities/ride_point_entity.dart';
 import '../../domain/calculators/motion_calculator.dart';
 import '../../domain/calculators/event_detector.dart';
 import '../../domain/calculators/vehicle_state_estimator.dart';
+import '../../domain/calculators/recording_cadence_policy.dart';
 import '../../data/models/ride_model.dart';
 import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
@@ -115,6 +116,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   final _calculator = MotionCalculator();
   final _detector = EventDetector();
   final _estimator = VehicleStateEstimator();
+  final _cadencePolicy = RecordingCadencePolicy();
 
   StreamSubscription<Position>? _locationSub;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
@@ -224,6 +226,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _lastSensorEvent = null;
     _detector.reset();
     _estimator.reset();
+    _cadencePolicy.reset();
     _lastPoint = null;
 
     state = state.copyWith(
@@ -395,27 +398,36 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       isCornering: vehicleState?.isCornering,
     );
 
+    // _lastPoint always advances to this fix regardless of whether it gets
+    // persisted below — MotionCalculator's accel/jerk derivative chain needs
+    // every consecutive fix, not just the thinned subset that gets written.
     _lastPoint = point;
 
-    _pointBuffer.add({
-      'ride_id': point.rideId,
-      'timestamp': point.timestamp.toIso8601String(),
-      'lat': point.lat,
-      'lng': point.lng,
-      'speed_ms': point.speedMs,
-      'acceleration': point.acceleration,
-      'jerk': point.jerk,
-      'altitude_m': point.altitudeM,
-      'period_type': periodType,
-      'accuracy_m': pos.accuracy,
-      'heading_deg': point.headingDeg,
-      'confidence': point.confidence,
-      'imu_quality': point.imuQuality,
-      'is_cornering': point.isCornering == null ? null : (point.isCornering! ? 1 : 0),
-    });
+    // Adaptive recording (Phase 1.5): thin what's WRITTEN on confident,
+    // uneventful stretches — never affects _lastPoint above, the live
+    // polyline below, or the ride-level distance/speed aggregates (both
+    // already updated from this same fix earlier in this method).
+    if (_cadencePolicy.shouldPersist(timestamp: timestamp, vehicleState: vehicleState)) {
+      _pointBuffer.add({
+        'ride_id': point.rideId,
+        'timestamp': point.timestamp.toIso8601String(),
+        'lat': point.lat,
+        'lng': point.lng,
+        'speed_ms': point.speedMs,
+        'acceleration': point.acceleration,
+        'jerk': point.jerk,
+        'altitude_m': point.altitudeM,
+        'period_type': periodType,
+        'accuracy_m': pos.accuracy,
+        'heading_deg': point.headingDeg,
+        'confidence': point.confidence,
+        'imu_quality': point.imuQuality,
+        'is_cornering': point.isCornering == null ? null : (point.isCornering! ? 1 : 0),
+      });
 
-    if (_pointBuffer.length >= _bufferFlushSize) {
-      _flushPointBuffer();
+      if (_pointBuffer.length >= _bufferFlushSize) {
+        _flushPointBuffer();
+      }
     }
 
     final alert = _detector.detect(

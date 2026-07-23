@@ -31,7 +31,7 @@ it was.
 | 5 | Confidence engine | ✅ Phase 1 — heuristic 0-100 score |
 | 6 | Motion classification | ✅ Phase 1 — isMoving/isStopped/isCornering/isBraking/isAccelerating |
 | 7 | Event detection | 🟡 Pre-existing (`EventDetector`) — untouched in Phase 1, gained one confidence gate on crash alerts |
-| 8 | Adaptive recording | ⬜ Not built — fixed 5m/1s GPS sampling regardless of ride state (see §4) |
+| 8 | Adaptive recording | ✅ Phase 1.5 — thins what's *persisted* on confident/steady stretches (see §4); GPS hardware polling itself is still fixed 5m/1s |
 | 9 | Map matching | ⬜ Deferred entirely (see §5) |
 | 10 | Analytics | 🟡 Pre-existing (`rider_stats.dart`, `riding_score.dart`, badges) — untouched, reads ride-level aggregates only |
 
@@ -127,17 +127,35 @@ callers.
 
 ---
 
-## 4. Phase 1.5 — Adaptive recording (future, low-risk once Phase 1 exists)
+## 4. Phase 1.5 — Adaptive recording (done, 2026-07-23)
 
-Today's GPS recording is a fixed 5m-distance/1s-interval filter regardless
-of ride state — a straight highway and a tight corner get sampled at the
-same rate. The original vision (record less on a confident straight
-highway, more mid-corner) becomes a cheap conditional now that
-`VehicleState.confidence`/`isCornering` exist per-tick — this is naturally
-the lowest-risk, highest-leverage next increment once Phase 1 has been
-runtime-verified, but wasn't built as part of Phase 1 itself (kept that
-phase scoped to the fusion/confidence foundation, not touching the actual
-GPS sampling cadence).
+**Important scoping clarification found while building this**: geolocator
+doesn't support changing GPS polling settings mid-stream, so this phase does
+**not** touch the underlying 5m-distance/1s-interval GPS sampling rate —
+that stays exactly as fixed as it was in Phase 1. What it actually adapts is
+which fixes get **persisted** to `ride_points`: a new `RecordingCadencePolicy`
+(pure, unit-tested, same pattern as the other calculators) throttles writes
+to at most one per `SensorConstants.minPersistIntervalOnSteadyStretches`
+(5s, matching the original vision's own "1 point every 5 seconds on a
+straight highway" example) whenever `VehicleState.confidence` clears a
+conservative floor (70/100) and none of cornering/braking/accelerating are
+true. Anything "interesting," or anything the fusion engine isn't
+confident about, is always kept at full fidelity.
+
+**Confirmed real trade-off, not just a storage optimization**: both
+`ride_summary_screen.dart` and `ride_share_screen.dart` rebuild their
+polyline by reading `ride_points` back from the DB — so thinned writes
+directly mean a visibly lower-resolution polyline on boring stretches, not
+just a storage-only change invisible to the rider. This was confirmed and
+explicitly signed off on before building it, rather than assumed.
+
+**What stays untouched, deliberately**: the live in-ride map polyline
+(`RideRecordingState.polyline`) still appends every GPS fix, unthinned —
+only the post-ride replay/summary/share view is affected. The ride-level
+aggregate stats (`distanceM`/`avgSpeedMs`/`maxSpeedMs`) and
+`MotionCalculator`'s accel/jerk derivative chain (`_lastPoint`) both still
+see every consecutive GPS fix regardless of the persistence decision —
+thinning only gates the one `_pointBuffer.add(...)` call.
 
 ---
 
@@ -181,17 +199,20 @@ completed rides (post-launch, real usage) to work from.
 
 ## 7. Open items / honest limitations
 
-- **No live sign-in/ride walkthrough was possible for Phase 1** — same
-  environment limitation as previous sessions (no simulator input-automation
-  tool available to sign in and record a real ride). Verified instead: full
-  unit-test suite (`sensor_validator_test.dart`, `vehicle_state_estimator_test.dart`,
-  272 tests total, all green), `flutter analyze` clean, and a clean
-  `flutter run` boot confirming the v5→v6 schema migration applies without
-  error. A real device/ride walkthrough — confirming GPS+gyro actually
-  produce sensible confidence/heading values in practice, and tuning the
-  heuristic constants (imuQuality penalties, confidence weights, cornering
-  threshold) against real riding — remains the first thing to do once this
-  is testable on a real device.
+- **No live sign-in/ride walkthrough was possible for Phase 1 or 1.5** —
+  same environment limitation as previous sessions (no simulator
+  input-automation tool available to sign in and record a real ride).
+  Verified instead: full unit-test suite (`sensor_validator_test.dart`,
+  `vehicle_state_estimator_test.dart`, `recording_cadence_policy_test.dart`,
+  282 tests total, all green), `flutter analyze` clean, and a clean
+  `flutter run` boot confirming Phase 1's v5→v6 schema migration applies
+  without error (Phase 1.5 has no schema changes of its own). A real
+  device/ride walkthrough — confirming GPS+gyro actually produce sensible
+  confidence/heading values in practice, watching the thinning policy
+  actually behave sensibly on a real commute, and tuning the heuristic
+  constants (imuQuality penalties, confidence weights, cornering threshold,
+  the thinning confidence floor and interval) against real riding — remains
+  the first thing to do once this is testable on a real device.
 - **iOS location settings**: `_startLocationStream()` unconditionally
   constructs an `AndroidSettings` object with no `IOSSettings`/
   `Platform.isAndroid` branch — pre-existing, not introduced or fixed by

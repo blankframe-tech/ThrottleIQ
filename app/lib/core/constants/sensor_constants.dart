@@ -39,6 +39,17 @@ class SensorConstants {
   // signal derived from garbage sensor data, e.g. mid-tunnel GPS loss)
   static const int minConfidenceForCrashAlert = 40;
 
+  // Adaptive recording (Phase 1.5): a point is only eligible to be thinned
+  // (skipped from persistence) when confidence is at or above this floor —
+  // deliberately conservative for a pre-launch app whose confidence
+  // heuristic hasn't been tuned against real rides yet. Cornering/braking/
+  // accelerating points are never eligible regardless of confidence. On an
+  // eligible stretch, persisted points are throttled to at most one every
+  // minPersistIntervalOnSteadyStretches — matching the original vision's
+  // "1 point every 5 seconds on a straight highway" example.
+  static const int minConfidenceToThinRecording = 70;
+  static const Duration minPersistIntervalOnSteadyStretches = Duration(seconds: 5);
+
   // Maintenance thresholds (km)
   static const double oilChangeMinKm = 1000;
   static const double oilChangeMaxKm = 1500;
