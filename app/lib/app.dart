@@ -4,6 +4,7 @@ import 'core/cloud/sync_manager.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/ride/presentation/providers/ride_recording_provider.dart';
 
 class ThrottleIQApp extends ConsumerWidget {
   const ThrottleIQApp({super.key});
@@ -17,6 +18,12 @@ class ThrottleIQApp extends ConsumerWidget {
         final sync = ref.read(syncManagerProvider);
         if (next.valueOrNull != null) {
           sync.startAutoSync();
+          // Finish off any ride that was still "active" when the app last
+          // died mid-recording (killed process, no chance to call
+          // stopRide()) — see RideRecordingNotifier.recoverCrashRide's doc
+          // comment. Only meaningful once signed in, since it touches the
+          // per-user local ride DB.
+          ref.read(rideRecordingProvider.notifier).recoverCrashRide();
         } else {
           sync.stopAutoSync();
         }

@@ -22,6 +22,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
+    <!-- Lets us ask the rider to whitelist ThrottleIQ from battery
+         optimization — several OEMs kill background processes even with an
+         active foreground service unless the app is explicitly exempted. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <application
         android:label="ThrottleIQ"
         android:name="${applicationName}"

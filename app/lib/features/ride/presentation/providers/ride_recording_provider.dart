@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -20,8 +23,12 @@ import '../../../../core/database/daos/bike_dao.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/battery_service.dart';
 import '../../../../core/constants/sensor_constants.dart';
+import '../../../../core/utils/badges.dart';
+import '../../../../core/utils/rider_stats.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../garage/data/models/bike_model.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 import '../../domain/entities/live_session_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -106,7 +113,8 @@ final rideRecordingProvider =
   (ref) => RideRecordingNotifier(ref),
 );
 
-class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
+class RideRecordingNotifier extends StateNotifier<RideRecordingState>
+    with WidgetsBindingObserver {
   RideRecordingNotifier(this._ref) : super(const RideRecordingState());
 
   final Ref _ref;
@@ -140,10 +148,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
   // Cooldown to avoid multi-counting same sensor event
   DateTime? _lastSensorEvent;
 
-  // Buffered point writes
+  // Buffered point writes. Kept deliberately small: a phone can be killed
+  // outright (OS jetsam under memory pressure, aggressive OEM battery
+  // managers) with no chance to run dispose()/stopRide() — this bounds how
+  // many already-recorded GPS fixes are lost with the buffer when that
+  // happens. See didChangeAppLifecycleState below for the complementary
+  // fix: force a flush the moment the app leaves the foreground (e.g.
+  // screen off mid-ride), instead of only relying on this timer/size.
   List<Map<String, dynamic>> _pointBuffer = [];
-  static const int _bufferFlushSize = 20;
-  static const Duration _bufferFlushInterval = Duration(seconds: 10);
+  static const int _bufferFlushSize = 5;
+  static const Duration _bufferFlushInterval = Duration(seconds: 3);
 
   // Crash detection & live session
   String? _currentLiveSessionToken;
@@ -165,6 +179,24 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
       if (bg == LocationPermission.always) {
         return true;
       }
+    }
+
+    // Android only: the foreground-service notification (see
+    // _startLocationStream) keeps the process alive through normal Doze/App
+    // Standby, but several OEMs (Xiaomi/MIUI, Samsung, OnePlus, etc.) run
+    // their own, more aggressive background-app killers that ignore the
+    // standard foreground-service exemption entirely and still kill the
+    // process a while after the screen turns off. Being whitelisted from
+    // battery optimization is the one thing that reliably stops that class
+    // of kill. Best-effort: if the user declines, recording still works,
+    // it's just more likely to be killed on aggressive OEMs.
+    if (Platform.isAndroid) {
+      try {
+        final status = await Permission.ignoreBatteryOptimizations.status;
+        if (!status.isGranted) {
+          await Permission.ignoreBatteryOptimizations.request();
+        }
+      } catch (_) {/* non-fatal — proceed without the exemption */}
     }
 
     return perm == LocationPermission.always || perm == LocationPermission.whileInUse;
@@ -241,6 +273,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     );
 
     await _persistRecordingState(ride);
+    WidgetsBinding.instance.addObserver(this);
     await WakelockPlus.enable();
     await HapticService.rideStart();
     _startLocationStream();
@@ -249,20 +282,61 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _startLiveSessionPublishing();
   }
 
+  /// Forces a buffer flush the instant the app leaves the foreground
+  /// (screen off, home button, task switch, or the OS about to kill it) —
+  /// the app being backgrounded is exactly when an unexpected kill becomes
+  /// likely, so this is the last reliable point to get already-recorded
+  /// points onto disk rather than waiting on the flush timer/size to
+  /// coincidentally line up first.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState appState) {
+    if (state.status != RecordingStatus.active && state.status != RecordingStatus.paused) {
+      return;
+    }
+    if (appState == AppLifecycleState.paused ||
+        appState == AppLifecycleState.inactive ||
+        appState == AppLifecycleState.detached ||
+        appState == AppLifecycleState.hidden) {
+      _flushPointBuffer();
+    }
+  }
+
+  // Tuned for "speed on screen feels laggy" (real-usage report): the old
+  // settings (accuracy: high, distanceFilter: 5, 1s interval) meant a fix
+  // only arrived after 5m of movement — fine at highway speed, but a
+  // multi-second-feeling stall at parking-lot/city-traffic speeds where 5m
+  // takes a while to cover. distanceFilter: 3 + bestForNavigation (which
+  // requests the GPS/sensor-fusion profile actually meant for turn-by-turn
+  // driving apps, not just "high accuracy") both push fixes to arrive
+  // sooner. iOS previously had no platform-specific branch at all — it fell
+  // back to whatever bare LocationSettings applies for AndroidSettings on a
+  // non-Android platform (distanceFilter/accuracy still apply, but iOS-only
+  // tuning like activityType and pauseLocationUpdatesAutomatically did
+  // nothing). AppleSettings.pauseLocationUpdatesAutomatically already
+  // defaults to false, but it's set explicitly here since a stale/low-
+  // movement pause is exactly the kind of thing that would make speed
+  // *also* look laggy, not just less precise.
   void _startLocationStream() {
-    _locationSub = Geolocator.getPositionStream(
-      locationSettings: AndroidSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-        forceLocationManager: false,
-        intervalDuration: const Duration(seconds: 1),
-        foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationText: 'ThrottleIQ is recording your ride in the background',
-          notificationTitle: 'Ride Recording Active',
-          enableWakeLock: true,
-        ),
-      ),
-    ).listen(_onPosition);
+    final settings = Platform.isIOS
+        ? AppleSettings(
+            accuracy: LocationAccuracy.bestForNavigation,
+            distanceFilter: 3,
+            activityType: ActivityType.automotiveNavigation,
+            pauseLocationUpdatesAutomatically: false,
+            allowBackgroundLocationUpdates: true,
+          )
+        : AndroidSettings(
+            accuracy: LocationAccuracy.bestForNavigation,
+            distanceFilter: 3,
+            forceLocationManager: false,
+            intervalDuration: const Duration(milliseconds: 500),
+            foregroundNotificationConfig: const ForegroundNotificationConfig(
+              notificationText: 'ThrottleIQ is recording your ride in the background',
+              notificationTitle: 'Ride Recording Active',
+              enableWakeLock: true,
+            ),
+          );
+    _locationSub = Geolocator.getPositionStream(locationSettings: settings).listen(_onPosition);
   }
 
   void _startSensorStream() {
@@ -538,6 +612,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _gyroSub?.cancel();
     _elapsedTimer?.cancel();
     _flushTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
 
     _flushPointBuffer();
     await WakelockPlus.disable();
@@ -560,12 +635,38 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
     await _bikeDao.incrementStats(ride.bikeId, _totalDistance);
     _ref.invalidate(garageProvider);
+    unawaited(_updatePublicStats(ride.userId));
 
     await HapticService.rideStop();
 
     final rideId = ride.id;
     state = const RideRecordingState();
     return rideId;
+  }
+
+  /// Recomputes total km/rides/earned badges from the full local ride+bike
+  /// history and denormalizes them onto `users/{uid}.publicStats`, so a
+  /// public/mutual-visibility profile view (UserProfileScreen) can show real
+  /// stats without needing cross-user read access to the owner-only
+  /// `rides`/`bikes` subcollections. Best-effort/fire-and-forget — a failure
+  /// here (offline, etc.) just means the public profile shows stale numbers
+  /// until the next ride, never blocks finishing the ride itself.
+  Future<void> _updatePublicStats(String uid) async {
+    try {
+      final rideRows = await _rideDao.getAllForUser(uid);
+      final bikeRows = await _bikeDao.getAllForUser(uid);
+      final stats = computeRiderStats(
+        rides: rideRows.map(RideModel.fromMap).toList(),
+        bikes: bikeRows.map(BikeModel.fromMap).toList(),
+      );
+      final earnedIds = computeBadges(stats).where((b) => b.earned).map((b) => b.def.id).toList();
+      await ProfileRepository().updatePublicStats(
+        uid: uid,
+        totalDistanceKm: stats.totalDistanceKm,
+        totalRides: stats.totalRides,
+        badgeIds: earnedIds,
+      );
+    } catch (_) {/* non-fatal — see doc comment */}
   }
 
   Future<void> _persistRecordingState(RideEntity ride) async {
@@ -580,6 +681,27 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     await prefs.remove('ride_start_time');
   }
 
+  /// Recovers a ride left dangling by a previous app launch that never
+  /// called stopRide()/dispose() — the process was killed outright (OS
+  /// jetsam, an OEM battery manager, a crash) while `active_ride_id` was
+  /// still set in SharedPreferences. Previously this method existed but was
+  /// never called from anywhere, so a killed ride's row just sat at
+  /// `status = active` forever — and RideDao.getAllForBike/getAllForUser
+  /// both filter on `status = 'completed'`, so it silently never appeared
+  /// in ride history at all, indistinguishable from having been lost
+  /// entirely. Now wired to run once on app startup for a signed-in user
+  /// (see app.dart).
+  ///
+  /// The in-memory running aggregates (_totalDistance, _maxSpeed, event
+  /// counts) from that old session are gone — they never survive process
+  /// death. Instead this recomputes real distance/avg/max speed from
+  /// whatever GPS points actually made it to disk (bounded loss now — see
+  /// _bufferFlushSize/_bufferFlushInterval and didChangeAppLifecycleState
+  /// above), so the recovered ride is genuinely representative rather than
+  /// a zeroed-out placeholder. Event counts (hard-brake/rapid-accel/high-
+  /// jerk) can't be reconstructed this way and are left at 0 — a real but
+  /// small and honestly-scoped limitation, documented here rather than
+  /// silently guessed at.
   Future<void> recoverCrashRide() async {
     final prefs = await SharedPreferences.getInstance();
     final rideId = prefs.getString('active_ride_id');
@@ -587,11 +709,68 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
 
     await _clearRecordingState();
     final ride = await _rideDao.getById(rideId);
-    if (ride != null) {
-      await _rideDao.finalizeRide(rideId, {
-        'end_time': DateTime.now().toIso8601String(),
-      });
+    if (ride == null) return;
+
+    final points = await _pointDao.getForRide(rideId);
+
+    // Fewer than 2 points means there's nothing meaningful to show (no
+    // distance is derivable from a single fix) — drop it rather than
+    // cluttering history with a zero-everything ride.
+    if (points.length < 2) {
+      await _rideDao.delete(rideId);
+      return;
     }
+
+    double distanceM = 0;
+    double maxSpeedMs = 0;
+    double speedSum = 0;
+    for (var i = 0; i < points.length; i++) {
+      final speed = (points[i]['speed_ms'] as num?)?.toDouble() ?? 0;
+      speedSum += speed;
+      if (speed > maxSpeedMs) maxSpeedMs = speed;
+      if (i > 0) {
+        distanceM += _haversineMeters(
+          lat1: (points[i - 1]['lat'] as num).toDouble(),
+          lng1: (points[i - 1]['lng'] as num).toDouble(),
+          lat2: (points[i]['lat'] as num).toDouble(),
+          lng2: (points[i]['lng'] as num).toDouble(),
+        );
+      }
+    }
+
+    final startedAt = DateTime.parse(points.first['timestamp'] as String);
+    final endedAt = DateTime.parse(points.last['timestamp'] as String);
+    final durationS = endedAt.difference(startedAt).inSeconds;
+    final avgSpeedMs = points.isNotEmpty ? speedSum / points.length : 0.0;
+
+    await _rideDao.finalizeRide(rideId, {
+      'end_time': endedAt.toIso8601String(),
+      'distance_m': distanceM,
+      'avg_speed_ms': avgSpeedMs,
+      'max_speed_ms': maxSpeedMs,
+      'duration_s': durationS,
+    });
+
+    final bikeId = ride['bike_id'] as String?;
+    if (bikeId != null) {
+      await _bikeDao.incrementStats(bikeId, distanceM);
+      _ref.invalidate(garageProvider);
+    }
+  }
+
+  static double _haversineMeters({
+    required double lat1,
+    required double lng1,
+    required double lat2,
+    required double lng2,
+  }) {
+    const earthRadiusM = 6371000.0;
+    final dLat = (lat2 - lat1) * pi / 180;
+    final dLng = (lng2 - lng1) * pi / 180;
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLng / 2) * sin(dLng / 2);
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return earthRadiusM * c;
   }
 
   /// Handle crash detection: show countdown, play alert, notify contacts
@@ -749,6 +928,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState> {
     _flushTimer?.cancel();
     _crashCountdownTimer?.cancel();
     _liveSessionTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _flushPointBuffer();
     super.dispose();
   }

@@ -253,9 +253,23 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      speedKmh.toStringAsFixed(0),
-                      style: display(64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
+                    // Real GPS fixes arrive in discrete steps (every few
+                    // hundred ms to a couple seconds, depending on speed and
+                    // signal — see _startLocationStream's tuning notes) so a
+                    // plain Text here visibly jumps between values. Tweening
+                    // toward each new reading instead of snapping to it
+                    // makes the number feel continuous even though the
+                    // underlying fixes aren't — reported as "speed updates
+                    // feel slow," and tightening the GPS settings alone
+                    // still leaves discrete jumps between real fixes.
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: speedKmh, end: speedKmh),
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeOut,
+                      builder: (context, value, child) => Text(
+                        value.toStringAsFixed(0),
+                        style: display(64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
+                      ),
                     ),
                     const Text('km/h',
                         style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
