@@ -33,7 +33,7 @@ class ForumThreadScreen extends ConsumerWidget {
     final titleController = TextEditingController();
     final bodyController = TextEditingController();
 
-    showModalBottomSheet(
+    showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
@@ -87,19 +87,24 @@ class ForumThreadScreen extends ConsumerWidget {
                     title: title,
                     body: body,
                   );
-                  // Pop the sheet BEFORE invalidating: forumPostsProvider
-                  // drives the body of the screen directly underneath this
-                  // modal (ForumThreadScreen.build's postsAsync.when swaps
-                  // the whole list for a loading spinner on invalidate).
-                  // Doing that swap in the same tick as popping the overlay
-                  // route above it raced the two tree mutations against each
-                  // other — a known trigger for Flutter's
-                  // "'_dependents.isEmpty': is not true" InheritedElement
-                  // assertion. Closing the sheet first lets its route
-                  // removal settle before the underlying screen rebuilds.
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
-                  ref.invalidate(forumPostsProvider(forumId));
-                  ref.invalidate(forumsForGarageProvider);
+                  // Pop with a result rather than invalidating inline: a
+                  // same-tick reorder (pop, THEN invalidate — the previous
+                  // fix here) turned out not to be enough. forumPostsProvider
+                  // drives ForumThreadScreen's body directly underneath this
+                  // sheet (postsAsync.when swaps the whole list for a
+                  // spinner on invalidate), and even with the pop issued
+                  // first in the same synchronous callback, both tree
+                  // mutations were apparently still landing in the same
+                  // frame — Flutter's Navigator.pop schedules route removal,
+                  // it doesn't complete it synchronously. Returning a result
+                  // and invalidating only in showModalBottomSheet's own
+                  // .then() below guarantees the sheet's entire dismissal
+                  // (including its exit transition) has actually finished
+                  // first — a strictly stronger guarantee than reordering
+                  // within the same callback. Was: "'_dependents.isEmpty':
+                  // is not true" InheritedElement assertion, still
+                  // reproducing after the same-tick reorder.
+                  if (sheetContext.mounted) Navigator.pop(sheetContext, true);
                 },
                 child: const Text('Post', style: TextStyle(color: Colors.white)),
               ),
@@ -107,9 +112,13 @@ class ForumThreadScreen extends ConsumerWidget {
           ),
         );
       },
-    ).then((_) {
+    ).then((posted) {
       titleController.dispose();
       bodyController.dispose();
+      if (posted == true) {
+        ref.invalidate(forumPostsProvider(forumId));
+        ref.invalidate(forumsForGarageProvider);
+      }
     });
   }
 

@@ -47,6 +47,19 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
     }
   }
 
+  // Invalidates nearbyPlacesProvider only after AddPlaceScreen's route has
+  // fully popped (context.push's future resolves once the whole route,
+  // including its exit transition, is gone) rather than racing this
+  // screen's list-swap against that route's removal in the same frame —
+  // see AddPlaceScreen._submit's doc comment for why a same-tick "pop then
+  // invalidate" reorder alone isn't a strong enough guarantee.
+  Future<void> _addPlace(BuildContext context) async {
+    final added = await context.push<bool>('/home/places/add');
+    if (added == true) {
+      ref.invalidate(nearbyPlacesProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final placesAsync = ref.watch(nearbyPlacesProvider(_selectedCategory));
@@ -181,7 +194,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
           bottom: AppDimensions.paddingMd,
           child: FloatingActionButton.extended(
             heroTag: 'add_place_fab',
-            onPressed: () => context.push('/home/places/add'),
+            onPressed: () => _addPlace(context),
             backgroundColor: AppColors.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Add place', style: TextStyle(color: Colors.white)),

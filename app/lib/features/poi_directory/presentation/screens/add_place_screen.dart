@@ -72,22 +72,24 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
       await PlaceRepository().addPlace(place);
 
-      // Pop BEFORE invalidating: this screen is pushed on top of
-      // PlacesListScreen (same Navigator), and nearbyPlacesProvider drives
-      // PlacesListScreen.build's placesAsync.when directly — invalidating
-      // it swaps that screen's list for a loading spinner. Doing that
-      // subtree swap in the same tick as popping the route above it races
-      // the two tree mutations against each other, the same trigger behind
-      // forum_thread_screen.dart's "'_dependents.isEmpty': is not true"
-      // InheritedElement assertion crash. Popping first lets the route
-      // removal settle before the revealed screen rebuilds.
-      if (mounted) context.pop();
-
-      // A brand-new place isn't in any cached nearbyPlacesProvider result
-      // yet — invalidate the whole family (all category keys) so the
-      // Places tab picks it up right away rather than showing a stale list
-      // until some unrelated refetch happens.
-      ref.invalidate(nearbyPlacesProvider);
+      // Pop with a result rather than invalidating here: this screen is
+      // pushed on top of PlacesListScreen (same Navigator), and
+      // nearbyPlacesProvider drives PlacesListScreen.build's
+      // placesAsync.when directly — invalidating it swaps that screen's
+      // list for a loading spinner. A same-tick "pop, then invalidate"
+      // reorder isn't a strong enough guarantee against Flutter's
+      // "'_dependents.isEmpty': is not true" InheritedElement assertion
+      // (forum_thread_screen.dart hit the identical crash again even after
+      // that reorder — Navigator.pop schedules route removal, it doesn't
+      // complete it synchronously, so both tree mutations can still land in
+      // the same frame). Returning a result here and having the caller
+      // invalidate only after context.push's OWN future resolves (i.e.
+      // after this route's entire removal, including its exit transition,
+      // has actually finished — see PlacesListScreen) is a materially
+      // stronger guarantee than the same-tick reorder, applied
+      // preemptively here since this screen has the identical shape —
+      // not yet confirmed against a live repro the way the forum crash was.
+      if (mounted) context.pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
