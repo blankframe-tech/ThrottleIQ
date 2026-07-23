@@ -213,28 +213,41 @@ class BikeDetailScreen extends ConsumerWidget {
     }
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog(
+  // Pops with a bool result rather than popping-then-navigating inline: a
+  // Navigator.pop immediately followed by a context.go/push in the same
+  // synchronous callback races the dialog's imperative route removal
+  // against go_router's declarative page-list update on the same
+  // Navigator, which can produce two pages computing the same key —
+  // Flutter's Navigator._updatePages assertion
+  // "'!keyReservation.contains(key)': is not true." Awaiting the dialog's
+  // own Future and navigating only after it fully resolves (mirroring
+  // active_ride_screen.dart's stop-ride confirm, already safe) guarantees
+  // the dialog's route is completely gone before anything else touches
+  // the Navigator.
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: const Text('Delete Bike?', style: TextStyle(color: AppColors.textPrimary)),
         content: const Text(
             'All ride history for this bike will be deleted.',
             style: TextStyle(color: AppColors.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
-              ref.read(garageProvider.notifier).deleteBike(bikeId);
-              Navigator.pop(context);
-              context.go('/home/garage');
-            },
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Delete', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
     );
+    if (confirmed == true) {
+      ref.read(garageProvider.notifier).deleteBike(bikeId);
+      if (context.mounted) context.go('/home/garage');
+    }
   }
 
   String _formatDate(DateTime dt) {

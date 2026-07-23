@@ -87,8 +87,18 @@ class _UserMenuButton extends ConsumerWidget {
     );
   }
 
-  void _showMenu(BuildContext context) {
-    showModalBottomSheet(
+  // Pops with the destination path as the sheet's result rather than
+  // popping-then-pushing inline: a Navigator.pop immediately followed by a
+  // context.push in the same synchronous callback races the sheet's
+  // imperative route removal against go_router's declarative page-list
+  // update on the same Navigator, which can produce two pages computing
+  // the same key -- Flutter's Navigator._updatePages assertion
+  // "'!keyReservation.contains(key)': is not true." (confirmed crash site:
+  // this exact menu, tapping "My Places"). Awaiting the sheet's own Future
+  // and pushing only after it fully resolves guarantees the sheet's route
+  // is completely gone before anything else touches the Navigator.
+  Future<void> _showMenu(BuildContext context) async {
+    final destination = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppColors.background,
       builder: (sheetContext) => SafeArea(
@@ -98,23 +108,18 @@ class _UserMenuButton extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.person_outline, color: AppColors.primary),
               title: const Text('Edit Profile'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                context.push('/profile/edit');
-              },
+              onTap: () => Navigator.pop(sheetContext, '/profile/edit'),
             ),
             ListTile(
               leading: const Icon(Icons.place_outlined, color: AppColors.primary),
               title: const Text('My Places'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                context.push('/places/mine');
-              },
+              onTap: () => Navigator.pop(sheetContext, '/places/mine'),
             ),
           ],
         ),
       ),
     );
+    if (destination != null && context.mounted) context.push(destination);
   }
 }
 
