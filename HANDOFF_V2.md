@@ -406,6 +406,14 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
   detector that never fired on anything short of an actual crash. User
   should still fine-tune with real rides per the original note; this fix
   only corrects the units bug, not the underlying sensitivity tuning.
+- **Follow-up (separate initiative, not part of this v2 branch's epic list):**
+  a confidence-gated crash alert landed as part of the Vehicle State Engine
+  Phase 1 work — see `VEHICLE_STATE_ARCHITECTURE.md`. A crash signal is now
+  only acted on if the fused GPS+IMU state clears a trust threshold, so a
+  correct-but-untuned threshold firing on garbage sensor data (e.g.
+  mid-tunnel GPS loss) gets suppressed instead of triggering a false
+  emergency-contact notification. `event_detector.dart`'s threshold itself
+  is unchanged from the fix above.
 
 ### H. Package rename — ✅ done (§2b) — §1 is resolved, no longer blocked.
 
