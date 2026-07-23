@@ -51,6 +51,10 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "audience",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         }

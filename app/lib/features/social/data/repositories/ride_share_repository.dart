@@ -133,11 +133,24 @@ class RideShareRepository {
   }
 
   /// Rides materialized as visible to the signed-in rider (followers/mutual
-  /// shares). Lines up with the `allowedUserIds arrayContains me` clause.
+  /// shares). Lines up with the `allowedUserIds arrayContains me` clause —
+  /// AND its `audience in ['followers','mutual']` co-condition. Firestore
+  /// can't prove a rule's AND'd condition true unless the query itself is
+  /// constrained on it too: `rideVisibleTo()`'s matching branch is
+  /// `audience in ['followers','mutual'] && uid in allowedUserIds`, so a
+  /// query filtered ONLY on `allowedUserIds` (no explicit `audience` filter)
+  /// can't be statically verified against that branch — Firestore rejects
+  /// the whole query with permission-denied, even though every real
+  /// document actually matching would pass (allowedUserIds is only ever
+  /// populated when audience is followers/mutual, but that's an app-level
+  /// write-time invariant, not something the query itself asserts). Adding
+  /// the explicit audience filter here makes the query prove what the rule
+  /// needs, matching firestore.indexes.json's composite index.
   Future<List<SharedRideEntity>> getSharedToMe(String uid, {int limit = 20}) async {
     final snap = await _firestore
         .collection('rides')
         .where('allowedUserIds', arrayContains: uid)
+        .where('audience', whereIn: ['followers', 'mutual'])
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .get();

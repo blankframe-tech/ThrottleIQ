@@ -42,8 +42,11 @@ to resume with zero prior conversation context.
   free tier. Avatar/ride-photo uploads now go to Cloudinary's cardless free
   tier instead. `firebase_storage` removed from `pubspec.yaml`,
   `storage.rules`/`firebase.json`'s `storage` key are dead.
-- **Still open** (§8): no one has walked the signed-in app past the login
-  screen this session — see §8 for exactly what that leaves unverified.
+- **A real device walkthrough happened 2026-07-23** (see §8) — the project
+  owner tested the live app directly, surfacing and getting fixes for a
+  forum-post crash and a Social-feed permission-denied bug that neither
+  `flutter analyze` nor the unit suite could have caught. This is the first
+  real-world usage signal this doc has had.
 
 ---
 
@@ -485,17 +488,30 @@ implementation:
 - ~~`flutter pub get` not re-run after removing `firebase_storage`~~ — done
   in a follow-up pass: `pubspec.lock` updated cleanly, `flutter analyze`
   stayed at 0 errors, `flutter test` stayed at 239/239.
-- **No live sign-in walkthrough.** This session confirmed the app boots
-  clean against the reconfigured Firebase project (lands on the sign-in
-  screen, no crash) but couldn't drive the UI further — no `idb`/simulator
-  automation tool was installed, and AppleScript/System Events control was
-  blocked by macOS Accessibility permissions in this environment. So: Auth
-  sign-up/sign-in, Firestore reads/writes, and the actual rendered look of
-  Epic F's charts/badges with real data are all still unverified beyond
-  "the code compiles, type-checks, and passes its unit tests."
-- **Firestore has 2 stale indexes** not present in `firestore.indexes.json`
-  (flagged by the deploy, not removed — deploying without `--force` leaves
-  them in place rather than guessing they're safe to drop).
+- ~~No live sign-in walkthrough~~ — **superseded 2026-07-23**: the project
+  owner walked the real app on a real device/simulator themselves (this
+  environment still can't drive the UI interactively — no simulator
+  input-automation tool available). That surfaced two real bugs neither
+  analyze nor the unit suite could have caught, both now fixed:
+  - A crash creating a forum post
+    (`'_dependents.isEmpty': is not true` — an `InheritedElement` popped a
+    modal sheet in the same tick as invalidating a provider that swaps the
+    screen underneath it). Fixed in `forum_thread_screen.dart`, and an
+    identical instance found by audit and fixed in `add_place_screen.dart`.
+  - The Social feed's Feed tab showing
+    `[cloud_firestore/permission-denied]` instead of any rides:
+    `RideShareRepository.getSharedToMe`'s query only filtered on
+    `allowedUserIds arrayContains uid`, but the matching `rideVisibleTo()`
+    rule branch also requires `audience in ['followers','mutual']` —
+    Firestore can't verify an AND'd rule condition the query itself doesn't
+    constrain, so it rejected the whole query. Fixed by adding the explicit
+    `audience` filter to the query and the matching composite index
+    (deployed live).
+- **Firestore has 3 stale indexes** not present in `firestore.indexes.json`
+  (2 pre-existing + 1 more from replacing the `allowedUserIds+createdAt`
+  index above with the corrected 3-field version — the old one is now
+  orphaned). Flagged by each deploy, not removed — deploying without
+  `--force` leaves them in place rather than guessing they're safe to drop.
 
 ---
 
