@@ -13,6 +13,12 @@ class RiderStatsSummary {
   final double totalDistanceKm;
   final List<RideEntity> recentRides;
 
+  /// Oldest → newest, capped to the last [computeRiderStats]'s `chartLimit`
+  /// rides — feeds the Rides tab's distance/speed-over-time charts, which
+  /// read left-to-right chronologically rather than most-recent-first like
+  /// [recentRides].
+  final List<RideEntity> chartRides;
+
   const RiderStatsSummary({
     required this.allTimeAvgSpeedKmh,
     required this.allTimeTopSpeedKmh,
@@ -21,6 +27,7 @@ class RiderStatsSummary {
     required this.totalRides,
     required this.totalDistanceKm,
     required this.recentRides,
+    this.chartRides = const [],
   });
 
   static const empty = RiderStatsSummary(
@@ -31,6 +38,7 @@ class RiderStatsSummary {
     totalRides: 0,
     totalDistanceKm: 0,
     recentRides: [],
+    chartRides: [],
   );
 }
 
@@ -38,6 +46,7 @@ RiderStatsSummary computeRiderStats({
   required List<RideEntity> rides,
   required List<BikeEntity> bikes,
   int recentLimit = 10,
+  int chartLimit = 20,
 }) {
   final mostUsedBike = _mostUsedBike(bikes);
 
@@ -71,6 +80,7 @@ RiderStatsSummary computeRiderStats({
   // pure function of its inputs regardless of what order they arrive in.
   final sortedByRecency = [...rides]
     ..sort((a, b) => b.startTime.compareTo(a.startTime));
+  final sortedChronologically = sortedByRecency.reversed.toList();
 
   return RiderStatsSummary(
     allTimeAvgSpeedKmh: avgSpeedSum / rides.length,
@@ -80,6 +90,9 @@ RiderStatsSummary computeRiderStats({
     totalRides: rides.length,
     totalDistanceKm: totalDistanceKm,
     recentRides: sortedByRecency.take(recentLimit).toList(),
+    chartRides: sortedChronologically.length > chartLimit
+        ? sortedChronologically.sublist(sortedChronologically.length - chartLimit)
+        : sortedChronologically,
   );
 }
 

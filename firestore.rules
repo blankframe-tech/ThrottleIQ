@@ -54,6 +54,16 @@ service cloud.firestore {
         allow write: if request.auth.uid == uid;
         allow read: if request.auth.uid == uid;
       }
+
+      // Rider Stats milestone badges (Epic F). Earned/not-earned is always
+      // recomputed client-side from local ride data
+      // (core/utils/badges.dart) — this collection is just a durable
+      // per-user record of what's been earned, owner-only like the other
+      // subcollections above, laying the groundwork for a future
+      // partner-discount lookup.
+      match /earnedBadges/{badgeId} {
+        allow read, write: if request.auth.uid == uid;
+      }
     }
 
     // Live sessions - readable by anyone with token (capability-based access)

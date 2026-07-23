@@ -101,5 +101,18 @@ void main() {
       );
       expect(stats.recentRides.map((r) => r.id).toList(), ['newest', 'middle']);
     });
+
+    test('chartRides is sorted oldest-first regardless of input order, capped to the limit', () {
+      final stats = computeRiderStats(
+        bikes: const [],
+        chartLimit: 2,
+        rides: [
+          _ride('oldest', startTime: DateTime(2026, 1, 1)),
+          _ride('newest', startTime: DateTime(2026, 1, 3)),
+          _ride('middle', startTime: DateTime(2026, 1, 2)),
+        ],
+      );
+      expect(stats.chartRides.map((r) => r.id).toList(), ['middle', 'newest']);
+    });
   });
 }

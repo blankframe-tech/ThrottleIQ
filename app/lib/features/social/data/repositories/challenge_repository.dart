@@ -133,6 +133,27 @@ class ChallengeRepository {
     });
   }
 
+  /// Records a standalone milestone badge (e.g. "500 km", "Ton-up") — not
+  /// tied to a time-boxed challenge doc, so unlike [earnBadge] this doesn't
+  /// touch challengeProgress (there is no challenge backing these; the
+  /// Rider Stats screen recomputes earned/not-earned locally and calls this
+  /// as a fire-and-forget sync). Lays the groundwork for a future
+  /// partner-discount lookup keyed off this same earnedBadges collection.
+  Future<void> earnMilestoneBadge({
+    required String userId,
+    required String badgeId,
+  }) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('earnedBadges')
+        .doc(badgeId)
+        .set({
+      'badgeId': badgeId,
+      'earnedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Gets all earned badges for a user.
   Future<List<Map<String, dynamic>>> getEarnedBadges(String userId) async {
     final querySnapshot = await _firestore

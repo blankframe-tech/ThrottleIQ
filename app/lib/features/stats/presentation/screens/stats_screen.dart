@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/badges.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
+import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
+import '../widgets/ride_line_chart.dart';
 
 const _ranks = [
   'New Rider',
@@ -25,6 +28,7 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(riderStatsProvider);
+    ref.watch(badgeSyncProvider); // fire-and-forget; UI never awaits this
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -77,14 +81,11 @@ class StatsScreen extends ConsumerWidget {
             final level = (totalKm / _kmPerLevel).floor() + 1;
             final kmIntoLevel = totalKm % _kmPerLevel;
             final rank = _ranks[(level - 1).clamp(0, _ranks.length - 1)];
-
-            final milestones = <(String, bool)>[
-              ('First ride', stats.totalRides >= 1),
-              ('100 km', totalKm >= 100),
-              ('500 km', totalKm >= 500),
-              ('10 rides', stats.totalRides >= 10),
-              ('Ton-up', stats.allTimeTopSpeedKmh >= 100),
-            ];
+            final badges = computeBadges(stats);
+            final distanceSeries =
+                stats.chartRides.map((r) => r.distanceKm).toList();
+            final speedSeries =
+                stats.chartRides.map((r) => r.avgSpeedKmh).toList();
 
             return SingleChildScrollView(
               child: Column(
@@ -130,11 +131,28 @@ class StatsScreen extends ConsumerWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            for (final (name, earned) in milestones)
-                              EditorialPill(name,
-                                  tone: earned ? PillTone.accent : PillTone.neutral,
-                                  filled: earned),
+                            for (final badge in badges)
+                              EditorialPill(badge.def.name,
+                                  tone: badge.earned ? PillTone.accent : PillTone.neutral,
+                                  filled: badge.earned),
                           ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Distance / speed over time
+                        const EditorialLabel('Distance over time'),
+                        const SizedBox(height: 10),
+                        EditorialCard(
+                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                          child: RideLineChart(values: distanceSeries),
+                        ),
+                        const SizedBox(height: 20),
+                        const EditorialLabel('Avg speed over time'),
+                        const SizedBox(height: 10),
+                        EditorialCard(
+                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                          child: RideLineChart(
+                              values: speedSeries, color: AppColors.secondary),
                         ),
                         const SizedBox(height: 20),
 
