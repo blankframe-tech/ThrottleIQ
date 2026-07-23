@@ -31,43 +31,50 @@ to resume with zero prior conversation context.
   and **Epic E (nav: Places tab replaces Service; map-pin add; OSM Overpass
   import; owned places)**.
 - **6 epics remain** (§5). Build order is dependency-first. §1 (Firebase
-  reconfig) is still open — confirmed still blocked as of this session:
-  `google-services.json` still has the old package name, though
-  `GoogleService-Info.plist` has already been updated to the new bundle id.
+  reconfig) is now resolved — new Android/iOS apps registered under
+  `com.bft.throttleiq`, config files replaced, `firebase_options.dart` and iOS
+  `Info.plist` URL scheme updated. `flutter pub get && flutter analyze` verified
+  clean this session; a real device/sim build to confirm Auth/Firestore connect
+  at runtime is still outstanding.
 
 ---
 
-## 1. ⛔ CRITICAL BLOCKER — Firebase reconfiguration (user action)
+## 1. ✅ RESOLVED — Firebase reconfiguration
 
 The package/bundle id was renamed `com.throttleiq.throttleiq` → **`com.bft.throttleiq`**
-to match the Play Console listing. `google-services.json` and
-`GoogleService-Info.plist` are keyed to the *old* id, so:
+to match the Play Console listing. Both new apps are now registered in the
+`throttleiqfb` Firebase console and the local config files/code are updated:
 
-- **Android builds fail** (`google-services` Gradle plugin: "No matching client
-  found for package name 'com.bft.throttleiq'") until the new
-  `google-services.json` is in place.
-- Firebase Auth/Firestore/Storage will not work on the renamed app at runtime
-  until reconfigured.
+- **Android** app added: package `com.bft.throttleiq`, App ID
+  `1:603325098273:android:94694220f44cbf63fcf660`, release SHA-1
+  `85:42:B8:AD:19:1E:6B:74:FC:85:27:4F:48:9D:BC:CE:4B:00:2F:10` and debug SHA-1
+  `90:1E:47:2B:08:4F:D1:D5:5C:2C:5C:56:F5:46:38:B7:12:59:95:FA` both
+  registered. New `google-services.json` downloaded and placed at
+  `app/android/app/google-services.json` (still contains the old app's client
+  entry too — harmless, the Gradle plugin matches by package name).
+- **iOS** app added: bundle `com.bft.throttleiq`, App ID
+  `1:603325098273:ios:0f2907197737692efcf660`. New `GoogleService-Info.plist`
+  downloaded and placed at `app/ios/Runner/GoogleService-Info.plist`
+  (previously this file had a manually-edited `BUNDLE_ID` but stale
+  `GOOGLE_APP_ID`/`CLIENT_ID` from the old app — now fully consistent).
+- `app/lib/firebase_options.dart` regenerated: added a real `android`
+  `FirebaseOptions` block (previously missing entirely), updated `ios` block
+  with the new app's `appId`/`iosClientId`, and made
+  `DefaultFirebaseOptions.currentPlatform` platform-aware via
+  `defaultTargetPlatform` (previously hard-returned `ios` unconditionally).
+- `app/ios/Runner/Info.plist` updated: `GIDClientID` and the
+  `CFBundleURLTypes`/`CFBundleURLSchemes` reversed-client-id both now point at
+  the new iOS app's OAuth client
+  (`603325098273-gkjts7olcqevdkc1kiful0gtjspfe0bv...`).
 
-**Do this in the `throttleiqfb` Firebase console:**
-1. Add **Android** app, package `com.bft.throttleiq`, register release SHA-1
-   `85:42:B8:AD:19:1E:6B:74:FC:85:27:4F:48:9D:BC:CE:4B:00:2F:10` (+ debug SHA-1
-   for Google Sign-In in debug). Download `google-services.json` →
-   `app/android/app/google-services.json` (replace).
-2. Add **iOS** app, bundle `com.bft.throttleiq`. Download
-   `GoogleService-Info.plist` → `app/ios/Runner/GoogleService-Info.plist`
-   (replace).
-3. Hand back to the coder agent to finish:
-   - regenerate `app/lib/firebase_options.dart` appIds (they change on
-     re-registration — do **not** guess them; use the new files or
-     `flutterfire configure`),
-   - make `DefaultFirebaseOptions.currentPlatform` platform-aware (it currently
-     hard-returns `ios`, a latent bug — Android worked only because
-     project-level keys overlap),
-   - update the iOS reversed-client-id URL scheme in `Info.plist`.
+**Not done in this pass** (optional, low priority): the two SHA-256
+fingerprints the old Android app had registered were not re-added to the new
+app — only the two SHA-1s (release + debug), which is what Google Sign-In
+actually keys off. Add them later if something specifically needs SHA-256.
 
-Until step 1 is done, **do not attempt an Android release build** from this
-branch.
+**Still worth doing:** a real `flutter analyze`/build check — this pass edited
+the files by hand (no Flutter SDK available in the editing environment) and
+was not run through `flutter pub get`/`analyze` yet.
 
 ---
 
@@ -343,10 +350,14 @@ Legend: ✅ done · 🔜 next · ⬜ later. Package rename = "H" (done early, bl
 
 ## 7. How to resume / verify
 
-1. Complete §1 (Firebase). Then from the coder side: regenerate
-   `firebase_options`, make `currentPlatform` platform-aware, update iOS URL
-   scheme.
-2. `cd app && flutter pub get && flutter analyze` (should stay clean).
+1. §1 (Firebase) is done — `firebase_options` regenerated, `currentPlatform`
+   is platform-aware, iOS URL scheme updated. Verified this session:
+   `flutter pub get && flutter analyze` is clean (0 errors; the 91 issues
+   reported are pre-existing lint infos/warnings unrelated to §1 — unused test
+   vars, `avoid_print`, deprecated `withOpacity`).
+2. Next: an actual build (`flutter run` / release APK) to confirm the app
+   boots against the new Firebase project at runtime — analyze-clean doesn't
+   prove Auth/Firestore actually connect.
 3. Deploy backend when convenient: `firebase deploy --only firestore:rules,firestore:indexes,storage`
    (rules + indexes updated through Epic C; `storage.rules` is new since Epic
    B — first deploy for that one).

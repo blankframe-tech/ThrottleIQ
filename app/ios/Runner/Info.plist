@@ -5,7 +5,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>GIDClientID</key>
-	<string>603325098273-gdefaanvp7u5e2d04f6uva4r888vuncq.apps.googleusercontent.com</string>
+	<string>603325098273-gkjts7olcqevdkc1kiful0gtjspfe0bv.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -13,7 +13,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.603325098273-gdefaanvp7u5e2d04f6uva4r888vuncq</string>
+				<string>com.googleusercontent.apps.603325098273-gkjts7olcqevdkc1kiful0gtjspfe0bv</string>
 			</array>
 		</dict>
 	</array>
