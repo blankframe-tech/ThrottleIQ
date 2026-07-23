@@ -72,13 +72,22 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
       await PlaceRepository().addPlace(place);
 
+      // Pop BEFORE invalidating: this screen is pushed on top of
+      // PlacesListScreen (same Navigator), and nearbyPlacesProvider drives
+      // PlacesListScreen.build's placesAsync.when directly — invalidating
+      // it swaps that screen's list for a loading spinner. Doing that
+      // subtree swap in the same tick as popping the route above it races
+      // the two tree mutations against each other, the same trigger behind
+      // forum_thread_screen.dart's "'_dependents.isEmpty': is not true"
+      // InheritedElement assertion crash. Popping first lets the route
+      // removal settle before the revealed screen rebuilds.
+      if (mounted) context.pop();
+
       // A brand-new place isn't in any cached nearbyPlacesProvider result
       // yet — invalidate the whole family (all category keys) so the
-      // Places tab picks it up as soon as this screen pops, rather than
-      // showing a stale list until some unrelated refetch happens.
+      // Places tab picks it up right away rather than showing a stale list
+      // until some unrelated refetch happens.
       ref.invalidate(nearbyPlacesProvider);
-
-      if (mounted) context.pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

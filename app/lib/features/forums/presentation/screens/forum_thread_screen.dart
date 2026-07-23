@@ -87,9 +87,19 @@ class ForumThreadScreen extends ConsumerWidget {
                     title: title,
                     body: body,
                   );
+                  // Pop the sheet BEFORE invalidating: forumPostsProvider
+                  // drives the body of the screen directly underneath this
+                  // modal (ForumThreadScreen.build's postsAsync.when swaps
+                  // the whole list for a loading spinner on invalidate).
+                  // Doing that swap in the same tick as popping the overlay
+                  // route above it raced the two tree mutations against each
+                  // other — a known trigger for Flutter's
+                  // "'_dependents.isEmpty': is not true" InheritedElement
+                  // assertion. Closing the sheet first lets its route
+                  // removal settle before the underlying screen rebuilds.
+                  if (sheetContext.mounted) Navigator.pop(sheetContext);
                   ref.invalidate(forumPostsProvider(forumId));
                   ref.invalidate(forumsForGarageProvider);
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
                 },
                 child: const Text('Post', style: TextStyle(color: Colors.white)),
               ),
