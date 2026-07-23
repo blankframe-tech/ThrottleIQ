@@ -30,9 +30,6 @@ class ForumThreadScreen extends ConsumerWidget {
   }
 
   void _showNewPostSheet(BuildContext context, WidgetRef ref) {
-    final titleController = TextEditingController();
-    final bodyController = TextEditingController();
-
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -40,81 +37,8 @@ class ForumThreadScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusLg)),
       ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppDimensions.paddingMd,
-            right: AppDimensions.paddingMd,
-            top: AppDimensions.paddingMd,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + AppDimensions.paddingMd,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'New post',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: titleController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(hintText: 'Title'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: bodyController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                maxLines: 4,
-                decoration: const InputDecoration(hintText: "What's going on?"),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: () async {
-                  final title = titleController.text.trim();
-                  final body = bodyController.text.trim();
-                  if (title.isEmpty || body.isEmpty) return;
-                  final user = ref.read(currentUserProvider);
-                  if (user == null) return;
-
-                  await ForumRepository().createPost(
-                    forumId: forumId,
-                    userId: user.uid,
-                    userName: user.displayName ?? 'Rider',
-                    userPhotoUrl: user.photoURL ?? '',
-                    title: title,
-                    body: body,
-                  );
-                  // Pop with a result rather than invalidating inline: a
-                  // same-tick reorder (pop, THEN invalidate — the previous
-                  // fix here) turned out not to be enough. forumPostsProvider
-                  // drives ForumThreadScreen's body directly underneath this
-                  // sheet (postsAsync.when swaps the whole list for a
-                  // spinner on invalidate), and even with the pop issued
-                  // first in the same synchronous callback, both tree
-                  // mutations were apparently still landing in the same
-                  // frame — Flutter's Navigator.pop schedules route removal,
-                  // it doesn't complete it synchronously. Returning a result
-                  // and invalidating only in showModalBottomSheet's own
-                  // .then() below guarantees the sheet's entire dismissal
-                  // (including its exit transition) has actually finished
-                  // first — a strictly stronger guarantee than reordering
-                  // within the same callback. Was: "'_dependents.isEmpty':
-                  // is not true" InheritedElement assertion, still
-                  // reproducing after the same-tick reorder.
-                  if (sheetContext.mounted) Navigator.pop(sheetContext, true);
-                },
-                child: const Text('Post', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (_) => _NewPostSheet(forumId: forumId),
     ).then((posted) {
-      titleController.dispose();
-      bodyController.dispose();
       if (posted == true) {
         ref.invalidate(forumPostsProvider(forumId));
         ref.invalidate(forumsForGarageProvider);
@@ -182,6 +106,114 @@ class ForumThreadScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// The "New post" sheet's content, as its own [ConsumerStatefulWidget]
+/// rather than inline closures over locally-created controllers.
+///
+/// Root cause of the actual crash here (confirmed from a real stack trace,
+/// after two earlier attempts diagnosed the wrong thing — see git history):
+/// the previous version created `TextEditingController`s in
+/// `_showNewPostSheet` and disposed them in `showModalBottomSheet(...)
+/// .then(...)`. That `.then()` fires as soon as `Navigator.pop` is called
+/// — NOT once the sheet's exit *animation* has finished rendering — so
+/// disposing the controllers there raced the still-playing transition,
+/// which was still rebuilding the `TextField`s referencing them:
+/// "A TextEditingController was used after being disposed." Everything
+/// else in the crash (the `_dependents.isEmpty` InheritedElement assertion,
+/// a RenderFlex overflow, "Looking up a deactivated widget's ancestor is
+/// unsafe") was a cascading symptom of that one root exception corrupting
+/// the tree mid-rebuild, not a separate bug — which is why two earlier
+/// fixes aimed at the invalidate/pop *ordering* never actually changed
+/// anything: they never touched the disposal code that was the real
+/// problem. Owning the controllers as State fields, disposed in
+/// State.dispose(), sidesteps the whole class of "when exactly is it safe
+/// to dispose" guessing — Flutter guarantees dispose() only runs once this
+/// widget is actually gone for good, not merely "popped."
+class _NewPostSheet extends ConsumerStatefulWidget {
+  final String forumId;
+  const _NewPostSheet({required this.forumId});
+
+  @override
+  ConsumerState<_NewPostSheet> createState() => _NewPostSheetState();
+}
+
+class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
+  final _titleController = TextEditingController();
+  final _bodyController = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final title = _titleController.text.trim();
+    final body = _bodyController.text.trim();
+    if (title.isEmpty || body.isEmpty || _submitting) return;
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    setState(() => _submitting = true);
+    await ForumRepository().createPost(
+      forumId: widget.forumId,
+      userId: user.uid,
+      userName: user.displayName ?? 'Rider',
+      userPhotoUrl: user.photoURL ?? '',
+      title: title,
+      body: body,
+    );
+    if (mounted) Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: AppDimensions.paddingMd,
+        right: AppDimensions.paddingMd,
+        top: AppDimensions.paddingMd,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'New post',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _titleController,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(hintText: 'Title'),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _bodyController,
+            style: const TextStyle(color: AppColors.textPrimary),
+            maxLines: 4,
+            decoration: const InputDecoration(hintText: "What's going on?"),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: _submitting ? null : _submit,
+            child: _submitting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                : const Text('Post', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

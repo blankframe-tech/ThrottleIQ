@@ -185,61 +185,93 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showContactDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Add Emergency Contact',
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            TextField(
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(labelText: 'Phone'),
-            ),
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration:
-                  const InputDecoration(labelText: 'Email (optional)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
+      builder: (_) => const _AddContactDialog(),
+    );
+  }
+}
+
+/// The "Add Emergency Contact" dialog's content, as its own
+/// [ConsumerStatefulWidget] rather than `TextEditingController`s created
+/// inline in `_showContactDialog` — those were never disposed at all (a
+/// small per-open leak, not a crash: unlike forum_thread_screen.dart's
+/// "New post" sheet, this dialog never called `.dispose()` in the first
+/// place, so it never hit the "used after disposed" race). Fixed with the
+/// same State-owned-controllers pattern used there, since it's the
+/// structurally correct way to own a TextEditingController's lifecycle
+/// regardless of which specific failure mode a given ad hoc version hits.
+class _AddContactDialog extends ConsumerStatefulWidget {
+  const _AddContactDialog();
+
+  @override
+  ConsumerState<_AddContactDialog> createState() => _AddContactDialogState();
+}
+
+class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+    if (name.isEmpty || phone.isEmpty) return;
+    final email = _emailCtrl.text.trim();
+    ref.read(emergencyContactsNotifierProvider.notifier).addContact(
+          name: name,
+          phone: phone,
+          email: email.isEmpty ? null : email,
+        );
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text('Add Emergency Contact',
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameCtrl,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(labelText: 'Name'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameCtrl.text.trim();
-              final phone = phoneCtrl.text.trim();
-              if (name.isEmpty || phone.isEmpty) return;
-              final email = emailCtrl.text.trim();
-              ref.read(emergencyContactsNotifierProvider.notifier).addContact(
-                    name: name,
-                    phone: phone,
-                    email: email.isEmpty ? null : email,
-                  );
-              Navigator.pop(dialogCtx);
-            },
-            child: const Text('Add'),
+          TextField(
+            controller: _phoneCtrl,
+            keyboardType: TextInputType.phone,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(labelText: 'Phone'),
+          ),
+          TextField(
+            controller: _emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(labelText: 'Email (optional)'),
           ),
         ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: const Text('Add'),
+        ),
+      ],
     );
   }
 }
