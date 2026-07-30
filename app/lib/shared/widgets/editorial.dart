@@ -52,6 +52,7 @@ class EditorialCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? color;
   final Color? borderColor;
+  final double radius;
 
   const EditorialCard({
     super.key,
@@ -60,20 +61,21 @@ class EditorialCard extends StatelessWidget {
     this.onTap,
     this.color,
     this.borderColor,
+    this.radius = AppDimensions.radiusXl,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: color ?? AppColors.surface,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(radius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        borderRadius: BorderRadius.circular(radius),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: borderColor ?? AppColors.border),
           ),
           child: child,

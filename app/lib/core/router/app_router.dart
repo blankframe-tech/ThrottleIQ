@@ -27,6 +27,7 @@ import '../../features/poi_directory/presentation/screens/places_list_screen.dar
 import '../../features/poi_directory/presentation/screens/add_place_screen.dart';
 import '../../features/poi_directory/presentation/screens/place_detail_screen.dart';
 import '../../features/poi_directory/presentation/screens/my_places_list_screen.dart';
+import '../../features/social/presentation/screens/my_shared_rides_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
@@ -115,6 +116,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Places tab, so it gets the same full-screen no-shell treatment as
       // /profile/edit rather than living under /home/places.
       GoRoute(path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
+      GoRoute(path: '/rides/mine', builder: (_, __) => const MySharedRidesScreen()),
       // Shell with bottom nav
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),

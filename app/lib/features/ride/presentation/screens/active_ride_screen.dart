@@ -20,12 +20,115 @@ class ActiveRideScreen extends ConsumerStatefulWidget {
   ConsumerState<ActiveRideScreen> createState() => _ActiveRideScreenState();
 }
 
+/// The live route map, isolated from the rest of [ActiveRideScreen] so that
+/// high-frequency stat updates (speed, elapsed, filtered acceleration) don't
+/// drag the tile layer and the full-ride Polyline through a rebuild with them.
+class _RouteMap extends ConsumerStatefulWidget {
+  const _RouteMap();
+
+  @override
+  ConsumerState<_RouteMap> createState() => _RouteMapState();
+}
+
+class _RouteMapState extends ConsumerState<_RouteMap> {
+  final MapController _mapCtrl = MapController();
+  static const _fallbackCenter = LatLng(23.8103, 90.4125);
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch only what the map actually draws. polylineVersion is the change
+    // signal for the route: the underlying list is mutated in place by the
+    // notifier and so is reference-stable, which a plain select() on
+    // `polyline` would read as "unchanged" forever.
+    final version = ref.watch(
+        rideRecordingProvider.select((s) => s.polylineVersion));
+    final position = ref.watch(
+        rideRecordingProvider.select((s) => s.currentPosition));
+    final polyline = ref.read(rideRecordingProvider).polyline;
+
+    if (position != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        try {
+          _mapCtrl.move(position, _mapCtrl.camera.zoom);
+        } catch (_) {/* controller not attached yet */}
+      });
+    }
+
+    return FlutterMap(
+      mapController: _mapCtrl,
+      options: MapOptions(
+        initialCenter: position ?? _fallbackCenter,
+        initialZoom: 17,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+        ),
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.bft.throttleiq',
+        ),
+        if (polyline.length > 1)
+          PolylineLayer(
+            key: ValueKey(version),
+            polylines: [
+              Polyline(
+                points: polyline,
+                color: AppColors.primary,
+                strokeWidth: 4,
+              ),
+            ],
+          ),
+        if (position != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: position,
+                width: 22,
+                height: 22,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
 class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     with SingleTickerProviderStateMixin {
-  final MapController _mapCtrl = MapController();
   late AnimationController _alertCtrl;
   late Animation<Color?> _alertColor;
   RideAlert _lastAlert = RideAlert.none;
+  // Anchors the iOS share popover to the button that triggered it. Without
+  // this, UIActivityViewController can fail to present at all on some
+  // iOS/share_plus combinations instead of just skipping the popover-arrow
+  // styling it's documented for on iPad — which is what made the button
+  // look like it silently did nothing.
+  final GlobalKey _shareButtonKey = GlobalKey();
+  // stopRide() resets the provider state to idle *before* _stopRide() gets
+  // to run its own post-stop navigation (context.go to either the share or
+  // summary screen) — stopRide()'s `state = ...` assignment notifies this
+  // widget's ref.watch synchronously, so the idle-redirect below used to
+  // schedule its own postFrameCallback to '/home/record' first and clobber
+  // whichever destination _stopRide() actually wanted, e.g. "Share ride"
+  // being checked in the end-ride dialog never actually landing on the share
+  // screen. Suppress the generic redirect while we're driving navigation
+  // ourselves.
+  bool _endingRide = false;
 
   @override
   void initState() {
@@ -66,27 +169,84 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     _alertCtrl.forward(from: 0);
   }
 
+  void _shareLiveLocation(String token) {
+    // See _shareButtonKey's doc comment for why this is computed at all.
+    Rect? origin;
+    final box = _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      origin = box.localToGlobal(Offset.zero) & box.size;
+    }
+    Share.share(
+      'Follow my ride live: $_liveShareBaseUrl/$token',
+      subject: 'ThrottleIQ live ride',
+      sharePositionOrigin: origin,
+    );
+  }
+
   Future<void> _stopRide() async {
+    var shareAfterEnd = false;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('End Ride?', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text('Your ride will be saved.',
-            style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('End Ride'),
-          ),
-        ],
+      builder: (_) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('End Ride?', style: TextStyle(color: AppColors.textPrimary)),
+          content: const Text('Your ride will be saved.',
+              style: TextStyle(color: AppColors.textSecondary)),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel')),
+                    GestureDetector(
+                      onTap: () => setDialogState(() => shareAfterEnd = !shareAfterEnd),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Share ride',
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                          Checkbox(
+                            value: shareAfterEnd,
+                            activeColor: AppColors.primary,
+                            onChanged: (v) =>
+                                setDialogState(() => shareAfterEnd = v ?? false),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                    child: const Text('End Ride'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
     if (confirmed != true) return;
+    _endingRide = true;
     final rideId = await ref.read(rideRecordingProvider.notifier).stopRide();
-    if (mounted) {
-      context.go(rideId != null ? '/ride/summary/$rideId' : '/home/record');
+    if (!mounted) return;
+    if (rideId == null) {
+      context.go('/home/record');
+    } else if (shareAfterEnd) {
+      context.go('/ride/share/$rideId');
+    } else {
+      context.go('/ride/summary/$rideId');
     }
   }
 
@@ -96,78 +256,40 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
 
     if (rideState.status == RecordingStatus.idle ||
         rideState.status == RecordingStatus.completed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/home/record'));
+      if (!_endingRide) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/home/record'));
+      }
       return const SizedBox.shrink();
     }
 
+    // Camera following moved into _RouteMap, which is driven by position
+    // updates rather than by every rebuild of this screen — this callback
+    // used to issue a MapController.move() on each build, i.e. as often as
+    // the accelerometer pushed state.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _triggerAlert(rideState.activeAlert);
-      if (rideState.polyline.isNotEmpty) {
-        try {
-          _mapCtrl.move(rideState.polyline.last, 17);
-        } catch (_) {}
-      }
     });
 
     final isPaused = rideState.status == RecordingStatus.paused;
     final speedKmh = rideState.currentSpeedMs * 3.6;
     final accel = rideState.sensorAccelMs2;
+    final avgSpeedKmh = rideState.elapsed.inSeconds > 0
+        ? (rideState.distanceM / rideState.elapsed.inSeconds) * 3.6
+        : 0.0;
 
     return Scaffold(
       body: Stack(
         children: [
           // ── Map ──────────────────────────────────────────────────────────
-          FlutterMap(
-            mapController: _mapCtrl,
-            options: MapOptions(
-              initialCenter: rideState.polyline.isNotEmpty
-                  ? rideState.polyline.last
-                  : const LatLng(23.8103, 90.4125),
-              initialZoom: 17,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
-              ),
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.bft.throttleiq',
-              ),
-              if (rideState.polyline.length > 1)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: rideState.polyline,
-                      color: AppColors.primary,
-                      strokeWidth: 4,
-                    ),
-                  ],
-                ),
-              if (rideState.polyline.isNotEmpty)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: rideState.polyline.last,
-                      width: 22,
-                      height: 22,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primary,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
+          //
+          // Deliberately `const`: this screen rebuilds on every speed, elapsed
+          // and accelerometer tick, and an identical const child lets Flutter
+          // skip the whole map subtree — tile layer, route polyline and all —
+          // on those rebuilds. _RouteMap subscribes to just the route/position
+          // slices of the recording state, so it still updates when the route
+          // actually moves. Inlining the map here instead meant re-rendering a
+          // Polyline of the entire ride many times a second.
+          const _RouteMap(),
 
           // ── Alert overlay flash ───────────────────────────────────────────
           AnimatedBuilder(
@@ -223,10 +345,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   if (rideState.liveSessionToken != null) ...[
                     const SizedBox(width: 8),
                     IconButton(
-                      onPressed: () => Share.share(
-                        'Follow my ride live: $_liveShareBaseUrl/${rideState.liveSessionToken}',
-                        subject: 'ThrottleIQ live ride',
-                      ),
+                      key: _shareButtonKey,
+                      onPressed: () => _shareLiveLocation(rideState.liveSessionToken!),
                       icon: const Icon(Icons.share_location,
                           color: AppColors.textPrimary),
                       tooltip: 'Share live location',
@@ -239,7 +359,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
 
           // ── Speed + sensor display ────────────────────────────────────────
           Positioned(
-            bottom: 200,
+            bottom: 160,
             left: 0,
             right: 0,
             child: Center(
@@ -273,6 +393,19 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                     ),
                     const Text('km/h',
                         style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _RideStat(
+                            label: 'Distance',
+                            value: SpeedFormatter.distanceKm(rideState.distanceM)),
+                        const SizedBox(width: 28),
+                        _RideStat(
+                            label: 'Avg Speed',
+                            value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     // Sensor G-force indicator
                     _GForceBar(accelMs2: accel),
@@ -281,6 +414,19 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
             ),
           ),
+
+          // ── Pause dim ─────────────────────────────────────────────────────
+          // Sits above the map/top bar/speed panel but below the bottom
+          // controls, so pausing darkens everything except the buttons you'd
+          // actually reach for.
+          if (isPaused)
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: Color(0xCC000000)),
+                ),
+              ),
+            ),
 
           // ── Bottom controls ───────────────────────────────────────────────
           Positioned(
@@ -301,49 +447,48 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   colors: [AppColors.background, AppColors.background.withValues(alpha: 0)],
                 ),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _RideStat(
-                          label: 'Distance',
-                          value: SpeedFormatter.distanceKm(rideState.distanceM)),
-                      _RideStat(
-                          label: 'Max Speed',
-                          value: '${(rideState.maxSpeedMs * 3.6).toStringAsFixed(0)} km/h'),
-                    ],
+                  Expanded(
+                    child: Container(
+                      decoration: isPaused
+                          ? BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.65),
+                                  blurRadius: 26,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            )
+                          : null,
+                      child: OutlinedButton.icon(
+                        onPressed: isPaused
+                            ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
+                            : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
+                        icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                        label: Text(isPaused ? 'Resume' : 'Pause'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 52),
+                          backgroundColor: isPaused ? AppColors.surface : null,
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: isPaused
-                              ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
-                              : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
-                          icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                          label: Text(isPaused ? 'Resume' : 'Pause'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(0, 52),
-                            foregroundColor: AppColors.primary,
-                            side: const BorderSide(color: AppColors.primary),
-                          ),
-                        ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _stopRide,
+                      icon: const Icon(Icons.stop_circle_outlined),
+                      label: const Text('End Ride'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 52),
+                        backgroundColor: AppColors.danger,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _stopRide,
-                          icon: const Icon(Icons.stop_circle_outlined),
-                          label: const Text('End Ride'),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(0, 52),
-                            backgroundColor: AppColors.danger,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),

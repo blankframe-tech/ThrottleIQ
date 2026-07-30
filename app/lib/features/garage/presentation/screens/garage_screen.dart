@@ -115,6 +115,11 @@ class _UserMenuButton extends ConsumerWidget {
               title: const Text('My Places'),
               onTap: () => Navigator.pop(sheetContext, '/places/mine'),
             ),
+            ListTile(
+              leading: const Icon(Icons.ios_share, color: AppColors.primary),
+              title: const Text('My Shared Rides'),
+              onTap: () => Navigator.pop(sheetContext, '/rides/mine'),
+            ),
           ],
         ),
       ),

@@ -39,7 +39,23 @@ enum RecordingStatus { idle, starting, active, paused, completed }
 class RideRecordingState {
   final RecordingStatus status;
   final RideEntity? ride;
+
+  /// Route drawn on the live map. This is a single growable list that the
+  /// notifier mutates in place — it is deliberately NOT copied on each new
+  /// fix (see _appendToPolyline). Because the instance is stable, a
+  /// `select((s) => s.polyline)` would never see a change; watch
+  /// [polylineVersion] instead. Treat as read-only outside the notifier.
   final List<LatLng> polyline;
+
+  /// Bumped every time [polyline] is mutated, so widgets can subscribe to
+  /// route changes specifically rather than to every state change.
+  final int polylineVersion;
+
+  /// Latest GPS fix, kept separately from [polyline] because the polyline is
+  /// decimated for display on long rides and its last element can therefore
+  /// lag the true current position.
+  final LatLng? currentPosition;
+
   final double currentSpeedMs;
   final double maxSpeedMs;
   final double distanceM;
@@ -60,6 +76,8 @@ class RideRecordingState {
     this.status = RecordingStatus.idle,
     this.ride,
     this.polyline = const [],
+    this.polylineVersion = 0,
+    this.currentPosition,
     this.currentSpeedMs = 0,
     this.maxSpeedMs = 0,
     this.distanceM = 0,
@@ -77,6 +95,8 @@ class RideRecordingState {
     RecordingStatus? status,
     RideEntity? ride,
     List<LatLng>? polyline,
+    int? polylineVersion,
+    LatLng? currentPosition,
     double? currentSpeedMs,
     double? maxSpeedMs,
     double? distanceM,
@@ -93,6 +113,8 @@ class RideRecordingState {
       status: status ?? this.status,
       ride: ride ?? this.ride,
       polyline: polyline ?? this.polyline,
+      polylineVersion: polylineVersion ?? this.polylineVersion,
+      currentPosition: currentPosition ?? this.currentPosition,
       currentSpeedMs: currentSpeedMs ?? this.currentSpeedMs,
       maxSpeedMs: maxSpeedMs ?? this.maxSpeedMs,
       distanceM: distanceM ?? this.distanceM,
@@ -148,6 +170,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   // Cooldown to avoid multi-counting same sensor event
   DateTime? _lastSensorEvent;
 
+  // Rate limit for pushing the filtered accelerometer value into UI state —
+  // see _onSensor.
+  DateTime? _lastSensorUiPush;
+  static const Duration _sensorUiPushInterval = Duration(milliseconds: 200);
+
   // Buffered point writes. Kept deliberately small: a phone can be killed
   // outright (OS jetsam under memory pressure, aggressive OEM battery
   // managers) with no chance to run dispose()/stopRide() — this bounds how
@@ -158,6 +185,45 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   List<Map<String, dynamic>> _pointBuffer = [];
   static const int _bufferFlushSize = 5;
   static const Duration _bufferFlushInterval = Duration(seconds: 3);
+
+  // ── Live map route ────────────────────────────────────────────────────
+  //
+  // The route used to be rebuilt as `[...state.polyline, newPoint]` on every
+  // single GPS fix. With distanceFilter: 3 that is a fix every few metres, so
+  // an hour of riding meant tens of thousands of whole-list copies whose cost
+  // grows with the ride — O(n²) allocation, an ever-larger live set for the
+  // GC to trace, and a Polyline of the same growing size handed to FlutterMap
+  // to re-render each time. That is the shape of "the app quits partway
+  // through a long ride but the data is fine": the OS kills the process for
+  // memory/unresponsiveness while the already-flushed SQLite rows survive.
+  //
+  // Instead, append in place to one stable list, and cap how many points the
+  // map ever holds. Persistence is entirely separate (_pointBuffer →
+  // RidePointDao), so decimating here loses no recorded data — only on-screen
+  // route resolution, and only on rides long enough that the extra detail is
+  // sub-pixel anyway.
+  List<LatLng> _polyline = <LatLng>[];
+  static const int _maxDisplayPoints = 2000;
+  int _displayStride = 1;
+  int _fixCount = 0;
+
+  /// Appends [p] to the display route, halving resolution whenever the cap is
+  /// hit so the point count stays bounded no matter how long the ride runs.
+  void _appendToPolyline(LatLng p) {
+    _fixCount++;
+    if (_displayStride > 1 && _fixCount % _displayStride != 0) return;
+
+    _polyline.add(p);
+    if (_polyline.length < _maxDisplayPoints) return;
+
+    // Keep every other point (indices 0, 2, 4, …), compacting in place.
+    var write = 1;
+    for (var read = 2; read < _polyline.length; read += 2) {
+      _polyline[write++] = _polyline[read];
+    }
+    _polyline.length = write;
+    _displayStride *= 2;
+  }
 
   // Crash detection & live session
   String? _currentLiveSessionToken;
@@ -260,11 +326,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _estimator.reset();
     _cadencePolicy.reset();
     _lastPoint = null;
+    _polyline = <LatLng>[];
+    _displayStride = 1;
+    _fixCount = 0;
+    _lastSensorUiPush = null;
 
     state = state.copyWith(
       status: RecordingStatus.active,
       ride: ride,
-      polyline: [],
+      polyline: _polyline,
+      polylineVersion: 0,
       currentSpeedMs: 0,
       maxSpeedMs: 0,
       distanceM: 0,
@@ -380,7 +451,19 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     _filteredAccel = _alpha * signedMagnitude + (1 - _alpha) * _filteredAccel;
 
-    if (mounted) {
+    // The accelerometer streams at ~20 Hz, and this used to publish a new
+    // state on every single sample. Every listener of the recording provider —
+    // including ActiveRideScreen, which owns the FlutterMap and the whole
+    // route Polyline — was therefore rebuilding 20 times a second for the sake
+    // of one smoothed number. Push at ~5 Hz instead: still faster than the eye
+    // resolves on a readout that is already low-pass filtered, and a 4x cut in
+    // rebuild pressure over a multi-hour ride. The alert detection below still
+    // sees every sample; only the UI publish is throttled.
+    final nowSample = DateTime.now();
+    final dueForUiPush = _lastSensorUiPush == null ||
+        nowSample.difference(_lastSensorUiPush!) >= _sensorUiPushInterval;
+    if (mounted && dueForUiPush) {
+      _lastSensorUiPush = nowSample;
       state = state.copyWith(sensorAccelMs2: _filteredAccel);
     }
 
@@ -532,12 +615,15 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
 
     final alertToShow = effectiveAlert != RideAlert.none ? effectiveAlert : state.activeAlert;
-    final newPolyline = [...state.polyline, LatLng(pos.latitude, pos.longitude)];
+    final here = LatLng(pos.latitude, pos.longitude);
+    _appendToPolyline(here);
     state = state.copyWith(
       currentSpeedMs: speedMs,
       maxSpeedMs: _maxSpeed,
       distanceM: _totalDistance,
-      polyline: newPolyline,
+      polyline: _polyline,
+      polylineVersion: state.polylineVersion + 1,
+      currentPosition: here,
       activeAlert: alertToShow,
       confidence: vehicleState?.confidence,
     );
@@ -613,6 +699,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _elapsedTimer?.cancel();
     _flushTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+
+    // The live-share session was previously left running: _liveSessionTimer
+    // was never cancelled here (unlike every other timer above) and the
+    // session doc was never marked finished. Anyone holding the share link
+    // kept seeing a permanent "RIDING" banner frozen on the last position
+    // from whenever the ride ended. Mark it completed *before* clearing
+    // _currentLiveSessionToken, since _updateLiveSessionStatus reads it.
+    _liveSessionTimer?.cancel();
+    await _updateLiveSessionStatus(LiveSessionStatus.completed);
+    _currentLiveSessionToken = null;
 
     _flushPointBuffer();
     await WakelockPlus.disable();
@@ -912,6 +1008,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           .doc(_currentLiveSessionToken)
           .update({
         'status': status.toString().split('.').last,
+        // Keep `active` consistent with `status` — a completed session that
+        // still reported active: true was indistinguishable from a live one
+        // to anything reading the field.
+        'active': status != LiveSessionStatus.completed,
         'updatedAt': DateTime.now().toIso8601String(),
       });
     } catch (e) {

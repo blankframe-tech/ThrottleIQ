@@ -36,6 +36,16 @@ final rideFeedProvider = FutureProvider<List<SharedRideEntity>>((ref) async {
   return rides;
 });
 
+/// The signed-in rider's own shared rides — reached from the garage header's
+/// user menu (My Shared Rides), not the feed. Unlike [rideFeedProvider] this
+/// isn't deduped/ranked against other visibility tiers; it's just "everything
+/// I've shared", regardless of audience.
+final myRidesProvider = FutureProvider<List<SharedRideEntity>>((ref) async {
+  final uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) return [];
+  return RideShareRepository().getMyRides(uid);
+});
+
 /// Holds the feed list locally so likes/votes can be toggled optimistically
 /// without waiting on a Firestore round-trip. Seeded from [rideFeedProvider]
 /// once it resolves.

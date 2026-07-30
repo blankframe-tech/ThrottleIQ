@@ -49,8 +49,18 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // R8 minification was crashing the app on launch on real devices
+            // (release-only crash before the first frame — never actually
+            // verified on hardware before, per todosanddone.md). The existing
+            // proguard-rules.pro only covers Firebase/Play Core/SQLite/Riverpod;
+            // it's missing keep rules for geolocator, google_sign_in,
+            // image_picker, permission_handler, and flutter_local_notifications,
+            // several of which use reflection and are common R8-strip victims.
+            // Disabled here to unblock; re-enable once verified on-device with
+            // fuller keep rules (see proguard-rules.pro comments) and a real
+            // R8 mapping-file crash report to confirm what's actually needed.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

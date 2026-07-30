@@ -262,7 +262,8 @@ class _StatChip extends StatelessWidget {
 
 /// A "slide to start" gesture: drag anywhere on the button and the fill/
 /// thumb track your finger continuously from 0% to 100% of its width.
-/// Release past [_commitThreshold] (60%) and the ride starts — the fill
+/// Release past [_commitThreshold] (35% — kept low since gripping/dragging
+/// precisely with riding gloves on is hard) and the ride starts — the fill
 /// animates the rest of the way to 100% first as a "locked in" cue, you
 /// don't have to physically drag all the way to the end. Release short of
 /// the threshold and it snaps back to 0. The whole button is the drag
@@ -278,7 +279,7 @@ class _SlideToStartButton extends ConsumerStatefulWidget {
 
 class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     with SingleTickerProviderStateMixin {
-  static const double _commitThreshold = 0.6;
+  static const double _commitThreshold = 0.35;
   static const double _trackHeight = 60;
   static const double _thumbSize = 48;
 

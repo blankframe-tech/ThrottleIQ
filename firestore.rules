@@ -130,7 +130,15 @@ service cloud.firestore {
     // (audience=='public' | allowedUserIds array-contains me | userId==me), so
     // every query is satisfiable without a rule-side document lookup.
     match /rides/{rideId} {
-      allow read: if rideVisibleTo(resource.data);
+      // `resource` is null when the doc doesn't exist yet — dereferencing
+      // resource.data in that case throws, which the rules engine treats as
+      // a denied read (surfaced to the client as permission-denied, not
+      // exists:false). RideShareRepository.shareRide() does exactly that
+      // read (an existence check before its first-time create), so every
+      // brand-new share hit permission-denied before the write was ever
+      // attempted. Guard it explicitly: a nonexistent doc has no data to
+      // protect, so it's always safe to let the read through.
+      allow read: if resource == null || rideVisibleTo(resource.data);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       // Owner can update/delete the ride freely, but may not reassign
       // authorship (userId is immutable on this branch).
