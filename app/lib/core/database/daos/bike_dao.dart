@@ -1,7 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 import '../database_helper.dart';
-import 'ride_dao.dart';
-import 'maintenance_dao.dart';
 
 class BikeDao {
   Future<void> insert(Map<String, dynamic> bike) async {
@@ -25,13 +23,35 @@ class BikeDao {
     await db.update('bikes', bike, where: 'id = ?', whereArgs: [bike['id']]);
   }
 
+  /// Deletes a bike and everything hanging off it: its rides, those rides'
+  /// GPS points, and its maintenance logs.
+  ///
+  /// Every statement runs on `txn`, deliberately. The previous version called
+  /// `RideDao.deleteForBike()` / `MaintenanceDao.deleteForBike()` from inside
+  /// this transaction, and those each grab `DatabaseHelper.instance.database`
+  /// — the *outer* connection — and (in RideDao's case) open a second
+  /// transaction on it. sqflite serializes access per connection, so that
+  /// inner call blocked waiting for this transaction to commit, while this
+  /// transaction sat waiting for the inner call to return: a deadlock. The
+  /// delete never completed and never threw, which is exactly how it
+  /// presented — "I can't delete a bike from the app", with no error.
+  ///
+  /// Keep this self-contained. Calling another DAO's method from inside a
+  /// transaction re-introduces the same deadlock.
   Future<void> delete(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
-      final rideDao = RideDao();
-      await rideDao.deleteForBike(id);
-      final maintenanceDao = MaintenanceDao();
-      await maintenanceDao.deleteForBike(id);
+      final rides = await txn.query(
+        'rides',
+        columns: ['id'],
+        where: 'bike_id = ?',
+        whereArgs: [id],
+      );
+      for (final ride in rides) {
+        await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
+      }
+      await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
+      await txn.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
     });
   }

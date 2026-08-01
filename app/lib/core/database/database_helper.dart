@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -11,6 +12,23 @@ class DatabaseHelper {
     _db ??= await _initDb();
     return _db!;
   }
+
+  /// Points the singleton at a caller-supplied database, for tests.
+  ///
+  /// Exists so the DAOs can be exercised against a real in-memory SQLite
+  /// (via `sqflite_common_ffi`) instead of being mocked. That matters:
+  /// BikeDao.delete once deadlocked by calling another DAO from inside its
+  /// own transaction, and no amount of mocking would have caught it — only
+  /// running the real statements against a real connection does.
+  @visibleForTesting
+  static void overrideDatabaseForTesting(Database? db) {
+    _db = db;
+  }
+
+  /// Builds the full schema on an already-open database. Used by
+  /// [overrideDatabaseForTesting] callers so a test DB matches production.
+  @visibleForTesting
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 7);
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');

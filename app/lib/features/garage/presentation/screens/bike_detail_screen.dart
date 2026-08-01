@@ -244,9 +244,20 @@ class BikeDetailScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmed == true) {
-      ref.read(garageProvider.notifier).deleteBike(bikeId);
+    if (confirmed != true) return;
+
+    // Awaited, and errors surfaced. Previously this was fire-and-forget and
+    // navigated away regardless, so when the delete failed (it deadlocked —
+    // see BikeDao.delete) the rider was returned to a garage that still had
+    // the bike in it, with nothing explaining why.
+    try {
+      await ref.read(garageProvider.notifier).deleteBike(bikeId);
       if (context.mounted) context.go('/home/garage');
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete this bike: $e')),
+      );
     }
   }
 
