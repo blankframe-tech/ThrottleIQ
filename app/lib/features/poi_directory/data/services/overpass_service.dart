@@ -24,7 +24,7 @@ class OverpassCandidate {
   });
 }
 
-/// Pulls nearby fuel/parts/garage points of interest from OpenStreetMap's
+/// Pulls nearby fuel/parts/garage/recreation points of interest from OpenStreetMap's
 /// Overpass API (https://overpass-api.de) — a free, rate-limited public
 /// service, so this is only ever called from an explicit rider action
 /// ("Import nearby" in `places_list_screen.dart`), never automatically.
@@ -36,8 +36,10 @@ class OverpassService {
 
   /// Fetches candidates within [radiusMeters] of the given point. Only
   /// motorcycle-relevant tags are queried: `amenity=fuel` (fuel),
-  /// `craft=motorcycle_repair` (garage/service), and `shop=motorcycle`
-  /// (parts/dealer).
+  /// `craft=motorcycle_repair` (garage/service), `shop=motorcycle`
+  /// (parts/dealer), and — for the recreation category — `amenity=cafe`,
+  /// `amenity=restaurant` and `tourism=viewpoint` (the biker-cafe / ride-out
+  /// stop-off shape of place).
   Future<List<OverpassCandidate>> fetchNearby({
     required double latitude,
     required double longitude,
@@ -50,6 +52,9 @@ class OverpassService {
   node["amenity"="fuel"](around:$radius,$latitude,$longitude);
   node["craft"="motorcycle_repair"](around:$radius,$latitude,$longitude);
   node["shop"="motorcycle"](around:$radius,$latitude,$longitude);
+  node["amenity"="cafe"](around:$radius,$latitude,$longitude);
+  node["amenity"="restaurant"](around:$radius,$latitude,$longitude);
+  node["tourism"="viewpoint"](around:$radius,$latitude,$longitude);
 );
 out body;
 ''';
@@ -98,6 +103,14 @@ out body;
     if (tags['amenity'] == 'fuel') return PlaceCategory.fuel;
     if (tags['craft'] == 'motorcycle_repair') return PlaceCategory.garage;
     if (tags['shop'] == 'motorcycle') return PlaceCategory.parts;
+    // Recreation: cafes/restaurants riders meet at, plus scenic viewpoints
+    // worth stopping for. Checked last so a node that somehow carries both a
+    // motorcycle tag and a food tag still classifies as the more specific
+    // motorcycle one.
+    if (tags['amenity'] == 'cafe' || tags['amenity'] == 'restaurant') {
+      return PlaceCategory.recreation;
+    }
+    if (tags['tourism'] == 'viewpoint') return PlaceCategory.recreation;
     return null;
   }
 

@@ -3,7 +3,12 @@ import 'package:equatable/equatable.dart';
 enum PlaceCategory {
   fuel,
   garage,
-  parts;
+  parts,
+
+  /// Biker cafes, rider-friendly eateries and scenic stop-offs — the
+  /// "where do we meet / where do we stop" category, as opposed to the
+  /// three utilitarian ones above.
+  recreation;
 
   String get displayName {
     switch (this) {
@@ -13,6 +18,8 @@ enum PlaceCategory {
         return 'Garage';
       case PlaceCategory.parts:
         return 'Parts';
+      case PlaceCategory.recreation:
+        return 'Recreation';
     }
   }
 
@@ -24,6 +31,8 @@ enum PlaceCategory {
         return '🔧';
       case PlaceCategory.parts:
         return '🛒';
+      case PlaceCategory.recreation:
+        return '☕';
     }
   }
 

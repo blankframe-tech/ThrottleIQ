@@ -14,6 +14,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../data/repositories/ride_share_repository.dart';
 
+const _captionMaxLength = 280;
+
 const _audienceOptions = [
   ('public', 'Public', 'Anyone on ThrottleIQ'),
   ('followers', 'Followers', 'People who follow you'),
@@ -37,11 +39,18 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
   String? _imagePath;
   String _audience = 'public';
   bool _sharing = false;
+  final _captionController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadPolyline();
+  }
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPolyline() async {
@@ -64,6 +73,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     final rideAsync = ref.read(rideDetailProvider(widget.rideId));
     final ride = rideAsync.valueOrNull;
     if (user == null || ride == null) return;
+
+    final caption = _captionController.text.trim();
 
     setState(() => _sharing = true);
     try {
@@ -92,6 +103,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         mapSnapshotUrl: null,
         audience: _audience,
         photoUrl: photoUrl,
+        caption: caption.isEmpty ? null : caption,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +137,21 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const EditorialLabel('Caption'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _captionController,
+              maxLines: 3,
+              maxLength: _captionMaxLength,
+              textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Say something about this ride',
+                hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                counterStyle: TextStyle(color: AppColors.textTertiary, fontSize: 11),
+              ),
+            ),
+            const SizedBox(height: 16),
             const EditorialLabel('Photo (optional)'),
             const SizedBox(height: 10),
             GestureDetector(

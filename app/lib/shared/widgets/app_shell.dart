@@ -2,23 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 
+/// The bottom-nav destinations, in display order — a location's index in this
+/// list *is* its `BottomNavigationBar` index.
+const List<String> shellTabs = [
+  '/home/social',
+  '/home/stats',
+  '/home/record',
+  '/home/places',
+  '/home/garage',
+];
+
+const int _recordTabIndex = 2;
+const int _garageTabIndex = 4;
+
+/// Shell routes that are *not* tabs of their own, mapped to the tab they
+/// logically belong under.
+///
+/// Without this, `/home/maintenance` matched no tab prefix and silently fell
+/// through to the Record fallback — the bug reported as "the maintenance page
+/// from garage, when selected, shows that I'm on record page in bottom but
+/// opens the maintenance page correctly." Maintenance is only ever reached
+/// from the garage / a bike card, so it highlights Garage.
+const Map<String, int> _nonTabShellRoutes = {
+  '/home/maintenance': _garageTabIndex,
+};
+
+/// Maps a shell location to the bottom-nav index that should appear selected.
+///
+/// Pure so it can be unit-tested without a widget tree. Matches a tab when the
+/// location *is* the tab path or is nested under it (`/home/garage/abc/edit`
+/// → Garage), then falls back to Record for anything unrecognised. The
+/// fallback exists only so `BottomNavigationBar` always gets a valid index —
+/// a new shell route that should highlight a specific tab belongs in
+/// [_nonTabShellRoutes], not in the fallback.
+int shellTabIndexForLocation(String location) {
+  final path = location.split('?').first;
+
+  bool matches(String base) => path == base || path.startsWith('$base/');
+
+  for (final entry in _nonTabShellRoutes.entries) {
+    if (matches(entry.key)) return entry.value;
+  }
+
+  final idx = shellTabs.indexWhere(matches);
+  return idx < 0 ? _recordTabIndex : idx;
+}
+
 class AppShell extends StatelessWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
-  static const _tabs = [
-    '/home/social',
-    '/home/stats',
-    '/home/record',
-    '/home/places',
-    '/home/garage',
-  ];
-
-  int _currentIndex(BuildContext context) {
-    final loc = GoRouterState.of(context).matchedLocation;
-    final idx = _tabs.indexWhere((t) => loc.startsWith(t));
-    return idx < 0 ? 2 : idx;
-  }
+  int _currentIndex(BuildContext context) =>
+      shellTabIndexForLocation(GoRouterState.of(context).matchedLocation);
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +67,7 @@ class AppShell extends StatelessWidget {
         ),
         child: BottomNavigationBar(
           currentIndex: idx,
-          onTap: (i) => context.go(_tabs[i]),
+          onTap: (i) => context.go(shellTabs[i]),
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,

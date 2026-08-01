@@ -137,6 +137,60 @@ void main() {
       expect(restored.routeId, 'route123');
     });
 
+    test('round-trips a caption through Firestore', () {
+      final captioned = RideShareModel(
+        id: 'ride4',
+        userId: 'user1',
+        userName: 'John Doe',
+        userPhotoUrl: 'http://example.com/photo.jpg',
+        bikeId: 'bike1',
+        bikeName: 'My Harley',
+        bikeType: 'Cruiser',
+        rideDate: DateTime(2024, 1, 15),
+        distanceKm: 50.0,
+        durationSeconds: 3600,
+        maxSpeedKmh: 100.0,
+        polyline: polyline,
+        createdAt: DateTime(2024, 1, 15, 12, 0),
+        caption: 'Coast road at sunrise',
+      );
+
+      final firestoreData = captioned.toFirestore();
+      expect(firestoreData['caption'], 'Coast road at sunrise');
+
+      final restored = RideShareModel.fromFirestore(firestoreData, 'ride4');
+      expect(restored.caption, 'Coast road at sunrise');
+      expect(restored.toEntity().caption, 'Coast road at sunrise');
+    });
+
+    test('writes a null caption when there is none', () {
+      expect(model.toFirestore()['caption'], isNull);
+      expect(model.toEntity().caption, isNull);
+    });
+
+    test('tolerates docs shared before captions existed', () {
+      final legacyData = {
+        'userId': 'user1',
+        'userName': 'John Doe',
+        'userPhotoUrl': 'http://example.com/photo.jpg',
+        'bikeId': 'bike1',
+        'bikeName': 'My Harley',
+        'bikeType': 'Cruiser',
+        'rideDate': DateTime(2024, 1, 15),
+        'distanceKm': 50.0,
+        'durationSeconds': 3600,
+        'maxSpeedKmh': 100.0,
+        'polyline': [
+          {'lat': 40.7128, 'lng': -74.0060},
+        ],
+        'createdAt': DateTime(2024, 1, 15, 12, 0),
+      };
+
+      final restored = RideShareModel.fromFirestore(legacyData, 'legacy1');
+      expect(restored.caption, isNull);
+      expect(restored.polyline.length, 1);
+    });
+
     test('handles missing optional fields', () {
       final minimalData = {
         'userId': 'user1',

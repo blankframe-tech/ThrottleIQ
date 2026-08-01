@@ -42,6 +42,9 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
     'Two-Strokes',
     'Dirt Bikes',
     'Spark Plug Corner',
+    'Engine Rebuild',
+    'Mileage Tips',
+    'Engine Oil Review',
   ];
 
   @override
@@ -88,6 +91,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final garageForumsAsync = ref.watch(forumsForGarageProvider);
+    final customForumsAsync = ref.watch(customForumsProvider);
 
     return ListView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),

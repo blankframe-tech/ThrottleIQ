@@ -32,6 +32,10 @@ class SharedRideEntity extends Equatable {
   /// which is a rendered map trace).
   final String? photoUrl;
 
+  /// Optional rider-written blurb shown above the media on the feed card.
+  /// Absent on rides shared before captions existed, hence nullable.
+  final String? caption;
+
   final int upvotes;
   final int downvotes;
 
@@ -63,6 +67,7 @@ class SharedRideEntity extends Equatable {
     this.allowedUserIds = const [],
     this.routeId,
     this.photoUrl,
+    this.caption,
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
@@ -85,6 +90,7 @@ class SharedRideEntity extends Equatable {
     String? audience,
     List<String>? allowedUserIds,
     String? photoUrl,
+    String? caption,
     int? upvotes,
     int? downvotes,
     Object? myVote = _unset,
@@ -111,6 +117,7 @@ class SharedRideEntity extends Equatable {
       allowedUserIds: allowedUserIds ?? this.allowedUserIds,
       routeId: routeId,
       photoUrl: photoUrl ?? this.photoUrl,
+      caption: caption ?? this.caption,
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
       myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
@@ -127,5 +134,6 @@ class SharedRideEntity extends Equatable {
         upvotes,
         downvotes,
         myVote,
+        caption,
       ];
 }

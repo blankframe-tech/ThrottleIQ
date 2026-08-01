@@ -78,6 +78,36 @@ void main() {
       expect(followersRide.allowedUserIds.length, 2);
     });
 
+    test('caption defaults to null and copyWith can set it', () {
+      expect(testRide.caption, isNull);
+
+      final captioned = testRide.copyWith(caption: 'Coast road at sunrise');
+      expect(captioned.caption, 'Coast road at sunrise');
+    });
+
+    test('copyWith preserves an existing caption when not overridden', () {
+      final captioned = testRide.copyWith(caption: 'Original caption');
+      final voted = captioned.copyWith(upvotes: 3);
+
+      expect(voted.caption, 'Original caption');
+      expect(voted.upvotes, 3);
+    });
+
+    test('copyWith overrides an existing caption', () {
+      final captioned = testRide.copyWith(caption: 'Original caption');
+      final rewritten = captioned.copyWith(caption: 'New caption');
+
+      expect(rewritten.caption, 'New caption');
+    });
+
+    test('caption participates in equality', () {
+      final a = testRide.copyWith(caption: 'A');
+      final b = testRide.copyWith(caption: 'B');
+
+      expect(a, isNot(equals(b)));
+      expect(a, equals(testRide.copyWith(caption: 'A')));
+    });
+
     test('ride with zero duration handles division', () {
       final zeroRide = SharedRideEntity(
         id: 'ride2',

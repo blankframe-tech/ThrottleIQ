@@ -9,6 +9,15 @@ import '../models/forum_model.dart';
 import '../models/forum_post_model.dart';
 import '../models/forum_reply_model.dart';
 
+/// Deterministic doc id for a rider-created forum.
+///
+/// Prefixed with `c-` so a custom forum can never collide with a bike slug
+/// (`yamaha__rx100`) or a topic slug (`maintenance`): those are produced by
+/// `slugify.dart`, which emits `[a-z0-9_]` only, so the `-` puts custom
+/// forums in a namespace that is disjoint by construction rather than by
+/// convention.
+String customForumSlug(String name) => 'c-${generalForumSlug(name)}';
+
 class ForumRepository {
   static final ForumRepository _instance = ForumRepository._internal();
 
@@ -92,6 +101,113 @@ class ForumRepository {
 
     final doc = snapshot ?? await docRef.get();
     return ForumModel.fromFirestore(doc).toEntity();
+  }
+
+  /// Creates a rider-owned forum. Unlike [getOrCreateForum] this is NOT
+  /// create-if-missing: a name collision is a real error the rider needs to
+  /// see ("pick another name"), not something to silently converge on —
+  /// otherwise "create" would hand them someone else's forum, which they'd
+  /// have no rights over. Same single-transaction existence check as
+  /// [getOrCreateForum] so two riders racing the same name can't both
+  /// observe "doesn't exist" and both believe they created it.
+  Future<ForumEntity> createCustomForum({
+    required String name,
+    String? description,
+    required String userId,
+  }) async {
+    final trimmed = name.trim();
+    final slug = customForumSlug(trimmed);
+    if (slug == 'c-') {
+      throw ArgumentError('Forum name must contain at least one letter or digit');
+    }
+
+    final docRef = _forums.doc(slug);
+    final trimmedDescription = description?.trim();
+
+    final created = await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(docRef);
+      if (existing.exists) return false;
+
+      transaction.set(docRef, {
+        'type': ForumType.custom.name,
+        'brand': '',
+        'model': null,
+        'topic': null,
+        'displayName': trimmed,
+        'description':
+            (trimmedDescription == null || trimmedDescription.isEmpty) ? null : trimmedDescription,
+        'createdBy': userId,
+        'maintainerIds': [userId],
+        'followerCount': 0,
+        'postCount': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
+
+    if (!created) {
+      throw StateError('A forum named "$trimmed" already exists');
+    }
+
+    final doc = await docRef.get();
+    return ForumModel.fromFirestore(doc).toEntity();
+  }
+
+  /// Rider-created forums, newest first — the "Rider forums" discovery list.
+  Future<List<ForumEntity>> getCustomForums({int limit = 50}) async {
+    final snapshot = await _forums
+        .where('type', isEqualTo: ForumType.custom.name)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => ForumModel.fromFirestore(doc).toEntity())
+        .toList();
+  }
+
+  /// Grants [uid] moderation rights on a custom forum. `arrayUnion` keeps
+  /// this idempotent — re-adding an existing maintainer is a no-op rather
+  /// than a duplicate entry.
+  Future<void> addMaintainer(String forumId, String uid) async {
+    await _forums.doc(forumId).update({
+      'maintainerIds': FieldValue.arrayUnion([uid]),
+    });
+  }
+
+  Future<void> removeMaintainer(String forumId, String uid) async {
+    await _forums.doc(forumId).update({
+      'maintainerIds': FieldValue.arrayRemove([uid]),
+    });
+  }
+
+  /// Deletes a post and rolls back the forum's `postCount`.
+  ///
+  /// Deliberately does NOT recurse into the post's `replies`/`votes`
+  /// subcollections: Firestore has no client-side recursive delete, and
+  /// fanning out a read+delete of every reply and vote from the phone is
+  /// both slow and unbounded. Those docs are simply orphaned — nothing
+  /// reads them once the parent post is gone (every query path goes
+  /// through the post doc), so this is acceptable for beta. A Cloud
+  /// Function triggered on post deletion should reap them later.
+  Future<void> deletePost({required String forumId, required String postId}) async {
+    final batch = _firestore.batch();
+    batch.delete(_forums.doc(forumId).collection('posts').doc(postId));
+    batch.update(_forums.doc(forumId), {'postCount': FieldValue.increment(-1)});
+    await batch.commit();
+  }
+
+  /// Deletes a reply and rolls back its post's `replyCount`.
+  Future<void> deleteReply({
+    required String forumId,
+    required String postId,
+    required String replyId,
+  }) async {
+    final postRef = _forums.doc(forumId).collection('posts').doc(postId);
+    final batch = _firestore.batch();
+    batch.delete(postRef.collection('replies').doc(replyId));
+    batch.update(postRef, {'replyCount': FieldValue.increment(-1)});
+    await batch.commit();
   }
 
   /// Gets a forum by its slug/id, or null if it hasn't been created yet.

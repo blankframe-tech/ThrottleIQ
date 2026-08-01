@@ -68,12 +68,52 @@ void main() {
       expect(candidate!.address, 'Mirpur Road, Dhaka');
     });
 
-    test('returns null for an unrelated tag (e.g. a restaurant)', () {
+    // A restaurant used to be "unrelated". It isn't any more: the recreation
+    // category exists precisely to cover the biker-cafe / ride-out stop-off
+    // kind of place, so food amenities now classify rather than being dropped.
+    test('classifies a restaurant as recreation', () {
       final candidate = service.parseElement({
         'id': 3,
         'lat': 23.81,
         'lon': 90.41,
         'tags': {'amenity': 'restaurant'},
+      });
+
+      expect(candidate, isNotNull);
+      expect(candidate!.category, PlaceCategory.recreation);
+    });
+
+    test('classifies a cafe as recreation', () {
+      final candidate = service.parseElement({
+        'id': 5,
+        'lat': 23.81,
+        'lon': 90.41,
+        'tags': {'amenity': 'cafe', 'name': 'Highway Riders Cafe'},
+      });
+
+      expect(candidate, isNotNull);
+      expect(candidate!.category, PlaceCategory.recreation);
+      expect(candidate.name, 'Highway Riders Cafe');
+    });
+
+    test('classifies a viewpoint as recreation', () {
+      final candidate = service.parseElement({
+        'id': 6,
+        'lat': 23.81,
+        'lon': 90.41,
+        'tags': {'tourism': 'viewpoint'},
+      });
+
+      expect(candidate, isNotNull);
+      expect(candidate!.category, PlaceCategory.recreation);
+    });
+
+    test('still returns null for a genuinely unrelated tag', () {
+      final candidate = service.parseElement({
+        'id': 7,
+        'lat': 23.81,
+        'lon': 90.41,
+        'tags': {'amenity': 'pharmacy'},
       });
 
       expect(candidate, isNull);

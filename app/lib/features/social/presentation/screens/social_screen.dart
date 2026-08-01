@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../forums/presentation/screens/forums_home_screen.dart';
@@ -241,21 +242,17 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     ],
                   ),
-                  if (ride.photoUrl != null) ...[
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                      child: CachedNetworkImage(
-                        imageUrl: ride.photoUrl!,
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                            height: 160, color: AppColors.background),
-                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                      ),
+                  if ((ride.caption ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      ride.caption!.trim(),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     ),
                   ],
+                  const SizedBox(height: 12),
+                  _buildMedia(ride),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -315,6 +312,46 @@ class _RideCardState extends ConsumerState<_RideCard> {
                   AppDimensions.paddingMd, 0, AppDimensions.paddingMd, AppDimensions.paddingMd),
               child: _buildComments(),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// Media strip: the route map is always shown (Strava-style). A rider photo,
+  /// when present, sits beside it — each taking half the card width — instead
+  /// of replacing it. [RideRouteMap] renders its own placeholder when the
+  /// polyline is empty (privacy clipping can legitimately empty a short ride).
+  Widget _buildMedia(SharedRideEntity ride) {
+    const mediaHeight = 160.0;
+    final map = RideRouteMap(
+      polyline: ride.polyline,
+      height: mediaHeight,
+      radius: AppDimensions.radiusLg,
+    );
+
+    if (ride.photoUrl == null) return map;
+
+    return SizedBox(
+      height: mediaHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              child: CachedNetworkImage(
+                imageUrl: ride.photoUrl!,
+                height: mediaHeight,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    Container(height: mediaHeight, color: AppColors.background),
+                errorWidget: (_, __, ___) =>
+                    Container(height: mediaHeight, color: AppColors.background),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: map),
         ],
       ),
     );

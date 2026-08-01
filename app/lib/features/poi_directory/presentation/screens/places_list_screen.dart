@@ -10,9 +10,10 @@ import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 
-/// Places bottom-nav tab: nearby garages/fuel pumps/parts shops, filterable
-/// by category, with an "Add place" entry point and a manual "Import
-/// nearby" action that pulls fuel/parts/garage POIs from OpenStreetMap.
+/// Places bottom-nav tab: nearby garages/fuel pumps/parts shops/biker cafes
+/// and other recreation stops, filterable by category, with an "Add place"
+/// entry point and a manual "Import nearby" action that pulls those POIs
+/// from OpenStreetMap.
 class PlacesListScreen extends ConsumerStatefulWidget {
   const PlacesListScreen({super.key});
 
@@ -142,7 +143,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                                 style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
                             SizedBox(height: 8),
                             Text(
-                              'Add a garage, fuel pump, or parts shop to help other riders.',
+                              'Add a garage, fuel pump, parts shop, or biker cafe to help other riders.',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
                             ),

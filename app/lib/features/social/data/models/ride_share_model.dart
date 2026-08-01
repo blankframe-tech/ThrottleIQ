@@ -37,6 +37,7 @@ class RideShareModel {
   final List<String> allowedUserIds;
   final String? routeId;
   final String? photoUrl;
+  final String? caption;
   final int upvotes;
   final int downvotes;
   final int? myVote;
@@ -63,6 +64,7 @@ class RideShareModel {
     this.allowedUserIds = const [],
     this.routeId,
     this.photoUrl,
+    this.caption,
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
@@ -92,6 +94,7 @@ class RideShareModel {
       'allowedUserIds': allowedUserIds,
       'routeId': routeId,
       'photoUrl': photoUrl,
+      'caption': caption,
       'upvotes': upvotes,
       'downvotes': downvotes,
     };
@@ -134,6 +137,8 @@ class RideShareModel {
           (data['allowedUserIds'] as List<dynamic>?)?.cast<String>() ?? [],
       routeId: data['routeId'] as String?,
       photoUrl: data['photoUrl'] as String?,
+      // Absent on every ride shared before captions shipped.
+      caption: data['caption'] as String?,
       upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
       downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
     );
@@ -162,6 +167,7 @@ class RideShareModel {
       allowedUserIds: allowedUserIds,
       routeId: routeId,
       photoUrl: photoUrl,
+      caption: caption,
       upvotes: upvotes,
       downvotes: downvotes,
       myVote: myVote,

@@ -11,6 +11,9 @@ class ForumModel {
   final int followerCount;
   final int postCount;
   final DateTime createdAt;
+  final String? createdBy;
+  final List<String> maintainerIds;
+  final String? description;
 
   const ForumModel({
     required this.id,
@@ -22,6 +25,9 @@ class ForumModel {
     this.followerCount = 0,
     this.postCount = 0,
     required this.createdAt,
+    this.createdBy,
+    this.maintainerIds = const [],
+    this.description,
   });
 
   ForumEntity toEntity() {
@@ -35,9 +41,16 @@ class ForumModel {
       followerCount: followerCount,
       postCount: postCount,
       createdAt: createdAt,
+      createdBy: createdBy,
+      maintainerIds: maintainerIds,
+      description: description,
     );
   }
 
+  /// Tolerant of docs written before rider-created forums existed: every
+  /// forum doc already in Firestore lacks `createdBy`/`maintainerIds`/
+  /// `description`, so those all fall back to null/empty rather than
+  /// throwing.
   factory ForumModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return ForumModel(
@@ -50,6 +63,12 @@ class ForumModel {
       followerCount: data['followerCount'] ?? 0,
       postCount: data['postCount'] ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdBy: data['createdBy'] as String?,
+      maintainerIds: (data['maintainerIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      description: data['description'] as String?,
     );
   }
 
@@ -63,6 +82,9 @@ class ForumModel {
       'followerCount': followerCount,
       'postCount': postCount,
       'createdAt': Timestamp.fromDate(createdAt),
+      'createdBy': createdBy,
+      'maintainerIds': maintainerIds,
+      'description': description,
     };
   }
 }

@@ -3,7 +3,12 @@ import 'package:equatable/equatable.dart';
 enum ForumType {
   brand,
   bikeModel,
-  general;
+  general,
+
+  /// A forum a rider created themselves (not auto-derived from a garage bike
+  /// or a built-in topic). These are the only forums that have a
+  /// [ForumEntity.createdBy] and a maintainer list.
+  custom;
 
   static ForumType fromString(String value) {
     return ForumType.values.firstWhere(
@@ -28,6 +33,17 @@ class ForumEntity extends Equatable {
   final int postCount;
   final DateTime createdAt;
 
+  /// The uid of the rider who created this forum. Null for auto-created
+  /// bike (brand/model) and built-in topic forums, which nobody owns.
+  final String? createdBy;
+
+  /// Uids allowed to moderate this forum alongside its creator (see
+  /// `forum_permissions.dart`). Always empty for auto-created forums.
+  final List<String> maintainerIds;
+
+  /// Optional blurb shown on rider-created forums.
+  final String? description;
+
   const ForumEntity({
     required this.id,
     required this.type,
@@ -38,6 +54,9 @@ class ForumEntity extends Equatable {
     this.followerCount = 0,
     this.postCount = 0,
     required this.createdAt,
+    this.createdBy,
+    this.maintainerIds = const [],
+    this.description,
   });
 
   @override
@@ -51,5 +70,8 @@ class ForumEntity extends Equatable {
         followerCount,
         postCount,
         createdAt,
+        createdBy,
+        maintainerIds,
+        description,
       ];
 }

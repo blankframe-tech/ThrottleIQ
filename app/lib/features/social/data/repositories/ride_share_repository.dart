@@ -53,6 +53,7 @@ class RideShareRepository {
     required String audience,
     String? photoUrl,
     String? routeId,
+    String? caption,
   }) async {
     // Apply privacy-zone clipping (strips ~200 m off each end to hide
     // home/work). On a short or near-home ride the clip can consume the whole
@@ -90,6 +91,7 @@ class RideShareRepository {
       allowedUserIds: allowedUserIds,
       routeId: routeId,
       photoUrl: photoUrl,
+      caption: caption,
     );
 
     final docRef = _firestore.collection('rides').doc(rideId);

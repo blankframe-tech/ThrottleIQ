@@ -9,6 +9,7 @@ class MaintenanceModel {
         odometerKm: (m['odometer_km'] as num).toDouble(),
         cost: m['cost'] != null ? (m['cost'] as num).toDouble() : null,
         notes: m['notes'] as String?,
+        customLabel: m['custom_label'] as String?,
         createdAt: DateTime.parse(m['created_at'] as String),
       );
 
@@ -20,6 +21,7 @@ class MaintenanceModel {
         'odometer_km': e.odometerKm,
         'cost': e.cost,
         'notes': e.notes,
+        'custom_label': e.customLabel,
         'synced': 0,
         'created_at': e.createdAt.toIso8601String(),
       };
