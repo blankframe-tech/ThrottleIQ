@@ -134,4 +134,89 @@ the next session can see what was asked for.
 
 ---
 
+## Assumption 9 — parallel agents died mid-flight; the work was finished by hand
+
+Six work packages were dispatched in parallel and **all six were killed by
+a session rate limit partway through**. Roughly a third of the intended
+work was already on disk, in a half-finished state.
+
+**Taken:** rather than re-dispatching (and risking the same), the partial
+state was audited (`flutter analyze` found exactly one broken file — a
+misplaced `library;` directive), repaired, and the remainder was completed
+sequentially, committing at every green checkpoint so no further
+interruption could lose work. Two packages were re-dispatched once the
+limit reset.
+
+**Why it matters to you:** the commit history is deliberately
+fine-grained for this reason. Each commit is independently green
+(0 analyzer errors, full suite passing), so any one of them can be
+reverted on its own.
+
+## Assumption 10 — one corner should be one instruction
+
+Writing the turn-by-turn tests surfaced a real defect: a single physical
+corner, sampled across several GPS points, produced two instructions
+("Turn right", then "Slight right" 50 m later). That both under-states the
+first turn and is noisy to ride to.
+
+**Taken:** consecutive same-direction bends are accumulated into one
+manoeuvre; a direction reversal or a genuinely straight segment ends the
+run, so an S-bend still reads as two turns. The grouping threshold
+(8°/segment) is deliberately below the 20° floor at which something counts
+as a turn at all, so a long sweeping bend groups rather than vanishing.
+
+**Untested against reality:** these constants are guesses until someone
+rides a route with the screen on. Same honest framing as the
+crash-detection thresholds.
+
+## Assumption 11 — moving time ignores long GPS gaps
+
+Average speed is now distance ÷ moving time. If tracking is suspended
+(tunnel, phone asleep, app killed) the next fix can arrive minutes later.
+
+**Taken:** gaps longer than 60 s are not counted as moving time at all,
+rather than being attributed to riding. Under-counting moving time
+slightly inflates average speed; counting a 10-minute tunnel as "moving"
+would deflate it enormously. The smaller, bounded error was chosen.
+
+## Assumption 12 — GPS trails are chunked, not one doc per point
+
+A ride holds thousands of points. One Firestore document per point would
+be thousands of reads/writes per ride.
+
+**Taken:** 500 points per `track` document, each point a fixed-order list
+`[lat, lng, tsMillis, speed, accel]` rather than a map — Firestore stores
+map keys verbatim in *every* element, so a map encoding repeats the field
+names thousands of times against the 1 MiB document limit.
+
+**The cost:** the encoding is positional, so the doc comment in
+`ride_track_codec.dart` *is* the schema. New fields append to the end and
+must read as nullable. Never reorder them.
+
+## Assumption 13 — discovered routes are shown but not openable
+
+Route documents live at `users/{uid}/routes/{id}`. Opening one needs the
+*owner's* uid, and the Discover tab lists routes from every rider.
+
+**Taken:** Discover cards are deliberately **non-tappable** rather than
+tappable-and-broken. Threading the owner uid through the route params is a
+small change, logged in the handoff doc's to-do list.
+
+## Assumption 14 — Firestore rules were deployed, not just written
+
+The new features are inert without matching rules, and the client-side
+permission checks are cosmetic on their own.
+
+**Taken:** rules were deployed to the live `throttleiqfb` project after
+confirming they are **strictly more permissive** than what was there
+before — new OR-branches and delete rules where deletes were previously
+denied outright. Nothing that previously worked can start failing. Rolling
+back is `git checkout <old> firestore.rules && firebase deploy`.
+
+**Not verified:** no live account has exercised them. Confirming a
+maintainer really can delete a post — and that a non-maintainer really
+cannot — is on the handoff doc's device-test list.
+
+---
+
 _Per-work-package assumptions are appended below as each landed._
