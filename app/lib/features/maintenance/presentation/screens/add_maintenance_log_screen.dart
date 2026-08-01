@@ -20,6 +20,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
   final _odometerCtrl = TextEditingController();
   final _costCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  final _customLabelCtrl = TextEditingController();
   ServiceType _selectedType = ServiceType.oilChange;
   DateTime _date = DateTime.now();
   bool _loading = false;
@@ -42,6 +43,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
     _odometerCtrl.dispose();
     _costCtrl.dispose();
     _notesCtrl.dispose();
+    _customLabelCtrl.dispose();
     super.dispose();
   }
 
@@ -71,6 +73,8 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
           odometerKm: double.parse(_odometerCtrl.text),
           cost: _costCtrl.text.isNotEmpty ? double.tryParse(_costCtrl.text) : null,
           notes: _notesCtrl.text.isEmpty ? null : _notesCtrl.text.trim(),
+          customLabel:
+              _selectedType == ServiceType.custom ? _customLabelCtrl.text : null,
         );
     if (mounted) context.pop();
   }
@@ -120,6 +124,27 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                   );
                 }).toList(),
               ),
+              // "Custom" on its own says nothing six months later, so naming
+              // it is required rather than optional once that chip is picked.
+              if (_selectedType == ServiceType.custom) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _customLabelCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'What did you service? *',
+                    hintText: 'e.g. Radiator flush',
+                  ),
+                  validator: (v) {
+                    if (_selectedType != ServiceType.custom) return null;
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Name the service';
+                    }
+                    return null;
+                  },
+                ),
+              ],
               const SizedBox(height: 20),
 
               // Date picker

@@ -32,6 +32,30 @@ service cloud.firestore {
           exists(/databases/$(database)/documents/follows/$(uid + '_' + request.auth.uid))));
     }
 
+    // The single global admin. Mirrors kAdminEmail in the app's
+    // forum_permissions.dart, but is enforced HERE independently — the client
+    // check is only cosmetic (it hides buttons); this is what actually stops
+    // a non-admin from deleting other riders' content. Move both to a custom
+    // claim (request.auth.token.admin) before public launch; an email
+    // comparison is only as trustworthy as the provider's verification.
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.email.lower() == 'the.abraar.rar@gmail.com';
+    }
+
+    // Whether the requester may moderate (delete other people's content in)
+    // the given forum. Costs one document read per evaluation — acceptable
+    // because it only fires on a delete, never on the read/list hot path.
+    // Auto-created bike/topic forums carry neither field, so this correctly
+    // reduces to admin-only for them.
+    function canModerateForum(forumId) {
+      return isAdmin() || (request.auth != null &&
+        exists(/databases/$(database)/documents/forums/$(forumId)) &&
+        (get(/databases/$(database)/documents/forums/$(forumId)).data.get('createdBy', '') == request.auth.uid ||
+         request.auth.uid in get(/databases/$(database)/documents/forums/$(forumId)).data.get('maintainerIds', [])));
+    }
+
     // User profiles.
     //
     // The root profile DOCUMENT is now readable by any authenticated user —
@@ -201,9 +225,16 @@ service cloud.firestore {
       // broad "any authenticated user can update" rule — that would let an
       // attacker set an arbitrary counter value directly instead of only
       // ever incrementing/decrementing by exactly one.
+      // A rider-created ('custom') forum must stamp its creator as the caller
+      // and seed the maintainer list with exactly that same uid — otherwise
+      // anyone could create a forum already "maintained" by someone else, or
+      // claim to have been created by another rider.
       allow create: if request.auth != null &&
         request.resource.data.followerCount == 0 &&
-        request.resource.data.postCount == 0;
+        request.resource.data.postCount == 0 &&
+        (request.resource.data.get('type', '') != 'custom' || (
+          request.resource.data.createdBy == request.auth.uid &&
+          request.resource.data.maintainerIds == [request.auth.uid]));
       allow update: if request.auth != null &&
         // followerCount moves by exactly ±1 via followForum/unfollowForum
         // (gated separately by the forum_follows/{followId} write rule
@@ -212,9 +243,22 @@ service cloud.firestore {
         ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']) &&
           (request.resource.data.followerCount == resource.data.followerCount + 1 ||
            request.resource.data.followerCount == resource.data.followerCount - 1)) ||
-         // ...or postCount moves by exactly +1 via createPost.
+         // ...or postCount moves by exactly ±1: +1 via createPost, -1 via a
+         // moderator's deletePost. The -1 direction is restricted to people
+         // who may actually moderate, so a rider can't decrement the counter
+         // without deleting anything.
          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['postCount']) &&
-          request.resource.data.postCount == resource.data.postCount + 1));
+          (request.resource.data.postCount == resource.data.postCount + 1 ||
+           (request.resource.data.postCount == resource.data.postCount - 1 &&
+            (isAdmin() ||
+             resource.data.get('createdBy', '') == request.auth.uid ||
+             request.auth.uid in resource.data.get('maintainerIds', []))))) ||
+         // ...or the creator/admin edits the maintainer list. Deliberately
+         // narrower than moderation: a maintainer can delete posts but must
+         // not be able to appoint peers or remove the creator who appointed
+         // them (mirrors canManageMaintainers in forum_permissions.dart).
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['maintainerIds']) &&
+          (isAdmin() || resource.data.get('createdBy', '') == request.auth.uid)));
 
       match /posts/{postId} {
         allow read: if request.auth != null;
@@ -228,12 +272,28 @@ service cloud.firestore {
         // opposite directions at once).
         allow update: if request.auth != null &&
           ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
-            request.resource.data.replyCount == resource.data.replyCount + 1) ||
+            // +1 via addReply; -1 via deleteReply, which only the reply's
+            // author or a forum moderator can perform (the delete rule on
+            // the reply doc itself is the real gate — this just keeps the
+            // counter from being driven down without one).
+            (request.resource.data.replyCount == resource.data.replyCount + 1 ||
+             (request.resource.data.replyCount == resource.data.replyCount - 1 &&
+              (resource.data.userId == request.auth.uid || canModerateForum(forumId))))) ||
            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
             request.resource.data.upvotes >= resource.data.upvotes - 1 &&
             request.resource.data.upvotes <= resource.data.upvotes + 1 &&
             request.resource.data.downvotes >= resource.data.downvotes - 1 &&
             request.resource.data.downvotes <= resource.data.downvotes + 1));
+
+        // A rider may always remove their own post; removing someone else's
+        // requires admin/creator/maintainer. The client shows the trash icon
+        // on the same condition, but this is the check that actually binds.
+        // Note the post's replies/votes subcollections are NOT reachable from
+        // a parent delete — they're left orphaned on purpose for beta (a
+        // Cloud Function should reap them); orphans are unreadable in
+        // practice since every read path starts from the parent post.
+        allow delete: if request.auth != null &&
+          (resource.data.userId == request.auth.uid || canModerateForum(forumId));
 
         // One vote doc per user: { value: 1 | -1 }. No rideVisibleTo-style
         // gate needed — forum posts have no audience tiers, they're readable
@@ -248,6 +308,9 @@ service cloud.firestore {
         match /replies/{replyId} {
           allow read: if request.auth != null;
           allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+          // Same ownership-or-moderator shape as the post delete above.
+          allow delete: if request.auth != null &&
+            (resource.data.userId == request.auth.uid || canModerateForum(forumId));
         }
       }
     }

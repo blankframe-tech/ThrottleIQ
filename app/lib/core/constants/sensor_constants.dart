@@ -59,4 +59,13 @@ class SensorConstants {
   static const double chainLubeMaxKm = 700;
   static const double tireCheckMinKm = 5000;
   static const double tireCheckMaxKm = 8000;
+
+  // Brakes get reminders alongside the original four because they're the
+  // safety-critical ones. The rest of the expanded ServiceType list is
+  // loggable but deliberately not reminded on — see _reminderTypes in
+  // maintenance_provider.dart for why.
+  static const double brakeFluidMinKm = 18000;
+  static const double brakeFluidMaxKm = 20000;
+  static const double discPadsMinKm = 12000;
+  static const double discPadsMaxKm = 15000;
 }

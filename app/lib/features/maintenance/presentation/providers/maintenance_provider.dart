@@ -28,6 +28,7 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
     required double odometerKm,
     double? cost,
     String? notes,
+    String? customLabel,
   }) async {
     final log = MaintenanceEntity(
       id: _uuid.v4(),
@@ -37,6 +38,11 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
       odometerKm: odometerKm,
       cost: cost,
       notes: notes,
+      // Only meaningful for ServiceType.custom; blanks are normalized to null
+      // so displayLabel never has to distinguish '' from absent.
+      customLabel: (customLabel != null && customLabel.trim().isNotEmpty)
+          ? customLabel.trim()
+          : null,
       createdAt: DateTime.now(),
     );
     await _dao.insert(MaintenanceModel.toMap(log));
@@ -57,17 +63,28 @@ final maintenanceRemindersProvider =
   return _computeReminders(bike.currentOdometerKm, logs);
 });
 
+/// Which service types get a proactive reminder card.
+///
+/// Deliberately NOT every [ServiceType]. The expanded list (spark plug,
+/// valve clearance, suspension, …) is there so a rider can *log* what they
+/// actually did, but rendering a reminder card per type would turn the
+/// maintenance screen into a wall of mostly-green cards and bury the ones
+/// that matter. Only the original four plus the two safety-critical brake
+/// items are reminded on; everything else is log-only.
+const _reminderTypes = [
+  ServiceType.oilChange,
+  ServiceType.airFilter,
+  ServiceType.chain,
+  ServiceType.tire,
+  ServiceType.brakeFluid,
+  ServiceType.frontDiscPads,
+];
+
 List<MaintenanceReminder> _computeReminders(
     double currentKm, List<MaintenanceEntity> logs) {
   final reminders = <MaintenanceReminder>[];
-  final types = [
-    ServiceType.oilChange,
-    ServiceType.airFilter,
-    ServiceType.chain,
-    ServiceType.tire,
-  ];
 
-  for (final type in types) {
+  for (final type in _reminderTypes) {
     final typeLogs = logs.where((l) => l.serviceType == type).toList()
       ..sort((a, b) => b.odometerKm.compareTo(a.odometerKm));
 
@@ -102,7 +119,12 @@ List<MaintenanceReminder> _computeReminders(
       return (SensorConstants.chainLubeMinKm, SensorConstants.chainLubeMaxKm);
     case ServiceType.tire:
       return (SensorConstants.tireCheckMinKm, SensorConstants.tireCheckMaxKm);
+    case ServiceType.brakeFluid:
+      return (SensorConstants.brakeFluidMinKm, SensorConstants.brakeFluidMaxKm);
+    case ServiceType.frontDiscPads:
+      return (SensorConstants.discPadsMinKm, SensorConstants.discPadsMaxKm);
     default:
-      return (0, double.infinity);
+      // Log-only types (see _reminderTypes): never overdue, never due soon.
+      return (double.infinity, double.infinity);
   }
 }

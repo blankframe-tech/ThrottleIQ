@@ -21,6 +21,7 @@ import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
+import '../../features/forums/presentation/screens/create_forum_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
 import '../../features/poi_directory/presentation/screens/places_list_screen.dart';
@@ -98,7 +99,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/ride/share/:rideId',
         builder: (_, state) => RideShareScreen(rideId: state.pathParameters['rideId']!),
       ),
-      // Forum routes (full-screen, no shell — same treatment as ride/summary)
+      // Forum routes (full-screen, no shell — same treatment as ride/summary).
+      // '/forums/create' MUST stay above '/forums/:forumId': go_router tries
+      // routes in listed order, so the param route would otherwise swallow
+      // 'create' and try to open a forum whose slug is literally "create"
+      // (same ordering hazard as '/profile/edit' vs '/profile/:uid' above).
+      GoRoute(path: '/forums/create', builder: (_, __) => const CreateForumScreen()),
       GoRoute(
         path: '/forums/:forumId',
         builder: (_, state) => ForumThreadScreen(forumId: state.pathParameters['forumId']!),

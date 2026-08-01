@@ -286,7 +286,9 @@ class _LogTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(log.serviceType.label, style: display(14, letterSpacing: 0)),
+                // displayLabel, not serviceType.label — a custom log shows the
+                // name the rider gave it instead of the word "Custom".
+                Text(log.displayLabel, style: display(14, letterSpacing: 0)),
                 const SizedBox(height: 4),
                 Text(
                   '${_formatDate(log.date)} · ${_distLabel(log.odometerKm, imperial)}'

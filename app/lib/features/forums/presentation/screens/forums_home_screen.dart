@@ -148,6 +148,49 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           ),
         ),
         const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Rider forums',
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () async {
+                await context.push('/forums/create');
+                // A forum created on that screen should show up here on the
+                // way back without needing a pull-to-refresh.
+                if (context.mounted) ref.invalidate(customForumsProvider);
+              },
+              icon: Icon(Icons.add, size: 18, color: AppColors.primary),
+              label: Text('Create', style: TextStyle(color: AppColors.primary)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        customForumsAsync.when(
+          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
+          data: (forums) {
+            if (forums.isEmpty) {
+              return Text(
+                'No rider-made forums yet. Create the first one.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              );
+            }
+            return Column(
+              children: [
+                for (final forum in forums) ...[
+                  _ForumCard(forum: forum),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 24),
         Text(
           'Find a forum',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
