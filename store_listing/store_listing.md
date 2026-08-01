@@ -51,6 +51,11 @@ Throttle IQ is under active development — expect frequent updates as we add fe
 
 ---
 
+## Privacy policy URL
+`https://throttleiqfb.web.app/privacy.html`
+
+Goes in **App content → Privacy policy**, not in the store listing text. Source file is `public/privacy.html`; see `data_safety_and_permissions.md`. Required before this app can be published at all (background location).
+
 ## Category
 Suggested: Auto & Vehicles (alternative: Maps & Navigation)
 

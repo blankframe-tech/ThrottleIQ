@@ -189,7 +189,7 @@
           <tr>
             <td><strong>Precise GPS location</strong> — latitude, longitude, speed, altitude, accuracy, timestamp, sampled continuously while a ride is recording</td>
             <td>To draw your route and calculate distance, speed, moving vs. stopped time, and to detect a possible crash</td>
-            <td>Stored on your phone. Only ride <em>summaries</em> are uploaded (see §2)</td>
+            <td>Saved on your phone first, then backed up to your own private cloud area (see §2)</td>
           </tr>
           <tr>
             <td><strong>GPS location in the background</strong> — the same data, continuing while your screen is off or another app is in front</td>
@@ -199,7 +199,7 @@
           <tr>
             <td><strong>Accelerometer and gyroscope readings</strong> (roughly 20 samples per second while recording)</td>
             <td>Crash detection, hard-braking / rapid-acceleration alerts, cornering and heading estimation</td>
-            <td>Processed on your phone. Derived values (acceleration, jerk, heading, cornering flag) are saved into the on-device ride log; the raw sensor stream is never uploaded</td>
+            <td>Processed on your phone as it arrives. The raw sensor stream is never stored or uploaded; only a per-point acceleration figure is kept alongside the route</td>
           </tr>
           <tr>
             <td><strong>Phone battery percentage</strong></td>
@@ -243,27 +243,40 @@
       <ul>
         <li><strong>No advertising, and no data sold or shared with advertisers or data brokers. Ever.</strong></li>
         <li><strong>No analytics or crash-reporting SDK.</strong> The app does not bundle Google Analytics, Firebase Analytics, Crashlytics, or any third-party behavioural tracker, so there is no usage-tracking profile of you.</li>
-        <li><strong>No push notification tokens.</strong> Notifications you see are generated on your own phone or read from your account; the app does not currently register a push token with a notification service.</li>
+        <li><strong>No push notifications.</strong> Notifications you see are generated on your own phone or read from your own account records. Google's messaging library is bundled with the app and, like every Firebase app, the Firebase SDKs give your installation an anonymous identifier — but ThrottleIQ never reads, stores, or sends anything to a push token, and nobody can push a message to your phone through it.</li>
         <li><strong>No contact list, no SMS, no microphone, no camera roll scanning.</strong> Photos are chosen one at a time through your phone's own picker.</li>
       </ul>
 
       <h2>2. What actually leaves your phone</h2>
 
       <p>ThrottleIQ records offline first. Rides are written to a database on your own device
-      before anything is uploaded, and the app works with no connection at all.</p>
+      before anything is uploaded, and the app works with no connection at all. When you are back
+      online it syncs to the cloud so that your history survives losing or reinstalling your phone.</p>
 
       <div class="callout">
-        <h3>Your detailed GPS trail stays on your phone</h3>
-        <p>The point-by-point GPS track of a ride — the thing that would reconstruct exactly where
-        you went — is stored only in the app's local database. It is not uploaded to the cloud.
-        What gets backed up is the ride <em>summary</em>: date, distance, duration, max speed,
-        event counts, and the bike it was on.</p>
-        <p>Two exceptions, both of which you trigger deliberately: sharing a ride to the feed
-        (§5) and starting a live-share link (§6).</p>
+        <h3>What is backed up, and who can reach it</h3>
+        <p>Two things are uploaded for each ride: the <strong>summary</strong> (date, distance,
+        duration, max speed, event counts, bike) and the <strong>point-by-point GPS trail</strong>
+        — the full route, with a timestamp, speed and acceleration figure at each point. Your
+        bikes, maintenance logs and saved routes are backed up too.</p>
+        <p>All of it lands in a private area of the database keyed to your account. Database
+        security rules restrict every one of those records — the GPS trail especially — to your
+        account alone. No other rider can read them, and none of it appears anywhere in the app
+        for anyone but you.</p>
+        <p>Your route only becomes visible to anyone else if you deliberately make it so: sharing
+        a ride to the feed (§5), publishing a saved route, or starting a live-share link (§6).</p>
       </div>
 
-      <p>Uninstalling the app deletes the local database, including every GPS trail on the device.
-      You can export a ride to a JSON or GPX file first if you want to keep it.</p>
+      <p>Uninstalling the app deletes the local database on the device. The cloud backup survives
+      an uninstall by design — that is what it is for — so uninstalling is not the same as deleting
+      your data. To remove the backup as well, see §9. You can export any ride to a JSON or GPX
+      file from the app if you want your own copy.</p>
+
+      <h3>Home-screen widgets</h3>
+      <p>If you add one of the app's home-screen widgets, the figures it shows — recent ride stats
+      and upcoming maintenance — are written to your phone's own local app storage so the widget
+      can draw them. That data stays on the device and is not sent anywhere. Bear in mind a widget
+      is visible to anyone who can see your home screen.</p>
 
       <h2>3. Background location — why it is needed</h2>
 
@@ -306,7 +319,7 @@
           </tr>
           <tr>
             <td><strong>Cloud Firestore</strong> (Google)</td>
-            <td>Your profile, ride summaries, bikes, maintenance logs, saved routes, emergency contacts, earned badges, in-app notifications, forum posts, shared rides, places, reviews, follows, and live-session records. This is the app's database.</td>
+            <td>Your profile, ride summaries and ride GPS trails, bikes, maintenance logs, saved routes, emergency contacts, earned badges, in-app notifications, forum posts, shared rides, places, reviews, follows, and live-session records. This is the app's database.</td>
           </tr>
           <tr>
             <td><strong>Cloudinary</strong> — cloud name <code>vjvcigkt</code></td>
@@ -402,9 +415,9 @@
       <ul>
         <li><strong>On your phone:</strong> rides, GPS trails, bikes and maintenance logs stay
         until you delete them in the app or uninstall it.</li>
-        <li><strong>In the cloud:</strong> your profile, ride summaries, bikes, maintenance logs,
-        routes, emergency contacts, posts, reviews and shared rides are kept for as long as your
-        account exists. There is no automatic expiry on any of it.</li>
+        <li><strong>In the cloud:</strong> your profile, ride summaries, ride GPS trails, bikes,
+        maintenance logs, routes, emergency contacts, posts, reviews and shared rides are kept for
+        as long as your account exists. There is no automatic expiry on any of it.</li>
         <li><strong>Live-share sessions:</strong> stop being viewable 24 hours after they start;
         the underlying record persists until deleted (see §6).</li>
         <li><strong>Deleted content:</strong> when you delete a ride, post, review, or emergency
@@ -423,9 +436,9 @@
         <strong>the address you signed up with</strong>, asking for account deletion. Using the
         signup address is how the request is verified as yours.</li>
         <li>Your sign-in credential and every cloud record tied to your account is deleted:
-        profile, username reservation, ride summaries, bikes, maintenance logs, saved routes,
-        emergency contacts, badges, notifications, live sessions, and crash alerts. Uploaded photos
-        are removed from Cloudinary.</li>
+        profile, username reservation, ride summaries, ride GPS trails, bikes, maintenance logs,
+        saved routes, emergency contacts, badges, notifications, live sessions, and crash alerts.
+        Uploaded photos are removed from Cloudinary.</li>
         <li>Content you posted in public — forum posts and replies, comments, place entries and
         reviews — is deleted on request too. Say so in your email if you want it removed;
         otherwise it may be left in place, detached from your profile, so threads other riders

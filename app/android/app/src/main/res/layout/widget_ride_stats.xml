@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ride Stats — 4x2. Weekly km is the hero figure; all-time sits beside it at
+    the same weight so the panel reads as a two-gauge instrument cluster.
+
+    The text defaults here are the "never published" placeholders: the widget
+    must look deliberate the moment it is dropped on the home screen, before
+    the app has ever run. The Kotlin provider overwrites them once data exists.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_ride_stats_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_background">
+
+    <ImageView
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_accent_bar"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_stats_title"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="9sp"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.18"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_stats_this_week"
+                    android:textColor="@color/widget_text_tertiary"
+                    android:textSize="9sp"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/widget_stats_weekly_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/widget_placeholder_value"
+                    android:textColor="@color/widget_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_stats_all_time"
+                    android:textColor="@color/widget_text_tertiary"
+                    android:textSize="9sp"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.12"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/widget_stats_total_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/widget_placeholder_value"
+                    android:textColor="@color/widget_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_stats_rides"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_placeholder_no_data"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+</LinearLayout>

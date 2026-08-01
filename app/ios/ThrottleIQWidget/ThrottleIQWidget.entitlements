@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	    The App Group is the ONLY channel between the Flutter app and this
+	    widget extension. The identical group must also appear in the Runner
+	    target's Runner.entitlements, and must exist on the Apple Developer
+	    portal for both bundle IDs, or UserDefaults(suiteName:) returns nil and
+	    every widget renders its placeholder.
+
+	    Must match HomeWidgetService.appGroupId in Dart.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.bft.throttleiq</string>
+	</array>
+</dict>
+</plist>

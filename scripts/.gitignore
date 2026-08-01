@@ -1,0 +1,13 @@
+node_modules/
+package-lock.json
+
+# Service-account keys must never be committed. reset_beta_data.js needs one
+# (see README.md) and it is equivalent to a root password for the Firebase
+# project — keep it outside the repo entirely. These patterns are only a
+# backstop for the case where someone drops one in here anyway.
+*.json
+!package.json
+service-account*.json
+*serviceaccount*.json
+*-admin*.json
+*.pem

@@ -1,0 +1,18 @@
+{
+  "name": "throttleiq-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Operational scripts for the ThrottleIQ Firebase project (throttleiqfb). Not part of the Flutter app or the Cloud Functions deploy.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "reset:dry-run": "node reset_beta_data.js --dry-run",
+    "reset:execute": "node reset_beta_data.js --yes-i-really-mean-it",
+    "check": "node --check reset_beta_data.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

@@ -65,6 +65,47 @@
             </intent-filter>
         </service>
 
+        <!-- Home-screen App Widgets.
+             Must be exported: the launcher process sends APPWIDGET_UPDATE
+             broadcasts to them from outside the app. Data comes from the
+             home_widget plugin's SharedPreferences, written by
+             lib/core/services/home_widget_service.dart. -->
+        <receiver
+            android:name=".StartRideWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_start_ride_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/start_ride_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".RideStatsWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_ride_stats_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ride_stats_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".MaintenanceWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_maintenance_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/maintenance_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

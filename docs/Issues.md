@@ -102,7 +102,68 @@ wrong-highlight behaviour. The Record fallback exists only to guarantee
 
 ---
 
-## 3. QA report
+## 3. Live-share sessions were world-listable (privacy hole)
+
+**Status:** Fixed and deployed 2026-08-01. **Assume exposure occurred** —
+see below.
+
+`firestore.rules` granted `allow read: if true` on `liveSessions/{token}`.
+The intent was "anyone holding the share link can view that ride." But in
+Firestore, **`read` means `get` + `list`** — so any client, without
+signing in at all, could enumerate the entire `liveSessions` collection and
+read every rider's live GPS position, speed, battery level and uid. The
+32-character token protected nothing against a collection listing; it only
+made individual documents hard to guess, which is irrelevant once you can
+list them.
+
+**Fix:** the rule is now `allow get: if true` — `list` is not granted, so a
+caller must already know the exact document id. Every real caller does a
+keyed `.doc(token)` lookup (`public/live-viewer.html:378`,
+`ride_recording_provider.dart:1032`), so no legitimate flow was using
+`list` and nothing broke.
+
+**Exposure assessment:** the project is pre-launch with only the owner's
+own accounts, so real-world exposure is almost certainly nil. But the hole
+was live on a public Firebase project for an unknown period, and live
+location is the most sensitive data this app holds. Treat any live-share
+session created before 2026-08-01 as potentially having been readable.
+
+**The general lesson, worth remembering when writing future rules:** never
+write `allow read` when you mean "anyone with the link." `read` grants
+enumeration. Use `allow get` for link-shared documents, and grant `list`
+only where a client is genuinely meant to browse a collection.
+
+---
+
+## 4. Live-session expiry could never have been reaped by a TTL policy
+
+**Status:** Fixed 2026-08-01 (app-side); the TTL policy itself still needs
+to be applied — see `HANDOFF_Document.md`.
+
+The handoff doc has long carried a to-do to add a Firestore TTL policy on
+`liveSessions.expiresAt` so expired share links auto-delete. That policy
+would have silently done nothing: **Firestore TTL only acts on a real
+`Timestamp` field**, and `LiveSessionEntity.toFirestore()` wrote
+`expiresAt` (and `updatedAt`) with `toIso8601String()` — plain strings.
+Documents with a non-Timestamp TTL field are ignored and never deleted, so
+the policy would have appeared configured while reaping nothing, forever.
+
+**Fix:** both fields are now written as `Timestamp.fromDate(...)`. Reads
+accept either shape, so sessions written by an older build still parse and
+a rider mid-ride during the upgrade doesn't get a broken link.
+`public/live-viewer.html` was fixed too — it did `new Date(session.expiresAt)`,
+which yields an Invalid Date for a Timestamp object and would have been
+silently swallowed by the existing `isNaN` guard, meaning expired links
+would have stopped expiring in the viewer.
+
+**Still to do:** existing docs keep their string values, so they will never
+be reaped even after the policy is applied. Either backfill them or accept
+that the pre-fix rows linger. The `gcloud` command to apply the policy is
+in `HANDOFF_Document.md`.
+
+---
+
+## 5. QA report
 
 **Status:** Not started.
 

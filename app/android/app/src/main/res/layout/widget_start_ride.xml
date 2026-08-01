@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Start Ride — 2x1. Carbon Mono: near-black panel, hairline border, one solid
+    lime action block. Everything is RemoteViews-safe (LinearLayout / TextView /
+    ImageView only).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_start_ride_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="10dp"
+    android:contentDescription="@string/widget_start_ride_content_description">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_start_ride_title"
+        android:textColor="@color/widget_text_secondary"
+        android:textSize="9sp"
+        android:fontFamily="monospace"
+        android:letterSpacing="0.18"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_button_primary">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_start_ride_cta"
+            android:textColor="@color/widget_on_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.10"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+</LinearLayout>

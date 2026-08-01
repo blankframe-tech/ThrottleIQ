@@ -387,7 +387,15 @@
               // Sessions carry a 24h expiry the app sets at publish time.
               // Nothing sweeps expired docs, so honour it client-side rather
               // than showing a day-old position as if it were live.
-              const expiresAt = new Date(session.expiresAt);
+              // expiresAt is a Firestore Timestamp on sessions written by
+              // current builds, and an ISO string on older ones. `new Date()`
+              // on a Timestamp object yields an Invalid Date, which the
+              // isNaN guard below would silently treat as "never expires" —
+              // so unwrap it via toDate() when it's available.
+              const rawExpiry = session.expiresAt;
+              const expiresAt = rawExpiry && typeof rawExpiry.toDate === 'function'
+                ? rawExpiry.toDate()
+                : new Date(rawExpiry);
               if (!isNaN(expiresAt.getTime()) && expiresAt < new Date()) {
                 showError('This live ride link has expired.');
                 document.getElementById('viewer').classList.add('hidden');

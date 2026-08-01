@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Maintenance — 4x1. One line that answers "what's next and how far away".
+    The left accent bar and the status chip both flip to danger red when the
+    service is overdue (swapped from MaintenanceWidgetProvider), so the state
+    is readable at a glance without reading the words.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_maintenance_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_background">
+
+    <ImageView
+        android:id="@+id/widget_maintenance_accent"
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_accent_bar"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/widget_maintenance_title"
+                android:textColor="@color/widget_text_secondary"
+                android:textSize="9sp"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.18"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/widget_maintenance_flag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_chip_due"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:text="@string/widget_maintenance_due_flag"
+                android:textColor="@color/widget_on_primary"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.10"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_maintenance_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="@string/widget_placeholder_no_service"
+            android:textColor="@color/widget_text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_maintenance_bike"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_placeholder_value"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="10sp"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    2x1. minWidth/minHeight follow the 70n-30 cell formula: 2 cells = 110dp,
+    1 cell = 40dp. targetCellWidth/Height are the API 31+ equivalents.
+
+    updatePeriodMillis is 30 min (the OS floor; anything smaller is silently
+    raised). The widget does not actually need it — the app pushes an explicit
+    update via HomeWidget.updateWidget on every publish — but it guarantees a
+    redraw after a reboot or a launcher restart.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_start_ride"
+    android:previewLayout="@layout/widget_start_ride"
+    android:previewImage="@mipmap/ic_launcher"
+    android:description="@string/widget_start_ride_description"
+    android:resizeMode="horizontal"
+    android:widgetCategory="home_screen" />

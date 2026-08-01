@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 enum LiveSessionStatus { riding, paused, crash, completed }
@@ -68,8 +69,15 @@ class LiveSessionEntity extends Equatable {
       'speedMs': speedMs,
       'batteryPct': batteryPct,
       'status': status.toString().split('.').last,
-      'updatedAt': updatedAt.toIso8601String(),
-      'expiresAt': expiresAt.toIso8601String(),
+      // Firestore Timestamps, NOT ISO strings.
+      //
+      // A Firestore TTL policy only acts on a real `Timestamp` field — a
+      // document whose expiry is stored as a String is silently ignored and
+      // never reaped. These were previously written with toIso8601String(),
+      // which meant the planned TTL policy on `expiresAt` would have appeared
+      // to apply while deleting nothing, forever.
+      'updatedAt': Timestamp.fromDate(updatedAt),
+      'expiresAt': Timestamp.fromDate(expiresAt),
     };
   }
 
@@ -87,9 +95,22 @@ class LiveSessionEntity extends Equatable {
         (e) => e.toString().split('.').last == data['status'],
         orElse: () => LiveSessionStatus.riding,
       ),
-      updatedAt: DateTime.parse(data['updatedAt'] as String),
-      expiresAt: DateTime.parse(data['expiresAt'] as String),
+      updatedAt: _dateFrom(data['updatedAt']),
+      expiresAt: _dateFrom(data['expiresAt']),
     );
+  }
+
+  /// Reads a date that may be a Firestore [Timestamp] (what this app writes
+  /// now) or an ISO-8601 String (what it wrote before the TTL fix). Sessions
+  /// written by an older build are still readable, so a rider mid-ride during
+  /// the upgrade doesn't get a crash on their live link. Falls back to the
+  /// epoch rather than throwing on an unexpected shape — a live session with
+  /// a garbled timestamp should read as long-expired, not blow up the viewer.
+  static DateTime _dateFrom(Object? raw) {
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is String) return DateTime.tryParse(raw) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    if (raw is DateTime) return raw;
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   @override

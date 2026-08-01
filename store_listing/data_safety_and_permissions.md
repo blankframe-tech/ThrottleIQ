@@ -2,6 +2,14 @@
 
 Based on the actual permissions in `app/android/app/src/main/AndroidManifest.xml` and the data flows in the codebase (Firebase + Cloudinary). Fill these into Play Console → App content.
 
+## Privacy policy URL (App content → Privacy policy)
+
+```
+https://throttleiqfb.web.app/privacy.html
+```
+
+Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. Must be live and anonymously reachable **before** submitting — a background-location app is rejected without it. The answers below must stay consistent with what that page says; if you change one, change the other.
+
 ## Permissions actually declared in the manifest
 - `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`
 - `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`
@@ -36,18 +44,22 @@ Based on the actual permissions in `app/android/app/src/main/AndroidManifest.xml
 ### App activity
 | Type | Collected? | Shared? | Purpose |
 |---|---|---|---|
-| App interactions | Yes | No | Analytics/diagnostics (Firebase) |
+| Other user-generated content (forum posts, replies, comments, ride captions, place reviews) | Yes | Yes | App functionality (community features) |
+
+Note: **do not** declare "App interactions" for analytics. `app/pubspec.yaml` contains no `firebase_analytics`, no `firebase_crashlytics`, and no third-party analytics SDK — nothing in the app collects behavioural/usage analytics, and claiming otherwise on the form contradicts `public/privacy.html`.
 
 ### Device or other IDs
 | Type | Collected? | Shared? | Purpose |
 |---|---|---|---|
-| Device or other IDs | Yes | No | App functionality, diagnostics (Firebase installation ID) |
+| Device or other IDs | Yes | No | App functionality (Firebase installation ID, created by the Firebase SDKs) |
+
+Note: `firebase_messaging` is declared in `pubspec.yaml` but nothing in `app/lib/` calls it — no FCM registration token is requested or stored today. Do not describe push tokens as collected until that is actually wired up.
 
 ### Is all user data encrypted in transit?
 **Yes** (Firebase/Cloudinary use HTTPS/TLS)
 
 ### Do you provide a way for users to request data deletion?
-**Yes** — point this at your privacy policy contact email until you build an in-app delete-account flow.
+**Yes** — there is no in-app delete-account flow yet (confirmed: nothing in `app/lib/` calls `User.delete()` or deletes a user's Firestore tree). Answer "Users can request that their data be deleted" and give the deletion URL as `https://throttleiqfb.web.app/privacy.html` — §9 of that page is the documented request route (email `the.abraar.rar@gmail.com` from the signup address). Switch this to "account deletion in-app" once the flow ships.
 
 ### Security practices
 - Data is encrypted in transit: Yes

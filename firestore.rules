@@ -152,8 +152,21 @@ service cloud.firestore {
     // Live sessions - readable by anyone with token (capability-based access)
     // Writable only by ride owner
     match /liveSessions/{token} {
-      // Anyone can read if they know the token (no auth required)
-      allow read: if true;
+      // Anyone holding the token can read that ONE session, without signing
+      // in — that's the whole point of a shareable live link.
+      //
+      // `get`, deliberately NOT `read`. In Firestore `read` = `get` + `list`,
+      // so the previous `allow read: if true` let any client — unauthenticated
+      // — enumerate the entire liveSessions collection and pull every rider's
+      // live GPS position without knowing a single token. The 32-character
+      // token was no protection at all against a collection listing. Granting
+      // only `get` means a caller must already know the exact doc id, which
+      // restores the intended "the link is the permission" model.
+      //
+      // Every caller does a keyed .doc(token) lookup (public/live-viewer.html
+      // and ride_recording_provider.dart), so nothing legitimately lists this
+      // collection and dropping `list` breaks no existing flow.
+      allow get: if true;
 
       // Only the ride owner (uid) can write
       allow create: if request.auth.uid == request.resource.data.uid;

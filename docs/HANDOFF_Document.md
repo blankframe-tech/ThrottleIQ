@@ -138,7 +138,16 @@ backend or a real device. **Treat each as unproven until tested.**
 ### Soon (requires Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
 - [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation). Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email) with real credentials via functions config.
 - [x] ~~Firebase Storage bucket~~ **SUPERSEDED 2026-07-23** — the project owner has no payment card, and Storage now requires Blaze even within its free tier. Avatar/photo uploads moved to Cloudinary instead (cloud name `vjvcigkt`) — no bucket needed.
-- [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete.
+- [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete. The app-side blocker is fixed (those fields are real `Timestamp`s now, not ISO strings — see `Issues.md` §4); applying the policy is a one-liner that needs gcloud:
+  ```
+  gcloud firestore fields ttls update expiresAt \
+    --collection-group=liveSessions \
+    --project=throttleiqfb \
+    --database='(default)' \
+    --enable-ttl
+  ```
+  Note: documents written *before* the fix still hold string expiries and will never be reaped. Backfill them or accept the leftovers.
+- [ ] **Deploy the privacy policy**: `firebase deploy --only hosting` publishes `public/privacy.html` to `https://throttleiqfb.web.app/privacy.html`. Play Console needs that URL to be live and anonymously reachable before the listing can be submitted.
 - [x] ~~**Sync `ride_points` (GPS trails) to Firestore**~~ **DONE 2026-08-01** (`ride_track_codec.dart` + `CloudRepository.uploadRideTrack`/`downloadRideTrack`). Trails are chunked into `users/{uid}/rides/{rideId}/track/{i}` docs of 500 positional points — one doc per point would have been thousands of writes per ride. Upload runs after the ride doc so a track can't orphan; download is on-demand and never clobbers local points. Track docs are owner-only in the rules. **Untested against a real account** — verify a reinstall actually restores polylines.
 
 ### Play Store
