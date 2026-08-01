@@ -30,14 +30,16 @@ Social  → Feed tab | Forums tab → forum thread → post detail
 Rides   → stats/journey (rank, badges, chart, recent rides)
 Record  → active ride (live) → crash overlay (conditional) → ride summary
                              → ride share → save as route
+Record  → ride with friends → friend picker → group ride live map
 Places  → place detail | add place | (header) my places, routes
 Routes  → route detail → turn-by-turn navigation
-Garage  → bike detail → edit bike | add bike | (header) edit profile,
+Garage  → bike detail → edit bike | add bike | (header) profile,
            my places, my shared rides → maintenance → add service log
 
-Full-screen (no bottom nav): Settings, Notifications, Edit Profile,
-User Profile (:uid), Ride Summary, Ride Share, Forum Thread/Post,
-Create Forum, Routes list/detail/navigate, Save Route
+Full-screen (no bottom nav): Settings, Notifications, Profile,
+Edit Profile, User Profile (:uid), Ride Summary, Ride Share,
+Forum Thread/Post, Create Forum, Routes list/detail/navigate,
+Save Route, Group Ride map
 ```
 
 ---
@@ -109,6 +111,17 @@ Added 2026-08-01. Built on the route data layer that had existed with no UI.
 - **Notifications screen** (`/notifications`).
 - **User profile screen** (`/profile/:uid`) — public profile view, showing a rider's bikes.
 
+## 7b. Ride with friends / group rides (`features/social`)
+
+Added 2026-08-01, on the group-ride data layer that had existed with no UI.
+
+- **"Ride with friends"** button on the Record screen, under the bike picker.
+- **Friend picker** — search riders by username, pick **2 to 10** (bounds enforced by a pure `validateGroupSelection`; live "n/10" counter, self excluded, duplicates collapsed, an 11th refused).
+- On confirm: the group ride is created, invites go out, each invitee gets an **in-app notification**, and **the inviter's ride starts recording immediately** via the normal recording path.
+- **Accepting** — a group-ride invite in the notifications screen is tappable; tapping accepts and opens the shared map.
+- **Shared live map** (`/group-ride/:groupRideId`) — every member is a **different colour**, assigned from a uid-sorted index so a rider keeps the same colour across rebuilds. Own marker is ringed. Roster splits "Riding" from "Invited"; each member shows "live" or "last seen 42s ago", and markers older than 30 s wash out rather than silently reading as current. Positions broadcast every 5 s. Members who've never reported a position are listed but never drawn at (0,0).
+- ⚠️ **Invites are in-app only — there is no push notification.** The invitee sees it next time they open the app. Real push needs the Cloud Function this repo documents as a stub. See `Assumptions Made.md` #17.
+
 ## 7a. Home-screen widgets (`core/services/home_widget_service.dart`)
 
 Added 2026-08-01. Three widgets, styled Carbon Mono (carbon background, lime accent, monospace, sharp corners):
@@ -127,7 +140,9 @@ Added 2026-08-01. Three widgets, styled Carbon Mono (carbon background, lime acc
 ## 8. Profile & settings (`features/profile`)
 
 - **Settings screen** (`/settings`) — profile summary, **Appearance** (theme switch: *Carbon Mono* dark instrument-panel theme vs. *Editorial* light warm-paper theme — added 2026-08-01, see `app/lib/core/theme/theme_style_provider.dart`), **Emergency Contacts** (add/delete; used by crash-detection escalation), **Sign Out**.
-- **Edit profile screen** (`/profile/edit`) — profile fields + **audience/privacy picker**: Everyone / Mutuals / Only me.
+- **Profile screen** (`/profile`) — added 2026-08-01. A **read-only** view of your own profile: avatar, display name, @username, nickname, bio, join date, and your garage. A single **Edit** action opens the form. Same screen as `/profile/:uid` with the uid omitted, so viewing yourself and viewing another rider can't drift apart. (The garage menu entry now reads **"Profile"**, not "Edit Profile".)
+- **Edit profile screen** (`/profile/edit`) — profile fields + **audience/privacy picker** (Everyone / Mutuals / Only me) + **"Who can see my bikes"** (Everyone / My followers / Only me, added 2026-08-01). The theme switcher is deliberately **not** here — it lives in Settings only.
+  - Bike visibility is enforced in `firestore.rules` (`bikesVisibleTo`), not just in the UI, and mirrors the pure `canSeeBikes()` predicate. Accounts with no setting default to **public** — note that this *widened* read access, since the subcollection was previously owner-only; see `Assumptions Made.md` #15.
 
 ---
 
