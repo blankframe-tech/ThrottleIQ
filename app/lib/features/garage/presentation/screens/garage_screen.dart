@@ -68,7 +68,7 @@ class GarageScreen extends ConsumerWidget {
 
 /// Avatar/menu button in the garage header — replaces the old round "+"
 /// (add-bike moved below the bike list). Opens the signed-in rider's own
-/// menu: profile edit today, with room for Epic E to add "My places".
+/// menu: their profile today, with room for Epic E to add "My places".
 class _UserMenuButton extends ConsumerWidget {
   const _UserMenuButton();
 
@@ -107,8 +107,10 @@ class _UserMenuButton extends ConsumerWidget {
           children: [
             ListTile(
               leading: Icon(Icons.person_outline, color: AppColors.primary),
-              title: const Text('Edit Profile'),
-              onTap: () => Navigator.pop(sheetContext, '/profile/edit'),
+              title: const Text('Profile'),
+              // The read-only profile view, not the edit form — editing is an
+              // action inside it now.
+              onTap: () => Navigator.pop(sheetContext, '/profile'),
             ),
             ListTile(
               leading: Icon(Icons.place_outlined, color: AppColors.primary),

@@ -2,6 +2,23 @@ import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/group_ride_entity.dart';
 
+/// Normalizes whatever Firestore hands back for a timestamp-ish field.
+///
+/// A field written with `FieldValue.serverTimestamp()` reads back as `null`
+/// on the writer's own device until the server round-trip lands (the local
+/// snapshot has no value yet), and a locally-written `DateTime` reads back as
+/// a `Timestamp`. Both used to reach `(x as dynamic).toDate()`, which threw
+/// on the null and took the whole group ride down with it.
+DateTime? _toDate(Object? value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  try {
+    return (value as dynamic).toDate() as DateTime?;
+  } catch (_) {
+    return null;
+  }
+}
+
 class GroupRideMemberModel {
   final String userId;
   final String userName;
@@ -38,16 +55,17 @@ class GroupRideMemberModel {
 
   factory GroupRideMemberModel.fromFirestore(Map<String, dynamic> data) {
     return GroupRideMemberModel(
-      userId: data['userId'] as String,
-      userName: data['userName'] as String,
-      userPhotoUrl: data['userPhotoUrl'] as String,
-      joinedAt: (data['joinedAt'] as dynamic).toDate() ?? DateTime.now(),
+      userId: data['userId'] as String? ?? '',
+      userName: data['userName'] as String? ?? 'Rider',
+      // Nullable in practice: a rider with no avatar is written as null by
+      // some paths and '' by others, and `as String` on the null blew up the
+      // whole group-ride parse (one avatar-less invitee = an unreadable ride).
+      userPhotoUrl: data['userPhotoUrl'] as String? ?? '',
+      joinedAt: _toDate(data['joinedAt']) ?? DateTime.now(),
       status: data['status'] as String? ?? 'joined',
       currentLat: (data['currentLat'] as num?)?.toDouble(),
       currentLng: (data['currentLng'] as num?)?.toDouble(),
-      lastLocationUpdate: data['lastLocationUpdate'] != null
-          ? (data['lastLocationUpdate'] as dynamic).toDate()
-          : null,
+      lastLocationUpdate: _toDate(data['lastLocationUpdate']),
     );
   }
 
@@ -80,6 +98,13 @@ class GroupRideModel {
   final List<LatLng>? routePolyline;
   final String status;
   final List<GroupRideMemberModel> members;
+
+  /// See [GroupRideEntity.memberIds] — flat uid arrays that exist purely so
+  /// firestore.rules can test membership (rules cannot index into an array of
+  /// maps like [members]).
+  final List<String> memberIds;
+  final List<String> invitedIds;
+
   final DateTime createdAt;
   final int maxParticipants;
 
@@ -94,6 +119,8 @@ class GroupRideModel {
     this.routePolyline,
     this.status = 'planned',
     this.members = const [],
+    this.memberIds = const [],
+    this.invitedIds = const [],
     required this.createdAt,
     this.maxParticipants = 20,
   });
@@ -112,6 +139,8 @@ class GroupRideModel {
           .toList(),
       'status': status,
       'members': members.map((m) => m.toFirestore()).toList(),
+      'memberIds': memberIds,
+      'invitedIds': invitedIds,
       'createdAt': createdAt,
       'maxParticipants': maxParticipants,
     };
@@ -144,12 +173,16 @@ class GroupRideModel {
       creatorName: data['creatorName'] as String,
       name: data['name'] as String,
       description: data['description'] as String?,
-      startTime: (data['startTime'] as dynamic).toDate() ?? DateTime.now(),
+      startTime: _toDate(data['startTime']) ?? DateTime.now(),
       routeId: data['routeId'] as String?,
       routePolyline: polylineList.isEmpty ? null : polylineList,
       status: data['status'] as String? ?? 'planned',
       members: membersList,
-      createdAt: (data['createdAt'] as dynamic).toDate() ?? DateTime.now(),
+      memberIds:
+          (data['memberIds'] as List<dynamic>?)?.cast<String>() ?? const [],
+      invitedIds:
+          (data['invitedIds'] as List<dynamic>?)?.cast<String>() ?? const [],
+      createdAt: _toDate(data['createdAt']) ?? DateTime.now(),
       maxParticipants: (data['maxParticipants'] as num?)?.toInt() ?? 20,
     );
   }
@@ -170,6 +203,8 @@ class GroupRideModel {
               ? GroupRideStatus.completed
               : GroupRideStatus.planned,
       members: members.map((m) => m.toEntity()).toList(),
+      memberIds: memberIds,
+      invitedIds: invitedIds,
       createdAt: createdAt,
       maxParticipants: maxParticipants,
     );

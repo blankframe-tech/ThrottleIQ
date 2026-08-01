@@ -218,7 +218,50 @@ first route on the stack — which deep links make hard to guarantee.
 
 ---
 
-## 7. QA report
+## 7. Deleting a bike deadlocked and silently did nothing
+
+**Status:** Fixed 2026-08-01 (commit `72159c0`). Reported by the project
+owner as _"I can't delete a bike from the app"_.
+
+**Root cause — a deadlock, not a logic error.** `BikeDao.delete` opened a
+transaction and then called `RideDao.deleteForBike()` and
+`MaintenanceDao.deleteForBike()` from *inside* it. Each of those fetches
+`DatabaseHelper.instance.database` — the **outer** connection — and
+`RideDao` opens a second transaction on it. sqflite serializes access per
+connection, so the inner call blocked waiting for the outer transaction to
+commit, while the outer transaction waited for the inner call to return.
+Neither could proceed. The delete never completed **and never threw**.
+
+Compounding it, `bike_detail_screen` called `deleteBike()` without
+`await` and navigated away regardless — so the rider was returned to a
+garage that still contained the bike, with no error anywhere.
+
+**Fix:** `BikeDao.delete` now runs every statement on `txn` itself, and
+the screen awaits the call and shows failures in a SnackBar.
+
+**The rule this establishes:** _never call another DAO's method from
+inside a `db.transaction(...)` block._ Those methods reach for the shared
+connection and will deadlock. Do the work on `txn` directly, even if it
+means duplicating a couple of `delete` statements. `BikeDao.delete`
+carries a comment saying so.
+
+**Why no test caught it:** the DAO "tests" under `test/database/` never
+touched a database — they asserted on plain maps. Fixed as part of this:
+`sqflite_common_ffi` is now a dev dependency and
+`test/database/bike_dao_delete_test.dart` runs 8 cases against a real
+in-memory SQLite, including the deadlock case, the cascade to
+rides/ride_points/maintenance_logs, isolation of other bikes, unknown
+ids, and idempotency. `DatabaseHelper` gained two `@visibleForTesting`
+hooks to point the singleton at a test database.
+
+⚠️ **If that file ever hangs**, the cause is almost certainly this bug
+reintroduced. The deadlock blocks below the level Dart's `@Timeout` can
+interrupt, so a regression shows up as a *stuck run*, not a red failure —
+verified by deliberately reintroducing the old implementation.
+
+---
+
+## 8. QA report
 
 **Status:** Not started.
 

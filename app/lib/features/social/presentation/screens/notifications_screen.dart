@@ -7,6 +7,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/app_notification_entity.dart';
+import '../providers/group_ride_providers.dart';
 import '../providers/notification_providers.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -75,14 +76,25 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationTile extends ConsumerStatefulWidget {
   final AppNotificationEntity notification;
   const _NotificationTile({required this.notification});
+
+  @override
+  ConsumerState<_NotificationTile> createState() => _NotificationTileState();
+}
+
+class _NotificationTileState extends ConsumerState<_NotificationTile> {
+  bool _accepting = false;
+
+  AppNotificationEntity get notification => widget.notification;
 
   String _label() {
     switch (notification.type) {
       case NotificationType.follow:
         return '${notification.fromName} started following you';
+      case NotificationType.groupRideInvite:
+        return '${notification.fromName} invited you to ride together';
     }
   }
 
@@ -94,6 +106,46 @@ class _NotificationTile extends StatelessWidget {
     return '${diff.inDays}d ago';
   }
 
+  /// Tapping a group-ride invite *is* the accept — the owner's flow is
+  /// "their friend clicks on the notification [and] they all see everyone
+  /// else on the map", so there's no separate accept step to get wrong.
+  Future<void> _acceptGroupRideInvite() async {
+    if (_accepting) return;
+    final user = ref.read(currentUserProvider);
+    final groupRideId = notification.groupRideId;
+    if (user == null || groupRideId == null || groupRideId.isEmpty) return;
+
+    setState(() => _accepting = true);
+    try {
+      await ref.read(groupRideRepositoryProvider).acceptInvitation(
+            groupRideId: groupRideId,
+            userId: user.uid,
+            userName: (user.displayName ?? '').trim().isEmpty
+                ? 'Rider'
+                : user.displayName!.trim(),
+            userPhotoUrl: user.photoURL ?? '',
+          );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _accepting = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text("Couldn't join the ride: $e")));
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _accepting = false);
+    context.push('/group-ride/$groupRideId');
+  }
+
+  void _onTap() {
+    if (notification.isActionableGroupRideInvite) {
+      _acceptGroupRideInvite();
+      return;
+    }
+    context.push('/profile/${notification.fromUid}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -101,7 +153,7 @@ class _NotificationTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        onTap: () => context.push('/profile/${notification.fromUid}'),
+        onTap: _accepting ? null : _onTap,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -120,11 +172,23 @@ class _NotificationTile extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                     const SizedBox(height: 2),
-                    Text(_relativeTime(),
+                    Text(
+                        notification.isActionableGroupRideInvite
+                            ? '${_relativeTime()} · tap to join'
+                            : _relativeTime(),
                         style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                   ],
                 ),
               ),
+              if (_accepting)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppColors.primary),
+                )
+              else if (notification.isActionableGroupRideInvite)
+                Icon(Icons.groups_outlined, size: 20, color: AppColors.primary),
               if (!notification.read)
                 Container(
                   width: 8,

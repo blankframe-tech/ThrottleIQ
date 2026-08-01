@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/utils/initials.dart';
+import '../bike_visibility.dart';
 
 /// A rider's public-facing profile.
 ///
@@ -45,6 +46,14 @@ class UserProfileEntity extends Equatable {
   /// 'private' (owner only). Enforced by firestore.rules.
   final String visibility;
 
+  /// Who can see this rider's garage: 'public' (any signed-in rider — the
+  /// default, and what a doc written before this field existed decodes to),
+  /// 'followers' (only riders who follow them), or 'private' (owner only).
+  /// Separate from [visibility] because a rider can want a findable profile
+  /// but a closed garage. See `domain/bike_visibility.dart` for the predicate
+  /// and firestore.rules for enforcement.
+  final String bikesVisibility;
+
   /// Denormalized ride stats, written by the owner's own device on ride
   /// finalize (see ProfileRepository.updatePublicStats) — kept off the
   /// owner-only `rides`/`bikes` subcollections so a public/mutual profile
@@ -69,6 +78,7 @@ class UserProfileEntity extends Equatable {
     this.followingCount = 0,
     this.ownedPlaceIds = const [],
     this.visibility = 'public',
+    this.bikesVisibility = kBikesVisibilityPublic,
     this.totalDistanceKm = 0,
     this.totalRides = 0,
     this.badgeIds = const [],
@@ -102,6 +112,7 @@ class UserProfileEntity extends Equatable {
     int? followingCount,
     List<String>? ownedPlaceIds,
     String? visibility,
+    String? bikesVisibility,
     double? totalDistanceKm,
     int? totalRides,
     List<String>? badgeIds,
@@ -120,6 +131,7 @@ class UserProfileEntity extends Equatable {
       followingCount: followingCount ?? this.followingCount,
       ownedPlaceIds: ownedPlaceIds ?? this.ownedPlaceIds,
       visibility: visibility ?? this.visibility,
+      bikesVisibility: bikesVisibility ?? this.bikesVisibility,
       totalDistanceKm: totalDistanceKm ?? this.totalDistanceKm,
       totalRides: totalRides ?? this.totalRides,
       badgeIds: badgeIds ?? this.badgeIds,
@@ -141,6 +153,7 @@ class UserProfileEntity extends Equatable {
         followingCount,
         ownedPlaceIds,
         visibility,
+        bikesVisibility,
         totalDistanceKm,
         totalRides,
         badgeIds,

@@ -87,6 +87,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+      // The rider's OWN profile, read-only. Same screen as '/profile/:uid'
+      // with the uid omitted — it resolves to the signed-in rider and adds an
+      // "Edit" action. Both literals must precede '/profile/:uid' below.
+      GoRoute(path: '/profile', builder: (_, __) => const UserProfileScreen()),
       GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
       // Must come after the literal '/profile/edit' above — go_router tries
       // routes in listed order, so the exact-match route wins for that one

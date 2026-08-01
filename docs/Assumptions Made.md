@@ -217,6 +217,73 @@ back is `git checkout <old> firestore.rules && firebase deploy`.
 maintainer really can delete a post — and that a non-maintainer really
 cannot — is on the handoff doc's device-test list.
 
+## Assumption 15 — bike visibility defaults to `public`, which widens read access
+
+⚠️ **The one decision in this pass with a real privacy consequence — read
+this one properly.**
+
+The ask was "option to show or hide my bikes from my followers or the
+public or only me". Implementing it means the `users/{uid}/bikes` rule
+changes from **owner-only** to "readable per the owner's tier". Existing
+accounts have no `bikesVisibility` field, so a default had to be chosen:
+
+- **`private` default** — nothing changes for anyone, but the feature is
+  inert until every rider opts in, and other riders' profiles show no
+  garage, which reads as broken.
+- **`public` default (taken)** — matches the documented product intent
+  (`Features.md` has always described `/profile/:uid` as "public profile
+  view, **showing a rider's bikes**"), and matches the owner's own framing:
+  asking for a way to *hide* implies visible is the baseline.
+
+**Taken:** default `public`.
+
+**Be clear-eyed about what that means:** before this change, no rider
+could read another rider's bikes at all — the rule forbade it, so the
+"show a rider's bikes" feature was aspirational and silently broken. After
+it, every existing account's garage becomes readable by any signed-in
+rider who can already see their profile. That is a widening, not a
+no-op, and it happens without those riders opting in.
+
+Mitigations actually in place: it's still gated behind
+`profileVisibleTo`, so a private/mutual profile keeps its garage hidden;
+writes stay strictly owner-only; and the tier is one tap to change in
+Edit profile.
+
+**To reverse:** change the `'public'` fallback to `'private'` in BOTH
+`bikesVisibleTo()` in `firestore.rules` and `canSeeBikes()` in
+`app/lib/features/profile/domain/bike_visibility.dart`, then redeploy.
+They must always agree.
+
+## Assumption 16 — DAOs are now tested against real SQLite
+
+The bike-delete deadlock (`Issues.md` §7) shipped because the DAO "tests"
+never opened a database — they asserted on plain maps, so a bug that only
+exists in real transaction semantics was invisible to them.
+
+**Taken:** added `sqflite_common_ffi` as a **dev** dependency (no effect
+on the shipped app) and two `@visibleForTesting` hooks on
+`DatabaseHelper`, so DAOs can run against a real in-memory SQLite.
+
+**Worth knowing:** the regression test for that deadlock does not fail
+cleanly if the bug returns — it *hangs*, because the deadlock sits below
+the level Dart's `@Timeout` can interrupt. Verified by deliberately
+reintroducing the old code. A stuck `test/database/` run is the signature.
+
+## Assumption 17 — group-ride invites are in-app, not push
+
+The ask says invitees "will be sent a notification". `firebase_messaging`
+is wired, but the Cloud Function that would actually *send* a push is an
+explicit stub (`functions/src/crash-notifications.ts` is mocked, and no
+group-ride function exists).
+
+**Taken:** write the in-app notification, which is what
+`notifications_screen.dart` reads and which works today. A real push
+needs the Cloud Function deployed — which needs the Blaze plan already
+tracked in the handoff doc's "Soon" section.
+
+**Consequence:** an invitee sees the invite when they next open the app,
+not on their lock screen. Called out so nobody assumes push works.
+
 ---
 
 _Per-work-package assumptions are appended below as each landed._

@@ -32,6 +32,35 @@ service cloud.firestore {
           exists(/databases/$(database)/documents/follows/$(uid + '_' + request.auth.uid))));
     }
 
+    // Whether the requester may read uid's bikes subcollection. Mirrors
+    // canSeeBikes() in app/lib/features/profile/domain/bike_visibility.dart —
+    // keep the two in lockstep; the client-side one only hides UI.
+    //
+    // The middle tier deliberately differs from profileVisibleTo's: a
+    // profile's is 'mutual' (both follow edges), a garage's is 'followers'
+    // (only requester -> uid), because "hide my bikes from my followers" is
+    // about who follows ME. Any unrecognized value — including the absent
+    // field on every account created before this shipped — reads as
+    // 'public', so this never regresses existing behaviour.
+    //
+    // Also requires profileVisibleTo: a rider whose profile you may not read
+    // shouldn't have a readable garage either.
+    //
+    // Costs one get() of the owner's profile per bike document read.
+    // Acceptable for an on-demand profile view of a handful of bikes; if it
+    // ever gets hot, denormalize bikesVisibility onto each bike doc at sync
+    // time and read it from resource.data instead.
+    function bikesVisibleTo(uid) {
+      let profile = get(/databases/$(database)/documents/users/$(uid)).data;
+      let tier = profile.get('bikesVisibility', 'public');
+      return request.auth != null && (
+        request.auth.uid == uid ||
+        (profileVisibleTo(uid, profile) && (
+          (tier != 'followers' && tier != 'private') ||
+          (tier == 'followers' &&
+            exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + uid))))));
+    }
+
     // The single global admin. Mirrors kAdminEmail in the app's
     // forum_permissions.dart, but is enforced HERE independently — the client
     // check is only cosmetic (it hides buttons); this is what actually stops
@@ -89,9 +118,12 @@ service cloud.firestore {
         }
       }
 
-      // User bikes subcollection
+      // User bikes subcollection. Reads are gated by the rider's own
+      // bikesVisibility setting (see bikesVisibleTo); writes stay owner-only
+      // so nobody can touch someone else's garage.
       match /bikes/{bikeId} {
-        allow read, write: if request.auth.uid == uid;
+        allow read: if bikesVisibleTo(uid);
+        allow write: if request.auth.uid == uid;
       }
 
       // User maintenance logs subcollection

@@ -9,6 +9,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/profile_repository.dart';
+import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
 
@@ -33,6 +34,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _saving = false;
   String? _usernameError;
   String _visibility = 'public';
+  String _bikesVisibility = kBikesVisibilityPublic;
 
   @override
   void dispose() {
@@ -51,6 +53,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _usernameCtrl.text = profile.username ?? '';
     _photoUrl = profile.photoUrl;
     _visibility = profile.visibility;
+    // Normalized: SegmentedButton asserts if `selected` isn't one of its
+    // segment values, and an unrecognized stored value means public anyway
+    // (see canSeeBikes).
+    _bikesVisibility = kBikesVisibilityLevels.contains(profile.bikesVisibility)
+        ? profile.bikesVisibility
+        : kBikesVisibilityPublic;
     _loaded = true;
   }
 
@@ -90,6 +98,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         photoUrl: photoUrl,
       );
       await repo.setVisibility(uid: uid, visibility: _visibility);
+      await repo.setBikesVisibility(uid: uid, bikesVisibility: _bikesVisibility);
 
       if (!mounted) return;
       context.pop();
@@ -114,7 +123,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: const Text('Edit profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Form(
@@ -208,6 +217,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ],
                 selected: {_visibility},
                 onSelectionChanged: (s) => setState(() => _visibility = s.first),
+              ),
+              const SizedBox(height: 20),
+              Text('Who can see my bikes',
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const SizedBox(height: 4),
+              Text('Your garage on your profile. Separate from who can see the profile itself.',
+                  style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+              const SizedBox(height: 8),
+              // 'followers' here, not 'mutual' as above: hiding bikes is about
+              // who follows YOU, so a one-way follower qualifies.
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(
+                      value: kBikesVisibilityPublic,
+                      label: Text('Everyone'),
+                      icon: Icon(Icons.public, size: 16)),
+                  ButtonSegment(
+                      value: kBikesVisibilityFollowers,
+                      label: Text('Followers'),
+                      icon: Icon(Icons.group, size: 16)),
+                  ButtonSegment(
+                      value: kBikesVisibilityPrivate,
+                      label: Text('Only me'),
+                      icon: Icon(Icons.lock, size: 16)),
+                ],
+                selected: {_bikesVisibility},
+                onSelectionChanged: (s) => setState(() => _bikesVisibility = s.first),
               ),
               const SizedBox(height: 32),
               ElevatedButton(

@@ -5,6 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
+import '../../../garage/data/models/bike_model.dart';
+import '../../../garage/domain/entities/bike_entity.dart';
+import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../models/user_profile_model.dart';
 
@@ -187,6 +190,56 @@ class ProfileRepository {
       'visibility': visibility,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  /// Sets who can see this rider's garage: 'public' (any signed-in rider —
+  /// the default), 'followers' (only riders who follow them), or 'private'
+  /// (owner only). Separate from [setVisibility] so a rider can stay findable
+  /// while keeping their bikes to themselves. The client-side gate lives in
+  /// `domain/bike_visibility.dart`; firestore.rules is what actually enforces
+  /// it against a direct read.
+  Future<void> setBikesVisibility({
+    required String uid,
+    required String bikesVisibility,
+  }) async {
+    assert(kBikesVisibilityLevels.contains(bikesVisibility));
+    await _users.doc(uid).set({
+      'bikesVisibility': bikesVisibility,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// The bikes in [uid]'s garage, read from the synced Firestore mirror of
+  /// their local garage (`users/{uid}/bikes`, written by
+  /// CloudRepository.uploadBikes — hence the snake_case SQLite column names
+  /// that [BikeModel.fromMap] expects).
+  ///
+  /// Only ever called for a viewer [canSeeBikes] has already cleared, and the
+  /// same decision is re-made in firestore.rules — a viewer who isn't allowed
+  /// gets a permission-denied here, which the profile screen renders as "no
+  /// garage section" rather than an error. Bikes that were never synced (a
+  /// brand-new bike on a device that hasn't run a sync cycle yet) simply
+  /// don't appear; the owner's own garage is always read from the local DB
+  /// via garageProvider instead, so this gap is only ever visible to others.
+  Future<List<BikeEntity>> getBikesFor(String uid) async {
+    final snap = await _users.doc(uid).collection('bikes').get();
+    final bikes = <BikeEntity>[];
+    for (final doc in snap.docs) {
+      final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
+      data['id'] = doc.id;
+      data['user_id'] ??= uid;
+      data['is_active'] ??= 0;
+      data['total_distance_m'] ??= 0;
+      data['ride_count'] ??= 0;
+      data['created_at'] ??= DateTime.now().toIso8601String();
+      // One malformed cloud doc must not blank out the whole garage.
+      try {
+        bikes.add(BikeModel.fromMap(data));
+      } catch (_) {
+        continue;
+      }
+    }
+    return bikes;
   }
 
   /// Uploads an avatar image (via Cloudinary — see [CloudinaryUploadService])

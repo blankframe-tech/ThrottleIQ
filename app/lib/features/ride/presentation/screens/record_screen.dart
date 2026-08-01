@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/motorcycle_quotes.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
@@ -22,21 +23,35 @@ final dashboardQuoteProvider = Provider<(String, String)>((ref) {
   return motorcycleQuotes[Random().nextInt(motorcycleQuotes.length)];
 });
 
-class RecordScreen extends ConsumerWidget {
+class RecordScreen extends ConsumerStatefulWidget {
   const RecordScreen({super.key});
 
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+  @override
+  ConsumerState<RecordScreen> createState() => _RecordScreenState();
+}
+
+class _RecordScreenState extends ConsumerState<RecordScreen> {
+  /// The rider's first name, read once — it can't change without a re-login,
+  /// and re-reading it in `build` would only re-roll the greeting below.
+  late final String? _name;
+
+  /// Picked once when the screen mounts rather than inline in `build`: this
+  /// screen rebuilds on every provider tick (unread count, ride status,
+  /// active bike) and a greeting that reshuffles on each of those would be
+  /// visually noisy.
+  late final Greeting _greeting;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
+    _greeting = greetingDetailFor(DateTime.now(), name: _name);
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
-    final name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
     final quote = ref.watch(dashboardQuoteProvider);
 
     // If actively recording, push to active ride screen
@@ -70,33 +85,10 @@ class RecordScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
 
-              // Black hero panel
-              InkPanel(
-                padding: const EdgeInsets.symmetric(vertical: 44, horizontal: 24),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 76,
-                      height: 76,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.onInk, width: 2),
-                      ),
-                      child: Icon(Icons.speed, color: AppColors.onInk, size: 34),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(quote.$1,
-                        textAlign: TextAlign.center,
-                        style: display(30, color: AppColors.onInk, height: 1.1)),
-                    Text(quote.$2,
-                        textAlign: TextAlign.center,
-                        style: display(30, color: AppColors.onInk, height: 1.1)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Greeting card
+              // 1. Greeting — the first thing on the screen. The casual line
+              // carries the rider's name when the picked variant has a
+              // `{name}` slot ("Evening, Sam."); otherwise the name keeps its
+              // own large display weight beneath the line.
               EditorialCard(
                 padding: const EdgeInsets.all(AppDimensions.paddingMd),
                 child: Row(
@@ -105,11 +97,20 @@ class RecordScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(_greeting(),
-                              style: TextStyle(
-                                  fontSize: 13, color: AppColors.textSecondary)),
-                          const SizedBox(height: 2),
-                          Text(name ?? 'Rider', style: display(22)),
+                          if (_greeting.usesName)
+                            Text(_greeting.line,
+                                style: display(22, height: 1.15),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis)
+                          else ...[
+                            Text(_greeting.line,
+                                style: TextStyle(
+                                    fontSize: 13, color: AppColors.textSecondary),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 2),
+                            Text(_name ?? 'Rider', style: display(22)),
+                          ],
                         ],
                       ),
                     ),
@@ -121,7 +122,21 @@ class RecordScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
 
-              // Bike card / no-bike warning
+              // 2. Quote — compact ink block. No fixed height and no icon: it
+              // wraps to its own text and is capped at 3 lines so an unusually
+              // long line can't push the bike picker off-screen.
+              InkPanel(
+                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                child: Text(
+                  '${quote.$1} ${quote.$2}',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: display(20, color: AppColors.onInk, height: 1.2),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 3. Bike card / no-bike warning
               if (activeBike != null)
                 EditorialCard(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -182,7 +197,14 @@ class RecordScreen extends ConsumerWidget {
                 ),
               const SizedBox(height: 12),
 
-              // Stat chips
+              // 4. Ride with friends — owned by another agent. Drop the button
+              // widget here, between the bike picker above and the stat chips
+              // below; it should be full-width (the Column is
+              // crossAxisAlignment.stretch) and followed by its own
+              // SizedBox(height: 12) spacer.
+              // TODO(ride-with-friends): insert the "Ride with friends" button here.
+
+              // 5. Stat chips
               if (activeBike != null)
                 Row(
                   children: [

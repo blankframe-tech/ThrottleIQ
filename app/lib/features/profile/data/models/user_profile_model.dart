@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 
 /// Firestore (de)serializer for a `users/{uid}` public profile document.
@@ -22,6 +23,10 @@ class UserProfileModel {
           (data['ownedPlaceIds'] as List?)?.whereType<String>().toList() ??
               const [],
       visibility: (data['visibility'] as String?) ?? 'public',
+      // Absent on every account created before the garage-visibility setting
+      // shipped — those must keep behaving exactly as they did, i.e. public.
+      bikesVisibility:
+          (data['bikesVisibility'] as String?) ?? kBikesVisibilityPublic,
       totalDistanceKm:
           ((data['publicStats'] as Map?)?['totalDistanceKm'] as num?)?.toDouble() ?? 0,
       totalRides: ((data['publicStats'] as Map?)?['totalRides'] as num?)?.toInt() ?? 0,

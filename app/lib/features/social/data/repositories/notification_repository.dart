@@ -37,6 +37,37 @@ class NotificationRepository {
     });
   }
 
+  /// Writes a "come ride with me" invite into [toUid]'s subcollection.
+  ///
+  /// Modelled exactly on [notifyFollow] — same shape, same "written from the
+  /// *other* rider's device" model, same `fromUid == request.auth.uid` rule
+  /// gate — plus [groupRideId], which is what makes the row tappable: the
+  /// notifications screen accepts the invitation and opens that ride's shared
+  /// map straight from the tile.
+  ///
+  /// In-app only. There is no phone push here and this method does not
+  /// attempt one: a real FCM delivery needs a Cloud Function to fan out to the
+  /// invitee's device token, and this project's `functions/` are still a
+  /// documented stub. The invitee sees this the next time they open the app.
+  Future<void> notifyGroupRideInvite({
+    required String toUid,
+    required String fromUid,
+    required String fromName,
+    required String groupRideId,
+    String? fromPhotoUrl,
+  }) async {
+    if (toUid == fromUid) return;
+    await _notifs(toUid).add({
+      'type': NotificationType.groupRideInvite.name,
+      'fromUid': fromUid,
+      'fromName': fromName,
+      'fromPhotoUrl': fromPhotoUrl,
+      'groupRideId': groupRideId,
+      'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+    });
+  }
+
   Stream<List<AppNotificationEntity>> watchNotifications(String uid) {
     return _notifs(uid)
         .orderBy('createdAt', descending: true)
@@ -58,6 +89,7 @@ class NotificationRepository {
       fromPhotoUrl: data['fromPhotoUrl'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       read: data['read'] as bool? ?? false,
+      groupRideId: data['groupRideId'] as String?,
     );
   }
 
