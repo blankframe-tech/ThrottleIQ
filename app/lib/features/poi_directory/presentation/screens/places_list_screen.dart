@@ -71,6 +71,13 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
       appBar: AppBar(
         title: const Text('Places'),
         actions: [
+          // Routes live alongside Places: both answer "where should I ride?",
+          // one as a destination and one as the road to get there.
+          IconButton(
+            tooltip: 'Saved routes',
+            icon: const Icon(Icons.route_outlined),
+            onPressed: () => context.push('/routes'),
+          ),
           IconButton(
             tooltip: 'Import nearby places from OpenStreetMap',
             icon: _importing

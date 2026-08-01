@@ -116,12 +116,19 @@ class RouteRepository {
 
   /// Makes a route public.
   Future<void> makePublic(String userId, String routeId) async {
+    await setPublic(userId, routeId, true);
+  }
+
+  /// Flips a route between public (discoverable by every rider) and private
+  /// (owner-only). [makePublic] is the one-way shorthand kept for callers that
+  /// only ever publish.
+  Future<void> setPublic(String userId, String routeId, bool isPublic) async {
     await _firestore
         .collection('users')
         .doc(userId)
         .collection('routes')
         .doc(routeId)
-        .update({'isPublic': true});
+        .update({'isPublic': isPublic});
   }
 
   /// Updates the times ridden counter.

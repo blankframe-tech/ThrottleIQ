@@ -25,6 +25,10 @@ import '../../features/forums/presentation/screens/create_forum_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
 import '../../features/poi_directory/presentation/screens/places_list_screen.dart';
+import '../../features/routes/presentation/screens/routes_list_screen.dart';
+import '../../features/routes/presentation/screens/route_detail_screen.dart';
+import '../../features/routes/presentation/screens/route_navigation_screen.dart';
+import '../../features/routes/presentation/screens/save_route_screen.dart';
 import '../../features/poi_directory/presentation/screens/add_place_screen.dart';
 import '../../features/poi_directory/presentation/screens/place_detail_screen.dart';
 import '../../features/poi_directory/presentation/screens/my_places_list_screen.dart';
@@ -123,6 +127,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       // /profile/edit rather than living under /home/places.
       GoRoute(path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
       GoRoute(path: '/rides/mine', builder: (_, __) => const MySharedRidesScreen()),
+      // Saved routes. '/routes' and '/routes/save/:rideId' are both listed
+      // before '/routes/:routeId' so the param route can't swallow them —
+      // same ordering hazard as '/forums/create' and '/profile/edit'.
+      GoRoute(path: '/routes', builder: (_, __) => const RoutesListScreen()),
+      GoRoute(
+        path: '/routes/save/:rideId',
+        builder: (_, state) =>
+            SaveRouteScreen(rideId: state.pathParameters['rideId']!),
+      ),
+      GoRoute(
+        path: '/routes/:routeId',
+        builder: (_, state) =>
+            RouteDetailScreen(routeId: state.pathParameters['routeId']!),
+        routes: [
+          GoRoute(
+            path: 'navigate',
+            builder: (_, state) =>
+                RouteNavigationScreen(routeId: state.pathParameters['routeId']!),
+          ),
+        ],
+      ),
       // Shell with bottom nav
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),

@@ -218,6 +218,20 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
               _audienceOptions.firstWhere((o) => o.$1 == _audience).$3,
               style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
             ),
+            const SizedBox(height: 24),
+            // "Add to routes" belongs here because saving a route is something
+            // the rider decides right after a ride, while they're already
+            // deciding what to do with it.
+            OutlinedButton.icon(
+              onPressed: _sharing
+                  ? null
+                  : () => context.push('/routes/save/${widget.rideId}'),
+              icon: const Icon(Icons.route_outlined, size: 18),
+              label: const Text('Save as route'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 44),
+              ),
+            ),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _sharing ? null : _share,

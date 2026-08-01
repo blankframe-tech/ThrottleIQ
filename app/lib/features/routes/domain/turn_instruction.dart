@@ -126,6 +126,17 @@ double normalizeBearingDelta(double deltaDeg) {
 
 /// Buckets a signed heading change (as produced by [normalizeBearingDelta])
 /// into a manoeuvre. Magnitude picks the severity, sign picks the side.
+/// Per-segment heading change below which a segment counts as "still going
+/// straight" for the purpose of grouping a bend.
+///
+/// Deliberately well under [classifyBearingDelta]'s own 20-degree floor: a
+/// long sweeping corner arrives as many small deltas that individually look
+/// straight but together add up to a real turn, and those should group into
+/// one manoeuvre. Set this too low and GPS jitter on a dead-straight road
+/// starts accumulating — though jitter alternates direction, and a direction
+/// reversal ends the run, so the failure mode is bounded.
+const double _straightToleranceDeg = 8.0;
+
 TurnKind classifyBearingDelta(double delta) {
   final magnitude = delta.abs();
   if (magnitude < 20.0) return TurnKind.straight;
@@ -266,22 +277,58 @@ List<TurnInstruction> buildTurnInstructions(
     ),
   ];
 
+  // Accumulate consecutive same-direction heading changes into ONE manoeuvre.
+  //
+  // A real corner is rarely a single clean vertex: GPS samples it across
+  // several points, so a 90-degree right arrives as e.g. 72 then 18 degrees
+  // over two segments. Emitted naively that becomes "Turn right" followed
+  // 50 m later by "Slight right" for the same physical corner — noisy to
+  // ride to, and it under-states the first turn. So a run of deltas that
+  // keep bending the same way, with no meaningful straight stretch between
+  // them, is summed and classified once, anchored at where the bend began.
+  var runDelta = 0.0;
+  var runStartSegment = -1;
+  var runEndSegment = -1;
+
+  void flushRun() {
+    if (runStartSegment < 0) return;
+    final kind = classifyBearingDelta(runDelta);
+    if (kind != TurnKind.straight) {
+      final index = segmentStart[runStartSegment];
+      instructions.add(TurnInstruction(
+        pointIndex: index,
+        kind: kind,
+        // The heading the rider ends up on once the whole bend is done.
+        bearingDeg: bearings[runEndSegment],
+        distanceFromStartM: cumulative[index],
+        text: turnText(kind),
+      ));
+    }
+    runDelta = 0;
+    runStartSegment = -1;
+    runEndSegment = -1;
+  }
+
   for (var j = 1; j < bearings.length; j++) {
     final delta = normalizeBearingDelta(bearings[j] - bearings[j - 1]);
-    final kind = classifyBearingDelta(delta);
-    if (kind == TurnKind.straight) continue;
 
-    // The manoeuvre happens where the two segments meet — the start of the
-    // segment the rider is turning ONTO.
-    final index = segmentStart[j];
-    instructions.add(TurnInstruction(
-      pointIndex: index,
-      kind: kind,
-      bearingDeg: bearings[j],
-      distanceFromStartM: cumulative[index],
-      text: turnText(kind),
-    ));
+    // A genuinely straight segment ends whatever bend was in progress.
+    if (delta.abs() < _straightToleranceDeg) {
+      flushRun();
+      continue;
+    }
+
+    // Direction reversal (right after left) is a new manoeuvre, not a
+    // continuation — an S-bend must stay two instructions.
+    if (runStartSegment >= 0 && (delta < 0) != (runDelta < 0)) {
+      flushRun();
+    }
+
+    if (runStartSegment < 0) runStartSegment = j;
+    runEndSegment = j;
+    runDelta += delta;
   }
+  flushRun();
 
   instructions.add(TurnInstruction(
     pointIndex: lastIndex,

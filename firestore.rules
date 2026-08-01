@@ -95,6 +95,21 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == uid;
       }
 
+      // Saved routes. Unlike the owner-only subcollections around it, a route
+      // marked public is readable by any signed-in rider — that's the whole
+      // point of the Discover tab. Writes stay owner-only, so nobody can
+      // publish, rename, or delete someone else's route.
+      //
+      // This match handles single-doc gets and the owner's own list query;
+      // the collectionGroup('routes') query behind getPublicRoutes needs the
+      // separate rule below, because a collection-group query is not matched
+      // by a path-anchored rule.
+      match /routes/{routeId} {
+        allow read: if request.auth.uid == uid ||
+          (request.auth != null && resource.data.get('isPublic', false) == true);
+        allow write: if request.auth.uid == uid;
+      }
+
       // False crash positives (for tuning/analytics)
       match /falseCrashPositives/{documentId} {
         allow write: if request.auth.uid == uid;
@@ -209,6 +224,19 @@ service cloud.firestore {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       }
+    }
+
+    // Collection-group read for the Discover tab's
+    // collectionGroup('routes').where('isPublic', == true) query.
+    //
+    // A path-anchored rule (users/{uid}/routes/{id} above) does NOT apply to
+    // a collection-group query, so this is required in addition to it, not
+    // instead of it. Written as a bare `isPublic == true` rather than
+    // `.get('isPublic', false)` because Firestore must be able to prove the
+    // query's own filter satisfies the rule, and it can only do that against
+    // a direct field comparison matching the filter.
+    match /{path=**}/routes/{routeId} {
+      allow read: if request.auth != null && resource.data.isPublic == true;
     }
 
     // Bike forums (Phase 3 — per-brand and per-model discussion boards).
