@@ -121,6 +121,7 @@ backend or a real device. **Treat each as unproven until tested.**
   2. **The deployed Firestore rules** — forum moderation and route publishing were written and deployed but never exercised against a live account. Confirm a maintainer really can delete a post, and that a non-maintainer really can't.
   3. **The `SharedPreferences` garage-forum cache** — verify adding a bike actually refreshes the "Your bikes" list rather than serving a stale cache.
   4. **DB schema 6 → 7** (`custom_label` on `maintenance_logs`) — migration is written but has only ever run on a fresh install here. Test an *upgrade* over an existing install.
+  5. **GPS trail sync** — record a ride, let it sync, reinstall, and confirm the ride's polyline comes back rather than an empty map.
 - [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator.
 
 ---
@@ -138,7 +139,7 @@ backend or a real device. **Treat each as unproven until tested.**
 - [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation). Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email) with real credentials via functions config.
 - [x] ~~Firebase Storage bucket~~ **SUPERSEDED 2026-07-23** — the project owner has no payment card, and Storage now requires Blaze even within its free tier. Avatar/photo uploads moved to Cloudinary instead (cloud name `vjvcigkt`) — no bucket needed.
 - [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete.
-- [ ] **Sync `ride_points` (GPS trails) to Firestore** — bikes/rides-metadata/maintenance sync both ways as of 2026-07-23, but the point-by-point GPS track never has (upload or download).
+- [x] ~~**Sync `ride_points` (GPS trails) to Firestore**~~ **DONE 2026-08-01** (`ride_track_codec.dart` + `CloudRepository.uploadRideTrack`/`downloadRideTrack`). Trails are chunked into `users/{uid}/rides/{rideId}/track/{i}` docs of 500 positional points — one doc per point would have been thousands of writes per ride. Upload runs after the ride doc so a track can't orphan; download is on-demand and never clobbers local points. Track docs are owner-only in the rules. **Untested against a real account** — verify a reinstall actually restores polylines.
 
 ### Play Store
 - [ ] Google Play developer account ($25 one-time)
