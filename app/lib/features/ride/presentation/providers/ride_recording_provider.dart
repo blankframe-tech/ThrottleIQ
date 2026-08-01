@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../domain/calculators/average_speed.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -160,6 +161,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   double _maxSpeed = 0;
   double _speedSum = 0;
   int _speedCount = 0;
+
+  /// Seconds spent above the moving threshold — the denominator of the
+  /// reported average speed. See average_speed.dart for why stopped time is
+  /// excluded.
+  int _movingSeconds = 0;
+  DateTime? _lastFixTime;
+
+  /// Gaps longer than this (tunnel, suspended app) are not counted as moving
+  /// time; mirrors `movingSeconds`'s own maxGapSeconds guard.
+  static const int _maxMovingGapSeconds = 60;
   DateTime? _activeStart;
   Duration _accumulatedDuration = Duration.zero;
 
@@ -318,6 +329,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _maxSpeed = 0;
     _speedSum = 0;
     _speedCount = 0;
+    _movingSeconds = 0;
+    _lastFixTime = null;
     _accumulatedDuration = Duration.zero;
     _activeStart = DateTime.now();
     _filteredAccel = 0;
@@ -503,6 +516,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (speedMs > _maxSpeed) _maxSpeed = speedMs;
     _speedSum += speedMs;
     _speedCount++;
+
+    // Moving time, for the distance-over-moving-time average speed. Counted
+    // here rather than derived at finalize so it survives the mid-ride-kill
+    // recovery path, and skipped for long gaps (tunnel / app suspended)
+    // whose duration we can't honestly attribute to riding.
+    if (_lastFixTime != null && speedMs >= SensorConstants.movingSpeedThresholdMs) {
+      final gap = timestamp.difference(_lastFixTime!).inSeconds;
+      if (gap > 0 && gap <= _maxMovingGapSeconds) _movingSeconds += gap;
+    }
+    _lastFixTime = timestamp;
 
     double? accel;
     double? jerk;
@@ -716,7 +739,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final ride = state.ride!;
     final finalDuration = state.elapsed.inSeconds;
-    final avgSpeed = _speedCount > 0 ? _speedSum / _speedCount : 0.0;
+    // distance / moving time, not the mean of speed samples — see
+    // average_speed.dart. Falls back to the old mean only when no moving time
+    // was accumulated at all (a ride that never got above walking pace), so a
+    // stationary "ride" still reports something rather than a bare zero.
+    final avgSpeed = _movingSeconds > 0
+        ? averageSpeedMs(distanceM: _totalDistance, movingSeconds: _movingSeconds)
+        : (_speedCount > 0 ? _speedSum / _speedCount : 0.0);
 
     await _rideDao.finalizeRide(ride.id, {
       'end_time': DateTime.now().toIso8601String(),
@@ -837,7 +866,21 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     final startedAt = DateTime.parse(points.first['timestamp'] as String);
     final endedAt = DateTime.parse(points.last['timestamp'] as String);
     final durationS = endedAt.difference(startedAt).inSeconds;
-    final avgSpeedMs = points.isNotEmpty ? speedSum / points.length : 0.0;
+
+    // Same distance-over-moving-time definition as the normal finalize path,
+    // rebuilt from the stored fixes so a recovered ride's average speed is
+    // directly comparable to a cleanly-finished one.
+    final recoveredMovingSeconds = movingSeconds([
+      for (final p in points)
+        (
+          time: DateTime.parse(p['timestamp'] as String),
+          speedMs: (p['speed_ms'] as num?)?.toDouble() ?? 0,
+        ),
+    ]);
+    final avgSpeedMs = recoveredMovingSeconds > 0
+        ? averageSpeedMs(
+            distanceM: distanceM, movingSeconds: recoveredMovingSeconds)
+        : (points.isNotEmpty ? speedSum / points.length : 0.0);
 
     await _rideDao.finalizeRide(rideId, {
       'end_time': endedAt.toIso8601String(),
