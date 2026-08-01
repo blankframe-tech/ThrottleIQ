@@ -83,6 +83,14 @@ class RouteDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         title: Text(routeAsync.valueOrNull?.name ?? 'Route'),
+        // Same no-back-stack guard as RoutesListScreen — a deep link straight
+        // to a route would otherwise render no back button at all.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back',
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/routes'),
+        ),
         actions: [
           if (routeAsync.valueOrNull != null)
             IconButton(

@@ -71,13 +71,6 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
       appBar: AppBar(
         title: const Text('Places'),
         actions: [
-          // Routes live alongside Places: both answer "where should I ride?",
-          // one as a destination and one as the road to get there.
-          IconButton(
-            tooltip: 'Saved routes',
-            icon: const Icon(Icons.route_outlined),
-            onPressed: () => context.push('/routes'),
-          ),
           IconButton(
             tooltip: 'Import nearby places from OpenStreetMap',
             icon: _importing
@@ -95,6 +88,57 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
       children: [
         Column(
           children: [
+            // Routes live under Places because both answer "where should I
+            // ride?" — one as a destination, the other as the road there.
+            // This is a labelled row rather than an app-bar icon on purpose:
+            // an icon-only action with a tooltip is effectively invisible on
+            // touch, and testers could not find this feature at all.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.paddingMd,
+                AppDimensions.paddingMd,
+                AppDimensions.paddingMd,
+                0,
+              ),
+              child: InkWell(
+                onTap: () => context.push('/routes'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.route_outlined, color: AppColors.primary, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Routes',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Roads worth riding — yours and other riders\'',
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppDimensions.paddingMd,

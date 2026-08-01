@@ -25,6 +25,23 @@ class RoutesListScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.background,
           title: const Text('Routes'),
+          // Explicit, rather than relying on AppBar's automatic back button.
+          // This screen is also reachable without a back stack (a deep link,
+          // or a cold launch straight to /routes), and in that case the
+          // automatic leading isn't rendered at all — leaving the rider
+          // stranded on a full-screen page with no way out. Pop when there's
+          // something to pop, otherwise fall back to the tab it belongs to.
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back',
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home/places');
+              }
+            },
+          ),
           bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
