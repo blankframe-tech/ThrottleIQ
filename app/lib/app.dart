@@ -2,16 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/cloud/sync_manager.dart';
 import 'core/router/app_router.dart';
+import 'core/services/home_widget_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 
-class ThrottleIQApp extends ConsumerWidget {
+class ThrottleIQApp extends ConsumerStatefulWidget {
   const ThrottleIQApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ThrottleIQApp> createState() => _ThrottleIQAppState();
+}
+
+class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Tapping the home-screen "Start ride" widget should land on Record, not
+    // just wherever the app happened to be. Registered here rather than in
+    // main() because it needs the router, and once (not per rebuild) because
+    // the underlying stream would otherwise gain a listener on every frame.
+    //
+    // Navigating only — it does NOT auto-start recording. Starting a ride
+    // without the rider confirming would be a surprising thing for a
+    // home-screen tap to do, and the Record screen's slide-to-start gesture
+    // exists precisely to make that deliberate.
+    HomeWidgetService.instance.registerStartRideHandler(() {
+      if (!mounted) return;
+      ref.read(routerProvider).go('/home/record');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     try {
       // Cloud sync lifecycle: start on login, stop on logout. SyncManager itself
       // no-ops when signed out, so starting is safe; stopping avoids idle timers.

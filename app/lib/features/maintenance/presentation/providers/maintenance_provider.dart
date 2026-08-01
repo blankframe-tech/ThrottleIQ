@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/services/home_widget_service.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../../data/models/maintenance_model.dart';
 import '../../../../core/database/daos/maintenance_dao.dart';
@@ -47,6 +50,9 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
     );
     await _dao.insert(MaintenanceModel.toMap(log));
     ref.invalidateSelf();
+    // Keep the maintenance widget in step with what was just logged —
+    // fire-and-forget, and a no-op wherever widgets aren't available.
+    unawaited(HomeWidgetService.instance.refreshFromLocalData());
   }
 
   Future<void> deleteLog(String id) async {

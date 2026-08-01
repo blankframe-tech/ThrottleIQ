@@ -254,4 +254,56 @@ void main() {
       expect(kWidgetReminderTypes.contains(next!.serviceType), isTrue);
     });
   });
+
+  group('HomeWidgetService.isStartRideUri', () {
+    test('matches the start-ride URI', () {
+      expect(
+        HomeWidgetService.isStartRideUri(Uri.parse('throttleiq://startride')),
+        isTrue,
+      );
+    });
+
+    // Android and iOS differ on trailing-slash handling, which is exactly why
+    // this compares scheme + host instead of the whole string.
+    test('matches regardless of a trailing slash or query', () {
+      expect(
+        HomeWidgetService.isStartRideUri(Uri.parse('throttleiq://startride/')),
+        isTrue,
+      );
+      expect(
+        HomeWidgetService.isStartRideUri(
+            Uri.parse('throttleiq://startride?src=widget')),
+        isTrue,
+      );
+    });
+
+    test('rejects null — a normal icon launch has no URI', () {
+      expect(HomeWidgetService.isStartRideUri(null), isFalse);
+    });
+
+    test('rejects a different host on the same scheme', () {
+      expect(
+        HomeWidgetService.isStartRideUri(Uri.parse('throttleiq://stats')),
+        isFalse,
+      );
+    });
+
+    test('rejects a foreign scheme, even with a matching host', () {
+      expect(
+        HomeWidgetService.isStartRideUri(Uri.parse('https://startride')),
+        isFalse,
+      );
+      expect(
+        HomeWidgetService.isStartRideUri(Uri.parse('evil://startride')),
+        isFalse,
+      );
+    });
+
+    test('the advertised URI constant is the one that matches', () {
+      expect(
+        HomeWidgetService.isStartRideUri(HomeWidgetService.startRideUri),
+        isTrue,
+      );
+    });
+  });
 }

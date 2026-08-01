@@ -152,6 +152,7 @@ backend or a real device. **Treat each as unproven until tested.**
 
 ### Play Store
 - [x] ~~Privacy policy page~~ **DONE** — `https://throttleiqfb.web.app/privacy.html`
+- [ ] ❓ **Decide the publisher identity — blocks the listing.** The privacy policy that was replaced on 2026-08-01 named **"Blankframe.tech"** as publisher, with contact `blankframe.technologies@gmail.com`; the GitHub org is `blankframe-tech`. The new policy deliberately names **no company** — it says "an independent, solo-developer project" and uses `the.abraar.rar@gmail.com` — because inventing a legal entity in a privacy policy is not a call to make on someone's behalf. **If Blankframe.tech is the real publishing entity, the policy needs it added**, since Play Console expects the listing's developer name to line up with the policy. Old file is recoverable from git history (`store_listing/privacy-policy.html`, deleted in this pass).
 - [ ] Google Play developer account ($25 one-time)
 - [ ] Build an **App Bundle** (`flutter build appbundle`) — Play prefers `.aab` over `.apk`
 - [ ] Internal testing track → closed beta → production

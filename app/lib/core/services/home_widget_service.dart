@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:home_widget/home_widget.dart';
 
 import '../constants/sensor_constants.dart';
@@ -256,6 +257,36 @@ class HomeWidgetService {
   Future<void> bootstrap() async {
     await initialize();
     await refreshFromLocalData();
+  }
+
+  /// The URI the "Start ride" widget launches the app with.
+  static final Uri startRideUri = Uri.parse('throttleiq://startride');
+
+  /// Whether [uri] is the widget's start-ride request.
+  ///
+  /// Compares scheme + host rather than the whole string: Android and iOS
+  /// hand the URI back with slightly different trailing-slash treatment, and
+  /// a raw `==` misses one of them.
+  static bool isStartRideUri(Uri? uri) =>
+      uri != null && uri.scheme == 'throttleiq' && uri.host == 'startride';
+
+  /// Fires [onStartRide] when the app is opened from the start-ride widget —
+  /// both for a cold launch and for a tap while the app is already alive.
+  ///
+  /// Wrapped so a platform that has no widget support (or a launch with no
+  /// URI at all, i.e. a normal icon tap) is a silent no-op rather than an
+  /// error on every start.
+  Future<void> registerStartRideHandler(VoidCallback onStartRide) async {
+    try {
+      final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
+      if (isStartRideUri(launched)) onStartRide();
+
+      HomeWidget.widgetClicked.listen((uri) {
+        if (isStartRideUri(uri)) onStartRide();
+      });
+    } catch (e, s) {
+      _log('registerStartRideHandler failed', e, s);
+    }
   }
 
   Future<void> publishRideStats({

@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../domain/calculators/average_speed.dart';
+import '../../../../core/services/home_widget_service.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -761,6 +762,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     await _bikeDao.incrementStats(ride.bikeId, _totalDistance);
     _ref.invalidate(garageProvider);
     unawaited(_updatePublicStats(ride.userId));
+    // Push the new totals to the home-screen widgets. Fire-and-forget and
+    // internally no-op safe, so it can't delay or fail finishing a ride.
+    unawaited(HomeWidgetService.instance.refreshFromLocalData());
 
     await HapticService.rideStop();
 
