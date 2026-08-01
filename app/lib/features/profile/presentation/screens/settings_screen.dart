@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/theme_style_provider.dart';
+import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/emergency_contacts_provider.dart';
 
@@ -106,6 +107,48 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => ref
                         .read(themeStyleProvider.notifier)
                         .setStyle(AppThemeStyle.editorial),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // A live preview of the mark for the selected appearance.
+          //
+          // The logo has always swapped correctly, but it only ever appeared
+          // on the splash and login screens — both of which a signed-in rider
+          // never sees. So toggling appearance here appeared to do nothing to
+          // the logo, because there was no logo on screen to change. Showing
+          // it next to the control is the point at which a rider actually
+          // cares which mark they're getting.
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                const AppLogo(size: 40),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('App mark',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                        themeStyle == AppThemeStyle.carbonMono
+                            ? 'The dark mark, used on the splash and sign-in screens.'
+                            : 'The light mark, used on the splash and sign-in screens.',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
               ],
