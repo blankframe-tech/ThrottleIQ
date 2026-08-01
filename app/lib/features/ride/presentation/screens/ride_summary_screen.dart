@@ -61,12 +61,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       ),
       body: rideAsync.when(
         loading: () =>
-            const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) =>
-            Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
         data: (ride) {
           if (ride == null) {
-            return const Center(
+            return Center(
                 child: Text('Ride not found',
                     style: TextStyle(color: AppColors.textSecondary)));
           }
@@ -105,7 +105,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           style: display(24, color: AppColors.onInk)),
                       const SizedBox(height: 4),
                       Text(_formatDate(ride.startTime),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13, color: AppColors.onInkMuted)),
                     ],
                   ),
@@ -173,7 +173,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           Text('$score',
                               style: display(34, color: AppColors.onInk)),
                           Text(scoreLabel.toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -194,7 +194,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                             Text(scoreLabel,
                                 style: display(18, letterSpacing: 0, color: scoreColor)),
                             const SizedBox(height: 2),
-                            const Text('out of 100',
+                            Text('out of 100',
                                 style: TextStyle(
                                     fontSize: 12, color: AppColors.textSecondary)),
                           ],
@@ -322,7 +322,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           border: Border.all(color: AppColors.border),
         ),
-        child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
     return ClipRRect(

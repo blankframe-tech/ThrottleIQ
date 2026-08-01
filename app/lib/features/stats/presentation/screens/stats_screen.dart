@@ -34,10 +34,10 @@ class StatsScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: statsAsync.when(
-          loading: () => const Center(
+          loading: () => Center(
               child: CircularProgressIndicator(color: AppColors.primary)),
           error: (e, _) => Center(
-              child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+              child: Text('$e', style: TextStyle(color: AppColors.danger))),
           data: (stats) {
             final header = Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -50,7 +50,7 @@ class StatsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   header,
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: Padding(
                         padding: EdgeInsets.all(AppDimensions.paddingLg),
@@ -112,7 +112,7 @@ class StatsScreen extends ConsumerWidget {
                                   ),
                                   Text(
                                       '${kmIntoLevel.toStringAsFixed(0)}/${_kmPerLevel.toStringAsFixed(0)} km',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 12,
                                           color: AppColors.textSecondary)),
                                 ],
@@ -261,7 +261,7 @@ class _RecentRideRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               ],
             ),

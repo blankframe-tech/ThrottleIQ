@@ -72,12 +72,12 @@ class ForumThreadScreen extends ConsumerWidget {
         label: const Text('New post', style: TextStyle(color: Colors.white)),
       ),
       body: postsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
         data: (_) {
           final posts = ref.watch(forumPostsNotifierProvider(forumId));
           if (posts.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
@@ -185,20 +185,20 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'New post',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _titleController,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(hintText: 'Title'),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _bodyController,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             maxLines: 4,
             decoration: const InputDecoration(hintText: "What's going on?"),
           ),
@@ -260,7 +260,7 @@ class _PostCard extends ConsumerWidget {
                     UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
                     const SizedBox(width: 8),
                     Text(post.userName,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                   ],
                 ),
               ),
@@ -269,14 +269,14 @@ class _PostCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             post.title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
             post.body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 10),
           Row(
@@ -289,7 +289,7 @@ class _PostCard extends ConsumerWidget {
                     color: post.myVote == 1 ? AppColors.primary : AppColors.textSecondary, size: 18),
               ),
               Text('${post.netScore}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
               IconButton(
                 padding: EdgeInsets.zero,
@@ -299,9 +299,9 @@ class _PostCard extends ConsumerWidget {
                     color: post.myVote == -1 ? AppColors.danger : AppColors.textSecondary, size: 18),
               ),
               const Spacer(),
-              const Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 4),
-              Text('${post.replyCount}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('${post.replyCount}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
             ],
           ),
         ],

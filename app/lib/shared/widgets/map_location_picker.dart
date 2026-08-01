@@ -53,7 +53,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             // Fixed center pin — the map moves, this stays put. Offset up by
             // half its height so the pin's *tip* (not its center) marks the
             // picked point, matching how a real map pin reads.
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 32),
               child: Icon(Icons.location_pin, size: 40, color: AppColors.primary),
             ),

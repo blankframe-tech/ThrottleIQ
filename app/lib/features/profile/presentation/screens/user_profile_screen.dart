@@ -36,13 +36,13 @@ class UserProfileScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Profile')),
       body: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(Icons.lock_outline, size: 48, color: AppColors.textTertiary),
                 SizedBox(height: 12),
                 Text('This profile is private',
@@ -53,7 +53,7 @@ class UserProfileScreen extends ConsumerWidget {
         ),
         data: (profile) {
           if (profile == null) {
-            return const Center(
+            return Center(
               child: Text('Rider not found', style: TextStyle(color: AppColors.textSecondary)),
             );
           }
@@ -88,16 +88,16 @@ class _ProfileBody extends ConsumerWidget {
                 UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 44),
                 const SizedBox(height: 12),
                 Text(profile.bestName,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 if (profile.username != null)
                   Text('@${profile.username}',
-                      style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
                 if (profile.bio != null && profile.bio!.trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(profile.bio!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 ],
               ],
             ),
@@ -156,12 +156,12 @@ class _ProfileBody extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const Text('Badges',
+          Text('Badges',
               style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 12),
           earnedBadges.isEmpty
-              ? const Text('No badges earned yet',
+              ? Text('No badges earned yet',
                   style: TextStyle(fontSize: 13, color: AppColors.textTertiary))
               : Wrap(
                   spacing: 8,
@@ -169,10 +169,10 @@ class _ProfileBody extends ConsumerWidget {
                   children: [
                     for (final b in earnedBadges)
                       Chip(
-                        avatar: const Icon(Icons.military_tech, size: 16, color: AppColors.primary),
+                        avatar: Icon(Icons.military_tech, size: 16, color: AppColors.primary),
                         label: Text(b.name),
                         backgroundColor: AppColors.surface,
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: AppColors.border),
                       ),
                   ],
                 ),
@@ -192,9 +192,9 @@ class _CountStat extends ConsumerWidget {
     return Column(
       children: [
         Text(value.valueOrNull?.toString() ?? '—',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ],
     );
   }
@@ -217,10 +217,10 @@ class _StatCard extends StatelessWidget {
       child: Column(
         children: [
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         ],
       ),
     );

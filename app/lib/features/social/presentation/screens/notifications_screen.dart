@@ -41,13 +41,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Notifications')),
       body: notificationsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
         data: (notifications) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _markAllReadOnce(notifications));
 
           if (notifications.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
@@ -117,11 +117,11 @@ class _NotificationTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_label(),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                     const SizedBox(height: 2),
                     Text(_relativeTime(),
-                        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                   ],
                 ),
               ),
@@ -129,7 +129,7 @@ class _NotificationTile extends StatelessWidget {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 ),
             ],
           ),

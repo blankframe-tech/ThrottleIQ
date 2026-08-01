@@ -46,7 +46,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.two_wheeler, size: 56, color: AppColors.textTertiary),
+                Icon(Icons.two_wheeler, size: 56, color: AppColors.textTertiary),
                 const SizedBox(height: 16),
                 Text('No active bike', style: display(20)),
               ],
@@ -81,7 +81,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                         Text(
                           '${activeBike.displayName} · '
                           '${_distLabel(activeBike.currentOdometerKm, _imperial)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14, color: AppColors.textSecondary),
                         ),
                       ],
@@ -94,7 +94,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'These checks track themselves from your ride distance — '
                 'log a service below once you\'ve had one done.',
                 style: TextStyle(
@@ -125,13 +125,13 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               const EditorialLabel('Service history'),
               const SizedBox(height: 10),
               logsAsync.when(
-                loading: () => const Center(
+                loading: () => Center(
                     child: CircularProgressIndicator(color: AppColors.primary)),
                 error: (e, _) =>
-                    Text('$e', style: const TextStyle(color: AppColors.danger)),
+                    Text('$e', style: TextStyle(color: AppColors.danger)),
                 data: (logs) {
                   if (logs.isEmpty) {
-                    return const Padding(
+                    return Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                         child: Text('No service logs yet.',
@@ -257,9 +257,9 @@ class _CheckRow extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Every ${_distLabel(reminder.kmLimit, imperial)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               Text(rightText,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -291,16 +291,16 @@ class _LogTile extends ConsumerWidget {
                 Text(
                   '${_formatDate(log.date)} · ${_distLabel(log.odometerKm, imperial)}'
                   '${log.cost != null ? ' · ৳${log.cost!.toStringAsFixed(0)}' : ''}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 if (log.notes != null && log.notes!.isNotEmpty)
                   Text(log.notes!,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.textTertiary, size: 18),
+            icon: Icon(Icons.delete_outline, color: AppColors.textTertiary, size: 18),
             onPressed: () =>
                 ref.read(maintenanceProvider(log.bikeId).notifier).deleteLog(log.id),
           ),

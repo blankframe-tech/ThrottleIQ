@@ -190,8 +190,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('End Ride?', style: TextStyle(color: AppColors.textPrimary)),
-          content: const Text('Your ride will be saved.',
+          title: Text('End Ride?', style: TextStyle(color: AppColors.textPrimary)),
+          content: Text('Your ride will be saved.',
               style: TextStyle(color: AppColors.textSecondary)),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
@@ -209,7 +209,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Share ride',
+                          Text('Share ride',
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                           Checkbox(
                             value: shareAfterEnd,
@@ -337,7 +337,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   const Spacer(),
                   Text(
                     SpeedFormatter.durationFromDuration(rideState.elapsed),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary),
@@ -347,7 +347,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                     IconButton(
                       key: _shareButtonKey,
                       onPressed: () => _shareLiveLocation(rideState.liveSessionToken!),
-                      icon: const Icon(Icons.share_location,
+                      icon: Icon(Icons.share_location,
                           color: AppColors.textPrimary),
                       tooltip: 'Share live location',
                     ),
@@ -391,7 +391,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         style: display(64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
                       ),
                     ),
-                    const Text('km/h',
+                    Text('km/h',
                         style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
                     const SizedBox(height: 10),
                     Row(
@@ -473,7 +473,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                           minimumSize: const Size(0, 52),
                           backgroundColor: isPaused ? AppColors.surface : null,
                           foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
+                          side: BorderSide(color: AppColors.primary),
                         ),
                       ),
                     ),
@@ -610,12 +610,12 @@ class _GForceBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('BRAKE', style: TextStyle(fontSize: 9, color: AppColors.textTertiary, letterSpacing: 0.5)),
+            Text('BRAKE', style: TextStyle(fontSize: 9, color: AppColors.textTertiary, letterSpacing: 0.5)),
             Text(
               '${gForce.abs().toStringAsFixed(2)}g',
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
             ),
-            const Text('ACCEL', style: TextStyle(fontSize: 9, color: AppColors.textTertiary, letterSpacing: 0.5)),
+            Text('ACCEL', style: TextStyle(fontSize: 9, color: AppColors.textTertiary, letterSpacing: 0.5)),
           ],
         ),
         const SizedBox(height: 4),
@@ -670,7 +670,7 @@ class _StatusPill extends StatelessWidget {
           Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 7),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.onInk)),
         ],
       ),
@@ -688,7 +688,7 @@ class _RideStat extends StatelessWidget {
     return Column(
       children: [
         Text(value, style: display(18, letterSpacing: 0)),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ],
     );
   }

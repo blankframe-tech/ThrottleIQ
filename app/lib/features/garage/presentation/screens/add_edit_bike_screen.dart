@@ -130,7 +130,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: _imagePath == null
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Icon(Icons.add_a_photo_outlined,
                                   color: AppColors.textSecondary, size: 28),
                               SizedBox(height: 6),
@@ -146,14 +146,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _brandCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Brand *', hintText: 'Yamaha'),
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _modelCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Model *', hintText: 'MT-15'),
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
@@ -164,7 +164,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: TextFormField(
                       controller: _yearCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       decoration: const InputDecoration(labelText: 'Year', hintText: '2023'),
                     ),
                   ),
@@ -173,7 +173,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: TextFormField(
                       controller: _ccCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       decoration: const InputDecoration(labelText: 'Engine CC', hintText: '155'),
                     ),
                   ),
@@ -183,7 +183,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               TextFormField(
                 controller: _odometerCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Odometer reading (km)', hintText: '12000'),
               ),

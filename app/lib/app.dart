@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/cloud/sync_manager.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 
@@ -30,9 +31,16 @@ class ThrottleIQApp extends ConsumerWidget {
       });
 
       final router = ref.watch(routerProvider);
+      final themeStyle = ref.watch(themeStyleProvider);
+      // AppColors is a mutable static facade (see app_colors.dart) so that
+      // the ~565 existing `AppColors.x` call sites across the app don't need
+      // to become context-aware. Keying on themeStyle forces this whole
+      // subtree to unmount/remount on toggle, which is what makes those
+      // static reads pick up the freshly-applied palette everywhere at once.
       return MaterialApp.router(
+        key: ValueKey(themeStyle),
         title: 'ThrottleIQ',
-        theme: AppTheme.light,
+        theme: AppTheme.build(themeStyle),
         debugShowCheckedModeBanner: false,
         routerConfig: router,
       );

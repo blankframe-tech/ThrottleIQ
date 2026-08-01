@@ -1,51 +1,59 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme_style.dart';
 
-/// ThrottleIQ "Editorial BW" palette.
+/// Runtime-swappable color tokens for ThrottleIQ.
 ///
-/// A light, warm, print-editorial base (cream paper + near-black ink + warm
-/// gray hairlines) with a deliberately restrained accent system:
-///   - ORANGE is the attention / action color (primary buttons, focus, active)
-///   - BLUE is a minimal secondary accent (links, subtle highlights)
-/// Semantic greens/ambers/reds are used only for status.
+/// Backed by an [AppColorPalette] ("Carbon Mono" dark by default, or
+/// "Editorial" light) that [apply] swaps out when the user changes their
+/// appearance preference in Settings — see `theme_style_provider.dart`.
 ///
-/// Field names are kept stable so the ~450 references across the app pick up
-/// the editorial values without churn.
+/// Field names are kept stable so the ~565 references across the app pick up
+/// whichever palette is current without call-site churn. Because these are
+/// now getters rather than `static const` fields, any `const` expression
+/// that embedded one of them (e.g. `const TextStyle(color: AppColors.x)`)
+/// must drop the `const` keyword.
 class AppColors {
   AppColors._();
 
-  // Base — warm editorial paper
-  static const Color background = Color(0xFFF4F1EC); // cream paper
-  static const Color surface = Color(0xFFFAF9F6); // card / raised paper
-  static const Color border = Color(0xFFE8E5DF); // warm hairline
-  static const Color surfaceVariant = Color(0xFFF0EEE9); // subtle fill
+  static AppColorPalette _current = AppColorPalette.carbonMono;
 
-  // Ink — bold black panels (hero, headers, icon tiles)
-  static const Color ink = Color(0xFF121212);
-  static const Color onInk = Color(0xFFF4F1EC); // paper text on ink
-  static const Color onInkMuted = Color(0xFFB0B0B0);
+  static void apply(AppColorPalette palette) {
+    _current = palette;
+  }
 
-  // Primary (Blue) — the main accent "pop" (badges, scores, chart lines, CTAs)
-  static const Color primary = Color(0xFF3B6CF6);
-  static const Color primaryHighlight = Color(0xFF6B90F8);
-  static const Color primaryDark = Color(0xFF2952C8);
+  // Base
+  static Color get background => _current.background;
+  static Color get surface => _current.surface;
+  static Color get border => _current.border;
+  static Color get surfaceVariant => _current.surfaceVariant;
 
-  // Secondary / attention (Orange) — coaching + warnings
-  static const Color secondary = Color(0xFFF2703C);
-  static const Color secondaryLight = Color(0xFFF58C5F);
-  static const Color attention = Color(0xFFF2703C);
+  // Ink — solid panels (hero, headers, icon tiles)
+  static Color get ink => _current.ink;
+  static Color get onInk => _current.onInk;
+  static Color get onInkMuted => _current.onInkMuted;
+
+  // Primary — the main accent "pop" (badges, scores, chart lines, CTAs)
+  static Color get primary => _current.primary;
+  static Color get primaryHighlight => _current.primaryHighlight;
+  static Color get primaryDark => _current.primaryDark;
+
+  // Secondary / attention
+  static Color get secondary => _current.secondary;
+  static Color get secondaryLight => _current.secondaryLight;
+  static Color get attention => _current.attention;
 
   // Status
-  static const Color success = Color(0xFF1AA568);
-  static const Color warning = Color(0xFFF2703C); // attention orange
-  static const Color danger = Color(0xFFE5484D);
+  static Color get success => _current.success;
+  static Color get warning => _current.warning;
+  static Color get danger => _current.danger;
 
-  // Text — ink on paper
-  static const Color textPrimary = Color(0xFF141414); // ink
-  static const Color textSecondary = Color(0xFF6B6B6B);
-  static const Color textTertiary = Color(0xFF9A9A9A);
+  // Text
+  static Color get textPrimary => _current.textPrimary;
+  static Color get textSecondary => _current.textSecondary;
+  static Color get textTertiary => _current.textTertiary;
 
   // Overlays / shimmer
-  static const Color overlayDark = Color(0xCC141414); // ink scrim
-  static const Color shimmerBase = Color(0xFFE8E5DF);
-  static const Color shimmerHighlight = Color(0xFFF0EEE9);
+  static Color get overlayDark => _current.overlayDark;
+  static Color get shimmerBase => _current.shimmerBase;
+  static Color get shimmerHighlight => _current.shimmerHighlight;
 }

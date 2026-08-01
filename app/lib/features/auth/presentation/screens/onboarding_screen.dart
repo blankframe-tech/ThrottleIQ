@@ -131,7 +131,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Text(
                   _step == 0 ? "What's your name?" : "Let's add your first bike",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 8),
@@ -140,13 +140,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ? 'So we can personalize your experience'
                       : 'We use this to track rides and maintenance per bike',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 36),
                 if (_step == 0) ...[
                   TextFormField(
                     controller: _nameCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'Full Name *',
                       hintText: 'John Doe',
@@ -156,7 +156,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _usernameCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Username *',
                       prefixText: '@',
@@ -176,7 +176,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ] else ...[
                   TextFormField(
                     controller: _brandCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'Brand *',
                       hintText: 'Yamaha, Honda, Bajaj...',
@@ -186,7 +186,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _modelCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'Model *',
                       hintText: 'FZ-S, CB300R, Pulsar...',
@@ -200,7 +200,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: TextFormField(
                           controller: _yearCtrl,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: TextStyle(color: AppColors.textPrimary),
                           decoration: const InputDecoration(labelText: 'Year', hintText: '2023'),
                         ),
                       ),
@@ -209,7 +209,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: TextFormField(
                           controller: _ccCtrl,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: TextStyle(color: AppColors.textPrimary),
                           decoration:
                               const InputDecoration(labelText: 'Engine CC', hintText: '150'),
                         ),
@@ -231,12 +231,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 if (_step > 0)
                   TextButton(
                     onPressed: _loading ? null : _previous,
-                    child: const Text('Back',
+                    child: Text('Back',
                         style: TextStyle(color: AppColors.textTertiary)),
                   ),
                 TextButton(
                   onPressed: () => context.go('/home/record'),
-                  child: const Text('Skip for now',
+                  child: Text('Skip for now',
                       style: TextStyle(color: AppColors.textTertiary)),
                 ),
               ],

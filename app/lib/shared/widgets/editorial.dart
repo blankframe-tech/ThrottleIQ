@@ -13,14 +13,14 @@ import '../../core/constants/app_dimensions.dart';
 TextStyle display(
   double size, {
   FontWeight weight = FontWeight.w700,
-  Color color = AppColors.textPrimary,
+  Color? color,
   double letterSpacing = -0.5,
   double? height,
 }) =>
     GoogleFonts.spaceGrotesk(
       fontSize: size,
       fontWeight: weight,
-      color: color,
+      color: color ?? AppColors.textPrimary,
       letterSpacing: letterSpacing,
       height: height,
     );
@@ -241,7 +241,7 @@ class StatCell extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ],
     );
   }
@@ -267,7 +267,7 @@ class DashedAddButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add, size: 18, color: AppColors.primary),
+            Icon(Icons.add, size: 18, color: AppColors.primary),
             const SizedBox(width: 8),
             Text(label,
                 style: display(14, letterSpacing: 0, color: AppColors.primary)),

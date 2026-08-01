@@ -32,7 +32,7 @@ class MySharedRidesScreen extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -50,12 +50,12 @@ class MySharedRidesScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('My Shared Rides')),
       body: ridesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) =>
-            Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
         data: (rides) {
           if (rides.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
@@ -94,7 +94,7 @@ class MySharedRidesScreen extends ConsumerWidget {
                             filled: false,
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline,
+                            icon: Icon(Icons.delete_outline,
                                 color: AppColors.textTertiary, size: 18),
                             onPressed: () => _delete(context, ref, ride.id),
                           ),
@@ -103,26 +103,26 @@ class MySharedRidesScreen extends ConsumerWidget {
                       Text(
                         '${_formatDate(ride.rideDate)} · ${ride.distanceKm.toStringAsFixed(1)} km · '
                         '${SpeedFormatter.durationFromSeconds(ride.durationSeconds)}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.favorite_border, size: 14, color: AppColors.textTertiary),
+                          Icon(Icons.favorite_border, size: 14, color: AppColors.textTertiary),
                           const SizedBox(width: 4),
                           Text('${ride.likes}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                           const SizedBox(width: 12),
-                          const Icon(Icons.mode_comment_outlined,
+                          Icon(Icons.mode_comment_outlined,
                               size: 14, color: AppColors.textTertiary),
                           const SizedBox(width: 4),
                           Text('${ride.comments}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                           const SizedBox(width: 12),
-                          const Icon(Icons.arrow_upward, size: 14, color: AppColors.textTertiary),
+                          Icon(Icons.arrow_upward, size: 14, color: AppColors.textTertiary),
                           const SizedBox(width: 4),
                           Text('${ride.netScore}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                         ],
                       ),
                     ],

@@ -91,9 +91,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Post')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _post == null
-              ? const Center(
+              ? Center(
                   child: Text('Post not found', style: TextStyle(color: AppColors.textSecondary)))
               : Column(
                   children: [
@@ -107,12 +107,12 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                           const SizedBox(height: 16),
                           Text(
                             '${_replies.length} ${_replies.length == 1 ? 'reply' : 'replies'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 12),
                           if (_replies.isEmpty)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(vertical: 8),
                               child: Text('No replies yet — be the first to help out.',
                                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
@@ -138,7 +138,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       children: [
         Text(
           post.title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Row(
@@ -147,14 +147,14 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
             const SizedBox(width: 8),
             Text(
               post.userName,
-              style: const TextStyle(fontSize: 13, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
           post.body,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.4),
+          style: TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.4),
         ),
       ],
     );
@@ -177,12 +177,12 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
               const SizedBox(width: 8),
               Text(
                 reply.userName,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(reply.body, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text(reply.body, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -196,8 +196,8 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           Expanded(
             child: TextField(
               controller: _replyController,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-              decoration: const InputDecoration(
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+              decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Write a reply...',
                 hintStyle: TextStyle(color: AppColors.textTertiary),
@@ -206,7 +206,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.send, color: AppColors.primary),
+            icon: Icon(Icons.send, color: AppColors.primary),
             onPressed: _submitReply,
           ),
         ],

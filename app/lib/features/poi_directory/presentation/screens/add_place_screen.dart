@@ -117,7 +117,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Location', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Location', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               MapLocationPicker(
                 // Keyed by center so the map remounts (and re-centers) once
@@ -129,7 +129,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 onLocationChanged: (latLng) => _pickedLocation = latLng,
               ),
               const SizedBox(height: 20),
-              const Text('Category', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Category', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -167,14 +167,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Name *', hintText: 'e.g. Rahman Motors'),
                 validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Address *', hintText: 'Street, area, city'),
                 validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
               ),
@@ -182,13 +182,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Phone (optional)', hintText: '+880...'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _hoursCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Hours (optional)',
                   hintText: 'e.g. 9am - 9pm, or 24/7',

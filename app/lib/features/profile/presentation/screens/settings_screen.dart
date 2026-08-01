@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_style.dart';
+import '../../../../core/theme/theme_style_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/emergency_contacts_provider.dart';
 
@@ -13,6 +16,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final contacts = ref.watch(emergencyContactsNotifierProvider);
+    final themeStyle = ref.watch(themeStyleProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -38,7 +42,7 @@ class SettingsScreen extends ConsumerWidget {
                             ? user!.displayName![0]
                             : '?')
                         .toUpperCase(),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary),
@@ -50,15 +54,58 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(user?.displayName ?? 'Rider',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 2),
                       Text(user?.email ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13, color: AppColors.textSecondary)),
                     ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── Appearance ─────────────────────────────────────────────────
+          Text('Appearance',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _ThemeStyleOption(
+                    label: 'Carbon Mono',
+                    description: 'Dark, sharp, instrument-panel',
+                    selected: themeStyle == AppThemeStyle.carbonMono,
+                    onTap: () => ref
+                        .read(themeStyleProvider.notifier)
+                        .setStyle(AppThemeStyle.carbonMono),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _ThemeStyleOption(
+                    label: 'Editorial',
+                    description: 'Light, warm paper',
+                    selected: themeStyle == AppThemeStyle.editorial,
+                    onTap: () => ref
+                        .read(themeStyleProvider.notifier)
+                        .setStyle(AppThemeStyle.editorial),
                   ),
                 ),
               ],
@@ -70,7 +117,7 @@ class SettingsScreen extends ConsumerWidget {
           // ── Emergency contacts ─────────────────────────────────────────
           Row(
             children: [
-              const Text('Emergency Contacts',
+              Text('Emergency Contacts',
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -84,20 +131,20 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Notified if a crash is detected and you don\'t respond within 60 seconds.',
             style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
           ),
           const SizedBox(height: 12),
 
           contacts.when(
-            loading: () => const Padding(
+            loading: () => Padding(
               padding: EdgeInsets.all(24),
               child: Center(
                   child: CircularProgressIndicator(color: AppColors.primary)),
             ),
             error: (e, _) => Text('Could not load contacts: $e',
-                style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                style: TextStyle(color: AppColors.danger, fontSize: 13)),
             data: (list) => list.isEmpty
                 ? Container(
                     padding: const EdgeInsets.all(20),
@@ -106,7 +153,7 @@ class SettingsScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text('No contacts yet — add someone you trust.',
                           style: TextStyle(
                               fontSize: 13, color: AppColors.textSecondary)),
@@ -126,7 +173,7 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.contact_emergency_outlined,
+                              Icon(Icons.contact_emergency_outlined,
                                   color: AppColors.primary, size: 20),
                               const SizedBox(width: 12),
                               Expanded(
@@ -134,7 +181,7 @@ class SettingsScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(c.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.textPrimary)),
@@ -142,7 +189,7 @@ class SettingsScreen extends ConsumerWidget {
                                         c.email == null
                                             ? c.phone
                                             : '${c.phone} · ${c.email}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 12,
                                             color: AppColors.textSecondary)),
                                   ],
@@ -153,7 +200,7 @@ class SettingsScreen extends ConsumerWidget {
                                     .read(emergencyContactsNotifierProvider
                                         .notifier)
                                     .deleteContact(c.id),
-                                icon: const Icon(Icons.delete_outline,
+                                icon: Icon(Icons.delete_outline,
                                     color: AppColors.textTertiary, size: 20),
                               ),
                             ],
@@ -238,26 +285,26 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppColors.surface,
-      title: const Text('Add Emergency Contact',
+      title: Text('Add Emergency Contact',
           style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _nameCtrl,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(labelText: 'Name'),
           ),
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(labelText: 'Phone'),
           ),
           TextField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(labelText: 'Email (optional)'),
           ),
         ],
@@ -272,6 +319,53 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
           child: const Text('Add'),
         ),
       ],
+    );
+  }
+}
+
+/// One tappable half of the Appearance segmented control.
+class _ThemeStyleOption extends StatelessWidget {
+  const _ThemeStyleOption({
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String description;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? AppColors.surface : AppColors.textPrimary)),
+            const SizedBox(height: 2),
+            Text(description,
+                style: TextStyle(
+                    fontSize: 11,
+                    color: selected
+                        ? AppColors.surface.withValues(alpha: 0.8)
+                        : AppColors.textTertiary)),
+          ],
+        ),
+      ),
     );
   }
 }

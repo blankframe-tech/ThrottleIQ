@@ -7,18 +7,19 @@ import '../../../../core/constants/app_colors.dart';
 /// [EditorialCard] alongside a header/unit label the caller supplies.
 class RideLineChart extends StatelessWidget {
   final List<double> values;
-  final Color color;
+  final Color? color;
 
   const RideLineChart({
     super.key,
     required this.values,
-    this.color = AppColors.primary,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? AppColors.primary;
     if (values.length < 2) {
-      return const SizedBox(
+      return SizedBox(
         height: 120,
         child: Center(
           child: Text(
@@ -53,11 +54,11 @@ class RideLineChart extends StatelessWidget {
               ],
               isCurved: true,
               barWidth: 2.5,
-              color: color,
+              color: effectiveColor,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: color.withValues(alpha: 0.12),
+                color: effectiveColor.withValues(alpha: 0.12),
               ),
             ),
           ],

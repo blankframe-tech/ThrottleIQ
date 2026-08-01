@@ -22,7 +22,7 @@ class BikeDetailScreen extends ConsumerWidget {
     final ridesAsync = ref.watch(rideHistoryProvider(bikeId));
 
     if (bike == null) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(child: Text('Bike not found', style: TextStyle(color: AppColors.textSecondary))),
       );
     }
@@ -42,7 +42,7 @@ class BikeDetailScreen extends ConsumerWidget {
             onPressed: () => context.go('/home/garage/$bikeId/edit'),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+            icon: Icon(Icons.delete_outline, color: AppColors.danger),
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
@@ -67,7 +67,7 @@ class BikeDetailScreen extends ConsumerWidget {
                     : null,
               ),
               child: bike.imagePath == null
-                  ? const Icon(Icons.two_wheeler, size: 72, color: AppColors.textTertiary)
+                  ? Icon(Icons.two_wheeler, size: 72, color: AppColors.textTertiary)
                   : null,
             ),
             const SizedBox(height: 16),
@@ -115,7 +115,7 @@ class BikeDetailScreen extends ConsumerWidget {
                 onPressed: () => _openForum(context, bike),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
+                  side: BorderSide(color: AppColors.primary),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 icon: const Icon(Icons.forum_outlined),
@@ -125,15 +125,15 @@ class BikeDetailScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Ride history
-            const Text('Ride History',
+            Text('Ride History',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             const SizedBox(height: 12),
             ridesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-              error: (e, _) => Text('$e', style: const TextStyle(color: AppColors.danger)),
+              loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
               data: (rides) {
                 if (rides.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
                       padding: EdgeInsets.all(32),
                       child: Text('No rides yet for this bike',
@@ -165,7 +165,7 @@ class BikeDetailScreen extends ConsumerWidget {
                                 children: [
                                   Text(
                                     _formatDate(ride.startTime),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.textPrimary),
@@ -173,7 +173,7 @@ class BikeDetailScreen extends ConsumerWidget {
                                   const SizedBox(height: 4),
                                   Text(
                                     '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 13, color: AppColors.textSecondary),
                                   ),
                                 ],
@@ -181,7 +181,7 @@ class BikeDetailScreen extends ConsumerWidget {
                             ),
                             Text(
                               '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.primaryHighlight,
                                   fontWeight: FontWeight.w600),
@@ -229,8 +229,8 @@ class BikeDetailScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete Bike?', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text(
+        title: Text('Delete Bike?', style: TextStyle(color: AppColors.textPrimary)),
+        content: Text(
             'All ride history for this bike will be deleted.',
             style: TextStyle(color: AppColors.textSecondary)),
         actions: [
@@ -239,7 +239,7 @@ class BikeDetailScreen extends ConsumerWidget {
               child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

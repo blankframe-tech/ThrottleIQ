@@ -140,7 +140,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                       : null,
                 ),
                 child: _imagePath == null
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -189,7 +189,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             const SizedBox(height: 8),
             Text(
               _audienceOptions.firstWhere((o) => o.$1 == _audience).$3,
-              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
             ),
             const SizedBox(height: 32),
             ElevatedButton(

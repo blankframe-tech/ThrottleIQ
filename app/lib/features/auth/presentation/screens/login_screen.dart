@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -105,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 Row(
-                  children: const [
+                  children: [
                     Expanded(child: Divider(color: AppColors.textSecondary)),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
@@ -122,7 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: const Text('Continue with Google'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: AppColors.textPrimary, width: 1.5),
+                    side: BorderSide(color: AppColors.textPrimary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -130,7 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account? ",
+                    Text("Don't have an account? ",
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/register'),
@@ -159,7 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscure,
-      style: const TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -178,21 +179,13 @@ class _ThrottleHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(Icons.speed, color: AppColors.primary, size: 28),
-        ),
+        const AppLogo(size: 52),
         const SizedBox(height: 20),
-        const Text('Welcome back',
+        Text('Welcome back',
             style: TextStyle(
                 fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         const SizedBox(height: 6),
-        const Text('Sign in to continue tracking your rides',
+        Text('Sign in to continue tracking your rides',
             style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
       ],
     );

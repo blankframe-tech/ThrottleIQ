@@ -53,7 +53,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(primary: AppColors.primary),
+          colorScheme: ColorScheme.dark(primary: AppColors.primary),
         ),
         child: child!,
       ),
@@ -87,7 +87,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Service Type',
+              Text('Service Type',
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
@@ -134,15 +134,15 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined,
+                      Icon(Icons.calendar_today_outlined,
                           color: AppColors.textSecondary, size: 18),
                       const SizedBox(width: 12),
                       Text(
                         '${_date.day}/${_date.month}/${_date.year}',
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                       ),
                       const Spacer(),
-                      const Icon(Icons.chevron_right,
+                      Icon(Icons.chevron_right,
                           color: AppColors.textTertiary, size: 18),
                     ],
                   ),
@@ -153,7 +153,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
               TextFormField(
                 controller: _odometerCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Odometer (km) *',
                   suffixText: 'km',
@@ -168,7 +168,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
               TextFormField(
                 controller: _costCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Cost (optional)',
                   prefixText: '৳ ',
@@ -178,7 +178,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
               TextFormField(
                 controller: _notesCtrl,
                 maxLines: 3,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Notes (optional)',
                   hintText: 'e.g. Used Motul 10W40...',

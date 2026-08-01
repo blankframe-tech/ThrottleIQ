@@ -1,4 +1,15 @@
-# GitHub secret-scanning alert: Google API Key in `public/live-viewer.html`
+# Issues
+
+_Last updated: 2026-08-01_
+
+Tracked problems found during review/QA that aren't simple TODOs (those live
+in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
+
+---
+
+## 1. API leak — GitHub secret-scanning alert (Firebase Web API key)
+
+**Status:** Resolved / false positive — recommendation given, not yet marked closed on GitHub.
 
 GitHub's secret scanning flagged the Firebase Web API key in
 `public/live-viewer.html` (introduced via commit `b3b149a`):
@@ -14,7 +25,7 @@ public/live-viewer.html
     };
 ```
 
-## Can this API key be used to do anything harmful?
+### Can this API key be used to do anything harmful?
 
 Realistically, not much beyond what the app already lets any visitor do —
 but there are a couple of real, low-severity risks worth knowing about.
@@ -43,7 +54,7 @@ but there are a couple of real, low-severity risks worth knowing about.
   the console (APIs & Services → Credentials → this key → "API
   restrictions") — it isn't visible from the repo.
 
-## Why this isn't a real leak
+### Why this isn't a real leak
 
 Firebase Web API keys are meant to be public — they identify the project
 when making client-side calls, they don't grant privileged access on
@@ -54,7 +65,7 @@ didn't newly expose anything. Firebase's own docs explicitly call this
 key non-secret; the actual access control is the Firestore/Storage
 Security Rules.
 
-## Recommendation
+### Recommendation
 
 - Don't rotate the key — that risks breaking the live app for no real
   security gain.
@@ -62,3 +73,13 @@ Security Rules.
   it's scoped to Firebase/Identity services only.
 - Close the GitHub secret-scanning alert once confirmed (mark as "used in
   tests" / "false positive" or revoked-as-appropriate per your review).
+
+---
+
+## 2. QA report
+
+**Status:** Not started.
+
+_No QA pass has been written up yet. When one is done (manual smoke test,
+device walkthrough, or a scripted run), record findings here as dated
+sub-sections — one per pass — rather than overwriting this placeholder._

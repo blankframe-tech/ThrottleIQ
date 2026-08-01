@@ -82,7 +82,7 @@ class RecordScreen extends ConsumerWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.onInk, width: 2),
                       ),
-                      child: const Icon(Icons.speed, color: AppColors.onInk, size: 34),
+                      child: Icon(Icons.speed, color: AppColors.onInk, size: 34),
                     ),
                     const SizedBox(height: 24),
                     Text(quote.$1,
@@ -106,7 +106,7 @@ class RecordScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(_greeting(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 13, color: AppColors.textSecondary)),
                           const SizedBox(height: 2),
                           Text(name ?? 'Rider', style: display(22)),
@@ -135,7 +135,7 @@ class RecordScreen extends ConsumerWidget {
                           color: AppColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                         ),
-                        child: const Icon(Icons.two_wheeler,
+                        child: Icon(Icons.two_wheeler,
                             color: AppColors.textPrimary, size: 24),
                       ),
                       const SizedBox(width: 12),
@@ -146,13 +146,13 @@ class RecordScreen extends ConsumerWidget {
                             Text(activeBike.displayName,
                                 style: display(16, letterSpacing: 0)),
                             const SizedBox(height: 2),
-                            const Text('Ready to ride',
+                            Text('Ready to ride',
                                 style: TextStyle(
                                     fontSize: 12, color: AppColors.textSecondary)),
                           ],
                         ),
                       ),
-                      const Text('Change',
+                      Text('Change',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -166,10 +166,10 @@ class RecordScreen extends ConsumerWidget {
                   borderColor: AppColors.attention,
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
+                      Icon(Icons.warning_amber_rounded,
                           color: AppColors.attention),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Text('No active bike selected',
                             style: TextStyle(color: AppColors.textPrimary)),
                       ),
@@ -215,7 +215,7 @@ class RecordScreen extends ConsumerWidget {
               // Start ride (slide) button
               _SlideToStartButton(enabled: activeBike != null),
               const SizedBox(height: 10),
-              const Center(
+              Center(
                 child: Text('Swipe right to start recording',
                     style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
               ),
@@ -226,7 +226,7 @@ class RecordScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(12),
                   borderColor: AppColors.danger,
                   child: Text(rideState.error!,
-                      style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                      style: TextStyle(color: AppColors.danger, fontSize: 13),
                       textAlign: TextAlign.center),
                 ),
               ],
@@ -253,7 +253,7 @@ class _StatChip extends StatelessWidget {
           Text(value, style: display(20)),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -380,7 +380,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                         child: Container(
                           width: _thumbSize,
                           height: _thumbSize,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.onInk,
                             shape: BoxShape.circle,
                           ),

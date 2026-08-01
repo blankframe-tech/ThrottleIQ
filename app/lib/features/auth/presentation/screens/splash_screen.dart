@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerWidget {
@@ -32,7 +33,7 @@ class SplashScreen extends ConsumerWidget {
       });
     });
 
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
         child: Column(
@@ -62,18 +63,9 @@ class _ThrottleIQLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primary.withOpacity(0.4), width: 1.5),
-          ),
-          child: const Icon(Icons.speed, color: AppColors.primary, size: 42),
-        ),
+        const AppLogo(size: 80),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'ThrottleIQ',
           style: TextStyle(
             fontSize: 28,
@@ -83,7 +75,7 @@ class _ThrottleIQLogo extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Ride smarter. Track deeper.',
           style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
         ),

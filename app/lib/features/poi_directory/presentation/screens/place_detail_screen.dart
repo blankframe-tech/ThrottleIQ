@@ -100,12 +100,12 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? 'Place')),
       body: placeAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) =>
-            Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
         data: (place) {
           if (place == null) {
-            return const Center(
+            return Center(
               child: Text('Place not found', style: TextStyle(color: AppColors.textSecondary)),
             );
           }
@@ -150,7 +150,7 @@ class _PlaceDetailBody extends ConsumerWidget {
       children: [
         _PlaceHeader(place: place),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Add your review',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
@@ -173,7 +173,7 @@ class _PlaceDetailBody extends ConsumerWidget {
         TextField(
           controller: reviewController,
           maxLines: 3,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
           decoration: const InputDecoration(hintText: 'Share your experience...'),
         ),
         const SizedBox(height: 12),
@@ -195,17 +195,17 @@ class _PlaceDetailBody extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Reviews',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 12),
         reviewsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => Text('$e', style: const TextStyle(color: AppColors.danger)),
+          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
           data: (reviews) {
             if (reviews.isEmpty) {
-              return const Text(
+              return Text(
                 'No reviews yet — be the first!',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               );
@@ -254,11 +254,11 @@ class _PlaceHeader extends StatelessWidget {
                   children: [
                     Text(
                       place.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                     ),
                     Text(place.category.displayName,
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -268,18 +268,18 @@ class _PlaceHeader extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star, size: 16, color: AppColors.warning),
+                      Icon(Icons.star, size: 16, color: AppColors.warning),
                       const SizedBox(width: 2),
                       Text(
                         place.ratingCount == 0 ? '—' : place.averageRating.toStringAsFixed(1),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
                   Text(
                     '${place.ratingCount} review${place.ratingCount == 1 ? '' : 's'}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -291,11 +291,11 @@ class _PlaceHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(place.address,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               ),
             ],
           ),
@@ -303,9 +303,9 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.phone!, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text(place.phone!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               ],
             ),
           ],
@@ -313,9 +313,9 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.hours!, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text(place.hours!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               ],
             ),
           ],
@@ -351,18 +351,18 @@ class _ReviewTile extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 isOwn ? 'You' : 'Rider',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               ),
               const Spacer(),
               Text(
                 '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
-                style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
               ),
             ],
           ),
           if (review.text.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(review.text, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            Text(review.text, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           ],
         ],
       ),

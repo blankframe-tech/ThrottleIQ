@@ -22,11 +22,11 @@ class MyPlacesListScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('My Places')),
       body: placesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
         data: (places) {
           if (places.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
@@ -72,7 +72,7 @@ class MyPlacesListScreen extends ConsumerWidget {
                             Text(place.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary)),
@@ -81,12 +81,12 @@ class MyPlacesListScreen extends ConsumerWidget {
                               place.verified
                                   ? '${place.category.displayName} · Verified'
                                   : place.category.displayName,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+                      Icon(Icons.chevron_right, color: AppColors.textTertiary),
                     ],
                   ),
                 );

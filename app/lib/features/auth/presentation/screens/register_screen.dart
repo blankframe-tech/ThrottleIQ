@@ -66,13 +66,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Join ThrottleIQ',
                   style: TextStyle(
                       fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Track every ride, remember every mile',
                   style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
                 ),
@@ -80,7 +80,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(labelText: 'Email', hintText: 'rider@example.com'),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Email required';
@@ -92,7 +92,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _passCtrl,
                   obscureText: _obscure,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '6+ characters',
@@ -111,7 +111,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _confirmCtrl,
                   obscureText: true,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(labelText: 'Confirm Password'),
                   validator: (v) {
                     if (v != _passCtrl.text) return 'Passwords do not match';
@@ -131,7 +131,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account? ',
+                    Text('Already have an account? ',
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/login'),

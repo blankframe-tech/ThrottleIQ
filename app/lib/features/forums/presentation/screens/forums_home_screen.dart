@@ -92,17 +92,17 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       children: [
-        const Text(
+        Text(
           'Your bikes',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 12),
         garageForumsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => Text('$e', style: const TextStyle(color: AppColors.danger)),
+          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
           data: (forums) {
             if (forums.isEmpty) {
-              return const Text(
+              return Text(
                 'Add a bike to your garage to see its forum here.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               );
@@ -118,7 +118,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           },
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Topics',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
@@ -132,7 +132,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           child: Column(
             children: [
               for (var i = 0; i < _generalTopics.length; i++) ...[
-                if (i > 0) const Divider(height: 1, color: AppColors.border),
+                if (i > 0) Divider(height: 1, color: AppColors.border),
                 _DiscoverRow(
                   icon: Icons.topic_outlined,
                   label: _generalTopics[i],
@@ -144,7 +144,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Find a forum',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
@@ -154,8 +154,8 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
                   hintText: 'Search a brand, e.g. Yamaha',
                   hintStyle: TextStyle(color: AppColors.textTertiary),
                 ),
@@ -164,7 +164,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.search, color: AppColors.primary),
+              icon: Icon(Icons.search, color: AppColors.primary),
               onPressed: _resolving ? null : () => _openBrandForum(_searchController.text),
             ),
           ],
@@ -179,7 +179,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           child: Column(
             children: [
               for (var i = 0; i < _popularBrands.length; i++) ...[
-                if (i > 0) const Divider(height: 1, color: AppColors.border),
+                if (i > 0) Divider(height: 1, color: AppColors.border),
                 _DiscoverRow(
                   icon: Icons.two_wheeler,
                   label: _popularBrands[i],
@@ -215,8 +215,8 @@ class _DiscoverRow extends StatelessWidget {
     return ListTile(
       onTap: enabled ? onTap : null,
       leading: Icon(icon, color: AppColors.primary, size: 22),
-      title: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+      title: Text(label, style: TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+      trailing: Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
     );
   }
 }
@@ -241,7 +241,7 @@ class _ForumCard extends ConsumerWidget {
               color: AppColors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.forum_outlined, color: AppColors.primary, size: 22),
+            child: Icon(Icons.forum_outlined, color: AppColors.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -250,11 +250,11 @@ class _ForumCard extends ConsumerWidget {
               children: [
                 Text(
                   forum.displayName,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 Text(
                   '${forum.postCount} posts · ${forum.followerCount} followers',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),

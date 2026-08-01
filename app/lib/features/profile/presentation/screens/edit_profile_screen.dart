@@ -142,7 +142,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         right: 0,
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
@@ -156,21 +156,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _displayNameCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Display name'),
                 validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nicknameCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Nickname', hintText: 'Shown on cards & feed'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _usernameCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Username',
                   hintText: 'yourhandle',
@@ -190,12 +190,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _bioCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 maxLines: 3,
                 decoration: const InputDecoration(labelText: 'Bio'),
               ),
               const SizedBox(height: 20),
-              const Text('Who can see my profile',
+              Text('Who can see my profile',
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
               const SizedBox(height: 8),

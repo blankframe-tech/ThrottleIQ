@@ -37,11 +37,11 @@ class GarageScreen extends ConsumerWidget {
             ),
             Expanded(
               child: bikesAsync.when(
-                loading: () => const Center(
+                loading: () => Center(
                     child: CircularProgressIndicator(color: AppColors.primary)),
                 error: (e, _) => Center(
                     child: Text('Error: $e',
-                        style: const TextStyle(color: AppColors.danger))),
+                        style: TextStyle(color: AppColors.danger))),
                 data: (bikes) {
                   if (bikes.isEmpty) return const _EmptyGarage();
                   return ListView.separated(
@@ -106,17 +106,17 @@ class _UserMenuButton extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person_outline, color: AppColors.primary),
+              leading: Icon(Icons.person_outline, color: AppColors.primary),
               title: const Text('Edit Profile'),
               onTap: () => Navigator.pop(sheetContext, '/profile/edit'),
             ),
             ListTile(
-              leading: const Icon(Icons.place_outlined, color: AppColors.primary),
+              leading: Icon(Icons.place_outlined, color: AppColors.primary),
               title: const Text('My Places'),
               onTap: () => Navigator.pop(sheetContext, '/places/mine'),
             ),
             ListTile(
-              leading: const Icon(Icons.ios_share, color: AppColors.primary),
+              leading: Icon(Icons.ios_share, color: AppColors.primary),
               title: const Text('My Shared Rides'),
               onTap: () => Navigator.pop(sheetContext, '/rides/mine'),
             ),
@@ -139,11 +139,11 @@ class _EmptyGarage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.garage_outlined, size: 56, color: AppColors.textTertiary),
+            Icon(Icons.garage_outlined, size: 56, color: AppColors.textTertiary),
             const SizedBox(height: 16),
             Text('No bikes yet', style: display(20)),
             const SizedBox(height: 6),
-            const Text('Add your first bike to get started',
+            Text('Add your first bike to get started',
                 style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
             const SizedBox(height: 20),
             DashedAddButton(
@@ -175,12 +175,12 @@ class _BikeCard extends ConsumerWidget {
             children: [
               Container(
                 height: 116,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.vertical(
                       top: Radius.circular(AppDimensions.radiusXl)),
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(Icons.two_wheeler, size: 44, color: AppColors.textTertiary),
                 ),
               ),
@@ -216,7 +216,7 @@ class _BikeCard extends ConsumerWidget {
                 ),
                 if (bike.cc != null)
                   Text('${bike.cc}cc',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -267,7 +267,7 @@ class _BikeCard extends ConsumerWidget {
                           style: display(14,
                               letterSpacing: 0, color: AppColors.primary)),
                       const SizedBox(width: 6),
-                      const Icon(Icons.arrow_forward, size: 16, color: AppColors.primary),
+                      Icon(Icons.arrow_forward, size: 16, color: AppColors.primary),
                     ],
                   ),
                 ),

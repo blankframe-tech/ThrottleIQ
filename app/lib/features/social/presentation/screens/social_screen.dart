@@ -31,7 +31,7 @@ class SocialScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Social'),
-          bottom: const TabBar(
+          bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
@@ -81,14 +81,14 @@ class _FeedTab extends ConsumerWidget {
         ),
         Expanded(
           child: feedAsync.when(
-            loading: () => const Center(
+            loading: () => Center(
                 child: CircularProgressIndicator(color: AppColors.primary)),
             error: (e, _) =>
-                Center(child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+                Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
             data: (_) {
               final rides = ref.watch(rideFeedNotifierProvider);
               if (rides.isEmpty) {
-                return const Center(
+                return Center(
                   child: Padding(
                     padding: EdgeInsets.all(AppDimensions.paddingLg),
                     child: Column(
@@ -220,7 +220,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.two_wheeler, color: AppColors.primary, size: 22),
+                        child: Icon(Icons.two_wheeler, color: AppColors.primary, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -229,16 +229,16 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           children: [
                             Text(
                               ride.bikeName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                             ),
                             Text(ride.bikeType,
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                           ],
                         ),
                       ),
                       Text(ride.userName,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     ],
                   ),
                   if (ride.photoUrl != null) ...[
@@ -284,7 +284,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         ),
                       ),
                       Text('${ride.netScore}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                       IconButton(
                         padding: EdgeInsets.zero,
@@ -298,9 +298,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 18),
+                      Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 18),
                       const SizedBox(width: 6),
-                      Text('${ride.comments}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      Text('${ride.comments}', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                       const Spacer(),
                       Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.textSecondary),
                     ],
@@ -327,12 +327,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
         Container(height: 1, color: AppColors.border),
         const SizedBox(height: 8),
         if (_loadingComments)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
           )
         else if ((_comments ?? const []).isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text('No comments yet', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           )
@@ -344,12 +344,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
                     children: [
                       TextSpan(
                         text: '${c.userName}  ',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                       ),
                       TextSpan(
                         text: c.text,
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -361,8 +361,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
             Expanded(
               child: TextField(
                 controller: _commentController,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                decoration: const InputDecoration(
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
                   isDense: true,
                   hintText: 'Add a comment...',
                   hintStyle: TextStyle(color: AppColors.textTertiary),
@@ -371,7 +371,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.send, color: AppColors.primary, size: 20),
+              icon: Icon(Icons.send, color: AppColors.primary, size: 20),
               onPressed: _submitComment,
             ),
           ],
@@ -384,9 +384,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
     return Column(
       children: [
         Text(value,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
       ],
     );
   }
@@ -449,13 +449,13 @@ class _RiderSearchSheetState extends ConsumerState<_RiderSearchSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Find riders',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
               autofocus: true,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 hintText: '@username or email',
                 prefixIcon: Icon(Icons.search),
@@ -465,14 +465,14 @@ class _RiderSearchSheetState extends ConsumerState<_RiderSearchSheet> {
             const SizedBox(height: 12),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  ? Center(child: CircularProgressIndicator(color: AppColors.primary))
                   : _results.isEmpty
                       ? Center(
                           child: Text(
                             _controller.text.trim().isEmpty
                                 ? 'Search by @username or email'
                                 : 'No riders found',
-                            style: const TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         )
                       : ListView.separated(
@@ -519,13 +519,13 @@ class _RiderResultTile extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(rider.bestName,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary)),
                         if (rider.username != null)
                           Text('@${rider.username}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                       ],
                     ),
                   ),

@@ -73,7 +73,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
           IconButton(
             tooltip: 'Import nearby places from OpenStreetMap',
             icon: _importing
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
@@ -117,20 +117,20 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
             Expanded(
               child: placesAsync.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    Center(child: CircularProgressIndicator(color: AppColors.primary)),
                 error: (e, _) => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(AppDimensions.paddingLg),
                     child: Text(
                       '$e',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.danger),
+                      style: TextStyle(color: AppColors.danger),
                     ),
                   ),
                 ),
                 data: (places) {
                   if (places.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Padding(
                         padding: EdgeInsets.all(AppDimensions.paddingLg),
                         child: Column(
@@ -282,7 +282,7 @@ class _PlaceCard extends StatelessWidget {
                   place.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 2),
@@ -290,7 +290,7 @@ class _PlaceCard extends StatelessWidget {
                   distanceKm == null
                       ? place.category.displayName
                       : '${place.category.displayName} · ${SpeedFormatter.distanceKm(distanceKm * 1000)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -302,11 +302,11 @@ class _PlaceCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.star, size: 14, color: AppColors.warning),
+                  Icon(Icons.star, size: 14, color: AppColors.warning),
                   const SizedBox(width: 2),
                   Text(
                     place.ratingCount == 0 ? '—' : place.averageRating.toStringAsFixed(1),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                 ],
@@ -314,7 +314,7 @@ class _PlaceCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${place.ratingCount} review${place.ratingCount == 1 ? '' : 's'}',
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
             ],
           ),
