@@ -76,7 +76,33 @@ Security Rules.
 
 ---
 
-## 2. QA report
+## 2. Maintenance page highlighted the wrong bottom-nav tab
+
+**Status:** Fixed 2026-08-01 (commit `221bb57`).
+
+Reported as: _"the maintenance page from garage, when selected, shows that
+I'm on record page in bottom but opens the maintenance page correctly."_
+
+**Root cause:** `AppShell._tabs` in `app/lib/shared/widgets/app_shell.dart`
+listed only the five tab paths. `/home/maintenance` is a shell route but
+not a tab, so `indexWhere` returned `-1` and the code fell through to a
+hardcoded `2` — the Record tab. The screen itself was routed correctly all
+along; only the highlight was wrong.
+
+**Fix:** the location→tab mapping is now an explicit, pure
+`shellTabIndexForLocation(String)`, with a `_nonTabShellRoutes` map sending
+`/home/maintenance` to Garage (where it's reached from). Matching is
+segment-aware, so a future `/home/recordings` can't steal the Record tab.
+Covered by `app/test/shared/app_shell_test.dart`.
+
+**Watch for:** any *new* `/home/*` shell route that isn't its own tab needs
+an entry in `_nonTabShellRoutes`, or it will silently inherit the same
+wrong-highlight behaviour. The Record fallback exists only to guarantee
+`BottomNavigationBar` a valid index.
+
+---
+
+## 3. QA report
 
 **Status:** Not started.
 

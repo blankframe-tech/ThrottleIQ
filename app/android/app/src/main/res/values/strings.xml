@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    All user-visible widget text lives here rather than in the layouts, so the
+    strings are translatable and so the Kotlin providers and the XML previews
+    can share one source of truth for placeholder copy.
+-->
+<resources>
+    <!-- Widget names / descriptions shown in the launcher's widget picker -->
+    <string name="widget_start_ride_label">ThrottleIQ · Start Ride</string>
+    <string name="widget_start_ride_description">One tap to open ThrottleIQ and start recording a ride.</string>
+    <string name="widget_ride_stats_label">ThrottleIQ · Ride Stats</string>
+    <string name="widget_ride_stats_description">Distance ridden this week and all time.</string>
+    <string name="widget_maintenance_label">ThrottleIQ · Maintenance</string>
+    <string name="widget_maintenance_description">The next service due on your bike.</string>
+
+    <!-- Start ride widget -->
+    <string name="widget_start_ride_title">THROTTLEIQ</string>
+    <string name="widget_start_ride_cta">START RIDE</string>
+
+    <!-- Ride stats widget -->
+    <string name="widget_stats_title">RIDE STATS</string>
+    <string name="widget_stats_this_week">THIS WEEK</string>
+    <string name="widget_stats_all_time">ALL TIME</string>
+
+    <!-- Maintenance widget -->
+    <string name="widget_maintenance_title">NEXT SERVICE</string>
+    <string name="widget_maintenance_overdue_flag">OVERDUE</string>
+    <string name="widget_maintenance_due_flag">DUE</string>
+
+    <!--
+        Shown before the app has ever published data (widget added but app never
+        opened, or signed out). A blank widget reads as broken; an em dash reads
+        as "nothing yet".
+    -->
+    <string name="widget_placeholder_value">—</string>
+    <string name="widget_placeholder_no_data">No data yet</string>
+    <string name="widget_placeholder_no_service">No service data yet</string>
+
+    <!-- Content descriptions -->
+    <string name="widget_start_ride_content_description">Start a ride in ThrottleIQ</string>
+</resources>

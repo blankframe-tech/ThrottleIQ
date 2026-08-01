@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Carbon Mono palette, mirrored from lib/core/theme/app_theme_style.dart
+    (AppColorPalette.carbonMono). Home-screen widgets are always rendered in
+    the Carbon Mono look regardless of the in-app theme toggle: a widget sits
+    on the rider's wallpaper, not inside the app, and the dark instrument-panel
+    treatment is the brand mark people recognise there.
+-->
+<resources>
+    <color name="widget_background">#FF0D0D0D</color>
+    <color name="widget_surface">#FF161616</color>
+    <color name="widget_border">#FF393939</color>
+    <color name="widget_surface_variant">#FF262626</color>
+
+    <color name="widget_primary">#FFC8FF3D</color>
+    <color name="widget_primary_dark">#FF9FCC1F</color>
+    <color name="widget_on_primary">#FF0D0D0D</color>
+
+    <color name="widget_text_primary">#FFF4F4F4</color>
+    <color name="widget_text_secondary">#FF8A8A8A</color>
+    <color name="widget_text_tertiary">#FF6F6F6F</color>
+
+    <color name="widget_danger">#FFFA4D56</color>
+    <color name="widget_attention">#FFFF7A45</color>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Overdue variant of widget_accent_bar; swapped in from Kotlin. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_danger" />
+    <corners android:radius="0dp" />
+</shape>

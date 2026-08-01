@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThrottleIQ Privacy Policy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      color: #2d3748;
+      line-height: 1.65;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 820px;
+      width: 100%;
+      overflow: hidden;
+      margin: 20px 0 60px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 36px 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px 28px 40px;
+    }
+
+    h2 {
+      font-size: 20px;
+      color: #2d3748;
+      margin: 34px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    h2:first-of-type {
+      margin-top: 8px;
+    }
+
+    h3 {
+      font-size: 16px;
+      color: #4a5568;
+      margin: 20px 0 8px;
+    }
+
+    p, ul, ol {
+      font-size: 15px;
+      color: #4a5568;
+    }
+
+    ul, ol {
+      margin: 10px 0 10px 22px;
+    }
+
+    li {
+      margin-bottom: 7px;
+    }
+
+    strong {
+      color: #2d3748;
+    }
+
+    a {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    code {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 13px;
+      color: #4a5568;
+    }
+
+    .callout {
+      background: #f7fafc;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 18px 0;
+      font-size: 15px;
+    }
+
+    .callout-warn {
+      background: #fff5f5;
+      border-left-color: #e53e3e;
+    }
+
+    .callout h3 {
+      margin-top: 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 520px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      color: #4a5568;
+    }
+
+    th {
+      background: #f7fafc;
+      color: #2d3748;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .meta {
+      text-align: center;
+      color: #718096;
+      font-size: 13px;
+      padding: 18px 24px 0;
+      margin-top: 30px;
+      border-top: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏍️ ThrottleIQ Privacy Policy</h1>
+      <p>Effective date: 1 August 2026</p>
+    </div>
+
+    <div class="content">
+
+      <p>ThrottleIQ is a motorcycle ride-tracking app. It is built and run by one independent
+      developer, and it is currently in beta. This policy describes, in plain terms, exactly what
+      the app collects, where that data goes, and how you get rid of it. It reflects what the
+      shipped code actually does — nothing is described here that the app does not do.</p>
+
+      <p>Questions, requests, or complaints:
+      <a href="mailto:the.abraar.rar@gmail.com">the.abraar.rar@gmail.com</a>. That address reaches
+      the developer directly; there is no support desk behind it.</p>
+
+      <h2>1. What the app collects, and why</h2>
+
+      <div class="table-wrap">
+        <table>
+          <tr>
+            <th>Data</th>
+            <th>Why</th>
+            <th>Where it goes</th>
+          </tr>
+          <tr>
+            <td><strong>Precise GPS location</strong> — latitude, longitude, speed, altitude, accuracy, timestamp, sampled continuously while a ride is recording</td>
+            <td>To draw your route and calculate distance, speed, moving vs. stopped time, and to detect a possible crash</td>
+            <td>Stored on your phone. Only ride <em>summaries</em> are uploaded (see §2)</td>
+          </tr>
+          <tr>
+            <td><strong>GPS location in the background</strong> — the same data, continuing while your screen is off or another app is in front</td>
+            <td>See §3 below</td>
+            <td>Same as above</td>
+          </tr>
+          <tr>
+            <td><strong>Accelerometer and gyroscope readings</strong> (roughly 20 samples per second while recording)</td>
+            <td>Crash detection, hard-braking / rapid-acceleration alerts, cornering and heading estimation</td>
+            <td>Processed on your phone. Derived values (acceleration, jerk, heading, cornering flag) are saved into the on-device ride log; the raw sensor stream is never uploaded</td>
+          </tr>
+          <tr>
+            <td><strong>Phone battery percentage</strong></td>
+            <td>Shown to people watching your live-ride link, so they can tell whether your phone is about to die mid-ride</td>
+            <td>Written into the live-session record while a ride is being shared live</td>
+          </tr>
+          <tr>
+            <td><strong>Email address</strong>, and — if you sign in with Google — the name and profile picture on your Google account</td>
+            <td>To create and sign you into your account, and to let other riders find you by exact email or @username</td>
+            <td>Firebase Authentication and your public profile record</td>
+          </tr>
+          <tr>
+            <td><strong>Profile details you type</strong> — display name, @username, nickname, bio</td>
+            <td>To identify you to other riders</td>
+            <td>Your public profile record</td>
+          </tr>
+          <tr>
+            <td><strong>Bikes, odometer readings, maintenance logs, saved routes</strong></td>
+            <td>The garage and maintenance features</td>
+            <td>Stored on your phone and backed up to your private cloud area</td>
+          </tr>
+          <tr>
+            <td><strong>Emergency contact names, phone numbers, and email addresses you type in</strong></td>
+            <td>So the app knows who to reach if you're in a crash</td>
+            <td>Your private cloud area. The app does <em>not</em> read your phone's contact list — you type these in by hand</td>
+          </tr>
+          <tr>
+            <td><strong>Photos you choose to attach</strong> — profile picture, photos on shared rides</td>
+            <td>To display them in the app</td>
+            <td>Uploaded to Cloudinary (see §4). Bike photos stay on your phone only</td>
+          </tr>
+          <tr>
+            <td><strong>Things you post</strong> — forum posts and replies, ride captions, comments, votes, place entries, place reviews, follows</td>
+            <td>The community features</td>
+            <td>Publicly readable to other signed-in riders</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>What the app does not collect</h3>
+      <ul>
+        <li><strong>No advertising, and no data sold or shared with advertisers or data brokers. Ever.</strong></li>
+        <li><strong>No analytics or crash-reporting SDK.</strong> The app does not bundle Google Analytics, Firebase Analytics, Crashlytics, or any third-party behavioural tracker, so there is no usage-tracking profile of you.</li>
+        <li><strong>No push notification tokens.</strong> Notifications you see are generated on your own phone or read from your account; the app does not currently register a push token with a notification service.</li>
+        <li><strong>No contact list, no SMS, no microphone, no camera roll scanning.</strong> Photos are chosen one at a time through your phone's own picker.</li>
+      </ul>
+
+      <h2>2. What actually leaves your phone</h2>
+
+      <p>ThrottleIQ records offline first. Rides are written to a database on your own device
+      before anything is uploaded, and the app works with no connection at all.</p>
+
+      <div class="callout">
+        <h3>Your detailed GPS trail stays on your phone</h3>
+        <p>The point-by-point GPS track of a ride — the thing that would reconstruct exactly where
+        you went — is stored only in the app's local database. It is not uploaded to the cloud.
+        What gets backed up is the ride <em>summary</em>: date, distance, duration, max speed,
+        event counts, and the bike it was on.</p>
+        <p>Two exceptions, both of which you trigger deliberately: sharing a ride to the feed
+        (§5) and starting a live-share link (§6).</p>
+      </div>
+
+      <p>Uninstalling the app deletes the local database, including every GPS trail on the device.
+      You can export a ride to a JSON or GPX file first if you want to keep it.</p>
+
+      <h2>3. Background location — why it is needed</h2>
+
+      <p>ThrottleIQ asks for permission to access your location <strong>while the app is in the
+      background</strong>, which on Android means the "Allow all the time" setting.</p>
+
+      <p>The reason is specific: a ride recording has to keep running when your phone screen is
+      off or another app is in front. On a motorcycle that is the normal case — the phone is on a
+      handlebar mount with the screen locked, or showing a navigation app, for the entire ride. If
+      location access stopped the moment the app left the foreground, the recording would break
+      into fragments, distance and max-speed figures would be wrong, and crash detection would go
+      blind exactly when it matters most.</p>
+
+      <p>Concretely, while and only while a ride is recording:</p>
+      <ul>
+        <li>The app runs an Android foreground service with a permanent, visible notification
+        reading "Ride Recording Active — ThrottleIQ is recording your ride in the background."
+        You can always see when it is running.</li>
+        <li>Location collection <strong>starts</strong> when you press start on a ride and
+        <strong>stops</strong> when you finish it. The app does not track you between rides.</li>
+        <li>The one other use of location is one-off: when you open the Places tab or ask to
+        import nearby places, the app takes a single position fix to find what's around you.</li>
+      </ul>
+
+      <p>You can refuse or later revoke background location in your phone's system settings.
+      Ride recording will then only work while the app is on screen, which in practice means it
+      will not work reliably. Nothing else in the app depends on it.</p>
+
+      <h2>4. Third parties, and exactly what each one receives</h2>
+
+      <div class="table-wrap">
+        <table>
+          <tr>
+            <th>Service</th>
+            <th>What it receives</th>
+          </tr>
+          <tr>
+            <td><strong>Firebase Authentication</strong> (Google)</td>
+            <td>Your email address and password credential, or your Google sign-in token. This is what proves who you are.</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud Firestore</strong> (Google)</td>
+            <td>Your profile, ride summaries, bikes, maintenance logs, saved routes, emergency contacts, earned badges, in-app notifications, forum posts, shared rides, places, reviews, follows, and live-session records. This is the app's database.</td>
+          </tr>
+          <tr>
+            <td><strong>Cloudinary</strong> — cloud name <code>vjvcigkt</code></td>
+            <td>Only the image files you choose to upload: your profile picture and any photo you attach to a shared ride. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides, your location, or your account details.</td>
+          </tr>
+          <tr>
+            <td><strong>OpenStreetMap tile servers</strong> — <code>tile.openstreetmap.org</code></td>
+            <td>Map tiles are fetched directly from OpenStreetMap whenever a map is drawn — while riding, on ride summaries, and on the live-share page. Each request necessarily reveals your device's IP address and which map squares you are looking at, which approximates where you are. Your account is never identified to them.</td>
+          </tr>
+          <tr>
+            <td><strong>Overpass API</strong> — <code>overpass-api.de</code></td>
+            <td>Only when you explicitly tap "Import nearby" in the Places tab: your current coordinates and a search radius, in order to look up fuel stops, motorcycle garages, parts shops, cafés, and viewpoints around you. This never happens automatically in the background.</td>
+          </tr>
+          <tr>
+            <td><strong>Google Sign-In</strong></td>
+            <td>Only if you choose that sign-in method. Google handles the login and returns your email, name, and profile photo.</td>
+          </tr>
+          <tr>
+            <td><strong>Firebase Hosting</strong> (Google)</td>
+            <td>Serves this page and the live-ride viewer page. Standard web server request logs apply.</td>
+          </tr>
+        </table>
+      </div>
+
+      <p>These services process data so the app can function. Their own handling of it is governed
+      by their policies — <a href="https://firebase.google.com/support/privacy" rel="noopener">Firebase</a>,
+      <a href="https://cloudinary.com/privacy" rel="noopener">Cloudinary</a>,
+      <a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" rel="noopener">OpenStreetMap Foundation</a>.</p>
+
+      <h2>5. What other riders can see</h2>
+
+      <ul>
+        <li><strong>Your profile</strong> — display name, @username, nickname, bio, profile photo,
+        and <strong>your email address</strong> — is readable by other signed-in riders by default,
+        because riders find each other by exact email or username. You can restrict your profile's
+        visibility to mutual follows, or make it private, in profile settings.</li>
+        <li><strong>Rides are private until you share them.</strong> When you share one, you pick
+        the audience: public, your followers, or mutual follows only. A shared ride carries its
+        route line, stats, your name and photo, the bike, and any caption or photo you attached.</li>
+        <li><strong>Route trimming.</strong> When a ride is shared, roughly the first and last 200
+        metres of the route are cut off before it is uploaded, so the shared trace does not begin
+        or end at your front door. If a ride is short enough that trimming consumes the whole
+        track, the ride is shared with no route line at all rather than an untrimmed one.</li>
+        <li><strong>Forum posts, comments, votes, places you add, and reviews you write</strong>
+        are visible to other signed-in riders and carry your name.</li>
+      </ul>
+
+      <h2>6. Live-ride sharing links</h2>
+
+      <p>If you start live sharing during a ride, the app creates a session identified by a random
+      32-character token and gives you a link like
+      <code>https://throttleiqfb.web.app/live/&lt;token&gt;</code>. While the ride is running, that
+      session record holds your <strong>current latitude and longitude, your current speed, your
+      phone's battery percentage, your ride status</strong> (riding, paused, crash, completed), the
+      time it was last updated, your account ID, and the ride ID. It updates continuously as you
+      ride, and it plots a live trail on a map.</p>
+
+      <div class="callout callout-warn">
+        <h3>Please understand what the link does</h3>
+        <ul>
+          <li><strong>Anyone holding the link can watch — no account, no sign-in, no approval from
+          you.</strong> The link is the permission. Whoever you send it to can forward it to anyone
+          else, and it will work for them too.</li>
+          <li>Session records are stamped to expire 24 hours after the ride starts, and the viewer
+          page refuses to display a session past that point. <strong>The record itself is not
+          automatically deleted at expiry today</strong> — expiry stops the page from showing it,
+          it does not erase it. Adding automatic deletion is a known outstanding item.</li>
+          <li>Only send a live link to people you actually want to know where you are, and treat
+          it as public once it leaves your hands.</li>
+        </ul>
+      </div>
+
+      <h2>7. Crash detection</h2>
+
+      <p>The app watches for a sudden impact combined with a sharp drop in speed. If it thinks
+      you've crashed, it starts an on-screen countdown you can cancel. If you don't cancel it, the
+      app records a crash alert containing your account ID, the ride ID, the time, and your last
+      known coordinates.</p>
+
+      <div class="callout callout-warn">
+        <p><strong>ThrottleIQ is not an emergency service, and does not call one.</strong> The
+        automatic SMS and email escalation to your emergency contacts is not live yet — the crash
+        alert is recorded, but at this stage the app does not itself contact anybody on your
+        behalf. Do not rely on ThrottleIQ as a safety net. The one thing that genuinely works
+        today is the live-share link you send out yourself before or during a ride.</p>
+      </div>
+
+      <p>If you cancel a crash countdown, the app records that as a false positive against your
+      own account, so detection thresholds can be improved.</p>
+
+      <h2>8. How long data is kept</h2>
+
+      <ul>
+        <li><strong>On your phone:</strong> rides, GPS trails, bikes and maintenance logs stay
+        until you delete them in the app or uninstall it.</li>
+        <li><strong>In the cloud:</strong> your profile, ride summaries, bikes, maintenance logs,
+        routes, emergency contacts, posts, reviews and shared rides are kept for as long as your
+        account exists. There is no automatic expiry on any of it.</li>
+        <li><strong>Live-share sessions:</strong> stop being viewable 24 hours after they start;
+        the underlying record persists until deleted (see §6).</li>
+        <li><strong>Deleted content:</strong> when you delete a ride, post, review, or emergency
+        contact in the app, the record is removed. Photos already uploaded to Cloudinary are not
+        automatically removed when the post referencing them is deleted — email the address below
+        if you need an image taken down.</li>
+      </ul>
+
+      <h2>9. Deleting your account and your data</h2>
+
+      <p>There is currently <strong>no in-app "delete my account" button</strong> — it is being
+      built. Until it ships, the process is:</p>
+
+      <ol>
+        <li>Email <a href="mailto:the.abraar.rar@gmail.com">the.abraar.rar@gmail.com</a> from
+        <strong>the address you signed up with</strong>, asking for account deletion. Using the
+        signup address is how the request is verified as yours.</li>
+        <li>Your sign-in credential and every cloud record tied to your account is deleted:
+        profile, username reservation, ride summaries, bikes, maintenance logs, saved routes,
+        emergency contacts, badges, notifications, live sessions, and crash alerts. Uploaded photos
+        are removed from Cloudinary.</li>
+        <li>Content you posted in public — forum posts and replies, comments, place entries and
+        reviews — is deleted on request too. Say so in your email if you want it removed;
+        otherwise it may be left in place, detached from your profile, so threads other riders
+        replied to don't break.</li>
+        <li>Expect this to be handled within about 30 days. It is done by hand, by one person.</li>
+      </ol>
+
+      <p>You can also delete most things yourself at any time without emailing anyone: individual
+      rides, bikes, maintenance entries, emergency contacts, posts, and shared rides all have a
+      delete action in the app. To wipe everything held locally, uninstall the app.</p>
+
+      <p>Want a copy of your data? Rides can be exported to JSON or GPX from the app. For anything
+      else, email the address above and it will be sent to you.</p>
+
+      <h2>10. Security, honestly stated</h2>
+
+      <p>All traffic to Firebase, Cloudinary, OpenStreetMap, and Overpass goes over HTTPS.
+      Access to the database is restricted by server-side security rules, so one rider cannot read
+      another rider's private rides, bikes, maintenance logs, or emergency contacts. Sign-in is
+      handled by Firebase Authentication; passwords are never stored by the app itself.</p>
+
+      <p>Two things you should weigh honestly: live-share links are readable by anyone who has the
+      link, by design (§6); and this is a beta app maintained by one person, with no independent
+      security audit and no formal breach-notification programme. If a breach affecting rider data
+      is discovered, it will be reported by email to affected riders and noted on this page. Please
+      make your own judgement about how much of your riding you want stored in it.</p>
+
+      <h2>11. Children</h2>
+
+      <p>ThrottleIQ is for licensed motorcycle riders and is not intended for children. Accounts
+      are not knowingly created for anyone under 13, or under the minimum age of digital consent
+      where you live if that is higher. If you believe a child has created an account, email the
+      address below and it will be deleted.</p>
+
+      <h2>12. Changes to this policy</h2>
+
+      <p>If what the app collects changes, this page changes with it and the effective date at the
+      top is updated. For a change that materially affects data already collected, notice will be
+      given in the app before it takes effect.</p>
+
+      <h2>13. Contact</h2>
+
+      <p>ThrottleIQ is an independent, solo-developer project. There is no company, no privacy
+      team, and no data protection officer — every request goes to one inbox and is handled by the
+      developer:</p>
+
+      <p style="font-size: 17px; margin-top: 10px;">
+        <a href="mailto:the.abraar.rar@gmail.com">the.abraar.rar@gmail.com</a>
+      </p>
+
+      <div class="meta">
+        <p>ThrottleIQ — Privacy Policy · Effective 1 August 2026</p>
+        <p>Published at https://throttleiqfb.web.app/privacy.html</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

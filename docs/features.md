@@ -26,14 +26,18 @@ Splash → (auth redirect) → Login / Register → Onboarding (first sign-in on
                         │  Social · Rides · ●Record· Places · Garage     │
                         └───────────────────────────────────────────────┘
 Social  → Feed tab | Forums tab → forum thread → post detail
+                                → create forum
 Rides   → stats/journey (rank, badges, chart, recent rides)
 Record  → active ride (live) → crash overlay (conditional) → ride summary
-Places  → place detail | add place | (header) my places
+                             → ride share → save as route
+Places  → place detail | add place | (header) my places, routes
+Routes  → route detail → turn-by-turn navigation
 Garage  → bike detail → edit bike | add bike | (header) edit profile,
            my places, my shared rides → maintenance → add service log
 
 Full-screen (no bottom nav): Settings, Notifications, Edit Profile,
-User Profile (:uid), Ride Summary, Ride Share, Forum Thread/Post
+User Profile (:uid), Ride Summary, Ride Share, Forum Thread/Post,
+Create Forum, Routes list/detail/navigate, Save Route
 ```
 
 ---
@@ -68,19 +72,37 @@ User Profile (:uid), Ride Summary, Ride Share, Forum Thread/Post
 
 - **Maintenance screen** (`/home/maintenance?bikeId=`) — service log list per bike, reminders shown as "every N km", delete a log entry, empty state ("No active bike" / "No service logs yet").
 - **Add service log screen** (`/home/maintenance/add`).
+- **Service types** (expanded 2026-08-01): the original Oil Change / Air Filter / Chain Lube / Tire Check plus Radiator-Coolant, Front Disc Pads, Rear Drum Pads, Brake Fluid, Spark Plug, Battery, Valve Clearance, Clutch Cable and Suspension — and a **Custom** type that requires the rider to name the service ("What did you service?"), shown by that name in the log list.
+- **Reminders** cover the original four plus brake fluid and front disc pads. The rest are log-only by design: a card per type would bury the ones that matter. See `_reminderTypes` in `maintenance_provider.dart`.
 
 ## 6. Places / POI directory (`features/poi_directory`) — bottom nav tab "Places"
 
-- **Places list screen** — nearby places, "import nearby places" (Overpass-backed), "Add place" FAB, empty state.
+- **Places list screen** — nearby places, "import nearby places" (Overpass-backed), "Add place" FAB, empty state; header shortcut to **Routes**.
 - **Place detail screen** — address, phone, hours, star rating, **submit a review**.
 - **Add place screen**.
 - **My places screen** (`/places/mine`, reached from Garage header menu) — places the current user added.
+- **Categories**: Fuel, Garage, Parts, and **Recreation** (added 2026-08-01 — biker cafes, restaurants and viewpoints; the Overpass import pulls `amenity=cafe`, `amenity=restaurant` and `tourism=viewpoint` for it).
+
+## 6a. Routes (`features/routes`) — reached from the Places header
+
+Added 2026-08-01. Built on the route data layer that had existed with no UI.
+
+- **Routes list** (`/routes`) — "My routes" and "Discover" (public routes from any rider) tabs; cards show a map thumbnail, distance, times-ridden and a private/public badge.
+- **Save as route** (`/routes/save/:rideId`) — reached from the end-of-ride share screen. Name + description, private/public switch; the track is re-derived from `RidePointDao`.
+- **Route detail** (`/routes/:routeId`) — full map, stats, public/private toggle, delete, the derived turn list, and "Start navigation".
+- **Turn-by-turn navigation** (`/routes/:routeId/navigate`) — live follow-the-line guidance: instruction banner with distance to the next turn, off-route warning past 100 m, distance remaining, speed-based ETA, wakelock held while navigating.
+  - **Offline and geometric.** Turns are derived from the route's own recorded polyline (`turn_instruction.dart`) — no routing engine, no API key, no recurring cost. The trade-off: no street names, no lane guidance, and it does **not** reroute — it tells the rider they're off route rather than inventing a new path. Street names would need map matching (Phase 3 in `HANDOFF_Document.md`).
 
 ## 7. Social (`features/social`, `features/forums`) — bottom nav tab "Social"
 
 - **Feed tab** — shared rides with score, comment count, inline comments; "Find riders" (search by username); empty state pointing users to share a ride from its summary screen.
-- **Forums tab** (`forums_home_screen.dart`) — forum list, search, → **forum thread screen** → **new post** (bottom sheet) → **post detail screen**.
-- **Ride share screen** (`/ride/share/:rideId`).
+  - Each card renders the ride's **route map** (Strava-style). With a photo, photo and map sit side by side; without one, the map spans the card.
+  - Rides carry an optional **caption**, written on the share screen.
+- **Forums tab** (`forums_home_screen.dart`) — "Your bikes" forums (both brand-level *and* model-level, e.g. Yamaha and Yamaha RX100), Topics, **Rider forums**, and brand search → **forum thread screen** → **new post** (bottom sheet) → **post detail screen**.
+  - The "Your bikes" list is cached in `SharedPreferences` keyed by a garage signature, so it no longer re-runs a Firestore transaction per bike on every visit.
+  - **Rider-created forums** (`/forums/create`): the creator becomes a maintainer and can appoint others (by UID — a beta shortcut). Maintainers and the creator can delete posts/replies; riders can always delete their own. The global admin (`the.abraar.rar@gmail.com`) can moderate anywhere. Enforced in `firestore.rules`, not just client-side.
+  - Topics now include Engine Rebuild, Mileage Tips and Engine Oil Review.
+- **Ride share screen** (`/ride/share/:rideId`) — caption, photo, audience, and **Save as route**.
 - **My shared rides screen** (`/rides/mine`, reached from Garage header menu) — delete a shared ride.
 - **Notifications screen** (`/notifications`).
 - **User profile screen** (`/profile/:uid`) — public profile view, showing a rider's bikes.
@@ -95,5 +117,7 @@ User Profile (:uid), Ride Summary, Ride Share, Forum Thread/Post
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
-- Fuel log, documents wallet, curated "best roads nearby", and turn-by-turn navigation from the competitor feature map in `HANDOFF_Document.md` §12 are not built.
+- Fuel log, documents wallet and curated "best roads nearby" from the competitor feature map in `HANDOFF_Document.md` Part 2 are not built. (Turn-by-turn navigation now IS — see §6a — though geometrically, not via a routing engine.)
+- **Discovered (public) routes can't be opened yet.** A route doc lives under `users/{uid}/routes/{id}`, and `routeByIdProvider` looks it up under the *signed-in* rider's uid, so only your own routes have a working detail screen. Opening someone else's needs the owner uid threaded through the route params. The Discover cards are deliberately non-tappable rather than tappable-and-broken.
 - iOS Simulator screenshots for every screen above are still outstanding — see the note at the top of this file.
+- **None of the 2026-08-01 feature work below has been exercised on a device** — it is verified by `flutter analyze`, 363 passing tests, and a release build only. See "Done, but NOT yet verified" in `HANDOFF_Document.md`.

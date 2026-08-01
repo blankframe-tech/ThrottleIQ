@@ -38,7 +38,18 @@ this is the first build meant for external (non-owner) hands. The
 `carbon-mono` branch was also deleted; `main` now carries both UI modes via
 the runtime theme toggle below, so the branch no longer serves a purpose.
 
-**Just shipped:** a rebrand / theming pass — a new dual theme system
+**Backlog pass, 2026-08-01 (later the same day):** the whole of
+`TODO next.md` and the codeable half of the "To do" list below were worked
+through in one session. Landed: forum moderation + rider-created forums,
+ride captions + Strava-style route maps on feed cards, a `recreation`
+place category, **saved routes with offline turn-by-turn navigation**
+(new `features/routes/`), expanded + rider-nameable maintenance types,
+the maintenance bottom-nav bug fix, and average speed redefined as
+distance ÷ moving time. Test suite went 287 → 363. Every judgement call
+made along the way is written up in `Assumptions Made.md` — read that
+before questioning why something was scoped the way it was.
+
+**Just shipped (earlier that day):** a rebrand / theming pass — a new dual theme system
 (*Carbon Mono* dark instrument-panel theme, default, vs. *Editorial* light
 warm-paper theme; `app_theme_style.dart` + `theme_style_provider.dart`)
 wired into Settings' Appearance section, new logo/icon assets
@@ -59,7 +70,8 @@ the now-cached build succeeded in ~40s. Not yet root-caused — if it
 recurs, just retry once before assuming a real provisioning problem.
 
 ### Known Limitations (Documented, Not Bugs)
-- **Avg speed still mean-of-samples** (will improve to distance/movingTime after beta)
+- ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
+- **Navigation is geometric, not routed** — turn-by-turn follows a saved route's own polyline: no street names, no lane guidance, and no rerouting (it reports "off route" instead). Deliberate: no routing engine or API key exists. See `Assumptions Made.md`.
 - **Sensor calibration**: Still heuristic (GPS fusion deferred to v1.1)
 - **POI search**: Geohash-based (simple), not real-time autocomplete
 - **Offline-first limit**: ~10MB local DB on typical device; cleanup policy on rotation
@@ -104,6 +116,11 @@ backend or a real device. **Treat each as unproven until tested.**
 - [ ] **Google sign-in end-to-end** — config + code are in place; needs one real tap-through on a device.
 - [ ] **Firestore rules under real traffic** — rules deployed but only compiler-checked; exercise with a real account (read own rides, fail reading someone else's).
 - [x] ~~Live-share viewer~~ **HOSTED 2026-07-14** at `throttleiqfb.web.app/live/{token}` (HTTP 200 verified); end-to-end with a live ride still needs a device test.
+- [ ] **The entire 2026-08-01 backlog pass** — forums moderation + rider-created forums, ride captions, feed route maps, recreation places, saved routes, turn-by-turn navigation, expanded maintenance types, the moving-time average speed. All of it is verified by `flutter analyze` (0 errors), 363 passing tests, and a successful release build — **none of it has been touched on a real device.** The riskiest untested paths, in order:
+  1. **Turn-by-turn navigation** — the geometry is unit-tested, but nothing has confirmed the banner advances sensibly at real road speeds, or that the 30 m "turn reached" / 100 m "off route" thresholds feel right on an actual bike. Tune these from a real ride.
+  2. **The deployed Firestore rules** — forum moderation and route publishing were written and deployed but never exercised against a live account. Confirm a maintainer really can delete a post, and that a non-maintainer really can't.
+  3. **The `SharedPreferences` garage-forum cache** — verify adding a bike actually refreshes the "Your bikes" list rather than serving a stale cache.
+  4. **DB schema 6 → 7** (`custom_label` on `maintenance_logs`) — migration is written but has only ever run on a fresh install here. Test an *upgrade* over an existing install.
 - [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator.
 
 ---
@@ -131,13 +148,14 @@ backend or a real device. **Treat each as unproven until tested.**
 - [ ] Bump `version:` in `pubspec.yaml` (versionCode) for every new upload
 
 ### Product (v1.1+)
-- [ ] Average speed = distance ÷ moving time (currently mean-of-samples)
+- [x] ~~Average speed = distance ÷ moving time~~ **DONE 2026-08-01** (`average_speed.dart`, 12 tests)
 - [ ] Sensor calibration via GPS fusion (current: heuristic axis pick)
 - [ ] Crash-detector threshold tuning from real false-positive logs
 - [ ] Geohash search → proper neighbor-table implementation (current neighbor calc is approximate)
-- [ ] Weather on record screen (OpenWeather)
+- [ ] Weather on record screen (OpenWeather) — needs an API key, none available
 - [ ] Leaderboards (smoothness-based), clubs & events
-- [ ] Turn-by-turn curvy-route navigation
+- [x] ~~Turn-by-turn navigation~~ **DONE 2026-08-01**, but *following a saved route*, not curvy-route *planning*. Planning a new route still needs a routing engine (Calimoto/Rever's core, XL/T3 — see Part 2).
+- [ ] **Open discovered (public) routes** — `routeByIdProvider` resolves routes under the signed-in rider's uid, so only your own open. Thread the owner uid through the route params.
 - [ ] iOS build & TestFlight (config scaffolding exists; needs a Mac + Apple Developer account)
 
 ---
@@ -152,7 +170,10 @@ backend or a real device. **Treat each as unproven until tested.**
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release APK on GitHub, matches `pubspec.yaml` at `1.0.0-beta.1+1`; all prior tags/releases were deleted 2026-08-01 (see TL;DR) |
-| Test suite | 287/287 green as of 2026-08-01 |
+| Test suite | 363/363 green as of 2026-08-01 (was 287 before the backlog pass) |
+| Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
+| Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` AND in `firestore.rules`. Both must change together; move to a custom claim before public launch |
+| DB schema | v7 (`custom_label` on `maintenance_logs`, added 2026-08-01) |
 
 ---
 
