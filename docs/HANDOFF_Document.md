@@ -51,6 +51,13 @@ this release went out — see "Done, but NOT yet verified" for exactly
 what's still unproven (the Editorial toggle itself hasn't been tap-tested
 live on a device, only exercised via new automated provider tests).
 
+**Known flake:** the first `flutter run --release -d <device>` on a
+physical iPhone failed at the install/launch step right after a clean
+Xcode build ("Could not run ... Try launching Xcode") even though
+`devicectl` showed the device as paired/available; an immediate retry with
+the now-cached build succeeded in ~40s. Not yet root-caused — if it
+recurs, just retry once before assuming a real provisioning problem.
+
 ### Known Limitations (Documented, Not Bugs)
 - **Avg speed still mean-of-samples** (will improve to distance/movingTime after beta)
 - **Sensor calibration**: Still heuristic (GPS fusion deferred to v1.1)
