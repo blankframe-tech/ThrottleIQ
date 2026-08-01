@@ -147,14 +147,14 @@ backend or a real device. **Treat each as unproven until tested.**
     --enable-ttl
   ```
   Note: documents written *before* the fix still hold string expiries and will never be reaped. Backfill them or accept the leftovers.
-- [ ] **Deploy the privacy policy**: `firebase deploy --only hosting` publishes `public/privacy.html` to `https://throttleiqfb.web.app/privacy.html`. Play Console needs that URL to be live and anonymously reachable before the listing can be submitted.
+- [x] ~~**Deploy the privacy policy**~~ **DONE 2026-08-01** — live at [`https://throttleiqfb.web.app/privacy.html`](https://throttleiqfb.web.app/privacy.html) (HTTP 200 verified anonymously). Paste that URL into the Play Console listing and the Data Safety form. Content is derived from what the code actually does; re-check §1–§4 whenever the data flows change.
 - [x] ~~**Sync `ride_points` (GPS trails) to Firestore**~~ **DONE 2026-08-01** (`ride_track_codec.dart` + `CloudRepository.uploadRideTrack`/`downloadRideTrack`). Trails are chunked into `users/{uid}/rides/{rideId}/track/{i}` docs of 500 positional points — one doc per point would have been thousands of writes per ride. Upload runs after the ride doc so a track can't orphan; download is on-demand and never clobbers local points. Track docs are owner-only in the rules. **Untested against a real account** — verify a reinstall actually restores polylines.
 
 ### Play Store
+- [x] ~~Privacy policy page~~ **DONE** — `https://throttleiqfb.web.app/privacy.html`
 - [ ] Google Play developer account ($25 one-time)
 - [ ] Build an **App Bundle** (`flutter build appbundle`) — Play prefers `.aab` over `.apk`
 - [ ] Internal testing track → closed beta → production
-- [ ] Privacy policy page (required for apps using location + Play data-safety form)
 - [ ] Bump `version:` in `pubspec.yaml` (versionCode) for every new upload
 
 ### Product (v1.1+)
