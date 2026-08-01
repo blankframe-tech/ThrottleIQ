@@ -261,7 +261,38 @@ verified by deliberately reintroducing the old implementation.
 
 ---
 
-## 8. QA report
+## 8. "The logo doesn't switch with the theme" — it did; it just wasn't on screen
+
+**Status:** Resolved 2026-08-01. Not a defect in the swap logic.
+
+Reported by the project owner. `AppLogo` watches `themeStyleProvider` and
+picks `throttleiq-icon-dark.svg` / `-light.svg` correctly — confirmed by
+four widget tests in `app/test/shared/app_logo_test.dart`, including the
+`const AppLogo(...)` case (const canonicalizes the *widget*, not the
+*element*, so it still rebuilds on a provider change — this is the thing
+everyone assumes is the bug, so it's pinned by a test).
+
+**The real problem:** `AppLogo` was only used on the splash and login
+screens, which a signed-in rider never sees. Toggling appearance in
+Settings appeared to do nothing to the logo because there was no logo
+rendered anywhere to change.
+
+**Fix:** the mark now renders under the Appearance control in Settings,
+captioned with which variant is active. Verified visually in both themes.
+
+**Methodology note worth keeping.** While investigating, editing the
+simulator's preferences plist directly appeared to show the theme *not*
+restoring on launch — which looked like a second, worse bug. It was an
+artefact: `cfprefsd` had the plist cached and served the app a stale
+value, silently discarding the edit. Writing through
+`xcrun simctl spawn <device> defaults write <bundle> flutter.theme_style
+-string editorial` worked, and persistence restored correctly. **Never
+edit a simulator app's plist directly to set up a test** — go through
+`defaults`, or you will chase a bug that isn't there.
+
+---
+
+## 9. QA report
 
 **Status:** Not started.
 
