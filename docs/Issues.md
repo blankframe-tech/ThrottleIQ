@@ -163,7 +163,62 @@ in `HANDOFF_Document.md`.
 
 ---
 
-## 5. QA report
+## 5. Missing Firestore composite indexes (Discover + Rider forums)
+
+**Status:** Fixed and deployed 2026-08-01.
+
+Two new queries shipped without the composite indexes they require, so
+both surfaces rendered a red `failed-precondition` error dump instead of
+content:
+
+| Query | Index needed |
+|---|---|
+| `getPublicRoutes()` — `collectionGroup('routes').where('isPublic').orderBy('timesRidden')` | `routes`, **COLLECTION_GROUP** scope, `isPublic ASC, timesRidden DESC` |
+| `getCustomForums()` — `forums.where('type').orderBy('createdAt')` | `forums`, COLLECTION scope, `type ASC, createdAt DESC` |
+
+Both are now in `firestore.indexes.json` and deployed.
+
+**Why the tests didn't catch it:** a missing index is a *runtime* failure
+from real Firestore. Nothing in the unit suite talks to Firestore, so
+`flutter analyze` and 402 green tests said nothing about it. Only running
+the app did.
+
+**Rule for next time:** any Firestore query combining a `where` on one
+field with an `orderBy` on another needs a composite index, and a
+`collectionGroup` query needs one scoped `COLLECTION_GROUP` specifically —
+a same-named `COLLECTION`-scoped index will NOT satisfy it. Add the index
+in the same commit as the query, and check `firestore.indexes.json`
+whenever a repository gains a filtered+sorted read.
+
+---
+
+## 6. Routes screen was unreachable and inescapable
+
+**Status:** Fixed 2026-08-01.
+
+Two independent UX defects in the new Routes feature, both found by
+looking at the running app rather than the code:
+
+1. **No way in.** The only entry point was an icon-only `IconButton` in
+   the Places app bar with a `tooltip`. Tooltips require hover and never
+   appear on touch, so the entire feature was invisible — a reviewer
+   looking straight at the Places tab could not find it. Replaced with a
+   labelled row at the top of the Places body: "Routes — roads worth
+   riding, yours and other riders'".
+2. **No way out.** `RoutesListScreen` (and `RouteDetailScreen`) relied on
+   `AppBar`'s automatic back button, which Flutter only renders when the
+   Navigator has something to pop. Reached by deep link or a cold launch
+   straight to `/routes`, there was no back affordance at all. Both now
+   set an explicit `leading` that pops when `context.canPop()` and
+   otherwise `go`es to the tab the screen belongs under.
+
+**Watch for:** the same pattern in any future full-screen route. Relying
+on the automatic leading is fine only if the screen can *never* be the
+first route on the stack — which deep links make hard to guarantee.
+
+---
+
+## 7. QA report
 
 **Status:** Not started.
 
