@@ -107,6 +107,21 @@ Added 2026-08-01. Built on the route data layer that had existed with no UI.
 - **Notifications screen** (`/notifications`).
 - **User profile screen** (`/profile/:uid`) — public profile view, showing a rider's bikes.
 
+## 7a. Home-screen widgets (`core/services/home_widget_service.dart`)
+
+Added 2026-08-01. Three widgets, styled Carbon Mono (carbon background, lime accent, monospace, sharp corners):
+
+| Widget | Size | Shows |
+|---|---|---|
+| **Start ride** | 2×1 | A button that opens the app on the Record screen |
+| **Ride stats** | 4×2 | Distance this week, total distance, ride count |
+| **Next service** | 4×1 | Active bike, the most urgent due service, km until due; flips lime → red when overdue |
+
+- **Android is fully working** — no manual step.
+- **iOS ships as sources plus a numbered Xcode README** (`app/ios/ThrottleIQWidget/README.md`). The extension target must be added once through the Xcode GUI; **the iOS widgets do not exist until someone does that.** The one step people miss is adding the App Group capability to *both* the Runner and widget targets.
+- Data republishes on app start, after a ride is finalized, and after a service log is added.
+- The Start-ride widget **navigates to Record; it does not auto-start a recording.** A home-screen tap silently beginning a GPS recording would be surprising — the slide-to-start gesture keeps that deliberate.
+
 ## 8. Profile & settings (`features/profile`)
 
 - **Settings screen** (`/settings`) — profile summary, **Appearance** (theme switch: *Carbon Mono* dark instrument-panel theme vs. *Editorial* light warm-paper theme — added 2026-08-01, see `app/lib/core/theme/theme_style_provider.dart`), **Emergency Contacts** (add/delete; used by crash-detection escalation), **Sign Out**.

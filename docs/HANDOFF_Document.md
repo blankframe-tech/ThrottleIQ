@@ -44,10 +44,19 @@ through in one session. Landed: forum moderation + rider-created forums,
 ride captions + Strava-style route maps on feed cards, a `recreation`
 place category, **saved routes with offline turn-by-turn navigation**
 (new `features/routes/`), expanded + rider-nameable maintenance types,
-the maintenance bottom-nav bug fix, and average speed redefined as
-distance ÷ moving time. Test suite went 287 → 363. Every judgement call
-made along the way is written up in `Assumptions Made.md` — read that
-before questioning why something was scoped the way it was.
+the maintenance bottom-nav bug fix, average speed redefined as
+distance ÷ moving time, GPS trail sync, **home-screen widgets** (Android
+working; iOS needs one Xcode step), the published privacy policy, and
+beta data-reset tooling. Test suite went 287 → **402**.
+
+**Two real defects were surfaced and fixed along the way** — both worth
+reading in `Issues.md`: live-share sessions were **world-listable** by
+unauthenticated clients (§3), and the planned live-session TTL policy
+could never have deleted anything (§4).
+
+Every judgement call made along the way is written up in
+`Assumptions Made.md` — read that before questioning why something was
+scoped the way it was.
 
 **Just shipped (earlier that day):** a rebrand / theming pass — a new dual theme system
 (*Carbon Mono* dark instrument-panel theme, default, vs. *Editorial* light
@@ -122,6 +131,7 @@ backend or a real device. **Treat each as unproven until tested.**
   3. **The `SharedPreferences` garage-forum cache** — verify adding a bike actually refreshes the "Your bikes" list rather than serving a stale cache.
   4. **DB schema 6 → 7** (`custom_label` on `maintenance_logs`) — migration is written but has only ever run on a fresh install here. Test an *upgrade* over an existing install.
   5. **GPS trail sync** — record a ride, let it sync, reinstall, and confirm the ride's polyline comes back rather than an empty map.
+  6. **Home-screen widgets** — Android widgets are confirmed *present in the built APK* (via `aapt2`) but have never been added to a real launcher. Add all three, confirm they show placeholders before any data and real values after a ride, and that the Start-ride widget opens on Record.
 - [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator.
 
 ---
@@ -154,7 +164,8 @@ backend or a real device. **Treat each as unproven until tested.**
 - [x] ~~Privacy policy page~~ **DONE** — `https://throttleiqfb.web.app/privacy.html`
 - [ ] ❓ **Decide the publisher identity — blocks the listing.** The privacy policy that was replaced on 2026-08-01 named **"Blankframe.tech"** as publisher, with contact `blankframe.technologies@gmail.com`; the GitHub org is `blankframe-tech`. The new policy deliberately names **no company** — it says "an independent, solo-developer project" and uses `the.abraar.rar@gmail.com` — because inventing a legal entity in a privacy policy is not a call to make on someone's behalf. **If Blankframe.tech is the real publishing entity, the policy needs it added**, since Play Console expects the listing's developer name to line up with the policy. Old file is recoverable from git history (`store_listing/privacy-policy.html`, deleted in this pass).
 - [ ] Google Play developer account ($25 one-time)
-- [ ] Build an **App Bundle** (`flutter build appbundle`) — Play prefers `.aab` over `.apk`
+- [x] ~~Build an **App Bundle**~~ **VERIFIED 2026-08-01** — `flutter build appbundle --release` produces `app/build/app/outputs/bundle/release/app-release.aab` (57.0 MB). Rebuild it after any version bump; the artifact itself isn't committed.
+- [ ] **Add the iOS widget extension target in Xcode** — see `app/ios/ThrottleIQWidget/README.md`. One-time GUI step; iOS widgets don't exist until it's done. Android needs nothing.
 - [ ] Internal testing track → closed beta → production
 - [ ] Bump `version:` in `pubspec.yaml` (versionCode) for every new upload
 
@@ -181,7 +192,8 @@ backend or a real device. **Treat each as unproven until tested.**
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release APK on GitHub, matches `pubspec.yaml` at `1.0.0-beta.1+1`; all prior tags/releases were deleted 2026-08-01 (see TL;DR) |
-| Test suite | 363/363 green as of 2026-08-01 (was 287 before the backlog pass) |
+| Test suite | 402/402 green as of 2026-08-01 (was 287 before the backlog pass) |
+| Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` AND in `firestore.rules`. Both must change together; move to a custom claim before public launch |
 | DB schema | v7 (`custom_label` on `maintenance_logs`, added 2026-08-01) |
