@@ -21,6 +21,7 @@ import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
+import '../../features/social/presentation/screens/group_ride_map_screen.dart';
 import '../../features/forums/presentation/screens/create_forum_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
@@ -85,6 +86,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/auth/onboarding', builder: (_, __) => const OnboardingScreen()),
       // Full-screen ride routes (no shell)
       GoRoute(path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
+      // Group ride live map. Full-screen like /ride/active — it must NOT go
+      // inside the ShellRoute. `?start=1` is set by the "Ride with friends"
+      // flow; the destination screen starts the recording rather than the
+      // button, so RecordScreen is torn down first and can't redirect the
+      // rider onto the solo ride screen mid-navigation.
+      GoRoute(
+        path: '/group-ride/:groupRideId',
+        builder: (_, state) => GroupRideMapScreen(
+          groupRideId: state.pathParameters['groupRideId']!,
+          autoStartRide: state.uri.queryParameters['start'] == '1',
+        ),
+      ),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
       // The rider's OWN profile, read-only. Same screen as '/profile/:uid'

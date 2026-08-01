@@ -51,7 +51,9 @@ Create Forum, Routes list/detail/navigate, Save Route
 
 ## 2. Record a ride (`features/ride`)
 
-- **Record screen** (center tab, default screen) — shows the active bike (or a warning + "Add Bike" CTA if none is selected), "swipe right" / "slide to start ride" gesture to begin recording, notifications bell, settings shortcut.
+- **Record screen** (center tab, default screen) — reordered 2026-08-01, top to bottom: **greeting → quote → bike picker → ride with friends → stats → slide to start**. Notifications bell and settings shortcut sit above. Shows a warning + "Add Bike" CTA when no bike is selected.
+  - **Casual, time-aware greeting** (`core/utils/greetings.dart`) — six buckets by hour (late night / early morning / morning / afternoon / evening / night), five variants each ("Late night runs, huh?", "Cold start, clear roads.", "Golden hour. Go."). Pure and unit-tested, with an injectable `Random`; rolled once per screen build so a provider tick doesn't reshuffle it.
+  - **Quote** — compact single block (max 3 lines). The large speedometer image that used to sit above it was removed 2026-08-01; it dominated the screen and pushed everything useful below the fold.
 - **Active ride screen** (`/ride/active`, full-screen) — live map + stats, pause/resume, end ride (with confirmation), **share live location** (generates a `/live/{token}` link via SMS/share sheet, hosted at `throttleiqfb.web.app`), and a full-screen **crash-detected "Are you OK?" overlay** with a dismiss countdown.
 - **Ride summary screen** (`/ride/summary/:rideId`) — post-ride score (out of 100), map/route, **Share** (posts to the social feed), **Export JSON**, **Export GPX**, "Save & done".
 
@@ -64,9 +66,9 @@ Create Forum, Routes list/detail/navigate, Save Route
 
 ## 4. Garage (`features/garage`) — bottom nav tab "Garage"
 
-- **Garage screen** — bike list; header menu → **Edit Profile**, **My Places**, **My Shared Rides**; empty state with "Add Bike" CTA.
+- **Garage screen** — bike list; header menu → **Profile**, **My Places**, **My Shared Rides**; empty state with "Add Bike" CTA.
 - **Add/Edit Bike screen** (`/home/garage/add`, `/home/garage/:bikeId/edit`).
-- **Bike detail screen** (`/home/garage/:bikeId`) — bike info, delete (with confirmation), **"Discuss this bike"** deep link into the matching forum thread.
+- **Bike detail screen** (`/home/garage/:bikeId`) — bike info, delete (with confirmation), **"Discuss this bike"** deep link into the matching forum thread. Deleting a bike removes its rides, their GPS points and its maintenance logs; it silently deadlocked before 2026-08-01 (`Issues.md` §7).
 
 ## 5. Maintenance (`features/maintenance`) — reached from Garage/bike detail
 

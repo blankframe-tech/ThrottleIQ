@@ -12,6 +12,7 @@ import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
+import '../../../social/presentation/widgets/ride_with_friends_button.dart';
 import '../providers/ride_recording_provider.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
@@ -197,12 +198,10 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                 ),
               const SizedBox(height: 12),
 
-              // 4. Ride with friends — owned by another agent. Drop the button
-              // widget here, between the bike picker above and the stat chips
-              // below; it should be full-width (the Column is
-              // crossAxisAlignment.stretch) and followed by its own
-              // SizedBox(height: 12) spacer.
-              // TODO(ride-with-friends): insert the "Ride with friends" button here.
+              // 4. Ride with friends. The widget owns the whole flow — friend
+              // picker, group-ride creation, invites and navigation.
+              const RideWithFriendsButton(),
+              const SizedBox(height: 12),
 
               // 5. Stat chips
               if (activeBike != null)
