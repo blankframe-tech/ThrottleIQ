@@ -78,6 +78,15 @@ service cloud.firestore {
       // User rides subcollection
       match /rides/{rideId} {
         allow read, write: if request.auth.uid == uid;
+
+        // The ride's GPS trail, stored as chunked documents rather than one
+        // doc per point (see ride_track_codec.dart). Owner-only, exactly like
+        // the parent ride — a raw track is the most location-sensitive data
+        // the app holds, and sharing a ride publishes a privacy-clipped copy
+        // onto the shared_rides doc instead of exposing this.
+        match /track/{chunkId} {
+          allow read, write: if request.auth.uid == uid;
+        }
       }
 
       // User bikes subcollection

@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../database/daos/ride_dao.dart';
 import '../database/daos/ride_point_dao.dart';
+import 'ride_track_codec.dart';
 
 class CloudRepository {
   static final CloudRepository _instance = CloudRepository._internal();
@@ -18,6 +19,7 @@ class CloudRepository {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late final RideDao _rideDao = RideDao();
+  late final RidePointDao _pointDao = RidePointDao();
 
   /// Upload unsynced rides to Firestore and mark them as synced
   Future<void> uploadRides(String uid, List<Map<String, dynamic>> rides) async {
@@ -167,6 +169,84 @@ class CloudRepository {
       pulledAny = true;
     }
     return pulledAny;
+  }
+
+  /// Uploads a ride's GPS trail as chunked `track` documents.
+  ///
+  /// Ride *metadata* has synced since 2026-07-23, but the point-by-point
+  /// track never had — so a rider reinstalling the app got their ride list
+  /// back with no lines on any map. This closes that.
+  ///
+  /// Idempotent: chunk documents are keyed by index and written with `set`,
+  /// so re-running overwrites rather than duplicating. Deliberately called
+  /// *after* the ride itself is synced, so a trail can never reference a ride
+  /// doc that doesn't exist yet.
+  Future<void> uploadRideTrack(String uid, String rideId) async {
+    final rows = await _pointDao.getForRide(rideId);
+    final chunks = chunkTrack(rows);
+    if (chunks.isEmpty) return;
+
+    final trackRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('rides')
+        .doc(rideId)
+        .collection('track');
+
+    // One batch per Firestore commit limit. Chunks are large documents, so
+    // this stays well under the 500-op cap in practice, but the loop makes
+    // that explicit rather than incidental.
+    final batch = _firestore.batch();
+    for (var i = 0; i < chunks.length; i++) {
+      batch.set(trackRef.doc('$i'), {
+        'index': i,
+        'points': chunks[i],
+        'syncedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  /// Pulls a ride's trail back down, on demand.
+  ///
+  /// Called when a ride's summary/share screen needs a polyline and the local
+  /// DB has none — never eagerly for every ride, since a full history could be
+  /// hundreds of thousands of points. Returns true if anything was written.
+  Future<bool> downloadRideTrack(String uid, String rideId) async {
+    final existing = await _pointDao.getForRide(rideId);
+    if (existing.isNotEmpty) return false; // Local data wins; never clobber it.
+
+    final snap = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('rides')
+        .doc(rideId)
+        .collection('track')
+        .get();
+    if (snap.docs.isEmpty) return false;
+
+    // Sort numerically by index — doc ids are strings, so Firestore's own
+    // ordering would place '10' before '2' and scramble the trail.
+    final docs = snap.docs.toList()
+      ..sort((a, b) {
+        final ai = (a.data()['index'] as num?)?.toInt() ??
+            int.tryParse(a.id) ??
+            0;
+        final bi = (b.data()['index'] as num?)?.toInt() ??
+            int.tryParse(b.id) ??
+            0;
+        return ai.compareTo(bi);
+      });
+
+    final rows = flattenTrack([
+      for (final doc in docs) (doc.data()['points'] as List<dynamic>? ?? const []),
+    ]);
+    if (rows.isEmpty) return false;
+
+    await _pointDao.insertBatch([
+      for (final row in rows) {...row, 'ride_id': rideId},
+    ]);
+    return true;
   }
 
   /// Store user profile data in Firestore

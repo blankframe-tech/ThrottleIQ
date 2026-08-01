@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/garage/presentation/providers/garage_provider.dart';
@@ -138,6 +138,21 @@ class SyncManager {
       // Upload to Firestore
       if (unsyncedRides.isNotEmpty) {
         await _cloudRepository.uploadRides(uid, unsyncedRides);
+
+        // Then each ride's GPS trail, strictly after the ride doc exists so a
+        // track can never point at a missing parent. A trail failure is
+        // logged and skipped rather than aborting the whole sync — the ride
+        // metadata is already safely up, and losing a polyline is far less
+        // bad than leaving the rest of the queue unsynced.
+        for (final ride in unsyncedRides) {
+          final rideId = ride['id'] as String?;
+          if (rideId == null) continue;
+          try {
+            await _cloudRepository.uploadRideTrack(uid, rideId);
+          } catch (e) {
+            debugPrint('[SyncManager] track upload failed for $rideId: $e');
+          }
+        }
       }
 
       if (unsyncedBikes.isNotEmpty) {
