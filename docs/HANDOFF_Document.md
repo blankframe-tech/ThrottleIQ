@@ -191,7 +191,7 @@ backend or a real device. **Treat each as unproven until tested.**
 | File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
-| Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release APK on GitHub, matches `pubspec.yaml` at `1.0.0-beta.1+1`; all prior tags/releases were deleted 2026-08-01 (see TL;DR) |
+| Latest release | [`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2) — signed release **APK + AAB**, matches `pubspec.yaml` at `1.0.0-beta.2+2`. Upload the `.aab` to Play, hand testers the `.apk`. (`beta-v1` is still there as the previous build.) |
 | Test suite | 402/402 green as of 2026-08-01 (was 287 before the backlog pass) |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
