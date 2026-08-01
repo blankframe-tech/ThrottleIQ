@@ -77,13 +77,13 @@ Create Forum, Routes list/detail/navigate, Save Route
 
 ## 6. Places / POI directory (`features/poi_directory`) — bottom nav tab "Places"
 
-- **Places list screen** — nearby places, "import nearby places" (Overpass-backed), "Add place" FAB, empty state; header shortcut to **Routes**.
+- **Places list screen** — nearby places, "import nearby places" (Overpass-backed), "Add place" FAB, empty state; a labelled **Routes** row at the top of the list (see §6a).
 - **Place detail screen** — address, phone, hours, star rating, **submit a review**.
 - **Add place screen**.
 - **My places screen** (`/places/mine`, reached from Garage header menu) — places the current user added.
 - **Categories**: Fuel, Garage, Parts, and **Recreation** (added 2026-08-01 — biker cafes, restaurants and viewpoints; the Overpass import pulls `amenity=cafe`, `amenity=restaurant` and `tourism=viewpoint` for it).
 
-## 6a. Routes (`features/routes`) — reached from the Places header
+## 6a. Routes (`features/routes`) — reached from the labelled row at the top of Places
 
 Added 2026-08-01. Built on the route data layer that had existed with no UI.
 
