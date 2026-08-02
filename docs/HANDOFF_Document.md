@@ -47,7 +47,7 @@ place category, **saved routes with offline turn-by-turn navigation**
 the maintenance bottom-nav bug fix, average speed redefined as
 distance ÷ moving time, GPS trail sync, **home-screen widgets** (Android
 working; iOS needs one Xcode step), the published privacy policy, and
-beta data-reset tooling. Test suite went 287 → **402**.
+beta data-reset tooling. Test suite went 287 → **489**.
 
 **Two real defects were surfaced and fixed along the way** — both worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
@@ -149,8 +149,8 @@ backend or a real device. **Treat each as unproven until tested.**
 - [ ] **Google sign-in end-to-end** — config + code are in place; needs one real tap-through on a device.
 - [ ] **Firestore rules under real traffic** — rules deployed but only compiler-checked; exercise with a real account (read own rides, fail reading someone else's).
 - [x] ~~Live-share viewer~~ **HOSTED 2026-07-14** at `throttleiqfb.web.app/live/{token}` (HTTP 200 verified); end-to-end with a live ride still needs a device test.
-- [x] ~~**Simulator smoke test of the backlog pass**~~ **PARTIALLY VERIFIED 2026-08-01** — run on the iPhone 17 simulator (iOS 26.5) against a real signed-in account. Confirmed rendering correctly: the Carbon Mono theme; the Forums "Your bikes" list showing **both** brand and model forums from real garage data; the Create-a-forum screen; the Routes list and its Discover tab; the new Recreation category chip in Places; and **feed cards drawing the ride's route map beside the photo**, with the "No route recorded" placeholder for rides with no track. This run found three real defects that the 402-test suite could not — two missing Firestore composite indexes and the Routes reachability/back-button problems (`Issues.md` §5 and §6), all since fixed and deployed. Still not exercised: recording an actual ride, and everything below.
-- [ ] **The rest of the 2026-08-01 backlog pass** — forums moderation, ride captions, saving a route, turn-by-turn navigation, expanded maintenance types, the moving-time average speed. Verified by `flutter analyze` (0 errors), 402 passing tests, and release builds — **none of it has been exercised by actually riding.** The riskiest untested paths, in order:
+- [x] ~~**Simulator smoke test of the backlog pass**~~ **PARTIALLY VERIFIED 2026-08-01** — run on the iPhone 17 simulator (iOS 26.5) against a real signed-in account. Confirmed rendering correctly: the Carbon Mono theme; the Forums "Your bikes" list showing **both** brand and model forums from real garage data; the Create-a-forum screen; the Routes list and its Discover tab; the new Recreation category chip in Places; and **feed cards drawing the ride's route map beside the photo**, with the "No route recorded" placeholder for rides with no track. This run found three real defects that the test suite could not — two missing Firestore composite indexes and the Routes reachability/back-button problems (`Issues.md` §5 and §6), all since fixed and deployed. Still not exercised: recording an actual ride, and everything below.
+- [ ] **The rest of the 2026-08-01 backlog pass** — forums moderation, ride captions, saving a route, turn-by-turn navigation, expanded maintenance types, the moving-time average speed. Verified by `flutter analyze` (0 errors), 489 passing tests, and release builds — **none of it has been exercised by actually riding.** The riskiest untested paths, in order:
   1. **Turn-by-turn navigation** — the geometry is unit-tested, but nothing has confirmed the banner advances sensibly at real road speeds, or that the 30 m "turn reached" / 100 m "off route" thresholds feel right on an actual bike. Tune these from a real ride.
   2. **The deployed Firestore rules** — forum moderation and route publishing were written and deployed but never exercised against a live account. Confirm a maintainer really can delete a post, and that a non-maintainer really can't.
   3. **The `SharedPreferences` garage-forum cache** — verify adding a bike actually refreshes the "Your bikes" list rather than serving a stale cache.
@@ -220,7 +220,7 @@ backend or a real device. **Treat each as unproven until tested.**
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2) — signed release **APK + AAB**, matches `pubspec.yaml` at `1.0.0-beta.2+2`. Upload the `.aab` to Play, hand testers the `.apk`. (`beta-v1` is still there as the previous build.) |
-| Test suite | 485/485 green as of 2026-08-01 (was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
+| Test suite | 489/489 green as of 2026-08-02 (was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` AND in `firestore.rules`. Both must change together; move to a custom claim before public launch |
