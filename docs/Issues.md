@@ -299,3 +299,24 @@ edit a simulator app's plist directly to set up a test** — go through
 _No QA pass has been written up yet. When one is done (manual smoke test,
 device walkthrough, or a scripted run), record findings here as dated
 sub-sections — one per pass — rather than overwriting this placeholder._
+
+---
+
+## 10. Stop hook blocked every session end, unconditionally (2026-08-02)
+
+**Status:** Fixed.
+
+`.claude/settings.json`'s `Stop` hook piped the hook's stdin JSON through
+`jq -r '.stop_hook_active // false'` to decide whether to allow the turn to
+end. `jq` isn't installed / on `PATH` on this machine, so the pipeline
+silently failed, `active` was always empty, and the hook took the `else`
+branch and returned `{"decision":"block", ...}` on **every** Stop event —
+including the re-invocation where `stop_hook_active` is `true` and the hook
+is supposed to stand down. In practice this meant the same "update the
+docs" reason fired every single time a turn tried to end, regardless of
+whether anything doc-worthy had changed, until the harness's own
+`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` override kicked in.
+
+**Fix:** rewrote the check to use `grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true'`
+against the raw stdin instead of `jq`, so it has no external-binary
+dependency. Verified against `true`/`false`/spaced JSON input.

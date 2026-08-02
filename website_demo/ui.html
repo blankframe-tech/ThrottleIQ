@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThrottleIQ — UI Preview</title>
+<meta name="description" content="Real ThrottleIQ UI: Carbon Mono dark instrument-panel theme and Editorial warm-paper theme, side by side.">
+<link rel="icon" href="assets/icon-dark.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#0B0D10; --panel:#14181F; --line:#22282f; --text:#F5F7FA; --muted:#9AA5B1;
+    --blue:#3B82F6; --blue2:#60A5FA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+  }
+  a{color:inherit;}
+  img{max-width:100%; display:block;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 24px;}
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(11,13,16,0.82); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav.wrap{display:flex; align-items:center; justify-content:space-between; padding:16px 24px;}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px;}
+  .brand img{width:28px; height:28px;}
+  .navlinks{display:flex; gap:28px; font-size:14px; color:var(--muted);}
+  .navlinks a:hover, .navlinks a.active{color:var(--text);}
+  @media (max-width:760px){ .navlinks{display:none;} }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; padding:11px 20px; border-radius:999px;
+    font-size:14px; font-weight:600; border:1px solid var(--line); white-space:nowrap;
+  }
+  .btn-ghost{background:transparent;}
+  .btn-ghost:hover{border-color:#3a4250; background:rgba(255,255,255,0.03);}
+
+  .hero{padding:64px 0 40px; text-align:center;}
+  .kicker{font-size:12.5px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:#FF6A00; margin-bottom:14px;}
+  h1{font-size:clamp(30px,5vw,46px); font-weight:800; letter-spacing:-1px; margin-bottom:16px;}
+  .lede{max-width:600px; margin:0 auto; color:var(--muted); font-size:17px;}
+
+  .tabs{display:flex; justify-content:center; gap:10px; margin:36px 0 8px;}
+  .tab{
+    padding:10px 22px; border-radius:999px; border:1px solid var(--line); background:var(--panel);
+    font-size:14px; font-weight:600; cursor:pointer; color:var(--muted); transition:all .15s ease;
+  }
+  .tab.active{color:var(--bg); background:linear-gradient(135deg, var(--blue), var(--blue2)); border-color:transparent;}
+
+  .gallery{padding:24px 0 96px;}
+  .frame{
+    border:1px solid var(--line); border-radius:20px; overflow:hidden; background:var(--panel);
+    max-width:1000px; margin:0 auto;
+  }
+  .frame img{width:100%;}
+  .caption{text-align:center; color:var(--muted); font-size:13.5px; margin-top:18px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  footer{border-top:1px solid var(--line); padding:32px 0; color:#6b7580; font-size:13px; text-align:center;}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="brand"><img src="assets/icon-dark.svg" alt="ThrottleIQ"> ThrottleIQ</div>
+    <div class="navlinks">
+      <a href="index.html#features">Features</a>
+      <a href="index.html#architecture">Architecture</a>
+      <a href="index.html#trust">Safety &amp; Privacy</a>
+      <a href="index.html#roadmap">Roadmap</a>
+      <a href="ui.html" class="active">UI Preview</a>
+    </div>
+    <a class="btn btn-ghost" href="https://github.com/blankframe-tech/ThrottleIQ" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <div class="kicker">Real UI</div>
+    <h1>Two themes, one app.</h1>
+    <p class="lede">Every screen ships in both looks — switch anytime in Settings.
+      Carbon Mono is a dark instrument panel; Editorial is warm paper with bold black panels.</p>
+    <div class="tabs">
+      <div class="tab active" data-target="carbon">Carbon Mono</div>
+      <div class="tab" data-target="editorial">Editorial</div>
+    </div>
+  </section>
+
+  <section class="gallery wrap">
+    <div class="panel active" id="carbon">
+      <div class="frame"><img src="assets/ui/carbon-mono.png" alt="ThrottleIQ Carbon Mono theme — start ride, active ride, safety check-in, ride summary, journey, garage, maintenance screens" loading="lazy"></div>
+      <p class="caption">Carbon Mono — IBM Carbon-inspired dark panel, lime accent, red reserved for overdue/alert states.</p>
+    </div>
+    <div class="panel" id="editorial">
+      <div class="frame"><img src="assets/ui/editorial-bw.png" alt="ThrottleIQ Editorial theme — start ride, active ride, safety check-in, ride summary, journey, garage, maintenance screens" loading="lazy"></div>
+      <p class="caption">Editorial — warm off-white paper, bold black panels, big rounded cards, one clean accent pop.</p>
+    </div>
+  </section>
+</main>
+
+<footer>&copy; 2026 ThrottleIQ &middot; <a href="index.html">Back to overview</a></footer>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.target).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

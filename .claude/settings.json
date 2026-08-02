@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.stop_hook_active // false' | { read -r active; if [ \"$active\" = \"true\" ]; then printf '{}'; else printf '{\"decision\":\"block\",\"reason\":\"Before fully stopping: if this session changed app behavior, fixed or surfaced an issue, or changed project status, update docs/Features.md, docs/HANDOFF_Document.md, and/or docs/Issues.md to reflect it (skip docs/pitch.md, which is off-limits unless the user asks). If nothing doc-worthy changed this session, no action is needed \\u2014 just say so briefly and stop.\"}'; fi; }",
+            "command": "input=$(cat); if printf '%s' \"$input\" | grep -Eq '\"stop_hook_active\"[[:space:]]*:[[:space:]]*true'; then printf '{}'; else printf '{\"decision\":\"block\",\"reason\":\"Before fully stopping: if this session changed app behavior, fixed or surfaced an issue, or changed project status, update docs/Features.md, docs/HANDOFF_Document.md, and/or docs/Issues.md to reflect it (skip docs/pitch.md, which is off-limits unless the user asks). If nothing doc-worthy changed this session, no action is needed \\u2014 just say so briefly and stop.\"}'; fi",
             "timeout": 15
           }
         ]

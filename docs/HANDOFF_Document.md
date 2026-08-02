@@ -54,6 +54,30 @@ reading in `Issues.md`: live-share sessions were **world-listable** by
 unauthenticated clients (§3), and the planned live-session TTL policy
 could never have deleted anything (§4).
 
+**Pitch site added, 2026-08-02:** a static, dependency-free pitch/marketing
+page now lives at `website_demo/index.html` (was an empty placeholder
+folder before this), plus `website_demo/ui.html` — a real-UI preview page
+(headless-screenshotted from the `designs/` Carbon Mono / Editorial mockup
+HTML, saved to `designs/screenshots/`) linked next to Roadmap. No app code,
+behavior, or build changed — this is collateral only, not shipped with the
+app.
+
+**Hooked Model doc added, 2026-08-02:** `docs/hooked_throttleiq.md` applies
+Nir Eyal's Trigger/Action/Variable-Reward/Investment framework to the app,
+grounded in the actual codebase (what's live vs. dormant/absent — e.g.
+badges and rank-up fire with no celebration moment, `ChallengeType.streak`
+is an unused enum, no push/scheduled notifications exist at all yet). It
+explicitly avoids re-listing what's already backlogged in Part 2 below;
+read it alongside Part 2 rather than as a competing plan.
+
+**Marketing doc added, 2026-08-02:** `docs/marketing.md` — a BD-market
+go-to-market plan for the Play Store → iOS TestFlight → App Store launch
+sequence, targeting 1,000+ DAU. Surfaced two real, checked gaps worth
+fixing before spending on acquisition: `public/live-viewer.html` has no
+install call-to-action at all, and there's no Bangla anywhere (UI or Play
+Store listing). Builds on `hooked_throttleiq.md` for retention rather than
+duplicating it.
+
 Every judgement call made along the way is written up in
 `Assumptions Made.md` — read that before questioning why something was
 scoped the way it was.
