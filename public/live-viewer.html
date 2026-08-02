@@ -218,6 +218,49 @@
       background: #e2e8f0;
       color: #2d3748;
     }
+    .install-cta {
+      margin-top: 26px;
+      padding: 22px 20px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      text-align: center;
+    }
+    .install-cta h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .install-cta p {
+      margin: 0 0 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      opacity: 0.92;
+    }
+    .install-cta a.cta-button {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fff;
+      color: #4c51bf;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      margin-top: 10px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .install-cta a.cta-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    }
+    .install-cta .cta-note {
+      display: block;
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
 
     .battery-indicator {
       display: inline-block;
@@ -266,6 +309,7 @@
       </div>
 
       <div id="error" class="error hidden"></div>
+      <div id="installCtaError" class="install-cta hidden"></div>
 
       <div id="viewer" class="hidden">
         <div id="statusBanner" class="status-banner"></div>
@@ -313,6 +357,14 @@
           📋 Copy Share Link
         </button>
       </div>
+
+      <!-- Install call-to-action.
+           This page is the ONLY thing a non-user ever sees — someone watching
+           a friend ride, already interested — so it is the cheapest place to
+           convert. Rendered by renderInstallCta() into both this slot and the
+           error slot above, because an expired link is a dead end where the
+           CTA is the only useful thing left on the page. -->
+      <div id="installCta" class="install-cta hidden"></div>
     </div>
   </div>
 
@@ -436,6 +488,9 @@
     function updateUI(session) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('viewer').classList.remove('hidden');
+      // Idempotent — updateUI runs on every snapshot, renderInstallCta just
+      // rewrites the same markup rather than appending.
+      renderInstallCta('viewer');
 
       // Status banner. `status` is written by the app as one of
       // riding/paused/crash/completed, but an older or partially-written doc
@@ -509,10 +564,70 @@
       map.panTo(here);
     }
 
+    // ---------------------------------------------------------------------
+    // Install call-to-action
+    //
+    // Store links live here, in ONE place, and are deliberately null until
+    // the listings actually exist. A dead store link on the only page
+    // non-users ever see is worse than no link: it burns the one moment of
+    // interest you get. Set a URL below and its button appears automatically
+    // — no other edit needed.
+    //
+    // Until then the CTA points at the signed beta APK on GitHub, which is a
+    // real, working download today.
+    // ---------------------------------------------------------------------
+    const APP_LINKS = {
+      // e.g. 'https://play.google.com/store/apps/details?id=com.bft.throttleiq'
+      playStore: null,
+      // e.g. 'https://apps.apple.com/app/idXXXXXXXXX'
+      appStore: null,
+      directApk: 'https://github.com/blankframe-tech/ThrottleIQ/releases/latest',
+    };
+
+    function installCtaHtml() {
+      const buttons = [];
+      if (APP_LINKS.playStore) {
+        buttons.push(`<a class="cta-button" href="${APP_LINKS.playStore}" rel="noopener">▶ Get it on Google Play</a>`);
+      }
+      if (APP_LINKS.appStore) {
+        buttons.push(`<a class="cta-button" href="${APP_LINKS.appStore}" rel="noopener"> Download on the App Store</a>`);
+      }
+      // Only fall back to the raw APK when neither store listing is live —
+      // once a store link exists, sending people to a GitHub release instead
+      // would be a downgrade.
+      if (buttons.length === 0 && APP_LINKS.directApk) {
+        buttons.push(`<a class="cta-button" href="${APP_LINKS.directApk}" rel="noopener">⬇ Download the Android beta</a>`);
+      }
+      if (buttons.length === 0) return '';
+
+      const note = (buttons.length === 1 && !APP_LINKS.playStore && !APP_LINKS.appStore)
+        ? '<span class="cta-note">Currently in closed beta — Android only.</span>'
+        : '';
+
+      return `
+        <h3>Ride with ThrottleIQ</h3>
+        <p>Track your rides, share your location live, and keep your bike's service history in one place.</p>
+        ${buttons.join('')}
+        ${note}
+      `;
+    }
+
+    function renderInstallCta(which) {
+      const el = document.getElementById(which === 'error' ? 'installCtaError' : 'installCta');
+      if (!el) return;
+      const html = installCtaHtml();
+      if (!html) return; // No link configured — render nothing rather than an empty box.
+      el.innerHTML = html;
+      el.classList.remove('hidden');
+    }
+
     function showError(message) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error').classList.remove('hidden');
       document.getElementById('error').textContent = message;
+      // An expired or broken link is a dead end. The install prompt is the
+      // only useful thing left on the page, so it matters MORE here.
+      renderInstallCta('error');
     }
 
     function copyShareLink() {
