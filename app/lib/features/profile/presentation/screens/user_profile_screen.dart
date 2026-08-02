@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -148,7 +149,7 @@ class _ProfileBody extends ConsumerWidget {
                 ],
                 if (profile.createdAt != null) ...[
                   const SizedBox(height: 8),
-                  Text('Riding with us since ${DateFormat.yMMMM().format(profile.createdAt!)}',
+                  Text('Riding with us since ${DateFormat.yMMMM(kNumericLocale).format(profile.createdAt!)}',
                       style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                 ],
               ],

@@ -3,25 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/i18n/locale_provider.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/theme_style_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/emergency_contacts_provider.dart';
 
-/// Settings & profile: account info, emergency contacts, sign out.
+/// Settings & profile: account info, language, emergency contacts, sign out.
+///
+/// This is the pilot screen for localization — the first (and, for now, only)
+/// screen reading its copy from [AppLocalizations] instead of string literals.
+/// Every string it shows has a key in `lib/l10n/app_en.arb` and a real Bangla
+/// translation in `app_bn.arb`; `test/core/i18n/arb_parity_test.dart` fails the
+/// build if those two ever drift apart.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final user = ref.watch(currentUserProvider);
     final contacts = ref.watch(emergencyContactsNotifierProvider);
     final themeStyle = ref.watch(themeStyleProvider);
+    final appLocale = ref.watch(localeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -54,7 +64,7 @@ class SettingsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user?.displayName ?? 'Rider',
+                      Text(user?.displayName ?? l10n.riderFallbackName,
                           style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -73,7 +83,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── Appearance ─────────────────────────────────────────────────
-          Text('Appearance',
+          Text(l10n.appearanceSection,
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -89,9 +99,9 @@ class SettingsScreen extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _ThemeStyleOption(
-                    label: 'Carbon Mono',
-                    description: 'Dark, sharp, instrument-panel',
+                  child: _SegmentedOption(
+                    label: l10n.themeCarbonLabel,
+                    description: l10n.themeCarbonDescription,
                     selected: themeStyle == AppThemeStyle.carbonMono,
                     onTap: () => ref
                         .read(themeStyleProvider.notifier)
@@ -100,9 +110,9 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: _ThemeStyleOption(
-                    label: 'Editorial',
-                    description: 'Light, warm paper',
+                  child: _SegmentedOption(
+                    label: l10n.themeEditorialLabel,
+                    description: l10n.themeEditorialDescription,
                     selected: themeStyle == AppThemeStyle.editorial,
                     onTap: () => ref
                         .read(themeStyleProvider.notifier)
@@ -136,7 +146,7 @@ class SettingsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('App mark',
+                      Text(l10n.appMarkTitle,
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -144,8 +154,8 @@ class SettingsScreen extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         themeStyle == AppThemeStyle.carbonMono
-                            ? 'The dark mark, used on the splash and sign-in screens.'
-                            : 'The light mark, used on the splash and sign-in screens.',
+                            ? l10n.appMarkDarkDescription
+                            : l10n.appMarkLightDescription,
                         style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
@@ -157,10 +167,69 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
+          // ── Language ───────────────────────────────────────────────────
+          // Deliberately three options rather than a two-way English/Bangla
+          // toggle: "System default" is not the same as "English". A rider
+          // whose phone is already in Bangla should get Bangla without
+          // touching this screen, and should keep getting whatever their
+          // phone says later — pinning them to a language is an explicit act.
+          Text(l10n.languageSection,
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.languageSystemLabel,
+                    description: l10n.languageSystemDescription,
+                    selected: appLocale == AppLocale.system,
+                    onTap: () => ref
+                        .read(localeProvider.notifier)
+                        .setLocale(AppLocale.system),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.languageEnglishLabel,
+                    description: l10n.languageEnglishDescription,
+                    selected: appLocale == AppLocale.english,
+                    onTap: () => ref
+                        .read(localeProvider.notifier)
+                        .setLocale(AppLocale.english),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.languageBanglaLabel,
+                    description: l10n.languageBanglaDescription,
+                    selected: appLocale == AppLocale.bangla,
+                    onTap: () => ref
+                        .read(localeProvider.notifier)
+                        .setLocale(AppLocale.bangla),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
           // ── Emergency contacts ─────────────────────────────────────────
           Row(
             children: [
-              Text('Emergency Contacts',
+              Text(l10n.emergencyContactsSection,
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -169,13 +238,13 @@ class SettingsScreen extends ConsumerWidget {
               TextButton.icon(
                 onPressed: () => _showContactDialog(context, ref),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add'),
+                label: Text(l10n.addAction),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Notified if a crash is detected and you don\'t respond within 60 seconds.',
+            l10n.emergencyContactsDescription,
             style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
           ),
           const SizedBox(height: 12),
@@ -186,7 +255,7 @@ class SettingsScreen extends ConsumerWidget {
               child: Center(
                   child: CircularProgressIndicator(color: AppColors.primary)),
             ),
-            error: (e, _) => Text('Could not load contacts: $e',
+            error: (e, _) => Text(l10n.emergencyContactsLoadError('$e'),
                 style: TextStyle(color: AppColors.danger, fontSize: 13)),
             data: (list) => list.isEmpty
                 ? Container(
@@ -197,7 +266,7 @@ class SettingsScreen extends ConsumerWidget {
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Center(
-                      child: Text('No contacts yet — add someone you trust.',
+                      child: Text(l10n.emergencyContactsEmpty,
                           style: TextStyle(
                               fontSize: 13, color: AppColors.textSecondary)),
                     ),
@@ -262,7 +331,7 @@ class SettingsScreen extends ConsumerWidget {
               if (context.mounted) context.go('/auth/login');
             },
             icon: const Icon(Icons.logout, size: 18),
-            label: const Text('Sign Out'),
+            label: Text(l10n.signOutAction),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 48),
               foregroundColor: AppColors.danger,
@@ -326,9 +395,10 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
       backgroundColor: AppColors.surface,
-      title: Text('Add Emergency Contact',
+      title: Text(l10n.addEmergencyContactTitle,
           style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -336,39 +406,42 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
           TextField(
             controller: _nameCtrl,
             style: TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: InputDecoration(labelText: l10n.contactNameField),
           ),
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
             style: TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(labelText: 'Phone'),
+            decoration: InputDecoration(labelText: l10n.contactPhoneField),
           ),
           TextField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
             style: TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(labelText: 'Email (optional)'),
+            decoration:
+                InputDecoration(labelText: l10n.contactEmailFieldOptional),
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancelAction),
         ),
         ElevatedButton(
           onPressed: _submit,
-          child: const Text('Add'),
+          child: Text(l10n.addAction),
         ),
       ],
     );
   }
 }
 
-/// One tappable half of the Appearance segmented control.
-class _ThemeStyleOption extends StatelessWidget {
-  const _ThemeStyleOption({
+/// One tappable segment of a label-plus-description segmented control. Shared
+/// by Appearance (two segments) and Language (three) so the two controls can't
+/// drift apart visually.
+class _SegmentedOption extends StatelessWidget {
+  const _SegmentedOption({
     required this.label,
     required this.description,
     required this.selected,

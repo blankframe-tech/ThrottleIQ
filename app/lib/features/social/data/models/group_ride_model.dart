@@ -40,7 +40,12 @@ class GroupRideMemberModel {
     this.lastLocationUpdate,
   });
 
-  Map<String, dynamic> toFirestore() {
+  /// The document body written to `groupRides/{id}/members/{uid}`.
+  ///
+  /// `userId` is stored as well as being the document id — the two are always
+  /// the same, but a reader that already has the map shouldn't have to carry
+  /// the id alongside it. [fromDocument] trusts the id, not the field.
+  Map<String, dynamic> toDocument() {
     return {
       'userId': userId,
       'userName': userName,
@@ -53,6 +58,24 @@ class GroupRideMemberModel {
     };
   }
 
+  /// Reads one `groupRides/{id}/members/{uid}` document.
+  ///
+  /// [docId] wins over the `userId` field for the same reason
+  /// `GroupRideRepository._locationsFrom` keys off the document id: the id is
+  /// what firestore.rules pin the write to, so it is the only value that
+  /// cannot be spoofed or left missing by a partial write.
+  factory GroupRideMemberModel.fromDocument(
+    Map<String, dynamic> data,
+    String docId,
+  ) {
+    return GroupRideMemberModel.fromFirestore({...data, 'userId': docId});
+  }
+
+  /// Reads one entry of a *legacy* parent-document `members` array.
+  ///
+  /// Group rides created before members moved to their own subcollection
+  /// stored the whole roster inline on `groupRides/{id}`. Kept so those rides
+  /// still render — see `mergeGroupRideMembers`.
   factory GroupRideMemberModel.fromFirestore(Map<String, dynamic> data) {
     return GroupRideMemberModel(
       userId: data['userId'] as String? ?? '',
@@ -97,11 +120,19 @@ class GroupRideModel {
   final String? routeId;
   final List<LatLng>? routePolyline;
   final String status;
+
+  /// The roster as it was stored *inline on the parent document* by group
+  /// rides created before members moved to `groupRides/{id}/members/{uid}`.
+  ///
+  /// Read-only legacy: [toFirestore] no longer writes it, because a rule can't
+  /// project a field out of an array of maps and so couldn't stop an accepting
+  /// invitee from rewriting everyone else's display name. Current rides leave
+  /// this empty and the roster is read from the subcollection.
   final List<GroupRideMemberModel> members;
 
-  /// See [GroupRideEntity.memberIds] — flat uid arrays that exist purely so
-  /// firestore.rules can test membership (rules cannot index into an array of
-  /// maps like [members]).
+  /// See [GroupRideEntity.memberIds] — flat uid arrays that exist so
+  /// firestore.rules can test membership on the parent document without
+  /// reading the members subcollection.
   final List<String> memberIds;
   final List<String> invitedIds;
 
@@ -138,7 +169,10 @@ class GroupRideModel {
           ?.map((point) => {'lat': point.latitude, 'lng': point.longitude})
           .toList(),
       'status': status,
-      'members': members.map((m) => m.toFirestore()).toList(),
+      // No 'members' key: the roster lives in the members subcollection now.
+      // Writing it here as well would keep the array of maps inside the
+      // parent's `allow update` surface, which is the whole reason an
+      // accepting invitee could scramble other riders' names.
       'memberIds': memberIds,
       'invitedIds': invitedIds,
       'createdAt': createdAt,

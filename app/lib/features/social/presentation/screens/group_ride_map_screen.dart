@@ -13,6 +13,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../domain/entities/group_ride_entity.dart';
+import '../../domain/utilities/group_ride_members.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
 
@@ -261,12 +262,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   // ---------------------------------------------------------------------
 
   /// Merges the ride's roster with the live location subcollection into one
-  /// ordered list. Ordering is by uid — not by join time or list order — so a
-  /// member's colour index (and therefore their colour) can't shift when
-  /// somebody else joins or leaves.
-  List<_MemberView> _buildMembers(GroupRideEntity ride, String? myUid) {
-    final ordered = [...ride.members]
-      ..sort((a, b) => a.userId.compareTo(b.userId));
+  /// ordered list. [roster] arrives already ordered by uid out of
+  /// `mergeGroupRideMembers` — not by join time or list order — so a member's
+  /// colour index (and therefore their colour) can't shift when somebody else
+  /// joins or leaves.
+  List<_MemberView> _buildMembers(
+      List<GroupRideMember> roster, String? myUid) {
+    final ordered = roster;
 
     return [
       for (var i = 0; i < ordered.length; i++)
@@ -328,6 +330,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   @override
   Widget build(BuildContext context) {
     final rideAsync = ref.watch(groupRideProvider(widget.groupRideId));
+    final rosterAsync = ref.watch(groupRideMembersProvider(widget.groupRideId));
     final myUid = ref.watch(currentUserProvider)?.uid;
 
     return Scaffold(
@@ -352,7 +355,18 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             );
           }
 
-          final members = _buildMembers(ride, myUid);
+          // The roster lives at `groupRides/{id}/members/{uid}`. A ride created
+          // before it moved there carries its members inline on the ride
+          // document instead, so both are read and the subcollection wins.
+          // A roster stream that hasn't arrived (or that errored) leaves the
+          // legacy list showing rather than emptying the map.
+          final members = _buildMembers(
+            mergeGroupRideMembers(
+              legacy: ride.members,
+              fromSubcollection: rosterAsync.valueOrNull ?? const [],
+            ),
+            myUid,
+          );
 
           if (!_didInitialFit && members.any((m) => m.position != null)) {
             _didInitialFit = true;

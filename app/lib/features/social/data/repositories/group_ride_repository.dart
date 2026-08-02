@@ -2,13 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/group_ride_entity.dart';
+import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
 
 /// One rider picked in the "Ride with friends" friend picker, carried into
-/// [GroupRideRepository.createGroupRide] so their name/avatar are baked into
-/// the ride's `members` array as a *pending* entry straight away. Without
-/// this the map's member list could only say "someone hasn't joined yet" —
-/// the name wouldn't exist anywhere until they accepted.
+/// [GroupRideRepository.createGroupRide] so their name/avatar are written to
+/// their member document as a *pending* entry straight away. Without this the
+/// map's member list could only say "someone hasn't joined yet" — the name
+/// wouldn't exist anywhere until they accepted.
 class GroupRideInvitee {
   final String userId;
   final String userName;
@@ -31,12 +32,27 @@ class GroupRideRepository {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  DocumentReference<Map<String, dynamic>> _rideRef(String groupRideId) =>
+      _firestore.collection('groupRides').doc(groupRideId);
+
+  /// One document per rider at `groupRides/{id}/members/{uid}`.
+  ///
+  /// The roster used to be an array of maps on the parent document. Rules
+  /// cannot project a field out of an array of maps, so the rule permitting an
+  /// invitee to accept could only bound the array's length — the accepting
+  /// rider could rewrite everybody else's name in the same write. As
+  /// documents, the rule is exactly expressible: the `{uid}` wildcard is
+  /// pinned to `request.auth.uid`, the same shape `memberLocations/{uid}`
+  /// already uses.
+  CollectionReference<Map<String, dynamic>> _membersRef(String groupRideId) =>
+      _rideRef(groupRideId).collection('members');
+
   /// Creates a new group ride.
   ///
-  /// [invitees] are written into `members` immediately with status `pending`
-  /// (and into `invitedIds`), so the shared map can list who's been asked but
-  /// hasn't shown up yet. They still need [inviteUsers] to get their own
-  /// invitation document — this only seeds the roster.
+  /// The creator's member document and one `pending` document per invitee are
+  /// written in the same batch as the ride, so the shared map can list who's
+  /// been asked but hasn't shown up yet. Invitees still need [inviteUsers] to
+  /// get their own invitation document — this only seeds the roster.
   Future<String> createGroupRide({
     required String creatorId,
     required String creatorName,
@@ -63,37 +79,66 @@ class GroupRideRepository {
       routeId: routeId,
       routePolyline: routePolyline,
       status: status,
-      members: [
-        GroupRideMemberModel(
-          userId: creatorId,
-          userName: creatorName,
-          userPhotoUrl: creatorPhotoUrl,
-          joinedAt: now,
-          status: 'joined',
-          currentLat: null,
-          currentLng: null,
-          lastLocationUpdate: null,
-        ),
-        for (final invitee in invitees)
-          GroupRideMemberModel(
-            userId: invitee.userId,
-            userName: invitee.userName,
-            userPhotoUrl: invitee.userPhotoUrl,
-            joinedAt: now,
-            status: 'pending',
-            currentLat: null,
-            currentLng: null,
-            lastLocationUpdate: null,
-          ),
-      ],
       memberIds: [creatorId],
       invitedIds: invitees.map((i) => i.userId).toList(),
       createdAt: now,
       maxParticipants: maxParticipants,
     );
 
-    await groupRideRef.set(groupRide.toFirestore());
+    final roster = <GroupRideMemberModel>[
+      GroupRideMemberModel(
+        userId: creatorId,
+        userName: creatorName,
+        userPhotoUrl: creatorPhotoUrl,
+        joinedAt: now,
+        status: 'joined',
+      ),
+      for (final invitee in invitees)
+        GroupRideMemberModel(
+          userId: invitee.userId,
+          userName: invitee.userName,
+          userPhotoUrl: invitee.userPhotoUrl,
+          joinedAt: now,
+          status: 'pending',
+        ),
+    ];
+
+    // One batch: a ride must never exist without its creator on the roster,
+    // and a roster must never exist without its ride.
+    final batch = _firestore.batch();
+    batch.set(groupRideRef, groupRide.toFirestore());
+    final members = groupRideRef.collection('members');
+    for (final member in roster) {
+      batch.set(members.doc(member.userId), member.toDocument());
+    }
+    await batch.commit();
+
     return groupRideRef.id;
+  }
+
+  /// Live view of one group ride's roster.
+  ///
+  /// Separate from [watchGroupRide] because it's a separate document set —
+  /// callers that need both combine them with `mergeGroupRideMembers`, which
+  /// also folds in the inline roster of rides created before this collection
+  /// existed.
+  Stream<List<GroupRideMember>> watchGroupRideMembers(String groupRideId) {
+    return _membersRef(groupRideId).snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((doc) =>
+                  GroupRideMemberModel.fromDocument(doc.data(), doc.id)
+                      .toEntity())
+              .toList(),
+        );
+  }
+
+  /// One-shot read of the members subcollection.
+  Future<List<GroupRideMember>> getGroupRideMembers(String groupRideId) async {
+    final snapshot = await _membersRef(groupRideId).get();
+    return snapshot.docs
+        .map((doc) =>
+            GroupRideMemberModel.fromDocument(doc.data(), doc.id).toEntity())
+        .toList();
   }
 
   /// Live view of one group ride — members joining, statuses flipping.
@@ -112,14 +157,18 @@ class GroupRideRepository {
     });
   }
 
-  /// Gets a group ride by ID.
+  /// Gets a group ride by ID, roster included.
   Future<GroupRideEntity?> getGroupRide(String groupRideId) async {
-    final doc =
-        await _firestore.collection('groupRides').doc(groupRideId).get();
+    final doc = await _rideRef(groupRideId).get();
     if (!doc.exists) return null;
 
-    final model = GroupRideModel.fromFirestore(doc.data()!, doc.id);
-    return model.toEntity();
+    final ride = GroupRideModel.fromFirestore(doc.data()!, doc.id).toEntity();
+    return ride.copyWith(
+      members: mergeGroupRideMembers(
+        legacy: ride.members,
+        fromSubcollection: await getGroupRideMembers(groupRideId),
+      ),
+    );
   }
 
   /// Gets upcoming group rides.
@@ -155,84 +204,109 @@ class GroupRideRepository {
         .toList();
   }
 
-  /// Invites users to a group ride.
+  /// Invites riders to a group ride.
+  ///
+  /// Writes three things per invitee, in one batch: the invitation marker at
+  /// `invitations/{uid}` (the to-do the notification acts on), a `pending`
+  /// member document so the roster can name them before they accept, and their
+  /// uid on the parent's `invitedIds` — which is what firestore.rules read to
+  /// let them see the ride at all.
+  ///
+  /// Takes [GroupRideInvitee]s rather than bare uids because the roster entry
+  /// needs a name; a uid alone would put "Rider" on the map. Only the ride's
+  /// creator may call this — the rules refuse anyone else on all three writes.
+  ///
+  /// The member documents overlap with what [createGroupRide] already seeded
+  /// for the same riders; they're written with `merge` so re-inviting somebody
+  /// tops up their name rather than resetting fields it doesn't know about.
   Future<void> inviteUsers({
     required String groupRideId,
-    required List<String> userIds,
+    required List<GroupRideInvitee> invitees,
   }) async {
+    if (invitees.isEmpty) return;
+
+    final rideRef = _rideRef(groupRideId);
     final batch = _firestore.batch();
 
-    for (final userId in userIds) {
-      final memberRef = _firestore
-          .collection('groupRides')
-          .doc(groupRideId)
-          .collection('invitations')
-          .doc(userId);
-
-      batch.set(memberRef, {
-        'userId': userId,
+    for (final invitee in invitees) {
+      batch.set(rideRef.collection('invitations').doc(invitee.userId), {
+        'userId': invitee.userId,
         'status': 'pending',
         'invitedAt': FieldValue.serverTimestamp(),
       });
+      batch.set(
+        _membersRef(groupRideId).doc(invitee.userId),
+        {
+          'userId': invitee.userId,
+          'userName': invitee.userName,
+          'userPhotoUrl': invitee.userPhotoUrl,
+          'joinedAt': DateTime.now(),
+          'status': 'pending',
+        },
+        SetOptions(merge: true),
+      );
     }
+
+    batch.update(rideRef, {
+      'invitedIds':
+          FieldValue.arrayUnion([for (final i in invitees) i.userId]),
+    });
 
     await batch.commit();
   }
 
-  /// Accepts a group ride invitation: flips the rider's pending entry in
-  /// `members` to joined, adds them to `memberIds` (which is what the
-  /// firestore rules gate location writes on) and clears them from
-  /// `invitedIds`.
+  /// Accepts a group ride invitation: flips the rider's own member document to
+  /// `joined`, adds them to `memberIds` (which is what the firestore rules
+  /// gate location writes on) and clears them from `invitedIds`.
   ///
-  /// Runs as a transaction and *rewrites* the members array rather than
-  /// `arrayUnion`-ing a new element, for two reasons: the rider is already in
-  /// the array as `pending` (createGroupRide seeds them), so a union would
-  /// leave a duplicate ghost entry; and `FieldValue.serverTimestamp()` — what
-  /// this used to put in `joinedAt` — is rejected outright by Firestore
-  /// inside an arrayUnion payload, so the old version threw before it ever
-  /// wrote anything.
+  /// The rider writes only `members/{their own uid}` and the two flat uid
+  /// arrays — never anybody else's roster entry. That is the whole point of
+  /// members being documents: while the roster was an array of maps on the
+  /// parent, a rule could bound its *size* but not its contents, so accepting
+  /// an invitation was enough to rewrite every other rider's display name.
   ///
-  /// Idempotent: accepting twice (double-tapping the notification) is a
-  /// no-op the second time.
+  /// Still a transaction, and it still never puts
+  /// `FieldValue.serverTimestamp()` into the payload — the earlier version put
+  /// one inside an `arrayUnion`, which Firestore rejects outright, so it threw
+  /// before writing anything.
+  ///
+  /// Idempotent: accepting twice (double-tapping the notification) leaves the
+  /// original `joinedAt` alone, so the second tap changes nothing.
   Future<void> acceptInvitation({
     required String groupRideId,
     required String userId,
     required String userName,
     required String userPhotoUrl,
   }) async {
-    final docRef = _firestore.collection('groupRides').doc(groupRideId);
+    final rideRef = _rideRef(groupRideId);
+    final memberRef = _membersRef(groupRideId).doc(userId);
 
     await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(docRef);
-      if (!snap.exists) return;
-      final data = snap.data() ?? <String, dynamic>{};
+      // Every read has to precede every write in a Firestore transaction.
+      final rideSnap = await txn.get(rideRef);
+      if (!rideSnap.exists) return;
+      final existing = (await txn.get(memberRef)).data();
 
-      final members = List<Map<String, dynamic>>.from(
-        (data['members'] as List<dynamic>? ?? const [])
-            .map((m) => Map<String, dynamic>.from(m as Map)),
-      );
-
-      final index = members.indexWhere((m) => m['userId'] == userId);
-      final joinedEntry = <String, dynamic>{
-        'userId': userId,
-        'userName': userName,
-        'userPhotoUrl': userPhotoUrl,
+      final entry = GroupRideMemberModel(
+        userId: userId,
+        userName: userName,
+        userPhotoUrl: userPhotoUrl,
         // A plain DateTime, not serverTimestamp() — see doc comment.
-        'joinedAt': DateTime.now(),
-        'status': 'joined',
-        'currentLat': index >= 0 ? members[index]['currentLat'] : null,
-        'currentLng': index >= 0 ? members[index]['currentLng'] : null,
-        'lastLocationUpdate':
-            index >= 0 ? members[index]['lastLocationUpdate'] : null,
-      };
-      if (index >= 0) {
-        members[index] = joinedEntry;
-      } else {
-        members.add(joinedEntry);
-      }
+        joinedAt: DateTime.now(),
+        status: 'joined',
+        currentLat: (existing?['currentLat'] as num?)?.toDouble(),
+        currentLng: (existing?['currentLng'] as num?)?.toDouble(),
+      ).toDocument();
 
-      txn.update(docRef, {
-        'members': members,
+      // Keep the moment they *first* joined rather than the moment of the
+      // repeat tap.
+      if (existing?['status'] == 'joined' && existing?['joinedAt'] != null) {
+        entry['joinedAt'] = existing!['joinedAt'];
+      }
+      entry['lastLocationUpdate'] = existing?['lastLocationUpdate'];
+
+      txn.set(memberRef, entry);
+      txn.update(rideRef, {
         'memberIds': FieldValue.arrayUnion([userId]),
         'invitedIds': FieldValue.arrayRemove([userId]),
       });
@@ -241,40 +315,40 @@ class GroupRideRepository {
     // Best-effort: the invite doc is only a to-do marker, and losing the race
     // to delete it must not make a successful join look like a failure.
     try {
-      await docRef.collection('invitations').doc(userId).delete();
+      await rideRef.collection('invitations').doc(userId).delete();
     } catch (_) {/* already gone, or rules raced us */}
   }
 
-  /// Declines a group ride invitation — marks the rider's roster entry
+  /// Declines a group ride invitation — marks the rider's own member document
   /// `declined` and drops them from `invitedIds` so they lose read access.
+  ///
+  /// Merged rather than overwritten: the name and avatar on that document were
+  /// written by the ride's creator at invite time and this caller doesn't have
+  /// them, so a full set would blank out the roster entry it is only meant to
+  /// restatus.
   Future<void> declineInvitation({
     required String groupRideId,
     required String userId,
   }) async {
-    final docRef = _firestore.collection('groupRides').doc(groupRideId);
+    final rideRef = _rideRef(groupRideId);
+    final memberRef = _membersRef(groupRideId).doc(userId);
 
     await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(docRef);
+      final snap = await txn.get(rideRef);
       if (!snap.exists) return;
-      final data = snap.data() ?? <String, dynamic>{};
 
-      final members = List<Map<String, dynamic>>.from(
-        (data['members'] as List<dynamic>? ?? const [])
-            .map((m) => Map<String, dynamic>.from(m as Map)),
+      txn.set(
+        memberRef,
+        {'userId': userId, 'status': 'declined'},
+        SetOptions(merge: true),
       );
-      final index = members.indexWhere((m) => m['userId'] == userId);
-      if (index >= 0) {
-        members[index] = {...members[index], 'status': 'declined'};
-      }
-
-      txn.update(docRef, {
-        'members': members,
+      txn.update(rideRef, {
         'invitedIds': FieldValue.arrayRemove([userId]),
       });
     });
 
     try {
-      await docRef.collection('invitations').doc(userId).delete();
+      await rideRef.collection('invitations').doc(userId).delete();
     } catch (_) {/* already gone */}
   }
 
@@ -376,70 +450,79 @@ class GroupRideRepository {
     required String groupRideId,
     required String userId,
   }) async {
-    final docRef = _firestore.collection('groupRides').doc(groupRideId);
+    final rideRef = _rideRef(groupRideId);
 
     await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(docRef);
+      final snap = await txn.get(rideRef);
       if (!snap.exists) return;
       final data = snap.data() ?? <String, dynamic>{};
 
       if (data['creatorId'] == userId) {
-        txn.update(docRef, {'status': 'completed'});
+        txn.update(rideRef, {'status': 'completed'});
         return;
       }
 
-      final members = (data['members'] as List<dynamic>? ?? const [])
-          .map((m) => Map<String, dynamic>.from(m as Map))
-          .where((m) => m['userId'] != userId)
-          .toList();
-
-      txn.update(docRef, {
-        'members': members,
+      // Their own member document and their own uid — the only two things the
+      // rules let a departing rider touch.
+      txn.delete(_membersRef(groupRideId).doc(userId));
+      txn.update(rideRef, {
         'memberIds': FieldValue.arrayRemove([userId]),
       });
     });
 
     try {
-      await docRef.collection('memberLocations').doc(userId).delete();
+      await rideRef.collection('memberLocations').doc(userId).delete();
     } catch (_) {/* nothing published yet, or already gone */}
   }
 
-  /// Removes a member from a group ride.
+  /// The creator removing somebody else from a ride ("kick"). See
+  /// [leaveGroupRide] for the self-removal path, which the rules treat
+  /// differently.
+  ///
+  /// Also strips the rider from the parent's legacy inline `members` array if
+  /// this ride has one: the creator is the only caller who is allowed to
+  /// rewrite that array, so a ride created before the roster moved to its own
+  /// subcollection can still be tidied up here.
   Future<void> removeMember({
     required String groupRideId,
     required String userId,
   }) async {
-    final doc = await _firestore
-        .collection('groupRides')
-        .doc(groupRideId)
-        .get();
+    final rideRef = _rideRef(groupRideId);
 
-    final members = List<Map<String, dynamic>>.from(doc['members'] ?? []);
-    members.removeWhere((m) => m['userId'] == userId);
+    await _firestore.runTransaction((txn) async {
+      final snap = await txn.get(rideRef);
+      if (!snap.exists) return;
 
-    await _firestore.collection('groupRides').doc(groupRideId).update({
-      'members': members,
-      // memberIds/invitedIds must never drift from members — firestore.rules
-      // reads them, not the array of maps, to decide who may write locations.
-      'memberIds': FieldValue.arrayRemove([userId]),
-      'invitedIds': FieldValue.arrayRemove([userId]),
+      final legacy = (snap.data()?['members'] as List<dynamic>?)
+          ?.map((m) => Map<String, dynamic>.from(m as Map))
+          .where((m) => m['userId'] != userId)
+          .toList();
+
+      txn.delete(_membersRef(groupRideId).doc(userId));
+      txn.update(rideRef, {
+        // memberIds/invitedIds must never drift from the roster —
+        // firestore.rules read them, not the member documents, to decide who
+        // may write locations.
+        'memberIds': FieldValue.arrayRemove([userId]),
+        'invitedIds': FieldValue.arrayRemove([userId]),
+        if (legacy != null) 'members': legacy,
+      });
     });
+
+    try {
+      await rideRef.collection('memberLocations').doc(userId).delete();
+    } catch (_) {/* nothing published yet, or already gone */}
   }
 
-  /// Deletes a group ride.
+  /// Deletes a group ride and everything hanging off it.
   Future<void> deleteGroupRide(String groupRideId) async {
-    final docRef = _firestore.collection('groupRides').doc(groupRideId);
+    final docRef = _rideRef(groupRideId);
 
-    // Delete member locations
-    final locations = await docRef.collection('memberLocations').get();
-    for (final location in locations.docs) {
-      await location.reference.delete();
-    }
-
-    // Delete invitations
-    final invitations = await docRef.collection('invitations').get();
-    for (final invitation in invitations.docs) {
-      await invitation.reference.delete();
+    for (final subcollection in ['memberLocations', 'invitations', 'members']) {
+      final snapshot = await docRef.collection(subcollection).get();
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
     }
 
     // Delete the group ride

@@ -18,16 +18,27 @@ final publicRoutesProvider = FutureProvider<List<RouteEntity>>((ref) {
   return _routeRepository.getPublicRoutes();
 });
 
-/// A single saved route belonging to the signed-in rider.
+/// Identifies one route document. A route lives at
+/// `users/{ownerUid}/routes/{routeId}`, so the id alone is not enough to find
+/// it — a *discovered* route belongs to another rider entirely.
 ///
-/// Scoped to the owner deliberately: a route doc lives under
-/// `users/{uid}/routes/{id}`, so fetching someone else's needs their uid too.
-/// Detail/navigation are only reachable from "My routes" today, so the
-/// owner-scoped lookup is all that's wired. Opening a *discovered* route
-/// would need the owner uid threaded through the route params as well.
+/// [ownerUid] is null for "mine": the signed-in rider's uid is substituted, so
+/// every existing `/routes/:routeId` link (which carries no owner) keeps
+/// resolving exactly as it did.
+typedef RouteLookup = ({String routeId, String? ownerUid});
+
+/// A single saved route — the signed-in rider's own, or a public one from
+/// another rider when [RouteLookup.ownerUid] names them.
+///
+/// A record is used as the family key on purpose: records compare structurally,
+/// so two lookups for the same route/owner pair share one provider instance
+/// instead of re-fetching.
 final routeByIdProvider =
-    FutureProvider.family<RouteEntity?, String>((ref, routeId) async {
-  final uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) return null;
-  return _routeRepository.getRoute(userId: uid, routeId: routeId);
+    FutureProvider.family<RouteEntity?, RouteLookup>((ref, lookup) async {
+  final viewerUid = ref.watch(currentUserProvider)?.uid;
+  final owner = (lookup.ownerUid != null && lookup.ownerUid!.isNotEmpty)
+      ? lookup.ownerUid!
+      : viewerUid;
+  if (owner == null) return null;
+  return _routeRepository.getRoute(userId: owner, routeId: lookup.routeId);
 });

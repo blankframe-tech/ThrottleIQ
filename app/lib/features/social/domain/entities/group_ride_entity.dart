@@ -40,15 +40,22 @@ class GroupRideEntity extends Equatable {
   final String? routeId;
   final List<LatLng>? routePolyline;
   final GroupRideStatus status;
+
+  /// The roster, when this entity was built from a source that has one.
+  ///
+  /// Reading the ride document alone no longer fills this in for rides created
+  /// after members moved to `groupRides/{id}/members/{uid}` — it holds only the
+  /// legacy inline array of older rides. Callers that need the live roster read
+  /// the subcollection and combine the two with `mergeGroupRideMembers`.
   final List<GroupRideMember> members;
 
-  /// Uids of riders who have actually joined, denormalized out of [members].
+  /// Uids of riders who have actually joined.
   ///
-  /// [members] is an array of maps, and Firestore security rules have no way
-  /// to project a field out of an array of maps — `request.auth.uid in
-  /// resource.data.members` can't be expressed. This flat array is what the
-  /// `groupRides` rules test membership against; it is written in the same
-  /// operation as [members] and must never drift from it.
+  /// Firestore security rules can't read across into a subcollection cheaply
+  /// (nor project a field out of an array of maps, which is what the roster
+  /// used to be), so membership is denormalized onto the parent as this flat
+  /// array. It is what the `groupRides` rules test against, and it must never
+  /// drift from the members subcollection.
   final List<String> memberIds;
 
   /// Uids invited but not yet joined (the pending half of [members]). Lets an

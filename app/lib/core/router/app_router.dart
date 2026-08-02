@@ -153,15 +153,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) =>
             SaveRouteScreen(rideId: state.pathParameters['rideId']!),
       ),
+      // `?owner=<uid>` names the rider a route belongs to, for routes opened
+      // from Discover. A route doc lives at `users/{ownerUid}/routes/{id}`, so
+      // without it a discovered route can only be looked up under the *viewer's*
+      // uid and is never found. Omitted (every link that already existed) means
+      // "mine", so /routes/:routeId keeps working unchanged.
       GoRoute(
         path: '/routes/:routeId',
-        builder: (_, state) =>
-            RouteDetailScreen(routeId: state.pathParameters['routeId']!),
+        builder: (_, state) => RouteDetailScreen(
+          routeId: state.pathParameters['routeId']!,
+          ownerUid: state.uri.queryParameters['owner'],
+        ),
         routes: [
           GoRoute(
             path: 'navigate',
-            builder: (_, state) =>
-                RouteNavigationScreen(routeId: state.pathParameters['routeId']!),
+            builder: (_, state) => RouteNavigationScreen(
+              routeId: state.pathParameters['routeId']!,
+              ownerUid: state.uri.queryParameters['owner'],
+            ),
           ),
         ],
       ),

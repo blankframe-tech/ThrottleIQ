@@ -30,7 +30,17 @@ const double _offRouteM = 100;
 /// path. Street names aren't available either; guidance is geometric.
 class RouteNavigationScreen extends ConsumerStatefulWidget {
   final String routeId;
-  const RouteNavigationScreen({super.key, required this.routeId});
+
+  /// The rider the route belongs to, carried through from `?owner=<uid>` so a
+  /// *discovered* route can be followed too. Null means "the signed-in
+  /// rider". Nothing here writes, so a non-owner needs no extra permission.
+  final String? ownerUid;
+
+  const RouteNavigationScreen({
+    super.key,
+    required this.routeId,
+    this.ownerUid,
+  });
 
   @override
   ConsumerState<RouteNavigationScreen> createState() =>
@@ -39,6 +49,9 @@ class RouteNavigationScreen extends ConsumerStatefulWidget {
 
 class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
   final _mapController = MapController();
+
+  RouteLookup get _lookup =>
+      (routeId: widget.routeId, ownerUid: widget.ownerUid);
 
   StreamSubscription<Position>? _positionSub;
   LatLng? _position;
@@ -116,7 +129,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
   /// of — a loop, not a single step, so a burst of movement (or a coarse fix
   /// after a tunnel) can't leave the banner stuck behind the rider.
   void _advanceTurnIfReached(LatLng here) {
-    final route = ref.read(routeByIdProvider(widget.routeId)).valueOrNull;
+    final route = ref.read(routeByIdProvider(_lookup)).valueOrNull;
     if (route == null) return;
     final turns = buildTurnInstructions(route.polyline);
     if (turns.isEmpty) return;
@@ -132,7 +145,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final routeAsync = ref.watch(routeByIdProvider(widget.routeId));
+    final routeAsync = ref.watch(routeByIdProvider(_lookup));
 
     return Scaffold(
       backgroundColor: AppColors.background,

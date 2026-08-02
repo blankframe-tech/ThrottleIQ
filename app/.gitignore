@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# gen-l10n's report of keys missing from a translation ARB. Regenerated on
+# every `flutter pub get`; the real gate is test/core/i18n/arb_parity_test.dart.
+/l10n_untranslated.txt
+
 # Symbolication related
 app.*.symbols
 

@@ -1,0 +1,37 @@
+{
+  "@@locale": "bn",
+
+  "settingsTitle": "সেটিংস",
+  "riderFallbackName": "রাইডার",
+
+  "appearanceSection": "অ্যাপের চেহারা",
+  "themeCarbonLabel": "কার্বন মোনো",
+  "themeCarbonDescription": "গাঢ়, ঝকঝকে, মিটারের মতো",
+  "themeEditorialLabel": "এডিটোরিয়াল",
+  "themeEditorialDescription": "হালকা, কাগজের মতো নরম",
+  "appMarkTitle": "অ্যাপের লোগো",
+  "appMarkDarkDescription": "গাঢ় লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।",
+  "appMarkLightDescription": "হালকা লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।",
+
+  "languageSection": "ভাষা",
+  "languageSystemLabel": "ফোনের ভাষা",
+  "languageSystemDescription": "ফোনে যা সেট করা আছে",
+  "languageEnglishLabel": "English",
+  "languageEnglishDescription": "সবসময় ইংরেজি",
+  "languageBanglaLabel": "বাংলা",
+  "languageBanglaDescription": "সবসময় বাংলা",
+
+  "emergencyContactsSection": "জরুরি যোগাযোগ",
+  "emergencyContactsDescription": "দুর্ঘটনা ধরা পড়লে আর আপনি 60 সেকেন্ডের মধ্যে সাড়া না দিলে এদেরকে জানিয়ে দেওয়া হবে।",
+  "emergencyContactsEmpty": "এখনো কাউকে যোগ করা হয়নি — বিশ্বাস করেন এমন কাউকে রাখুন।",
+  "emergencyContactsLoadError": "কন্টাক্ট লোড করা গেল না: {error}",
+
+  "addAction": "যোগ করুন",
+  "cancelAction": "বাতিল",
+  "addEmergencyContactTitle": "জরুরি যোগাযোগ যোগ করুন",
+  "contactNameField": "নাম",
+  "contactPhoneField": "ফোন নম্বর",
+  "contactEmailFieldOptional": "ইমেইল (না দিলেও চলবে)",
+
+  "signOutAction": "সাইন আউট"
+}

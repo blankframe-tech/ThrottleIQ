@@ -14,22 +14,6 @@ void main() {
         name: "Sam's group ride",
         startTime: startTime,
         status: 'active',
-        members: [
-          GroupRideMemberModel(
-            userId: 'creator',
-            userName: 'Sam',
-            userPhotoUrl: '',
-            joinedAt: createdAt,
-            status: 'joined',
-          ),
-          GroupRideMemberModel(
-            userId: 'friend1',
-            userName: 'Alex',
-            userPhotoUrl: 'http://example.com/a.png',
-            joinedAt: createdAt,
-            status: 'pending',
-          ),
-        ],
         memberIds: const ['creator'],
         invitedIds: const ['friend1'],
         createdAt: createdAt,
@@ -63,7 +47,7 @@ void main() {
       expect(read.invitedIds, ['friend1']);
     });
 
-    test('roster, statuses and timestamps survive write → read', () {
+    test('scalars and timestamps survive write → read', () {
       final read = GroupRideModel.fromFirestore(
         asFirestoreRead(buildModel().toFirestore()),
         'gr1',
@@ -74,8 +58,6 @@ void main() {
       expect(read.status, 'active');
       expect(read.startTime, startTime);
       expect(read.createdAt, createdAt);
-      expect(read.members.map((m) => m.userId), ['creator', 'friend1']);
-      expect(read.members.map((m) => m.status), ['joined', 'pending']);
       expect(read.maxParticipants, 3);
     });
 
@@ -88,8 +70,67 @@ void main() {
       expect(entity.memberIds, ['creator']);
       expect(entity.invitedIds, ['friend1']);
       expect(entity.status, GroupRideStatus.active);
-      expect(entity.members.last.status, GroupRideMemberStatus.pending);
-      expect(entity.joinedMembersCount, 1);
+    });
+
+    test(
+      'the ride document carries NO members array — the roster is a '
+      'subcollection now, and writing it here too would put the array of maps '
+      'back inside the parent update surface an accepting invitee can reach',
+      () {
+        expect(buildModel().toFirestore().containsKey('members'), isFalse);
+      },
+    );
+  });
+
+  group('GroupRideMemberModel documents', () {
+    GroupRideMemberModel buildMember() => GroupRideMemberModel(
+          userId: 'friend1',
+          userName: 'Alex',
+          userPhotoUrl: 'http://example.com/a.png',
+          joinedAt: createdAt,
+          status: 'pending',
+        );
+
+    test('a member document survives write → read', () {
+      final read = GroupRideMemberModel.fromDocument(
+        asFirestoreRead(buildMember().toDocument()),
+        'friend1',
+      );
+
+      expect(read.userId, 'friend1');
+      expect(read.userName, 'Alex');
+      expect(read.userPhotoUrl, 'http://example.com/a.png');
+      expect(read.joinedAt, createdAt);
+      expect(read.status, 'pending');
+      expect(read.toEntity().status, GroupRideMemberStatus.pending);
+    });
+
+    test(
+      'the document id wins over the userId field — the id is what the rules '
+      'pin the write to, so it is the value that cannot be spoofed',
+      () {
+        final read = GroupRideMemberModel.fromDocument(
+          {...buildMember().toDocument(), 'userId': 'someone-else'},
+          'friend1',
+        );
+
+        expect(read.userId, 'friend1');
+      },
+    );
+
+    test('a declined-only merge write (no name, no timestamps) still parses',
+        () {
+      // declineInvitation writes exactly {'userId', 'status'} with merge, so
+      // a member document that never got a name must not throw.
+      final read = GroupRideMemberModel.fromDocument(
+        const {'userId': 'friend1', 'status': 'declined'},
+        'friend1',
+      );
+
+      expect(read.userId, 'friend1');
+      expect(read.userName, 'Rider');
+      expect(read.userPhotoUrl, '');
+      expect(read.toEntity().status, GroupRideMemberStatus.declined);
     });
   });
 
@@ -125,6 +166,33 @@ void main() {
       expect(read.invitedIds, isEmpty);
       expect(read.members, isEmpty);
     });
+
+    test(
+      'a ride created before the roster moved to a subcollection still reads '
+      'its inline members array',
+      () {
+        final read = GroupRideModel.fromFirestore({
+          'creatorId': 'creator',
+          'creatorName': 'Sam',
+          'name': 'Legacy ride',
+          'startTime': Timestamp.fromDate(startTime),
+          'createdAt': Timestamp.fromDate(createdAt),
+          'memberIds': const ['creator'],
+          'members': [
+            {
+              'userId': 'creator',
+              'userName': 'Sam',
+              'userPhotoUrl': '',
+              'joinedAt': Timestamp.fromDate(createdAt),
+              'status': 'joined',
+            },
+          ],
+        }, 'legacy');
+
+        expect(read.members.single.userId, 'creator');
+        expect(read.toEntity().members.single.userName, 'Sam');
+      },
+    );
   });
 
   group('GroupRideEntity.joinedMembers ordering', () {

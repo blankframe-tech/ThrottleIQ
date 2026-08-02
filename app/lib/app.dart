@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/cloud/sync_manager.dart';
+import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
+import 'l10n/app_localizations.dart';
 
 class ThrottleIQApp extends ConsumerStatefulWidget {
   const ThrottleIQApp({super.key});
@@ -56,6 +58,8 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
 
       final router = ref.watch(routerProvider);
       final themeStyle = ref.watch(themeStyleProvider);
+      // null = follow the device language, resolved against supportedLocales.
+      final locale = ref.watch(appLocaleProvider);
       // AppColors is a mutable static facade (see app_colors.dart) so that
       // the ~565 existing `AppColors.x` call sites across the app don't need
       // to become context-aware. Keying on themeStyle forces this whole
@@ -66,6 +70,12 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
         title: 'ThrottleIQ',
         theme: AppTheme.build(themeStyle),
         debugShowCheckedModeBanner: false,
+        // Unlike the appearance switch above, a language change needs no
+        // remount: Localizations rebuilds its dependents on a locale change,
+        // so the key stays keyed on themeStyle alone.
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: const [Locale('en'), Locale('bn')],
         routerConfig: router,
       );
     } catch (e) {

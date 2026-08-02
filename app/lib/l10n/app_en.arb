@@ -1,0 +1,149 @@
+{
+  "@@locale": "en",
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "AppBar title of the settings screen."
+  },
+
+  "riderFallbackName": "Rider",
+  "@riderFallbackName": {
+    "description": "Shown in place of a display name when the account has none set."
+  },
+
+  "appearanceSection": "Appearance",
+  "@appearanceSection": {
+    "description": "Section header for the theme/appearance controls."
+  },
+
+  "themeCarbonLabel": "Carbon Mono",
+  "@themeCarbonLabel": {
+    "description": "Name of the dark theme. Product name — kept recognisable across languages."
+  },
+
+  "themeCarbonDescription": "Dark, sharp, instrument-panel",
+  "@themeCarbonDescription": {
+    "description": "One-line description under the Carbon Mono theme option."
+  },
+
+  "themeEditorialLabel": "Editorial",
+  "@themeEditorialLabel": {
+    "description": "Name of the light theme. Product name — kept recognisable across languages."
+  },
+
+  "themeEditorialDescription": "Light, warm paper",
+  "@themeEditorialDescription": {
+    "description": "One-line description under the Editorial theme option."
+  },
+
+  "appMarkTitle": "App mark",
+  "@appMarkTitle": {
+    "description": "Label beside the live logo preview in the Appearance section."
+  },
+
+  "appMarkDarkDescription": "The dark mark, used on the splash and sign-in screens.",
+  "@appMarkDarkDescription": {
+    "description": "Description of the logo preview while the dark theme is selected."
+  },
+
+  "appMarkLightDescription": "The light mark, used on the splash and sign-in screens.",
+  "@appMarkLightDescription": {
+    "description": "Description of the logo preview while the light theme is selected."
+  },
+
+  "languageSection": "Language",
+  "@languageSection": {
+    "description": "Section header for the app language control."
+  },
+
+  "languageSystemLabel": "System default",
+  "@languageSystemLabel": {
+    "description": "Language option that follows the phone's own language setting."
+  },
+
+  "languageSystemDescription": "Follow your phone",
+  "@languageSystemDescription": {
+    "description": "One-line description under the system-default language option."
+  },
+
+  "languageEnglishLabel": "English",
+  "@languageEnglishLabel": {
+    "description": "The English language option. Language names are always written in their own language, so this is NOT translated."
+  },
+
+  "languageEnglishDescription": "Always English",
+  "@languageEnglishDescription": {
+    "description": "One-line description under the English language option."
+  },
+
+  "languageBanglaLabel": "বাংলা",
+  "@languageBanglaLabel": {
+    "description": "The Bangla language option. Language names are always written in their own language, so this stays in Bangla even in the English ARB."
+  },
+
+  "languageBanglaDescription": "Always Bangla",
+  "@languageBanglaDescription": {
+    "description": "One-line description under the Bangla language option."
+  },
+
+  "emergencyContactsSection": "Emergency Contacts",
+  "@emergencyContactsSection": {
+    "description": "Section header for the emergency contact list."
+  },
+
+  "emergencyContactsDescription": "Notified if a crash is detected and you don't respond within 60 seconds.",
+  "@emergencyContactsDescription": {
+    "description": "Explains when emergency contacts get alerted. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
+  },
+
+  "emergencyContactsEmpty": "No contacts yet — add someone you trust.",
+  "@emergencyContactsEmpty": {
+    "description": "Empty state for the emergency contact list."
+  },
+
+  "emergencyContactsLoadError": "Could not load contacts: {error}",
+  "@emergencyContactsLoadError": {
+    "description": "Shown when the emergency contact list fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "network unreachable"
+      }
+    }
+  },
+
+  "addAction": "Add",
+  "@addAction": {
+    "description": "Button that opens the add-emergency-contact dialog, and the confirm button inside it."
+  },
+
+  "cancelAction": "Cancel",
+  "@cancelAction": {
+    "description": "Dismisses the add-emergency-contact dialog without saving."
+  },
+
+  "addEmergencyContactTitle": "Add Emergency Contact",
+  "@addEmergencyContactTitle": {
+    "description": "Title of the add-emergency-contact dialog."
+  },
+
+  "contactNameField": "Name",
+  "@contactNameField": {
+    "description": "Label for the contact name text field."
+  },
+
+  "contactPhoneField": "Phone",
+  "@contactPhoneField": {
+    "description": "Label for the contact phone text field."
+  },
+
+  "contactEmailFieldOptional": "Email (optional)",
+  "@contactEmailFieldOptional": {
+    "description": "Label for the optional contact email text field."
+  },
+
+  "signOutAction": "Sign Out",
+  "@signOutAction": {
+    "description": "Button that signs the rider out and returns to the login screen."
+  }
+}

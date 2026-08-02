@@ -43,6 +43,15 @@ class _RideWithFriendsButtonState extends ConsumerState<RideWithFriendsButton> {
         ? 'A rider'
         : user.displayName!.trim();
 
+    final invitees = [
+      for (final rider in picked)
+        GroupRideInvitee(
+          userId: rider.uid,
+          userName: rider.bestName,
+          userPhotoUrl: rider.photoUrl ?? '',
+        ),
+    ];
+
     try {
       final repo = ref.read(groupRideRepositoryProvider);
       final groupRideId = await repo.createGroupRide(
@@ -54,20 +63,13 @@ class _RideWithFriendsButtonState extends ConsumerState<RideWithFriendsButton> {
         // The ride is live the moment it's created — this isn't a scheduled
         // "planned" meet-up, the creator's recording starts immediately.
         status: 'active',
-        invitees: [
-          for (final rider in picked)
-            GroupRideInvitee(
-              userId: rider.uid,
-              userName: rider.bestName,
-              userPhotoUrl: rider.photoUrl ?? '',
-            ),
-        ],
+        invitees: invitees,
         maxParticipants: picked.length + 1,
       );
 
       await repo.inviteUsers(
         groupRideId: groupRideId,
-        userIds: picked.map((r) => r.uid).toList(),
+        invitees: invitees,
       );
 
       // In-app notifications only — see NotificationRepository

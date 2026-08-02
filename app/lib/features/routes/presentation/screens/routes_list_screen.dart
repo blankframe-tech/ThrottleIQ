@@ -112,7 +112,7 @@ class _RoutesTab extends ConsumerWidget {
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             itemCount: routes.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _RouteCard(route: routes[i], tappable: mine),
+            itemBuilder: (_, i) => _RouteCard(route: routes[i], mine: mine),
           ),
         );
       },
@@ -123,16 +123,22 @@ class _RoutesTab extends ConsumerWidget {
 class _RouteCard extends StatelessWidget {
   final RouteEntity route;
 
-  /// Discovered routes belong to another rider, so their detail screen (which
-  /// looks routes up under the *signed-in* rider's uid) can't open them yet.
-  final bool tappable;
+  /// Whether this card is in "My routes". A *discovered* route belongs to
+  /// another rider and lives at `users/{theirUid}/routes/{id}`, so its link
+  /// has to name the owner — without `?owner=` the detail screen would look
+  /// it up under the signed-in rider and find nothing.
+  final bool mine;
 
-  const _RouteCard({required this.route, required this.tappable});
+  const _RouteCard({required this.route, required this.mine});
 
   @override
   Widget build(BuildContext context) {
+    final location = mine
+        ? '/routes/${route.id}'
+        : '/routes/${route.id}?owner=${Uri.encodeComponent(route.userId)}';
+
     return AppCard(
-      onTap: tappable ? () => context.push('/routes/${route.id}') : null,
+      onTap: () => context.push(location),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

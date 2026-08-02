@@ -1,0 +1,16 @@
+# Configures `flutter gen-l10n`, which runs automatically on `flutter pub get`
+# because pubspec.yaml sets `flutter: generate: true`.
+#
+# Generated output lands next to the ARBs in lib/l10n/ (Flutter's current
+# default — the old synthetic `package:flutter_gen` import is gone) and IS
+# checked in, so a clean checkout analyzes and builds without a codegen step.
+# Re-run `flutter gen-l10n` after editing an ARB and commit the result.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# English is the fallback for any key a translation file has not caught up on
+# yet, so a missing Bangla string degrades to English rather than crashing.
+# (The ARB parity test in test/core/i18n/ is what stops that from shipping.)
+untranslated-messages-file: l10n_untranslated.txt
+nullable-getter: false
