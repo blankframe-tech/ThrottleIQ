@@ -180,7 +180,14 @@ backend or a real device. **Treat each as unproven until tested.**
 ### Soon (requires Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
 - [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation). Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email) with real credentials via functions config.
 - [x] ~~Firebase Storage bucket~~ **SUPERSEDED 2026-07-23** — the project owner has no payment card, and Storage now requires Blaze even within its free tier. Avatar/photo uploads moved to Cloudinary instead (cloud name `vjvcigkt`) — no bucket needed.
-- [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete. The app-side blocker is fixed (those fields are real `Timestamp`s now, not ISO strings — see `Issues.md` §4); applying the policy is a one-liner that needs gcloud:
+- [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete. The app-side blocker is fixed (those fields are real `Timestamp`s now, not ISO strings — see `Issues.md` §4). **Two ways to apply it; pick either.**
+
+  **A — Firebase console, no install needed (easiest):**
+  1. Open [Firestore → Time-to-live](https://console.firebase.google.com/project/throttleiqfb/firestore/ttl)
+  2. **Create policy** → Collection group `liveSessions`, timestamp field `expiresAt`
+  3. Save. It takes up to ~24 h to start reaping, and deletions are best-effort — Google does not promise deletion at the exact expiry instant.
+
+  **B — gcloud** (`gcloud` is **not installed on this machine**, so this needs `brew install --cask google-cloud-sdk` and `gcloud auth login` first):
   ```
   gcloud firestore fields ttls update expiresAt \
     --collection-group=liveSessions \
@@ -188,7 +195,8 @@ backend or a real device. **Treat each as unproven until tested.**
     --database='(default)' \
     --enable-ttl
   ```
-  Note: documents written *before* the fix still hold string expiries and will never be reaped. Backfill them or accept the leftovers.
+
+  ⚠️ **This does not clean up the existing backlog.** Documents written before the Timestamp fix hold *string* expiries, and TTL ignores any non-Timestamp field — so those rows linger forever regardless of which method you use. Either delete them by hand in the console (`liveSessions` is small and pre-launch, so this is a few clicks) or accept them. Verify after enabling by checking that a session created *today* disappears within ~24 h of its `expiresAt`.
 - [x] ~~**Deploy the privacy policy**~~ **DONE 2026-08-01** — live at [`https://throttleiqfb.web.app/privacy.html`](https://throttleiqfb.web.app/privacy.html) (HTTP 200 verified anonymously). Paste that URL into the Play Console listing and the Data Safety form. Content is derived from what the code actually does; re-check §1–§4 whenever the data flows change.
 - [x] ~~**Sync `ride_points` (GPS trails) to Firestore**~~ **DONE 2026-08-01** (`ride_track_codec.dart` + `CloudRepository.uploadRideTrack`/`downloadRideTrack`). Trails are chunked into `users/{uid}/rides/{rideId}/track/{i}` docs of 500 positional points — one doc per point would have been thousands of writes per ride. Upload runs after the ride doc so a track can't orphan; download is on-demand and never clobbers local points. Track docs are owner-only in the rules. **Untested against a real account** — verify a reinstall actually restores polylines.
 
