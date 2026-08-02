@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-01 · Branch: `main`_
+_Last updated: 2026-08-02 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -20,21 +20,25 @@ prompts this after every work session. Feature-by-feature UI detail lives in
 
 ### TL;DR — where things stand
 
-As of 2026-08-01, the app is pre-launch (`v1.0.0-beta.1+1`, tagged **Beta
-v1** — this is the version going out to the 12-dev Play Store closed-testing
-group). Core ride-recording, garage, maintenance, social, POI-directory, and
+As of 2026-08-02, the app is pre-launch at **`1.0.0-beta.2+2`, tagged
+[`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2)**
+— that release carries both a signed APK (for handing to testers directly)
+and an AAB (for the Play Console), and is the build intended for the 12-dev
+closed-testing group. `beta-v1` remains on GitHub as the previous build.
+Core ride-recording, garage, maintenance, social, POI-directory, and
 forum features are built and wired end-to-end — the 2026-07-14 audit's
 orphaned screens (crash countdown, sync manager, exports, emergency
 contacts, live share) have all since been wired in, see "Done, but NOT yet
 verified" below. The Vehicle State Engine's foundation (Phase 1 + 1.5 —
 sensor fusion, confidence scoring, motion classification, adaptive
-recording thinning) shipped 2026-07-23, and the test suite was 287/287
-green as of 2026-08-01.
+recording thinning) shipped 2026-07-23, and the test suite is **489/489
+green** as of 2026-08-02.
 
 **Versioning reset 2026-08-01:** the old `2.0.0-beta.x` line, its git tags,
 and all prior GitHub Releases (including the same-day `carbon-ui-` one)
 were deleted in favor of a clean `1.0.0-beta.1+1` / **Beta v1** start —
-this is the first build meant for external (non-owner) hands. The
+that was the first build meant for external (non-owner) hands (the line has
+since moved on to `beta-v2`; see the TL;DR above for current state). The
 `carbon-mono` branch was also deleted; `main` now carries both UI modes via
 the runtime theme toggle below, so the branch no longer serves a purpose.
 
