@@ -292,7 +292,35 @@ edit a simulator app's plist directly to set up a test** — go through
 
 ---
 
-## 9. QA report
+## 9. Bangla would have been served to every unmatched locale (caught pre-ship)
+
+**Status:** Never shipped — caught while wiring localization, 2026-08-02.
+Recorded because the trap is easy to walk back into.
+
+`flutter gen-l10n` emits `AppLocalizations.supportedLocales` **sorted
+alphabetically by ARB filename**, so with `app_bn.arb` and `app_en.arb`
+the generated list is `[Locale('bn'), Locale('en')]` — Bangla first.
+
+Flutter's `basicLocaleListResolution` falls back to
+`supportedLocales.first` when the device locale matches nothing. So
+wiring `MaterialApp` straight to the generated list would have served
+**Bangla to every French, Hindi, Arabic and Spanish phone** — silently,
+and only on devices nobody here owns.
+
+**Avoided by** passing an explicit en-first literal in `app.dart`:
+`supportedLocales: const [Locale('en'), Locale('bn')]`. Two tests lock it
+in — one asserts English is first, one asserts `Locale('fr')` resolves to
+English.
+
+⚠️ **Do not "simplify"** `app.dart` to use
+`AppLocalizations.supportedLocales`. It looks like obvious cleanup and
+reintroduces the bug. The tests will fail if you try; that's their job.
+The same hazard applies to any future locale whose code sorts before
+`en` (`ar`, `bn`, `de`…).
+
+---
+
+## 10. QA report
 
 **Status:** Not started.
 
