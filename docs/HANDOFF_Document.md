@@ -99,12 +99,22 @@ this release went out — see "Done, but NOT yet verified" for exactly
 what's still unproven (the Editorial toggle itself hasn't been tap-tested
 live on a device, only exercised via new automated provider tests).
 
-**Known flake:** the first `flutter run --release -d <device>` on a
-physical iPhone failed at the install/launch step right after a clean
-Xcode build ("Could not run ... Try launching Xcode") even though
-`devicectl` showed the device as paired/available; an immediate retry with
-the now-cached build succeeded in ~40s. Not yet root-caused — if it
-recurs, just retry once before assuming a real provisioning problem.
+**Known flake — now confirmed reproducible (seen twice: 2026-08-01 and
+2026-08-03).** The first `flutter run --release -d <device>` on a physical
+iPhone fails at the install/launch step right after a *clean* Xcode build
+("Could not run ... Try launching Xcode") even though `devicectl` shows
+the device as paired/available. An immediate retry, with the build now
+cached, succeeds in ~30-40s both times.
+
+The pattern is: long clean build (~290s) → install fails → retry (~32s) →
+works. It correlates with the length of the build, not with the device
+state, which points at the install step timing out against a device that
+has gone back to sleep rather than a provisioning problem. **Just retry
+once.** Not worth chasing further unless it starts failing twice.
+
+Related: `flutter devices` often can't see the iPhone at the default
+timeout even when `xcrun devicectl list devices` reports it as
+`available (paired)`. Use `--device-timeout 30`; the device shows up.
 
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
@@ -187,7 +197,7 @@ backend or a real device. **Treat each as unproven until tested.**
   2. **Create policy** → Collection group `liveSessions`, timestamp field `expiresAt`
   3. Save. It takes up to ~24 h to start reaping, and deletions are best-effort — Google does not promise deletion at the exact expiry instant.
 
-  **B — gcloud** (`gcloud` is **not installed on this machine**, so this needs `brew install --cask google-cloud-sdk` and `gcloud auth login` first):
+  **B — gcloud** (installed 2026-08-03, SDK 578.0.0, on PATH — but still needs an interactive `gcloud auth login` before this will run):
   ```
   gcloud firestore fields ttls update expiresAt \
     --collection-group=liveSessions \
