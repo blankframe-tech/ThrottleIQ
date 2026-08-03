@@ -108,18 +108,41 @@ this release went out — see "Done, but NOT yet verified" for exactly
 what's still unproven (the Editorial toggle itself hasn't been tap-tested
 live on a device, only exercised via new automated provider tests).
 
-**Known flake — now confirmed reproducible (seen twice: 2026-08-01 and
-2026-08-03).** The first `flutter run --release -d <device>` on a physical
-iPhone fails at the install/launch step right after a *clean* Xcode build
-("Could not run ... Try launching Xcode") even though `devicectl` shows
-the device as paired/available. An immediate retry, with the build now
-cached, succeeds in ~30-40s both times.
+**iOS install failure — root-caused 2026-08-04. Previously mis-diagnosed
+here as a timing "flake"; that was wrong.**
 
-The pattern is: long clean build (~290s) → install fails → retry (~32s) →
-works. It correlates with the length of the build, not with the device
-state, which points at the install step timing out against a device that
-has gone back to sleep rather than a provisioning problem. **Just retry
-once.** Not worth chasing further unless it starts failing twice.
+Symptom: `flutter run --release -d <device>` fails at install with the
+useless "Could not run ... Try launching Xcode". Sometimes an immediate
+retry appeared to fix it, which is what made it look like a flake.
+
+**Actual cause:** `objective_c.framework` gets embedded **ad-hoc signed**
+(`flags=0x2(adhoc)`, `TeamIdentifier=not set`) while every other framework
+carries the Apple Development identity. iOS refuses to install a bundle
+containing an ad-hoc-signed framework. `codesign -vvv` reports the
+framework "valid on disk", so it looks fine — you have to check the
+*identity*, not validity.
+
+That framework comes from `path_provider_foundation` → `objective_c`,
+which builds via Flutter's **native-assets / build-hooks** system (the
+same subsystem behind the `Target native_assets required define SdkRoot
+but it was not provided` warning in build logs). Stale native-asset output
+gets re-embedded without re-signing.
+
+**Fix: `flutter clean && flutter pub get`, then rebuild.** That forces the
+native-assets step to re-run and the framework to be signed properly —
+verified: `flags=0x0(none)`, Apple Development identity, installs first
+try with no retry.
+
+**Getting the real error.** `flutter run` hides it. Use:
+```
+xcrun devicectl device install app --device <udid> build/ios/iphoneos/Runner.app
+```
+which names the offending framework and the `0xe8008014` code directly.
+Then compare identities:
+```
+codesign -dvv build/ios/iphoneos/Runner.app/Frameworks/<name>.framework
+```
+Ad-hoc means the build didn't re-sign it; clean and rebuild.
 
 Related: `flutter devices` often can't see the iPhone at the default
 timeout even when `xcrun devicectl list devices` reports it as
