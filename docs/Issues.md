@@ -428,7 +428,54 @@ thread's top frames name the culprit directly.
 
 ---
 
-## 12. QA report
+## 12. Deleted bikes came back on the next sync
+
+**Status:** Fixed 2026-08-04 (commit `c92bfb8`).
+
+Reported twice, as what looked like two problems: _"when I delete a bike
+I can still choose it on the ride page and I'm still in its forum"_ and
+_"it removes it from the garage temporarily but when I reopen the app the
+deleted bike appears again."_ **One bug.** The bike never actually left.
+
+**Root cause.** `GarageNotifier.deleteBike` called `BikeDao.delete`, which
+removed the **local** row only. The Firestore document survived, and
+`CloudRepository.downloadBikes` re-adds *"anything missing locally"* —
+which is precisely what a deleted bike looks like. The next sync
+faithfully recreated it. Nothing downstream was broken: the bike picker
+and the garage-forum resolution were correctly reflecting data that said
+the bike still existed.
+
+**Why a tombstone and not just a remote delete.** Deleting the Firestore
+doc alone still loses the deletion whenever the rider is offline at the
+moment they tap delete — the local row goes, the remote delete fails, and
+the next sync brings it back. So:
+
+- schema 7 → 8 adds `deleted_bikes(id, deleted_at, synced)`
+- `BikeDao.delete` writes the tombstone **in the same transaction** as the
+  delete, so the two can never disagree
+- `downloadBikes` consults it and skips those ids
+- `CloudRepository.deleteBikeRemote` removes the bike doc **and its
+  rides** — otherwise `downloadRides` resurrects rides orphaned to a bike
+  that no longer exists
+- `SyncManager` pushes pending deletions **before** uploads and downloads,
+  so a single cycle settles a deletion instead of fighting itself; a
+  failure leaves the tombstone unsynced for the next attempt
+- tombstone rows are **kept** after syncing, never removed: a second
+  device that still has the bike would otherwise reintroduce it
+
+**The general lesson.** This codebase's sync is "pull anything missing
+locally." Under that rule, **a local delete is indistinguishable from a
+record that hasn't synced yet** — so any entity that can be deleted needs
+a tombstone, not just a delete. Rides, maintenance logs and routes have
+the same shape and have **not** been audited for this; if a delete there
+ever looks flaky, this is the first thing to check.
+
+Covered by 5 new real-SQLite tests (13 total in
+`test/database/bike_dao_delete_test.dart`).
+
+---
+
+## 13. QA report
 
 **Status:** Not started.
 
