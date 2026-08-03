@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../database/daos/bike_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
@@ -134,6 +135,23 @@ class SyncManager {
         where: 'synced = ?',
         whereArgs: [0],
       );
+
+      // Push deletions BEFORE uploads. A bike deleted locally still has its
+      // rides in the local DB removed, but the remote copies linger — and the
+      // download half of this sync would happily pull them back. Removing
+      // them first means one sync cycle fully settles a deletion instead of
+      // fighting itself.
+      for (final bikeId in await BikeDao().pendingRemoteDeletions()) {
+        try {
+          await _cloudRepository.deleteBikeRemote(uid, bikeId);
+          await BikeDao().markDeletionSynced(bikeId);
+        } catch (e) {
+          // Offline or permission hiccup — leave the tombstone unsynced and
+          // retry next cycle. The local tombstone keeps the bike deleted in
+          // the meantime, so the rider never sees it come back.
+          debugPrint('[SyncManager] remote bike delete failed for $bikeId: $e');
+        }
+      }
 
       // Upload to Firestore
       if (unsyncedRides.isNotEmpty) {

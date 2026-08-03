@@ -28,7 +28,7 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 7);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 8);
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
@@ -45,7 +45,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -114,7 +114,30 @@ class DatabaseHelper {
     if (oldVersion < 7) {
       await db.execute('ALTER TABLE maintenance_logs ADD COLUMN custom_label TEXT');
     }
+    if (oldVersion < 8) {
+      await db.execute(_createDeletedBikesSql);
+    }
   }
+
+  /// Tombstones for locally-deleted bikes.
+  ///
+  /// Without this, deleting a bike was purely local — `CloudRepository`
+  /// re-downloads "anything missing locally", so the bike came straight back
+  /// on the next sync and the rider saw it reappear after a restart, still
+  /// selectable on the record screen and still in their forums. A tombstone
+  /// makes the deletion durable even when the cloud delete can't happen yet
+  /// (offline), because the download path consults this table.
+  ///
+  /// `synced = 0` means the remote copy still needs deleting; SyncManager
+  /// retries those and flips the row to 1. Rows are kept, not removed, so a
+  /// second device that still has the bike can't reintroduce it.
+  static const String _createDeletedBikesSql = '''
+    CREATE TABLE IF NOT EXISTS deleted_bikes (
+      id TEXT PRIMARY KEY,
+      deleted_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
@@ -226,5 +249,7 @@ class DatabaseHelper {
         updated_at TEXT NOT NULL
       )
     ''');
+
+    await db.execute(_createDeletedBikesSql);
   }
 }

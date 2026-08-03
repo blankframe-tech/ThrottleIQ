@@ -53,7 +53,45 @@ class BikeDao {
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
+
+      // Tombstone, written in the SAME transaction as the delete so the two
+      // can never disagree. Deleting locally is not enough on its own:
+      // CloudRepository.downloadBikes re-adds "anything missing locally", so
+      // without this the bike reappeared on the next sync — still selectable
+      // on the record screen, still in the rider's forums. See Issues.md.
+      await txn.insert(
+        'deleted_bikes',
+        {
+          'id': id,
+          'deleted_at': DateTime.now().toIso8601String(),
+          'synced': 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     });
+  }
+
+  /// Ids this device has deleted. The download path must skip these.
+  Future<Set<String>> deletedIds() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('deleted_bikes', columns: ['id']);
+    return rows.map((r) => r['id'] as String).toSet();
+  }
+
+  /// Tombstones whose remote copy still needs deleting.
+  Future<List<String>> pendingRemoteDeletions() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('deleted_bikes',
+        columns: ['id'], where: 'synced = 0');
+    return rows.map((r) => r['id'] as String).toList();
+  }
+
+  /// Marks a tombstone's remote delete as done. The row is kept, not removed —
+  /// another device that still has the bike would otherwise reintroduce it.
+  Future<void> markDeletionSynced(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('deleted_bikes', {'synced': 1},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> setActive(String id, String userId) async {

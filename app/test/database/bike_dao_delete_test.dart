@@ -178,4 +178,54 @@ void main() {
       expect(await count('bikes', 'id = ?', ['b1']), 0);
     });
   });
+
+  group('BikeDao tombstones', () {
+    // The delete previously only removed the local row. CloudRepository
+    // re-downloads "anything missing locally", so the bike came straight back
+    // on the next sync — the rider deleted it, reopened the app, and there it
+    // was again, still selectable and still in their forums.
+    test('deleting records a tombstone', () async {
+      await seedBike('b1');
+      await BikeDao().delete('b1');
+
+      expect(await BikeDao().deletedIds(), contains('b1'));
+    });
+
+    test('a fresh tombstone is pending a remote delete', () async {
+      await seedBike('b1');
+      await BikeDao().delete('b1');
+
+      expect(await BikeDao().pendingRemoteDeletions(), contains('b1'));
+    });
+
+    test('marking synced clears it from pending but KEEPS the tombstone', () async {
+      await seedBike('b1');
+      await BikeDao().delete('b1');
+      await BikeDao().markDeletionSynced('b1');
+
+      expect(await BikeDao().pendingRemoteDeletions(), isEmpty);
+      // Kept on purpose: another device that still has the bike would
+      // otherwise reintroduce it on its next upload.
+      expect(await BikeDao().deletedIds(), contains('b1'));
+    });
+
+    test('deleting the same bike twice does not duplicate the tombstone', () async {
+      await seedBike('b1');
+      await BikeDao().delete('b1');
+      await BikeDao().delete('b1');
+
+      final pending = await BikeDao().pendingRemoteDeletions();
+      expect(pending.where((id) => id == 'b1').length, 1);
+    });
+
+    test('untouched bikes are not tombstoned', () async {
+      await seedBike('b1');
+      await seedBike('b2');
+      await BikeDao().delete('b1');
+
+      final deleted = await BikeDao().deletedIds();
+      expect(deleted, contains('b1'));
+      expect(deleted, isNot(contains('b2')));
+    });
+  });
 }

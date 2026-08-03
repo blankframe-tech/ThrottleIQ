@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/database_helper.dart';
+import '../database/daos/bike_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../database/daos/ride_point_dao.dart';
 import 'ride_track_codec.dart';
@@ -20,6 +21,33 @@ class CloudRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late final RideDao _rideDao = RideDao();
   late final RidePointDao _pointDao = RidePointDao();
+  late final BikeDao _bikeDao = BikeDao();
+
+  /// Deletes a bike's remote copy, and the rides hanging off it.
+  ///
+  /// Local deletion alone was never enough: the bike doc stayed in Firestore
+  /// and [downloadBikes] pulled it straight back. The bike's rides go too, or
+  /// [downloadRides] would resurrect orphaned rides pointing at a bike that
+  /// no longer exists.
+  ///
+  /// Best-effort by design — the caller marks the tombstone synced only when
+  /// this returns without throwing, so an offline delete is simply retried on
+  /// the next sync while the local tombstone keeps the bike gone meanwhile.
+  Future<void> deleteBikeRemote(String uid, String bikeId) async {
+    final userDoc = _firestore.collection('users').doc(uid);
+
+    final rides = await userDoc
+        .collection('rides')
+        .where('bike_id', isEqualTo: bikeId)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final ride in rides.docs) {
+      batch.delete(ride.reference);
+    }
+    batch.delete(userDoc.collection('bikes').doc(bikeId));
+    await batch.commit();
+  }
 
   /// Upload unsynced rides to Firestore and mark them as synced
   Future<void> uploadRides(String uid, List<Map<String, dynamic>> rides) async {
@@ -98,6 +126,11 @@ class CloudRepository {
     final localIds = (await db.query('bikes', columns: ['id']))
         .map((r) => r['id'] as String)
         .toSet();
+    // Bikes this device deleted must never come back. "Missing locally" is
+    // exactly what a deleted bike looks like, so without consulting the
+    // tombstones this loop faithfully re-created every bike the rider had
+    // just removed — which is precisely how the delete appeared not to work.
+    final deletedIds = await _bikeDao.deletedIds();
     final snap = await _firestore.collection('users').doc(uid).collection('bikes').get();
 
     final hasLocalActive = localIds.isNotEmpty &&
@@ -106,7 +139,7 @@ class CloudRepository {
     var pulledAny = false;
 
     for (final doc in snap.docs) {
-      if (localIds.contains(doc.id)) continue;
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       // A local file path from a *different* device is meaningless here —
       // rather than let the UI try (and fail) to load a nonexistent file.
