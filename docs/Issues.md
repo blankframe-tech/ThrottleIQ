@@ -362,7 +362,73 @@ pass against the emulator or a second account before the beta.**
 
 ---
 
-## 11. QA report
+## 11. "The app crashes randomly" — nested array in the GPS trail upload
+
+**Status:** Fixed 2026-08-03 (commit `1fca84e`). Reported by the project
+owner as random crashes on iPhone, twice in one day.
+
+**Root cause, confirmed from the crash report rather than inferred.**
+`~/Library/Logs/DiagnosticReports/Runner-2026-08-01-174714.ips`:
+
+```
+EXC_CRASH (SIGABRT)
+  ...
+  FirebaseFirestoreInternal  ThrowInvalidArgument<>(char const*)
+  FirebaseFirestoreInternal  -[FSTUserDataReader parseData:context:]
+```
+
+**Firestore does not support nested arrays** — an array may not contain
+another array. `chunkTrack()` returned `List<List<num>>` (a list of
+5-element point lists) and `uploadRideTrack` wrote it as the `points`
+field, so every trail upload handed the native SDK a shape it refuses.
+
+Two things made it lethal rather than merely broken:
+
+1. The rejection is an **Objective-C exception, not a Dart one**. The
+   `try`/`catch` wrapped around the call in `SyncManager` caught nothing.
+   The process aborted.
+2. It fires from SyncManager's **background timer** after a ride syncs —
+   nothing the rider did, hence "random".
+
+Timeline confirms it: the trail-sync commit landed 2026-08-01 **17:14**;
+the crash is stamped **17:47**, the first sync after a ride with that code
+in place.
+
+**Fix:** each chunk is now a **flat** array of numbers, `fieldsPerPoint`
+(5) per point, strided on read via `decodeChunk`. The original reason for
+a positional encoding — avoiding repeated map keys against the 1 MiB
+document limit — still holds; only the nesting is gone. No migration was
+needed, because the write always threw and no track document was ever
+persisted.
+
+### Two lessons worth carrying
+
+**Dart-only round-trip tests cannot validate a Firestore schema.** The
+codec had 13 passing tests. They round-tripped Dart → Dart and never
+touched Firestore, so they cheerfully certified a shape the database
+rejects. Same blind spot as §7's DAO deadlock, which passed map-shaped
+"tests" that never opened SQLite. **If a payload crosses a boundary, the
+test has to cross it too** — or at minimum assert the boundary's rules
+(the regression test here asserts every chunk element is a `num` and
+never a `List`).
+
+**`try`/`catch` around a plugin call is not a safety net.** Native
+exceptions from Firebase/platform channels bypass Dart error handling
+entirely and abort the process. Defensive `catch` blocks around
+`batch.set()` give a false sense of protection; the only real defence is
+not constructing an invalid payload.
+
+### If it recurs
+
+Crash reports do **not** sync to the Mac automatically. Either open Xcode
+→ Window → Devices and Simulators → *View Device Logs*, or on the phone
+Settings → Privacy & Security → Analytics & Improvements → Analytics
+Data, and look for `ThrottleIQ-*.ips` / `Runner-*.ips`. The faulting
+thread's top frames name the culprit directly.
+
+---
+
+## 12. QA report
 
 **Status:** Not started.
 

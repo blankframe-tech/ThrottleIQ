@@ -244,7 +244,7 @@ backend or a real device. **Treat each as unproven until tested.**
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2) — signed release **APK + AAB**, matches `pubspec.yaml` at `1.0.0-beta.2+2`. Upload the `.aab` to Play, hand testers the `.apk`. (`beta-v1` is still there as the previous build.) |
-| Test suite | 546/546 green as of 2026-08-03 (was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
+| Test suite | 550/550 green as of 2026-08-03 (was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` AND in `firestore.rules`. Both must change together; move to a custom claim before public launch |
