@@ -19,6 +19,10 @@
       {
         "source": "/live/**",
         "destination": "/live-viewer.html"
+      },
+      {
+        "source": "/r/**",
+        "destination": "/live-viewer.html"
       }
     ]
   }

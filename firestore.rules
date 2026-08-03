@@ -551,14 +551,43 @@ service cloud.firestore {
     // doc not exist and uid==self), keep their own (update with uid
     // unchanged), or release their own (delete). There is no way to overwrite
     // someone else's handle.
+    //
+    // `get`, deliberately NOT `read` — same reasoning as `liveSessions`
+    // below (docs/Issues.md §3): `read` = `get` + `list`, and a `list` grant
+    // here would let anyone enumerate every handle→uid pair. `allow get: if
+    // true` (no auth required) rather than gating on `request.auth != null`
+    // because the permanent share link (`/r/{username}`) is resolved by
+    // public/live-viewer.html, which never signs in — the whole point of a
+    // shareable link is that the person opening it doesn't need the app.
+    // Every real caller does a keyed `.doc(handle)` lookup (ProfileRepository,
+    // live-viewer.html), so nothing legitimately lists this collection.
     match /usernames/{handle} {
-      allow read: if request.auth != null;
+      allow get: if true;
       allow create: if request.auth != null &&
         request.resource.data.uid == request.auth.uid;
       allow update: if request.auth != null &&
         resource.data.uid == request.auth.uid &&
         request.resource.data.uid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Live pointer — `livePointers/{uid}` → { token, active }. The other half
+    // of the permanent share link: resolves a uid to "are they riding right
+    // now, and if so which liveSessions/{token}". Deliberately keyed by uid
+    // (from the signed-in rider's own auth), not by username — the rule
+    // below is then a straight path match with no profile lookup, and it is
+    // structurally impossible for one rider to write another's pointer.
+    //
+    // `get: if true`, not `read`, for the same reason as `usernames` and
+    // `liveSessions`: the public viewer page reads this without signing in,
+    // and only a keyed lookup is ever done — granting `list` would let a
+    // client enumerate every rider's on/off-riding status for free.
+    match /livePointers/{uid} {
+      allow get: if true;
+      allow create: if request.auth != null && request.auth.uid == uid &&
+        request.resource.data.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid &&
+        request.resource.data.uid == uid;
     }
 
     // Follow graph — one edge doc per (follower → followee) at

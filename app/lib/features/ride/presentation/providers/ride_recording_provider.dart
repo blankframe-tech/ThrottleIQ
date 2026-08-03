@@ -732,6 +732,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // _currentLiveSessionToken, since _updateLiveSessionStatus reads it.
     _liveSessionTimer?.cancel();
     await _updateLiveSessionStatus(LiveSessionStatus.completed);
+    // Same reasoning one level up: the permanent /r/{username} link must stop
+    // resolving to this ride the moment it ends, or it becomes a frozen
+    // "last seen here" beacon that outlives the rider's intent to share.
+    await _clearLivePointer();
     _currentLiveSessionToken = null;
 
     _flushPointBuffer();
@@ -1008,8 +1012,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (uid == null || ride == null) return;
 
     try {
-      final token = _currentLiveSessionToken ??
-          await _createLiveSessionToken();
+      final existingToken = _currentLiveSessionToken;
+      final token = existingToken ?? await _createLiveSessionToken();
       _currentLiveSessionToken = token;
 
       final batteryLevel = await BatteryService.getBatteryLevel();
@@ -1037,11 +1041,77 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           .doc(token)
           .set(session.toFirestore());
 
+      // Point the rider's permanent link at this session — only on the tick
+      // that minted the token, not on all ~360 updates of a one-hour ride.
+      // Written *after* the session doc exists so the pointer can never
+      // reference a document that isn't there yet.
+      if (existingToken == null) {
+        await _publishLivePointer(uid, token);
+      }
+
       if (state.liveSessionToken != token) {
         state = state.copyWith(liveSessionToken: token);
       }
     } catch (e) {
       print('Failed to publish live session: $e');
+    }
+  }
+
+  /// Publishes/refreshes `livePointers/{uid}` — the one document that makes a
+  /// rider's permanent share link (`/r/{username}`) work.
+  ///
+  /// The old `/live/{token}` link is minted fresh per ride, so a rider had to
+  /// re-send it every time. The permanent link instead resolves in three
+  /// *keyed* lookups, none of which is a query: `usernames/{handle}` → uid,
+  /// `livePointers/{uid}` → token, `liveSessions/{token}` → the ride.
+  ///
+  /// Keyed by uid deliberately, NOT by username. The rule for this collection
+  /// is then simply `request.auth.uid == uid` from the document path — no
+  /// profile lookup, and structurally impossible for one rider to publish a
+  /// pointer under another rider's name. It also survives a handle change for
+  /// free, since `usernames/{handle}` is already re-pointed transactionally by
+  /// ProfileRepository.setUsername.
+  ///
+  /// Note what this document does NOT contain: no position, no speed, no
+  /// route. It is a token indirection and an on/off flag. Anyone guessing a
+  /// username learns only whether that rider is out right now — and only
+  /// because the rider published a shareable live session in the first place.
+  ///
+  /// Best-effort like every other live-share write here: a failure costs the
+  /// permanent link for this ride, never the ride recording itself.
+  Future<void> _publishLivePointer(String uid, String token) async {
+    try {
+      await _firestore.collection('livePointers').doc(uid).set({
+        'uid': uid,
+        'token': token,
+        'active': true,
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (e) {
+      print('Failed to publish live pointer: $e');
+    }
+  }
+
+  /// Flips the permanent link back to "not riding right now".
+  ///
+  /// The token is cleared rather than left dangling: the viewer must not be
+  /// able to walk from a finished pointer to a completed session doc and
+  /// render its last position. `active: false` alone would be enough for the
+  /// current viewer, but relying on the viewer to be well-behaved with data
+  /// it has already been handed is exactly the mistake that made the
+  /// liveSessions rule a privacy hole.
+  Future<void> _clearLivePointer() async {
+    final uid = _ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+    try {
+      await _firestore.collection('livePointers').doc(uid).set({
+        'uid': uid,
+        'token': null,
+        'active': false,
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (e) {
+      print('Failed to clear live pointer: $e');
     }
   }
 

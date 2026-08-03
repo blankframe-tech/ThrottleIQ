@@ -290,6 +290,29 @@
       transition: width 0.3s;
     }
 
+    .idle {
+      text-align: center;
+      padding: 36px 20px;
+      color: #4a5568;
+    }
+
+    .idle-icon {
+      font-size: 44px;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .idle h2 {
+      font-size: 19px;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+
+    .idle p {
+      font-size: 14px;
+      color: #718096;
+    }
+
     .hidden {
       display: none;
     }
@@ -310,6 +333,18 @@
 
       <div id="error" class="error hidden"></div>
       <div id="installCtaError" class="install-cta hidden"></div>
+
+      <!-- "Not riding right now" — reachable only from a permanent
+           /r/{username} link, which by design stays valid forever and so
+           spends most of its life pointing at nothing. Deliberately NOT the
+           error box: a rider simply not being out is the normal state, not a
+           broken link, and the page keeps listening so it flips itself live
+           the moment they start. -->
+      <div id="idle" class="idle hidden">
+        <div class="idle-icon">🅿️</div>
+        <h2 id="idleTitle">Not riding right now</h2>
+        <p id="idleSubtitle">This link stays live — it'll update by itself the moment they set off.</p>
+      </div>
 
       <div id="viewer" class="hidden">
         <div id="statusBanner" class="status-banner"></div>
@@ -391,18 +426,69 @@
 
     let db = null;
 
-    // Extract token from URL. Hosting rewrites /live/** to this page, so the
-    // token is the last non-empty path segment; ?token= is also accepted. The
-    // filter(Boolean) matters — a trailing slash otherwise yields "".
-    const urlParams = new URLSearchParams(window.location.search);
-    const pathToken = window.location.pathname.split('/').filter(Boolean).pop();
-    const token = urlParams.get('token') || pathToken;
+    // A live session whose last update is older than this is treated as over,
+    // not as a position. Only applied on the permanent-link path: a one-off
+    // /live/{token} link is handed out for one specific ride and dies with it,
+    // whereas /r/{username} is expected to be sitting in someone's chat
+    // history for months, so it must never present a hours-old fix as "here
+    // they are". Generous enough to ride through a tunnel, a dead-zone
+    // highway stretch, or a phone that briefly lost data.
+    const STALE_OFFLINE_MS = 10 * 60 * 1000;
+
+    // Same shape ProfileRepository.setUsername enforces when a handle is
+    // claimed. Validated before it is ever used as a document id, so a
+    // hand-edited URL can't be used to address some other collection path.
+    const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+
+    // ------------------------------------------------------------------
+    // Routing. This page now answers two URL shapes:
+    //
+    //   /live/{token}    one-off, minted per ride (the original link)
+    //   /r/{username}    permanent, one per rider — resolves to whatever
+    //                    session they have going right now, or to a plain
+    //                    "not riding" panel when they have none
+    //
+    // Both are Hosting rewrites onto this file, so the mode has to be read
+    // back off the path. Query-string forms (?token= / ?u=) are kept for
+    // opening the page off Hosting.
+    // ------------------------------------------------------------------
+    function parseRoute() {
+      const params = new URLSearchParams(window.location.search);
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const last = segments[segments.length - 1];
+      const first = segments[0];
+
+      const queryHandle = params.get('u') || params.get('rider');
+      if (queryHandle) return { mode: 'handle', value: queryHandle };
+      const queryToken = params.get('token');
+      if (queryToken) return { mode: 'token', value: queryToken };
+
+      if (first === 'r') return { mode: 'handle', value: last };
+      if (first === 'live') return { mode: 'token', value: last };
+      // Opened as /live-viewer.html with nothing to go on.
+      return { mode: 'none', value: null };
+    }
+
+    const route = parseRoute();
 
     bootstrap();
 
     async function bootstrap() {
-      if (!token || token.length < 10 || token === 'live-viewer.html') {
-        showError('Invalid or missing session token. Please check the share link.');
+      let handle = null;
+
+      if (route.mode === 'handle') {
+        handle = String(route.value || '').trim().toLowerCase().replace(/^@/, '');
+        if (!HANDLE_RE.test(handle)) {
+          showError('That rider link doesn’t look right. Please check it and try again.');
+          return;
+        }
+      } else if (route.mode === 'token') {
+        if (!route.value || route.value.length < 10 || route.value === 'live-viewer.html') {
+          showError('Invalid or missing session token. Please check the share link.');
+          return;
+        }
+      } else {
+        showError('Invalid or missing share link. Please check the link and try again.');
         return;
       }
 
@@ -422,64 +508,178 @@
         return;
       }
 
-      initializeViewer(token);
+      if (route.mode === 'handle') {
+        document.querySelector('.header p').textContent = '@' + handle;
+        initializePermanentViewer(handle);
+      } else {
+        initializeViewer(route.value);
+      }
     }
 
-    async function initializeViewer(token) {
+    // ------------------------------------------------------------------
+    // Permanent per-rider link: /r/{username}
+    //
+    // Resolution is three KEYED document reads and no queries at all:
+    //
+    //   usernames/{handle}     -> { uid }
+    //   livePointers/{uid}     -> { active, token }
+    //   liveSessions/{token}   -> the live ride
+    //
+    // That is deliberate and load-bearing. The obvious implementation —
+    // liveSessions.where('uid','==',uid).where('active','==',true) — needs a
+    // `list` grant on liveSessions, and a `list` grant on that collection is
+    // precisely the bug that once let anyone enumerate every rider's live GPS
+    // position (docs/Issues.md §3). Every read below is a .doc() get, so the
+    // rules can stay get-only and no composite index is required.
+    // ------------------------------------------------------------------
+    async function initializePermanentViewer(handle) {
+      let uid;
       try {
-        const docRef = db.collection('liveSessions').doc(token);
-        let lastUpdateTime = Date.now();
-        let updateWarningShown = false;
+        const handleDoc = await db.collection('usernames').doc(handle).get();
+        if (!handleDoc.exists) {
+          showError('No rider found for this link.');
+          return;
+        }
+        uid = handleDoc.data().uid;
+      } catch (error) {
+        console.error('Handle lookup failed:', error);
+        showError('Could not look up this rider. Please try again later.');
+        return;
+      }
 
-        // Real-time listener
-        docRef.onSnapshot(
-          (doc) => {
-            if (doc.exists) {
-              const session = doc.data();
-              // Sessions carry a 24h expiry the app sets at publish time.
-              // Nothing sweeps expired docs, so honour it client-side rather
-              // than showing a day-old position as if it were live.
-              // expiresAt is a Firestore Timestamp on sessions written by
-              // current builds, and an ISO string on older ones. `new Date()`
-              // on a Timestamp object yields an Invalid Date, which the
-              // isNaN guard below would silently treat as "never expires" —
-              // so unwrap it via toDate() when it's available.
-              const rawExpiry = session.expiresAt;
-              const expiresAt = rawExpiry && typeof rawExpiry.toDate === 'function'
-                ? rawExpiry.toDate()
-                : new Date(rawExpiry);
-              if (!isNaN(expiresAt.getTime()) && expiresAt < new Date()) {
-                showError('This live ride link has expired.');
-                document.getElementById('viewer').classList.add('hidden');
-                return;
-              }
-              updateUI(session);
-              lastUpdateTime = Date.now();
-              updateWarningShown = false;
-              document.getElementById('warningMsg').style.display = 'none';
-            } else {
-              showError('Session not found or has expired.');
-              document.getElementById('viewer').classList.add('hidden');
-              document.getElementById('loading').classList.add('hidden');
+      if (!uid) {
+        showError('No rider found for this link.');
+        return;
+      }
+
+      // Watch the pointer rather than reading it once: someone who opens the
+      // link a minute early should see it come alive on its own, and someone
+      // watching to the end should see it settle back to "not riding" without
+      // a refresh.
+      let detachSession = null;
+      let watchedToken = null;
+
+      db.collection('livePointers').doc(uid).onSnapshot(
+        (doc) => {
+          const pointer = doc.exists ? doc.data() : null;
+          const token = pointer && pointer.active === true ? pointer.token : null;
+
+          if (!token) {
+            if (detachSession) { detachSession(); detachSession = null; }
+            watchedToken = null;
+            showIdle();
+            return;
+          }
+          if (token === watchedToken) return; // Already streaming this ride.
+
+          if (detachSession) detachSession();
+          watchedToken = token;
+          detachSession = watchLiveSession(token, { permanent: true });
+        },
+        (error) => {
+          console.error('Live pointer error:', error);
+          showError('Could not check whether this rider is out. Please try again later.');
+        }
+      );
+    }
+
+    /// Subscribes to one liveSessions document and renders it. Returns the
+    /// unsubscribe function. Shared by both link shapes; `permanent` only
+    /// changes what a finished/stale/absent session means — a dead end for a
+    /// one-off token, an ordinary "not riding" for a permanent link.
+    function watchLiveSession(token, { permanent } = { permanent: false }) {
+      let lastUpdateTime = Date.now();
+      let updateWarningShown = false;
+
+      const notLive = (tokenMessage) => {
+        if (permanent) {
+          showIdle();
+        } else {
+          showError(tokenMessage);
+          document.getElementById('viewer').classList.add('hidden');
+          document.getElementById('loading').classList.add('hidden');
+        }
+      };
+
+      const unsubscribe = db.collection('liveSessions').doc(token).onSnapshot(
+        (doc) => {
+          if (!doc.exists) {
+            notLive('Session not found or has expired.');
+            return;
+          }
+          const session = doc.data();
+
+          // Sessions carry a 24h expiry the app sets at publish time.
+          // Nothing sweeps expired docs, so honour it client-side rather
+          // than showing a day-old position as if it were live.
+          // expiresAt is a Firestore Timestamp on sessions written by
+          // current builds, and an ISO string on older ones. `new Date()`
+          // on a Timestamp object yields an Invalid Date, which the
+          // isNaN guard below would silently treat as "never expires" —
+          // so unwrap it via toDate() when it's available.
+          const expiresAt = toDate(session.expiresAt);
+          if (expiresAt && expiresAt < new Date()) {
+            notLive('This live ride link has expired.');
+            return;
+          }
+
+          // Belt and braces for the permanent link. The pointer is cleared
+          // when a ride ends, so normally we never get here on a finished
+          // session — but a phone that dies, loses data or is force-killed
+          // mid-ride never runs that cleanup, and a permanent link must not
+          // become a frozen "last seen here" beacon because of it.
+          if (permanent) {
+            const updatedAt = toDate(session.updatedAt);
+            const stale = updatedAt && (Date.now() - updatedAt.getTime()) > STALE_OFFLINE_MS;
+            if (session.active === false || session.status === 'completed' || stale) {
+              showIdle();
+              return;
             }
-          },
-          (error) => {
-            console.error('Firestore error:', error);
-            showError('Failed to connect to session. Please check permissions.');
           }
-        );
 
-        // Check for stale data every 5 seconds
-        setInterval(() => {
-          const timeSinceUpdate = Date.now() - lastUpdateTime;
-          if (timeSinceUpdate > 30000 && !updateWarningShown) {
-            document.getElementById('warningMsg').style.display = 'block';
-            updateWarningShown = true;
-          } else if (timeSinceUpdate < 30000 && updateWarningShown) {
-            document.getElementById('warningMsg').style.display = 'none';
-            updateWarningShown = false;
-          }
-        }, 5000);
+          showViewer();
+          updateUI(session);
+          lastUpdateTime = Date.now();
+          updateWarningShown = false;
+          document.getElementById('warningMsg').style.display = 'none';
+        },
+        (error) => {
+          console.error('Firestore error:', error);
+          showError('Failed to connect to session. Please check permissions.');
+        }
+      );
+
+      // Check for stale data every 5 seconds
+      const staleTimer = setInterval(() => {
+        const timeSinceUpdate = Date.now() - lastUpdateTime;
+        if (timeSinceUpdate > 30000 && !updateWarningShown) {
+          document.getElementById('warningMsg').style.display = 'block';
+          updateWarningShown = true;
+        } else if (timeSinceUpdate < 30000 && updateWarningShown) {
+          document.getElementById('warningMsg').style.display = 'none';
+          updateWarningShown = false;
+        }
+      }, 5000);
+
+      return () => {
+        clearInterval(staleTimer);
+        unsubscribe();
+      };
+    }
+
+    /// Reads a field that may be a Firestore Timestamp (current builds) or an
+    /// ISO-8601 string (older ones), returning null for anything unusable so
+    /// callers can tell "no value" from "the epoch".
+    function toDate(raw) {
+      if (!raw) return null;
+      if (typeof raw.toDate === 'function') return raw.toDate();
+      const parsed = new Date(raw);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function initializeViewer(token) {
+      try {
+        watchLiveSession(token, { permanent: false });
       } catch (error) {
         showError(`Error: ${error.message}`);
       }
@@ -621,8 +821,30 @@
       el.classList.remove('hidden');
     }
 
+    /// The permanent link's resting state: rider exists, rider isn't out.
+    /// Hides the stats/map rather than leaving the last known position on
+    /// screen, and clears the map so a later ride doesn't inherit the
+    /// previous one's trail.
+    function showIdle() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+      document.getElementById('viewer').classList.add('hidden');
+      document.getElementById('idle').classList.remove('hidden');
+      if (trail) trail.setLatLngs([]);
+      renderInstallCta('viewer');
+    }
+
+    function showViewer() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+      document.getElementById('idle').classList.add('hidden');
+      document.getElementById('viewer').classList.remove('hidden');
+    }
+
     function showError(message) {
       document.getElementById('loading').classList.add('hidden');
+      document.getElementById('idle').classList.add('hidden');
+      document.getElementById('viewer').classList.add('hidden');
       document.getElementById('error').classList.remove('hidden');
       document.getElementById('error').textContent = message;
       // An expired or broken link is a dead end. The install prompt is the
