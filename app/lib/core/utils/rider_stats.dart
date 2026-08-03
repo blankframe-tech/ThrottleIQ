@@ -19,6 +19,15 @@ class RiderStatsSummary {
   /// [recentRides].
   final List<RideEntity> chartRides;
 
+  /// EVERY ride, newest first — uncapped.
+  ///
+  /// [recentRides] is truncated, which is right for "here are your last few"
+  /// but wrong the moment the list can be re-sorted: ordering a
+  /// already-truncated list by top speed would surface the fastest of your
+  /// last ten rides while calling it your fastest, which is a lie the rider
+  /// can't see. Sorting reads from here and truncates afterwards.
+  final List<RideEntity> allRides;
+
   const RiderStatsSummary({
     required this.allTimeAvgSpeedKmh,
     required this.allTimeTopSpeedKmh,
@@ -28,6 +37,7 @@ class RiderStatsSummary {
     required this.totalDistanceKm,
     required this.recentRides,
     this.chartRides = const [],
+    this.allRides = const [],
   });
 
   static const empty = RiderStatsSummary(
@@ -39,6 +49,7 @@ class RiderStatsSummary {
     totalDistanceKm: 0,
     recentRides: [],
     chartRides: [],
+    allRides: [],
   );
 }
 
@@ -90,6 +101,7 @@ RiderStatsSummary computeRiderStats({
     totalRides: rides.length,
     totalDistanceKm: totalDistanceKm,
     recentRides: sortedByRecency.take(recentLimit).toList(),
+    allRides: sortedByRecency,
     chartRides: sortedChronologically.length > chartLimit
         ? sortedChronologically.sublist(sortedChronologically.length - chartLimit)
         : sortedChronologically,

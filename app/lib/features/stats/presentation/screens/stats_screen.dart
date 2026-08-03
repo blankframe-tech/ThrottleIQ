@@ -7,6 +7,7 @@ import '../../../../core/utils/badges.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
+import '../../domain/ride_sort.dart';
 import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/ride_line_chart.dart';
@@ -22,12 +23,18 @@ const _ranks = [
 ];
 const _kmPerLevel = 500.0;
 
+/// How many rides the list shows. Ranking always considers the full history;
+/// this only caps what's drawn, so "Top speed" really is your fastest ten
+/// rides ever rather than the fastest of your ten most recent.
+const int _ridesListLimit = 10;
+
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(riderStatsProvider);
+    final sort = ref.watch(rideSortProvider);
     ref.watch(badgeSyncProvider); // fire-and-forget; UI never awaits this
 
     return Scaffold(
@@ -39,6 +46,14 @@ class StatsScreen extends ConsumerWidget {
           error: (e, _) => Center(
               child: Text('$e', style: TextStyle(color: AppColors.danger))),
           data: (stats) {
+            // Sort the whole history, then cap — never the other way round.
+            // Falls back to recentRides so an older cached summary (which has
+            // no allRides) still renders its list instead of going blank.
+            final source =
+                stats.allRides.isNotEmpty ? stats.allRides : stats.recentRides;
+            final visibleRides =
+                sortRides(source, sort).take(_ridesListLimit).toList();
+
             final header = Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
@@ -204,16 +219,59 @@ class StatsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 24),
 
-                        const EditorialLabel('Recent rides'),
-                        const SizedBox(height: 10),
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: stats.recentRides.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
-                          itemBuilder: (_, i) =>
-                              _RecentRideRow(ride: stats.recentRides[i]),
+                        EditorialLabel(
+                          sort == RideSort.recent ? 'Recent rides' : 'Your rides',
                         ),
+                        const SizedBox(height: 10),
+                        // Sort chips. Ranking reads from stats.allRides (the
+                        // full history) and truncates AFTER sorting — sorting
+                        // the already-truncated recent list would show "your
+                        // fastest" while only ever considering your last ten.
+                        SizedBox(
+                          height: 34,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: RideSort.values.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (_, i) {
+                              final option = RideSort.values[i];
+                              return GestureDetector(
+                                onTap: () => ref
+                                    .read(rideSortProvider.notifier)
+                                    .state = option,
+                                child: EditorialPill(
+                                  option.label,
+                                  filled: option == sort,
+                                  tone: option == sort
+                                      ? PillTone.accent
+                                      : PillTone.neutral,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (visibleRides.isEmpty)
+                          Text('No rides yet.',
+                              style: TextStyle(
+                                  fontSize: 13, color: AppColors.textSecondary))
+                        else
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: visibleRides.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            itemBuilder: (_, i) =>
+                                _RecentRideRow(ride: visibleRides[i], sort: sort),
+                          ),
+                        if (stats.allRides.length > visibleRides.length) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            'Showing ${visibleRides.length} of ${stats.allRides.length} rides',
+                            style: TextStyle(
+                                fontSize: 12, color: AppColors.textTertiary),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -244,7 +302,13 @@ class _BigStat extends StatelessWidget {
 
 class _RecentRideRow extends StatelessWidget {
   final RideEntity ride;
-  const _RecentRideRow({required this.ride});
+
+  /// The active ordering, so the trailing figure shows what the list is
+  /// actually ranked by. Sorting by distance while every row still showed
+  /// km/h would look like the sort had silently failed.
+  final RideSort sort;
+
+  const _RecentRideRow({required this.ride, required this.sort});
 
   @override
   Widget build(BuildContext context) {
@@ -266,8 +330,13 @@ class _RecentRideRow extends StatelessWidget {
               ],
             ),
           ),
-          Text('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-              style: display(14, letterSpacing: 0, color: AppColors.primary)),
+          // Recency has no figure of its own — the date on the left already
+          // is the sort key — so it keeps showing top speed, as before.
+          Text(
+            sort.trailingValue(ride) ??
+                '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
+            style: display(14, letterSpacing: 0, color: AppColors.primary),
+          ),
         ],
       ),
     );
