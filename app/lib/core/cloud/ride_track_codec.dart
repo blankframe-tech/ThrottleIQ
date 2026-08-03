@@ -6,29 +6,44 @@
 /// trail is chunked into `rides/{rideId}/track/{chunkIndex}` documents, each
 /// holding up to [trackChunkSize] points.
 ///
-/// Within a chunk each point is a **fixed-order list**, not a map:
+/// Within a chunk the points are stored **flattened into one array of
+/// numbers**, [fieldsPerPoint] values per point, in fixed order:
 ///
 /// ```
-/// [lat, lng, timestampMillis, speedMs, accelMs2]
+/// [lat, lng, tsMillis, speed, accel,  lat, lng, tsMillis, speed, accel,  …]
 /// ```
 ///
-/// Firestore stores map keys verbatim in every single element, so a map-based
-/// encoding would repeat the strings 'lat', 'lng', 'timestamp'… once per
-/// point — for a 5,000-point ride that is tens of thousands of redundant
-/// characters counted against the 1 MiB document limit. The positional form
-/// costs nothing per element, at the price of this comment being the schema.
-/// Adding a field means appending to the END of the list and treating it as
-/// nullable on read, never reordering.
+/// Two constraints force this shape, and both matter:
 ///
-/// Everything here is pure so the round-trip is directly testable.
+/// 1. **Firestore does not support nested arrays.** An array may not contain
+///    another array. The obvious encoding — a list of 5-element point lists —
+///    is rejected by the native SDK with an "Invalid argument" exception from
+///    `FSTUserDataReader parseData:`. That is an Objective-C exception, NOT a
+///    Dart one, so it cannot be caught by `try`/`catch` around the write: it
+///    aborts the process. This shipped that way on 2026-08-01 and crashed the
+///    app on the first sync after a ride (see `Issues.md` §11). **Do not
+///    reintroduce nesting here** — a flat array is not a style choice.
+/// 2. Firestore stores map keys verbatim in every element, so a list of maps
+///    would repeat 'lat'/'lng'/'timestamp' once per point — tens of thousands
+///    of redundant characters against the 1 MiB document limit on a long ride.
+///
+/// The price is that this comment is the schema. Adding a field means bumping
+/// [fieldsPerPoint], appending at the END of the per-point block, and treating
+/// it as nullable on read. Never reorder.
+///
+/// Everything here is pure so the round-trip is directly testable — though
+/// note that pure round-trip tests are exactly what MISSED the nested-array
+/// bug, because Dart happily round-trips a shape Firestore refuses.
 library;
 
 /// Points per `track` document. Firestore's hard limit is 1 MiB per document;
-/// 500 positional points is comfortably inside it with room for the trail to
-/// grow extra fields later.
+/// 500 points (2,500 numbers) is comfortably inside it.
 const int trackChunkSize = 500;
 
-/// Fields, in the order they appear in an encoded point.
+/// How many numbers each point occupies in the flattened array.
+const int fieldsPerPoint = 5;
+
+/// Offsets within one point's block.
 const int _lat = 0;
 const int _lng = 1;
 const int _ts = 2;
@@ -64,18 +79,38 @@ Map<String, dynamic> decodeTrackPoint(List<dynamic> encoded) {
   };
 }
 
-/// Splits [rows] into chunks of at most [trackChunkSize] encoded points.
-/// An empty trail yields no chunks (so nothing is uploaded for a ride with
-/// no track, rather than one empty document).
-List<List<List<num>>> chunkTrack(List<Map<String, dynamic>> rows) {
-  final chunks = <List<List<num>>>[];
+/// Splits [rows] into chunks of at most [trackChunkSize] points, each chunk a
+/// **flat** array of numbers ([fieldsPerPoint] per point).
+///
+/// Flat, not a list of lists — Firestore rejects nested arrays outright. See
+/// the library comment above; this is the shape that crashed the app.
+///
+/// An empty trail yields no chunks, so a ride with no track uploads nothing
+/// rather than one empty document.
+List<List<num>> chunkTrack(List<Map<String, dynamic>> rows) {
+  final chunks = <List<num>>[];
   for (var start = 0; start < rows.length; start += trackChunkSize) {
     final end = (start + trackChunkSize) < rows.length
         ? start + trackChunkSize
         : rows.length;
-    chunks.add([for (var i = start; i < end; i++) encodeTrackPoint(rows[i])]);
+    final flat = <num>[];
+    for (var i = start; i < end; i++) {
+      flat.addAll(encodeTrackPoint(rows[i]));
+    }
+    chunks.add(flat);
   }
   return chunks;
+}
+
+/// Rebuilds point rows from one flat chunk, striding [fieldsPerPoint] at a
+/// time. A trailing partial block (a truncated or corrupted document) is
+/// dropped rather than decoded into a point with garbage tail values.
+List<Map<String, dynamic>> decodeChunk(List<dynamic> flat) {
+  final out = <Map<String, dynamic>>[];
+  for (var i = 0; i + fieldsPerPoint <= flat.length; i += fieldsPerPoint) {
+    out.add(decodeTrackPoint(flat.sublist(i, i + fieldsPerPoint)));
+  }
+  return out;
 }
 
 /// Flattens downloaded chunks back into an ordered list of point rows.
@@ -84,8 +119,7 @@ List<List<List<num>>> chunkTrack(List<Map<String, dynamic>> rows) {
 /// ordering (which would put chunk 10 before chunk 2).
 List<Map<String, dynamic>> flattenTrack(List<List<dynamic>> chunks) {
   return [
-    for (final chunk in chunks)
-      for (final point in chunk) decodeTrackPoint(point as List<dynamic>),
+    for (final chunk in chunks) ...decodeChunk(chunk),
   ];
 }
 

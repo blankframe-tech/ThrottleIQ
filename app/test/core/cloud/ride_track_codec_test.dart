@@ -60,29 +60,44 @@ void main() {
   });
 
   group('chunkTrack', () {
+    // THE regression test. Firestore rejects nested arrays with a native
+    // Objective-C exception that Dart cannot catch — it aborts the process.
+    // Shipping a List<List<num>> here crashed the app on the first sync after
+    // a ride (Issues.md #11). Every chunk must be a FLAT array of numbers.
+    test('chunks are flat arrays of numbers — never nested', () {
+      final chunks = chunkTrack([for (var i = 0; i < 3; i++) _row(i)]);
+      for (final chunk in chunks) {
+        for (final value in chunk) {
+          expect(value, isA<num>(),
+              reason: 'a nested array here is what crashed the app');
+          expect(value, isNot(isA<List>()));
+        }
+      }
+    });
+
     test('an empty trail produces no chunks at all', () {
       expect(chunkTrack(const []), isEmpty);
     });
 
-    test('a partial chunk stays a single chunk', () {
+    test('a partial chunk stays a single chunk, strided', () {
       final chunks = chunkTrack([for (var i = 0; i < 10; i++) _row(i)]);
       expect(chunks, hasLength(1));
-      expect(chunks.first, hasLength(10));
+      expect(chunks.first, hasLength(10 * fieldsPerPoint));
     });
 
     test('exactly one chunk-worth is one chunk, not two', () {
       final chunks =
           chunkTrack([for (var i = 0; i < trackChunkSize; i++) _row(i)]);
       expect(chunks, hasLength(1));
-      expect(chunks.first, hasLength(trackChunkSize));
+      expect(chunks.first, hasLength(trackChunkSize * fieldsPerPoint));
     });
 
     test('one over the boundary spills into a second chunk', () {
       final chunks =
           chunkTrack([for (var i = 0; i < trackChunkSize + 1; i++) _row(i)]);
       expect(chunks, hasLength(2));
-      expect(chunks[0], hasLength(trackChunkSize));
-      expect(chunks[1], hasLength(1));
+      expect(chunks[0], hasLength(trackChunkSize * fieldsPerPoint));
+      expect(chunks[1], hasLength(fieldsPerPoint));
     });
 
     test('a large trail chunks evenly', () {
@@ -90,8 +105,30 @@ void main() {
           chunkTrack([for (var i = 0; i < trackChunkSize * 3; i++) _row(i)]);
       expect(chunks, hasLength(3));
       for (final c in chunks) {
-        expect(c, hasLength(trackChunkSize));
+        expect(c, hasLength(trackChunkSize * fieldsPerPoint));
       }
+    });
+  });
+
+  group('decodeChunk', () {
+    test('strides the flat array back into points', () {
+      final rows = [for (var i = 0; i < 4; i++) _row(i)];
+      final decoded = decodeChunk(chunkTrack(rows).single);
+      expect(decoded, hasLength(4));
+      expect(decoded[2]['lat'], closeTo(rows[2]['lat'] as double, 1e-9));
+    });
+
+    // A truncated document would otherwise decode its tail into a point with
+    // garbage zeros, putting a phantom (0,0) fix in the middle of the ocean
+    // on the rider's map.
+    test('drops a trailing partial block rather than decoding garbage', () {
+      final flat = [...chunkTrack([_row(0), _row(1)]).single];
+      flat.removeLast(); // truncate mid-point
+      expect(decodeChunk(flat), hasLength(1));
+    });
+
+    test('handles an empty chunk', () {
+      expect(decodeChunk(const []), isEmpty);
     });
   });
 
