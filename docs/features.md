@@ -64,7 +64,11 @@ Save Route, Group Ride map
 
 - **"Your Journey"** — rider rank/level (New Rider → Weekend Rider → Steady Cruiser → Road Regular → Seasoned Rider → Veteran → Road Master, 500 km per level).
 - Badges (earned via `badgeSyncProvider`).
-- Ride history line chart and a recent-rides list.
+- Ride history line chart and a rides list.
+- **Sortable rides list** (added 2026-08-03): chips for **Recent / Top speed / Distance / Duration / Best score**. The trailing figure on each row follows the active sort, so the list explains its own order.
+  - Ranking reads the **full** ride history and truncates afterwards — `recentRides` is capped at 10, so sorting *that* by top speed would show the fastest of your last ten while calling it your fastest. `RiderStatsSummary.allRides` exists for this.
+  - Ties break by recency (repeated commutes and 0.0 km test rides tie constantly; without it the list reshuffles between rebuilds). Missing values sort **last** — a ride with no recorded duration is a data gap, not the longest ride.
+  - The sort is **not persisted**: it's a momentary question, not a preference.
 - Empty state for zero-ride accounts.
 
 ## 4. Garage (`features/garage`) — bottom nav tab "Garage"
