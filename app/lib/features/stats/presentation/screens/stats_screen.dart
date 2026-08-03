@@ -10,7 +10,9 @@ import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_sort.dart';
 import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
+import '../widgets/badge_grid.dart';
 import '../widgets/ride_line_chart.dart';
+import 'all_rides_screen.dart';
 
 const _ranks = [
   'New Rider',
@@ -68,17 +70,17 @@ class StatsScreen extends ConsumerWidget {
                   Expanded(
                     child: Center(
                       child: Padding(
-                        padding: EdgeInsets.all(AppDimensions.paddingLg),
+                        padding: const EdgeInsets.all(AppDimensions.paddingLg),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.insights_outlined,
                                 size: 56, color: AppColors.textTertiary),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text('No rides yet',
                                 style: TextStyle(
                                     color: AppColors.textSecondary, fontSize: 16)),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text('Go for a ride to start your journey.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -97,10 +99,15 @@ class StatsScreen extends ConsumerWidget {
             final kmIntoLevel = totalKm % _kmPerLevel;
             final rank = _ranks[(level - 1).clamp(0, _ranks.length - 1)];
             final badges = computeBadges(stats);
+            final earnedCount = badges.where((b) => b.earned).length;
+            final badgeFamiliesProgress = computeBadgeProgress(stats);
             final distanceSeries =
                 stats.chartRides.map((r) => r.distanceKm).toList();
             final speedSeries =
                 stats.chartRides.map((r) => r.avgSpeedKmh).toList();
+            // Both charts plot the same rides, so they share one date axis.
+            final chartDates =
+                stats.chartRides.map((r) => r.startTime).toList();
 
             return SingleChildScrollView(
               child: Column(
@@ -113,6 +120,37 @@ class StatsScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Rider-wide totals, directly under "Your Journey" —
+                        // moved off the Record screen, which had them as the
+                        // *active bike's* figures. The journey is the rider's,
+                        // so these are across every bike in the garage.
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatChip(
+                                value: SpeedFormatter.distanceKm(
+                                    stats.totalDistanceKm * 1000),
+                                label: 'total km',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _StatChip(
+                                value: '${stats.totalRides}',
+                                label: 'rides',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _StatChip(
+                                value: _daysSinceLastRide(stats.recentRides),
+                                label: 'last ride',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
                         // Level / progress card
                         EditorialCard(
                           padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -139,27 +177,20 @@ class StatsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 20),
 
-                        // Badges
-                        const EditorialLabel('Badges'),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final badge in badges)
-                              EditorialPill(badge.def.name,
-                                  tone: badge.earned ? PillTone.accent : PillTone.neutral,
-                                  filled: badge.earned),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Distance / speed over time
+                        // Distance / speed over time. Graphs sit above the
+                        // badges: they're the part of "your journey" that
+                        // changes every ride, whereas badges move rarely, and
+                        // burying the trend under a wall of icons made the
+                        // rarely-changing thing the loudest.
                         const EditorialLabel('Distance over time'),
                         const SizedBox(height: 10),
                         EditorialCard(
                           padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                          child: RideLineChart(values: distanceSeries),
+                          child: RideLineChart(
+                            values: distanceSeries,
+                            dates: chartDates,
+                            unit: 'km',
+                          ),
                         ),
                         const SizedBox(height: 20),
                         const EditorialLabel('Avg speed over time'),
@@ -167,30 +198,32 @@ class StatsScreen extends ConsumerWidget {
                         EditorialCard(
                           padding: const EdgeInsets.all(AppDimensions.paddingMd),
                           child: RideLineChart(
-                              values: speedSeries, color: AppColors.secondary),
+                            values: speedSeries,
+                            color: AppColors.secondary,
+                            dates: chartDates,
+                            unit: 'km/h',
+                          ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
-                        // Headline stats
+                        // Badges
                         Row(
                           children: [
-                            Expanded(
-                              child: _BigStat(
-                                value: stats.totalDistanceKm.toStringAsFixed(0),
-                                unit: 'km',
-                                label: 'total distance',
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _BigStat(
-                                value: '${stats.totalRides}',
-                                label: 'total rides',
-                              ),
-                            ),
+                            const Expanded(child: EditorialLabel('Badges')),
+                            Text('$earnedCount of ${badges.length} earned',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textTertiary)),
                           ],
                         ),
                         const SizedBox(height: 12),
+                        BadgeGrid(families: badgeFamiliesProgress),
+                        const SizedBox(height: 24),
+
+                        // Headline stats. Total distance and total ride count
+                        // used to lead this block; they're now the chips at
+                        // the top of the page, and printing them twice on one
+                        // screen just made the page longer.
                         Row(
                           children: [
                             Expanded(
@@ -227,28 +260,12 @@ class StatsScreen extends ConsumerWidget {
                         // full history) and truncates AFTER sorting — sorting
                         // the already-truncated recent list would show "your
                         // fastest" while only ever considering your last ten.
-                        SizedBox(
-                          height: 34,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: RideSort.values.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
-                            itemBuilder: (_, i) {
-                              final option = RideSort.values[i];
-                              return GestureDetector(
-                                onTap: () => ref
-                                    .read(rideSortProvider.notifier)
-                                    .state = option,
-                                child: EditorialPill(
-                                  option.label,
-                                  filled: option == sort,
-                                  tone: option == sort
-                                      ? PillTone.accent
-                                      : PillTone.neutral,
-                                ),
-                              );
-                            },
-                          ),
+                        // Same widget the All rides page uses, over the same
+                        // provider, so the two views can't disagree.
+                        RideSortChips(
+                          sort: sort,
+                          onChanged: (option) =>
+                              ref.read(rideSortProvider.notifier).state = option,
                         ),
                         const SizedBox(height: 12),
                         if (visibleRides.isEmpty)
@@ -264,14 +281,14 @@ class StatsScreen extends ConsumerWidget {
                             itemBuilder: (_, i) =>
                                 _RecentRideRow(ride: visibleRides[i], sort: sort),
                           ),
-                        if (stats.allRides.length > visibleRides.length) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            'Showing ${visibleRides.length} of ${stats.allRides.length} rides',
-                            style: TextStyle(
-                                fontSize: 12, color: AppColors.textTertiary),
-                          ),
-                        ],
+                        const SizedBox(height: 14),
+                        // Always offered, even when every ride already fits
+                        // in the ten shown: the full page carries detail and
+                        // route maps this compact list deliberately doesn't.
+                        _AllRidesButton(
+                          total: source.length,
+                          showing: visibleRides.length,
+                        ),
                       ],
                     ),
                   ),
@@ -280,6 +297,67 @@ class StatsScreen extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Whole days since the most recent ride. [rides] is newest-first, as
+/// [RiderStatsSummary.recentRides] always is.
+String _daysSinceLastRide(List<RideEntity> rides) {
+  if (rides.isEmpty) return '—';
+  final days = DateTime.now().difference(rides.first.startTime).inDays;
+  return '${days < 0 ? 0 : days}d';
+}
+
+/// Compact figure chip. Same shape as the ones that used to sit on the
+/// Record screen, so the move reads as a move rather than a redesign.
+class _StatChip extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatChip({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return EditorialCard(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value,
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: display(20)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+class _AllRidesButton extends StatelessWidget {
+  final int total;
+  final int showing;
+  const _AllRidesButton({required this.total, required this.showing});
+
+  @override
+  Widget build(BuildContext context) {
+    return EditorialCard(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      onTap: () => context.push('/rides/all'),
+      child: Row(
+        children: [
+          Icon(Icons.list_alt_outlined, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text('All rides',
+                style: display(14, letterSpacing: 0, color: AppColors.primary)),
+          ),
+          Text('$showing of $total shown',
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+          const SizedBox(width: 6),
+          Icon(Icons.chevron_right, size: 18, color: AppColors.textTertiary),
+        ],
       ),
     );
   }

@@ -16,6 +16,7 @@ import '../../features/social/presentation/screens/ride_share_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
+import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
@@ -144,6 +145,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // /profile/edit rather than living under /home/places.
       GoRoute(path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
       GoRoute(path: '/rides/mine', builder: (_, __) => const MySharedRidesScreen()),
+      // Opened from the Stats "All rides" button, on top of the current
+      // screen — same full-screen no-shell treatment as /ride/summary.
+      GoRoute(path: '/rides/all', builder: (_, __) => const AllRidesScreen()),
       // Saved routes. '/routes' and '/routes/save/:rideId' are both listed
       // before '/routes/:routeId' so the param route can't swallow them —
       // same ordering hazard as '/forums/create' and '/profile/edit'.
