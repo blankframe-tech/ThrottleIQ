@@ -606,9 +606,14 @@ service cloud.firestore {
       // A ride is always created by its creator with themselves as the only
       // joined member — nobody conjures a ride they aren't on, or seeds one
       // pre-populated with members who never agreed.
+      // The roster lives in the members subcollection below, never inline on
+      // this document — refusing a `members` key here makes that invariant
+      // unforgeable rather than merely conventional. Only affects NEW rides;
+      // pre-existing rides keep their legacy inline array and still read.
       allow create: if request.auth != null &&
         request.resource.data.creatorId == request.auth.uid &&
-        request.resource.data.memberIds == [request.auth.uid];
+        request.resource.data.memberIds == [request.auth.uid] &&
+        !('members' in request.resource.data);
 
       allow update: if request.auth != null && (
         // 1. The creator: status changes, removing a member, ending the ride.
@@ -616,14 +621,15 @@ service cloud.firestore {
         (resource.data.creatorId == request.auth.uid &&
          request.resource.data.creatorId == resource.data.creatorId) ||
 
-        // 2. An invited rider accepting or declining. Bounded so they can
-        //    only add THEMSELVES to memberIds and only remove themselves
-        //    from invitedIds, and cannot change the roster's size — their
-        //    pending entry is flipped in place, never appended.
+        // 2. An invited rider accepting or declining. The roster is no longer
+        //    here — it lives in the members subcollection below, where a
+        //    rider can only write their own document — so this clause has
+        //    nothing left to bound but the two flat uid arrays: add exactly
+        //    themselves to memberIds, remove exactly themselves from
+        //    invitedIds.
         (request.auth.uid in resource.data.get('invitedIds', []) &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['members', 'memberIds', 'invitedIds']) &&
-         request.resource.data.members.size() == resource.data.members.size() &&
+           .hasOnly(['memberIds', 'invitedIds']) &&
          !(request.auth.uid in request.resource.data.get('invitedIds', [])) &&
          request.resource.data.get('memberIds', [])
            .hasAll(resource.data.get('memberIds', [])) &&
@@ -636,14 +642,46 @@ service cloud.firestore {
         (request.auth.uid in resource.data.get('memberIds', []) &&
          request.auth.uid != resource.data.creatorId &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['members', 'memberIds']) &&
+           .hasOnly(['memberIds']) &&
          !(request.auth.uid in request.resource.data.get('memberIds', [])) &&
          resource.data.get('memberIds', [])
-           .hasAll(request.resource.data.get('memberIds', [])) &&
-         request.resource.data.members.size() == resource.data.members.size() - 1));
+           .hasAll(request.resource.data.get('memberIds', []))));
 
       allow delete: if request.auth != null &&
         resource.data.creatorId == request.auth.uid;
+
+      // Roster documents, one per rider at `members/{uid}`.
+      //
+      // The roster used to be an array of maps on the ride document itself.
+      // Rules cannot project a field out of an array of maps, so the accept
+      // clause above could only bound the array's *size* — an invited rider
+      // accepting was free to rewrite every other member's display name in
+      // the same write. As documents the rule is exactly expressible, in the
+      // same shape memberLocations/{uid} already uses: the {uid} wildcard is
+      // pinned to request.auth.uid on write.
+      //
+      // The creator is the exception, and has to be: creating a ride seeds a
+      // `pending` document (carrying a name) for every invitee, and kicking
+      // somebody deletes theirs. That is no new power — the creator can
+      // already end or delete the whole ride.
+      match /members/{memberUid} {
+        function ride() {
+          return get(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
+        }
+        allow read: if request.auth != null && (
+          request.auth.uid == ride().creatorId ||
+          request.auth.uid in ride().get('memberIds', []) ||
+          request.auth.uid in ride().get('invitedIds', []));
+        allow write: if request.auth != null && (
+          request.auth.uid == ride().creatorId ||
+          // Anyone else writes ONLY their own entry, and only while on the
+          // ride or holding an open invitation. An accepting invitee is still
+          // in invitedIds at the instant they write: rules evaluate against
+          // the committed document, not the pending transaction.
+          (request.auth.uid == memberUid && (
+            request.auth.uid in ride().get('memberIds', []) ||
+            request.auth.uid in ride().get('invitedIds', []))));
+      }
 
       // Invitation markers, one per invited rider at `invitations/{uid}`.
       // Only the ride's creator hands them out; the invitee or the creator
