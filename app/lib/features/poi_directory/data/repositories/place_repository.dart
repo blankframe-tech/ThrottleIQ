@@ -1,16 +1,34 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:throttleiq/core/services/cloudinary_upload_service.dart';
 import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
 
 class PlaceRepository {
   final FirebaseFirestore _firestore;
+  final CloudinaryUploadService _uploadService;
 
-  PlaceRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  PlaceRepository({
+    FirebaseFirestore? firestore,
+    CloudinaryUploadService? uploadService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _uploadService = uploadService ?? CloudinaryUploadService();
 
   static const String _collection = 'places';
+
+  /// Uploads a rider-taken photo of a place (via Cloudinary — same service
+  /// and unsigned preset as `RideShareRepository.uploadRidePhoto`, since
+  /// Firebase Storage isn't available on this project's billing plan) and
+  /// returns its public URL for [PlaceEntity.photoUrls].
+  ///
+  /// Foldered per submitter rather than per place: a place has no id until
+  /// `addPlace` returns, and the photo has to exist before the document that
+  /// references it is written.
+  Future<String> uploadPlacePhoto(String uid, File file) {
+    return _uploadService.upload(file, folder: 'places/$uid');
+  }
 
   /// Add a new place
   Future<String> addPlace(PlaceEntity place) async {

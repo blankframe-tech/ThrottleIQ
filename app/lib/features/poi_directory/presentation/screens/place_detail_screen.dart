@@ -288,17 +288,21 @@ class _PlaceHeader extends StatelessWidget {
           const SizedBox(height: 12),
           Container(height: 1, color: AppColors.border),
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(place.address,
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              ),
-            ],
-          ),
+          // Address is optional on submission (and absent on Overpass imports
+          // with no addr:* tags), so an empty one is normal — skip the row
+          // entirely rather than rendering a lone pin icon beside blank text.
+          if (place.address.trim().isNotEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(place.address,
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                ),
+              ],
+            ),
           if (place.phone != null && place.phone!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(
