@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-02 · Branch: `main`_
+_Last updated: 2026-08-03 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -31,8 +31,8 @@ orphaned screens (crash countdown, sync manager, exports, emergency
 contacts, live share) have all since been wired in, see "Done, but NOT yet
 verified" below. The Vehicle State Engine's foundation (Phase 1 + 1.5 —
 sensor fusion, confidence scoring, motion classification, adaptive
-recording thinning) shipped 2026-07-23, and the test suite is **531/531
-green** as of 2026-08-02.
+recording thinning) shipped 2026-07-23, and the test suite is **550/550
+green** as of 2026-08-03.
 
 **Versioning reset 2026-08-01:** the old `2.0.0-beta.x` line, its git tags,
 and all prior GitHub Releases (including the same-day `carbon-ui-` one)
@@ -51,12 +51,21 @@ place category, **saved routes with offline turn-by-turn navigation**
 the maintenance bottom-nav bug fix, average speed redefined as
 distance ÷ moving time, GPS trail sync, **home-screen widgets** (Android
 working; iOS needs one Xcode step), the published privacy policy, and
-beta data-reset tooling. Test suite went 287 → **531**.
+beta data-reset tooling. Test suite went 287 → **550**.
 
-**Two real defects were surfaced and fixed along the way** — both worth
+**Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
-unauthenticated clients (§3), and the planned live-session TTL policy
-could never have deleted anything (§4).
+unauthenticated clients (§3), the planned live-session TTL policy could
+never have deleted anything (§4), and the GPS-trail sync **crashed the app
+outright** (§11).
+
+⚠️ **If you handed anyone the `beta-v2` build, it crashes.** That release
+(2026-08-01) contains the nested-array trail upload: Firestore refuses the
+payload with a native exception that Dart cannot catch, so the app aborts
+from a background timer shortly after any ride syncs — no user action
+involved, which is why it read as random. Fixed 2026-08-03 in `1fca84e`.
+**Cut a beta-v3 before the 12-dev group gets anything**, and don't
+diagnose crash reports against beta-v2.
 
 **Pitch site added, 2026-08-02:** a static, dependency-free pitch/marketing
 page now lives at `website_demo/index.html` (was an empty placeholder
@@ -164,7 +173,7 @@ backend or a real device. **Treat each as unproven until tested.**
 - [ ] **Firestore rules under real traffic** — rules deployed but only compiler-checked; exercise with a real account (read own rides, fail reading someone else's).
 - [x] ~~Live-share viewer~~ **HOSTED 2026-07-14** at `throttleiqfb.web.app/live/{token}` (HTTP 200 verified); end-to-end with a live ride still needs a device test.
 - [x] ~~**Simulator smoke test of the backlog pass**~~ **PARTIALLY VERIFIED 2026-08-01** — run on the iPhone 17 simulator (iOS 26.5) against a real signed-in account. Confirmed rendering correctly: the Carbon Mono theme; the Forums "Your bikes" list showing **both** brand and model forums from real garage data; the Create-a-forum screen; the Routes list and its Discover tab; the new Recreation category chip in Places; and **feed cards drawing the ride's route map beside the photo**, with the "No route recorded" placeholder for rides with no track. This run found three real defects that the test suite could not — two missing Firestore composite indexes and the Routes reachability/back-button problems (`Issues.md` §5 and §6), all since fixed and deployed. Still not exercised: recording an actual ride, and everything below.
-- [ ] **The rest of the 2026-08-01 backlog pass** — forums moderation, ride captions, saving a route, turn-by-turn navigation, expanded maintenance types, the moving-time average speed. Verified by `flutter analyze` (0 errors), 531 passing tests, and release builds — **none of it has been exercised by actually riding.** The riskiest untested paths, in order:
+- [ ] **The rest of the 2026-08-01 backlog pass** — forums moderation, ride captions, saving a route, turn-by-turn navigation, expanded maintenance types, the moving-time average speed. Verified by `flutter analyze` (0 errors), 550 passing tests, and release builds — **none of it has been exercised by actually riding.** The riskiest untested paths, in order:
   1. **Turn-by-turn navigation** — the geometry is unit-tested, but nothing has confirmed the banner advances sensibly at real road speeds, or that the 30 m "turn reached" / 100 m "off route" thresholds feel right on an actual bike. Tune these from a real ride.
   2. **The deployed Firestore rules** — forum moderation and route publishing were written and deployed but never exercised against a live account. Confirm a maintainer really can delete a post, and that a non-maintainer really can't.
   3. **The `SharedPreferences` garage-forum cache** — verify adding a bike actually refreshes the "Your bikes" list rather than serving a stale cache.
