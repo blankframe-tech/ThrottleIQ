@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-08-01 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-08-04 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
 
 What a signed-in user can actually do in the app today, organized by the
 five-tab bottom nav. This is a living document — regenerate/update it
@@ -53,29 +53,37 @@ Save Route, Group Ride map
 
 ## 2. Record a ride (`features/ride`)
 
-- **Record screen** (center tab, default screen) — reordered 2026-08-01, top to bottom: **greeting → quote → bike picker → ride with friends → stats → slide to start**. Notifications bell and settings shortcut sit above. Shows a warning + "Add Bike" CTA when no bike is selected.
+- **Record screen** (center tab, default screen) — restructured 2026-08-04, top to bottom: **greeting+quote (one card) → bike picker → ride with friends → slide to start**. Notifications bell and settings shortcut sit above. Shows a warning + "Add Bike" CTA when no bike is selected.
   - **Casual, time-aware greeting** (`core/utils/greetings.dart`) — six buckets by hour (late night / early morning / morning / afternoon / evening / night), five variants each ("Late night runs, huh?", "Cold start, clear roads.", "Golden hour. Go."). Pure and unit-tested, with an injectable `Random`; rolled once per screen build so a provider tick doesn't reshuffle it.
-  - **Quote** — compact single block (max 3 lines). The large speedometer image that used to sit above it was removed 2026-08-01; it dominated the screen and pushed everything useful below the fold.
+  - **Greeting + quote, one card** (changed 2026-08-04) — the quote used to be its own ink-block card; it now sits under the greeting/name in the same `EditorialCard`, in a deliberately small, muted font so it reads as flavour text rather than competing with the greeting. Open question in `HANDOFF_Document.md`: whether the quote belongs on this screen at all, vs. an intermediate "here we go" screen between tapping start and recording beginning.
+  - **Rider-wide totals moved off this screen** (2026-08-04) — total km / ride count / days-since-last-ride used to live here as the *active bike's* figures; they're now on the Rides tab under "Your Journey", scoped to the whole rider rather than one bike.
+  - **Bike picker shows the rider's own bike photo** (2026-08-04) when one was added in Garage, with a fallback to the generic icon tile — see `BikePhoto` in §4.
+  - **Slide-to-start button is theme-aware** (2026-08-04) — it used to hard-code a near-black track, which was correct on Carbon Mono but was the one black control on the light Editorial palette. Now derives its colors from `Theme.of(context).brightness`.
 - **Active ride screen** (`/ride/active`, full-screen) — live map + stats, pause/resume, end ride (with confirmation), **share live location** (generates a `/live/{token}` link via SMS/share sheet, hosted at `throttleiqfb.web.app`), and a full-screen **crash-detected "Are you OK?" overlay** with a dismiss countdown.
   - The viewer page (`public/live-viewer.html`) carries an **install call-to-action**, added 2026-08-02 — it's the only page a non-user ever sees. It renders in both the live view and the expired-link state (a dead link is where it matters most). Store URLs live in one `APP_LINKS` block in that file and are null until the listings exist; until then it offers the GitHub beta APK. Set a store URL there and its button appears automatically.
+  - **Permanent per-rider link** (added 2026-08-04): `/r/{username}` — same page, new route. Resolves to whatever live session the rider currently has going (via `usernames/{handle}` → `livePointers/{uid}` → `liveSessions/{token}`, all keyed lookups, never a query — see `Issues.md` §14), or shows a "not riding right now" panel that flips itself live the moment they start. A rider shares this link once instead of a fresh `/live/{token}` link every ride. **Requires `firestore.rules` and `firebase.json` to both be deployed** — see the "Now" checklist in `HANDOFF_Document.md`.
 - **Ride summary screen** (`/ride/summary/:rideId`) — post-ride score (out of 100), map/route, **Share** (posts to the social feed), **Export JSON**, **Export GPX**, "Save & done".
 
 ## 3. Rides / stats (`features/stats`) — bottom nav tab "Rides"
 
-- **"Your Journey"** — rider rank/level (New Rider → Weekend Rider → Steady Cruiser → Road Regular → Seasoned Rider → Veteran → Road Master, 500 km per level).
-- Badges (earned via `badgeSyncProvider`).
-- Ride history line chart and a rides list.
+- **"Your Journey"** header, followed directly by the rider-wide **total km / rides / days since last ride** chips (moved here from the Record screen 2026-08-04 — these are the rider's totals across every bike, not one bike's).
+- Rank/level card (New Rider → Weekend Rider → Steady Cruiser → Road Regular → Seasoned Rider → Veteran → Road Master, 500 km per level).
+- **Distance and average-speed line charts** — each now marks the **peak point with a dot** and labels the peak's **value on the y-axis**, plus the **first/last ride's date on the x-axis** (`RideLineChart`, changed 2026-08-04). Deliberately not a full axis ladder — a 20-point sparkline only needs "how big did it get" and "over what span."
+- **Badges**, moved below the charts (2026-08-04) — the trend changes every ride and badges move rarely, so burying the trend under a wall of icons made the rarely-changing thing the loudest. Now rendered as `BadgeGrid`: one tile per badge **family** (bronze/silver/gold/platinum/diamond-style tiers grouped under one icon), colored + the family icon when at least one tier is earned, gray otherwise. Tapping any tile opens a ladder sheet listing every tier with its own earned/locked state — earned rungs say what they mean, locked ones say what to do and how far off the rider is. See `HANDOFF_Document.md` for the open question on the "complete every badge → engine oil" reward, which has no claim flow built yet.
 - **Sortable rides list** (added 2026-08-03): chips for **Recent / Top speed / Distance / Duration / Best score**. The trailing figure on each row follows the active sort, so the list explains its own order.
   - Ranking reads the **full** ride history and truncates afterwards — `recentRides` is capped at 10, so sorting *that* by top speed would show the fastest of your last ten while calling it your fastest. `RiderStatsSummary.allRides` exists for this.
   - Ties break by recency (repeated commutes and 0.0 km test rides tie constantly; without it the list reshuffles between rebuilds). Missing values sort **last** — a ride with no recorded duration is a data gap, not the longest ride.
   - The sort is **not persisted**: it's a momentary question, not a preference.
+- **"All rides" button** (added 2026-08-04) — the compact list only ever shows 10; this opens `/rides/all` on top of the current screen. Same sort chips, lazy infinite scroll over the full history (not paged navigation — the data's already in memory, only rendering needs bounding), full per-ride detail (distance/duration/avg/top/score/events), and the ride's **route thumbnail** where one was recorded.
 - Empty state for zero-ride accounts.
 
 ## 4. Garage (`features/garage`) — bottom nav tab "Garage"
 
 - **Garage screen** — bike list; header menu → **Profile**, **My Places**, **My Shared Rides**; empty state with "Add Bike" CTA.
+  - **Bike photos now render** on both the garage list and bike detail (fixed 2026-08-04, `Issues.md`) — a photo added via Edit Bike previously only ever saved to the entity; every screen that should have shown it (garage card, bike detail, record screen) still drew the generic icon tile. All three now go through a shared `BikePhoto` widget, which also falls back to the icon when the saved path points at a file that no longer exists — the normal case for a bike synced down from another device, since image paths are local and don't travel with sync.
 - **Add/Edit Bike screen** (`/home/garage/add`, `/home/garage/:bikeId/edit`).
 - **Bike detail screen** (`/home/garage/:bikeId`) — bike info, delete (with confirmation), **"Discuss this bike"** deep link into the matching forum thread. Deleting a bike removes its rides, their GPS points and its maintenance logs; it silently deadlocked before 2026-08-01 (`Issues.md` §7).
+  - **Delete is now actually durable** (fixed 2026-08-04, `Issues.md` §12) — it previously only removed the local row, so the bike reappeared on the next sync (still selectable on the Record screen, still in its forum). Deletes now write a local tombstone in the same transaction and remove the Firestore copy (and its rides) via `SyncManager`.
 
 ## 5. Maintenance (`features/maintenance`) — reached from Garage/bike detail
 
@@ -87,8 +95,8 @@ Save Route, Group Ride map
 ## 6. Places / POI directory (`features/poi_directory`) — bottom nav tab "Places"
 
 - **Places list screen** — nearby places, "import nearby places" (Overpass-backed), "Add place" FAB, empty state; a labelled **Routes** row at the top of the list (see §6a).
-- **Place detail screen** — address, phone, hours, star rating, **submit a review**.
-- **Add place screen**.
+- **Place detail screen** — address, phone, hours, star rating, **submit a review**, and a photo when one was added.
+- **Add place screen** — a photo is now **optional** (added 2026-08-04, Cloudinary-backed like ride photos; a failed upload doesn't cost the rest of the submission). Address is also optional, with **reverse-geocode autofill** from the dropped map pin (`NominatimService`, OpenStreetMap — an explicit rider action, never triggered by panning, per Nominatim's rate policy) and a helper note that the address is meant to be informal ("beside XYZ school," not a formal street address).
 - **My places screen** (`/places/mine`, reached from Garage header menu) — places the current user added.
 - **Categories**: Fuel, Garage, Parts, and **Recreation** (added 2026-08-01 — biker cafes, restaurants and viewpoints; the Overpass import pulls `amenity=cafe`, `amenity=restaurant` and `tourism=viewpoint` for it).
 
@@ -104,14 +112,18 @@ Added 2026-08-01. Built on the route data layer that had existed with no UI.
 
 ## 7. Social (`features/social`, `features/forums`) — bottom nav tab "Social"
 
-- **Feed tab** — shared rides with score, comment count, inline comments; "Find riders" (search by username); empty state pointing users to share a ride from its summary screen.
-  - Each card renders the ride's **route map** (Strava-style). With a photo, photo and map sit side by side; without one, the map spans the card.
+- **Header search** (added 2026-08-04) — one box, riders and forums both, replacing the old standalone "Find riders" tile. A rider name or an email is routed to `searchByUsername`/`searchByEmail`; forums are matched in-memory over a bounded, most-followed page (`ForumRepository.searchForums`) since Firestore has no substring match. Debounced 250 ms so it isn't a query per keystroke.
+- **Feed tab** — shared rides with score, comment count, inline comments; empty state pointing users to share a ride from its summary screen.
+  - **Sort/filter chips** (added 2026-08-04, `FeedSort`) sit where "Find riders" used to: **Hot** (net upvotes, ties break by recency), **Recent** (default), **Following** (only riders you follow — an empty following list shows an empty feed on purpose, rather than silently ignoring the chip).
+  - Each card renders the ride's **route map** (Strava-style). With photos, photos and map sit side by side; without any, the map spans the card.
+  - **Up to 3 photos per ride** (added 2026-08-04, `kMaxRidePhotos`) — rendered as a swipeable strip with a "2/3" counter and page dots once there's more than one; a single photo behaves exactly as before (no swipe, no counter).
   - Rides carry an optional **caption**, written on the share screen.
 - **Forums tab** (`forums_home_screen.dart`) — "Your bikes" forums (both brand-level *and* model-level, e.g. Yamaha and Yamaha RX100), Topics, **Rider forums**, and brand search → **forum thread screen** → **new post** (bottom sheet) → **post detail screen**.
   - The "Your bikes" list is cached in `SharedPreferences` keyed by a garage signature, so it no longer re-runs a Firestore transaction per bike on every visit.
   - **Rider-created forums** (`/forums/create`): the creator becomes a maintainer and can appoint others (by UID — a beta shortcut). Maintainers and the creator can delete posts/replies; riders can always delete their own. The global admin (`the.abraar.rar@gmail.com`) can moderate anywhere. Enforced in `firestore.rules`, not just client-side.
   - Topics now include Engine Rebuild, Mileage Tips and Engine Oil Review.
-- **Ride share screen** (`/ride/share/:rideId`) — caption, photo, audience, and **Save as route**.
+  - Deleting a bike from Garage no longer leaves it choosable from Record or its forum reachable — see `Issues.md` §12; both were symptoms of the same delete-never-reached-the-cloud bug.
+- **Ride share screen** (`/ride/share/:rideId`) — caption, **up to 3 photos** (was 1, changed 2026-08-04), audience, and **Save as route**.
 - **My shared rides screen** (`/rides/mine`, reached from Garage header menu) — delete a shared ride.
 - **Notifications screen** (`/notifications`).
 - **User profile screen** (`/profile/:uid`) — public profile view, showing a rider's bikes.
@@ -121,7 +133,7 @@ Added 2026-08-01. Built on the route data layer that had existed with no UI.
 Added 2026-08-01, on the group-ride data layer that had existed with no UI.
 
 - **"Ride with friends"** button on the Record screen, under the bike picker.
-- **Friend picker** — search riders by username, pick **2 to 10** (bounds enforced by a pure `validateGroupSelection`; live "n/10" counter, self excluded, duplicates collapsed, an 11th refused).
+- **Friend picker** — search riders by username, pick **1 to 10** (changed from 2-10 on 2026-08-04 — riding with a single friend is the commonest case, and forcing a third invitee to unlock the feature was pure friction; bounds enforced by a pure `validateGroupSelection`; live "n/10" counter, self excluded, duplicates collapsed, an 11th refused).
 - On confirm: the group ride is created, invites go out, each invitee gets an **in-app notification**, and **the inviter's ride starts recording immediately** via the normal recording path.
 - **Accepting** — a group-ride invite in the notifications screen is tappable; tapping accepts and opens the shared map.
 - **Shared live map** (`/group-ride/:groupRideId`) — every member is a **different colour**, assigned from a uid-sorted index so a rider keeps the same colour across rebuilds. Own marker is ringed. Roster splits "Riding" from "Invited"; each member shows "live" or "last seen 42s ago", and markers older than 30 s wash out rather than silently reading as current. Positions broadcast every 5 s. Members who've never reported a position are listed but never drawn at (0,0).

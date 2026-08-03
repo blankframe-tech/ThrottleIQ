@@ -503,3 +503,38 @@ whether anything doc-worthy had changed, until the harness's own
 **Fix:** rewrote the check to use `grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true'`
 against the raw stdin instead of `jq`, so it has no external-binary
 dependency. Verified against `true`/`false`/spaced JSON input.
+
+---
+
+## 14. `usernames` was world-listable, same bug class as §3 (2026-08-04)
+
+**Status:** Fixed, deployed pending `firebase deploy --only firestore:rules`.
+
+Found while building the permanent per-rider share link
+(`/r/{username}` — see `HANDOFF_Document.md`). `firestore.rules` granted
+`allow read: if request.auth != null` on `usernames/{handle}`. Same mistake
+as §3: **`read` = `get` + `list`**, so any signed-in rider could enumerate
+the entire `usernames` collection and pull every handle→uid pair — not as
+sensitive as live GPS, but still a full username→identity map handed out
+for free. Every real caller (`ProfileRepository`, the new
+`public/live-viewer.html` handle resolution) does a keyed `.doc(handle)`
+lookup, so nothing legitimately needed `list`.
+
+**Fix:** `allow get: if true` — no `list`, and no auth requirement either,
+because the permanent share link is opened by people who never sign in
+(that's the whole point of a link). This also **enabled** the new feature
+rather than just closing a hole: with the old `request.auth != null` gate,
+the public live-viewer page — which never calls `firebase.auth()` — would
+have gotten permission-denied on every single `/r/{username}` visit.
+
+Added a matching rule for the new `livePointers/{uid}` collection (the
+other half of the permanent link — see `HANDOFF_Document.md`), keyed by uid
+rather than username so the rule is a plain path match:
+`allow get: if true`, write gated on `request.auth.uid == uid`.
+
+**The general lesson, restated from §3:** every new capability-style
+collection (readable via a link/handle, not by browsing) needs `allow get`,
+never `allow read`, from the moment it's written — not as a follow-up
+audit. This is the second time the same class of rule shipped wrong; worth
+a second pair of eyes on any future `firestore.rules` diff before it goes
+out.
