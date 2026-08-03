@@ -13,6 +13,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../data/repositories/ride_share_repository.dart';
+import '../../domain/entities/shared_ride_entity.dart';
 
 const _captionMaxLength = 280;
 
@@ -22,7 +23,8 @@ const _audienceOptions = [
   ('mutual', 'Mutual', 'Riders you follow each other'),
 ];
 
-/// End-of-ride share step: optional photo + audience tier, reached from
+/// End-of-ride share step: up to [kMaxRidePhotos] photos + audience tier,
+/// reached from
 /// [RideSummaryScreen]'s Share button. Re-derives the ride/polyline/bike
 /// itself (rather than threading them through the router) the same way
 /// RideSummaryScreen does.
@@ -36,7 +38,11 @@ class RideShareScreen extends ConsumerStatefulWidget {
 
 class _RideShareScreenState extends ConsumerState<RideShareScreen> {
   List<LatLng> _polyline = [];
-  String? _imagePath;
+
+  /// Local file paths of the picked photos, in the order they'll appear on the
+  /// feed card. Never longer than [kMaxRidePhotos] — see [_pickImages].
+  final List<String> _imagePaths = [];
+
   String _audience = 'public';
   bool _sharing = false;
   final _captionController = TextEditingController();
@@ -62,10 +68,36 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     });
   }
 
-  Future<void> _pickImage() async {
+  /// Picks photos, keeping the total at or under [kMaxRidePhotos].
+  ///
+  /// The picker's own `limit` is only a hint (platforms are free to ignore
+  /// it), so the cap is enforced again here and the rider is told plainly
+  /// what was dropped rather than silently losing a photo they chose.
+  Future<void> _pickImages() async {
+    final remaining = kMaxRidePhotos - _imagePaths.length;
+    if (remaining <= 0) {
+      _showCapMessage(
+          'You can add up to $kMaxRidePhotos photos. Remove one to add another.');
+      return;
+    }
+
     final picker = ImagePicker();
-    final xfile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (xfile != null) setState(() => _imagePath = xfile.path);
+    final picked = await picker.pickMultiImage(imageQuality: 80, limit: remaining);
+    if (picked.isEmpty || !mounted) return;
+
+    final accepted = picked.take(remaining).map((x) => x.path).toList();
+    setState(() => _imagePaths.addAll(accepted));
+
+    if (picked.length > remaining) {
+      _showCapMessage(
+          'Only $kMaxRidePhotos photos per ride — kept the first $remaining.');
+    }
+  }
+
+  void _showCapMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _share() async {
@@ -82,10 +114,13 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
       final bike = bikes.where((b) => b.id == ride.bikeId).firstOrNull;
       final repo = RideShareRepository();
 
-      String? photoUrl;
-      if (_imagePath != null) {
-        photoUrl = await repo.uploadRidePhoto(user.uid, widget.rideId, File(_imagePath!));
-      }
+      // Uploaded through the same Cloudinary path as the old single photo,
+      // one call per file. Future.wait keeps the returned urls in the picked
+      // order, so the feed card shows them the way the rider arranged them.
+      final photoUrls = await Future.wait(
+        _imagePaths.map(
+            (path) => repo.uploadRidePhoto(user.uid, widget.rideId, File(path))),
+      );
 
       await repo.shareRide(
         rideId: ride.id,
@@ -102,7 +137,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         polyline: _polyline,
         mapSnapshotUrl: null,
         audience: _audience,
-        photoUrl: photoUrl,
+        photoUrls: photoUrls,
         caption: caption.isEmpty ? null : caption,
       );
       if (!mounted) return;
@@ -118,6 +153,95 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     } finally {
       if (mounted) setState(() => _sharing = false);
     }
+  }
+
+  /// Empty state = one big "add photos" panel (the pre-multi-photo look).
+  /// Once something is picked it becomes a thumbnail row with a remove button
+  /// per photo and an add tile that disappears at the cap, so the limit is
+  /// visible in the UI rather than only surfacing as an error.
+  Widget _buildPhotoPicker() {
+    if (_imagePaths.isEmpty) {
+      return GestureDetector(
+        onTap: _pickImages,
+        child: Container(
+          height: 180,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_a_photo_outlined, color: AppColors.textTertiary, size: 32),
+                const SizedBox(height: 8),
+                Text('Add up to $kMaxRidePhotos ride or bike photos',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    const tile = 104.0;
+    // Scrolls rather than wraps: three tiles plus the add tile can exceed a
+    // narrow phone's content width, and an overflow stripe in the share sheet
+    // is worse than a nudge-to-scroll.
+    return SizedBox(
+      height: tile,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          for (var i = 0; i < _imagePaths.length; i++) ...[
+            SizedBox(
+              width: tile,
+              height: tile,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                    child: Image.file(File(_imagePaths[i]), fit: BoxFit.cover),
+                  ),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _imagePaths.removeAt(i)),
+                        child: const CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.black54,
+                          child: Icon(Icons.close, size: 14, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (_imagePaths.length < kMaxRidePhotos)
+            GestureDetector(
+              onTap: _pickImages,
+              child: Container(
+                width: tile,
+                height: tile,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Icon(Icons.add_photo_alternate_outlined,
+                    color: AppColors.textTertiary, size: 26),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -152,49 +276,16 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const EditorialLabel('Photo (optional)'),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 180,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                  border: Border.all(color: AppColors.border),
-                  image: _imagePath != null
-                      ? DecorationImage(image: FileImage(File(_imagePath!)), fit: BoxFit.cover)
-                      : null,
-                ),
-                child: _imagePath == null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add_a_photo_outlined, color: AppColors.textTertiary, size: 32),
-                            SizedBox(height: 8),
-                            Text('Add a ride or bike photo',
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                          ],
-                        ),
-                      )
-                    : Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.black54,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.close, size: 16, color: Colors.white),
-                              onPressed: () => setState(() => _imagePath = null),
-                            ),
-                          ),
-                        ),
-                      ),
-              ),
+            Row(
+              children: [
+                const EditorialLabel('Photos (optional)'),
+                const Spacer(),
+                Text('${_imagePaths.length}/$kMaxRidePhotos',
+                    style: TextStyle(color: AppColors.textTertiary, fontSize: 12)),
+              ],
             ),
+            const SizedBox(height: 10),
+            _buildPhotoPicker(),
             const SizedBox(height: 24),
             const EditorialLabel('Who can see this'),
             const SizedBox(height: 10),

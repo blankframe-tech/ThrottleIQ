@@ -191,6 +191,109 @@ void main() {
       expect(restored.polyline.length, 1);
     });
 
+    test('round-trips up to three photos through Firestore', () {
+      final photographed = RideShareModel(
+        id: 'ride5',
+        userId: 'user1',
+        userName: 'John Doe',
+        userPhotoUrl: 'http://example.com/photo.jpg',
+        bikeId: 'bike1',
+        bikeName: 'My Harley',
+        bikeType: 'Cruiser',
+        rideDate: DateTime(2024, 1, 15),
+        distanceKm: 50.0,
+        durationSeconds: 3600,
+        maxSpeedKmh: 100.0,
+        polyline: polyline,
+        createdAt: DateTime(2024, 1, 15, 12, 0),
+        photoUrls: const ['one.jpg', 'two.jpg', 'three.jpg'],
+      );
+
+      final firestoreData = photographed.toFirestore();
+      expect(firestoreData['photoUrls'], ['one.jpg', 'two.jpg', 'three.jpg']);
+      // Legacy mirror so older app builds still show something.
+      expect(firestoreData['photoUrl'], 'one.jpg');
+
+      final restored = RideShareModel.fromFirestore(firestoreData, 'ride5');
+      expect(restored.photoUrls, ['one.jpg', 'two.jpg', 'three.jpg']);
+      expect(restored.toEntity().photoUrls, ['one.jpg', 'two.jpg', 'three.jpg']);
+      expect(restored.toEntity().photoUrl, 'one.jpg');
+    });
+
+    test('writes null photo fields when there are none', () {
+      final firestoreData = model.toFirestore();
+      expect(firestoreData['photoUrls'], isEmpty);
+      expect(firestoreData['photoUrl'], isNull);
+      expect(model.toEntity().photoUrls, isEmpty);
+    });
+
+    test('reads a ride shared before multi-photo support', () {
+      final legacyData = {
+        'userId': 'user1',
+        'userName': 'John Doe',
+        'userPhotoUrl': 'http://example.com/photo.jpg',
+        'bikeId': 'bike1',
+        'bikeName': 'My Harley',
+        'bikeType': 'Cruiser',
+        'rideDate': DateTime(2024, 1, 15),
+        'distanceKm': 50.0,
+        'durationSeconds': 3600,
+        'maxSpeedKmh': 100.0,
+        'polyline': [],
+        'createdAt': DateTime(2024, 1, 15, 12, 0),
+        // The old shape: one photo, no photoUrls array at all.
+        'photoUrl': 'legacy.jpg',
+      };
+
+      final restored = RideShareModel.fromFirestore(legacyData, 'legacy2');
+      expect(restored.photoUrls, ['legacy.jpg']);
+      expect(restored.toEntity().photoUrl, 'legacy.jpg');
+    });
+
+    test('does not double-count the legacy mirror of a new-style ride', () {
+      final data = {
+        'userId': 'user1',
+        'userName': 'John Doe',
+        'userPhotoUrl': '',
+        'bikeId': 'bike1',
+        'bikeName': 'My Harley',
+        'bikeType': 'Cruiser',
+        'rideDate': DateTime(2024, 1, 15),
+        'distanceKm': 50.0,
+        'durationSeconds': 3600,
+        'maxSpeedKmh': 100.0,
+        'polyline': [],
+        'createdAt': DateTime(2024, 1, 15, 12, 0),
+        'photoUrls': ['one.jpg', 'two.jpg'],
+        'photoUrl': 'one.jpg',
+      };
+
+      expect(RideShareModel.fromFirestore(data, 'ride6').photoUrls,
+          ['one.jpg', 'two.jpg']);
+    });
+
+    test('caps and cleans a malformed photoUrls array from Firestore', () {
+      final data = {
+        'userId': 'user1',
+        'userName': 'John Doe',
+        'userPhotoUrl': '',
+        'bikeId': 'bike1',
+        'bikeName': 'My Harley',
+        'bikeType': 'Cruiser',
+        'rideDate': DateTime(2024, 1, 15),
+        'distanceKm': 50.0,
+        'durationSeconds': 3600,
+        'maxSpeedKmh': 100.0,
+        'polyline': [],
+        'createdAt': DateTime(2024, 1, 15, 12, 0),
+        // Four entries, one duplicate, one non-string.
+        'photoUrls': ['a.jpg', 42, 'b.jpg', 'a.jpg', 'c.jpg', 'd.jpg'],
+      };
+
+      final restored = RideShareModel.fromFirestore(data, 'ride7');
+      expect(restored.photoUrls, ['a.jpg', 'b.jpg', 'c.jpg']);
+    });
+
     test('handles missing optional fields', () {
       final minimalData = {
         'userId': 'user1',

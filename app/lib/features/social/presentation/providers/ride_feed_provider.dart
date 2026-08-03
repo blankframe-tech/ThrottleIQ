@@ -1,15 +1,39 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../data/repositories/follow_repository.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../../domain/feed_sort.dart';
+
+/// Which ordering the feed chips have selected.
+///
+/// Deliberately NOT persisted, mirroring `rideSortProvider` on Stats: a sort
+/// is a momentary "show me what's hot", not a preference. Defaults to
+/// [FeedSort.recent] — opening the tab should show what riders just posted.
+final feedSortProvider = StateProvider<FeedSort>((ref) => FeedSort.recent);
+
+/// Uids the signed-in rider follows, for [FeedSort.following].
+///
+/// The follow graph is small (one doc per edge) and already fetched whole by
+/// `FollowRepository.getFollowing`, so filtering the merged feed against this
+/// set client-side needs no extra Firestore query — and therefore no new
+/// composite index or rules clause.
+final followingUidsProvider = FutureProvider<Set<String>>((ref) async {
+  final uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) return const {};
+  return (await FollowRepository().getFollowing(uid)).toSet();
+});
 
 /// The rider's feed: public rides + rides shared to them (followers/mutual)
-/// + their own shared rides, deduped and ranked by vote score.
+/// + their own shared rides, deduped and ordered newest-first.
 ///
 /// Firestore rules can't filter a single list query across audiences (see
 /// firestore.rules `rideVisibleTo`), so this fans out to the three queries
-/// that each line up with one visibility clause and merges client-side.
+/// that each line up with one visibility clause and merges client-side. Each
+/// query already asks Firestore for `createdAt` descending; the merge is
+/// re-sorted here because interleaving three sorted lists doesn't preserve
+/// the order.
 final rideFeedProvider = FutureProvider<List<SharedRideEntity>>((ref) async {
   final uid = ref.watch(currentUserProvider)?.uid;
   final repo = RideShareRepository();
@@ -27,13 +51,7 @@ final rideFeedProvider = FutureProvider<List<SharedRideEntity>>((ref) async {
     }
   }
 
-  final rides = byId.values.toList()
-    ..sort((a, b) {
-      final scoreCompare = b.netScore.compareTo(a.netScore);
-      if (scoreCompare != 0) return scoreCompare;
-      return b.createdAt.compareTo(a.createdAt);
-    });
-  return rides;
+  return sortFeed(byId.values.toList(), FeedSort.recent);
 });
 
 /// The signed-in rider's own shared rides — reached from the garage header's
@@ -53,6 +71,21 @@ final rideFeedNotifierProvider =
     StateNotifierProvider<RideFeedNotifier, List<SharedRideEntity>>((ref) {
   final rides = ref.watch(rideFeedProvider).valueOrNull ?? [];
   return RideFeedNotifier(ref, rides);
+});
+
+/// What the feed list actually renders: the locally-held feed
+/// ([rideFeedNotifierProvider], so optimistic like/vote edits show through)
+/// run through the selected [FeedSort].
+///
+/// Ordering lives in the pure `sortFeed` rather than in the Firestore queries
+/// because the feed is a client-side merge of three queries — no single query
+/// could order it, and re-fetching on every chip tap would be a round-trip for
+/// data already in memory.
+final visibleFeedProvider = Provider<List<SharedRideEntity>>((ref) {
+  final rides = ref.watch(rideFeedNotifierProvider);
+  final sort = ref.watch(feedSortProvider);
+  final following = ref.watch(followingUidsProvider).valueOrNull ?? const <String>{};
+  return sortFeed(rides, sort, followingUids: following);
 });
 
 class RideFeedNotifier extends StateNotifier<List<SharedRideEntity>> {

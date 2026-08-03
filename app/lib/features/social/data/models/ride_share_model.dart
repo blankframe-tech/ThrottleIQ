@@ -36,7 +36,12 @@ class RideShareModel {
   final String audience;
   final List<String> allowedUserIds;
   final String? routeId;
-  final String? photoUrl;
+
+  /// Up to [kMaxRidePhotos] rider photos. Written to Firestore as `photoUrls`,
+  /// with the first one mirrored into the legacy `photoUrl` field — see
+  /// [toFirestore].
+  final List<String> photoUrls;
+
   final String? caption;
   final int upvotes;
   final int downvotes;
@@ -63,12 +68,16 @@ class RideShareModel {
     this.audience = 'public',
     this.allowedUserIds = const [],
     this.routeId,
-    this.photoUrl,
+    this.photoUrls = const [],
     this.caption,
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
   });
+
+  /// The lead photo, or null — also what gets written to the legacy
+  /// `photoUrl` field.
+  String? get photoUrl => photoUrls.isEmpty ? null : photoUrls.first;
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -93,6 +102,12 @@ class RideShareModel {
       'audience': audience,
       'allowedUserIds': allowedUserIds,
       'routeId': routeId,
+      'photoUrls': photoUrls,
+      // Legacy mirror: app builds shipped before multi-photo support only read
+      // `photoUrl`, so a ride shared from a new build still shows its lead
+      // photo there instead of appearing photo-less. Never read back when
+      // `photoUrls` is present (see [fromFirestore]), so the two can't
+      // double-count the same image.
       'photoUrl': photoUrl,
       'caption': caption,
       'upvotes': upvotes,
@@ -136,7 +151,15 @@ class RideShareModel {
       allowedUserIds:
           (data['allowedUserIds'] as List<dynamic>?)?.cast<String>() ?? [],
       routeId: data['routeId'] as String?,
-      photoUrl: data['photoUrl'] as String?,
+      // Multi-photo rides carry `photoUrls`; anything shared before that has
+      // only the single `photoUrl`, which is folded in as the lead photo so
+      // existing shared rides keep rendering. Elements are checked rather than
+      // cast so one malformed entry can't blow up the whole feed.
+      photoUrls: normalizeRidePhotoUrls(
+        (data['photoUrls'] as List<dynamic>?)
+            ?.map((e) => e is String ? e : null),
+        legacyPhotoUrl: data['photoUrl'] as String?,
+      ),
       // Absent on every ride shared before captions shipped.
       caption: data['caption'] as String?,
       upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
@@ -166,7 +189,7 @@ class RideShareModel {
       audience: audience,
       allowedUserIds: allowedUserIds,
       routeId: routeId,
-      photoUrl: photoUrl,
+      photoUrls: photoUrls,
       caption: caption,
       upvotes: upvotes,
       downvotes: downvotes,

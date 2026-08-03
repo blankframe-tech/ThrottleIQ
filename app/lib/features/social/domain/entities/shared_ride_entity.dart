@@ -1,6 +1,44 @@
 import 'package:equatable/equatable.dart';
 import 'package:latlong2/latlong.dart';
 
+/// How many rider-taken photos one shared ride may carry.
+///
+/// The feed card shows the photos beside the route map (each gets half the
+/// card width), so this is a product cap rather than a storage one — past
+/// three, a rider is posting an album, not a ride.
+const int kMaxRidePhotos = 3;
+
+/// Cleans a raw photo-url list into the shape [SharedRideEntity.photoUrls]
+/// guarantees: no nulls, no blanks, no duplicates, at most [kMaxRidePhotos],
+/// order preserved.
+///
+/// [legacyPhotoUrl] is the pre-multi-photo single `photoUrl` field. It is used
+/// ONLY when [urls] yields nothing, so a ride shared before this change still
+/// renders its one photo, while a ride written by the new code (which mirrors
+/// its first photo back into `photoUrl` for older app builds) never counts the
+/// same image twice.
+///
+/// Pure and Flutter-free so both the model's read path and the share composer
+/// can enforce the cap identically — see
+/// `test/features/social/shared_ride_entity_test.dart`.
+List<String> normalizeRidePhotoUrls(
+  Iterable<String?>? urls, {
+  String? legacyPhotoUrl,
+}) {
+  final out = <String>[];
+  for (final url in urls ?? const <String?>[]) {
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty || out.contains(trimmed)) continue;
+    out.add(trimmed);
+    if (out.length == kMaxRidePhotos) break;
+  }
+  if (out.isEmpty) {
+    final legacy = legacyPhotoUrl?.trim() ?? '';
+    if (legacy.isNotEmpty) out.add(legacy);
+  }
+  return out;
+}
+
 class SharedRideEntity extends Equatable {
   final String id;
   final String userId;
@@ -28,9 +66,14 @@ class SharedRideEntity extends Equatable {
   final List<String> allowedUserIds;
   final String? routeId; // Optional reference to saved route
 
-  /// A rider-taken photo of the ride/bike (distinct from [mapSnapshotUrl],
-  /// which is a rendered map trace).
-  final String? photoUrl;
+  /// Rider-taken photos of the ride/bike (distinct from [mapSnapshotUrl],
+  /// which is a rendered map trace), newest-first as the rider ordered them.
+  /// At most [kMaxRidePhotos]; empty when the ride has no photo.
+  ///
+  /// Rides shared before multi-photo support carry a single `photoUrl` string
+  /// in Firestore instead; [RideShareModel.fromFirestore] folds that into this
+  /// list, so nothing downstream has to know which era a ride came from.
+  final List<String> photoUrls;
 
   /// Optional rider-written blurb shown above the media on the feed card.
   /// Absent on rides shared before captions existed, hence nullable.
@@ -66,12 +109,18 @@ class SharedRideEntity extends Equatable {
     this.audience = 'public',
     this.allowedUserIds = const [],
     this.routeId,
-    this.photoUrl,
+    this.photoUrls = const [],
     this.caption,
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
   });
+
+  /// The ride's lead photo — the first of [photoUrls], or null when it has
+  /// none. Kept as the single-photo accessor so callers that only ever want
+  /// one image (and the legacy `photoUrl` Firestore field written for older
+  /// app builds) have one obvious source.
+  String? get photoUrl => photoUrls.isEmpty ? null : photoUrls.first;
 
   int get durationMinutes => durationSeconds ~/ 60;
   double get avgSpeedKmh =>
@@ -89,7 +138,7 @@ class SharedRideEntity extends Equatable {
     bool? isLikedByCurrentUser,
     String? audience,
     List<String>? allowedUserIds,
-    String? photoUrl,
+    List<String>? photoUrls,
     String? caption,
     int? upvotes,
     int? downvotes,
@@ -116,7 +165,7 @@ class SharedRideEntity extends Equatable {
       audience: audience ?? this.audience,
       allowedUserIds: allowedUserIds ?? this.allowedUserIds,
       routeId: routeId,
-      photoUrl: photoUrl ?? this.photoUrl,
+      photoUrls: photoUrls ?? this.photoUrls,
       caption: caption ?? this.caption,
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
@@ -135,5 +184,6 @@ class SharedRideEntity extends Equatable {
         downvotes,
         myVote,
         caption,
+        photoUrls,
       ];
 }

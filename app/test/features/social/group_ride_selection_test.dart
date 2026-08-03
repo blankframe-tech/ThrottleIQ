@@ -8,10 +8,17 @@ void main() {
       expect(validateGroupSelection(0), contains('$kMinGroupRideFriends'));
     });
 
-    test('1 selected is rejected — one short of the minimum', () {
-      final message = validateGroupSelection(1);
+    test('1 selected is accepted — riding with a single friend is valid', () {
+      expect(validateGroupSelection(1), isNull);
+    });
+
+    test('0 is the only non-negative count below the minimum', () {
+      final message = validateGroupSelection(0);
       expect(message, isNotNull);
       expect(message, contains('1 more'));
+      // Singular noun, since the bound is one.
+      expect(message, contains('rider'));
+      expect(message, isNot(contains('riders')));
     });
 
     test('$kMinGroupRideFriends selected is the first valid count', () {
@@ -40,7 +47,7 @@ void main() {
     });
 
     test('the bounds are the ones the owner asked for', () {
-      expect(kMinGroupRideFriends, 2);
+      expect(kMinGroupRideFriends, 1);
       expect(kMaxGroupRideFriends, 10);
     });
   });

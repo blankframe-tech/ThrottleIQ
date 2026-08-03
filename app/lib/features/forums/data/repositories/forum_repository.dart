@@ -166,6 +166,55 @@ class ForumRepository {
         .toList();
   }
 
+  /// Forums whose display name matches [query], for the Social header search.
+  ///
+  /// Firestore has no substring or case-insensitive matching, and forum docs
+  /// carry no lowercased name field, so this fetches a bounded page of forums
+  /// and filters in memory. Two consequences worth knowing:
+  ///
+  ///  * The query is a single-field `orderBy` with a `limit` and no `where`,
+  ///    so it rides the automatic single-field index — no composite index to
+  ///    deploy (the mistake this project has already paid for twice).
+  ///  * It scans the [scanLimit] most-followed forums, not all of them. That
+  ///    is fine while the whole board list is small; past that, the fix is a
+  ///    `displayNameLower` field written at creation plus the same prefix
+  ///    range query ProfileRepository.searchByUsername already uses for
+  ///    usernames — a range plus an ordering on that one field, so still no
+  ///    composite index, but it does need a backfill of every existing forum
+  ///    doc.
+  ///
+  /// Prefix matches rank above mid-string ones ("roy" should surface "Royal
+  /// Enfield" before "Vintage Royals"), then by follower count, then by name
+  /// so the order is total and can't reshuffle between identical searches.
+  Future<List<ForumEntity>> searchForums(
+    String query, {
+    int scanLimit = 200,
+    int limit = 20,
+  }) async {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return [];
+
+    final snapshot = await _forums
+        .orderBy('followerCount', descending: true)
+        .limit(scanLimit)
+        .get();
+
+    final matches = snapshot.docs
+        .map((doc) => ForumModel.fromFirestore(doc).toEntity())
+        .where((forum) => forum.displayName.toLowerCase().contains(q))
+        .toList()
+      ..sort((a, b) {
+        final aPrefix = a.displayName.toLowerCase().startsWith(q);
+        final bPrefix = b.displayName.toLowerCase().startsWith(q);
+        if (aPrefix != bPrefix) return aPrefix ? -1 : 1;
+        final byFollowers = b.followerCount.compareTo(a.followerCount);
+        if (byFollowers != 0) return byFollowers;
+        return a.displayName.compareTo(b.displayName);
+      });
+
+    return matches.take(limit).toList();
+  }
+
   /// Grants [uid] moderation rights on a custom forum. `arrayUnion` keeps
   /// this idempotent — re-adding an existing maintainer is a no-op rather
   /// than a duplicate entry.

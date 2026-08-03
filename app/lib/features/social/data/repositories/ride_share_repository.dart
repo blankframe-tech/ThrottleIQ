@@ -25,6 +25,10 @@ class RideShareRepository {
 
   /// Uploads a rider-taken ride/bike photo (via Cloudinary — see
   /// [CloudinaryUploadService]) and returns its public URL.
+  ///
+  /// One call per photo: a ride can carry up to [kMaxRidePhotos], and the
+  /// composer uploads them through this same path so multi-photo shares use
+  /// no new storage path or credentials.
   Future<String> uploadRidePhoto(String uid, String rideId, File file) {
     return _uploadService.upload(file, folder: 'rideShares/$uid');
   }
@@ -51,7 +55,7 @@ class RideShareRepository {
     required List<LatLng> polyline,
     required String? mapSnapshotUrl,
     required String audience,
-    String? photoUrl,
+    List<String> photoUrls = const [],
     String? routeId,
     String? caption,
   }) async {
@@ -90,7 +94,10 @@ class RideShareRepository {
       audience: audience,
       allowedUserIds: allowedUserIds,
       routeId: routeId,
-      photoUrl: photoUrl,
+      // Re-normalized here rather than trusted from the caller: the cap is a
+      // data invariant of a shared ride, not a UI rule, so it holds even if a
+      // future caller skips the composer.
+      photoUrls: normalizeRidePhotoUrls(photoUrls),
       caption: caption,
     );
 

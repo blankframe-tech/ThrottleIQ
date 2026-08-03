@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,9 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../forums/data/repositories/forum_repository.dart';
+import '../../../forums/domain/entities/forum_entity.dart';
 import '../../../forums/presentation/screens/forums_home_screen.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
@@ -15,37 +20,301 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../../domain/feed_sort.dart';
 import '../providers/follow_providers.dart';
 import '../providers/notification_providers.dart';
 import '../providers/ride_feed_provider.dart';
 
+/// How long the header search waits after the last keystroke before querying.
+/// Rider search runs a Firestore prefix query per keystroke otherwise.
+const _searchDebounce = Duration(milliseconds: 250);
+
+/// Riders matching the header search box. Autodisposed per query string so a
+/// long session doesn't accumulate one cached result list per typed prefix.
+final _riderSearchProvider =
+    FutureProvider.autoDispose.family<List<UserProfileEntity>, String>((ref, query) async {
+  final q = query.trim();
+  if (q.isEmpty) return const [];
+  final repo = ProfileRepository();
+  // An email needs the exact-match query; anything else (with or without a
+  // leading @) is a username prefix. Same rule the old Find-riders sheet used.
+  final looksLikeEmail = q.contains('@') && q.contains('.') && !q.startsWith('@');
+  return looksLikeEmail ? repo.searchByEmail(q) : repo.searchByUsername(q);
+});
+
+/// Forums matching the header search box. See
+/// [ForumRepository.searchForums] for why this is an in-memory filter.
+final _forumSearchProvider =
+    FutureProvider.autoDispose.family<List<ForumEntity>, String>((ref, query) async {
+  final q = query.trim();
+  if (q.isEmpty) return const [];
+  return ForumRepository().searchForums(q);
+});
+
 /// Social hub: Feed (Phase 2), Forums (Phase 3). Places moved to its own
 /// bottom-nav tab in Epic E.
-class SocialScreen extends StatelessWidget {
+///
+/// The header holds one search box covering both riders and forums — a rider
+/// looking for "Royal Enfield" shouldn't have to know whether that's a person
+/// or a board before they can type it. Results replace the tab body while the
+/// box has text, so searching never loses the rider's place in the feed.
+class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
 
   @override
+  State<SocialScreen> createState() => _SocialScreenState();
+}
+
+class _SocialScreenState extends State<SocialScreen> {
+  final _controller = TextEditingController();
+
+  /// The debounced query the results panel actually runs, as opposed to the
+  /// raw controller text which changes on every keystroke.
+  String _query = '';
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    // Clearing is immediate — waiting 250 ms to dismiss the results panel
+    // after the rider empties the box feels broken.
+    if (value.trim().isEmpty) {
+      setState(() => _query = '');
+      return;
+    }
+    _debounce = Timer(_searchDebounce, () {
+      if (mounted) setState(() => _query = value.trim());
+    });
+  }
+
+  void _clear() {
+    _debounce?.cancel();
+    _controller.clear();
+    setState(() => _query = '');
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final searching = _query.isNotEmpty;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Social'),
+          titleSpacing: AppDimensions.paddingMd,
+          title: SizedBox(
+            height: 40,
+            child: TextField(
+              controller: _controller,
+              onChanged: _onChanged,
+              textInputAction: TextInputAction.search,
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                isDense: true,
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                hintText: 'Search riders and forums',
+                hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                suffixIcon: _controller.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                        onPressed: _clear,
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                  borderSide: BorderSide(color: AppColors.primary),
+                ),
+              ),
+            ),
+          ),
           bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
-            tabs: [
+            tabs: const [
               Tab(text: 'Feed'),
               Tab(text: 'Forums'),
             ],
           ),
         ),
-        body: const TabBarView(
+        // Stacked rather than swapped so the TabBarView keeps its state (feed
+        // scroll position, expanded comment threads) while results are up.
+        body: Stack(
           children: [
-            _FeedTab(),
-            ForumsHomeScreen(),
+            const TabBarView(
+              children: [
+                _FeedTab(),
+                ForumsHomeScreen(),
+              ],
+            ),
+            if (searching)
+              Positioned.fill(
+                child: Container(
+                  color: AppColors.background,
+                  child: _SearchResults(query: _query),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Combined rider + forum results, grouped by type. Each group loads and
+/// fails independently — a forum-search error shouldn't hide riders that
+/// came back fine.
+class _SearchResults extends ConsumerWidget {
+  final String query;
+  const _SearchResults({required this.query});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myUid = ref.watch(currentUserProvider)?.uid;
+    final ridersAsync = ref.watch(_riderSearchProvider(query));
+    final forumsAsync = ref.watch(_forumSearchProvider(query));
+
+    // Never offer to follow yourself.
+    final riders =
+        (ridersAsync.valueOrNull ?? const <UserProfileEntity>[])
+            .where((r) => r.uid != myUid)
+            .toList();
+    final forums = forumsAsync.valueOrNull ?? const <ForumEntity>[];
+
+    final stillLoading = ridersAsync.isLoading || forumsAsync.isLoading;
+    if (!stillLoading && riders.isEmpty && forums.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
+          child: Text(
+            'Nothing found for "$query".\nTry a @username, an email, or a forum name.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      children: [
+        const EditorialLabel('Riders'),
+        const SizedBox(height: 10),
+        if (ridersAsync.isLoading)
+          const _SectionSpinner()
+        else if (ridersAsync.hasError)
+          _SectionMessage('Couldn\'t search riders: ${ridersAsync.error}')
+        else if (riders.isEmpty)
+          const _SectionMessage('No riders match that.')
+        else
+          for (final rider in riders) ...[
+            _RiderResultTile(rider: rider),
+            const SizedBox(height: 8),
+          ],
+        const SizedBox(height: 16),
+        const EditorialLabel('Forums'),
+        const SizedBox(height: 10),
+        if (forumsAsync.isLoading)
+          const _SectionSpinner()
+        else if (forumsAsync.hasError)
+          _SectionMessage('Couldn\'t search forums: ${forumsAsync.error}')
+        else if (forums.isEmpty)
+          const _SectionMessage('No forums match that.')
+        else
+          for (final forum in forums) ...[
+            _ForumResultTile(forum: forum),
+            const SizedBox(height: 8),
+          ],
+      ],
+    );
+  }
+}
+
+class _SectionSpinner extends StatelessWidget {
+  const _SectionSpinner();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+}
+
+class _SectionMessage extends StatelessWidget {
+  final String text;
+  const _SectionMessage(this.text);
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+      );
+}
+
+class _ForumResultTile extends StatelessWidget {
+  final ForumEntity forum;
+  const _ForumResultTile({required this.forum});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push('/forums/${forum.id}'),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.forum_outlined, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(forum.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary)),
+                  Text('${forum.followerCount} followers · ${forum.postCount} posts',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
           ],
         ),
       ),
@@ -59,24 +328,33 @@ class _FeedTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(rideFeedProvider);
+    final sort = ref.watch(feedSortProvider);
 
     return Column(
       children: [
+        // Sort/filter chips sit where "Find riders" used to — search now lives
+        // in the header, and this is the row a rider looks at when deciding
+        // what the feed should show them.
         Padding(
           padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
               AppDimensions.paddingMd, AppDimensions.paddingMd, 0),
-          child: OutlinedButton.icon(
-            onPressed: () => showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: AppColors.background,
-              builder: (_) => const _RiderSearchSheet(),
-            ),
-            icon: const Icon(Icons.person_search_outlined, size: 18),
-            label: const Text('Find riders'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 44),
-              alignment: Alignment.centerLeft,
+          child: SizedBox(
+            height: 34,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: FeedSort.values.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final option = FeedSort.values[i];
+                return GestureDetector(
+                  onTap: () => ref.read(feedSortProvider.notifier).state = option,
+                  child: EditorialPill(
+                    option.label,
+                    filled: option == sort,
+                    tone: option == sort ? PillTone.accent : PillTone.neutral,
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -87,19 +365,40 @@ class _FeedTab extends ConsumerWidget {
             error: (e, _) =>
                 Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
             data: (_) {
-              final rides = ref.watch(rideFeedNotifierProvider);
+              // "Following" filters against the follow graph, so until that
+              // has loaded the filtered feed is empty for a reason that has
+              // nothing to do with who the rider follows — show the spinner
+              // rather than a wrong "nobody you follow has posted".
+              if (sort == FeedSort.following &&
+                  ref.watch(followingUidsProvider).isLoading) {
+                return Center(
+                    child: CircularProgressIndicator(color: AppColors.primary));
+              }
+              final rides = ref.watch(visibleFeedProvider);
               if (rides.isEmpty) {
+                // "Following" filtering to nothing is a different situation
+                // from an empty feed, and needs a different way out.
+                final following = sort == FeedSort.following;
                 return Center(
                   child: Padding(
-                    padding: EdgeInsets.all(AppDimensions.paddingLg),
+                    padding: const EdgeInsets.all(AppDimensions.paddingLg),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.dynamic_feed_outlined, size: 64, color: AppColors.textTertiary),
-                        SizedBox(height: 16),
-                        Text('No rides yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                        SizedBox(height: 8),
-                        Text('Share a ride from its summary screen to get things started.',
+                        Icon(
+                            following
+                                ? Icons.people_outline
+                                : Icons.dynamic_feed_outlined,
+                            size: 64,
+                            color: AppColors.textTertiary),
+                        const SizedBox(height: 16),
+                        Text(following ? 'Nothing from your riders yet' : 'No rides yet',
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        Text(
+                            following
+                                ? 'Search for riders above and follow them to fill this in.'
+                                : 'Share a ride from its summary screen to get things started.',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
                       ],
@@ -317,10 +616,19 @@ class _RideCardState extends ConsumerState<_RideCard> {
     );
   }
 
-  /// Media strip: the route map is always shown (Strava-style). A rider photo,
-  /// when present, sits beside it — each taking half the card width — instead
-  /// of replacing it. [RideRouteMap] renders its own placeholder when the
-  /// polyline is empty (privacy clipping can legitimately empty a short ride).
+  /// Media strip: the route map is always shown (Strava-style). Rider photos,
+  /// when present, sit beside it — photos and map each taking half the card
+  /// width — instead of replacing it. [RideRouteMap] renders its own
+  /// placeholder when the polyline is empty (privacy clipping can legitimately
+  /// empty a short ride).
+  ///
+  /// Multiple photos are a swipeable strip ([_PhotoStrip]) rather than a
+  /// collage: the map already owns half the card, so a 2×2 collage of three
+  /// photos would leave each one about 75 px wide — too small to read on a
+  /// phone. The strip keeps every photo at the full size a single photo used
+  /// to get, renders identically for 1, 2 or 3, and can't overflow, because
+  /// its width is whatever the Row hands it rather than something that grows
+  /// with the photo count.
   Widget _buildMedia(SharedRideEntity ride) {
     const mediaHeight = 160.0;
     final map = RideRouteMap(
@@ -329,27 +637,14 @@ class _RideCardState extends ConsumerState<_RideCard> {
       radius: AppDimensions.radiusLg,
     );
 
-    if (ride.photoUrl == null) return map;
+    if (ride.photoUrls.isEmpty) return map;
 
     return SizedBox(
       height: mediaHeight,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-              child: CachedNetworkImage(
-                imageUrl: ride.photoUrl!,
-                height: mediaHeight,
-                fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    Container(height: mediaHeight, color: AppColors.background),
-                errorWidget: (_, __, ___) =>
-                    Container(height: mediaHeight, color: AppColors.background),
-              ),
-            ),
-          ),
+          Expanded(child: _PhotoStrip(urls: ride.photoUrls, height: mediaHeight)),
           const SizedBox(width: 8),
           Expanded(child: map),
         ],
@@ -431,19 +726,23 @@ class _RideCardState extends ConsumerState<_RideCard> {
   Widget _divider() => Container(width: 1, height: 28, color: AppColors.border);
 }
 
-/// Rider search: find by @username (prefix, as-you-type) or exact email,
-/// with a follow/unfollow toggle per result.
-class _RiderSearchSheet extends ConsumerStatefulWidget {
-  const _RiderSearchSheet();
+/// A ride's photos as a horizontally swipeable strip, one photo per page,
+/// with a "2/3" counter and page dots once there's more than one.
+///
+/// A single photo renders exactly as it did before multi-photo support: one
+/// page, no counter, no dots.
+class _PhotoStrip extends StatefulWidget {
+  final List<String> urls;
+  final double height;
+  const _PhotoStrip({required this.urls, required this.height});
 
   @override
-  ConsumerState<_RiderSearchSheet> createState() => _RiderSearchSheetState();
+  State<_PhotoStrip> createState() => _PhotoStripState();
 }
 
-class _RiderSearchSheetState extends ConsumerState<_RiderSearchSheet> {
-  final _controller = TextEditingController();
-  List<UserProfileEntity> _results = const [];
-  bool _loading = false;
+class _PhotoStripState extends State<_PhotoStrip> {
+  final _controller = PageController();
+  int _page = 0;
 
   @override
   void dispose() {
@@ -451,80 +750,82 @@ class _RiderSearchSheetState extends ConsumerState<_RiderSearchSheet> {
     super.dispose();
   }
 
-  Future<void> _search(String query) async {
-    final q = query.trim();
-    if (q.isEmpty) {
-      setState(() => _results = const []);
-      return;
-    }
-    setState(() => _loading = true);
-    final repo = ProfileRepository();
-    final looksLikeEmail = q.contains('@') && q.contains('.') && !q.startsWith('@');
-    final results = looksLikeEmail
-        ? await repo.searchByEmail(q)
-        : await repo.searchByUsername(q);
-    if (!mounted) return;
-    final myUid = ref.read(currentUserProvider)?.uid;
-    setState(() {
-      _results = results.where((r) => r.uid != myUid).toList();
-      _loading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppDimensions.paddingMd,
-        right: AppDimensions.paddingMd,
-        top: AppDimensions.paddingMd,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
-      ),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.7,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Find riders',
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            const SizedBox(height: 12),
-            TextField(
+    final urls = widget.urls;
+    final multiple = urls.length > 1;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: PageView.builder(
               controller: _controller,
-              autofocus: true,
-              style: TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                hintText: '@username or email',
-                prefixIcon: Icon(Icons.search),
+              itemCount: urls.length,
+              // A single photo shouldn't swipe at all — there's nowhere to go,
+              // and a rubber-banding image reads as a broken card.
+              physics: multiple
+                  ? const PageScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              onPageChanged: (i) => setState(() => _page = i),
+              itemBuilder: (_, i) => CachedNetworkImage(
+                imageUrl: urls[i],
+                height: widget.height,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    Container(height: widget.height, color: AppColors.background),
+                errorWidget: (_, __, ___) =>
+                    Container(height: widget.height, color: AppColors.background),
               ),
-              onChanged: _search,
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: _loading
-                  ? Center(child: CircularProgressIndicator(color: AppColors.primary))
-                  : _results.isEmpty
-                      ? Center(
-                          child: Text(
-                            _controller.text.trim().isEmpty
-                                ? 'Search by @username or email'
-                                : 'No riders found',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: _results.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (_, i) => _RiderResultTile(rider: _results[i]),
-                        ),
+          ),
+          if (multiple) ...[
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                ),
+                child: Text(
+                  '${_page + 1}/${urls.length}',
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 6,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < urls.length; i++)
+                    Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == _page ? Colors.white : Colors.white54,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 }
 
+/// One rider row in the header search results: tap to open the profile,
+/// with a follow/unfollow toggle on the right.
 class _RiderResultTile extends ConsumerWidget {
   final UserProfileEntity rider;
   const _RiderResultTile({required this.rider});

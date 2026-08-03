@@ -108,6 +108,33 @@ void main() {
       expect(a, equals(testRide.copyWith(caption: 'A')));
     });
 
+    test('has no photos by default', () {
+      expect(testRide.photoUrls, isEmpty);
+      expect(testRide.photoUrl, isNull);
+    });
+
+    test('photoUrl exposes the lead photo of the list', () {
+      final withPhotos = testRide.copyWith(photoUrls: const ['a.jpg', 'b.jpg']);
+
+      expect(withPhotos.photoUrl, 'a.jpg');
+      expect(withPhotos.photoUrls, ['a.jpg', 'b.jpg']);
+    });
+
+    test('copyWith preserves photos when not overridden', () {
+      final withPhotos = testRide.copyWith(photoUrls: const ['a.jpg']);
+      final voted = withPhotos.copyWith(upvotes: 2);
+
+      expect(voted.photoUrls, ['a.jpg']);
+    });
+
+    test('photos participate in equality', () {
+      final a = testRide.copyWith(photoUrls: const ['a.jpg']);
+      final b = testRide.copyWith(photoUrls: const ['b.jpg']);
+
+      expect(a, isNot(equals(b)));
+      expect(a, equals(testRide.copyWith(photoUrls: const ['a.jpg'])));
+    });
+
     test('ride with zero duration handles division', () {
       final zeroRide = SharedRideEntity(
         id: 'ride2',
@@ -148,6 +175,55 @@ void main() {
       );
 
       expect(withRoute.routeId, 'route123');
+    });
+  });
+
+  group('normalizeRidePhotoUrls', () {
+    test('keeps order and passes through a clean list', () {
+      expect(normalizeRidePhotoUrls(const ['a.jpg', 'b.jpg']), ['a.jpg', 'b.jpg']);
+    });
+
+    test('caps at three photos', () {
+      expect(
+        normalizeRidePhotoUrls(const ['a', 'b', 'c', 'd', 'e']),
+        ['a', 'b', 'c'],
+      );
+      expect(kMaxRidePhotos, 3);
+    });
+
+    test('drops nulls, blanks and duplicates, and trims', () {
+      expect(
+        normalizeRidePhotoUrls(const [' a.jpg ', '', null, 'a.jpg', '   ', 'b.jpg']),
+        ['a.jpg', 'b.jpg'],
+      );
+    });
+
+    test('falls back to the legacy single photoUrl when the list is empty', () {
+      expect(
+        normalizeRidePhotoUrls(null, legacyPhotoUrl: 'legacy.jpg'),
+        ['legacy.jpg'],
+      );
+      expect(
+        normalizeRidePhotoUrls(const [], legacyPhotoUrl: 'legacy.jpg'),
+        ['legacy.jpg'],
+      );
+    });
+
+    test('ignores the legacy photoUrl when the list has photos', () {
+      expect(
+        normalizeRidePhotoUrls(const ['new.jpg'], legacyPhotoUrl: 'new.jpg'),
+        ['new.jpg'],
+      );
+      expect(
+        normalizeRidePhotoUrls(const ['a.jpg', 'b.jpg'], legacyPhotoUrl: 'a.jpg'),
+        ['a.jpg', 'b.jpg'],
+      );
+    });
+
+    test('yields nothing when there is nothing to keep', () {
+      expect(normalizeRidePhotoUrls(null), isEmpty);
+      expect(normalizeRidePhotoUrls(const [null, '', '  ']), isEmpty);
+      expect(normalizeRidePhotoUrls(const [], legacyPhotoUrl: '  '), isEmpty);
     });
   });
 }

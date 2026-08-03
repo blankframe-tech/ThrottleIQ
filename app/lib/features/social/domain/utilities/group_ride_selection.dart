@@ -1,14 +1,18 @@
 /// Bounds and validation for "Ride with friends" group-ride invites.
 ///
-/// Kept as plain top-level Dart (no Flutter, no Firestore) so the rule the
-/// owner actually stated — "Pick 2-10 max" — lives in exactly one place and
-/// can be unit-tested without a widget tree. Both the picker's confirm button
-/// and its "you've hit the cap" refusal read from here; nothing hard-codes 2
-/// or 10 anywhere else.
+/// Kept as plain top-level Dart (no Flutter, no Firestore) so the bound
+/// lives in exactly one place and can be unit-tested without a widget tree.
+/// Both the picker's confirm button and its "you've hit the cap" refusal read
+/// from here; nothing hard-codes 1 or 10 anywhere else.
 library;
 
 /// Minimum riders (besides the inviter) needed before a group ride can start.
-const int kMinGroupRideFriends = 2;
+///
+/// One, not two: riding with a single friend is the commonest case by far —
+/// two mates heading out together — and refusing it forced riders to invent a
+/// third invitee or skip the feature entirely. The inviter still counts, so
+/// the smallest real group is two people.
+const int kMinGroupRideFriends = 1;
 
 /// Maximum riders (besides the inviter) that may be invited to one group ride.
 /// The group ride document is therefore sized for 11 participants — the ten
@@ -26,7 +30,11 @@ String? validateGroupSelection(int count) {
   }
   if (count < kMinGroupRideFriends) {
     final short = kMinGroupRideFriends - (count < 0 ? 0 : count);
-    return 'Pick at least $kMinGroupRideFriends riders — '
+    // Pluralized off the bound rather than hard-coded, so the message stays
+    // grammatical if the minimum ever moves again ("at least 1 rider" vs
+    // "at least 2 riders").
+    const noun = kMinGroupRideFriends == 1 ? 'rider' : 'riders';
+    return 'Pick at least $kMinGroupRideFriends $noun — '
         '$short more to go.';
   }
   return null;
