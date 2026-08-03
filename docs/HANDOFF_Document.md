@@ -251,6 +251,64 @@ backend or a real device. **Treat each as unproven until tested.**
 - [ ] Internal testing track → closed beta → production
 - [ ] Bump `version:` in `pubspec.yaml` (versionCode) for every new upload
 
+### Open questions for the product owner
+
+- ❓ **Does the quote belong on the Record screen at all?** It now shares a
+  card with the greeting and name (small type). But the Record screen is
+  the pre-ride screen, and a rider standing at their bike wants the bike
+  picker and the start control, not prose. **Alternative worth
+  considering:** show the quote on an *intermediate screen between
+  tapping start and recording beginning* — a two-second "here we go"
+  moment, where a line of personality actually lands instead of competing
+  with the controls. That screen could also carry the GPS-lock status,
+  which currently has nowhere to live. Decide before the beta; it's a
+  cheap move now and awkward later.
+- ❓ **Badge completion reward.** The intent is that a rider completing
+  every badge gets an engine oil from us. Nothing in the app encodes that
+  yet — no "all badges earned" state, no fulfilment path, no way to claim.
+  Decide whether it's a real promise (needs a claim flow, an address, and
+  a cost model) or aspirational copy, before it goes in front of testers.
+
+### Proposed features (not built — for discussion)
+
+- 🔮 **Auto-pause in traffic.** Detect a stop (already possible — the
+  recorder classifies `period_type` as moving/idle at the 1 m/s cutoff)
+  and pause recording automatically, then **surface the jam time back to
+  the rider after the ride**: "you spent 14 minutes stopped." That number
+  is genuinely interesting in Dhaka and nobody else shows it. The data is
+  already being collected — `movingSeconds` exists for the average-speed
+  fix — so this is presentation plus a pause policy, not new tracking.
+  Watch out for: auto-pause at a long traffic light vs. a genuine stop,
+  and not double-counting against the existing manual pause.
+- 🔮 **iOS start/stop widget.** The Android widget already exists and the
+  iOS sources are written (`app/ios/ThrottleIQWidget/`), but iOS widgets
+  can't *start a recording* from the widget itself — they can only deep
+  link into the app. A true start/stop control needs App Intents
+  (iOS 17+) plus background-location handoff. Worth scoping properly
+  rather than assuming parity with Android.
+- 🔮 **All-day auto-tracking** — detect that the rider has got on a bike
+  and record without being asked. This is the single biggest retention
+  idea in the backlog and also the most dangerous: it means continuous
+  motion monitoring, which costs battery, needs "Always" location
+  permission (a much harder App Store/Play review conversation, and a
+  privacy-policy change), and produces false positives from car and bus
+  journeys. Prototype the *detection* offline against recorded rides
+  before committing to the permission ask.
+- 🔮 **ThrottleIQ Partner** — a companion surface for the people who worry
+  about a rider: spouse, parent, friend. Today live-share is one link per
+  ride; Partner would let someone follow **multiple** riders (son,
+  husband, father, friend) from one place, seeing who's currently out and
+  where. Web first (the live viewer is already a web page and the
+  permanent per-rider link is the natural building block), then a small
+  standalone app. Note this is a **second product** with its own auth,
+  its own privacy model, and its own consent story — a rider must be able
+  to revoke a follower, and "always visible to my spouse" is a very
+  different consent posture from "here's a link to this one ride". Do not
+  start it before the main app has real users.
+- 🔮 **Badge tiers as a collectible set** — bronze/silver/gold/platinum/
+  diamond families are in as of 2026-08-04. The natural extensions:
+  seasonal/limited badges, a shareable badge card, and club-level badges.
+
 ### Product (v1.1+)
 - [x] ~~Average speed = distance ÷ moving time~~ **DONE 2026-08-01** (`average_speed.dart`, 12 tests)
 - [ ] Sensor calibration via GPS fusion (current: heuristic axis pick)
