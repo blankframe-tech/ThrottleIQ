@@ -122,6 +122,7 @@ Added 2026-08-01, on the group-ride data layer that had existed with no UI.
 - **Accepting** — a group-ride invite in the notifications screen is tappable; tapping accepts and opens the shared map.
 - **Shared live map** (`/group-ride/:groupRideId`) — every member is a **different colour**, assigned from a uid-sorted index so a rider keeps the same colour across rebuilds. Own marker is ringed. Roster splits "Riding" from "Invited"; each member shows "live" or "last seen 42s ago", and markers older than 30 s wash out rather than silently reading as current. Positions broadcast every 5 s. Members who've never reported a position are listed but never drawn at (0,0).
 - ⚠️ **Invites are in-app only — there is no push notification.** The invitee sees it next time they open the app. Real push needs the Cloud Function this repo documents as a stub. See `Assumptions Made.md` #17.
+- The roster lives at `groupRides/{id}/members/{uid}` — one document per rider, not an array on the ride (changed 2026-08-02, see `Issues.md` §10). Rides created before that keep a legacy inline array; reads merge both, the subcollection winning.
 
 ## 7a. Home-screen widgets (`core/services/home_widget_service.dart`)
 
@@ -156,6 +157,6 @@ Added 2026-08-01. Three widgets, styled Carbon Mono (carbon background, lime acc
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
 - Fuel log, documents wallet and curated "best roads nearby" from the competitor feature map in `HANDOFF_Document.md` Part 2 are not built. (Turn-by-turn navigation now IS — see §6a — though geometrically, not via a routing engine.)
-- **Discovered (public) routes can't be opened yet.** A route doc lives under `users/{uid}/routes/{id}`, and `routeByIdProvider` looks it up under the *signed-in* rider's uid, so only your own routes have a working detail screen. Opening someone else's needs the owner uid threaded through the route params. The Discover cards are deliberately non-tappable rather than tappable-and-broken.
+- ~~Discovered (public) routes can't be opened~~ **FIXED 2026-08-02** — the detail and navigate routes take an optional `?owner=<uid>`, so a public route from another rider opens read-only (Delete and the public/private toggle are hidden; navigation works, since following a track writes nothing). Omitting `owner` still means "mine", so existing links are unchanged.
 - iOS Simulator screenshots for every screen above are still outstanding — see the note at the top of this file.
 - **None of the 2026-08-01 feature work below has been exercised on a device** — it is verified by `flutter analyze`, 363 passing tests, and a release build only. See "Done, but NOT yet verified" in `HANDOFF_Document.md`.

@@ -320,7 +320,49 @@ The same hazard applies to any future locale whose code sorts before
 
 ---
 
-## 10. QA report
+## 10. Group-ride roster was rewritable by any accepting invitee
+
+**Status:** Fixed and deployed 2026-08-02.
+
+The roster was an **array of maps** on the ride document. Firestore rules
+**cannot project a field out of an array of maps** — there is no way to
+express "you may change only the element whose `userId` is yours" — so
+the accept clause could only bound the array's *size*. A genuinely
+invited rider accepting could, in the same write, rewrite every other
+member's display name. They could never grant themselves anything or add
+anyone (the flat `memberIds`/`invitedIds` arrays were correctly bounded);
+the exposure was roster vandalism, not privilege escalation.
+
+**Fix:** members moved to `groupRides/{id}/members/{uid}` — one document
+per rider. The rule is then exactly expressible, in the same shape
+`memberLocations/{uid}` already used: the `{uid}` wildcard is pinned to
+`request.auth.uid` on write. The parent `allow update` clauses no longer
+mention `members` at all, and `allow create` now refuses an inline
+`members` key so the invariant is unforgeable rather than conventional.
+
+**The general lesson:** if a rules constraint needs to be *per-element*,
+the data has to be per-document. An array of maps is a rules dead end —
+reach for a subcollection before writing one.
+
+**Backwards compatibility:** reads merge the legacy inline array with the
+subcollection, subcollection winning, so pre-existing rides still render.
+Writes are a clean break. One accepted rough edge, **legacy rides only**:
+a non-creator who leaves keeps their stale inline entry, because the
+tightened rules correctly forbid them rewriting that array. The creator
+kicking them does clean it. Pre-launch, so no migration was written — if
+you want zero legacy surface, delete existing `groupRides` documents
+before the beta starts; nothing else references them.
+
+⚠️ **The rules themselves are reasoned, not executed.** There is no
+emulator/rules-test harness in this repo, so the claim that an accepting
+invitee is still permitted (they remain in `invitedIds` at write time,
+since rules evaluate against committed state, not the pending
+transaction) has not been run. **Do one manual invite → accept → leave
+pass against the emulator or a second account before the beta.**
+
+---
+
+## 11. QA report
 
 **Status:** Not started.
 
