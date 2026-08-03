@@ -7,6 +7,7 @@ import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../providers/garage_provider.dart';
+import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -172,19 +173,17 @@ class _BikeCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Photo strip placeholder
+          // Photo strip — the rider's own photo of the bike if they attached
+          // one and the file is still there, otherwise the generic icon.
           Stack(
             children: [
-              Container(
+              BikePhoto(
+                imagePath: bike.imagePath,
+                width: double.infinity,
                 height: 116,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(AppDimensions.radiusXl)),
-                ),
-                child: Center(
-                  child: Icon(Icons.two_wheeler, size: 44, color: AppColors.textTertiary),
-                ),
+                iconSize: 44,
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppDimensions.radiusXl)),
               ),
               if (bike.isActive)
                 const Positioned(

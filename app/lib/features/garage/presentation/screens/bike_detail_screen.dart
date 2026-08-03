@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +6,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/stat_card.dart';
 import '../providers/garage_provider.dart';
+import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
@@ -52,7 +52,11 @@ class BikeDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero image / header
+            // Hero image / header. Went through [BikePhoto] rather than a
+            // DecorationImage: a saved imagePath can point at a file that no
+            // longer exists (or at nothing at all, for a bike synced down from
+            // another device), and only Image.file's errorBuilder can fall
+            // back to the icon when the decode fails.
             Container(
               height: 180,
               width: double.infinity,
@@ -60,15 +64,15 @@ class BikeDetailScreen extends ConsumerWidget {
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 border: Border.all(color: AppColors.border),
-                image: bike.imagePath != null
-                    ? DecorationImage(
-                        image: FileImage(File(bike.imagePath!)),
-                        fit: BoxFit.cover)
-                    : null,
               ),
-              child: bike.imagePath == null
-                  ? Icon(Icons.two_wheeler, size: 72, color: AppColors.textTertiary)
-                  : null,
+              child: BikePhoto(
+                imagePath: bike.imagePath,
+                width: double.infinity,
+                height: 180,
+                iconSize: 72,
+                backgroundColor: Colors.transparent,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              ),
             ),
             const SizedBox(height: 16),
 

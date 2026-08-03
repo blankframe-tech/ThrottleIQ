@@ -7,10 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/motorcycle_quotes.dart';
-import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../garage/presentation/widgets/bike_photo.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_with_friends_button.dart';
 import '../providers/ride_recording_provider.dart';
@@ -86,73 +86,79 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
               ),
               const SizedBox(height: 4),
 
-              // 1. Greeting — the first thing on the screen. The casual line
+              // 1. Greeting + quote — one card, not two. The casual line
               // carries the rider's name when the picked variant has a
               // `{name}` slot ("Evening, Sam."); otherwise the name keeps its
-              // own large display weight beneath the line.
+              // own large display weight beneath the line. The quote sits
+              // under both as a deliberately much smaller, muted footnote —
+              // it's flavour text, so it must not compete with the greeting
+              // it now shares a box with. Capped at 3 lines so an unusually
+              // long one can't push the bike picker off-screen.
               EditorialCard(
                 padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_greeting.usesName)
-                            Text(_greeting.line,
-                                style: display(22, height: 1.15),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis)
-                          else ...[
-                            Text(_greeting.line,
-                                style: TextStyle(
-                                    fontSize: 13, color: AppColors.textSecondary),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis),
-                            const SizedBox(height: 2),
-                            Text(_name ?? 'Rider', style: display(22)),
-                          ],
-                        ],
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_greeting.usesName)
+                                Text(_greeting.line,
+                                    style: display(22, height: 1.15),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis)
+                              else ...[
+                                Text(_greeting.line,
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textSecondary),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 2),
+                                Text(_name ?? 'Rider', style: display(22)),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (activeBike != null && activeBike.rideCount > 0)
+                          EditorialPill('${activeBike.rideCount} rides',
+                              tone: PillTone.accent),
+                      ],
                     ),
-                    if (activeBike != null && activeBike.rideCount > 0)
-                      EditorialPill('${activeBike.rideCount} rides',
-                          tone: PillTone.accent),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${quote.$1} ${quote.$2}',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: display(13,
+                          weight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0,
+                          height: 1.3),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
 
-              // 2. Quote — compact ink block. No fixed height and no icon: it
-              // wraps to its own text and is capped at 3 lines so an unusually
-              // long line can't push the bike picker off-screen.
-              InkPanel(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                child: Text(
-                  '${quote.$1} ${quote.$2}',
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: display(20, color: AppColors.onInk, height: 1.2),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 3. Bike card / no-bike warning
+              // 2. Bike card / no-bike warning
               if (activeBike != null)
                 EditorialCard(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   onTap: () => context.go('/home/garage'),
                   child: Row(
                     children: [
-                      Container(
+                      // The rider's own photo of this bike when there is one,
+                      // otherwise the generic icon tile (see [BikePhoto]).
+                      BikePhoto(
+                        imagePath: activeBike.imagePath,
                         width: 44,
                         height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                        ),
-                        child: Icon(Icons.two_wheeler,
-                            color: AppColors.textPrimary, size: 24),
+                        iconSize: 24,
+                        iconColor: AppColors.textPrimary,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -198,42 +204,15 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                 ),
               const SizedBox(height: 12),
 
-              // 4. Ride with friends. The widget owns the whole flow — friend
+              // 3. Ride with friends. The widget owns the whole flow — friend
               // picker, group-ride creation, invites and navigation.
               const RideWithFriendsButton(),
-              const SizedBox(height: 12),
-
-              // 5. Stat chips
-              if (activeBike != null)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatChip(
-                        value: SpeedFormatter.distanceKm(activeBike.totalDistanceM),
-                        label: 'total km',
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StatChip(
-                        value: '${activeBike.rideCount}',
-                        label: 'rides',
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StatChip(
-                        value: activeBike.lastRideAt != null
-                            ? '${DateTime.now().difference(activeBike.lastRideAt!).inDays}d'
-                            : '—',
-                        label: 'last ride',
-                      ),
-                    ),
-                  ],
-                ),
               const SizedBox(height: 24),
 
-              // Start ride (slide) button
+              // 4. Start ride (slide) button. The bike's total km / ride count
+              // / days-since-last-ride chips used to sit between these two —
+              // they now live on the Rides tab, which is where riders go to
+              // look back at what they've done. This screen is for starting.
               _SlideToStartButton(enabled: activeBike != null),
               const SizedBox(height: 10),
               Center(
@@ -254,28 +233,6 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final String value;
-  final String label;
-  const _StatChip({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return EditorialCard(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(value, style: display(20)),
-          const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-        ],
       ),
     );
   }
@@ -356,6 +313,26 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
         ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
     final enabled = widget.enabled && !isStarting;
 
+    // The track was hard-coded to `AppColors.ink` (near-black in both
+    // palettes). On Carbon Mono that's right — a black slab with a lime fill
+    // reads as instrument panel against the dark background. On Editorial it
+    // was the one black control on a cream page where every other action
+    // (buttons, links, active borders) is the blue primary, so it looked like
+    // it belonged to a different app. On the light palette the track is the
+    // primary itself and the drag fill deepens to `primaryDark`, which keeps
+    // the progress cue that the black/primary contrast used to provide.
+    // Brightness is the palette discriminator: Editorial builds a light
+    // ThemeData, Carbon Mono a dark one (see AppTheme.build).
+    final isLightPalette = Theme.of(context).brightness == Brightness.light;
+    final trackColor = enabled
+        ? (isLightPalette ? AppColors.primary : AppColors.ink)
+        : AppColors.textTertiary;
+    final fillColor =
+        isLightPalette ? AppColors.primaryDark : AppColors.primary;
+    final thumbIconColor = enabled
+        ? (isLightPalette ? AppColors.primary : AppColors.ink)
+        : AppColors.textTertiary;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         _trackWidth = (constraints.maxWidth - _thumbSize).clamp(1.0, double.infinity);
@@ -375,11 +352,11 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                   final fraction = _ctrl.value;
                   return Stack(
                     children: [
-                      Container(color: enabled ? AppColors.ink : AppColors.textTertiary),
+                      Container(color: trackColor),
                       FractionallySizedBox(
                         widthFactor: fraction,
                         alignment: Alignment.centerLeft,
-                        child: Container(color: AppColors.primary),
+                        child: Container(color: fillColor),
                       ),
                       Center(
                         child: isStarting
@@ -406,8 +383,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                             shape: BoxShape.circle,
                           ),
                           child: Icon(Icons.arrow_forward,
-                              color: enabled ? AppColors.ink : AppColors.textTertiary,
-                              size: 22),
+                              color: thumbIconColor, size: 22),
                         ),
                       ),
                     ],
