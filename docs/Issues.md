@@ -508,7 +508,11 @@ dependency. Verified against `true`/`false`/spaced JSON input.
 
 ## 14. `usernames` was world-listable, same bug class as §3 (2026-08-04)
 
-**Status:** Fixed, deployed pending `firebase deploy --only firestore:rules`.
+**Status:** Fixed and **deployed 2026-08-04**, verified against the live
+project: an unauthenticated `list` of `usernames` now returns
+403 PERMISSION_DENIED, while a keyed `get` of a nonexistent handle returns
+404 NOT_FOUND (i.e. permitted, just absent). `livePointers` and
+`liveSessions` also refuse `list`.
 
 Found while building the permanent per-rider share link
 (`/r/{username}` — see `HANDOFF_Document.md`). `firestore.rules` granted

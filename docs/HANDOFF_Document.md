@@ -213,15 +213,25 @@ backend or a real device. **Treat each as unproven until tested.**
 ## 📋 To do
 
 ### Now (before inviting beta testers)
-- [ ] **Deploy `firestore.rules`** (`firebase deploy --only firestore:rules`)
-  before beta-v3 goes out. This pass (2026-08-04) both closed a hole (§14 —
-  `usernames` was world-listable, same class as §3) and added the rule for
-  the new `livePointers` collection that the permanent share link
-  (`/r/{username}`) depends on. **Without this deploy, the permanent link
-  is broken for every tester** — the live-viewer page gets
-  permission-denied resolving the handle. Deploy hosting too
-  (`firebase deploy --only hosting`) for the `/r/**` rewrite in
-  `firebase.json`.
+- [x] ~~**Deploy `firestore.rules` + hosting**~~ **DONE 2026-08-04.** Both
+  released to `throttleiqfb`. Verified against the live project rather than
+  assumed:
+  - `/r/{username}` and `/live/{token}` both serve the viewer (HTTP 200),
+    and the deployed HTML contains the permanent-link resolution code.
+  - An **unauthenticated** `get` of `usernames/{handle}` returns
+    **404 NOT_FOUND, not 403** — i.e. the read is permitted and the handle
+    simply doesn't exist. This is the check that mattered: a 403 would have
+    meant the rule was still auth-gated and the permanent link would be
+    broken for every visitor, since the whole point is that whoever opens
+    the link does **not** have the app.
+  - `usernames`, `livePointers` and `liveSessions` all return
+    **403 PERMISSION_DENIED** on an unauthenticated `list` — the §3/§14 bug
+    class is closed in both new places it appeared.
+
+  **Re-run `firebase deploy --only firestore:rules,hosting` after any
+  future edit to `firestore.rules` or `firebase.json`** — neither ships
+  with the app, and a rules change that isn't deployed silently does
+  nothing.
 - [x] ~~Wire the orphaned features~~ **DONE 2026-07-14**: crash countdown overlay, SyncManager bootstrap, export buttons, Settings screen (logout + emergency contacts) all wired; live viewer deployed to `throttleiqfb.web.app`. Remaining genuine builds: POI UI and a real social feed (the agent "screens" were empty stubs).
 - [ ] **Back up the signing keystore** — `throttleiq-release.keystore` + `app/android/key.properties` exist ONLY on the dev machine. If lost, the app can never be updated under the same identity. → password manager / secure cloud, never git.
 - [ ] **Install the beta APK on a real phone** and run the smoke test: register → record a ride → stop → summary → confirm the ride appears in Firestore console.
