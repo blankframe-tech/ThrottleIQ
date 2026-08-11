@@ -9,6 +9,23 @@
   "themeCarbonDescription": "গাঢ়, ঝকঝকে, মিটারের মতো",
   "themeEditorialLabel": "এডিটোরিয়াল",
   "themeEditorialDescription": "হালকা, কাগজের মতো নরম",
+
+  "skinFieldLabel": "স্কিন",
+  "themeNocturneLabel": "নকটার্ন",
+  "themeNocturneDescription": "গাঢ় নীল, নরম বেগুনি আভা",
+  "themeTrailSocialLabel": "ট্রেইল সোশ্যাল",
+  "themeTrailSocialDescription": "গাঢ় ফিড, ঝলমলে কমলা",
+  "themeCalmingLabel": "কামিং",
+  "themeCalmingDescription": "উষ্ণ ক্রিম, নরম সবুজ",
+  "themePositiveVibesLabel": "পজিটিভ ভাইবস",
+  "themePositiveVibesDescription": "ঝকঝকে সাদা আর সবুজ",
+  "themeRetroLabel": "রেট্রো",
+  "themeRetroDescription": "সাদা-কালো টার্মিনাল, চৌকো ধারালো কোণ",
+  "themeAnalystBlueLabel": "অ্যানালিস্ট ব্লু",
+  "themeAnalystBlueDescription": "নেভি কনসোল, সায়ান মিটার",
+  "themeGenesisLabel": "জেনেসিস",
+  "themeGenesisDescription": "প্রায় কালো, সোনালি আর বেগুনি",
+
   "appMarkTitle": "অ্যাপের লোগো",
   "appMarkDarkDescription": "গাঢ় লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।",
   "appMarkLightDescription": "হালকা লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।",
@@ -33,5 +50,48 @@
   "contactPhoneField": "ফোন নম্বর",
   "contactEmailFieldOptional": "ইমেইল (না দিলেও চলবে)",
 
-  "signOutAction": "সাইন আউট"
+  "signOutAction": "সাইন আউট",
+
+  "navSocialLabel": "সোশ্যাল",
+  "navRidesLabel": "রাইড",
+  "navRecordLabel": "রেকর্ড",
+  "navPlacesLabel": "স্থান",
+  "navGarageLabel": "গ্যারেজ",
+
+  "bikePickerSheetTitle": "আজ চালাচ্ছেন",
+  "rideCountLabel": "{count, plural, =1{{count}টি রাইড} other{{count}টি রাইড}}",
+  "changeAction": "পাল্টান",
+
+  "ridesStatLabel": "রাইড",
+  "kilometresStatLabel": "কিলোমিটার",
+  "dayStreakStatLabel": "দিনের ধারা",
+
+  "rideNotFoundMessage": "রাইড খুঁজে পাওয়া যায়নি",
+  "niceRideGreeting": "চমৎকার রাইড হলো!",
+  "niceRideGreetingNamed": "চমৎকার রাইড হলো, {name}!",
+
+  "distanceStatLabel": "কিমি",
+  "durationStatLabel": "সময়",
+  "avgSpeedStatLabel": "গড়",
+  "maxSpeedStatLabel": "সর্বোচ্চ",
+  "movingStatLabel": "চলমান",
+  "jamStatLabel": "জ্যামে",
+
+  "scoreSmoothLabel": "মসৃণ",
+  "scoreSteadyLabel": "স্থির",
+  "scoreAggressiveLabel": "বেপরোয়া",
+  "ridingScoreLabel": "রাইডিং স্কোর",
+  "outOf100Label": "100 এর মধ্যে",
+
+  "hardBrakesStatLabel": "হার্ড ব্রেক",
+  "rapidAccelStatLabel": "হঠাৎ গতি",
+  "highJerkStatLabel": "তীব্র ঝাঁকুনি",
+
+  "routeSectionLabel": "রুট",
+  "saveAndDoneAction": "সেভ করে শেষ",
+  "shareAction": "শেয়ার করুন",
+  "exportJsonAction": "JSON এক্সপোর্ট করুন",
+  "exportGpxAction": "GPX এক্সপোর্ট করুন",
+  "exportFailedMessage": "এক্সপোর্ট ব্যর্থ হয়েছে",
+  "rideExportShareSubject": "ThrottleIQ রাইড এক্সপোর্ট"
 }

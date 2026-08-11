@@ -30,6 +30,51 @@ class AppLocalizationsBn extends AppLocalizations {
   String get themeEditorialDescription => 'হালকা, কাগজের মতো নরম';
 
   @override
+  String get skinFieldLabel => 'স্কিন';
+
+  @override
+  String get themeNocturneLabel => 'নকটার্ন';
+
+  @override
+  String get themeNocturneDescription => 'গাঢ় নীল, নরম বেগুনি আভা';
+
+  @override
+  String get themeTrailSocialLabel => 'ট্রেইল সোশ্যাল';
+
+  @override
+  String get themeTrailSocialDescription => 'গাঢ় ফিড, ঝলমলে কমলা';
+
+  @override
+  String get themeCalmingLabel => 'কামিং';
+
+  @override
+  String get themeCalmingDescription => 'উষ্ণ ক্রিম, নরম সবুজ';
+
+  @override
+  String get themePositiveVibesLabel => 'পজিটিভ ভাইবস';
+
+  @override
+  String get themePositiveVibesDescription => 'ঝকঝকে সাদা আর সবুজ';
+
+  @override
+  String get themeRetroLabel => 'রেট্রো';
+
+  @override
+  String get themeRetroDescription => 'সাদা-কালো টার্মিনাল, চৌকো ধারালো কোণ';
+
+  @override
+  String get themeAnalystBlueLabel => 'অ্যানালিস্ট ব্লু';
+
+  @override
+  String get themeAnalystBlueDescription => 'নেভি কনসোল, সায়ান মিটার';
+
+  @override
+  String get themeGenesisLabel => 'জেনেসিস';
+
+  @override
+  String get themeGenesisDescription => 'প্রায় কালো, সোনালি আর বেগুনি';
+
+  @override
   String get appMarkTitle => 'অ্যাপের লোগো';
 
   @override
@@ -97,4 +142,119 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get signOutAction => 'সাইন আউট';
+
+  @override
+  String get navSocialLabel => 'সোশ্যাল';
+
+  @override
+  String get navRidesLabel => 'রাইড';
+
+  @override
+  String get navRecordLabel => 'রেকর্ড';
+
+  @override
+  String get navPlacesLabel => 'স্থান';
+
+  @override
+  String get navGarageLabel => 'গ্যারেজ';
+
+  @override
+  String get bikePickerSheetTitle => 'আজ চালাচ্ছেন';
+
+  @override
+  String rideCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি রাইড',
+      one: '$countটি রাইড',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get changeAction => 'পাল্টান';
+
+  @override
+  String get ridesStatLabel => 'রাইড';
+
+  @override
+  String get kilometresStatLabel => 'কিলোমিটার';
+
+  @override
+  String get dayStreakStatLabel => 'দিনের ধারা';
+
+  @override
+  String get rideNotFoundMessage => 'রাইড খুঁজে পাওয়া যায়নি';
+
+  @override
+  String get niceRideGreeting => 'চমৎকার রাইড হলো!';
+
+  @override
+  String niceRideGreetingNamed(String name) {
+    return 'চমৎকার রাইড হলো, $name!';
+  }
+
+  @override
+  String get distanceStatLabel => 'কিমি';
+
+  @override
+  String get durationStatLabel => 'সময়';
+
+  @override
+  String get avgSpeedStatLabel => 'গড়';
+
+  @override
+  String get maxSpeedStatLabel => 'সর্বোচ্চ';
+
+  @override
+  String get movingStatLabel => 'চলমান';
+
+  @override
+  String get jamStatLabel => 'জ্যামে';
+
+  @override
+  String get scoreSmoothLabel => 'মসৃণ';
+
+  @override
+  String get scoreSteadyLabel => 'স্থির';
+
+  @override
+  String get scoreAggressiveLabel => 'বেপরোয়া';
+
+  @override
+  String get ridingScoreLabel => 'রাইডিং স্কোর';
+
+  @override
+  String get outOf100Label => '100 এর মধ্যে';
+
+  @override
+  String get hardBrakesStatLabel => 'হার্ড ব্রেক';
+
+  @override
+  String get rapidAccelStatLabel => 'হঠাৎ গতি';
+
+  @override
+  String get highJerkStatLabel => 'তীব্র ঝাঁকুনি';
+
+  @override
+  String get routeSectionLabel => 'রুট';
+
+  @override
+  String get saveAndDoneAction => 'সেভ করে শেষ';
+
+  @override
+  String get shareAction => 'শেয়ার করুন';
+
+  @override
+  String get exportJsonAction => 'JSON এক্সপোর্ট করুন';
+
+  @override
+  String get exportGpxAction => 'GPX এক্সপোর্ট করুন';
+
+  @override
+  String get exportFailedMessage => 'এক্সপোর্ট ব্যর্থ হয়েছে';
+
+  @override
+  String get rideExportShareSubject => 'ThrottleIQ রাইড এক্সপোর্ট';
 }

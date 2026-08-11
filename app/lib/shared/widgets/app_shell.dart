@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// The bottom-nav destinations, in display order — a location's index in this
 /// list *is* its `BottomNavigationBar` index.
@@ -58,6 +59,7 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final idx = _currentIndex(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
@@ -75,12 +77,12 @@ class AppShell extends StatelessWidget {
           unselectedItemColor: AppColors.textTertiary,
           selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Social'),
-            BottomNavigationBarItem(icon: Icon(Icons.insights_outlined), activeIcon: Icon(Icons.insights), label: 'Rides'),
-            BottomNavigationBarItem(icon: Icon(Icons.radio_button_checked_outlined), activeIcon: Icon(Icons.radio_button_checked), label: 'Record'),
-            BottomNavigationBarItem(icon: Icon(Icons.place_outlined), activeIcon: Icon(Icons.place), label: 'Places'),
-            BottomNavigationBarItem(icon: Icon(Icons.garage_outlined), activeIcon: Icon(Icons.garage), label: 'Garage'),
+          items: [
+            BottomNavigationBarItem(icon: const Icon(Icons.people_outline), activeIcon: const Icon(Icons.people), label: l10n.navSocialLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.place_outlined), activeIcon: const Icon(Icons.place), label: l10n.navPlacesLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.garage_outlined), activeIcon: const Icon(Icons.garage), label: l10n.navGarageLabel),
           ],
         ),
       ),

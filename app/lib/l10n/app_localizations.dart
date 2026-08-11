@@ -140,6 +140,96 @@ abstract class AppLocalizations {
   /// **'Light, warm paper'**
   String get themeEditorialDescription;
 
+  /// Label above the dropdown that picks the app's visual skin.
+  ///
+  /// In en, this message translates to:
+  /// **'Skin'**
+  String get skinFieldLabel;
+
+  /// Name of the Nocturne skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Nocturne'**
+  String get themeNocturneLabel;
+
+  /// One-line description under the Nocturne skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep indigo, lavender glow'**
+  String get themeNocturneDescription;
+
+  /// Name of the Trail Social skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Trail Social'**
+  String get themeTrailSocialLabel;
+
+  /// One-line description under the Trail Social skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark feed, punchy orange'**
+  String get themeTrailSocialDescription;
+
+  /// Name of the Calming skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Calming'**
+  String get themeCalmingLabel;
+
+  /// One-line description under the Calming skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm cream, soft sage'**
+  String get themeCalmingDescription;
+
+  /// Name of the Positive Vibes skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Positive Vibes'**
+  String get themePositiveVibesLabel;
+
+  /// One-line description under the Positive Vibes skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Bright white and green'**
+  String get themePositiveVibesDescription;
+
+  /// Name of the Retro skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Retro'**
+  String get themeRetroLabel;
+
+  /// One-line description under the Retro skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Black-and-white terminal, hard square edges'**
+  String get themeRetroDescription;
+
+  /// Name of the Analyst Blue skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyst Blue'**
+  String get themeAnalystBlueLabel;
+
+  /// One-line description under the Analyst Blue skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Navy console, cyan telemetry'**
+  String get themeAnalystBlueDescription;
+
+  /// Name of the Genesis skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Genesis'**
+  String get themeGenesisLabel;
+
+  /// One-line description under the Genesis skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Near-black, gold and violet'**
+  String get themeGenesisDescription;
+
   /// Label beside the live logo preview in the Appearance section.
   ///
   /// In en, this message translates to:
@@ -265,6 +355,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign Out'**
   String get signOutAction;
+
+  /// Bottom-nav tab label for the social/feed tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Social'**
+  String get navSocialLabel;
+
+  /// Bottom-nav tab label for the rides/stats tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides'**
+  String get navRidesLabel;
+
+  /// Bottom-nav tab label for the record-a-ride tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get navRecordLabel;
+
+  /// Bottom-nav tab label for the places/POI-directory tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get navPlacesLabel;
+
+  /// Bottom-nav tab label for the garage/bikes tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get navGarageLabel;
+
+  /// Title of the bottom sheet that lets the rider switch which bike is active, on the Record screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding today'**
+  String get bikePickerSheetTitle;
+
+  /// How many times a bike has been ridden, shown as the subtitle under its name in the bike-switcher sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 ride} other{{count} rides}}'**
+  String rideCountLabel(int count);
+
+  /// Affordance on the Record-screen hero that opens the bike switcher. Rendered upper-case in the UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get changeAction;
+
+  /// Label under the rider's total ride count, in the Record screen's stat strip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides'**
+  String get ridesStatLabel;
+
+  /// Label under the rider's total distance, in the Record screen's stat strip.
+  ///
+  /// In en, this message translates to:
+  /// **'Kilometres'**
+  String get kilometresStatLabel;
+
+  /// Label under the rider's current consecutive-day riding streak, in the Record screen's stat strip.
+  ///
+  /// In en, this message translates to:
+  /// **'Day streak'**
+  String get dayStreakStatLabel;
+
+  /// Shown on the ride summary screen when the ride id it was given doesn't resolve to a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride not found'**
+  String get rideNotFoundMessage;
+
+  /// Header on the ride summary screen when the rider's display name isn't available.
+  ///
+  /// In en, this message translates to:
+  /// **'Nice ride!'**
+  String get niceRideGreeting;
+
+  /// Header on the ride summary screen, with the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Nice ride, {name}!'**
+  String niceRideGreetingNamed(String name);
+
+  /// Unit label under the distance figure on the ride summary screen's stat row.
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get distanceStatLabel;
+
+  /// Label under the ride's total duration on the ride summary screen's stat row.
+  ///
+  /// In en, this message translates to:
+  /// **'duration'**
+  String get durationStatLabel;
+
+  /// Label under the average-speed figure on the ride summary screen's stat row.
+  ///
+  /// In en, this message translates to:
+  /// **'avg'**
+  String get avgSpeedStatLabel;
+
+  /// Label under the top-speed figure on the ride summary screen's stat row.
+  ///
+  /// In en, this message translates to:
+  /// **'max'**
+  String get maxSpeedStatLabel;
+
+  /// Label under the moving-time figure on the ride summary screen's jam-time card.
+  ///
+  /// In en, this message translates to:
+  /// **'moving'**
+  String get movingStatLabel;
+
+  /// Label under the stopped-in-traffic time figure on the ride summary screen's jam-time card.
+  ///
+  /// In en, this message translates to:
+  /// **'in jam'**
+  String get jamStatLabel;
+
+  /// Riding-score rating for a high score (80+) on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth op.'**
+  String get scoreSmoothLabel;
+
+  /// Riding-score rating for a mid score (60-79) on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Steady'**
+  String get scoreSteadyLabel;
+
+  /// Riding-score rating for a low score (below 60) on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get scoreAggressiveLabel;
+
+  /// Label on the riding-score card on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding score'**
+  String get ridingScoreLabel;
+
+  /// Sits under the riding-score rating word, clarifying the score's scale. The 100 stays a Western numeral in every language — see core/i18n/numeric_locale.dart.
+  ///
+  /// In en, this message translates to:
+  /// **'out of 100'**
+  String get outOf100Label;
+
+  /// Label under the hard-brake event count on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'hard brakes'**
+  String get hardBrakesStatLabel;
+
+  /// Label under the rapid-acceleration event count on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'rapid accel'**
+  String get rapidAccelStatLabel;
+
+  /// Label under the high-jerk (sudden jolt) event count on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'high jerk'**
+  String get highJerkStatLabel;
+
+  /// Section header above the route map on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get routeSectionLabel;
+
+  /// Primary button on the ride summary screen — dismisses the screen, keeping the ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & done'**
+  String get saveAndDoneAction;
+
+  /// Button that opens the ride-share flow from the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareAction;
+
+  /// Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'Export JSON'**
+  String get exportJsonAction;
+
+  /// Button that exports the ride as a GPX file. GPX is a file-format name and stays untranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'Export GPX'**
+  String get exportGpxAction;
+
+  /// Snackbar shown when a JSON/GPX ride export fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed'**
+  String get exportFailedMessage;
+
+  /// Subject line of the share-sheet action used to send an exported ride file. ThrottleIQ is the product name and stays untranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ ride export'**
+  String get rideExportShareSubject;
 }
 
 class _AppLocalizationsDelegate

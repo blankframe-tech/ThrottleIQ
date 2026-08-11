@@ -10,6 +10,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/emergency_contacts_provider.dart';
+import '../widgets/skin_dropdown.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -89,39 +90,12 @@ class SettingsScreen extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.themeCarbonLabel,
-                    description: l10n.themeCarbonDescription,
-                    selected: themeStyle == AppThemeStyle.carbonMono,
-                    onTap: () => ref
-                        .read(themeStyleProvider.notifier)
-                        .setStyle(AppThemeStyle.carbonMono),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.themeEditorialLabel,
-                    description: l10n.themeEditorialDescription,
-                    selected: themeStyle == AppThemeStyle.editorial,
-                    onTap: () => ref
-                        .read(themeStyleProvider.notifier)
-                        .setStyle(AppThemeStyle.editorial),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Nine skins is well past what a segmented control can hold — the
+          // two-up switch this replaced gave each option a label *and* a
+          // description at full width, which is exactly the affordance that
+          // doesn't survive being divided nine ways. A dropdown keeps both,
+          // and keeps the closed state to one line.
+          const SkinDropdown(),
           const SizedBox(height: 12),
           // A live preview of the mark for the selected appearance.
           //
@@ -153,7 +127,7 @@ class SettingsScreen extends ConsumerWidget {
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 2),
                       Text(
-                        themeStyle == AppThemeStyle.carbonMono
+                        AppColorPalette.forStyle(themeStyle).isDark
                             ? l10n.appMarkDarkDescription
                             : l10n.appMarkLightDescription,
                         style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -437,9 +411,9 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
   }
 }
 
-/// One tappable segment of a label-plus-description segmented control. Shared
-/// by Appearance (two segments) and Language (three) so the two controls can't
-/// drift apart visually.
+/// One tappable segment of a label-plus-description segmented control. Used by
+/// the Language control (three segments); Appearance used to share it, before
+/// the skin list outgrew a segmented control and moved to [SkinDropdown].
 class _SegmentedOption extends StatelessWidget {
   const _SegmentedOption({
     required this.label,

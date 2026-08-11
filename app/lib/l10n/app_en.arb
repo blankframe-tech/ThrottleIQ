@@ -36,6 +36,81 @@
     "description": "One-line description under the Editorial theme option."
   },
 
+  "skinFieldLabel": "Skin",
+  "@skinFieldLabel": {
+    "description": "Label above the dropdown that picks the app's visual skin."
+  },
+
+  "themeNocturneLabel": "Nocturne",
+  "@themeNocturneLabel": {
+    "description": "Name of the Nocturne skin. Product name — kept recognisable across languages."
+  },
+
+  "themeNocturneDescription": "Deep indigo, lavender glow",
+  "@themeNocturneDescription": {
+    "description": "One-line description under the Nocturne skin option."
+  },
+
+  "themeTrailSocialLabel": "Trail Social",
+  "@themeTrailSocialLabel": {
+    "description": "Name of the Trail Social skin. Product name — kept recognisable across languages."
+  },
+
+  "themeTrailSocialDescription": "Dark feed, punchy orange",
+  "@themeTrailSocialDescription": {
+    "description": "One-line description under the Trail Social skin option."
+  },
+
+  "themeCalmingLabel": "Calming",
+  "@themeCalmingLabel": {
+    "description": "Name of the Calming skin. Product name — kept recognisable across languages."
+  },
+
+  "themeCalmingDescription": "Warm cream, soft sage",
+  "@themeCalmingDescription": {
+    "description": "One-line description under the Calming skin option."
+  },
+
+  "themePositiveVibesLabel": "Positive Vibes",
+  "@themePositiveVibesLabel": {
+    "description": "Name of the Positive Vibes skin. Product name — kept recognisable across languages."
+  },
+
+  "themePositiveVibesDescription": "Bright white and green",
+  "@themePositiveVibesDescription": {
+    "description": "One-line description under the Positive Vibes skin option."
+  },
+
+  "themeRetroLabel": "Retro",
+  "@themeRetroLabel": {
+    "description": "Name of the Retro skin. Product name — kept recognisable across languages."
+  },
+
+  "themeRetroDescription": "Black-and-white terminal, hard square edges",
+  "@themeRetroDescription": {
+    "description": "One-line description under the Retro skin option."
+  },
+
+  "themeAnalystBlueLabel": "Analyst Blue",
+  "@themeAnalystBlueLabel": {
+    "description": "Name of the Analyst Blue skin. Product name — kept recognisable across languages."
+  },
+
+  "themeAnalystBlueDescription": "Navy console, cyan telemetry",
+  "@themeAnalystBlueDescription": {
+    "description": "One-line description under the Analyst Blue skin option."
+  },
+
+  "themeGenesisLabel": "Genesis",
+  "@themeGenesisLabel": {
+    "description": "Name of the Genesis skin. Product name — kept recognisable across languages."
+  },
+
+  "themeGenesisDescription": "Near-black, gold and violet",
+  "@themeGenesisDescription": {
+    "description": "One-line description under the Genesis skin option."
+  },
+
   "appMarkTitle": "App mark",
   "@appMarkTitle": {
     "description": "Label beside the live logo preview in the Appearance section."
@@ -145,5 +220,192 @@
   "signOutAction": "Sign Out",
   "@signOutAction": {
     "description": "Button that signs the rider out and returns to the login screen."
+  },
+
+  "navSocialLabel": "Social",
+  "@navSocialLabel": {
+    "description": "Bottom-nav tab label for the social/feed tab."
+  },
+
+  "navRidesLabel": "Rides",
+  "@navRidesLabel": {
+    "description": "Bottom-nav tab label for the rides/stats tab."
+  },
+
+  "navRecordLabel": "Record",
+  "@navRecordLabel": {
+    "description": "Bottom-nav tab label for the record-a-ride tab."
+  },
+
+  "navPlacesLabel": "Places",
+  "@navPlacesLabel": {
+    "description": "Bottom-nav tab label for the places/POI-directory tab."
+  },
+
+  "navGarageLabel": "Garage",
+  "@navGarageLabel": {
+    "description": "Bottom-nav tab label for the garage/bikes tab."
+  },
+
+  "bikePickerSheetTitle": "Riding today",
+  "@bikePickerSheetTitle": {
+    "description": "Title of the bottom sheet that lets the rider switch which bike is active, on the Record screen."
+  },
+
+  "rideCountLabel": "{count, plural, =1{1 ride} other{{count} rides}}",
+  "@rideCountLabel": {
+    "description": "How many times a bike has been ridden, shown as the subtitle under its name in the bike-switcher sheet.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "changeAction": "Change",
+  "@changeAction": {
+    "description": "Affordance on the Record-screen hero that opens the bike switcher. Rendered upper-case in the UI."
+  },
+
+  "ridesStatLabel": "Rides",
+  "@ridesStatLabel": {
+    "description": "Label under the rider's total ride count, in the Record screen's stat strip."
+  },
+
+  "kilometresStatLabel": "Kilometres",
+  "@kilometresStatLabel": {
+    "description": "Label under the rider's total distance, in the Record screen's stat strip."
+  },
+
+  "dayStreakStatLabel": "Day streak",
+  "@dayStreakStatLabel": {
+    "description": "Label under the rider's current consecutive-day riding streak, in the Record screen's stat strip."
+  },
+
+  "rideNotFoundMessage": "Ride not found",
+  "@rideNotFoundMessage": {
+    "description": "Shown on the ride summary screen when the ride id it was given doesn't resolve to a ride."
+  },
+
+  "niceRideGreeting": "Nice ride!",
+  "@niceRideGreeting": {
+    "description": "Header on the ride summary screen when the rider's display name isn't available."
+  },
+
+  "niceRideGreetingNamed": "Nice ride, {name}!",
+  "@niceRideGreetingNamed": {
+    "description": "Header on the ride summary screen, with the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Abraar"
+      }
+    }
+  },
+
+  "distanceStatLabel": "km",
+  "@distanceStatLabel": {
+    "description": "Unit label under the distance figure on the ride summary screen's stat row."
+  },
+
+  "durationStatLabel": "duration",
+  "@durationStatLabel": {
+    "description": "Label under the ride's total duration on the ride summary screen's stat row."
+  },
+
+  "avgSpeedStatLabel": "avg",
+  "@avgSpeedStatLabel": {
+    "description": "Label under the average-speed figure on the ride summary screen's stat row."
+  },
+
+  "maxSpeedStatLabel": "max",
+  "@maxSpeedStatLabel": {
+    "description": "Label under the top-speed figure on the ride summary screen's stat row."
+  },
+
+  "movingStatLabel": "moving",
+  "@movingStatLabel": {
+    "description": "Label under the moving-time figure on the ride summary screen's jam-time card."
+  },
+
+  "jamStatLabel": "in jam",
+  "@jamStatLabel": {
+    "description": "Label under the stopped-in-traffic time figure on the ride summary screen's jam-time card."
+  },
+
+  "scoreSmoothLabel": "Smooth op.",
+  "@scoreSmoothLabel": {
+    "description": "Riding-score rating for a high score (80+) on the ride summary screen."
+  },
+
+  "scoreSteadyLabel": "Steady",
+  "@scoreSteadyLabel": {
+    "description": "Riding-score rating for a mid score (60-79) on the ride summary screen."
+  },
+
+  "scoreAggressiveLabel": "Aggressive",
+  "@scoreAggressiveLabel": {
+    "description": "Riding-score rating for a low score (below 60) on the ride summary screen."
+  },
+
+  "ridingScoreLabel": "Riding score",
+  "@ridingScoreLabel": {
+    "description": "Label on the riding-score card on the ride summary screen."
+  },
+
+  "outOf100Label": "out of 100",
+  "@outOf100Label": {
+    "description": "Sits under the riding-score rating word, clarifying the score's scale. The 100 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
+  },
+
+  "hardBrakesStatLabel": "hard brakes",
+  "@hardBrakesStatLabel": {
+    "description": "Label under the hard-brake event count on the ride summary screen."
+  },
+
+  "rapidAccelStatLabel": "rapid accel",
+  "@rapidAccelStatLabel": {
+    "description": "Label under the rapid-acceleration event count on the ride summary screen."
+  },
+
+  "highJerkStatLabel": "high jerk",
+  "@highJerkStatLabel": {
+    "description": "Label under the high-jerk (sudden jolt) event count on the ride summary screen."
+  },
+
+  "routeSectionLabel": "Route",
+  "@routeSectionLabel": {
+    "description": "Section header above the route map on the ride summary screen."
+  },
+
+  "saveAndDoneAction": "Save & done",
+  "@saveAndDoneAction": {
+    "description": "Primary button on the ride summary screen — dismisses the screen, keeping the ride."
+  },
+
+  "shareAction": "Share",
+  "@shareAction": {
+    "description": "Button that opens the ride-share flow from the ride summary screen."
+  },
+
+  "exportJsonAction": "Export JSON",
+  "@exportJsonAction": {
+    "description": "Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated."
+  },
+
+  "exportGpxAction": "Export GPX",
+  "@exportGpxAction": {
+    "description": "Button that exports the ride as a GPX file. GPX is a file-format name and stays untranslated."
+  },
+
+  "exportFailedMessage": "Export failed",
+  "@exportFailedMessage": {
+    "description": "Snackbar shown when a JSON/GPX ride export fails."
+  },
+
+  "rideExportShareSubject": "ThrottleIQ ride export",
+  "@rideExportShareSubject": {
+    "description": "Subject line of the share-sheet action used to send an exported ride file. ThrottleIQ is the product name and stays untranslated."
   }
 }
