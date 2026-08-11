@@ -103,3 +103,18 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+  fonts:
+    # Bundled (not fetched via google_fonts at runtime) so Bangla glyphs are
+    # available offline from first launch — the app's Bangla-speaking riders
+    # are exactly the audience most likely to be on a patchy connection. None
+    # of the IBM Plex / Space Grotesk faces this app otherwise uses ship
+    # Bengali glyphs, so without this, Bangla text silently falls back to
+    # whatever the platform happens to have, in a typeface that doesn't match
+    # the rest of the UI. See app_typography.dart / app_theme.dart for where
+    # it's wired in as a fontFamilyFallback. Single variable-font file
+    # (weight axis) rather than separate static weights per style — this is a
+    # fallback face for glyph coverage, not the primary display type, so one
+    # instance covering the whole weight range is enough.
+    - family: NotoSansBengali
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-Variable.ttf

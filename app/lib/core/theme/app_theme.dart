@@ -4,22 +4,43 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
 import 'app_theme_style.dart';
+import 'app_typography.dart';
 
 class AppTheme {
   AppTheme._();
 
   /// Builds the [ThemeData] for the given [AppThemeStyle]. Reads current
   /// values off [AppColors], which must already have had the matching
-  /// [AppColorPalette] applied (see `theme_style_provider.dart`) — shape and
-  /// typography are shared by both styles; only the color palette and base
-  /// brightness differ. Display/heading type uses IBM Plex Mono; body uses
-  /// IBM Plex Sans.
+  /// [AppColorPalette] applied (see `theme_style_provider.dart`) — for every
+  /// skin but Retro, shape and typography are shared and only the color
+  /// palette and base brightness differ. Display/heading type uses IBM Plex
+  /// Mono; body uses IBM Plex Sans.
+  ///
+  /// Retro is the documented exception. It is not a palette swap but an old
+  /// black-and-white terminal, so it also drops body type to monospace and
+  /// takes every corner radius to zero — a rounded card with a 2px black rule
+  /// around it reads as a mistake rather than as a style. See
+  /// [AppColorPalette.retro].
   static ThemeData build(AppThemeStyle style) {
-    final isDark = style == AppThemeStyle.carbonMono;
+    final isDark = AppColorPalette.forStyle(style).isDark;
     final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
 
-    // Body in IBM Plex Sans, display/headings/titles in IBM Plex Mono.
-    final bodyText = GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
+    final isTerminal = style == AppThemeStyle.retro;
+
+    // Square everything off on the terminal skin. Every other skin keeps the
+    // shared near-zero-radius instrument-panel edges from AppDimensions.
+    double radius(double shared) => isTerminal ? 0 : shared;
+
+    // The heavy rule that carries the Retro direction — see the palette's
+    // note on `border` being full-strength ink there.
+    final outlineWidth = isTerminal ? 2.0 : 1.0;
+
+    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on the terminal
+    // skin, where a proportional body face would break the illusion the
+    // rest of the direction is building.
+    final bodyText = isTerminal
+        ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
+        : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText
         .copyWith(
           displayLarge: GoogleFonts.ibmPlexMono(
@@ -43,7 +64,18 @@ class AppTheme {
           titleLarge: GoogleFonts.ibmPlexMono(
               textStyle: bodyText.titleLarge, fontWeight: FontWeight.w600),
         )
-        .apply(bodyColor: AppColors.textPrimary, displayColor: AppColors.textPrimary);
+        .apply(
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+          // Bengali fallback for every named style in the theme — see
+          // AppTypography.bengaliFallback and pubspec.yaml. This is what
+          // covers plain `Text(...)` widgets that take their style from
+          // `Theme.of(context).textTheme` rather than calling GoogleFonts
+          // directly; the handful of standalone TextStyles below (app bar
+          // title, button labels, snackbar) need their own since they never
+          // go through this TextTheme.
+          fontFamilyFallback: AppTypography.bengaliFallback,
+        );
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
@@ -82,15 +114,15 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
-        ),
+        ).copyWith(fontFamilyFallback: AppTypography.bengaliFallback),
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          side: BorderSide(color: AppColors.border, width: 1),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusXl)),
+          side: BorderSide(color: AppColors.border, width: outlineWidth),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -99,29 +131,30 @@ class AppTheme {
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           borderSide: BorderSide(color: AppColors.danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           borderSide: BorderSide(color: AppColors.danger, width: 2),
         ),
         hintStyle: TextStyle(color: AppColors.textTertiary),
         labelStyle: TextStyle(color: AppColors.textSecondary),
       ),
-      // Primary action = accent pop (lime on Carbon Mono, blue on Editorial).
+      // Primary action = accent pop (lime on Carbon Mono, blue on Editorial,
+      // and whatever the selected skin's `primary` is).
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -129,13 +162,13 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           ),
           textStyle: GoogleFonts.ibmPlexMono(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
-          ),
+          ).copyWith(fontFamilyFallback: AppTypography.bengaliFallback),
         ),
       ),
       // Secondary action = neutral outline.
@@ -143,15 +176,15 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary,
           minimumSize: const Size.fromHeight(52),
-          side: BorderSide(color: AppColors.textPrimary, width: 1.5),
+          side: BorderSide(color: AppColors.textPrimary, width: isTerminal ? 2 : 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
           ),
           textStyle: GoogleFonts.ibmPlexMono(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
-          ),
+          ).copyWith(fontFamilyFallback: AppTypography.bengaliFallback),
         ),
       ),
       // Links = accent pop.
@@ -173,10 +206,11 @@ class AppTheme {
       // Ink snackbar for contrast against either palette.
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.ink,
-        contentTextStyle: GoogleFonts.ibmPlexSans(color: AppColors.onInk),
+        contentTextStyle: GoogleFonts.ibmPlexSans(color: AppColors.onInk)
+            .copyWith(fontFamilyFallback: AppTypography.bengaliFallback),
         actionTextColor: AppColors.primaryHighlight,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(radius(AppDimensions.radiusMd)),
         ),
         behavior: SnackBarBehavior.floating,
       ),

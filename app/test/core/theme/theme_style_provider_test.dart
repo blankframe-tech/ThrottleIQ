@@ -69,6 +69,62 @@ void main() {
       expect(AppColors.primary, AppColorPalette.editorial.primary);
     });
 
+    test('a skin persists under its enum name and restores from it', () async {
+      // Skins added after the original two round-trip through
+      // `AppThemeStyle.name`; only Carbon Mono and Editorial keep the two
+      // hand-written legacy spellings asserted above.
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await pumpEventQueue();
+
+      await container
+          .read(themeStyleProvider.notifier)
+          .setStyle(AppThemeStyle.analystBlue);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('theme_style'), 'analystBlue');
+      expect(AppColors.primary, AppColorPalette.analystBlue.primary);
+
+      final restored = ProviderContainer();
+      addTearDown(restored.dispose);
+      restored.read(themeStyleProvider);
+      await pumpEventQueue();
+      expect(restored.read(themeStyleProvider), AppThemeStyle.analystBlue);
+    });
+
+    test('every skin survives a persist/restore round trip', () async {
+      // The encode/decode pair is hand-written (legacy spellings on one side,
+      // enum names on the other), which is exactly the kind of mapping that
+      // silently loses whichever member nobody thought to try.
+      for (final style in AppThemeStyle.values) {
+        SharedPreferences.setMockInitialValues({});
+        final writer = ProviderContainer();
+        await pumpEventQueue();
+        await writer.read(themeStyleProvider.notifier).setStyle(style);
+        writer.dispose();
+
+        final reader = ProviderContainer();
+        reader.read(themeStyleProvider);
+        await pumpEventQueue();
+        expect(reader.read(themeStyleProvider), style, reason: '$style');
+        reader.dispose();
+      }
+    });
+
+    test('an unrecognised persisted value falls back to Carbon Mono', () async {
+      // e.g. a skin removed since it was written, or prefs carried back to an
+      // older build. The rider gets the default, not a crash.
+      SharedPreferences.setMockInitialValues({'theme_style': 'vaporwave'});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(themeStyleProvider);
+      await pumpEventQueue();
+
+      expect(container.read(themeStyleProvider), AppThemeStyle.carbonMono);
+      expect(AppColors.primary, AppColorPalette.carbonMono.primary);
+    });
+
     test('setStyle is a no-op when already on the requested style', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();

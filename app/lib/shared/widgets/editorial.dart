@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
+import '../../core/theme/app_typography.dart';
 
 /// Editorial BW design-system primitives.
 ///
@@ -9,7 +9,9 @@ import '../../core/constants/app_dimensions.dart';
 /// with hairline borders, Space Grotesk display type, and a single accent pop
 /// (blue) plus an attention color (orange).
 
-/// Space Grotesk display text — used for headings and big numbers.
+/// Display text for headings and big numbers, in whichever face the current
+/// skin uses — see [AppTypography.display]. Kept as a bare top-level function
+/// because a few hundred call sites already read `display(18)`.
 TextStyle display(
   double size, {
   FontWeight weight = FontWeight.w700,
@@ -17,10 +19,10 @@ TextStyle display(
   double letterSpacing = -0.5,
   double? height,
 }) =>
-    GoogleFonts.spaceGrotesk(
-      fontSize: size,
-      fontWeight: weight,
-      color: color ?? AppColors.textPrimary,
+    AppTypography.display(
+      size,
+      weight: weight,
+      color: color,
       letterSpacing: letterSpacing,
       height: height,
     );

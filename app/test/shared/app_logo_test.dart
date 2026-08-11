@@ -55,6 +55,34 @@ void main() {
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
     });
 
+    // The mark follows the skin's base brightness, not `style == carbonMono`
+    // — which was the rule until there was more than one dark skin, and would
+    // now hand every new dark skin the light mark.
+    testWidgets('every skin gets the mark matching its brightness',
+        (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: AppLogo(size: 40)),
+        ),
+      );
+
+      for (final style in AppThemeStyle.values) {
+        await container.read(themeStyleProvider.notifier).setStyle(style);
+        await tester.pump();
+        expect(
+          assetNameOf(tester),
+          AppColorPalette.forStyle(style).isDark
+              ? 'assets/icons/throttleiq-icon-dark.svg'
+              : 'assets/icons/throttleiq-icon-light.svg',
+          reason: '$style',
+        );
+      }
+    });
+
     testWidgets('swaps back to dark', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
