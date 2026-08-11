@@ -18,15 +18,16 @@ maintained.
 
 | | |
 |---|---|
-| Tests | **717/717 green** |
+| Tests | **739/739 green** (grew from 717 across a follow-up session — jam time, Bengali font, geohash neighbor-table, GPS-fused sensor calibration, partial i18n) |
 | `flutter analyze` | clean — 0 errors, 0 new warnings |
 | iOS build | simulator (debug) + **release, installed and running on Abraar's iPhone** |
-| Committed | **nothing** — the entire session is uncommitted working tree |
-| Seen rendered by a human | **nothing from this session** |
+| Committed | **DONE 2026-08-12** — 8 commits on `main`, pushed to `origin/main` (`8c298c1`). Split by feature area: theme/typography/Bengali font, ride (survival/discard/Record redesign/jam time/sensor calibration), garage cropping, forums scoping, geohash fix, i18n, docs, iOS tooling. |
+| Seen rendered by a human | **still nothing** — see below |
 
 **The release build is already on your phone**, and it is the current one —
-rebuilt and reinstalled after the cropper landed, confirmed running. The
-device pass below needs no build step from you; just open the app.
+rebuilt, reinstalled via `xcrun devicectl` and launched again 2026-08-12 to
+pick up everything committed since. The device pass below needs no build
+step from you; just open the app.
 
 (Two ThrottleIQ builds are installed on that phone now. Same bundle id, so
 you get one icon and the newest wins — but if anything looks stale, delete
@@ -47,19 +48,12 @@ flow have never been looked at.
 
 ---
 
-## 0. Commit first
+## 0. ~~Commit first~~ DONE 2026-08-12
 
-Nothing from this session is committed, and it spans ~20 files including a
-rewrite of the ride-recording provider. A stray `git checkout` loses all of
-it.
-
-```
-git add -A && git commit
-```
-
-Worth splitting into at least: the ride-survival/discard work, the Retro
-skin + typography, the Record redesign, and the forums scoping — they're
-independent and each is separately revertable.
+Committed and pushed as 8 commits on `main` (see the status table above).
+`website_demo/assets/poster-*.html` (6 files) were deliberately left
+uncommitted — unclear provenance, not part of any described work this
+pass touched.
 
 ---
 

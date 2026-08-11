@@ -11,8 +11,9 @@ prompts this after every work session. Feature-by-feature UI detail lives in
 
 > **Start here if you're picking this up right now:**
 > [`WHAT_TO_DO_NOW.md`](WHAT_TO_DO_NOW.md) — a short, dated checklist for
-> the immediate state of the tree (2026-08-11: uncommitted work, and a
-> device pass that nothing else can substitute for). It is a **snapshot,
+> the immediate state of the tree (everything as of 2026-08-11 is now
+> committed and pushed; what's left is a device pass that nothing else can
+> substitute for). It is a **snapshot,
 > not a second backlog**, and is meant to be deleted once worked through —
 > everything durable belongs in this file.
 
