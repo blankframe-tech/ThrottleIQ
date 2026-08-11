@@ -122,32 +122,6 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           },
         ),
         const SizedBox(height: 24),
-        Text(
-          'Topics',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            children: [
-              for (var i = 0; i < _generalTopics.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: AppColors.border),
-                _DiscoverRow(
-                  icon: Icons.topic_outlined,
-                  label: _generalTopics[i],
-                  enabled: !_resolving,
-                  onTap: () => _openGeneralForum(_generalTopics[i]),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
         Row(
           children: [
             Expanded(
@@ -216,7 +190,62 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
+        // Brands and topics are both "a forum you don't own your way into" —
+        // the same discovery act, so they share one block rather than each
+        // getting a top-level section. Brands lead because the search box
+        // directly above them searches brands.
+        _DiscoverGroup(
+          label: 'Brands',
+          icon: Icons.two_wheeler,
+          entries: _popularBrands,
+          enabled: !_resolving,
+          onTap: _openBrandForum,
+        ),
+        const SizedBox(height: 16),
+        _DiscoverGroup(
+          label: 'Topics',
+          icon: Icons.topic_outlined,
+          entries: _generalTopics,
+          enabled: !_resolving,
+          onTap: _openGeneralForum,
+        ),
+      ],
+    );
+  }
+}
+
+/// One labelled group of discovery rows inside "Find a forum".
+class _DiscoverGroup extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final List<String> entries;
+  final bool enabled;
+  final void Function(String) onTap;
+
+  const _DiscoverGroup({
+    required this.label,
+    required this.icon,
+    required this.entries,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+            color: AppColors.textTertiary,
+          ),
+        ),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -225,13 +254,13 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           ),
           child: Column(
             children: [
-              for (var i = 0; i < _popularBrands.length; i++) ...[
+              for (var i = 0; i < entries.length; i++) ...[
                 if (i > 0) Divider(height: 1, color: AppColors.border),
                 _DiscoverRow(
-                  icon: Icons.two_wheeler,
-                  label: _popularBrands[i],
-                  enabled: !_resolving,
-                  onTap: () => _openBrandForum(_popularBrands[i]),
+                  icon: icon,
+                  label: entries[i],
+                  enabled: enabled,
+                  onTap: () => onTap(entries[i]),
                 ),
               ],
             ],

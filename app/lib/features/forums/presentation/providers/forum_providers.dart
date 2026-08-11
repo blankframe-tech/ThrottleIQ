@@ -21,20 +21,43 @@ const String kGarageForumsSignatureKey = 'forums_for_garage_signature';
 /// Deterministic fingerprint of the forums the current garage implies.
 ///
 /// Pure so it can be unit-tested without Firestore or SharedPreferences.
-/// Every bike contributes two slugs — its brand forum and its brand+model
-/// forum — deduped and sorted, so the signature depends only on the *set*
-/// of forums the garage needs, not on bike ids, ordering, mileage, or any
-/// other field that changes constantly. That's the whole point: re-ordering
-/// the garage or logging a ride must not invalidate the cache, but adding a
-/// genuinely new bike must.
+/// Each bike contributes exactly one slug — its brand+model forum — deduped
+/// and sorted, so the signature depends only on the *set* of forums the
+/// garage needs, not on bike ids, ordering, mileage, or any other field that
+/// changes constantly. That's the whole point: re-ordering the garage or
+/// logging a ride must not invalidate the cache, but adding a genuinely new
+/// bike must.
+///
+/// Bikes with no model recorded contribute nothing: `bikeForumSlug(brand)`
+/// with an empty model is just the brand forum, which is precisely what
+/// "Your bikes" is no longer meant to include. Such a bike shows no forum
+/// here until it's given a model — the brand forum is still one search away
+/// under "Find a forum".
 String garageForumsSignature(List<BikeEntity> bikes) {
-  final slugs = <String>{};
-  for (final bike in bikes) {
-    slugs.add(bikeForumSlug(bike.brand));
-    slugs.add(bikeForumSlug(bike.brand, model: bike.model));
-  }
-  final sorted = slugs.toList()..sort();
+  final sorted = garageForumTargets(bikes).map((t) => t.slug).toList()..sort();
   return sorted.join(',');
+}
+
+/// The forums a garage implies: one per distinct bike model, and **not** the
+/// brand forums above them.
+///
+/// Owning a Yamaha RXS 1154 says you want to talk about the RXS 1154. It does
+/// not say you want every thread about every Yamaha ever made auto-added to
+/// your bikes — which is what the previous brand+model pair did, and which
+/// buried the forum a rider actually cared about under a much noisier one
+/// they never asked for. Brand forums still exist and are still followable;
+/// they're just opt-in via discovery now rather than assigned by ownership.
+List<({String slug, String brand, String model})> garageForumTargets(
+    List<BikeEntity> bikes) {
+  final seen = <String>{};
+  final targets = <({String slug, String brand, String model})>[];
+  for (final bike in bikes) {
+    if (bike.model.trim().isEmpty) continue;
+    final slug = bikeForumSlug(bike.brand, model: bike.model);
+    if (slug.isEmpty || !seen.add(slug)) continue;
+    targets.add((slug: slug, brand: bike.brand, model: bike.model));
+  }
+  return targets;
 }
 
 /// Serializes a resolved forum for the SharedPreferences cache. Only the
@@ -80,11 +103,11 @@ List<ForumEntity> decodeCachedGarageForums(String? raw) {
   }
 }
 
-/// Two forums per unique bike in the current rider's garage — the brand
-/// forum ("Yamaha") and the specific model forum ("Yamaha RX100") — created
-/// on demand via `getOrCreateForum` so "Your bikes" forums always exist
-/// without any separate seeding step. Deduped by slug, so two Yamahas share
-/// one brand forum.
+/// One forum per unique bike in the current rider's garage — the specific
+/// model forum ("Yamaha RX100"), never the brand above it (see
+/// [garageForumTargets]) — created on demand via `getOrCreateForum` so "Your
+/// bikes" forums always exist without any separate seeding step. Deduped by
+/// slug, so two identical bikes share one forum.
 ///
 /// Cached in SharedPreferences: this used to run one Firestore
 /// `runTransaction` **per bike, on every rebuild and every visit to the
@@ -111,28 +134,17 @@ final forumsForGarageProvider = FutureProvider<List<ForumEntity>>((ref) async {
   // Reuse anything already resolved; only genuinely new slugs hit Firestore.
   final cachedBySlug = {for (final forum in cached) forum.id: forum};
   final resolved = <ForumEntity>[];
-  final seenSlugs = <String>{};
 
-  for (final bike in bikes) {
-    // Brand forum first, then the model forum, so the list reads
-    // "Yamaha" / "Yamaha RX100" for each bike.
-    for (final target in [
-      (brand: bike.brand, model: null),
-      (brand: bike.brand, model: bike.model),
-    ]) {
-      final slug = bikeForumSlug(target.brand, model: target.model);
-      if (slug.isEmpty || !seenSlugs.add(slug)) continue;
-
-      final hit = cachedBySlug[slug];
-      if (hit != null) {
-        resolved.add(hit);
-        continue;
-      }
-      resolved.add(await _forumRepository.getOrCreateForum(
-        brand: target.brand,
-        model: target.model,
-      ));
+  for (final target in garageForumTargets(bikes)) {
+    final hit = cachedBySlug[target.slug];
+    if (hit != null) {
+      resolved.add(hit);
+      continue;
     }
+    resolved.add(await _forumRepository.getOrCreateForum(
+      brand: target.brand,
+      model: target.model,
+    ));
   }
 
   await prefs.setString(
