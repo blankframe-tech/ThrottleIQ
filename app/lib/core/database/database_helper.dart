@@ -28,7 +28,7 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 8);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 9);
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
@@ -45,7 +45,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -117,6 +117,15 @@ class DatabaseHelper {
     if (oldVersion < 8) {
       await db.execute(_createDeletedBikesSql);
     }
+    if (oldVersion < 9) {
+      // Seconds spent above the moving threshold, mirroring the in-memory
+      // total `stopRide()` already tracks for the average-speed calculation
+      // (see average_speed.dart). Persisting it is what lets jam time
+      // (ride clock minus this) survive past the recording session — see
+      // jam_time.dart. Existing rides finalized before this column existed
+      // simply have no jam figure to show, rather than a guessed-at one.
+      await db.execute('ALTER TABLE rides ADD COLUMN moving_s INTEGER');
+    }
   }
 
   /// Tombstones for locally-deleted bikes.
@@ -170,6 +179,7 @@ class DatabaseHelper {
         avg_speed_ms REAL,
         max_speed_ms REAL,
         duration_s INTEGER,
+        moving_s INTEGER,
         hard_brake_count INTEGER NOT NULL DEFAULT 0,
         rapid_accel_count INTEGER NOT NULL DEFAULT 0,
         high_jerk_count INTEGER NOT NULL DEFAULT 0,

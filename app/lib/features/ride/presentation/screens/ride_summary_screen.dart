@@ -10,6 +10,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../core/utils/riding_score.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/ride_entity.dart';
@@ -49,6 +50,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   Widget build(BuildContext context) {
     final rideAsync = ref.watch(rideDetailProvider(widget.rideId));
     final name = ref.watch(currentUserProvider)?.displayName?.split(' ').first;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -67,7 +69,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         data: (ride) {
           if (ride == null) {
             return Center(
-                child: Text('Ride not found',
+                child: Text(l10n.rideNotFoundMessage,
                     style: TextStyle(color: AppColors.textSecondary)));
           }
 
@@ -85,10 +87,10 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   ? AppColors.attention
                   : AppColors.danger;
           final scoreLabel = score >= 80
-              ? 'Smooth op.'
+              ? l10n.scoreSmoothLabel
               : score >= 60
-                  ? 'Steady'
-                  : 'Aggressive';
+                  ? l10n.scoreSteadyLabel
+                  : l10n.scoreAggressiveLabel;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0,
@@ -101,7 +103,10 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name != null ? 'Nice ride, $name!' : 'Nice ride!',
+                      Text(
+                          name != null
+                              ? l10n.niceRideGreetingNamed(name)
+                              : l10n.niceRideGreeting,
                           style: display(24, color: AppColors.onInk)),
                       const SizedBox(height: 4),
                       Text(_formatDate(ride.startTime),
@@ -120,7 +125,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       Expanded(
                         child: StatCell(
                           value: ride.distanceKm.toStringAsFixed(1),
-                          label: 'km',
+                          label: l10n.distanceStatLabel,
                           align: CrossAxisAlignment.center,
                           valueSize: 20,
                         ),
@@ -130,7 +135,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         child: StatCell(
                           value: SpeedFormatter.durationFromSeconds(
                               ride.durationSeconds ?? 0),
-                          label: 'moving',
+                          label: l10n.durationStatLabel,
                           align: CrossAxisAlignment.center,
                           valueSize: 20,
                         ),
@@ -139,7 +144,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       Expanded(
                         child: StatCell(
                           value: ride.avgSpeedKmh.toStringAsFixed(0),
-                          label: 'avg',
+                          label: l10n.avgSpeedStatLabel,
                           align: CrossAxisAlignment.center,
                           valueSize: 20,
                         ),
@@ -148,7 +153,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       Expanded(
                         child: StatCell(
                           value: ride.maxSpeedKmh.toStringAsFixed(0),
-                          label: 'max',
+                          label: l10n.maxSpeedStatLabel,
                           align: CrossAxisAlignment.center,
                           valueSize: 20,
                         ),
@@ -157,6 +162,46 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // ── Jam time ─────────────────────────────────────────────
+                // Only rendered when moving time survived to this ride's row
+                // (see jam_time.dart / RideEntity.jamSeconds) — older rides
+                // finalized before it was tracked have nothing honest to show
+                // here, so the card is skipped rather than showing a 0 that
+                // looks like "no jam" when it really means "unknown".
+                if (ride.jamSeconds != null) ...[
+                  EditorialCard(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: StatCell(
+                            value: SpeedFormatter.durationFromSeconds(
+                                ride.movingSeconds ?? 0),
+                            label: l10n.movingStatLabel,
+                            align: CrossAxisAlignment.center,
+                            valueSize: 20,
+                          ),
+                        ),
+                        _vDivider(),
+                        Expanded(
+                          child: StatCell(
+                            value: SpeedFormatter.durationFromSeconds(
+                                ride.jamSeconds!),
+                            label: l10n.jamStatLabel,
+                            align: CrossAxisAlignment.center,
+                            valueColor: ride.jamSeconds! > 0
+                                ? AppColors.attention
+                                : null,
+                            valueSize: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // ── Score tile + rating ──────────────────────────────────
                 IntrinsicHeight(
@@ -189,12 +234,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const EditorialLabel('Riding score'),
+                            EditorialLabel(l10n.ridingScoreLabel),
                             const SizedBox(height: 6),
                             Text(scoreLabel,
                                 style: display(18, letterSpacing: 0, color: scoreColor)),
                             const SizedBox(height: 2),
-                            Text('out of 100',
+                            Text(l10n.outOf100Label,
                                 style: TextStyle(
                                     fontSize: 12, color: AppColors.textSecondary)),
                           ],
@@ -214,7 +259,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       Expanded(
                         child: StatCell(
                           value: '${ride.hardBrakeCount}',
-                          label: 'hard brakes',
+                          label: l10n.hardBrakesStatLabel,
                           align: CrossAxisAlignment.center,
                           valueColor:
                               ride.hardBrakeCount > 0 ? AppColors.danger : null,
@@ -225,7 +270,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       Expanded(
                         child: StatCell(
                           value: '${ride.rapidAccelCount}',
-                          label: 'rapid accel',
+                          label: l10n.rapidAccelStatLabel,
                           align: CrossAxisAlignment.center,
                           valueColor: ride.rapidAccelCount > 0
                               ? AppColors.attention
@@ -237,7 +282,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       Expanded(
                         child: StatCell(
                           value: '${ride.highJerkCount}',
-                          label: 'high jerk',
+                          label: l10n.highJerkStatLabel,
                           align: CrossAxisAlignment.center,
                           valueColor:
                               ride.highJerkCount > 0 ? AppColors.attention : null,
@@ -250,7 +295,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 const SizedBox(height: 16),
 
                 // ── Map ──────────────────────────────────────────────────
-                const EditorialLabel('Route'),
+                EditorialLabel(l10n.routeSectionLabel),
                 const SizedBox(height: 10),
                 _buildMap(ride, startCenter),
                 const SizedBox(height: 20),
@@ -261,7 +306,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () => context.go('/home/record'),
-                        child: const Text('Save & done'),
+                        child: Text(l10n.saveAndDoneAction),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -271,7 +316,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                             ? null
                             : () => context.push('/ride/share/${ride.id}'),
                         icon: const Icon(Icons.public, size: 18),
-                        label: const Text('Share'),
+                        label: Text(l10n.shareAction),
                       ),
                     ),
                   ],
@@ -283,14 +328,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       child: TextButton.icon(
                         onPressed: () => _exportRide(ride, gpx: false),
                         icon: const Icon(Icons.data_object, size: 18),
-                        label: const Text('Export JSON'),
+                        label: Text(l10n.exportJsonAction),
                       ),
                     ),
                     Expanded(
                       child: TextButton.icon(
                         onPressed: () => _exportRide(ride, gpx: true),
                         icon: const Icon(Icons.route, size: 18),
-                        label: const Text('Export GPX'),
+                        label: Text(l10n.exportGpxAction),
                       ),
                     ),
                   ],
@@ -402,13 +447,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         ? await service.exportRideToGPX(rideMap)
         : await service.exportRideToJSON(rideMap);
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     if (file == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Export failed')),
+        SnackBar(content: Text(l10n.exportFailedMessage)),
       );
       return;
     }
-    await Share.shareXFiles([XFile(file.path)], subject: 'ThrottleIQ ride export');
+    await Share.shareXFiles([XFile(file.path)], subject: l10n.rideExportShareSubject);
   }
 
   String _formatDate(DateTime dt) {

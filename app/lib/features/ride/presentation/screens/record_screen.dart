@@ -10,10 +10,11 @@ import '../../../../core/constants/motorcycle_quotes.dart';
 import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
-import '../../../garage/presentation/widgets/bike_photo.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_with_friends_button.dart';
 import '../providers/ride_recording_provider.dart';
+import '../widgets/bike_picker_card.dart';
+import '../widgets/rider_stat_strip.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
 /// cached for the container's lifetime, so this stays fixed across rebuilds
@@ -63,176 +64,147 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
       });
     }
 
+    // The screen reads top-to-bottom as one instrument panel: what you're
+    // riding, what you've done on it, who you're riding with, and the throttle
+    // at the bottom under your thumb. It used to be four cards of roughly
+    // equal weight stacked in a scroll view, which gave the greeting the same
+    // visual authority as the control that actually starts a ride.
+    //
+    // The throttle is deliberately *outside* the scroll view rather than the
+    // last item in it: slide-to-start is the one control this screen exists
+    // for, and it must be under the thumb at a fixed place every time —
+    // never scrolled off, and never in a different spot depending on whether
+    // an error card happens to be showing above it.
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
-              AppDimensions.paddingMd, AppDimensions.paddingLg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top row: notifications + settings (editorial has no chrome title here)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _NotificationBellButton(unreadCount: ref.watch(unreadNotificationCountProvider)),
-                  IconButton(
-                    onPressed: () => context.push('/settings'),
-                    icon: const Icon(Icons.settings_outlined),
-                    tooltip: 'Settings',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              // 1. Greeting + quote — one card, not two. The casual line
-              // carries the rider's name when the picked variant has a
-              // `{name}` slot ("Evening, Sam."); otherwise the name keeps its
-              // own large display weight beneath the line. The quote sits
-              // under both as a deliberately much smaller, muted footnote —
-              // it's flavour text, so it must not compete with the greeting
-              // it now shares a box with. Capped at 3 lines so an unusually
-              // long one can't push the bike picker off-screen.
-              EditorialCard(
-                padding: const EdgeInsets.all(AppDimensions.paddingMd),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.paddingMd, 4, AppDimensions.paddingMd, 8),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Chrome only — the screen has no title bar; the hero is
+                    // the header.
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (_greeting.usesName)
-                                Text(_greeting.line,
-                                    style: display(22, height: 1.15),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis)
-                              else ...[
-                                Text(_greeting.line,
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 2),
-                                Text(_name ?? 'Rider', style: display(22)),
-                              ],
-                            ],
-                          ),
+                        _NotificationBellButton(
+                            unreadCount:
+                                ref.watch(unreadNotificationCountProvider)),
+                        IconButton(
+                          onPressed: () => context.push('/settings'),
+                          icon: const Icon(Icons.settings_outlined),
+                          tooltip: 'Settings',
                         ),
-                        if (activeBike != null && activeBike.rideCount > 0)
-                          EditorialPill('${activeBike.rideCount} rides',
-                              tone: PillTone.accent),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${quote.$1} ${quote.$2}',
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: display(13,
-                          weight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0,
-                          height: 1.3),
-                    ),
+                    const SizedBox(height: 4),
+
+                    // 1. Hero — the bike, at full width, wearing the greeting.
+                    // The casual line carries the rider's name when the picked
+                    // variant has a `{name}` slot ("Evening, Sam."); otherwise
+                    // it sits above the name as an overline.
+                    if (activeBike != null)
+                      BikePickerCard(
+                        activeBike: activeBike,
+                        overlineText:
+                            _greeting.usesName ? null : _greeting.line,
+                        titleText: _greeting.usesName
+                            ? _greeting.line
+                            : (_name ?? 'Rider'),
+                      )
+                    else
+                      const _NoBikeCard(),
+                    const SizedBox(height: 18),
+
+                    // 2. What you've done so far — the reason to go again.
+                    const RiderStatStrip(),
+                    const SizedBox(height: 22),
+
+                    // 3. Ride with friends. The widget owns the whole flow —
+                    // friend picker, group-ride creation, invites, navigation.
+                    const RideWithFriendsButton(),
+
+                    if (rideState.error != null) ...[
+                      const SizedBox(height: 16),
+                      EditorialCard(
+                        padding: const EdgeInsets.all(12),
+                        borderColor: AppColors.danger,
+                        child: Text(rideState.error!,
+                            style:
+                                TextStyle(color: AppColors.danger, fontSize: 13),
+                            textAlign: TextAlign.center),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+            ),
 
-              // 2. Bike card / no-bike warning
-              if (activeBike != null)
-                EditorialCard(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  onTap: () => context.go('/home/garage'),
-                  child: Row(
-                    children: [
-                      // The rider's own photo of this bike when there is one,
-                      // otherwise the generic icon tile (see [BikePhoto]).
-                      BikePhoto(
-                        imagePath: activeBike.imagePath,
-                        width: 44,
-                        height: 44,
-                        iconSize: 24,
-                        iconColor: AppColors.textPrimary,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(activeBike.displayName,
-                                style: display(16, letterSpacing: 0)),
-                            const SizedBox(height: 2),
-                            Text('Ready to ride',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textSecondary)),
-                          ],
-                        ),
-                      ),
-                      Text('Change',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary)),
-                    ],
+            // 4. Start ride, pinned.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
+                  AppDimensions.paddingMd, AppDimensions.paddingMd),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SlideToStartButton(enabled: activeBike != null),
+                  const SizedBox(height: 12),
+                  // Flavour text, demoted to a footer. It takes the line the
+                  // "swipe right to start" hint used to own — the bar labels
+                  // its own gesture, so the hint was saying it twice.
+                  Text(
+                    '${quote.$1} ${quote.$2}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: AppColors.textTertiary),
                   ),
-                )
-              else
-                EditorialCard(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  borderColor: AppColors.attention,
-                  child: Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: AppColors.attention),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text('No active bike selected',
-                            style: TextStyle(color: AppColors.textPrimary)),
-                      ),
-                      TextButton(
-                        onPressed: () => context.go('/home/garage/add'),
-                        child: const Text('Add Bike'),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
-
-              // 3. Ride with friends. The widget owns the whole flow — friend
-              // picker, group-ride creation, invites and navigation.
-              const RideWithFriendsButton(),
-              const SizedBox(height: 24),
-
-              // 4. Start ride (slide) button. The bike's total km / ride count
-              // / days-since-last-ride chips used to sit between these two —
-              // they now live on the Rides tab, which is where riders go to
-              // look back at what they've done. This screen is for starting.
-              _SlideToStartButton(enabled: activeBike != null),
-              const SizedBox(height: 10),
-              Center(
-                child: Text('Swipe right to start recording',
-                    style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
+                ],
               ),
-
-              if (rideState.error != null) ...[
-                const SizedBox(height: 16),
-                EditorialCard(
-                  padding: const EdgeInsets.all(12),
-                  borderColor: AppColors.danger,
-                  child: Text(rideState.error!,
-                      style: TextStyle(color: AppColors.danger, fontSize: 13),
-                      textAlign: TextAlign.center),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+/// Stands in for the hero when the rider has no bike yet — same footprint, so
+/// the screen doesn't reflow the moment they add one.
+class _NoBikeCard extends StatelessWidget {
+  const _NoBikeCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return EditorialCard(
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      borderColor: AppColors.attention,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.two_wheeler, size: 40, color: AppColors.attention),
+          const SizedBox(height: 12),
+          Text('No bike yet', style: display(22)),
+          const SizedBox(height: 4),
+          Text(
+            'Add the bike you ride and ThrottleIQ can start tracking it.',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () => context.go('/home/garage/add'),
+            child: const Text('Add a bike'),
+          ),
+        ],
       ),
     );
   }

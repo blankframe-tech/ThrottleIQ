@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
@@ -250,6 +251,49 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     }
   }
 
+  /// Throws the ride away without saving it. Worded as bluntly as the action
+  /// is — this is the one control on the screen with no undo, so the dialog
+  /// says what is lost rather than asking a polite "are you sure?", and the
+  /// destructive choice is the one that has to be reached for.
+  Future<void> _cancelRide() async {
+    final rideState = ref.read(rideRecordingProvider);
+    final distance = SpeedFormatter.distanceKm(rideState.distanceM);
+    final duration = SpeedFormatter.durationFromDuration(rideState.elapsed);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Discard this ride?',
+            style: TextStyle(color: AppColors.textPrimary)),
+        content: Text(
+          '$distance over $duration will be deleted. This ride will not be '
+          'saved to your history and cannot be recovered.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep recording'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Discard', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    // Same suppression as _stopRide: cancelRide() resets the provider to idle
+    // synchronously, and the generic idle-redirect below would otherwise race
+    // this navigation.
+    _endingRide = true;
+    await ref.read(rideRecordingProvider.notifier).cancelRide();
+    if (!mounted) return;
+    context.go('/home/record');
+  }
+
   @override
   Widget build(BuildContext context) {
     final rideState = ref.watch(rideRecordingProvider);
@@ -310,6 +354,19 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               left: 16,
               right: 16,
               child: _AlertBanner(alert: rideState.activeAlert),
+            ),
+
+          // ── "We kept your ride" banner ───────────────────────────────────
+          //
+          // Only after a restore, and only until the rider resumes. Without
+          // it, coming back to a paused ride you never paused reads as a bug.
+          if (rideState.restoredFromPreviousSession &&
+              rideState.activeAlert == RideAlert.none)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 72,
+              left: 16,
+              right: 16,
+              child: const _RecoveredBanner(),
             ),
 
           // ── Top bar ───────────────────────────────────────────────────────
@@ -447,47 +504,65 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   colors: [AppColors.background, AppColors.background.withValues(alpha: 0)],
                 ),
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: Container(
-                      decoration: isPaused
-                          ? BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.65),
-                                  blurRadius: 26,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            )
-                          : null,
-                      child: OutlinedButton.icon(
-                        onPressed: isPaused
-                            ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
-                            : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
-                        icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                        label: Text(isPaused ? 'Resume' : 'Pause'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 52),
-                          backgroundColor: isPaused ? AppColors.surface : null,
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(color: AppColors.primary),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: isPaused
+                              ? BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(alpha: 0.65),
+                                      blurRadius: 26,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                )
+                              : null,
+                          child: OutlinedButton.icon(
+                            onPressed: isPaused
+                                ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
+                                : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
+                            icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                            label: Text(isPaused ? 'Resume' : 'Pause'),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 52),
+                              backgroundColor: isPaused ? AppColors.surface : null,
+                              foregroundColor: AppColors.primary,
+                              side: BorderSide(color: AppColors.primary),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _stopRide,
-                      icon: const Icon(Icons.stop_circle_outlined),
-                      label: const Text('End Ride'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(0, 52),
-                        backgroundColor: AppColors.danger,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _stopRide,
+                          icon: const Icon(Icons.stop_circle_outlined),
+                          label: const Text('End Ride'),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(0, 52),
+                            backgroundColor: AppColors.danger,
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+                  // Discard sits below the pair, as a text button rather than
+                  // a third equal-weight control: "end and save" is what
+                  // almost every ride wants, and a delete-my-data action
+                  // shouldn't be the same size and shape as the one next to
+                  // it that keeps everything.
+                  TextButton.icon(
+                    onPressed: _cancelRide,
+                    icon: Icon(Icons.delete_outline, size: 18, color: AppColors.textSecondary),
+                    label: Text(
+                      'Discard ride',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                     ),
                   ),
                 ],
@@ -502,6 +577,44 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               onImOk: () =>
                   ref.read(rideRecordingProvider.notifier).dismissCrashAlert(),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown once, on a ride that was picked back up off disk at launch — see
+/// [RideRecordingNotifier.restoreInterruptedRide].
+class _RecoveredBanner extends StatelessWidget {
+  const _RecoveredBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: AppColors.primary),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.restore, size: 20, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Ride kept from last time', style: display(14, letterSpacing: 0)),
+                const SizedBox(height: 2),
+                Text(
+                  'Resume to carry on, or discard it to start fresh.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -15,9 +15,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/entities/ride_point_entity.dart';
 import '../../domain/calculators/motion_calculator.dart';
+import '../../domain/calculators/accel_axis_calibrator.dart';
 import '../../domain/calculators/event_detector.dart';
 import '../../domain/calculators/vehicle_state_estimator.dart';
 import '../../domain/calculators/recording_cadence_policy.dart';
+import '../../domain/calculators/ride_resume.dart';
 import '../../data/models/ride_model.dart';
 import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
@@ -74,6 +76,13 @@ class RideRecordingState {
   /// in any screen.
   final int confidence;
 
+  /// True when this paused ride was picked back up off disk at launch rather
+  /// than paused by the rider in this session — see
+  /// [RideRecordingNotifier.restoreInterruptedRide]. Drives the "we kept your
+  /// ride" banner on the active ride screen, and clears the moment the rider
+  /// resumes.
+  final bool restoredFromPreviousSession;
+
   const RideRecordingState({
     this.status = RecordingStatus.idle,
     this.ride,
@@ -91,6 +100,7 @@ class RideRecordingState {
     this.crashCountdown = 60,
     this.liveSessionToken,
     this.confidence = 0,
+    this.restoredFromPreviousSession = false,
   });
 
   RideRecordingState copyWith({
@@ -110,6 +120,7 @@ class RideRecordingState {
     int? crashCountdown,
     String? liveSessionToken,
     int? confidence,
+    bool? restoredFromPreviousSession,
   }) {
     return RideRecordingState(
       status: status ?? this.status,
@@ -128,6 +139,8 @@ class RideRecordingState {
       crashCountdown: crashCountdown ?? this.crashCountdown,
       liveSessionToken: liveSessionToken ?? this.liveSessionToken,
       confidence: confidence ?? this.confidence,
+      restoredFromPreviousSession:
+          restoredFromPreviousSession ?? this.restoredFromPreviousSession,
     );
   }
 }
@@ -149,6 +162,15 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   final _detector = EventDetector();
   final _estimator = VehicleStateEstimator();
   final _cadencePolicy = RecordingCadencePolicy();
+  final _axisCalibrator = AccelAxisCalibrator();
+
+  // Raw accelerometer samples since the last processed GPS fix, averaged and
+  // handed to _axisCalibrator alongside that fix's GPS-derived acceleration
+  // — see _onPosition and accel_axis_calibrator.dart.
+  double _rawAccelSumX = 0;
+  double _rawAccelSumY = 0;
+  double _rawAccelSumZ = 0;
+  int _rawAccelSampleCount = 0;
 
   StreamSubscription<Position>? _locationSub;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
@@ -174,6 +196,23 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   static const int _maxMovingGapSeconds = 60;
   DateTime? _activeStart;
   Duration _accumulatedDuration = Duration.zero;
+
+  /// Set whenever recording is about to continue across a break in the fix
+  /// stream — a pause/resume, or a resume of a ride restored from a previous
+  /// app run. Consumed by the first fix that arrives afterwards, which skips
+  /// its distance/accel/jerk derivatives.
+  ///
+  /// Without this, [MotionCalculator] happily measures from the last fix
+  /// before the break to the first one after it: park the bike, pause, drive
+  /// home in a van and resume, and the ride gains the whole van journey as a
+  /// single straight line. A paused ride that now survives the app being
+  /// killed makes that gap arbitrarily long, so the guard stops being
+  /// optional.
+  bool _skipNextDistanceDelta = false;
+
+  /// Throttles the ride-clock snapshot below — see [_persistElapsed].
+  DateTime? _lastElapsedPersist;
+  static const Duration _elapsedPersistInterval = Duration(seconds: 10);
 
   // Low-pass filtered sensor acceleration (longitudinal, m/s²)
   double _filteredAccel = 0;
@@ -280,30 +319,31 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     return perm == LocationPermission.always || perm == LocationPermission.whileInUse;
   }
 
-  Future<bool> _checkLocationServices() async {
-    final enabled = await Geolocator.isLocationServiceEnabled();
-    if (!enabled) {
-      state = state.copyWith(
-        status: RecordingStatus.idle,
-        error: 'Location services are disabled. Please enable GPS to track rides.',
-      );
-      return false;
+  /// Message for a GPS/permission precondition that isn't met, or null when
+  /// recording is good to go.
+  ///
+  /// Deliberately does not touch `state`: the two callers need to fail into
+  /// different states — [startRide] back to idle, [resumeRide] back to the
+  /// paused ride it must not throw away — and a helper that decided that for
+  /// them is what previously made "resume" and "start" have to be the same
+  /// code path.
+  Future<String?> _recordingBlockedReason() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      return 'Location services are disabled. Please enable GPS to track rides.';
     }
-    return true;
+    if (!await _requestPermissions()) {
+      return 'Location permission required to track rides.';
+    }
+    return null;
   }
 
   Future<void> startRide() async {
     if (state.status != RecordingStatus.idle) return;
     state = state.copyWith(status: RecordingStatus.starting);
 
-    if (!await _checkLocationServices()) return;
-
-    final granted = await _requestPermissions();
-    if (!granted) {
-      state = state.copyWith(
-        status: RecordingStatus.idle,
-        error: 'Location permission required to track rides.',
-      );
+    final blocked = await _recordingBlockedReason();
+    if (blocked != null) {
+      state = state.copyWith(status: RecordingStatus.idle, error: blocked);
       return;
     }
 
@@ -339,11 +379,18 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _detector.reset();
     _estimator.reset();
     _cadencePolicy.reset();
+    _axisCalibrator.reset();
+    _rawAccelSumX = 0;
+    _rawAccelSumY = 0;
+    _rawAccelSumZ = 0;
+    _rawAccelSampleCount = 0;
     _lastPoint = null;
     _polyline = <LatLng>[];
     _displayStride = 1;
     _fixCount = 0;
     _lastSensorUiPush = null;
+    _skipNextDistanceDelta = false;
+    _lastElapsedPersist = null;
 
     state = state.copyWith(
       status: RecordingStatus.active,
@@ -355,6 +402,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       distanceM: 0,
       elapsed: Duration.zero,
       activeAlert: RideAlert.none,
+      restoredFromPreviousSession: false,
     );
 
     await _persistRecordingState(ride);
@@ -373,6 +421,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// likely, so this is the last reliable point to get already-recorded
   /// points onto disk rather than waiting on the flush timer/size to
   /// coincidentally line up first.
+  ///
+  /// The ride clock is snapshotted for the same reason: swiping the app out
+  /// of the recents switcher goes straight to `detached` with no chance to
+  /// run anything else, and elapsed time is the one part of the session that
+  /// isn't derivable from the stored fixes.
   @override
   void didChangeAppLifecycleState(AppLifecycleState appState) {
     if (state.status != RecordingStatus.active && state.status != RecordingStatus.paused) {
@@ -383,6 +436,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         appState == AppLifecycleState.detached ||
         appState == AppLifecycleState.hidden) {
       _flushPointBuffer();
+      unawaited(_persistElapsed(force: true));
     }
   }
 
@@ -449,7 +503,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (state.status != RecordingStatus.active) return;
 
     // Feeds VehicleStateEstimator's imuQuality pipeline in parallel — the
-    // haptic alert logic below (dominant-axis low-pass filter) is untouched.
+    // haptic alert logic below is untouched.
     _estimator.addAccelSample(
       timestamp: DateTime.now(),
       ax: event.x,
@@ -457,11 +511,20 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       az: event.z,
     );
 
-    final magnitude = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-    final dominantAxis = [event.x.abs(), event.y.abs(), event.z.abs()];
-    final dominantIdx = dominantAxis.indexOf(dominantAxis.reduce((a, b) => a > b ? a : b));
-    final signed = [event.x, event.y, event.z][dominantIdx];
-    final signedMagnitude = signed < 0 ? -magnitude : magnitude;
+    // Feeds _axisCalibrator's fit for this stretch since the last GPS fix —
+    // see _onPosition, which consumes and resets this average once it has a
+    // GPS-derived acceleration to pair it with.
+    _rawAccelSumX += event.x;
+    _rawAccelSumY += event.y;
+    _rawAccelSumZ += event.z;
+    _rawAccelSampleCount++;
+
+    // Signed longitudinal acceleration: a true projection onto the fitted
+    // mounting axis once _axisCalibrator has enough GPS-paired samples to
+    // trust, the old dominant-raw-axis guess until then — see
+    // accel_axis_calibrator.dart.
+    final signedMagnitude =
+        _axisCalibrator.signedLongitudinalAccelMs2(event.x, event.y, event.z);
 
     _filteredAccel = _alpha * signedMagnitude + (1 - _alpha) * _filteredAccel;
 
@@ -532,7 +595,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     double? jerk;
     double distDelta = 0;
 
-    if (_lastPoint != null) {
+    // The first fix after a pause/resume or a restore measures across a gap
+    // of unknown length, so its derivatives describe the break rather than
+    // the riding — see _skipNextDistanceDelta. The fix itself is still
+    // recorded; only the deltas derived *from the previous one* are dropped.
+    if (_lastPoint != null && !_skipNextDistanceDelta) {
       final result = _calculator.calculate(
         prev: _lastPoint!,
         currentSpeedMs: speedMs,
@@ -544,6 +611,27 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       jerk = result.jerk;
       distDelta = result.distanceDeltaM;
     }
+    _skipNextDistanceDelta = false;
+
+    // Pair this fix's GPS-derived acceleration with the raw accelerometer
+    // samples seen since the previous fix, for _axisCalibrator's fit — see
+    // accel_axis_calibrator.dart. Skipped when accel is null (no previous
+    // point, or this is the first fix after a pause/resume gap the same way
+    // distance/jerk are skipped above): a null accel has nothing honest to
+    // pair the raw average against. The raw accumulator is cleared either
+    // way so a skipped interval's samples don't bleed into the next one.
+    if (accel != null && _rawAccelSampleCount > 0) {
+      _axisCalibrator.addSample(
+        ax: _rawAccelSumX / _rawAccelSampleCount,
+        ay: _rawAccelSumY / _rawAccelSampleCount,
+        az: _rawAccelSumZ / _rawAccelSampleCount,
+        gpsAccelMs2: accel,
+      );
+    }
+    _rawAccelSumX = 0;
+    _rawAccelSumY = 0;
+    _rawAccelSumZ = 0;
+    _rawAccelSampleCount = 0;
 
     _totalDistance += distDelta;
 
@@ -660,6 +748,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         state = state.copyWith(
           elapsed: _accumulatedDuration + DateTime.now().difference(_activeStart!),
         );
+        unawaited(_persistElapsed());
       }
     });
 
@@ -701,15 +790,93 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _accelSub?.pause();
     _gyroSub?.pause();
     state = state.copyWith(status: RecordingStatus.paused);
+    await _persistElapsed(force: true);
   }
 
+  /// Picks recording back up, from either kind of pause: one the rider made
+  /// in this session (subscriptions exist and are merely paused) or one that
+  /// survived the app being killed (nothing is streaming — the session was
+  /// rebuilt from disk by [restoreInterruptedRide]).
+  ///
+  /// The cold case has to re-check GPS and permissions, and must fail
+  /// *without* discarding the ride: a rider who resumes with location
+  /// services switched off gets an error on a still-paused ride, not a
+  /// silently binned one.
   Future<void> resumeRide() async {
     if (state.status != RecordingStatus.paused) return;
+
+    final coldStart = _locationSub == null;
+    if (coldStart) {
+      final blocked = await _recordingBlockedReason();
+      if (blocked != null) {
+        state = state.copyWith(error: blocked);
+        return;
+      }
+    }
+
     _activeStart = DateTime.now();
-    _locationSub?.resume();
-    _accelSub?.resume();
-    _gyroSub?.resume();
-    state = state.copyWith(status: RecordingStatus.active);
+    _skipNextDistanceDelta = true;
+
+    if (coldStart) {
+      await WakelockPlus.enable();
+      _startLocationStream();
+      _startSensorStream();
+      _startTimer();
+      _startLiveSessionPublishing();
+    } else {
+      _locationSub?.resume();
+      _accelSub?.resume();
+      _gyroSub?.resume();
+    }
+
+    state = state.copyWith(
+      status: RecordingStatus.active,
+      restoredFromPreviousSession: false,
+    );
+  }
+
+  /// Throws the ride away: no history row, no points, nothing synced.
+  ///
+  /// Distinct from [stopRide] in exactly the way the rider means it — a ride
+  /// started by accident, or one the app recovered that isn't worth keeping.
+  /// The local row is deleted rather than marked cancelled because
+  /// `RideDao.delete` also drops the ride's `ride_points`, and a ride that
+  /// never reached `status = 'completed'` is invisible to every query and to
+  /// the sync layer, so nothing about it ever left the device.
+  Future<void> cancelRide() async {
+    if (state.status != RecordingStatus.active && state.status != RecordingStatus.paused) {
+      return;
+    }
+    final ride = state.ride;
+
+    _locationSub?.cancel();
+    _accelSub?.cancel();
+    _gyroSub?.cancel();
+    _locationSub = null;
+    _accelSub = null;
+    _gyroSub = null;
+    _elapsedTimer?.cancel();
+    _flushTimer?.cancel();
+    _crashCountdownTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+
+    // Same teardown as stopRide: anyone holding the share link must stop
+    // seeing a live ride, and the permanent /r/{username} link must stop
+    // resolving to it.
+    _liveSessionTimer?.cancel();
+    await _updateLiveSessionStatus(LiveSessionStatus.completed);
+    await _clearLivePointer();
+    _currentLiveSessionToken = null;
+
+    // Deliberately dropped rather than flushed — these are the points of a
+    // ride that is about to be deleted.
+    _pointBuffer.clear();
+
+    await WakelockPlus.disable();
+    await _clearRecordingState();
+    if (ride != null) await _rideDao.delete(ride.id);
+
+    state = const RideRecordingState();
   }
 
   Future<String?> stopRide() async {
@@ -720,6 +887,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _locationSub?.cancel();
     _accelSub?.cancel();
     _gyroSub?.cancel();
+    _locationSub = null;
+    _accelSub = null;
+    _gyroSub = null;
     _elapsedTimer?.cancel();
     _flushTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -758,6 +928,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       'avg_speed_ms': avgSpeed,
       'max_speed_ms': _maxSpeed,
       'duration_s': finalDuration,
+      // Denominator of avgSpeed above, persisted too so jam time (ride clock
+      // minus this) survives past the recording session — see jam_time.dart.
+      'moving_s': _movingSeconds,
       'hard_brake_count': _detector.hardBrakeCount,
       'rapid_accel_count': _detector.rapidAccelCount,
       'high_jerk_count': _detector.highJerkCount,
@@ -802,122 +975,195 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     } catch (_) {/* non-fatal — see doc comment */}
   }
 
+  // Marker that a ride is mid-flight. Its presence at launch is what tells
+  // the app a previous run ended without stopRide() ever being reached.
+  static const String _prefsRideId = 'active_ride_id';
+  static const String _prefsStartTime = 'ride_start_time';
+
+  /// Last known ride clock, in seconds. Everything else about a session can
+  /// be rebuilt from the stored GPS fixes (see [rebuildRideAggregates]) —
+  /// elapsed time cannot, because a ride that spent forty minutes paused at
+  /// a chai stall has fixes spanning far more wall-clock than it recorded.
+  static const String _prefsElapsedS = 'ride_elapsed_s';
+
   Future<void> _persistRecordingState(RideEntity ride) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('active_ride_id', ride.id);
-    await prefs.setString('ride_start_time', ride.startTime.toIso8601String());
+    await prefs.setString(_prefsRideId, ride.id);
+    await prefs.setString(_prefsStartTime, ride.startTime.toIso8601String());
+    await prefs.setInt(_prefsElapsedS, 0);
+  }
+
+  /// Snapshots the ride clock. Throttled to [_elapsedPersistInterval] on the
+  /// per-second timer that calls it, since the cost of losing up to ten
+  /// seconds of elapsed time to a kill is nil next to writing prefs 3,600
+  /// times an hour. [force] bypasses the throttle for the moments that
+  /// matter: pausing, and the app leaving the foreground.
+  Future<void> _persistElapsed({bool force = false}) async {
+    final now = DateTime.now();
+    if (!force &&
+        _lastElapsedPersist != null &&
+        now.difference(_lastElapsedPersist!) < _elapsedPersistInterval) {
+      return;
+    }
+    _lastElapsedPersist = now;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_prefsElapsedS, state.elapsed.inSeconds);
   }
 
   Future<void> _clearRecordingState() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('active_ride_id');
-    await prefs.remove('ride_start_time');
+    await prefs.remove(_prefsRideId);
+    await prefs.remove(_prefsStartTime);
+    await prefs.remove(_prefsElapsedS);
   }
 
-  /// Recovers a ride left dangling by a previous app launch that never
-  /// called stopRide()/dispose() — the process was killed outright (OS
-  /// jetsam, an OEM battery manager, a crash) while `active_ride_id` was
-  /// still set in SharedPreferences. Previously this method existed but was
-  /// never called from anywhere, so a killed ride's row just sat at
-  /// `status = active` forever — and RideDao.getAllForBike/getAllForUser
-  /// both filter on `status = 'completed'`, so it silently never appeared
-  /// in ride history at all, indistinguishable from having been lost
-  /// entirely. Now wired to run once on app startup for a signed-in user
-  /// (see app.dart).
+  /// Picks up a ride left mid-flight by a previous app run that never reached
+  /// stopRide() — the rider swiped the app out of the recents switcher, or
+  /// the process was killed outright (OS jetsam, an OEM battery manager, a
+  /// crash) while `active_ride_id` was still set in SharedPreferences. Runs
+  /// once on app startup for a signed-in user (see app.dart).
   ///
-  /// The in-memory running aggregates (_totalDistance, _maxSpeed, event
-  /// counts) from that old session are gone — they never survive process
-  /// death. Instead this recomputes real distance/avg/max speed from
-  /// whatever GPS points actually made it to disk (bounded loss now — see
-  /// _bufferFlushSize/_bufferFlushInterval and didChangeAppLifecycleState
-  /// above), so the recovered ride is genuinely representative rather than
-  /// a zeroed-out placeholder. Event counts (hard-brake/rapid-accel/high-
-  /// jerk) can't be reconstructed this way and are left at 0 — a real but
-  /// small and honestly-scoped limitation, documented here rather than
-  /// silently guessed at.
-  Future<void> recoverCrashRide() async {
+  /// **The ride is restored, not finalized.** This used to quietly close the
+  /// ride out and file it in history, which meant quitting the app mid-ride
+  /// ended it: a rider who stopped for fuel and swiped the app away came
+  /// back to two half-rides and no way to continue the first. Now the
+  /// session is rebuilt into [RecordingStatus.paused] with its distance, top
+  /// speed, moving time, route and ride clock intact, and the rider chooses
+  /// what happens to it — resume, end and save, or [cancelRide] and start
+  /// fresh.
+  ///
+  /// The in-memory aggregates from the old session are gone (they never
+  /// survive process death), so they are recomputed from whatever GPS points
+  /// actually made it to disk — bounded loss, see `_bufferFlushSize` /
+  /// `_bufferFlushInterval` / [didChangeAppLifecycleState]. The ride clock
+  /// comes from the [_prefsElapsedS] snapshot, falling back to the span of
+  /// the stored fixes when none survived. Event counts (hard-brake /
+  /// rapid-accel / high-jerk) cannot be reconstructed from thinned points
+  /// and restart at 0 — a real, narrow limitation documented here rather
+  /// than silently guessed at.
+  Future<void> restoreInterruptedRide() async {
+    // A ride recorded in this session already owns the notifier; a stale
+    // pref must not tear it down.
+    if (state.status != RecordingStatus.idle) return;
+
     final prefs = await SharedPreferences.getInstance();
-    final rideId = prefs.getString('active_ride_id');
+    final rideId = prefs.getString(_prefsRideId);
     if (rideId == null) return;
 
-    await _clearRecordingState();
-    final ride = await _rideDao.getById(rideId);
-    if (ride == null) return;
-
-    final points = await _pointDao.getForRide(rideId);
-
-    // Fewer than 2 points means there's nothing meaningful to show (no
-    // distance is derivable from a single fix) — drop it rather than
-    // cluttering history with a zero-everything ride.
-    if (points.length < 2) {
-      await _rideDao.delete(rideId);
+    final row = await _rideDao.getById(rideId);
+    if (row == null) {
+      await _clearRecordingState();
       return;
     }
 
-    double distanceM = 0;
-    double maxSpeedMs = 0;
-    double speedSum = 0;
-    for (var i = 0; i < points.length; i++) {
-      final speed = (points[i]['speed_ms'] as num?)?.toDouble() ?? 0;
-      speedSum += speed;
-      if (speed > maxSpeedMs) maxSpeedMs = speed;
-      if (i > 0) {
-        distanceM += _haversineMeters(
-          lat1: (points[i - 1]['lat'] as num).toDouble(),
-          lng1: (points[i - 1]['lng'] as num).toDouble(),
-          lat2: (points[i]['lat'] as num).toDouble(),
-          lng2: (points[i]['lng'] as num).toDouble(),
-        );
-      }
+    // Already finalized — either stopRide() got as far as writing the row but
+    // not as far as clearing these prefs, or crash detection closed the ride
+    // out mid-recording. Either way it is in history now, and offering it
+    // back as resumable would duplicate it.
+    if (row['status'] == RideStatus.completed.name) {
+      await _clearRecordingState();
+      return;
     }
 
-    final startedAt = DateTime.parse(points.first['timestamp'] as String);
-    final endedAt = DateTime.parse(points.last['timestamp'] as String);
-    final durationS = endedAt.difference(startedAt).inSeconds;
+    final points = await _pointDao.getForRide(rideId);
 
-    // Same distance-over-moving-time definition as the normal finalize path,
-    // rebuilt from the stored fixes so a recovered ride's average speed is
-    // directly comparable to a cleanly-finished one.
-    final recoveredMovingSeconds = movingSeconds([
+    // Fewer than 2 fixes is not a ride worth offering back — no distance is
+    // derivable from a single point. Drop it rather than presenting the
+    // rider a zero-everything session to make a decision about.
+    if (points.length < 2) {
+      await _rideDao.delete(rideId);
+      await _clearRecordingState();
+      return;
+    }
+
+    final fixes = <StoredFix>[
       for (final p in points)
         (
           time: DateTime.parse(p['timestamp'] as String),
+          lat: (p['lat'] as num).toDouble(),
+          lng: (p['lng'] as num).toDouble(),
           speedMs: (p['speed_ms'] as num?)?.toDouble() ?? 0,
         ),
-    ]);
-    final avgSpeedMs = recoveredMovingSeconds > 0
-        ? averageSpeedMs(
-            distanceM: distanceM, movingSeconds: recoveredMovingSeconds)
-        : (points.isNotEmpty ? speedSum / points.length : 0.0);
+    ];
+    final aggregates = rebuildRideAggregates(fixes);
 
-    await _rideDao.finalizeRide(rideId, {
-      'end_time': endedAt.toIso8601String(),
-      'distance_m': distanceM,
-      'avg_speed_ms': avgSpeedMs,
-      'max_speed_ms': maxSpeedMs,
-      'duration_s': durationS,
-    });
+    _totalDistance = aggregates.distanceM;
+    _maxSpeed = aggregates.maxSpeedMs;
+    _speedSum = aggregates.speedSum;
+    _speedCount = aggregates.speedCount;
+    _movingSeconds = aggregates.movingSeconds;
+    // Left null on purpose: the interval between the last stored fix and
+    // whenever the rider resumes is not riding time, and seeding this would
+    // invite _onPosition to count it as such.
+    _lastFixTime = null;
 
-    final bikeId = ride['bike_id'] as String?;
-    if (bikeId != null) {
-      await _bikeDao.incrementStats(bikeId, distanceM);
-      _ref.invalidate(garageProvider);
+    final snapshotSeconds = prefs.getInt(_prefsElapsedS);
+    _accumulatedDuration = Duration(
+      seconds: snapshotSeconds ?? aggregates.span.inSeconds,
+    );
+    _activeStart = null;
+
+    _filteredAccel = 0;
+    _lastSensorEvent = null;
+    _lastSensorUiPush = null;
+    _lastElapsedPersist = null;
+    _detector.reset();
+    _estimator.reset();
+    _cadencePolicy.reset();
+    // Same narrow limitation as the event counts above: the fitted axis is
+    // in-memory only and doesn't survive a process death, so a resumed ride
+    // re-learns it from scratch rather than picking up mid-fit.
+    _axisCalibrator.reset();
+    _rawAccelSumX = 0;
+    _rawAccelSumY = 0;
+    _rawAccelSumZ = 0;
+    _rawAccelSampleCount = 0;
+
+    // Kept so the live-share session still has a last known position to
+    // publish while paused; the gap it spans is neutralised by
+    // _skipNextDistanceDelta rather than by throwing the point away.
+    final last = fixes.last;
+    _lastPoint = RidePointEntity(
+      rideId: rideId,
+      timestamp: last.time,
+      lat: last.lat,
+      lng: last.lng,
+      speedMs: last.speedMs,
+    );
+    _skipNextDistanceDelta = true;
+
+    _polyline = <LatLng>[];
+    _displayStride = 1;
+    _fixCount = 0;
+    for (final fix in fixes) {
+      _appendToPolyline(LatLng(fix.lat, fix.lng));
     }
-  }
 
-  static double _haversineMeters({
-    required double lat1,
-    required double lng1,
-    required double lat2,
-    required double lng2,
-  }) {
-    const earthRadiusM = 6371000.0;
-    final dLat = (lat2 - lat1) * pi / 180;
-    final dLng = (lng2 - lng1) * pi / 180;
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLng / 2) * sin(dLng / 2);
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return earthRadiusM * c;
+    state = RideRecordingState(
+      status: RecordingStatus.paused,
+      ride: RideModel.fromMap(row),
+      polyline: _polyline,
+      polylineVersion: 1,
+      currentPosition: _polyline.isEmpty ? null : _polyline.last,
+      maxSpeedMs: _maxSpeed,
+      distanceM: _totalDistance,
+      elapsed: _accumulatedDuration,
+      restoredFromPreviousSession: true,
+    );
+
+    // The ride is live again as far as the app is concerned, so it needs the
+    // same background-flush hook a freshly started one gets.
+    WidgetsBinding.instance.addObserver(this);
+    await _persistElapsed(force: true);
+
+    // The killed session's live-share token died with the process, so there
+    // is no way to mark that `liveSessions` doc finished — but the pointer
+    // that makes `/r/{username}` resolve to it is keyed by uid and very much
+    // reachable. Left alone it would keep anyone with the rider's permanent
+    // link parked on the last position from before the app died, for as long
+    // as the paused ride sits there. Clear it now; resuming mints a fresh
+    // token and re-points it (see _publishLiveSession).
+    await _clearLivePointer();
   }
 
   /// Handle crash detection: show countdown, play alert, notify contacts

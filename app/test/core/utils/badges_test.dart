@@ -328,6 +328,83 @@ void main() {
     });
   });
 
+  /// The live streak shown on the Record screen, as distinct from the
+  /// personal best above it. `now` is injected throughout so these don't
+  /// depend on the day the suite runs.
+  group('computeCurrentDayStreak', () {
+    final today = DateTime(2026, 6, 10);
+
+    test('empty history has no streak', () {
+      expect(computeCurrentDayStreak(const [], now: today), 0);
+    });
+
+    test('counts back from a ride today', () {
+      expect(
+        computeCurrentDayStreak([
+          _ride(id: 'a', startTime: DateTime(2026, 6, 8, 7)),
+          _ride(id: 'b', startTime: DateTime(2026, 6, 9, 18)),
+          _ride(id: 'c', startTime: DateTime(2026, 6, 10, 9)),
+        ], now: today),
+        3,
+      );
+    });
+
+    test('a ride yesterday keeps the streak alive', () {
+      // Otherwise the number a rider sees collapses to zero every morning
+      // until they've been out again.
+      expect(
+        computeCurrentDayStreak([
+          _ride(id: 'a', startTime: DateTime(2026, 6, 8)),
+          _ride(id: 'b', startTime: DateTime(2026, 6, 9)),
+        ], now: today),
+        2,
+      );
+    });
+
+    test('two days off ends it, however long the run was', () {
+      expect(
+        computeCurrentDayStreak([
+          for (var d = 1; d <= 7; d++)
+            _ride(id: 'r$d', startTime: DateTime(2026, 6, d)),
+        ], now: today),
+        0,
+      );
+    });
+
+    test('ignores an older, longer run behind a gap', () {
+      // The personal best here is 4; what the rider is *on* is 2.
+      expect(
+        computeCurrentDayStreak([
+          for (var d = 1; d <= 4; d++)
+            _ride(id: 'old$d', startTime: DateTime(2026, 6, d)),
+          _ride(id: 'new1', startTime: DateTime(2026, 6, 9)),
+          _ride(id: 'new2', startTime: DateTime(2026, 6, 10)),
+        ], now: today),
+        2,
+      );
+    });
+
+    test('several rides in one day count once', () {
+      expect(
+        computeCurrentDayStreak([
+          _ride(id: 'a', startTime: DateTime(2026, 6, 10, 7)),
+          _ride(id: 'b', startTime: DateTime(2026, 6, 10, 19)),
+        ], now: today),
+        1,
+      );
+    });
+
+    test('spans a month boundary', () {
+      expect(
+        computeCurrentDayStreak([
+          _ride(id: 'a', startTime: DateTime(2026, 5, 31, 20)),
+          _ride(id: 'b', startTime: DateTime(2026, 6, 1, 8)),
+        ], now: DateTime(2026, 6, 1)),
+        2,
+      );
+    });
+  });
+
   group('computeBadgeProgress', () {
     test('groups every badge into exactly one family', () {
       final progress = computeBadgeProgress(_stats());

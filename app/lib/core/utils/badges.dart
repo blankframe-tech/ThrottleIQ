@@ -264,6 +264,50 @@ int computeLongestDayStreak(List<RideEntity> rides) {
   return best;
 }
 
+/// The streak the rider is *on* right now: consecutive calendar days ending
+/// today or yesterday on which at least one ride was recorded.
+///
+/// Distinct from [computeLongestDayStreak], which is a personal best and only
+/// ever grows. A dashboard number labelled "streak" has to be the live one —
+/// showing a best of 14 to someone who last rode in March reads as a claim
+/// that they're on a 14-day run.
+///
+/// Yesterday counts as still-alive so the number doesn't collapse to zero
+/// every morning before the day's ride; a gap of two days or more ends it.
+/// [now] is injectable so the "today" boundary is testable.
+int computeCurrentDayStreak(List<RideEntity> rides, {DateTime? now}) {
+  if (rides.isEmpty) return 0;
+
+  final today = () {
+    final n = now ?? DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }();
+
+  final days = rides
+      .map((r) =>
+          DateTime(r.startTime.year, r.startTime.month, r.startTime.day))
+      .toSet()
+      .toList()
+    ..sort((a, b) => b.compareTo(a)); // newest first
+
+  // Same hour-window comparison as computeLongestDayStreak, and for the same
+  // DST reason: consecutive local midnights are 23-25 hours apart.
+  bool isDayBefore(DateTime later, DateTime earlier) {
+    final gap = later.difference(earlier).inHours;
+    return gap >= 20 && gap <= 28;
+  }
+
+  final mostRecent = days.first;
+  if (mostRecent != today && !isDayBefore(today, mostRecent)) return 0;
+
+  var streak = 1;
+  for (var i = 1; i < days.length; i++) {
+    if (!isDayBefore(days[i - 1], days[i])) break;
+    streak++;
+  }
+  return streak;
+}
+
 // ---------------------------------------------------------------------------
 // The ladders
 // ---------------------------------------------------------------------------

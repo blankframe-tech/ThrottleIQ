@@ -45,12 +45,13 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
         final sync = ref.read(syncManagerProvider);
         if (next.valueOrNull != null) {
           sync.startAutoSync();
-          // Finish off any ride that was still "active" when the app last
-          // died mid-recording (killed process, no chance to call
-          // stopRide()) — see RideRecordingNotifier.recoverCrashRide's doc
-          // comment. Only meaningful once signed in, since it touches the
-          // per-user local ride DB.
-          ref.read(rideRecordingProvider.notifier).recoverCrashRide();
+          // Pick up any ride that was still recording when the app last went
+          // away (swiped out of recents, killed process — no chance to call
+          // stopRide()). It comes back *paused*, for the rider to resume,
+          // end, or discard; see
+          // RideRecordingNotifier.restoreInterruptedRide. Only meaningful
+          // once signed in, since it touches the per-user local ride DB.
+          ref.read(rideRecordingProvider.notifier).restoreInterruptedRide();
         } else {
           sync.stopAutoSync();
         }
