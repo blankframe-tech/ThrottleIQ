@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-03 · Branch: `main`_
+_Last updated: 2026-08-11 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -8,6 +8,13 @@ the Vehicle State Engine architecture/roadmap. Update it (don't fork a new
 doc) whenever status changes — see `.claude/settings.json` for the hook that
 prompts this after every work session. Feature-by-feature UI detail lives in
 `Features.md`; tracked defects live in `Issues.md`.
+
+> **Start here if you're picking this up right now:**
+> [`WHAT_TO_DO_NOW.md`](WHAT_TO_DO_NOW.md) — a short, dated checklist for
+> the immediate state of the tree (2026-08-11: uncommitted work, and a
+> device pass that nothing else can substitute for). It is a **snapshot,
+> not a second backlog**, and is meant to be deleted once worked through —
+> everything durable belongs in this file.
 
 **Contents**
 - [Part 1 — Status & Handoff](#part-1--status--handoff)
@@ -31,8 +38,8 @@ orphaned screens (crash countdown, sync manager, exports, emergency
 contacts, live share) have all since been wired in, see "Done, but NOT yet
 verified" below. The Vehicle State Engine's foundation (Phase 1 + 1.5 —
 sensor fusion, confidence scoring, motion classification, adaptive
-recording thinning) shipped 2026-07-23, and the test suite is **550/550
-green** as of 2026-08-03.
+recording thinning) shipped 2026-07-23, and the test suite is **678/678
+green** as of 2026-08-11.
 
 **Versioning reset 2026-08-01:** the old `2.0.0-beta.x` line, its git tags,
 and all prior GitHub Releases (including the same-day `carbon-ui-` one)
@@ -108,6 +115,139 @@ this release went out — see "Done, but NOT yet verified" for exactly
 what's still unproven (the Editorial toggle itself hasn't been tap-tested
 live on a device, only exercised via new automated provider tests).
 
+**Skins — nine palettes behind a dropdown, 2026-08-11.** Settings'
+Appearance switch was a two-up segmented control carrying a label *and* a
+description per option at full width — the affordance that does not
+survive being divided nine ways. It is now a **dropdown**, and the theme
+list grew from 2 to 9: the seven style directions from the
+`ThrottleIQ Style Directions` deck (Nocturne, Trail Social, Calming,
+Positive Vibes, Retro, Analyst Blue, Genesis) joined Carbon Mono and
+Editorial. The deck specifies oklch; those were converted to sRGB, and
+tokens no direction named (most define no `secondary`; none define
+shimmer or status colors) were **derived in the same oklch space** rather
+than borrowed from a neighbouring skin. Full table and the
+add-a-skin recipe are in `Features.md` §8.
+
+Three things worth knowing before touching this area:
+
+- **`style == carbonMono` is no longer "is this dark".** It was the test
+  for base brightness, the `ColorScheme` variant, the status-bar icon
+  color and which app mark to show — and it silently means "light" for
+  the four new dark skins (Nocturne, Trail
+  Social, Analyst Blue, Genesis). `AppColorPalette` now carries an **`isDark`**
+  flag and every one of those call sites reads it. A test asserts each
+  palette's flag agrees with its background's actual luminance.
+- **The skin catalogue is compiler-enforced.** `forStyle` and the
+  label/description lookups are exhaustive switches with no `default`, so
+  a new enum member without a palette or a name fails the build instead of
+  rendering as Carbon Mono.
+- **Persisted values are asymmetric on purpose.** New skins round-trip
+  through `AppThemeStyle.name`; Carbon Mono and Editorial still *write*
+  their legacy `carbon`/`editorial` spellings so a rollback to an older
+  build keeps the rider's setting. An unrecognised value falls back to
+  the default rather than throwing.
+
+Covered by 14 new tests (`test/features/profile/skin_dropdown_test.dart`,
+`test/core/theme/app_theme_style_test.dart`, plus additions to the
+provider and logo suites); suite is **640/640 green**.
+
+**Device run, 2026-08-11 — partially verified, still not tap-tested.** Ran
+on a cabled iPhone (iOS 27.0) in debug: 74.8s Xcode build, 25.5s install,
+**no ad-hoc signing failure — `flutter clean` was not needed**, so the
+§iOS-install fix above is not a required pre-step every time. Confirmed
+live off the Dart VM Service rather than by eye, since no screenshot or
+tap tooling exists here for a physical device (see `Issues.md` §15):
+
+- The root key read `MaterialApp-[<AppThemeStyle.editorial>]` — the app
+  booted on **Editorial**, decoded from the legacy `editorial` string in
+  SharedPreferences. **That's the backward-compatibility path confirmed on
+  a real device**, not just in a test, and it is the single thing most
+  likely to have silently reset every existing rider to the default.
+- App reached `RecordScreen` inside `AppShell` signed in, no Dart
+  exceptions after launch.
+
+**Second run, same day — the picker has now been used on device.** The
+app was relaunched after a `Lost connection to device` (the phone was still
+`connected` per `devicectl`, so the debug connection dropped rather than
+the cable) and came back up keyed
+**`MaterialApp-[<AppThemeStyle.genesis>]`**. The persisted skin had changed
+from `editorial` to `genesis` between runs, and `setStyle` is only
+reachable from the dropdown's `onChanged` — so the picker was tapped on the
+phone, a **brand-new skin was selected, and it survived an app restart**.
+That exercises the new `AppThemeStyle.name` persistence encoding on a real
+device, end to end, which the legacy-decode check above could not.
+
+Genesis then rendered `RecordScreen` with **zero exceptions, zero
+`RenderFlex` overflows** in either run's log — at the device's actual
+`textScaler: 1.1176` with bold text. That is independent corroboration that
+`Issues.md` §16 was a false alarm.
+
+Still unproven: **six of the nine skins have never been applied to a real
+screen** (everything except Carbon Mono, Editorial, and Genesis), and no
+screen beyond Record has been seen under any non-default skin. The two
+worth checking first are still Retro (ink-black `border` token) and
+Positive Vibes (white `surface` on near-white `background`).
+
+**Correction, same session:** a suspected text-scaling clipping bug in the
+picker was filed and then **disproved by measurement** — see `Issues.md`
+§16. No code change; the attempted fix was a no-op that would have been a
+touch-target regression had the assumption behind it been true. The device
+observation that prompted it stands and is worth carrying: this project's
+test iPhone runs at **textScaler 1.1176 with bold text**, while every
+widget test runs at 1.0.
+
+**Technique worth reusing:** when you can't screenshot a physical iOS
+device, `ext.flutter.debugDumpApp` over the VM Service's HTTP endpoint
+gives you the live widget tree — which screen is mounted, which widgets
+exist, and (because `app.dart` keys `MaterialApp` on the theme style) which
+skin is applied. `curl "$VM_URI/getVM"` for the isolate id, then
+`curl "$VM_URI/ext.flutter.debugDumpApp?isolateId=$ID"`.
+
+`_flutter.screenshot` returns "Could not capture image screenshot" — the
+device log gives the real reason: **`Compressed screenshots not supported
+for Impeller`**. That's the renderer, not the device, so it will fail on
+the simulator too, and no amount of retrying helps. For real pixels you
+need host tooling (`brew install libimobiledevice` → `idevicescreenshot`);
+none is installed.
+
+**`Lost connection to device` was not the device.** Two `flutter run`
+sessions died that way mid-session and were misread first as the phone
+sleeping. The actual cause: a **concurrent Claude Code session** working in
+`repos/life-manager` runs `pkill -f "flutter run"` in its launch script —
+an unscoped pattern that kills every `flutter run` on the machine, not just
+its own. `devicectl list devices` reporting the phone as `connected` right
+after a "lost connection" is the tell that nothing was wrong with the
+device.
+
+**It happened again on 2026-08-11, from this side.** A ThrottleIQ session
+ran bare `pkill -f "flutter run"` twice to stop a simulator run — the exact
+pattern this note warns about — while the life-manager session was live.
+So this is not a one-way hazard to defend against; it is a rule *this*
+repo's sessions have already broken, and the fix has to be applied here
+too, not just expected of the other side.
+
+Two things follow. **Scope any `pkill` to the device id** (`pkill -f
+"flutter run -d <udid>"`) — and note that even that self-kills if the
+pattern also matches the shell running the compound command that contains
+it. And when you just need the app on the phone rather than a hot-reload
+session, **skip `flutter run` entirely**: `flutter build ios --debug`, then
+`xcrun devicectl device install app --device <udid>
+build/ios/iphoneos/Runner.app` and `xcrun devicectl device process launch
+--device <udid> com.bft.throttleiq`. A debug bundle carries its own
+`kernel_blob.bin`, so it runs standalone — no host process to lose, and
+nothing for another session to kill. You give up hot reload and the VM
+Service tree dump described above.
+
+**Docs review, 2026-08-04:** a pass through this file, `Issues.md`,
+`Features.md`, and `TODO next.md` to compile a "what's next" punch list
+found that **`TODO next.md` is entirely stale** — all 10 of its items
+(Strava-style route maps on shared rides, captions, recreation places +
+saved routes, turn-by-turn nav, the garage-forum cache, new forum
+topics, rider-created forums with maintainers, the beta data-reset, the
+start-ride/stats/maintenance widgets, and the maintenance bottom-nav
+bug) are already shipped per `Features.md`. Nothing in it is open work;
+it's safe to delete or archive rather than treat as a backlog.
+
 **iOS install failure — root-caused 2026-08-04. Previously mis-diagnosed
 here as a timing "flake"; that was wrong.**
 
@@ -133,6 +273,22 @@ native-assets step to re-run and the framework to be signed properly —
 verified: `flags=0x0(none)`, Apple Development identity, installs first
 try with no retry.
 
+⚠️ **That is not the only cause of this symptom — 2026-08-11.** A release
+run hit the identical "Could not run … Try launching Xcode" message, but
+the ad-hoc diagnosis did **not** apply: the very next command,
+`xcrun devicectl device install app` against the same
+`build/ios/iphoneos/Runner.app` that `flutter run` had just refused,
+installed it successfully on the first try, and the app launched and ran.
+Nothing was cleaned or rebuilt in between.
+
+So the failure was in **`flutter run`'s own install step**, not in the
+bundle. Treat the message as "the install failed, cause unknown" rather
+than as a signature of the signing bug — and **check with `devicectl`
+before spending five minutes on a `flutter clean`**, since that is both the
+faster diagnostic and, when it succeeds, the fix. This is a second reason
+to prefer the build-install-launch sequence below over `flutter run` on a
+physical device.
+
 **Getting the real error.** `flutter run` hides it. Use:
 ```
 xcrun devicectl device install app --device <udid> build/ios/iphoneos/Runner.app
@@ -147,6 +303,130 @@ Ad-hoc means the build didn't re-sign it; clean and rebuild.
 Related: `flutter devices` often can't see the iPhone at the default
 timeout even when `xcrun devicectl list devices` reports it as
 `available (paired)`. Use `--device-timeout 30`; the device shows up.
+
+**Ride survival, discard, Retro-as-terminal, Record redesign, model-only
+forums — 2026-08-11 (later the same day).** Five requested changes; the
+first is the one with teeth.
+
+The defects and gaps behind these are written up in `Issues.md`
+**§18–§21**; the Retro/Record/forums items are design changes, not defects.
+
+- **Quitting the app mid-ride no longer ends the ride** (§18). `recoverCrashRide`
+  finalized a dangling ride on next launch and filed it in history, so
+  swiping ThrottleIQ out of recents at a fuel stop split a ride in two with
+  no way to continue the first half. It's now `restoreInterruptedRide`,
+  which brings the session back **paused** — distance, top speed, moving
+  time, route and ride clock intact — and lets the rider resume, end and
+  save, or discard. The screen says "Ride kept from last time" so a paused
+  ride nobody paused doesn't read as a bug.
+  - Aggregates rebuild from the fixes already on disk (new pure
+    `ride_resume.dart`, 9 tests). **Elapsed time is the exception** — it is
+    not derivable from the fixes (a ride that sat 40 minutes at a chai
+    stall spans far more wall-clock than it recorded), so it's snapshotted
+    to prefs every 10s, forced on pause and on backgrounding.
+  - **The first fix after any resume drops its derivatives**
+    (`_skipNextDistanceDelta`). `MotionCalculator` otherwise measures
+    straight across the break: pause, van the bike home, resume, and the
+    ride gains the van journey as one straight line. This was already
+    latent on ordinary pause/resume; a pause that now survives a restart
+    makes the gap unbounded, which is what turned it from theoretical into
+    something worth fixing.
+  - **Honest gap:** hard-brake / rapid-accel / high-jerk counts restart at
+    0 on a resumed ride. They come from `EventDetector`'s live thresholds
+    over a continuous sample stream and thinned stored points cannot
+    reproduce them. Documented rather than guessed at.
+- **Discard ride** (`cancelRide`, §20) — deletes the row and its points, ends
+  the live session, clears the `/r/{username}` pointer, drops buffered
+  points rather than flushing them. A ride that never reached
+  `status = 'completed'` is invisible to every query and to the sync layer,
+  so nothing about a discarded ride ever left the device.
+- **Retro is now a black-and-white terminal**, per the request, built off
+  the deck's Rawblock geometry rather than its mustard/rust palette. It is
+  the **first skin that is not purely a palette swap**: square corners, 2px
+  ink rules, monospace body type. New `AppTypography` swaps the display
+  face alongside `AppColors`, applied together in one place so a skin can't
+  half-apply. Full detail and the accessibility trade (severity encoded in
+  value, not hue, because a monochrome skin has no red to spend) in
+  `features.md`.
+- **Record screen redesigned** as an instrument panel: bike-photo hero with
+  the greeting overlaid, a rides/km/**current streak** strip, and
+  slide-to-start pinned outside the scroll view. The bike picker became a
+  sheet; its regression test still guards "picking a bike switches it in
+  place, without navigating".
+- **"Your bikes" forums are model-only.** Owning one Yamaha used to enrol
+  you in the brand forum too, burying the bike you cared about under every
+  Yamaha thread ever posted. Brand forums are now opt-in via discovery,
+  where **Topics** also moved (Brands and Topics are two labelled groups
+  under "Find a forum" rather than Topics being its own section).
+
+**One defect was found while fixing another** (§19): a ride killed
+mid-flight left `livePointers/{uid}` still resolving, so anyone holding the
+rider's permanent `/r/{username}` link stayed parked on the last position
+from before the app died. Same bug class as §3 and §14. Note for whoever
+touches this area next — **every** ride teardown path has to clear that
+pointer, and there are now four of them.
+
+Suite went 640 → **678 green**, `flutter analyze` clean (0 errors, 0 new
+warnings). Also fixed a pre-existing failure in the (uncommitted)
+`app_theme_style_test.dart` (§21): every `AppTheme.build` call leaked a
+google_fonts download failure onto an unawaited future — the app ships no
+font assets and `flutter_test` fails every HTTP request — which failed
+whichever test happened to be running when it landed, not the one that
+caused it.
+
+**Runs on device in release; still not *seen*.** A release build was built,
+installed and launched on the cabled iPhone (iOS 27.0) the same night —
+`com.bft.throttleiq` confirmed still running minutes later, so it clears
+Firebase init and renders. Debug on the iOS 26.5 simulator boots clean too,
+no Dart exceptions in either.
+
+That is where verification stops. Sign-in needs real credentials and there
+is no sign-in or tap automation here, and no screenshot tooling for a
+physical device — so the redesigned Record screen, the hero, the Retro
+skin, the forums changes and the whole kill-and-resume flow are
+analyzer-, test- and boots-without-crashing-verified, and nothing more.
+**Nobody has looked at them.** Same standing limitation as every previous
+session; the ordered device pass that closes it is in
+[`WHAT_TO_DO_NOW.md`](WHAT_TO_DO_NOW.md).
+
+**Bike photos can be cropped — 2026-08-11 (same session).** Picking a bike
+photo now goes into an in-app cropper (Free / 1:1 / 4:3 / 16:9 + rotate),
+and an attached photo gets **Crop** and **Replace** buttons under the
+preview. Built rather than pulled in as `image_cropper`, whose native screen
+would be the only one in the app that ignores the rider's skin. Full
+rationale in `features.md` §4.
+
+Two notes for whoever works on this next:
+
+- **The three-way file split is load-bearing, not tidiness.** `flutter_test`
+  runs widget code in a fake-async zone where real file reads and image
+  decodes never complete — the first attempt at a widget test for the
+  cropper **hung rather than failed**, which is the worst way for this to
+  present. Pulling the pixel pipeline out into
+  `core/utils/image_crop_io.dart` with an injectable output directory made
+  it testable in an ordinary `test()`. Keep I/O out of `State` methods here.
+- **Cropped photos land in the app documents directory**, unlike
+  as-picked ones which keep their `ImagePicker` cache path. That's a partial
+  fix to the stale-path problem `BikePhoto` already works around — worth
+  finishing by copying *every* picked photo somewhere durable, which would
+  make `BikePhoto`'s fallback a real edge case rather than routine.
+
+Suite 678 → **717 green** (39 new: 29 geometry, 10 pixel pipeline),
+`flutter analyze` clean, simulator build clean, and a **release build with
+the cropper in it is installed and running on the iPhone** — launched
+without incident, though as ever nobody has been past sign-in to look at it.
+
+**The devicectl runbook was used in anger and worked.** Going straight to
+`flutter build ios --release` → `xcrun devicectl device install app` →
+`devicectl device process launch` installed first try, no failure and no
+`flutter clean` — corroborating the ⚠️ added to the iOS-install section
+above rather than leaving it a one-off observation. Prefer this sequence
+over `flutter run` on a physical device.
+
+Minor device-state note: two ThrottleIQ builds are now installed on that
+phone (the pre-cropper one from earlier the same night, and this one). Same
+bundle id, so iOS shows one icon and the newer install wins — but delete the
+app and reinstall if anything ever looks stale.
 
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
@@ -206,7 +486,7 @@ backend or a real device. **Treat each as unproven until tested.**
   7. **Ride with friends** — needs **two real accounts on two devices**: invite, confirm the invitee sees the in-app notification, accept, and confirm both riders appear on each other's map in different colours and that stale positions grey out. The deployed `groupRides` rules have never been exercised by a real client — and since the roster moved to a subcollection (`Issues.md` §10), the invite → accept → leave path is the specific thing to exercise. Its rule correctness is reasoned, not executed; there's no rules-test harness in this repo.
   8. **Bike visibility** — confirm another rider can see your bikes on `public`, cannot on `private`, and that `followers` tracks the follow edge. Note this rules change *widened* read access (`Assumptions Made.md` #15).
   9. **Bike deletion** — the deadlock is fixed and covered by real-SQLite tests, but confirm on a device that deleting a bike with rides actually removes it and its history.
-- [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator.
+- [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator. **Widened 2026-08-11:** that toggle is now a nine-skin dropdown, so what's unverified on a device is nine palettes, not two — and only Carbon Mono has ever been seen rendering a real screen. The seven new skins have never been applied to anything but a swatch. Highest-value single check when a simulator is next available: apply **Retro** (its `border` token is full-strength ink rather than a hairline — the one palette that could plausibly look wrong applied app-wide) and **Positive Vibes** (pure-white `surface` on a near-white `background`) and page through Record → Active ride → Ride summary.
 
 ---
 
@@ -234,6 +514,8 @@ backend or a real device. **Treat each as unproven until tested.**
   nothing.
 - [x] ~~Wire the orphaned features~~ **DONE 2026-07-14**: crash countdown overlay, SyncManager bootstrap, export buttons, Settings screen (logout + emergency contacts) all wired; live viewer deployed to `throttleiqfb.web.app`. Remaining genuine builds: POI UI and a real social feed (the agent "screens" were empty stubs).
 - [ ] **Back up the signing keystore** — `throttleiq-release.keystore` + `app/android/key.properties` exist ONLY on the dev machine. If lost, the app can never be updated under the same identity. → password manager / secure cloud, never git.
+- [x] ~~**Release key's SHA-1 registered with the Android Google OAuth client**~~ **VERIFIED 2026-08-11.** Worth an explicit line because the failure mode is nasty and silent: if the OAuth client only carries the *debug* keystore's fingerprint, **Google sign-in works in debug and fails in release**, with nothing in the app to explain why. Checked — `app/android/app/google-services.json` carries two Android OAuth fingerprints and `throttleiq-release.keystore`'s SHA-1 is one of them, so ThrottleIQ is not exposed to this. Re-check after any keystore change (including a Play App Signing upload-key rotation, which introduces a *second* fingerprint that also has to be registered).
+  - **`keytool` does not work out of the box on this Mac.** `/usr/bin/keytool` is Apple's stub and no JDK is on PATH (`/usr/libexec/java_home` fails). Use Android Studio's bundled runtime: `"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -list -v -keystore throttleiq-release.keystore`. Note that the stub **fails silently under `2>/dev/null`** and yields an empty fingerprint — which compares unequal to everything and reads as "the key isn't registered". That false negative was hit once already; if a fingerprint check says "not registered", verify `keytool` actually ran before believing it.
 - [ ] **Install the beta APK on a real phone** and run the smoke test: register → record a ride → stop → summary → confirm the ride appears in Firestore console.
 - [x] ~~Run the test suite~~ **DONE 2026-07-14** — 184/184 green (fixed a real EventDetector regression + bad test expectations found on the first-ever full run).
 - [x] ~~Deploy the live-share viewer~~ **DONE 2026-07-14** — hosted at `throttleiqfb.web.app` (verified 200); the app's share links point there.
@@ -292,13 +574,15 @@ backend or a real device. **Treat each as unproven until tested.**
 
 - 🔮 **Auto-pause in traffic.** Detect a stop (already possible — the
   recorder classifies `period_type` as moving/idle at the 1 m/s cutoff)
-  and pause recording automatically, then **surface the jam time back to
-  the rider after the ride**: "you spent 14 minutes stopped." That number
-  is genuinely interesting in Dhaka and nobody else shows it. The data is
-  already being collected — `movingSeconds` exists for the average-speed
-  fix — so this is presentation plus a pause policy, not new tracking.
-  Watch out for: auto-pause at a long traffic light vs. a genuine stop,
-  and not double-counting against the existing manual pause.
+  and pause recording automatically. ~~surface the jam time back to the
+  rider after the ride~~ **DONE 2026-08-12** — ride summary now shows
+  moving vs. jam time (`jam_time.dart`, `rides.moving_s`, schema v9; see
+  `Features.md` §2). What's **still open** is only the auto-pause policy
+  itself: today jam time is reported but the ride keeps recording through
+  it (correctly — moving time already excludes it from the average-speed
+  denominator). Auto-pausing would need to watch out for a long traffic
+  light vs. a genuine stop, and not double-counting against the existing
+  manual pause.
 - 🔮 **iOS start/stop widget.** The Android widget already exists and the
   iOS sources are written (`app/ios/ThrottleIQWidget/`), but iOS widgets
   can't *start a recording* from the widget itself — they can only deep
@@ -330,15 +614,17 @@ backend or a real device. **Treat each as unproven until tested.**
 
 ### Product (v1.1+)
 - [x] ~~Average speed = distance ÷ moving time~~ **DONE 2026-08-01** (`average_speed.dart`, 12 tests)
-- [ ] Sensor calibration via GPS fusion (current: heuristic axis pick)
+- [x] ~~Sensor calibration via GPS fusion (current: heuristic axis pick)~~ **DONE 2026-08-12** — `accel_axis_calibrator.dart`. Fits a 3D "which way is forward" axis by least-squares against `MotionCalculator`'s GPS-derived acceleration (normal equations, solved incrementally, no stored sample history), and projects raw accelerometer samples onto it instead of picking whichever raw axis happens to read largest that instant. Falls back to the old dominant-axis heuristic until ~20 GPS-paired samples have accumulated *and* the fit is well-conditioned (guards against a near-singular matrix from straight-line-only riding). 6 tests, including recovering a known tilted axis from synthetic noisy data. **The near-singular-matrix determinant threshold is an unvalidated starting point** — as expected, tuning it (and re-checking whether the existing hard-brake/rapid-accel thresholds still fire right against the new, more accurate projection) needs real ride logs, which weren't available here.
 - [ ] Crash-detector threshold tuning from real false-positive logs
-- [ ] Geohash search → proper neighbor-table implementation (current neighbor calc is approximate)
+- [x] ~~Geohash search → proper neighbor-table implementation (current neighbor calc is approximate)~~ **DONE 2026-08-12** — `GeohashUtil.getNeighbors` (`core/utils/geohash_util.dart`) now returns the correct 8 compass neighbors via the standard bit-interleaved neighbor-table algorithm (the same technique behind `geofire-common`), replacing the old re-encode-`center±cellWidth` approximation, which only ever found 4 neighbors and could drift across a cell boundary on float rounding. Cross-checked against an independent from-scratch bit-interleaving implementation (12,000 random points, 0 mismatches) and the `north(south(x))==x` round-trip identity; matches the classic "ezs42" worked example used across the wider geohash-library ecosystem. 8 tests, including antimeridian wraparound. Note the algorithm's one shared, known limitation: longitude correctly wraps at ±180°, but latitude has no "north of the pole" case, so it wraps too at the very top/bottom row — irrelevant at Bangladesh's ~20–26°N, so left as documented rather than special-cased. `getNeighbors` itself still isn't called from any query path (`PlaceRepository.getNearbyPlaces` fetches every place and filters in memory) — wiring it into an actual geohash-range nearby-query is separate, unstarted work.
 - [ ] Weather on record screen (OpenWeather) — needs an API key, none available
 - [ ] Leaderboards (smoothness-based), clubs & events
 - [x] ~~Turn-by-turn navigation~~ **DONE 2026-08-01**, but *following a saved route*, not curvy-route *planning*. Planning a new route still needs a routing engine (Calimoto/Rever's core, XL/T3 — see Part 2).
 - [x] ~~**Open discovered (public) routes**~~ **DONE 2026-08-02** — `?owner=<uid>` on the detail and navigate routes; read-only for non-owners.
-- [ ] **Bundle a Bengali font** — IBM Plex has no Bengali glyphs, so Bangla falls back to the platform face and renders in a visibly different typeface from the rest of the UI. No tofu, but it looks wrong. Add a Bengali family and set `fontFamilyFallback` in `AppTheme`.
-- [ ] **Translate the rest of the app** — only the settings screen is localized; ~700 strings are still hardcoded English. Also still open from `marketing.md`: the Play Store listing has no Bangla.
+- [x] ~~**Bundle a Bengali font**~~ **DONE 2026-08-12** — Noto Sans Bengali (variable font, OFL-licensed, `assets/fonts/`) bundled as a real pubspec `fonts:` asset rather than fetched via `google_fonts` at runtime, so Bangla glyphs render correctly offline from first launch. Wired as `AppTypography.bengaliFallback` and appended to every text style the app hands out — the shared `textTheme` via `TextTheme.apply(fontFamilyFallback:)`, plus the handful of standalone `GoogleFonts.xxx()` styles (app bar title, button labels, snackbar) that sit outside `textTheme` and needed their own `.copyWith`. 10 tests assert every named style and every standalone style carries it.
+- [ ] **Translate the rest of the app** — only the settings screen was localized as of 2026-08-11; **partially picked up 2026-08-12**: the bottom nav (`app_shell.dart`), the Record-screen bike-picker hero and stat strip, and the full ride summary screen are now localized (34 new ARB keys, real Bangla translations, all passing the existing `arb_parity_test.dart` suite — no partial/placeholder translations). Two widget tests (`bike_picker_card_test.dart`, `rider_stat_strip_test.dart`) needed the same `localizationsDelegates`/`supportedLocales` MaterialApp wrapper `skin_dropdown_test.dart` already used, since pumping a widget that calls `AppLocalizations.of(context)` without it throws.
+  **Still hardcoded, by remaining string count** (rough — literal single-line `Text('...')` call sites only, so an undercount for hint/label/multi-line text): active_ride_screen.dart (~14), forum_thread_screen.dart (~13), edit_profile_screen.dart (~12), user_profile_screen.dart (~11), my_shared_rides_screen.dart / add_place_screen.dart / garage_screen.dart / bike_detail_screen.dart (~10 each), stats_screen.dart (~9), route_detail_screen.dart (~8), social_screen.dart / ride_share_screen.dart / login_screen.dart (~7 each), and smaller counts across the rest of `features/*`. record_screen.dart itself is mostly *already* dynamic copy (`greetings.dart`) rather than literal strings, so it's a smaller lift than its raw count suggests. Also still open from `marketing.md`: the Play Store listing has no Bangla.
+  **Not verified on a device**, same caveat as everything else in this pass: whether the (longer, on average) Bangla translations actually fit the tight stat-cell columns on the ride summary screen and the 11pt bottom-nav labels without wrapping or truncating.
 - [ ] iOS build & TestFlight (config scaffolding exists; needs a Mac + Apple Developer account)
 
 ---
@@ -350,10 +636,10 @@ backend or a real device. **Treat each as unproven until tested.**
 | Firebase project | `throttleiqfb` (asia-south1) |
 | Android package (all code, `main`) | `com.bft.throttleiq` — **registered in Firebase** since 2026-07-23: App ID `1:603325098273:android:94694220f44cbf63fcf660` |
 | File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why |
-| Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up** |
+| Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2) — signed release **APK + AAB**, matches `pubspec.yaml` at `1.0.0-beta.2+2`. Upload the `.aab` to Play, hand testers the `.apk`. (`beta-v1` is still there as the previous build.) |
-| Test suite | 550/550 green as of 2026-08-03 (was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
+| Test suite | 640/640 green as of 2026-08-11 (550 on 2026-08-03; was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` AND in `firestore.rules`. Both must change together; move to a custom claim before public launch |
