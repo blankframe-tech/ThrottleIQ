@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/screens/image_crop_screen.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
 
@@ -49,10 +50,44 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     }
   }
 
+  /// Pick a photo, then crop it.
+  ///
+  /// The crop step is offered, not forced: cancelling out of the cropper keeps
+  /// the photo as picked rather than throwing the whole selection away, since
+  /// "I picked the right photo but don't need to crop it" is the common case
+  /// and having to re-pick would be a punishment for tapping Cancel.
+  ///
+  /// `imageQuality: 80` stays on the pick so an enormous original is shrunk
+  /// before it is ever decoded; the cropper re-encodes at 90 from whatever it
+  /// receives, so cropping doesn't compound the loss much.
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final xfile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (xfile != null) setState(() => _imagePath = xfile.path);
+    if (xfile == null || !mounted) return;
+
+    final cropped = await ImageCropScreen.open(
+      context,
+      sourcePath: xfile.path,
+      title: 'Crop bike photo',
+    );
+    if (!mounted) return;
+    setState(() => _imagePath = cropped ?? xfile.path);
+  }
+
+  /// Re-crop a photo that's already attached — reachable from the "Crop"
+  /// button under the preview. Without this, adjusting a crop means picking
+  /// the photo out of the library again.
+  Future<void> _cropCurrent() async {
+    final path = _imagePath;
+    if (path == null) return;
+
+    final cropped = await ImageCropScreen.open(
+      context,
+      sourcePath: path,
+      title: 'Crop bike photo',
+    );
+    if (cropped == null || !mounted) return;
+    setState(() => _imagePath = cropped);
   }
 
   Future<void> _submit() async {
@@ -143,6 +178,28 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                   ),
                 ),
               ),
+              // Only offered once there's a photo to act on. "Crop" is
+              // separate from "Replace" because re-framing the photo you
+              // already chose shouldn't send you back into the library.
+              if (_imagePath != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _cropCurrent,
+                      icon: const Icon(Icons.crop, size: 18),
+                      label: const Text('Crop'),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.photo_library_outlined, size: 18),
+                      label: const Text('Replace'),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 24),
               TextFormField(
                 controller: _brandCtrl,
