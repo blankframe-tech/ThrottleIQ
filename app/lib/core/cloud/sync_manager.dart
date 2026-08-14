@@ -9,13 +9,15 @@ import '../database/daos/bike_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
+import 'outbox_service.dart';
 
 /// Represents the sync status of the app
 enum SyncStatus { idle, syncing, success, failure }
 
 /// Manages automatic sync of local data to Firestore
 class SyncManager {
-  SyncManager([this._ref]) {
+  SyncManager([this._ref, OutboxService? outbox])
+      : _outbox = outbox ?? OutboxService.instance {
     _initConnectivityListener();
   }
 
@@ -25,6 +27,7 @@ class SyncManager {
   final Ref? _ref;
 
   final CloudRepository _cloudRepository = CloudRepository();
+  final OutboxService _outbox;
   final Connectivity _connectivity = Connectivity();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -100,6 +103,15 @@ class SyncManager {
     _isSyncing = true;
     _status = SyncStatus.syncing;
     _notifyListeners();
+
+    // Anything the rider already committed to while offline goes FIRST, ahead
+    // of the bulk ride/bike sync below. Two reasons: these are explicit
+    // rider-initiated actions ("end this ride", "share this ride") rather than
+    // background bookkeeping, and the bulk pass can be slow enough on a
+    // freshly-restored connection that a share would otherwise sit behind it.
+    // Failures inside drain() are recorded per-entry and never thrown, so this
+    // cannot abort the sync that follows.
+    await _outbox.drain();
 
     try {
       final uid = _auth.currentUser!.uid;

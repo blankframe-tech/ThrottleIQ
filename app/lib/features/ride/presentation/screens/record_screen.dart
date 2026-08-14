@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/motorcycle_quotes.dart';
+import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -14,6 +15,7 @@ import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_with_friends_button.dart';
 import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
+import '../widgets/hold_to_start_button.dart';
 import '../widgets/rider_stat_strip.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
@@ -152,7 +154,16 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _SlideToStartButton(enabled: activeBike != null),
+                  // Which control depends on the active skin's shape profile:
+                  // a slide track on the boxy/terminal skins, a press-and-hold
+                  // ring on the rounded ones. See StartControlStyle for why
+                  // this is the one place a skin swaps a widget rather than
+                  // just restyling it.
+                  if (AppDimensions.shape.startControl ==
+                      StartControlStyle.holdRing)
+                    _HoldToStartControl(enabled: activeBike != null)
+                  else
+                    _SlideToStartButton(enabled: activeBike != null),
                   const SizedBox(height: 12),
                   // Flavour text, demoted to a footer. It takes the line the
                   // "swipe right to start" hint used to own — the bar labels
@@ -206,6 +217,36 @@ class _NoBikeCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Riverpod wrapper around [HoldToStartButton] — the rounded skins' start
+/// control. Owns exactly the same start/navigate/recover-from-failure flow as
+/// [_SlideToStartButtonState._triggerStart], so the two controls behave
+/// identically once the gesture completes; only the gesture differs.
+class _HoldToStartControl extends ConsumerWidget {
+  final bool enabled;
+  const _HoldToStartControl({required this.enabled});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(rideRecordingProvider).status;
+
+    return HoldToStartButton(
+      enabled: enabled,
+      busy: status == RecordingStatus.starting,
+      onStart: () async {
+        await ref.read(rideRecordingProvider.notifier).startRide();
+        if (!context.mounted) return;
+        // Same recovery contract as the slide control: only navigate if the
+        // ride actually went active. If it didn't, the button re-arms itself
+        // (HoldToStartButton unwinds when `busy` drops back to false) and the
+        // error card above explains why.
+        if (ref.read(rideRecordingProvider).status == RecordingStatus.active) {
+          context.go('/ride/active');
+        }
+      },
     );
   }
 }

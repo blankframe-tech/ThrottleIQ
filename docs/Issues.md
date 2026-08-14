@@ -1542,3 +1542,127 @@ Worth recording so the next pass doesn't re-derive it:
 - `reset_beta_data.js` has a genuinely careful safety posture (dry-run default,
   project-id guard checked twice, idempotent).
 - No `badCertificateCallback` / `HttpOverrides`, no cleartext endpoints.
+
+## 25. Ending or sharing a ride was impossible offline — awaiting a Firestore write never returns (2026-08-14)
+
+**Status: FIXED 2026-08-14.** Reported from real use: *"I can't share rides or
+end when offline."*
+
+### Why it happened
+
+A Firestore write issued with no connection does **not** fail. The SDK accepts
+it into its own local mutation queue and the returned `Future` stays unresolved
+until a server acknowledges it — which, offline, is never. So this shape:
+
+```dart
+try {
+  await _firestore.collection('livePointers').doc(uid).set({...});
+} catch (e) {
+  print('Failed to clear live pointer: $e');   // never runs
+}
+```
+
+...does not degrade gracefully. It hangs, forever, and the `catch` that looks
+like it's handling the offline case handles nothing. Every one of these writes
+was already wrapped in `try`/`catch` and commented as "best effort", which is
+exactly why the bug survived review: the code reads as if it tolerates failure,
+and the failure mode it doesn't tolerate is *not failing*.
+
+`stopRide()` hit this on `_clearLivePointer()`, which runs for **every** rider
+with a uid — not just those who shared their location. Everything after it (the
+local `finalizeRide`, the bike odometer bump, the summary screen) was
+unreachable, so ending a ride offline did nothing at all. `shareRide()` hit the
+same wall on its `docRef.set(...)`, leaving the composer spinning.
+
+Three more instances of the same shape were found while fixing it, none of them
+reported yet but all of them live:
+
+- `restoreInterruptedRide()` awaited `_clearLivePointer()` — so recovering a
+  ride the app died during stalled offline, which is precisely when a rider is
+  likely to be out of coverage.
+- `dismissCrashAlert()` awaited a `falseCrashPositives` telemetry write
+  **before** setting the ride back to active. Dismissing a false crash alarm in
+  a dead spot left the ride stuck in the crash state.
+- `_handleCrashNotification()` awaited the `crashNotifications` write that
+  triggers the alert Cloud Function.
+
+### The fix
+
+Two layers, because the two cases want different things:
+
+1. **A durable outbox** (`core/cloud/outbox_service.dart`, `outbox` table added
+   in DB **v10**) for operations the rider explicitly asked for and must not
+   lose: sharing a ride, and the end-of-ride live-share teardown. The intent is
+   written to SQLite *before* any network attempt, so it survives being killed;
+   `SyncManager` drains it on every connectivity change, on login and on its
+   5-minute timer, ahead of the bulk ride/bike sync. Entries back off
+   exponentially (30s → 30min cap) and are keyed by ride/uid so re-queuing
+   supersedes rather than double-posting.
+2. **A bounded `_bestEffortWrite()`** for genuinely optional telemetry (crash
+   samples, live-session status pings). Same `try`/`catch`, now with a
+   `.timeout()` so "best effort" actually means it. Note the timeout does not
+   cancel anything — the Firestore SDK still delivers the write when signal
+   returns. We only stop waiting.
+
+Photo uploads needed one extra turn: Cloudinary mints a *new* asset per call, so
+a retry that re-uploaded would orphan the first copy and burn quota. The queued
+share therefore carries local file paths, and each URL is folded back into the
+row's payload as it lands, so a retry resumes after the uploads instead of
+redoing them.
+
+The share composer now says **"Saved — we'll post it when you're back online"**
+rather than reporting a failure, because it isn't one.
+
+### What is verified, and what isn't
+
+Verified: 20 new tests (`test/core/cloud/outbox_test.dart`,
+`test/database/outbox_migration_test.dart`) covering queue durability,
+supersede-on-requeue, ordering, backoff bounds, corrupt-payload tolerance, and
+the **v9 → v10 migration on the real upgrade ladder** rather than through
+`_onCreate`. That last one matters: a broken migration sends `_initDb` into its
+corrupt-file rescue, which deletes the database and every stored ride with it.
+
+**Not verified: actual offline behaviour on a device.** The delivery paths need
+a real Firestore, and the failure being fixed is a *timing* property of the
+network SDK. Someone should fly-mode a phone and confirm end-ride, share, and
+resume all complete promptly, then re-enable data and confirm the queue drains.
+
+## 26. A ride killed in its first seconds was deleted, not resumed (2026-08-14)
+
+**Status: FIXED 2026-08-14.** Same report as §25: *"when I'm riding and
+accidentally close the app, the data is lost."*
+
+Ride resume already existed and is genuinely thorough —
+`RideRecordingNotifier.restoreInterruptedRide()` rebuilds distance, top speed,
+moving time, route and ride clock from the persisted fixes and hands the rider
+a *paused* session to resume, end, or discard (see `ride_resume.dart`). The
+trigger is sound too: `restoreInterruptedRide()` runs off the `authStateProvider`
+listener in `app.dart`, and since that listener is what first creates the
+provider, the loading → signed-in transition cannot be missed.
+
+What was actually losing data was the write cadence underneath it:
+
+- **GPS fixes were batched 5-at-a-time (or every 3s).** Until the first flush
+  they existed only in memory. And `restoreInterruptedRide()` *deletes* any ride
+  with fewer than 2 stored points, on the reasonable grounds that no distance is
+  derivable from one. So an app killed in the opening seconds didn't lose a
+  little tail — it lost the entire ride, deliberately. Fixed with an early-ride
+  window (`_earlyRideFlushUntil = 8`): every fix is written through until the
+  ride has 8 persisted points, then normal batching resumes so a long ride
+  isn't doing an SQLite write per fix. A restored ride re-enters that window,
+  since a ride the app already died during is the one to be careful with.
+- **`_flushPointBuffer()` was fire-and-forget.** It never awaited the insert, so
+  a failure vanished silently and `stopRide()`/`pauseRide()` could finalize a
+  ride before its last fixes were committed. It now awaits, and on a failed
+  insert puts the batch back at the front of the buffer so the next flush
+  retries rather than leaving a hole in the trace.
+
+**Still a documented limitation, unchanged:** event counts (hard-brake /
+rapid-accel / high-jerk) and the fitted accelerometer axis are in-memory only
+and restart at 0 on a resume. They can't be honestly reconstructed from thinned
+points — see `ride_resume.dart`'s class doc.
+
+**Not verified on a device.** The fix is a durability property of process death,
+which the test suite can't stage. Worth confirming by hand: start a ride, force-
+kill the app after ~5 seconds, reopen, and check the ride comes back rather than
+vanishing.

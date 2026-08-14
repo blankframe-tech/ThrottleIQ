@@ -616,7 +616,14 @@ These exist in code/config but have never been exercised against the real
 backend or a real device. **Treat each as unproven until tested.**
 
 - [x] ~~**On-device behaviour**~~ **PARTIALLY VERIFIED 2026-07-23** — the project owner has now tested the live app directly (see §8/§8a/§8b history), surfacing several real bugs since fixed. Still open specifically: a real ride with the screen off for several minutes, to confirm the mid-ride-kill data-loss fix (§8b) actually holds.
-- [x] ~~Unit/widget test suite~~ **VERIFIED 2026-07-14** — 184/184 green.
+- [x] ~~Unit/widget test suite~~ **VERIFIED 2026-07-14** — 184/184 green. (775/775 as of 2026-08-14.)
+- [ ] 🔴 **Offline end / share / resume — the 2026-08-14 fix, unexercised on a device.** `Issues.md` §25 and §26. This is the highest-value device check on the list right now, because it was reported by the project owner from real use and because the bug being fixed is a *timing* property of the Firestore SDK that no test in this repo can stage: an awaited write with no connection never returns, so `try`/`catch` never fires and the caller hangs. The exact sequence to run, in **fly mode**:
+  1. Start a ride, ride a little, **end it** — it must finalize and show the summary promptly (this was hanging outright, for every rider, shared location or not).
+  2. **Share** that ride with a photo — the composer must return quickly and say *"Saved — we'll post it when you're back online"*.
+  3. Start another ride, **force-kill the app after ~5 seconds**, reopen — the ride must come back paused rather than vanishing (the <2-stored-points delete path, §26).
+  4. Trigger the crash overlay and **dismiss** it — the ride must return to active (it was stalling on a telemetry write).
+  5. **Re-enable data.** The queued share must post, the live pointer must clear, and nothing must double-post.
+- [ ] **DB schema 9 → 10** (`outbox` table) — unlike the 6 → 7 migration below, this one *is* covered by a test that runs the real `_onUpgrade` ladder over a v9 database with rides in it (`test/database/outbox_migration_test.dart`), because a broken migration here sends `_initDb` into its corrupt-file rescue, which **deletes the database and every stored ride**. Still worth one real upgrade over an existing install, since the test opens an in-memory DB rather than a rider's actual file.
 - [ ] **Google sign-in end-to-end** — config + code are in place; needs one real tap-through on a device.
 - [ ] **Firestore rules under real traffic** — rules deployed but only compiler-checked; exercise with a real account (read own rides, fail reading someone else's).
 - [x] ~~Live-share viewer~~ **HOSTED 2026-07-14** at `throttleiqfb.web.app/live/{token}` (HTTP 200 verified); end-to-end with a live ride still needs a device test.
@@ -898,7 +905,8 @@ backend or a real device. **Treat each as unproven until tested.**
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`Issues.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
-| DB schema | v7 (`custom_label` on `maintenance_logs`, added 2026-08-01) |
+| DB schema | **v10** (`outbox`, the offline write queue, added 2026-08-14 — `Issues.md` §25). v9 added `rides.moving_s`; v7 added `custom_label` on `maintenance_logs` |
+| Offline writes | Anything the rider explicitly asked for that needs the cloud goes through `core/cloud/outbox_service.dart`, **not** a bare `await` on Firestore. An awaited Firestore write with no connection never completes — it doesn't throw — so a direct `await` on a user-facing path hangs the app. `SyncManager` drains the queue on connectivity change, login, and its 5-minute timer. Optional telemetry uses `_bestEffortWrite()` (same idea, just a timeout, no durability) |
 
 ---
 

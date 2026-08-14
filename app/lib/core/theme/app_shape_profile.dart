@@ -1,5 +1,21 @@
 import 'app_theme_style.dart';
 
+/// Which gesture the Record screen's start control uses.
+///
+/// Not a cosmetic choice — the two are different widgets with different
+/// affordances — but it belongs with the shape tokens because the reason to
+/// pick one over the other is the skin's silhouette. See [AppShapeProfile]'s
+/// note on why this is the one exception to "shape never changes a widget".
+enum StartControlStyle {
+  /// Full-width "slide to start" track. The historical control, and the right
+  /// one for the boxy/terminal skins whose whole vocabulary is rectangles.
+  slide,
+
+  /// Circular press-and-hold ring: hold the button and a progress arc sweeps
+  /// the circumference; release early and it unwinds.
+  holdRing,
+}
+
 /// One immutable set of *shape* tokens — corner radii, rule weights and the
 /// handful of control metrics that read as part of a skin's silhouette.
 ///
@@ -21,6 +37,16 @@ import 'app_theme_style.dart';
 /// add, or remove a widget. No skin changes the layout hierarchy — the same
 /// screens render the same widgets in the same order on every skin. These
 /// tokens only change how those widgets are drawn and how much room they take.
+///
+/// [startControl] is the one deliberate exception, and it is scoped to a single
+/// control. A slide-to-start bar is a *rectangle* gesture — its affordance is
+/// the width it travels across — and on the rounded skins it was the last
+/// hard-edged full-width slab on an otherwise soft screen. Swapping it for a
+/// press-and-hold ring on those skins is the same trade the radii make
+/// elsewhere, just at the scale where shape and interaction stop being
+/// separable. Both variants do exactly one thing (start a ride) and both are
+/// deliberate gestures rather than a single tap, so nothing about the screen's
+/// meaning changes with the skin.
 class AppShapeProfile {
   /// Corner radii, smallest to largest. [radiusFull] is the "pill" token —
   /// used for chips, progress bars and badges, where a boxy skin wants a
@@ -48,6 +74,9 @@ class AppShapeProfile {
   final double fieldPaddingH;
   final double fieldPaddingV;
 
+  /// Which start control the Record screen renders. See [StartControlStyle].
+  final StartControlStyle startControl;
+
   const AppShapeProfile({
     required this.radiusSm,
     required this.radiusMd,
@@ -59,6 +88,7 @@ class AppShapeProfile {
     required this.controlHeight,
     required this.fieldPaddingH,
     required this.fieldPaddingV,
+    this.startControl = StartControlStyle.slide,
   });
 
   /// Sharp, near-zero-radius instrument-panel edges — the shape every skin
@@ -98,6 +128,11 @@ class AppShapeProfile {
     controlHeight: 54,
     fieldPaddingH: 18,
     fieldPaddingV: 16,
+    // The full-width slide track was the one hard rectangle left on these
+    // skins, and its affordance is horizontal travel — there is no rounded
+    // version of it that still reads as "slide". A hold-to-start ring is the
+    // circular equivalent of the same deliberate, non-accidental gesture.
+    startControl: StartControlStyle.holdRing,
   );
 
   /// Retro's old-terminal shape: every corner square, every rule doubled.

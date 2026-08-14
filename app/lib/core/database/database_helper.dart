@@ -28,7 +28,19 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 9);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 10);
+
+  /// Runs the real migration ladder against an already-open database.
+  ///
+  /// Exists so an upgrade can be tested on the path an existing install
+  /// actually takes. [createSchemaForTesting] goes through `_onCreate`, which
+  /// builds the current schema directly and therefore proves nothing about
+  /// whether a rider on the previous version can still open their database —
+  /// the failure mode that matters, because it bricks the app for exactly the
+  /// people who already have rides stored.
+  @visibleForTesting
+  Future<void> upgradeSchemaForTesting(Database db, int from, int to) =>
+      _onUpgrade(db, from, to);
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
@@ -45,7 +57,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -126,7 +138,47 @@ class DatabaseHelper {
       // simply have no jam figure to show, rather than a guessed-at one.
       await db.execute('ALTER TABLE rides ADD COLUMN moving_s INTEGER');
     }
+    if (oldVersion < 10) {
+      await db.execute(_createOutboxSql);
+      await db.execute(_createOutboxIndexSql);
+    }
   }
+
+  /// Durable queue of cloud writes the rider has already committed to, but
+  /// which couldn't reach Firestore yet.
+  ///
+  /// This exists because awaiting a Firestore write while offline does NOT
+  /// fail — it simply never completes, since the returned Future resolves on
+  /// server acknowledgement. A `try`/`catch` around it catches nothing and the
+  /// caller hangs forever. That is what made "end ride" and "share ride"
+  /// unusable without a connection: the rider tapped the button and the app
+  /// sat there. See docs/Issues.md §25.
+  ///
+  /// Rows are the rider's *intent*, recorded the instant they tap, and are
+  /// replayed by [SyncManager] when connectivity returns. `payload` is JSON
+  /// whose shape is owned by the handler for that `kind` — deliberately
+  /// schemaless here so a new queued operation needs no migration.
+  ///
+  /// `next_attempt_at` carries the exponential backoff, so one permanently
+  /// failing row can't spin the drain loop.
+  static const String _createOutboxSql = '''
+    CREATE TABLE IF NOT EXISTS outbox (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at TEXT,
+      last_error TEXT
+    )
+  ''';
+
+  /// The drain loop's only query shape: oldest-first, among rows whose backoff
+  /// has elapsed.
+  static const String _createOutboxIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_outbox_next_attempt
+      ON outbox(next_attempt_at, created_at)
+  ''';
 
   /// Tombstones for locally-deleted bikes.
   ///
@@ -261,5 +313,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute(_createDeletedBikesSql);
+    await db.execute(_createOutboxSql);
+    await db.execute(_createOutboxIndexSql);
   }
 }

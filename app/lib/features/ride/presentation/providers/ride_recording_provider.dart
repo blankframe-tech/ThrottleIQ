@@ -34,6 +34,7 @@ import '../../../garage/data/models/bike_model.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../domain/entities/live_session_entity.dart';
+import '../../../../core/cloud/outbox_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const _uuid = Uuid();
@@ -237,6 +238,19 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   static const int _bufferFlushSize = 5;
   static const Duration _bufferFlushInterval = Duration(seconds: 3);
 
+  /// Fixes that have actually reached SQLite for the current ride.
+  ///
+  /// Tracked (rather than queried) purely to drive [_earlyRideFlushUntil] — a
+  /// count is enough, and a COUNT(*) per fix would not be.
+  int _persistedPointCount = 0;
+
+  /// Below this many persisted fixes, every fix is flushed immediately instead
+  /// of batched — see the call site in `_onPosition`. Deliberately a little
+  /// above the 2 that [restoreInterruptedRide] needs, so a ride killed in its
+  /// opening seconds comes back with a usable trace rather than the bare
+  /// minimum.
+  static const int _earlyRideFlushUntil = 8;
+
   // ── Live map route ────────────────────────────────────────────────────
   //
   // The route used to be rebuilt as `[...state.polyline, newPoint]` on every
@@ -403,6 +417,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _polyline = <LatLng>[];
     _displayStride = 1;
     _fixCount = 0;
+    _persistedPointCount = 0;
     _lastSensorUiPush = null;
     _skipNextDistanceDelta = false;
     _lastElapsedPersist = null;
@@ -456,7 +471,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         appState == AppLifecycleState.inactive ||
         appState == AppLifecycleState.detached ||
         appState == AppLifecycleState.hidden) {
-      _flushPointBuffer();
+      unawaited(_flushPointBuffer());
       unawaited(_persistElapsed(force: true));
     }
   }
@@ -715,8 +730,17 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         'is_cornering': point.isCornering == null ? null : (point.isCornering! ? 1 : 0),
       });
 
-      if (_pointBuffer.length >= _bufferFlushSize) {
-        _flushPointBuffer();
+      // Early in a ride every fix is written through immediately instead of
+      // being batched. A ride needs 2 persisted points to be resumable at all
+      // (restoreInterruptedRide deletes anything shorter — there is no
+      // distance to derive from one point), and batching means the first
+      // _bufferFlushSize fixes exist only in memory. Killing the app in those
+      // first seconds therefore didn't just lose a little tail, it lost the
+      // whole ride. After the threshold the normal batching takes over, which
+      // is what keeps a long ride from doing an SQLite write per fix.
+      final flushEveryFix = _persistedPointCount < _earlyRideFlushUntil;
+      if (flushEveryFix || _pointBuffer.length >= _bufferFlushSize) {
+        unawaited(_flushPointBuffer());
       }
     }
 
@@ -776,15 +800,29 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _flushTimer?.cancel();
     _flushTimer = Timer.periodic(_bufferFlushInterval, (_) {
       if (state.status == RecordingStatus.active && _pointBuffer.isNotEmpty) {
-        _flushPointBuffer();
+        unawaited(_flushPointBuffer());
       }
     });
   }
 
-  void _flushPointBuffer() {
+  /// Writes buffered fixes to SQLite.
+  ///
+  /// Now awaits the insert (it was fire-and-forget) and reports failure rather
+  /// than dropping it silently. The buffer is copied and cleared *before* the
+  /// await so fixes arriving mid-write aren't lost or written twice; on a
+  /// failed insert they're put back at the front of the buffer so the next
+  /// flush retries them rather than the ride quietly developing a hole.
+  Future<void> _flushPointBuffer() async {
     if (_pointBuffer.isEmpty) return;
-    _pointDao.insertBatch(List.from(_pointBuffer));
+    final batch = List<Map<String, dynamic>>.from(_pointBuffer);
     _pointBuffer.clear();
+    try {
+      await _pointDao.insertBatch(batch);
+      _persistedPointCount += batch.length;
+    } catch (e) {
+      debugPrint('[Ride] point flush failed (${batch.length} fixes): $e');
+      _pointBuffer.insertAll(0, batch);
+    }
   }
 
   /// Explicit per-ride opt-in for live location sharing (docs/Issues.md
@@ -824,7 +862,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
   Future<void> pauseRide() async {
     if (state.status != RecordingStatus.active) return;
-    _flushPointBuffer();
+    await _flushPointBuffer();
     _accumulatedDuration = state.elapsed;
     _activeStart = null;
     _locationSub?.pause();
@@ -907,14 +945,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _crashCountdownTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
 
-    // Same teardown as stopRide: anyone holding the share link must stop
-    // seeing a live ride, and the permanent /r/{username} link must stop
-    // resolving to it.
+    // Same teardown as stopRide, and queued the same way so discarding a ride
+    // works offline too.
     _liveSessionTimer?.cancel();
-    await _updateLiveSessionStatus(LiveSessionStatus.completed);
-    await _clearLivePointer();
-    _currentLiveSessionToken = null;
-    _liveShareEnabled = false;
+    await _tearDownLiveShare();
 
     // Deliberately dropped rather than flushed — these are the points of a
     // ride that is about to be deleted.
@@ -946,18 +980,24 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // was never cancelled here (unlike every other timer above) and the
     // session doc was never marked finished. Anyone holding the share link
     // kept seeing a permanent "RIDING" banner frozen on the last position
-    // from whenever the ride ended. Mark it completed *before* clearing
-    // _currentLiveSessionToken, since _updateLiveSessionStatus reads it.
+    // from whenever the ride ended.
+    //
+    // Both teardown writes now go through the outbox instead of being awaited
+    // directly here. That is the fix for "I can't end a ride offline": an
+    // awaited Firestore write does not fail without a connection, it simply
+    // never completes, so ending a ride hung on _clearLivePointer() — which
+    // runs for every rider with a uid, shared ride or not — and the rest of
+    // this method (the local finalize that actually saves the ride) was never
+    // reached. The outbox records the intent to disk first and bounds the
+    // delivery attempt, so ending a ride is now a local operation that cannot
+    // be blocked by the network. See docs/Issues.md §25.
     _liveSessionTimer?.cancel();
-    await _updateLiveSessionStatus(LiveSessionStatus.completed);
-    // Same reasoning one level up: the permanent /r/{username} link must stop
-    // resolving to this ride the moment it ends, or it becomes a frozen
-    // "last seen here" beacon that outlives the rider's intent to share.
-    await _clearLivePointer();
-    _currentLiveSessionToken = null;
-    _liveShareEnabled = false;
+    await _tearDownLiveShare();
 
-    _flushPointBuffer();
+    // Awaited, not fire-and-forget: everything below this finalizes the ride
+    // and hands the rider a summary, and the last few fixes must be on disk
+    // before that happens or the saved distance disagrees with the trace.
+    await _flushPointBuffer();
     await WakelockPlus.disable();
     await _clearRecordingState();
 
@@ -1184,6 +1224,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _polyline = <LatLng>[];
     _displayStride = 1;
     _fixCount = 0;
+    // Seeded from what's actually on disk, so a short restored ride re-enters
+    // the flush-every-fix window (see _earlyRideFlushUntil) — a ride the app
+    // already died once during is exactly the one to be careful with.
+    _persistedPointCount = fixes.length;
     for (final fix in fixes) {
       _appendToPolyline(LatLng(fix.lat, fix.lng));
     }
@@ -1212,7 +1256,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // link parked on the last position from before the app died, for as long
     // as the paused ride sits there. Clear it now; resuming mints a fresh
     // token and re-points it (see _publishLiveSession).
-    await _clearLivePointer();
+    //
+    // Queued, not awaited against the network: recovering an interrupted ride
+    // is the one moment this must never stall, and a rider whose app died
+    // mid-ride is quite likely out of coverage. Same reasoning as stopRide().
+    await _tearDownLiveShare();
   }
 
   /// Handle crash detection: show countdown, play alert, notify contacts
@@ -1247,18 +1295,23 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _crashCountdownTimer?.cancel();
     state = state.copyWith(crashDetected: false, crashCountdown: 60);
 
-    // Log false positive to Firestore for tuning
+    // Log false positive to Firestore for tuning. Bounded and non-fatal: this
+    // is telemetry, and it used to sit unguarded in front of the finalizeRide
+    // below that actually gets the rider riding again.
     final uid = _ref.read(currentUserProvider)?.uid;
     if (uid != null && state.ride != null) {
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('falseCrashPositives')
-          .add({
-        'rideId': state.ride!.id,
-        'timestamp': DateTime.now().toIso8601String(),
-        'crashSignal': _detector.lastCrashSignal?.toMap(),
-      });
+      await _bestEffortWrite(
+        'false-positive log',
+        () => _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('falseCrashPositives')
+            .add({
+          'rideId': state.ride!.id,
+          'timestamp': DateTime.now().toIso8601String(),
+          'crashSignal': _detector.lastCrashSignal?.toMap(),
+        }),
+      );
     }
 
     // Resume normal ride status
@@ -1275,19 +1328,21 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     final ride = state.ride;
     if (uid == null || ride == null) return;
 
-    // Trigger Cloud Function via Firestore write
-    try {
-      await _firestore.collection('crashNotifications').add({
+    // Trigger Cloud Function via Firestore write. Bounded like every other
+    // write here — but note the timeout does not discard it: the Firestore SDK
+    // holds the write locally and delivers it when signal returns, which is
+    // the behaviour you want for a crash alert sent from a dead spot.
+    await _bestEffortWrite(
+      'crash notification',
+      () => _firestore.collection('crashNotifications').add({
         'uid': uid,
         'rideId': ride.id,
         'timestamp': DateTime.now().toIso8601String(),
         'lastLat': _lastPoint?.lat,
         'lastLng': _lastPoint?.lng,
         'status': 'pending', // 'pending', 'contacted', 'acknowledged'
-      });
-    } catch (e) {
-      print('Failed to send crash notification: $e');
-    }
+      }),
+    );
   }
 
   /// Create a live share session token.
@@ -1340,10 +1395,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
 
-      await _firestore
-          .collection('liveSessions')
-          .doc(token)
-          .set(session.toFirestore());
+      await _bestEffortWrite(
+        'live session publish',
+        () => _firestore
+            .collection('liveSessions')
+            .doc(token)
+            .set(session.toFirestore()),
+      );
 
       // Point the rider's permanent link at this session — only on the tick
       // that minted the token, not on all ~360 updates of a one-hour ride.
@@ -1383,17 +1441,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   ///
   /// Best-effort like every other live-share write here: a failure costs the
   /// permanent link for this ride, never the ride recording itself.
-  Future<void> _publishLivePointer(String uid, String token) async {
-    try {
-      await _firestore.collection('livePointers').doc(uid).set({
+  Future<void> _publishLivePointer(String uid, String token) {
+    return _bestEffortWrite(
+      'live pointer publish',
+      () => _firestore.collection('livePointers').doc(uid).set({
         'uid': uid,
         'token': token,
         'active': true,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
-      });
-    } catch (e) {
-      print('Failed to publish live pointer: $e');
-    }
+      }),
+    );
   }
 
   /// Flips the permanent link back to "not riding right now".
@@ -1404,27 +1461,64 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// current viewer, but relying on the viewer to be well-behaved with data
   /// it has already been handed is exactly the mistake that made the
   /// liveSessions rule a privacy hole.
-  Future<void> _clearLivePointer() async {
-    final uid = _ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
+  /// Runs a fire-and-forget cloud write with a hard time limit.
+  ///
+  /// Every Firestore write in this notifier is best-effort — losing a live
+  /// pointer or a crash-tuning sample must never cost the rider their ride.
+  /// They were all already wrapped in `try`/`catch`, which turns out not to be
+  /// enough: offline, a Firestore write neither succeeds nor throws, it just
+  /// never completes, so `catch` never runs and the awaiting caller stalls
+  /// indefinitely. `dismissCrashAlert()` was the worst of these — it awaited a
+  /// false-positive log *before* setting the ride back to active, so
+  /// dismissing a false crash alarm with no signal left the ride stuck in the
+  /// crash state.
+  ///
+  /// Bounding the wait is what makes "best effort" actually mean best effort.
+  /// Note the write is NOT cancelled on timeout — the Firestore SDK keeps it
+  /// in its own local mutation queue and delivers it whenever the connection
+  /// returns. We simply stop waiting. See docs/Issues.md §25.
+  Future<void> _bestEffortWrite(String label, Future<void> Function() write) async {
     try {
-      await _firestore.collection('livePointers').doc(uid).set({
-        'uid': uid,
-        'token': null,
-        'active': false,
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
-      });
+      await write().timeout(kOutboxAttemptTimeout);
+    } on TimeoutException {
+      debugPrint('[Ride] $label not confirmed within '
+          '${kOutboxAttemptTimeout.inSeconds}s — queued by Firestore, moving on');
     } catch (e) {
-      print('Failed to clear live pointer: $e');
+      debugPrint('[Ride] $label failed: $e');
     }
+  }
+
+  /// Ends the live-share session and clears the rider's permanent pointer,
+  /// without ever blocking on the network.
+  ///
+  /// Both writes are handed to [OutboxService], which persists the intent
+  /// before attempting delivery and gives that attempt a hard timeout. Offline
+  /// this returns in milliseconds with the teardown durably queued; the writes
+  /// land on the next sync. Online it behaves as the direct awaits used to.
+  ///
+  /// The local flags are cleared either way — as far as this device is
+  /// concerned the ride is no longer being shared the moment the rider ends
+  /// it, regardless of when the cloud finds out.
+  Future<void> _tearDownLiveShare() async {
+    final uid = _ref.read(currentUserProvider)?.uid;
+    final token = _currentLiveSessionToken;
+    _currentLiveSessionToken = null;
+    _liveShareEnabled = false;
+    if (uid == null) return;
+
+    await OutboxService.instance.enqueueLiveSessionTeardown(
+      uid: uid,
+      token: token,
+    );
   }
 
   /// Update live session status
   Future<void> _updateLiveSessionStatus(LiveSessionStatus status) async {
     if (_currentLiveSessionToken == null) return;
 
-    try {
-      await _firestore
+    await _bestEffortWrite(
+      'live session status',
+      () => _firestore
           .collection('liveSessions')
           .doc(_currentLiveSessionToken)
           .update({
@@ -1434,10 +1528,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         // to anything reading the field.
         'active': status != LiveSessionStatus.completed,
         'updatedAt': DateTime.now().toIso8601String(),
-      });
-    } catch (e) {
-      print('Failed to update live session status: $e');
-    }
+      }),
+    );
   }
 
   @override
@@ -1450,7 +1542,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _crashCountdownTimer?.cancel();
     _liveSessionTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    _flushPointBuffer();
+    unawaited(_flushPointBuffer());
     super.dispose();
   }
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
@@ -12,7 +13,6 @@ import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
-import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 
 const _captionMaxLength = 280;
@@ -112,17 +112,15 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     try {
       final bikes = ref.read(garageProvider).valueOrNull ?? [];
       final bike = bikes.where((b) => b.id == ride.bikeId).firstOrNull;
-      final repo = RideShareRepository();
 
-      // Uploaded through the same Cloudinary path as the old single photo,
-      // one call per file. Future.wait keeps the returned urls in the picked
-      // order, so the feed card shows them the way the rider arranged them.
-      final photoUrls = await Future.wait(
-        _imagePaths.map(
-            (path) => repo.uploadRidePhoto(user.uid, widget.rideId, File(path))),
-      );
-
-      await repo.shareRide(
+      // Handed to the outbox rather than written straight to Firestore. The
+      // rider's intent is on disk before this returns, so a share started with
+      // no signal is never lost and never hangs — it posts on the next sync.
+      // Photo uploads are part of the queued operation (the local file paths
+      // travel with it), which is why nothing is uploaded here first: an
+      // upload that succeeded while the Firestore write didn't would otherwise
+      // have to be redone, orphaning the first copy.
+      final deliveredNow = await OutboxService.instance.enqueueShareRide(
         rideId: ride.id,
         userId: user.uid,
         userName: user.displayName ?? 'Rider',
@@ -135,17 +133,23 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         durationSeconds: ride.durationSeconds ?? 0,
         maxSpeedKmh: ride.maxSpeedKmh,
         polyline: _polyline,
-        mapSnapshotUrl: null,
         audience: _audience,
-        photoUrls: photoUrls,
+        localPhotoPaths: _imagePaths,
         caption: caption.isEmpty ? null : caption,
       );
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ride shared')),
+        SnackBar(
+          content: Text(deliveredNow
+              ? 'Ride shared'
+              : "Saved — we'll post it when you're back online"),
+        ),
       );
       context.go('/home/social');
     } catch (e) {
+      // Reaching here now means something local failed (the queue write
+      // itself), not a network problem — those are absorbed by the outbox.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to share ride: $e')),
