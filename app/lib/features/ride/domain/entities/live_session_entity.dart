@@ -16,6 +16,15 @@ class LiveSessionEntity extends Equatable {
   final DateTime updatedAt;
   final DateTime expiresAt;
 
+  /// Explicit opt-in marker — docs/Issues.md §24.1. `_publishLiveSession`
+  /// only ever runs after the rider has actively turned sharing on, so this
+  /// is always `true` for a doc this app writes. It exists as a
+  /// belt-and-suspenders field the Firestore rule also checks
+  /// (`firestore.rules`'s `liveSessions/{token}` `get` rule): even if a
+  /// future regression reintroduced unconditional publishing, an anonymous
+  /// reader still can't get anywhere without this field being true.
+  final bool shareable;
+
   const LiveSessionEntity({
     required this.token,
     required this.uid,
@@ -28,6 +37,7 @@ class LiveSessionEntity extends Equatable {
     this.status = LiveSessionStatus.riding,
     required this.updatedAt,
     required this.expiresAt,
+    this.shareable = true,
   });
 
   LiveSessionEntity copyWith({
@@ -42,6 +52,7 @@ class LiveSessionEntity extends Equatable {
     LiveSessionStatus? status,
     DateTime? updatedAt,
     DateTime? expiresAt,
+    bool? shareable,
   }) {
     return LiveSessionEntity(
       token: token ?? this.token,
@@ -55,6 +66,7 @@ class LiveSessionEntity extends Equatable {
       status: status ?? this.status,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
+      shareable: shareable ?? this.shareable,
     );
   }
 
@@ -69,6 +81,7 @@ class LiveSessionEntity extends Equatable {
       'speedMs': speedMs,
       'batteryPct': batteryPct,
       'status': status.toString().split('.').last,
+      'shareable': shareable,
       // Firestore Timestamps, NOT ISO strings.
       //
       // A Firestore TTL policy only acts on a real `Timestamp` field — a
@@ -97,6 +110,11 @@ class LiveSessionEntity extends Equatable {
       ),
       updatedAt: _dateFrom(data['updatedAt']),
       expiresAt: _dateFrom(data['expiresAt']),
+      // Legacy sessions written before §24.1 have no `shareable` field.
+      // Default false — fail closed rather than open — even though the
+      // Firestore rule (not this parse) is what actually gates a stranger's
+      // read.
+      shareable: data['shareable'] as bool? ?? false,
     );
   }
 
@@ -126,5 +144,6 @@ class LiveSessionEntity extends Equatable {
         status,
         updatedAt,
         expiresAt,
+        shareable,
       ];
 }

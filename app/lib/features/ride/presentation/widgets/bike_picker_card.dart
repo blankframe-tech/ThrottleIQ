@@ -50,7 +50,7 @@ class BikePickerCard extends ConsumerWidget {
     final picked = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppDimensions.radiusXl)),
       ),

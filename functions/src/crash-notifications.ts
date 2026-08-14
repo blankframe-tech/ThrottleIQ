@@ -76,8 +76,19 @@ export const onCrashNotification = functions.firestore
   });
 
 /**
- * Send notification to a contact via SMS or email
- * MOCK: Replace with actual Twilio/SendGrid integration
+ * Send notification to a contact via SMS or email.
+ * MOCK: Replace with actual Twilio/SendGrid integration.
+ *
+ * Neither the message content built below nor any contact PII is logged or
+ * persisted (docs/Issues.md §24.8). This function was previously logging
+ * `contact.phone`/`contact.email` directly via console.log, and the SMS body
+ * it logged also carried the crash's GPS coordinates — third-party PII the
+ * contact never consented to ThrottleIQ having, landing in Cloud Logging
+ * (retained by default, visible to anyone with project Viewer) and in
+ * `notificationLog`. The message bodies still exist here (a real
+ * Twilio/SendGrid integration will need exactly this content to actually
+ * send something) but are only ever handed to that future call, never to
+ * console.log or Firestore.
  */
 async function sendContactNotification(
   contact: EmergencyContact,
@@ -90,14 +101,13 @@ async function sendContactNotification(
     ? `https://maps.google.com/?q=${lastLat},${lastLng}`
     : 'Location unavailable';
 
-  // MOCK SMS message
+  // MOCK SMS message — built for a future Twilio call, deliberately never
+  // logged (see doc comment above).
   const smsMessage = `ALERT: ${contact.name}, your emergency contact ${uid} may have crashed. ` +
     `Ride: ${rideId}. Location: ${location}. Reply CONFIRM if they are OK.`;
 
-  // MOCK email subject
+  // MOCK email subject/body — same "built for later, never logged" rule.
   const emailSubject = `ThrottleIQ Emergency Alert - Potential Crash`;
-
-  // MOCK email body
   const emailBody = `
 Dear ${contact.name},
 
@@ -115,23 +125,28 @@ If no confirmation is received within 15 minutes, we will send a follow-up alert
 Stay safe,
 ThrottleIQ Safety Team
   `;
+  // Referenced (not logged) so a real Twilio/SendGrid call has something to
+  // send once this MOCK is replaced — see this function's doc comment.
+  void smsMessage;
+  void emailSubject;
+  void emailBody;
 
-  console.log(`[MOCK] Sending SMS to ${contact.phone}: ${smsMessage}`);
-  console.log(`[MOCK] Sending email to ${contact.email}: ${emailSubject}`);
+  // No PII, no message content, no GPS — just enough to know an attempt was
+  // made and for which contact record, without saying who that contact is.
+  console.log(
+    `[MOCK] Would notify emergencyContacts/${contact.id} for uid ${uid} (ride ${rideId}); ` +
+      'no message was actually sent (crash-alert delivery is not yet implemented).'
+  );
 
-  // TODO: Integrate with Twilio for SMS
-  // TODO: Integrate with SendGrid or Firebase Email for email
-
-  // For now, log the attempt
+  // For now, log the attempt — contactId only, so a real integration's
+  // delivery log doesn't duplicate the contact's phone/email at rest
+  // (docs/Issues.md §24.8). Look up the contact by id if that's ever needed.
   await db
     .collection('users')
     .doc(uid)
     .collection('notificationLog')
     .add({
       contactId: contact.id,
-      contactName: contact.name,
-      phone: contact.phone,
-      email: contact.email,
       rideId,
       timestamp: new Date().toISOString(),
       method: contact.phone ? 'sms' : 'email',

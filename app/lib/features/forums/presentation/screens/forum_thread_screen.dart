@@ -35,8 +35,9 @@ class ForumThreadScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusLg)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusLg)),
       ),
       builder: (_) => _NewPostSheet(forumId: forumId),
     ).then((posted) {
@@ -76,9 +77,9 @@ class ForumThreadScreen extends ConsumerWidget {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: AppColors.surface,
-                shape: const RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusLg)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(AppDimensions.radiusLg)),
                 ),
                 builder: (_) => _MaintainersSheet(forumId: forumId),
               ),

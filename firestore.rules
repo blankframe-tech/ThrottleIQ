@@ -64,13 +64,114 @@ service cloud.firestore {
     // The single global admin. Mirrors kAdminEmail in the app's
     // forum_permissions.dart, but is enforced HERE independently — the client
     // check is only cosmetic (it hides buttons); this is what actually stops
-    // a non-admin from deleting other riders' content. Move both to a custom
-    // claim (request.auth.token.admin) before public launch; an email
-    // comparison is only as trustworthy as the provider's verification.
+    // a non-admin from deleting other riders' content.
+    //
+    // docs/Issues.md §24.9: prefers the `admin` custom claim
+    // (request.auth.token.admin) — set via scripts/set_admin_claim.js, which
+    // only this project's own service-account credentials can run — over the
+    // email-string comparison this used to be exclusively. A custom claim can
+    // only ever be written server-side with the Admin SDK, never by a client
+    // regardless of what a Firestore rule or Cloud Function bug might
+    // otherwise allow; an email claim is only as trustworthy as the auth
+    // provider's verification of it. The email check remains as a fallback so
+    // nothing breaks before set_admin_claim.js has actually been run once —
+    // it can be deleted after that.
+    // Note the `.get(key, default)` form on email_verified/email, not direct
+    // property access: a token that simply lacks the claim (any non-email
+    // sign-in method — anonymous, phone) makes `request.auth.token.email_verified`
+    // an evaluation ERROR, not `false`. That error propagates out of every
+    // rule that calls this, including through the `||` chains in
+    // canModerateForum() and the clauses that use it, denying writes that
+    // should have been allowed on their other branch. Caught by the rules
+    // tests in scripts/test/rules/ (docs/Issues.md §24.11).
     function isAdmin() {
-      return request.auth != null &&
-        request.auth.token.email_verified == true &&
-        request.auth.token.email.lower() == 'the.abraar.rar@gmail.com';
+      return request.auth != null && (
+        request.auth.token.get('admin', false) == true ||
+        (request.auth.token.get('email_verified', false) == true &&
+         request.auth.token.get('email', '').lower() == 'the.abraar.rar@gmail.com'));
+    }
+
+    // Ties an engagement-counter bump to the SAME transaction
+    // creating/deleting the per-user doc it's supposed to represent —
+    // docs/Issues.md §24.7. Before this, a tally like `likes` or
+    // `upvotes`/`downvotes` could move by exactly ±1 per REQUEST, but
+    // nothing capped the number of requests: a client could loop the same
+    // update and drive any tally to an arbitrary value, since the rule never
+    // looked at the votes/likes subcollection at all. Every real caller
+    // (RideShareRepository.toggleLike/.vote, ForumRepository.votePost)
+    // already writes the counter bump and the per-user doc in the SAME
+    // Firestore transaction, so `existsAfter()`/`getAfter()` — which see the
+    // state once the WHOLE transaction commits, unlike `exists()`/`get()`,
+    // which see only the state as of the transaction's START — can require
+    // that a counter only moves when its paired doc is actually being
+    // created, deleted, or flipped in lockstep within that same commit. A
+    // client that tries to bump a counter alone, without the paired write,
+    // now fails this check; so does looping the same bump repeatedly, since
+    // after the first successful call the "before" state has already
+    // changed.
+    //
+    // `likeBumpValid` covers the simple create/delete-only shape (rides'
+    // `likes`, a boolean-ish per-user doc). `voteBumpValid` covers the
+    // three-state shape (`votes/{uid}` → {value: 1 | -1} or absent) shared by
+    // rides' upvotes/downvotes and forum posts' upvotes/downvotes: it reads
+    // the vote doc's value before and after (0 standing for "no vote"), and
+    // requires the actual upvotes/downvotes diff to match exactly what that
+    // before→after transition implies — covering a fresh vote, a toggle-off,
+    // and a flip (down→up or up→down) as the same one formula rather than
+    // three separate cases.
+    function likeBumpValid(likeDocPath, delta) {
+      return delta == 1
+        ? (!exists(likeDocPath) && existsAfter(likeDocPath))
+        : (delta == -1 && exists(likeDocPath) && !existsAfter(likeDocPath));
+    }
+
+    // Whether `docPath` is being created by `uid` in THIS commit — the shape
+    // behind the comment/reply counter bumps. Unlike likes/votes, whose doc id
+    // is the caller's uid and so can be reconstructed inside the rule, a
+    // comment/reply gets an auto-generated id the rule has no way to guess, so
+    // the bump carries it in `lastCommentId`/`lastReplyId` and this checks that
+    // id. `!exists(...)` is what stops a replay: exists() sees the state as of
+    // the transaction's START, so pointing the bump at a comment that was
+    // already there (anyone's, including the caller's own earlier one) fails.
+    // The authorship check keeps the bump from riding on someone else's
+    // concurrently-created comment.
+    function newDocBy(docPath, uid) {
+      return !exists(docPath) && existsAfter(docPath) &&
+        getAfter(docPath).data.userId == uid;
+    }
+
+    // The mirror of newDocBy for a counter going DOWN: the named doc existed
+    // at the start of this commit and is gone after it. No authorship check
+    // here on purpose — the doc's own `allow delete` rule decides who may
+    // remove it, and it runs in the same batch, so a caller who isn't allowed
+    // to delete never gets the decrement either.
+    function docRemoved(docPath) {
+      return exists(docPath) && !existsAfter(docPath);
+    }
+
+    function voteBumpValid(voteDocPath, upvotesBefore, upvotesAfter, downvotesBefore, downvotesAfter) {
+      let before = exists(voteDocPath) ? get(voteDocPath).data.value : 0;
+      let after = existsAfter(voteDocPath) ? getAfter(voteDocPath).data.value : 0;
+      return before != after &&
+        (upvotesAfter - upvotesBefore) == (after == 1 ? 1 : 0) - (before == 1 ? 1 : 0) &&
+        (downvotesAfter - downvotesBefore) == (after == -1 ? 1 : 0) - (before == -1 ? 1 : 0);
+    }
+
+    // Whether `handle` is claimed by `uid` in usernames/{handle}, evaluated
+    // AFTER the current write (existsAfter/getAfter, not exists/get) — used
+    // to validate a users/{uid} profile write's usernameLower field below.
+    // This has to be the "After" form: setUsername() claims the handle and
+    // writes the profile doc's usernameLower in the SAME transaction, and a
+    // plain exists()/get() inside a rule sees only the state as of the
+    // transaction's START, before either write lands — it would see no
+    // usernames/{handle} doc yet and reject every legitimate username claim.
+    // existsAfter()/getAfter() see the state once the whole transaction has
+    // committed, which is exactly what's needed to check two documents
+    // written together for consistency. (rules_version '2', declared at the
+    // top of this file, is required for these to exist at all.)
+    function usernameClaimedBy(handle, uid) {
+      return existsAfter(/databases/$(database)/documents/usernames/$(handle)) &&
+        getAfter(/databases/$(database)/documents/usernames/$(handle)).data.uid == uid;
     }
 
     // Whether the requester may moderate (delete other people's content in)
@@ -102,7 +203,31 @@ service cloud.firestore {
     // pre-existing fully-open behavior for anyone who never touches it.
     match /users/{uid} {
       allow read: if profileVisibleTo(uid, resource.data);
-      allow write: if request.auth.uid == uid;
+
+      // Owner-only, PLUS docs/Issues.md §24.5: a usernameLower change must be
+      // backed by a real claim in usernames/{handle}. This rule used to be a
+      // bare `request.auth.uid == uid` with no field validation at all.
+      // ProfileRepository.setUsername() claims usernames/{handle} in a
+      // transaction to guarantee global handle uniqueness, but nothing
+      // stopped a client from skipping that transaction and writing
+      // {'usernameLower': 'victimhandle', ...} straight into its own profile
+      // doc — rider search (searchByUsername) reads usernameLower directly,
+      // not the reservation collection, so that alone was enough to
+      // impersonate any handle in search results.
+      //
+      // "Changed" means the merged resulting document's usernameLower
+      // differs from what's currently stored — the very common case of some
+      // OTHER field being written (updatePublicStats, setVisibility, a
+      // `set(..., merge: true)` that doesn't touch usernameLower at all)
+      // still carries usernameLower in request.resource.data because merge
+      // writes are evaluated against the full resulting document, not just
+      // the sent fields — so this only actually constrains a write that
+      // introduces a NEW usernameLower value.
+      allow write: if request.auth.uid == uid &&
+        (!('usernameLower' in request.resource.data) ||
+         (resource != null &&
+          resource.data.get('usernameLower', null) == request.resource.data.usernameLower) ||
+         usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid));
 
       // User rides subcollection
       match /rides/{rideId} {
@@ -198,7 +323,22 @@ service cloud.firestore {
       // Every caller does a keyed .doc(token) lookup (public/live-viewer.html
       // and ride_recording_provider.dart), so nothing legitimately lists this
       // collection and dropping `list` breaks no existing flow.
-      allow get: if true;
+      //
+      // `shareable == true` is required IN ADDITION to knowing the token —
+      // docs/Issues.md §24.1. The premise this rule used to rely on ("a rider
+      // only appears here because they published a shareable live session in
+      // the first place") was false: the client called
+      // `_startLiveSessionPublishing()` unconditionally from `startRide()`,
+      // so every ride minted a readable session whether or not the rider
+      // ever meant to share it. The client fix (ride_recording_provider.dart
+      // `enableLiveSharing()`) now gates publishing behind an explicit opt-in
+      // and stamps `shareable: true` only on docs written after that opt-in
+      // — but a rules-only check is what actually stops a stranger, since
+      // client-side gating alone leaves every already-written session (and
+      // any future client regression) readable. `.get('shareable', false)`
+      // means any legacy doc written before this field existed reads as
+      // NOT shareable — fail closed, not open.
+      allow get: if resource.data.get('shareable', false) == true;
 
       // Only the ride owner (uid) can write
       allow create: if request.auth.uid == request.resource.data.uid;
@@ -240,27 +380,39 @@ service cloud.firestore {
       // Any authenticated user who can see the ride may bump the engagement
       // counters, but cannot touch any other field or set an arbitrary value.
       // Three disjoint shapes:
-      //   - likes: ±1 (legacy heart; kept for back-compat)
-      //   - comments: +1
-      //   - upvotes/downvotes: each moves within ±1. Both may change in one
-      //     write (flipping a downvote to an upvote is upvotes+1 & downvotes-1
-      //     in a single transaction), so this is bounded per-field rather than
-      //     to a single affected key. A voter can only ever nudge each tally by
-      //     one, never set an arbitrary total — same guarantee as the ±1 like
-      //     rule, extended to the two vote tallies. The net score is derived
-      //     client-side (upvotes - downvotes); it is deliberately not stored,
-      //     so there is no orderable score field to spoof.
+      //   - likes: ±1 (legacy heart; kept for back-compat), tied to the
+      //     caller's own likes/{uid} doc being created/deleted in the same
+      //     transaction (docs/Issues.md §24.7 — see likeBumpValid above).
+      //   - comments: +1, now tied to the comment doc named by the bump's own
+      //     `lastCommentId` being created by the caller in the same
+      //     transaction (docs/Issues.md §24.7 — see newDocBy above).
+      //     addComment() was made transactional to close this; a client that
+      //     loops the bump with no comment posted, or that points it at a
+      //     comment that already existed, now fails.
+      //   - upvotes/downvotes: tied to the caller's own votes/{uid} doc's
+      //     value (before/after this transaction) via voteBumpValid — covers
+      //     a fresh vote, a toggle-off, and a flip (down→up or up→down,
+      //     which moves both tallies in one write) as a single formula. The
+      //     net score is derived client-side (upvotes - downvotes); it is
+      //     deliberately not stored, so there is no orderable score field to
+      //     spoof.
       allow update: if request.auth != null && rideVisibleTo(resource.data) &&
         ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) &&
-          (request.resource.data.likes == resource.data.likes + 1 ||
-           request.resource.data.likes == resource.data.likes - 1)) ||
-         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments']) &&
-          request.resource.data.comments == resource.data.comments + 1) ||
+          likeBumpValid(
+            /databases/$(database)/documents/rides/$(rideId)/likes/$(request.auth.uid),
+            request.resource.data.likes - resource.data.likes)) ||
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'lastCommentId']) &&
+          request.resource.data.comments == resource.data.comments + 1 &&
+          request.resource.data.get('lastCommentId', '') is string &&
+          request.resource.data.get('lastCommentId', '') != '' &&
+          newDocBy(
+            /databases/$(database)/documents/rides/$(rideId)/comments/$(request.resource.data.lastCommentId),
+            request.auth.uid)) ||
          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
-          request.resource.data.upvotes >= resource.data.upvotes - 1 &&
-          request.resource.data.upvotes <= resource.data.upvotes + 1 &&
-          request.resource.data.downvotes >= resource.data.downvotes - 1 &&
-          request.resource.data.downvotes <= resource.data.downvotes + 1));
+          voteBumpValid(
+            /databases/$(database)/documents/rides/$(rideId)/votes/$(request.auth.uid),
+            resource.data.upvotes, request.resource.data.upvotes,
+            resource.data.downvotes, request.resource.data.downvotes)));
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
       match /likes/{userId} {
@@ -307,16 +459,25 @@ service cloud.firestore {
       // broad "any authenticated user can update" rule — that would let an
       // attacker set an arbitrary counter value directly instead of only
       // ever incrementing/decrementing by exactly one.
-      // A rider-created ('custom') forum must stamp its creator as the caller
-      // and seed the maintainer list with exactly that same uid — otherwise
-      // anyone could create a forum already "maintained" by someone else, or
-      // claim to have been created by another rider.
+      // Every forum — not just rider-created ('custom') ones — must stamp its
+      // creator as the caller and seed the maintainer list with exactly that
+      // same uid, or omit both fields entirely. docs/Issues.md §24.4: this
+      // constraint used to apply ONLY when type == 'custom', so for any other
+      // type (e.g. 'bikeModel') createdBy/maintainerIds were unconstrained.
+      // Forum ids are deterministic slugs (bikeForumSlug/generalForumSlug),
+      // so an attacker could pre-create a not-yet-existing brand/model forum
+      // with maintainerIds: [attackerUid] and hold permanent moderator/delete
+      // rights over it forever — canModerateForum() reads exactly those
+      // fields. getOrCreateForum() auto-creates bike/topic forums with
+      // neither field set at all (see canModerateForum's doc comment above),
+      // so "omit both fields" has to stay legal or that flow breaks; what's
+      // now closed is a client setting them to anything OTHER than its own
+      // uid / a single-element list of its own uid.
       allow create: if request.auth != null &&
         request.resource.data.followerCount == 0 &&
         request.resource.data.postCount == 0 &&
-        (request.resource.data.get('type', '') != 'custom' || (
-          request.resource.data.createdBy == request.auth.uid &&
-          request.resource.data.maintainerIds == [request.auth.uid]));
+        (!('createdBy' in request.resource.data) || request.resource.data.createdBy == request.auth.uid) &&
+        (!('maintainerIds' in request.resource.data) || request.resource.data.maintainerIds == [request.auth.uid]);
       allow update: if request.auth != null &&
         // followerCount moves by exactly ±1 via followForum/unfollowForum
         // (gated separately by the forum_follows/{followId} write rule
@@ -347,25 +508,45 @@ service cloud.firestore {
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
           request.resource.data.replyCount == 0 &&
           request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0;
-        // Two disjoint shapes now: addReply's replyCount +1 bump (as
-        // before), or a votePost bounded upvotes/downvotes change — same
-        // ±1-per-field discipline as the rides/{rideId} vote clause above,
-        // including the single-write "flip" case (both fields move by 1 in
-        // opposite directions at once).
+        // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
+        // the reply doc named by `lastReplyId` being created in the same
+        // transaction (docs/Issues.md §24.7 — addReply() was made
+        // transactional to allow this, mirroring addComment() on rides); a
+        // deleteReply -1; or a votePost bounded upvotes/downvotes change tied
+        // to the caller's own votes/{uid} doc via voteBumpValid (same fix and
+        // same reasoning as the rides/{rideId} vote clause above; votePost()
+        // runs in exactly the same kind of transaction
+        // RideShareRepository.vote() does).
         allow update: if request.auth != null &&
-          ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
-            // +1 via addReply; -1 via deleteReply, which only the reply's
-            // author or a forum moderator can perform (the delete rule on
-            // the reply doc itself is the real gate — this just keeps the
-            // counter from being driven down without one).
-            (request.resource.data.replyCount == resource.data.replyCount + 1 ||
-             (request.resource.data.replyCount == resource.data.replyCount - 1 &&
-              (resource.data.userId == request.auth.uid || canModerateForum(forumId))))) ||
+          ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'lastReplyId']) &&
+            request.resource.data.replyCount == resource.data.replyCount + 1 &&
+            request.resource.data.get('lastReplyId', '') is string &&
+            request.resource.data.get('lastReplyId', '') != '' &&
+            newDocBy(
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/replies/$(request.resource.data.lastReplyId),
+              request.auth.uid)) ||
+           // -1 via deleteReply, tied to the reply doc named by `lastReplyId`
+           // actually being deleted in the same batch. Who is allowed to
+           // delete it is settled by the reply's own delete rule below
+           // (author or moderator), which runs in that same batch — so if
+           // that denies, the whole batch fails and this counter never moves.
+           //
+           // This used to read `resource.data.userId == request.auth.uid ||
+           // canModerateForum(forumId)`, which was wrong: `resource` here is
+           // the POST, so it checked the POST's author, not the reply's. A
+           // rider deleting their own reply on someone else's post had the
+           // whole batch denied (docs/Issues.md §24.11).
+           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'lastReplyId']) &&
+            request.resource.data.replyCount == resource.data.replyCount - 1 &&
+            request.resource.data.get('lastReplyId', '') is string &&
+            request.resource.data.get('lastReplyId', '') != '' &&
+            docRemoved(
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/replies/$(request.resource.data.lastReplyId))) ||
            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
-            request.resource.data.upvotes >= resource.data.upvotes - 1 &&
-            request.resource.data.upvotes <= resource.data.upvotes + 1 &&
-            request.resource.data.downvotes >= resource.data.downvotes - 1 &&
-            request.resource.data.downvotes <= resource.data.downvotes + 1));
+            voteBumpValid(
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/votes/$(request.auth.uid),
+              resource.data.upvotes, request.resource.data.upvotes,
+              resource.data.downvotes, request.resource.data.downvotes)));
 
         // A rider may always remove their own post; removing someone else's
         // requires admin/creator/maintainer. The client shows the trash icon
@@ -656,10 +837,33 @@ service cloud.firestore {
         //    nothing left to bound but the two flat uid arrays: add exactly
         //    themselves to memberIds, remove exactly themselves from
         //    invitedIds.
+        //
+        //    docs/Issues.md §24.6: invitedIds' new value must be EXACTLY the
+        //    old list with the caller removed — not just "caller isn't in
+        //    it anymore". The previous `!(auth.uid in new invitedIds)` check
+        //    bounded only whether the caller stayed out, not what else
+        //    changed in the same write, so an accepting invitee could
+        //    rewrite invitedIds to any list of uids they liked (adding
+        //    strangers, who'd then satisfy inGroupRide() and gain read on
+        //    memberLocations/{uid} — every member's live position — or
+        //    deleting other pending invitees). Same bug class as §10, which
+        //    fixed the equivalent hole in memberIds by moving the roster to
+        //    documents; it survived here because §10 never touched the
+        //    invite array.
         (request.auth.uid in resource.data.get('invitedIds', []) &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['memberIds', 'invitedIds']) &&
+         // new invitedIds ⊆ old invitedIds (nobody added)...
          !(request.auth.uid in request.resource.data.get('invitedIds', [])) &&
+         request.resource.data.get('invitedIds', [])
+           .hasOnly(resource.data.get('invitedIds', [])) &&
+         // ...and old invitedIds ⊆ new invitedIds + {caller} (nobody else
+         // removed) — together these two hasOnly checks (same set-equality
+         // idiom the memberIds lines below already use) pin the new value to
+         // EXACTLY the old list minus the caller, not merely "doesn't
+         // contain the caller anymore".
+         resource.data.get('invitedIds', [])
+           .hasOnly(request.resource.data.get('invitedIds', []).concat([request.auth.uid])) &&
          request.resource.data.get('memberIds', [])
            .hasAll(resource.data.get('memberIds', [])) &&
          request.resource.data.get('memberIds', [])

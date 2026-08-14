@@ -10,9 +10,18 @@
   "scripts": {
     "reset:dry-run": "node reset_beta_data.js --dry-run",
     "reset:execute": "node reset_beta_data.js --yes-i-really-mean-it",
-    "check": "node --check reset_beta_data.js"
+    "seed:dhaka:fetch": "node seed_dhaka_places.js --out=dhaka_places.json",
+    "seed:dhaka:dry-run": "node seed_dhaka_places.js --dry-run",
+    "seed:dhaka:execute": "node seed_dhaka_places.js --yes-i-really-mean-it",
+    "test": "node --test \"test/*.test.js\"",
+    "test:rules": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" firebase emulators:exec --project=throttleiq-rules-test --only firestore \"'$npm_node_execpath' --test test/rules/*.test.js\"",
+    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.14.1"
   }
 }

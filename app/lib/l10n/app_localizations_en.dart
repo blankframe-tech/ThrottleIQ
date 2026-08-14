@@ -27,7 +27,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeEditorialLabel => 'Editorial';
 
   @override
-  String get themeEditorialDescription => 'Light, warm paper';
+  String get themeEditorialDescription => 'Light, warm paper, sharp edges';
 
   @override
   String get skinFieldLabel => 'Skin';
@@ -36,25 +36,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeNocturneLabel => 'Nocturne';
 
   @override
-  String get themeNocturneDescription => 'Deep indigo, lavender glow';
+  String get themeNocturneDescription =>
+      'Deep indigo, lavender glow, sharp edges';
 
   @override
   String get themeTrailSocialLabel => 'Trail Social';
 
   @override
-  String get themeTrailSocialDescription => 'Dark feed, punchy orange';
+  String get themeTrailSocialDescription => 'Dark feed, punchy orange, rounded';
 
   @override
   String get themeCalmingLabel => 'Calming';
 
   @override
-  String get themeCalmingDescription => 'Warm cream, soft sage';
+  String get themeCalmingDescription => 'Warm cream, soft sage, rounded';
 
   @override
   String get themePositiveVibesLabel => 'Positive Vibes';
 
   @override
-  String get themePositiveVibesDescription => 'Bright white and green';
+  String get themePositiveVibesDescription => 'Bright white and green, rounded';
 
   @override
   String get themeRetroLabel => 'Retro';
@@ -67,13 +68,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeAnalystBlueLabel => 'Analyst Blue';
 
   @override
-  String get themeAnalystBlueDescription => 'Navy console, cyan telemetry';
+  String get themeAnalystBlueDescription =>
+      'Navy console, cyan telemetry, sharp edges';
 
   @override
   String get themeGenesisLabel => 'Genesis';
 
   @override
-  String get themeGenesisDescription => 'Near-black, gold and violet';
+  String get themeGenesisDescription =>
+      'Near-black, gold and violet, sharp edges';
 
   @override
   String get appMarkTitle => 'App mark';
@@ -112,7 +115,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emergencyContactsDescription =>
-      'Notified if a crash is detected and you don\'t respond within 60 seconds.';
+      'Logged if a crash is detected and you don\'t respond within 60 seconds. Automatic SMS/email alerts aren\'t live yet.';
 
   @override
   String get emergencyContactsEmpty =>

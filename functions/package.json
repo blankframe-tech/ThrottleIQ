@@ -2,6 +2,7 @@
   "name": "throttleiq-functions",
   "description": "Cloud Functions for ThrottleIQ crash detection and notifications",
   "version": "1.0.0",
+  "main": "lib/index.js",
   "engines": {
     "node": "20"
   },
@@ -14,5 +15,9 @@
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
   }
 }

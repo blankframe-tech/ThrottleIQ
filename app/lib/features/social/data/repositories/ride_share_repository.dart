@@ -291,11 +291,8 @@ class RideShareRepository {
     required String userPhotoUrl,
     required String text,
   }) async {
-    final commentRef = _firestore
-        .collection('rides')
-        .doc(rideId)
-        .collection('comments')
-        .doc();
+    final rideRef = _firestore.collection('rides').doc(rideId);
+    final commentRef = rideRef.collection('comments').doc();
 
     final comment = {
       'id': commentRef.id,
@@ -308,9 +305,17 @@ class RideShareRepository {
       'updatedAt': null,
     };
 
-    await commentRef.set(comment);
-    await _firestore.collection('rides').doc(rideId).update({
-      'comments': FieldValue.increment(1),
+    // Both writes go in ONE transaction, and the bump carries the new
+    // comment's id, so firestore.rules can require that the `comments` tally
+    // only moves when a matching comment doc is actually created in the same
+    // commit (docs/Issues.md §24.7). Two separate calls, as this used to do,
+    // gave the rule nothing to check the bump against.
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(commentRef, comment);
+      transaction.update(rideRef, {
+        'comments': FieldValue.increment(1),
+        'lastCommentId': commentRef.id,
+      });
     });
 
     return commentRef.id;

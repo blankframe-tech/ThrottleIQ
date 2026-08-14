@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/route_entity.dart';
+import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/route_model.dart';
 
 class RouteRepository {
@@ -14,6 +15,13 @@ class RouteRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Saves a new route from a completed ride.
+  ///
+  /// Stores the full-fidelity trail — routes are private by default
+  /// (`isPublic: false`) and "Only you can see this route" is the promise the
+  /// save screen makes for that state, so a personal route deliberately keeps
+  /// its real endpoints. Privacy-zone clipping happens in [setPublic], at the
+  /// moment a route actually becomes readable by anyone else — see that
+  /// method's doc comment (docs/Issues.md §24.3).
   Future<String> saveRoute({
     required String userId,
     required String name,
@@ -122,13 +130,42 @@ class RouteRepository {
   /// Flips a route between public (discoverable by every rider) and private
   /// (owner-only). [makePublic] is the one-way shorthand kept for callers that
   /// only ever publish.
+  ///
+  /// Going public permanently clips the stored polyline (docs/Issues.md
+  /// §24.3) — strips ~200m off each end, same as
+  /// [RideShareRepository.shareRide] does for shared rides. Route *sharing*
+  /// always did this; route *publishing* stored the raw trail verbatim, so
+  /// flipping this switch used to hand every authenticated rider (via the
+  /// `collectionGroup('routes')` rule) a polyline starting from the owner's
+  /// driveway. The clip overwrites the stored trail rather than living
+  /// alongside a separate "public copy" field — once a route has been public,
+  /// its trail is treated as exposed for good, even if it's later set back to
+  /// private, the same way a shared ride's clipped copy is never restored.
+  /// A short or near-home route can clip down to nothing; that's the
+  /// privacy-safe outcome, not an error — the route stays public, just
+  /// without a line to draw. Turning a route private does NOT need a read
+  /// first — it never touches the polyline.
   Future<void> setPublic(String userId, String routeId, bool isPublic) async {
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('routes')
-        .doc(routeId)
-        .update({'isPublic': isPublic});
+    final docRef =
+        _firestore.collection('users').doc(userId).collection('routes').doc(routeId);
+
+    if (!isPublic) {
+      await docRef.update({'isPublic': false});
+      return;
+    }
+
+    final snapshot = await docRef.get();
+    final data = snapshot.data();
+    final rawPolyline = data == null
+        ? const <LatLng>[]
+        : RouteModel.fromFirestore(data, routeId).polyline;
+    final clipped = PrivacyZoneClipper.clipPolyline(rawPolyline);
+
+    await docRef.update({
+      'isPublic': true,
+      'polyline':
+          clipped.map((point) => {'lat': point.latitude, 'lng': point.longitude}).toList(),
+    });
   }
 
   /// Updates the times ridden counter.

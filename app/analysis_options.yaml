@@ -9,6 +9,24 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    # `build/` is generated output and has no business being analyzed.
+    #
+    # This is not housekeeping — without it `flutter analyze` is unusable. The
+    # iOS SwiftPM migration leaves FlutterFire's *sources* checked out under
+    # `build/ios/SourcePackages/checkouts/`, so packages like
+    # `firebase_auth_platform_interface` exist twice in one analysis context
+    # (there and in the pub cache). Identically-named classes from two
+    # libraries make every override across them read as invalid, which
+    # produced **~6,150 errors, none of them in this project** — burying any
+    # real error in `lib/` and making the exit code meaningless. See
+    # `docs/Issues.md` §23.
+    #
+    # Nothing generated-and-committed lives here: the l10n output is in
+    # `lib/l10n/`, which is still analyzed.
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

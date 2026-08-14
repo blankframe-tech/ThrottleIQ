@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_dimensions.dart';
+import 'app_shape_profile.dart';
 import 'app_theme_style.dart';
 import 'app_typography.dart';
 
@@ -44,12 +46,16 @@ class ThemeStyleNotifier extends StateNotifier<AppThemeStyle> {
 
   /// Pushes [style] into every static token facade at once.
   ///
-  /// [AppColors] is not the only one any more: Retro also swaps the display
-  /// typeface (see [AppTypography]). Applying them together in one place is
-  /// what stops a skin from ending up half-applied — the failure mode being
-  /// mono type left behind on the next skin the rider picks.
+  /// [AppColors] is not the only one any more: a skin also carries a shape
+  /// profile (see [AppShapeProfile] — rounded corners on some directions, sharp
+  /// instrument-panel edges on others) and, for Retro, a different display
+  /// typeface (see [AppTypography]). Applying all three together in one place
+  /// is what stops a skin from ending up half-applied — the failure mode being
+  /// mono type or another skin's corner radius left behind on the next skin the
+  /// rider picks.
   void _applyTokens(AppThemeStyle style) {
     AppColors.apply(AppColorPalette.forStyle(style));
+    AppDimensions.apply(AppShapeProfile.forStyle(style));
     AppTypography.applyStyle(style);
   }
 

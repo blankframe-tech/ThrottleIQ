@@ -45,9 +45,9 @@ Future<void> showBadgeLadderSheet(
     context: context,
     backgroundColor: AppColors.surface,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radiusXl)),
     ),
     builder: (_) => _BadgeLadderSheet(progress: progress),
   );

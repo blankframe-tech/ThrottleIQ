@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/theme_style_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -146,9 +147,16 @@ class SkinDropdown extends ConsumerWidget {
   }
 }
 
-/// A miniature of one skin: its background, with its primary and secondary
-/// accents stacked on top. Small enough to sit inline in a dropdown row and
-/// still tell three palettes apart at a glance.
+/// A miniature of one skin: its background and corner shape, with its primary
+/// and secondary accents stacked on top. Small enough to sit inline in a
+/// dropdown row and still tell three palettes apart at a glance.
+///
+/// The corner radius comes from *this row's* [AppShapeProfile], for the same
+/// reason the colors come from this row's palette: shape is part of what a skin
+/// is now (some are rounded, some boxy, Retro is square), so a rider comparing
+/// nine rows should be able to see that here rather than by applying each one.
+/// Scaled down from the full-size token — a 24px-tall swatch drawn with a
+/// card's 20px radius is just a circle.
 class SkinSwatch extends StatelessWidget {
   const SkinSwatch({super.key, required this.style});
 
@@ -157,12 +165,13 @@ class SkinSwatch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppColorPalette.forStyle(style);
+    final shape = AppShapeProfile.forStyle(style);
     return Container(
       width: 34,
       height: 24,
       decoration: BoxDecoration(
         color: palette.background,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        borderRadius: BorderRadius.circular(shape.radiusLg / 2),
         // Deliberately the *current* skin's border, not this row's: several
         // palettes' own borders are invisible against their own background
         // (Retro's rule is ink-black, Editorial's a warm hairline), and the

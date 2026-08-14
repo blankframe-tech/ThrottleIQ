@@ -6,7 +6,18 @@
   "functions": {
     "source": "functions",
     "codebase": "default",
-    "runtime": "nodejs_20"
+    "runtime": "nodejs_20",
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
   },
   "hosting": {
     "public": "public",

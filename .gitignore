@@ -124,3 +124,13 @@ google-services.json.*.bak
 
 # Obsidian personal vault/workspace state (not project content)
 docs/.obsidian/
+
+# Regenerable review artifact from scripts/seed_dhaka_places.js (`npm run
+# seed:dhaka:fetch`) — scraped OSM data, not source. Re-fetch rather than commit.
+scripts/dhaka_places.json
+
+# Cloud Functions build output (tsc outDir; source of truth is functions/src)
+functions/lib/
+
+# Firebase emulator debug logs (scripts/test/rules)
+*-debug.log

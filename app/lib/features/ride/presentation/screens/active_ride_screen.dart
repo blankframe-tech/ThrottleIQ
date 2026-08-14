@@ -170,7 +170,17 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     _alertCtrl.forward(from: 0);
   }
 
-  void _shareLiveLocation(String token) {
+  /// Tapping this button IS the opt-in (docs/Issues.md §24.1). Publishing
+  /// used to start the instant a ride began, whether or not the rider ever
+  /// meant to share it; now nothing is published until this runs.
+  /// `enableLiveSharing()` is a no-op if sharing is already on, so re-tapping
+  /// to re-share an in-progress session is still just one call.
+  Future<void> _shareLiveLocation() async {
+    final notifier = ref.read(rideRecordingProvider.notifier);
+    await notifier.enableLiveSharing();
+    final token = ref.read(rideRecordingProvider).liveSessionToken;
+    if (token == null || !mounted) return;
+
     // See _shareButtonKey's doc comment for why this is computed at all.
     Rect? origin;
     final box = _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
@@ -399,16 +409,23 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary),
                   ),
-                  if (rideState.liveSessionToken != null) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      key: _shareButtonKey,
-                      onPressed: () => _shareLiveLocation(rideState.liveSessionToken!),
-                      icon: Icon(Icons.share_location,
-                          color: AppColors.textPrimary),
-                      tooltip: 'Share live location',
+                  const SizedBox(width: 8),
+                  IconButton(
+                    key: _shareButtonKey,
+                    onPressed: _shareLiveLocation,
+                    // Filled once sharing is actually on, outlined beforehand
+                    // — the icon itself communicates the opt-in state, since
+                    // tapping it is what turns sharing on in the first place.
+                    icon: Icon(
+                      rideState.liveSessionToken != null
+                          ? Icons.share_location
+                          : Icons.location_disabled,
+                      color: AppColors.textPrimary,
                     ),
-                  ],
+                    tooltip: rideState.liveSessionToken != null
+                        ? 'Share live location'
+                        : 'Turn on & share live location',
+                  ),
                 ],
               ),
             ),

@@ -27,10 +27,19 @@
          active foreground service unless the app is explicitly exempted. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- docs/Issues.md §24.9: this app's local SQLite DB holds every rider's
+         GPS trail, unencrypted. android:allowBackup defaults to true, which
+         makes that database eligible both for Android's automatic cloud
+         backup (Google Drive, on eligible devices) and for `adb backup`
+         extraction from anyone with physical/debug access to the device.
+         Disabling it outright closes both paths at once; there's no
+         supported fine-grained exclusion (dataExtractionRules/
+         fullBackupContent) needed on top of that once backup itself is off. -->
     <application
         android:label="ThrottleIQ"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"

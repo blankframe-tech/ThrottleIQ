@@ -253,9 +253,15 @@ class ForumRepository {
     required String replyId,
   }) async {
     final postRef = _forums.doc(forumId).collection('posts').doc(postId);
+    // A batch is one atomic commit, same as a transaction as far as the rules
+    // are concerned, so `lastReplyId` lets firestore.rules tie this -1 to the
+    // reply actually being deleted here (docs/Issues.md §24.7/§24.11).
     final batch = _firestore.batch();
     batch.delete(postRef.collection('replies').doc(replyId));
-    batch.update(postRef, {'replyCount': FieldValue.increment(-1)});
+    batch.update(postRef, {
+      'replyCount': FieldValue.increment(-1),
+      'lastReplyId': replyId,
+    });
     await batch.commit();
   }
 
@@ -446,16 +452,25 @@ class ForumRepository {
     final postRef = _forums.doc(forumId).collection('posts').doc(postId);
     final replyRef = postRef.collection('replies').doc();
 
-    await replyRef.set({
-      'postId': postId,
-      'forumId': forumId,
-      'userId': userId,
-      'userName': userName,
-      'userPhotoUrl': userPhotoUrl,
-      'body': body,
-      'createdAt': FieldValue.serverTimestamp(),
+    // One transaction, and the bump carries the new reply's id, so
+    // firestore.rules can tie the `replyCount` +1 to a reply doc actually
+    // being created in the same commit (docs/Issues.md §24.7). Mirrors
+    // RideShareRepository.addComment().
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(replyRef, {
+        'postId': postId,
+        'forumId': forumId,
+        'userId': userId,
+        'userName': userName,
+        'userPhotoUrl': userPhotoUrl,
+        'body': body,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      transaction.update(postRef, {
+        'replyCount': FieldValue.increment(1),
+        'lastReplyId': replyRef.id,
+      });
     });
-    await postRef.update({'replyCount': FieldValue.increment(1)});
 
     return replyRef.id;
   }

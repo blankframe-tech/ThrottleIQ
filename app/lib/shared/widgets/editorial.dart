@@ -54,7 +54,11 @@ class EditorialCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? color;
   final Color? borderColor;
-  final double radius;
+
+  /// Corner radius, or null to follow the active skin's card radius. Nullable
+  /// rather than defaulted because `AppDimensions.radiusXl` is per-skin now
+  /// (see [AppShapeProfile]) and so can't be a `const` default value.
+  final double? radius;
 
   const EditorialCard({
     super.key,
@@ -63,21 +67,22 @@ class EditorialCard extends StatelessWidget {
     this.onTap,
     this.color,
     this.borderColor,
-    this.radius = AppDimensions.radiusXl,
+    this.radius,
   });
 
   @override
   Widget build(BuildContext context) {
+    final r = radius ?? AppDimensions.radiusXl;
     return Material(
       color: color ?? AppColors.surface,
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: BorderRadius.circular(r),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(r),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: BorderRadius.circular(r),
             border: Border.all(color: borderColor ?? AppColors.border),
           ),
           child: child,
@@ -91,12 +96,15 @@ class EditorialCard extends StatelessWidget {
 class InkPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final double radius;
+
+  /// Corner radius, or null to follow the active skin — see
+  /// [EditorialCard.radius].
+  final double? radius;
   const InkPanel({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(AppDimensions.paddingLg),
-    this.radius = AppDimensions.radiusXl,
+    this.radius,
   });
 
   @override
@@ -105,7 +113,7 @@ class InkPanel extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: AppColors.ink,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(radius ?? AppDimensions.radiusXl),
       ),
       child: child,
     );

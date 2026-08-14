@@ -21,13 +21,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get themeCarbonLabel => 'কার্বন মোনো';
 
   @override
-  String get themeCarbonDescription => 'গাঢ়, ঝকঝকে, মিটারের মতো';
+  String get themeCarbonDescription => 'গাঢ়, ধারালো কোণ, মিটারের মতো';
 
   @override
   String get themeEditorialLabel => 'এডিটোরিয়াল';
 
   @override
-  String get themeEditorialDescription => 'হালকা, কাগজের মতো নরম';
+  String get themeEditorialDescription => 'হালকা, কাগজের মতো নরম, ধারালো কোণ';
 
   @override
   String get skinFieldLabel => 'স্কিন';
@@ -36,25 +36,25 @@ class AppLocalizationsBn extends AppLocalizations {
   String get themeNocturneLabel => 'নকটার্ন';
 
   @override
-  String get themeNocturneDescription => 'গাঢ় নীল, নরম বেগুনি আভা';
+  String get themeNocturneDescription => 'গাঢ় নীল, নরম বেগুনি আভা, ধারালো কোণ';
 
   @override
   String get themeTrailSocialLabel => 'ট্রেইল সোশ্যাল';
 
   @override
-  String get themeTrailSocialDescription => 'গাঢ় ফিড, ঝলমলে কমলা';
+  String get themeTrailSocialDescription => 'গাঢ় ফিড, ঝলমলে কমলা, গোল কোণ';
 
   @override
   String get themeCalmingLabel => 'কামিং';
 
   @override
-  String get themeCalmingDescription => 'উষ্ণ ক্রিম, নরম সবুজ';
+  String get themeCalmingDescription => 'উষ্ণ ক্রিম, নরম সবুজ, গোল কোণ';
 
   @override
   String get themePositiveVibesLabel => 'পজিটিভ ভাইবস';
 
   @override
-  String get themePositiveVibesDescription => 'ঝকঝকে সাদা আর সবুজ';
+  String get themePositiveVibesDescription => 'ঝকঝকে সাদা আর সবুজ, গোল কোণ';
 
   @override
   String get themeRetroLabel => 'রেট্রো';
@@ -66,13 +66,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get themeAnalystBlueLabel => 'অ্যানালিস্ট ব্লু';
 
   @override
-  String get themeAnalystBlueDescription => 'নেভি কনসোল, সায়ান মিটার';
+  String get themeAnalystBlueDescription =>
+      'নেভি কনসোল, সায়ান মিটার, ধারালো কোণ';
 
   @override
   String get themeGenesisLabel => 'জেনেসিস';
 
   @override
-  String get themeGenesisDescription => 'প্রায় কালো, সোনালি আর বেগুনি';
+  String get themeGenesisDescription =>
+      'প্রায় কালো, সোনালি আর বেগুনি, ধারালো কোণ';
 
   @override
   String get appMarkTitle => 'অ্যাপের লোগো';
@@ -111,7 +113,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get emergencyContactsDescription =>
-      'দুর্ঘটনা ধরা পড়লে আর আপনি 60 সেকেন্ডের মধ্যে সাড়া না দিলে এদেরকে জানিয়ে দেওয়া হবে।';
+      'দুর্ঘটনা ধরা পড়লে ও আপনি 60 সেকেন্ডের মধ্যে সাড়া না দিলে তা লগ করা হবে — স্বয়ংক্রিয় SMS/ইমেইল সতর্কতা এখনো চালু হয়নি।';
 
   @override
   String get emergencyContactsEmpty =>

@@ -17,18 +17,21 @@ class RideRouteMap extends StatelessWidget {
   final List<LatLng> polyline;
   final double height;
 
-  /// Corner radius of the clipped map surface.
-  final double radius;
+  /// Corner radius of the clipped map surface, or null to follow the active
+  /// skin's shape. Nullable rather than defaulted because the radius tokens are
+  /// per-skin now (see [AppShapeProfile]) and so can't be `const` defaults.
+  final double? radius;
 
   const RideRouteMap({
     super.key,
     required this.polyline,
     this.height = 160,
-    this.radius = AppDimensions.radiusLg,
+    this.radius,
   });
 
   @override
   Widget build(BuildContext context) {
+    final radius = this.radius ?? AppDimensions.radiusLg;
     if (polyline.isEmpty) {
       return Container(
         height: height,

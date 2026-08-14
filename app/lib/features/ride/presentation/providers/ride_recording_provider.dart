@@ -281,6 +281,21 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   static const Duration _liveSessionUpdateInterval = Duration(seconds: 10);
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Explicit per-ride opt-in gate for live location sharing — docs/Issues.md
+  /// §24.1. `_startLiveSessionPublishing()` used to run unconditionally from
+  /// `startRide()`/`resumeRide()`, so EVERY ride published an unauthenticated,
+  /// handle-guessable live position whether or not the rider ever meant to
+  /// share it. Now [_startLiveSessionPublishing] is only ever reached through
+  /// [enableLiveSharing], which the rider triggers explicitly (the "Share
+  /// live location" control). Defaults to false and is reset to false at the
+  /// start of every new ride and on every teardown path.
+  bool _liveShareEnabled = false;
+
+  /// Whether this ride currently has live sharing turned on. Read by the UI
+  /// to decide whether "Share live location" still needs to opt in or can
+  /// just re-share the existing link.
+  bool get isLiveShareEnabled => _liveShareEnabled;
+
   Future<bool> _requestPermissions() async {
     LocationPermission perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
@@ -391,6 +406,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _lastSensorUiPush = null;
     _skipNextDistanceDelta = false;
     _lastElapsedPersist = null;
+    // A new ride never inherits the previous ride's sharing choice —
+    // see docs/Issues.md §24.1.
+    _liveShareEnabled = false;
+    _currentLiveSessionToken = null;
 
     state = state.copyWith(
       status: RecordingStatus.active,
@@ -412,7 +431,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _startLocationStream();
     _startSensorStream();
     _startTimer();
-    _startLiveSessionPublishing();
+    // Live-session publishing does NOT start here. It only ever starts via
+    // enableLiveSharing(), which requires the rider to explicitly ask to
+    // share this ride's location — see docs/Issues.md §24.1.
   }
 
   /// Forces a buffer flush the instant the app leaves the foreground
@@ -766,6 +787,26 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _pointBuffer.clear();
   }
 
+  /// Explicit per-ride opt-in for live location sharing (docs/Issues.md
+  /// §24.1). This is the ONLY path that starts `liveSessions`/`livePointers`
+  /// publishing — nothing does it automatically anymore. Call this from the
+  /// rider tapping "Share live location"; a no-op if already sharing or if
+  /// there's no active/paused ride to share.
+  ///
+  /// Awaits the first publish (rather than only kicking off the periodic
+  /// timer) so `state.liveSessionToken` is populated by the time this
+  /// returns — the caller needs the token immediately, to open the share
+  /// sheet.
+  Future<void> enableLiveSharing() async {
+    if (_liveShareEnabled) return;
+    if (state.status != RecordingStatus.active && state.status != RecordingStatus.paused) {
+      return;
+    }
+    _liveShareEnabled = true;
+    await _publishLiveSession();
+    _startLiveSessionPublishing();
+  }
+
   void _startLiveSessionPublishing() {
     _liveSessionTimer?.cancel();
     _liveSessionTimer = Timer.periodic(
@@ -822,7 +863,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _startLocationStream();
       _startSensorStream();
       _startTimer();
-      _startLiveSessionPublishing();
+      // Only resume publishing if sharing was actually turned on. A cold
+      // start means the process died and _liveShareEnabled — in-memory only
+      // — reset to false; the rider has to re-tap "Share live location" to
+      // resume broadcasting. Fail closed, not open. See docs/Issues.md §24.1.
+      if (_liveShareEnabled) {
+        _startLiveSessionPublishing();
+      }
     } else {
       _locationSub?.resume();
       _accelSub?.resume();
@@ -867,6 +914,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     await _updateLiveSessionStatus(LiveSessionStatus.completed);
     await _clearLivePointer();
     _currentLiveSessionToken = null;
+    _liveShareEnabled = false;
 
     // Deliberately dropped rather than flushed — these are the points of a
     // ride that is about to be deleted.
@@ -907,6 +955,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // "last seen here" beacon that outlives the rider's intent to share.
     await _clearLivePointer();
     _currentLiveSessionToken = null;
+    _liveShareEnabled = false;
 
     _flushPointBuffer();
     await WakelockPlus.disable();
@@ -1241,10 +1290,19 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
   }
 
-  /// Create a live share session token
+  /// Create a live share session token.
+  ///
+  /// Must be `Random.secure()`, not the default `Random()` (docs/Issues.md
+  /// §24.2). `liveSessions` is a pure capability model — this token IS the
+  /// entire access control, "the link is the permission." Dart's default
+  /// `Random` is a seeded 64-bit LCG initialised from the clock, so an
+  /// attacker who knows roughly when a ride started can brute-force the seed
+  /// and derive the token directly; the nominal 62^32 keyspace never comes
+  /// into it. `Random.secure()` draws from the OS CSPRNG instead, so the
+  /// token's ~190 bits of entropy are real.
   Future<String> _createLiveSessionToken() async {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    final rnd = Random();
+    final rnd = Random.secure();
     final token = String.fromCharCodes(
       Iterable.generate(32, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
     );

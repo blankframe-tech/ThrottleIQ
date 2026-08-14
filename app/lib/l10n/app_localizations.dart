@@ -137,7 +137,7 @@ abstract class AppLocalizations {
   /// One-line description under the Editorial theme option.
   ///
   /// In en, this message translates to:
-  /// **'Light, warm paper'**
+  /// **'Light, warm paper, sharp edges'**
   String get themeEditorialDescription;
 
   /// Label above the dropdown that picks the app's visual skin.
@@ -155,7 +155,7 @@ abstract class AppLocalizations {
   /// One-line description under the Nocturne skin option.
   ///
   /// In en, this message translates to:
-  /// **'Deep indigo, lavender glow'**
+  /// **'Deep indigo, lavender glow, sharp edges'**
   String get themeNocturneDescription;
 
   /// Name of the Trail Social skin. Product name — kept recognisable across languages.
@@ -167,7 +167,7 @@ abstract class AppLocalizations {
   /// One-line description under the Trail Social skin option.
   ///
   /// In en, this message translates to:
-  /// **'Dark feed, punchy orange'**
+  /// **'Dark feed, punchy orange, rounded'**
   String get themeTrailSocialDescription;
 
   /// Name of the Calming skin. Product name — kept recognisable across languages.
@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// One-line description under the Calming skin option.
   ///
   /// In en, this message translates to:
-  /// **'Warm cream, soft sage'**
+  /// **'Warm cream, soft sage, rounded'**
   String get themeCalmingDescription;
 
   /// Name of the Positive Vibes skin. Product name — kept recognisable across languages.
@@ -191,7 +191,7 @@ abstract class AppLocalizations {
   /// One-line description under the Positive Vibes skin option.
   ///
   /// In en, this message translates to:
-  /// **'Bright white and green'**
+  /// **'Bright white and green, rounded'**
   String get themePositiveVibesDescription;
 
   /// Name of the Retro skin. Product name — kept recognisable across languages.
@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// One-line description under the Analyst Blue skin option.
   ///
   /// In en, this message translates to:
-  /// **'Navy console, cyan telemetry'**
+  /// **'Navy console, cyan telemetry, sharp edges'**
   String get themeAnalystBlueDescription;
 
   /// Name of the Genesis skin. Product name — kept recognisable across languages.
@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// One-line description under the Genesis skin option.
   ///
   /// In en, this message translates to:
-  /// **'Near-black, gold and violet'**
+  /// **'Near-black, gold and violet, sharp edges'**
   String get themeGenesisDescription;
 
   /// Label beside the live logo preview in the Appearance section.
@@ -296,10 +296,10 @@ abstract class AppLocalizations {
   /// **'Emergency Contacts'**
   String get emergencyContactsSection;
 
-  /// Explains when emergency contacts get alerted. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart.
+  /// Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — docs/Issues.md §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart.
   ///
   /// In en, this message translates to:
-  /// **'Notified if a crash is detected and you don\'t respond within 60 seconds.'**
+  /// **'Logged if a crash is detected and you don\'t respond within 60 seconds. Automatic SMS/email alerts aren\'t live yet.'**
   String get emergencyContactsDescription;
 
   /// Empty state for the emergency contact list.

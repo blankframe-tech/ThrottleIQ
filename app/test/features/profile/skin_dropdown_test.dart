@@ -155,4 +155,37 @@ void main() {
           .length,
     );
   });
+
+  testWidgets('each row previews its own corner shape, not the applied one',
+      (tester) async {
+    // Shape is part of what a skin is (rounded / boxy / Retro's square), so the
+    // picker has to show it for the same reason it shows the colors: otherwise a
+    // rider has to apply all nine to find out which ones are round.
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(harness(container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<AppThemeStyle>));
+    await tester.pumpAndSettle();
+
+    double swatchRadius(AppThemeStyle style) {
+      final container = tester.widget<Container>(find
+          .descendant(
+              of: find.byWidget(tester
+                  .widgetList<SkinSwatch>(find.byType(SkinSwatch))
+                  .firstWhere((s) => s.style == style)),
+              matching: find.byType(Container))
+          .first);
+      final decoration = container.decoration! as BoxDecoration;
+      return (decoration.borderRadius! as BorderRadius).topLeft.x;
+    }
+
+    // Carbon Mono is boxy, Positive Vibes is rounded, Retro is square — three
+    // visibly different swatches while the applied skin is Carbon Mono
+    // throughout.
+    expect(swatchRadius(AppThemeStyle.retro), 0);
+    expect(swatchRadius(AppThemeStyle.positiveVibes),
+        greaterThan(swatchRadius(AppThemeStyle.carbonMono)));
+  });
 }

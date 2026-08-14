@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-11_
+_Last updated: 2026-08-12_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -887,3 +887,658 @@ the same underlying lesson as §17's ("screens that touch
 every control inside them is unguarded") — different dependency, identical
 shape. Two independent instances now; treat it as the house rule rather than
 a case-by-case workaround.
+
+---
+
+## 23. `flutter analyze` reports ~6,150 errors that aren't in this project (2026-08-12)
+
+**Status:** **FIXED 2026-08-12** (same day it was found) — `build/**` is now
+excluded in `app/analysis_options.yaml`. Kept written up because the symptom
+looks catastrophic and will recur in any Flutter project that adopts iOS
+SwiftPM without this exclusion.
+
+Running `flutter analyze` from `app/` printed **6,163 errors**. None of
+them were in `lib/` or `test/`. Every one came from
+`app/build/ios/SourcePackages/checkouts/flutterfire/**` — the FlutterFire
+sources Swift Package Manager checked out under `build/` when the iOS
+SwiftPM migration landed (commit `8c298c1`, 2026-08-11).
+
+The errors themselves are the expected consequence of a package existing
+twice in one analysis context: the checkout's own
+`firebase_auth_platform_interface` and the pub-cache copy are separate
+libraries with identically-named classes, so every override across them
+reads as invalid —
+
+```
+error • 'MethodChannelFirebaseAuth.authStateChanges' … isn't a valid
+override of 'FirebaseAuthPlatform.authStateChanges'
+  (where UserPlatform is defined in .../build/ios/SourcePackages/…)
+  (where UserPlatform is defined in ~/.pub-cache/hosted/pub.dev/…)
+```
+
+**Why it mattered more than the noise suggests.** `flutter analyze` is the
+project's cheapest correctness gate, and both its exit code and its output
+were useless by default — a real error in `lib/` was one line among six
+thousand. Anyone who ran it, saw the count, and didn't check *where* the
+errors were would reasonably conclude the tree was broken.
+
+**The fix:**
+
+```yaml
+# app/analysis_options.yaml
+analyzer:
+  exclude:
+    - build/**
+```
+
+`build/` is generated output and has no business being analyzed. Verified
+nothing generated-and-committed is hidden by this: the l10n output lives in
+`lib/l10n/`, which is still analyzed. Result:
+
+| | before | after |
+|---|---|---|
+| issues | 6,782 | 121 |
+| errors | 6,163 | **0** |
+| runtime | 8.8s | 2.9s |
+
+The rejected alternative was `flutter clean` before every analyze run —
+effective, but it throws away the whole build cache to fix a lint run, and the
+checkout comes straight back on the next iOS build.
+
+**The filter that stood in for the fix**, still worth knowing when analyzing a
+tree that predates it, or any other project with this shape:
+
+```bash
+flutter analyze 2>&1 | grep -E '• (lib|test)/' | grep 'error •'
+```
+
+Empty output means clean. That is how the 2026-08-12 shape work was verified
+before the exclusion landed — it found exactly the 8 real `const` breakages
+and nothing else, which is also the evidence the exclusion isn't hiding
+anything: the error count was already 0 by that measure.
+
+Note this is **not** the same thing as the ~121 remaining `info`/`warning`
+lints in `lib/` and `test/` (unused locals, `prefer_const_constructors`,
+`withOpacity` deprecations, `subtype_of_sealed_class` from Firestore mocks).
+Those are real, in-project, and predate this — worth a cleanup pass, but they
+were never load-bearing noise the way this was.
+
+---
+
+## 24. Security audit — 8 open findings, 2 of them launch-blocking (2026-08-12)
+
+**Status:** **ALL 8 FINDINGS FIXED IN CODE; THE 2026-08-12 RULES WERE DEPLOYED
+2026-08-14. A SECOND, NARROWER RULES DEPLOY IS NOW PENDING AND MUST NOT GO OUT
+BEFORE THE NEXT APP BUILD — see the ordering note below.** Originally found by
+a read-only audit of `firestore.rules`,
+`storage.rules`, `functions/`, `public/live-viewer.html`, the Flutter client
+and the Android/ops config, with no code changed at audit time. A follow-up
+pass the same day fixed all 8 — §24.1–§24.9 below now each carry their own
+**Status** line with what actually changed and file/line references into the
+fix, in the same place the original finding is recorded, so the exploit and
+the fix read together.
+
+**✅ The 2026-08-12 rules are live.** `firebase deploy --only firestore:rules`
+was run against `throttleiqfb` on 2026-08-14 and reported
+`released rules firestore.rules to cloud.firestore`. That covers §24.1, §24.4,
+§24.5, §24.6, §24.9's admin-claim change, and §24.7's like/vote half — those
+are all now enforced for live riders.
+
+**🔶 A second rules deploy is pending, and its ordering matters.** The
+2026-08-14 pass closed §24.7's residual (comment/reply counter inflation), and
+that fix spans both sides of the wire: the tightened rule requires the counter
+bump to carry a `lastCommentId`/`lastReplyId` naming a doc created in the same
+transaction, and only the NEW client sends those fields. **Deploying these
+rules before the app build that goes with them ships would break commenting
+and replying outright for every install still running the current release** —
+the old client bumps the counter alone and the new rule denies it. Correct
+order:
+
+1. Ship the app build containing the transactional
+   `RideShareRepository.addComment()` / `ForumRepository.addReply()` and the
+   `lastReplyId` on `ForumRepository.deleteReply()`.
+2. Wait for installs to pick it up (or accept breaking comments for stragglers).
+3. Then `firebase deploy --only firestore:rules`.
+
+Before step 3, run `npm run test:rules` from `scripts/` — there is now a real
+emulator-backed rules suite (§24.11), so a rules edit no longer has to be
+deployed blind.
+
+Until step 3, the residual documented in §24.7 stays open in production — which
+is the status quo, not a regression.
+
+**🔶 Cloud Functions still cannot deploy at all** — `firebase deploy` fails
+with *"project throttleiqfb must be on the Blaze (pay-as-you-go) plan"*,
+because `artifactregistry.googleapis.com` can't be enabled on Spark. This
+blocks §24.8's crash-notification PII fix and §24.9's new
+`reconcileRideIdentity` trigger from ever running, no matter how correct the
+code is. Upgrading the project at
+<https://console.firebase.google.com/project/throttleiqfb/usage/details> is the
+only way through. See §24.10 for the build problems found and fixed underneath
+this one.
+
+This breaks the one-`##`-per-issue convention on purpose: these came out of a
+single pass, they share context, and splitting them across §24–§31 would bury
+the two that matter. Sub-sections are numbered §24.1 … §24.9 so they can be
+cited individually.
+
+**These two were the ones to fix before beta testers are invited.** §24.1 and
+§24.2 composed into "any stranger can watch any rider move in real time," and
+both are now fixed — see their sections below for exactly what changed.
+
+### 24.1 Live location is readable by anonymous strangers, given only a @handle — CRITICAL
+
+**Status: FIXED 2026-08-12** (rules deployed 2026-08-14).
+`_startLiveSessionPublishing()` no longer runs from `startRide()`/
+`resumeRide()` at all — it only runs via the new `enableLiveSharing()`
+(`ride_recording_provider.dart`), triggered by the rider tapping "Share live
+location" (`active_ride_screen.dart`'s `_shareLiveLocation`). That tap IS the
+opt-in now; the icon shows filled/outlined depending on whether sharing is
+actually on. `_liveShareEnabled` resets to `false` at the start of every new
+ride and on every teardown path (`stopRide`/`cancelRide`), and a cold-started
+resume after a process death does NOT automatically resume publishing — fail
+closed, the rider has to re-tap. `LiveSessionEntity` gained a `shareable`
+field, `true` on every doc this app writes (since publishing now only ever
+follows the opt-in), and `firestore.rules`' `liveSessions/{token}` `get` rule
+requires `shareable == true` — a rules-level backstop, not just client
+gating, so even a future regression that reintroduced always-on publishing
+still can't be read by a stranger without the rule also regressing.
+
+Three collections are readable with **no authentication at all**, and they
+chain into each other:
+
+```
+usernames/{handle}   → { uid }    firestore.rules:565   allow get: if true
+livePointers/{uid}   → { token }  firestore.rules:586   allow get: if true
+liveSessions/{token} → live GPS   firestore.rules:201   allow get: if true
+```
+
+Each of those three grants was deliberate and is defended in a comment — the
+permanent `/r/{username}` link has to resolve for a visitor who does not have
+the app and is not signed in (§14, §3). The grants are not the bug. **The bug
+is the premise underneath them.** `firestore.rules:574-584` argues the chain is
+safe because a rider only appears in `livePointers` "because the rider
+published a shareable live session in the first place."
+
+That is not what the client does. `_startLiveSessionPublishing()` is called
+unconditionally from `startRide()`
+(`ride_recording_provider.dart:415`, and again on resume at `:825`). There is
+no opt-in flag, no share toggle, no consent gate anywhere on the path — every
+ride publishes `liveSessions/{token}` and points `livePointers/{uid}` at it,
+whether or not the rider ever taps "share live location".
+
+So the real exposure is: **for every rider, on every ride, an unauthenticated
+attacker who guesses the handle gets live lat/lng, speed, battery and crash
+status, polled in real time.** Handles are `[a-z0-9_]{3,20}` and are
+auto-derived from the email local part (`suggestUsernameBase`,
+`profile_repository.dart:128-137`), so a wordlist of first names hits a large
+share of the userbase. Anonymous Firestore `get`s are not rate-limited.
+
+Worth being blunt about what this is: a stalking primitive, on an app whose
+README sells privacy-zone protection as a feature.
+
+**Fix:** gate `_publishLiveSession` / `_publishLivePointer` behind an explicit
+per-ride share opt-in, *and* require an explicit `shareable: true` field on the
+session doc before `get` is granted — client-side gating alone leaves every
+already-written session readable.
+
+### 24.2 Live-share tokens come from a non-cryptographic PRNG — HIGH
+
+**Status: FIXED 2026-08-12** (ships with the next app build — a pure client
+fix, no rule involved, so no deploy applies to it). One-word
+change in `_createLiveSessionToken()`: `Random()` → `Random.secure()`.
+
+`ride_recording_provider.dart:1245-1252`:
+
+```dart
+final rnd = Random();   // dart:math — NOT Random.secure()
+final token = String.fromCharCodes(
+  Iterable.generate(32, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+);
+```
+
+`liveSessions` is a pure capability model — "the link is the permission"
+(`firestore.rules:184-201`). The token **is** the entire access control, and it
+comes out of Dart's default `Random`: a seeded 64-bit LCG initialised from the
+clock. An attacker who knows roughly when a ride started can brute-force the
+seed and derive the token exactly; the nominal 62³² keyspace never comes into
+it. And because nothing sweeps expired sessions (§4 — `expiresAt` is honoured
+only client-side, in `live-viewer.html`), a recovered token keeps returning the
+last known position indefinitely.
+
+**Fix:** `Random.secure()`. One word, and it is the difference between ~190
+bits of entropy and ~64 bits of guessable clock state.
+
+### 24.3 Publishing a saved route leaks the rider's home address — HIGH
+
+**Status: FIXED 2026-08-12.** Implemented the "at minimum in `setPublic`"
+alternative rather than clipping in `saveRoute` — a private route (the
+default, "Only you can see this route") keeps its real endpoints, since
+nothing but the owner can ever read it; `RouteRepository.setPublic()` now
+reads the stored polyline, runs `PrivacyZoneClipper.clipPolyline` on it, and
+overwrites the stored trail in the same write that flips `isPublic: true`.
+The clip is permanent — setting a route back to private does not restore the
+un-clipped trail, the same one-way posture `RideShareRepository.shareRide`
+already has for shared rides. A short/near-home route can clip to nothing;
+that's the safe outcome, matching `shareRide`'s existing behavior, not an
+error.
+
+Ride *sharing* clips privacy zones — `ride_share_repository.dart:66` runs
+`PrivacyZoneClipper.clipPolyline`, stripping ~200 m off each end. Route
+*publishing* does not.
+
+`save_route_screen.dart:88-99` passes `_polyline` — the raw trail read straight
+out of the local `ride_points` table — into `RouteRepository.saveRoute`, which
+stores it verbatim (`route_repository.dart:17-42`). Flipping the "Public"
+switch then exposes it to **every** authenticated rider through the
+collection-group rule at `firestore.rules:292-294`.
+
+The switch's own subtitle says only "Any rider can find and ride this route."
+It does not say "starting from your driveway." Two code paths, the same GPS
+trail, opposite privacy postures — that inconsistency is the whole finding.
+
+**Fix:** run `PrivacyZoneClipper.clipPolyline` in `saveRoute` (or at minimum in
+`setPublic`).
+
+### 24.4 Forum-moderator takeover via unconstrained forum creation — HIGH
+
+**Status: FIXED 2026-08-12** (rules deployed 2026-08-14). The
+`createdBy`/`maintainerIds` ownership constraint in the `forums/{forumId}`
+`create` rule now applies to every write, not only `type == 'custom'`:
+either field, if present at all, must equal the caller / `[caller]`; both
+may still be omitted entirely (required for `getOrCreateForum`'s
+auto-created bike/topic forums, which never set them). Verified against
+`forum_repository.dart`'s three create paths: `getOrCreateForum` and
+`getOrCreateGeneralForum` never set either field, `createCustomForum` always
+sets both to the caller's own uid — so the tightened rule changes nothing
+for any real caller, only for a client trying to set them to something else.
+
+`firestore.rules:314-319`:
+
+```
+allow create: if request.auth != null &&
+  request.resource.data.followerCount == 0 &&
+  request.resource.data.postCount == 0 &&
+  (request.resource.data.get('type', '') != 'custom' || (
+    request.resource.data.createdBy == request.auth.uid &&
+    request.resource.data.maintainerIds == [request.auth.uid]));
+```
+
+The `createdBy` / `maintainerIds` constraint fires **only when
+`type == 'custom'`**. For any other type those fields are unconstrained.
+
+Forum ids are deterministic slugs — `bikeForumSlug('yamaha', model: 'r15')` →
+`yamaha__r15`, `generalForumSlug('Maintenance')` → `maintenance`
+(`forum_repository.dart:46,80`). An attacker enumerates popular brand/model
+slugs that don't exist yet and pre-creates them with `type: 'bikeModel'` and
+`maintainerIds: ['<attacker-uid>']`. `canModerateForum()`
+(`firestore.rules:81-86`) reads exactly those fields, so the attacker now holds
+permanent delete rights over every post and reply any rider ever makes in that
+forum, plus the ability to drive `postCount` down. They can also stamp
+`createdBy` with an innocent third party's uid.
+
+**Fix:** apply the ownership constraint to all types, or require
+`!('maintainerIds' in request.resource.data)` for non-custom forums.
+
+### 24.5 @username impersonation — the profile doc bypasses the reservation — MEDIUM
+
+**Status: FIXED 2026-08-12** (rules deployed 2026-08-14). The
+`users/{uid}` write rule now rejects a `usernameLower` value it can't verify:
+a write is allowed if `usernameLower` isn't in the resulting document, is
+unchanged from what's already stored, OR a matching `usernames/{handle}` doc
+claims that exact handle for the caller's own uid. That last check uses
+`existsAfter()`/`getAfter()` rather than `exists()`/`get()` — `setUsername()`
+claims the handle and writes the profile doc's `usernameLower` in the SAME
+transaction, and a plain `exists()` only sees state as of the transaction's
+*start*, before either write lands, which would have rejected every
+legitimate call. `existsAfter()` sees the post-commit state, which is exactly
+what's needed to check two documents written together for consistency.
+Residual: this validates `usernameLower` only, not the cosmetic `username`
+display field, since the client sources those two from different places
+(`usernameLower` always from `setUsername`'s transaction; `username`'s exact
+case/`@`-prefix form varies by caller) and pinning both exactly risked
+breaking a legitimate write this pass couldn't fully enumerate. A spoofed
+`username` alone (without a matching `usernameLower`) would not surface the
+attacker in a search for the victim's handle, since `searchByUsername`
+queries `usernameLower`.
+
+`firestore.rules:105` is a bare `allow write: if request.auth.uid == uid;` with
+**no field validation at all**.
+
+`setUsername` (`profile_repository.dart:91-120`) takes real care to claim
+`usernames/{handle}` in a transaction so handles are globally unique. But rider
+search reads `users.usernameLower` directly, not the reservation collection
+(`profile_repository.dart:257-259`). Nothing stops a client writing
+`{'usernameLower': 'victimhandle', 'username': '@victimhandle'}` straight into
+its own profile doc and skipping the transaction entirely. The impersonator
+then appears in search for that handle, with a copied display name and avatar —
+and search is exactly the flow used to pick who to follow and who to invite to
+a group ride.
+
+The same hole lets `publicStats` (`profile_repository.dart:160-180`) be set to
+arbitrary distance / ride-count / badge values.
+
+**Fix:** validate the write shape — reject `usernameLower` changes unless a
+matching `usernames/{handle}` doc with `uid == request.auth.uid` exists.
+
+### 24.6 A group-ride invitee can add arbitrary strangers to the ride — MEDIUM
+
+**Status: FIXED 2026-08-12** (rules deployed 2026-08-14). The
+"invitee accepts" clause now pins `invitedIds`' new value to exactly the old
+list with the caller removed, via the same `hasOnly`/`concat` set-equality
+idiom the `memberIds` half of the same clause already used (rather than the
+unconfirmed `List.removeAll()` method, to stay on syntax already proven to
+parse elsewhere in this file): new ⊆ old (nobody added) AND old ⊆ new + 
+{caller} (nobody else removed). An accepting invitee can no longer inject
+strangers into `invitedIds` (who'd otherwise immediately satisfy
+`inGroupRide()` and gain read on every member's live position) or delete
+other pending invitees in the same write.
+
+`firestore.rules:659-666`, the "invitee accepts" clause, bounds `memberIds`
+precisely but places **no constraint on the contents of `invitedIds`** beyond
+requiring the caller remove themselves:
+
+```
+request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'invitedIds']) &&
+!(request.auth.uid in request.resource.data.get('invitedIds', [])) && ...
+```
+
+So an accepting invitee can rewrite `invitedIds` to any list of uids in the
+same write. Everyone they add satisfies `inGroupRide()` and immediately gains
+read on `groupRides/{id}/memberLocations/{uid}`
+(`firestore.rules:739-742`) — **every member's live position**. They can also
+delete other pending invitees.
+
+This is the same bug class as §10, which was fixed by moving the roster out of
+an array and into documents. It survived in the *invite* array, which that fix
+didn't touch.
+
+**Fix:** require `invitedIds` to be the old list minus exactly the caller.
+
+### 24.7 Unbounded like / vote inflation — MEDIUM
+
+**Status: FULLY FIXED — like/vote half 2026-08-12 (rules deployed
+2026-08-14); comment/reply half 2026-08-14 (rules NOT yet deployed, must
+follow the app build — see §24's ordering note).**
+`rides/{rideId}`'s `likes` and `upvotes`/`downvotes` bumps, and
+`forums/{forumId}/posts/{postId}`'s `upvotes`/`downvotes` bump, are now tied
+to the SAME transaction creating/deleting the per-user doc they represent
+(`likes/{uid}` or `votes/{uid}`), via two new helper functions
+(`likeBumpValid`, `voteBumpValid`) using `existsAfter()`/`getAfter()` —
+verified against the actual client: `RideShareRepository.toggleLike`/`.vote`
+and `ForumRepository.votePost` already write the counter bump and the
+per-user doc in one `runTransaction()` call each, so nothing in the app had
+to change, only the rule. A client that bumps a counter alone, without the
+paired subcollection write, or that loops the same bump repeatedly, now
+fails this check (the "before" state has already changed after the first
+successful call).
+
+**Residual now CLOSED 2026-08-14 — but not yet deployed, and the deploy
+order matters (see §24's top note).** `rides/{rideId}.comments` and
+`forums/{forumId}/posts/{postId}.replyCount` were the two counters left
+untied, because `RideShareRepository.addComment()` and
+`ForumRepository.addReply()` each wrote the counter bump as a SEPARATE call
+from the comment/reply doc, giving `existsAfter()` no single commit to
+inspect. Both are now `runTransaction()` calls that write the doc and the
+bump together.
+
+Tying the rule to them needed one extra step that likes/votes didn't: a
+like/vote doc is keyed by the caller's uid, so the rule can reconstruct its
+path, but a comment/reply gets an auto-generated id the rule cannot guess.
+So the bump now carries that id — `lastCommentId` on the ride,
+`lastReplyId` on the post — and a new `newDocBy()` helper requires that the
+named doc (a) did not exist at the transaction's start, (b) exists after it,
+and (c) has `userId == request.auth.uid`. Check (a) is what blocks a replay
+that points the bump at a comment already sitting there; check (c) stops a
+bump riding on someone else's concurrently-created comment.
+
+The `replyCount` −1 path (deleteReply) is deliberately left untied to a
+specific doc: it stays gated on author-or-moderator as before, and the §24.7
+concern is inflation, not deflation — a delete batch carries no new id to
+check anyway.
+
+**Verified against the emulator.** `scripts/test/rules/firestore_rules.test.js`
+covers this directly: the bump succeeds in its real transactional shape, and
+is denied when sent alone, when it names a comment that already existed (the
+replay), when it names a nonexistent comment, when it tries to move the count
+by more than 1, when it smuggles another field along, and when the same id is
+reused a second time. See §24.11 — writing those tests immediately caught two
+further bugs.
+
+The `places/{placeId}` rating-replay limitation this section's original
+writeup cross-referenced remains exactly as documented at that rule (still
+honestly flagged, still not fully closed, for the reasons given there).
+
+The counter-bump rules (`firestore.rules:253-263` for rides, `:364-368` for
+forum posts) let any viewer move each tally by ±1, but nothing ties the bump to
+the `votes/{userId}` doc — the two writes aren't atomic and the rule never
+checks the vote doc. A client loops the +1 update and drives any post to an
+arbitrary score.
+
+The in-rule comment claims "a voter can only ever nudge each tally by one."
+True per request; there is no cap on requests. Same shape as the honestly
+documented `places` rating-replay limitation at `firestore.rules:480-494`,
+which is also still live.
+
+### 24.8 Emergency contacts' phone numbers and emails go to Cloud Logging — MEDIUM
+
+**Status: FIXED 2026-08-12.** `crash-notifications.ts` no longer logs
+`contact.phone`, `contact.email`, the rendered SMS/email bodies (which
+embedded the crash's GPS coordinates), or the contact's name — the one
+`console.log` line that fires now names only the contact's Firestore doc id
+and the ride id. `notificationLog` documents dropped `phone`/`email`/
+`contactName` too, keeping `contactId` only (already sufficient to look the
+contact back up if ever needed) — the same PII no longer lands at rest
+either, not just out of logs. The SMS/email message content is still built
+(a real Twilio/SendGrid call will need exactly that), it's just never
+logged or persisted anymore.
+
+Also fixed in the same pass, found while verifying this would actually
+deploy: `functions/` had no `index.ts` and no `main` field in `package.json`
+at all — `crash-notifications.ts`'s exports were never re-exported from
+anywhere `firebase deploy --only functions` would look, so **nothing in this
+directory could have deployed as written**, regardless of this fix. Added
+`functions/src/index.ts` (re-exports everything) and
+`"main": "lib/index.js"` in `package.json`. Compiles clean
+(`tsc --noEmit`, verified in this session).
+
+**Noted alongside, unchanged and NOT something a code fix can close:** the
+entire crash-alert path is still a mock — `sendContactNotification` and
+`scheduleEscalation` only log an attempt, nobody is actually contacted after
+a detected crash. That needs real Twilio/SendGrid accounts and API keys,
+which only the project owner can set up (see `HANDOFF_Document.md`'s "Soon"
+section). Fixed what code alone could fix here: the Settings screen's
+emergency-contacts description no longer claims contacts ARE notified —
+"Notified if a crash is detected and you don't respond within 60 seconds."
+was flatly false and is now "Logged if a crash is detected and you don't
+respond within 60 seconds. Automatic SMS/email alerts aren't live yet." in
+both `app_en.arb` and `app_bn.arb` (and their generated
+`app_localizations_*.dart`, hand-edited to match since no Flutter SDK was
+available in this session to run `flutter gen-l10n` — worth a real regen
+next time the l10n toolchain is available, to confirm nothing else in that
+generation step was missed).
+
+`functions/src/crash-notifications.ts:119-120`:
+
+```ts
+console.log(`[MOCK] Sending SMS to ${contact.phone}: ${smsMessage}`);
+console.log(`[MOCK] Sending email to ${contact.email}: ${emailSubject}`);
+```
+
+Third-party PII — contacts never consented to this app, and the SMS body also
+carries the crash GPS coordinates — lands in Cloud Logging, retained by default
+and visible to anyone with project Viewer. `sendContactNotification` also
+persists `phone`/`email` into `users/{uid}/notificationLog`; that one is at
+least unreachable from clients, since no rule matches the path.
+
+**Noted alongside, and arguably the bigger problem:** the entire crash-alert
+path is a mock. `sendContactNotification` and `scheduleEscalation` only log.
+**Nobody is actually contacted after a detected crash.** That is already
+tracked as a deploy task in `HANDOFF_Document.md` ("Soon → Cloud Functions"),
+but it is worth stating in safety terms rather than deployment terms.
+
+### 24.9 Lower-severity items
+
+- **Android auto-backup left at default — FIXED 2026-08-12.**
+  `AndroidManifest.xml`'s `<application>` tag now sets
+  `android:allowBackup="false"`. That alone fully disables both Android's
+  automatic cloud backup and `adb backup` extraction — no
+  `dataExtractionRules`/`fullBackupContent` needed on top, since those only
+  matter for fine-tuning what gets backed up when backup is otherwise on.
+- **Cloudinary unsigned preset is client-extractable — NEEDS YOUR ACTION,
+  not a code fix.** `cloudinary_upload_service.dart:29-30` hardcodes cloud
+  name `vjvcigkt` and preset `throttleiq_unsigned`; that this is
+  APK-extractable is expected for an unsigned preset, not itself a bug.
+  What needs checking lives in the Cloudinary dashboard (Settings → Upload
+  → Upload presets), which this agent has no login for: confirm the preset
+  restricts resource type and file size and has moderation enabled, so a
+  pulled preset can't be used for quota exhaustion or hosting arbitrary/
+  illegal content. Tracked in `HANDOFF_Document.md`'s key-facts table too.
+- **Email enumeration — NOT FIXED, left as-is on purpose.** `searchByEmail`
+  (`profile_repository.dart:268-274`) still lets any authed rider confirm
+  whether an arbitrary email is registered and pull the full profile —
+  intentional per `firestore.rules:88-98` (find-by-email is an explicit
+  product ask), unchanged by this pass. It's noted here because it's what
+  makes §24.1's handles guessable in the first place — but §24.1's own fix
+  (real opt-in + `shareable: true` gate) means a guessed/enumerated handle no
+  longer resolves to a live position unless that specific rider chose to
+  share that specific ride, which is the actual mitigation for the
+  combination, not a change to email enumeration itself.
+- **Attacker-controlled `userName` / `userPhotoUrl` on shared rides — FIXED
+  IN CODE 2026-08-14, BLOCKED ON THE BLAZE UPGRADE TO ACTUALLY RUN.** The
+  recommended fix from the previous pass (below) was implemented:
+  `functions/src/ride-identity.ts` adds a `reconcileRideIdentity` trigger
+  (`onWrite` on `rides/{rideId}`) that overwrites `userName`/`userPhotoUrl`
+  from the authoritative `users/{uid}` profile doc. It writes back only when
+  a field actually differs, which is what stops it recursing on its own
+  correction; it no-ops on deletes, on rides with no usable `userId`, and on
+  authors with no profile doc yet (leaving client values rather than blanking
+  a legitimate rider's name). **It cannot deploy until the project is on
+  Blaze** — see §24's top note — so in production this remains open exactly
+  as described below. The residual trade-off is unchanged from the original
+  recommendation: a spoofed name is visible in the feed for the brief window
+  between the client's write and the trigger firing. Closing that window
+  entirely would mean dropping the denormalized fields and joining against
+  `users/{uid}` at read time.
+
+  The original finding and the reasoning for not doing this in rules:
+  `rides` create still pins only `userId`
+  (`firestore.rules:235`); the denormalized display name/avatar on a feed
+  card are still free-form. Investigated a rules-level fix (validate against
+  `request.auth.token.name`/`.picture`, the ID token claims Firebase Auth
+  sets from the same `displayName`/`photoURL` the client already reads) but
+  didn't ship it: the four call sites that populate these fields
+  (`ride_share_screen.dart`, `social_screen.dart`, `notifications_screen.dart`,
+  `group_ride_map_screen.dart`) don't all source them the same way — some
+  read `FirebaseAuth`'s `user.displayName`/`.photoURL` directly, `Profile
+  Repository`'s own `displayName`/`photoUrl` fields (settable separately via
+  `updateProfile`) can legitimately differ from those, and one call site
+  passes empty strings outright. Getting a rule exactly right across all four
+  without a way to test it end-to-end risked silently breaking legitimate ride
+  sharing, which is a worse outcome than leaving a cosmetic (`userId` itself
+  is still correctly pinned, so this is a feed-card impersonation, not an
+  account-level one) impersonation vector open one more pass. That reasoning
+  still holds — the trigger sidesteps the client-trust problem entirely,
+  without needing a rule to reconcile four different call sites' conventions.
+- **Admin check is an email-string comparison — FIXED 2026-08-12 (with a
+  manual step still needed).** `isAdmin()` in `firestore.rules` now checks
+  the `admin` custom claim (`request.auth.token.admin`) first, falling back
+  to the email comparison only if that claim isn't set — so nothing broke
+  before the claim actually exists. `scripts/set_admin_claim.js` (new) grants
+  it, mirroring `reset_beta_data.js`'s safety posture (dry-run default,
+  project-id guard, requires real `GOOGLE_APPLICATION_CREDENTIALS`) — this
+  agent could not run it, since it needs this project's own service-account
+  credentials. **Still to do:** run
+  `FIREBASE_PROJECT_ID=throttleiqfb node scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it`,
+  then sign out/in on that account to refresh its ID token. The email
+  fallback in `firestore.rules` can be deleted once that's confirmed working.
+
+### 24.10 `functions/` could not have been built or deployed — FIXED 2026-08-14 (deploy still blocked on Blaze)
+
+Found while trying to verify §24.8's and §24.9's function code actually
+compiles. §24.8 had already caught that there was no `index.ts` entry point;
+underneath that were two more problems, either of which would have failed a
+deploy on its own:
+
+- **`typescript` was never a dependency.** `package.json` declared
+  `"build": "tsc"` but listed no `typescript` (and no `@types/node`) in
+  `devDependencies`, and `functions/node_modules` did not exist at all. `npm
+  run build` could only ever have failed. Both are now declared and installed,
+  and `functions/package-lock.json` is committed alongside them.
+- **`firebase.json` had no `predeploy` hook for functions.** Without it,
+  `firebase deploy --only functions` ships whatever is in `functions/lib/`
+  rather than building first — and `lib/` did not exist, while
+  `package.json`'s `"main"` points at `lib/index.js`. Added the standard
+  `npm --prefix "$RESOURCE_DIR" run build`. `functions/lib/` is now gitignored,
+  since `functions/src/` is the source of truth.
+
+Verified: `npm run build` produces `lib/crash-notifications.js`, `lib/index.js`
+and `lib/ride-identity.js`, and `tsc --noEmit` is clean.
+
+**Still blocked:** none of this can reach production until the project is on
+the Blaze plan (see §24's top note). `firebase deploy` fails at
+`artifactregistry.googleapis.com` enablement, which Spark does not permit.
+
+Note also `firebase.json` sets `"runtime": "nodejs_20"`, with an underscore;
+the conventional spelling is `nodejs20`. Left alone rather than changed blind —
+the deploy that failed had already parsed the config and moved on to API
+enablement, so it is at worst ignored, and there is no way to confirm the fix
+here while deploys are blocked. Worth checking on the first successful deploy.
+
+### 24.11 Two bugs the new rules test harness immediately caught — FIXED 2026-08-14
+
+§24.7's writeup said the new clauses were "not verified against an emulator"
+because there was no Java runtime. That turned out to be wrong in a useful way:
+there IS a JVM on this machine, inside Android Studio's bundled JBR —
+`HANDOFF_Document.md`'s own `keytool` note (added 2026-08-11) points at it.
+Pointing `JAVA_HOME` there runs the Firestore emulator fine.
+
+So there is now a real rules test suite: `scripts/test/rules/firestore_rules.test.js`,
+19 tests, run with `npm run test:rules` from `scripts/`. It lives under
+`test/rules/` rather than `test/` on purpose — `npm test`'s glob is
+`test/*.test.js`, deliberately non-recursive, so the pure-function tests keep
+running with no emulator involved.
+
+Writing the tests found two bugs within minutes, both of which had been
+deployed live on 2026-08-14:
+
+- **A rider could not delete their own reply on someone else's post — live
+  breakage, not just a security gap.** The `replyCount` −1 clause read
+  `resource.data.userId == request.auth.uid || canModerateForum(forumId)`, but
+  in that clause `resource` is the POST, so it checked the POST's author. Any
+  rider deleting their own reply on a post they didn't write had the entire
+  batch denied. Fixed by tying the −1 to the reply doc actually being deleted
+  in the same batch (new `docRemoved()` helper, mirroring `newDocBy()`), and
+  delegating *who may delete* to the reply's own `allow delete` rule — which
+  runs in the same batch, so an unauthorized deleter never reaches the
+  decrement either. `ForumRepository.deleteReply()` now sends `lastReplyId`
+  alongside the decrement.
+- **`isAdmin()` threw an evaluation error on any token without an
+  `email_verified` claim.** It read `request.auth.token.email_verified`
+  directly; on a token lacking the claim that is an ERROR, not `false`. Since
+  `canModerateForum()` is `isAdmin() || (creator/maintainer check)`, the error
+  took down the whole expression *before* the branch that should have allowed
+  the write — so a legitimate forum creator or maintainer signing in by any
+  non-email method could not moderate. Fixed with the
+  `.get('email_verified', false)` / `.get('email', '')` form. The regression
+  test asserts a forum creator can moderate on a token with no email claims.
+
+Both fixes are in the same undeployed batch as §24.7's, and inherit the same
+ordering constraint (see §24's top note): `deleteReply`'s `lastReplyId` is a
+new client field, so the rules must not go out ahead of the app build.
+
+### What the audit found clean
+
+Worth recording so the next pass doesn't re-derive it:
+
+- `public/live-viewer.html` uses `textContent` for all remote data and
+  validates the handle against `HANDLE_RE` before using it as a document id —
+  no XSS. The only `innerHTML` write is a constant install-CTA string.
+- All SQLite access uses parameterised `whereArgs`. No string-interpolated SQL
+  outside schema DDL.
+- Signing secrets are correctly excluded: `throttleiq-release.keystore` and
+  `app/android/key.properties` are gitignored (`.gitignore:82-86`) and appear
+  nowhere in git history.
+- `reset_beta_data.js` has a genuinely careful safety posture (dry-run default,
+  project-id guard checked twice, idempotent).
+- No `badCertificateCallback` / `HttpOverrides`, no cleartext endpoints.

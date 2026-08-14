@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:throttleiq/core/constants/app_dimensions.dart';
+import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/app_typography.dart';
@@ -110,6 +112,115 @@ void main() {
     });
   });
 
+  group('AppShapeProfile catalogue', () {
+    test('every style resolves to a shape profile', () {
+      // forStyle is exhaustive, so this is a compile-time guarantee; asserted
+      // anyway so the intent survives a refactor that adds a default branch.
+      for (final style in AppThemeStyle.values) {
+        expect(AppShapeProfile.forStyle(style), isNotNull, reason: '$style');
+      }
+    });
+
+    test('the three profiles are actually distinguishable', () {
+      // The point of per-skin shape is that a rider can see it. A "rounded"
+      // profile two pixels off the boxy one reads as a rendering artifact,
+      // which is the failure this catches.
+      expect(AppShapeProfile.rounded.radiusMd,
+          greaterThan(AppShapeProfile.boxy.radiusMd * 3));
+      expect(AppShapeProfile.rounded.radiusXl,
+          greaterThan(AppShapeProfile.boxy.radiusXl * 2));
+      expect(AppShapeProfile.terminal.radiusXl, 0);
+    });
+
+    test('radii are ordered sm ≤ md ≤ lg ≤ xl within every profile', () {
+      // A half-edited profile (lg smaller than md, say) draws a card with
+      // tighter corners than the chip inside it — visible, but only if you
+      // happen to apply that one skin.
+      for (final style in AppThemeStyle.values) {
+        final s = AppShapeProfile.forStyle(style);
+        expect(s.radiusSm, lessThanOrEqualTo(s.radiusMd), reason: '$style');
+        expect(s.radiusMd, lessThanOrEqualTo(s.radiusLg), reason: '$style');
+        expect(s.radiusLg, lessThanOrEqualTo(s.radiusXl), reason: '$style');
+      }
+    });
+
+    test('boxy skins keep the historical instrument-panel radii exactly', () {
+      // The skins that stay boxy must be pixel-identical to what riders
+      // already have — this is the regression guard on "no visual change for
+      // the five dashboard/editorial directions".
+      expect(AppShapeProfile.boxy.radiusSm, 2);
+      expect(AppShapeProfile.boxy.radiusMd, 2);
+      expect(AppShapeProfile.boxy.radiusLg, 4);
+      expect(AppShapeProfile.boxy.radiusXl, 6);
+      expect(AppShapeProfile.boxy.radiusFull, 4);
+      expect(AppShapeProfile.boxy.outlineWidth, 1);
+      expect(AppShapeProfile.boxy.controlHeight, 52);
+    });
+
+    test('Carbon Mono, the default skin, is boxy', () {
+      // The app's primary design language, and the fallback for an unknown
+      // persisted preference. If it ever resolves to another profile, every
+      // rider who never picked a skin gets a silent restyle.
+      expect(AppShapeProfile.forStyle(AppThemeStyle.carbonMono),
+          same(AppShapeProfile.boxy));
+    });
+
+    test('only Retro gets the terminal profile', () {
+      for (final style in AppThemeStyle.values) {
+        final isTerminal =
+            AppShapeProfile.forStyle(style) == AppShapeProfile.terminal;
+        expect(isTerminal, style == AppThemeStyle.retro, reason: '$style');
+      }
+    });
+
+    test('rounded skins get a true pill for the full-radius token', () {
+      // radiusFull backs chips, progress bars and badges. On a rounded skin a
+      // 4px "pill" is the tell that the profile was copied from the boxy one.
+      for (final style in AppThemeStyle.values) {
+        final s = AppShapeProfile.forStyle(style);
+        if (s != AppShapeProfile.rounded) continue;
+        expect(s.radiusFull, greaterThanOrEqualTo(100), reason: '$style');
+      }
+    });
+
+    test('spacing and chrome heights are not part of a skin', () {
+      // A skin changes how the app looks, not where things are: the padding
+      // scale and the nav/app-bar heights stay compile-time constants, so no
+      // skin can reflow a screen. This is the guard on "no hierarchy change".
+      expect(AppDimensions.paddingSm, 8);
+      expect(AppDimensions.paddingMd, 16);
+      expect(AppDimensions.paddingLg, 24);
+      expect(AppDimensions.paddingXl, 32);
+      expect(AppDimensions.bottomNavHeight, 72);
+      expect(AppDimensions.appBarHeight, 64);
+    });
+  });
+
+  group('AppDimensions, the shape facade', () {
+    tearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+
+    test('apply() swaps every radius at once', () {
+      AppDimensions.apply(AppShapeProfile.rounded);
+      expect(AppDimensions.radiusSm, AppShapeProfile.rounded.radiusSm);
+      expect(AppDimensions.radiusMd, AppShapeProfile.rounded.radiusMd);
+      expect(AppDimensions.radiusLg, AppShapeProfile.rounded.radiusLg);
+      expect(AppDimensions.radiusXl, AppShapeProfile.rounded.radiusXl);
+      expect(AppDimensions.radiusFull, AppShapeProfile.rounded.radiusFull);
+      expect(AppDimensions.shape, same(AppShapeProfile.rounded));
+    });
+
+    test('apply() swaps rule weights and control metrics too', () {
+      AppDimensions.apply(AppShapeProfile.terminal);
+      expect(AppDimensions.outlineWidth, 2);
+      expect(AppDimensions.emphasisOutlineWidth, 2);
+      AppDimensions.apply(AppShapeProfile.rounded);
+      expect(AppDimensions.outlineWidth, 1);
+      expect(AppDimensions.controlHeight, AppShapeProfile.rounded.controlHeight);
+      expect(AppDimensions.fieldPaddingH, AppShapeProfile.rounded.fieldPaddingH);
+      expect(AppDimensions.fieldPaddingV, AppShapeProfile.rounded.fieldPaddingV);
+    });
+  });
+
   group('AppTheme.build', () {
     test('brightness follows each skin\'s palette, not its identity', () {
       for (final style in AppThemeStyle.values) {
@@ -121,23 +232,44 @@ void main() {
       }
     });
 
-    test('only Retro squares its corners off', () {
-      // Retro is the one skin that is a shape change as well as a palette
-      // (see AppColorPalette.retro). If another skin starts returning zero
-      // radii, either it copied Retro's branch or the shared
-      // AppDimensions radii were flattened for everyone.
+    test('the card radius is the applied skin\'s, not a shared constant', () {
+      // AppTheme.build reads AppDimensions, which is a facade over whichever
+      // AppShapeProfile was last applied — so the theme's shape follows the
+      // *applied* skin, not the style argument. Applying each skin's profile
+      // before building is what a real skin switch does (see
+      // ThemeStyleNotifier._applyTokens); getting that wrong is how a rider
+      // ends up with the previous skin's corners.
       double cardRadius(AppThemeStyle style) {
+        AppDimensions.apply(AppShapeProfile.forStyle(style));
         final shape = themeFor(style).cardTheme.shape;
         return ((shape! as RoundedRectangleBorder).borderRadius as BorderRadius)
             .topLeft
             .x;
       }
 
-      expect(cardRadius(AppThemeStyle.retro), 0);
       for (final style in AppThemeStyle.values) {
-        if (style == AppThemeStyle.retro) continue;
-        expect(cardRadius(style), greaterThan(0), reason: '$style');
+        expect(cardRadius(style), AppShapeProfile.forStyle(style).radiusXl,
+            reason: '$style');
       }
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+    });
+
+    test('Retro squares its corners off and doubles its rules', () {
+      // Retro is the skin whose shape *is* the direction — square corners and
+      // the heavy ink rule AppColorPalette.retro's border supplies. If it
+      // starts drawing a radius, it picked up another skin's profile.
+      AppDimensions.apply(AppShapeProfile.forStyle(AppThemeStyle.retro));
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+      final theme = themeFor(AppThemeStyle.retro);
+
+      final card = theme.cardTheme.shape! as RoundedRectangleBorder;
+      expect((card.borderRadius as BorderRadius).topLeft.x, 0);
+      expect(card.side.width, 2);
+
+      final button =
+          theme.elevatedButtonTheme.style!.shape!.resolve(const {})!
+              as RoundedRectangleBorder;
+      expect((button.borderRadius as BorderRadius).topLeft.x, 0);
     });
 
     test('every named text style carries the Bengali fallback', () {

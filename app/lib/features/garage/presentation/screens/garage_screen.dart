@@ -182,7 +182,7 @@ class _BikeCard extends ConsumerWidget {
                 width: double.infinity,
                 height: 116,
                 iconSize: 44,
-                borderRadius: const BorderRadius.vertical(
+                borderRadius: BorderRadius.vertical(
                     top: Radius.circular(AppDimensions.radiusXl)),
               ),
               if (bike.isActive)

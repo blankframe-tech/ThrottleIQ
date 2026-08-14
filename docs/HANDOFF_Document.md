@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-11 · Branch: `main`_
+_Last updated: 2026-08-12 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -39,8 +39,8 @@ orphaned screens (crash countdown, sync manager, exports, emergency
 contacts, live share) have all since been wired in, see "Done, but NOT yet
 verified" below. The Vehicle State Engine's foundation (Phase 1 + 1.5 —
 sensor fusion, confidence scoring, motion classification, adaptive
-recording thinning) shipped 2026-07-23, and the test suite is **678/678
-green** as of 2026-08-11.
+recording thinning) shipped 2026-07-23, and the test suite is **755/755
+green** as of 2026-08-12.
 
 **Versioning reset 2026-08-01:** the old `2.0.0-beta.x` line, its git tags,
 and all prior GitHub Releases (including the same-day `carbon-ui-` one)
@@ -429,6 +429,150 @@ phone (the pre-cropper one from earlier the same night, and this one). Same
 bundle id, so iOS shows one icon and the newer install wins — but delete the
 app and reinstall if anything ever looks stale.
 
+**Per-skin shape + a Dhaka places seed — 2026-08-12.** Two independent
+pieces of work; neither blocked the other.
+
+**1. Skins now differ in shape, not just palette.** Shape used to be shared:
+`AppTheme.build` computed `isTerminal ? 0 : shared`, so all eight non-Retro
+skins took the same near-zero instrument-panel radii, and nine visually
+distinct directions had identical corners. A palette swap alone can't carry
+"Positive Vibes" (health-app energy) away from "Analyst Blue" (a monitoring
+console) — the corner radius does as much of that work as the accent hue.
+
+New `core/theme/app_shape_profile.dart` adds a third axis alongside
+`AppColorPalette` and `AppTypography`: three profiles (**boxy**, the
+historical radii unchanged; **rounded**, 8/10/16/20 with true pills;
+**terminal**, Retro's square corners and doubled rules), assigned per skin by
+an exhaustive switch. Trail Social / Calming / Positive Vibes round off; the
+five dashboard/console/premium/print skins stay boxy. Full table in
+`Features.md` §8.
+
+Three things worth knowing before touching this area:
+
+- **`AppDimensions` is now a runtime-swappable facade**, exactly like
+  `AppColors` — that is *why* this was a small change. All 96 existing
+  `AppDimensions.radius*` call sites across 36 files were untouched; they
+  just read the active profile now. Applied from the same
+  `ThemeStyleNotifier._applyTokens`, so color + shape + type still land
+  atomically and a skin can't be half-applied.
+- **The one migration cost was `const`.** The radii stopped being
+  `static const`, which broke exactly 8 `const` expressions that had
+  embedded them: 5 bottom-sheet `RoundedRectangleBorder`s (dropped the
+  `const`), and 3 widgets — `EditorialCard`, `InkPanel`, `RideRouteMap` —
+  whose `radius` *parameter defaulted* to a token. Those are now nullable
+  with the token resolved in `build`. `flutter analyze` found all 8; there
+  was no third category. Note that `paddingSm…Xl`, `bottomNavHeight` and
+  `appBarHeight` were deliberately left `static const`: a skin changes how
+  the app looks, not where things sit, and keeping spacing constant is what
+  makes "no hierarchy change" structurally true rather than a promise. A
+  test asserts it.
+- **This is the first skin work that has actually been *seen* rendered.**
+  Not on a device — via a throwaway golden-image harness (`--update-goldens`
+  on a temporary test that pumped a real card/chip/progress/field/button
+  stack under each profile, then read the PNGs, then deleted itself). Text
+  renders as boxes there (no font assets in the test env), but shape does
+  not, which is all this change is. Carbon Mono sharp, Positive Vibes and
+  Trail Social visibly rounded with stadium chips, Retro square with 2px
+  rules — all as intended, same layout in every one. **Worth repeating this
+  trick** for any future purely-visual change: far cheaper than a simulator
+  run, and it produces something you can actually look at.
+
+**2. `scripts/seed_dhaka_places.js` — seed Dhaka's pumps, garages and parts
+sellers.** So a rider who opens Places in Dhaka sees a real directory on
+first launch instead of an empty list waiting for someone else to contribute.
+Same OpenStreetMap/Overpass source as the in-app "Import nearby", but a
+whole-city bounding box run once from the Admin SDK. Follows
+`reset_beta_data.js`'s house style: `--dry-run` default, `FIREBASE_PROJECT_ID`
+guard plus a resolved-credentials guard, idempotent and resumable.
+
+**Status: written, tested, verified against live Overpass — not yet run
+against production.** The write step needs a service-account key. A real
+fetch on 2026-08-12 returned **395 places over Dhaka metro: 256 fuel, 75
+garages, 64 parts sellers** (32 unnamed in OSM). Flow, flags and the
+rollback recipe are in `scripts/README.md`.
+
+- **The geohash is a line-for-line port of `GeohashUtil.encode`, not an npm
+  package.** This one matters: a seeded place whose geohash disagrees with
+  what the client computes falls outside the prefix range
+  `getPlacesByGeohash` queries, so it exists in Firestore and is **invisible
+  on the map with nothing erroring**. Verified against the Dart
+  implementation over 4,004 points (2,000 in the Dhaka box, 2,000 worldwide,
+  plus origin/poles/antimeridian) — 0 mismatches; 8 pinned as test fixtures.
+- **Two places it reaches further than the in-app importer, both Dhaka-
+  specific.** It queries `nwr` (ways and relations) not just nodes — most of
+  the city's petrol stations are mapped as building polygons, which the app's
+  node-only query misses entirely — and it adds `shop=motorcycle_repair` /
+  `shop=motorcycle_parts` to the app's three tags. Safe to diverge because
+  dedup is by `osmId`: a node the app can't classify is one it will never try
+  to re-create. **If the app's importer is ever widened, widen it toward
+  this list** rather than the reverse.
+- **Two decisions baked in**, both flagged in the README: seeded places are
+  `verified: true` (structured source, not an unmoderated rider submission —
+  `--unverified` flips it), and `createdBy` is the sentinel
+  `system:osm-seed-dhaka` (a real uid there would hand one rider ownership of
+  every pump in Dhaka via "My places"; a colon can't appear in a Firebase
+  uid, so it can't collide).
+- **Coverage is honestly partial** and the script says so on every run. OSM
+  maps Dhaka's chain petrol stations well and its small independent garages
+  and roadside parts counters much less so. That was the known trade of
+  choosing Overpass over a paid Places API — free, no key, no quota, no
+  recurring cost, in exchange for an incomplete long tail.
+- `scripts/` has unit tests now (`npm test`, node's built-in runner, no new
+  dependency): 22 covering the mapping, geohash, dedup and document shape —
+  all pure, no network, no Firestore.
+
+Suite 717 → **755 green**, `flutter analyze` clean in `lib/` and `test/`.
+Nothing here has been on a device.
+
+**Two follow-ups, same day.**
+
+- **`flutter analyze` is usable again** — `build/**` is now excluded in
+  `app/analysis_options.yaml`. **6,782 issues / 6,163 errors → 121 issues / 0
+  errors**, and 8.8s → 2.9s. Every one of those errors came from the
+  FlutterFire sources SwiftPM checks out under `build/`, none from this
+  project; full write-up and the rejected alternative in `Issues.md` §23
+  (now marked fixed). A subsequent `flutter build ios --release` succeeded, so
+  the exclusion doesn't affect the build — only what gets analyzed.
+- **The skin blurbs name the shape**, in both ARBs — "…, rounded" /
+  "…, sharp edges" and "…, গোল কোণ" / "…, ধারালো কোণ". Retro and Carbon
+  Mono's English already named theirs; Carbon Mono's **Bangla** was corrected
+  from "ঝকঝকে" (shiny) to "ধারালো কোণ", because otherwise it would have been
+  the one row in a Bangla picker not naming its shape while the other eight
+  did — an inconsistency this change would itself have introduced. 15 strings
+  across `app_en.arb` / `app_bn.arb`, `flutter gen-l10n` re-run and the
+  generated files committed as usual.
+
+**Installed and running on the iPhone 15 — but still not *seen*.**
+`flutter build ios --release` → `build/ios/iphoneos/Runner.app` (48.2 MB,
+42.3s Xcode build), signed with the `abraar.rar@icloud.com` development
+identity, then installed and launched on Abraar's iPhone 15 via the
+`devicectl` sequence. Install and launch both succeeded first try, in under 20
+seconds total. **No ad-hoc signing failure and no `flutter clean` needed** — a
+third consecutive corroboration of the ⚠️ on the iOS-install section above;
+treat `flutter build ios --release` → `devicectl device install app` →
+`devicectl device process launch` as the default path and `flutter run` as the
+fallback.
+
+Note the one process trap worth remembering: `xcrun devicectl list devices`
+lists *known* devices whether or not they're reachable, with state
+`unavailable` when nothing is cabled/unlocked/trusted. Don't read a populated
+table as a connected phone. The `available (paired)` state is the one that
+means installable, and `\bavailable\b` (not `available`) is the grep that
+distinguishes it from `unavailable`.
+
+**What remains unverified is unchanged, and it is the whole point of the
+exercise:** the skins have still never been *looked at* on a real screen. The
+app is running but sits at sign-in, and no credentials or tap automation exist
+on this side — the standing limitation from every previous device run
+(`Issues.md` §15). The rider-side checks queued up for whoever has
+credentials: apply **Positive Vibes** (rounded profile on a near-white base,
+and the only place a 20px radius meets the Record screen's 210px photo hero),
+**Retro** (must be completely square — anything rounded means the terminal
+profile isn't applying), and **Carbon Mono** (must look *identical* to before;
+any visible change there is a regression, since boxy keeps the historical
+radii verbatim). Also worth an eye: whether the lengthened skin blurbs
+ellipsize at this device's textScaler 1.1176 with bold text.
+
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
 - **Navigation is geometric, not routed** — turn-by-turn follows a saved route's own polyline: no street names, no lane guidance, and no rerouting (it reports "off route" instead). Deliberate: no routing engine or API key exists. See `Assumptions Made.md`.
@@ -487,13 +631,94 @@ backend or a real device. **Treat each as unproven until tested.**
   7. **Ride with friends** — needs **two real accounts on two devices**: invite, confirm the invitee sees the in-app notification, accept, and confirm both riders appear on each other's map in different colours and that stale positions grey out. The deployed `groupRides` rules have never been exercised by a real client — and since the roster moved to a subcollection (`Issues.md` §10), the invite → accept → leave path is the specific thing to exercise. Its rule correctness is reasoned, not executed; there's no rules-test harness in this repo.
   8. **Bike visibility** — confirm another rider can see your bikes on `public`, cannot on `private`, and that `followers` tracks the follow edge. Note this rules change *widened* read access (`Assumptions Made.md` #15).
   9. **Bike deletion** — the deadlock is fixed and covered by real-SQLite tests, but confirm on a device that deleting a bike with rides actually removes it and its history.
-- [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator. **Widened 2026-08-11:** that toggle is now a nine-skin dropdown, so what's unverified on a device is nine palettes, not two — and only Carbon Mono has ever been seen rendering a real screen. The seven new skins have never been applied to anything but a swatch. Highest-value single check when a simulator is next available: apply **Retro** (its `border` token is full-strength ink rather than a hairline — the one palette that could plausibly look wrong applied app-wide) and **Positive Vibes** (pure-white `surface` on a near-white `background`) and page through Record → Active ride → Ride summary.
+- [x] ~~Carbon Mono / Editorial theme toggle — default theme~~ **PARTIALLY VERIFIED 2026-08-01** — ran on the iOS Simulator, screenshotted the Record screen: dark Carbon Mono palette, lime accents, sharp corners, and IBM Plex type all render correctly by default. The Editorial toggle in Settings itself was **not** tap-tested live (no `idb`/`cliclick` in this environment, and scripted macOS clicks need an Accessibility grant that wasn't available) — instead it's covered by 5 new tests in `test/core/theme/theme_style_provider_test.dart` exercising the tap → notifier → palette-swap → persistence path directly. Writing those tests caught a real bug, since fixed: `ThemeStyleNotifier._loadPersisted()` could crash with "used after dispose" if the notifier were torn down while its `SharedPreferences` read was still in flight — now guarded with a `mounted` check. Still open: an actual finger-tap of the Settings toggle on a device/simulator. **Widened 2026-08-11:** that toggle is now a nine-skin dropdown, so what's unverified on a device is nine palettes, not two — and only Carbon Mono has ever been seen rendering a real screen. The seven new skins have never been applied to anything but a swatch. Highest-value single check when a simulator is next available: apply **Retro** (its `border` token is full-strength ink rather than a hairline — the one palette that could plausibly look wrong applied app-wide) and **Positive Vibes** (pure-white `surface` on a near-white `background`) and page through Record → Active ride → Ride summary. **Widened again 2026-08-12:** three of the skins now change *shape* as well (rounded corners, stadium chips, taller buttons — see the 2026-08-12 entry above). Those were seen rendered via a golden-image harness at the widget level, which is real pixels but not a real screen; what's unverified is whether the rounded profile holds up across a *whole* screen's worth of nested cards and chips. The two skins to apply on a device are unchanged, plus **Positive Vibes** now doubles as the rounded-profile check.
+- [x] ~~**Run `scripts/seed_dhaka_places.js` against production**~~ **DONE
+  2026-08-12.** **395 places written to `throttleiqfb`** — 256 fuel, 75
+  garages, 64 parts sellers across Dhaka metro, one batch commit. Read back
+  and verified against Firestore directly: `places` went 3 → 398 (the 3
+  pre-existing rider-contributed places untouched), all 395 carry
+  `createdBy: 'system:osm-seed-dhaka'` and `verified: true`, **0 missing or
+  malformed geohashes and 0 missing `osmId`s**. A second dry run reports
+  `395 already present, 0 new`, which is the idempotency contract proven on
+  real data rather than in a test.
+  - Two prerequisites that were not obvious and cost time — worth knowing
+    before anyone runs any script in `scripts/`:
+    1. **`npm install` had never been run in `scripts/`.** `firebase-admin` is
+       a dependency of that directory, not of the Flutter app, so a fresh
+       checkout fails with "Cannot load 'firebase-admin'" on a script that
+       otherwise looks ready.
+    2. **Being logged into the Firebase CLI is not enough.** `firebase
+       projects:list` showing `throttleiqfb (current)` is a *user* credential;
+       the Admin SDK's `applicationDefault()` reads
+       `GOOGLE_APPLICATION_CREDENTIALS` or gcloud ADC, neither of which the CLI
+       login creates. It needs a service-account key (or
+       `gcloud auth application-default login`).
+  - `scripts/dhaka_places.json` (the fetched candidate list) is **gitignored**
+    — it is a regenerable review artifact, not source. Re-create with
+    `npm run seed:dhaka:fetch`.
+  - **Still to check on a device:** open Places with a Dhaka location and
+    confirm the directory renders, then tap "Import nearby" there and confirm
+    it adds nothing — that is the osmId dedup contract between this script and
+    the in-app importer, and it has only been proven script-side.
+  - **The 32 unnamed entries are now live** as literally "Fuel"/"Garage"/
+    "Parts" (OSM has no name for them). If they read badly in the list, they
+    are individually deletable, or the whole batch is one
+    `createdBy == 'system:osm-seed-dhaka'` query away — but note that window
+    effectively closes once riders start leaving reviews, since those live in
+    the separate `reviews` collection and would be orphaned rather than
+    deleted.
 
 ---
 
 ## 📋 To do
 
 ### Now (before inviting beta testers)
+- [x] ~~🔴 **Close the two launch-blocking security findings**~~ **CODE FIXED
+  2026-08-12 — NOT YET DEPLOYED.** (Audit 2026-08-12, `Issues.md` §24 — all 8
+  findings were open; all 8 now have code fixes, see §24.1–§24.9 in
+  `Issues.md` for what each one actually does.) The two blockers composed
+  into "any anonymous stranger can watch any rider move in real time":
+  - **§24.1 — live sessions published with no consent.** Fixed:
+    `_startLiveSessionPublishing()` no longer runs from `startRide()`/
+    `resumeRide()` at all. It only ever runs via the new
+    `enableLiveSharing()`, triggered by the rider tapping "Share live
+    location" — that tap IS the opt-in now, not just a share-sheet trigger
+    for a session that already existed. `liveSessions` docs also now carry
+    `shareable: true`, and `firestore.rules`' `get` rule on
+    `liveSessions/{token}` requires it — so even a future client regression
+    that reintroduced always-on publishing still can't be read by a stranger
+    without the rule also being wrong.
+  - **§24.2 — share tokens used `dart:math` `Random()`.** Fixed: `Random.secure()`.
+  - The other six (§24.3 unclipped public routes, §24.4 forum-moderator
+    takeover, §24.5 @username impersonation, §24.6 group-ride invite
+    escalation, §24.7 vote inflation, §24.8 PII in Cloud Logging) are also
+    fixed — see `Issues.md` §24 for each.
+  - **✅ DONE 2026-08-14: the 2026-08-12 rules were deployed.**
+    `firebase deploy --only firestore:rules` released to `throttleiqfb`, so
+    §24.1, §24.4, §24.5, §24.6, §24.9's admin-claim change and §24.7's
+    like/vote half are all enforced live.
+  - **🔶 A SECOND rules deploy is pending, and must NOT go out before the
+    next app build.** The 2026-08-14 pass closed §24.7's residual and fixed
+    two bugs found by the new rules tests (§24.11). Those rules require the
+    client to send `lastCommentId` / `lastReplyId` with counter bumps, which
+    only the new build does — **deploying them early breaks commenting,
+    replying and reply-deletion for every install still on the current
+    release.** Order: ship the app build → let installs update → then
+    `firebase deploy --only firestore:rules`. Run `npm run test:rules` from
+    `scripts/` first.
+  - **🔶 Cloud Functions cannot deploy at all — needs the Blaze upgrade.**
+    `firebase deploy` fails on `artifactregistry.googleapis.com`, which Spark
+    won't enable. This blocks §24.8's crash-notification PII fix and §24.9's
+    new `reconcileRideIdentity` trigger from ever running. Upgrade at
+    <https://console.firebase.google.com/project/throttleiqfb/usage/details>.
+    Separately, `functions/` could not even have been BUILT before 2026-08-14
+    (no `typescript` dependency, no `predeploy` hook) — both fixed, see
+    `Issues.md` §24.10.
+  - Also still needs a human: `scripts/set_admin_claim.js` (new — see
+    `Issues.md` §24.9) has to be run once, with real
+    `GOOGLE_APPLICATION_CREDENTIALS`, to actually grant the `admin` custom
+    claim `isAdmin()` now prefers. Until then the email-comparison fallback
+    keeps the admin account working, so this isn't blocking, just unfinished.
 - [x] ~~**Deploy `firestore.rules` + hosting**~~ **DONE 2026-08-04.** Both
   released to `throttleiqfb`. Verified against the live project rather than
   assumed:
@@ -513,6 +738,21 @@ backend or a real device. **Treat each as unproven until tested.**
   future edit to `firestore.rules` or `firebase.json`** — neither ships
   with the app, and a rules change that isn't deployed silently does
   nothing.
+
+  **Test rules before deploying them: `npm run test:rules` from `scripts/`.**
+  Added 2026-08-14 (`Issues.md` §24.11) — 19 emulator-backed tests over the
+  engagement-counter and moderation clauses. The Firestore emulator needs a
+  JVM and there is no `java` on PATH, so the npm script points `JAVA_HOME` at
+  Android Studio's bundled JBR, the same runtime the `keytool` note below
+  uses. Two live bugs turned up in the first run, so this is worth doing
+  rather than deploying on inspection alone. Note `npm test` in the same
+  package stays emulator-free (its glob is non-recursive); the rules tests
+  live in `test/rules/` for exactly that reason.
+
+  **Careful with rules that depend on new client fields.** A rule tightened
+  to require something only the newest build sends will break every install
+  that hasn't updated. Ship the app first, then the rules — this bit the
+  §24.7/§24.11 batch and is why it's still sitting undeployed.
 - [x] ~~Wire the orphaned features~~ **DONE 2026-07-14**: crash countdown overlay, SyncManager bootstrap, export buttons, Settings screen (logout + emergency contacts) all wired; live viewer deployed to `throttleiqfb.web.app`. Remaining genuine builds: POI UI and a real social feed (the agent "screens" were empty stubs).
 - [ ] **Back up the signing keystore** — `throttleiq-release.keystore` + `app/android/key.properties` exist ONLY on the dev machine. If lost, the app can never be updated under the same identity. → password manager / secure cloud, never git.
 - [x] ~~**Release key's SHA-1 registered with the Android Google OAuth client**~~ **VERIFIED 2026-08-11.** Worth an explicit line because the failure mode is nasty and silent: if the OAuth client only carries the *debug* keystore's fingerprint, **Google sign-in works in debug and fails in release**, with nothing in the app to explain why. Checked — `app/android/app/google-services.json` carries two Android OAuth fingerprints and `throttleiq-release.keystore`'s SHA-1 is one of them, so ThrottleIQ is not exposed to this. Re-check after any keystore change (including a Play App Signing upload-key rotation, which introduces a *second* fingerprint that also has to be registered).
@@ -522,7 +762,21 @@ backend or a real device. **Treat each as unproven until tested.**
 - [x] ~~Deploy the live-share viewer~~ **DONE 2026-07-14** — hosted at `throttleiqfb.web.app` (verified 200); the app's share links point there.
 
 ### Soon (requires Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
-- [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation). Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email) with real credentials via functions config.
+- [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation).
+  Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email)
+  with real credentials via functions config — **needs the project owner's
+  own Twilio/SendGrid accounts and API keys**, not something fixable in code
+  alone. Two things changed 2026-08-12 (`Issues.md` §24.8) that make this
+  more urgent, not less: the emergency-contacts screen no longer implies
+  contacts ARE notified (the copy was flatly wrong — nobody has ever been
+  contacted after a detected crash), and `functions/` gained an
+  `index.ts`/`package.json main` it was missing entirely before, so it can
+  actually be deployed now — previously `firebase deploy --only functions`
+  had no entry point to find. Also worth knowing: the mock no longer logs a
+  contact's phone/email or the crash's GPS coordinates (was landing in Cloud
+  Logging, §24.8) — a real integration will need to read those from
+  `EmergencyContact`/the notification's lat/lng again, they just aren't
+  logged anymore.
 - [x] ~~Firebase Storage bucket~~ **SUPERSEDED 2026-07-23** — the project owner has no payment card, and Storage now requires Blaze even within its free tier. Avatar/photo uploads moved to Cloudinary instead (cloud name `vjvcigkt`) — no bucket needed.
 - [ ] **Firestore TTL policy** on `liveSessions.expiresAt` so expired live-share docs auto-delete. The app-side blocker is fixed (those fields are real `Timestamp`s now, not ISO strings — see `Issues.md` §4). **Two ways to apply it; pick either.**
 
@@ -636,14 +890,14 @@ backend or a real device. **Treat each as unproven until tested.**
 |---|---|
 | Firebase project | `throttleiqfb` (asia-south1) |
 | Android package (all code, `main`) | `com.bft.throttleiq` — **registered in Firebase** since 2026-07-23: App ID `1:603325098273:android:94694220f44cbf63fcf660` |
-| File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why |
+| File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why. **Needs a manual check** (`Issues.md` §24.9): the unsigned preset `throttleiq_unsigned` is client-extractable from the APK by design — that's not itself a bug — but confirm in the Cloudinary dashboard (Settings → Upload → Upload presets) that it restricts resource type, file size, and has moderation enabled, so a pulled-preset client can't be used for quota exhaustion or hosting arbitrary/illegal content. This needs dashboard login, so it wasn't something fixable from a code change |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2) — signed release **APK + AAB**, matches `pubspec.yaml` at `1.0.0-beta.2+2`. Upload the `.aab` to Play, hand testers the `.apk`. (`beta-v1` is still there as the previous build.) |
-| Test suite | 640/640 green as of 2026-08-11 (550 on 2026-08-03; was 287 before the backlog pass). DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
+| Test suite | 755/755 green as of 2026-08-12 (717 on 2026-08-11; 550 on 2026-08-03; was 287 before the backlog pass). Plus 22 Node tests in `scripts/` (`npm test`) for the Dhaka seed script's pure logic. DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
-| Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` AND in `firestore.rules`. Both must change together; move to a custom claim before public launch |
+| Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`Issues.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
 | DB schema | v7 (`custom_label` on `maintenance_logs`, added 2026-08-01) |
 
 ---

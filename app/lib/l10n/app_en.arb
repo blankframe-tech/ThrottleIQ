@@ -31,7 +31,7 @@
     "description": "Name of the light theme. Product name — kept recognisable across languages."
   },
 
-  "themeEditorialDescription": "Light, warm paper",
+  "themeEditorialDescription": "Light, warm paper, sharp edges",
   "@themeEditorialDescription": {
     "description": "One-line description under the Editorial theme option."
   },
@@ -46,7 +46,7 @@
     "description": "Name of the Nocturne skin. Product name — kept recognisable across languages."
   },
 
-  "themeNocturneDescription": "Deep indigo, lavender glow",
+  "themeNocturneDescription": "Deep indigo, lavender glow, sharp edges",
   "@themeNocturneDescription": {
     "description": "One-line description under the Nocturne skin option."
   },
@@ -56,7 +56,7 @@
     "description": "Name of the Trail Social skin. Product name — kept recognisable across languages."
   },
 
-  "themeTrailSocialDescription": "Dark feed, punchy orange",
+  "themeTrailSocialDescription": "Dark feed, punchy orange, rounded",
   "@themeTrailSocialDescription": {
     "description": "One-line description under the Trail Social skin option."
   },
@@ -66,7 +66,7 @@
     "description": "Name of the Calming skin. Product name — kept recognisable across languages."
   },
 
-  "themeCalmingDescription": "Warm cream, soft sage",
+  "themeCalmingDescription": "Warm cream, soft sage, rounded",
   "@themeCalmingDescription": {
     "description": "One-line description under the Calming skin option."
   },
@@ -76,7 +76,7 @@
     "description": "Name of the Positive Vibes skin. Product name — kept recognisable across languages."
   },
 
-  "themePositiveVibesDescription": "Bright white and green",
+  "themePositiveVibesDescription": "Bright white and green, rounded",
   "@themePositiveVibesDescription": {
     "description": "One-line description under the Positive Vibes skin option."
   },
@@ -96,7 +96,7 @@
     "description": "Name of the Analyst Blue skin. Product name — kept recognisable across languages."
   },
 
-  "themeAnalystBlueDescription": "Navy console, cyan telemetry",
+  "themeAnalystBlueDescription": "Navy console, cyan telemetry, sharp edges",
   "@themeAnalystBlueDescription": {
     "description": "One-line description under the Analyst Blue skin option."
   },
@@ -106,7 +106,7 @@
     "description": "Name of the Genesis skin. Product name — kept recognisable across languages."
   },
 
-  "themeGenesisDescription": "Near-black, gold and violet",
+  "themeGenesisDescription": "Near-black, gold and violet, sharp edges",
   "@themeGenesisDescription": {
     "description": "One-line description under the Genesis skin option."
   },
@@ -166,9 +166,9 @@
     "description": "Section header for the emergency contact list."
   },
 
-  "emergencyContactsDescription": "Notified if a crash is detected and you don't respond within 60 seconds.",
+  "emergencyContactsDescription": "Logged if a crash is detected and you don't respond within 60 seconds. Automatic SMS/email alerts aren't live yet.",
   "@emergencyContactsDescription": {
-    "description": "Explains when emergency contacts get alerted. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
+    "description": "Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — docs/Issues.md §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
   },
 
   "emergencyContactsEmpty": "No contacts yet — add someone you trust.",
