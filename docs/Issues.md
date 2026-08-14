@@ -1675,7 +1675,13 @@ vanishing.
 
 ## 27. `AndroidManifest.xml` declares a foreground service class that doesn't exist (2026-08-15)
 
-**Status: OPEN — found 2026-08-15 while assessing background auto-tracking.**
+**Status: FIXED 2026-08-15** — found while assessing background auto-tracking,
+removed the same day. The `<service>` block is gone, replaced by a comment
+explaining where background GPS actually comes from so the next person doesn't
+re-add it. Verified against the shipped artifact rather than the source: the
+`app-release.aab`'s merged bundle manifest declares 18 services, none of them
+this one, and geolocator's `com.baseflow.geolocator.GeolocatorLocationService`
+is present as expected.
 
 `AndroidManifest.xml:63-66` declares:
 

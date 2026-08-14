@@ -698,19 +698,22 @@ working harder. Everything from 6 down runs in parallel with that wait.
    `lastCommentId`/`lastReplyId`, which only that build sends, so
    commenting/replying/reply-deletion fail on any device without it. The
    iPhone has it; the APK is built but uninstalled.
-4. **Bump `version:` and rebuild the AAB.** `1.0.0-beta.2+2` → `+3`. The
-   existing AAB is from 2026-08-01 and contains none of the security, offline
-   or resume work.
+4. ~~**Bump `version:` and rebuild the AAB.**~~ **DONE 2026-08-15.**
+   `1.0.0-beta.3+3` (versionCode 3, verified in the merged manifest), and
+   `app/build/app/outputs/bundle/release/app-release.aab` rebuilt at 72 MiB
+   with everything through `f25a93d` plus the §27 manifest fix. **The artifact
+   is not committed** — rebuild after any further change.
 5. **Upload to internal testing, then submit the Background Location Access
-   declaration** — the long pole (see the Play Store section's note).
+   declaration** — the long pole (see the Play Store section's note). The AAB
+   from step 4 is ready to upload.
 
 **This week, before anyone else touches it**
 6. **Ride with it.** The offline end/share fix, the resume fix and
    hold-to-start all have zero road time. Run the fly-mode sequence under
    "Done, but NOT yet verified".
-7. **Delete the dead `<service>` block** (`Issues.md` §27) — a
-   `foregroundServiceType="location"` declaration for a class that doesn't
-   exist, going into the review submitted at step 5.
+7. ~~**Delete the dead `<service>` block**~~ **DONE 2026-08-15** (`Issues.md`
+   §27) — removed before the AAB in step 4 was built, so the artifact heading
+   into the review is clean.
 8. **Decide the publisher identity** — blocks the listing.
 
 **Before it's public**
@@ -891,7 +894,7 @@ working harder. Everything from 6 down runs in parallel with that wait.
 - [ ] ❓ **Decide the publisher identity — blocks the listing.** The privacy policy that was replaced on 2026-08-01 named **"Blankframe.tech"** as publisher, with contact `blankframe.technologies@gmail.com`; the GitHub org is `blankframe-tech`. The new policy deliberately names **no company** — it says "an independent, solo-developer project" and uses `the.abraar.rar@gmail.com` — because inventing a legal entity in a privacy policy is not a call to make on someone's behalf. **If Blankframe.tech is the real publishing entity, the policy needs it added**, since Play Console expects the listing's developer name to line up with the policy. Old file is recoverable from git history (`store_listing/privacy-policy.html`, deleted in this pass).
 - [ ] Google Play developer account ($25 one-time)
 - [x] ~~Build an **App Bundle**~~ **VERIFIED 2026-08-01** — `flutter build appbundle --release` produces `app/build/app/outputs/bundle/release/app-release.aab` (57.0 MB). Rebuild it after any version bump; the artifact itself isn't committed.
-  - ⚠️ **The existing AAB is from 2026-08-01 and contains none of the security, offline or resume work.** It must be rebuilt before any upload, and `version:` (currently `1.0.0-beta.2+2`) bumped first — Play rejects a duplicate versionCode.
+  - ✅ **Rebuilt 2026-08-15 at `1.0.0-beta.3+3`** (72 MiB), carrying the security, offline and resume work plus the §27 manifest fix. versionCode 3 verified in the merged manifest. Bump `version:` again before the next upload — Play rejects a duplicate versionCode.
 - [ ] **Add the iOS widget extension target in Xcode** — see `app/ios/ThrottleIQWidget/README.md`. One-time GUI step; iOS widgets don't exist until it's done. Android needs nothing.
 - [ ] Internal testing track → closed beta → production
 - [ ] Bump `version:` in `pubspec.yaml` (versionCode) for every new upload

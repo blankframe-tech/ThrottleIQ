@@ -59,11 +59,18 @@
             </intent-filter>
         </activity>
 
-        <!-- Foreground Service for Background GPS Location Tracking -->
-        <service
-            android:name="com.bft.throttleiq.LocationForegroundService"
-            android:exported="false"
-            android:foregroundServiceType="location" />
+        <!-- Background GPS during a ride is handled by geolocator's own
+             foreground service, configured from Dart via
+             ForegroundNotificationConfig (ride_recording_provider.dart). A
+             `com.bft.throttleiq.LocationForegroundService` used to be declared
+             here, but that class has never existed anywhere in the repo —
+             nothing started it, so it was dead config. Removed because it is a
+             foregroundServiceType="location" declaration, and declaring a
+             location service the app doesn't implement is the kind of mismatch
+             that draws a rejection in Google's Background Location Access
+             review. See docs/Issues.md §27. If a purpose-built service is ever
+             written (see the auto-tracking entry in HANDOFF_Document.md), it
+             gets declared here. -->
 
         <!-- Firebase Messaging -->
         <service
