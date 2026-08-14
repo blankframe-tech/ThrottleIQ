@@ -707,15 +707,15 @@ backend or a real device. **Treat each as unproven until tested.**
   - **✅ DONE 2026-08-14: the second rules deploy went out too**, covering
     §24.7's residual and §24.11's two fixes, with `npm run test:rules` (19/19)
     run immediately before it.
-  - **🔴 The client half of that deploy has not reached any device, and until
-    it does, commenting/replying/reply-deletion FAIL on every install.** The
-    live rules require `lastCommentId` / `lastReplyId` on counter bumps, which
-    only the 2026-08-14 build sends. The Android APK exists (see the beta-APK
-    item below) but **has not been installed**, and **no iOS build has been
-    made at all**. This ordering was called out in advance and the deploy was
-    requested anyway, so it's a known state rather than a surprise — but it
-    is the thing to close first. Install the new build before commenting from
-    a phone, and build for iOS before testing there.
+  - **🔶 The client half is on ONE device so far.** The live rules require
+    `lastCommentId` / `lastReplyId` on counter bumps, which only the
+    2026-08-14 build sends — so commenting, replying and reply-deletion fail
+    on any install that doesn't have it. Status:
+    - **Abraar's iPhone — done 2026-08-14.** `flutter run --release` built and
+      installed the iOS release build from `1a735f5`.
+    - **Android — APK built but NOT installed anywhere** (see the beta-APK
+      item below).
+    - Any other device is still in the broken window until updated.
   - **🔶 Cloud Functions cannot deploy at all — needs the Blaze upgrade.**
     `firebase deploy` fails on `artifactregistry.googleapis.com`, which Spark
     won't enable. This blocks §24.8's crash-notification PII fix and §24.9's
@@ -811,10 +811,38 @@ backend or a real device. **Treat each as unproven until tested.**
 - [x] ~~**Sync `ride_points` (GPS trails) to Firestore**~~ **DONE 2026-08-01** (`ride_track_codec.dart` + `CloudRepository.uploadRideTrack`/`downloadRideTrack`). Trails are chunked into `users/{uid}/rides/{rideId}/track/{i}` docs of 500 positional points — one doc per point would have been thousands of writes per ride. Upload runs after the ride doc so a track can't orphan; download is on-demand and never clobbers local points. Track docs are owner-only in the rules. **Untested against a real account** — verify a reinstall actually restores polylines.
 
 ### Play Store
+
+> **🔴 The long pole is a Google review, not a build step — surfaced 2026-08-14
+> when a same-night production launch was considered.** `AndroidManifest.xml`
+> declares `ACCESS_BACKGROUND_LOCATION` (line 6) with a
+> `foregroundServiceType="location"` service, which triggers Google's
+> **Background Location Access declaration**: a Play Console form needing a
+> video demo and written justification, with a review that runs **days to
+> weeks**. Production, open testing and closed testing are all gated on it.
+> **Internal testing is normally exempt** — that's the route to get a build to
+> real devices immediately — but confirm that in Console rather than assuming
+> it. Plan the launch date around this review, not around the code being ready.
+>
+> Two more permission/policy notes for the same submission:
+> `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is a restricted permission and a
+> common rejection reason — have the justification written before submitting.
+> And the **Data Safety form** must declare precise location, photos and email,
+> *including* that location is shared with other users (the live-share link is
+> a share to a third party by Play's definition).
+>
+> **Also decide, before the listing copy is written:** crash detection
+> currently notifies nobody. Cloud Functions cannot deploy on the Spark plan
+> (see §24's note above), so the alert path is a mock. The in-app copy was made
+> honest about this on 2026-08-12, but a store listing that markets crash
+> detection as a safety feature while nothing is actually sent is both a policy
+> risk and a real-world one. Either upgrade to Blaze and wire up the SMS/email
+> provider, or keep the claim out of the listing.
+
 - [x] ~~Privacy policy page~~ **DONE** — `https://throttleiqfb.web.app/privacy.html`
 - [ ] ❓ **Decide the publisher identity — blocks the listing.** The privacy policy that was replaced on 2026-08-01 named **"Blankframe.tech"** as publisher, with contact `blankframe.technologies@gmail.com`; the GitHub org is `blankframe-tech`. The new policy deliberately names **no company** — it says "an independent, solo-developer project" and uses `the.abraar.rar@gmail.com` — because inventing a legal entity in a privacy policy is not a call to make on someone's behalf. **If Blankframe.tech is the real publishing entity, the policy needs it added**, since Play Console expects the listing's developer name to line up with the policy. Old file is recoverable from git history (`store_listing/privacy-policy.html`, deleted in this pass).
 - [ ] Google Play developer account ($25 one-time)
 - [x] ~~Build an **App Bundle**~~ **VERIFIED 2026-08-01** — `flutter build appbundle --release` produces `app/build/app/outputs/bundle/release/app-release.aab` (57.0 MB). Rebuild it after any version bump; the artifact itself isn't committed.
+  - ⚠️ **The existing AAB is from 2026-08-01 and contains none of the security, offline or resume work.** It must be rebuilt before any upload, and `version:` (currently `1.0.0-beta.2+2`) bumped first — Play rejects a duplicate versionCode.
 - [ ] **Add the iOS widget extension target in Xcode** — see `app/ios/ThrottleIQWidget/README.md`. One-time GUI step; iOS widgets don't exist until it's done. Android needs nothing.
 - [ ] Internal testing track → closed beta → production
 - [ ] Bump `version:` in `pubspec.yaml` (versionCode) for every new upload

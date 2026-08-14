@@ -1001,12 +1001,13 @@ older build:
 - posting a reply in a forum fails,
 - deleting your own reply fails.
 
-The Android release APK containing the client half exists (built 2026-08-14
-from `1a735f5` — see `HANDOFF_Document.md`), but **has not been installed**, and
-**no iOS build of it has been made at all**. Until each device is updated, that
-device is in the broken window. This was a deliberate, informed call rather than
-an oversight — the deploy was requested with the ordering understood — but it
-does mean *install the new build before commenting from a phone*.
+Closing that window, device by device: **Abraar's iPhone got the iOS release
+build on 2026-08-14** (`flutter run --release` from `1a735f5`), so it is fine.
+The **Android APK exists but has not been installed anywhere**, and any other
+device is still broken until updated. This was a deliberate, informed call
+rather than an oversight — the deploy was requested with the ordering
+understood — but it does mean *install the new build before commenting from a
+phone*.
 
 Until step 3, the residual documented in §24.7 stays open in production — which
 is the status quo, not a regression.
