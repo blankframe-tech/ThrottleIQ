@@ -679,6 +679,55 @@ backend or a real device. **Treat each as unproven until tested.**
 
 ## 📋 To do
 
+### 🎯 Do next, in order (assembled 2026-08-15, when a Play launch was being considered)
+
+The checklists below are grouped by *topic*; this is the same work ordered by
+what actually blocks what. The dependency that matters is **1 → 2 → 4 → 5**:
+Google's background-location review can't start until there's an app in
+Console, and it's the one item on this list that cannot be compressed by
+working harder. Everything from 6 down runs in parallel with that wait.
+
+**Tonight**
+1. **Back up the signing keystore.** 5 minutes. Lose it and the app can never
+   be updated under the same identity — a dead end, not a setback. Everything
+   below assumes this is done.
+2. **Start the Play developer account** ($25). New accounts need identity
+   verification that can take **up to 48 hours**; starting it costs nothing.
+3. **Install the 2026-08-14 build on the Android device.** Not housekeeping —
+   there is a **live regression**: the deployed rules require
+   `lastCommentId`/`lastReplyId`, which only that build sends, so
+   commenting/replying/reply-deletion fail on any device without it. The
+   iPhone has it; the APK is built but uninstalled.
+4. **Bump `version:` and rebuild the AAB.** `1.0.0-beta.2+2` → `+3`. The
+   existing AAB is from 2026-08-01 and contains none of the security, offline
+   or resume work.
+5. **Upload to internal testing, then submit the Background Location Access
+   declaration** — the long pole (see the Play Store section's note).
+
+**This week, before anyone else touches it**
+6. **Ride with it.** The offline end/share fix, the resume fix and
+   hold-to-start all have zero road time. Run the fly-mode sequence under
+   "Done, but NOT yet verified".
+7. **Delete the dead `<service>` block** (`Issues.md` §27) — a
+   `foregroundServiceType="location"` declaration for a class that doesn't
+   exist, going into the review submitted at step 5.
+8. **Decide the publisher identity** — blocks the listing.
+
+**Before it's public**
+9. **Decide what happens to crash detection.** It notifies nobody (Spark plan).
+   Either upgrade to Blaze and wire the SMS/email provider, or keep the claim
+   out of the listing. The only item here with real-world rather than merely
+   policy consequences.
+10. **Data Safety form** (precise location, photos, email, *and* location
+    shared with other users via live-share) + the
+    `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` justification.
+11. **Run `set_admin_claim.js`**, and **verify the Cloudinary preset
+    restrictions** in their dashboard.
+
+**Deferred, not before launch**
+12. **Auto-tracking** — pick the isolate strategy first (see Proposed features).
+13. **iOS widget extension target** — one-time Xcode GUI step.
+
 ### Now (before inviting beta testers)
 - [x] ~~🔴 **Close the two launch-blocking security findings**~~ **CODE FIXED
   2026-08-12 — NOT YET DEPLOYED.** (Audit 2026-08-12, `Issues.md` §24 — all 8
