@@ -1672,3 +1672,40 @@ points — see `ride_resume.dart`'s class doc.
 which the test suite can't stage. Worth confirming by hand: start a ride, force-
 kill the app after ~5 seconds, reopen, and check the ride comes back rather than
 vanishing.
+
+## 27. `AndroidManifest.xml` declares a foreground service class that doesn't exist (2026-08-15)
+
+**Status: OPEN — found 2026-08-15 while assessing background auto-tracking.**
+
+`AndroidManifest.xml:63-66` declares:
+
+```xml
+<service
+    android:name="com.bft.throttleiq.LocationForegroundService"
+    android:exported="false"
+    android:foregroundServiceType="location" />
+```
+
+There is no such class. `android/app/src/main/kotlin/com/bft/throttleiq/` contains
+only `MainActivity.kt`, `WidgetKeys.kt` and the three widget providers — nothing
+named `LocationForegroundService`, in Kotlin or Java, anywhere in the repo.
+
+**Why it hasn't crashed anything:** nothing starts it. Background location
+during a ride is actually handled by **geolocator's own** foreground service,
+configured via `ForegroundNotificationConfig` in
+`ride_recording_provider.dart:508`. The declaration is dead config. If anything
+ever *did* call `startService` on it, that's an immediate
+`ClassNotFoundException`.
+
+**Why it still matters, and why it's worth fixing before the Play submission:**
+it is a `foregroundServiceType="location"` declaration, and together with
+`ACCESS_BACKGROUND_LOCATION` it is part of what Google reviews under the
+Background Location Access declaration (see `HANDOFF_Document.md`'s Play Store
+note). Declaring a location foreground service the app does not implement is
+exactly the kind of mismatch that draws a rejection or a "please explain" round
+trip, and it costs nothing to remove.
+
+**Fix:** delete the `<service>` block, unless a real
+`LocationForegroundService` is about to be written — see the auto-tracking plan
+in `HANDOFF_Document.md`, where a purpose-built one is Step 3. Removing it does
+not affect current behaviour; geolocator's service is untouched by it.

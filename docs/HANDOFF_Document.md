@@ -867,6 +867,69 @@ backend or a real device. **Treat each as unproven until tested.**
 
 ### Proposed features (not built — for discussion)
 
+- 🔮 **Automatic ride tracking (start recording without tapping start).**
+  Assessed against the real code 2026-08-15. Summary: **background *recording*
+  already works; what's missing is a background *trigger*, and the honest cost
+  is one hard architectural problem plus a battery decision.**
+
+  *What already exists, and is easy to overcount:*
+  - iOS `UIBackgroundModes: location` is already set (`ios/Runner/Info.plist:79-82`).
+  - Android background location already runs through **geolocator's own**
+    foreground service (`ForegroundNotificationConfig`,
+    `ride_recording_provider.dart:508`), plus `ACCESS_BACKGROUND_LOCATION` and
+    `FOREGROUND_SERVICE_LOCATION` in the manifest. So a ride keeps recording
+    with the app backgrounded and the screen off today. Only *starting* needs
+    the UI.
+  - `startRide()` takes no arguments and reads uid/bike from providers — it has
+    **no `BuildContext` or widget coupling** and is already callable headlessly.
+
+  *What does NOT exist, contrary to a first read of the calculators directory:*
+  - **There is no IDLE/WALKING/RIDING state machine.**
+    `VehicleStateEstimator` is a per-GPS-tick complementary filter that emits a
+    `VehicleState` snapshot (`isMoving`, `isCornering`, confidence…). Its
+    `_rebuild()` returns early with no GPS fix, so it produces *nothing* until a
+    GPS stream is already running — which makes it structurally unable to be the
+    auto-start trigger, since the whole point is to decide whether to turn GPS
+    on. A trigger needs a *different*, cheap input: platform activity
+    recognition, or iOS significant-location-change.
+  - **`RecordingCadencePolicy` is not a battery saver in the sense people
+    assume.** Its own doc is explicit: it only thins what is *written to disk*.
+    It does not change the GPS sampling rate. Current settings are
+    `LocationAccuracy.bestForNavigation` with `distanceFilter: 3` (tuned in
+    response to a "speed feels laggy" report) — the top of the power envelope.
+    **This is the single biggest battery lever and it is currently untouched.**
+    Always-on monitoring at those settings is not viable; the trigger must run
+    on activity recognition / SLC and only then escalate to full-rate GPS.
+
+  *The actual hard part — isolates, not UI coupling.* Every "wake the app"
+  mechanism (`workmanager`, `flutter_background_geolocation`'s headless task,
+  a native service callback) runs its Dart in a **separate isolate** with its
+  own memory. `RideRecordingNotifier` lives in the UI isolate's
+  `ProviderContainer` and holds all recording state in instance fields, so a
+  background isolate cannot call `startRide()` on it. Options, cheapest first:
+  1. **Trigger-only, arm-on-launch** — background isolate does nothing but
+     write a "ride detected at T" marker to SQLite/prefs; the UI isolate picks
+     it up. Cheap, but it doesn't record anything until the app is next opened,
+     so it's a prompt (*"Looks like you rode. Save it?"*), not auto-tracking.
+  2. **Native service owns the recording** — the foreground service collects
+     fixes and writes `ride_points` directly; Dart reconciles on next launch.
+     Most robust, most native code, and the `LocationForegroundService`
+     currently declared-but-missing (`Issues.md` §27) would become real.
+  3. **`flutter_background_geolocation`** (paid licence) — bundles activity
+     recognition, SLC, foreground service and a headless task. Buys ~all of the
+     platform work; costs money and a large dependency.
+
+  *Rough order of work if pursued:* add an activity-recognition source → decide
+  the isolate strategy above (this is the design decision, make it first) →
+  drop GPS accuracy/`distanceFilter` for the monitoring state and only escalate
+  once riding is confirmed → decide the false-positive UX (a car journey looks
+  like a ride to any accelerometer). The 63 KB `ride_recording_provider.dart`
+  is where option 2 hurts, since recording state would have to move out of
+  instance fields.
+
+  *Not scheduled.* Recorded here so the next pass starts from the real state of
+  the code rather than re-deriving it.
+
 - 🔮 **Auto-pause in traffic.** Detect a stop (already possible — the
   recorder classifies `period_type` as moving/idle at the 1 m/s cutoff)
   and pause recording automatically. ~~surface the jam time back to the
