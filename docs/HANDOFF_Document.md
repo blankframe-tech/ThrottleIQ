@@ -704,15 +704,18 @@ backend or a real device. **Treat each as unproven until tested.**
     `firebase deploy --only firestore:rules` released to `throttleiqfb`, so
     §24.1, §24.4, §24.5, §24.6, §24.9's admin-claim change and §24.7's
     like/vote half are all enforced live.
-  - **🔶 A SECOND rules deploy is pending, and must NOT go out before the
-    next app build.** The 2026-08-14 pass closed §24.7's residual and fixed
-    two bugs found by the new rules tests (§24.11). Those rules require the
-    client to send `lastCommentId` / `lastReplyId` with counter bumps, which
-    only the new build does — **deploying them early breaks commenting,
-    replying and reply-deletion for every install still on the current
-    release.** Order: ship the app build → let installs update → then
-    `firebase deploy --only firestore:rules`. Run `npm run test:rules` from
-    `scripts/` first.
+  - **✅ DONE 2026-08-14: the second rules deploy went out too**, covering
+    §24.7's residual and §24.11's two fixes, with `npm run test:rules` (19/19)
+    run immediately before it.
+  - **🔴 The client half of that deploy has not reached any device, and until
+    it does, commenting/replying/reply-deletion FAIL on every install.** The
+    live rules require `lastCommentId` / `lastReplyId` on counter bumps, which
+    only the 2026-08-14 build sends. The Android APK exists (see the beta-APK
+    item below) but **has not been installed**, and **no iOS build has been
+    made at all**. This ordering was called out in advance and the deploy was
+    requested anyway, so it's a known state rather than a surprise — but it
+    is the thing to close first. Install the new build before commenting from
+    a phone, and build for iOS before testing there.
   - **🔶 Cloud Functions cannot deploy at all — needs the Blaze upgrade.**
     `firebase deploy` fails on `artifactregistry.googleapis.com`, which Spark
     won't enable. This blocks §24.8's crash-notification PII fix and §24.9's

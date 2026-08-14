@@ -984,25 +984,29 @@ was run against `throttleiqfb` on 2026-08-14 and reported
 §24.5, §24.6, §24.9's admin-claim change, and §24.7's like/vote half — those
 are all now enforced for live riders.
 
-**🔶 A second rules deploy is pending, and its ordering matters.** The
-2026-08-14 pass closed §24.7's residual (comment/reply counter inflation), and
-that fix spans both sides of the wire: the tightened rule requires the counter
-bump to carry a `lastCommentId`/`lastReplyId` naming a doc created in the same
-transaction, and only the NEW client sends those fields. **Deploying these
-rules before the app build that goes with them ships would break commenting
-and replying outright for every install still running the current release** —
-the old client bumps the counter alone and the new rule denies it. Correct
-order:
+**✅ The second rules deploy is done too — 2026-08-14, after the 19-test
+emulator suite passed.** This covered §24.7's residual (comment/reply counter
+inflation) and §24.11's two fixes. `npm run test:rules` from `scripts/` was run
+immediately before, and is the check to repeat before any future rules deploy —
+there is now a real emulator-backed suite (§24.11), so a rules edit no longer
+has to go out blind.
 
-1. Ship the app build containing the transactional
-   `RideShareRepository.addComment()` / `ForumRepository.addReply()` and the
-   `lastReplyId` on `ForumRepository.deleteReply()`.
-2. Wait for installs to pick it up (or accept breaking comments for stragglers).
-3. Then `firebase deploy --only firestore:rules`.
+**⚠️ The client half of that fix has NOT reached any device yet, and the two
+must match.** The deployed rule requires the counter bump to carry a
+`lastCommentId`/`lastReplyId` naming a doc created in the same transaction, and
+**only the new client sends those fields**. So on any install still running an
+older build:
 
-Before step 3, run `npm run test:rules` from `scripts/` — there is now a real
-emulator-backed rules suite (§24.11), so a rules edit no longer has to be
-deployed blind.
+- posting a comment on a ride fails,
+- posting a reply in a forum fails,
+- deleting your own reply fails.
+
+The Android release APK containing the client half exists (built 2026-08-14
+from `1a735f5` — see `HANDOFF_Document.md`), but **has not been installed**, and
+**no iOS build of it has been made at all**. Until each device is updated, that
+device is in the broken window. This was a deliberate, informed call rather than
+an oversight — the deploy was requested with the ordering understood — but it
+does mean *install the new build before commenting from a phone*.
 
 Until step 3, the residual documented in §24.7 stays open in production — which
 is the status quo, not a regression.
@@ -1257,9 +1261,10 @@ didn't touch.
 
 ### 24.7 Unbounded like / vote inflation — MEDIUM
 
-**Status: FULLY FIXED — like/vote half 2026-08-12 (rules deployed
-2026-08-14); comment/reply half 2026-08-14 (rules NOT yet deployed, must
-follow the app build — see §24's ordering note).**
+**Status: FULLY FIXED AND DEPLOYED — like/vote half 2026-08-12, comment/reply
+half 2026-08-14, both released to `throttleiqfb` on 2026-08-14. Note the
+client half has not reached any device yet; see §24's top note for what that
+breaks in the meantime.**
 `rides/{rideId}`'s `likes` and `upvotes`/`downvotes` bumps, and
 `forums/{forumId}/posts/{postId}`'s `upvotes`/`downvotes` bump, are now tied
 to the SAME transaction creating/deleting the per-user doc they represent
@@ -1273,8 +1278,8 @@ paired subcollection write, or that loops the same bump repeatedly, now
 fails this check (the "before" state has already changed after the first
 successful call).
 
-**Residual now CLOSED 2026-08-14 — but not yet deployed, and the deploy
-order matters (see §24's top note).** `rides/{rideId}.comments` and
+**Residual now CLOSED and deployed 2026-08-14** (the client half still has to
+reach devices — see §24's top note). `rides/{rideId}.comments` and
 `forums/{forumId}/posts/{postId}.replyCount` were the two counters left
 untied, because `RideShareRepository.addComment()` and
 `ForumRepository.addReply()` each wrote the counter bump as a SEPARATE call
