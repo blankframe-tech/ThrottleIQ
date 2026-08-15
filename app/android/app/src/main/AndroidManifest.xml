@@ -132,5 +132,21 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+
+        <!-- Required by url_launcher on Android 11+ (API 30), which introduced
+             package visibility: without a matching <intent> here the launcher
+             cannot see *any* app that handles these, so a place's "Directions"
+             and "Call" buttons would fail with an ActivityNotFoundException on
+             a modern phone while working fine on an old one. Declaring the
+             intents (rather than specific package names) keeps this working
+             whatever maps app or dialler the rider actually uses. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
     </queries>
 </manifest>

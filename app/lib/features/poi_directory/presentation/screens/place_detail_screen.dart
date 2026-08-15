@@ -1,5 +1,8 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -8,6 +11,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
+import '../../domain/place_directions.dart';
 import '../providers/places_provider.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
@@ -323,8 +327,105 @@ class _PlaceHeader extends StatelessWidget {
               ],
             ),
           ],
+          const SizedBox(height: 14),
+          _PlaceActions(place: place),
         ],
       ),
+    );
+  }
+}
+
+/// "Directions" (and "Call", when the place has a number) under the details.
+///
+/// Directions is the primary action — for a petrol pump or a garage, getting
+/// there is the whole reason the rider opened this screen, so it's a filled
+/// button at full width rather than an icon in the app bar.
+class _PlaceActions extends StatelessWidget {
+  final PlaceEntity place;
+  const _PlaceActions({required this.place});
+
+  /// Opens the rider's maps app at driving directions to this place.
+  ///
+  /// `LaunchMode.externalApplication` matters: the default mode can open the
+  /// link in an in-app webview on Android, which produces a *map of the route*
+  /// with no live guidance — the opposite of what "Directions" promises. This
+  /// forces the real Google Maps app (or the browser if it isn't installed).
+  ///
+  /// On iOS, if that fails outright we retry with Apple Maps, which is always
+  /// present. A failure on either is reported rather than swallowed: a button
+  /// that silently does nothing is worse than one that says why.
+  Future<void> _openDirections(BuildContext context) async {
+    final google = googleMapsDirectionsUri(
+      latitude: place.latitude,
+      longitude: place.longitude,
+    );
+
+    var launched = false;
+    try {
+      launched = await launchUrl(google, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched && Platform.isIOS) {
+      final apple = appleMapsDirectionsUri(
+        latitude: place.latitude,
+        longitude: place.longitude,
+        label: place.name,
+      );
+      try {
+        launched =
+            await launchUrl(apple, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        launched = false;
+      }
+    }
+
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't open a maps app for directions")),
+      );
+    }
+  }
+
+  Future<void> _call(BuildContext context, Uri uri) async {
+    var launched = false;
+    try {
+      launched = await launchUrl(uri);
+    } catch (_) {
+      launched = false;
+    }
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't open the dialler")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Null when the place has no number, or one with no digits in it at all —
+    // hide the button rather than opening an empty dialler.
+    final tel = telUri(place.phone);
+
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _openDirections(context),
+            icon: const Icon(Icons.directions, size: 18),
+            label: const Text('Directions'),
+          ),
+        ),
+        if (tel != null) ...[
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: () => _call(context, tel),
+            icon: const Icon(Icons.phone, size: 18),
+            label: const Text('Call'),
+          ),
+        ],
+      ],
     );
   }
 }

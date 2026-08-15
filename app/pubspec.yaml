@@ -42,6 +42,11 @@ dependencies:
   dio: ^5.4.3
   connectivity_plus: ^6.0.3
 
+  # Deep links out to the OS (maps hand-off for "Directions" on a place, and
+  # tel: on a place's phone number). ThrottleIQ deliberately does NOT route
+  # to a destination itself — see place_directions.dart.
+  url_launcher: ^6.2.5
+
   # Image
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
