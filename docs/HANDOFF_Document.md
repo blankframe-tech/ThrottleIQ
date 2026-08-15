@@ -698,13 +698,16 @@ working harder. Everything from 6 down runs in parallel with that wait.
    `lastCommentId`/`lastReplyId`, which only that build sends, so
    commenting/replying/reply-deletion fail on any device without it. The
    iPhone has it; the APK is built but uninstalled.
-4. **Bump `version:` and rebuild the AAB.** Built once at `1.0.0-beta.3+3`
-   (versionCode 3, verified in the merged manifest, 72 MiB) — but **that
-   artifact is already stale**: the Places Directions/Call feature (`a623df8`)
-   landed after it and added a new dependency (`url_launcher`) and new
-   `<queries>` manifest entries. Bump to `+4` and rebuild before uploading.
-   This is the standing rule, not a one-off: **the AAB is not committed, so any
-   commit after a build invalidates it.**
+4. ~~**Bump `version:` and rebuild the AAB.**~~ **DONE 2026-08-15 — shipped as
+   the `beta-v3` GitHub release**, built from `caa1a48` at `1.0.0-beta.3+3`
+   (versionCode 3, verified in the bundle manifest; release-signed, SHA-1
+   `8542b8ad…2f10`). Both artifacts are attached to the release, so the AAB
+   for the Play upload no longer has to be rebuilt from scratch — download
+   `ThrottleIQ-beta-v3.aab` from
+   <https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v3>.
+   **Standing rule for next time: the build artifacts are not committed, so any
+   commit after a build invalidates them — bump to `+4` and rebuild before the
+   *next* upload.**
 5. **Upload to internal testing, then submit the Background Location Access
    declaration** — the long pole (see the Play Store section's note). The AAB
    from step 4 is ready to upload.
@@ -822,7 +825,15 @@ working harder. Everything from 6 down runs in parallel with that wait.
 - [x] ~~**Release key's SHA-1 registered with the Android Google OAuth client**~~ **VERIFIED 2026-08-11.** Worth an explicit line because the failure mode is nasty and silent: if the OAuth client only carries the *debug* keystore's fingerprint, **Google sign-in works in debug and fails in release**, with nothing in the app to explain why. Checked — `app/android/app/google-services.json` carries two Android OAuth fingerprints and `throttleiq-release.keystore`'s SHA-1 is one of them, so ThrottleIQ is not exposed to this. Re-check after any keystore change (including a Play App Signing upload-key rotation, which introduces a *second* fingerprint that also has to be registered).
   - **`keytool` does not work out of the box on this Mac.** `/usr/bin/keytool` is Apple's stub and no JDK is on PATH (`/usr/libexec/java_home` fails). Use Android Studio's bundled runtime: `"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -list -v -keystore throttleiq-release.keystore`. Note that the stub **fails silently under `2>/dev/null`** and yields an empty fingerprint — which compares unequal to everything and reads as "the key isn't registered". That false negative was hit once already; if a fingerprint check says "not registered", verify `keytool` actually ran before believing it.
 - [ ] **Install the beta APK on a real phone** and run the smoke test: register → record a ride → stop → summary → confirm the ride appears in Firestore console.
-  - **Latest release build: 2026-08-14**, from commit `1a735f5` (the offline/resume/hold-to-start batch). `app/build/app/outputs/flutter-apk/app-release.apk`, 76 MiB. Verified release-signed — `apksigner` reports `CN=ThrottleIQ, OU=BlankFrame Technologies` (not `CN=Android Debug`) with SHA-1 `8542b8ad…2f10`, which **is** one of the two fingerprints in `app/android/app/google-services.json`, so Google sign-in works in this build. That check is cheap and worth repeating each release: a debug-signed "release" APK fails sign-in silently, with nothing in the app to explain why.
+  - **Latest release: `beta-v3`, published 2026-08-15** from `caa1a48` —
+    <https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v3>
+    (pre-release, `ThrottleIQ-beta-v3.apk` 76 MiB + `ThrottleIQ-beta-v3.aab`
+    72 MiB, `1.0.0-beta.3+3`). Carries the security batch, the offline outbox,
+    the ride-resume fix, hold-to-start, and Places directions. Tag convention
+    is `beta-vN` with title `ThrottleIQ — Beta vN (vX)` and both artifacts
+    attached; follow it for the next one.
+  - Verified release-signed — `apksigner` reports `CN=ThrottleIQ, OU=BlankFrame Technologies` (not `CN=Android Debug`) with SHA-1 `8542b8ad…2f10`, which **is** one of the two fingerprints in `app/android/app/google-services.json`, so Google sign-in works in this build. That check is cheap and worth repeating each release: a debug-signed "release" APK fails sign-in silently, with nothing in the app to explain why.
+  - **iPhone is on this build; Android still isn't.** Abraar's iPhone was launched to directly (`flutter run --release`, 2026-08-15), so it has the client half the deployed rules require. **No Android device has been installed to** — the APK is merely published on the release page. Until someone installs it, commenting/replying/reply-deletion still fail on Android (see §24's note).
   - **This is the build to run the §25/§26 fly-mode sequence on** — see the offline item under "Done, but NOT yet verified" above. It is the whole reason this APK exists.
 - [x] ~~Run the test suite~~ **DONE 2026-07-14** — 184/184 green (fixed a real EventDetector regression + bad test expectations found on the first-ever full run).
 - [x] ~~Deploy the live-share viewer~~ **DONE 2026-07-14** — hosted at `throttleiqfb.web.app` (verified 200); the app's share links point there.
