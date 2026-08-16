@@ -158,7 +158,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get navPlacesLabel => 'স্থান';
 
   @override
-  String get navGarageLabel => 'গ্যারেজ';
+  String get navProfileLabel => 'প্রোফাইল';
 
   @override
   String get bikePickerSheetTitle => 'আজ চালাচ্ছেন';

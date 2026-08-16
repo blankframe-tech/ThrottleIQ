@@ -15,7 +15,7 @@ import 'package:throttleiq/l10n/app_localizations.dart';
 /// (`Issues.md` §15).
 ///
 /// The regression this file exists for: switching bikes used to navigate to
-/// `/home/garage` instead of switching the bike. The card has since become
+/// `/home/profile` instead of switching the bike. The card has since become
 /// the Record screen's photo hero and the dropdown a bottom sheet, but the
 /// contract under test is unchanged — picking a bike switches it, in place.
 BikeEntity bike(String id, String model, {bool active = false, int rides = 0}) =>

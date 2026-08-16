@@ -27,7 +27,7 @@ Splash → (auth redirect) → Login / Register → Onboarding (first sign-in on
                                                     ▼
                         ┌───────────────────────────────────────────────┐
                         │              Bottom nav (AppShell)             │
-                        │  Social · Rides · ●Record· Places · Garage     │
+                        │  Social · Rides · ●Record· Places · Profile    │
                         └───────────────────────────────────────────────┘
 Social  → Feed tab | Forums tab → forum thread → post detail
                                 → create forum
@@ -37,8 +37,9 @@ Record  → active ride (live) → crash overlay (conditional) → ride summary
 Record  → ride with friends → friend picker → group ride live map
 Places  → place detail | add place | (header) my places, routes
 Routes  → route detail → turn-by-turn navigation
-Garage  → bike detail → edit bike | add bike | (header) profile,
-           my places, my shared rides → maintenance → add service log
+Profile → (header) settings, notifications, profile menu (profile,
+           my places, my shared rides) → bike detail → edit bike | add bike
+           → maintenance → add service log
 
 Full-screen (no bottom nav): Settings, Notifications, Profile,
 Edit Profile, User Profile (:uid), Ride Summary, Ride Share,
@@ -57,7 +58,8 @@ Save Route, Group Ride map
 
 ## 2. Record a ride (`features/ride`)
 
-- **Record screen** (center tab, default screen) — **redesigned 2026-08-11** as one instrument panel, top to bottom: **bike-photo hero (greeting overlaid) → stat strip → ride with friends**, with **slide-to-start pinned to the bottom** and the quote as a footer line under it. Notifications bell and settings shortcut sit above. Shows an "Add a bike" card in the hero's place when no bike is selected.
+- **Record screen** (center tab, default screen) — **redesigned 2026-08-11** as one instrument panel, top to bottom: **bike-photo hero (greeting overlaid) → stat strip → ride with friends**, with **slide-to-start pinned to the bottom** and the quote as a footer line under it. Shows an "Add a bike" card in the hero's place when no bike is selected.
+  - **No header chrome, 2026-08-17** — the Notifications bell and Settings gear that used to sit above the hero moved to the Profile tab's header (§4), so the rider's own recording surface carries only recording-related controls.
   - **Why it changed**: the previous stack (2026-08-04) was four cards of roughly equal weight in a scroll view, which gave the greeting the same visual authority as the control that actually starts a ride.
   - **The throttle is outside the scroll view**, not the last item in it — the start control is the one control the screen exists for, so it sits at a fixed place under the thumb every time, and doesn't move when an error card appears above it.
   - **The start control depends on the skin's shape profile** (added 2026-08-14). Boxy and terminal skins keep the full-width **slide-to-start** track; the rounded skins (Trail Social, Calming, Positive Vibes) get **`HoldToStartButton`** — a circular press-and-hold ring whose progress arc sweeps from 12 o'clock over 900ms, with a glow that swells as it charges, a face that presses in slightly, and a label that flips `HOLD` → `GO` past 60%. Release early and the arc unwinds at 2.5× the fill speed, so an abandoned press reads as dismissed rather than politely rewound.
@@ -71,7 +73,7 @@ Save Route, Group Ride map
   - **The quote is a footer** (2026-08-04 → moved again 2026-08-11) — it was its own ink-block card, then a muted line inside the greeting card, and is now a small centred line *under* the slide-to-start bar. It also took over the line the "Swipe right to start recording" hint used to own: the bar labels its own gesture, so the hint was saying it twice. Open question still standing in `HANDOFF_Document.md`: whether the quote belongs on this screen at all, vs. an intermediate "here we go" screen between tapping start and recording beginning.
   - **Rider-wide totals moved off this screen** (2026-08-04) — total km / ride count / days-since-last-ride used to live here as the *active bike's* figures; they're now on the Rides tab under "Your Journey", scoped to the whole rider rather than one bike.
   - **Bike picker shows the rider's own bike photo** (2026-08-04) when one was added in Garage, with a fallback to the generic icon tile — see `BikePhoto` in §4. The photo can be cropped when it's added — see §4.
-  - **Bike switching happens in place** (2026-08-11) — it used to be a card whose whole surface navigated to `/home/garage` with a "Change" label, so switching bikes meant leaving the screen you were about to start a ride from, and the label named something the card didn't do. The hero now owns switching:
+  - **Bike switching happens in place** (2026-08-11) — it used to be a card whose whole surface navigated to `/home/profile` with a "Change" label, so switching bikes meant leaving the screen you were about to start a ride from, and the label named something the card didn't do. The hero now owns switching:
     - **Two or more bikes** → tapping the hero opens a **picker sheet** with every bike and a check on the active one; picking one calls `setActiveBike` without navigating. A "CHANGE ⌄" affordance sits on the hero. (A sheet rather than the previous dropdown because the hero is a photo, and a menu anchored to a 210px image either covers the thing you're choosing or floats off it.)
     - **One bike** → no switch affordance at all. A picker whose only option is the one already selected is a control that can't do anything.
     - Sheet rows show **ride count**, not "Ready to ride" — every row would say "Ready to ride", which distinguishes nothing; ride count is what separates two similarly-named bikes.
@@ -111,11 +113,22 @@ Save Route, Group Ride map
 - **"All rides" button** (added 2026-08-04) — the compact list only ever shows 10; this opens `/rides/all` on top of the current screen. Same sort chips, lazy infinite scroll over the full history (not paged navigation — the data's already in memory, only rendering needs bounding), full per-ride detail (distance/duration/avg/top/score/events), and the ride's **route thumbnail** where one was recorded.
 - Empty state for zero-ride accounts.
 
-## 4. Garage (`features/garage`) — bottom nav tab "Garage"
+## 4. Garage (`features/garage`) — bottom nav tab "Profile" (route `/home/profile`)
 
-- **Garage screen** — bike list; header menu → **Profile**, **My Places**, **My Shared Rides**; empty state with "Add Bike" CTA.
+**Tab renamed from "Garage" to "Profile" 2026-08-17.** `GarageScreen` is still
+the screen behind it (route path kept as `/home/profile` internally — the
+`features/garage` folder and `GarageScreen` class name are unchanged, scoped
+deliberately to keep the diff small), but it now leads with account-level
+chrome rather than the bike list alone:
+
+- **Header**: a **profile summary** (avatar, name, "View profile" — tap opens
+  the same menu as before: **Profile**, **My Places**, **My Shared Rides**),
+  and, moved here from the Record screen's header, a **Notifications bell**
+  (unread badge) and a **Settings** gear icon. Record's header is now chrome-free.
+- **"Your Bikes" section** underneath — the bike list, unchanged in
+  substance: **Add/Edit Bike screen** (`/home/profile/add`,
+  `/home/profile/:bikeId/edit`), empty state with "Add Bike" CTA.
   - **Bike photos now render** on both the garage list and bike detail (fixed 2026-08-04, `Issues.md`) — a photo added via Edit Bike previously only ever saved to the entity; every screen that should have shown it (garage card, bike detail, record screen) still drew the generic icon tile. All three now go through a shared `BikePhoto` widget, which also falls back to the icon when the saved path points at a file that no longer exists — the normal case for a bike synced down from another device, since image paths are local and don't travel with sync.
-- **Add/Edit Bike screen** (`/home/garage/add`, `/home/garage/:bikeId/edit`).
   - **Photos can be cropped** (added 2026-08-11). Picking a photo goes straight into an in-app cropper; once one is attached, **Crop** and **Replace** buttons sit under the preview, so re-framing a photo doesn't mean finding it in the library again.
     - **The crop is offered, not forced** — cancelling out of the cropper keeps the photo as picked rather than discarding the whole selection. "Right photo, no crop needed" is the common case, and re-picking would be a punishment for tapping Cancel.
     - **Built in-app, not `image_cropper`.** That plugin's screen is native chrome (UCrop / TOCropViewController), which would be the one screen in the app that ignores the skin the rider chose — wrong on eight of the nine — and it wants an Android manifest entry and a pod. This uses `package:image`, already a dependency for `ImageCompressionUtils`.
@@ -125,7 +138,7 @@ Save Route, Group Ride map
     - **EXIF orientation is baked in before measuring** (`img.bakeOrientation`). `ImagePicker` normally normalises it when re-encoding, but a crop applied to an image whose orientation tag hasn't been applied cuts the wrong region, sideways, with no error.
     - **Cropped photos are written to the app documents directory**, not left beside the `ImagePicker` original in a cache dir the OS may reclaim — which is the documented reason `BikePhoto` needs a fallback for a non-null-but-stale path at all. Only cropped photos get this; a photo kept as-picked still carries a cache path.
     - `ImageCropScreen.open(context, sourcePath:)` is generic and returns a path or null, so the other three pickers (profile avatar, place photo, ride photos) are one call away from the same treatment — **not wired up**, since only bike photos were asked for.
-- **Bike detail screen** (`/home/garage/:bikeId`) — bike info, delete (with confirmation), **"Discuss this bike"** deep link into the matching forum thread. Deleting a bike removes its rides, their GPS points and its maintenance logs; it silently deadlocked before 2026-08-01 (`Issues.md` §7).
+- **Bike detail screen** (`/home/profile/:bikeId`) — bike info, delete (with confirmation), **"Discuss this bike"** deep link into the matching forum thread. Deleting a bike removes its rides, their GPS points and its maintenance logs; it silently deadlocked before 2026-08-01 (`Issues.md` §7).
   - **Delete is now actually durable** (fixed 2026-08-04, `Issues.md` §12) — it previously only removed the local row, so the bike reappeared on the next sync (still selectable on the Record screen, still in its forum). Deletes now write a local tombstone in the same transaction and remove the Firestore copy (and its rides) via `SyncManager`.
 
 ## 5. Maintenance (`features/maintenance`) — reached from Garage/bike detail

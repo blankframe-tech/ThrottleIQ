@@ -211,8 +211,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // Renamed from '/home/garage': the bottom-nav tab is now "Profile"
+          // and this screen leads with the profile summary and the
+          // Settings/Notifications entry points that used to live in
+          // RecordScreen's header, with the bike list (GarageScreen) still
+          // underneath — see HANDOFF_Document.md.
           GoRoute(
-            path: '/home/garage',
+            path: '/home/profile',
             builder: (_, __) => const GarageScreen(),
             routes: [
               GoRoute(path: 'add', builder: (_, __) => const AddEditBikeScreen()),

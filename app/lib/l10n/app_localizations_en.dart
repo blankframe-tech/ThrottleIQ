@@ -160,7 +160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navPlacesLabel => 'Places';
 
   @override
-  String get navGarageLabel => 'Garage';
+  String get navProfileLabel => 'Profile';
 
   @override
   String get bikePickerSheetTitle => 'Riding today';

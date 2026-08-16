@@ -11,7 +11,6 @@ import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
-import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_with_friends_button.dart';
 import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
@@ -89,21 +88,11 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Chrome only — the screen has no title bar; the hero is
-                    // the header.
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _NotificationBellButton(
-                            unreadCount:
-                                ref.watch(unreadNotificationCountProvider)),
-                        IconButton(
-                          onPressed: () => context.push('/settings'),
-                          icon: const Icon(Icons.settings_outlined),
-                          tooltip: 'Settings',
-                        ),
-                      ],
-                    ),
+                    // Settings and Notifications used to live here as icon
+                    // buttons; both moved to the Profile tab's header, next to
+                    // the rest of the account-level chrome (see
+                    // GarageScreen) — this screen has no title bar of its
+                    // own, and the hero below is the header.
                     const SizedBox(height: 4),
 
                     // 1. Hero — the bike, at full width, wearing the greeting.
@@ -212,7 +201,7 @@ class _NoBikeCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton(
-            onPressed: () => context.go('/home/garage/add'),
+            onPressed: () => context.go('/home/profile/add'),
             child: const Text('Add a bike'),
           ),
         ],
@@ -407,43 +396,6 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
           ),
         );
       },
-    );
-  }
-}
-
-class _NotificationBellButton extends StatelessWidget {
-  final int unreadCount;
-  const _NotificationBellButton({required this.unreadCount});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(
-          onPressed: () => context.push('/notifications'),
-          icon: const Icon(Icons.notifications_outlined),
-          tooltip: 'Notifications',
-        ),
-        if (unreadCount > 0)
-          Positioned(
-            right: 6,
-            top: 6,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: AppColors.danger,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-              ),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-              child: Text(
-                unreadCount > 9 ? '9+' : '$unreadCount',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

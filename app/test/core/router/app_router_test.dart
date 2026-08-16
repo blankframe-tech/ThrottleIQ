@@ -50,7 +50,7 @@ void main() {
 
     test('does not touch a signed-in, non-onboarding user browsing /home/*', () {
       expect(
-        computeAuthRedirect(isAuth: true, isOnboarding: false, loc: '/home/garage/add'),
+        computeAuthRedirect(isAuth: true, isOnboarding: false, loc: '/home/profile/add'),
         isNull,
       );
     });

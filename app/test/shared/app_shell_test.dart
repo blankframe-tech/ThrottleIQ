@@ -16,23 +16,23 @@ void main() {
     // The reported bug: maintenance is reached from the garage, but matched no
     // tab prefix and fell through to the Record fallback, so the wrong tab
     // appeared selected while the right screen was shown.
-    test('/home/maintenance selects Garage, not Record', () {
-      const garage = 4;
-      expect(shellTabIndexForLocation('/home/maintenance'), garage);
-      expect(shellTabIndexForLocation('/home/maintenance/add'), garage);
+    test('/home/maintenance selects Profile, not Record', () {
+      const profile = 4;
+      expect(shellTabIndexForLocation('/home/maintenance'), profile);
+      expect(shellTabIndexForLocation('/home/maintenance/add'), profile);
       expect(
         shellTabIndexForLocation('/home/maintenance?bikeId=abc123'),
-        garage,
+        profile,
       );
       expect(
         shellTabIndexForLocation('/home/maintenance/add?bikeId=abc123'),
-        garage,
+        profile,
       );
     });
 
     test('nested tab paths select their parent tab', () {
-      expect(shellTabIndexForLocation('/home/garage/abc123'), 4);
-      expect(shellTabIndexForLocation('/home/garage/abc123/edit'), 4);
+      expect(shellTabIndexForLocation('/home/profile/abc123'), 4);
+      expect(shellTabIndexForLocation('/home/profile/abc123/edit'), 4);
       expect(shellTabIndexForLocation('/home/places/add'), 3);
       expect(shellTabIndexForLocation('/home/places/xyz'), 3);
     });

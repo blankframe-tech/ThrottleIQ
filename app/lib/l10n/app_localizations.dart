@@ -380,11 +380,11 @@ abstract class AppLocalizations {
   /// **'Places'**
   String get navPlacesLabel;
 
-  /// Bottom-nav tab label for the garage/bikes tab.
+  /// Bottom-nav tab label for the profile tab (profile, settings, notifications, bikes/garage).
   ///
   /// In en, this message translates to:
-  /// **'Garage'**
-  String get navGarageLabel;
+  /// **'Profile'**
+  String get navProfileLabel;
 
   /// Title of the bottom sheet that lets the rider switch which bike is active, on the Record screen.
   ///

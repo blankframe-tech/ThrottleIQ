@@ -56,7 +56,7 @@
   "navRidesLabel": "রাইড",
   "navRecordLabel": "রেকর্ড",
   "navPlacesLabel": "স্থান",
-  "navGarageLabel": "গ্যারেজ",
+  "navProfileLabel": "প্রোফাইল",
 
   "bikePickerSheetTitle": "আজ চালাচ্ছেন",
   "rideCountLabel": "{count, plural, =1{{count}টি রাইড} other{{count}টি রাইড}}",

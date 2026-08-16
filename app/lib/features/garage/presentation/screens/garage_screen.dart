@@ -11,7 +11,16 @@ import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../social/presentation/providers/notification_providers.dart';
+import '../../../../shared/widgets/notification_bell_button.dart';
 
+/// The Profile tab's root screen (route `/home/profile`).
+///
+/// Leads with the rider's own profile, plus the Settings and Notifications
+/// entry points that used to sit in RecordScreen's header — moved here so
+/// account-level chrome lives on the tab actually named "Profile" rather than
+/// floating over the ride-recording screen. The bike garage stays underneath:
+/// it's still the tab's main content, just no longer the *only* thing on it.
 class GarageScreen extends ConsumerWidget {
   const GarageScreen({super.key});
 
@@ -25,16 +34,29 @@ class GarageScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header: "Your Garage" + user menu
+            // Header: profile summary (tap for Profile / My Places / My
+            // Shared Rides), then Notifications and Settings — the two
+            // account-level actions RecordScreen used to carry.
             Padding(
               padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 12,
-                  AppDimensions.paddingMd, 8),
+                  AppDimensions.paddingMd, 4),
               child: Row(
                 children: [
-                  Expanded(child: Text('Your Garage', style: display(28))),
-                  const _UserMenuButton(),
+                  const Expanded(child: _ProfileSummary()),
+                  NotificationBellButton(
+                      unreadCount: ref.watch(unreadNotificationCountProvider)),
+                  IconButton(
+                    onPressed: () => context.push('/settings'),
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: 'Settings',
+                  ),
                 ],
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
+              child: Text('Your Bikes', style: display(22)),
             ),
             Expanded(
               child: bikesAsync.when(
@@ -54,7 +76,7 @@ class GarageScreen extends ConsumerWidget {
                         ? _BikeCard(bike: bikes[i])
                         : DashedAddButton(
                             label: 'Add a bike',
-                            onTap: () => context.go('/home/garage/add'),
+                            onTap: () => context.go('/home/profile/add'),
                           ),
                   );
                 },
@@ -67,23 +89,44 @@ class GarageScreen extends ConsumerWidget {
   }
 }
 
-/// Avatar/menu button in the garage header — replaces the old round "+"
-/// (add-bike moved below the bike list). Opens the signed-in rider's own
-/// menu: their profile today, with room for Epic E to add "My places".
-class _UserMenuButton extends ConsumerWidget {
-  const _UserMenuButton();
+/// Profile summary at the top of the Profile tab: avatar, name, and a "View
+/// profile" hint, tappable for the same menu the old avatar-only button
+/// opened (profile / my places / my shared rides).
+class _ProfileSummary extends ConsumerWidget {
+  const _ProfileSummary();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final profile = ref.watch(myProfileProvider).valueOrNull;
+    final name = profile?.bestName ?? user?.displayName ?? 'Rider';
 
     return GestureDetector(
       onTap: () => _showMenu(context),
-      child: UserAvatar(
-        photoUrl: profile?.photoUrl ?? user?.photoURL,
-        name: profile?.bestName ?? user?.displayName ?? 'Rider',
-        radius: 22,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          UserAvatar(
+            photoUrl: profile?.photoUrl ?? user?.photoURL,
+            name: name,
+            radius: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(name,
+                    style: display(18, letterSpacing: 0),
+                    overflow: TextOverflow.ellipsis),
+                Text('View profile',
+                    style:
+                        TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -151,7 +194,7 @@ class _EmptyGarage extends StatelessWidget {
             const SizedBox(height: 20),
             DashedAddButton(
               label: 'Add a bike',
-              onTap: () => context.go('/home/garage/add'),
+              onTap: () => context.go('/home/profile/add'),
             ),
           ],
         ),
@@ -168,7 +211,7 @@ class _BikeCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return EditorialCard(
       padding: EdgeInsets.zero,
-      onTap: () => context.go('/home/garage/${bike.id}'),
+      onTap: () => context.go('/home/profile/${bike.id}'),
       borderColor: bike.isActive ? AppColors.primary : AppColors.border,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -10,11 +10,11 @@ const List<String> shellTabs = [
   '/home/stats',
   '/home/record',
   '/home/places',
-  '/home/garage',
+  '/home/profile',
 ];
 
 const int _recordTabIndex = 2;
-const int _garageTabIndex = 4;
+const int _profileTabIndex = 4;
 
 /// Shell routes that are *not* tabs of their own, mapped to the tab they
 /// logically belong under.
@@ -23,16 +23,17 @@ const int _garageTabIndex = 4;
 /// through to the Record fallback — the bug reported as "the maintenance page
 /// from garage, when selected, shows that I'm on record page in bottom but
 /// opens the maintenance page correctly." Maintenance is only ever reached
-/// from the garage / a bike card, so it highlights Garage.
+/// from a bike card on the Profile tab's garage section, so it highlights
+/// Profile.
 const Map<String, int> _nonTabShellRoutes = {
-  '/home/maintenance': _garageTabIndex,
+  '/home/maintenance': _profileTabIndex,
 };
 
 /// Maps a shell location to the bottom-nav index that should appear selected.
 ///
 /// Pure so it can be unit-tested without a widget tree. Matches a tab when the
-/// location *is* the tab path or is nested under it (`/home/garage/abc/edit`
-/// → Garage), then falls back to Record for anything unrecognised. The
+/// location *is* the tab path or is nested under it (`/home/profile/abc/edit`
+/// → Profile), then falls back to Record for anything unrecognised. The
 /// fallback exists only so `BottomNavigationBar` always gets a valid index —
 /// a new shell route that should highlight a specific tab belongs in
 /// [_nonTabShellRoutes], not in the fallback.
@@ -82,7 +83,7 @@ class AppShell extends StatelessWidget {
             BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.place_outlined), activeIcon: const Icon(Icons.place), label: l10n.navPlacesLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.garage_outlined), activeIcon: const Icon(Icons.garage), label: l10n.navGarageLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: l10n.navProfileLabel),
           ],
         ),
       ),

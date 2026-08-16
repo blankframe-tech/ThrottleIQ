@@ -39,7 +39,7 @@ class BikeDetailScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.go('/home/garage/$bikeId/edit'),
+            onPressed: () => context.go('/home/profile/$bikeId/edit'),
           ),
           IconButton(
             icon: Icon(Icons.delete_outline, color: AppColors.danger),
@@ -256,7 +256,7 @@ class BikeDetailScreen extends ConsumerWidget {
     // the bike in it, with nothing explaining why.
     try {
       await ref.read(garageProvider.notifier).deleteBike(bikeId);
-      if (context.mounted) context.go('/home/garage');
+      if (context.mounted) context.go('/home/profile');
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

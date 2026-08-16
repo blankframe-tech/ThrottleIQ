@@ -242,9 +242,9 @@
     "description": "Bottom-nav tab label for the places/POI-directory tab."
   },
 
-  "navGarageLabel": "Garage",
-  "@navGarageLabel": {
-    "description": "Bottom-nav tab label for the garage/bikes tab."
+  "navProfileLabel": "Profile",
+  "@navProfileLabel": {
+    "description": "Bottom-nav tab label for the profile tab (profile, settings, notifications, bikes/garage)."
   },
 
   "bikePickerSheetTitle": "Riding today",

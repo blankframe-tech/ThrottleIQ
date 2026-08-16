@@ -118,6 +118,23 @@ didn't ask for:
 Verified: `flutter analyze` 0 errors, `flutter test` 804/804, clean
 `flutter build` on both platforms.
 
+**Bottom-nav "Garage" renamed to "Profile", on a branch — 2026-08-17 (same
+day, third session).** Requested directly, and built on `feature/profile-tab`
+rather than `main` since it touches the nav shell. The Profile tab
+(`/home/profile`, née `/home/garage` — path kept for a smaller diff, see
+`Features.md` §4) now leads with a profile summary plus **Notifications**
+and **Settings** entry points moved off `RecordScreen`'s header, with the
+existing bike garage underneath as a "Your Bikes" section. `RecordScreen`
+now carries no header chrome at all — recording controls only.
+`NotificationBellButton` was pulled out to `shared/widgets/` so both screens
+can use it. Verified: `flutter analyze` 0 errors, `flutter test` 804/804,
+clean builds on both platforms, and confirmed on the iOS simulator — the tab
+reads "Profile" with a person icon and Record's header is empty. Interactive
+tap-through past the tab bar itself wasn't reliably automatable in this
+headless environment (same standing limitation as `Issues.md` §15); the new
+screen's content is verified by code review and widget composition rather
+than an on-screen tap.
+
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
 unauthenticated clients (§3), the planned live-session TTL policy could

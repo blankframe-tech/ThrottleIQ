@@ -13,10 +13,11 @@ import '../../../garage/presentation/widgets/bike_photo.dart';
 /// one bike, the control that switches between them **in place**.
 ///
 /// This started life as a small photo-and-name card that navigated to
-/// `/home/garage` to change bikes, which cost a trip off the screen and back
-/// and promised something it didn't do. Switching now happens here: Garage is
-/// where you *manage* bikes, but choosing which one you're about to ride is a
-/// Record-screen decision and shouldn't move you off the screen you're about
+/// `/home/profile` to change bikes, which cost a trip off the screen and back
+/// and promised something it didn't do. Switching now happens here: the
+/// Profile tab's garage section is where you *manage* bikes, but choosing
+/// which one you're about to ride is a Record-screen decision and shouldn't
+/// move you off the screen you're about
 /// to start the ride from. That contract is what
 /// `test/features/ride/bike_picker_card_test.dart` guards.
 ///
