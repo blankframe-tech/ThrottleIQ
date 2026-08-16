@@ -1715,3 +1715,163 @@ trip, and it costs nothing to remove.
 `LocationForegroundService` is about to be written — see the auto-tracking plan
 in `HANDOFF_Document.md`, where a purpose-built one is Step 3. Removing it does
 not affect current behaviour; geolocator's service is untouched by it.
+
+---
+
+## 28. Downloaded rides don't reach the UI until the app is restarted (2026-08-17)
+
+**Status: Fixed.** Surfaced by running the app on the iOS simulator, signed
+into the same account as the project owner's phone: the phone reported 43
+rides / 119 km, the simulator showed 20 rides / 26 km and appeared never to
+catch up.
+
+**It was not a sync gap.** An earlier pass of this writeup blamed
+`uploadRides`' all-or-nothing batch and asked for a Firestore doc count to
+confirm. Dumping the simulator's actual sqflite file settled it instead, and
+the answer was the opposite of the guess:
+
+```
+sqlite3 .../Documents/throttleiq.db \
+  "SELECT count(*), round(sum(distance_m)/1000,1) FROM rides WHERE status='completed';"
+42|119.0
+```
+
+The rows were **already on the device**. Meanwhile the running app rendered
+25.72 km / 20 rides / "14d last ride", with both charts ending 2 Aug. And:
+
+```
+  "... AND created_at <= '2026-08-03';"   →   20|25.72
+```
+
+The on-screen figures were exactly a **chronological prefix** of the local
+table. That is the tell: `downloadRides` iterates `snap.docs`, which Firestore
+returns in document-id order, and ids are random UUIDs — so *no* failure
+inside that loop can produce a clean date-ordered subset. Nothing was missing
+and nothing was failing. The UI was showing a pre-download snapshot of a table
+that had since been filled in.
+
+**Root cause (`sync_manager.dart:125-128`):** `_performSync` discarded
+`downloadRides`' return value and invalidated exactly one provider, only when
+*bikes* were pulled:
+
+```dart
+final pulledBikes = await _cloudRepository.downloadBikes(uid);
+await _cloudRepository.downloadMaintenance(uid);
+await _cloudRepository.downloadRides(uid);      // return value dropped
+if (pulledBikes) _ref?.invalidate(garageProvider);
+```
+
+`riderStatsProvider` watches `currentUserProvider` and `garageProvider` and
+nothing else, so it re-read the rides table only as a side effect of a bike
+being pulled down. On this simulator all 5 bikes were already local, so
+`pulledBikes` was `false` — the one case where the invalidate is needed is the
+one case it didn't fire. The stat strip, the rides list and the badge counts
+all kept serving the value computed during startup, before that cycle's
+download finished, and only a full app restart cleared it. On a device that
+happened to pull a bike in the same cycle the bug is invisible, which is why
+this survived the earlier download-sync work.
+
+**Why it read as a sync bug:** every symptom of a stale provider and a stalled
+upload is identical from the outside — a second device showing fewer rides
+than the phone, indefinitely, with no error anywhere. The distinguishing
+evidence isn't in the code at all, it's the *shape* of the subset: date-ordered
+means presentation, id-ordered or random means transport. Worth reaching for
+the on-device database before theorising next time; on the simulator it's a
+plain file at
+`~/Library/Developer/CoreSimulator/Devices/<UDID>/data/Containers/Data/Application/<APP>/Documents/throttleiq.db`
+and `sqlite3` answers in seconds what static reading could not.
+
+**Fixed:**
+
+- `sync_manager.dart` now keeps `downloadRides`' return value and invalidates
+  `riderStatsProvider` and `rideHistoryProvider` when it's true. Deliberately
+  keyed off the download's own result rather than `pulledBikes`.
+- `sync_manager.dart` fetches unsynced rides via `RideDao.getUnsynced()`
+  instead of querying `synced = 0` directly. The direct query skipped the
+  DAO's `status = 'completed'` filter, so in-progress and abandoned rides were
+  uploaded too — six zero-distance `active` rows had already reached Firestore
+  and been pulled back down onto the simulator. They never affected the totals
+  (the stats query filters on `completed`) but they are junk in the cloud, and
+  a ride still being recorded could sync a half-written row.
+- `uploadRides` keeps the single batch as its fast path but now falls back to
+  per-ride writes when the batch throws, logging the offending ride id and
+  Firestore's reason. The batch hazard described in the earlier writeup was
+  never what happened here, but it is real and cheap to close: `firestore.rules`
+  grants the owner blanket write on `users/{uid}/rides` and every column in the
+  table is a scalar, so a rejection is unlikely — not impossible.
+- `downloadBikes` / `downloadRides` / `downloadMaintenance` wrap each insert
+  in its own try/catch. `rides.bike_id` is a FOREIGN KEY and
+  `database_helper.dart:68` sets `PRAGMA foreign_keys = ON`, so a ride whose
+  bike was skipped by the tombstone check *would* have aborted the loop and
+  silently dropped every doc behind it.
+- `print('Sync error: $e')` → `debugPrint` with a `[SyncManager]` tag and a
+  stack trace. The bare print with no stack is a large part of why this took a
+  database dump to diagnose.
+
+**Separately:** the same session found the simulator's main "Places" tab
+empty. That looks environmental, not a data bug — `nearbyPlacesProvider`
+(`places_provider.dart:54-63`) depends on a real device GPS fix within 25 km
+(`currentPositionProvider`), and a simulator has no location until one is set
+via *Simulator → Features → Location*. "My places" (self-added, reached from
+the garage menu) reads Firestore directly by uid with no location dependency
+and should already match across devices — worth a separate look only if it's
+*also* empty after confirming the account matches.
+
+## 29. The auto-tracking working tree didn't compile — four separate breaks, none caught by `flutter analyze` alone (2026-08-17)
+
+**Status: Fixed.** The previous session's auto-tracking feature work (see
+`AUTO_TRACKING_PLAN.md`) and the §28 sync fix landed in the working tree
+uncommitted and unbuilt — its own writeup said the Flutter SDK wasn't
+reachable from that sandbox, so nothing past `flutter analyze` had run. This
+session had a real `flutter` on `PATH` and used it: `flutter analyze` alone
+showed 0 errors, but `flutter build ios --simulator` and `flutter build apk
+--debug` each failed on their first try, on things a Dart-only check cannot
+see.
+
+**1. `pubspec.yaml` had dropped `url_launcher`** while
+`place_detail_screen.dart` still imports it for the Directions/Call actions
+(`launchUrl`, `LaunchMode`). `flutter analyze` didn't catch it because pub's
+lockfile still had the package cached from before the removal; `pub get`
+would have failed loudly the moment someone ran it clean. Restored the
+dependency.
+
+**2. `notification_service.dart`'s `zonedSchedule` call was missing
+`uiLocalNotificationDateInterpretation`**, a required named parameter on
+`flutter_local_notifications` 17.2.4 (confirmed by reading the installed
+package source directly, not assumed from a version number). Added it.
+
+**3. The v11 migration's new columns weren't idempotent.** Every other step
+in `_onUpgrade`'s ladder uses `CREATE TABLE IF NOT EXISTS`, specifically so a
+re-run is survivable rather than a crash — the test suite has its own case
+enforcing that invariant (`outbox_migration_test.dart`, "the upgrade is
+idempotent if it runs twice"). The new `is_auto`/`bike_confidence` columns
+used a bare `ALTER TABLE ADD COLUMN`, which has no `IF NOT EXISTS` in SQLite
+and threw `duplicate column name` the moment that test exercised it. Added
+`_addColumnIfMissing()` (checks `PRAGMA table_info` first) and routed both
+columns through it.
+
+**4. Two Android-only Gradle failures**, invisible from the Dart side
+entirely:
+- `flutter_background_geolocation`'s transitive `android-permissions`
+  library declares its own `android:label`, colliding with the app's during
+  manifest merge. Fixed with `xmlns:tools` + `tools:replace="android:label"`
+  on `<application>`.
+- Two plugins resolved different `androidx.work` versions
+  (`work-runtime:2.8.1` vs `work-runtime-ktx:2.7.1`), which `checkDebugDuplicateClasses`
+  rejects outright. Forced both to `2.8.1` via `resolutionStrategy` in the
+  root `build.gradle.kts`.
+
+**Verified after all four fixes:** `flutter pub get`, `flutter analyze` (0
+errors), `flutter test` (797/797), `flutter build ios --simulator`,
+`flutter build apk --debug`, and a live `flutter run` on the iOS simulator —
+which also gave §28's fix its first runtime confirmation: the stat strip
+reads **42 rides / 119 km**, matching the sqlite dump in §28 rather than the
+stale 20/25.72 prefix.
+
+**Why this matters beyond this one tree:** `flutter analyze` is a Dart-only
+static check. It cannot see a lockfile masking a removed pub dependency, a
+plugin's required-parameter change across a version bump, a SQL statement
+that only fails on a second execution, or anything in `android/` at all.
+"Analyze is clean" and "it builds" are different claims — when a change
+touches native config, plugin versions, or a migration ladder, a real
+`flutter build`/`flutter test` pass is the only thing that actually checks it.

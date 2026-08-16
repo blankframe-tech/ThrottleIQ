@@ -59,6 +59,66 @@ class RideDao {
     await db.update('rides', {'synced': synced ? 1 : 0}, where: 'id = ?', whereArgs: [id]);
   }
 
+  /// Completed auto-detected rides whose bike attribution the rider hasn't
+  /// confirmed yet — the input to the daily confirmation prompt.
+  ///
+  /// Scoped to `completed` so a ride still being recorded is never offered for
+  /// confirmation, and ordered oldest-first so a rider who has ignored the
+  /// prompt for a few days is asked about the ride they're least likely to
+  /// still remember first, while they might still remember it at all.
+  Future<List<Map<String, dynamic>>> getUnconfirmedAutoRides(
+    String userId, {
+    int limit = 20,
+  }) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query(
+      'rides',
+      where:
+          'user_id = ? AND status = ? AND is_auto = 1 AND bike_confidence = ?',
+      whereArgs: [userId, 'completed', 'low'],
+      orderBy: 'start_time ASC',
+      limit: limit,
+    );
+  }
+
+  /// Records the rider's answer to "which bike was this?".
+  ///
+  /// Always sets confidence to `confirmed`, whether or not [bikeId] differs
+  /// from what was guessed — "yes, that was the right bike" is as much a
+  /// confirmation as a correction, and both must stop the prompt re-asking.
+  ///
+  /// `synced = 0` because reattribution has to reach the cloud copy too;
+  /// otherwise the next download would restore the wrong bike.
+  Future<void> confirmBikeAttribution(String rideId, String bikeId) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      'rides',
+      {'bike_id': bikeId, 'bike_confidence': 'confirmed', 'synced': 0},
+      where: 'id = ?',
+      whereArgs: [rideId],
+    );
+  }
+
+  /// Rides finishing within [day], for the daily prompt and the weekly digest.
+  Future<List<Map<String, dynamic>>> getCompletedBetween(
+    String userId,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query(
+      'rides',
+      where: 'user_id = ? AND status = ? AND start_time >= ? AND start_time < ?',
+      whereArgs: [
+        userId,
+        'completed',
+        from.toIso8601String(),
+        to.toIso8601String(),
+      ],
+      orderBy: 'start_time ASC',
+    );
+  }
+
   Future<void> delete(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {

@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/cloud/sync_manager.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
+import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
+import 'core/services/notification_service.dart';
+import 'features/ride/data/repositories/auto_ride_reconciler_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -17,10 +22,20 @@ class ThrottleIQApp extends ConsumerStatefulWidget {
   ConsumerState<ThrottleIQApp> createState() => _ThrottleIQAppState();
 }
 
-class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
+class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Tapping a ride-confirmation notification should land on that ride, so
+    // the rider can say which bike it was. Registered once, here, for the same
+    // reason as the widget handler below.
+    NotificationService.instance.onConfirmRideTapped = (rideId) {
+      if (!mounted) return;
+      ref.read(routerProvider).go('/ride/summary/$rideId');
+    };
     // Tapping the home-screen "Start ride" widget should land on Record, not
     // just wherever the app happened to be. Registered here rather than in
     // main() because it needs the router, and once (not per rebuild) because
@@ -34,6 +49,31 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
       if (!mounted) return;
       ref.read(routerProvider).go('/home/record');
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Rides detected while the app was closed are rebuilt the moment it comes
+  /// back to the foreground, not only at cold start.
+  ///
+  /// The common shape is: rider parks, opens the app a minute later to check
+  /// something — the process was never killed, so a launch-only hook would sit
+  /// on the finished journey until the next cold start, which on a phone that
+  /// keeps apps alive could be days.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState appState) {
+    if (appState != AppLifecycleState.resumed) return;
+    unawaited(_reconcileDetectedRides());
+  }
+
+  Future<void> _reconcileDetectedRides() async {
+    if (!await AutoTrackingService.isEnabled()) return;
+    if (!mounted) return;
+    await ref.read(autoRideReconcilerServiceProvider).reconcilePending();
   }
 
   @override
@@ -52,8 +92,14 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp> {
           // RideRecordingNotifier.restoreInterruptedRide. Only meaningful
           // once signed in, since it touches the per-user local ride DB.
           ref.read(rideRecordingProvider.notifier).restoreInterruptedRide();
+          // Auto-tracking is per-rider: it needs a uid to attribute detected
+          // rides to, and reconciling before sign-in would have nothing to
+          // attach them to. Both no-op unless the rider has opted in.
+          unawaited(AutoTrackingService.instance.start());
+          unawaited(_reconcileDetectedRides());
         } else {
           sync.stopAutoSync();
+          unawaited(AutoTrackingService.instance.stop());
         }
       });
 

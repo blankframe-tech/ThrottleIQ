@@ -76,9 +76,32 @@
 	<string>ThrottleIQ needs your location to track your motorcycle rides with GPS accuracy.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>ThrottleIQ needs to track your location even when the app is not in use to record complete ride data.</string>
+	<!-- Auto-tracking needs to know the device started moving in a vehicle
+	     without GPS being on. Core Motion's activity classifier is what
+	     provides that at near-zero power; NSMotionUsageDescription is what
+	     lets the app read it at all. Without this key the app crashes on
+	     first access rather than degrading. -->
+	<key>NSMotionUsageDescription</key>
+	<string>ThrottleIQ uses motion activity to notice when you start riding, so it can record the ride without you having to tap start.</string>
 	<key>UIBackgroundModes</key>
 	<array>
+		<!-- Already present: keeps location flowing during a ride. -->
 		<string>location</string>
+		<!-- Added for auto-tracking: `fetch` and `processing` let the
+		     background detection wake and hand off staged fixes when the app
+		     itself is not running. Without them iOS terminates the app after
+		     a journey and the fixes are not reconciled until the rider next
+		     opens it by hand. -->
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<!-- Required by flutter_background_geolocation's BGTaskScheduler
+	     integration. These identifiers are fixed by the plugin; changing them
+	     silently disables its background refresh. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.transistorsoft.fetch</string>
+		<string>com.transistorsoft.customtask</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

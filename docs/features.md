@@ -7,15 +7,15 @@ five-tab bottom nav. This is a living document — regenerate/update it
 whenever screens, routes, or user-facing flows change (see the doc-update
 hook in `.claude/settings.json`).
 
-> 📸 **Screenshots: TODO.** This pass was done by reading the screen source
-> (`app/lib/features/*/presentation/screens/*.dart`) and the router, not by
-> driving the iOS Simulator. The app *was* built and booted on the simulator
-> on 2026-08-11 (clean, no Dart exceptions), but it stops at the sign-in
-> screen — reaching any screen documented below needs real credentials, and
-> no sign-in or tap automation is available here. **So nothing in this file
-> from 2026-08-11 has been seen rendered**, including the redesigned Record
-> screen and the Retro skin. Capture screenshots per section below next time
-> the app is run signed-in on a simulator/device.
+> 📸 **Screenshots: mostly still TODO.** This pass was done by reading the
+> screen source (`app/lib/features/*/presentation/screens/*.dart`) and the
+> router, not by driving the iOS Simulator. As of 2026-08-11 the app booted
+> clean but stopped at sign-in, with no credentials or tap automation
+> available. **Update 2026-08-17**: the simulator used that session was
+> already signed in from prior manual use, so the Record tab *was* seen
+> rendered with real data (42 rides / 119 km stat strip) — see `Issues.md`
+> §28/§29. Everything else below is still unverified visually. Capture
+> screenshots per section below next time the app is driven signed-in.
 
 ---
 

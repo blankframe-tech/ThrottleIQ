@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-12 · Branch: `main`_
+_Last updated: 2026-08-17 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -60,6 +60,22 @@ the maintenance bottom-nav bug fix, average speed redefined as
 distance ÷ moving time, GPS trail sync, **home-screen widgets** (Android
 working; iOS needs one Xcode step), the published privacy policy, and
 beta data-reset tooling. Test suite went 287 → **550**.
+
+**Auto-tracking foundation + a stale-UI sync bug, fixed and build-verified,
+2026-08-17.** A prior session built the Vehicle State Engine's background
+auto-detection layer (`docs/AUTO_TRACKING_PLAN.md`) and, separately, tracked
+down why a second device could show fewer rides than the phone indefinitely
+(`Issues.md` §28 — a provider invalidation gap, not a sync failure). Both
+landed uncommitted, and neither had been run through a real `flutter`
+toolchain. This session did: `flutter analyze` alone reported 0 errors, but
+a real build surfaced four separate breaks invisible to static analysis —
+a dropped pub dependency, a plugin's now-required parameter, a
+non-idempotent schema migration, and two native Android/Gradle conflicts —
+all fixed, see `Issues.md` §29. After the fixes: `flutter test` **797/797**,
+clean `flutter build` on both iOS and Android, and a live `flutter run` on
+the iOS simulator gave §28's fix its first runtime confirmation (stat strip
+reads 42 rides / 119 km, matching the on-device sqlite dump). Test suite
+grew 755 → **797**.
 
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by

@@ -52,13 +52,34 @@ class EventDetector {
 
   CrashSignal? lastCrashSignal;
 
+  /// Classifies one fix.
+  ///
+  /// [at] is the instant this sample belongs to. It defaults to
+  /// `DateTime.now()`, which is correct for the live recording path where
+  /// fixes arrive in real time — but **any replay caller must pass it
+  /// explicitly**, using the fix's own timestamp.
+  ///
+  /// This matters because every window in this class is wall-clock relative:
+  /// the 2-second crash window, the 2-second speed history, and the 5-second
+  /// alert TTL. Replaying an hour of stored fixes takes milliseconds, so with
+  /// an implicit `DateTime.now()` every sample lands inside one window — the
+  /// crash detector would see the whole ride as a single instant and the
+  /// jerk/speed-drop logic would produce nonsense. Passing the stored
+  /// timestamp is what makes reconstructing a ride from persisted fixes
+  /// (see `AutoRideReconciler`) produce the same events the live path would
+  /// have produced.
+  ///
+  /// Optional rather than required only so the existing live call sites and
+  /// the crash-detector test suite keep compiling unchanged; treat it as
+  /// required in any new code.
   RideAlert detect({
     double? jerk,
     double? accel,
     double speedMs = 0,
     int elapsedSeconds = 0,
+    DateTime? at,
   }) {
-    final now = DateTime.now();
+    final now = at ?? DateTime.now();
 
     // Update recent speed history (keep last 2 seconds)
     _recentSpeeds.add(_SpeedSample(speedMs: speedMs, timestamp: now));

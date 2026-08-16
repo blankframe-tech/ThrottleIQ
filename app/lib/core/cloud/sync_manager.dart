@@ -6,7 +6,10 @@ import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/daos/bike_dao.dart';
+import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
+import '../../features/ride/presentation/providers/ride_recording_provider.dart';
+import '../../features/stats/presentation/providers/rider_stats_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
 import 'outbox_service.dart';
@@ -124,15 +127,34 @@ class SyncManager {
       // edit. See CloudRepository.downloadBikes's doc comment.
       final pulledBikes = await _cloudRepository.downloadBikes(uid);
       await _cloudRepository.downloadMaintenance(uid);
-      await _cloudRepository.downloadRides(uid);
+      final pulledRides = await _cloudRepository.downloadRides(uid);
       if (pulledBikes) _ref?.invalidate(garageProvider);
+      // Rides that just landed in the local table are invisible until the
+      // providers that read that table are rebuilt. riderStatsProvider watches
+      // only currentUserProvider and garageProvider, so on a device whose
+      // bikes were already local (pulledBikes == false) *nothing* re-read the
+      // rides table after a download — the stat strip kept rendering whatever
+      // it computed at launch, before this download finished, until the app
+      // was restarted. That is the "phone says 43 rides / 119 km, second
+      // device says 20 / 26" report: both devices held identical rows, the
+      // second one was just showing a pre-download snapshot of them
+      // (docs/Issues.md §28). Invalidate on the download's own return value
+      // rather than piggybacking on pulledBikes, which is false in exactly
+      // the case that matters.
+      if (pulledRides) {
+        _ref?.invalidate(riderStatsProvider);
+        _ref?.invalidate(rideHistoryProvider);
+      }
 
-      // Fetch unsynced rides
-      final unsyncedRides = await db.query(
-        'rides',
-        where: 'synced = ?',
-        whereArgs: [0],
-      );
+      // Fetch unsynced rides. Goes through the DAO rather than querying
+      // `synced = 0` directly: getUnsynced() also filters `status =
+      // 'completed'`, and skipping it meant in-progress and abandoned rides
+      // were uploaded too. Six zero-distance `active` rows had already
+      // reached Firestore this way and been pulled down onto every other
+      // device — harmless to the totals (the stats query filters on
+      // completed) but pure garbage in the cloud, and a ride still being
+      // recorded would sync a half-written row.
+      final unsyncedRides = await RideDao().getUnsynced();
 
       // Fetch unsynced bikes
       final unsyncedBikes = await db.query(
@@ -194,9 +216,14 @@ class SyncManager {
       }
 
       _status = SyncStatus.success;
-    } catch (e) {
+    } catch (e, stack) {
       _status = SyncStatus.failure;
-      print('Sync error: $e');
+      // Was a bare print() with no stack and no tag, which is why the sync
+      // gap above took a database dump to diagnose rather than a glance at
+      // the console. Everything reachable from here is now per-item
+      // fault-isolated (see CloudRepository), so an exception arriving at
+      // this catch means the cycle itself broke, not one bad row.
+      debugPrint('[SyncManager] sync cycle failed: $e\n$stack');
     } finally {
       _isSyncing = false;
       _notifyListeners();

@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -9,10 +10,34 @@
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
 
+    <!-- Activity recognition: the auto-tracking trigger.
+
+         This is what lets ThrottleIQ notice a ride starting without polling
+         GPS. The platform classifier runs at OS-managed power (effectively
+         free); GPS is only started once it reports vehicle motion. Polling
+         location on a timer instead would cost 5-10% battery per hour and
+         make all-day tracking unshippable — see docs/AUTO_TRACKING_PLAN.md.
+
+         ACTIVITY_RECOGNITION is the API 29+ runtime permission; the
+         com.google.android.gms one covers API 28 and below. Both are needed
+         for the same capability across the range of devices this app targets. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- Crash alerts must be able to take over a locked screen.
+
+         Without this (Android 14+) a crash notification degrades to an
+         ordinary heads-up notification. It is still delivered, but a rider
+         whose phone is in a pocket may not see it — and the 60-second
+         countdown to contacting their emergency contacts runs either way.
+         The whole point of the escalation is that it is answerable without
+         opening the app. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <!-- Network -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -39,7 +64,8 @@
         android:label="ThrottleIQ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:allowBackup="false">
+        android:allowBackup="false"
+        tools:replace="android:label">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -71,6 +97,24 @@
              review. See docs/Issues.md §27. If a purpose-built service is ever
              written (see the auto-tracking entry in HANDOFF_Document.md), it
              gets declared here. -->
+
+        <!-- flutter_background_geolocation licence key.
+
+             REQUIRED FOR RELEASE BUILDS. Debug builds run unlicensed; a
+             release build without a valid key logs a licence error and the
+             plugin never starts, which presents as "auto-tracking works on my
+             phone but not for testers". Buy at https://shop.transistorsoft.com
+             and paste the key below — it is per Android application id
+             (com.bft.throttleiq), not per developer.
+
+             The plugin declares its own foreground service, boot receiver and
+             headless dispatcher in its library manifest; they are merged in
+             automatically and must NOT be re-declared here. (See Issues.md
+             §27 for what happens when this manifest declares a location
+             service the app doesn't implement.) -->
+        <meta-data
+            android:name="com.transistorsoft.locationmanager.license"
+            android:value="PASTE_LICENCE_KEY_BEFORE_RELEASE" />
 
         <!-- Firebase Messaging -->
         <service

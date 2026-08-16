@@ -28,7 +28,7 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 10);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 11);
 
   /// Runs the real migration ladder against an already-open database.
   ///
@@ -57,7 +57,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -66,6 +66,18 @@ class DatabaseHelper {
 
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
+  }
+
+  /// `ALTER TABLE ADD COLUMN` has no `IF NOT EXISTS`, unlike this ladder's
+  /// `CREATE TABLE` steps — so a column addition needs its own guard to keep
+  /// the "a re-run is survivable" invariant the rest of `_onUpgrade` relies on.
+  Future<void> _addColumnIfMissing(
+      Database db, String table, String column, String columnDef) async {
+    final info = await db.rawQuery('PRAGMA table_info($table)');
+    final exists = info.any((row) => row['name'] == column);
+    if (!exists) {
+      await db.execute('ALTER TABLE $table ADD COLUMN $columnDef');
+    }
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -142,7 +154,91 @@ class DatabaseHelper {
       await db.execute(_createOutboxSql);
       await db.execute(_createOutboxIndexSql);
     }
+    if (oldVersion < 11) {
+      // Auto-tracking. Existing rides were all started by the rider, so the
+      // defaults below are the truthful reading of a pre-v11 row rather than
+      // a placeholder: is_auto = 0, bike_confidence = 'high'.
+      await _addColumnIfMissing(db, 'rides', 'is_auto',
+          'is_auto INTEGER NOT NULL DEFAULT 0');
+      await _addColumnIfMissing(db, 'rides', 'bike_confidence',
+          "bike_confidence TEXT NOT NULL DEFAULT 'high'");
+      await db.execute(_createAutoDetectionsSql);
+      await db.execute(_createAutoFixesSql);
+      await db.execute(_createAutoFixesIndexSql);
+      await db.execute(_createAutoDetectionsIndexSql);
+    }
   }
+
+  /// One detected journey, from the moment the platform said "this device
+  /// started moving in a vehicle" to the moment it said it stopped.
+  ///
+  /// Written by the **background isolate**, which has no access to the app's
+  /// Riverpod container and therefore cannot go through `RideRecordingNotifier`
+  /// — see `AutoTrackingService`. It deliberately records nothing derived:
+  /// no distance, no average speed, no events. All of that is computed later
+  /// by `AutoRideReconciler` on the UI isolate, by replaying [auto_fixes]
+  /// through the same calculators the live path uses. Two code paths producing
+  /// ride statistics by different routes is exactly the bug this avoids.
+  ///
+  /// `status` is the reconciliation state machine:
+  ///   recording   — the isolate is still appending fixes
+  ///   pending     — movement ended; waiting for the app to open and rebuild it
+  ///   reconciled  — became `ride_id`; fixes can be pruned
+  ///   discarded   — too short/slow to be a ride, or the rider said it wasn't
+  ///
+  /// `trigger_source` records what woke us (activity recognition vs
+  /// significant location change vs a paired device). Kept because the whole
+  /// point of the first release is measuring which triggers produce real rides
+  /// and which produce bus journeys.
+  static const String _createAutoDetectionsSql = '''
+    CREATE TABLE IF NOT EXISTS auto_detections (
+      id TEXT PRIMARY KEY,
+      started_at TEXT NOT NULL,
+      ended_at TEXT,
+      trigger_source TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'recording',
+      ride_id TEXT,
+      discard_reason TEXT,
+      created_at TEXT NOT NULL
+    )
+  ''';
+
+  /// Raw fixes captured by the background isolate for an [auto_detections] row.
+  ///
+  /// Intentionally a separate table from `ride_points` rather than writing
+  /// straight into it: a detection is not yet a ride. Until the rider confirms
+  /// (or the reconciler's own thresholds accept it) these must not appear in
+  /// history, count toward a bike's odometer, or sync to Firestore. Promotion
+  /// happens in one place, transactionally.
+  ///
+  /// Columns mirror what `_onPosition` reads off a `Position`, so the replay
+  /// can reconstruct the identical calculator inputs.
+  static const String _createAutoFixesSql = '''
+    CREATE TABLE IF NOT EXISTS auto_fixes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      detection_id TEXT NOT NULL,
+      timestamp TEXT NOT NULL,
+      lat REAL NOT NULL,
+      lng REAL NOT NULL,
+      speed_ms REAL NOT NULL,
+      accuracy_m REAL,
+      altitude_m REAL,
+      heading_deg REAL,
+      FOREIGN KEY(detection_id) REFERENCES auto_detections(id) ON DELETE CASCADE
+    )
+  ''';
+
+  /// The replay's only query shape: every fix for one detection, in order.
+  static const String _createAutoFixesIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_auto_fixes_detection
+      ON auto_fixes(detection_id, timestamp)
+  ''';
+
+  /// The reconciler's only query shape: what still needs processing.
+  static const String _createAutoDetectionsIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_auto_detections_status
+      ON auto_detections(status, started_at)
+  ''';
 
   /// Durable queue of cloud writes the rider has already committed to, but
   /// which couldn't reach Firestore yet.
@@ -237,6 +333,8 @@ class DatabaseHelper {
         high_jerk_count INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'active',
         map_snapshot_path TEXT,
+        is_auto INTEGER NOT NULL DEFAULT 0,
+        bike_confidence TEXT NOT NULL DEFAULT 'high',
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )
@@ -315,5 +413,9 @@ class DatabaseHelper {
     await db.execute(_createDeletedBikesSql);
     await db.execute(_createOutboxSql);
     await db.execute(_createOutboxIndexSql);
+    await db.execute(_createAutoDetectionsSql);
+    await db.execute(_createAutoFixesSql);
+    await db.execute(_createAutoFixesIndexSql);
+    await db.execute(_createAutoDetectionsIndexSql);
   }
 }

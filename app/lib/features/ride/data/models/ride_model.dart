@@ -17,6 +17,12 @@ class RideModel {
         highJerkCount: m['high_jerk_count'] as int,
         status: _statusFromString(m['status'] as String),
         mapSnapshotPath: m['map_snapshot_path'] as String?,
+        // Null-tolerant rather than `as int`: rides written before schema v11
+        // have no value here, and a ride recorded by the rider is the correct
+        // reading of "this column didn't exist yet".
+        isAuto: (m['is_auto'] as int?) == 1,
+        bikeConfidence:
+            BikeAttributionConfidence.fromName(m['bike_confidence'] as String?),
       );
 
   static Map<String, dynamic> toMap(RideEntity e) => {
@@ -35,6 +41,8 @@ class RideModel {
         'high_jerk_count': e.highJerkCount,
         'status': e.status.name,
         'map_snapshot_path': e.mapSnapshotPath,
+        'is_auto': e.isAuto ? 1 : 0,
+        'bike_confidence': e.bikeConfidence.name,
         'synced': 0,
         'created_at': e.startTime.toIso8601String(),
       };

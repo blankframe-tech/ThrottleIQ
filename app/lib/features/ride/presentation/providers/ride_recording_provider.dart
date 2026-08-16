@@ -26,6 +26,7 @@ import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/database/daos/bike_dao.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/battery_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../core/utils/rider_stats.dart';
@@ -153,7 +154,16 @@ final rideRecordingProvider =
 
 class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     with WidgetsBindingObserver {
-  RideRecordingNotifier(this._ref) : super(const RideRecordingState());
+  RideRecordingNotifier(this._ref) : super(const RideRecordingState()) {
+    // One cancellation path, two entry points. The rider can answer a crash
+    // alert either from the in-app countdown or from the notification's
+    // "I'm OK" action, and both must land on the same dismissCrashAlert() —
+    // otherwise a crash dismissed from the lock screen would leave the
+    // countdown running underneath and still call their emergency contacts.
+    NotificationService.instance.onCrashDismissed = () {
+      if (state.crashDetected) unawaited(dismissCrashAlert());
+    };
+  }
 
   final Ref _ref;
   final _rideDao = RideDao();
@@ -310,6 +320,35 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// just re-share the existing link.
   bool get isLiveShareEnabled => _liveShareEnabled;
 
+  /// True when the rider explicitly started this ride (slide-to-start, the
+  /// home-screen widget, a group ride), false when auto-tracking started it
+  /// on their behalf.
+  ///
+  /// Three things branch on this, and all three are about the difference
+  /// between "the rider is looking at the live screen" and "the phone is in a
+  /// jacket pocket":
+  ///
+  /// 1. **Screen wakelock.** A manual ride holds the screen on because the
+  ///    rider is watching the speed readout. Holding it for a pocketed phone
+  ///    burns battery and cooks the handset against the rider's leg for no
+  ///    benefit. See [startRide].
+  /// 2. **GPS profile.** `bestForNavigation` + `distanceFilter: 3` exists to
+  ///    make the on-screen speed feel responsive (tuned against a real
+  ///    "speed feels laggy" report). Nobody is reading the screen on an auto
+  ///    ride, and the post-ride polyline is just as good at a lower rate —
+  ///    so the auto profile trades responsiveness for battery. See
+  ///    [_startLocationStream].
+  /// 3. **Crash escalation.** The in-app 60-second countdown is only
+  ///    dismissible from a screen the rider is looking at. An auto ride
+  ///    escalates through a full-screen notification instead. See
+  ///    [_onCrashDetected].
+  bool _userInitiated = true;
+
+  /// Whether the ride in progress was started by auto-tracking rather than by
+  /// the rider. Read by the UI to label the ride and to explain why crash
+  /// handling behaves differently.
+  bool get isAutoStarted => !_userInitiated;
+
   Future<bool> _requestPermissions() async {
     LocationPermission perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
@@ -366,9 +405,25 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     return null;
   }
 
-  Future<void> startRide() async {
+  /// Starts recording.
+  ///
+  /// [userInitiated] defaults to true, so every existing call site (all of
+  /// which are a rider tapping something) keeps its current behaviour
+  /// unchanged. Auto-tracking passes false — see [_userInitiated] for what
+  /// branches on it.
+  ///
+  /// [bikeId] overrides the active bike. Auto-tracking passes the bike it
+  /// inferred; when it can't infer one it passes null and this falls back to
+  /// the active bike, in which case the caller is responsible for marking the
+  /// ride's attribution confidence as low (see [BikeAttributionConfidence]).
+  Future<void> startRide({
+    bool userInitiated = true,
+    String? bikeId,
+    BikeAttributionConfidence bikeConfidence = BikeAttributionConfidence.high,
+  }) async {
     if (state.status != RecordingStatus.idle) return;
     state = state.copyWith(status: RecordingStatus.starting);
+    _userInitiated = userInitiated;
 
     final blocked = await _recordingBlockedReason();
     if (blocked != null) {
@@ -377,8 +432,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
 
     final uid = _ref.read(currentUserProvider)?.uid;
-    final bike = _ref.read(activeBikeProvider);
-    if (uid == null || bike == null) {
+    // An explicit bikeId wins over the active bike. Auto-tracking uses this
+    // when it could identify the bike some other way (a paired intercom, a
+    // single-bike garage); otherwise it passes null and accepts the active
+    // bike with low confidence, which the rider is later asked to confirm.
+    final resolvedBikeId = bikeId ?? _ref.read(activeBikeProvider)?.id;
+    if (uid == null || resolvedBikeId == null) {
       state = state.copyWith(
         status: RecordingStatus.idle,
         error: 'Please add a bike before recording a ride.',
@@ -389,8 +448,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     final ride = RideEntity(
       id: _uuid.v4(),
       userId: uid,
-      bikeId: bike.id,
+      bikeId: resolvedBikeId,
       startTime: DateTime.now(),
+      isAuto: !userInitiated,
+      bikeConfidence: bikeConfidence,
     );
 
     await _rideDao.insert(RideModel.toMap(ride));
@@ -441,7 +502,15 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     await _persistRecordingState(ride);
     WidgetsBinding.instance.addObserver(this);
-    await WakelockPlus.enable();
+    // Screen wakelock only for a ride the rider is actually watching. On an
+    // auto-started ride the phone is pocketed, so this would hold the display
+    // on against the rider's leg for the whole journey — battery cost and heat
+    // for nothing anyone can see. Note this is unrelated to geolocator's
+    // `enableWakeLock` in ForegroundNotificationConfig below, which is a CPU
+    // partial wakelock and is needed on every ride.
+    if (_userInitiated) {
+      await WakelockPlus.enable();
+    }
     await HapticService.rideStart();
     _startLocationStream();
     _startSensorStream();
@@ -491,23 +560,51 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   // defaults to false, but it's set explicitly here since a stale/low-
   // movement pause is exactly the kind of thing that would make speed
   // *also* look laggy, not just less precise.
+  //
+  // Two profiles, chosen by [_userInitiated]. Everything described above is
+  // the *manual* profile and is unchanged.
+  //
+  // The auto profile exists because the reason for the expensive settings is
+  // perceptual, not analytical: `bestForNavigation` and `distanceFilter: 3`
+  // buy a live speed readout that updates without a visible stall. On an
+  // auto-started ride there is no readout — the phone is in a pocket — and
+  // the only consumer of the fixes is the post-ride polyline and the
+  // aggregate stats, both of which are indistinguishable at 10 m spacing.
+  // Dropping to `high`/10 m/2 s is the single largest battery lever available
+  // to all-day tracking (see docs/AUTO_TRACKING_PLAN.md, Part 3); it is worth
+  // roughly half the in-ride draw and costs nothing anyone can perceive.
+  //
+  // Deliberately NOT changed for the auto profile: the foreground-service
+  // notification (the process must survive the same way) and, on iOS,
+  // `pauseLocationUpdatesAutomatically: false` — letting iOS auto-pause an
+  // unattended ride is how you silently lose the second half of it.
   void _startLocationStream() {
+    final accuracy = _userInitiated
+        ? LocationAccuracy.bestForNavigation
+        : LocationAccuracy.high;
+    final distanceFilter = _userInitiated ? 3 : 10;
+
     final settings = Platform.isIOS
         ? AppleSettings(
-            accuracy: LocationAccuracy.bestForNavigation,
-            distanceFilter: 3,
+            accuracy: accuracy,
+            distanceFilter: distanceFilter,
             activityType: ActivityType.automotiveNavigation,
             pauseLocationUpdatesAutomatically: false,
             allowBackgroundLocationUpdates: true,
           )
         : AndroidSettings(
-            accuracy: LocationAccuracy.bestForNavigation,
-            distanceFilter: 3,
+            accuracy: accuracy,
+            distanceFilter: distanceFilter,
             forceLocationManager: false,
-            intervalDuration: const Duration(milliseconds: 500),
-            foregroundNotificationConfig: const ForegroundNotificationConfig(
-              notificationText: 'ThrottleIQ is recording your ride in the background',
-              notificationTitle: 'Ride Recording Active',
+            intervalDuration:
+                Duration(milliseconds: _userInitiated ? 500 : 2000),
+            foregroundNotificationConfig: ForegroundNotificationConfig(
+              notificationText: _userInitiated
+                  ? 'ThrottleIQ is recording your ride in the background'
+                  : 'ThrottleIQ detected a ride and is recording it',
+              notificationTitle: _userInitiated
+                  ? 'Ride Recording Active'
+                  : 'Ride Detected',
               enableWakeLock: true,
             ),
           );
@@ -744,11 +841,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       }
     }
 
+    // `at:` is the fix's own GPS timestamp, not wall-clock. On the live path
+    // the two are within milliseconds of each other, so this changes nothing
+    // today — it exists so the identical call in the replay path
+    // (AutoRideReconciler) produces identical events. See EventDetector.detect.
     final alert = _detector.detect(
       jerk: jerk,
       accel: accel,
       speedMs: speedMs,
       elapsedSeconds: state.elapsed.inSeconds,
+      at: timestamp,
     );
 
     // Crash-alert confidence gate (Epic G follow-up): don't act on a crash
@@ -896,6 +998,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _activeStart = DateTime.now();
     _skipNextDistanceDelta = true;
 
+    // Resuming is by definition a rider action — they tapped resume, so they
+    // are looking at the screen. Even for a ride auto-tracking originally
+    // started, that means the responsive GPS profile and the screen wakelock
+    // are now the right choices. The ride row keeps its `isAuto` flag for
+    // attribution and labelling; only the live sensor behaviour changes here.
+    _userInitiated = true;
+
     if (coldStart) {
       await WakelockPlus.enable();
       _startLocationStream();
@@ -943,6 +1052,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _elapsedTimer?.cancel();
     _flushTimer?.cancel();
     _crashCountdownTimer?.cancel();
+    // A crash notification is `ongoing` and can't be swiped away, so ending
+    // the ride it belongs to has to take it down explicitly or it sits on the
+    // lock screen forever offering an "I'm OK" button that answers nothing.
+    await NotificationService.instance.cancelCrashAlert();
     WidgetsBinding.instance.removeObserver(this);
 
     // Same teardown as stopRide, and queued the same way so discarding a ride
@@ -1270,12 +1383,30 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     await HapticService.maxVibration();
     state = state.copyWith(crashDetected: true, crashCountdown: 60);
 
+    // Escalate outside the app as well as inside it.
+    //
+    // The in-app countdown below is only answerable from a screen the rider is
+    // looking at. That assumption held while every ride was started by hand,
+    // and breaks completely for auto-tracking: the phone is in a jacket
+    // pocket, the app is backgrounded, and the rider's only clue is a
+    // vibration they will read as an ordinary notification — sixty seconds
+    // before their emergency contacts are called about a crash that may never
+    // have happened.
+    //
+    // Fired for manual rides too, not just auto-started ones. A rider who
+    // pockets their phone mid-ride is in exactly the same position, and a
+    // crash alert nobody can answer is the failure mode worth over-covering.
+    unawaited(NotificationService.instance.showCrashAlert(secondsRemaining: 60));
+
     _crashCountdownTimer?.cancel();
     _crashCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (state.crashCountdown > 0) {
         state = state.copyWith(crashCountdown: state.crashCountdown - 1);
       } else {
         _crashCountdownTimer?.cancel();
+        // The countdown is spent; the alert is no longer answerable, so it
+        // must not sit on the lock screen implying it still is.
+        unawaited(NotificationService.instance.cancelCrashAlert());
         _handleCrashNotification();
       }
     });
@@ -1293,6 +1424,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// User confirmed they're OK (false positive)
   Future<void> dismissCrashAlert() async {
     _crashCountdownTimer?.cancel();
+    await NotificationService.instance.cancelCrashAlert();
     state = state.copyWith(crashDetected: false, crashCountdown: 60);
 
     // Log false positive to Firestore for tuning. Bounded and non-fatal: this

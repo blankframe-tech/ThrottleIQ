@@ -3,6 +3,9 @@ import 'package:equatable/equatable.dart';
 // Prefixed: the calculator function shares its name with the [jamSeconds]
 // getter below, which would otherwise resolve to itself recursively.
 import '../calculators/jam_time.dart' as jam_time;
+import 'bike_attribution.dart';
+
+export 'bike_attribution.dart' show BikeAttributionConfidence;
 
 enum RideStatus { active, paused, completed, crash }
 
@@ -27,6 +30,16 @@ class RideEntity extends Equatable {
   final RideStatus status;
   final String? mapSnapshotPath;
 
+  /// True when auto-tracking started this ride rather than the rider.
+  ///
+  /// Drives the "detected automatically" label in history, and is why
+  /// [bikeConfidence] can be anything other than
+  /// [BikeAttributionConfidence.high].
+  final bool isAuto;
+
+  /// How much to trust [bikeId] — see [BikeAttributionConfidence].
+  final BikeAttributionConfidence bikeConfidence;
+
   const RideEntity({
     required this.id,
     required this.userId,
@@ -43,6 +56,8 @@ class RideEntity extends Equatable {
     this.highJerkCount = 0,
     this.status = RideStatus.active,
     this.mapSnapshotPath,
+    this.isAuto = false,
+    this.bikeConfidence = BikeAttributionConfidence.high,
   });
 
   double get distanceKm => distanceM / 1000;
@@ -72,11 +87,14 @@ class RideEntity extends Equatable {
     RideStatus? status,
     DateTime? endTime,
     String? mapSnapshotPath,
+    bool? isAuto,
+    BikeAttributionConfidence? bikeConfidence,
+    String? bikeId,
   }) {
     return RideEntity(
       id: id,
       userId: userId,
-      bikeId: bikeId,
+      bikeId: bikeId ?? this.bikeId,
       startTime: startTime,
       endTime: endTime ?? this.endTime,
       distanceM: distanceM ?? this.distanceM,
@@ -89,9 +107,12 @@ class RideEntity extends Equatable {
       highJerkCount: highJerkCount ?? this.highJerkCount,
       status: status ?? this.status,
       mapSnapshotPath: mapSnapshotPath ?? this.mapSnapshotPath,
+      isAuto: isAuto ?? this.isAuto,
+      bikeConfidence: bikeConfidence ?? this.bikeConfidence,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, bikeId, startTime, status];
+  List<Object?> get props =>
+      [id, userId, bikeId, startTime, status, isAuto, bikeConfidence];
 }

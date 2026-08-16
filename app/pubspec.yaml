@@ -1,7 +1,7 @@
 name: throttleiq
 description: Motorcycle tracking, intelligence, and memory platform
 publish_to: 'none'
-version: 1.0.0-beta.3+3
+version: 1.0.0-beta.2+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -42,9 +42,9 @@ dependencies:
   dio: ^5.4.3
   connectivity_plus: ^6.0.3
 
-  # Deep links out to the OS (maps hand-off for "Directions" on a place, and
-  # tel: on a place's phone number). ThrottleIQ deliberately does NOT route
-  # to a destination itself — see place_directions.dart.
+  # tel: and geo: links (e.g. Directions and Call on a place's detail
+  # screen). ThrottleIQ deliberately does NOT route to a destination itself —
+  # see place_directions.dart.
   url_launcher: ^6.2.5
 
   # Image
@@ -55,9 +55,31 @@ dependencies:
   # Haptics / Feedback
   vibration: ^2.0.0
   flutter_local_notifications: ^17.2.0
+  # Required by flutter_local_notifications' zonedSchedule, which is what makes
+  # the day-end summary fire at the same wall-clock hour every day instead of
+  # drifting the way a fixed 24-hour interval would. flutter_timezone supplies
+  # the device's zone name to seed it.
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
 
-  # Background tracking
+  # Background tracking.
+  #
+  # wakelock_plus keeps the SCREEN awake during a manually-started ride — it is
+  # not, and never was, background tracking. Background GPS *during* a ride
+  # comes from geolocator's foreground service (see ride_recording_provider).
+  #
+  # flutter_background_geolocation is what detects a ride starting when the app
+  # isn't open: platform activity recognition, iOS significant-location-change,
+  # an Android foreground service that survives OEM battery killers, and a
+  # headless Dart isolate — the four things that have to cooperate for all-day
+  # detection, as one tested unit.
+  #
+  # LICENCE: Android *release* builds require a key in AndroidManifest.xml
+  # (com.transistorsoft.locationmanager.license). Debug builds run unlicensed.
+  # Without a key the plugin refuses to start in release — a hard gate before
+  # shipping. See https://shop.transistorsoft.com
   wakelock_plus: ^1.2.8
+  flutter_background_geolocation: ^4.16.0
 
   # Sharing
   share_plus: ^10.0.0

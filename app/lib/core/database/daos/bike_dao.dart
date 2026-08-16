@@ -102,6 +102,43 @@ class BikeDao {
     });
   }
 
+  /// Moves one ride's contribution from one bike to another.
+  ///
+  /// Needed because auto-detected rides are attributed by guess (see
+  /// `BikeAttributionConfidence`) and the rider can correct that afterwards.
+  /// A correction that only rewrote `rides.bike_id` would leave the distance
+  /// and ride count on the wrong bike forever — and since maintenance
+  /// intervals are distance-based, that means both bikes' service schedules
+  /// stay wrong even though history now looks right.
+  ///
+  /// One transaction, and `total_distance_m` is floored at zero: a bike whose
+  /// stats were recomputed or edited at some point could otherwise be driven
+  /// negative by subtracting a ride it never fully accumulated.
+  Future<void> moveRideStats({
+    required String fromBikeId,
+    required String toBikeId,
+    required double distanceM,
+  }) async {
+    if (fromBikeId == toBikeId) return;
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      await txn.rawUpdate("""
+        UPDATE bikes SET
+          total_distance_m = MAX(0, total_distance_m - ?),
+          ride_count = MAX(0, ride_count - 1),
+          synced = 0
+        WHERE id = ?
+      """, [distanceM, fromBikeId]);
+      await txn.rawUpdate("""
+        UPDATE bikes SET
+          total_distance_m = total_distance_m + ?,
+          ride_count = ride_count + 1,
+          synced = 0
+        WHERE id = ?
+      """, [distanceM, toBikeId]);
+    });
+  }
+
   Future<void> incrementStats(String id, double distanceM) async {
     final db = await DatabaseHelper.instance.database;
     await db.rawUpdate('''

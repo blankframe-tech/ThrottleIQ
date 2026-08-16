@@ -9,6 +9,7 @@ import '../../../../core/theme/theme_style_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../ride/presentation/widgets/auto_tracking_tile.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../widgets/skin_dropdown.dart';
 
@@ -197,6 +198,11 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // ── Ride tracking ──────────────────────────────────────────────
+          const AutoTrackingTile(),
 
           const SizedBox(height: 24),
 

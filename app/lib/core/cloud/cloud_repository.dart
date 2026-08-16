@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -49,21 +50,55 @@ class CloudRepository {
     await batch.commit();
   }
 
-  /// Upload unsynced rides to Firestore and mark them as synced
+  /// Upload unsynced rides to Firestore and mark them as synced.
+  ///
+  /// Fast path is still one atomic batch — it's a single round trip for the
+  /// common case of a handful of rides. The retry loop is what matters: a
+  /// batch is all-or-nothing, so before this existed a single ride Firestore
+  /// refused took the whole batch down, `updateSyncedStatus` never ran for
+  /// *any* of them, and the outer catch in SyncManager swallowed the reason.
+  /// The same doomed set — plus every ride recorded afterwards — was then
+  /// retried every five minutes forever, so one bad row could strand a
+  /// device's entire backlog with nothing in the UI to say so. Falling back
+  /// to per-ride writes bounds the damage to the offending ride and, just as
+  /// importantly, names it in the log; §11's postmortem is the precedent for
+  /// how invisible this class of failure is without that.
   Future<void> uploadRides(String uid, List<Map<String, dynamic>> rides) async {
-    final batch = _firestore.batch();
-    for (final ride in rides) {
-      final docRef = _firestore.collection('users').doc(uid).collection('rides').doc(ride['id']);
-      batch.set(docRef, {
-        ...ride,
-        'syncedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    await batch.commit();
+    if (rides.isEmpty) return;
 
-    // Mark all rides as synced in local DB
+    final collection = _firestore.collection('users').doc(uid).collection('rides');
+    Map<String, dynamic> payload(Map<String, dynamic> ride) => {
+          ...ride,
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
+
+    try {
+      final batch = _firestore.batch();
+      for (final ride in rides) {
+        batch.set(collection.doc(ride['id']), payload(ride));
+      }
+      await batch.commit();
+      for (final ride in rides) {
+        await _rideDao.updateSyncedStatus(ride['id'], true);
+      }
+      return;
+    } catch (e) {
+      debugPrint(
+          '[CloudRepository] batched ride upload failed (${rides.length} rides), '
+          'retrying individually: $e');
+    }
+
+    // One ride at a time, so a row Firestore won't take can't hold the rest
+    // hostage. A ride that fails here stays synced = 0 and is retried next
+    // cycle exactly as before — the difference is that its siblings get
+    // through and the rider stops silently losing backups.
     for (final ride in rides) {
-      await _rideDao.updateSyncedStatus(ride['id'], true);
+      try {
+        await collection.doc(ride['id']).set(payload(ride));
+        await _rideDao.updateSyncedStatus(ride['id'], true);
+      } catch (e) {
+        debugPrint('[CloudRepository] ride upload rejected for ${ride['id']}: $e');
+      }
     }
   }
 
@@ -150,10 +185,18 @@ class CloudRepository {
       final wasActive = data['is_active'] == 1;
       data['is_active'] =
           (wasActive && !hasLocalActive && !pulledAnyActive) ? 1 : 0;
-      if (data['is_active'] == 1) pulledAnyActive = true;
       data['synced'] = 1;
-      await db.insert('bikes', data, conflictAlgorithm: ConflictAlgorithm.replace);
-      pulledAny = true;
+      try {
+        await db.insert('bikes', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        pulledAny = true;
+      } catch (e) {
+        // Same per-doc isolation as downloadRides, and it matters more here:
+        // this runs first in the sync cycle, so an unguarded throw took the
+        // ride and maintenance downloads down with it.
+        debugPrint('[CloudRepository] bike download skipped for ${doc.id}: $e');
+        continue;
+      }
+      if (data['is_active'] == 1) pulledAnyActive = true;
     }
     return pulledAny;
   }
@@ -173,8 +216,12 @@ class CloudRepository {
       if (localIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
-      await db.insert('maintenance_logs', data, conflictAlgorithm: ConflictAlgorithm.replace);
-      pulledAny = true;
+      try {
+        await db.insert('maintenance_logs', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        pulledAny = true;
+      } catch (e) {
+        debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
+      }
     }
     return pulledAny;
   }
@@ -198,8 +245,19 @@ class CloudRepository {
       if (localIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
-      await db.insert('rides', data, conflictAlgorithm: ConflictAlgorithm.replace);
-      pulledAny = true;
+      try {
+        await db.insert('rides', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        pulledAny = true;
+      } catch (e) {
+        // Per-doc, deliberately. `rides.bike_id` is a FOREIGN KEY and
+        // database_helper turns `PRAGMA foreign_keys` ON, so a ride whose
+        // bike never made it down (deleted locally, so skipped by
+        // downloadBikes' tombstone check) throws here. Unguarded, that one
+        // row aborted the whole loop and every remaining doc was silently
+        // skipped — and since Firestore returns docs in id order, the same
+        // arbitrary subset landed every cycle and the count never moved.
+        debugPrint('[CloudRepository] ride download skipped for ${doc.id}: $e');
+      }
     }
     return pulledAny;
   }

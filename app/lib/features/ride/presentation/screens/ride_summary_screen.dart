@@ -14,6 +14,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/ride_entity.dart';
+import '../widgets/bike_confirmation_card.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 
@@ -98,6 +99,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Only renders for an auto-detected ride whose bike the
+                // app guessed and the rider hasn't confirmed — see
+                // BikeConfirmationCard. No-op on every other ride.
+                BikeConfirmationCard(ride: ride),
+
                 // ── Black "nice ride" header ─────────────────────────────
                 InkPanel(
                   child: Column(
