@@ -135,6 +135,21 @@ headless environment (same standing limitation as `Issues.md` §15); the new
 screen's content is verified by code review and widget composition rather
 than an on-screen tap.
 
+**`feature/profile-tab` merged to `main`, and the widget App Group is real
+on a device for the first time — 2026-08-17 (same day, fourth session).**
+Merged (fast-forward) and pushed. Then, launching on Abraar's iPhone (cabled)
+surfaced the gap `Issues.md` §29 had flagged but not yet hit: `Runner.xcodeproj`
+had no `DEVELOPMENT_TEAM` anywhere, so `flutter build ios --release` refused
+outright, and forcing it with `-allowProvisioningUpdates` failed again
+against a team ID guessed from a certificate string rather than read from
+Xcode's own account list. Fixed by setting `DEVELOPMENT_TEAM = NJ4675FFUX`
+(the real team, "Abrar Masud Nafiz (Personal Team)") on all three targets —
+see `Issues.md` §30 for the part that would have shipped silently broken:
+cached provisioning profiles from before the App Group existed had an
+**empty** `application-groups` entitlement, which is not a build error, just
+a widget that shows placeholders forever. Confirmed installed and running
+(non-zero PID) on the physical device via `xcrun devicectl`.
+
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
 unauthenticated clients (§3), the planned live-session TTL policy could

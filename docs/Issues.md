@@ -1875,3 +1875,50 @@ that only fails on a second execution, or anything in `android/` at all.
 "Analyze is clean" and "it builds" are different claims — when a change
 touches native config, plugin versions, or a migration ladder, a real
 `flutter build`/`flutter test` pass is the only thing that actually checks it.
+
+## 30. `Runner.xcodeproj` had no `DEVELOPMENT_TEAM` anywhere — device release builds failed outright, and the widget App Group silently had no members (2026-08-17)
+
+**Status: Fixed.** Surfaced trying to build a release for a physical device
+(Abraar's iPhone, cabled) for the first time since §29 added the
+`ThrottleIQWidget` target and its App Group entitlement. `flutter build ios
+--release` failed with `Signing for "Runner" requires a development team`.
+Simulator builds never need one, which is exactly why this had gone
+unnoticed through every earlier `flutter build ios --simulator` check this
+session.
+
+Forcing it with `xcodebuild ... -allowProvisioningUpdates` (the CLI
+equivalent of Xcode's automatic-signing "just fix it" button) failed
+differently: `No Account for Team "29BPVM86G5"`. That team ID was read off
+the local codesigning identity's display name
+(`Apple Development: abraar.rar@icloud.com (29BPVM86G5)`) and looked like a
+team ID, but Xcode had no account for it — the real team, found in Xcode's
+own `IDEProvisioningTeamByIdentifier` preference, is `NJ4675FFUX` ("Abrar
+Masud Nafiz (Personal Team)").
+
+**The part that would have shipped silently broken:** cached provisioning
+profiles for both `com.bft.throttleiq` and `com.bft.throttleiq.ThrottleIQWidget`
+already existed on disk (`~/Library/Developer/Xcode/UserData/Provisioning
+Profiles/`), generated before the App Group entitlement existed — their
+`com.apple.security.application-groups` entitlement was an **empty array**.
+Nothing about a build using those stale profiles would have failed or
+warned; the widgets would have installed, appeared in the picker, and shown
+their placeholder text forever, exactly the failure mode §29's iOS README
+warns about, just with no error to point at it.
+
+**Fixed:** set `DEVELOPMENT_TEAM = NJ4675FFUX` on all three targets (Runner,
+ThrottleIQWidget, RunnerTests), all three configurations, via the same
+`xcodeproj` Ruby-gem scripting used in §29. With the team set,
+`-allowProvisioningUpdates` regenerated both App IDs' provisioning profiles
+for real — confirmed the new `ThrottleIQWidget` profile carries
+`com.apple.security.application-groups: [group.com.bft.throttleiq]`, where
+the stale one had none.
+
+**Verified:** `xcodebuild -workspace Runner.xcworkspace -scheme Runner
+-configuration Release -destination 'generic/platform=iOS'
+-allowProvisioningUpdates build` succeeds; the resulting `Runner.app`
+installed via `xcrun devicectl device install app` and launched via
+`xcrun devicectl device process launch` on Abraar's iPhone, confirmed
+running (non-zero PID in `devicectl device info processes`). This is the
+first time the widget App Group has been exercised on real signing rather
+than the simulator's no-team `<dict/>` entitlements — see §29's caveat about
+`codesign -d --entitlements` showing empty on a team-less build.
