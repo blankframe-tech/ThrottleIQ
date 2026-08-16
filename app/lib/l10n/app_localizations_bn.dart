@@ -259,4 +259,37 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get rideExportShareSubject => 'ThrottleIQ রাইড এক্সপোর্ট';
+
+  @override
+  String get autoTrackingTileTitle => 'স্বয়ংক্রিয়ভাবে রাইড শনাক্ত করুন';
+
+  @override
+  String get autoTrackingTileSubtitle =>
+      'আপনি স্টার্ট না চাপলেও রাইড লগ করে রাখে। রাইড না করলে দিনে প্রায় 3–5% ব্যাটারি খরচ হয়।';
+
+  @override
+  String get autoTrackingLocationServicesOffMessage =>
+      'রাইড শনাক্ত করতে ThrottleIQ-কে লোকেশন সার্ভিস চালু করুন।';
+
+  @override
+  String get autoTrackingPermissionDeniedMessage =>
+      'রাইড শনাক্ত করতে লোকেশন অনুমতি প্রয়োজন।';
+
+  @override
+  String get autoTrackingAlwaysPermissionRequiredMessage =>
+      'অ্যাপ বন্ধ থাকা অবস্থায় রাইড শনাক্ত করতে ThrottleIQ-এর \"সবসময়\" লোকেশন অ্যাক্সেস প্রয়োজন। এটি আপনি সেটিংস থেকে পরিবর্তন করতে পারবেন।';
+
+  @override
+  String get autoTrackingStartFailedMessage =>
+      'এই ডিভাইসে ব্যাকগ্রাউন্ড ট্র্যাকিং চালু করা যায়নি।';
+
+  @override
+  String get bikeConfirmationTitle => 'এটি কোন বাইকে হয়েছে?';
+
+  @override
+  String get bikeConfirmationBody =>
+      'আমরা এই রাইডটি স্বয়ংক্রিয়ভাবে শনাক্ত করে আপনার সক্রিয় বাইকে যুক্ত করেছি। সার্ভিস রিমাইন্ডার সঠিক রাখতে নিশ্চিত করুন।';
+
+  @override
+  String get bikeConfirmationUpdatedMessage => 'রাইড আপডেট হয়েছে।';
 }

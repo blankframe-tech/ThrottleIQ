@@ -565,6 +565,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ThrottleIQ ride export'**
   String get rideExportShareSubject;
+
+  /// Title of the settings switch that turns on background ride detection.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect rides automatically'**
+  String get autoTrackingTileTitle;
+
+  /// Subtitle under the auto-tracking switch, naming the battery cost so the ask reads as honest rather than evasive.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs a ride without you tapping start. Uses about 3–5% battery a day when you are not riding.'**
+  String get autoTrackingTileSubtitle;
+
+  /// Snackbar shown when the rider enables auto-tracking but the device's location services are off.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services to let ThrottleIQ detect rides.'**
+  String get autoTrackingLocationServicesOffMessage;
+
+  /// Snackbar shown when the rider denies the location permission auto-tracking needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required to detect rides.'**
+  String get autoTrackingPermissionDeniedMessage;
+
+  /// Snackbar shown when the rider grants only "while in use" location access instead of "Always".
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ needs \"Always\" location access to detect rides while the app is closed. You can change this in Settings.'**
+  String get autoTrackingAlwaysPermissionRequiredMessage;
+
+  /// Snackbar shown when the background tracking plugin fails to start despite permissions being granted.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start background tracking on this device.'**
+  String get autoTrackingStartFailedMessage;
+
+  /// Heading on the card asking the rider to confirm which bike an auto-detected ride was on.
+  ///
+  /// In en, this message translates to:
+  /// **'Which bike was this?'**
+  String get bikeConfirmationTitle;
+
+  /// Explanatory body text under the bike-confirmation card heading.
+  ///
+  /// In en, this message translates to:
+  /// **'We detected this ride automatically and logged it to your active bike. Confirm so your service reminders stay accurate.'**
+  String get bikeConfirmationBody;
+
+  /// Snackbar shown after the rider confirms or corrects which bike an auto-detected ride was on.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride updated.'**
+  String get bikeConfirmationUpdatedMessage;
 }
 
 class _AppLocalizationsDelegate

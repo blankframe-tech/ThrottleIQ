@@ -20,19 +20,32 @@ import '../../domain/entities/ride_entity.dart';
 final autoTrackingEnabledProvider =
     AsyncNotifierProvider<AutoTrackingNotifier, bool>(AutoTrackingNotifier.new);
 
+/// Why [AutoTrackingNotifier.enable] didn't turn tracking on.
+///
+/// A typed reason, not a raw string, so the caller (which has a
+/// [BuildContext]) picks the localized copy — this provider has no context to
+/// read [AppLocalizations] from, and English literals here would be exactly
+/// the Bangla-parity gap `arb_parity_test.dart` can't see.
+enum AutoTrackingEnableFailure {
+  locationServicesOff,
+  permissionDenied,
+  alwaysPermissionRequired,
+  startFailed,
+}
+
 class AutoTrackingNotifier extends AsyncNotifier<bool> {
   @override
   Future<bool> build() => AutoTrackingService.isEnabled();
 
   /// Turns auto-tracking on, collecting the permissions it needs first.
   ///
-  /// Returns a human-readable reason on failure, or null on success. The
-  /// permissions are requested in a deliberate order — background location
-  /// first, because it is the one that can't be worked around, and there is no
-  /// point asking about notifications for a feature that can't run.
-  Future<String?> enable() async {
+  /// Returns the failure reason, or null on success. The permissions are
+  /// requested in a deliberate order — background location first, because it
+  /// is the one that can't be worked around, and there is no point asking
+  /// about notifications for a feature that can't run.
+  Future<AutoTrackingEnableFailure?> enable() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      return 'Turn on location services to let ThrottleIQ detect rides.';
+      return AutoTrackingEnableFailure.locationServicesOff;
     }
 
     var permission = await Geolocator.checkPermission();
@@ -41,7 +54,7 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      return 'Location permission is required to detect rides.';
+      return AutoTrackingEnableFailure.permissionDenied;
     }
 
     // "While in use" is not enough: the whole feature is about noticing a ride
@@ -53,8 +66,7 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     if (permission == LocationPermission.whileInUse) {
       final upgraded = await Geolocator.requestPermission();
       if (upgraded != LocationPermission.always) {
-        return 'ThrottleIQ needs "Always" location access to detect rides '
-            'while the app is closed. You can change this in Settings.';
+        return AutoTrackingEnableFailure.alwaysPermissionRequired;
       }
     }
 
@@ -66,7 +78,7 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     final started = await AutoTrackingService.instance.start();
     if (!started) {
       await AutoTrackingService.setEnabled(false);
-      return 'Could not start background tracking on this device.';
+      return AutoTrackingEnableFailure.startFailed;
     }
 
     await NotificationService.instance.scheduleDailySummary();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../providers/auto_tracking_provider.dart';
@@ -30,6 +31,7 @@ class BikeConfirmationCard extends ConsumerWidget {
     final bikes = ref.watch(garageProvider).valueOrNull ?? const [];
     if (bikes.length <= 1) return const SizedBox.shrink();
 
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12),
       padding: const EdgeInsets.all(16),
@@ -45,18 +47,17 @@ class BikeConfirmationCard extends ConsumerWidget {
             children: [
               Icon(Icons.help_outline, size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Which bike was this?',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  l10n.bikeConfirmationTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'We detected this ride automatically and logged it to your active '
-            'bike. Confirm so your service reminders stay accurate.',
+            l10n.bikeConfirmationBody,
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12),
@@ -85,7 +86,7 @@ class BikeConfirmationCard extends ConsumerWidget {
     await ref.read(rideAttributionProvider).confirm(ride: ride, bikeId: bikeId);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ride updated.')),
+      SnackBar(content: Text(AppLocalizations.of(context).bikeConfirmationUpdatedMessage)),
     );
   }
 }

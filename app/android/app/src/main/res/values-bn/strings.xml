@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Bangla resource strings for the home-screen App Widgets. These resolve by
+    the DEVICE's system locale, not the in-app language toggle (widgets render
+    through the Android launcher, outside the Flutter engine) — but the app
+    treats Bangla as a first-class language throughout, so the widget picker
+    and widget faces should read in Bangla on a Bangla-locale device too.
+    Keep every key in sync with values/strings.xml.
+-->
+<resources>
+    <!-- Widget names / descriptions shown in the launcher's widget picker -->
+    <string name="widget_start_ride_label">ThrottleIQ · রাইড শুরু করুন</string>
+    <string name="widget_start_ride_description">এক ট্যাপে ThrottleIQ খুলে রাইড রেকর্ড শুরু করুন।</string>
+    <string name="widget_ride_stats_label">ThrottleIQ · রাইড পরিসংখ্যান</string>
+    <string name="widget_ride_stats_description">এই সপ্তাহ ও সর্বমোট চালানো দূরত্ব।</string>
+    <string name="widget_maintenance_label">ThrottleIQ · রক্ষণাবেক্ষণ</string>
+    <string name="widget_maintenance_description">আপনার বাইকের পরবর্তী সার্ভিস।</string>
+    <string name="widget_auto_tracking_label">ThrottleIQ · অটো-ট্র্যাকিং</string>
+    <string name="widget_auto_tracking_description">এক ট্যাপে ThrottleIQ-এর স্বয়ংক্রিয় রাইড শনাক্তকরণ সেটিং খুলুন।</string>
+
+    <!-- Start ride widget -->
+    <string name="widget_start_ride_title">THROTTLEIQ</string>
+    <string name="widget_start_ride_cta">রাইড শুরু</string>
+
+    <!-- Start auto-tracking widget -->
+    <string name="widget_auto_tracking_cta">অটো-ট্র্যাক</string>
+
+    <!-- Ride stats widget -->
+    <string name="widget_stats_title">রাইড পরিসংখ্যান</string>
+    <string name="widget_stats_this_week">এই সপ্তাহ</string>
+    <string name="widget_stats_all_time">সর্বমোট</string>
+
+    <!-- Maintenance widget -->
+    <string name="widget_maintenance_title">পরবর্তী সার্ভিস</string>
+    <string name="widget_maintenance_overdue_flag">বকেয়া</string>
+    <string name="widget_maintenance_due_flag">প্রাপ্য</string>
+
+    <!--
+        Shown before the app has ever published data (widget added but app never
+        opened, or signed out).
+    -->
+    <string name="widget_placeholder_value">—</string>
+    <string name="widget_placeholder_no_data">এখনও কোনো তথ্য নেই</string>
+    <string name="widget_placeholder_no_service">এখনও সার্ভিসের তথ্য নেই</string>
+
+    <!-- Content descriptions -->
+    <string name="widget_start_ride_content_description">ThrottleIQ-এ রাইড শুরু করুন</string>
+    <string name="widget_auto_tracking_content_description">ThrottleIQ-এর স্বয়ংক্রিয় রাইড শনাক্তকরণ সেটিং খুলুন</string>
+</resources>

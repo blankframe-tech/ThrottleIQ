@@ -77,6 +77,47 @@ the iOS simulator gave §28's fix its first runtime confirmation (stat strip
 reads 42 rides / 119 km, matching the on-device sqlite dump). Test suite
 grew 755 → **797**.
 
+**Bangla parity, a fourth home-screen widget, iOS widget wiring, and
+directions-starts-a-ride — 2026-08-17 (same day, later session).** Closed
+three of `AUTO_TRACKING_PLAN.md`'s blocking items and did one thing the plan
+didn't ask for:
+- `AutoTrackingTile` and `BikeConfirmationCard` now read from
+  `AppLocalizations` instead of English literals; `AutoTrackingNotifier.enable()`
+  returns a typed `AutoTrackingEnableFailure` enum rather than an English
+  string, since the provider layer has no `BuildContext` to localize from.
+- Added a **Start Auto-Tracking** home-screen widget (Android + iOS) —
+  opens Settings rather than flipping the switch itself, for the same reason
+  Start Ride only navigates: the tap has no foreground window for a
+  permission prompt or a failure to surface in.
+- **The iOS `ThrottleIQWidget` extension target is now registered in
+  `Runner.xcodeproj`.** This used to be a manual "add through Xcode's New
+  Target flow" step (hand-editing `project.pbxproj` was judged too risky to
+  script) — it was scripted anyway, with the `xcodeproj` Ruby gem building
+  the identical target/build-phase/entitlements structure Xcode's GUI would
+  have produced. Hit and fixed two real issues along the way: appending the
+  "Embed Foundation Extensions" phase after Flutter's "Thin Binary" script
+  phase produced a build-graph cycle (fixed by reordering it before that
+  phase), and a file reference created with a bare filename resolved to the
+  wrong path because its parent group carries no `path` of its own (fixed by
+  matching the sibling `.xcconfig` references' full relative path). Verified
+  with `flutter build ios --simulator` and `pluginkit -m -p
+  com.apple.widgetkit-extension` listing the extension on the built app.
+  **Not yet functional**: with no Apple Developer team assigned in this
+  environment, iOS disallows custom entitlements even on the simulator
+  (confirmed via `codesign -d --entitlements`), so the App Group is
+  structurally wired but inert until someone opens Xcode and picks a team for
+  both targets — see `ios/ThrottleIQWidget/README.md`.
+- Tapping **Directions** on a place detail screen now starts a ride before
+  handing off to the external maps app (Google/Apple Maps), so navigating
+  externally still gets a ride logged. Not requested by the plan; requested
+  directly and implemented as a deliberate exception to "don't act without
+  confirmation" — starting the recording provider is silent-on-failure by
+  design (no bike, no permission, already recording), so a rider who only
+  wanted directions never sees an error from it.
+
+Verified: `flutter analyze` 0 errors, `flutter test` 804/804, clean
+`flutter build` on both platforms.
+
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
 unauthenticated clients (§3), the planned live-session TTL policy could

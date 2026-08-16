@@ -355,21 +355,58 @@ SDK. Treat this as "written and self-reviewed", not "working".
 
 ## Blocking before this can ship
 
-1. **`flutter pub get && flutter analyze && flutter test`.** None of it has run.
+1. ~~**`flutter pub get && flutter analyze && flutter test`.** None of it has run.~~
+   **DONE 2026-08-17.** Run for the first time on a real toolchain — the tree
+   didn't actually compile; see `Issues.md` §29 for the four breaks that
+   surfaced (a dropped pub dependency, a required plugin parameter, a
+   non-idempotent migration, two Android/Gradle conflicts). After fixing:
+   `flutter test` 804/804, `flutter build` clean on iOS and Android.
 2. **Licence key.** `AndroidManifest.xml` has
    `PASTE_LICENCE_KEY_BEFORE_RELEASE`. Release builds will not start the
-   plugin without a real key from transistorsoft.
+   plugin without a real key from transistorsoft. Still open.
 3. **On-device crash-alert test.** Force a crash signal with the phone locked
    and confirm the full-screen notification appears and "I'm OK" cancels the
    countdown. This is the one path where a bug contacts someone's family.
-4. **Migration test.** `upgradeSchemaForTesting(db, 10, 11)` — the ladder is
-   the failure mode that bricks the app for riders who already have rides.
-5. **Bangla strings.** `AutoTrackingTile` and `BikeConfirmationCard` use
-   English literals. `arb_parity_test.dart` compares the two ARB files against
-   each other and cannot see a hardcoded string, so this will pass CI and still
-   be wrong.
+   Still open — needs a physical device.
+4. ~~**Migration test.** `upgradeSchemaForTesting(db, 10, 11)` — the ladder is
+   the failure mode that bricks the app for riders who already have rides.~~
+   **DONE 2026-08-17.** This is exactly the test that caught the non-idempotent
+   `is_auto`/`bike_confidence` columns in §29 — it was already written, it just
+   had never been run before.
+5. ~~**Bangla strings.** `AutoTrackingTile` and `BikeConfirmationCard` use
+   English literals.~~ **DONE 2026-08-17.** Both widgets, plus
+   `AutoTrackingNotifier`'s four failure messages, now read from
+   `AppLocalizations`; `enable()` returns a typed
+   `AutoTrackingEnableFailure` enum instead of an English string so the
+   provider layer never has to know a locale. `arb_parity_test.dart` passes,
+   including its Western-digits check (the first Bangla draft used Bengali
+   numerals in the battery figure — the test catches exactly that).
 6. **Play Store.** Background Location Access declaration and Data Safety form
-   both change. `ACTIVITY_RECOGNITION` is a new sensitive permission.
+   both change. `ACTIVITY_RECOGNITION` is a new sensitive permission. Still
+   open.
 7. **Battery measurement.** The 3–5%/day figure in the settings copy is from
    published telematics benchmarks, not from this app. Measure it before
-   leaving that number in front of riders.
+   leaving that number in front of riders. Still open.
+8. **Home-screen widgets, 2026-08-17.** Expanded from 3 to 4 (added Start
+   Auto-Tracking) and the iOS `ThrottleIQWidget` extension target — previously
+   just loose Swift files with a README describing a manual Xcode "New
+   Target" flow — is now actually registered in `Runner.xcodeproj`, built
+   programmatically with the `xcodeproj` Ruby gem rather than by hand (see
+   `ios/ThrottleIQWidget/README.md`). Verified via `flutter build ios
+   --simulator` and `pluginkit -m -p com.apple.widgetkit-extension` listing
+   `com.bft.throttleiq.ThrottleIQWidget` on the built app. **Still needs an
+   Apple Developer account**: with no signing team in this environment, iOS
+   disallows custom entitlements even on the simulator, so the App Group is
+   structurally wired but not yet functional — the widgets will appear in the
+   picker but keep showing placeholders until a team is assigned in Xcode
+   (Signing & Capabilities, both targets) and the App Group registers for
+   real. See the README's "What's NOT done" section.
+9. **Directions now starts a ride, 2026-08-17.** Tapping "Directions" on a
+   place detail screen (`place_detail_screen.dart`) starts recording before
+   handing off to the external maps app, so a rider who navigates externally
+   still gets a ride logged. Silent on failure by design (no bike, no
+   permission, already recording) — the primary action is directions, not
+   the ride. Not yet confirmed on a device: starting the recording provider
+   requires location permission, and a permission *prompt* needs the app in
+   the foreground, which is why the ride-start call happens before
+   `launchUrl` rather than after.

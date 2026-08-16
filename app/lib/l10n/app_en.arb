@@ -407,5 +407,50 @@
   "rideExportShareSubject": "ThrottleIQ ride export",
   "@rideExportShareSubject": {
     "description": "Subject line of the share-sheet action used to send an exported ride file. ThrottleIQ is the product name and stays untranslated."
+  },
+
+  "autoTrackingTileTitle": "Detect rides automatically",
+  "@autoTrackingTileTitle": {
+    "description": "Title of the settings switch that turns on background ride detection."
+  },
+
+  "autoTrackingTileSubtitle": "Logs a ride without you tapping start. Uses about 3–5% battery a day when you are not riding.",
+  "@autoTrackingTileSubtitle": {
+    "description": "Subtitle under the auto-tracking switch, naming the battery cost so the ask reads as honest rather than evasive."
+  },
+
+  "autoTrackingLocationServicesOffMessage": "Turn on location services to let ThrottleIQ detect rides.",
+  "@autoTrackingLocationServicesOffMessage": {
+    "description": "Snackbar shown when the rider enables auto-tracking but the device's location services are off."
+  },
+
+  "autoTrackingPermissionDeniedMessage": "Location permission is required to detect rides.",
+  "@autoTrackingPermissionDeniedMessage": {
+    "description": "Snackbar shown when the rider denies the location permission auto-tracking needs."
+  },
+
+  "autoTrackingAlwaysPermissionRequiredMessage": "ThrottleIQ needs \"Always\" location access to detect rides while the app is closed. You can change this in Settings.",
+  "@autoTrackingAlwaysPermissionRequiredMessage": {
+    "description": "Snackbar shown when the rider grants only \"while in use\" location access instead of \"Always\"."
+  },
+
+  "autoTrackingStartFailedMessage": "Could not start background tracking on this device.",
+  "@autoTrackingStartFailedMessage": {
+    "description": "Snackbar shown when the background tracking plugin fails to start despite permissions being granted."
+  },
+
+  "bikeConfirmationTitle": "Which bike was this?",
+  "@bikeConfirmationTitle": {
+    "description": "Heading on the card asking the rider to confirm which bike an auto-detected ride was on."
+  },
+
+  "bikeConfirmationBody": "We detected this ride automatically and logged it to your active bike. Confirm so your service reminders stay accurate.",
+  "@bikeConfirmationBody": {
+    "description": "Explanatory body text under the bike-confirmation card heading."
+  },
+
+  "bikeConfirmationUpdatedMessage": "Ride updated.",
+  "@bikeConfirmationUpdatedMessage": {
+    "description": "Snackbar shown after the rider confirms or corrects which bike an auto-detected ride was on."
   }
 }

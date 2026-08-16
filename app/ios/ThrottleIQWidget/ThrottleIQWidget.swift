@@ -2,7 +2,8 @@
 //  ThrottleIQWidget.swift
 //  ThrottleIQWidget
 //
-//  Home-screen widgets for ThrottleIQ: Start Ride, Ride Stats, Maintenance.
+//  Home-screen widgets for ThrottleIQ: Start Ride, Start Auto-Tracking, Ride
+//  Stats, Maintenance.
 //
 //  Data contract
 //  -------------
@@ -16,8 +17,10 @@
 //
 //  Setup
 //  -----
-//  This target is NOT registered in Runner.xcodeproj. Follow README.md in this
-//  folder to create it in Xcode before any of this compiles.
+//  The ThrottleIQWidget target is registered in Runner.xcodeproj and builds
+//  as part of `flutter build ios` — see README.md in this folder for what
+//  that got you automatically versus what still needs your Apple Developer
+//  account (a signing team, and the App Group on the developer portal).
 //
 
 import SwiftUI
@@ -193,6 +196,69 @@ struct ThrottleIQStartRideWidget: Widget {
         }
         .configurationDisplayName("Start Ride")
         .description("One tap to open ThrottleIQ and start recording a ride.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+// MARK: - Start Auto-Tracking
+
+struct AutoTrackingEntry: TimelineEntry {
+    let date: Date
+}
+
+struct AutoTrackingProvider: TimelineProvider {
+    func placeholder(in context: Context) -> AutoTrackingEntry {
+        AutoTrackingEntry(date: Date())
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (AutoTrackingEntry) -> Void) {
+        completion(AutoTrackingEntry(date: Date()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<AutoTrackingEntry>) -> Void) {
+        // Stateless button, like Start Ride — one entry that never expires.
+        completion(Timeline(entries: [AutoTrackingEntry(date: Date())], policy: .never))
+    }
+}
+
+struct AutoTrackingWidgetView: View {
+    var entry: AutoTrackingEntry
+
+    var body: some View {
+        CarbonPanel {
+            VStack(alignment: .leading, spacing: 8) {
+                SectionLabel(text: "THROTTLEIQ")
+
+                Text("AUTO-TRACK")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .kerning(0.8)
+                    .foregroundColor(Carbon.onPrimary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Carbon.primary)
+                    .cornerRadius(Carbon.cornerRadius)
+            }
+            .padding(10)
+        }
+        .carbonContainerBackground()
+        // Opens Settings rather than flipping the switch itself — enabling
+        // auto-tracking can prompt for "Always" location and can fail, and
+        // neither has anywhere to surface from a bare widget tap. See
+        // HomeWidgetService.registerAutoTrackingHandler on the Dart side.
+        .widgetURL(URL(string: "throttleiq://autotracking"))
+    }
+}
+
+struct ThrottleIQAutoTrackingWidget: Widget {
+    /// `kind` must equal `HomeWidgetService.iosAutoTrackingWidget` in Dart.
+    let kind = "ThrottleIQAutoTrackingWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: AutoTrackingProvider()) { entry in
+            AutoTrackingWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Start Auto-Tracking")
+        .description("One tap to open ThrottleIQ's automatic ride detection setting.")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -424,6 +490,7 @@ struct ThrottleIQMaintenanceWidget: Widget {
 struct ThrottleIQWidgetBundle: WidgetBundle {
     var body: some Widget {
         ThrottleIQStartRideWidget()
+        ThrottleIQAutoTrackingWidget()
         ThrottleIQRideStatsWidget()
         ThrottleIQMaintenanceWidget()
     }

@@ -261,4 +261,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rideExportShareSubject => 'ThrottleIQ ride export';
+
+  @override
+  String get autoTrackingTileTitle => 'Detect rides automatically';
+
+  @override
+  String get autoTrackingTileSubtitle =>
+      'Logs a ride without you tapping start. Uses about 3–5% battery a day when you are not riding.';
+
+  @override
+  String get autoTrackingLocationServicesOffMessage =>
+      'Turn on location services to let ThrottleIQ detect rides.';
+
+  @override
+  String get autoTrackingPermissionDeniedMessage =>
+      'Location permission is required to detect rides.';
+
+  @override
+  String get autoTrackingAlwaysPermissionRequiredMessage =>
+      'ThrottleIQ needs \"Always\" location access to detect rides while the app is closed. You can change this in Settings.';
+
+  @override
+  String get autoTrackingStartFailedMessage =>
+      'Could not start background tracking on this device.';
+
+  @override
+  String get bikeConfirmationTitle => 'Which bike was this?';
+
+  @override
+  String get bikeConfirmationBody =>
+      'We detected this ride automatically and logged it to your active bike. Confirm so your service reminders stay accurate.';
+
+  @override
+  String get bikeConfirmationUpdatedMessage => 'Ride updated.';
 }

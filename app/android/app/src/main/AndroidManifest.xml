@@ -166,6 +166,18 @@
                 android:resource="@xml/maintenance_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".AutoTrackingWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_auto_tracking_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/auto_tracking_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

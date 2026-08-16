@@ -233,9 +233,11 @@ class HomeWidgetService {
   static const String androidStartRideWidget = 'StartRideWidgetProvider';
   static const String androidRideStatsWidget = 'RideStatsWidgetProvider';
   static const String androidMaintenanceWidget = 'MaintenanceWidgetProvider';
+  static const String androidAutoTrackingWidget = 'AutoTrackingWidgetProvider';
   static const String iosStartRideWidget = 'ThrottleIQStartRideWidget';
   static const String iosRideStatsWidget = 'ThrottleIQRideStatsWidget';
   static const String iosMaintenanceWidget = 'ThrottleIQMaintenanceWidget';
+  static const String iosAutoTrackingWidget = 'ThrottleIQAutoTrackingWidget';
 
   static const String _androidPackage = 'com.bft.throttleiq';
 
@@ -262,6 +264,9 @@ class HomeWidgetService {
   /// The URI the "Start ride" widget launches the app with.
   static final Uri startRideUri = Uri.parse('throttleiq://startride');
 
+  /// The URI the "Start Auto-Tracking" widget launches the app with.
+  static final Uri autoTrackingUri = Uri.parse('throttleiq://autotracking');
+
   /// Whether [uri] is the widget's start-ride request.
   ///
   /// Compares scheme + host rather than the whole string: Android and iOS
@@ -269,6 +274,10 @@ class HomeWidgetService {
   /// a raw `==` misses one of them.
   static bool isStartRideUri(Uri? uri) =>
       uri != null && uri.scheme == 'throttleiq' && uri.host == 'startride';
+
+  /// Whether [uri] is the widget's start-auto-tracking request.
+  static bool isAutoTrackingUri(Uri? uri) =>
+      uri != null && uri.scheme == 'throttleiq' && uri.host == 'autotracking';
 
   /// Fires [onStartRide] when the app is opened from the start-ride widget —
   /// both for a cold launch and for a tap while the app is already alive.
@@ -286,6 +295,23 @@ class HomeWidgetService {
       });
     } catch (e, s) {
       _log('registerStartRideHandler failed', e, s);
+    }
+  }
+
+  /// Fires [onStartAutoTracking] when the app is opened from the
+  /// Start-Auto-Tracking widget — same cold-launch-and-live-tap coverage as
+  /// [registerStartRideHandler], and the same no-op-on-failure contract.
+  Future<void> registerAutoTrackingHandler(
+      VoidCallback onStartAutoTracking) async {
+    try {
+      final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
+      if (isAutoTrackingUri(launched)) onStartAutoTracking();
+
+      HomeWidget.widgetClicked.listen((uri) {
+        if (isAutoTrackingUri(uri)) onStartAutoTracking();
+      });
+    } catch (e, s) {
+      _log('registerAutoTrackingHandler failed', e, s);
     }
   }
 
@@ -365,7 +391,7 @@ class HomeWidgetService {
     }
   }
 
-  /// Re-renders all three widgets from whatever is already stored.
+  /// Re-renders all four widgets from whatever is already stored.
   Future<void> refreshAllWidgets() async {
     await _update(
         androidName: androidStartRideWidget, iOSName: iosStartRideWidget);
@@ -373,6 +399,9 @@ class HomeWidgetService {
         androidName: androidRideStatsWidget, iOSName: iosRideStatsWidget);
     await _update(
         androidName: androidMaintenanceWidget, iOSName: iosMaintenanceWidget);
+    await _update(
+        androidName: androidAutoTrackingWidget,
+        iOSName: iosAutoTrackingWidget);
   }
 
   /// Reads the offline-first local database (the same tables the Stats hub and

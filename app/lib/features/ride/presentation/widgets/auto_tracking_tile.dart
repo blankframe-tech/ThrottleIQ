@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
 
 /// Settings control for automatic ride detection.
@@ -11,17 +12,12 @@ import '../providers/auto_tracking_provider.dart';
 /// naming the number is what makes the ask credible. It is also honest — the
 /// idle cost really is a few percent a day, because detection runs on platform
 /// activity recognition and never polls GPS. See docs/AUTO_TRACKING_PLAN.md.
-///
-/// NOTE: copy here is in English literals, unlike the rest of
-/// `settings_screen.dart`, which reads from [AppLocalizations]. Bangla parity
-/// needs matching keys in `lib/l10n/app_en.arb` and `app_bn.arb` before this
-/// ships — `test/core/i18n/arb_parity_test.dart` guards the two ARB files
-/// against each other but cannot see a hardcoded string.
 class AutoTrackingTile extends ConsumerWidget {
   const AutoTrackingTile({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final enabled = ref.watch(autoTrackingEnabledProvider);
 
     return Container(
@@ -35,14 +31,11 @@ class AutoTrackingTile extends ConsumerWidget {
         onChanged: enabled.isLoading
             ? null
             : (value) => _toggle(context, ref, value),
-        title: const Text(
-          'Detect rides automatically',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.autoTrackingTileTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: const Text(
-          'Logs a ride without you tapping start. Uses about 3–5% battery a '
-          'day when you are not riding.',
-        ),
+        subtitle: Text(l10n.autoTrackingTileSubtitle),
         secondary: Icon(Icons.motorcycle, color: AppColors.primary),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
@@ -57,14 +50,31 @@ class AutoTrackingTile extends ConsumerWidget {
       return;
     }
 
-    final error = await notifier.enable();
-    if (error == null || !context.mounted) return;
+    final failure = await notifier.enable();
+    if (failure == null || !context.mounted) return;
 
     // Enabling can fail for reasons the rider can act on (services off,
     // permission refused), so the failure is surfaced rather than the switch
     // silently springing back with no explanation.
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error), duration: const Duration(seconds: 5)),
+      SnackBar(
+        content: Text(_message(l10n, failure)),
+        duration: const Duration(seconds: 5),
+      ),
     );
+  }
+
+  String _message(AppLocalizations l10n, AutoTrackingEnableFailure failure) {
+    switch (failure) {
+      case AutoTrackingEnableFailure.locationServicesOff:
+        return l10n.autoTrackingLocationServicesOffMessage;
+      case AutoTrackingEnableFailure.permissionDenied:
+        return l10n.autoTrackingPermissionDeniedMessage;
+      case AutoTrackingEnableFailure.alwaysPermissionRequired:
+        return l10n.autoTrackingAlwaysPermissionRequiredMessage;
+      case AutoTrackingEnableFailure.startFailed:
+        return l10n.autoTrackingStartFailedMessage;
+    }
   }
 }

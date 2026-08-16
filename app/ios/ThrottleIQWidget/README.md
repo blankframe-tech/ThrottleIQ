@@ -1,179 +1,102 @@
 # ThrottleIQ iOS Widget Extension — setup
 
-The Swift sources in this folder are complete, but the widget extension
-**target does not exist in `Runner.xcodeproj` yet**. Nothing in this folder is
-compiled until you create it.
+**The target is registered in `Runner.xcodeproj` and builds automatically as
+part of `flutter build ios`.** This used to be a manual Xcode step (hand-editing
+`project.pbxproj` was judged too risky to automate — see the note that used to
+be here); it was done programmatically instead, with the `xcodeproj` Ruby gem
+driving the same target/build-phase/entitlements structure Xcode's own "New
+Target" flow would have produced, then verified with `flutter build ios
+--simulator` and by confirming `pluginkit -m -p com.apple.widgetkit-extension`
+lists `com.bft.throttleiq.ThrottleIQWidget` on the built simulator app.
 
-This was left as a manual step on purpose: `Runner.xcodeproj/project.pbxproj`
-is a machine-generated file that currently produces a working, device-verified
-release build, and hand-editing it is the single most reliable way to break an
-iOS build in a way that is hard to diagnose. Xcode's "New Target" flow writes
-the same entries correctly.
+What's already done, so you don't need to:
+- The `ThrottleIQWidget` target exists, with the four widgets in
+  `ThrottleIQWidget.swift` (Start Ride, Start Auto-Tracking, Ride Stats,
+  Maintenance) as its `WidgetBundle`.
+- `ios/Flutter/Widget.xcconfig` feeds it `FLUTTER_BUILD_NAME`/
+  `FLUTTER_BUILD_NUMBER` (via `Generated.xcconfig`) without pulling in
+  CocoaPods — the widget links no pods, only `WidgetKit`/`SwiftUI`.
+- `INFOPLIST_FILE`, `GENERATE_INFOPLIST_FILE=NO`, bundle id
+  (`com.bft.throttleiq.ThrottleIQWidget`), deployment target (iOS 14.0), and
+  `CODE_SIGN_ENTITLEMENTS` are all set on the target.
+- Runner embeds the extension via an "Embed Foundation Extensions" copy-files
+  phase, positioned **before** Flutter's "Thin Binary" and "[CP] Embed Pods
+  Frameworks" script phases — appending it after those (Xcode's own template
+  order for a plain app) produces a build-graph cycle when combined with
+  Flutter's script phases specifically. If you ever regenerate this target
+  from scratch in Xcode, move that phase manually if the build reports
+  "Cycle inside Runner".
+- Both `Runner/Runner.entitlements` and
+  `ThrottleIQWidget/ThrottleIQWidget.entitlements` declare the App Group
+  `group.com.bft.throttleiq`, and `Runner`'s build settings point at its
+  entitlements file.
 
-**Android is unaffected** — the Android widgets are already fully wired and
-ship in the release APK. Skipping this whole document costs you the iOS
-widgets only.
+## What's NOT done — needs your Apple Developer account
 
----
+Nobody but the account owner can do this part; it needs credentials this
+automation doesn't have.
 
-## Facts you'll need
+1. Open `Runner.xcworkspace` (not the `.xcodeproj`) in Xcode.
+2. Select the **Runner** target → **Signing & Capabilities** → pick your
+   **Team**. Repeat for the **ThrottleIQWidget** target.
+3. With Automatic signing and a team selected, Xcode creates the
+   `group.com.bft.throttleiq` App Group and its provisioning profiles for
+   you — this is the "step 5 creates the group for you" shortcut. If you
+   manage profiles by hand instead, register the App Group at
+   <https://developer.apple.com/account/resources/identifiers/list/applicationGroup>
+   and enable it on the `com.bft.throttleiq` App ID first.
+4. Confirm both targets show a checked `group.com.bft.throttleiq` under App
+   Groups and no red signing errors.
 
-| Thing | Value |
-| --- | --- |
-| Runner bundle ID | `com.bft.throttleiq` |
-| Widget bundle ID | `com.bft.throttleiq.ThrottleIQWidget` |
-| App Group | `group.com.bft.throttleiq` |
-| Runner deployment target | iOS 13.0 (Podfile pins platform 14.0) |
-| Swift version | 5.0 |
-| Target / product name | `ThrottleIQWidget` (exactly — the folder name must match) |
+**Without a team, the app groups is a not-yet-functional passenger:** it
+built and installed fine on the simulator in this session with entitlements
+resolving to an empty `<dict/>` at the codesign layer (Xcode disallows
+custom entitlements for a team-less "Sign to Run Locally" identity on iOS,
+even on the simulator) — confirmed via
+`codesign -d --entitlements :- build/ios/iphonesimulator/Runner.app`. The
+widgets will render (`pluginkit` sees them) but will keep showing their
+placeholder text until a real team is assigned and the App Group actually
+takes effect.
 
----
+## Verify on a device or simulator with your team assigned
 
-## 1. Create the App Group on the developer portal
-
-1. Sign in at <https://developer.apple.com/account/resources/identifiers/list/applicationGroup>.
-2. **Identifiers → + → App Groups → Continue.**
-3. Description `ThrottleIQ Widgets`, Identifier `group.com.bft.throttleiq`. **Continue → Register.**
-4. Go to **Identifiers → App IDs → `com.bft.throttleiq`**, enable **App Groups**,
-   click **Edit**, tick `group.com.bft.throttleiq`, **Save**.
-
-If you are using Xcode automatic signing you can skip this section — step 5
-creates the group and provisioning profiles for you. Do it manually only if
-you manage profiles by hand.
-
-## 2. Open the workspace (not the project)
-
-5. `open /Users/blackbird/Everything/dev/repos/ThrottleIQ/app/ios/Runner.xcworkspace`
-
-   Always the **`.xcworkspace`**. Opening `Runner.xcodeproj` directly breaks
-   the CocoaPods integration.
-
-## 3. Add the Widget Extension target
-
-6. **File → New → Target…**
-7. Platform **iOS**, choose **Widget Extension**, **Next**.
-8. Fill in:
-   - Product Name: **`ThrottleIQWidget`** (exact spelling and case)
-   - Team: the same team as Runner
-   - Language: **Swift**
-   - **Untick "Include Configuration App Intent"** (and "Include Live Activity"
-     if offered). These sources use `StaticConfiguration`; leaving the box
-     ticked generates an `AppIntent`-based template that will not compile
-     against them.
-   - Project: **Runner**, Embed in Application: **Runner**
-9. **Finish.** When Xcode asks *"Activate ThrottleIQWidget scheme?"* click
-   **Activate**.
-
-## 4. Replace the generated sources with the ones in this folder
-
-Xcode has just created a group named `ThrottleIQWidget` containing its own
-template files. Replace them:
-
-10. In the Project navigator, select every file Xcode generated inside the
-    `ThrottleIQWidget` group — typically `ThrottleIQWidget.swift`,
-    `ThrottleIQWidgetBundle.swift`, `AppIntent.swift`, and `Info.plist` — and
-    **Delete → Move to Trash**. Keep the `Assets.xcassets` it generated.
-11. Right-click the `ThrottleIQWidget` group → **Add Files to "Runner"…**
-12. Select `ThrottleIQWidget.swift` and `Info.plist` from
-    `app/ios/ThrottleIQWidget/`.
-    - **Untick** "Copy items if needed" (the files are already in place).
-    - Under "Add to targets", tick **ThrottleIQWidget only**. Make sure
-      **Runner is unticked** — adding the widget sources to the app target
-      causes duplicate-`@main` errors.
-    - **Add.**
-13. Select the **ThrottleIQWidget target → Build Settings**, search
-    `Info.plist File`, and confirm `INFOPLIST_FILE` is
-    `ThrottleIQWidget/Info.plist`. Fix it if Xcode left a stale path from the
-    file you deleted.
-14. In the same Build Settings, search `Generate Info.plist File` and set
-    **`GENERATE_INFOPLIST_FILE` to `No`** — otherwise Xcode ignores the plist
-    you just added and synthesises its own.
-
-## 5. Add the App Group capability to BOTH targets
-
-15. Select the **Runner** target → **Signing & Capabilities** → **+ Capability**
-    → **App Groups**. Click **+** under the group list and add
-    `group.com.bft.throttleiq`, then tick it.
-    - This creates `ios/Runner/Runner.entitlements`. The Runner target has no
-      entitlements file today, so this step is required, not optional.
-16. Select the **ThrottleIQWidget** target → **Signing & Capabilities** →
-    **+ Capability** → **App Groups** → add/tick the same
-    `group.com.bft.throttleiq`.
-17. Xcode will have generated `ThrottleIQWidget/ThrottleIQWidget.entitlements`
-    (or offered to). A correct copy already exists in this folder; if Xcode
-    created a different file, either point `CODE_SIGN_ENTITLEMENTS` at
-    `ThrottleIQWidget/ThrottleIQWidget.entitlements` or verify Xcode's version
-    lists `group.com.bft.throttleiq` under
-    `com.apple.security.application-groups`.
-18. Confirm both targets show a checked `group.com.bft.throttleiq` and no red
-    signing errors.
-
-    **This is the step that silently breaks everything if skipped.** With no
-    App Group, `UserDefaults(suiteName:)` returns `nil` on one side and the
-    widgets show `—` / "No data yet" forever, with no error anywhere.
-
-## 6. Match build settings to Runner
-
-19. **ThrottleIQWidget target → General → Minimum Deployments**: set **iOS 14.0**
-    (WidgetKit's floor; Runner declares 13.0 but the Podfile already pins the
-    platform to 14.0, so nothing regresses). Do **not** set it above 14.0
-    unless you also raise Runner's.
-20. **Build Settings → Swift Language Version**: `Swift 5`.
-21. **Build Settings → Product Bundle Identifier**: confirm
-    `com.bft.throttleiq.ThrottleIQWidget`. It must be a child of the Runner
-    bundle ID.
-22. Confirm the widget's `CFBundleShortVersionString` / `CFBundleVersion` are
-    still `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)` (they are, in the
-    provided `Info.plist`). Hardcoded values that drift from Runner's are
-    rejected at App Store upload.
-
-## 7. Register the URL scheme
-
-Already done — `CFBundleURLTypes` in `ios/Runner/Info.plist` now declares the
-`throttleiq` scheme, appended alongside the existing Google Sign-In entry.
-Nothing to do here; just don't remove it, or the Start Ride widget's
-`widgetURL(URL(string: "throttleiq://startride"))` will open nothing.
-
-23. To verify: **Runner target → Info → URL Types** should list an entry with
-    identifier `com.bft.throttleiq` and scheme `throttleiq`.
-
-## 8. Build and verify
-
-24. Select the **Runner** scheme and a real device, then **Product → Run**.
-    Launch the app once so it publishes widget data (the app calls
-    `HomeWidgetService.bootstrap()` from `main()`).
-25. Long-press the home screen → **+** → search **ThrottleIQ**. Three widgets
-    should be offered: Start Ride (small), Ride Stats (medium), Maintenance
-    (medium).
-26. Add each. Before the app has published anything they must show `—` /
-    "No data yet" / "No service data yet" — never a blank box. After a ride
-    exists, Ride Stats shows real distances.
-27. Tap the Start Ride widget: the app should open. (See "Not done" below for
-    what it does *not* yet do.)
+1. Run the **Runner** scheme. Launch once so it publishes widget data (the
+   app calls `HomeWidgetService.bootstrap()` from `main()`).
+2. Long-press the home screen → **+** → search **ThrottleIQ**. Four widgets
+   should be offered: Start Ride (small), Start Auto-Tracking (small), Ride
+   Stats (medium), Maintenance (medium).
+3. Add each. Before the app has published anything they must show `—` /
+   "No data yet" / "No service data yet" — never a blank box. After a ride
+   exists, Ride Stats shows real distances.
+4. Tap Start Ride: the app opens on the Record screen. Tap Start
+   Auto-Tracking: the app opens on Settings, where the auto-tracking switch
+   lives — see `HomeWidgetService.registerAutoTrackingHandler` for why that
+   widget doesn't flip the switch itself.
 
 ---
 
 ## Troubleshooting
 
-**Widgets show placeholders forever.** Almost always the App Group (step 15/16).
-Verify the identical string appears in both targets' entitlements and that the
-group exists on the developer portal for the app ID.
+**Widgets show placeholders forever.** Almost always the App Group step
+above. Verify the identical string appears in both targets' entitlements and
+that the group exists on the developer portal for the app ID.
+
+**"Cycle inside Runner; building could produce unreliable results."** The
+"Embed Foundation Extensions" copy-files phase is running after Flutter's
+"Thin Binary" script phase. Move it to right after "Embed Frameworks" in
+Runner's Build Phases list (see "What's already done" above).
 
 **"Multiple commands produce …" or duplicate `@main`.** `ThrottleIQWidget.swift`
-was added to the Runner target as well. Select the file → File Inspector →
-Target Membership → untick **Runner**.
+was added to the Runner target as well as ThrottleIQWidget's. Select the file
+→ File Inspector → Target Membership → untick **Runner**.
 
 **Widget picker shows nothing.** The extension did not embed. Runner target →
-Build Phases → **Embed Foundation Extensions** (older Xcode: "Embed App
-Extensions") must list `ThrottleIQWidget.appex`.
+Build Phases → **Embed Foundation Extensions** must list
+`ThrottleIQWidget.appex`.
 
-**Archive fails on version mismatch.** Step 22 — the widget's version strings
-must be the `$(FLUTTER_BUILD_*)` variables.
-
-**`flutter build ios` stops working after this.** Nothing in this flow should
-affect it; if it does, the fastest recovery is
-`git checkout -- ios/Runner.xcodeproj/project.pbxproj` and starting over from
-step 6.
+**Archive fails on version mismatch.** The widget's version strings must stay
+the `$(FLUTTER_BUILD_NAME)`/`$(FLUTTER_BUILD_NUMBER)` variables — don't
+hardcode them in `Info.plist`.
 
 ---
 
@@ -202,14 +125,18 @@ placeholder.
 | `ti_overdue` | Bool | `true` |
 
 The widget `kind` strings must equal the `iOS*Widget` constants in
-`HomeWidgetService`: `ThrottleIQStartRideWidget`, `ThrottleIQRideStatsWidget`,
+`HomeWidgetService`: `ThrottleIQStartRideWidget`,
+`ThrottleIQAutoTrackingWidget`, `ThrottleIQRideStatsWidget`,
 `ThrottleIQMaintenanceWidget`.
 
 ## Not done
 
-- **Tapping Start Ride only opens the app**; it does not jump straight into
-  recording. Routing the `throttleiq://startride` URL requires a change to
-  `lib/core/router/app_router.dart`, which was out of scope. The URL is
-  already delivered on both platforms, so the remaining work is one deep-link
-  handler on the Dart side.
-- The widget extension target itself (this document).
+- **Tapping Start Ride only opens the app** (lands on the Record screen); it
+  does not start recording by itself — the rider still uses slide-to-start.
+  Deliberate: see the comment on `HomeWidgetService.registerStartRideHandler`
+  in `app.dart`. Start Auto-Tracking follows the same rule, for a sharper
+  reason — enabling it can require a location-permission prompt and can fail,
+  neither of which has anywhere to surface from a bare widget tap, so it
+  opens Settings instead of trying to flip the switch itself.
+- The Apple Developer account steps above (team assignment, App Group
+  registration/verification).

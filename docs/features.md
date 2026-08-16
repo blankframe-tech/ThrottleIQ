@@ -145,6 +145,7 @@ Save Route, Group Ride map
     - **The place name is deliberately not in the URL.** `dir/?api=1` treats a text destination as a *search query*, so passing "Shell Petrol Pump" could resolve to a different branch than the one tapped. Coordinates are unambiguous, which beats a pretty pin label.
     - URL building is pure and unit-tested (`domain/place_directions.dart`, 8 tests) — including that coordinates never stringify into exponent notation (`1e-7` is not a valid maps URL) and that a number with no digits hides the Call button rather than opening an empty dialler.
     - Needed an Android `<queries>` entry: package visibility on API 30+ means that without it the launcher can see no app at all for these intents, so both buttons would throw on a modern phone while working on an old one.
+    - **Directions also starts a ride** (added 2026-08-17). The rider is about to go somewhere on the bike; ThrottleIQ starts recording before handing off to the external maps app, so a journey navigated externally still gets logged. The ride-start call happens *before* `launchUrl`, not after — once the external app takes over, ThrottleIQ is backgrounded and has no foreground window left for a location-permission prompt to appear in. Silent on failure by design (no bike added, permission missing, a ride already active/paused) — the primary promise of the button is directions, and a rider who only wanted those should never see an error from the ride the tap also tried to start.
 - **Add place screen** — a photo is now **optional** (added 2026-08-04, Cloudinary-backed like ride photos; a failed upload doesn't cost the rest of the submission). Address is also optional, with **reverse-geocode autofill** from the dropped map pin (`NominatimService`, OpenStreetMap — an explicit rider action, never triggered by panning, per Nominatim's rate policy) and a helper note that the address is meant to be informal ("beside XYZ school," not a formal street address).
 - **My places screen** (`/places/mine`, reached from Garage header menu) — places the current user added.
 - **Categories**: Fuel, Garage, Parts, and **Recreation** (added 2026-08-01 — biker cafes, restaurants and viewpoints; the Overpass import pulls `amenity=cafe`, `amenity=restaurant` and `tourism=viewpoint` for it).
@@ -200,18 +201,19 @@ Added 2026-08-01, on the group-ride data layer that had existed with no UI.
 
 ## 7a. Home-screen widgets (`core/services/home_widget_service.dart`)
 
-Added 2026-08-01. Three widgets, styled Carbon Mono (carbon background, lime accent, monospace, sharp corners):
+Added 2026-08-01, expanded to four widgets 2026-08-17. Styled Carbon Mono (carbon background, lime accent, monospace, sharp corners):
 
 | Widget | Size | Shows |
 |---|---|---|
 | **Start ride** | 2×1 | A button that opens the app on the Record screen |
+| **Start Auto-Tracking** | 2×1 | A button that opens the app on Settings, where the auto-tracking switch lives |
 | **Ride stats** | 4×2 | Distance this week, total distance, ride count |
 | **Next service** | 4×1 | Active bike, the most urgent due service, km until due; flips lime → red when overdue |
 
-- **Android is fully working** — no manual step.
-- **iOS ships as sources plus a numbered Xcode README** (`app/ios/ThrottleIQWidget/README.md`). The extension target must be added once through the Xcode GUI; **the iOS widgets do not exist until someone does that.** The one step people miss is adding the App Group capability to *both* the Runner and widget targets.
+- **Android is fully working** — no manual step. Widget picker labels and copy are localized (`values/strings.xml` + `values-bn/strings.xml`), resolved by the *device's* system locale rather than the in-app language toggle (App Widgets render through the launcher, outside the Flutter engine).
+- **iOS: the extension target is registered in `Runner.xcodeproj`** (`app/ios/ThrottleIQWidget/`) — as of 2026-08-17 this is no longer a manual Xcode step. It was wired programmatically with the `xcodeproj` Ruby gem (a hand-edited `project.pbxproj` was previously judged too risky to automate; scripting the same structure Xcode's "New Target" flow produces sidesteps that), verified with `flutter build ios --simulator` and `pluginkit -m -p com.apple.widgetkit-extension` listing the extension on the built app. **Still not functional without an Apple Developer team**: `codesign` shows an empty entitlements dict when no signing team is assigned (confirmed in this session's no-team environment) — iOS disallows custom entitlements, including App Groups, for a team-less identity even on the simulator. Once a team is picked in Xcode for both the Runner and ThrottleIQWidget targets (Signing & Capabilities), Automatic signing creates the App Group and the widgets stop showing placeholders. See `app/ios/ThrottleIQWidget/README.md`.
 - Data republishes on app start, after a ride is finalized, and after a service log is added.
-- The Start-ride widget **navigates to Record; it does not auto-start a recording.** A home-screen tap silently beginning a GPS recording would be surprising — the slide-to-start gesture keeps that deliberate.
+- The Start-ride and Start-Auto-Tracking widgets **navigate; neither acts on its own.** Start Ride opens Record (slide-to-start still required — a silent GPS recording from a home-screen tap would be surprising). Start Auto-Tracking opens Settings rather than flipping the switch itself, because enabling it can trigger a location-permission prompt and can fail, and neither has anywhere to surface from a bare widget tap.
 
 ## 8. Profile & settings (`features/profile`)
 

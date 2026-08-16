@@ -305,5 +305,64 @@ void main() {
         isTrue,
       );
     });
+
+    test('rejects the auto-tracking URI — the two must not cross-fire', () {
+      expect(
+        HomeWidgetService.isStartRideUri(
+            Uri.parse('throttleiq://autotracking')),
+        isFalse,
+      );
+    });
+  });
+
+  group('HomeWidgetService.isAutoTrackingUri', () {
+    test('matches the auto-tracking URI', () {
+      expect(
+        HomeWidgetService.isAutoTrackingUri(
+            Uri.parse('throttleiq://autotracking')),
+        isTrue,
+      );
+    });
+
+    test('matches regardless of a trailing slash or query', () {
+      expect(
+        HomeWidgetService.isAutoTrackingUri(
+            Uri.parse('throttleiq://autotracking/')),
+        isTrue,
+      );
+      expect(
+        HomeWidgetService.isAutoTrackingUri(
+            Uri.parse('throttleiq://autotracking?src=widget')),
+        isTrue,
+      );
+    });
+
+    test('rejects null — a normal icon launch has no URI', () {
+      expect(HomeWidgetService.isAutoTrackingUri(null), isFalse);
+    });
+
+    test('rejects the start-ride URI — the two must not cross-fire', () {
+      expect(
+        HomeWidgetService.isAutoTrackingUri(
+            Uri.parse('throttleiq://startride')),
+        isFalse,
+      );
+    });
+
+    test('rejects a foreign scheme, even with a matching host', () {
+      expect(
+        HomeWidgetService.isAutoTrackingUri(
+            Uri.parse('https://autotracking')),
+        isFalse,
+      );
+    });
+
+    test('the advertised URI constant is the one that matches', () {
+      expect(
+        HomeWidgetService.isAutoTrackingUri(
+            HomeWidgetService.autoTrackingUri),
+        isTrue,
+      );
+    });
   });
 }

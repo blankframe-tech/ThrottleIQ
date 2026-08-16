@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
@@ -340,7 +342,7 @@ class _PlaceHeader extends StatelessWidget {
 /// Directions is the primary action — for a petrol pump or a garage, getting
 /// there is the whole reason the rider opened this screen, so it's a filled
 /// button at full width rather than an icon in the app bar.
-class _PlaceActions extends StatelessWidget {
+class _PlaceActions extends ConsumerWidget {
   final PlaceEntity place;
   const _PlaceActions({required this.place});
 
@@ -354,7 +356,16 @@ class _PlaceActions extends StatelessWidget {
   /// On iOS, if that fails outright we retry with Apple Maps, which is always
   /// present. A failure on either is reported rather than swallowed: a button
   /// that silently does nothing is worse than one that says why.
-  Future<void> _openDirections(BuildContext context) async {
+  Future<void> _openDirections(BuildContext context, WidgetRef ref) async {
+    // Started *before* handing off to the external app, not after: once
+    // launchUrl backgrounds ThrottleIQ, there is no foreground window left for
+    // a location-permission prompt to appear in. Silently no-ops (see
+    // RideRecordingNotifier.startRide) if a ride is already active/paused, if
+    // there's no bike, or if permission is missing — a rider who only wanted
+    // directions should never see an error from the ride the tap also
+    // started.
+    unawaited(ref.read(rideRecordingProvider.notifier).startRide());
+
     final google = googleMapsDirectionsUri(
       latitude: place.latitude,
       longitude: place.longitude,
@@ -403,7 +414,7 @@ class _PlaceActions extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Null when the place has no number, or one with no digits in it at all —
     // hide the button rather than opening an empty dialler.
     final tel = telUri(place.phone);
@@ -412,7 +423,7 @@ class _PlaceActions extends StatelessWidget {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => _openDirections(context),
+            onPressed: () => _openDirections(context, ref),
             icon: const Icon(Icons.directions, size: 18),
             label: const Text('Directions'),
           ),

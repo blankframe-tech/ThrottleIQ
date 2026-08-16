@@ -36,8 +36,11 @@ object WidgetKeys {
  *
  * The intent is *explicit* (`Intent(context, MainActivity::class.java)` built
  * by HomeWidgetLaunchIntent), so no manifest intent-filter is needed for the
- * tap to work — the URI rides along as the intent data. Dart can read it back
- * with `HomeWidget.initiallyLaunchedFromHomeWidget()` to route straight into
- * recording; until that routing exists the tap simply opens the app.
+ * tap to work — the URI rides along as the intent data. Dart reads it back
+ * with `HomeWidget.initiallyLaunchedFromHomeWidget()` / `HomeWidget.widgetClicked`
+ * and routes to the Record screen — see `HomeWidgetService.registerStartRideHandler`.
  */
 const val START_RIDE_URI = "throttleiq://startride"
+
+/** Deep link carried by the Start Auto-Tracking widget's launch intent. */
+const val AUTO_TRACKING_URI = "throttleiq://autotracking"

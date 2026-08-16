@@ -49,6 +49,16 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       if (!mounted) return;
       ref.read(routerProvider).go('/home/record');
     });
+    // Tapping the "Start Auto-Tracking" widget lands on Settings, where the
+    // switch (and, if it fails, the reason why) lives — see
+    // AutoTrackingWidgetProvider's doc comment for why this doesn't just flip
+    // the switch itself: enabling it needs to survive a location-permission
+    // prompt and a possible failure, neither of which has anywhere to surface
+    // from a bare launch intent.
+    HomeWidgetService.instance.registerAutoTrackingHandler(() {
+      if (!mounted) return;
+      ref.read(routerProvider).go('/settings');
+    });
   }
 
   @override

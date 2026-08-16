@@ -12,10 +12,15 @@
     <string name="widget_ride_stats_description">Distance ridden this week and all time.</string>
     <string name="widget_maintenance_label">ThrottleIQ · Maintenance</string>
     <string name="widget_maintenance_description">The next service due on your bike.</string>
+    <string name="widget_auto_tracking_label">ThrottleIQ · Auto-Tracking</string>
+    <string name="widget_auto_tracking_description">One tap to open ThrottleIQ\'s automatic ride detection setting.</string>
 
     <!-- Start ride widget -->
     <string name="widget_start_ride_title">THROTTLEIQ</string>
     <string name="widget_start_ride_cta">START RIDE</string>
+
+    <!-- Start auto-tracking widget -->
+    <string name="widget_auto_tracking_cta">AUTO-TRACK</string>
 
     <!-- Ride stats widget -->
     <string name="widget_stats_title">RIDE STATS</string>
@@ -38,4 +43,5 @@
 
     <!-- Content descriptions -->
     <string name="widget_start_ride_content_description">Start a ride in ThrottleIQ</string>
+    <string name="widget_auto_tracking_content_description">Open ThrottleIQ\'s automatic ride detection setting</string>
 </resources>

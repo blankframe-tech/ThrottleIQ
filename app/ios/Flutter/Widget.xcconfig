@@ -1,0 +1,10 @@
+// Base config for the ThrottleIQWidget extension target.
+//
+// Deliberately does NOT go through Debug.xcconfig/Release.xcconfig (which
+// pull in Pods-Runner's xcconfig) — the widget extension links no CocoaPods
+// dependencies of its own, only system frameworks. It still needs
+// Generated.xcconfig directly, though: FLUTTER_BUILD_NAME/FLUTTER_BUILD_NUMBER
+// are read into ThrottleIQWidget/Info.plist's CFBundleShortVersionString/
+// CFBundleVersion, and Xcode resolves $(...) references in an Info.plist
+// against whatever build settings are visible to that file's target.
+#include "Generated.xcconfig"
