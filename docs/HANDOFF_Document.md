@@ -210,6 +210,31 @@ replaced with a fresh signed build from the same commit — version stays
 `1.0.0-beta.1+1` (nav-only change, no functional/schema change warranting a
 bump).
 
+**New skin: Cute Analyst — 2026-08-17 (same day, seventh session).**
+Requested directly: add a new skin that's "Analyst Blue but rounded," name
+it Cute Analyst, verify on the connected iPhone (this time in **release**
+mode, so it's a real build to actually use), and move `beta-v1` forward
+again. `AppColorPalette.cuteAnalyst` reuses `analystBlue`'s 22-token
+palette verbatim (`app_theme_style.dart`) — the whole point is proving
+color and shape are independent skin axes — while `AppShapeProfile.forStyle`
+maps the new `AppThemeStyle.cuteAnalyst` member onto the existing `rounded`
+profile (`app_shape_profile.dart`) instead of `boxy`, picking up soft
+corners and the hold-ring Record-screen start control along with it. Wired
+through the four exhaustive-by-design switches that make a missing skin a
+compile error rather than a silent gap: `AppColorPalette.forStyle`,
+`AppShapeProfile.forStyle`, and `skin_dropdown.dart`'s `skinLabel`/
+`skinDescription`. Added `themeCuteAnalystLabel`/`themeCuteAnalystDescription`
+to both `app_en.arb` and `app_bn.arb` (Bangla transliterates the name, per
+the existing convention) and regenerated `app_localizations*.dart` via
+`flutter gen-l10n`. The skin catalogue's "no two skins share a
+background/primary pair" uniqueness test (`app_theme_style_test.dart`) had
+to be loosened to key on shape as well as color, since Cute Analyst is the
+first skin to deliberately duplicate another one's exact palette — full
+804/804 suite still green. Verified with `flutter run --release` (Xcode
+build + install + launch) on Abraar's iPhone. `beta-v1` (local + remote tag,
+GitHub Release APK asset and notes) was moved forward again to this commit,
+same as the nav-swap update above; version stays `1.0.0-beta.1+1`.
+
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
 unauthenticated clients (§3), the planned live-session TTL policy could
@@ -332,11 +357,14 @@ Genesis then rendered `RecordScreen` with **zero exceptions, zero
 `textScaler: 1.1176` with bold text. That is independent corroboration that
 `Issues.md` §16 was a false alarm.
 
-Still unproven: **six of the nine skins have never been applied to a real
-screen** (everything except Carbon Mono, Editorial, and Genesis), and no
-screen beyond Record has been seen under any non-default skin. The two
-worth checking first are still Retro (ink-black `border` token) and
-Positive Vibes (white `surface` on near-white `background`).
+Still unproven: **seven of the now-ten skins have never been applied to a
+real screen** (everything except Carbon Mono, Editorial, and Genesis — Cute
+Analyst, added 2026-08-17, joins this unproven list too, verified only by a
+release-mode app launch, not by actually selecting it in Settings and
+looking at a screen), and no screen beyond Record has been seen under any
+non-default skin. The two worth checking first are still Retro (ink-black
+`border` token) and Positive Vibes (white `surface` on near-white
+`background`).
 
 **Correction, same session:** a suspected text-scaling clipping bug in the
 picker was filed and then **disproved by measurement** — see `Issues.md`
@@ -1210,7 +1238,7 @@ working harder. Everything from 6 down runs in parallel with that wait.
 | File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why. **Needs a manual check** (`Issues.md` §24.9): the unsigned preset `throttleiq_unsigned` is client-extractable from the APK by design — that's not itself a bug — but confirm in the Cloudinary dashboard (Settings → Upload → Upload presets) that it restricts resource type, file size, and has moderation enabled, so a pulled-preset client can't be used for quota exhaustion or hosting arbitrary/illegal content. This needs dashboard login, so it wasn't something fixable from a code change |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
-| Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release **APK only** (no AAB yet), matches `pubspec.yaml` at `1.0.0-beta.1+1`. Tag was moved forward 2026-08-17 to include the Places/Rides nav swap; `beta-v2`/`beta-v3` were deleted in the 2026-08-17 versioning reset (see TL;DR above) — those links are dead. |
+| Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release **APK only** (no AAB yet), matches `pubspec.yaml` at `1.0.0-beta.1+1`. Tag was moved forward twice on 2026-08-17: first for the Places/Rides nav swap, then again for the new Cute Analyst skin. `beta-v2`/`beta-v3` were deleted in the 2026-08-17 versioning reset (see TL;DR above) — those links are dead. |
 | Test suite | 755/755 green as of 2026-08-12 (717 on 2026-08-11; 550 on 2026-08-03; was 287 before the backlog pass). Plus 22 Node tests in `scripts/` (`npm test`) for the Dhaka seed script's pure logic. DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
