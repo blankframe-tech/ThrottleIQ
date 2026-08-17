@@ -194,6 +194,22 @@ GitHub Release no longer exists, deleted as part of this reset — but if
 anyone already has that APK file sitting on a device, it still crashes for
 the reason described; the fix landed in `main` regardless of tag churn.
 
+**Bottom-nav Places/Rides swap, `beta-v1` moved forward — 2026-08-17 (same
+day, sixth session).** Requested directly: swap the Places and Rides
+bottom-nav tabs (Places now sits next to Social on the left; Rides now
+sits next to Profile on the right — new order Social, Places, Record,
+Rides, Profile), verify on the connected physical iPhone, and update the
+`beta-v1` release to carry it. `shellTabs` and the `BottomNavigationBarItem`
+list in `app_shell.dart` were swapped in lockstep (they're the single
+source of truth per-tab-index — see the comment at the top of the file),
+and `app_shell_test.dart`'s hardcoded `/home/places` index was updated from
+3 to 1. Verified with a clean `flutter run` build + install + launch on
+Abraar's iPhone. The `beta-v1` git tag (local + remote) was moved from
+`145f8ea` to this commit, and its GitHub Release's APK asset and notes were
+replaced with a fresh signed build from the same commit — version stays
+`1.0.0-beta.1+1` (nav-only change, no functional/schema change warranting a
+bump).
+
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
 unauthenticated clients (§3), the planned live-session TTL policy could
@@ -1194,7 +1210,7 @@ working harder. Everything from 6 down runs in parallel with that wait.
 | File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why. **Needs a manual check** (`Issues.md` §24.9): the unsigned preset `throttleiq_unsigned` is client-extractable from the APK by design — that's not itself a bug — but confirm in the Cloudinary dashboard (Settings → Upload → Upload presets) that it restricts resource type, file size, and has moderation enabled, so a pulled-preset client can't be used for quota exhaustion or hosting arbitrary/illegal content. This needs dashboard login, so it wasn't something fixable from a code change |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
-| Latest release | [`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2) — signed release **APK + AAB**, matches `pubspec.yaml` at `1.0.0-beta.2+2`. Upload the `.aab` to Play, hand testers the `.apk`. (`beta-v1` is still there as the previous build.) |
+| Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release **APK only** (no AAB yet), matches `pubspec.yaml` at `1.0.0-beta.1+1`. Tag was moved forward 2026-08-17 to include the Places/Rides nav swap; `beta-v2`/`beta-v3` were deleted in the 2026-08-17 versioning reset (see TL;DR above) — those links are dead. |
 | Test suite | 755/755 green as of 2026-08-12 (717 on 2026-08-11; 550 on 2026-08-03; was 287 before the backlog pass). Plus 22 Node tests in `scripts/` (`npm test`) for the Dhaka seed script's pure logic. DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
