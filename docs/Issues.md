@@ -1922,3 +1922,46 @@ running (non-zero PID in `devicectl device info processes`). This is the
 first time the widget App Group has been exercised on real signing rather
 than the simulator's no-team `<dict/>` entitlements — see §29's caveat about
 `codesign -d --entitlements` showing empty on a team-less build.
+
+**Caveat this "Verified" note doesn't cover (as originally written):** only
+process launch was confirmed above — nobody actually long-pressed the home
+screen and added a widget from the picker after the fix. Reported same day:
+the widget still wasn't offered in the **+** gallery on Abraar's phone.
+
+**Resolved same day, a few hours later.** Cause was exactly guess (1) above:
+`xcrun devicectl device info apps` showed the phone was still running
+**build 3** (`beta-v3`, from Aug 15) — installed before this section's fix
+even existed, not after it. Nothing had reinstalled since. Fix: `xcrun
+devicectl device uninstall app com.bft.throttleiq`, then a fresh `flutter
+build ios --release` from current `main` and a clean `devicectl install`.
+Confirmed this time with more than a process check: `codesign -d
+--entitlements` on the freshly built `.app` and its `.appex` both show the
+real `group.com.bft.throttleiq` entitlement (not the stale empty one), and
+`devicectl device info processes` lists **`ThrottleIQWidget.appex`'s own
+process running** alongside `Runner` — WidgetKit only spins up the extension
+process to snapshot it for the gallery, so that's the extension being live
+and discoverable, not just the host app. No iOS UI-automation tool exists to
+literally tap "long-press → + → search" on a physical device, so the very
+last visual step is still the account owner's to eyeball, but every
+technical precondition for it now checks out.
+
+## 31. Android home-screen widgets, verified end-to-end on an emulator for the first time (2026-08-17)
+
+**Status: Verified working.** Unlike iOS, an Android emulator (`Pixel_10_Pro`
+AVD) is fully drivable headlessly via `adb`, so this got a real visual check
+rather than just a package-manager/entitlement inspection. `adb shell
+dumpsys package com.bft.throttleiq` confirmed all four `AppWidgetProvider`s
+registered (`StartRideWidgetProvider`, `RideStatsWidgetProvider`,
+`MaintenanceWidgetProvider`, `AutoTrackingWidgetProvider`). Then, via `adb
+shell input` long-press + tap sequences plus `adb exec-out screencap`
+screenshots read back frame-by-frame: opened the launcher's Widgets sheet,
+browsed to **ThrottleIQ → 4 widgets**, and expanded it — Start Ride and
+Auto-Track render their real carbon-mono preview art, and **Ride Stats shows
+the `—` / no-data placeholder correctly** rather than a blank box, matching
+`ios/ThrottleIQWidget/README.md`'s data-contract requirement (that file
+documents the iOS side of the same four widgets; the Android providers share
+the same `ti_*` `SharedPreferences` keys via `WidgetKeys.kt`). Did not drag a
+widget onto the home screen itself (the launcher's drag gesture is fragile
+over `adb input swipe` and the picker rendering real, non-placeholder-broken
+previews is equivalent proof) — everything short of that one drag gesture
+was directly observed, not inferred from logs.

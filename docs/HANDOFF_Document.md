@@ -28,19 +28,21 @@ prompts this after every work session. Feature-by-feature UI detail lives in
 
 ### TL;DR — where things stand
 
-As of 2026-08-02, the app is pre-launch at **`1.0.0-beta.2+2`, tagged
-[`beta-v2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2)**
-— that release carries both a signed APK (for handing to testers directly)
-and an AAB (for the Play Console), and is the build intended for the 12-dev
-closed-testing group. `beta-v1` remains on GitHub as the previous build.
-Core ride-recording, garage, maintenance, social, POI-directory, and
-forum features are built and wired end-to-end — the 2026-07-14 audit's
-orphaned screens (crash countdown, sync manager, exports, emergency
-contacts, live share) have all since been wired in, see "Done, but NOT yet
-verified" below. The Vehicle State Engine's foundation (Phase 1 + 1.5 —
-sensor fusion, confidence scoring, motion classification, adaptive
-recording thinning) shipped 2026-07-23, and the test suite is **755/755
-green** as of 2026-08-12.
+As of 2026-08-17, the app is pre-launch at **`1.0.0-beta.1+1`, tagged
+[`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1)**
+— a second, deliberate versioning reset (see "Second versioning reset"
+below): the earlier `beta-v1`/`beta-v2`/`beta-v3` tags and releases were
+all pre-launch iterations with no confirmed real-device widget check behind
+any of them, so this is the first build to actually carry that name for
+real. It's an APK-only release for now (no AAB attached — nothing has gone
+to the Play Console yet). Core ride-recording, garage, maintenance, social,
+POI-directory, and forum features are built and wired end-to-end — the
+2026-07-14 audit's orphaned screens (crash countdown, sync manager, exports,
+emergency contacts, live share) have all since been wired in, see "Done, but
+NOT yet verified" below. The Vehicle State Engine's foundation (Phase 1 +
+1.5 — sensor fusion, confidence scoring, motion classification, adaptive
+recording thinning) shipped 2026-07-23, and the test suite is **804/804
+green** as of 2026-08-17.
 
 **Versioning reset 2026-08-01:** the old `2.0.0-beta.x` line, its git tags,
 and all prior GitHub Releases (including the same-day `carbon-ui-` one)
@@ -149,6 +151,48 @@ cached provisioning profiles from before the App Group existed had an
 **empty** `application-groups` entitlement, which is not a build error, just
 a widget that shows placeholders forever. Confirmed installed and running
 (non-zero PID) on the physical device via `xcrun devicectl`.
+
+**Widgets verified for real on both platforms, and a second versioning
+reset — 2026-08-17 (same day, fifth session).** Requested directly: run the
+current build on Abraar's iPhone and confirm the widget actually works, and
+if Android's does too, cut it as the real Beta v1.
+
+**iOS.** The phone turned out to still be running `beta-v3` (build 3, Aug
+15) — installed before the previous session's `DEVELOPMENT_TEAM` fix even
+existed, which is exactly why the widget still wasn't offered in the **+**
+gallery (`Issues.md` §30's "Verified" note only ever checked that the app
+process launched, not that anyone reinstalled since the fix). Fixed with a
+clean `xcrun devicectl device uninstall app` followed by a fresh `flutter
+build ios --release` from current `main` and reinstall. `codesign -d
+--entitlements` on the new build confirmed the real `group.com.bft.throttleiq`
+App Group on both `Runner` and `ThrottleIQWidget.appex`, and — new this
+time — `devicectl device info processes` showed the **widget extension's
+own process running**, not just the host app's, meaning WidgetKit had
+actually discovered and snapshotted it. See `Issues.md` §30's resolution
+note for the full trail; no iOS device-UI-automation tool exists to
+literally tap the picker open, so that last look is still Abraar's to take.
+
+**Android.** Verified further than iOS was possible to: the `Pixel_10_Pro`
+emulator is fully drivable over `adb`, so `adb shell input` long-presses
+plus `adb exec-out screencap` screenshots (read back frame-by-frame) walked
+the actual launcher UI to **ThrottleIQ → 4 widgets** in the Widgets sheet.
+All four expand with real preview art; Ride Stats correctly shows the `—`
+no-data placeholder rather than a blank box. See `Issues.md` §31.
+
+**Second versioning reset.** With both platforms confirmed, `beta-v1`,
+`beta-v2`, and `beta-v3` — all three prior tags and their GitHub Releases —
+were deleted (local and remote), matching the precedent set by the
+2026-08-01 reset above. `app/pubspec.yaml` was set back to
+`1.0.0-beta.1+1`, and a fresh `beta-v1` tag/release was cut from this
+commit with the release APK attached — this is meant to be the actual first
+build handed to outside beta testers, superseding all three earlier ones.
+`feature/profile-tab` (already fast-forward merged in the previous session)
+was deleted, local and remote, as the one now-pointless branch.
+
+⚠️ **The old `beta-v2` warning below is now about a dead link** — that
+GitHub Release no longer exists, deleted as part of this reset — but if
+anyone already has that APK file sitting on a device, it still crashes for
+the reason described; the fix landed in `main` regardless of tag churn.
 
 **Three real defects were surfaced and fixed along the way** — all worth
 reading in `Issues.md`: live-share sessions were **world-listable** by
