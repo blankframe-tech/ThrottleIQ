@@ -111,6 +111,16 @@
     "description": "One-line description under the Genesis skin option."
   },
 
+  "themeCuteAnalystLabel": "Cute Analyst",
+  "@themeCuteAnalystLabel": {
+    "description": "Name of the Cute Analyst skin. Product name — kept recognisable across languages."
+  },
+
+  "themeCuteAnalystDescription": "Navy console, cyan telemetry, soft rounded edges",
+  "@themeCuteAnalystDescription": {
+    "description": "One-line description under the Cute Analyst skin option."
+  },
+
   "appMarkTitle": "App mark",
   "@appMarkTitle": {
     "description": "Label beside the live logo preview in the Appearance section."

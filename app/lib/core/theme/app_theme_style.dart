@@ -21,6 +21,7 @@ enum AppThemeStyle {
   retro,
   analystBlue,
   genesis,
+  cuteAnalyst,
 }
 
 /// One immutable set of color tokens, matching the field names historically
@@ -367,6 +368,14 @@ class AppColorPalette {
     isDark: true,
   );
 
+  /// "Cute Analyst" — the same navy console / cyan telemetry palette as
+  /// [analystBlue], carried over untouched; only the shape profile differs
+  /// (soft, rounded corners via [AppShapeProfile.rounded] instead of
+  /// [analystBlue]'s boxy instrument-panel edges — see
+  /// `app_shape_profile.dart`). Proof that color and shape really are
+  /// independent axes of a skin: same palette, a completely different feel.
+  static const AppColorPalette cuteAnalyst = analystBlue;
+
   /// Exhaustive by design — a `switch` with no `default`, so adding a member
   /// to [AppThemeStyle] without a palette is a compile error rather than a
   /// skin that silently renders as Carbon Mono.
@@ -380,5 +389,6 @@ class AppColorPalette {
         AppThemeStyle.retro => retro,
         AppThemeStyle.analystBlue => analystBlue,
         AppThemeStyle.genesis => genesis,
+        AppThemeStyle.cuteAnalyst => cuteAnalyst,
       };
 }

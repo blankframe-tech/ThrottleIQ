@@ -79,6 +79,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Near-black, gold and violet, sharp edges';
 
   @override
+  String get themeCuteAnalystLabel => 'Cute Analyst';
+
+  @override
+  String get themeCuteAnalystDescription =>
+      'Navy console, cyan telemetry, soft rounded edges';
+
+  @override
   String get appMarkTitle => 'App mark';
 
   @override

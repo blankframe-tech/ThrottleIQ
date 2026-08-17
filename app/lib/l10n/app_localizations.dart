@@ -230,6 +230,18 @@ abstract class AppLocalizations {
   /// **'Near-black, gold and violet, sharp edges'**
   String get themeGenesisDescription;
 
+  /// Name of the Cute Analyst skin. Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Cute Analyst'**
+  String get themeCuteAnalystLabel;
+
+  /// One-line description under the Cute Analyst skin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Navy console, cyan telemetry, soft rounded edges'**
+  String get themeCuteAnalystDescription;
+
   /// Label beside the live logo preview in the Appearance section.
   ///
   /// In en, this message translates to:

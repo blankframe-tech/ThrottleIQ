@@ -23,6 +23,7 @@ String skinLabel(AppLocalizations l10n, AppThemeStyle style) => switch (style) {
       AppThemeStyle.retro => l10n.themeRetroLabel,
       AppThemeStyle.analystBlue => l10n.themeAnalystBlueLabel,
       AppThemeStyle.genesis => l10n.themeGenesisLabel,
+      AppThemeStyle.cuteAnalyst => l10n.themeCuteAnalystLabel,
     };
 
 /// The one-line "what this skin looks like" blurb shown under each name.
@@ -37,6 +38,7 @@ String skinDescription(AppLocalizations l10n, AppThemeStyle style) =>
       AppThemeStyle.retro => l10n.themeRetroDescription,
       AppThemeStyle.analystBlue => l10n.themeAnalystBlueDescription,
       AppThemeStyle.genesis => l10n.themeGenesisDescription,
+      AppThemeStyle.cuteAnalyst => l10n.themeCuteAnalystDescription,
     };
 
 /// The skin picker for Settings › Appearance: every [AppThemeStyle] as one row

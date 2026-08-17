@@ -171,6 +171,11 @@ class AppShapeProfile {
   ///   part of the identity and rounding it off would flatten five distinct
   ///   skins toward the same soft default.
   /// - Terminal: Retro only.
+  /// - Cute Analyst reuses [rounded] rather than [boxy] — it's Analyst Blue's
+  ///   own palette (see [AppColorPalette.cuteAnalyst]) deliberately taken out
+  ///   of the "sharp console" group above and given the soft-corner treatment
+  ///   instead, including the [StartControlStyle.holdRing] Record-screen
+  ///   control that comes bundled with [rounded].
   static AppShapeProfile forStyle(AppThemeStyle style) => switch (style) {
         AppThemeStyle.carbonMono => boxy,
         AppThemeStyle.editorial => boxy,
@@ -181,5 +186,6 @@ class AppShapeProfile {
         AppThemeStyle.retro => terminal,
         AppThemeStyle.analystBlue => boxy,
         AppThemeStyle.genesis => boxy,
+        AppThemeStyle.cuteAnalyst => rounded,
       };
 }

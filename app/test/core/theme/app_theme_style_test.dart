@@ -59,13 +59,19 @@ void main() {
       }
     });
 
-    test('no two skins share a background/primary pair', () {
-      // The copy-paste guard: two skins with the same base and accent are the
-      // same skin under two names, whatever else differs.
+    test('no two skins share a background/primary/shape triple', () {
+      // The copy-paste guard: two skins with the same base, accent, and
+      // corner shape are the same skin under two names, whatever else
+      // differs. Color alone stopped being enough the day Cute Analyst
+      // shipped — it deliberately reuses Analyst Blue's exact palette and
+      // differs only in [AppShapeProfile] (boxy vs. rounded), so shape has to
+      // be part of the identity this guard checks.
       final seen = <String, AppThemeStyle>{};
       for (final style in AppThemeStyle.values) {
         final p = AppColorPalette.forStyle(style);
-        final key = '${p.background.toARGB32()}/${p.primary.toARGB32()}';
+        final shape = AppShapeProfile.forStyle(style);
+        final key = '${p.background.toARGB32()}/${p.primary.toARGB32()}/'
+            '${shape.radiusMd}';
         expect(seen[key], isNull,
             reason: '$style is visually identical to ${seen[key]}');
         seen[key] = style;

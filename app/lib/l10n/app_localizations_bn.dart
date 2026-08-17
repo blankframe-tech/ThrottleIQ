@@ -77,6 +77,12 @@ class AppLocalizationsBn extends AppLocalizations {
       'প্রায় কালো, সোনালি আর বেগুনি, ধারালো কোণ';
 
   @override
+  String get themeCuteAnalystLabel => 'কিউট অ্যানালিস্ট';
+
+  @override
+  String get themeCuteAnalystDescription => 'নেভি কনসোল, সায়ান মিটার, গোল কোণ';
+
+  @override
   String get appMarkTitle => 'অ্যাপের লোগো';
 
   @override
