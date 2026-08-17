@@ -7,9 +7,9 @@ import '../../l10n/app_localizations.dart';
 /// list *is* its `BottomNavigationBar` index.
 const List<String> shellTabs = [
   '/home/social',
-  '/home/stats',
-  '/home/record',
   '/home/places',
+  '/home/record',
+  '/home/stats',
   '/home/profile',
 ];
 
@@ -80,9 +80,9 @@ class AppShell extends StatelessWidget {
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
             BottomNavigationBarItem(icon: const Icon(Icons.people_outline), activeIcon: const Icon(Icons.people), label: l10n.navSocialLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.place_outlined), activeIcon: const Icon(Icons.place), label: l10n.navPlacesLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: l10n.navProfileLabel),
           ],
         ),

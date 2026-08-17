@@ -33,12 +33,12 @@ void main() {
     test('nested tab paths select their parent tab', () {
       expect(shellTabIndexForLocation('/home/profile/abc123'), 4);
       expect(shellTabIndexForLocation('/home/profile/abc123/edit'), 4);
-      expect(shellTabIndexForLocation('/home/places/add'), 3);
-      expect(shellTabIndexForLocation('/home/places/xyz'), 3);
+      expect(shellTabIndexForLocation('/home/places/add'), 1);
+      expect(shellTabIndexForLocation('/home/places/xyz'), 1);
     });
 
     test('query strings are ignored when matching', () {
-      expect(shellTabIndexForLocation('/home/places?category=fuel'), 3);
+      expect(shellTabIndexForLocation('/home/places?category=fuel'), 1);
     });
 
     test('an unknown location falls back to Record', () {
