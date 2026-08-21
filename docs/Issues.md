@@ -1965,3 +1965,41 @@ widget onto the home screen itself (the launcher's drag gesture is fragile
 over `adb input swipe` and the picker rendering real, non-placeholder-broken
 previews is equivalent proof) — everything short of that one drag gesture
 was directly observed, not inferred from logs.
+
+---
+
+## 32. UI/UX critique of the current screen set — surfaced, not fixed (2026-08-17)
+
+**Status:** Not started. Design/polish findings, not root-caused bugs — no
+code changed. Full writeup with screenshot references in
+`docs/uiux_critique.md`; summarized here per this file's convention of one
+`##` per tracked problem.
+
+Reviewed the 40-screen `screenshots/carbon_mono/` walkthrough end to end.
+Most findings are subjective design critique (see the doc), but a few are
+concrete defects worth tracking as real issues:
+
+- **Paused-ride screen dims the stat card, not just the map**
+  (`06_ride_paused.png`) — speed/distance/brake-accel numbers fade to
+  near-illegible grey-on-black under the pause scrim, on the one screen
+  meant to be glanced at mid-ride.
+- **Places list FAB overlaps the last list row** (`23_places_nearby.png`) —
+  "+ Add place" has no reserved bottom padding and sits on top of content.
+- **Zero-review places render as `★ —`** (`23_places_nearby.png`) instead of
+  "No ratings yet" — reads as a rendering bug, not an empty state.
+- **Ride summary shows the riding score twice** (`08_ride_summary.png`) — a
+  `100 / SMOOTH OP.` card and an adjacent `RIDING SCORE / Smooth op. / out of
+  100` card duplicate the same value.
+- **Maintenance status pill doesn't escalate before 0 km left**
+  (`21_maintenance_service_checks.png`) — a part at ~13% of its interval
+  remaining shows the same green "OK" as one at 99% remaining, which defeats
+  the point of an early-warning indicator.
+- **Emergency Contacts is exposed in Settings while explicitly non-functional**
+  (`38_settings.png`) — copy states alerts "aren't live yet"; a safety
+  feature presented as available but inert risks a false sense of security.
+
+The rest (dead space on Home/`03_home_record.png`, busy live-ride map
+styling, unlabeled chart axes, theme-picker list without live previews,
+low-contrast secondary text, slide-to-start friction on the primary CTA) are
+polish/opinion calls — see `docs/uiux_critique.md` for the full list and
+reasoning. None of this has been triaged into actual work items yet.
