@@ -801,6 +801,81 @@ regression file for §33.1/§33.3,
 errors), `flutter test` **809/809** (up from 804), `npm run test:rules`
 **32/32** (up from 19), and `node --check` on both edited scripts.
 
+**Appearance system redesigned: Vibe / Brightness / Color as three
+independent axes, replacing the flat ten-skin dropdown — 2026-08-23 (same
+day, later session).** Requested directly: a rider should be able to pick
+Boxy or Curvy shape, Dark or Light brightness, and one of seven color
+families, in any combination — "sharp dark like Nothing OS" and "rounded
+light like iOS" from every family, not just whichever brightness/shape a
+skin happened to ship with originally.
+- `AppThemeStyle` (10 flat skins) split into three independent enums/values:
+  `AppColorMode` (7 families — Carbon Mono, Editorial, Nocturne, Trail
+  Social, Calming, Retro, Analyst Blue), `AppShapeVibe` (`boxy`/`curvy` —
+  `terminal` retired, Retro now takes whichever vibe like everyone else),
+  and `Brightness` (Flutter's own dark/light). `AppColorPalette.forMode(mode,
+  brightness)` replaces `forStyle`.
+- **Positive Vibes, Genesis, and Cute Analyst were dropped** — each was
+  really another family's colors under a different name (Positive Vibes ≈
+  Calming's green story; Cute Analyst was *literally* `AppColorPalette
+  .analystBlue` with a different shape) or a hue with no natural light/dark
+  companion (Genesis's gold/violet). Cute Analyst's own mechanism — reusing
+  a palette under a different shape — is exactly what Vibe now does
+  generically for every family, which is what made dropping it as a
+  separate named option lose no capability.
+- **The four color families that only ever shipped one brightness gained a
+  same-hue-family companion**, not an unrelated new color story: Carbon
+  Mono's light companion darkens the same lime/magenta hues (verified
+  ≥3:1 contrast against white, the WCAG AA bar for UI components) instead
+  of borrowing Editorial's blue. 14 palettes total, up from 10.
+- **Settings' Appearance section** now shows three controls: two 2-segment
+  pickers (Vibe, Brightness, reusing the existing `_SegmentedOption` the
+  Language control already used) and a `ColorModeDropdown` (in the new
+  `appearance_picker.dart`, replacing `skin_dropdown.dart`) whose row
+  swatches preview each family resolved against the rider's *currently
+  selected* Vibe/Brightness, since color no longer implies either.
+- **Persistence**: three independent `SharedPreferences` keys
+  (`color_mode`/`shape_vibe`/`brightness`) instead of one flat
+  `theme_style` — a rider who only ever changes Brightness has no
+  `color_mode` key on disk at all, and each axis restores independently
+  with the other two defaulting, rather than an all-or-nothing decode. A
+  pre-redesign rider's flat skin choice migrates to the equivalent triple
+  once (dropped families map to their closest surviving equivalent; Cute
+  Analyst's migration is exact).
+- l10n: `skinFieldLabel`/the three dropped families' label+description keys
+  removed; `vibeFieldLabel`/`vibeBoxyLabel`/`vibeCurvyLabel`/
+  `brightnessFieldLabel`/`brightnessDarkLabel`/`brightnessLightLabel`/
+  `colorFieldLabel` added in both `app_en.arb` and `app_bn.arb`, and the
+  seven surviving families' descriptions were generalized to name only
+  their hues (no more "…, sharp edges" baked into a color's blurb).
+  `flutter gen-l10n` re-run and the generated files committed.
+- All five theme-system test files rewritten for the new model
+  (`app_theme_style_test.dart`, `app_typography_test.dart`,
+  `theme_style_provider_test.dart`, `app_logo_test.dart`, and
+  `skin_dropdown_test.dart` → `appearance_picker_test.dart`) — including new
+  coverage the old flat model couldn't express (every one of the 14
+  palettes checked for contrast/dark-agreement/distinctness; the legacy
+  single-key → triple migration checked per historical skin name; Retro
+  checked as monochrome in *both* brightnesses). Caught and fixed one real
+  bug the new tests surfaced before commit: the persistence loader required
+  all three new keys to decode successfully before trusting any of them,
+  so a rider who'd only ever changed one axis would have it silently
+  ignored on restart — now each axis decodes and defaults independently.
+  Verified: `flutter analyze` clean (same pre-existing noise, no new
+  errors), `flutter test` **816/816** (up from 809).
+
+**Vibe/Brightness/Color build installed and confirmed running on Abraar's
+iPhone 15 — 2026-08-23 (same day, later still).** `flutter build ios
+--release` → `devicectl device install app` → `devicectl device process
+launch`, the same reliable sequence documented earlier in this file — no
+signing failure, no `flutter clean` needed. Confirmed via `devicectl device
+info processes` that the freshly-installed container's `Runner` process was
+actually alive on-device (not just "launched" then immediately crashed).
+**Not yet independently confirmed:** this environment has no screenshot/UI-
+automation tooling for a physical iOS device (no `idevicescreenshot`), so
+what's actually rendered on screen — in particular, the new three-axis
+Appearance picker — still needs a human eyes-on pass, same standing
+limitation as every prior device run in this file (`Issues.md` §15).
+
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
 - **Navigation is geometric, not routed** — turn-by-turn follows a saved route's own polyline: no street names, no lane guidance, and no rerouting (it reports "off route" instead). Deliberate: no routing engine or API key exists. See `Assumptions Made.md`.
@@ -1067,6 +1142,14 @@ working harder. Everything from 6 down runs in parallel with that wait.
 - [x] ~~Deploy the live-share viewer~~ **DONE 2026-07-14** — hosted at `throttleiqfb.web.app` (verified 200); the app's share links point there.
 
 ### Soon (requires Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
+
+> **Considering avoiding Blaze entirely (a Supabase migration, or similar)?**
+> See `docs/backend_options.md` — written 2026-08-23, weighs enabling Blaze
+> against a surgical Cloudflare/Vercel workaround and a full backend
+> migration, with a real 10K-DAU cost estimate. Short version: enable
+> Blaze — migrating means rewriting `firestore.rules` (960 lines, audited
+> across `Issues.md` §3/§10/§24/§33) as Postgres RLS from scratch.
+
 - [ ] **Cloud Functions** — deploy `functions/` (crash-notification escalation).
   Currently SMS/email are mocked; wire Twilio (SMS) and/or SendGrid (email)
   with real credentials via functions config — **needs the project owner's

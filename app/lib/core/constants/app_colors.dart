@@ -3,9 +3,10 @@ import '../theme/app_theme_style.dart';
 
 /// Runtime-swappable color tokens for ThrottleIQ.
 ///
-/// Backed by an [AppColorPalette] ("Carbon Mono" dark by default, or
-/// "Editorial" light) that [apply] swaps out when the user changes their
-/// appearance preference in Settings — see `theme_style_provider.dart`.
+/// Backed by an [AppColorPalette] (Carbon Mono, Boxy, Dark by default) that
+/// [apply] swaps out when the user changes their appearance preference
+/// (color mode and/or brightness) in Settings — see
+/// `theme_style_provider.dart`.
 ///
 /// Field names are kept stable so the ~565 references across the app pick up
 /// whichever palette is current without call-site churn. Because these are
@@ -15,7 +16,7 @@ import '../theme/app_theme_style.dart';
 class AppColors {
   AppColors._();
 
-  static AppColorPalette _current = AppColorPalette.carbonMono;
+  static AppColorPalette _current = AppColorPalette.carbonMonoDark;
 
   static void apply(AppColorPalette palette) {
     _current = palette;

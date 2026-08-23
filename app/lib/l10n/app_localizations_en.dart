@@ -18,72 +18,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appearanceSection => 'Appearance';
 
   @override
+  String get vibeFieldLabel => 'Vibe';
+
+  @override
+  String get vibeBoxyLabel => 'Boxy';
+
+  @override
+  String get vibeBoxyDescription => 'Sharp corners';
+
+  @override
+  String get vibeCurvyLabel => 'Curvy';
+
+  @override
+  String get vibeCurvyDescription => 'Rounded corners';
+
+  @override
+  String get brightnessFieldLabel => 'Brightness';
+
+  @override
+  String get brightnessDarkLabel => 'Dark';
+
+  @override
+  String get brightnessDarkDescription => 'Dark base';
+
+  @override
+  String get brightnessLightLabel => 'Light';
+
+  @override
+  String get brightnessLightDescription => 'Light base';
+
+  @override
+  String get colorFieldLabel => 'Color';
+
+  @override
   String get themeCarbonLabel => 'Carbon Mono';
 
   @override
-  String get themeCarbonDescription => 'Dark, sharp, instrument-panel';
+  String get themeCarbonDescription => 'Lime and magenta';
 
   @override
   String get themeEditorialLabel => 'Editorial';
 
   @override
-  String get themeEditorialDescription => 'Light, warm paper, sharp edges';
-
-  @override
-  String get skinFieldLabel => 'Skin';
+  String get themeEditorialDescription => 'Blue and orange, paper warmth';
 
   @override
   String get themeNocturneLabel => 'Nocturne';
 
   @override
-  String get themeNocturneDescription =>
-      'Deep indigo, lavender glow, sharp edges';
+  String get themeNocturneDescription => 'Indigo and lavender glow';
 
   @override
   String get themeTrailSocialLabel => 'Trail Social';
 
   @override
-  String get themeTrailSocialDescription => 'Dark feed, punchy orange, rounded';
+  String get themeTrailSocialDescription => 'Punchy kudos orange';
 
   @override
   String get themeCalmingLabel => 'Calming';
 
   @override
-  String get themeCalmingDescription => 'Warm cream, soft sage, rounded';
-
-  @override
-  String get themePositiveVibesLabel => 'Positive Vibes';
-
-  @override
-  String get themePositiveVibesDescription => 'Bright white and green, rounded';
+  String get themeCalmingDescription => 'Warm sage and tan';
 
   @override
   String get themeRetroLabel => 'Retro';
 
   @override
-  String get themeRetroDescription =>
-      'Black-and-white terminal, hard square edges';
+  String get themeRetroDescription => 'Black-and-white terminal, no color';
 
   @override
   String get themeAnalystBlueLabel => 'Analyst Blue';
 
   @override
-  String get themeAnalystBlueDescription =>
-      'Navy console, cyan telemetry, sharp edges';
-
-  @override
-  String get themeGenesisLabel => 'Genesis';
-
-  @override
-  String get themeGenesisDescription =>
-      'Near-black, gold and violet, sharp edges';
-
-  @override
-  String get themeCuteAnalystLabel => 'Cute Analyst';
-
-  @override
-  String get themeCuteAnalystDescription =>
-      'Navy console, cyan telemetry, soft rounded edges';
+  String get themeAnalystBlueDescription => 'Navy console, cyan telemetry';
 
   @override
   String get appMarkTitle => 'App mark';

@@ -20,7 +20,7 @@ void main() {
   });
 
   group('AppLogo', () {
-    testWidgets('renders the dark mark under Carbon Mono', (tester) async {
+    testWidgets('renders the dark mark under the default appearance', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(home: AppLogo(size: 40)),
@@ -31,10 +31,10 @@ void main() {
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
     });
 
-    // The regression this file exists for: toggling appearance must swap the
-    // mark. AppLogo watches themeStyleProvider directly, so a `const`
+    // The regression this file exists for: toggling brightness must swap the
+    // mark. AppLogo watches appearanceProvider directly, so a `const`
     // constructor at the call site does not (and must not) prevent it.
-    testWidgets('swaps to the light mark when appearance changes', (tester) async {
+    testWidgets('swaps to the light mark when brightness changes', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -47,18 +47,15 @@ void main() {
       await tester.pump();
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
 
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.editorial);
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
       await tester.pump();
 
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
     });
 
-    // The mark follows the skin's base brightness, not `style == carbonMono`
-    // — which was the rule until there was more than one dark skin, and would
-    // now hand every new dark skin the light mark.
-    testWidgets('every skin gets the mark matching its brightness',
+    // The mark follows brightness directly, not the color mode — every color
+    // mode must get the mark matching whichever brightness it's paired with.
+    testWidgets('every color mode gets the mark matching the active brightness',
         (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -70,16 +67,19 @@ void main() {
         ),
       );
 
-      for (final style in AppThemeStyle.values) {
-        await container.read(themeStyleProvider.notifier).setStyle(style);
-        await tester.pump();
-        expect(
-          assetNameOf(tester),
-          AppColorPalette.forStyle(style).isDark
-              ? 'assets/icons/throttleiq-icon-dark.svg'
-              : 'assets/icons/throttleiq-icon-light.svg',
-          reason: '$style',
-        );
+      for (final brightness in Brightness.values) {
+        await container.read(appearanceProvider.notifier).setBrightness(brightness);
+        for (final mode in AppColorMode.values) {
+          await container.read(appearanceProvider.notifier).setColorMode(mode);
+          await tester.pump();
+          expect(
+            assetNameOf(tester),
+            brightness == Brightness.dark
+                ? 'assets/icons/throttleiq-icon-dark.svg'
+                : 'assets/icons/throttleiq-icon-light.svg',
+            reason: '$mode/$brightness',
+          );
+        }
       }
     });
 
@@ -93,15 +93,11 @@ void main() {
           child: const MaterialApp(home: AppLogo(size: 40)),
         ),
       );
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.editorial);
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
       await tester.pump();
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
 
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.carbonMono);
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
       await tester.pump();
 
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
@@ -126,9 +122,7 @@ void main() {
       await tester.pump();
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
 
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.editorial);
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
       await tester.pump();
 
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');

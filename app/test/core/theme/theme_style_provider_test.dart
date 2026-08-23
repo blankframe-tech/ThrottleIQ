@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,219 +10,242 @@ import 'package:throttleiq/core/theme/app_typography.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
 
 void main() {
-  group('ThemeStyleNotifier', () {
-    test('defaults to Carbon Mono and applies its palette to AppColors immediately', () async {
+  group('AppearanceNotifier', () {
+    test('defaults to Carbon Mono/Boxy/Dark and applies it to AppColors immediately', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(container.read(themeStyleProvider), AppThemeStyle.carbonMono);
-      expect(AppColors.primary, AppColorPalette.carbonMono.primary);
-      expect(AppColors.background, AppColorPalette.carbonMono.background);
+      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
+      expect(AppColors.primary, AppColorPalette.carbonMonoDark.primary);
+      expect(AppColors.background, AppColorPalette.carbonMonoDark.background);
 
       await pumpEventQueue();
     });
 
-    test('setStyle(editorial) flips both the provider state and AppColors, and persists it',
-        () async {
-      SharedPreferences.setMockInitialValues({});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      await pumpEventQueue();
-
-      await container.read(themeStyleProvider.notifier).setStyle(AppThemeStyle.editorial);
-
-      expect(container.read(themeStyleProvider), AppThemeStyle.editorial);
-      expect(AppColors.primary, AppColorPalette.editorial.primary);
-      expect(AppColors.background, AppColorPalette.editorial.background);
-
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('theme_style'), 'editorial');
-    });
-
-    test('setStyle(carbonMono) switches back from Editorial and updates AppColors', () async {
-      SharedPreferences.setMockInitialValues({'theme_style': 'editorial'});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      container.read(themeStyleProvider); // trigger lazy notifier construction
-      await pumpEventQueue();
-      expect(container.read(themeStyleProvider), AppThemeStyle.editorial);
-
-      await container.read(themeStyleProvider.notifier).setStyle(AppThemeStyle.carbonMono);
-
-      expect(container.read(themeStyleProvider), AppThemeStyle.carbonMono);
-      expect(AppColors.primary, AppColorPalette.carbonMono.primary);
-      expect(AppColors.background, AppColorPalette.carbonMono.background);
-
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('theme_style'), 'carbon');
-    });
-
-    test('a persisted "editorial" preference is restored on the next app start', () async {
-      SharedPreferences.setMockInitialValues({'theme_style': 'editorial'});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      // Providers are lazy: reading it is what constructs the notifier (and
-      // seeds Carbon Mono synchronously). Only then does its persisted-choice
-      // load kick off asynchronously — pump the event queue for that to land.
-      container.read(themeStyleProvider);
-      await pumpEventQueue();
-
-      expect(container.read(themeStyleProvider), AppThemeStyle.editorial);
-      expect(AppColors.primary, AppColorPalette.editorial.primary);
-    });
-
-    test('a skin persists under its enum name and restores from it', () async {
-      // Skins added after the original two round-trip through
-      // `AppThemeStyle.name`; only Carbon Mono and Editorial keep the two
-      // hand-written legacy spellings asserted above.
+    test('setColorMode(editorial) flips the provider state and AppColors, and persists it', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.analystBlue);
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.editorial);
+
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.editorial);
+      // Brightness/vibe are untouched by a color-only change.
+      expect(container.read(appearanceProvider).brightness, Brightness.dark);
+      expect(AppColors.primary, AppColorPalette.editorialDark.primary);
+      expect(AppColors.background, AppColorPalette.editorialDark.background);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('theme_style'), 'analystBlue');
-      expect(AppColors.primary, AppColorPalette.analystBlue.primary);
-
-      final restored = ProviderContainer();
-      addTearDown(restored.dispose);
-      restored.read(themeStyleProvider);
-      await pumpEventQueue();
-      expect(restored.read(themeStyleProvider), AppThemeStyle.analystBlue);
+      expect(prefs.getString('color_mode'), 'editorial');
     });
 
-    test('every skin survives a persist/restore round trip', () async {
-      // The encode/decode pair is hand-written (legacy spellings on one side,
-      // enum names on the other), which is exactly the kind of mapping that
-      // silently loses whichever member nobody thought to try.
-      for (final style in AppThemeStyle.values) {
+    test('setBrightness(light) flips brightness only, and persists it', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await pumpEventQueue();
+
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
+
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.carbonMono);
+      expect(container.read(appearanceProvider).brightness, Brightness.light);
+      expect(AppColors.background, AppColorPalette.carbonMonoLight.background);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('brightness'), 'light');
+    });
+
+    test('setShapeVibe(curvy) flips shape only, applies it to AppDimensions, and persists it', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await pumpEventQueue();
+
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.carbonMono);
+      expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.curvy);
+      expect(AppDimensions.shape, same(AppShapeProfile.curvy));
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('shape_vibe'), 'curvy');
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+    });
+
+    test('the three axes persist and restore independently', () async {
+      SharedPreferences.setMockInitialValues({});
+      final writer = ProviderContainer();
+      await pumpEventQueue();
+      await writer.read(appearanceProvider.notifier).setColorMode(AppColorMode.analystBlue);
+      await writer.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      await writer.read(appearanceProvider.notifier).setBrightness(Brightness.light);
+      writer.dispose();
+
+      final reader = ProviderContainer();
+      addTearDown(reader.dispose);
+      reader.read(appearanceProvider);
+      await pumpEventQueue();
+
+      final restored = reader.read(appearanceProvider);
+      expect(restored.colorMode, AppColorMode.analystBlue);
+      expect(restored.shapeVibe, AppShapeVibe.curvy);
+      expect(restored.brightness, Brightness.light);
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+    });
+
+    test('every color mode persists under its enum name and restores', () async {
+      for (final mode in AppColorMode.values) {
         SharedPreferences.setMockInitialValues({});
         final writer = ProviderContainer();
         await pumpEventQueue();
-        await writer.read(themeStyleProvider.notifier).setStyle(style);
+        // setColorMode is a no-op (and so persists nothing) when already on
+        // the requested mode — real for the default, Carbon Mono, so detour
+        // through a different mode first to force an actual transition.
+        final detour =
+            mode == AppColorMode.retro ? AppColorMode.editorial : AppColorMode.retro;
+        await writer.read(appearanceProvider.notifier).setColorMode(detour);
+        await writer.read(appearanceProvider.notifier).setColorMode(mode);
         writer.dispose();
 
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('color_mode'), mode.name, reason: '$mode');
+
         final reader = ProviderContainer();
-        reader.read(themeStyleProvider);
+        reader.read(appearanceProvider);
         await pumpEventQueue();
-        expect(reader.read(themeStyleProvider), style, reason: '$style');
+        expect(reader.read(appearanceProvider).colorMode, mode, reason: '$mode');
         reader.dispose();
       }
     });
 
-    test('an unrecognised persisted value falls back to Carbon Mono', () async {
-      // e.g. a skin removed since it was written, or prefs carried back to an
-      // older build. The rider gets the default, not a crash.
-      SharedPreferences.setMockInitialValues({'theme_style': 'vaporwave'});
+    test('an unrecognised persisted color_mode falls back to the default appearance', () async {
+      // e.g. a mode removed since it was written (positiveVibes/genesis/
+      // cuteAnalyst), or prefs carried back to an older build. Since all
+      // three new keys must decode successfully to skip the legacy path,
+      // one bad key with no legacy value to fall back to just leaves the
+      // default in place — not a crash, and not a half-applied appearance.
+      SharedPreferences.setMockInitialValues({
+        'color_mode': 'vaporwave',
+        'shape_vibe': 'boxy',
+        'brightness': 'dark',
+      });
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      container.read(themeStyleProvider);
+      container.read(appearanceProvider);
       await pumpEventQueue();
 
-      expect(container.read(themeStyleProvider), AppThemeStyle.carbonMono);
-      expect(AppColors.primary, AppColorPalette.carbonMono.primary);
+      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
+      expect(AppColors.primary, AppColorPalette.carbonMonoDark.primary);
     });
 
-    test('a skin applies its shape profile alongside its palette', () async {
-      // _applyTokens pushes color, shape and type together on purpose. The
-      // failure this guards is a half-applied skin — the new palette with the
-      // previous skin's corner radius still in place, which looks like a
-      // rendering bug rather than a settings bug.
-      SharedPreferences.setMockInitialValues({});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      await pumpEventQueue();
+    group('legacy single-key migration', () {
+      // Riders who picked a skin before Vibe/Brightness/Color became three
+      // separate choices have one flat 'theme_style' value on disk. It must
+      // decode to the equivalent triple exactly once, including the three
+      // color modes that no longer exist as standalone options.
+      const cases = <String, AppAppearance>{
+        'carbon': AppAppearance(
+            colorMode: AppColorMode.carbonMono,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: Brightness.dark),
+        'editorial': AppAppearance(
+            colorMode: AppColorMode.editorial,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: Brightness.light),
+        'trailSocial': AppAppearance(
+            colorMode: AppColorMode.trailSocial,
+            shapeVibe: AppShapeVibe.curvy,
+            brightness: Brightness.dark),
+        'retro': AppAppearance(
+            colorMode: AppColorMode.retro,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: Brightness.light),
+        // Dropped modes map to their closest surviving equivalent.
+        'positiveVibes': AppAppearance(
+            colorMode: AppColorMode.calming,
+            shapeVibe: AppShapeVibe.curvy,
+            brightness: Brightness.light),
+        'genesis': AppAppearance.defaultAppearance,
+        // Cute Analyst was always exactly Analyst Blue's palette + rounded
+        // shape, so this migration is exact, not an approximation.
+        'cuteAnalyst': AppAppearance(
+            colorMode: AppColorMode.analystBlue,
+            shapeVibe: AppShapeVibe.curvy,
+            brightness: Brightness.dark),
+      };
 
-      // Carbon Mono, the default, is boxy. Reading the provider is what
-      // constructs the notifier (and so applies the default tokens) — asserting
-      // on the facade before that would just be reading whatever the previous
-      // test left in these statics.
-      expect(container.read(themeStyleProvider), AppThemeStyle.carbonMono);
-      expect(AppDimensions.shape, same(AppShapeProfile.boxy));
-      expect(AppDimensions.radiusMd, AppShapeProfile.boxy.radiusMd);
+      for (final entry in cases.entries) {
+        test('"${entry.key}" migrates to ${entry.value.colorMode}/'
+            '${entry.value.shapeVibe}/${entry.value.brightness}', () async {
+          SharedPreferences.setMockInitialValues({'theme_style': entry.key});
+          final container = ProviderContainer();
+          addTearDown(container.dispose);
+          container.read(appearanceProvider);
+          await pumpEventQueue();
 
-      // Positive Vibes is one of the rounded directions.
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.positiveVibes);
-      expect(AppDimensions.shape, same(AppShapeProfile.rounded));
-      expect(AppDimensions.radiusMd, AppShapeProfile.rounded.radiusMd);
-      expect(AppColors.primary, AppColorPalette.positiveVibes.primary);
-
-      // ...and switching away from it must take the rounded corners with it.
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.analystBlue);
-      expect(AppDimensions.shape, same(AppShapeProfile.boxy));
-      expect(AppDimensions.radiusMd, AppShapeProfile.boxy.radiusMd);
-    });
-
-    test('Retro applies square corners and mono type together', () async {
-      // Retro is the only skin that moves all three axes at once, so it is the
-      // one that catches a facade that was forgotten in _applyTokens.
-      SharedPreferences.setMockInitialValues({});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      await pumpEventQueue();
-
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.retro);
-
-      expect(AppDimensions.shape, same(AppShapeProfile.terminal));
-      expect(AppDimensions.radiusXl, 0);
-      expect(AppDimensions.outlineWidth, 2);
-      expect(AppTypography.isMono, isTrue);
-      expect(AppColors.border, AppColorPalette.retro.ink);
-
-      await container
-          .read(themeStyleProvider.notifier)
-          .setStyle(AppThemeStyle.carbonMono);
-      expect(AppDimensions.radiusXl, AppShapeProfile.boxy.radiusXl);
-      expect(AppTypography.isMono, isFalse);
-    });
-
-    test('a persisted skin restores its shape, not just its palette', () async {
-      SharedPreferences.setMockInitialValues({'theme_style': 'calming'});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      container.read(themeStyleProvider);
-      await pumpEventQueue();
-
-      expect(container.read(themeStyleProvider), AppThemeStyle.calming);
-      expect(AppDimensions.shape, same(AppShapeProfile.rounded));
-    });
-
-    test('every skin\'s applied shape matches its declared profile', () async {
-      for (final style in AppThemeStyle.values) {
-        SharedPreferences.setMockInitialValues({});
-        final container = ProviderContainer();
-        await pumpEventQueue();
-        await container.read(themeStyleProvider.notifier).setStyle(style);
-        expect(AppDimensions.shape, same(AppShapeProfile.forStyle(style)),
-            reason: '$style');
-        container.dispose();
+          expect(container.read(appearanceProvider), entry.value);
+          addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+        });
       }
     });
 
-    test('setStyle is a no-op when already on the requested style', () async {
+    test('an appearance applies its shape profile alongside its palette', () async {
+      // _applyTokens pushes color, shape and type together on purpose. The
+      // failure this guards is a half-applied appearance — the new palette
+      // with the previous vibe's corner radius still in place, which looks
+      // like a rendering bug rather than a settings bug.
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(themeStyleProvider.notifier).setStyle(AppThemeStyle.carbonMono);
+      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
+      expect(AppDimensions.shape, same(AppShapeProfile.boxy));
 
-      expect(container.read(themeStyleProvider), AppThemeStyle.carbonMono);
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      expect(AppDimensions.shape, same(AppShapeProfile.curvy));
+      expect(AppDimensions.radiusMd, AppShapeProfile.curvy.radiusMd);
+
+      // ...and switching back must take the rounded corners with it.
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+      expect(AppDimensions.shape, same(AppShapeProfile.boxy));
+      expect(AppDimensions.radiusMd, AppShapeProfile.boxy.radiusMd);
+    });
+
+    test('Retro applies mono type independent of vibe/brightness', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await pumpEventQueue();
+
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.retro);
+      expect(AppTypography.isMono, isTrue);
+      // Brightness is still the default (dark) at this point.
+      expect(AppColors.border, AppColorPalette.retroDark.ink);
+
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      expect(AppTypography.isMono, isTrue); // unchanged by the vibe switch
+      expect(AppDimensions.radiusXl, AppShapeProfile.curvy.radiusXl);
+
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.carbonMono);
+      expect(AppTypography.isMono, isFalse);
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
+    });
+
+    test('setColorMode is a no-op when already on the requested mode', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await pumpEventQueue();
+
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.carbonMono);
+
+      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
       final prefs = await SharedPreferences.getInstance();
-      // Never persisted anything, since setStyle returned early.
-      expect(prefs.getString('theme_style'), isNull);
+      // Never persisted anything, since setColorMode returned early.
+      expect(prefs.getString('color_mode'), isNull);
     });
   });
 }

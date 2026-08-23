@@ -5,35 +5,36 @@ import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
 import 'app_theme_style.dart';
 import 'app_typography.dart';
+import 'theme_style_provider.dart';
 
 class AppTheme {
   AppTheme._();
 
-  /// Builds the [ThemeData] for the given [AppThemeStyle]. Reads current
+  /// Builds the [ThemeData] for the given [AppAppearance]. Reads current
   /// values off [AppColors] and [AppDimensions], both of which must already
   /// have had the matching [AppColorPalette] and [AppShapeProfile] applied
   /// (see `theme_style_provider.dart`). Display/heading type uses IBM Plex
   /// Mono; body uses IBM Plex Sans.
   ///
-  /// Shape is per-skin, not shared: some directions get rounded corners and
-  /// roomier controls, others keep the sharp instrument-panel edges — see
-  /// [AppShapeProfile.forStyle]. Nothing about the layout hierarchy changes
-  /// with the skin, only how the same widgets are drawn.
+  /// Shape is per-appearance, not shared: Curvy gets rounded corners and
+  /// roomier controls, Boxy keeps the sharp instrument-panel edges — see
+  /// [AppShapeProfile.forVibe]. Nothing about the layout hierarchy changes
+  /// with the appearance, only how the same widgets are drawn.
   ///
-  /// Retro remains the one skin that is more than shape and color. On top of
-  /// [AppShapeProfile.terminal]'s square corners and doubled rules it also
-  /// drops body type to monospace, which is the only style branch left in this
-  /// method. See [AppColorPalette.retro].
-  static ThemeData build(AppThemeStyle style) {
-    final isDark = AppColorPalette.forStyle(style).isDark;
+  /// Retro remains the one color mode that is more than shape and color: it
+  /// drops body type to monospace regardless of which shape/brightness it's
+  /// paired with, which is the only style branch left in this method. See
+  /// [AppColorPalette.retroLight]/[AppColorPalette.retroDark].
+  static ThemeData build(AppAppearance appearance) {
+    final isDark = appearance.brightness == Brightness.dark;
     final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
 
-    final isTerminal = style == AppThemeStyle.retro;
+    final isMonoColorMode = appearance.colorMode == AppColorMode.retro;
 
-    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on the terminal
-    // skin, where a proportional body face would break the illusion the
-    // rest of the direction is building.
-    final bodyText = isTerminal
+    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Retro, where a
+    // proportional body face would break the illusion the rest of the
+    // direction is building.
+    final bodyText = isMonoColorMode
         ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
         : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText

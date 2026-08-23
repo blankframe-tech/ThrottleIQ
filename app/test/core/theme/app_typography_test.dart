@@ -16,8 +16,8 @@ void main() {
 
   /// [AppTypography.display] with google_fonts' unloadable-font complaint
   /// swallowed — same reasoning as `themeFor` in app_theme_style_test.dart.
-  TextStyle displayFor(AppThemeStyle style) {
-    AppTypography.applyStyle(style);
+  TextStyle displayFor(AppColorMode colorMode) {
+    AppTypography.applyStyle(colorMode);
     late TextStyle result;
     runZonedGuarded(
       () => result = AppTypography.display(20),
@@ -31,21 +31,21 @@ void main() {
     return result;
   }
 
-  tearDown(() => AppTypography.applyStyle(AppThemeStyle.carbonMono));
+  tearDown(() => AppTypography.applyStyle(AppColorMode.carbonMono));
 
   group('AppTypography.display', () {
-    test('carries the Bengali fallback on every skin, mono or proportional', () {
-      for (final style in AppThemeStyle.values) {
-        expect(displayFor(style).fontFamilyFallback,
+    test('carries the Bengali fallback on every color mode, mono or proportional', () {
+      for (final mode in AppColorMode.values) {
+        expect(displayFor(mode).fontFamilyFallback,
             contains(AppTypography.bengaliFallback.single),
-            reason: '$style');
+            reason: '$mode');
       }
     });
 
     test('isMono only flips for Retro', () {
-      for (final style in AppThemeStyle.values) {
-        AppTypography.applyStyle(style);
-        expect(AppTypography.isMono, style == AppThemeStyle.retro, reason: '$style');
+      for (final mode in AppColorMode.values) {
+        AppTypography.applyStyle(mode);
+        expect(AppTypography.isMono, mode == AppColorMode.retro, reason: '$mode');
       }
     });
   });

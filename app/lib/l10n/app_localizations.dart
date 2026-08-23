@@ -116,131 +116,155 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearanceSection;
 
-  /// Name of the dark theme. Product name — kept recognisable across languages.
+  /// Label above the Boxy/Curvy shape selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibe'**
+  String get vibeFieldLabel;
+
+  /// Name of the sharp-cornered shape vibe.
+  ///
+  /// In en, this message translates to:
+  /// **'Boxy'**
+  String get vibeBoxyLabel;
+
+  /// One-line description under the Boxy vibe option.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharp corners'**
+  String get vibeBoxyDescription;
+
+  /// Name of the rounded-corner shape vibe.
+  ///
+  /// In en, this message translates to:
+  /// **'Curvy'**
+  String get vibeCurvyLabel;
+
+  /// One-line description under the Curvy vibe option.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded corners'**
+  String get vibeCurvyDescription;
+
+  /// Label above the Dark/Light brightness selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness'**
+  String get brightnessFieldLabel;
+
+  /// Name of the dark brightness option.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get brightnessDarkLabel;
+
+  /// One-line description under the Dark brightness option.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark base'**
+  String get brightnessDarkDescription;
+
+  /// Name of the light brightness option.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get brightnessLightLabel;
+
+  /// One-line description under the Light brightness option.
+  ///
+  /// In en, this message translates to:
+  /// **'Light base'**
+  String get brightnessLightDescription;
+
+  /// Label above the dropdown that picks the app's color mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get colorFieldLabel;
+
+  /// Name of the Carbon Mono color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Carbon Mono'**
   String get themeCarbonLabel;
 
-  /// One-line description under the Carbon Mono theme option.
+  /// One-line description under the Carbon Mono color option.
   ///
   /// In en, this message translates to:
-  /// **'Dark, sharp, instrument-panel'**
+  /// **'Lime and magenta'**
   String get themeCarbonDescription;
 
-  /// Name of the light theme. Product name — kept recognisable across languages.
+  /// Name of the Editorial color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Editorial'**
   String get themeEditorialLabel;
 
-  /// One-line description under the Editorial theme option.
+  /// One-line description under the Editorial color option.
   ///
   /// In en, this message translates to:
-  /// **'Light, warm paper, sharp edges'**
+  /// **'Blue and orange, paper warmth'**
   String get themeEditorialDescription;
 
-  /// Label above the dropdown that picks the app's visual skin.
-  ///
-  /// In en, this message translates to:
-  /// **'Skin'**
-  String get skinFieldLabel;
-
-  /// Name of the Nocturne skin. Product name — kept recognisable across languages.
+  /// Name of the Nocturne color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Nocturne'**
   String get themeNocturneLabel;
 
-  /// One-line description under the Nocturne skin option.
+  /// One-line description under the Nocturne color option.
   ///
   /// In en, this message translates to:
-  /// **'Deep indigo, lavender glow, sharp edges'**
+  /// **'Indigo and lavender glow'**
   String get themeNocturneDescription;
 
-  /// Name of the Trail Social skin. Product name — kept recognisable across languages.
+  /// Name of the Trail Social color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Trail Social'**
   String get themeTrailSocialLabel;
 
-  /// One-line description under the Trail Social skin option.
+  /// One-line description under the Trail Social color option.
   ///
   /// In en, this message translates to:
-  /// **'Dark feed, punchy orange, rounded'**
+  /// **'Punchy kudos orange'**
   String get themeTrailSocialDescription;
 
-  /// Name of the Calming skin. Product name — kept recognisable across languages.
+  /// Name of the Calming color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Calming'**
   String get themeCalmingLabel;
 
-  /// One-line description under the Calming skin option.
+  /// One-line description under the Calming color option.
   ///
   /// In en, this message translates to:
-  /// **'Warm cream, soft sage, rounded'**
+  /// **'Warm sage and tan'**
   String get themeCalmingDescription;
 
-  /// Name of the Positive Vibes skin. Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Positive Vibes'**
-  String get themePositiveVibesLabel;
-
-  /// One-line description under the Positive Vibes skin option.
-  ///
-  /// In en, this message translates to:
-  /// **'Bright white and green, rounded'**
-  String get themePositiveVibesDescription;
-
-  /// Name of the Retro skin. Product name — kept recognisable across languages.
+  /// Name of the Retro color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Retro'**
   String get themeRetroLabel;
 
-  /// One-line description under the Retro skin option.
+  /// One-line description under the Retro color option.
   ///
   /// In en, this message translates to:
-  /// **'Black-and-white terminal, hard square edges'**
+  /// **'Black-and-white terminal, no color'**
   String get themeRetroDescription;
 
-  /// Name of the Analyst Blue skin. Product name — kept recognisable across languages.
+  /// Name of the Analyst Blue color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Analyst Blue'**
   String get themeAnalystBlueLabel;
 
-  /// One-line description under the Analyst Blue skin option.
+  /// One-line description under the Analyst Blue color option.
   ///
   /// In en, this message translates to:
-  /// **'Navy console, cyan telemetry, sharp edges'**
+  /// **'Navy console, cyan telemetry'**
   String get themeAnalystBlueDescription;
-
-  /// Name of the Genesis skin. Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Genesis'**
-  String get themeGenesisLabel;
-
-  /// One-line description under the Genesis skin option.
-  ///
-  /// In en, this message translates to:
-  /// **'Near-black, gold and violet, sharp edges'**
-  String get themeGenesisDescription;
-
-  /// Name of the Cute Analyst skin. Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Cute Analyst'**
-  String get themeCuteAnalystLabel;
-
-  /// One-line description under the Cute Analyst skin option.
-  ///
-  /// In en, this message translates to:
-  /// **'Navy console, cyan telemetry, soft rounded edges'**
-  String get themeCuteAnalystDescription;
 
   /// Label beside the live logo preview in the Appearance section.
   ///

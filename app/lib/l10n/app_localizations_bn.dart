@@ -18,69 +18,79 @@ class AppLocalizationsBn extends AppLocalizations {
   String get appearanceSection => 'অ্যাপের চেহারা';
 
   @override
+  String get vibeFieldLabel => 'ভাইব';
+
+  @override
+  String get vibeBoxyLabel => 'বক্সি';
+
+  @override
+  String get vibeBoxyDescription => 'ধারালো কোণ';
+
+  @override
+  String get vibeCurvyLabel => 'কার্ভি';
+
+  @override
+  String get vibeCurvyDescription => 'গোল কোণ';
+
+  @override
+  String get brightnessFieldLabel => 'উজ্জ্বলতা';
+
+  @override
+  String get brightnessDarkLabel => 'গাঢ়';
+
+  @override
+  String get brightnessDarkDescription => 'গাঢ় বেস';
+
+  @override
+  String get brightnessLightLabel => 'হালকা';
+
+  @override
+  String get brightnessLightDescription => 'হালকা বেস';
+
+  @override
+  String get colorFieldLabel => 'রং';
+
+  @override
   String get themeCarbonLabel => 'কার্বন মোনো';
 
   @override
-  String get themeCarbonDescription => 'গাঢ়, ধারালো কোণ, মিটারের মতো';
+  String get themeCarbonDescription => 'লাইম আর ম্যাজেন্টা';
 
   @override
   String get themeEditorialLabel => 'এডিটোরিয়াল';
 
   @override
-  String get themeEditorialDescription => 'হালকা, কাগজের মতো নরম, ধারালো কোণ';
-
-  @override
-  String get skinFieldLabel => 'স্কিন';
+  String get themeEditorialDescription => 'নীল আর কমলা, কাগজের উষ্ণতা';
 
   @override
   String get themeNocturneLabel => 'নকটার্ন';
 
   @override
-  String get themeNocturneDescription => 'গাঢ় নীল, নরম বেগুনি আভা, ধারালো কোণ';
+  String get themeNocturneDescription => 'গাঢ় নীল আর বেগুনি আভা';
 
   @override
   String get themeTrailSocialLabel => 'ট্রেইল সোশ্যাল';
 
   @override
-  String get themeTrailSocialDescription => 'গাঢ় ফিড, ঝলমলে কমলা, গোল কোণ';
+  String get themeTrailSocialDescription => 'ঝলমলে কমলা';
 
   @override
   String get themeCalmingLabel => 'কামিং';
 
   @override
-  String get themeCalmingDescription => 'উষ্ণ ক্রিম, নরম সবুজ, গোল কোণ';
-
-  @override
-  String get themePositiveVibesLabel => 'পজিটিভ ভাইবস';
-
-  @override
-  String get themePositiveVibesDescription => 'ঝকঝকে সাদা আর সবুজ, গোল কোণ';
+  String get themeCalmingDescription => 'উষ্ণ সবুজ আর বাদামি';
 
   @override
   String get themeRetroLabel => 'রেট্রো';
 
   @override
-  String get themeRetroDescription => 'সাদা-কালো টার্মিনাল, চৌকো ধারালো কোণ';
+  String get themeRetroDescription => 'সাদা-কালো টার্মিনাল, কোনো রং নেই';
 
   @override
   String get themeAnalystBlueLabel => 'অ্যানালিস্ট ব্লু';
 
   @override
-  String get themeAnalystBlueDescription =>
-      'নেভি কনসোল, সায়ান মিটার, ধারালো কোণ';
-
-  @override
-  String get themeGenesisLabel => 'জেনেসিস';
-
-  @override
-  String get themeGenesisDescription =>
-      'প্রায় কালো, সোনালি আর বেগুনি, ধারালো কোণ';
-
-  @override
-  String get themeCuteAnalystLabel => 'কিউট অ্যানালিস্ট';
-
-  @override
-  String get themeCuteAnalystDescription => 'নেভি কনসোল, সায়ান মিটার, গোল কোণ';
+  String get themeAnalystBlueDescription => 'নেভি কনসোল, সায়ান মিটার';
 
   @override
   String get appMarkTitle => 'অ্যাপের লোগো';

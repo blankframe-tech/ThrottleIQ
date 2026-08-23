@@ -16,109 +16,129 @@
     "description": "Section header for the theme/appearance controls."
   },
 
-  "themeCarbonLabel": "Carbon Mono",
-  "@themeCarbonLabel": {
-    "description": "Name of the dark theme. Product name — kept recognisable across languages."
+  "vibeFieldLabel": "Vibe",
+  "@vibeFieldLabel": {
+    "description": "Label above the Boxy/Curvy shape selector."
   },
 
-  "themeCarbonDescription": "Dark, sharp, instrument-panel",
+  "vibeBoxyLabel": "Boxy",
+  "@vibeBoxyLabel": {
+    "description": "Name of the sharp-cornered shape vibe."
+  },
+
+  "vibeBoxyDescription": "Sharp corners",
+  "@vibeBoxyDescription": {
+    "description": "One-line description under the Boxy vibe option."
+  },
+
+  "vibeCurvyLabel": "Curvy",
+  "@vibeCurvyLabel": {
+    "description": "Name of the rounded-corner shape vibe."
+  },
+
+  "vibeCurvyDescription": "Rounded corners",
+  "@vibeCurvyDescription": {
+    "description": "One-line description under the Curvy vibe option."
+  },
+
+  "brightnessFieldLabel": "Brightness",
+  "@brightnessFieldLabel": {
+    "description": "Label above the Dark/Light brightness selector."
+  },
+
+  "brightnessDarkLabel": "Dark",
+  "@brightnessDarkLabel": {
+    "description": "Name of the dark brightness option."
+  },
+
+  "brightnessDarkDescription": "Dark base",
+  "@brightnessDarkDescription": {
+    "description": "One-line description under the Dark brightness option."
+  },
+
+  "brightnessLightLabel": "Light",
+  "@brightnessLightLabel": {
+    "description": "Name of the light brightness option."
+  },
+
+  "brightnessLightDescription": "Light base",
+  "@brightnessLightDescription": {
+    "description": "One-line description under the Light brightness option."
+  },
+
+  "colorFieldLabel": "Color",
+  "@colorFieldLabel": {
+    "description": "Label above the dropdown that picks the app's color mode."
+  },
+
+  "themeCarbonLabel": "Carbon Mono",
+  "@themeCarbonLabel": {
+    "description": "Name of the Carbon Mono color mode. Product name — kept recognisable across languages."
+  },
+
+  "themeCarbonDescription": "Lime and magenta",
   "@themeCarbonDescription": {
-    "description": "One-line description under the Carbon Mono theme option."
+    "description": "One-line description under the Carbon Mono color option."
   },
 
   "themeEditorialLabel": "Editorial",
   "@themeEditorialLabel": {
-    "description": "Name of the light theme. Product name — kept recognisable across languages."
+    "description": "Name of the Editorial color mode. Product name — kept recognisable across languages."
   },
 
-  "themeEditorialDescription": "Light, warm paper, sharp edges",
+  "themeEditorialDescription": "Blue and orange, paper warmth",
   "@themeEditorialDescription": {
-    "description": "One-line description under the Editorial theme option."
-  },
-
-  "skinFieldLabel": "Skin",
-  "@skinFieldLabel": {
-    "description": "Label above the dropdown that picks the app's visual skin."
+    "description": "One-line description under the Editorial color option."
   },
 
   "themeNocturneLabel": "Nocturne",
   "@themeNocturneLabel": {
-    "description": "Name of the Nocturne skin. Product name — kept recognisable across languages."
+    "description": "Name of the Nocturne color mode. Product name — kept recognisable across languages."
   },
 
-  "themeNocturneDescription": "Deep indigo, lavender glow, sharp edges",
+  "themeNocturneDescription": "Indigo and lavender glow",
   "@themeNocturneDescription": {
-    "description": "One-line description under the Nocturne skin option."
+    "description": "One-line description under the Nocturne color option."
   },
 
   "themeTrailSocialLabel": "Trail Social",
   "@themeTrailSocialLabel": {
-    "description": "Name of the Trail Social skin. Product name — kept recognisable across languages."
+    "description": "Name of the Trail Social color mode. Product name — kept recognisable across languages."
   },
 
-  "themeTrailSocialDescription": "Dark feed, punchy orange, rounded",
+  "themeTrailSocialDescription": "Punchy kudos orange",
   "@themeTrailSocialDescription": {
-    "description": "One-line description under the Trail Social skin option."
+    "description": "One-line description under the Trail Social color option."
   },
 
   "themeCalmingLabel": "Calming",
   "@themeCalmingLabel": {
-    "description": "Name of the Calming skin. Product name — kept recognisable across languages."
+    "description": "Name of the Calming color mode. Product name — kept recognisable across languages."
   },
 
-  "themeCalmingDescription": "Warm cream, soft sage, rounded",
+  "themeCalmingDescription": "Warm sage and tan",
   "@themeCalmingDescription": {
-    "description": "One-line description under the Calming skin option."
-  },
-
-  "themePositiveVibesLabel": "Positive Vibes",
-  "@themePositiveVibesLabel": {
-    "description": "Name of the Positive Vibes skin. Product name — kept recognisable across languages."
-  },
-
-  "themePositiveVibesDescription": "Bright white and green, rounded",
-  "@themePositiveVibesDescription": {
-    "description": "One-line description under the Positive Vibes skin option."
+    "description": "One-line description under the Calming color option."
   },
 
   "themeRetroLabel": "Retro",
   "@themeRetroLabel": {
-    "description": "Name of the Retro skin. Product name — kept recognisable across languages."
+    "description": "Name of the Retro color mode. Product name — kept recognisable across languages."
   },
 
-  "themeRetroDescription": "Black-and-white terminal, hard square edges",
+  "themeRetroDescription": "Black-and-white terminal, no color",
   "@themeRetroDescription": {
-    "description": "One-line description under the Retro skin option."
+    "description": "One-line description under the Retro color option."
   },
 
   "themeAnalystBlueLabel": "Analyst Blue",
   "@themeAnalystBlueLabel": {
-    "description": "Name of the Analyst Blue skin. Product name — kept recognisable across languages."
+    "description": "Name of the Analyst Blue color mode. Product name — kept recognisable across languages."
   },
 
-  "themeAnalystBlueDescription": "Navy console, cyan telemetry, sharp edges",
+  "themeAnalystBlueDescription": "Navy console, cyan telemetry",
   "@themeAnalystBlueDescription": {
-    "description": "One-line description under the Analyst Blue skin option."
-  },
-
-  "themeGenesisLabel": "Genesis",
-  "@themeGenesisLabel": {
-    "description": "Name of the Genesis skin. Product name — kept recognisable across languages."
-  },
-
-  "themeGenesisDescription": "Near-black, gold and violet, sharp edges",
-  "@themeGenesisDescription": {
-    "description": "One-line description under the Genesis skin option."
-  },
-
-  "themeCuteAnalystLabel": "Cute Analyst",
-  "@themeCuteAnalystLabel": {
-    "description": "Name of the Cute Analyst skin. Product name — kept recognisable across languages."
-  },
-
-  "themeCuteAnalystDescription": "Navy console, cyan telemetry, soft rounded edges",
-  "@themeCuteAnalystDescription": {
-    "description": "One-line description under the Cute Analyst skin option."
+    "description": "One-line description under the Analyst Blue color option."
   },
 
   "appMarkTitle": "App mark",

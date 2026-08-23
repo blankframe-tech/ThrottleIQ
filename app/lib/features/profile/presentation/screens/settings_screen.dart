@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/locale_provider.dart';
-import '../../../../core/theme/app_theme_style.dart';
+import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/theme/theme_style_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/widgets/auto_tracking_tile.dart';
 import '../providers/emergency_contacts_provider.dart';
-import '../widgets/skin_dropdown.dart';
+import '../widgets/appearance_picker.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -28,7 +28,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final user = ref.watch(currentUserProvider);
     final contacts = ref.watch(emergencyContactsNotifierProvider);
-    final themeStyle = ref.watch(themeStyleProvider);
+    final appearance = ref.watch(appearanceProvider);
     final appLocale = ref.watch(localeProvider);
 
     return Scaffold(
@@ -85,18 +85,98 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── Appearance ─────────────────────────────────────────────────
+          // Three independent choices, not one flat skin list: Vibe (shape),
+          // Brightness, and Color each pick their own axis, so any of the
+          // seven color modes can be sharp or curvy, dark or light. A rider
+          // who wants "sharp, like Nothing" or "rounded, like iOS" sets Vibe
+          // once and every color mode they try afterward respects it.
           Text(l10n.appearanceSection,
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 12),
-          // Nine skins is well past what a segmented control can hold — the
-          // two-up switch this replaced gave each option a label *and* a
-          // description at full width, which is exactly the affordance that
-          // doesn't survive being divided nine ways. A dropdown keeps both,
-          // and keeps the closed state to one line.
-          const SkinDropdown(),
+          Text(l10n.vibeFieldLabel,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.vibeBoxyLabel,
+                    description: l10n.vibeBoxyDescription,
+                    selected: appearance.shapeVibe == AppShapeVibe.boxy,
+                    onTap: () => ref
+                        .read(appearanceProvider.notifier)
+                        .setShapeVibe(AppShapeVibe.boxy),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.vibeCurvyLabel,
+                    description: l10n.vibeCurvyDescription,
+                    selected: appearance.shapeVibe == AppShapeVibe.curvy,
+                    onTap: () => ref
+                        .read(appearanceProvider.notifier)
+                        .setShapeVibe(AppShapeVibe.curvy),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(l10n.brightnessFieldLabel,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.brightnessDarkLabel,
+                    description: l10n.brightnessDarkDescription,
+                    selected: appearance.brightness == Brightness.dark,
+                    onTap: () => ref
+                        .read(appearanceProvider.notifier)
+                        .setBrightness(Brightness.dark),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.brightnessLightLabel,
+                    description: l10n.brightnessLightDescription,
+                    selected: appearance.brightness == Brightness.light,
+                    onTap: () => ref
+                        .read(appearanceProvider.notifier)
+                        .setBrightness(Brightness.light),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const ColorModeDropdown(),
           const SizedBox(height: 12),
           // A live preview of the mark for the selected appearance.
           //
@@ -128,7 +208,7 @@ class SettingsScreen extends ConsumerWidget {
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 2),
                       Text(
-                        AppColorPalette.forStyle(themeStyle).isDark
+                        appearance.brightness == Brightness.dark
                             ? l10n.appMarkDarkDescription
                             : l10n.appMarkLightDescription,
                         style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -417,9 +497,10 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
   }
 }
 
-/// One tappable segment of a label-plus-description segmented control. Used by
-/// the Language control (three segments); Appearance used to share it, before
-/// the skin list outgrew a segmented control and moved to [SkinDropdown].
+/// One tappable segment of a label-plus-description segmented control. Used
+/// by the Language control (three segments) and by Appearance's Vibe and
+/// Brightness controls (two segments each) — Color has too many options for
+/// this shape and uses [ColorModeDropdown] instead.
 class _SegmentedOption extends StatelessWidget {
   const _SegmentedOption({
     required this.label,

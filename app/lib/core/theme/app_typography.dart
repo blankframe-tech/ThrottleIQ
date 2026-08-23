@@ -22,12 +22,14 @@ import 'app_theme_style.dart';
 class AppTypography {
   AppTypography._();
 
-  static AppThemeStyle _style = AppThemeStyle.carbonMono;
+  static AppColorMode _colorMode = AppColorMode.carbonMono;
 
-  static void applyStyle(AppThemeStyle style) => _style = style;
+  static void applyStyle(AppColorMode colorMode) => _colorMode = colorMode;
 
-  /// Whether the current skin sets display type in a monospace face.
-  static bool get isMono => _style == AppThemeStyle.retro;
+  /// Whether the current color mode sets display type in a monospace face.
+  /// Independent of shape/brightness — Retro is monospace whether it's Boxy
+  /// or Curvy, dark or light.
+  static bool get isMono => _colorMode == AppColorMode.retro;
 
   /// Bundled Bengali fallback (see pubspec.yaml) for every text style this
   /// app hands out. Neither Space Grotesk, IBM Plex Sans, nor IBM Plex Mono
