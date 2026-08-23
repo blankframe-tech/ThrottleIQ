@@ -109,8 +109,29 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  /// Signs out and, on a device someone else may sign into next, makes sure
+  /// nothing of this rider's is left behind to leak into the next account.
+  ///
+  /// docs/Issues.md §33.1/§33.10: this used to be a bare `_auth.signOut()`.
+  /// Two gaps that closed:
+  ///   - `GoogleSignIn().signOut()` — without it, a later `signInWithGoogle()`
+  ///     on the same device could silently reauthenticate the account that
+  ///     just signed out instead of showing the picker.
+  ///   - The confidentiality gap itself is closed at the query layer, not
+  ///     here: every "unsynced" query (`RideDao.getUnsynced`, the bikes/
+  ///     maintenance queries in `SyncManager._performSync`) is now scoped to
+  ///     `user_id`, so a sync started by whoever is signed in next can never
+  ///     pick up rows this rider recorded but hadn't synced yet. Those rows
+  ///     stay put — unsynced but no longer uploadable under a stranger's
+  ///     account — until this rider signs back in on this device, at which
+  ///     point they sync normally. Deliberately NOT wiping the local DB here:
+  ///     that would destroy exactly the offline data durability the outbox/
+  ///     local-first design exists for, on every ordinary sign-out.
   Future<void> signOut() async {
     await _auth.signOut();
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {/* not signed in via Google, or already signed out */}
     state = const AsyncValue.data(null);
   }
 }

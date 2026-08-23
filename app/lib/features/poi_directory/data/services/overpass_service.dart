@@ -45,6 +45,15 @@ class OverpassService {
     required double longitude,
     required double radiusMeters,
   }) async {
+    // docs/Issues.md §33.16: latitude/longitude/radiusMeters are spliced
+    // directly into the query text below, so a non-finite value (NaN/
+    // Infinity — e.g. from a corrupted last-known-location) would render as
+    // the literal strings "NaN"/"Infinity" and produce a malformed query.
+    // Reject before building it rather than let Overpass reject it.
+    if (!latitude.isFinite || !longitude.isFinite || !radiusMeters.isFinite) {
+      return const [];
+    }
+
     final radius = radiusMeters.round();
     final query = '''
 [out:json][timeout:25];
@@ -59,17 +68,24 @@ class OverpassService {
 out body;
 ''';
 
-    final response = await _dio.post<Map<String, dynamic>>(
-      _endpoint,
-      data: {'data': query},
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        _endpoint,
+        data: {'data': query},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      );
 
-    final elements = (response.data?['elements'] as List<dynamic>?) ?? [];
-    return elements
-        .map((e) => parseElement(e as Map<String, dynamic>))
-        .whereType<OverpassCandidate>()
-        .toList();
+      final elements = (response.data?['elements'] as List<dynamic>?) ?? [];
+      return elements
+          .map((e) => parseElement(e as Map<String, dynamic>))
+          .whereType<OverpassCandidate>()
+          .toList();
+    } on DioException {
+      // Matches NominatimService's defensive pattern: a free, rate-limited
+      // public API failing (timeout, 429, transient outage) should not crash
+      // an explicit "Import nearby" tap — it should just come back empty.
+      return const [];
+    }
   }
 
   /// Parses one raw Overpass JSON element into a candidate, or null when it

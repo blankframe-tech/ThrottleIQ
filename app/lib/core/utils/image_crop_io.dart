@@ -27,7 +27,18 @@ Future<String> writeCroppedImage({
   int quality = 90,
 }) async {
   final bytes = await File(sourcePath).readAsBytes();
-  final decoded = img.decodeImage(bytes);
+
+  // docs/Issues.md §33.11: check the header-declared dimensions (cheap —
+  // `startDecode` parses dimensions without decoding pixel data) before the
+  // full pixel decode below, which would otherwise happily materialize a
+  // multi-gigabyte bitmap for a crafted file with tiny compressed bytes but
+  // a huge declared width/height (a decompression bomb).
+  final decoder = img.findDecoderForData(bytes);
+  final info = decoder?.startDecode(bytes);
+  if (decoder == null || info == null || info.width * info.height > 50 * 1000 * 1000) {
+    throw const FormatException('Unsupported, corrupt, or oversized image');
+  }
+  final decoded = decoder.decode(bytes);
   if (decoded == null) {
     throw const FormatException('Unsupported or corrupt image');
   }

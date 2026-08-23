@@ -34,19 +34,36 @@ class RideDao {
     await db.update('rides', ride, where: 'id = ?', whereArgs: [ride['id']]);
   }
 
+  /// Ends a ride's recording lifecycle. Defaults `status` to `'completed'` —
+  /// the normal end-of-ride call never passes one — but a caller that DOES
+  /// pass a `status` (crash detection writing `'crash'`, a dismissed false
+  /// positive writing `'active'`) must have it win.
+  ///
+  /// docs/Issues.md §33.3: this used to spread `data` first and hardcode
+  /// `'status': 'completed'` after it, so the literal always overrode
+  /// whatever status the caller asked for — `status: 'crash'` was silently
+  /// rewritten to `'completed'` the instant it was written, and a dismissed
+  /// crash's `status: 'active'` never stuck either. `status: 'crash'` was
+  /// never actually persisted anywhere.
   Future<void> finalizeRide(String id, Map<String, dynamic> data) async {
     final db = await DatabaseHelper.instance.database;
     await db.update(
       'rides',
-      {...data, 'status': 'completed', 'synced': 0},
+      {'status': 'completed', ...data, 'synced': 0},
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  Future<List<Map<String, dynamic>>> getUnsynced() async {
+  /// docs/Issues.md §33.1: scoped to [userId] — this feeds directly into
+  /// SyncManager's upload pass, and an unscoped query would happily hand
+  /// another rider's still-unsynced rides to whichever account is currently
+  /// signed in on this device.
+  Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
     final db = await DatabaseHelper.instance.database;
-    return db.query('rides', where: 'synced = 0 AND status = ?', whereArgs: ['completed']);
+    return db.query('rides',
+        where: 'user_id = ? AND synced = 0 AND status = ?',
+        whereArgs: [userId, 'completed']);
   }
 
   Future<void> markSynced(String id) async {

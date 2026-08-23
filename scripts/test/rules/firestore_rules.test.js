@@ -40,6 +40,7 @@ const {
   increment,
   runTransaction,
   writeBatch,
+  Timestamp,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
@@ -360,4 +361,191 @@ test('vote bump still succeeds alongside its own votes/{uid} doc', async () => {
 test('vote bump without the votes/{uid} doc is still denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(updateDoc(doc(db, 'rides', RIDE_ID), { upvotes: increment(1) }));
+});
+
+// ---------------------------------------------------------------------------
+// liveSessions/{token} — §33.2: the read rule must also honor expiresAt, not
+// just shareable.
+// ---------------------------------------------------------------------------
+
+const LIVE_TOKEN = 'a'.repeat(32);
+
+function seedLiveSession(overrides) {
+  return testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'liveSessions', LIVE_TOKEN), {
+      uid: ALICE,
+      rideId: RIDE_ID,
+      shareable: true,
+      expiresAt: Timestamp.fromMillis(Date.now() + 60_000),
+      ...overrides,
+    });
+  });
+}
+
+test('an unauthenticated reader can read a shareable, unexpired live session', async () => {
+  await seedLiveSession({});
+  const db = testEnv.unauthenticatedContext().firestore();
+  await assertSucceeds(getDoc(doc(db, 'liveSessions', LIVE_TOKEN)));
+});
+
+test('an expired live session is denied even though shareable is still true', async () => {
+  // The exact §33.2 exploit: a link the app itself would call "expired,"
+  // read straight off Firestore instead of through the 24h JS check.
+  await seedLiveSession({ expiresAt: Timestamp.fromMillis(Date.now() - 60_000) });
+  const db = testEnv.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(db, 'liveSessions', LIVE_TOKEN)));
+});
+
+test('a live session with no expiresAt at all is denied (fails closed, like legacy shareable)', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'liveSessions', LIVE_TOKEN), {
+      uid: ALICE,
+      rideId: RIDE_ID,
+      shareable: true,
+      // no expiresAt
+    });
+  });
+  const db = testEnv.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(db, 'liveSessions', LIVE_TOKEN)));
+});
+
+// ---------------------------------------------------------------------------
+// users/{uid}/notifications/{id} — §33.4: type enum + fromPhotoUrl domain
+// allowlist on create.
+// ---------------------------------------------------------------------------
+
+function notificationRef(db, ownerUid = ALICE) {
+  return doc(collection(db, 'users', ownerUid, 'notifications'));
+}
+
+test('a valid follow notification (no photo) is allowed', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(notificationRef(db), {
+      type: 'follow',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: null,
+      read: false,
+    })
+  );
+});
+
+test('a valid follow notification with an allowlisted Cloudinary photo is allowed', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(notificationRef(db), {
+      type: 'follow',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: 'https://res.cloudinary.com/vjvcigkt/image/upload/v1/avatars/mallory.jpg',
+      read: false,
+    })
+  );
+});
+
+test('a valid groupRideInvite notification with a groupRideId is allowed', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(notificationRef(db), {
+      type: 'groupRideInvite',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: '',
+      groupRideId: 'ride-123',
+      read: false,
+    })
+  );
+});
+
+test('a notification with an unknown type is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(notificationRef(db), {
+      type: 'systemAlert',
+      fromUid: MALLORY,
+      fromName: 'Admin: verify your account',
+      read: false,
+    })
+  );
+});
+
+test('a notification with a non-allowlisted fromPhotoUrl (the tracking-pixel vector) is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(notificationRef(db), {
+      type: 'follow',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: 'https://attacker.example/pixel.png',
+      read: false,
+    })
+  );
+});
+
+test('a groupRideInvite notification with no groupRideId is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(notificationRef(db), {
+      type: 'groupRideInvite',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: '',
+      read: false,
+    })
+  );
+});
+
+test('a notification spoofing fromUid as someone else is still denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(notificationRef(db), {
+      type: 'follow',
+      fromUid: ALICE,
+      fromName: 'Alice',
+      fromPhotoUrl: null,
+      read: false,
+    })
+  );
+});
+
+// ---------------------------------------------------------------------------
+// crashNotifications/{id} — §33.18: create-only, no client update/delete.
+// ---------------------------------------------------------------------------
+
+test('a rider can create their own pending crash notification', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(doc(db, 'crashNotifications', 'crash-1'), {
+      uid: MALLORY,
+      rideId: RIDE_ID,
+      status: 'pending',
+    })
+  );
+});
+
+test('a crash notification created with a non-pending status is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(doc(db, 'crashNotifications', 'crash-1'), {
+      uid: MALLORY,
+      rideId: RIDE_ID,
+      status: 'acknowledged',
+    })
+  );
+});
+
+test('a rider cannot rewrite their own crash notification status after creation', async () => {
+  // The exact §33.18 exploit: suppress the escalation by self-acknowledging.
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'crashNotifications', 'crash-1'), {
+      uid: MALLORY,
+      rideId: RIDE_ID,
+      status: 'pending',
+    });
+  });
+  const db = dbFor(MALLORY);
+  await assertFails(
+    updateDoc(doc(db, 'crashNotifications', 'crash-1'), { status: 'acknowledged' })
+  );
 });

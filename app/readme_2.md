@@ -20,6 +20,5 @@ The following files are present in this directory:
 
 - `SETUP.md`: Markdown document.
 - `analysis_options.yaml`: Configuration file.
-- `firestore_rules_poi_directory.txt`: Source file.
 - `pubspec.yaml`: Configuration file.
 

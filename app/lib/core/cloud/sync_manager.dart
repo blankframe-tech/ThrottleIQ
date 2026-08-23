@@ -154,21 +154,31 @@ class SyncManager {
       // device — harmless to the totals (the stats query filters on
       // completed) but pure garbage in the cloud, and a ride still being
       // recorded would sync a half-written row.
-      final unsyncedRides = await RideDao().getUnsynced();
+      //
+      // docs/Issues.md §33.1: scoped to `uid` (the CURRENTLY signed-in
+      // rider), same as the bikes/maintenance queries below. Without this, a
+      // rider who recorded offline and signed out before it synced would
+      // have their still-unsynced rows uploaded under whichever account
+      // signs in next on this device — a real cross-account data leak, not
+      // just a UX glitch. Rows belonging to a different `user_id` are simply
+      // left alone; they sync normally once that rider signs back in here.
+      final unsyncedRides = await RideDao().getUnsynced(uid);
 
-      // Fetch unsynced bikes
+      // Fetch unsynced bikes — scoped to `uid` for the same reason.
       final unsyncedBikes = await db.query(
         'bikes',
-        where: 'synced = ?',
-        whereArgs: [0],
+        where: 'synced = ? AND user_id = ?',
+        whereArgs: [0, uid],
       );
 
-      // Fetch unsynced maintenance logs
-      final unsyncedMaintenance = await db.query(
-        'maintenance_logs',
-        where: 'synced = ?',
-        whereArgs: [0],
-      );
+      // Fetch unsynced maintenance logs. `maintenance_logs` has no `user_id`
+      // column of its own — ownership is via `bike_id` — so scoping to `uid`
+      // means joining through `bikes`, same reasoning as above.
+      final unsyncedMaintenance = await db.rawQuery('''
+        SELECT maintenance_logs.* FROM maintenance_logs
+        INNER JOIN bikes ON bikes.id = maintenance_logs.bike_id
+        WHERE maintenance_logs.synced = 0 AND bikes.user_id = ?
+      ''', [uid]);
 
       // Push deletions BEFORE uploads. A bike deleted locally still has its
       // rides in the local DB removed, but the remote copies linger — and the

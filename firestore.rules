@@ -299,10 +299,49 @@ service cloud.firestore {
       // Bounded so a rider can only ever write a notification claiming to
       // be from themselves, never spoof another uid as the source. Reads/
       // updates (marking read)/deletes stay owner-only.
+      // docs/Issues.md §33.4: `fromUid == request.auth.uid` alone bounded WHO
+      // a notification could claim to be from, but nothing bounded the
+      // `{uid}` it landed in (any signed-in rider could target any victim)
+      // or the free-text content — `fromName`/`fromPhotoUrl`/`type` were
+      // entirely unvalidated. Concretely: any signed-in rider could flood an
+      // arbitrary victim's feed with a spoofed sender name, or set
+      // `fromPhotoUrl` to an attacker-controlled URL that the victim's
+      // device fetches unconditionally the moment they open Notifications —
+      // an unauthenticated tracking beacon with no relationship to the
+      // victim required at all.
+      //
+      // `type` is now restricted to the two kinds the app actually writes
+      // (NotificationType in app_notification_entity.dart), and
+      // `fromPhotoUrl` — the concrete tracking-pixel vector — must be null/
+      // absent/empty or a URL on a domain this app actually serves avatars
+      // from (Cloudinary under this project's own cloud name, or Google's
+      // account-picture host for Google sign-in). `fromName` is left
+      // otherwise free-text: matching it against the sender's real profile
+      // would mean replicating UserProfileEntity.bestName's nickname →
+      // displayName → @username fallback chain inside a rule, which is
+      // fragile to keep in lockstep and risks silently breaking legitimate
+      // follow/invite notifications if it ever drifts from the client. A
+      // spoofed display NAME (not a URL fetched automatically) is a lower-
+      // severity, residual risk closer to any other free-text social content
+      // this app already carries (captions, forum posts) — not the
+      // unconditional device-fetch/beacon vector this fix closes.
       match /notifications/{notificationId} {
         allow read, update, delete: if request.auth.uid == uid;
         allow create: if request.auth != null &&
-          request.resource.data.fromUid == request.auth.uid;
+          request.resource.data.fromUid == request.auth.uid &&
+          request.resource.data.get('type', '') in ['follow', 'groupRideInvite'] &&
+          request.resource.data.get('fromName', '') is string &&
+          request.resource.data.get('fromName', '').size() > 0 &&
+          request.resource.data.get('fromName', '').size() <= 100 &&
+          (!('fromPhotoUrl' in request.resource.data) ||
+           request.resource.data.fromPhotoUrl == null ||
+           request.resource.data.fromPhotoUrl == '' ||
+           (request.resource.data.fromPhotoUrl is string &&
+            request.resource.data.fromPhotoUrl.matches(
+              '^https://(res\\.cloudinary\\.com/vjvcigkt/|lh3\\.googleusercontent\\.com/).*'))) &&
+          (request.resource.data.get('type', '') != 'groupRideInvite' ||
+           (request.resource.data.get('groupRideId', '') is string &&
+            request.resource.data.get('groupRideId', '') != ''));
       }
     }
 
@@ -338,17 +377,44 @@ service cloud.firestore {
       // any future client regression) readable. `.get('shareable', false)`
       // means any legacy doc written before this field existed reads as
       // NOT shareable — fail closed, not open.
-      allow get: if resource.data.get('shareable', false) == true;
+      //
+      // docs/Issues.md §33.2: ALSO requires `expiresAt` to be in the future.
+      // The client (public/live-viewer.html) enforced the 24h TTL only in
+      // its own JS — nothing stopped a caller from skipping the page
+      // entirely and reading the doc straight off the Firestore REST API
+      // with a token from a link that had "expired" hours or days earlier.
+      // Same fail-closed default as `shareable`: `.get('expiresAt',
+      // request.time)` means a doc with no `expiresAt` at all compares as
+      // `request.time > request.time`, i.e. false — denied, not left open.
+      allow get: if resource.data.get('shareable', false) == true &&
+        resource.data.get('expiresAt', request.time) > request.time;
 
       // Only the ride owner (uid) can write
       allow create: if request.auth.uid == request.resource.data.uid;
       allow update: if request.auth.uid == resource.data.uid;
     }
 
-    // Crash notifications - triggered by Cloud Function
+    // Crash notifications - the client only ever CREATEs one (see
+    // ride_recording_provider.dart's crash-detection path, which `.add()`s a
+    // single `status: 'pending'` doc and never updates it again). Every
+    // status transition after that ('contacted', 'escalated', ...) is done
+    // server-side by functions/src/crash-notifications.ts via the Admin SDK,
+    // which is not subject to these rules at all — so the client never
+    // legitimately needs update/delete here.
+    //
+    // docs/Issues.md §33.18: this used to be a bare `allow write`, which also
+    // covers update — a rider could freely rewrite their own doc's `status`
+    // after creation (e.g. straight to 'acknowledged'), which could suppress
+    // the escalation this collection exists to drive once real delivery
+    // ships (currently mocked — Cloud Functions can't deploy on this
+    // project's billing plan, docs/Issues.md §24). Scoping to `create` only,
+    // with the shape the client actually writes, closes that off; no
+    // `allow update`/`allow delete` is granted at all.
     match /crashNotifications/{documentId} {
-      allow write: if request.auth.uid == request.resource.data.uid;
-      allow read: if request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.uid &&
+        request.resource.data.get('status', '') == 'pending';
+      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
     }
 
     // Shared/public rides (Social feed) — top-level collection.
@@ -599,8 +665,10 @@ service cloud.firestore {
     // Places directory (Phase 4 — nearby garages/fuel pumps/parts shops).
     // Standalone top-level collection: `places/{placeId}`. There is
     // deliberately NO nested `places/{placeId}/reviews` block here — the
-    // draft this was adapted from (app/firestore_rules_poi_directory.txt)
-    // assumed that shape, but ReviewRepository actually reads/writes a
+    // draft this was adapted from (app/firestore_rules_poi_directory.txt,
+    // deleted per docs/Issues.md §33.14: it was inert, unreferenced by
+    // firebase.json, and materially weaker than these rules) assumed that
+    // shape, but ReviewRepository actually reads/writes a
     // standalone top-level `reviews` collection filtered by `placeId` (see
     // ReviewRepository._collection = 'reviews' and getReviewsForPlace /
     // streamReviewsForPlace), so a nested-reviews rule would just be dead

@@ -42,11 +42,31 @@ class DatabaseHelper {
   Future<void> upgradeSchemaForTesting(Database db, int from, int to) =>
       _onUpgrade(db, from, to);
 
+  /// Substrings SQLite actually uses for a file that is unopenable/unreadable
+  /// as a database, as opposed to a transient failure (disk full, file
+  /// locked by another process, a momentary I/O error) that happens to throw
+  /// from the same call. docs/Issues.md §33.9: the previous catch treated ANY
+  /// exception here as the one documented corruption case it was written
+  /// for, and deleted the whole database — turning a transient error into
+  /// permanent data loss of every local ride/bike/maintenance record.
+  static const _corruptionMarkers = [
+    'file is not a database',
+    'file is encrypted or is not a database',
+    'database disk image is malformed',
+    'database corrupt',
+  ];
+
+  bool _looksCorrupt(Object error) {
+    final message = error.toString().toLowerCase();
+    return _corruptionMarkers.any((marker) => message.contains(marker));
+  }
+
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
     try {
       return await _openDb(path);
-    } catch (_) {
+    } catch (e) {
+      if (!_looksCorrupt(e)) rethrow;
       // db file left corrupt by the maintenance_logs index-before-table bug
       // (fixed below) - nuke and rebuild rather than crash forever.
       await deleteDatabase(path);

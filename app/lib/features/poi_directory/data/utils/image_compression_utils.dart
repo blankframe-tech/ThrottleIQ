@@ -6,6 +6,30 @@ class ImageCompressionUtils {
   /// Maximum file size in bytes (2 MB)
   static const int maxFileSizeBytes = 2 * 1024 * 1024;
 
+  /// Hard cap on decoded pixel count (50 megapixels — far beyond any real
+  /// phone camera's default JPEG output, but bounds worst-case decoded
+  /// memory to ~200MB instead of whatever a crafted file's header claims).
+  ///
+  /// docs/Issues.md §33.11: `img.decodeImage` fully decodes into an
+  /// uncompressed bitmap with no size check beforehand. A small file whose
+  /// header declares huge pixel dimensions (a decompression bomb) could
+  /// decode to gigabytes of raw RGBA and crash the app. Checking the header
+  /// via `startDecode` first — which parses dimensions without decoding
+  /// pixel data — makes this check cheap regardless of the real decode cost.
+  static const int _maxDecodePixels = 50 * 1000 * 1000;
+
+  /// Returns the decoded image, or null if the file is unreadable/unsupported
+  /// OR its declared dimensions exceed [_maxDecodePixels].
+  static img.Image? _safeDecodeImage(Uint8List imageBytes) {
+    final decoder = img.findDecoderForData(imageBytes);
+    if (decoder == null) return null;
+    final info = decoder.startDecode(imageBytes);
+    if (info == null || info.width * info.height > _maxDecodePixels) {
+      return null;
+    }
+    return decoder.decode(imageBytes);
+  }
+
   /// Compress image from file path
   static Future<File?> compressImage(String imagePath) async {
     try {
@@ -15,7 +39,7 @@ class ImageCompressionUtils {
       final imageBytes = await file.readAsBytes();
 
       // Decode the image
-      final image = img.decodeImage(imageBytes);
+      final image = _safeDecodeImage(imageBytes);
       if (image == null) return null;
 
       // Resize if necessary (max width 1280px)
@@ -86,7 +110,7 @@ class ImageCompressionUtils {
     try {
       final file = File(imagePath);
       final imageBytes = await file.readAsBytes();
-      final image = img.decodeImage(imageBytes);
+      final image = _safeDecodeImage(imageBytes);
 
       if (image == null) return null;
 
@@ -107,7 +131,7 @@ class ImageCompressionUtils {
     int quality = 85,
   }) async {
     try {
-      final image = img.decodeImage(imageBytes);
+      final image = _safeDecodeImage(imageBytes);
       if (image == null) return null;
 
       // Resize if necessary

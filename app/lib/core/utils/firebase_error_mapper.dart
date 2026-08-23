@@ -31,5 +31,11 @@ String mapFirebaseAuthError(dynamic error) {
     return 'Permission denied. Please check your account settings.';
   }
 
-  return error.toString();
+  // docs/Issues.md §33.17: this used to be `return error.toString();` — any
+  // error that reached here (not a FirebaseAuthException, no recognizable
+  // "network"/"permission" substring) had its raw exception text, which can
+  // include internal type/stack details, put directly into a user-facing
+  // SnackBar. A generic message is exactly as actionable to the rider and
+  // leaks nothing internal.
+  return 'Something went wrong. Please try again.';
 }

@@ -18,11 +18,6 @@ class MaintenanceDao {
     await db.delete('maintenance_logs', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<List<Map<String, dynamic>>> getUnsynced() async {
-    final db = await DatabaseHelper.instance.database;
-    return db.query('maintenance_logs', where: 'synced = 0');
-  }
-
   Future<void> markSynced(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.update('maintenance_logs', {'synced': 1}, where: 'id = ?', whereArgs: [id]);

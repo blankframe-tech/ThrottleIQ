@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-17 · Branch: `main`_
+_Last updated: 2026-08-23 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -749,6 +749,57 @@ profile isn't applying), and **Carbon Mono** (must look *identical* to before;
 any visible change there is a regression, since boxy keeps the historical
 radii verbatim). Also worth an eye: whether the lengthened skin blurbs
 ellipsize at this device's textScaler 1.1176 with bold text.
+
+**Security & bug review pass, 18 findings fixed — 2026-08-23.** A read-only
+sweep across the Firestore/Storage rules, Cloud Functions, admin scripts, the
+auth/cloud-sync layer, social sharing/live-viewer/location-privacy code,
+external API integrations, and the ride-tracking domain/DB layer surfaced 18
+issues, logged as `Issues.md` §33 — then all 18 were fixed in the same
+session (or, for the two that genuinely can't be code-fixed right now,
+documented as deferred with why). Two were launch-blocking in the same class
+as §24.1/§24.2:
+- **Signing out didn't clear local data** — a shared device let the next
+  user's sync upload the previous rider's rides/bikes/maintenance (GPS
+  tracks included) into their own account. Fixed by scoping every "unsynced"
+  query to `user_id` (§33.1).
+- **Live-location share links never expired server-side** — the 24h TTL was
+  client-side JS only; the Firestore rule now also requires `expiresAt >
+  request.time` (§33.2).
+
+Also fixed: crash detection silently forced every ride to `status:
+'completed'`, so `'crash'`/dismissed-`'active'` never persisted (§33.3);
+cross-user notification spoofing/tracking-pixel injection, closed with a
+`type` enum + photo-domain allowlist in the rules (§33.4); the
+`crashNotifications` rule let a rider self-suppress their own escalation
+(§33.18); a dead, fail-open `PrivacyZone` class was deleted outright (§33.7);
+an `EventDetector` gating bug that inflated false-positive crash detections
+(§33.8); `DatabaseHelper` nuking the entire local DB on any exception instead
+of only genuine corruption (§33.9); Google session not cleared on sign-out
+(§33.10); a decompression-bomb guard added before image decode (§33.11);
+`searchPlacesByName` silently returning nothing for Bengali prefixes, since
+the range-query sentinel was `'z'` (§33.12); `reset_beta_data.js`'s
+project-id guard being trivially satisfied (it's the only project this repo
+has) — now also requires typing a confirmation phrase (§33.13); a stale,
+weaker draft rules file deleted (§33.14); Storage-rules size/content-type
+constraints added, though that whole file remains dormant — absent from
+`firebase.json`, unused by the client (§33.6/§33.15); an Overpass query with
+no guard against non-finite coordinates (§33.16); and a Firebase auth error
+mapper that leaked raw exception text to the UI (§33.17).
+
+**Not code-fixed, by design:** Cloudinary's unsigned upload preset (§33.5)
+stays public/unsigned — closing it means signed uploads via a Cloud Function,
+which needs the Blaze billing plan this project isn't on (same blocker as
+§24's Cloud Functions deploy). Documented as an accepted, deferred risk with
+the real fix (Cloudinary console-side preset restrictions) noted in
+`Issues.md`.
+
+13 new tests added covering the fixes (rules-emulator tests for §33.2/§33.4/
+§33.18 in `scripts/test/rules/firestore_rules.test.js`, plus a new real-SQLite
+regression file for §33.1/§33.3,
+`app/test/database/ride_dao_sync_and_finalize_test.dart`). Verified:
+`flutter analyze` clean (same pre-existing style-only noise as before, no new
+errors), `flutter test` **809/809** (up from 804), `npm run test:rules`
+**32/32** (up from 19), and `node --check` on both edited scripts.
 
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.

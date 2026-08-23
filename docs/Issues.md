@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-12_
+_Last updated: 2026-08-23_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -2003,3 +2003,397 @@ styling, unlabeled chart axes, theme-picker list without live previews,
 low-contrast secondary text, slide-to-start friction on the primary CTA) are
 polish/opinion calls — see `docs/uiux_critique.md` for the full list and
 reasoning. None of this has been triaged into actual work items yet.
+
+---
+
+## 33. Bug & vulnerability sweep — 5 parallel reviews, 18 findings, 16 fixed same session, 2 deferred (2026-08-23)
+
+**Status: 16/18 FIXED, code + rules + admin script, same session as the
+review.** The remaining 2 (§33.5, and half of §33.6) are documented as
+deferred with why — see their sections. Read-only review first (five
+independent passes — Firestore/Storage rules + Cloud Functions + admin
+scripts; auth + cloud-sync; social sharing/live-viewer/location-privacy;
+external API integrations + uploads; ride-tracking domain calculators +
+local DB), then every fixable finding fixed and verified in the same pass.
+Findings below, ranked by severity, numbered §33.1+ so they can be cited
+individually. Two were launch-blocking in the same way §24.1/§24.2 were —
+both now fixed.
+
+Verification: `flutter analyze` clean (same pre-existing style-only noise
+as before §33, no new errors), `flutter test` **809/809** (was 804 — added
+`app/test/database/ride_dao_sync_and_finalize_test.dart`, 5 tests, real
+in-memory SQLite, covering §33.1/§33.3), `npm run test:rules` **32/32** (was
+19 — added 13 tests in `scripts/test/rules/firestore_rules.test.js` covering
+§33.2/§33.4/§33.18), `node --check` clean on both edited scripts. Nothing
+here has been run against a real device or a live Firebase project — same
+caveat as every other rules/Functions change in this file; deploy still
+needs `firebase deploy --only firestore:rules` (and eventually `storage`)
+before any of the rules fixes protect a real rider.
+
+### 33.1 Signing out doesn't clear local data — next user on a shared device can upload the previous rider's data to their own account — CRITICAL
+
+**Status: FIXED.** `RideDao.getUnsynced()` now takes a `userId` and filters
+`WHERE user_id = ?` (`ride_dao.dart`); `SyncManager._performSync` passes the
+current `uid` into it and added the same filter to the bikes query and a
+`bikes` JOIN to the maintenance-logs query (`maintenance_logs` has no
+`user_id` column of its own), so a sync can only ever upload rows owned by
+whoever is currently signed in. `AuthNotifier.signOut()` also now calls
+`GoogleSignIn().signOut()` (see §33.10) but deliberately does NOT wipe the
+local DB — that would destroy exactly the offline durability the outbox/
+local-first design exists for on every ordinary sign-out; a different
+rider's still-unsynced rows are simply left alone until that rider signs
+back in on this device. `MaintenanceDao.getUnsynced()` — the same unscoped
+shape, but with zero call sites — was deleted outright rather than fixed,
+since nothing used it. New regression tests:
+`app/test/database/ride_dao_sync_and_finalize_test.dart`.
+
+`AuthNotifier.signOut()` (`app/lib/features/auth/presentation/providers/auth_provider.dart:112-115`)
+only calls `_auth.signOut()` — it never touches the local SQLite DB. The
+"unsynced" queries never filter by `user_id`, despite the column existing:
+`RideDao.getUnsynced()` (`ride_dao.dart:47-49`) and the bike/maintenance
+queries in `SyncManager._performSync` (`sync_manager.dart:160-171`) just grab
+every `synced = 0` row and hand it to `CloudRepository.uploadRides/
+uploadBikes/uploadMaintenance`, which write to `users/{uid}/...` for
+whichever `uid` is *currently* signed in (`cloud_repository.dart:69,109,127`).
+
+Concrete scenario: Rider A records offline on a shared/demo device, signs out
+before connectivity returns; Rider B signs in; B's next sync cycle uploads
+A's still-unsynced rides/bikes/maintenance logs — full GPS tracks included —
+into `users/{B}/...`. A real confidentiality break, reachable through normal
+app use, no exploit tooling needed. Fix: scope every "unsynced" query by
+`user_id = currentUser.uid`, and have `signOut()` purge or uid-tag local rows
+before the next sync.
+
+### 33.2 Live-location share links never expire server-side — CRITICAL
+
+**Status: FIXED** (rules changed, NOT yet deployed — see §33's verification
+note). `firestore.rules`' `liveSessions/{token}` `allow get` now also
+requires `resource.data.get('expiresAt', request.time) > request.time` —
+same fail-closed default pattern as the existing `shareable` check, so a
+legacy doc with no `expiresAt` at all reads as already-expired rather than
+as open. New tests in `firestore_rules.test.js`: an unexpired shareable
+session is readable unauthenticated; an expired one is denied even with
+`shareable: true`; a session with no `expiresAt` field is denied.
+
+`firestore.rules:341` — `allow get: if resource.data.get('shareable', false)
+== true;` — never checks `expiresAt`. The 24h expiry in
+`public/live-viewer.html:612-624` is enforced only in client-side JS; the
+file's own comment admits "nothing sweeps expired docs." Anyone who ever
+received a `/live/{token}` link can hit the Firestore REST API directly with
+that token forever and keep reading the rider's live lat/lng, speed, and
+status long after the app claims the link "expired." For a location-sharing
+feature on a motorcycle app this is a stalking/safety exposure, not a
+data-hygiene nitpick.
+
+### 33.3 Crash detection is silently broken — `RideDao.finalizeRide` always forces status to `'completed'` — HIGH
+
+**Status: FIXED.** `finalizeRide` now spreads `data` OVER a `'status':
+'completed'` default (`{'status': 'completed', ...data, 'synced': 0}`)
+instead of after it, so a caller-supplied status wins while the normal
+end-of-ride call (which passes none) still defaults correctly. New
+regression tests in `ride_dao_sync_and_finalize_test.dart` cover all three
+real call sites' shapes: no status passed (defaults to completed), `'crash'`
+passed (persists), `'active'` passed after a crash (persists).
+
+`ride_dao.dart:37-45`:
+```dart
+Future<void> finalizeRide(String id, Map<String, dynamic> data) async {
+  await db.update('rides', {...data, 'status': 'completed', 'synced': 0}, ...);
+}
+```
+The map-literal spread means the trailing `'status': 'completed'` always wins
+over whatever `data['status']` was. `_onCrashDetected()` writes
+`{'status': 'crash'}` and `dismissCrashAlert()` writes `{'status': 'active'}`
+(both in `ride_recording_provider.dart`) — both get silently overwritten to
+`'completed'`. A crashed, still-recording ride gets marked "completed"
+mid-ride (shows up that way in history/feed, and `restoreInterruptedRide()`
+won't offer to recover it if the app dies before the rider actually stops); a
+false-positive crash dismissal leaves the DB permanently "completed" while
+recording continues. `status: 'crash'` is never actually persisted anywhere
+today.
+
+### 33.4 Any signed-in user can inject spoofed notifications into another user's feed — HIGH
+
+**Status: FIXED** (rules changed, NOT yet deployed). The `notifications`
+create rule now restricts `type` to `['follow', 'groupRideInvite']` (the
+only two `NotificationType` values the app writes), requires `fromName` to
+be a non-empty string ≤100 chars, and — the concrete tracking-pixel vector —
+requires `fromPhotoUrl` (when present and non-empty) to match a domain
+allowlist: this project's own Cloudinary cloud name or Google's account-
+picture host. A `groupRideInvite` must also carry a non-empty
+`groupRideId`. Deliberately NOT fixed: matching `fromName` against the
+sender's real profile, which would mean replicating
+`UserProfileEntity.bestName`'s nickname → displayName → @username fallback
+chain inside a rule — fragile to keep in lockstep, and risks silently
+breaking real follow/invite notifications if it drifts from the client. A
+spoofed display *name* (not a URL the victim's device fetches automatically)
+is treated as a residual, lower-severity risk, same tier as any other
+free-text social content this app carries. Seven new tests in
+`firestore_rules.test.js` cover valid follow/invite shapes, the unknown-type
+rejection, the non-allowlisted-photo rejection, the missing-groupRideId
+rejection, and that `fromUid` still can't be spoofed.
+
+`firestore.rules:302-306` only checks `request.resource.data.fromUid ==
+request.auth.uid` — the target `{uid}` path segment (whose subcollection is
+being written to) is unconstrained, and `fromName`/`fromPhotoUrl`/`type` are
+all client-controlled with no validation. `notifications_screen.dart` renders
+`fromName` verbatim and feeds `fromPhotoUrl` into `UserAvatar`, which fetches
+it unconditionally. Any signed-in attacker can flood an arbitrary victim's
+notifications with spoofed sender text, or use `fromPhotoUrl` as a "victim
+just opened the app" tracking beacon. Fix: require `fromName`/`fromPhotoUrl`
+to match `get(/databases/$(database)/documents/users/$(request.auth.uid))`,
+and restrict `type` to a known enum.
+
+### 33.5 Cloudinary unsigned-upload credentials are public and unbounded — HIGH
+
+**Status: DEFERRED — not code-fixable right now, documented instead.**
+Closing this properly means signed uploads: a Cloud Function mints a
+short-lived signature per upload and the client sends that instead of the
+public unsigned preset. This project's Cloud Functions cannot deploy at all
+today — confirmed in §24's audit — because `throttleiqfb` is on the Spark
+(free) plan and `artifactregistry.googleapis.com`, required for any
+Functions deploy, needs Blaze. The same blocker that stops §24.8/§24.9's
+Cloud Functions from ever running stops a signed-upload fix from ever
+running either; shipping the Cloud Function code without the ability to
+deploy it would fix nothing while looking fixed. Real fix, once Blaze is
+adopted: add a callable Function that returns a signed upload signature,
+switch `CloudinaryUploadService` to request one before each upload. Interim
+mitigation available today, outside this repo: restrict the
+`throttleiq_unsigned` preset in the Cloudinary console itself (max file
+size, format allowlist, moderation add-on) — preset-level config, not
+something a code change here can reach.
+
+`cloudinary_upload_service.dart:28-31` ships a plaintext cloud name
+(`vjvcigkt`) and unsigned upload preset (`throttleiq_unsigned`) in the
+binary — trivially extracted via `strings` on the APK/IPA. Anyone can POST
+directly to that Cloudinary endpoint from outside the app, indefinitely, with
+no ThrottleIQ account and no rate limiting on the client side — a
+quota-exhaustion or abusive-content griefing vector against the project's
+Cloudinary account.
+
+### 33.6 Storage rules don't mirror Firestore's audience tiers for ride-share photos — MEDIUM
+
+**Status: CORRECTED SCOPE, PARTIALLY FIXED.** Turns out `storage.rules` is
+currently **dormant, not a live security boundary**: `firebase.json` has no
+`"storage"` key at all (only `firestore`/`functions`/`hosting`), so these
+rules are never deployed, and the Flutter client has no `firebase_storage`
+dependency in `pubspec.yaml` — every avatar/ride-photo upload goes through
+`CloudinaryUploadService` instead (see §33.5), not Firebase Storage at all.
+So today there is nothing here to exploit either way.
+
+Fixed anyway, as defense-in-depth for whenever Storage is wired back up:
+`storage.rules` now caps write size (5MB avatars / 10MB ride photos) and
+requires `contentType` to actually be an image — that part is simple,
+self-contained Storage-rules syntax, safe to harden without a live deploy to
+verify it against. The audience-tier mirroring itself (calling out to
+Firestore from a Storage rule via `firestore.get()` to check the matching
+ride's `audience`) is real, documented syntax but was NOT added — this repo
+has no Storage-rules emulator test harness the way `scripts/test/rules/`
+covers Firestore, and shipping untested cross-service rule syntax for
+currently-dormant infrastructure risks a silent typo nobody notices until
+the day it actually matters. Left as a follow-up for whenever `"storage"` is
+added back to `firebase.json`: mirror `rideVisibleTo()` via `firestore.get()`
+on the ride doc, and add it to a real `firebase emulators:exec --only
+firestore,storage` test before trusting it. Noted in `storage.rules` itself
+so this isn't lost.
+
+`storage.rules:18-21` makes `rideShares/{uid}/{filename}` readable by any
+authenticated user, full stop — but the associated ride doc in
+`firestore.rules` can be scoped to `followers`/`mutual`/owner-only via
+`rideVisibleTo()`. Anyone who obtains the photo path (UUID-based but not
+secret) sees it regardless of the ride's actual audience; privacy relies on
+URL obscurity, not authorization.
+
+### 33.7 Dead `PrivacyZone.clipPrivacyZones` fails open — latent landmine — MEDIUM
+
+**Status: FIXED — deleted.** Zero call sites (confirmed via grep before
+deleting), so rather than patch a fail-open landmine nobody was tripping
+over yet, `app/lib/core/utils/privacy_zone.dart` was removed outright.
+`PrivacyZoneClipper` (`privacy_zone_clipper.dart`) is the one actually wired
+into sharing and already fails closed — nothing else to point future code
+at now.
+
+`app/lib/core/utils/privacy_zone.dart:60-62` returns the **full, unredacted
+polyline** (home location included) when a ride is too short to clip 200m
+from both ends. The class actually wired into sharing,
+`privacy_zone_clipper.dart`'s `PrivacyZoneClipper`, fails *closed* in the same
+situation (`return []`). `PrivacyZone.clipPrivacyZones` has zero call sites
+today (confirmed via grep) — not currently exploitable — but it's a trap for
+the next feature (export, thumbnail, PDF report) that reaches for "the
+privacy clipper" and picks this class instead.
+
+### 33.8 `EventDetector` jerk-spike gating bug inflates false-positive crash detection — MEDIUM
+
+**Status: FIXED.** `_peakJerkInWindow` now only updates while
+`_highAccelStart != null` (a spike window is actually open) — a jerk
+reading before any accel spike no longer counts toward it. Verified against
+the existing `crash_detector_test.dart` suite (all 8 cases, including "DOES
+fire on crash," still pass — that scenario's jerk sample arrives on the same
+call as a continuing accel window, so it's unaffected).
+
+`event_detector.dart:88-94` updates `_peakJerkInWindow` on every call with a
+high jerk reading regardless of whether an accel-spike window
+(`_highAccelStart`) is actually active. A jerk spike seconds before an
+unrelated high-accel event can still count as "in window," inflating
+false-positive crash detections (which trigger the 60s countdown and
+emergency-contact escalation).
+
+### 33.9 `DatabaseHelper._initDb` nukes the entire local DB on any exception, not just the one migration bug it was meant for — MEDIUM
+
+**Status: FIXED.** `_initDb`'s catch now checks the exception message
+against a list of substrings SQLite actually uses for an unopenable/
+corrupt database file (`"file is not a database"`, `"database disk image is
+malformed"`, etc.) via a new `_looksCorrupt()` helper, and only deletes+
+rebuilds when one matches; anything else (disk full, locked file, a
+momentary I/O error) now rethrows instead of destroying local data.
+
+`database_helper.dart:45-55` — the catch is unscoped: a transient disk-full or
+locked-file error during `onUpgrade` triggers the same delete-and-rebuild as
+genuine corruption, destroying all local ride/bike/maintenance data.
+
+### 33.10 Google session isn't cleared on sign-out — MEDIUM
+
+**Status: FIXED.** `AuthNotifier.signOut()` now also calls
+`GoogleSignIn().signOut()` (wrapped in a try/catch, since a rider who never
+signed in via Google will have nothing to sign out of).
+
+`auth_provider.dart:112-115` never calls `GoogleSignIn().signOut()`/
+`disconnect()`. Compounds §33.1's shared-device scenario: after "signing
+out," a later `signInWithGoogle()` on the same device can silently
+reauthenticate the previous Google account rather than showing a picker.
+
+### 33.11 Unbounded image decode before resize — local DoS via crafted image — MEDIUM
+
+**Status: FIXED.** Both files now probe header-declared dimensions first via
+`img.findDecoderForData(bytes).startDecode(bytes)` — which parses
+width/height without decoding pixel data — and reject anything over 50
+megapixels (~200MB worst-case decoded, comfortably above any real phone
+camera's default JPEG output) before ever calling the full decode.
+`image_compression_utils.dart` gained a shared `_safeDecodeImage()` helper
+used by all three of its decode call sites; `image_crop_io.dart`'s
+`writeCroppedImage` does the same check inline.
+
+`image_compression_utils.dart:18` and `image_crop_io.dart:30` call
+`img.decodeImage(imageBytes)` fully before any dimension check. An image with
+large declared pixel dimensions decodes to gigabytes of raw bitmap before
+`copyResize` ever runs, which can OOM-crash the app. Reachable from any
+picked/shared image (gallery, camera roll).
+
+### 33.12 `searchPlacesByName` prefix search breaks for Bengali/non-ASCII text — MEDIUM
+
+**Status: FIXED.** The upper bound is now `query + ''` — the standard
+Firestore prefix-query sentinel, a private-use codepoint above any realistic
+character in any script — instead of `query + 'z'`.
+
+`place_repository.dart:203-212` bounds the range query with `isLessThan: query
++ 'z'`, which only works if every possible continuation character sorts below
+`'z'` (U+007A). This app ships Bengali localization (`app_bn.arb`); Bengali
+script (U+0980–U+09FF) sorts above `'z'`, so searching a real non-degenerate
+Bengali prefix against a longer stored name returns nothing. Standard fix is
+a high-codepoint sentinel like `''`.
+
+### 33.13 `reset_beta_data.js`'s project guard is illusory — MEDIUM (operational risk)
+
+**Status: FIXED.** `--yes-i-really-mean-it` now also requires typing
+`DELETE ALL BETA DATA` verbatim at an interactive prompt
+(`confirmRealDelete()`) before the 5-second countdown even starts — a guard
+that can't be satisfied by a copy-pasted command or an env var, unlike the
+project-id check. A new `--non-interactive` flag skips the prompt
+deliberately, for legitimate scripted/CI use. Smoke-tested: a wrong typed
+answer aborts before any Firestore call is made; `--non-interactive` skips
+the prompt without hanging.
+
+It refuses to run unless `FIREBASE_PROJECT_ID=throttleiqfb` — but per
+`.firebaserc` that's the *only* project configured; there's no staging/prod
+split. The guard protects against pointing at the wrong project among
+several, but does nothing to stop an irreversible full wipe once this project
+is serving real user traffic.
+
+### 33.14 Stale, weaker draft rules file committed alongside the real rules — LOW (informational)
+
+**Status: FIXED — deleted.** `app/firestore_rules_poi_directory.txt` is
+gone; the comment in `firestore.rules` that referenced it (explaining why
+there's no nested `places/{placeId}/reviews` block) now notes it was
+deleted per this entry instead of pointing at a file that no longer exists.
+
+`app/firestore_rules_poi_directory.txt` is a full standalone `firestore.rules`
+draft, not referenced by `firebase.json` (which correctly points at the real
+`firestore.rules`), but materially weaker: its `places` update rule allows any
+owner/admin to set arbitrary `ratingSum`/`ratingCount` with no ±1-delta
+binding. Inert today, but a live attack blueprint if ever deployed by
+mistake (manual `firebase deploy` against the wrong path, a future
+`firebase.json` edit). Recommend deleting it now that its content is fully
+superseded.
+
+### 33.15 No size/content-type constraints on storage uploads — LOW
+
+**Status: FIXED** (rules changed; see §33.6 for why `storage.rules` isn't
+actually deployed yet). Both `avatars/{filename}` and
+`rideShares/{uid}/{filename}` writes now require `request.resource.size`
+under 5MB/10MB respectively and `request.resource.contentType.matches
+('image/.*')`.
+
+`storage.rules`'s `avatars/{filename}` and `rideShares/{uid}/{filename}` gate
+only on filename/uid ownership — no `request.resource.size` or `contentType`
+check. A user can repeatedly overwrite their own slot with an arbitrarily
+large file — a storage/bandwidth cost-griefing vector against the project.
+
+### 33.16 Overpass QL query has no guard against non-finite values — LOW
+
+**Status: FIXED.** `fetchNearby` now returns `const []` immediately if
+`latitude`/`longitude`/`radiusMeters` aren't all finite, before building the
+query string, and the Dio call is now wrapped in `try`/`on DioException`
+returning `const []` — matching `NominatimService`'s existing defensive
+pattern for this free, rate-limited public API.
+
+`overpass_service.dart:49-60` splices `radius`/`latitude`/`longitude` directly
+into the query text. Not classic injection (always `double`-typed today), but
+`double.nan`/`double.infinity` (e.g. a corrupted last-known-location) renders
+as `"NaN"`/`"Infinity"` into the query body, and unlike `NominatimService`
+there's no try/catch around the call — it surfaces as an unhandled
+`DioException`.
+
+### 33.17 Firebase auth error mapper leaks raw exception text to the UI — LOW
+
+**Status: FIXED.** The fallback now returns a generic `'Something went
+wrong. Please try again.'` instead of `error.toString()`.
+
+`firebase_error_mapper.dart:34`'s fallback `return error.toString();` puts
+raw, non-`FirebaseAuthException` error text (can include internal
+exception/type details) directly into a user-facing `SnackBar`.
+
+### 33.18 `crashNotifications` write rule lets a rider freely rewrite their own doc's `status` post-creation — LOW
+
+**Status: FIXED** (rules changed, NOT yet deployed). Split `allow write`
+into `allow create` (bounded to `uid == auth.uid` and `status == 'pending'`,
+the exact shape `ride_recording_provider.dart` writes) and `allow read`, with
+NO update/delete grant at all — confirmed via grep that the client only ever
+`.add()`s this doc once and never updates it; every real status transition
+(`'contacted'`, `'escalated'`, ...) happens server-side via the Admin SDK in
+`functions/src/crash-notifications.ts`, which isn't subject to these rules
+regardless. Three new tests in `firestore_rules.test.js`: a valid pending
+create succeeds, a create with a non-pending status is denied, and a rider
+can no longer update their own doc's status after creation.
+
+`firestore.rules:349-352`'s `allow write` has no further constraint after
+creation, which could let a rider suppress the (currently mocked) 15-minute
+escalation once real SMS/email delivery ships.
+
+### Also worth noting: rules test coverage gap
+
+**Status: PARTIALLY CLOSED.** §33.2's and §33.4's and §33.18's own fixes each
+came with new emulator tests (13 total — see §33's verification note), so
+`liveSessions`'/`notifications`'/`crashNotifications`' newly-changed clauses
+are now covered. `groupRides` invite/member logic, `emergencyContacts`, and
+storage rules still have no emulator coverage — that gap is unchanged by
+this session and remains open.
+
+`scripts/test/rules/firestore_rules.test.js` has no coverage at all for
+`liveSessions`, `groupRides` invite/member logic, `emergencyContacts`, or
+storage rules — exactly the areas with the most complex hand-reasoned boolean
+logic, and where §33.2 and §33.6 live. Everything else in scope — the rest of
+`firestore.rules`, Cloud Functions (`functions/src/*.ts`), and the admin
+scripts (`set_admin_claim.js`, `seed_dhaka_places.js`) — came back clean:
+properly gated, no hardcoded secrets, no SQL/NoSQL injection anywhere in the
+DAOs, and `public/live-viewer.html` uses `textContent` (not `innerHTML`) for
+all session-derived data.

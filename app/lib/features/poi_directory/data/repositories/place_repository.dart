@@ -199,12 +199,20 @@ class PlaceRepository {
     return deg * (3.14159265359 / 180);
   }
 
-  /// Search places by name
+  /// Search places by name (prefix match).
+  ///
+  /// docs/Issues.md §33.12: the upper bound used to be `query + 'z'`, which
+  /// only brackets every continuation of [query] when every possible next
+  /// character sorts below U+007A — true for plain ASCII, false for this
+  /// app's Bengali place names (U+0980–U+09FF), which sort above `'z'` and so
+  /// fell outside the range entirely. `''` is the standard Firestore
+  /// prefix-query sentinel: a private-use codepoint higher than any realistic
+  /// character in a place name, in any script.
   Future<List<PlaceEntity>> searchPlacesByName(String query) async {
     final querySnapshot = await _firestore
         .collection(_collection)
         .where('name', isGreaterThanOrEqualTo: query)
-        .where('name', isLessThan: query + 'z')
+        .where('name', isLessThan: '$query')
         .get();
     return querySnapshot.docs
         .map((doc) => PlaceModel.fromFirestore(doc).toEntity())

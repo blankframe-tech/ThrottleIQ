@@ -52,6 +52,9 @@ let admin;
 /** The only project this script will ever touch. */
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 
+/** What a human must type, verbatim, before a real (non-dry-run) delete. */
+const DELETE_CONFIRMATION_PHRASE = 'DELETE ALL BETA DATA';
+
 /**
  * Firestore's write batch hard limit is 500 operations. Commit at 400 to leave
  * headroom and to keep each commit small enough to retry cheaply.
@@ -128,6 +131,7 @@ function parseArgs(argv) {
     skipAuth: false,
     only: null,
     help: false,
+    nonInteractive: false,
   };
 
   for (const arg of argv) {
@@ -140,6 +144,8 @@ function parseArgs(argv) {
       // written out in full in a runbook.
     } else if (arg === '--skip-auth') {
       opts.skipAuth = true;
+    } else if (arg === '--non-interactive') {
+      opts.nonInteractive = true;
     } else if (arg.startsWith('--only=')) {
       opts.only = arg
         .slice('--only='.length)
@@ -173,7 +179,20 @@ Flags:
   --only=a,b,c              Only these top-level collections. Use 'auth' for
                             Firebase Auth users. Handy for resuming.
   --skip-auth               Do not touch Firebase Auth accounts.
+  --non-interactive         Skip the typed confirmation prompt below (for
+                            scripted/CI use). Use deliberately — it removes
+                            the one guard that isn't satisfied by anyone who
+                            can set an env var and pass a flag.
   --help                    This message.
+
+Before deleting anything, --yes-i-really-mean-it also requires typing
+'${DELETE_CONFIRMATION_PHRASE}' at a prompt. docs/Issues.md §33.13:
+FIREBASE_PROJECT_ID/--yes-i-really-mean-it alone only guard against pointing
+at the WRONG project — since this is the only project this script (or this
+whole repo) ever configures, both are trivially satisfied by anyone who has
+ever run this script before, including by a copy-pasted command with no
+human re-reading it. The typed prompt is the actual "a person looked at this
+and meant it" gate once real user data exists here.
 
 Environment:
   FIREBASE_PROJECT_ID              Must equal '${EXPECTED_PROJECT_ID}'.
@@ -394,6 +413,42 @@ function assertResolvedProject(app) {
   }
 }
 
+/**
+ * docs/Issues.md §33.13: the project-id guard above only ever protects
+ * against pointing this script at the WRONG project — and since
+ * 'throttleiqfb' is the only project this repo configures at all (see
+ * .firebaserc), that guard is satisfied by definition the moment real user
+ * data lives there. This is the guard that actually requires a human to
+ * stop and think: typing the full phrase back can't happen from a
+ * copy-pasted command line or a script that forgot what it was calling.
+ *
+ * Skipped when [nonInteractive] is set (see --non-interactive), for
+ * legitimate scripted/CI use — that flag exists precisely so skipping this
+ * prompt is a deliberate, visible choice rather than an accident.
+ */
+async function confirmRealDelete({ nonInteractive }) {
+  if (nonInteractive) {
+    warn('  NOTE   --non-interactive: skipping the typed confirmation prompt.\n');
+    return;
+  }
+
+  const readline = require('node:readline/promises');
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  let typed;
+  try {
+    typed = await rl.question(
+      `  Type '${DELETE_CONFIRMATION_PHRASE}' to proceed, anything else to abort: `
+    );
+  } finally {
+    rl.close();
+  }
+
+  if (typed.trim() !== DELETE_CONFIRMATION_PHRASE) {
+    fail('Confirmation phrase did not match. Nothing was deleted.');
+  }
+  log('');
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -461,6 +516,7 @@ async function main() {
   log('');
 
   if (deleting) {
+    await confirmRealDelete({ nonInteractive: opts.nonInteractive });
     log('  Starting in 5 seconds. Ctrl-C now if this is not what you meant.');
     log('  (Interrupting is safe — the script is resumable; just run it again.)');
     log('');
