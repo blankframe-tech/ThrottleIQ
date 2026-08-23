@@ -876,6 +876,17 @@ what's actually rendered on screen — in particular, the new three-axis
 Appearance picker — still needs a human eyes-on pass, same standing
 limitation as every prior device run in this file (`Issues.md` §15).
 
+**Both pending commits pushed and `beta-v1` moved forward twice more —
+2026-08-23 (same day, later still).** The §33 security/bug sweep (already
+pushed as `0474793`) and the Vibe/Brightness/Color redesign (committed this
+session as `26dc53b`, previously sitting uncommitted in the working tree)
+are both now on `main`. Rebuilt the Android release APK from `26dc53b`
+(`flutter build apk --release` → `app-release.apk`, 87.0MB) — the same
+commit already confirmed launching on iOS above — moved the `beta-v1` tag
+to it, force-pushed the tag, and replaced the release's APK asset
+(`gh release upload --clobber`) plus its notes (`gh release edit`) to
+describe what's new. See <https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1>.
+
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
 - **Navigation is geometric, not routed** — turn-by-turn follows a saved route's own polyline: no street names, no lane guidance, and no rerouting (it reports "off route" instead). Deliberate: no routing engine or API key exists. See `Assumptions Made.md`.
@@ -1372,7 +1383,7 @@ working harder. Everything from 6 down runs in parallel with that wait.
 | File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why. **Needs a manual check** (`Issues.md` §24.9): the unsigned preset `throttleiq_unsigned` is client-extractable from the APK by design — that's not itself a bug — but confirm in the Cloudinary dashboard (Settings → Upload → Upload presets) that it restricts resource type, file size, and has moderation enabled, so a pulled-preset client can't be used for quota exhaustion or hosting arbitrary/illegal content. This needs dashboard login, so it wasn't something fixable from a code change |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
-| Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release **APK only** (no AAB yet), matches `pubspec.yaml` at `1.0.0-beta.1+1`. Tag was moved forward twice on 2026-08-17: first for the Places/Rides nav swap, then again for the new Cute Analyst skin. `beta-v2`/`beta-v3` were deleted in the 2026-08-17 versioning reset (see TL;DR above) — those links are dead. |
+| Latest release | [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1) — signed release **APK only** (no AAB yet), matches `pubspec.yaml` at `1.0.0-beta.1+1`. Tag moved forward four times now: 2026-08-17 for the Places/Rides nav swap, again the same day for the Cute Analyst skin, and twice more on 2026-08-23 — once for the §33 security/bug sweep, once for the Vibe/Brightness/Color appearance redesign (commit `26dc53b`). `beta-v2`/`beta-v3` were deleted in the 2026-08-17 versioning reset (see TL;DR above) — those links are dead. |
 | Test suite | 755/755 green as of 2026-08-12 (717 on 2026-08-11; 550 on 2026-08-03; was 287 before the backlog pass). Plus 22 Node tests in `scripts/` (`npm test`) for the Dhaka seed script's pure logic. DAOs now run against real in-memory SQLite via `sqflite_common_ffi` — see `Issues.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `Assumptions Made.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
