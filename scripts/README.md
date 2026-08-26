@@ -8,10 +8,12 @@ Flutter app build and are not deployed with the Cloud Functions.
 |---|---|---|
 | [`reset_beta_data.js`](#-reset_beta_datajs--read-this-first) | Wipes **all** rider data and Auth accounts | **No** |
 | [`seed_dhaka_places.js`](#seed_dhaka_placesjs--seed-the-dhaka-places-directory) | Creates place documents for Dhaka's petrol pumps, garages and parts sellers, from OpenStreetMap | Yes — one query deletes the batch |
+| [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
+| [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 
-Both share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
+All four share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
-be re-run. The [Setup](#setup) section below applies to both.
+be re-run. The [Setup](#setup) section below applies to all of them.
 
 Unit tests for the pure logic in these scripts (no network, no Firestore):
 
@@ -458,5 +460,191 @@ from duplicating a seeded place: both sides key off `osmId`.
 ```bash
 npm run check   # parses both scripts, connects to nothing
 npm test        # unit tests for the mapping, geohash and dedup logic
+```
+
+---
+
+# `seed_qa_test_riders.js` — fabricate QA test riders
+
+Creates fabricated rider accounts so the Social feed, forums and garage
+screens have realistic content to QA against instead of an empty beta app.
+
+By default it creates **30** accounts, each with one bike from a 30-entry
+Bangladesh-market catalog spanning commuter (Honda CB Shine 125, Bajaj CT 100,
+...) to high-range (KTM RC 390, Kawasaki Z400, Royal Enfield Himalayan 411,
+...), a handful of backdated rides, one or two of those rides shared to the
+public Social feed, and two forum posts each (one in the bike's own model
+forum, one in a general topic forum — Road Trips, Maintenance, Mileage Talk,
+Mods & Accessories).
+
+**Read this before running it for real:** this project has only one Firebase
+project configured (`throttleiqfb` — see `.firebaserc`), the same one real
+beta testers use. There is no separate staging environment. A real run writes
+PUBLICLY VISIBLE content — shared rides and forum posts other testers will
+see in the app — until you clean it up. If that's not what you want, don't
+pass `--yes-i-really-mean-it`.
+
+**Status: this has been run.** All 30 accounts are live in `throttleiqfb` as
+of 2026-08-27 — see `HANDOFF_Document.md` for the exact counts and the two
+real bugs that run surfaced (both fixed and re-verified against production
+before/after: the `qaSeed` tag on bike/ride subdocs breaking device sync, and
+`cleanup_qa_test_riders.js`'s original forum-post query needing a Firestore
+index this project doesn't have). Run `cleanup_qa_test_riders.js` (dry-run
+first) when QA is done with this batch — don't leave it live indefinitely.
+
+## What makes a run safe to inspect first
+
+Unlike the other two scripts, `--dry-run` here needs **no credentials at
+all**: it generates every rider/bike/ride/post payload in memory and prints a
+summary plus one full sample rider as JSON, without calling Firebase Auth or
+Firestore. Read that output before you ever point it at real credentials.
+
+```bash
+cd scripts
+node seed_qa_test_riders.js               # dry run, no setup needed
+node seed_qa_test_riders.js --count=5     # smaller sample dry run
+```
+
+## Running it for real
+
+Same [service-account setup](#1-get-a-service-account-key) as the other
+scripts — or, if no service-account key is available, `gcloud auth
+application-default login` as an account with Owner/Editor on the GCP
+project works too (`GOOGLE_APPLICATION_CREDENTIALS` isn't needed in that
+case; Firebase Admin SDK resolves the ADC file automatically). You'll also
+likely need `gcloud auth application-default set-quota-project throttleiqfb`
+once — Google requires a quota project on user ADC credentials, separately
+from IAM permissions. **The GCP project owner is not necessarily the same
+account as this app's own admin user** (`the.abraar.rar@gmail.com`, the
+email hardcoded in `firestore.rules`/`forum_permissions.dart` for in-app
+admin — that's an app-level concept, unrelated to Google Cloud IAM on the
+underlying project); logging in as the wrong one fails with
+`PERMISSION_DENIED` on both a Firestore read and `auth.listUsers()`.
+
+```bash
+cd scripts
+FIREBASE_PROJECT_ID=throttleiqfb node seed_qa_test_riders.js --yes-i-really-mean-it
+```
+
+Nothing is created without that flag, and it also requires typing the phrase
+`SEED QA TEST RIDERS` at a prompt first (`--non-interactive` skips that for
+scripted use). Each account:
+
+- signs up with Firebase Auth at `<handle>@qa-seed.invalid` (`.invalid` is the
+  IANA-reserved TLD for exactly this — RFC 2606 — so it can never collide with
+  a real rider's email), password `QaSeed!2026`, and the custom claim
+  `{ qaSeed: true }`
+- gets a `users/{uid}` profile + claimed `usernames/{handle}`, one bike in
+  `users/{uid}/bikes`, and 4-8 backdated rides in `users/{uid}/rides`
+- shares 1-2 of those rides to the public `rides` feed
+- posts twice into `forums/{forumId}/posts` (creating the bike-model forum if
+  it doesn't exist yet)
+
+Every Firestore document this creates carries `qaSeed: true` — **except** the
+bike and per-user ride documents. Those two are written straight into the
+same shape `CloudRepository.uploadBikes`/`uploadRides` use, because
+`CloudRepository.downloadBikes`/`downloadRides` on a real device inserts a
+Firestore bike/ride doc's fields directly into the local SQLite `bikes`/`rides`
+tables by column name — an extra `qaSeed` key there would make that insert
+throw (caught per-doc, but the bike/ride would then never sync down). Those
+two subtrees are still found and removed by cleanup, since it walks
+everything under a `users/{uid}` doc matched by the profile's own `qaSeed`
+flag rather than needing the tag on every nested doc.
+
+The bike catalog, topic list, and forum-slug logic live in
+`qa_seed_catalog.js`, required by both this script and the cleanup script —
+kept in one place because cleanup needs the *exact same* set of possible
+forum ids the seed script could have written to (see that script's own
+section below for why).
+
+Re-running is safe: an email Firebase Auth already has (i.e. that rider was
+already seeded) is logged as `SKIPPED`, not an abort.
+
+## `cleanup_qa_test_riders.js` — remove the batch
+
+Finds everything by the same two markers: `qaSeed: true` on Firestore
+documents, and the `@qa-seed.invalid` email domain on Auth accounts. Deletes
+the `users/{uid}` profile + its `bikes`/`rides` subtrees, the reserved
+`usernames/{handle}` doc, the shared feed rides, the forum posts (decrementing
+each forum's `postCount` by however many seeded posts it removes), and the
+Auth accounts themselves.
+
+**Forum posts are matched differently from everything else.** The obvious
+approach — `collectionGroup('posts').where('qaSeed', '==', true)` — needs a
+Firestore composite index that `throttleiqfb` doesn't have, and failed
+outright with `FAILED_PRECONDITION` the first time this was run for real.
+Instead this queries `forums/{forumId}/posts` directly for every forum id
+`seed_qa_test_riders.js` could ever have written to
+(`qa_seed_catalog.allSeedableForumIds()` — the full cross product of its bike
+catalog and topic list, so it's guaranteed exhaustive) — a plain single-field
+query under a known parent, which Firestore always auto-indexes.
+
+It deliberately does **not** delete the forum documents themselves, even ones
+the seed script had to create (tagged `qaSeedCreatedForum: true`) — a real
+rider may have posted into one since seeding. An empty forum shell left
+behind is harmless; deleting one a real rider is now using would not be.
+
+```bash
+cd scripts
+FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js               # dry run
+FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js --yes-i-really-mean-it
+```
+
+Requires the confirmation phrase `DELETE QA SEED DATA`, same as
+`--yes-i-really-mean-it` on the other destructive script here. This is
+irreversible, but scoped only to the tagged QA batch — it cannot touch real
+rider data.
+
+## Live roster (seeded 2026-08-27)
+
+The 30 accounts actually created in `throttleiqfb`, pulled from Firestore
+after the run — see [Running it for real](#running-it-for-real) above for
+how to reproduce this listing (`qa_seed_catalog.allSeedableForumIds()` plus a
+`qaSeed == true` query per forum/user).
+
+| Handle | Name | Bike | City |
+|---|---|---|---|
+| tanvir01 | Tanvir Ahmed | Honda CB Shine 125 | Dhaka |
+| nusrat02 | Nusrat Jahan | Bajaj Discover 125 | Chattogram |
+| rakibul03 | Rakibul Islam | TVS Metro Plus 100 | Sylhet |
+| farhana04 | Farhana Akter | Hero Splendor Plus | Rajshahi |
+| shakil05 | Shakil Hasan | Yamaha Saluto 125 | Cox's Bazar |
+| mitu06 | Mitu Rahman | Suzuki Hayate EP | Bogura |
+| imran07 | Imran Hossain | Runner Turbo 100 | Cumilla |
+| sadia08 | Sadia Islam | Lifan KP100 | Khulna |
+| kamrul09 | Kamrul Hasan | Walton Fizor 125 | Rangpur |
+| rumana10 | Rumana Akter | Bajaj CT 100 | Mymensingh |
+| mahmudul11 | Mahmudul Hasan | Yamaha FZS-Fi V3 | Dhaka |
+| sabrina12 | Sabrina Yasmin | Honda CB150R Streetfire | Chattogram |
+| arif13 | Arif Hossain | Suzuki Gixxer 155 | Sylhet |
+| tania14 | Tania Sultana | Bajaj Pulsar NS160 | Rajshahi |
+| nayeem15 | Nayeem Chowdhury | TVS Apache RTR 160 4V | Cox's Bazar |
+| jannatul16 | Jannatul Ferdous | Yamaha MT-15 | Bogura |
+| habibur17 | Habibur Rahman | Honda X-Blade 160 | Cumilla |
+| shirin18 | Shirin Akter | Bajaj Pulsar 150 | Khulna |
+| rezaul19 | Rezaul Karim | TVS Apache RTR 165RP | Rangpur |
+| mahfuza20 | Mahfuza Begum | Suzuki Gixxer SF 155 | Mymensingh |
+| sohel21 | Sohel Rana | Yamaha R15 V4 | Dhaka |
+| nasrin22 | Nasrin Sultana | Suzuki GSX-R150 | Chattogram |
+| anisur23 | Anisur Rahman | KTM Duke 250 | Sylhet |
+| farzana24 | Farzana Haque | Honda CBR250RR | Rajshahi |
+| jubayer25 | Jubayer Ahmed | Kawasaki Ninja 300 | Cox's Bazar |
+| sultana26 | Sultana Razia | Royal Enfield Classic 350 | Bogura |
+| emon27 | Emon Khan | Royal Enfield Himalayan 411 | Cumilla |
+| rukhsana28 | Rukhsana Parvin | Yamaha YZF-R3 | Khulna |
+| riyad29 | Riyad Hossain | KTM RC 390 | Rangpur |
+| moushumi30 | Moushumi Akter | Kawasaki Z400 | Mymensingh |
+
+**Where their posts are** — 60 posts across 34 forums: one post per rider in
+their own bike's model forum (30 forums, e.g. `forums/honda__cb_shine_125`),
+plus general topic forums — **Road Trips** (5 posts), **Maintenance** (11),
+**Mileage Talk** (8), **Mods & Accessories** (6).
+
+## Syntax check
+
+```bash
+node --check seed_qa_test_riders.js
+node --check cleanup_qa_test_riders.js
+node --check qa_seed_catalog.js
 ```
 

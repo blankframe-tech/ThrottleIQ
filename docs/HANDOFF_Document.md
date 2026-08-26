@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-23 · Branch: `main`_
+_Last updated: 2026-08-27 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -886,6 +886,92 @@ commit already confirmed launching on iOS above — moved the `beta-v1` tag
 to it, force-pushed the tag, and replaced the release's APK asset
 (`gh release upload --clobber`) plus its notes (`gh release edit`) to
 describe what's new. See <https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1>.
+
+**3. `scripts/seed_qa_test_riders.js` + `scripts/cleanup_qa_test_riders.js` —
+fabricated QA test riders, 2026-08-26.** So the Social feed, forums and
+garage screens have realistic content to QA against instead of an empty beta
+app. Same house style as `reset_beta_data.js`/`seed_dhaka_places.js`
+(`--dry-run` default, `FIREBASE_PROJECT_ID` + resolved-credentials guard,
+typed confirmation phrase). Creates 30 Firebase Auth accounts
+(`<handle>@qa-seed.invalid` — `.invalid` is the RFC 2606-reserved TLD, so it
+can never collide with a real rider), each with one bike from a 30-entry
+Bangladesh-market catalog spanning commuter (Honda CB Shine 125, Bajaj CT
+100, ...) to high-range (KTM RC 390, Kawasaki Z400, Royal Enfield Himalayan
+411, ...), 4-8 backdated rides, 1-2 of those shared to the public feed, and
+two forum posts each.
+
+**Status: LIVE in production as of 2026-08-27, run at the product owner's
+explicit direction ("make it happen on the real firebase").** All 30 accounts
+exist in `throttleiqfb` right now — real Auth users, real profiles/bikes/
+rides, 45 rides on the public Social feed, 60 forum posts across 34 forums.
+Re-verified against production immediately after with a dry run of
+`cleanup_qa_test_riders.js`, which is the accounting to trust over any of the
+figures above if the two ever disagree: **239** `users` subtree docs (30
+profiles + 30 bikes + ~179 rides), **30** usernames, **45** shared feed
+rides, **60** forum posts, **34** forums touched, **30** Auth accounts. No
+separate staging project exists for this (`.firebaserc` only configures
+`throttleiqfb`), so this content is PUBLICLY VISIBLE to real beta testers
+right now — run `cleanup_qa_test_riders.js` (dry-run first) to remove it when
+QA is done with it.
+
+**Auth for this had to go through `gcloud auth application-default login`
+rather than a service-account key** (none was available in the environment
+this ran from). First attempt authenticated as `the.abraar.rar@gmail.com` —
+the *app-level* admin account hardcoded in `forum_permissions.dart`/
+`firestore.rules` (`Issues.md` §24.9) — which is a completely different thing
+from a Google Cloud IAM role on the `throttleiqfb` *project*, and that
+account has none: both a Firestore read and `auth.listUsers()` came back
+`PERMISSION_DENIED`. The actual GCP project owner is
+`blankframe.technologies@gmail.com` (same account the Firebase CLI here was
+already logged into) — re-running the ADC login as that account, then
+`gcloud auth application-default set-quota-project throttleiqfb` (Google
+requires a quota project on user ADC credentials, separately from IAM), fixed
+it. Worth remembering next time this needs doing from a fresh machine:
+**app-admin identity and GCP-project-owner identity are not the same
+account.**
+
+- **Every seeded doc carries `qaSeed: true` for `cleanup_qa_test_riders.js`
+  to find — except the `users/{uid}/bikes` and `users/{uid}/rides`
+  documents.** Real bug caught before ever running it for real:
+  `CloudRepository.downloadBikes`/`downloadRides` insert a Firestore
+  bike/ride doc's fields straight into the local SQLite `bikes`/`rides`
+  tables by column name, and those tables have a fixed column set — an
+  extra `qaSeed` key there throws inside the per-doc `try/catch`, which
+  would have silently stopped a seeded bike/ride from ever syncing down to
+  a real device. Those two subtrees are still found by cleanup, since it
+  walks everything under a `users/{uid}` doc matched by the parent
+  profile's own `qaSeed` flag rather than needing the tag on every nested
+  doc.
+- **A second real bug, caught by dry-running cleanup against the live
+  2-rider canary before scaling to 30**: `cleanup_qa_test_riders.js`
+  originally matched forum posts with
+  `collectionGroup('posts').where('qaSeed', '==', true)` — Firestore
+  requires a composite index for any collection-group query with a filter,
+  and `throttleiqfb` doesn't have one for `posts`/`qaSeed`, so this failed
+  outright with `FAILED_PRECONDITION`. Fixed by pulling the bike/topic
+  catalog into a new shared `scripts/qa_seed_catalog.js` (required by both
+  scripts, so they can't drift apart) and having cleanup query
+  `forums/{forumId}/posts` directly for every forum id the seed script could
+  ever write to — a plain single-field query, always auto-indexed, no
+  Firestore config deploy needed. Re-verified against the canary batch
+  before trusting it on the full 30.
+- Cleanup deliberately does not delete the forum documents themselves, even
+  ones the seed script had to create (`qaSeedCreatedForum: true`) — a real
+  rider may have posted into one since. It does decrement each forum's
+  `postCount` by the number of seeded posts it removes.
+- **Known gap, not yet fixed: a real rider who follows one of these QA
+  accounts gets an orphaned `follows/{realUid}_{qaUid}` edge after
+  cleanup.** Cleanup purges each QA post's/ride's own subtree (so a real
+  rider's replies/votes on seeded content do get swept up correctly), but
+  `follows` is a top-level collection unrelated to any `qaSeed`-tagged doc,
+  and cleanup never touches it — nor does it decrement the real rider's own
+  `followingCount`, which was incremented by a normal `followForum`-style
+  transaction at follow time. Harmless (points at a uid that no longer
+  exists, same as any other orphan in this codebase — e.g. `deletePost`'s
+  orphaned replies/votes, `Issues.md`'s precedent for accepting this at beta
+  scale) but worth fixing properly before this becomes a repeated pattern:
+  cleanup would need to look up each QA uid's followers first and unwind
+  both sides.
 
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
