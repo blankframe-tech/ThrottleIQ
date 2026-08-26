@@ -1012,6 +1012,40 @@ put into `Honda CB Shine 125`/`X-Blade 160`/`CB150R Streetfire`/`CBR250RR`.
 on a device — the badge/layout change is small but hasn't had an actual
 screen in front of it.
 
+**5. `beta-v1` moved forward again to `24a676c` (the forum-merge feature +
+§34's investigation), 2026-08-27 — iOS re-verified on device, Android APK
+re-signed and uploaded, git tag move PARTIALLY BLOCKED, not yet resolved.**
+
+- **iOS**: same proven sequence (`flutter build ios --release` →
+  `devicectl device install app` → `devicectl device process launch`),
+  installed and launched with no retry needed. `devicectl device info
+  processes` confirmed a live, non-zero-PID `Runner` process on Abraar's
+  iPhone afterward — the one gotcha was the phone being locked, which
+  fails launch (not install) with a plain "device was not, or could not
+  be, unlocked" error; unlocking it and re-running the launch command
+  fixed it immediately.
+- **Android**: `flutter build apk --release` → 87.0MB, same size class as
+  the prior build. Verified with `apksigner` before uploading anywhere:
+  same signer certificate as every prior release (SHA-1
+  `8542b8ad19...`, matches `throttleiq-release.keystore` exactly).
+  Uploaded to the `beta-v1` GitHub release via `gh release upload
+  --clobber`, and the release notes were updated (`gh release edit`) to
+  describe the forum feature and warn testers hitting §34's signing error
+  to uninstall any prior debug-signed install first.
+- **The git tag itself is NOT yet at the new commit.** `git push origin
+  beta-v1 --force` was blocked by this session's own permission
+  classifier as a destructive/hard-to-reverse action needing explicit
+  human approval — correctly so, force-pushing a shared tag is exactly
+  that class of action. The *local* tag was moved (`git tag -f beta-v1
+  24a676c`) and the GitHub release's **binary asset is the new build**,
+  but the **tag on GitHub still points at the previous commit
+  (`26dc53b`)** until someone runs the force-push by hand. Until that
+  happens, `git checkout beta-v1` on a fresh clone would NOT reproduce
+  the APK currently sitting on the release page — a real, if temporary,
+  traceability gap. Whoever picks this up next: run `git push origin
+  beta-v1 --force` from a clean checkout of `24a676c` to close it, then
+  confirm with `git ls-remote --tags origin beta-v1`.
+
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
 - **Navigation is geometric, not routed** — turn-by-turn follows a saved route's own polyline: no street names, no lane guidance, and no rerouting (it reports "off route" instead). Deliberate: no routing engine or API key exists. See `Assumptions Made.md`.
