@@ -281,9 +281,14 @@ class _PostCard extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
-      await ForumRepository().deletePost(forumId: forumId, postId: post.id);
+      // post.forumId, not the screen's forumId: this card may be showing a
+      // post merged in from a bike-model forum onto its brand forum's list
+      // (see ForumRepository.getPosts) — the post only actually lives in
+      // its own forum's `posts` subcollection.
+      await ForumRepository().deletePost(forumId: post.forumId, postId: post.id);
       if (!context.mounted) return;
-      ref.invalidate(forumPostsProvider(forumId));
+      ref.invalidate(forumPostsProvider(post.forumId));
+      if (post.forumId != forumId) ref.invalidate(forumPostsProvider(forumId));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -295,15 +300,21 @@ class _PostCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final forum = ref.watch(forumByIdProvider(forumId)).valueOrNull;
+    // The post's OWN forum, not necessarily the screen's — see _confirmDelete.
+    final postForum = ref.watch(forumByIdProvider(post.forumId)).valueOrNull;
     // Riders can always remove their own post; moderating *other* people's
-    // posts additionally needs the admin/creator/maintainer check.
+    // posts additionally needs the admin/creator/maintainer check, against
+    // whichever forum the post actually lives in.
     final canDelete = post.userId == user?.uid ||
-        (forum != null &&
-            canModerate(forum: forum, uid: user?.uid, email: user?.email));
+        (postForum != null &&
+            canModerate(forum: postForum, uid: user?.uid, email: user?.email));
+    // Shown only when this card is a mention merged in from a narrower
+    // bike-model forum onto its brand forum's list — a native post of the
+    // forum being viewed needs no origin tag.
+    final mergedFrom = post.forumId != forumId ? postForum : null;
 
     return AppCard(
-      onTap: () => context.push('/forums/$forumId/post/${post.id}'),
+      onTap: () => context.push('/forums/${post.forumId}/post/${post.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -340,6 +351,24 @@ class _PostCard extends ConsumerWidget {
                 ),
             ],
           ),
+          if (mergedFrom != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.subdirectory_arrow_right, size: 14, color: AppColors.textTertiary),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    'from ${mergedFrom.displayName}',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.textTertiary, fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           Text(
             post.title,

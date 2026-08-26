@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-27 · Branch: `main`_
+_Last updated: 2026-08-27 (later) · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -972,6 +972,45 @@ account.**
   scale) but worth fixing properly before this becomes a repeated pattern:
   cleanup would need to look up each QA uid's followers first and unwind
   both sides.
+
+**4. A brand forum now shows its model forums' posts too, 2026-08-27.**
+Requested directly: "if Honda CB Shine 125 has a post, Honda has the post
+mentioning in the subforum too." `ForumRepository.getPosts` now merges in
+posts from every `bikeModel` forum under a `brand` forum's brand when
+that's the forum being viewed — read-time merge, not a write-time copy (a
+merged post still lives only in its own model forum, still counts only
+toward that forum's own `postCount`), tagged `from {model forum name}` in
+`_PostCard` so it reads as a mention, not native brand-forum content.
+Voting/deleting a merged post now always targets its own
+`ForumPostEntity.forumId` — not the screen's — a latent bug this surfaced:
+`ForumPostsNotifier.vote` and `_hydrateVotes` previously assumed every post
+in a list belonged to the forum being viewed, which was always true before
+this feature existed.
+
+Deliberately one-directional (model → brand only) — see `garageForumTargets`
+above (2026-08-11) for the exact opposite lesson already learned once: mixing
+broad and narrow forum content the other way (brand posts leaking into a
+model forum) buries what a rider came to that narrower forum to read.
+Merging upward doesn't have that problem — the brand forum is already the
+broad one, so a specific post surfacing there is additive.
+
+The candidate query is a plain `forums.where('brand', '==', X)` — single
+equality field, always auto-indexed — filtered to `type == bikeModel &&
+postCount > 0` client-side (`modelForumsToMergeInto`, unit-tested), not a
+compound `where` or a `collectionGroup('posts')` query. Deliberate, after
+`cleanup_qa_test_riders.js` above hit exactly that trap for real: a
+`collectionGroup` query with a filter needs a composite index this project
+doesn't have, and fails outright rather than degrading.
+
+**Verified against live production data**, not just tests: queried
+`forums/honda` (a real, pre-existing forum, not one this session created)
+and confirmed it now picks up exactly the 4 posts the QA seed batch above
+put into `Honda CB Shine 125`/`X-Blade 160`/`CB150R Streetfire`/`CBR250RR`.
+`flutter analyze` clean (0 new errors), `flutter test` **822/822** including
+6 new cases for `modelForumsToMergeInto`
+(`test/features/forums/forum_repository_test.dart`). Not yet seen rendered
+on a device — the badge/layout change is small but hasn't had an actual
+screen in front of it.
 
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.

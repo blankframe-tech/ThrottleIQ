@@ -18,6 +18,23 @@ import '../models/forum_reply_model.dart';
 /// convention.
 String customForumSlug(String name) => 'c-${generalForumSlug(name)}';
 
+/// Which of [candidates] should have their posts merged into [brand]'s
+/// brand-level forum — pure logic factored out for testing (same pattern as
+/// `garageForumTargets` in forum_providers.dart).
+///
+/// A forum qualifies only if it's a [ForumType.bikeModel] forum under
+/// [brand] with at least one post — never the brand doc itself, never a
+/// general/custom forum that happens to share the brand string, and never
+/// an empty model forum (not worth a Firestore read for zero posts). This
+/// only ever merges upward (model → brand); a brand forum's own posts never
+/// appear inside a narrower model forum — see [ForumRepository.getPosts]'s
+/// doc comment for why that direction is deliberate.
+List<ForumEntity> modelForumsToMergeInto(String brand, List<ForumEntity> candidates) {
+  return candidates
+      .where((f) => f.type == ForumType.bikeModel && f.brand == brand && f.postCount > 0)
+      .toList();
+}
+
 class ForumRepository {
   static final ForumRepository _instance = ForumRepository._internal();
 
@@ -355,17 +372,71 @@ class ForumRepository {
     return postRef.id;
   }
 
+  /// Posts for a forum, newest first.
+  ///
+  /// For a [ForumType.brand] forum, this also merges in posts from every
+  /// [ForumType.bikeModel] forum under that brand — so a post made in
+  /// "Honda CB Shine 125" also shows up when viewing "Honda", tagged with
+  /// its own model forum in the UI (`_PostCard`'s origin badge). This is a
+  /// read-time merge, not a write-time copy: a merged post still lives only
+  /// in its own model forum's `posts` subcollection, still counts only
+  /// toward that forum's `postCount`, and voting/deleting it always targets
+  /// its own [ForumPostEntity.forumId] — never the brand forum's id — which
+  /// is why every post in the returned list is fully self-describing rather
+  /// than assumed to belong to [forumId].
+  ///
+  /// Deliberately one-directional: a brand forum's own posts never appear
+  /// inside a narrower model forum. `forum_providers.dart`'s
+  /// `garageForumTargets` made the opposite call once already (owning a
+  /// bike adds you to its model forum, not the noisier brand forum above
+  /// it) for the same reason — mixing broad and narrow content the other
+  /// way buries what a rider actually came to read. Merging model → brand
+  /// doesn't have that problem: the brand forum is the broad one, so a
+  /// specific post surfacing there is additive, not noise.
   Future<List<ForumPostEntity>> getPosts(String forumId) async {
+    final forumDoc = await _forums.doc(forumId).get();
+    final forum = forumDoc.exists ? ForumModel.fromFirestore(forumDoc).toEntity() : null;
+
+    final posts = await _postsIn(forumId);
+    if (forum != null && forum.type == ForumType.brand) {
+      posts.addAll(await _postsFromModelForums(forum.brand));
+      posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return _hydrateVotes(posts);
+  }
+
+  Future<List<ForumPostEntity>> _postsIn(String forumId) async {
     final snapshot = await _forums
         .doc(forumId)
         .collection('posts')
         .orderBy('createdAt', descending: true)
         .get();
+    return snapshot.docs.map((doc) => ForumPostModel.fromFirestore(doc).toEntity()).toList();
+  }
 
-    final posts = snapshot.docs
-        .map((doc) => ForumPostModel.fromFirestore(doc).toEntity())
-        .toList();
-    return _hydrateVotes(forumId, posts);
+  /// The posts to merge into a brand forum — see [getPosts]'s doc comment.
+  ///
+  /// `brand`-equality is a plain single-field query, which Firestore always
+  /// auto-indexes — deliberately not a compound `where('type', ...)
+  /// .where('brand', ...)` query or a `collectionGroup('posts')` query.
+  /// `modelForumsToMergeInto` does the `type`/`postCount` filtering
+  /// client-side instead (same "fetch broader, filter in memory" shape as
+  /// [searchForums] above). `cleanup_qa_test_riders.js`
+  /// (`scripts/qa_seed_catalog.js`) hit exactly this the hard way: a
+  /// `collectionGroup('posts').where('qaSeed', '==', true)` query failed
+  /// outright with `FAILED_PRECONDITION` because this project has no
+  /// composite index for it — not worth risking here too.
+  Future<List<ForumPostEntity>> _postsFromModelForums(String brand) async {
+    if (brand.trim().isEmpty) return const [];
+
+    final candidatesSnap = await _forums.where('brand', isEqualTo: brand).get();
+    final candidates =
+        candidatesSnap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
+    final modelForums = modelForumsToMergeInto(brand, candidates);
+    if (modelForums.isEmpty) return const [];
+
+    final perForum = await Future.wait(modelForums.map((f) => _postsIn(f.id)));
+    return perForum.expand((posts) => posts).toList();
   }
 
   Future<ForumPostEntity?> getPost({
@@ -375,20 +446,23 @@ class ForumRepository {
     final doc = await _forums.doc(forumId).collection('posts').doc(postId).get();
     if (!doc.exists) return null;
     final post = ForumPostModel.fromFirestore(doc).toEntity();
-    final hydrated = await _hydrateVotes(forumId, [post]);
+    final hydrated = await _hydrateVotes([post]);
     return hydrated.first;
   }
 
   /// Hydrates the signed-in rider's vote state onto each post — entity-only,
   /// never stored on the post doc itself (mirrors
   /// RideShareRepository._hydrate's isLikedByCurrentUser/myVote pattern).
-  Future<List<ForumPostEntity>> _hydrateVotes(
-      String forumId, List<ForumPostEntity> posts) async {
+  ///
+  /// Reads each vote from the post's OWN `forumId`, not a shared one for the
+  /// whole list — required since [getPosts] can now return posts merged in
+  /// from several different model forums at once.
+  Future<List<ForumPostEntity>> _hydrateVotes(List<ForumPostEntity> posts) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || posts.isEmpty) return posts;
 
     final votes =
-        await Future.wait(posts.map((p) => getMyPostVote(forumId, p.id, uid)));
+        await Future.wait(posts.map((p) => getMyPostVote(p.forumId, p.id, uid)));
     return [
       for (var i = 0; i < posts.length; i++) posts[i].copyWith(myVote: votes[i]),
     ];

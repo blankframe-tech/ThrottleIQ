@@ -196,18 +196,22 @@ final forumPostsProvider = FutureProvider.family<List<ForumPostEntity>, String>(
 final forumPostsNotifierProvider = StateNotifierProvider.family<ForumPostsNotifier,
     List<ForumPostEntity>, String>((ref, forumId) {
   final posts = ref.watch(forumPostsProvider(forumId)).valueOrNull ?? [];
-  return ForumPostsNotifier(ref, forumId, posts);
+  return ForumPostsNotifier(ref, posts);
 });
 
 class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
-  ForumPostsNotifier(this._ref, this._forumId, List<ForumPostEntity> initial) : super(initial);
+  ForumPostsNotifier(this._ref, List<ForumPostEntity> initial) : super(initial);
 
   final Ref _ref;
-  final String _forumId;
   final _repo = ForumRepository();
 
   /// Casts/changes/clears a vote (1 upvote, -1 downvote). Tapping the same
   /// arrow again clears it, mirroring RideFeedNotifier.vote.
+  ///
+  /// Always writes to the post's OWN `forumId`, not the screen's — this list
+  /// can include posts merged in from a bike-model forum while viewing that
+  /// bike's brand forum (see ForumRepository.getPosts), and voting on one of
+  /// those has to land in the model forum it actually lives in.
   Future<void> vote(String postId, int value) async {
     final uid = _ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
@@ -233,7 +237,7 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
     ];
 
     try {
-      await _repo.votePost(_forumId, postId, uid, value);
+      await _repo.votePost(post.forumId, postId, uid, value);
     } catch (e) {
       state = [
         for (final p in state)
