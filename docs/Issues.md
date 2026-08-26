@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-23_
+_Last updated: 2026-08-27_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -2397,3 +2397,71 @@ scripts (`set_admin_claim.js`, `seed_dhaka_places.js`) — came back clean:
 properly gated, no hardcoded secrets, no SQL/NoSQL injection anywhere in the
 DAOs, and `public/live-viewer.html` uses `textContent` (not `innerHTML`) for
 all session-derived data.
+
+---
+
+## 34. `beta-v1` Android APK reported as a "signing error" that won't open on some devices — reported, not yet confirmed (2026-08-27)
+
+A tester reported the `beta-v1` GitHub release APK shows a signing error and
+won't open on some Android devices. No physical device or `adb` was available
+in this environment to reproduce it directly, so this is a diagnosis from
+static verification of the actual release artifact, not a confirmed root
+cause — see "What would confirm this" below before treating it as closed.
+
+**The release artifact itself checks out clean.** Downloaded the real
+`app-release.apk` from the `beta-v1` GitHub release and verified it with
+`apksigner` and `aapt` (both from the Android SDK build-tools; needed
+Android Studio's bundled JBR for `apksigner` — no system `java`, same
+`JAVA_HOME` workaround `scripts/README.md` already documents for the rules
+emulator):
+
+- **Signature verifies**, APK Signature Scheme v2, one signer.
+- **Certificate matches the canonical release keystore exactly** — compared
+  the APK's embedded signer cert against `keytool -list -v -keystore
+  throttleiq-release.keystore` on this machine: SHA-1
+  `85:42:B8:AD:19:1E:6B:74:FC:85:27:4F:48:9D:BC:CE:4B:00:2F:10` on both
+  sides. So this release was built with the right key, not an accidental
+  different/regenerated one.
+- `minSdkVersion` **24** (Android 7.0+), `targetSdkVersion` 36, package
+  `com.bft.throttleiq`, `versionCode` 1 — all as expected from
+  `app/android/app/build.gradle.kts`.
+- No v1 (JAR) signature is embedded, only v2 — **this is expected, not a
+  bug**: AGP 8.11.1 (`app/android/settings.gradle.kts`) skips v1 signing
+  automatically once `minSdkVersion` is 24+, since v1 only exists for
+  devices below Android 7.0, which this app doesn't support anyway.
+- File size (86,977,541 bytes) matches the ~87.0MB `HANDOFF_Document.md`
+  recorded when this APK was built — not corrupted or truncated by the
+  GitHub upload.
+
+**Working hypothesis: a signature mismatch against an already-installed
+build on the affected devices**, not a defect in this release. Android
+refuses to install an APK over an existing app with the same package name
+(`com.bft.throttleiq`) if the certificates don't match — the platform's own
+tamper protection, and exactly what a user would describe as a "signing
+error." The most likely source of a mismatched prior install is a **debug
+build** (`flutter run`/`flutter install`, signed with Android's default
+debug keystore — a different certificate from `throttleiq-release.keystore`)
+still present on a test device from earlier development, or one of the
+deleted `beta-v1`/`beta-v2`/`beta-v3` tag iterations mentioned in the
+current release's own notes, if any of those were ever built with a
+different signing setup. This would explain "some devices, not all": only
+devices carrying a prior differently-signed install are affected: a device
+that never had ThrottleIQ on it should install this APK cleanly.
+
+**What would confirm this** (not yet done — needs a physical affected
+device):
+- Uninstall any existing ThrottleIQ install on an affected device
+  (Settings → Apps → ThrottleIQ → Uninstall), then install the release APK
+  again. If that fixes it, the diagnosis is confirmed.
+- Or, with the device on `adb`: `adb install -r app-release.apk` — a
+  signature mismatch fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
+  specifically, which is unambiguous versus a generic parse/corruption
+  error.
+- The exact on-screen error text from an affected device would also narrow
+  this down — "signing error" is the tester's paraphrase, not necessarily
+  the literal OS message.
+
+**Not yet done, worth doing regardless of root cause:** add a line to the
+GitHub release notes telling testers to uninstall any prior ThrottleIQ build
+before installing this one — cheap, and correct regardless of whether the
+hypothesis above is confirmed.
