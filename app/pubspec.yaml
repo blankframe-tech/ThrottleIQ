@@ -107,7 +107,7 @@ dependencies:
   # configures the platform session so record/playback actually route
   # through a paired Bluetooth headset instead of the phone's own mic/
   # speaker. See group_ride_map_screen.dart.
-  record: ^5.1.2
+  record: ^7.1.1
   just_audio: ^0.9.40
   audio_session: ^0.1.21
 
