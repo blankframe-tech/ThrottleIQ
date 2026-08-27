@@ -30,16 +30,37 @@ class CloudinaryUploadService {
   static const _endpoint =
       'https://api.cloudinary.com/v1_1/$_cloudName/image/upload';
 
+  /// Cloudinary routes non-image media (audio included) through its `video`
+  /// resource type — confirmed against the live `throttleiq_unsigned`
+  /// preset before wiring this in (a short AAC clip uploaded successfully
+  /// and came back with `is_audio: true`), so no preset/account change was
+  /// needed to add voice notes.
+  static const _videoEndpoint =
+      'https://api.cloudinary.com/v1_1/$_cloudName/video/upload';
+
   /// Uploads [file] under the given [folder] (organizational only, e.g.
   /// `avatars` or `rideShares/$uid`) and returns its public `secure_url`.
   Future<String> upload(File file, {required String folder}) async {
+    final url = await _post(_endpoint, file, folder: folder);
+    return url;
+  }
+
+  /// Uploads a short audio clip (e.g. a push-to-talk voice note) and
+  /// returns its public `secure_url`. Kept separate from [upload] rather
+  /// than adding a resource-type parameter to it, so the avatar/ride-photo
+  /// upload path is untouched by this addition.
+  Future<String> uploadAudio(File file, {required String folder}) async {
+    return _post(_videoEndpoint, file, folder: folder);
+  }
+
+  Future<String> _post(String endpoint, File file, {required String folder}) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(file.path),
       'upload_preset': _uploadPreset,
       'folder': folder,
     });
     final response = await _dio.post<Map<String, dynamic>>(
-      _endpoint,
+      endpoint,
       data: formData,
     );
     final url = response.data?['secure_url'] as String?;

@@ -999,6 +999,49 @@ service cloud.firestore {
           (request.auth.uid == invitedUid || request.auth.uid == rideCreator());
       }
 
+      // Push-to-talk voice notes, one document per clip at
+      // `voiceNotes/{noteId}`. Create+read only — there is no update/delete
+      // path, so a sent clip can never be edited or retracted, and the
+      // create clause is the entire security surface for this collection.
+      //
+      // Only a JOINED member may send (not merely an invited one — an
+      // invitee can read the ride and its roster before accepting, but may
+      // not talk into it), senderId is pinned to the caller so nobody can
+      // send as somebody else, every field is whitelisted with hasOnly() so
+      // no other data rides along in the same write, audioUrl is pinned to
+      // Cloudinary's own host so this collection can't be used to broadcast
+      // arbitrary links, and createdAt must be exactly request.time — the
+      // same idiom the rest of this file uses to force
+      // FieldValue.serverTimestamp() rather than a spoofable client clock.
+      match /voiceNotes/{noteId} {
+        function ride() {
+          return get(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
+        }
+        allow read: if request.auth != null && (
+          request.auth.uid == ride().creatorId ||
+          request.auth.uid in ride().get('memberIds', []) ||
+          request.auth.uid in ride().get('invitedIds', []));
+
+        allow create: if request.auth != null &&
+          request.auth.uid == request.resource.data.senderId &&
+          (request.auth.uid == ride().creatorId ||
+           request.auth.uid in ride().get('memberIds', [])) &&
+          request.resource.data.keys().hasOnly([
+            'senderId', 'senderName', 'senderPhotoUrl', 'audioUrl',
+            'durationMs', 'createdAt'
+          ]) &&
+          request.resource.data.senderId is string &&
+          request.resource.data.senderName is string &&
+          request.resource.data.audioUrl is string &&
+          request.resource.data.audioUrl.matches('https://res[.]cloudinary[.]com/.*') &&
+          request.resource.data.durationMs is int &&
+          request.resource.data.durationMs >= 800 &&
+          request.resource.data.durationMs <= 60000 &&
+          request.resource.data.createdAt == request.time;
+
+        allow update, delete: if false;
+      }
+
       // Live positions, one document per rider at `memberLocations/{uid}`.
       // The {uid} wildcard is pinned to request.auth.uid on write, so a rider
       // can only ever move their OWN marker, and only while actually on the

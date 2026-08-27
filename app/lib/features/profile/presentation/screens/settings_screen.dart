@@ -283,6 +283,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // ── Ride tracking ──────────────────────────────────────────────
           const AutoTrackingTile(),
+          const AutoTrackingScheduleTile(),
 
           const SizedBox(height: 24),
 

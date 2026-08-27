@@ -195,15 +195,16 @@ void main() {
       expect(AppShapeProfile.boxy.controlHeight, 52);
     });
 
-    test('the default appearance is Carbon Mono, Boxy, Dark', () {
-      // The fallback for an unknown persisted preference. If it ever
-      // resolves to another combination, every rider who never touched
-      // Settings gets a silent restyle.
-      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.carbonMono);
-      expect(AppAppearance.defaultAppearance.shapeVibe, AppShapeVibe.boxy);
-      expect(AppAppearance.defaultAppearance.brightness, Brightness.dark);
+    test('the default appearance is Calming, Curvy, Light', () {
+      // The fallback for an unknown persisted preference, and what every new
+      // install/account starts on. If it ever resolves to another
+      // combination, every rider who never touched Settings gets a silent
+      // restyle.
+      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.calming);
+      expect(AppAppearance.defaultAppearance.shapeVibe, AppShapeVibe.curvy);
+      expect(AppAppearance.defaultAppearance.brightness, Brightness.light);
       expect(AppShapeProfile.forVibe(AppAppearance.defaultAppearance.shapeVibe),
-          same(AppShapeProfile.boxy));
+          same(AppShapeProfile.curvy));
     });
 
     test('Curvy gets a true pill for the full-radius token', () {

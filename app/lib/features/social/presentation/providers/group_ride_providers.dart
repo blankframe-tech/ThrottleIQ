@@ -28,3 +28,14 @@ final groupRideMembersProvider =
   (ref, groupRideId) =>
       ref.watch(groupRideRepositoryProvider).watchGroupRideMembers(groupRideId),
 );
+
+/// Live view of a group ride's push-to-talk voice notes, oldest first.
+///
+/// `autoDispose` for the same reason as [groupRideProvider] — only the
+/// group-ride map screen watches this, and it must not keep billing reads
+/// for a ride nobody has open.
+final voiceNotesProvider =
+    StreamProvider.autoDispose.family<List<VoiceNoteEntity>, String>(
+  (ref, groupRideId) =>
+      ref.watch(groupRideRepositoryProvider).watchVoiceNotes(groupRideId),
+);

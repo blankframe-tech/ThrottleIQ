@@ -34,8 +34,32 @@ enum AutoTrackingEnableFailure {
 }
 
 class AutoTrackingNotifier extends AsyncNotifier<bool> {
+  /// Whether the switch should read as on.
+  ///
+  /// The stored flag alone isn't enough: it only records what the rider last
+  /// chose *in this app*. If they later revoke "Allow all the time" from the
+  /// OS Settings app — the exact permission this feature depends on — the
+  /// flag stays true and the switch would keep lying about being on with no
+  /// way for the rider to tell, right up until the feature silently stops
+  /// detecting rides. Rebuilding re-checks the real OS permission every time
+  /// (app resume — see the `ref.invalidate` in app.dart's
+  /// didChangeAppLifecycleState — and whenever this screen mounts) and
+  /// flips the stored flag off the moment they no longer match, so "on" here
+  /// always means the feature can actually run right now.
   @override
-  Future<bool> build() => AutoTrackingService.isEnabled();
+  Future<bool> build() async {
+    final storedEnabled = await AutoTrackingService.isEnabled();
+    if (!storedEnabled) return false;
+
+    final servicesOn = await Geolocator.isLocationServiceEnabled();
+    final permission = await Geolocator.checkPermission();
+    final stillGranted = servicesOn && permission == LocationPermission.always;
+    if (stillGranted) return true;
+
+    await AutoTrackingService.setEnabled(false);
+    await AutoTrackingService.instance.stop();
+    return false;
+  }
 
   /// Turns auto-tracking on, collecting the permissions it needs first.
   ///
@@ -91,6 +115,62 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     await AutoTrackingService.instance.stop();
     await NotificationService.instance.cancelDailySummary();
     state = const AsyncValue.data(false);
+  }
+}
+
+/// The rider's chosen active-hours window for auto-tracking — whether it's
+/// restricted to a daily window at all, and if so, which one.
+class AutoTrackingSchedule {
+  final bool enabled;
+  final int startMinutes;
+  final int endMinutes;
+  const AutoTrackingSchedule({
+    required this.enabled,
+    required this.startMinutes,
+    required this.endMinutes,
+  });
+}
+
+/// Loads and edits [AutoTrackingSchedule]. Separate from
+/// [autoTrackingEnabledProvider] because the window is meaningful to look at
+/// and change independently of whether tracking is currently on — a rider
+/// picking their commute hours before ever flipping the main switch on
+/// shouldn't be blocked from doing so.
+final autoTrackingScheduleProvider = AsyncNotifierProvider<
+    AutoTrackingScheduleNotifier, AutoTrackingSchedule>(
+  AutoTrackingScheduleNotifier.new,
+);
+
+class AutoTrackingScheduleNotifier extends AsyncNotifier<AutoTrackingSchedule> {
+  @override
+  Future<AutoTrackingSchedule> build() async {
+    final enabled = await AutoTrackingService.isScheduleEnabled();
+    final (start, end) = await AutoTrackingService.getScheduleWindow();
+    return AutoTrackingSchedule(
+        enabled: enabled, startMinutes: start, endMinutes: end);
+  }
+
+  Future<void> setEnabled(bool value) async {
+    await AutoTrackingService.setScheduleEnabled(value);
+    await AutoTrackingService.instance.applyScheduleChange();
+    state = AsyncValue.data(AutoTrackingSchedule(
+      enabled: value,
+      startMinutes: state.requireValue.startMinutes,
+      endMinutes: state.requireValue.endMinutes,
+    ));
+  }
+
+  /// [startMinutes] must be strictly before [endMinutes] — the UI's time
+  /// pickers enforce this and disable the save action otherwise, since this
+  /// single-window model doesn't support a range that wraps past midnight.
+  Future<void> setWindow(int startMinutes, int endMinutes) async {
+    await AutoTrackingService.setScheduleWindow(startMinutes, endMinutes);
+    await AutoTrackingService.instance.applyScheduleChange();
+    state = AsyncValue.data(AutoTrackingSchedule(
+      enabled: state.requireValue.enabled,
+      startMinutes: startMinutes,
+      endMinutes: endMinutes,
+    ));
   }
 }
 

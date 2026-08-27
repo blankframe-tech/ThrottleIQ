@@ -30,6 +30,38 @@ class GroupRideMember extends Equatable {
 
 enum GroupRideMemberStatus { joined, declined, pending }
 
+/// One push-to-talk clip at `groupRides/{id}/voiceNotes/{noteId}`.
+///
+/// Create-and-read only — there is no edit/delete path, so unlike
+/// [GroupRideMember] this has no mutable status to track.
+class VoiceNoteEntity extends Equatable {
+  final String id;
+  final String senderId;
+  final String senderName;
+  final String senderPhotoUrl;
+  final String audioUrl;
+  final int durationMs;
+
+  /// Null until the server round-trip lands on the sender's own device —
+  /// see `_toDate` in group_ride_model.dart. The playback queue treats a
+  /// null timestamp as "not yet orderable" rather than "now", so a clip
+  /// never jumps the queue before its real time is known.
+  final DateTime? createdAt;
+
+  const VoiceNoteEntity({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    required this.senderPhotoUrl,
+    required this.audioUrl,
+    required this.durationMs,
+    this.createdAt,
+  });
+
+  @override
+  List<Object?> get props => [id, senderId, audioUrl, createdAt];
+}
+
 class GroupRideEntity extends Equatable {
   final String id;
   final String creatorId;

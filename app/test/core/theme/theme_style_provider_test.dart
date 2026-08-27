@@ -11,14 +11,14 @@ import 'package:throttleiq/core/theme/theme_style_provider.dart';
 
 void main() {
   group('AppearanceNotifier', () {
-    test('defaults to Carbon Mono/Boxy/Dark and applies it to AppColors immediately', () async {
+    test('defaults to Calming/Curvy/Light and applies it to AppColors immediately', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
-      expect(AppColors.primary, AppColorPalette.carbonMonoDark.primary);
-      expect(AppColors.background, AppColorPalette.carbonMonoDark.background);
+      expect(AppColors.primary, AppColorPalette.calmingLight.primary);
+      expect(AppColors.background, AppColorPalette.calmingLight.background);
 
       await pumpEventQueue();
     });
@@ -33,44 +33,46 @@ void main() {
 
       expect(container.read(appearanceProvider).colorMode, AppColorMode.editorial);
       // Brightness/vibe are untouched by a color-only change.
-      expect(container.read(appearanceProvider).brightness, Brightness.dark);
-      expect(AppColors.primary, AppColorPalette.editorialDark.primary);
-      expect(AppColors.background, AppColorPalette.editorialDark.background);
+      expect(container.read(appearanceProvider).brightness, Brightness.light);
+      expect(AppColors.primary, AppColorPalette.editorialLight.primary);
+      expect(AppColors.background, AppColorPalette.editorialLight.background);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('color_mode'), 'editorial');
     });
 
-    test('setBrightness(light) flips brightness only, and persists it', () async {
+    test('setBrightness(dark) flips brightness only, and persists it', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
+      // Light is the default now, so dark is the one that's a real transition.
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.carbonMono);
-      expect(container.read(appearanceProvider).brightness, Brightness.light);
-      expect(AppColors.background, AppColorPalette.carbonMonoLight.background);
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.calming);
+      expect(container.read(appearanceProvider).brightness, Brightness.dark);
+      expect(AppColors.background, AppColorPalette.calmingDark.background);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('brightness'), 'light');
+      expect(prefs.getString('brightness'), 'dark');
     });
 
-    test('setShapeVibe(curvy) flips shape only, applies it to AppDimensions, and persists it', () async {
+    test('setShapeVibe(boxy) flips shape only, applies it to AppDimensions, and persists it', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      // Curvy is the default now, so boxy is the one that's a real transition.
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.carbonMono);
-      expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.curvy);
-      expect(AppDimensions.shape, same(AppShapeProfile.curvy));
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.calming);
+      expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.boxy);
+      expect(AppDimensions.shape, same(AppShapeProfile.boxy));
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('shape_vibe'), 'curvy');
+      expect(prefs.getString('shape_vibe'), 'boxy');
       addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
@@ -78,9 +80,12 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final writer = ProviderContainer();
       await pumpEventQueue();
+      // All three set to values other than the default, so every axis's
+      // persistence is actually exercised rather than one falling back to
+      // an un-set key that happens to match the default anyway.
       await writer.read(appearanceProvider.notifier).setColorMode(AppColorMode.analystBlue);
-      await writer.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
-      await writer.read(appearanceProvider.notifier).setBrightness(Brightness.light);
+      await writer.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+      await writer.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
       writer.dispose();
 
       final reader = ProviderContainer();
@@ -90,8 +95,8 @@ void main() {
 
       final restored = reader.read(appearanceProvider);
       expect(restored.colorMode, AppColorMode.analystBlue);
-      expect(restored.shapeVibe, AppShapeVibe.curvy);
-      expect(restored.brightness, Brightness.light);
+      expect(restored.shapeVibe, AppShapeVibe.boxy);
+      expect(restored.brightness, Brightness.dark);
       addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
@@ -101,7 +106,7 @@ void main() {
         final writer = ProviderContainer();
         await pumpEventQueue();
         // setColorMode is a no-op (and so persists nothing) when already on
-        // the requested mode — real for the default, Carbon Mono, so detour
+        // the requested mode — real for the default, Calming, so detour
         // through a different mode first to force an actual transition.
         final detour =
             mode == AppColorMode.retro ? AppColorMode.editorial : AppColorMode.retro;
@@ -120,12 +125,11 @@ void main() {
       }
     });
 
-    test('an unrecognised persisted color_mode falls back to the default appearance', () async {
+    test('an unrecognised persisted color_mode falls back to the default color, other explicit axes stand', () async {
       // e.g. a mode removed since it was written (positiveVibes/genesis/
-      // cuteAnalyst), or prefs carried back to an older build. Since all
-      // three new keys must decode successfully to skip the legacy path,
-      // one bad key with no legacy value to fall back to just leaves the
-      // default in place — not a crash, and not a half-applied appearance.
+      // cuteAnalyst), or prefs carried back to an older build. Only the bad
+      // axis falls back to the default — shape_vibe/brightness were
+      // explicitly set here and must still be respected, not reset too.
       SharedPreferences.setMockInitialValues({
         'color_mode': 'vaporwave',
         'shape_vibe': 'boxy',
@@ -136,8 +140,12 @@ void main() {
       container.read(appearanceProvider);
       await pumpEventQueue();
 
-      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
-      expect(AppColors.primary, AppColorPalette.carbonMonoDark.primary);
+      expect(container.read(appearanceProvider).colorMode,
+          AppAppearance.defaultAppearance.colorMode);
+      expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.boxy);
+      expect(container.read(appearanceProvider).brightness, Brightness.dark);
+      expect(AppColors.primary, AppColorPalette.calmingDark.primary);
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
     group('legacy single-key migration', () {
@@ -202,16 +210,17 @@ void main() {
       await pumpEventQueue();
 
       expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
-      expect(AppDimensions.shape, same(AppShapeProfile.boxy));
-
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
       expect(AppDimensions.shape, same(AppShapeProfile.curvy));
-      expect(AppDimensions.radiusMd, AppShapeProfile.curvy.radiusMd);
 
-      // ...and switching back must take the rounded corners with it.
       await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
       expect(AppDimensions.shape, same(AppShapeProfile.boxy));
       expect(AppDimensions.radiusMd, AppShapeProfile.boxy.radiusMd);
+
+      // ...and switching back must take the rounded corners with it.
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      expect(AppDimensions.shape, same(AppShapeProfile.curvy));
+      expect(AppDimensions.radiusMd, AppShapeProfile.curvy.radiusMd);
+      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
     test('Retro applies mono type independent of vibe/brightness', () async {
@@ -222,12 +231,14 @@ void main() {
 
       await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.retro);
       expect(AppTypography.isMono, isTrue);
-      // Brightness is still the default (dark) at this point.
-      expect(AppColors.border, AppColorPalette.retroDark.ink);
+      // Brightness is still the default (light) at this point.
+      expect(AppColors.border, AppColorPalette.retroLight.ink);
 
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      // Curvy is already the default, so boxy is the one that's a real
+      // transition here.
+      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
       expect(AppTypography.isMono, isTrue); // unchanged by the vibe switch
-      expect(AppDimensions.radiusXl, AppShapeProfile.curvy.radiusXl);
+      expect(AppDimensions.radiusXl, AppShapeProfile.boxy.radiusXl);
 
       await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.carbonMono);
       expect(AppTypography.isMono, isFalse);
@@ -240,7 +251,8 @@ void main() {
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.carbonMono);
+      // Calming is the default now, so requesting it again is the no-op case.
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.calming);
 
       expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
       final prefs = await SharedPreferences.getInstance();

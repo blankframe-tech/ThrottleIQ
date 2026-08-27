@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_entity.dart';
@@ -103,7 +104,8 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         const SizedBox(height: 12),
         garageForumsAsync.when(
           loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
+          error: (e, _) =>
+              ErrorView(error: e, onRetry: () => ref.invalidate(forumsForGarageProvider)),
           data: (forums) {
             if (forums.isEmpty) {
               return Text(
@@ -146,7 +148,8 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         const SizedBox(height: 4),
         customForumsAsync.when(
           loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
+          error: (e, _) =>
+              ErrorView(error: e, onRetry: () => ref.invalidate(customForumsProvider)),
           data: (forums) {
             if (forums.isEmpty) {
               return Text(

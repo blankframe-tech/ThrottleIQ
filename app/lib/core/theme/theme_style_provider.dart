@@ -32,12 +32,15 @@ class AppAppearance {
     required this.brightness,
   });
 
-  /// Carbon Mono, Boxy, Dark — the app's original, single-brightness identity
-  /// before this split, kept as the default so nobody's first launch changes.
+  /// Calming, Curvy, Light — the default for every new install and every
+  /// newly-created account (changed 2026-08-27, from the original Carbon
+  /// Mono / Boxy / Dark). Also what any single un-set axis falls back to for
+  /// a returning rider who only ever changed the other two — see
+  /// [AppearanceNotifier._loadPersisted].
   static const defaultAppearance = AppAppearance(
-    colorMode: AppColorMode.carbonMono,
-    shapeVibe: AppShapeVibe.boxy,
-    brightness: Brightness.dark,
+    colorMode: AppColorMode.calming,
+    shapeVibe: AppShapeVibe.curvy,
+    brightness: Brightness.light,
   );
 
   AppAppearance copyWith({
@@ -74,8 +77,8 @@ class AppAppearance {
 ///     Dark — an EXACT match, since that skin was always just Analyst Blue's
 ///     palette with a different shape.
 ///   - `genesis` (dark, boxy, gold/violet) → no surviving hue is close, so it
-///     falls back to the app default (Carbon Mono, Boxy, Dark) rather than
-///     guessing a resemblance that isn't really there.
+///     falls back to whatever [AppAppearance.defaultAppearance] currently is
+///     rather than guessing a resemblance that isn't really there.
 const Map<String, AppAppearance> _legacyTriple = {
   'carbon': AppAppearance(
     colorMode: AppColorMode.carbonMono,
@@ -154,8 +157,8 @@ Brightness? _decodeBrightness(String? saved) {
 /// Persisted appearance preference: three independent choices — color
 /// family, shape vibe, brightness — rather than one flat skin name.
 ///
-/// Defaults to [AppAppearance.defaultAppearance] (Carbon Mono / Boxy / Dark,
-/// the app's original identity) until a saved choice loads from
+/// Defaults to [AppAppearance.defaultAppearance] (Calming / Curvy / Light)
+/// until a saved choice loads from
 /// [SharedPreferences]. A rider who already had a skin picked under the old
 /// single-key scheme has it decoded via [_legacyTriple] on first load under
 /// this build, then persisted forward under the three new keys.

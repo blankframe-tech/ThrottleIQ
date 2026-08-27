@@ -33,6 +33,7 @@ const {
 const {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -41,6 +42,7 @@ const {
   runTransaction,
   writeBatch,
   Timestamp,
+  serverTimestamp,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
@@ -50,9 +52,11 @@ const RULES = fs.readFileSync(
 
 const ALICE = 'alice-uid';
 const MALLORY = 'mallory-uid';
+const STRANGER = 'stranger-uid';
 const RIDE_ID = 'ride-1';
 const FORUM_ID = 'forum-1';
 const POST_ID = 'post-1';
+const GROUP_RIDE_ID = 'group-ride-1';
 
 let testEnv;
 
@@ -92,6 +96,20 @@ test.beforeEach(async () => {
       replyCount: 0,
       upvotes: 0,
       downvotes: 0,
+    });
+    // Alice is the creator and only joined member; Mallory is invited but
+    // has not accepted — the shape voiceNotes' create rule needs to tell
+    // "joined" from "merely invited" apart.
+    await setDoc(doc(db, 'groupRides', GROUP_RIDE_ID), {
+      creatorId: ALICE,
+      creatorName: 'Alice',
+      name: "Alice's group ride",
+      startTime: new Date(),
+      status: 'active',
+      memberIds: [ALICE],
+      invitedIds: [MALLORY],
+      createdAt: new Date(),
+      maxParticipants: 20,
     });
   });
 });
@@ -548,4 +566,139 @@ test('a rider cannot rewrite their own crash notification status after creation'
   await assertFails(
     updateDoc(doc(db, 'crashNotifications', 'crash-1'), { status: 'acknowledged' })
   );
+});
+
+// ---------------------------------------------------------------------------
+// groupRides/{id}/voiceNotes/{noteId} — push-to-talk clips, create+read only.
+// ---------------------------------------------------------------------------
+
+/** A syntactically valid voice-note payload, as GroupRideRepository writes it. */
+function voiceNoteData(overrides = {}) {
+  return {
+    senderId: ALICE,
+    senderName: 'Alice',
+    senderPhotoUrl: '',
+    audioUrl:
+      'https://res.cloudinary.com/vjvcigkt/video/upload/v1/voiceNotes/clip.m4a',
+    durationMs: 2000,
+    createdAt: serverTimestamp(),
+    ...overrides,
+  };
+}
+
+function voiceNotesCollection(db) {
+  return collection(db, 'groupRides', GROUP_RIDE_ID, 'voiceNotes');
+}
+
+test('a joined member can send a voice note', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(voiceNotesCollection(db)), voiceNoteData())
+  );
+});
+
+test('an invited-but-not-yet-joined rider cannot send a voice note', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(
+      doc(voiceNotesCollection(db)),
+      voiceNoteData({ senderId: MALLORY, senderName: 'Mallory' })
+    )
+  );
+});
+
+test('a rider with no relationship to the ride cannot send a voice note', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(
+      doc(voiceNotesCollection(db)),
+      voiceNoteData({ senderId: STRANGER, senderName: 'Stranger' })
+    )
+  );
+});
+
+test('sending a voice note as somebody else is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(voiceNotesCollection(db)), voiceNoteData({ senderId: MALLORY }))
+  );
+});
+
+test('a voice note with an extra field is denied (hasOnly)', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(voiceNotesCollection(db)),
+      voiceNoteData({ note: 'not on the whitelist' })
+    )
+  );
+});
+
+test('a voice note pointing off Cloudinary is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(voiceNotesCollection(db)),
+      voiceNoteData({ audioUrl: 'https://evil.example.com/clip.m4a' })
+    )
+  );
+});
+
+test('a voice note under the 800ms accidental-tap floor is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(voiceNotesCollection(db)), voiceNoteData({ durationMs: 500 }))
+  );
+});
+
+test('a voice note over the 60s ceiling is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(voiceNotesCollection(db)), voiceNoteData({ durationMs: 90000 }))
+  );
+});
+
+test('a voice note stamped with a client clock instead of serverTimestamp() is denied', async () => {
+  // The spoof this file's other create-time checks all guard against: a
+  // plain Date lets the sender claim any moment, including one that would
+  // let a note jump ahead of ones that arrived first.
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(voiceNotesCollection(db)), voiceNoteData({ createdAt: new Date() }))
+  );
+});
+
+test('a sent voice note cannot be updated or deleted by anyone, including its sender', async () => {
+  let noteRef;
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    noteRef = doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes'));
+    await setDoc(noteRef, voiceNoteData());
+  });
+
+  const db = dbFor(ALICE);
+  await assertFails(updateDoc(doc(db, noteRef.path), { durationMs: 5000 }));
+  await assertFails(deleteDoc(doc(db, noteRef.path)));
+});
+
+test('an invited-but-not-yet-joined rider can still read voice notes', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes')),
+      voiceNoteData()
+    );
+  });
+  const db = dbFor(MALLORY);
+  const snap = await getDocs(voiceNotesCollection(db));
+  assert.equal(snap.empty, false);
+});
+
+test('a rider with no relationship to the ride cannot read voice notes', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes')),
+      voiceNoteData()
+    );
+  });
+  const db = dbFor(STRANGER);
+  await assertFails(getDocs(voiceNotesCollection(db)));
 });

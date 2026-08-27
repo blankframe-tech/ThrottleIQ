@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -125,10 +126,31 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       EditorialCard(
                         padding: const EdgeInsets.all(12),
                         borderColor: AppColors.danger,
-                        child: Text(rideState.error!,
-                            style:
-                                TextStyle(color: AppColors.danger, fontSize: 13),
-                            textAlign: TextAlign.center),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(rideState.error!,
+                                style: TextStyle(
+                                    color: AppColors.danger, fontSize: 13),
+                                textAlign: TextAlign.center),
+                            if (rideState.blockKind !=
+                                RecordingBlockKind.none) ...[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () => rideState.blockKind ==
+                                        RecordingBlockKind.locationServicesOff
+                                    ? Geolocator.openLocationSettings()
+                                    : Geolocator.openAppSettings(),
+                                child: Text(
+                                  rideState.blockKind ==
+                                          RecordingBlockKind.locationServicesOff
+                                      ? 'Turn on Location'
+                                      : 'Open App Settings',
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ],
                   ],
@@ -210,6 +232,33 @@ class _NoBikeCard extends StatelessWidget {
   }
 }
 
+/// Puts the blocked-recording reason (GPS off / no permission) in front of
+/// the rider immediately, as a SnackBar with a one-tap fix — the persistent
+/// card above the start control says the same thing, but it can sit below
+/// the fold behind the hero/stat-strip/friends cards, so a rider who just
+/// slid the bar and got nothing back would otherwise have to scroll up to
+/// find out why.
+void _showBlockedSnackBar(BuildContext context, RideRecordingState state) {
+  if (state.error == null) return;
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(SnackBar(
+    content: Text(state.error!),
+    duration: const Duration(seconds: 6),
+    action: switch (state.blockKind) {
+      RecordingBlockKind.locationServicesOff => SnackBarAction(
+          label: 'TURN ON',
+          onPressed: () => Geolocator.openLocationSettings(),
+        ),
+      RecordingBlockKind.permissionDenied => SnackBarAction(
+          label: 'SETTINGS',
+          onPressed: () => Geolocator.openAppSettings(),
+        ),
+      RecordingBlockKind.none => null,
+    },
+  ));
+}
+
 /// Riverpod wrapper around [HoldToStartButton] — the rounded skins' start
 /// control. Owns exactly the same start/navigate/recover-from-failure flow as
 /// [_SlideToStartButtonState._triggerStart], so the two controls behave
@@ -228,12 +277,16 @@ class _HoldToStartControl extends ConsumerWidget {
       onStart: () async {
         await ref.read(rideRecordingProvider.notifier).startRide();
         if (!context.mounted) return;
+        final result = ref.read(rideRecordingProvider);
         // Same recovery contract as the slide control: only navigate if the
         // ride actually went active. If it didn't, the button re-arms itself
         // (HoldToStartButton unwinds when `busy` drops back to false) and the
-        // error card above explains why.
-        if (ref.read(rideRecordingProvider).status == RecordingStatus.active) {
+        // error card above explains why — echoed as a SnackBar too, since the
+        // card can be scrolled out of view.
+        if (result.status == RecordingStatus.active) {
           context.go('/ride/active');
+        } else {
+          _showBlockedSnackBar(context, result);
         }
       },
     );
@@ -293,13 +346,16 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   void _triggerStart() async {
     await ref.read(rideRecordingProvider.notifier).startRide();
     if (!mounted) return;
-    if (ref.read(rideRecordingProvider).status == RecordingStatus.active) {
+    final result = ref.read(rideRecordingProvider);
+    if (result.status == RecordingStatus.active) {
       context.go('/ride/active');
     } else {
       // startRide() didn't actually go active (permission denied, no bike,
       // GPS disabled, ...) — don't leave the bar stuck full; let the rider
-      // try again. rideState.error (rendered below this widget) explains why.
+      // try again. rideState.error (rendered below this widget) explains why,
+      // echoed as a SnackBar since that card can be scrolled out of view.
       _ctrl.animateTo(0.0, curve: Curves.easeOut);
+      _showBlockedSnackBar(context, result);
     }
   }
 

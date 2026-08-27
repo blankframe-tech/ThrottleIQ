@@ -12,6 +12,7 @@ import 'features/ride/data/repositories/auto_ride_reconciler_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 import 'l10n/app_localizations.dart';
 
@@ -78,6 +79,11 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
   void didChangeAppLifecycleState(AppLifecycleState appState) {
     if (appState != AppLifecycleState.resumed) return;
     unawaited(_reconcileDetectedRides());
+    // A rider who left to revoke (or grant) location permission from OS
+    // Settings and comes straight back should see the Settings switch
+    // reflect that immediately, not only after they next toggle it — see
+    // AutoTrackingNotifier.build for the actual re-check this triggers.
+    ref.invalidate(autoTrackingEnabledProvider);
   }
 
   Future<void> _reconcileDetectedRides() async {

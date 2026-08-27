@@ -1,15 +1,22 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../domain/entities/group_ride_entity.dart';
@@ -75,6 +82,33 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   bool _hasLocationPermission = false;
   bool _leaving = false;
 
+  // -- Voice notes ("Ride with friends" push-to-talk) --------------------
+
+  final AudioRecorder _voiceRecorder = AudioRecorder();
+  final AudioPlayer _voicePlayer = AudioPlayer();
+  final CloudinaryUploadService _uploadService = CloudinaryUploadService();
+
+  /// Set once in [initState], synchronously — never null by the time the
+  /// voice-notes listener can fire. Notes created at or before this moment
+  /// are this ride's history from before the rider opened this screen, and
+  /// must never auto-play — only notes strictly after it are "new".
+  late final DateTime _screenOpenedAt;
+
+  /// Every note id this device has already queued or explicitly skipped
+  /// (its own echo), so a stream re-emission of the same list never
+  /// replays or re-queues it.
+  final Set<String> _seenVoiceNoteIds = {};
+  final List<VoiceNoteEntity> _voiceNoteQueue = [];
+
+  bool _isRecordingVoiceNote = false;
+  bool _isSendingVoiceNote = false;
+  bool _isPlayingVoiceNote = false;
+  bool _voiceNotesMuted = false;
+  String? _playingVoiceNoteSender;
+  String? _voiceNoteError;
+  DateTime? _recordingStartedAt;
+  String? _recordingPath;
+
   /// Only auto-fit the camera to the group once. After that the rider is in
   /// charge of the viewport — yanking it back every time somebody's marker
   /// moved would make the map unusable to pan.
@@ -83,6 +117,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   @override
   void initState() {
     super.initState();
+    _screenOpenedAt = DateTime.now();
     // Provider mutation and permission prompts both have to wait until after
     // the first frame — neither is legal from initState.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -249,11 +284,223 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     context.go('/home/record');
   }
 
+  // ---------------------------------------------------------------------
+  // Voice notes
+  // ---------------------------------------------------------------------
+
+  /// Runs off [voiceNotesProvider] via `ref.listen` in [build] — see the
+  /// call site. Queues any note that is new since this screen opened and
+  /// wasn't sent by this device, then kicks the playback queue if it's
+  /// idle. A note with no `createdAt` yet (the writer's own pre-round-trip
+  /// echo) is left unseen on purpose: it re-emits with a real timestamp
+  /// moments later and is picked up then, rather than being misjudged as
+  /// "old" or "new" from a null.
+  void _onVoiceNotesChanged(List<VoiceNoteEntity> notes) {
+    final myUid = ref.read(currentUserProvider)?.uid;
+
+    for (final note in notes) {
+      if (_seenVoiceNoteIds.contains(note.id)) continue;
+      final createdAt = note.createdAt;
+      if (createdAt == null) continue;
+      if (!createdAt.isAfter(_screenOpenedAt)) {
+        _seenVoiceNoteIds.add(note.id);
+        continue;
+      }
+      _seenVoiceNoteIds.add(note.id);
+      if (note.senderId != myUid && !_voiceNotesMuted) {
+        _voiceNoteQueue.add(note);
+      }
+    }
+
+    if (!_isPlayingVoiceNote) unawaited(_playNextVoiceNote());
+  }
+
+  Future<void> _playNextVoiceNote() async {
+    if (_voiceNoteQueue.isEmpty || _isPlayingVoiceNote || _voiceNotesMuted) {
+      return;
+    }
+    final note = _voiceNoteQueue.removeAt(0);
+    if (mounted) {
+      setState(() {
+        _isPlayingVoiceNote = true;
+        _playingVoiceNoteSender = note.senderName;
+      });
+    }
+
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.allowBluetooth |
+                AVAudioSessionCategoryOptions.allowBluetoothA2dp,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+      ));
+      await session.setActive(true);
+      await _voicePlayer.setUrl(note.audioUrl);
+      await _voicePlayer.play();
+    } catch (_) {
+      // A clip that fails to load/play is skipped rather than stalling the
+      // rest of the queue — one bad URL must not silence the whole group.
+    } finally {
+      await _deactivateVoiceAudioSession();
+      if (mounted) {
+        setState(() {
+          _isPlayingVoiceNote = false;
+          _playingVoiceNoteSender = null;
+        });
+      }
+      unawaited(_playNextVoiceNote());
+    }
+  }
+
+  Future<void> _deactivateVoiceAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.setActive(
+        false,
+        avAudioSessionSetActiveOptions:
+            AVAudioSessionSetActiveOptions.notifyOthersOnDeactivation,
+      );
+    } catch (_) {/* best-effort */}
+  }
+
+  void _toggleVoiceNotesMuted() {
+    setState(() {
+      _voiceNotesMuted = !_voiceNotesMuted;
+      if (_voiceNotesMuted) _voiceNoteQueue.clear();
+    });
+  }
+
+  /// Starts recording on press-down. Mirrors this screen's other permission
+  /// flows (see [_ensureLocationPermission]): a denial degrades to a
+  /// non-fatal banner, never a crash. Goes through `permission_handler`
+  /// exclusively — checking `.status` before `.request()` — so `record`'s
+  /// own internal permission check sees an already-granted status and never
+  /// fires a second native prompt.
+  Future<void> _startRecordingVoiceNote() async {
+    if (_isRecordingVoiceNote || _isSendingVoiceNote) return;
+    if (mounted) setState(() => _voiceNoteError = null);
+
+    var status = await Permission.microphone.status;
+    if (!status.isGranted) {
+      status = await Permission.microphone.request();
+    }
+    if (!mounted) return;
+    if (!status.isGranted) {
+      setState(() => _voiceNoteError =
+          'Microphone access is off — you can still hear the group.');
+      return;
+    }
+
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.allowBluetooth |
+                AVAudioSessionCategoryOptions.allowBluetoothA2dp |
+                AVAudioSessionCategoryOptions.defaultToSpeaker,
+        avAudioSessionMode: AVAudioSessionMode.voiceChat,
+        androidAudioAttributes: const AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.speech,
+          usage: AndroidAudioUsage.voiceCommunication,
+        ),
+      ));
+      await session.setActive(true);
+
+      final dir = await getTemporaryDirectory();
+      final path =
+          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _voiceRecorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc),
+        path: path,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isRecordingVoiceNote = true;
+        _recordingStartedAt = DateTime.now();
+        _recordingPath = path;
+      });
+    } catch (e) {
+      await _deactivateVoiceAudioSession();
+      if (!mounted) return;
+      setState(() => _voiceNoteError = "Couldn't start recording: $e");
+    }
+  }
+
+  /// Stops on release (or on the gesture being cancelled) and sends the
+  /// clip. A clip under 800ms is treated as an accidental tap — released
+  /// and discarded with no error shown, never uploaded.
+  Future<void> _stopRecordingVoiceNoteAndSend() async {
+    if (!_isRecordingVoiceNote) return;
+    final startedAt = _recordingStartedAt;
+    if (mounted) setState(() => _isRecordingVoiceNote = false);
+
+    String? path;
+    try {
+      path = await _voiceRecorder.stop();
+    } catch (_) {
+      path = _recordingPath;
+    }
+    await _deactivateVoiceAudioSession();
+
+    if (path == null || startedAt == null) return;
+    final file = File(path);
+    final duration = DateTime.now().difference(startedAt);
+
+    if (duration.inMilliseconds < 800) {
+      unawaited(file.delete().catchError((_) => file));
+      return;
+    }
+
+    final user = ref.read(currentUserProvider);
+    final uid = user?.uid;
+    if (uid == null) {
+      unawaited(file.delete().catchError((_) => file));
+      return;
+    }
+
+    if (mounted) setState(() => _isSendingVoiceNote = true);
+    try {
+      final url = await _uploadService.uploadAudio(
+        file,
+        folder: 'voiceNotes/${widget.groupRideId}',
+      );
+      final senderName = (user?.displayName ?? '').trim().isEmpty
+          ? 'Rider'
+          : user!.displayName!.trim();
+      await ref.read(groupRideRepositoryProvider).sendVoiceNote(
+            groupRideId: widget.groupRideId,
+            senderId: uid,
+            senderName: senderName,
+            senderPhotoUrl: user?.photoURL ?? '',
+            audioUrl: url,
+            durationMs: duration.inMilliseconds,
+          );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _voiceNoteError = "Couldn't send voice note: $e");
+      }
+    } finally {
+      unawaited(file.delete().catchError((_) => file));
+      if (mounted) setState(() => _isSendingVoiceNote = false);
+    }
+  }
+
   @override
   void dispose() {
     _broadcastTimer?.cancel();
     _staleTicker?.cancel();
     _locationsSub?.cancel();
+    // Best-effort: if the rider navigates away mid-hold there is nobody left
+    // to send the clip to anyway, so the recording is simply abandoned
+    // rather than raced to finish.
+    if (_isRecordingVoiceNote) {
+      unawaited(_voiceRecorder.stop());
+    }
+    _voiceRecorder.dispose();
+    _voicePlayer.dispose();
     super.dispose();
   }
 
@@ -333,6 +580,18 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     final rosterAsync = ref.watch(groupRideMembersProvider(widget.groupRideId));
     final myUid = ref.watch(currentUserProvider)?.uid;
 
+    // Side effect only — the roster/map above never renders voice notes
+    // directly, this just feeds the playback queue. Riverpod dedupes
+    // repeated registration of the same listener across rebuilds, so this
+    // is safe to call on every build.
+    ref.listen<AsyncValue<List<VoiceNoteEntity>>>(
+      voiceNotesProvider(widget.groupRideId),
+      (previous, next) {
+        final notes = next.valueOrNull;
+        if (notes != null) _onVoiceNotesChanged(notes);
+      },
+    );
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -378,8 +637,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
           return Column(
             children: [
-              if (_locationError != null)
-                _Banner(message: _locationError!),
+              for (final message in [_locationError, _voiceNoteError]
+                  .whereType<String>())
+                _Banner(message: message),
               Expanded(
                 flex: 3,
                 child: Stack(
@@ -410,9 +670,90 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                 flex: 2,
                 child: _MemberList(members: members),
               ),
+              _buildVoiceNoteBar(),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildVoiceNoteBar() {
+    final busy = _isSendingVoiceNote;
+    final label = _isRecordingVoiceNote
+        ? 'Recording — release to send'
+        : busy
+            ? 'Sending…'
+            : _isPlayingVoiceNote
+                ? 'Playing ${_playingVoiceNoteSender ?? 'voice note'}…'
+                : 'Hold to talk';
+    final accent = _isRecordingVoiceNote ? AppColors.danger : AppColors.primary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTapDown: (_) => unawaited(_startRecordingVoiceNote()),
+                onTapUp: (_) => unawaited(_stopRecordingVoiceNoteAndSend()),
+                onTapCancel: () =>
+                    unawaited(_stopRecordingVoiceNoteAndSend()),
+                child: Container(
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                    border: Border.all(color: accent),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (busy)
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: accent),
+                        )
+                      else
+                        Icon(
+                          _isRecordingVoiceNote ? Icons.mic : Icons.mic_none,
+                          color: accent,
+                          size: 20,
+                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        label,
+                        style: TextStyle(fontWeight: FontWeight.w600, color: accent),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: _toggleVoiceNotesMuted,
+              tooltip: _voiceNotesMuted
+                  ? 'Unmute voice notes'
+                  : 'Mute voice notes',
+              icon: Icon(
+                _voiceNotesMuted ? Icons.volume_off : Icons.volume_up,
+                color: _voiceNotesMuted
+                    ? AppColors.textTertiary
+                    : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

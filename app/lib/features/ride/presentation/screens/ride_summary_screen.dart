@@ -59,7 +59,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         backgroundColor: AppColors.background,
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.go('/home/record'),
+          onPressed: () => _dismiss(context),
         ),
       ),
       body: rideAsync.when(
@@ -311,7 +311,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => context.go('/home/record'),
+                        onPressed: () => _dismiss(context),
                         child: Text(l10n.saveAndDoneAction),
                       ),
                     ),
@@ -352,6 +352,20 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         },
       ),
     );
+  }
+
+  // Reached two ways: pushed on top of a rides list (bike detail / all
+  // rides / stats) to view a past ride, or `go`'d straight here from
+  // active_ride_screen right after finishing a recording, which replaces
+  // the stack so there's nothing to pop back to. `canPop` tells them apart —
+  // pop back to the list in the first case, fall back to the record screen
+  // only when there truly is no prior screen.
+  void _dismiss(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/home/record');
+    }
   }
 
   Widget _vDivider() =>

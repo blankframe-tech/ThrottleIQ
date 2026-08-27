@@ -59,7 +59,7 @@ void main() {
     addTearDown(container.dispose);
     await tester.pumpWidget(harness(container));
     await tester.pumpAndSettle();
-    expect(container.read(appearanceProvider).colorMode, AppColorMode.carbonMono);
+    expect(container.read(appearanceProvider).colorMode, AppColorMode.calming);
 
     await tester.tap(find.byType(DropdownButtonFormField<AppColorMode>));
     await tester.pumpAndSettle();

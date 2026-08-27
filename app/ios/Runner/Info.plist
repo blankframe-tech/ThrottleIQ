@@ -83,6 +83,8 @@
 	     first access rather than degrading. -->
 	<key>NSMotionUsageDescription</key>
 	<string>ThrottleIQ uses motion activity to notice when you start riding, so it can record the ride without you having to tap start.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ThrottleIQ needs microphone access to send push-to-talk voice notes to the riders in your group ride.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<!-- Already present: keeps location flowing during a ride. -->

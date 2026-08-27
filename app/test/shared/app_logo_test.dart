@@ -20,7 +20,7 @@ void main() {
   });
 
   group('AppLogo', () {
-    testWidgets('renders the dark mark under the default appearance', (tester) async {
+    testWidgets('renders the light mark under the default appearance', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(home: AppLogo(size: 40)),
@@ -28,13 +28,13 @@ void main() {
       );
       await tester.pump();
 
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
+      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
     });
 
     // The regression this file exists for: toggling brightness must swap the
     // mark. AppLogo watches appearanceProvider directly, so a `const`
     // constructor at the call site does not (and must not) prevent it.
-    testWidgets('swaps to the light mark when brightness changes', (tester) async {
+    testWidgets('swaps to the dark mark when brightness changes', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -45,12 +45,12 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
+      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
 
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
       await tester.pump();
 
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
+      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
     });
 
     // The mark follows brightness directly, not the color mode — every color
@@ -120,12 +120,12 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
+      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
 
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
+      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
       await tester.pump();
 
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
+      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
     });
   });
 }

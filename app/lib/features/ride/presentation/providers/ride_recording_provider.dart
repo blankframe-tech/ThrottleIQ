@@ -42,6 +42,11 @@ const _uuid = Uuid();
 
 enum RecordingStatus { idle, starting, active, paused, completed }
 
+/// What [RideRecordingState.error] is about, when it's a blocked-recording
+/// message — lets the UI offer the right fix (open Location Settings vs.
+/// open the app's permission page) instead of just showing text.
+enum RecordingBlockKind { none, locationServicesOff, permissionDenied }
+
 class RideRecordingState {
   final RecordingStatus status;
   final RideEntity? ride;
@@ -68,6 +73,12 @@ class RideRecordingState {
   final Duration elapsed;
   final RideAlert activeAlert;
   final String? error;
+
+  /// What [error] is about, when it's non-null and came from
+  /// [RideRecordingNotifier._recordingBlockedReason]. `.none` otherwise —
+  /// including whenever [error] itself is null, since it clears the same way
+  /// (see [copyWith]).
+  final RecordingBlockKind blockKind;
   final double sensorAccelMs2;
   final bool crashDetected;
   final int crashCountdown; // Seconds remaining (60 to 0)
@@ -97,6 +108,7 @@ class RideRecordingState {
     this.elapsed = Duration.zero,
     this.activeAlert = RideAlert.none,
     this.error,
+    this.blockKind = RecordingBlockKind.none,
     this.sensorAccelMs2 = 0,
     this.crashDetected = false,
     this.crashCountdown = 60,
@@ -117,6 +129,7 @@ class RideRecordingState {
     Duration? elapsed,
     RideAlert? activeAlert,
     String? error,
+    RecordingBlockKind? blockKind,
     double? sensorAccelMs2,
     bool? crashDetected,
     int? crashCountdown,
@@ -136,6 +149,7 @@ class RideRecordingState {
       elapsed: elapsed ?? this.elapsed,
       activeAlert: activeAlert ?? this.activeAlert,
       error: error,
+      blockKind: blockKind ?? RecordingBlockKind.none,
       sensorAccelMs2: sensorAccelMs2 ?? this.sensorAccelMs2,
       crashDetected: crashDetected ?? this.crashDetected,
       crashCountdown: crashCountdown ?? this.crashCountdown,
@@ -395,12 +409,21 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// paused ride it must not throw away — and a helper that decided that for
   /// them is what previously made "resume" and "start" have to be the same
   /// code path.
-  Future<String?> _recordingBlockedReason() async {
+  Future<({String message, RecordingBlockKind kind})?>
+      _recordingBlockedReason() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      return 'Location services are disabled. Please enable GPS to track rides.';
+      return (
+        message: 'Location is turned off. Turn on Location Services to '
+            'start a ride.',
+        kind: RecordingBlockKind.locationServicesOff,
+      );
     }
     if (!await _requestPermissions()) {
-      return 'Location permission required to track rides.';
+      return (
+        message: 'ThrottleIQ needs location permission to track your ride. '
+            'Grant it in Settings.',
+        kind: RecordingBlockKind.permissionDenied,
+      );
     }
     return null;
   }
@@ -427,7 +450,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final blocked = await _recordingBlockedReason();
     if (blocked != null) {
-      state = state.copyWith(status: RecordingStatus.idle, error: blocked);
+      state = state.copyWith(
+        status: RecordingStatus.idle,
+        error: blocked.message,
+        blockKind: blocked.kind,
+      );
       return;
     }
 
@@ -990,7 +1017,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (coldStart) {
       final blocked = await _recordingBlockedReason();
       if (blocked != null) {
-        state = state.copyWith(error: blocked);
+        state = state.copyWith(error: blocked.message, blockKind: blocked.kind);
         return;
       }
     }

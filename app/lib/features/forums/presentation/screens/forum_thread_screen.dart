@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
@@ -94,7 +95,8 @@ class ForumThreadScreen extends ConsumerWidget {
       ),
       body: postsAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        error: (e, _) =>
+            ErrorView(error: e, onRetry: () => ref.invalidate(forumPostsProvider(forumId))),
         data: (_) {
           final posts = ref.watch(forumPostsNotifierProvider(forumId));
           if (posts.isEmpty) {

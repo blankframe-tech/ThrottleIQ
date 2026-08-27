@@ -420,6 +420,46 @@ class GroupRideRepository {
         .map((snapshot) => _locationsFrom(snapshot.docs));
   }
 
+  /// Sends one push-to-talk clip to `groupRides/{id}/voiceNotes/{noteId}`.
+  ///
+  /// Create-only — firestore.rules refuses update/delete on this
+  /// collection entirely, so a sent clip can never be edited or retracted.
+  /// Only a joined member (not merely an invitee) may call this; the rules
+  /// enforce that independently of this method.
+  Future<void> sendVoiceNote({
+    required String groupRideId,
+    required String senderId,
+    required String senderName,
+    required String senderPhotoUrl,
+    required String audioUrl,
+    required int durationMs,
+  }) async {
+    final model = VoiceNoteModel(
+      id: '',
+      senderId: senderId,
+      senderName: senderName,
+      senderPhotoUrl: senderPhotoUrl,
+      audioUrl: audioUrl,
+      durationMs: durationMs,
+    );
+    await _rideRef(groupRideId).collection('voiceNotes').add({
+      ...model.toDocument(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Live view of a group ride's voice notes, oldest first.
+  Stream<List<VoiceNoteEntity>> watchVoiceNotes(String groupRideId) {
+    return _rideRef(groupRideId)
+        .collection('voiceNotes')
+        .orderBy('createdAt')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) =>
+                VoiceNoteModel.fromDocument(doc.data(), doc.id).toEntity())
+            .toList());
+  }
+
   /// Starts a group ride (changes status to active).
   Future<void> startGroupRide(String groupRideId) async {
     await _firestore
@@ -518,7 +558,12 @@ class GroupRideRepository {
   Future<void> deleteGroupRide(String groupRideId) async {
     final docRef = _rideRef(groupRideId);
 
-    for (final subcollection in ['memberLocations', 'invitations', 'members']) {
+    for (final subcollection in [
+      'memberLocations',
+      'invitations',
+      'members',
+      'voiceNotes',
+    ]) {
       final snapshot = await docRef.collection(subcollection).get();
       for (final doc in snapshot.docs) {
         await doc.reference.delete();

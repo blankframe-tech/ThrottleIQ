@@ -94,6 +94,9 @@ class AutoTrackingService {
   static const _uuid = Uuid();
   static const _prefsEnabled = 'auto_tracking_enabled';
   static const _prefsCurrentDetection = 'auto_tracking_current_detection';
+  static const _prefsScheduleEnabled = 'auto_tracking_schedule_enabled';
+  static const _prefsScheduleStartMin = 'auto_tracking_schedule_start_min';
+  static const _prefsScheduleEndMin = 'auto_tracking_schedule_end_min';
 
   final _dao = AutoDetectionDao();
   var _configured = false;
@@ -114,6 +117,56 @@ class AutoTrackingService {
     await prefs.setBool(_prefsEnabled, value);
   }
 
+  /// Whether the rider has restricted auto-tracking to a daily window,
+  /// rather than watching all day. Off by default — full-day is the feature
+  /// as originally shipped, and a rider who never opens this control should
+  /// keep getting exactly that.
+  static Future<bool> isScheduleEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_prefsScheduleEnabled) ?? false;
+  }
+
+  static Future<void> setScheduleEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsScheduleEnabled, value);
+  }
+
+  /// The active window, as minutes since local midnight. Defaults to 7am–10pm
+  /// — a plausible waking-hours guess for a first-time toggle, not a claim
+  /// about any particular rider's schedule.
+  static Future<(int startMinutes, int endMinutes)> getScheduleWindow() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (
+      prefs.getInt(_prefsScheduleStartMin) ?? 7 * 60,
+      prefs.getInt(_prefsScheduleEndMin) ?? 22 * 60,
+    );
+  }
+
+  /// [startMinutes] must be strictly less than [endMinutes] — an overnight
+  /// window that wraps past midnight isn't supported by this single-window
+  /// picker (see the Settings UI, which enforces this before calling here).
+  static Future<void> setScheduleWindow(
+      int startMinutes, int endMinutes) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_prefsScheduleStartMin, startMinutes);
+    await prefs.setInt(_prefsScheduleEndMin, endMinutes);
+  }
+
+  /// The plugin's cron-like schedule string for the stored window (e.g.
+  /// `'1-7 07:00-22:00'` — every day, 7am to 10pm), or null when the rider
+  /// hasn't turned scheduling on, meaning "track all day" as before.
+  static Future<String?> _scheduleCronOrNull() async {
+    if (!await isScheduleEnabled()) return null;
+    final (start, end) = await getScheduleWindow();
+    String fmt(int minutes) {
+      final h = (minutes ~/ 60).toString().padLeft(2, '0');
+      final m = (minutes % 60).toString().padLeft(2, '0');
+      return '$h:$m';
+    }
+
+    return '1-7 ${fmt(start)}-${fmt(end)}';
+  }
+
   /// Prepares the plugin. Safe to call more than once.
   ///
   /// Deliberately does **not** start tracking — [start] does, and only when
@@ -126,7 +179,15 @@ class AutoTrackingService {
     bg.BackgroundGeolocation.onLocation(_onLocation, _onLocationError);
     bg.BackgroundGeolocation.onActivityChange(_onActivityChange);
 
+    final schedule = await _scheduleCronOrNull();
+
     await bg.BackgroundGeolocation.ready(bg.Config(
+      // Rider-configured active hours (Settings → auto-tracking → Active
+      // hours), or null for the original all-day behaviour. Only takes
+      // effect via startSchedule()/stopSchedule() below, not plain
+      // start()/stop() — see those methods.
+      schedule: schedule == null ? null : [schedule],
+
       // ── Detection ────────────────────────────────────────────────────
       // HIGH rather than NAVIGATION: nobody is watching a live readout on an
       // auto-tracked ride, and the post-hoc polyline is indistinguishable.
@@ -186,16 +247,57 @@ class AutoTrackingService {
   }
 
   /// Begins watching for rides. No-op unless the rider has opted in.
+  ///
+  /// Goes through the plugin's scheduler ([bg.BackgroundGeolocation.
+  /// startSchedule]) rather than a plain [bg.BackgroundGeolocation.start]
+  /// when a daily active-hours window is set — the scheduler is what
+  /// actually turns tracking off outside that window and back on inside it,
+  /// entirely natively, so it keeps working across app restarts and reboots
+  /// without this Dart code needing to be running to flip anything.
   Future<bool> start() async {
     if (!await isEnabled()) return false;
     await configure();
-    final state = await bg.BackgroundGeolocation.start();
+    final scheduled = await isScheduleEnabled();
+    final state = scheduled
+        ? await bg.BackgroundGeolocation.startSchedule()
+        : await bg.BackgroundGeolocation.start();
     return state.enabled;
   }
 
   Future<void> stop() async {
     if (!_configured) return;
+    // Per the plugin's own docs: `.stop()` does not halt the scheduler by
+    // itself, so a rider who had a schedule running would otherwise see
+    // tracking silently resume at the next scheduled start. Calling
+    // stopSchedule() unconditionally is harmless when no schedule was ever
+    // started.
+    await bg.BackgroundGeolocation.stopSchedule();
     await bg.BackgroundGeolocation.stop();
+  }
+
+  /// Re-applies the active-hours window to an already-running tracker —
+  /// called when the rider edits the schedule from Settings without toggling
+  /// auto-tracking off and back on. No-op if auto-tracking itself is off;
+  /// the new window is picked up from [configure] the next time it's turned
+  /// on instead.
+  ///
+  /// **Not yet verified on a physical device** — built against the plugin's
+  /// documented `setConfig`/`startSchedule`/`stopSchedule` contract, same as
+  /// every other flutter_background_geolocation integration in this file,
+  /// but this specific live-update path hasn't been exercised on-device yet.
+  /// See docs/Issues.md.
+  Future<void> applyScheduleChange() async {
+    if (!_configured || !await isEnabled()) return;
+    final schedule = await _scheduleCronOrNull();
+    await bg.BackgroundGeolocation.setConfig(
+      bg.Config(schedule: schedule == null ? null : [schedule]),
+    );
+    if (schedule != null) {
+      await bg.BackgroundGeolocation.startSchedule();
+    } else {
+      await bg.BackgroundGeolocation.stopSchedule();
+      await bg.BackgroundGeolocation.start();
+    }
   }
 
   // ── Event handlers (UI isolate) ───────────────────────────────────────

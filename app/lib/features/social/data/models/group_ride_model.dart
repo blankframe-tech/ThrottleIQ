@@ -110,6 +110,67 @@ class GroupRideMemberModel {
   }
 }
 
+class VoiceNoteModel {
+  final String id;
+  final String senderId;
+  final String senderName;
+  final String senderPhotoUrl;
+  final String audioUrl;
+  final int durationMs;
+  final DateTime? createdAt;
+
+  VoiceNoteModel({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    required this.senderPhotoUrl,
+    required this.audioUrl,
+    required this.durationMs,
+    this.createdAt,
+  });
+
+  /// The document body written to `groupRides/{id}/voiceNotes/{noteId}`.
+  /// `createdAt` is always `FieldValue.serverTimestamp()` at the call site
+  /// (the firestore.rules create clause requires it), never a plain
+  /// `DateTime` — so it is deliberately not a field here.
+  Map<String, dynamic> toDocument() {
+    return {
+      'senderId': senderId,
+      'senderName': senderName,
+      'senderPhotoUrl': senderPhotoUrl,
+      'audioUrl': audioUrl,
+      'durationMs': durationMs,
+    };
+  }
+
+  factory VoiceNoteModel.fromDocument(
+    Map<String, dynamic> data,
+    String docId,
+  ) {
+    return VoiceNoteModel(
+      id: docId,
+      senderId: data['senderId'] as String? ?? '',
+      senderName: data['senderName'] as String? ?? 'Rider',
+      senderPhotoUrl: data['senderPhotoUrl'] as String? ?? '',
+      audioUrl: data['audioUrl'] as String? ?? '',
+      durationMs: (data['durationMs'] as num?)?.toInt() ?? 0,
+      createdAt: _toDate(data['createdAt']),
+    );
+  }
+
+  VoiceNoteEntity toEntity() {
+    return VoiceNoteEntity(
+      id: id,
+      senderId: senderId,
+      senderName: senderName,
+      senderPhotoUrl: senderPhotoUrl,
+      audioUrl: audioUrl,
+      durationMs: durationMs,
+      createdAt: createdAt,
+    );
+  }
+}
+
 class GroupRideModel {
   final String id;
   final String creatorId;

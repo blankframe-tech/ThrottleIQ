@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-27_
+_Last updated: 2026-08-27 (§35, §36, §37)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -2465,3 +2465,172 @@ device):
 GitHub release notes telling testers to uninstall any prior ThrottleIQ build
 before installing this one — cheap, and correct regardless of whether the
 hypothesis above is confirmed.
+
+---
+
+## 35. Root cause found for the Android "licensing error" crash: `flutter_background_geolocation`'s license key was never filled in (2026-08-27)
+
+Supersedes §34's hypothesis for the specific symptom reported this session:
+**install succeeds, app then shows a licensing error and crashes on every
+launch, on every tested device other than the developer's own.** That
+install-then-crash shape doesn't match §34 (a certificate mismatch blocks
+*installation* itself with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, it doesn't
+let the app install and then crash) — §34 may still be a real, separate
+issue for testers who see the error before install completes.
+
+**Confirmed cause:** `android/app/src/main/AndroidManifest.xml`'s
+`com.transistorsoft.locationmanager.license` meta-data still holds the
+literal placeholder `PASTE_LICENCE_KEY_BEFORE_RELEASE` — never replaced with
+a real key. This was already flagged in the manifest's own comment and in
+`auto_tracking_service.dart`'s doc comment as "REQUIRED FOR RELEASE BUILDS
+... a hard gate before shipping," but the key was never purchased/pasted in.
+`AutoTrackingService.instance.configure()` runs unconditionally on every app
+launch (`main.dart:55`, regardless of whether the rider has opted into
+auto-tracking), so an invalid license on a release-signed build hits this
+path for every install, every launch — matching "every other Android phone."
+
+**Fix (not yet done — requires a purchase, not just a code change):** buy a
+license key at https://shop.transistorsoft.com for application id
+`com.bft.throttleiq` (per-app-id, not per-developer, one-time), paste it
+into the manifest's `android:value`, then rebuild, re-sign
+(`apksigner`-verify against `throttleiq-release.keystore` as in §34), and
+re-upload the `beta-v1` release asset.
+
+---
+
+## 36. Ride summary screen always closed to the record screen, even when opened from a rides list — FIXED (2026-08-27)
+
+`ride_summary_screen.dart` (route `/ride/summary/:rideId`) is reached two
+different ways: `active_ride_screen.dart` `go`'s there right after finishing
+a recording (replacing the nav stack — nothing to go back to but the record
+screen), but `all_rides_screen.dart`, `stats_screen.dart`, and
+`bike_detail_screen.dart` all `push` it on top of a rides list to view a
+past ride's details. The close (✕) button and "Save & Done" button both
+hardcoded `context.go('/home/record')`, so closing a ride opened from a list
+incorrectly landed on the recording screen instead of back on that list.
+
+**Fix:** both buttons now call a `_dismiss` helper that checks
+`context.canPop()` — pops back to the previous screen when there is one
+(the list-opened case), falls back to `/home/record` only when there truly
+is nothing to pop to (the post-recording case). `flutter analyze` clean on
+the changed file; no existing test file covered this screen's navigation.
+
+---
+
+## 37. Error-message and permission-awareness pass: record screen, auto-tracking, Social/Forums — FIXED, one new feature not yet verified on device (2026-08-27)
+
+Reported directly by the project owner as four related complaints about how
+the app fails: unclear GPS errors on Record, no way to schedule auto-tracking
+active hours, auto-tracking's permission state not being trusted, and raw
+Firestore errors leaking into Social/Forums. All four addressed in one pass.
+
+**37.1 — Record screen's blocked-recording message could go unseen.**
+`ride_recording_provider.dart`'s GPS-off/permission-denied message rendered
+only in an `EditorialCard` at the bottom of the scrollable content, below the
+hero/stat-strip/"ride with friends" cards — easy to end up below the fold, so
+a rider who slid the start bar and had it silently snap back with no visible
+explanation is exactly what was reported as "behaves weirdly." Fixed:
+- Added `RecordingBlockKind` (`locationServicesOff` / `permissionDenied` /
+  `none`) alongside `RideRecordingState.error`, set by
+  `_recordingBlockedReason()` (`ride_recording_provider.dart`).
+- `record_screen.dart` now also shows a SnackBar the instant a start attempt
+  is blocked (`_showBlockedSnackBar`, called from both `_SlideToStartButton`
+  and `_HoldToStartControl`), with a one-tap action — "TURN ON" opens
+  `Geolocator.openLocationSettings()`, "SETTINGS" opens
+  `Geolocator.openAppSettings()` — so the fix is never more than one tap from
+  the failure. The existing card also gained the same action button.
+
+**37.2 — Auto-tracking's Settings toggle trusted a stale flag.**
+`AutoTrackingNotifier.build()` (`auto_tracking_provider.dart`) used to just
+read the persisted `SharedPreferences` bool and show that as the switch
+state — it never re-checked whether "Always" location permission was still
+actually granted. A rider who revoked it from OS Settings would keep seeing
+the switch as ON with no indication the feature had silently stopped
+working. Fixed: `build()` now re-verifies `Geolocator.isLocationServiceEnabled()`
++ `checkPermission() == always` every time it runs, flips the stored flag
+(and stops the plugin) the moment they no longer match, and
+`app.dart`'s `didChangeAppLifecycleState` now calls
+`ref.invalidate(autoTrackingEnabledProvider)` on resume — so coming back
+from OS Settings after granting or revoking the permission updates the
+switch immediately, not only after the next manual toggle.
+
+**37.3 — New feature: daily active-hours window for auto-tracking.**
+Product ask: "let me toggle *when* day-long tracking is active," not just
+on/off. `flutter_background_geolocation` already has first-class support for
+this (`Config.schedule` + `startSchedule()`/`stopSchedule()` — a native,
+cron-like scheduler that keeps working across app kills and reboots without
+Dart code needing to run to flip anything), so this uses that rather than a
+hand-rolled Dart-side time check. New in `auto_tracking_service.dart`:
+`isScheduleEnabled`/`setScheduleEnabled`/`getScheduleWindow`/
+`setScheduleWindow` (SharedPreferences-backed, minutes-since-midnight,
+default 7am–10pm), `_scheduleCronOrNull()` builds the `'1-7 HH:MM-HH:MM'`
+cron string, `configure()` passes it into `Config.schedule`, `start()`
+chooses `startSchedule()` over plain `start()` when a window is set, `stop()`
+now also calls `stopSchedule()` (per the plugin's own docs: plain `.stop()`
+does not halt a running scheduler), and a new `applyScheduleChange()` pushes
+an edited window to an already-running tracker via `setConfig()` without
+tearing down and re-registering the plugin's event listeners.
+
+New `AutoTrackingScheduleTile` (`auto_tracking_tile.dart`), shown under the
+existing tile in Settings only while auto-tracking is on, with a switch and
+two time pickers ("From" / "Until"); rejects `start >= end` since this
+single-window model doesn't support a range that wraps past midnight.
+Deliberately **not localized**, unlike the rest of this screen — adding a
+real, reviewed Bangla translation for a brand-new feature was out of scope
+here; tracked as a gap, not silently skipped.
+
+⚠️ **Not yet verified on a physical device.** `flutter analyze` (0 issues on
+every changed file) and the full `flutter test` suite (826/826) both pass,
+but nothing here has been exercised against the real native plugin — in
+particular whether `startSchedule()`/`setConfig()` behave exactly as
+documented, and whether the scheduler actually starts/stops GPS at the
+configured times on-device. Same "built, not yet verified" caveat this repo
+already applies elsewhere (see §35's own unresolved beta-tester report on
+this same plugin) — test on a real phone before trusting this for a rider's
+actual battery/tracking expectations.
+
+**37.4 — Raw Firestore errors surfacing verbatim in Social and Forums.**
+`social_screen.dart`, `forums_home_screen.dart` (×2), and
+`forum_thread_screen.dart` each had a `.when(error: (e, _) => Text('$e'))`
+branch, so offline Firestore reads showed the SDK's own retry-policy message
+— `"[cloud_firestore/unavailable] The service is currently unavailable...
+may be corrected by retrying with a backoff..."` — directly to the rider,
+exactly as reported. Fixed with two new pieces:
+- `mapFirestoreError()` (`core/utils/firebase_error_mapper.dart`) — switches
+  on `FirebaseException.code` (`unavailable`, `deadline-exceeded`,
+  `permission-denied`, `not-found`, `resource-exhausted`) plus a
+  network-substring fallback, returning a plain customer-facing sentence
+  ("You're offline. Check your internet connection and try again.", etc.)
+  instead of ever surfacing `error.toString()`.
+- `ErrorView` (`shared/widgets/error_view.dart`) — the reusable
+  offline/error widget this codebase didn't previously have (confirmed by
+  search — every screen was hand-rolling its own ad hoc error `Text`). Shows
+  the mapped message with a wifi-off or generic icon and, when given
+  `onRetry`, a "Try again" button. All four call sites now pass
+  `onRetry: () => ref.invalidate(<the underlying provider>)`.
+
+---
+
+## 38. No crash reporting is wired into the app at all — no visibility into production crashes (2026-08-27)
+
+Surfaced answering a launch-readiness/marketing question, not while working a
+ticket — confirmed by reading `app/pubspec.yaml`, not assumed.
+`store_listing/data_safety_and_permissions.md` already notes the *absence* of
+`firebase_analytics`/`firebase_crashlytics` as a reason not to over-declare on
+the Play Data Safety form, but nothing flags it as a gap to close before
+real users arrive. It is one: today, if an installed build crashes on a
+user's phone, nothing tells you it happened — no Crashlytics, no Sentry, no
+equivalent. The only crash signal that has ever reached this project is a
+tester manually reporting one in words (§34).
+
+**Matters most for the sequencing question this was raised in:** the plan
+discussed was organic users first, Facebook ads later, once the app is
+stable. Without a crash reporter, "once it's stable" can't be measured —
+there's no dashboard, no crash-free-sessions rate, nothing but word of mouth
+from whichever testers happen to say something. Add one (Firebase Crashlytics
+is the natural fit given the app is already on Firebase) before the organic
+push, not after — otherwise the bug-finding phase produces no evidence trail
+to decide when it's over.
+
+Not fixed this session — flagged only. Add to the pre-launch checklist in
+`HANDOFF_Document.md`'s "Now (before inviting beta testers)" section.

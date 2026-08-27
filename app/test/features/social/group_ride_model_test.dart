@@ -228,4 +228,64 @@ void main() {
       expect(entity.joinedMembers.map((m) => m.userId), ['alpha', 'zeta']);
     });
   });
+
+  group('VoiceNoteModel round trip', () {
+    VoiceNoteModel buildVoiceNote() => VoiceNoteModel(
+          id: 'note1',
+          senderId: 'friend1',
+          senderName: 'Alex',
+          senderPhotoUrl: 'http://example.com/a.png',
+          audioUrl:
+              'https://res.cloudinary.com/vjvcigkt/video/upload/v1/clip.m4a',
+          durationMs: 4200,
+        );
+
+    test('a voice note document survives write → read', () {
+      final written = {...buildVoiceNote().toDocument(), 'createdAt': createdAt};
+      final read =
+          VoiceNoteModel.fromDocument(asFirestoreRead(written), 'note1');
+
+      expect(read.id, 'note1');
+      expect(read.senderId, 'friend1');
+      expect(read.senderName, 'Alex');
+      expect(read.senderPhotoUrl, 'http://example.com/a.png');
+      expect(read.audioUrl,
+          'https://res.cloudinary.com/vjvcigkt/video/upload/v1/clip.m4a');
+      expect(read.durationMs, 4200);
+      expect(read.createdAt, createdAt);
+      expect(read.toEntity().senderId, 'friend1');
+    });
+
+    test(
+      'toDocument never writes createdAt — the repository always supplies '
+      "FieldValue.serverTimestamp() itself, which firestore.rules' "
+      'create clause requires exactly',
+      () {
+        expect(buildVoiceNote().toDocument().containsKey('createdAt'), isFalse);
+      },
+    );
+
+    test(
+      'a fresh local write with no server round trip yet reads createdAt as '
+      'null, not "now" — the playback queue relies on this to never treat an '
+      'unstamped echo as orderable',
+      () {
+        final read =
+            VoiceNoteModel.fromDocument(buildVoiceNote().toDocument(), 'note1');
+        expect(read.createdAt, isNull);
+      },
+    );
+
+    test('a document missing every optional field parses with safe defaults',
+        () {
+      final read = VoiceNoteModel.fromDocument(const {}, 'note1');
+
+      expect(read.id, 'note1');
+      expect(read.senderName, 'Rider');
+      expect(read.senderPhotoUrl, '');
+      expect(read.audioUrl, '');
+      expect(read.durationMs, 0);
+      expect(read.createdAt, isNull);
+    });
+  });
 }

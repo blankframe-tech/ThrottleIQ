@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -363,7 +364,7 @@ class _FeedTab extends ConsumerWidget {
             loading: () => Center(
                 child: CircularProgressIndicator(color: AppColors.primary)),
             error: (e, _) =>
-                Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+                ErrorView(error: e, onRetry: () => ref.invalidate(rideFeedProvider)),
             data: (_) {
               // "Following" filters against the follow graph, so until that
               // has loaded the filtered feed is empty for a reason that has

@@ -99,6 +99,18 @@ dependencies:
   shared_preferences: ^2.2.3
   path_provider: ^2.1.1
 
+  # Voice notes ("Ride with friends" push-to-talk).
+  #
+  # record captures short push-to-talk clips; just_audio plays them back
+  # (chosen over audioplayers for steadier interruption/completion-event
+  # handling, which the sequential playback queue relies on); audio_session
+  # configures the platform session so record/playback actually route
+  # through a paired Bluetooth headset instead of the phone's own mic/
+  # speaker. See group_ride_map_screen.dart.
+  record: ^5.1.2
+  just_audio: ^0.9.40
+  audio_session: ^0.1.21
+
   # Utilities
   uuid: ^4.4.0
   # Pinned to 0.20.2 by flutter_localizations from the Flutter SDK; bumped from
