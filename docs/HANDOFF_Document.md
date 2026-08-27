@@ -1046,6 +1046,37 @@ re-signed and uploaded, git tag move PARTIALLY BLOCKED, not yet resolved.**
   beta-v1 --force` from a clean checkout of `24a676c` to close it, then
   confirm with `git ls-remote --tags origin beta-v1`.
 
+  **✅ CLOSED 2026-08-27**, in the session right after: the project owner
+  explicitly directed the force-push as part of cutting the next `beta-v1`
+  move, so it went out — `git ls-remote --tags origin beta-v1` now matches
+  local `HEAD` exactly. See entry 6 below.
+
+**6. `beta-v1` moved forward again to `ea12fc2`** (default-appearance change
++ the error-message/permission pass in `Issues.md` §37 + the `record`
+dependency fix in §39), **2026-08-27, same day as entry 5 — tag force-push
+included this time, explicitly authorized by the project owner.**
+
+- Checked first: only one tag/release existed (`beta-v1`) — the earlier
+  `beta-v2`/`beta-v3` iterations were already deleted in a prior session, so
+  there was nothing else to clean up.
+- **Android**: `flutter build apk --release` failed outright the first time
+  — a `record` package dependency bug unrelated to anything in this move,
+  see `Issues.md` §39 for the fix. Rebuilt clean at 90.0MB, verified with
+  `apksigner` (same SHA-1 as every prior release), uploaded to the `beta-v1`
+  release via `gh release upload --clobber`, release notes updated via
+  `gh release edit`.
+- **Tag**: `git tag -f beta-v1 ea12fc2` then `git push origin beta-v1
+  --force` — completes the "Whoever picks this up next" instruction from
+  entry 5 above. Confirmed with `git ls-remote --tags origin beta-v1`.
+- **iOS**: same proven sequence, installed and launched on Abraar's iPhone,
+  confirmed a live `Runner` process via `devicectl device info processes`
+  afterward.
+- **Also includes**, bundled in at the project owner's explicit direction:
+  the group-ride push-to-talk voice notes feature (§7b in `features.md`),
+  which was sitting uncommitted in the working tree from separate work and
+  is itself not yet verified on a physical device/Bluetooth headset — see
+  `HANDOFF_Document.md`'s "⚠️ Done, but NOT yet verified" section.
+
 ### Known Limitations (Documented, Not Bugs)
 - ~~**Avg speed still mean-of-samples**~~ **FIXED 2026-08-01** — now distance ÷ moving time (`average_speed.dart`), with stopped time excluded via the same `speed < 1 m/s` cutoff the recorder already stamps as `period_type`. Gaps over 60 s (tunnel / suspended app) aren't counted rather than guessed at.
 - **Navigation is geometric, not routed** — turn-by-turn follows a saved route's own polyline: no street names, no lane guidance, and no rerouting (it reports "off route" instead). Deliberate: no routing engine or API key exists. See `Assumptions Made.md`.

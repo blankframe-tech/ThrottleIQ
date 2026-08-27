@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-27 (§35, §36, §37)_
+_Last updated: 2026-08-27 (§35, §36, §37, §38, §39)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -2634,3 +2634,53 @@ to decide when it's over.
 
 Not fixed this session — flagged only. Add to the pre-launch checklist in
 `HANDOFF_Document.md`'s "Now (before inviting beta testers)" section.
+
+---
+
+## 38. Default appearance changed to Calming/Curvy/Light for every new install/account — FIXED (2026-08-27)
+
+Requested directly by the project owner. `AppAppearance.defaultAppearance`
+(`theme_style_provider.dart`) was Carbon Mono/Boxy/Dark since the
+Vibe/Brightness/Color split — now Calming/Curvy/Light. This is the single
+source both a fresh install and a brand-new account resolve to (no persisted
+`SharedPreferences` keys yet), and also what any *individual* un-set axis
+falls back to for a returning rider who only ever changed the other two —
+see `AppearanceNotifier._loadPersisted`.
+
+A rider who already picked an appearance in Settings is unaffected — this
+only changes what nobody-touched-Settings resolves to. Six existing tests
+across three files (`app_theme_style_test.dart`,
+`theme_style_provider_test.dart`, `appearance_picker_test.dart`,
+`app_logo_test.dart`) hard-coded the old default (either as the literal
+expected value, or as a "no-op" transition target that stopped being a
+no-op) and needed updating alongside the change — `flutter analyze` clean,
+826/826 tests pass.
+
+---
+
+## 39. `record` package's 5.x line doesn't compile for release — blocked the Beta V1 Android build (2026-08-27)
+
+Surfaced while cutting the Beta V1 release requested by the project owner.
+`pubspec.yaml`'s `record: ^5.1.2` (added for the group-ride push-to-talk
+voice notes feature, same session as `Issues.md`'s neighboring entries)
+resolved to `record 5.2.1` + `record_linux 0.7.2` +
+`record_platform_interface 1.6.0` — a combination pub's version solver
+accepts (satisfies every semver constraint) but that does not actually
+compile: `record_linux 0.7.2` is missing `startStream` and has a stale
+`hasPermission` signature that `record_platform_interface 1.6.0` requires.
+`flutter build apk --release` failed at the Dart kernel-compile step, before
+any Android-specific step ran — this would have failed for **any** platform
+target, not just Android; it happened to surface here because Beta V1 was
+the first release build cut since these dependencies were added.
+
+`flutter pub upgrade record_linux` reported "No dependencies changed" —
+0.7.2 is the newest `record_linux` release compatible with `record`'s `^5.x`
+constraint, so this isn't a stale lockfile; it's a genuine unfixed pairing
+in the 5.x line. `flutter pub outdated` showed `record 7.1.1` as the next
+release where `record`/`record_linux`/`record_platform_interface` were
+bumped together and actually match.
+
+**Fixed:** bumped to `record: ^7.1.1`. The `AudioRecorder`/`RecordConfig`/
+`AudioEncoder` surface `group_ride_map_screen.dart` uses was unaffected by
+the major version jump — `flutter analyze` clean, `flutter build apk
+--release` succeeded (90.0MB), 826/826 tests still pass.
