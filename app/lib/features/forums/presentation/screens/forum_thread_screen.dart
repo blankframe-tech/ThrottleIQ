@@ -42,8 +42,10 @@ class ForumThreadScreen extends ConsumerWidget {
       ),
       builder: (_) => _NewPostSheet(forumId: forumId),
     ).then((posted) {
+      // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
+      // which inserts the new post into forumPostsNotifierProvider directly
+      // instead (docs/Issues.md §54).
       if (posted == true) {
-        ref.invalidate(forumPostsProvider(forumId));
         ref.invalidate(forumsForGarageProvider);
       }
     });
@@ -168,6 +170,12 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
   bool _submitting = false;
+  // Only set once the rider has tried to submit — an empty field isn't an
+  // error until then (docs/Issues.md §54: submitting blank/title-only used
+  // to just silently do nothing, with no inline error, shake, or disabled
+  // button to say the tap even registered).
+  bool _titleError = false;
+  bool _bodyError = false;
 
   @override
   void dispose() {
@@ -177,14 +185,21 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     final title = _titleController.text.trim();
     final body = _bodyController.text.trim();
-    if (title.isEmpty || body.isEmpty || _submitting) return;
+    if (title.isEmpty || body.isEmpty) {
+      setState(() {
+        _titleError = title.isEmpty;
+        _bodyError = body.isEmpty;
+      });
+      return;
+    }
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
     setState(() => _submitting = true);
-    await ForumRepository().createPost(
+    final postId = await ForumRepository().createPost(
       forumId: widget.forumId,
       userId: user.uid,
       userName: user.displayName ?? 'Rider',
@@ -192,6 +207,18 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
       title: title,
       body: body,
     );
+    ref.read(forumPostsNotifierProvider(widget.forumId).notifier).addPost(
+          ForumPostEntity(
+            id: postId,
+            forumId: widget.forumId,
+            userId: user.uid,
+            userName: user.displayName ?? 'Rider',
+            userPhotoUrl: user.photoURL ?? '',
+            title: title,
+            body: body,
+            createdAt: DateTime.now(),
+          ),
+        );
     if (mounted) Navigator.pop(context, true);
   }
 
@@ -216,14 +243,26 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
           TextField(
             controller: _titleController,
             style: TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(hintText: 'Title'),
+            onChanged: (_) {
+              if (_titleError) setState(() => _titleError = false);
+            },
+            decoration: InputDecoration(
+              hintText: 'Title',
+              errorText: _titleError ? 'Title is required' : null,
+            ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _bodyController,
             style: TextStyle(color: AppColors.textPrimary),
             maxLines: 4,
-            decoration: const InputDecoration(hintText: "What's going on?"),
+            onChanged: (_) {
+              if (_bodyError) setState(() => _bodyError = false);
+            },
+            decoration: InputDecoration(
+              hintText: "What's going on?",
+              errorText: _bodyError ? 'Say something before posting' : null,
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(

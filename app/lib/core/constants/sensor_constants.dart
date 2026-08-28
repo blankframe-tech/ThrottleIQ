@@ -29,6 +29,15 @@ class SensorConstants {
   static const double movingSpeedThresholdMs = 1.0; // matches existing periodType cutoff
   static const double corneringYawRateThresholdRadS = 0.26; // ~15°/s
 
+  // Some GPS chipsets (the iOS Simulator's location playback, and a subset
+  // of Android GPS chipsets) report Position.speed as near-zero even while
+  // genuinely moving. When the raw field reads below this floor, the recorder
+  // falls back to a haversine distance/time-derived speed for that fix
+  // instead of recording the ride as stationary (docs/Issues.md §49). Reuses
+  // movingSpeedThresholdMs's cutoff — the same value already used to decide
+  // "is this fix idle or moving" everywhere else.
+  static const double unreliableSpeedFallbackThresholdMs = movingSpeedThresholdMs;
+
   // Complementary filter heading blend — favor GPS course when the fix is
   // accurate, lean more on gyro dead-reckoning when it isn't
   static const double headingGoodAccuracyThresholdM = 8.0;

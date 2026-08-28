@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-28 · Branch: `main`_
+_Last updated: 2026-08-29 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -29,8 +29,25 @@ Console progress (2026-08-28):** developer account verified as an individual
 the first release AAB built locally (`flutter build appbundle --release` →
 `app/build/app/outputs/bundle/release/app-release.aab`, versionCode 1) for
 upload to the Internal testing track — confirm in Play Console whether the
-upload/release creation was completed. Test suite: **865/865 green**,
-`flutter analyze` clean.
+upload/release creation was completed. **Google Cloud project
+`throttle-iq-gcc1`** (project number `439350192148`) exists and is linked for
+Play Console API access, set up 2026-08-29 to enable automated releases
+(service account + Google Play Developer API, e.g. via `fastlane supply` or
+Gradle Play Publisher). As of 2026-08-29: the Play Android Developer API is
+enabled and a `throttleiq-play-publisher` service account exists with a JSON
+key downloaded to `secrets/` (gitignored the same day — `/secrets/` and
+`*.json.key` added to `.gitignore` so the key can't be accidentally
+committed). **API access verified working 2026-08-29** — the service account
+was invited under Play Console's **Users and permissions** page (there's no
+longer a separate "API access" page; it's invited by pasting its
+`...@throttle-iq-gcc1.iam.gserviceaccount.com` email like a human user, then
+granted per-app "Release to testing tracks" only) and confirmed end-to-end by
+creating and deleting a real Android Publisher API edit for
+`com.bft.throttleiq`. Reuse note: `gcloud auth print-access-token` needs
+`--scopes=https://www.googleapis.com/auth/androidpublisher` explicitly — the
+default `cloud-platform` scope alone 403s against this API. **Still
+pending:** wiring up an actual CLI publishing tool (fastlane `supply` or
+Gradle Play Publisher). Test suite: **865/865 green**, `flutter analyze` clean.
 
 **Built and wired end-to-end:** ride recording (offline-first, background
 GPS, crash detection with a cancellable countdown), garage + distance-based
@@ -92,6 +109,14 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `Issues.md`; this list is a compact pointer, not the record itself.
 
+- **2026-08-29** — Fixed all six defects from the §46 QA sweep: the
+  export-crash `sharePositionOrigin` fix (§48), a GPS-speed fallback for
+  when `Position.speed` is unreliable (§49), three forum UX gaps — posts
+  appearing immediately instead of after a re-entry, empty-post validation,
+  and a spinner while a brand/topic forum resolves (§54) — and "can't
+  delete your own post" (§47), which turned out to be an unreleased
+  (not just stale) `firestore.rules` ruleset in production, fixed by
+  redeploying.
 - **2026-08-28 (later still)** — Auto-tracking's licensing crash (§35) fixed
   by replacing the paid `flutter_background_geolocation` plugin with a free
   stand-in (`flutter_activity_recognition` + `flutter_foreground_task` +
@@ -382,10 +407,27 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   2026-08-12** — 395 places live in `throttleiqfb`. Still to check on a
   device: opening Places in Dhaka renders them, and "Import nearby" adds
   nothing (osmId dedup holds).
+- [ ] **The §46 QA sweep's six fixes** (`Issues.md` §47–§49, §54, 2026-08-29):
+  export-crash fix, GPS-speed fallback, three forum UX fixes
+  (new-post-appears-immediately, empty-post validation, brand-forum-open
+  spinner), and the delete-your-own-post rules release. All
+  `flutter analyze`/`flutter test` (862/862) clean and (for the rules) 73/73
+  `npm run test:rules`, but none re-run through the same
+  accessibility-driven device sweep that found them. The speed fallback in
+  particular needs a real recorded ride, not just simulator GPS playback, to
+  confirm avg/max speed come out sane; the delete fix needs an actual
+  delete-your-own-post tap against the now-released production rules.
 
 ## 📋 To do
 
-### Now (blocking any further distribution)
+- [x] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-08-29** — the QA sweep's
+  "can't delete your own forum post" (`Issues.md` §47) turned out not to be
+  a rules-*text* bug: the post-delete rule already correctly allows the
+  author (new `npm run test:rules` case `'a rider can delete their own
+  post'`, 73/73 green). `firebase deploy --only firestore:rules --project
+  throttleiqfb` reported the content as already uploaded but **not yet
+  released** — this deploy is what made it the live-serving ruleset, which
+  lines up with what QA actually saw.
 - [x] ~~Buy the `flutter_background_geolocation` license key~~ **RESOLVED
   DIFFERENTLY, 2026-08-28** — instead of buying the key, the plugin was
   replaced with a free stand-in (`flutter_activity_recognition` +

@@ -2897,19 +2897,7 @@ Ran a tab-by-tab, button-by-button walkthrough of the whole app (iOS
 Simulator + physical device, accessibility-driven UI automation, a real
 2.2 km ride recorded end to end) rather than a code read. Three confirmed
 defects, filed individually below (§47–§49), plus two lower-severity forum
-UX gaps and one low-severity loading-state gap not broken out into their own
-sections:
-
-- **New forum posts don't appear until you leave and re-enter the thread**
-  — the compose sheet closes and reports success, but the thread screen
-  behind it doesn't refetch/invalidate, so it keeps showing "No posts yet"
-  until a manual back-and-forward navigation.
-- **Submitting an empty or title-only forum post gives zero feedback** — no
-  inline error, no shake, nothing; unclear whether the tap even registered.
-- **Brand forums (e.g. a whole-brand page like Yamaha) show a fully blank
-  body with no loading spinner** for the few seconds their post list takes
-  to fetch — the per-bike forum screen shows a spinner for the equivalent
-  wait, brand forums don't.
+UX gaps and one low-severity loading-state gap, all fixed §54.
 
 Full report, including a "confirmed working" list (join-by-code, invite
 flow, pause/resume/discard, place reviews, empty states, badges, the
@@ -2925,7 +2913,7 @@ This is real production data (the account and forum are real, not a
 sandbox); it needs the §47 rules fix (then delete normally) or a manual
 Firestore-console removal.
 
-## 47. Deleting your own forum post fails with `permission-denied` — CONFIRMED, not fixed
+## 47. Deleting your own forum post fails with `permission-denied` — NOT a rules-file bug; rules were just stale/undeployed (2026-08-29)
 
 Found during the §46 sweep. Created a post as the signed-in account on that
 account's own bike forum, then tried to delete it as the same author.
@@ -2938,16 +2926,36 @@ have permission to execute the specified operation.
 
 The delete button, confirmation dialog ("Delete post? This removes the post
 and its replies from the forum. It cannot be undone."), and optimistic UI
-all behave correctly — the write itself is rejected server-side. Reads as a
-`firestore.rules` gap (the forum-post delete rule likely doesn't check
-`request.auth.uid == resource.data.authorId`, or that rule isn't deployed)
-rather than a client-side bug, consistent with the pattern already seen in
-§29/§35/§37/§42 of rules lagging behind shipped features in this project.
+all behave correctly — the write itself is rejected server-side.
 
-**Not yet fixed.** Left a real, currently-undeletable test post live in the
-Suzuki Gixxer bike forum (see §46) until this is resolved.
+**Root-caused, not a code bug.** `firestore.rules`' post-delete rule
+(`allow delete: if request.auth != null && (resource.data.userId ==
+request.auth.uid || canModerateForum(forumId));`, added 2026-08-01) already
+allows this — `||` short-circuits, so the author path never touches
+`canModerateForum`'s `get()` at all. There was also no test pinning the
+plain "author deletes their own post" path down (only "moderator deletes
+someone else's" and "stranger denied" were covered), so a stale/undeployed
+copy of this rule in production could sit unnoticed indefinitely — exactly
+the pattern already seen in §29/§35/§37/§42 of rules lagging behind what's
+committed locally.
 
-## 48. Export JSON / Export GPX silently do nothing on iOS — CONFIRMED, not fixed
+**Fixed this session:**
+- Added `scripts/test/rules/firestore_rules.test.js`'s `'a rider can delete
+  their own post'` test — `npm run test:rules`: 73/73 green, confirming the
+  rule text in this repo is correct.
+- Ran `firebase deploy --only firestore:rules --project throttleiqfb`
+  (user-approved, since it pushes straight to the production project). CLI
+  output: `firestore: latest version of firestore.rules already up to date,
+  skipping upload... firestore: released rules firestore.rules to
+  cloud.firestore`. That phrasing means this file's content was already
+  sitting in Firebase's ruleset storage from an earlier upload, but this
+  deploy is what actually made it the **released** (live-serving) ruleset —
+  i.e. exactly the "correct rules uploaded, never released/active" gap the
+  §29/§35/§37/§42 pattern predicts. The stray "QA test post" left in the
+  Suzuki Gixxer bike forum (see §46) should now be deletable normally
+  through the app.
+
+## 48. Export JSON / Export GPX silently do nothing on iOS — FIXED (2026-08-29)
 
 Found during the §46 sweep. Tapping either export button on the Ride
 Summary screen produces no visible effect whatsoever — no share sheet, no
@@ -2962,15 +2970,19 @@ flutter: PlatformException(error, sharePositionOrigin: argument must be set,
 **Root cause:** `ride_summary_screen.dart:632` — `await
 Share.shareXFiles([XFile(file.path)], subject: ...)` — never passes
 `sharePositionOrigin`. This iOS version enforces a non-zero anchor rect for
-the share popover's presentation, even on iPhone. The fix already exists
+the share popover's presentation, even on iPhone. The fix already existed
 elsewhere in the same file's own feature area: `active_ride_screen.dart:190
 –193` computes and passes `sharePositionOrigin: origin` correctly for the
-"share live location" button. Exporting just needs the same treatment
-applied to `_exportRide()`.
+"share live location" button.
 
-**Not yet fixed.**
+**Fixed:** gave each export button its own `GlobalKey`
+(`_exportJsonButtonKey`, `_exportGpxButtonKey`), and `_exportRide()` now
+computes the button's on-screen `Rect` from whichever key was tapped and
+passes it as `sharePositionOrigin`, mirroring `active_ride_screen.dart`'s
+`_shareButtonKey` exactly. `flutter analyze` clean, `flutter test` 862/862
+(no iOS-toolchain on-device re-verification this session).
 
-## 49. Recorded rides can save with avg/max speed and moving-time all zero — no fallback when `Position.speed` is unreliable — CONFIRMED (needs on-device verification), not fixed
+## 49. Recorded rides can save with avg/max speed and moving-time all zero — no fallback when `Position.speed` is unreliable — FIXED (needs on-device verification) (2026-08-29)
 
 Found during the §46 sweep's end-to-end recorded ride (2.2 km, simulated
 GPS movement via `xcrun simctl location start`). The live speedometer on
@@ -2989,16 +3001,25 @@ display it as-is. Distance and the live avg-speed readout are computed
 independently from GPS coordinate deltas (`motion_calculator.dart:19–41`,
 haversine-based), which is why only the speed-dependent numbers broke.
 
-**Open question, not yet resolved:** Xcode Simulator location playback is
-known not to populate a realistic `CLLocation.speed`, so this exact
-zero-speed condition may be specific to simulated GPS rather than something
-a real ride hits. But the code path has no fallback for it either way, and
-unreliable/zero GPS speed fields are a known real-world condition on some
-Android GPS chipsets too — and a ride's avg/max/moving-time are baked in at
-save time with no way to recompute after the fact if it does happen for
-real. **Next step: record one short real ride on a physical device and
-check whether avg/max speed come out non-zero** before deciding whether a
-distance/time-derived fallback is worth adding to `_onPosition`.
+**Fixed:** `_onPosition` now computes a haversine distance/time-derived
+speed (`derivedSpeedMs = distDelta / deltaT`, the same calculation
+`motion_calculator.dart` was already doing for distance) alongside the raw
+`Position.speed` reading. When the raw field is below
+`SensorConstants.unreliableSpeedFallbackThresholdMs` (reuses the existing
+`movingSpeedThresholdMs` = 1.0 m/s cutoff) but the derived speed is at or
+above it, the derived value is used instead for that fix — feeding
+`_maxSpeed`, `_speedSum`, moving-time accounting, `periodType`, the fusion
+estimator, and the persisted point alike. Acceleration/jerk still derive
+from the raw field, unchanged — this bug was only ever about the
+speed-shaped numbers, not the sensor-fusion path. `flutter test`: 862/862.
+
+**Still open:** Xcode Simulator location playback is known not to populate
+a realistic `CLLocation.speed`, so the exact zero-speed condition this was
+built against may be simulator-specific — but unreliable/zero GPS speed
+fields are a known real-world condition on some Android GPS chipsets too,
+so the fallback is worth having regardless. **Next step unchanged: record
+one short real ride on a physical device** to confirm avg/max speed come
+out sane (and non-suspiciously-derived) end to end.
 
 ---
 
@@ -3217,3 +3238,78 @@ emulator access), and the in-app sign-in/splash mark
 (`assets/icons/throttleiq-icon-dark.svg`, rendered by `AppLogo` per
 `app_logo.dart`) is a **separate, deliberately untouched** asset — it's the
 in-app brand mark, not the OS app icon, and this change didn't touch it.
+
+---
+
+## 53. Play Console internal testing track inactive — release never rolled out (2026-08-29)
+
+Testers added to the "First Class" internal-testing list (and invited via
+the opt-in link) reported the join link telling them they weren't invited,
+even though they were on the list and signed in with the invited email.
+
+**Cause (Play Console, not app code):** the internal testing track itself
+was showing **Inactive**, and the only release under it —
+`1 (1.0.0-beta.1)`, uploaded 2026-08-28 — was sitting as an **Untitled
+release / Draft, Not reviewed**. It was never actually rolled out, only
+uploaded. Being on the tester email list only makes someone *eligible* to
+opt in; with no active rollout on the track, there's nothing for the
+opt-in link to grant access to, so testers see a generic "make sure you're
+invited" message regardless of list membership.
+
+**Fix:** opened the draft release, clicked through **Review release**,
+resolved the blocking requirements Play flagged, then **Start rollout to
+Internal testing**. Confirmed resolved same day — release `1 (1.0.0-beta.1)`
+now shows **Active** under Internal testing (uploaded 2026-08-28 8:39 PM).
+Testers still need to re-open the opt-in link and then open the Play Store
+app itself to download; allow a few minutes to propagate.
+
+**Not app code** — no source changed this session; noting this here so the
+release-publish step isn't mistaken for already done next time internal
+testers are invited.
+
+---
+
+## 54. §46's three lower-severity forum UX gaps — FIXED (2026-08-29)
+
+The compose-flow and discovery gaps §46 flagged but didn't break out into
+their own sections.
+
+**New forum posts didn't appear until you left and re-entered the thread.**
+Root cause was subtler than "doesn't invalidate" — it did invalidate
+(`ref.invalidate(forumPostsProvider(forumId))` after a successful post), but
+`ForumRepository.createPost` stamps `createdAt: FieldValue.serverTimestamp()`,
+which reads back as `null` on the client until the server acks it, and
+`getPosts`'s query does `orderBy('createdAt')` — Firestore excludes any doc
+whose order-by field is still null from that query. The invalidate's
+refetch reliably raced that ack and silently omitted the post the rider
+just made; only a *later* fetch (after the timestamp resolved) picked it
+up, which read as "needs a manual back-and-forward." **Fixed** by having
+`_NewPostSheetState._submit()` insert the new post directly into
+`forumPostsNotifierProvider` (a new `ForumPostsNotifier.addPost`, prepending
+locally) instead of relying on a refetch — the same optimistic-update shape
+`vote()` already used. The stale `ref.invalidate(forumPostsProvider(...))`
+call is gone from `_showNewPostSheet`.
+
+**Submitting an empty or title-only post gave zero feedback.** `_submit()`
+used to just `return` on blank fields with no visible sign anything
+happened. **Fixed:** blank title/body now sets `_titleError`/`_bodyError`,
+surfaced as `TextField.decoration.errorText` ("Title is required" / "Say
+something before posting"), cleared as soon as the rider types in that
+field.
+
+**Brand forums showed a blank body with no spinner while resolving.** Not
+actually the thread screen's `postsAsync.when(loading: ...)` — that already
+had a spinner. The real gap was one step earlier: `forums_home_screen.dart`
+tapping a brand/topic discovery row (`_openBrandForum`/`_openGeneralForum`)
+awaits `ForumRepository().getOrCreateForum(...)`, a Firestore transaction
+that can take a few seconds on first open, and the only feedback during
+that wait was the row going inert (`enabled: !_resolving`) — no spinner,
+which is what read as "broken." **Fixed:** `_resolving` (a bool) became
+`_resolvingEntry` (the specific brand/topic in flight), and the tapped
+`_DiscoverRow` now swaps its trailing chevron for a small
+`CircularProgressIndicator` for exactly that entry (the search box's own
+search button does the same when it's the one in flight).
+
+**Verification:** `flutter analyze` clean (no new issues in any touched
+file), `flutter test` 862/862. Not re-verified on-device/simulator this
+session — no iOS toolchain run.

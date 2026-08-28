@@ -734,11 +734,47 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   void _onPosition(Position pos) {
     if (state.status != RecordingStatus.active) return;
 
-    final speedMs = pos.speed < 0 ? 0.0 : pos.speed;
+    final rawSpeedMs = pos.speed < 0 ? 0.0 : pos.speed;
     // geolocator >=11 exposes timestamp as a non-nullable DateTime (GPS device time)
     final timestamp = pos.timestamp;
 
     if (pos.accuracy > SensorConstants.maxGpsAccuracyM) return;
+
+    double? accel;
+    double? jerk;
+    double distDelta = 0;
+
+    // The first fix after a pause/resume or a restore measures across a gap
+    // of unknown length, so its derivatives describe the break rather than
+    // the riding — see _skipNextDistanceDelta. The fix itself is still
+    // recorded; only the deltas derived *from the previous one* are dropped.
+    double deltaT = 0;
+    if (_lastPoint != null && !_skipNextDistanceDelta) {
+      deltaT = timestamp.difference(_lastPoint!.timestamp).inMilliseconds / 1000.0;
+      final result = _calculator.calculate(
+        prev: _lastPoint!,
+        currentSpeedMs: rawSpeedMs,
+        currentLat: pos.latitude,
+        currentLng: pos.longitude,
+        currentTime: timestamp,
+      );
+      accel = result.acceleration;
+      jerk = result.jerk;
+      distDelta = result.distanceDeltaM;
+    }
+    _skipNextDistanceDelta = false;
+
+    // docs/Issues.md §49: Position.speed can read near-zero on some devices
+    // (confirmed on Xcode Simulator location playback) while the rider is
+    // genuinely moving. Distance/live-average-speed stay correct because
+    // they're derived from GPS coordinate deltas independently of this
+    // field — so when the raw speed is unreliable, fall back to that same
+    // haversine-derived speed rather than recording the fix as stationary.
+    final derivedSpeedMs = deltaT > 0 ? distDelta / deltaT : 0.0;
+    final speedMs = (rawSpeedMs < SensorConstants.unreliableSpeedFallbackThresholdMs &&
+            derivedSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs)
+        ? derivedSpeedMs
+        : rawSpeedMs;
 
     if (speedMs > _maxSpeed) _maxSpeed = speedMs;
     _speedSum += speedMs;
@@ -753,28 +789,6 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       if (gap > 0 && gap <= _maxMovingGapSeconds) _movingSeconds += gap;
     }
     _lastFixTime = timestamp;
-
-    double? accel;
-    double? jerk;
-    double distDelta = 0;
-
-    // The first fix after a pause/resume or a restore measures across a gap
-    // of unknown length, so its derivatives describe the break rather than
-    // the riding — see _skipNextDistanceDelta. The fix itself is still
-    // recorded; only the deltas derived *from the previous one* are dropped.
-    if (_lastPoint != null && !_skipNextDistanceDelta) {
-      final result = _calculator.calculate(
-        prev: _lastPoint!,
-        currentSpeedMs: speedMs,
-        currentLat: pos.latitude,
-        currentLng: pos.longitude,
-        currentTime: timestamp,
-      );
-      accel = result.acceleration;
-      jerk = result.jerk;
-      distDelta = result.distanceDeltaM;
-    }
-    _skipNextDistanceDelta = false;
 
     // Pair this fix's GPS-derived acceleration with the raw accelerometer
     // samples seen since the previous fix, for _axisCalibrator's fit — see

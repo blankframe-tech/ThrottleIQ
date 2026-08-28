@@ -251,6 +251,24 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
     }
   }
 
+  /// Prepends a just-created post to the local list so the thread shows it
+  /// immediately (docs/Issues.md §54).
+  ///
+  /// Deliberately NOT a `ref.invalidate(forumPostsProvider(forumId))` +
+  /// refetch: `createPost` writes `createdAt: FieldValue.serverTimestamp()`,
+  /// which reads back as null on the client until the server acks it — and
+  /// `getPosts`'s query does `orderBy('createdAt')`, which excludes any doc
+  /// whose order-by field is still null. Refetching right after creating
+  /// the post raced that ack and silently omitted the post the rider just
+  /// made, which is exactly what "New post doesn't appear until you leave
+  /// and come back" was: the *next* fetch (after the timestamp had time to
+  /// resolve) picked it up fine. Inserting it locally sidesteps the race
+  /// entirely, the same way [vote] updates optimistically instead of
+  /// waiting on Firestore.
+  void addPost(ForumPostEntity post) {
+    state = [post, ...state];
+  }
+
   /// Patches the cached reply count after a successful post, mirroring
   /// RideFeedNotifier.incrementCommentCount.
   void incrementReplyCount(String postId) {

@@ -86,6 +86,10 @@ key.properties
 *.keystore
 *.jks
 
+# Google Cloud service account keys (NEVER commit — grants Play Publisher API access)
+/secrets/
+*.json.key
+
 # IDE
 .vscode/
 .idea/

@@ -36,6 +36,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   List<double> _speedsMs = [];
   bool _polylineLoaded = false;
   ({double riderKmh, double baselineKmh})? _speedOutlier;
+  // Anchors the iOS share popover to the tapped button (docs/Issues.md §48) —
+  // without a non-zero sharePositionOrigin, UIActivityViewController throws
+  // instead of presenting, same root cause active_ride_screen.dart's
+  // _shareButtonKey was added for.
+  final GlobalKey _exportJsonButtonKey = GlobalKey();
+  final GlobalKey _exportGpxButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -376,14 +382,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   children: [
                     Expanded(
                       child: TextButton.icon(
-                        onPressed: () => _exportRide(ride, gpx: false),
+                        key: _exportJsonButtonKey,
+                        onPressed: () => _exportRide(ride, gpx: false, buttonKey: _exportJsonButtonKey),
                         icon: const Icon(Icons.data_object, size: 18),
                         label: Text(l10n.exportJsonAction),
                       ),
                     ),
                     Expanded(
                       child: TextButton.icon(
-                        onPressed: () => _exportRide(ride, gpx: true),
+                        key: _exportGpxButtonKey,
+                        onPressed: () => _exportRide(ride, gpx: true, buttonKey: _exportGpxButtonKey),
                         icon: const Icon(Icons.route, size: 18),
                         label: Text(l10n.exportGpxAction),
                       ),
@@ -604,7 +612,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     );
   }
 
-  Future<void> _exportRide(RideEntity ride, {required bool gpx}) async {
+  Future<void> _exportRide(RideEntity ride, {required bool gpx, required GlobalKey buttonKey}) async {
     final service = ExportService();
     final rideMap = {
       'id': ride.id,
@@ -629,7 +637,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       );
       return;
     }
-    await Share.shareXFiles([XFile(file.path)], subject: l10n.rideExportShareSubject);
+    Rect? origin;
+    final box = buttonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      origin = box.localToGlobal(Offset.zero) & box.size;
+    }
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      subject: l10n.rideExportShareSubject,
+      sharePositionOrigin: origin,
+    );
   }
 
   String _formatDate(DateTime dt) {

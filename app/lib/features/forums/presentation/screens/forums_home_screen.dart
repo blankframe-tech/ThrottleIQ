@@ -23,7 +23,15 @@ class ForumsHomeScreen extends ConsumerStatefulWidget {
 
 class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
   final _searchController = TextEditingController();
-  bool _resolving = false;
+  // The brand/topic currently being resolved (getOrCreateForum can be a
+  // multi-second Firestore transaction on first open) — null when nothing is
+  // in flight. Tracking *which* entry, not just a bool, lets the tapped row
+  // itself show a spinner (docs/Issues.md §54: opening a brand forum used to
+  // just disable the row with no visible feedback at all, "for a moment it
+  // reads as broken rather than loading" — the per-bike tiles above never had
+  // this problem because their forum is already resolved before the tile
+  // exists to tap).
+  String? _resolvingEntry;
 
   static const _popularBrands = [
     'Yamaha',
@@ -56,8 +64,8 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
 
   Future<void> _openBrandForum(String brand) async {
     final trimmed = brand.trim();
-    if (trimmed.isEmpty || _resolving) return;
-    setState(() => _resolving = true);
+    if (trimmed.isEmpty || _resolvingEntry != null) return;
+    setState(() => _resolvingEntry = trimmed);
     try {
       final forum = await ForumRepository().getOrCreateForum(brand: trimmed);
       if (!mounted) return;
@@ -68,13 +76,13 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         SnackBar(content: Text('Could not open forum: $e')),
       );
     } finally {
-      if (mounted) setState(() => _resolving = false);
+      if (mounted) setState(() => _resolvingEntry = null);
     }
   }
 
   Future<void> _openGeneralForum(String topic) async {
-    if (_resolving) return;
-    setState(() => _resolving = true);
+    if (_resolvingEntry != null) return;
+    setState(() => _resolvingEntry = topic);
     try {
       final forum = await ForumRepository().getOrCreateGeneralForum(topic: topic);
       if (!mounted) return;
@@ -85,7 +93,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         SnackBar(content: Text('Could not open forum: $e')),
       );
     } finally {
-      if (mounted) setState(() => _resolving = false);
+      if (mounted) setState(() => _resolvingEntry = null);
     }
   }
 
@@ -188,8 +196,18 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              icon: Icon(Icons.search, color: AppColors.primary),
-              onPressed: _resolving ? null : () => _openBrandForum(_searchController.text),
+              icon: _resolvingEntry != null &&
+                      _resolvingEntry == _searchController.text.trim()
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          color: AppColors.primary, strokeWidth: 2),
+                    )
+                  : Icon(Icons.search, color: AppColors.primary),
+              onPressed: _resolvingEntry != null
+                  ? null
+                  : () => _openBrandForum(_searchController.text),
             ),
           ],
         ),
@@ -202,7 +220,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           label: 'Brands',
           icon: Icons.two_wheeler,
           entries: _popularBrands,
-          enabled: !_resolving,
+          resolvingEntry: _resolvingEntry,
           onTap: _openBrandForum,
         ),
         const SizedBox(height: 16),
@@ -210,7 +228,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           label: 'Topics',
           icon: Icons.topic_outlined,
           entries: _generalTopics,
-          enabled: !_resolving,
+          resolvingEntry: _resolvingEntry,
           onTap: _openGeneralForum,
         ),
       ],
@@ -223,14 +241,17 @@ class _DiscoverGroup extends StatelessWidget {
   final String label;
   final IconData icon;
   final List<String> entries;
-  final bool enabled;
+  // The entry currently being resolved (null = nothing in flight). Passed
+  // through rather than a plain `enabled` bool so the tapped row can show a
+  // spinner instead of just going inert — see _resolvingEntry's doc comment.
+  final String? resolvingEntry;
   final void Function(String) onTap;
 
   const _DiscoverGroup({
     required this.label,
     required this.icon,
     required this.entries,
-    required this.enabled,
+    required this.resolvingEntry,
     required this.onTap,
   });
 
@@ -262,7 +283,8 @@ class _DiscoverGroup extends StatelessWidget {
                 _DiscoverRow(
                   icon: icon,
                   label: entries[i],
-                  enabled: enabled,
+                  enabled: resolvingEntry == null,
+                  resolving: resolvingEntry == entries[i],
                   onTap: () => onTap(entries[i]),
                 ),
               ],
@@ -281,11 +303,13 @@ class _DiscoverRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool enabled;
+  final bool resolving;
   final VoidCallback onTap;
   const _DiscoverRow({
     required this.icon,
     required this.label,
     required this.enabled,
+    required this.resolving,
     required this.onTap,
   });
 
@@ -295,7 +319,13 @@ class _DiscoverRow extends StatelessWidget {
       onTap: enabled ? onTap : null,
       leading: Icon(icon, color: AppColors.primary, size: 22),
       title: Text(label, style: TextStyle(fontSize: 14, color: AppColors.textPrimary)),
-      trailing: Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+      trailing: resolving
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+            )
+          : Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
     );
   }
 }

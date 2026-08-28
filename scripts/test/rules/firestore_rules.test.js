@@ -349,6 +349,19 @@ test('a non-moderator still cannot delete someone else\'s post', async () => {
   await assertFails(deleteDoc(doc(db, 'forums', FORUM_ID, 'posts', POST_ID)));
 });
 
+// docs/Issues.md §47: a QA sweep reported "permission-denied" when a
+// rider deleted their OWN post — the plain author case, not the
+// creator/maintainer path §329's test above covers. The rule text
+// (`resource.data.userId == request.auth.uid || canModerateForum(...)`)
+// already allows this, so this was never a gap in this file; it pins the
+// author-delete path down explicitly so a future rules edit can't silently
+// break it again without a red test, the way an undeployed/stale rules file
+// could have caused the reported failure with no local test ever catching it.
+test('a rider can delete their own post', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(deleteDoc(doc(db, 'forums', FORUM_ID, 'posts', POST_ID)));
+});
+
 // ---------------------------------------------------------------------------
 // Regression cover: the 2026-08-12 like/vote clauses must still behave.
 // ---------------------------------------------------------------------------
