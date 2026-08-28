@@ -120,6 +120,10 @@ dependencies:
   collection: ^1.18.0
   equatable: ^2.0.5
   permission_handler: ^11.3.1
+  # Renders the SafeQR medical-info card as an on-device QR code — pure client-
+  # side widget, no backend/scanning half needed since the payload is just
+  # plain text a phone camera app already reads.
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

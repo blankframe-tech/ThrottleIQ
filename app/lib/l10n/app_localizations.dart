@@ -655,6 +655,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ride updated.'**
   String get bikeConfirmationUpdatedMessage;
+
+  /// Segment label for riding alone, in the Solo/Group choice on the Record screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Solo'**
+  String get rideModeSoloLabel;
+
+  /// Segment label for riding with others, in the Solo/Group choice on the Record screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get rideModeGroupLabel;
+
+  /// Button that opens the friend picker to start a group ride by inviting riders.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends'**
+  String get rideModeInviteFriendsAction;
+
+  /// Button that opens the join-by-code sheet for a group ride someone else started.
+  ///
+  /// In en, this message translates to:
+  /// **'Join with a code'**
+  String get rideModeJoinByCodeAction;
+
+  /// Title of the sheet where a rider types in a group ride's join code.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a ride'**
+  String get joinRideByCodeTitle;
+
+  /// Subtitle explaining what to type into the join-code sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-character code the ride\'s creator shared with you.'**
+  String get joinRideByCodeSubtitle;
+
+  /// Placeholder text in the join-code input field, shaped like a real code.
+  ///
+  /// In en, this message translates to:
+  /// **'ABC123'**
+  String get joinRideCodeHint;
+
+  /// Button that submits the typed join code.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get joinRideAction;
+
+  /// Shown when the typed text is the wrong shape to even be a join code.
+  ///
+  /// In en, this message translates to:
+  /// **'That doesn\'t look like a valid code.'**
+  String get joinRideCodeInvalidFormat;
+
+  /// Fallback error shown when joining by code fails for an unrecognized reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t join that ride. Check the code and try again.'**
+  String get joinRideGenericError;
+
+  /// Title of the SafeQR screen and its entry point in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'SafeQR'**
+  String get safeQrTitle;
+
+  /// Subtitle under the SafeQR tile in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'A scannable medical-info card for first responders'**
+  String get safeQrSettingsSubtitle;
+
+  /// Explanatory text at the top of the SafeQR screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone can scan this with a phone camera — no app or account needed on their end. Fill in what you\'d want a first responder or traffic police to know.'**
+  String get safeQrIntro;
+
+  /// Shown in place of the QR code before the rider has entered anything worth scanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your blood group below to generate your card'**
+  String get safeQrEmptyStateHint;
+
+  /// Section heading above the SafeQR editable fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical info'**
+  String get safeQrMedicalInfoSection;
+
+  /// Label for the blood group input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood group'**
+  String get safeQrBloodGroupField;
+
+  /// Placeholder text in the blood group input field.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. O+'**
+  String get safeQrBloodGroupHint;
+
+  /// Label for the allergies input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get safeQrAllergiesField;
+
+  /// Label for the medical conditions input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical conditions'**
+  String get safeQrConditionsField;
+
+  /// Label for the current medications input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Current medications'**
+  String get safeQrMedicationsField;
+
+  /// Note explaining that an emergency contact is pulled in automatically, naming which one.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (your first emergency contact) is included automatically.'**
+  String safeQrContactIncludedNote(String name);
+
+  /// Note shown when the rider has no emergency contact yet to pull onto the card.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an emergency contact above to include it on this card automatically.'**
+  String get safeQrNoContactNote;
+
+  /// Button that saves the SafeQR medical info fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get safeQrSaveAction;
+
+  /// Snackbar shown after saving SafeQR medical info.
+  ///
+  /// In en, this message translates to:
+  /// **'SafeQR info saved.'**
+  String get safeQrSavedMessage;
+
+  /// Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved only on this device — it is not backed up or synced.'**
+  String get safeQrLocalOnlyDisclaimer;
 }
 
 class _AppLocalizationsDelegate

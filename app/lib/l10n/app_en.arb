@@ -482,5 +482,114 @@
   "bikeConfirmationUpdatedMessage": "Ride updated.",
   "@bikeConfirmationUpdatedMessage": {
     "description": "Snackbar shown after the rider confirms or corrects which bike an auto-detected ride was on."
+  },
+
+  "rideModeSoloLabel": "Solo",
+  "@rideModeSoloLabel": {
+    "description": "Segment label for riding alone, in the Solo/Group choice on the Record screen."
+  },
+  "rideModeGroupLabel": "Group",
+  "@rideModeGroupLabel": {
+    "description": "Segment label for riding with others, in the Solo/Group choice on the Record screen."
+  },
+  "rideModeInviteFriendsAction": "Invite friends",
+  "@rideModeInviteFriendsAction": {
+    "description": "Button that opens the friend picker to start a group ride by inviting riders."
+  },
+  "rideModeJoinByCodeAction": "Join with a code",
+  "@rideModeJoinByCodeAction": {
+    "description": "Button that opens the join-by-code sheet for a group ride someone else started."
+  },
+
+  "joinRideByCodeTitle": "Join a ride",
+  "@joinRideByCodeTitle": {
+    "description": "Title of the sheet where a rider types in a group ride's join code."
+  },
+  "joinRideByCodeSubtitle": "Enter the 6-character code the ride's creator shared with you.",
+  "@joinRideByCodeSubtitle": {
+    "description": "Subtitle explaining what to type into the join-code sheet."
+  },
+  "joinRideCodeHint": "ABC123",
+  "@joinRideCodeHint": {
+    "description": "Placeholder text in the join-code input field, shaped like a real code."
+  },
+  "joinRideAction": "Join",
+  "@joinRideAction": {
+    "description": "Button that submits the typed join code."
+  },
+  "joinRideCodeInvalidFormat": "That doesn't look like a valid code.",
+  "@joinRideCodeInvalidFormat": {
+    "description": "Shown when the typed text is the wrong shape to even be a join code."
+  },
+  "joinRideGenericError": "Couldn't join that ride. Check the code and try again.",
+  "@joinRideGenericError": {
+    "description": "Fallback error shown when joining by code fails for an unrecognized reason."
+  },
+
+  "safeQrTitle": "SafeQR",
+  "@safeQrTitle": {
+    "description": "Title of the SafeQR screen and its entry point in Settings."
+  },
+  "safeQrSettingsSubtitle": "A scannable medical-info card for first responders",
+  "@safeQrSettingsSubtitle": {
+    "description": "Subtitle under the SafeQR tile in Settings."
+  },
+  "safeQrIntro": "Anyone can scan this with a phone camera — no app or account needed on their end. Fill in what you'd want a first responder or traffic police to know.",
+  "@safeQrIntro": {
+    "description": "Explanatory text at the top of the SafeQR screen."
+  },
+  "safeQrEmptyStateHint": "Add your blood group below to generate your card",
+  "@safeQrEmptyStateHint": {
+    "description": "Shown in place of the QR code before the rider has entered anything worth scanning."
+  },
+  "safeQrMedicalInfoSection": "Medical info",
+  "@safeQrMedicalInfoSection": {
+    "description": "Section heading above the SafeQR editable fields."
+  },
+  "safeQrBloodGroupField": "Blood group",
+  "@safeQrBloodGroupField": {
+    "description": "Label for the blood group input field."
+  },
+  "safeQrBloodGroupHint": "e.g. O+",
+  "@safeQrBloodGroupHint": {
+    "description": "Placeholder text in the blood group input field."
+  },
+  "safeQrAllergiesField": "Allergies",
+  "@safeQrAllergiesField": {
+    "description": "Label for the allergies input field."
+  },
+  "safeQrConditionsField": "Medical conditions",
+  "@safeQrConditionsField": {
+    "description": "Label for the medical conditions input field."
+  },
+  "safeQrMedicationsField": "Current medications",
+  "@safeQrMedicationsField": {
+    "description": "Label for the current medications input field."
+  },
+  "safeQrContactIncludedNote": "{name} (your first emergency contact) is included automatically.",
+  "@safeQrContactIncludedNote": {
+    "description": "Note explaining that an emergency contact is pulled in automatically, naming which one.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Karim Uddin"
+      }
+    }
+  },
+  "safeQrNoContactNote": "Add an emergency contact above to include it on this card automatically.",
+  "@safeQrNoContactNote": {
+    "description": "Note shown when the rider has no emergency contact yet to pull onto the card."
+  },
+  "safeQrSaveAction": "Save",
+  "@safeQrSaveAction": {
+    "description": "Button that saves the SafeQR medical info fields."
+  },
+  "safeQrSavedMessage": "SafeQR info saved.",
+  "@safeQrSavedMessage": {
+    "description": "Snackbar shown after saving SafeQR medical info."
+  },
+  "safeQrLocalOnlyDisclaimer": "Saved only on this device — it is not backed up or synced.",
+  "@safeQrLocalOnlyDisclaimer": {
+    "description": "Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced."
   }
 }

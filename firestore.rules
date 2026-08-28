@@ -871,7 +871,17 @@ service cloud.firestore {
           request.auth.uid in resource.data.get('invitedIds', []));
       }
 
-      allow get: if inGroupRide();
+      // Also readable by `get` (never `list`, so nobody can enumerate rides)
+      // to any signed-in rider once the ride is active — the same
+      // unguessable-token trust model as the /live/{token} and /r/{username}
+      // live-share links elsewhere in this file: the only way to learn a
+      // specific groupRideId without already being on the ride is resolving
+      // a shared join code through groupRideJoinCodes below, and that code is
+      // exactly as hard to guess as those tokens. This is what lets the
+      // "confirm join" screen preview a ride (name, creator, headcount)
+      // before the rider commits.
+      allow get: if inGroupRide() ||
+        (request.auth != null && resource.data.status == 'active');
 
       // `list` is granted ONLY in the shape getUserGroupRides queries — a
       // list rule must be provable from the query's own filters.
@@ -946,7 +956,27 @@ service cloud.firestore {
            .hasOnly(['memberIds']) &&
          !(request.auth.uid in request.resource.data.get('memberIds', [])) &&
          resource.data.get('memberIds', [])
-           .hasAll(request.resource.data.get('memberIds', []))));
+           .hasAll(request.resource.data.get('memberIds', []))) ||
+
+        // 4. A stranger joining via a shared join code (groupRideJoinCodes
+        //    below) rather than an invite — GroupRideRepository.joinByCode.
+        //    Adds exactly themselves to memberIds on a ride that's ACTIVE and
+        //    not already at its cap. There is no Cloud Function to check GPS
+        //    proximity server-side (Blaze-gated, see HANDOFF_Document.md), so
+        //    "nearby" is a client-side courtesy prompt only — the actual
+        //    security boundary is the same unguessable-code model as the
+        //    `allow get` carve-out above, not a location check.
+        (resource.data.status == 'active' &&
+         !(request.auth.uid in resource.data.get('memberIds', [])) &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['memberIds']) &&
+         request.auth.uid in request.resource.data.get('memberIds', []) &&
+         request.resource.data.get('memberIds', [])
+           .hasOnly(resource.data.get('memberIds', []).concat([request.auth.uid])) &&
+         request.resource.data.get('memberIds', [])
+           .hasAll(resource.data.get('memberIds', [])) &&
+         request.resource.data.get('memberIds', []).size() <=
+           resource.data.get('maxParticipants', 20)));
 
       allow delete: if request.auth != null &&
         resource.data.creatorId == request.auth.uid;
@@ -981,7 +1011,18 @@ service cloud.firestore {
           // the committed document, not the pending transaction.
           (request.auth.uid == memberUid && (
             request.auth.uid in ride().get('memberIds', []) ||
-            request.auth.uid in ride().get('invitedIds', []))));
+            request.auth.uid in ride().get('invitedIds', []) ||
+            // Joining via code (joinByCode): the sibling write to memberIds
+            // on the parent (clause 4 above) is validated independently and
+            // hasn't committed yet when this rule evaluates `ride()`, so it
+            // can only check that the ride is live, not that the caller is
+            // already listed. Accepted, narrow tradeoff: a signed-in rider
+            // who knows an active ride's id could plant their own `pending`-
+            // looking roster row here without also being added to
+            // memberIds — cosmetic only, since every real privilege
+            // (locations, voice notes) is gated on memberIds/invitedIds on
+            // the parent, never on this subcollection's mere existence.
+            ride().status == 'active')));
       }
 
       // Invitation markers, one per invited rider at `invitations/{uid}`.
@@ -1059,6 +1100,68 @@ service cloud.firestore {
           request.auth.uid == riderUid && (
             request.auth.uid == ride().creatorId ||
             request.auth.uid in ride().get('memberIds', []));
+      }
+    }
+
+    // Join-code → groupRideId lookup for the code-based "door in" on an
+    // active group ride (GroupRideRepository.joinByCode). One document per
+    // code at the top level (not nested under groupRides, since the whole
+    // point is resolving this BEFORE the caller has any relationship to the
+    // ride the code points at).
+    //
+    // `get` is safe on a code the caller already typed in — same
+    // unguessable-bearer-token model as the groupRides `allow get` carve-out
+    // above — but `list` stays closed so nobody can enumerate every ride's
+    // code by scanning this collection.
+    match /groupRideJoinCodes/{code} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      // Written once, by createGroupRide, in the same batch as the ride
+      // itself; never changes afterward. Not tied to the ride's creatorId
+      // here — the ride document doesn't exist yet elsewhere in the same
+      // batch for a rule's `get()` to check against — so this only pins the
+      // shape, not the linkage. Low-severity accepted gap: a signed-in rider
+      // could squat an unused code with a bogus groupRideId, which at worst
+      // makes joinByCode resolve to "no such ride" for whoever tries that
+      // exact code next — it grants no read/write access to anything real.
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasOnly(['groupRideId', 'createdAt']) &&
+        request.resource.data.groupRideId is string &&
+        request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // roadSpeedSamples/{segmentId}/samples/{sampleId} — anonymous speed
+    // samples pooled per road-segment proxy (a geohash cell, not a real
+    // road — see `app/lib/features/ride/domain/calculators/
+    // segment_speed_aggregator.dart`), so a rider's own ride summary can
+    // compare their speed on a stretch against everyone else's historical
+    // speed there. A sample deliberately carries no uid, no rideId, and no
+    // exact lat/lng — only the coarse geohash cell (the collection key
+    // itself, ~150m at precision 7) and the sample's speed/weekday/hour/
+    // weather. It's an anonymous contribution to a shared pool, not owned by
+    // anyone, so there is no per-doc owner check — only a tight shape check,
+    // mirroring groupRides/voiceNotes' bounded create-only pattern above.
+    match /roadSpeedSamples/{segmentId} {
+      match /samples/{sampleId} {
+        allow read: if request.auth != null;
+
+        allow create: if request.auth != null &&
+          request.resource.data.keys().hasOnly([
+            'speedKmh', 'weekday', 'hour', 'weatherCode', 'createdAt'
+          ]) &&
+          request.resource.data.speedKmh is number &&
+          request.resource.data.speedKmh >= 0 &&
+          request.resource.data.speedKmh <= 400 &&
+          request.resource.data.weekday is int &&
+          request.resource.data.weekday >= 1 && request.resource.data.weekday <= 7 &&
+          request.resource.data.hour is int &&
+          request.resource.data.hour >= 0 && request.resource.data.hour <= 23 &&
+          (request.resource.data.weatherCode == null ||
+            request.resource.data.weatherCode is int) &&
+          request.resource.data.createdAt == request.time;
+
+        allow update, delete: if false;
       }
     }
 

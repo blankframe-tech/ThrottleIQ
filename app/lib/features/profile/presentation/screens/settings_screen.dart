@@ -383,6 +383,55 @@ class SettingsScreen extends ConsumerWidget {
                   ),
           ),
 
+          const SizedBox(height: 24),
+
+          // ── SafeQR ─────────────────────────────────────────────────────
+          // A separate screen, not inlined here: it owns its own editable
+          // fields plus a live QR preview, which doesn't fit this screen's
+          // "one row per setting" shape. This tile is just the doorway.
+          Material(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => context.push('/safe-qr'),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.qr_code_2_outlined,
+                        color: AppColors.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.safeQrTitle,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text(l10n.safeQrSettingsSubtitle,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: AppColors.textTertiary, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           const SizedBox(height: 32),
 
           // ── Sign out ───────────────────────────────────────────────────

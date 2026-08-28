@@ -308,4 +308,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bikeConfirmationUpdatedMessage => 'Ride updated.';
+
+  @override
+  String get rideModeSoloLabel => 'Solo';
+
+  @override
+  String get rideModeGroupLabel => 'Group';
+
+  @override
+  String get rideModeInviteFriendsAction => 'Invite friends';
+
+  @override
+  String get rideModeJoinByCodeAction => 'Join with a code';
+
+  @override
+  String get joinRideByCodeTitle => 'Join a ride';
+
+  @override
+  String get joinRideByCodeSubtitle =>
+      'Enter the 6-character code the ride\'s creator shared with you.';
+
+  @override
+  String get joinRideCodeHint => 'ABC123';
+
+  @override
+  String get joinRideAction => 'Join';
+
+  @override
+  String get joinRideCodeInvalidFormat =>
+      'That doesn\'t look like a valid code.';
+
+  @override
+  String get joinRideGenericError =>
+      'Couldn\'t join that ride. Check the code and try again.';
+
+  @override
+  String get safeQrTitle => 'SafeQR';
+
+  @override
+  String get safeQrSettingsSubtitle =>
+      'A scannable medical-info card for first responders';
+
+  @override
+  String get safeQrIntro =>
+      'Anyone can scan this with a phone camera — no app or account needed on their end. Fill in what you\'d want a first responder or traffic police to know.';
+
+  @override
+  String get safeQrEmptyStateHint =>
+      'Add your blood group below to generate your card';
+
+  @override
+  String get safeQrMedicalInfoSection => 'Medical info';
+
+  @override
+  String get safeQrBloodGroupField => 'Blood group';
+
+  @override
+  String get safeQrBloodGroupHint => 'e.g. O+';
+
+  @override
+  String get safeQrAllergiesField => 'Allergies';
+
+  @override
+  String get safeQrConditionsField => 'Medical conditions';
+
+  @override
+  String get safeQrMedicationsField => 'Current medications';
+
+  @override
+  String safeQrContactIncludedNote(String name) {
+    return '$name (your first emergency contact) is included automatically.';
+  }
+
+  @override
+  String get safeQrNoContactNote =>
+      'Add an emergency contact above to include it on this card automatically.';
+
+  @override
+  String get safeQrSaveAction => 'Save';
+
+  @override
+  String get safeQrSavedMessage => 'SafeQR info saved.';
+
+  @override
+  String get safeQrLocalOnlyDisclaimer =>
+      'Saved only on this device — it is not backed up or synced.';
 }

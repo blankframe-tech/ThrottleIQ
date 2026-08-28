@@ -80,6 +80,39 @@ void main() {
         expect(buildModel().toFirestore().containsKey('members'), isFalse);
       },
     );
+
+    test('joinCode survives write → read', () {
+      final withCode = GroupRideModel(
+        id: 'gr1',
+        creatorId: 'creator',
+        creatorName: 'Sam',
+        name: "Sam's group ride",
+        startTime: startTime,
+        status: 'active',
+        createdAt: createdAt,
+        joinCode: 'AB12CD',
+      );
+
+      final read = GroupRideModel.fromFirestore(
+        asFirestoreRead(withCode.toFirestore()),
+        'gr1',
+      );
+
+      expect(read.joinCode, 'AB12CD');
+      expect(read.toEntity().joinCode, 'AB12CD');
+    });
+
+    test('a ride created before joinCode existed reads as an empty code', () {
+      final read = GroupRideModel.fromFirestore({
+        'creatorId': 'creator',
+        'creatorName': 'Sam',
+        'name': 'Legacy ride',
+        'startTime': Timestamp.fromDate(startTime),
+        'createdAt': Timestamp.fromDate(createdAt),
+      }, 'legacy');
+
+      expect(read.joinCode, '');
+    });
   });
 
   group('GroupRideMemberModel documents', () {

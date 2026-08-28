@@ -308,4 +308,88 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get bikeConfirmationUpdatedMessage => 'রাইড আপডেট হয়েছে।';
+
+  @override
+  String get rideModeSoloLabel => 'একা';
+
+  @override
+  String get rideModeGroupLabel => 'গ্রুপ';
+
+  @override
+  String get rideModeInviteFriendsAction => 'বন্ধুদের আমন্ত্রণ জানান';
+
+  @override
+  String get rideModeJoinByCodeAction => 'কোড দিয়ে যোগ দিন';
+
+  @override
+  String get joinRideByCodeTitle => 'রাইডে যোগ দিন';
+
+  @override
+  String get joinRideByCodeSubtitle =>
+      'রাইড তৈরিকারী আপনাকে যে 6-অক্ষরের কোড দিয়েছেন তা লিখুন।';
+
+  @override
+  String get joinRideCodeHint => 'ABC123';
+
+  @override
+  String get joinRideAction => 'যোগ দিন';
+
+  @override
+  String get joinRideCodeInvalidFormat => 'এটি সঠিক কোড বলে মনে হচ্ছে না।';
+
+  @override
+  String get joinRideGenericError =>
+      'এই রাইডে যোগ দেওয়া যায়নি। কোডটি পরীক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
+  String get safeQrTitle => 'SafeQR';
+
+  @override
+  String get safeQrSettingsSubtitle =>
+      'জরুরি সেবাদানকারীদের জন্য স্ক্যান করার মতো মেডিকেল তথ্য কার্ড';
+
+  @override
+  String get safeQrIntro =>
+      'যে কেউ ফোনের ক্যামেরা দিয়ে এটি স্ক্যান করতে পারবে — তাদের কোনো অ্যাপ বা অ্যাকাউন্টের দরকার নেই। জরুরি সেবাদানকারী বা ট্রাফিক পুলিশ জানলে ভালো হয় এমন তথ্য পূরণ করুন।';
+
+  @override
+  String get safeQrEmptyStateHint =>
+      'আপনার কার্ড তৈরি করতে নিচে রক্তের গ্রুপ যোগ করুন';
+
+  @override
+  String get safeQrMedicalInfoSection => 'মেডিকেল তথ্য';
+
+  @override
+  String get safeQrBloodGroupField => 'রক্তের গ্রুপ';
+
+  @override
+  String get safeQrBloodGroupHint => 'যেমন O+';
+
+  @override
+  String get safeQrAllergiesField => 'অ্যালার্জি';
+
+  @override
+  String get safeQrConditionsField => 'শারীরিক অবস্থা';
+
+  @override
+  String get safeQrMedicationsField => 'বর্তমান ওষুধ';
+
+  @override
+  String safeQrContactIncludedNote(String name) {
+    return '$name (আপনার প্রথম জরুরি যোগাযোগ) স্বয়ংক্রিয়ভাবে যুক্ত করা হয়েছে।';
+  }
+
+  @override
+  String get safeQrNoContactNote =>
+      'এই কার্ডে স্বয়ংক্রিয়ভাবে যুক্ত করতে উপরে একটি জরুরি যোগাযোগ যোগ করুন।';
+
+  @override
+  String get safeQrSaveAction => 'সংরক্ষণ করুন';
+
+  @override
+  String get safeQrSavedMessage => 'SafeQR তথ্য সংরক্ষিত হয়েছে।';
+
+  @override
+  String get safeQrLocalOnlyDisclaimer =>
+      'শুধুমাত্র এই ডিভাইসে সংরক্ষিত — এটি ব্যাকআপ বা সিঙ্ক করা হয় না।';
 }

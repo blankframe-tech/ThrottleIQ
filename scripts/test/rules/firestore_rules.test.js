@@ -57,6 +57,7 @@ const RIDE_ID = 'ride-1';
 const FORUM_ID = 'forum-1';
 const POST_ID = 'post-1';
 const GROUP_RIDE_ID = 'group-ride-1';
+const JOIN_CODE = 'AB12CD';
 
 let testEnv;
 
@@ -110,6 +111,11 @@ test.beforeEach(async () => {
       invitedIds: [MALLORY],
       createdAt: new Date(),
       maxParticipants: 20,
+      joinCode: JOIN_CODE,
+    });
+    await setDoc(doc(db, 'groupRideJoinCodes', JOIN_CODE), {
+      groupRideId: GROUP_RIDE_ID,
+      createdAt: new Date(),
     });
   });
 });
@@ -701,4 +707,344 @@ test('a rider with no relationship to the ride cannot read voice notes', async (
   });
   const db = dbFor(STRANGER);
   await assertFails(getDocs(voiceNotesCollection(db)));
+});
+
+// ---------------------------------------------------------------------------
+// roadSpeedSamples/{segmentId}/samples/{sampleId} — anonymous, no-owner,
+// bounded-shape create-only pool (road-baseline feature, 2026-08-28).
+// ---------------------------------------------------------------------------
+
+const SEGMENT_ID = 'w7z3s';
+
+/** A syntactically valid road-speed sample, as _publishSegmentBaselines writes it. */
+function roadSpeedSampleData(overrides = {}) {
+  return {
+    speedKmh: 42.5,
+    weekday: 3,
+    hour: 14,
+    weatherCode: 1,
+    createdAt: serverTimestamp(),
+    ...overrides,
+  };
+}
+
+function roadSpeedSamplesCollection(db, segmentId = SEGMENT_ID) {
+  return collection(db, 'roadSpeedSamples', segmentId, 'samples');
+}
+
+test('any authenticated rider can contribute a valid sample', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(roadSpeedSamplesCollection(db)), roadSpeedSampleData())
+  );
+});
+
+test('a sample with no weather (fetch failed) is still allowed', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ weatherCode: null })
+    )
+  );
+});
+
+test('an unauthenticated writer cannot contribute a sample', async () => {
+  const db = testEnv.unauthenticatedContext().firestore();
+  await assertFails(
+    setDoc(doc(roadSpeedSamplesCollection(db)), roadSpeedSampleData())
+  );
+});
+
+test('an unauthenticated reader cannot read the pool either', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(collection(ctx.firestore(), 'roadSpeedSamples', SEGMENT_ID, 'samples')),
+      roadSpeedSampleData()
+    );
+  });
+  const db = testEnv.unauthenticatedContext().firestore();
+  await assertFails(getDocs(roadSpeedSamplesCollection(db)));
+});
+
+test('a signed-in rider can read the pool for a segment they never rode', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(collection(ctx.firestore(), 'roadSpeedSamples', SEGMENT_ID, 'samples')),
+      roadSpeedSampleData()
+    );
+  });
+  const db = dbFor(STRANGER);
+  const snap = await getDocs(roadSpeedSamplesCollection(db));
+  assert.equal(snap.empty, false);
+});
+
+test('a sample carrying a uid (identifying the rider) is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ uid: ALICE })
+    )
+  );
+});
+
+test('speedKmh above the plausibility ceiling is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ speedKmh: 500 })
+    )
+  );
+});
+
+test('a negative speedKmh is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ speedKmh: -1 })
+    )
+  );
+});
+
+test('weekday outside 1-7 is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ weekday: 8 })
+    )
+  );
+});
+
+test('hour outside 0-23 is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ hour: 24 })
+    )
+  );
+});
+
+test('a non-integer weatherCode is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ weatherCode: 'sunny' })
+    )
+  );
+});
+
+test('a sample stamped with a client clock instead of serverTimestamp() is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(roadSpeedSamplesCollection(db)),
+      roadSpeedSampleData({ createdAt: new Date() })
+    )
+  );
+});
+
+test('a sample can never be updated or deleted, even by its own contributor', async () => {
+  let sampleRef;
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    sampleRef = doc(
+      collection(ctx.firestore(), 'roadSpeedSamples', SEGMENT_ID, 'samples')
+    );
+    await setDoc(sampleRef, roadSpeedSampleData());
+  });
+
+  const db = dbFor(ALICE);
+  await assertFails(updateDoc(doc(db, sampleRef.path), { speedKmh: 999 }));
+  await assertFails(deleteDoc(doc(db, sampleRef.path)));
+});
+
+// ---------------------------------------------------------------------------
+// groupRideJoinCodes/{code} + the code-join door on groupRides — a stranger
+// joining an active ride via a shared 6-character code instead of an invite
+// (GroupRideRepository.joinByCode).
+// ---------------------------------------------------------------------------
+
+test('any signed-in rider can resolve a known join code', async () => {
+  const db = dbFor(STRANGER);
+  const snap = await getDoc(doc(db, 'groupRideJoinCodes', JOIN_CODE));
+  assert.equal(snap.exists(), true);
+  assert.equal(snap.data().groupRideId, GROUP_RIDE_ID);
+});
+
+test('join codes cannot be listed/enumerated', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(getDocs(collection(db, 'groupRideJoinCodes')));
+});
+
+test('a signed-in rider can create a well-shaped join code mapping', async () => {
+  const db = dbFor(STRANGER);
+  await assertSucceeds(
+    setDoc(doc(db, 'groupRideJoinCodes', 'ZZ99ZZ'), {
+      groupRideId: 'some-other-ride',
+      createdAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a join code mapping with an extra field is denied', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(doc(db, 'groupRideJoinCodes', 'ZZ99ZZ'), {
+      groupRideId: 'some-other-ride',
+      createdAt: serverTimestamp(),
+      extra: 'nope',
+    })
+  );
+});
+
+test('a join code mapping stamped with a client clock is denied', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(doc(db, 'groupRideJoinCodes', 'ZZ99ZZ'), {
+      groupRideId: 'some-other-ride',
+      createdAt: new Date(),
+    })
+  );
+});
+
+test('an existing join code mapping cannot be overwritten or deleted', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(doc(db, 'groupRideJoinCodes', JOIN_CODE), {
+      groupRideId: 'hijacked-ride',
+      createdAt: serverTimestamp(),
+    })
+  );
+  await assertFails(deleteDoc(doc(db, 'groupRideJoinCodes', JOIN_CODE)));
+});
+
+test('a rider with no relationship to an ACTIVE ride can still get() it by id', async () => {
+  // This is what lets the "confirm join" screen preview a ride resolved from
+  // a join code, before the rider has any membership relationship to it.
+  const db = dbFor(STRANGER);
+  await assertSucceeds(getDoc(doc(db, 'groupRides', GROUP_RIDE_ID)));
+});
+
+test('a stranger cannot get() a ride that is not active', async () => {
+  const PLANNED_RIDE_ID = 'group-ride-planned';
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groupRides', PLANNED_RIDE_ID), {
+      creatorId: ALICE,
+      creatorName: 'Alice',
+      name: "Alice's planned ride",
+      startTime: new Date(),
+      status: 'planned',
+      memberIds: [ALICE],
+      invitedIds: [],
+      createdAt: new Date(),
+      maxParticipants: 20,
+    });
+  });
+  const db = dbFor(STRANGER);
+  await assertFails(getDoc(doc(db, 'groupRides', PLANNED_RIDE_ID)));
+});
+
+test('a stranger can join an active ride by adding exactly themselves to memberIds', async () => {
+  const db = dbFor(STRANGER);
+  await assertSucceeds(
+    updateDoc(doc(db, 'groupRides', GROUP_RIDE_ID), {
+      memberIds: [ALICE, STRANGER],
+    })
+  );
+});
+
+test('joining cannot add anyone other than the caller', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    updateDoc(doc(db, 'groupRides', GROUP_RIDE_ID), {
+      memberIds: [ALICE, STRANGER, MALLORY],
+    })
+  );
+});
+
+test('joining cannot touch any field besides memberIds', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    updateDoc(doc(db, 'groupRides', GROUP_RIDE_ID), {
+      memberIds: [ALICE, STRANGER],
+      name: 'Renamed by a stranger',
+    })
+  );
+});
+
+test('joining a non-active ride via the code door is denied', async () => {
+  const ENDED_RIDE_ID = 'group-ride-ended';
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groupRides', ENDED_RIDE_ID), {
+      creatorId: ALICE,
+      creatorName: 'Alice',
+      name: "Alice's ended ride",
+      startTime: new Date(),
+      status: 'completed',
+      memberIds: [ALICE],
+      invitedIds: [],
+      createdAt: new Date(),
+      maxParticipants: 20,
+    });
+  });
+  const db = dbFor(STRANGER);
+  await assertFails(
+    updateDoc(doc(db, 'groupRides', ENDED_RIDE_ID), {
+      memberIds: [ALICE, STRANGER],
+    })
+  );
+});
+
+test('joining a full ride via the code door is denied', async () => {
+  const FULL_RIDE_ID = 'group-ride-full';
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groupRides', FULL_RIDE_ID), {
+      creatorId: ALICE,
+      creatorName: 'Alice',
+      name: "Alice's full ride",
+      startTime: new Date(),
+      status: 'active',
+      memberIds: [ALICE],
+      invitedIds: [],
+      createdAt: new Date(),
+      maxParticipants: 1,
+    });
+  });
+  const db = dbFor(STRANGER);
+  await assertFails(
+    updateDoc(doc(db, 'groupRides', FULL_RIDE_ID), {
+      memberIds: [ALICE, STRANGER],
+    })
+  );
+});
+
+test('a stranger can write their own roster row while joining an active ride', async () => {
+  const db = dbFor(STRANGER);
+  await assertSucceeds(
+    setDoc(doc(db, 'groupRides', GROUP_RIDE_ID, 'members', STRANGER), {
+      userId: STRANGER,
+      userName: 'Stranger',
+      userPhotoUrl: '',
+      joinedAt: new Date(),
+      status: 'joined',
+    })
+  );
+});
+
+test('a stranger cannot write someone else\'s roster row via the code door', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(doc(db, 'groupRides', GROUP_RIDE_ID, 'members', MALLORY), {
+      userId: MALLORY,
+      userName: 'Mallory',
+      userPhotoUrl: '',
+      joinedAt: new Date(),
+      status: 'joined',
+    })
+  );
 });

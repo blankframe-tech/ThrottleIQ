@@ -200,6 +200,11 @@ class GroupRideModel {
   final DateTime createdAt;
   final int maxParticipants;
 
+  /// The shareable code a rider without an invite can type in to join (see
+  /// `group_ride_join_code.dart`). Empty for rides created before this
+  /// existed — they simply have no code-join door, invite-only as before.
+  final String joinCode;
+
   GroupRideModel({
     required this.id,
     required this.creatorId,
@@ -215,6 +220,7 @@ class GroupRideModel {
     this.invitedIds = const [],
     required this.createdAt,
     this.maxParticipants = 20,
+    this.joinCode = '',
   });
 
   Map<String, dynamic> toFirestore() {
@@ -238,6 +244,7 @@ class GroupRideModel {
       'invitedIds': invitedIds,
       'createdAt': createdAt,
       'maxParticipants': maxParticipants,
+      'joinCode': joinCode,
     };
   }
 
@@ -279,6 +286,7 @@ class GroupRideModel {
           (data['invitedIds'] as List<dynamic>?)?.cast<String>() ?? const [],
       createdAt: _toDate(data['createdAt']) ?? DateTime.now(),
       maxParticipants: (data['maxParticipants'] as num?)?.toInt() ?? 20,
+      joinCode: data['joinCode'] as String? ?? '',
     );
   }
 
@@ -302,6 +310,7 @@ class GroupRideModel {
       invitedIds: invitedIds,
       createdAt: createdAt,
       maxParticipants: maxParticipants,
+      joinCode: joinCode,
     );
   }
 }

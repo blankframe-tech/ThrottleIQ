@@ -98,6 +98,10 @@ class GroupRideEntity extends Equatable {
   final DateTime createdAt;
   final int maxParticipants;
 
+  /// See `GroupRideModel.joinCode`. Empty for rides created before the
+  /// code-join door existed.
+  final String joinCode;
+
   const GroupRideEntity({
     required this.id,
     required this.creatorId,
@@ -113,6 +117,7 @@ class GroupRideEntity extends Equatable {
     this.invitedIds = const [],
     required this.createdAt,
     this.maxParticipants = 20,
+    this.joinCode = '',
   });
 
   int get joinedMembersCount =>

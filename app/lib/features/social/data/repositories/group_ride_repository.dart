@@ -2,8 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/group_ride_entity.dart';
+import '../../domain/utilities/group_ride_join_code.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
+
+/// Thrown by [GroupRideRepository.joinByCode] with a message fit to show the
+/// rider verbatim — "wrong/expired code" and "ride is full" are both real,
+/// distinct outcomes a rider should be told apart from a generic failure.
+class GroupRideJoinException implements Exception {
+  final String message;
+  const GroupRideJoinException(this.message);
+
+  @override
+  String toString() => message;
+}
 
 /// One rider picked in the "Ride with friends" friend picker, carried into
 /// [GroupRideRepository.createGroupRide] so their name/avatar are written to
@@ -68,6 +80,7 @@ class GroupRideRepository {
   }) async {
     final groupRideRef = _firestore.collection('groupRides').doc();
     final now = DateTime.now();
+    final joinCode = generateGroupRideJoinCode();
 
     final groupRide = GroupRideModel(
       id: groupRideRef.id,
@@ -83,6 +96,7 @@ class GroupRideRepository {
       invitedIds: invitees.map((i) => i.userId).toList(),
       createdAt: now,
       maxParticipants: maxParticipants,
+      joinCode: joinCode,
     );
 
     final roster = <GroupRideMemberModel>[
@@ -111,6 +125,14 @@ class GroupRideRepository {
     for (final member in roster) {
       batch.set(members.doc(member.userId), member.toDocument());
     }
+    // The code→id lookup lives in its own top-level collection, keyed by the
+    // code itself, so `joinByCode` can resolve it with a single `get` on a
+    // document id the rider already typed in — see firestore.rules'
+    // `groupRideJoinCodes` block for why that's safe without a `list` rule.
+    batch.set(_firestore.collection('groupRideJoinCodes').doc(joinCode), {
+      'groupRideId': groupRideRef.id,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
     await batch.commit();
 
     return groupRideRef.id;
@@ -169,6 +191,94 @@ class GroupRideRepository {
         fromSubcollection: await getGroupRideMembers(groupRideId),
       ),
     );
+  }
+
+  /// Ride-doc-only read, deliberately not [getGroupRide]: that method also
+  /// reads the `members` subcollection, which stays invite/member-only in
+  /// firestore.rules. A rider previewing a ride before joining by code only
+  /// has `get` access to the ride document itself (rules' `allow get`
+  /// carve-out for `status == 'active'`), so this is the one call the
+  /// "confirm join" screen can actually make.
+  Future<GroupRideEntity?> getGroupRidePreview(String groupRideId) async {
+    final doc = await _rideRef(groupRideId).get();
+    if (!doc.exists) return null;
+    return GroupRideModel.fromFirestore(doc.data()!, doc.id).toEntity();
+  }
+
+  /// Resolves a rider-typed join code to the ride it points at, or `null` if
+  /// the code is unknown. Two reads: the code lookup, then the ride preview —
+  /// both cheap `get`s on a specific document id, never a `list` query.
+  Future<GroupRideEntity?> findRideByJoinCode(String code) async {
+    final normalized = normalizeGroupRideJoinCode(code);
+    final lookup = await _firestore
+        .collection('groupRideJoinCodes')
+        .doc(normalized)
+        .get();
+    final groupRideId = lookup.data()?['groupRideId'] as String?;
+    if (groupRideId == null) return null;
+    return getGroupRidePreview(groupRideId);
+  }
+
+  /// Joins an active ride by its shareable code (see
+  /// `group_ride_join_code.dart`) — the door in for a rider nobody has
+  /// invited, e.g. someone met at a fuel stop mid-ride.
+  ///
+  /// Throws [GroupRideJoinException] with a rider-facing message on every
+  /// refusal (unknown code, ride not active, ride full, already joined)
+  /// rather than a generic failure, since these are all real, distinguishable
+  /// outcomes worth telling apart on the confirm screen.
+  Future<String> joinByCode({
+    required String code,
+    required String userId,
+    required String userName,
+    required String userPhotoUrl,
+  }) async {
+    final ride = await findRideByJoinCode(code);
+    if (ride == null) {
+      throw const GroupRideJoinException('That code doesn\'t match a ride.');
+    }
+    if (ride.status != GroupRideStatus.active) {
+      throw const GroupRideJoinException('This ride has already ended.');
+    }
+    if (ride.memberIds.contains(userId)) {
+      return ride.id;
+    }
+    if (ride.memberIds.length >= ride.maxParticipants) {
+      throw const GroupRideJoinException('This ride is full.');
+    }
+
+    final rideRef = _rideRef(ride.id);
+    final memberRef = _membersRef(ride.id).doc(userId);
+
+    await _firestore.runTransaction((txn) async {
+      final rideSnap = await txn.get(rideRef);
+      final data = rideSnap.data();
+      if (!rideSnap.exists || data == null || data['status'] != 'active') {
+        throw const GroupRideJoinException('This ride has already ended.');
+      }
+      final memberIds = (data['memberIds'] as List<dynamic>?) ?? const [];
+      if (memberIds.contains(userId)) return;
+      final cap = (data['maxParticipants'] as num?)?.toInt() ?? 20;
+      if (memberIds.length >= cap) {
+        throw const GroupRideJoinException('This ride is full.');
+      }
+
+      txn.update(rideRef, {
+        'memberIds': FieldValue.arrayUnion([userId]),
+      });
+      txn.set(
+        memberRef,
+        GroupRideMemberModel(
+          userId: userId,
+          userName: userName,
+          userPhotoUrl: userPhotoUrl,
+          joinedAt: DateTime.now(),
+          status: 'joined',
+        ).toDocument(),
+      );
+    });
+
+    return ride.id;
   }
 
   /// Gets upcoming group rides.

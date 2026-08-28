@@ -12,7 +12,7 @@ import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
-import '../../../social/presentation/widgets/ride_with_friends_button.dart';
+import '../../../social/presentation/widgets/ride_mode_selector.dart';
 import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
 import '../widgets/hold_to_start_button.dart';
@@ -117,9 +117,10 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                     const RiderStatStrip(),
                     const SizedBox(height: 22),
 
-                    // 3. Ride with friends. The widget owns the whole flow —
-                    // friend picker, group-ride creation, invites, navigation.
-                    const RideWithFriendsButton(),
+                    // 3. Solo/Group choice. The widget owns the whole flow —
+                    // friend picker or join-by-code, group-ride creation,
+                    // invites, navigation.
+                    const RideModeSelector(),
 
                     if (rideState.error != null) ...[
                       const SizedBox(height: 16),

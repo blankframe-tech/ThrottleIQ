@@ -94,6 +94,12 @@ void main() {
       const intentionallyIdentical = {
         'languageEnglishLabel',
         'languageBanglaLabel',
+        // A coined feature wordmark, not a phrase — kept as-is the same way
+        // "ThrottleIQ" itself is never translated mid-sentence elsewhere.
+        'safeQrTitle',
+        // A placeholder showing the *shape* of a join code (letters+digits),
+        // not natural-language content to translate.
+        'joinRideCodeHint',
       };
       final bengali = RegExp(r'[ঀ-৿]');
 

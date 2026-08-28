@@ -46,7 +46,7 @@ class GroupRideMapScreen extends ConsumerStatefulWidget {
   /// Set by the `?start=1` query parameter the "Ride with friends" flow
   /// navigates with. The recording is started *here*, after the record screen
   /// has been torn down, rather than in the button — see the comment on
-  /// [RideWithFriendsButton]'s navigation for why that race matters.
+  /// [RideModeSelector]'s navigation for why that race matters.
   final bool autoStartRide;
 
   const GroupRideMapScreen({

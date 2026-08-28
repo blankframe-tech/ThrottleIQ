@@ -18,6 +18,7 @@ import '../../features/maintenance/presentation/screens/add_maintenance_log_scre
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/safe_qr_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
@@ -100,6 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/safe-qr', builder: (_, __) => const SafeQrScreen()),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
       // The rider's OWN profile, read-only. Same screen as '/profile/:uid'
       // with the uid omitted — it resolves to the signed-in rider and adds an

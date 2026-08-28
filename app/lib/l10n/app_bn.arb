@@ -111,5 +111,33 @@
   "autoTrackingStartFailedMessage": "এই ডিভাইসে ব্যাকগ্রাউন্ড ট্র্যাকিং চালু করা যায়নি।",
   "bikeConfirmationTitle": "এটি কোন বাইকে হয়েছে?",
   "bikeConfirmationBody": "আমরা এই রাইডটি স্বয়ংক্রিয়ভাবে শনাক্ত করে আপনার সক্রিয় বাইকে যুক্ত করেছি। সার্ভিস রিমাইন্ডার সঠিক রাখতে নিশ্চিত করুন।",
-  "bikeConfirmationUpdatedMessage": "রাইড আপডেট হয়েছে।"
+  "bikeConfirmationUpdatedMessage": "রাইড আপডেট হয়েছে।",
+
+  "rideModeSoloLabel": "একা",
+  "rideModeGroupLabel": "গ্রুপ",
+  "rideModeInviteFriendsAction": "বন্ধুদের আমন্ত্রণ জানান",
+  "rideModeJoinByCodeAction": "কোড দিয়ে যোগ দিন",
+
+  "joinRideByCodeTitle": "রাইডে যোগ দিন",
+  "joinRideByCodeSubtitle": "রাইড তৈরিকারী আপনাকে যে 6-অক্ষরের কোড দিয়েছেন তা লিখুন।",
+  "joinRideCodeHint": "ABC123",
+  "joinRideAction": "যোগ দিন",
+  "joinRideCodeInvalidFormat": "এটি সঠিক কোড বলে মনে হচ্ছে না।",
+  "joinRideGenericError": "এই রাইডে যোগ দেওয়া যায়নি। কোডটি পরীক্ষা করে আবার চেষ্টা করুন।",
+
+  "safeQrTitle": "SafeQR",
+  "safeQrSettingsSubtitle": "জরুরি সেবাদানকারীদের জন্য স্ক্যান করার মতো মেডিকেল তথ্য কার্ড",
+  "safeQrIntro": "যে কেউ ফোনের ক্যামেরা দিয়ে এটি স্ক্যান করতে পারবে — তাদের কোনো অ্যাপ বা অ্যাকাউন্টের দরকার নেই। জরুরি সেবাদানকারী বা ট্রাফিক পুলিশ জানলে ভালো হয় এমন তথ্য পূরণ করুন।",
+  "safeQrEmptyStateHint": "আপনার কার্ড তৈরি করতে নিচে রক্তের গ্রুপ যোগ করুন",
+  "safeQrMedicalInfoSection": "মেডিকেল তথ্য",
+  "safeQrBloodGroupField": "রক্তের গ্রুপ",
+  "safeQrBloodGroupHint": "যেমন O+",
+  "safeQrAllergiesField": "অ্যালার্জি",
+  "safeQrConditionsField": "শারীরিক অবস্থা",
+  "safeQrMedicationsField": "বর্তমান ওষুধ",
+  "safeQrContactIncludedNote": "{name} (আপনার প্রথম জরুরি যোগাযোগ) স্বয়ংক্রিয়ভাবে যুক্ত করা হয়েছে।",
+  "safeQrNoContactNote": "এই কার্ডে স্বয়ংক্রিয়ভাবে যুক্ত করতে উপরে একটি জরুরি যোগাযোগ যোগ করুন।",
+  "safeQrSaveAction": "সংরক্ষণ করুন",
+  "safeQrSavedMessage": "SafeQR তথ্য সংরক্ষিত হয়েছে।",
+  "safeQrLocalOnlyDisclaimer": "শুধুমাত্র এই ডিভাইসে সংরক্ষিত — এটি ব্যাকআপ বা সিঙ্ক করা হয় না।"
 }
