@@ -46,7 +46,14 @@ Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. M
 |---|---|---|---|
 | Other user-generated content (forum posts, replies, comments, ride captions, place reviews) | Yes | Yes | App functionality (community features) |
 
-Note: **do not** declare "App interactions" for analytics. `app/pubspec.yaml` contains no `firebase_analytics`, no `firebase_crashlytics`, and no third-party analytics SDK — nothing in the app collects behavioural/usage analytics, and claiming otherwise on the form contradicts `public/privacy.html`.
+Note: **do not** declare "App interactions" for analytics. `app/pubspec.yaml` still has no `firebase_analytics` and no third-party behavioural-analytics SDK — nothing in the app tracks usage/interactions, and claiming otherwise on the form contradicts `public/privacy.html`. `firebase_crashlytics` **was** added (see Issues.md §38) — that's diagnostics, declared separately below, not "App activity."
+
+### App info and performance (Diagnostics)
+| Type | Collected? | Shared? | Purpose |
+|---|---|---|---|
+| Crash logs | Yes | No | Analytics (Firebase Crashlytics — app stability/crash monitoring) |
+
+Source: `app/lib/main.dart` wires `FlutterError.onError`, `PlatformDispatcher.instance.onError`, and a `runZonedGuarded` handler to `FirebaseCrashlytics.instance`, gated off in debug builds (`setCrashlyticsCollectionEnabled(!kDebugMode)`) so only real installs report. Update `public/privacy.html` to mention crash diagnostics if it doesn't already, so this stays consistent with the form.
 
 ### Device or other IDs
 | Type | Collected? | Shared? | Purpose |

@@ -232,6 +232,11 @@
             <td>Uploaded to Cloudinary (see §4). Bike photos stay on your phone only</td>
           </tr>
           <tr>
+            <td><strong>Crash diagnostics</strong> — if the app itself crashes or hits an unhandled error, a stack trace, the device model/OS version, and app version</td>
+            <td>So bugs that crash the app get fixed, instead of going unnoticed</td>
+            <td>Firebase Crashlytics. This is separate from the ride-crash detection in §7 — it's about the <em>app</em> crashing, not you. Off while testing in debug builds; only real installs report</td>
+          </tr>
+          <tr>
             <td><strong>Things you post</strong> — forum posts and replies, ride captions, comments, votes, place entries, place reviews, follows</td>
             <td>The community features</td>
             <td>Publicly readable to other signed-in riders</td>
@@ -242,7 +247,7 @@
       <h3>What the app does not collect</h3>
       <ul>
         <li><strong>No advertising, and no data sold or shared with advertisers or data brokers. Ever.</strong></li>
-        <li><strong>No analytics or crash-reporting SDK.</strong> The app does not bundle Google Analytics, Firebase Analytics, Crashlytics, or any third-party behavioural tracker, so there is no usage-tracking profile of you.</li>
+        <li><strong>No behavioural analytics.</strong> The app does not bundle Google Analytics, Firebase Analytics, or any third-party tracker, so there is no usage-tracking profile of you. It does use Firebase Crashlytics to catch app crashes — see the crash-diagnostics row in the table above — but that only fires when the app itself breaks, not to track what you do in it.</li>
         <li><strong>No push notifications.</strong> Notifications you see are generated on your own phone or read from your own account records. Google's messaging library is bundled with the app and, like every Firebase app, the Firebase SDKs give your installation an anonymous identifier — but ThrottleIQ never reads, stores, or sends anything to a push token, and nobody can push a message to your phone through it.</li>
         <li><strong>No contact list, no SMS, no microphone, no camera roll scanning.</strong> Photos are chosen one at a time through your phone's own picker.</li>
       </ul>
