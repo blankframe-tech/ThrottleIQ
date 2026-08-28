@@ -321,11 +321,12 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   accept, confirm both riders appear on each other's live map and stale
   positions grey out. The deployed `groupRides` rules have never been
   exercised by a real client.
-- [ ] **Join a group ride by code** (added 2026-08-28) — needs the
-  `firestore.rules` deploy above first, then two real accounts: create a
-  ride, share its code, join from the second account, confirm it appears on
-  the shared map without ever having been invited. Rules behavior is covered
-  by emulator tests (72/72); no real client has exercised it.
+- [ ] **Join a group ride by code** (added 2026-08-28) — `firestore.rules`
+  deployed 2026-08-28 (see "Now" above); still needs two real accounts:
+  create a ride, share its code, join from the second account, confirm it
+  appears on the shared map without ever having been invited. Rules
+  behavior is covered by emulator tests (72/72); no real client has
+  exercised it.
 - [ ] **SafeQR** (added 2026-08-28) — the QR code itself is rendered by
   `qr_flutter`, a pure widget with no platform code, so it's low-risk, but no
   actual phone camera has scanned a rendered card yet to confirm the payload

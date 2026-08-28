@@ -2762,14 +2762,10 @@ updated in the same session, before any of this shipped, not after.
 - `flutter analyze`: 0 errors. `flutter test`: **847/847 green**.
 
 **NOT yet verified — real gaps, not hedging:**
-- ⚠️ **`firestore.rules` has not been deployed.** Same trap this file has
-  flagged before (§24's note: "ship the app first, then the rules") — until
-  `firebase deploy --only firestore:rules` runs, the new `roadSpeedSamples`
-  rules exist only in this repo, and the deployed rules' default-deny
-  catch-all means writes to that collection will fail in production, not
-  silently succeed unsecured. Safe to deploy (append-only, additive), but
-  it's a required manual step before this feature does anything on a real
-  device.
+- ✅ **`firestore.rules` deployed 2026-08-28** (`firebase deploy --only
+  firestore:rules --project throttleiqfb`) — the `roadSpeedSamples` rules,
+  and the join-by-code rules from the same batch, are now live. What's
+  still open below is real-device verification, not the deploy step.
 - `WeatherService` has never made a real HTTP call in this environment (no
   live network access here) — its Open-Meteo request/response parsing is
   reasoned through and defensively coded (best-effort, times out, returns
