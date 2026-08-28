@@ -358,6 +358,26 @@ class CloudRepository {
     return doc.data();
   }
 
+  /// Historical speed samples (km/h) for a road segment (a geohash cell —
+  /// see `domain/calculators/segment_speed_aggregator.dart`), most recent
+  /// first, capped at [limit] so this stays a bounded read as the pool
+  /// grows. Read-only: the write side lives in
+  /// `ride_recording_provider.dart`'s `_publishSegmentBaselines`, alongside
+  /// this app's other fire-and-forget post-ride writes.
+  Future<List<double>> fetchRoadSpeedSamples(String segmentId, {int limit = 200}) async {
+    final snapshot = await _firestore
+        .collection('roadSpeedSamples')
+        .doc(segmentId)
+        .collection('samples')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs
+        .map((d) => (d.data()['speedKmh'] as num?)?.toDouble())
+        .whereType<double>()
+        .toList();
+  }
+
   /// Export ride data as JSON file to Downloads folder
   Future<File> exportToJSON(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) async {
     final directory = await getDownloadsDirectory();

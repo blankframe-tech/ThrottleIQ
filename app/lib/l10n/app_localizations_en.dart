@@ -93,17 +93,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeAnalystBlueDescription => 'Navy console, cyan telemetry';
 
   @override
-  String get appMarkTitle => 'App mark';
-
-  @override
-  String get appMarkDarkDescription =>
-      'The dark mark, used on the splash and sign-in screens.';
-
-  @override
-  String get appMarkLightDescription =>
-      'The light mark, used on the splash and sign-in screens.';
-
-  @override
   String get languageSection => 'Language';
 
   @override
@@ -239,6 +228,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scoreAggressiveLabel => 'Aggressive';
+
+  @override
+  String get speedBandIdleLabel => 'Idle';
+
+  @override
+  String get speedBandNormalLabel => 'Normal';
+
+  @override
+  String get speedBandBriskLabel => 'Brisk';
+
+  @override
+  String get speedBandHardLabel => 'Hard';
+
+  @override
+  String get speedOutlierTitle => 'Faster than usual here';
+
+  @override
+  String speedOutlierBody(int riderKmh, int baselineKmh) {
+    return 'You hit $riderKmh km/h on part of this ride — riders here are usually around $baselineKmh km/h.';
+  }
 
   @override
   String get ridingScoreLabel => 'Riding score';

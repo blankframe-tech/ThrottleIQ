@@ -93,17 +93,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get themeAnalystBlueDescription => 'নেভি কনসোল, সায়ান মিটার';
 
   @override
-  String get appMarkTitle => 'অ্যাপের লোগো';
-
-  @override
-  String get appMarkDarkDescription =>
-      'গাঢ় লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।';
-
-  @override
-  String get appMarkLightDescription =>
-      'হালকা লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।';
-
-  @override
   String get languageSection => 'ভাষা';
 
   @override
@@ -239,6 +228,26 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get scoreAggressiveLabel => 'বেপরোয়া';
+
+  @override
+  String get speedBandIdleLabel => 'নিষ্ক্রিয়';
+
+  @override
+  String get speedBandNormalLabel => 'স্বাভাবিক';
+
+  @override
+  String get speedBandBriskLabel => 'দ্রুত';
+
+  @override
+  String get speedBandHardLabel => 'অতি দ্রুত';
+
+  @override
+  String get speedOutlierTitle => 'এখানে স্বাভাবিকের চেয়ে দ্রুত';
+
+  @override
+  String speedOutlierBody(int riderKmh, int baselineKmh) {
+    return 'এই রাইডের একটি অংশে আপনি $riderKmh কিমি/ঘ গতিতে ছিলেন — এখানে রাইডাররা সাধারণত প্রায় $baselineKmh কিমি/ঘ গতিতে চলে।';
+  }
 
   @override
   String get ridingScoreLabel => 'রাইডিং স্কোর';

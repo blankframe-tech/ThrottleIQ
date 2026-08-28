@@ -36,6 +36,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../domain/entities/live_session_entity.dart';
 import '../../../../core/cloud/outbox_service.dart';
+import '../../../../core/services/weather_service.dart';
+import '../../domain/calculators/segment_speed_aggregator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const _uuid = Uuid();
@@ -318,6 +320,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   String? _currentLiveSessionToken;
   static const Duration _liveSessionUpdateInterval = Duration(seconds: 10);
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final WeatherService _weatherService = WeatherService();
 
   /// Explicit per-ride opt-in gate for live location sharing — docs/Issues.md
   /// §24.1. `_startLiveSessionPublishing()` used to run unconditionally from
@@ -1171,6 +1174,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // Push the new totals to the home-screen widgets. Fire-and-forget and
     // internally no-op safe, so it can't delay or fail finishing a ride.
     unawaited(HomeWidgetService.instance.refreshFromLocalData());
+    // Anonymous per-segment speed contribution for the road-baseline feature
+    // — see `_publishSegmentBaselines`'s doc comment. Never blocks ending a
+    // ride: a network hiccup here should never be why the summary screen is
+    // slow to appear.
+    unawaited(_publishSegmentBaselines(ride.id, ride.startTime));
 
     await HapticService.rideStop();
 
@@ -1644,6 +1652,59 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           '${kOutboxAttemptTimeout.inSeconds}s — queued by Firestore, moving on');
     } catch (e) {
       debugPrint('[Ride] $label failed: $e');
+    }
+  }
+
+  /// Contributes this ride's per-segment speeds to the anonymous shared pool
+  /// `roadSpeedSamples/{segmentId}/samples` — the write side of the
+  /// road-baseline feature; the read/comparison side lives in
+  /// `ride_summary_screen.dart`.
+  ///
+  /// Segments are geohash cells (`segment_speed_aggregator.dart`), not real
+  /// roads — see that file's doc comment for why. Each sample carries only
+  /// `speedKmh`/`weekday`/`hour`/`weatherCode` — no uid, no rideId, no exact
+  /// coordinates beyond the cell itself, enforced by `firestore.rules`'
+  /// `roadSpeedSamples` rule. Weather is fetched once per ride (it doesn't
+  /// meaningfully change segment-to-segment) and is best-effort — a failed
+  /// fetch just means `weatherCode` is null on every sample from this ride,
+  /// not a failed ride.
+  ///
+  /// No cap on the number of segments published — a very long ride touches
+  /// more geohash cells and therefore writes more docs. Fine at beta scale;
+  /// worth revisiting (batched writes, or a per-ride cap) if ride volume
+  /// ever makes this collection's write cost worth watching.
+  Future<void> _publishSegmentBaselines(String rideId, DateTime startTime) async {
+    final rows = await _pointDao.getForRide(rideId);
+    if (rows.length < 2) return; // nothing to bucket
+
+    final segments = averageSpeedPerSegment([
+      for (final r in rows)
+        (lat: r['lat'] as double, lng: r['lng'] as double, speedMs: (r['speed_ms'] as num).toDouble()),
+    ]);
+    if (segments.isEmpty) return;
+
+    final weather = await _weatherService.fetchForRide(
+      lat: rows.first['lat'] as double,
+      lng: rows.first['lng'] as double,
+      at: startTime,
+    );
+
+    debugPrint('[Ride] publishing ${segments.length} road-speed sample(s)');
+    for (final segment in segments) {
+      await _bestEffortWrite(
+        'roadSpeedSample:${segment.segmentId}',
+        () => _firestore
+            .collection('roadSpeedSamples')
+            .doc(segment.segmentId)
+            .collection('samples')
+            .add({
+          'speedKmh': segment.avgSpeedKmh,
+          'weekday': startTime.weekday,
+          'hour': startTime.hour,
+          'weatherCode': weather?.weatherCode,
+          'createdAt': FieldValue.serverTimestamp(),
+        }),
+      );
     }
   }
 

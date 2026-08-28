@@ -141,21 +141,6 @@
     "description": "One-line description under the Analyst Blue color option."
   },
 
-  "appMarkTitle": "App mark",
-  "@appMarkTitle": {
-    "description": "Label beside the live logo preview in the Appearance section."
-  },
-
-  "appMarkDarkDescription": "The dark mark, used on the splash and sign-in screens.",
-  "@appMarkDarkDescription": {
-    "description": "Description of the logo preview while the dark theme is selected."
-  },
-
-  "appMarkLightDescription": "The light mark, used on the splash and sign-in screens.",
-  "@appMarkLightDescription": {
-    "description": "Description of the logo preview while the light theme is selected."
-  },
-
   "languageSection": "Language",
   "@languageSection": {
     "description": "Section header for the app language control."
@@ -377,6 +362,40 @@
   "scoreAggressiveLabel": "Aggressive",
   "@scoreAggressiveLabel": {
     "description": "Riding-score rating for a low score (below 60) on the ride summary screen."
+  },
+
+  "speedBandIdleLabel": "Idle",
+  "@speedBandIdleLabel": {
+    "description": "Legend label for the slowest speed band on the ride summary map's speed-colored route (under 5 km/h)."
+  },
+
+  "speedBandNormalLabel": "Normal",
+  "@speedBandNormalLabel": {
+    "description": "Legend label for the normal speed band on the ride summary map's speed-colored route (5-50 km/h)."
+  },
+
+  "speedBandBriskLabel": "Brisk",
+  "@speedBandBriskLabel": {
+    "description": "Legend label for the brisk speed band on the ride summary map's speed-colored route (50-90 km/h)."
+  },
+
+  "speedBandHardLabel": "Hard",
+  "@speedBandHardLabel": {
+    "description": "Legend label for the fastest speed band on the ride summary map's speed-colored route (90 km/h and up)."
+  },
+
+  "speedOutlierTitle": "Faster than usual here",
+  "@speedOutlierTitle": {
+    "description": "Title of the private post-ride card shown when part of this ride was a statistical outlier against the anonymous road-speed baseline for that stretch. Never shown to anyone but the rider themselves."
+  },
+
+  "speedOutlierBody": "You hit {riderKmh} km/h on part of this ride — riders here are usually around {baselineKmh} km/h.",
+  "@speedOutlierBody": {
+    "description": "Body of the speed-outlier card. {riderKmh} and {baselineKmh} are both whole-number km/h, always Western digits regardless of language — see core/i18n/numeric_locale.dart.",
+    "placeholders": {
+      "riderKmh": { "type": "int", "example": "82" },
+      "baselineKmh": { "type": "int", "example": "38" }
+    }
   },
 
   "ridingScoreLabel": "Riding score",

@@ -277,6 +277,24 @@
       your data. To remove the backup as well, see §9. You can export any ride to a JSON or GPX
       file from the app if you want your own copy.</p>
 
+      <div class="callout">
+        <h3>Anonymous road-speed data</h3>
+        <p>After each ride, the app also contributes a small, <strong>anonymous</strong> record for
+        each rough stretch of road you rode: a speed, the day of the week, the hour, and (when
+        available) the weather at the time. This goes into a shared pool that every rider's app
+        draws from — not your account's private area.</p>
+        <p>These records carry no name, no account ID, no ride ID, and no exact coordinates — only
+        a coarse ~150m map cell, which is not enough to pinpoint an address or identify who rode
+        it. They cannot be linked back to you or your account, by us or by anyone else.</p>
+        <p>The pool is used for one thing: right after a ride, the app privately compares your own
+        speed on a stretch against the anonymous history for that same stretch, and if yours was a
+        real outlier, shows <em>you</em> a note about it on your own ride summary. Nobody else ever
+        sees this comparison, and it is never reported, published, or used to identify you to
+        anyone — including other riders, insurers, or authorities.</p>
+        <p>This is on by default for every recorded ride and does not currently have its own
+        off switch separate from turning off ride recording entirely.</p>
+      </div>
+
       <h3>Home-screen widgets</h3>
       <p>If you add one of the app's home-screen widgets, the figures it shows — recent ride stats
       and upcoming maintenance — are written to your phone's own local app storage so the widget
@@ -337,6 +355,10 @@
           <tr>
             <td><strong>Overpass API</strong> — <code>overpass-api.de</code></td>
             <td>Only when you explicitly tap "Import nearby" in the Places tab: your current coordinates and a search radius, in order to look up fuel stops, motorcycle garages, parts shops, cafés, and viewpoints around you. This never happens automatically in the background.</td>
+          </tr>
+          <tr>
+            <td><strong>Open-Meteo</strong> — <code>api.open-meteo.com</code></td>
+            <td>After each ride, the coordinates of where it started and the ride's date/time, to look up the weather then and there for the anonymous road-speed feature described in §2. No API key, login, or account is used — like the OpenStreetMap row above, the request necessarily reveals your device's IP address to Open-Meteo, but never your ThrottleIQ account or identity.</td>
           </tr>
           <tr>
             <td><strong>Google Sign-In</strong></td>

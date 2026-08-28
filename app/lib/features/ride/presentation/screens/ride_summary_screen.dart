@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -14,9 +15,13 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/ride_entity.dart';
+import '../../domain/calculators/speed_segments.dart';
+import '../../domain/calculators/segment_speed_aggregator.dart';
+import '../../domain/calculators/speed_baseline.dart';
 import '../widgets/bike_confirmation_card.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
+import '../../../../core/cloud/cloud_repository.dart';
 
 class RideSummaryScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -28,7 +33,9 @@ class RideSummaryScreen extends ConsumerStatefulWidget {
 
 class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   List<LatLng> _polyline = [];
+  List<double> _speedsMs = [];
   bool _polylineLoaded = false;
+  ({double riderKmh, double baselineKmh})? _speedOutlier;
 
   @override
   void initState() {
@@ -43,8 +50,43 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       _polyline = points
           .map((p) => LatLng(p['lat'] as double, p['lng'] as double))
           .toList();
+      _speedsMs = points.map((p) => (p['speed_ms'] as num).toDouble()).toList();
       _polylineLoaded = true;
     });
+    unawaited(_checkSpeedOutlier());
+  }
+
+  /// Compares this ride's fastest road-segment (a geohash cell, see
+  /// `segment_speed_aggregator.dart`) against the anonymous historical
+  /// baseline pooled for that same segment, and — only if there's enough
+  /// pooled history to mean anything and this ride was a real statistical
+  /// outlier there (`speed_baseline.dart`) — surfaces a private insight
+  /// card. Shown only to this rider, about their own ride; never posted,
+  /// shared, or visible to anyone else. Best-effort: any failure (offline,
+  /// no pooled data yet — the common case for a while at beta scale) just
+  /// means no card, never an error the rider sees.
+  Future<void> _checkSpeedOutlier() async {
+    if (_polyline.length < 2 || _speedsMs.length != _polyline.length) return;
+
+    final segments = averageSpeedPerSegment([
+      for (var i = 0; i < _polyline.length; i++)
+        (lat: _polyline[i].latitude, lng: _polyline[i].longitude, speedMs: _speedsMs[i]),
+    ]);
+    if (segments.isEmpty) return;
+    final fastest = segments.reduce((a, b) => a.avgSpeedKmh >= b.avgSpeedKmh ? a : b);
+
+    try {
+      final historical =
+          await CloudRepository().fetchRoadSpeedSamples(fastest.segmentId);
+      final baseline = computeBaseline(historical);
+      if (baseline == null || !isSpeedOutlier(fastest.avgSpeedKmh, baseline)) return;
+      if (!mounted) return;
+      setState(() {
+        _speedOutlier = (riderKmh: fastest.avgSpeedKmh, baselineKmh: baseline.meanKmh);
+      });
+    } catch (e) {
+      debugPrint('[RideSummary] speed-outlier check failed: $e');
+    }
   }
 
   @override
@@ -304,6 +346,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 EditorialLabel(l10n.routeSectionLabel),
                 const SizedBox(height: 10),
                 _buildMap(ride, startCenter),
+                _buildSpeedLegend(l10n),
+                _buildSpeedOutlierCard(l10n),
                 const SizedBox(height: 20),
 
                 // ── Actions ──────────────────────────────────────────────
@@ -390,6 +434,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
+    // Falls back to a single primary-color line if speeds weren't captured
+    // for this ride (e.g. an older row before speed_ms was populated) —
+    // buildSpeedSegments returns [] in that case rather than misdrawing.
+    final speedSegments = buildSpeedSegments(_polyline, _speedsMs);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: SizedBox(
@@ -408,10 +457,21 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             ),
             if (_polyline.length > 1)
               PolylineLayer(
-                polylines: [
-                  Polyline(
-                      points: _polyline, color: AppColors.primary, strokeWidth: 4),
-                ],
+                polylines: speedSegments.isNotEmpty
+                    ? [
+                        for (final segment in speedSegments)
+                          Polyline(
+                            points: segment.points,
+                            color: _speedBandColor(segment.band),
+                            strokeWidth: 4,
+                          ),
+                      ]
+                    : [
+                        Polyline(
+                            points: _polyline,
+                            color: AppColors.primary,
+                            strokeWidth: 4),
+                      ],
               ),
             if (_polyline.isNotEmpty)
               MarkerLayer(
@@ -445,6 +505,101 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Color _speedBandColor(SpeedBand band) {
+    switch (band) {
+      case SpeedBand.idle:
+        return AppColors.textTertiary;
+      case SpeedBand.normal:
+        return AppColors.success;
+      case SpeedBand.brisk:
+        return AppColors.warning;
+      case SpeedBand.hard:
+        return AppColors.danger;
+    }
+  }
+
+  String _speedBandLabel(AppLocalizations l10n, SpeedBand band) {
+    switch (band) {
+      case SpeedBand.idle:
+        return l10n.speedBandIdleLabel;
+      case SpeedBand.normal:
+        return l10n.speedBandNormalLabel;
+      case SpeedBand.brisk:
+        return l10n.speedBandBriskLabel;
+      case SpeedBand.hard:
+        return l10n.speedBandHardLabel;
+    }
+  }
+
+  Widget _buildSpeedLegend(AppLocalizations l10n) {
+    if (_polyline.length < 2) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 14,
+        runSpacing: 4,
+        children: [
+          for (final band in SpeedBand.values)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _speedBandColor(band),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(_speedBandLabel(l10n, band),
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpeedOutlierCard(AppLocalizations l10n) {
+    final outlier = _speedOutlier;
+    if (outlier == null) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.speed, color: AppColors.warning, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.speedOutlierTitle,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary)),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.speedOutlierBody(
+                      outlier.riderKmh.round(), outlier.baselineKmh.round()),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

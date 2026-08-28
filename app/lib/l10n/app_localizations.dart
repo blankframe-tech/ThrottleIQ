@@ -266,24 +266,6 @@ abstract class AppLocalizations {
   /// **'Navy console, cyan telemetry'**
   String get themeAnalystBlueDescription;
 
-  /// Label beside the live logo preview in the Appearance section.
-  ///
-  /// In en, this message translates to:
-  /// **'App mark'**
-  String get appMarkTitle;
-
-  /// Description of the logo preview while the dark theme is selected.
-  ///
-  /// In en, this message translates to:
-  /// **'The dark mark, used on the splash and sign-in screens.'**
-  String get appMarkDarkDescription;
-
-  /// Description of the logo preview while the light theme is selected.
-  ///
-  /// In en, this message translates to:
-  /// **'The light mark, used on the splash and sign-in screens.'**
-  String get appMarkLightDescription;
-
   /// Section header for the app language control.
   ///
   /// In en, this message translates to:
@@ -529,6 +511,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Aggressive'**
   String get scoreAggressiveLabel;
+
+  /// Legend label for the slowest speed band on the ride summary map's speed-colored route (under 5 km/h).
+  ///
+  /// In en, this message translates to:
+  /// **'Idle'**
+  String get speedBandIdleLabel;
+
+  /// Legend label for the normal speed band on the ride summary map's speed-colored route (5-50 km/h).
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get speedBandNormalLabel;
+
+  /// Legend label for the brisk speed band on the ride summary map's speed-colored route (50-90 km/h).
+  ///
+  /// In en, this message translates to:
+  /// **'Brisk'**
+  String get speedBandBriskLabel;
+
+  /// Legend label for the fastest speed band on the ride summary map's speed-colored route (90 km/h and up).
+  ///
+  /// In en, this message translates to:
+  /// **'Hard'**
+  String get speedBandHardLabel;
+
+  /// Title of the private post-ride card shown when part of this ride was a statistical outlier against the anonymous road-speed baseline for that stretch. Never shown to anyone but the rider themselves.
+  ///
+  /// In en, this message translates to:
+  /// **'Faster than usual here'**
+  String get speedOutlierTitle;
+
+  /// Body of the speed-outlier card. {riderKmh} and {baselineKmh} are both whole-number km/h, always Western digits regardless of language — see core/i18n/numeric_locale.dart.
+  ///
+  /// In en, this message translates to:
+  /// **'You hit {riderKmh} km/h on part of this ride — riders here are usually around {baselineKmh} km/h.'**
+  String speedOutlierBody(int riderKmh, int baselineKmh);
 
   /// Label on the riding-score card on the ride summary screen.
   ///

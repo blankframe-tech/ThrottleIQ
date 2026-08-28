@@ -34,10 +34,6 @@
   "themeAnalystBlueLabel": "অ্যানালিস্ট ব্লু",
   "themeAnalystBlueDescription": "নেভি কনসোল, সায়ান মিটার",
 
-  "appMarkTitle": "অ্যাপের লোগো",
-  "appMarkDarkDescription": "গাঢ় লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।",
-  "appMarkLightDescription": "হালকা লোগোটা — স্প্ল্যাশ আর সাইন-ইন স্ক্রিনে এটাই দেখবেন।",
-
   "languageSection": "ভাষা",
   "languageSystemLabel": "ফোনের ভাষা",
   "languageSystemDescription": "ফোনে যা সেট করা আছে",
@@ -88,6 +84,12 @@
   "scoreSmoothLabel": "মসৃণ",
   "scoreSteadyLabel": "স্থির",
   "scoreAggressiveLabel": "বেপরোয়া",
+  "speedBandIdleLabel": "নিষ্ক্রিয়",
+  "speedBandNormalLabel": "স্বাভাবিক",
+  "speedBandBriskLabel": "দ্রুত",
+  "speedBandHardLabel": "অতি দ্রুত",
+  "speedOutlierTitle": "এখানে স্বাভাবিকের চেয়ে দ্রুত",
+  "speedOutlierBody": "এই রাইডের একটি অংশে আপনি {riderKmh} কিমি/ঘ গতিতে ছিলেন — এখানে রাইডাররা সাধারণত প্রায় {baselineKmh} কিমি/ঘ গতিতে চলে।",
   "ridingScoreLabel": "রাইডিং স্কোর",
   "outOf100Label": "100 এর মধ্যে",
 
