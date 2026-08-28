@@ -28,7 +28,7 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 11);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 12);
 
   /// Runs the real migration ladder against an already-open database.
   ///
@@ -77,7 +77,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 11,
+      version: 12,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -102,7 +102,8 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE ride_points ADD COLUMN period_type TEXT DEFAULT "moving"');
+      await db.execute(
+          'ALTER TABLE ride_points ADD COLUMN period_type TEXT DEFAULT "moving"');
       await db.execute('ALTER TABLE ride_points ADD COLUMN accuracy_m REAL');
     }
     if (oldVersion < 3) {
@@ -152,11 +153,14 @@ class DatabaseHelper {
     if (oldVersion < 6) {
       await db.execute('ALTER TABLE ride_points ADD COLUMN heading_deg REAL');
       await db.execute('ALTER TABLE ride_points ADD COLUMN confidence INTEGER');
-      await db.execute('ALTER TABLE ride_points ADD COLUMN imu_quality INTEGER');
-      await db.execute('ALTER TABLE ride_points ADD COLUMN is_cornering INTEGER');
+      await db
+          .execute('ALTER TABLE ride_points ADD COLUMN imu_quality INTEGER');
+      await db
+          .execute('ALTER TABLE ride_points ADD COLUMN is_cornering INTEGER');
     }
     if (oldVersion < 7) {
-      await db.execute('ALTER TABLE maintenance_logs ADD COLUMN custom_label TEXT');
+      await db
+          .execute('ALTER TABLE maintenance_logs ADD COLUMN custom_label TEXT');
     }
     if (oldVersion < 8) {
       await db.execute(_createDeletedBikesSql);
@@ -178,14 +182,21 @@ class DatabaseHelper {
       // Auto-tracking. Existing rides were all started by the rider, so the
       // defaults below are the truthful reading of a pre-v11 row rather than
       // a placeholder: is_auto = 0, bike_confidence = 'high'.
-      await _addColumnIfMissing(db, 'rides', 'is_auto',
-          'is_auto INTEGER NOT NULL DEFAULT 0');
+      await _addColumnIfMissing(
+          db, 'rides', 'is_auto', 'is_auto INTEGER NOT NULL DEFAULT 0');
       await _addColumnIfMissing(db, 'rides', 'bike_confidence',
           "bike_confidence TEXT NOT NULL DEFAULT 'high'");
       await db.execute(_createAutoDetectionsSql);
       await db.execute(_createAutoFixesSql);
       await db.execute(_createAutoFixesIndexSql);
       await db.execute(_createAutoDetectionsIndexSql);
+    }
+    if (oldVersion < 12) {
+      // The bike's own paint color, so screens can tint themselves to it
+      // (see RecordScreen) instead of everything reading the app's neutral
+      // accent regardless of which bike is active.
+      await _addColumnIfMissing(
+          db, 'bikes', 'color_value', 'color_value INTEGER');
     }
   }
 
@@ -331,6 +342,7 @@ class DatabaseHelper {
         ride_count INTEGER NOT NULL DEFAULT 0,
         last_ride_at TEXT,
         odometer_km REAL,
+        color_value INTEGER,
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/constants/bike_colors.dart';
+import '../../../../core/utils/image_crop_io.dart';
 import '../../../../shared/screens/image_crop_screen.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
@@ -25,6 +27,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   final _ccCtrl = TextEditingController();
   final _odometerCtrl = TextEditingController();
   String? _imagePath;
+  int? _colorValue;
   bool _loading = false;
   BikeEntity? _existingBike;
 
@@ -46,6 +49,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       _ccCtrl.text = _existingBike!.cc?.toString() ?? '';
       _odometerCtrl.text = _existingBike!.odometerKm?.toString() ?? '';
       _imagePath = _existingBike!.imagePath;
+      _colorValue = _existingBike!.colorValue;
       setState(() {});
     }
   }
@@ -62,7 +66,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   /// receives, so cropping doesn't compound the loss much.
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final xfile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final xfile =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (xfile == null || !mounted) return;
 
     final cropped = await ImageCropScreen.open(
@@ -71,7 +76,19 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       title: 'Crop bike photo',
     );
     if (!mounted) return;
-    setState(() => _imagePath = cropped ?? xfile.path);
+    if (cropped != null) {
+      setState(() => _imagePath = cropped);
+      return;
+    }
+    // Skipping the crop keeps the photo as picked rather than throwing the
+    // selection away, but `xfile.path` itself lives in ImagePicker's own
+    // cache directory — not guaranteed to survive an app rebuild/reinstall
+    // or OS cleanup (see `persistPickedImage`) — so it still has to be
+    // copied into the app's own storage before it's saved as `imagePath`.
+    final persisted =
+        await persistPickedImage(sourcePath: xfile.path, filePrefix: 'bike');
+    if (!mounted) return;
+    setState(() => _imagePath = persisted);
   }
 
   /// Re-crop a photo that's already attached — reachable from the "Crop"
@@ -103,6 +120,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               cc: int.tryParse(_ccCtrl.text),
               imagePath: _imagePath,
               odometerKm: double.tryParse(_odometerCtrl.text),
+              colorValue: _colorValue,
+              clearColor: _colorValue == null,
             ),
           );
     } else {
@@ -113,6 +132,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             cc: int.tryParse(_ccCtrl.text),
             imagePath: _imagePath,
             odometerKm: double.tryParse(_odometerCtrl.text),
+            colorValue: _colorValue,
           );
     }
 
@@ -154,7 +174,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     height: 120,
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusLg),
                       border: Border.all(color: AppColors.border),
                       image: _imagePath != null
                           ? DecorationImage(
@@ -171,7 +192,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                               SizedBox(height: 6),
                               Text('Add Photo',
                                   style: TextStyle(
-                                      fontSize: 12, color: AppColors.textSecondary)),
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary)),
                             ],
                           )
                         : null,
@@ -204,14 +226,16 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               TextFormField(
                 controller: _brandCtrl,
                 style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Brand *', hintText: 'Yamaha'),
+                decoration: const InputDecoration(
+                    labelText: 'Brand *', hintText: 'Yamaha'),
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _modelCtrl,
                 style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Model *', hintText: 'MT-15'),
+                decoration: const InputDecoration(
+                    labelText: 'Model *', hintText: 'MT-15'),
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
@@ -222,7 +246,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       controller: _yearCtrl,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: AppColors.textPrimary),
-                      decoration: const InputDecoration(labelText: 'Year', hintText: '2023'),
+                      decoration: const InputDecoration(
+                          labelText: 'Year', hintText: '2023'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -231,7 +256,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       controller: _ccCtrl,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: AppColors.textPrimary),
-                      decoration: const InputDecoration(labelText: 'Engine CC', hintText: '155'),
+                      decoration: const InputDecoration(
+                          labelText: 'Engine CC', hintText: '155'),
                     ),
                   ),
                 ],
@@ -239,23 +265,123 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _odometerCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Odometer reading (km)', hintText: '12000'),
+              ),
+              const SizedBox(height: 20),
+              Text('Bike color',
+                  style:
+                      TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              _ColorSwatchPicker(
+                selected: _colorValue,
+                onChanged: (value) => setState(() => _colorValue = value),
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _loading ? null : _submit,
                 child: _loading
                     ? const SizedBox(
-                        height: 20, width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : Text(isEdit ? 'Save Changes' : 'Add Bike'),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A row of preset paint-color swatches, plus an "Auto" tile that clears the
+/// pick — the rider isn't forced to know their bike's exact color to still
+/// get a distinct one (see [bikeAccentColor]'s id-based fallback).
+class _ColorSwatchPicker extends StatelessWidget {
+  const _ColorSwatchPicker({required this.selected, required this.onChanged});
+
+  final int? selected;
+  final ValueChanged<int?> onChanged;
+
+  static const double _size = 40;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        _AutoTile(isSelected: selected == null, onTap: () => onChanged(null)),
+        for (final color in bikeColorPalette)
+          _SwatchTile(
+            color: color,
+            isSelected: selected == color.toARGB32(),
+            onTap: () => onChanged(color.toARGB32()),
+          ),
+      ],
+    );
+  }
+}
+
+class _SwatchTile extends StatelessWidget {
+  const _SwatchTile(
+      {required this.color, required this.isSelected, required this.onTap});
+
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: _ColorSwatchPicker._size,
+        height: _ColorSwatchPicker._size,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? AppColors.textPrimary : Colors.transparent,
+            width: 2.5,
+          ),
+        ),
+        child: isSelected
+            ? const Icon(Icons.check, color: Colors.white, size: 18)
+            : null,
+      ),
+    );
+  }
+}
+
+class _AutoTile extends StatelessWidget {
+  const _AutoTile({required this.isSelected, required this.onTap});
+
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: _ColorSwatchPicker._size,
+        height: _ColorSwatchPicker._size,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? AppColors.textPrimary : AppColors.border,
+            width: isSelected ? 2.5 : 1,
+          ),
+        ),
+        child:
+            Icon(Icons.auto_awesome, size: 16, color: AppColors.textSecondary),
       ),
     );
   }

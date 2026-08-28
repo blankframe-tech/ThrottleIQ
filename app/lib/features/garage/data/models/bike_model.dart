@@ -16,6 +16,7 @@ class BikeModel {
             ? DateTime.parse(m['last_ride_at'] as String)
             : null,
         odometerKm: (m['odometer_km'] as num?)?.toDouble(),
+        colorValue: m['color_value'] as int?,
         createdAt: DateTime.parse(m['created_at'] as String),
       );
 
@@ -32,6 +33,7 @@ class BikeModel {
         'ride_count': e.rideCount,
         'last_ride_at': e.lastRideAt?.toIso8601String(),
         'odometer_km': e.odometerKm,
+        'color_value': e.colorValue,
         'synced': 0,
         'created_at': e.createdAt.toIso8601String(),
       };

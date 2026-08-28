@@ -32,6 +32,7 @@ class BikePickerCard extends ConsumerWidget {
     required this.activeBike,
     this.overlineText,
     this.titleText,
+    this.accentColor,
   });
 
   final BikeEntity activeBike;
@@ -43,6 +44,11 @@ class BikePickerCard extends ConsumerWidget {
   /// The large line across the hero, normally the greeting.
   final String? titleText;
 
+  /// The active bike's own color (see `bikeAccentColor`) — tints the hero's
+  /// border and scrim so the card that shows *which bike* you're riding also
+  /// reads as that bike's color, not just its name.
+  final Color? accentColor;
+
   static const double _height = 210;
 
   Future<void> _pickBike(
@@ -52,8 +58,8 @@ class BikePickerCard extends ConsumerWidget {
       context: context,
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.radiusXl)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -101,6 +107,14 @@ class BikePickerCard extends ConsumerWidget {
     final bikes = ref.watch(garageProvider).valueOrNull ?? const <BikeEntity>[];
     final canSwitch = bikes.length >= 2;
     final l10n = AppLocalizations.of(context);
+    final accent = accentColor;
+    // The scrim used to be a flat ink gradient regardless of bike — tinting
+    // its base color toward the accent (rather than swapping it wholesale)
+    // keeps the legibility contract (opaque enough at the bottom for text)
+    // while still reading as "this bike's color" at a glance.
+    final scrimBase = accent != null
+        ? Color.lerp(AppColors.ink, accent, 0.35)!
+        : AppColors.ink;
 
     return GestureDetector(
       onTap: canSwitch ? () => _pickBike(context, ref, bikes) : null,
@@ -110,7 +124,10 @@ class BikePickerCard extends ConsumerWidget {
           height: _height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(
+              color: accent?.withValues(alpha: 0.7) ?? AppColors.border,
+              width: accent != null ? 1.5 : 1,
+            ),
           ),
           child: Stack(
             fit: StackFit.expand,
@@ -132,9 +149,9 @@ class BikePickerCard extends ConsumerWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.ink.withValues(alpha: 0.15),
-                      AppColors.ink.withValues(alpha: 0.55),
-                      AppColors.ink.withValues(alpha: 0.88),
+                      scrimBase.withValues(alpha: 0.15),
+                      scrimBase.withValues(alpha: 0.55),
+                      scrimBase.withValues(alpha: 0.88),
                     ],
                     stops: const [0, 0.45, 1],
                   ),
@@ -152,7 +169,8 @@ class BikePickerCard extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 13, color: AppColors.onInk.withValues(alpha: 0.8)),
+                            fontSize: 13,
+                            color: AppColors.onInk.withValues(alpha: 0.8)),
                       ),
                       const SizedBox(height: 2),
                     ],
@@ -161,7 +179,8 @@ class BikePickerCard extends ConsumerWidget {
                         titleText!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: display(24, color: AppColors.onInk, height: 1.15),
+                        style:
+                            display(24, color: AppColors.onInk, height: 1.15),
                       ),
                     const SizedBox(height: 10),
                     Row(
@@ -190,12 +209,14 @@ class BikePickerCard extends ConsumerWidget {
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1,
-                                  color: AppColors.onInk.withValues(alpha: 0.85),
+                                  color:
+                                      AppColors.onInk.withValues(alpha: 0.85),
                                 ),
                               ),
                               Icon(Icons.expand_more,
                                   size: 18,
-                                  color: AppColors.onInk.withValues(alpha: 0.85)),
+                                  color:
+                                      AppColors.onInk.withValues(alpha: 0.85)),
                             ],
                           ),
                         ],

@@ -58,6 +58,27 @@ void main() {
         created_at TEXT NOT NULL
       )
     ''');
+    // Present since v1 — later ladder steps (e.g. v11 → v12's bikes.color_value)
+    // run in the same _onUpgrade call and expect it to already exist, same as
+    // on a real rider's phone.
+    await db.execute('''
+      CREATE TABLE bikes (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        brand TEXT NOT NULL,
+        model TEXT NOT NULL,
+        year INTEGER,
+        cc INTEGER,
+        image_path TEXT,
+        is_active INTEGER NOT NULL DEFAULT 0,
+        total_distance_m REAL NOT NULL DEFAULT 0,
+        ride_count INTEGER NOT NULL DEFAULT 0,
+        last_ride_at TEXT,
+        odometer_km REAL,
+        synced INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
   }
 
   test('v9 → v10 adds the outbox table and keeps existing rides', () async {

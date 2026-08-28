@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:image/image.dart' as img;
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'crop_geometry.dart';
@@ -35,7 +36,9 @@ Future<String> writeCroppedImage({
   // a huge declared width/height (a decompression bomb).
   final decoder = img.findDecoderForData(bytes);
   final info = decoder?.startDecode(bytes);
-  if (decoder == null || info == null || info.width * info.height > 50 * 1000 * 1000) {
+  if (decoder == null ||
+      info == null ||
+      info.width * info.height > 50 * 1000 * 1000) {
     throw const FormatException('Unsupported, corrupt, or oversized image');
   }
   final decoded = decoder.decode(bytes);
@@ -79,5 +82,26 @@ Future<String> writeCroppedImage({
     '${dir.path}/${filePrefix}_${DateTime.now().millisecondsSinceEpoch}.jpg',
   );
   await file.writeAsBytes(img.encodeJpg(cropped, quality: quality));
+  return file.path;
+}
+
+/// Copies [sourcePath] into the same durable, app-owned location
+/// [writeCroppedImage] writes to, without touching pixels — for when the
+/// rider picks a photo but skips the crop step entirely rather than
+/// cancelling out of it. `ImagePicker`'s own path lives in a cache directory
+/// the OS is free to reclaim (and doesn't survive an app reinstall), so
+/// storing it as-is in `Bike.imagePath` is the same trap [writeCroppedImage]
+/// above already avoids — this exists so the "skip crop" path avoids it too.
+Future<String> persistPickedImage({
+  required String sourcePath,
+  Directory? outputDirectory,
+  String filePrefix = 'photo',
+}) async {
+  final dir = outputDirectory ?? await getApplicationDocumentsDirectory();
+  final ext = p.extension(sourcePath);
+  final file = File(
+    '${dir.path}/${filePrefix}_${DateTime.now().millisecondsSinceEpoch}$ext',
+  );
+  await File(sourcePath).copy(file.path);
   return file.path;
 }

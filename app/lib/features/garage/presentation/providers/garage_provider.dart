@@ -8,7 +8,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 final _dao = BikeDao();
 const _uuid = Uuid();
 
-final garageProvider = AsyncNotifierProvider<GarageNotifier, List<BikeEntity>>(GarageNotifier.new);
+final garageProvider =
+    AsyncNotifierProvider<GarageNotifier, List<BikeEntity>>(GarageNotifier.new);
 
 class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
   @override
@@ -26,6 +27,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     int? cc,
     String? imagePath,
     double? odometerKm,
+    int? colorValue,
   }) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
@@ -38,6 +40,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
       cc: cc,
       imagePath: imagePath,
       odometerKm: odometerKm,
+      colorValue: colorValue,
       createdAt: DateTime.now(),
     );
     await _dao.insert(BikeModel.toMap(bike));

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
 class BikeEntity extends Equatable {
   final String id;
@@ -18,6 +19,14 @@ class BikeEntity extends Equatable {
   /// before the bike was added to the app, odometer drift, etc.).
   final double? odometerKm;
 
+  /// The bike's own color (as an ARGB int, `Color.toARGB32()`), picked by the
+  /// rider when adding/editing it. Used to tint screens to the bike actually
+  /// being ridden — see `RecordScreen` — rather than everything reading the
+  /// app's neutral accent regardless of which bike is active. Null when the
+  /// rider never picked one, so an accent still needs a hash-based fallback
+  /// at the call site rather than assuming this is always set.
+  final int? colorValue;
+
   final DateTime createdAt;
 
   const BikeEntity({
@@ -33,6 +42,7 @@ class BikeEntity extends Equatable {
     this.rideCount = 0,
     this.lastRideAt,
     this.odometerKm,
+    this.colorValue,
     required this.createdAt,
   });
 
@@ -45,6 +55,8 @@ class BikeEntity extends Equatable {
 
   String get displayName => '$brand $model${year != null ? ' ($year)' : ''}';
 
+  Color? get color => colorValue != null ? Color(colorValue!) : null;
+
   BikeEntity copyWith({
     String? brand,
     String? model,
@@ -56,6 +68,8 @@ class BikeEntity extends Equatable {
     int? rideCount,
     DateTime? lastRideAt,
     double? odometerKm,
+    int? colorValue,
+    bool clearColor = false,
   }) {
     return BikeEntity(
       id: id,
@@ -70,10 +84,22 @@ class BikeEntity extends Equatable {
       rideCount: rideCount ?? this.rideCount,
       lastRideAt: lastRideAt ?? this.lastRideAt,
       odometerKm: odometerKm ?? this.odometerKm,
+      colorValue: clearColor ? null : (colorValue ?? this.colorValue),
       createdAt: createdAt,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, brand, model, year, cc, imagePath, isActive, odometerKm];
+  List<Object?> get props => [
+        id,
+        userId,
+        brand,
+        model,
+        year,
+        cc,
+        imagePath,
+        isActive,
+        odometerKm,
+        colorValue
+      ];
 }

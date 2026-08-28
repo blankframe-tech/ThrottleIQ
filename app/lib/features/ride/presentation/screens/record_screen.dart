@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/constants/bike_colors.dart';
 import '../../../../core/constants/motorcycle_quotes.dart';
 import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/utils/greetings.dart';
@@ -57,6 +58,9 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
     final quote = ref.watch(dashboardQuoteProvider);
+    final accent = activeBike != null && bikeHasPhoto(activeBike)
+        ? bikeAccentColor(activeBike)
+        : null;
 
     // If actively recording, push to active ride screen
     if (rideState.status == RecordingStatus.active ||
@@ -79,121 +83,143 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     // an error card happens to be showing above it.
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.paddingMd, 4, AppDimensions.paddingMd, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Settings and Notifications used to live here as icon
-                    // buttons; both moved to the Profile tab's header, next to
-                    // the rest of the account-level chrome (see
-                    // GarageScreen) — this screen has no title bar of its
-                    // own, and the hero below is the header.
-                    const SizedBox(height: 4),
+      body: DecoratedBox(
+        // A faint wash of the active bike's own color, so the screen you
+        // start a ride from reads as *that bike's* dashboard rather than a
+        // neutral shell that happens to show its name. Subtle on purpose —
+        // this sits behind body text, so it stays low-alpha and fades into
+        // the ordinary background well before the fold.
+        decoration: BoxDecoration(
+          gradient: accent != null
+              ? RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.3,
+                  colors: [
+                    accent.withValues(alpha: 0.18),
+                    AppColors.background,
+                  ],
+                  stops: const [0, 0.65],
+                )
+              : null,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.paddingMd, 4, AppDimensions.paddingMd, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Settings and Notifications used to live here as icon
+                      // buttons; both moved to the Profile tab's header, next to
+                      // the rest of the account-level chrome (see
+                      // GarageScreen) — this screen has no title bar of its
+                      // own, and the hero below is the header.
+                      const SizedBox(height: 4),
 
-                    // 1. Hero — the bike, at full width, wearing the greeting.
-                    // The casual line carries the rider's name when the picked
-                    // variant has a `{name}` slot ("Evening, Sam."); otherwise
-                    // it sits above the name as an overline.
-                    if (activeBike != null)
-                      BikePickerCard(
-                        activeBike: activeBike,
-                        overlineText:
-                            _greeting.usesName ? null : _greeting.line,
-                        titleText: _greeting.usesName
-                            ? _greeting.line
-                            : (_name ?? 'Rider'),
-                      )
-                    else
-                      const _NoBikeCard(),
-                    const SizedBox(height: 18),
+                      // 1. Hero — the bike, at full width, wearing the greeting.
+                      // The casual line carries the rider's name when the picked
+                      // variant has a `{name}` slot ("Evening, Sam."); otherwise
+                      // it sits above the name as an overline.
+                      if (activeBike != null)
+                        BikePickerCard(
+                          activeBike: activeBike,
+                          overlineText:
+                              _greeting.usesName ? null : _greeting.line,
+                          titleText: _greeting.usesName
+                              ? _greeting.line
+                              : (_name ?? 'Rider'),
+                          accentColor: accent,
+                        )
+                      else
+                        const _NoBikeCard(),
+                      const SizedBox(height: 18),
 
-                    // 2. What you've done so far — the reason to go again.
-                    const RiderStatStrip(),
-                    const SizedBox(height: 22),
+                      // 2. What you've done so far — the reason to go again.
+                      const RiderStatStrip(),
+                      const SizedBox(height: 22),
 
-                    // 3. Solo/Group choice. The widget owns the whole flow —
-                    // friend picker or join-by-code, group-ride creation,
-                    // invites, navigation.
-                    const RideModeSelector(),
+                      // 3. Solo/Group choice. The widget owns the whole flow —
+                      // friend picker or join-by-code, group-ride creation,
+                      // invites, navigation.
+                      const RideModeSelector(),
 
-                    if (rideState.error != null) ...[
-                      const SizedBox(height: 16),
-                      EditorialCard(
-                        padding: const EdgeInsets.all(12),
-                        borderColor: AppColors.danger,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(rideState.error!,
-                                style: TextStyle(
-                                    color: AppColors.danger, fontSize: 13),
-                                textAlign: TextAlign.center),
-                            if (rideState.blockKind !=
-                                RecordingBlockKind.none) ...[
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () => rideState.blockKind ==
-                                        RecordingBlockKind.locationServicesOff
-                                    ? Geolocator.openLocationSettings()
-                                    : Geolocator.openAppSettings(),
-                                child: Text(
-                                  rideState.blockKind ==
+                      if (rideState.error != null) ...[
+                        const SizedBox(height: 16),
+                        EditorialCard(
+                          padding: const EdgeInsets.all(12),
+                          borderColor: AppColors.danger,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(rideState.error!,
+                                  style: TextStyle(
+                                      color: AppColors.danger, fontSize: 13),
+                                  textAlign: TextAlign.center),
+                              if (rideState.blockKind !=
+                                  RecordingBlockKind.none) ...[
+                                const SizedBox(height: 8),
+                                TextButton(
+                                  onPressed: () => rideState.blockKind ==
                                           RecordingBlockKind.locationServicesOff
-                                      ? 'Turn on Location'
-                                      : 'Open App Settings',
+                                      ? Geolocator.openLocationSettings()
+                                      : Geolocator.openAppSettings(),
+                                  child: Text(
+                                    rideState.blockKind ==
+                                            RecordingBlockKind
+                                                .locationServicesOff
+                                        ? 'Turn on Location'
+                                        : 'Open App Settings',
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
+                  ),
+                ),
+              ),
+
+              // 4. Start ride, pinned.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
+                    AppDimensions.paddingMd, AppDimensions.paddingMd),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Which control depends on the active skin's shape profile:
+                    // a slide track on the boxy/terminal skins, a press-and-hold
+                    // ring on the rounded ones. See StartControlStyle for why
+                    // this is the one place a skin swaps a widget rather than
+                    // just restyling it.
+                    if (AppDimensions.shape.startControl ==
+                        StartControlStyle.holdRing)
+                      _HoldToStartControl(enabled: activeBike != null)
+                    else
+                      _SlideToStartButton(enabled: activeBike != null),
+                    const SizedBox(height: 12),
+                    // Flavour text, demoted to a footer. It takes the line the
+                    // "swipe right to start" hint used to own — the bar labels
+                    // its own gesture, so the hint was saying it twice.
+                    Text(
+                      '${quote.$1} ${quote.$2}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 12,
+                          height: 1.35,
+                          color: AppColors.textTertiary),
+                    ),
                   ],
                 ),
               ),
-            ),
-
-            // 4. Start ride, pinned.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
-                  AppDimensions.paddingMd, AppDimensions.paddingMd),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Which control depends on the active skin's shape profile:
-                  // a slide track on the boxy/terminal skins, a press-and-hold
-                  // ring on the rounded ones. See StartControlStyle for why
-                  // this is the one place a skin swaps a widget rather than
-                  // just restyling it.
-                  if (AppDimensions.shape.startControl ==
-                      StartControlStyle.holdRing)
-                    _HoldToStartControl(enabled: activeBike != null)
-                  else
-                    _SlideToStartButton(enabled: activeBike != null),
-                  const SizedBox(height: 12),
-                  // Flavour text, demoted to a footer. It takes the line the
-                  // "swipe right to start" hint used to own — the bar labels
-                  // its own gesture, so the hint was saying it twice.
-                  Text(
-                    '${quote.$1} ${quote.$2}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 12,
-                        height: 1.35,
-                        color: AppColors.textTertiary),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -308,7 +334,8 @@ class _SlideToStartButton extends ConsumerStatefulWidget {
   const _SlideToStartButton({required this.enabled});
 
   @override
-  ConsumerState<_SlideToStartButton> createState() => _SlideToStartButtonState();
+  ConsumerState<_SlideToStartButton> createState() =>
+      _SlideToStartButtonState();
 }
 
 class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
@@ -323,7 +350,8 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 220));
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -331,7 +359,8 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     // Setting .value directly (rather than animateTo) tracks the finger
     // 1:1 with no easing lag, and implicitly stops any in-flight settle
     // animation if the user grabs it again mid-snap-back.
-    _ctrl.value = (_ctrl.value + details.delta.dx / _trackWidth).clamp(0.0, 1.0);
+    _ctrl.value =
+        (_ctrl.value + details.delta.dx / _trackWidth).clamp(0.0, 1.0);
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -394,7 +423,8 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        _trackWidth = (constraints.maxWidth - _thumbSize).clamp(1.0, double.infinity);
+        _trackWidth =
+            (constraints.maxWidth - _thumbSize).clamp(1.0, double.infinity);
 
         return GestureDetector(
           onPanUpdate: enabled ? _onPanUpdate : null,
@@ -428,7 +458,8 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                                 opacity: (1 - fraction * 2).clamp(0.0, 1.0),
                                 child: Text('Slide to start ride',
                                     style: display(16,
-                                        color: AppColors.onInk, letterSpacing: 0.2)),
+                                        color: AppColors.onInk,
+                                        letterSpacing: 0.2)),
                               ),
                       ),
                       Positioned(
