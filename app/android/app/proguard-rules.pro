@@ -46,9 +46,42 @@
 # flutter_local_notifications
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
 
-# sensors_plus / battery_plus / device_info_plus / package_info_plus (Flutter
-# plugin registration classes — safe broad keep for first-party plugin glue)
+# io.flutter.plugins.GeneratedPluginRegistrant and any first-party plugin
+# actually registered under this namespace (e.g. image_picker above also
+# lives here) — the federated fluttercommunity/pravera/etc. plugins below do
+# NOT live under this package despite the "plus"/"flutter_" naming, so they
+# each need their own rule.
 -keep class io.flutter.plugins.** { *; }
+
+# dev.fluttercommunity.plus.* federated plugins: wakelock_plus,
+# connectivity_plus, battery_plus, share_plus, sensors_plus, device_info_plus,
+# package_info_plus
+-keep class dev.fluttercommunity.plus.** { *; }
+
+# flutter_activity_recognition (auto-tracking motion trigger) and
+# flutter_foreground_task (auto-tracking's persistent service — the
+# ForegroundService class itself is manifest-declared so R8 already treats it
+# as an entry point, but its supporting classes are not)
+-keep class com.pravera.** { *; }
+
+# record (push-to-talk voice notes)
+-keep class com.llfbandit.record.** { *; }
+
+# just_audio + audio_session (push-to-talk playback/routing)
+-keep class com.ryanheise.** { *; }
+
+# home_widget (writes the SharedPreferences the app's own AutoTracking/
+# RideStats/StartRide/Maintenance widget providers read)
+-keep class es.antonborri.home_widget.** { *; }
+
+# vibration
+-keep class com.benjaminabel.vibration.** { *; }
+
+# flutter_timezone
+-keep class net.wolverinebeach.flutter_timezone.** { *; }
+
+# sqflite (plugin binding — distinct from the org.sqlite native lib above)
+-keep class com.tekartik.sqflite.** { *; }
 
 # Preserve line numbers for crash reporting
 -keepattributes SourceFile,LineNumberTable
