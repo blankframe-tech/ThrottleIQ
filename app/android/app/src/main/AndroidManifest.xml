@@ -92,32 +92,28 @@
              foreground service, configured from Dart via
              ForegroundNotificationConfig (ride_recording_provider.dart). A
              `com.bft.throttleiq.LocationForegroundService` used to be declared
-             here, but that class has never existed anywhere in the repo —
-             nothing started it, so it was dead config. Removed because it is a
-             foregroundServiceType="location" declaration, and declaring a
-             location service the app doesn't implement is the kind of mismatch
-             that draws a rejection in Google's Background Location Access
-             review. See docs/Issues.md §27. If a purpose-built service is ever
-             written (see the auto-tracking entry in HANDOFF_Document.md), it
-             gets declared here. -->
+             here, but that class never existed anywhere in the repo — nothing
+             started it, so it was dead config, removed per docs/Issues.md §27
+             (declaring a location-type service the app doesn't implement is
+             the kind of mismatch that draws a rejection in Google's
+             Background Location Access review). -->
 
-        <!-- flutter_background_geolocation licence key.
-
-             REQUIRED FOR RELEASE BUILDS. Debug builds run unlicensed; a
-             release build without a valid key logs a licence error and the
-             plugin never starts, which presents as "auto-tracking works on my
-             phone but not for testers". Buy at https://shop.transistorsoft.com
-             and paste the key below — it is per Android application id
-             (com.bft.throttleiq), not per developer.
-
-             The plugin declares its own foreground service, boot receiver and
-             headless dispatcher in its library manifest; they are merged in
-             automatically and must NOT be re-declared here. (See Issues.md
-             §27 for what happens when this manifest declares a location
-             service the app doesn't implement.) -->
-        <meta-data
-            android:name="com.transistorsoft.locationmanager.license"
-            android:value="PASTE_LICENCE_KEY_BEFORE_RELEASE" />
+        <!-- flutter_foreground_task's service: the free-tier auto-tracking
+             detector (auto_tracking_service.dart), replacing the paid
+             flutter_background_geolocation plugin as of 2026-08-28 — see
+             that file's doc comment and
+             docs/archives/flutter_background_geolocation-2026-08-28/. Unlike
+             the plugin this replaces, this one does NOT merge its own
+             service declaration in automatically; it must be declared here,
+             with the exact name below (per the library's own install
+             instructions — do not rename). foregroundServiceType="location"
+             matches what this service actually does (watches for motion,
+             then GPS), keeping the Background Location Access review honest
+             — the same reasoning that removed the dead declaration above. -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
 
         <!-- Firebase Messaging -->
         <service

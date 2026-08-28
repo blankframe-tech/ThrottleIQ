@@ -410,3 +410,22 @@ SDK. Treat this as "written and self-reviewed", not "working".
    requires location permission, and a permission *prompt* needs the app in
    the foreground, which is why the ride-start call happens before
    `launchUrl` rather than after.
+
+---
+
+# Update — 2026-08-28: the licence-cost open question, answered
+
+The first "Open questions" item above — *"Is `flutter_background_geolocation`'s
+licence cost acceptable pre-revenue?"* — is answered: no, not for now. Rather
+than pay it, the plugin was replaced with a free stack
+(`flutter_activity_recognition` + `flutter_foreground_task`), a deliberate
+decision to stay on the free tier for roughly the next three months. Full
+writeup in `Issues.md` §50; pros/cons for revisiting the paid plugin later
+are in `HANDOFF_Document.md`'s Feature Backlog, under "Automatic ride
+tracking"; the old implementation is archived at
+`docs/archives/flutter_background_geolocation-2026-08-28/`.
+
+This does not change anything else in this document — Parts 0–5 above
+describe the detection/reconciliation architecture, which the swap left
+untouched (`AutoDetectionDao`, the schema, `AutoRideReconcilerService` are
+all unchanged). Only *which plugin feeds the DAO* changed.

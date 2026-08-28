@@ -69,18 +69,27 @@ dependencies:
   # not, and never was, background tracking. Background GPS *during* a ride
   # comes from geolocator's foreground service (see ride_recording_provider).
   #
-  # flutter_background_geolocation is what detects a ride starting when the app
-  # isn't open: platform activity recognition, iOS significant-location-change,
-  # an Android foreground service that survives OEM battery killers, and a
-  # headless Dart isolate — the four things that have to cooperate for all-day
-  # detection, as one tested unit.
+  # flutter_activity_recognition + flutter_foreground_task detect a ride
+  # starting when the app isn't open: platform activity recognition
+  # (ActivityRecognitionClient on Android, CMMotionActivityManager on iOS) for
+  # the "are they moving" signal, a persistent Android foreground service
+  # (survives the app being swiped from recents) to keep that signal alive,
+  # and geolocator (above) for fixes once vehicle motion is seen. Both free
+  # (MIT). This is the free-tier stand-in for the paid
+  # `flutter_background_geolocation` — see
+  # docs/archives/flutter_background_geolocation-2026-08-28/README.md for why,
+  # and docs/HANDOFF_Document.md's backlog for the paid plugin's pros/cons if
+  # this ever needs revisiting.
   #
-  # LICENCE: Android *release* builds require a key in AndroidManifest.xml
-  # (com.transistorsoft.locationmanager.license). Debug builds run unlicensed.
-  # Without a key the plugin refuses to start in release — a hard gate before
-  # shipping. See https://shop.transistorsoft.com
+  # KNOWN GAP vs the paid plugin: on iOS, the task handler does not survive
+  # the rider force-swiping ThrottleIQ from the app switcher (it does on
+  # Android). The paid plugin's iOS significant-location-change wake-up
+  # doesn't survive a user force-quit either, only an OS-initiated kill for
+  # memory — so the practical gap is narrower than it first looks, but it is
+  # not zero. See auto_tracking_service.dart's doc comment.
   wakelock_plus: ^1.2.8
-  flutter_background_geolocation: ^4.16.0
+  flutter_activity_recognition: ^4.0.0
+  flutter_foreground_task: ^11.0.1
 
   # Sharing
   share_plus: ^10.0.0

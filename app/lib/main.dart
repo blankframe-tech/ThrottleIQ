@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 import 'app.dart';
@@ -13,6 +14,13 @@ import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
 
 void main() async {
+  // Must run before anything else: this registers the port the auto-tracking
+  // foreground-service isolate uses to talk back to the UI isolate, and has
+  // to exist before that service (possibly already running from before this
+  // process started — after a reboot, or the app being relaunched while it
+  // was still watching for a ride) can deliver to it.
+  FlutterForegroundTask.initCommunicationPort();
+
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -67,11 +75,12 @@ void main() async {
       debugPrint('Notification init failed: $e');
     }
 
-    // Prepare the background tracker's config and register its headless task.
-    // This does NOT start tracking — AutoTrackingService.start() does, and only
-    // if the rider has opted in. Registering the headless task at every launch
-    // (not just when enabled) is deliberate: it is how the plugin knows what to
-    // invoke after a device reboot, before any Dart of ours has run.
+    // Declares the background tracker's notification/task options. This does
+    // NOT start tracking — AutoTrackingService.start() does, and only if the
+    // rider has opted in. Boot survival doesn't depend on this running first:
+    // flutter_foreground_task's native side persists the Dart callback handle
+    // itself the first time the service is started, and re-invokes it
+    // directly on reboot without waiting for this app's main() to run.
     try {
       await AutoTrackingService.instance.configure();
     } catch (e) {

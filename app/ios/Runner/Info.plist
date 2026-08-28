@@ -89,21 +89,22 @@
 	<array>
 		<!-- Already present: keeps location flowing during a ride. -->
 		<string>location</string>
-		<!-- Added for auto-tracking: `fetch` and `processing` let the
-		     background detection wake and hand off staged fixes when the app
-		     itself is not running. Without them iOS terminates the app after
-		     a journey and the fixes are not reconciled until the rider next
-		     opens it by hand. -->
+		<!-- flutter_foreground_task's BGTaskScheduler-based background
+		     refresh (auto-tracking's free-tier stand-in for the paid
+		     flutter_background_geolocation plugin as of 2026-08-28 — see
+		     auto_tracking_service.dart). `processing` (used by the old
+		     plugin) is dropped: this plugin only asks for `fetch`, and its
+		     own docs are explicit that on iOS the task does not survive the
+		     rider force-quitting the app either way — see
+		     auto_tracking_service.dart's "Known gap" note. -->
 		<string>fetch</string>
-		<string>processing</string>
 	</array>
-	<!-- Required by flutter_background_geolocation's BGTaskScheduler
-	     integration. These identifiers are fixed by the plugin; changing them
-	     silently disables its background refresh. -->
+	<!-- Required by flutter_foreground_task's BGTaskScheduler integration.
+	     This identifier is fixed by the plugin; changing it silently
+	     disables its background refresh. -->
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.transistorsoft.fetch</string>
-		<string>com.transistorsoft.customtask</string>
+		<string>com.pravera.flutter_foreground_task.refresh</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

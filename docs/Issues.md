@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-28 (§35, §36, §37, §38, §40, §41, §42)_
+_Last updated: 2026-08-28 (§35, §36, §37, §38, §40, §41, §42, §43, §44, §45, §46, §47, §48, §49)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -2468,7 +2468,7 @@ hypothesis above is confirmed.
 
 ---
 
-## 35. Root cause found for the Android "licensing error" crash: `flutter_background_geolocation`'s license key was never filled in (2026-08-27)
+## 35. Root cause found for the Android "licensing error" crash: `flutter_background_geolocation`'s license key was never filled in — FIXED DIFFERENTLY, see §50 (2026-08-27)
 
 Supersedes §34's hypothesis for the specific symptom reported this session:
 **install succeeds, app then shows a licensing error and crashes on every
@@ -2489,12 +2489,19 @@ launch (`main.dart:55`, regardless of whether the rider has opted into
 auto-tracking), so an invalid license on a release-signed build hits this
 path for every install, every launch — matching "every other Android phone."
 
-**Fix (not yet done — requires a purchase, not just a code change):** buy a
-license key at https://shop.transistorsoft.com for application id
+**Fix as originally scoped (not done — would have required a purchase):**
+buy a license key at https://shop.transistorsoft.com for application id
 `com.bft.throttleiq` (per-app-id, not per-developer, one-time), paste it
 into the manifest's `android:value`, then rebuild, re-sign
 (`apksigner`-verify against `throttleiq-release.keystore` as in §34), and
 re-upload the `beta-v1` release asset.
+
+**What actually happened, 2026-08-28: see §50.** Rather than buy the key,
+the plugin was replaced with a free stand-in — a product decision to stay
+free-tier for roughly three months, not a change to the diagnosis above.
+`flutter build apk --release` now succeeds with no licence gate at all. The
+paid-plugin path above still works if ever revisited; the old implementation
+is archived at `docs/archives/flutter_background_geolocation-2026-08-28/`.
 
 ---
 
@@ -2780,3 +2787,297 @@ updated in the same session, before any of this shipped, not after.
   it fills in as ride volume grows.
 - No opt-out toggle yet — noted honestly in the privacy policy rather than
   silently omitted.
+
+## 43. OS app icon (iOS/legacy Android) looked like "a circle inside a squircle" with illegible arc text — FIXED (2026-08-28)
+
+User feedback after installing a release build on a physical iPhone: the
+home-screen icon (`assets/images/app_icon.svg`, the flat rounded-square
+source `flutter_launcher_icons` uses for iOS and legacy Android) drew a
+circular ring *inside* its own rounded-square (squircle) background —
+reading as two competing shapes — with the "THROTTLE IQ" wordmark arced in
+tiny text around that inner circle, illegible at real icon sizes.
+
+Redesigned per the user's direction: the inner ring is now a squircle
+concentric with the icon's own corner radius (`rx=98` inset inside the
+`rx=112` background) instead of a circle, and the wordmark is stacked
+instead of arced — "THROTTLE" large across the top, the twin-wheel crest
+mark centered in the middle (stroke width doubled, 16 vs the old 8, for a
+bolder mark at a glance), "IQ" large across the bottom. Regenerated
+`app_icon.png` from the new SVG via `rsvg-convert` and re-ran
+`flutter_launcher_icons` to propagate it to every iOS `AppIcon.appiconset`
+size and the Android legacy/default mipmaps, then did a full
+`flutter run --release` reinstall on the connected iPhone to confirm the
+new icon actually shows on a fresh install (icon changes don't show up on a
+hot restart of an already-installed app).
+
+**Deliberately left alone:** `app_icon_adaptive_fg.svg` (Android 8+
+adaptive-icon foreground) keeps its circular ring — that file has no
+squircle background of its own to clash with; its content is inset to
+Android's circular safe zone specifically so it survives whatever mask
+shape (circle/squircle/rounded-square/teardrop) a given launcher theme
+applies, per the existing comment in `pubspec.yaml`. The in-app splash/
+sign-in mark (`assets/icons/throttleiq-icon-dark.svg`, `AppLogo` widget) was
+also left untouched — it's a bare circular mark with no squircle behind it
+in-app, so the same "two competing shapes" complaint doesn't apply there;
+its own arc-text may be worth a legibility pass later but that wasn't what
+was reported this session.
+
+## 44. OS app icon's inner squircle border floated inset from the icon's real edge instead of touching it — FIXED (2026-08-28)
+
+Follow-up to §43: the redesigned squircle border (`rect x="34" y="34" ... rx="98"`)
+was concentric with the background's corner radius but still sat well inside
+it, leaving a bare dark margin between the drawn border and the icon's
+actual outer edge — so the "frame" read as floating rather than bounding the
+icon.
+
+Fix: inset the rect by only half its stroke width (`x="5" y="5" rx="107"`,
+stroke-width still 10) so the outer edge of the stroke lands exactly on the
+icon's own edge instead of ~30px inside it. Regenerated `app_icon.png` from
+the SVG via `rsvg-convert` and re-ran `flutter_launcher_icons` to propagate
+to every iOS `AppIcon.appiconset` size and the Android legacy/default
+mipmaps. ⚠️ **Not yet verified with a fresh install on a physical device**
+(unlike §43, this pass only confirmed the change by rendering the PNGs, not
+by reinstalling on a phone).
+
+`app_icon_adaptive_fg.svg` (Android 8+ adaptive foreground) again left
+alone — no change requested there, and it has no squircle background to
+border in the first place.
+
+---
+
+## 45. Bike photo silently vanishes after a rebuild/reinstall — FIXED (2026-08-28)
+
+Reported from real use: after every rebuild, a bike's photo in Garage was
+gone (back to the generic icon tile), even though nothing had been changed
+about that bike.
+
+**Root cause:** `add_edit_bike_screen.dart`'s `_pickImage()` offers the crop
+step but doesn't force it — cancelling out of the cropper keeps the photo as
+picked rather than discarding the whole selection, which is intentional (see
+§ in `features.md` on cropping). But the fallback used the *raw*
+`image_picker` result verbatim: `_imagePath = cropped ?? xfile.path`.
+`xfile.path` lives in `ImagePicker`'s own cache directory inside the app's
+sandbox container — not `getApplicationDocumentsDirectory()` — which is not
+guaranteed stable across app rebuilds/reinstalls (a fresh debug build gets a
+new sandbox container UUID) or even in-place OS cache cleanup. The DB kept
+the old path; `BikePhoto`'s `errorBuilder` then silently swapped in the
+fallback icon once the file was gone, with no error surfaced anywhere.
+
+The crop pipeline itself (`image_crop_io.dart`'s `writeCroppedImage`) already
+wrote to the documents directory correctly — only the "skip crop" path had
+the unsafe fallback.
+
+**Fix:** added `persistPickedImage()` (`core/utils/image_crop_io.dart`),
+which copies a source file into the same durable documents-directory
+location `writeCroppedImage` uses, without touching pixels. `_pickImage()`
+now calls this on the picker's raw path whenever the crop step is
+skipped/cancelled, instead of storing that path directly.
+
+Existing bikes whose `imagePath` was already saved before this fix (i.e.
+already pointing at a since-reclaimed cache file) are not auto-repaired —
+they still fall back to the generic icon until the rider re-attaches a
+photo, same as any other stale-path case `BikePhoto` already handles.
+
+✅ **Verified end-to-end on the iOS Simulator** (2026-08-28, via `idb` UI
+automation): picked a photo, skipped crop (the exact bug path), saved —
+confirmed via the app's sqlite file that `bikes.image_path` pointed at
+`Documents/bike_<timestamp>.jpg`, not the `tmp/image_picker_...jpg` the
+picker itself wrote. Deleted that tmp file outright (simulating the OS/
+rebuild reclaiming it) and force-quit + relaunched the app: the photo still
+rendered, since the durable copy in `Documents/` was untouched. Also
+reconfirmed the Record-screen tint only appears once a bike has a real
+photo (§ note in `features.md`) — no tint with no photo, a colored wash once
+one exists.
+
+---
+
+## 46. Full-app QA sweep (2026-08-28): Export JSON/GPX, forum post deletion, and GPS-speed fallback — full report published
+
+Ran a tab-by-tab, button-by-button walkthrough of the whole app (iOS
+Simulator + physical device, accessibility-driven UI automation, a real
+2.2 km ride recorded end to end) rather than a code read. Three confirmed
+defects, filed individually below (§47–§49), plus two lower-severity forum
+UX gaps and one low-severity loading-state gap not broken out into their own
+sections:
+
+- **New forum posts don't appear until you leave and re-enter the thread**
+  — the compose sheet closes and reports success, but the thread screen
+  behind it doesn't refetch/invalidate, so it keeps showing "No posts yet"
+  until a manual back-and-forward navigation.
+- **Submitting an empty or title-only forum post gives zero feedback** — no
+  inline error, no shake, nothing; unclear whether the tap even registered.
+- **Brand forums (e.g. a whole-brand page like Yamaha) show a fully blank
+  body with no loading spinner** for the few seconds their post list takes
+  to fetch — the per-bike forum screen shows a spinner for the equivalent
+  wait, brand forums don't.
+
+Full report, including a "confirmed working" list (join-by-code, invite
+flow, pause/resume/discard, place reviews, empty states, badges, the
+appearance system, auto-detect permission handling) and explicit coverage
+notes (Group ride, Routes, Maintenance, SafeQR, Emergency Contacts, Android
+— not reached this pass): published as an Artifact, "ThrottleIQ
+Diagnostics".
+
+**Residual side effect of this sweep:** one test forum post ("QA test
+post") is stuck, undeletable through the app, in the live "Suzuki Gixxer"
+bike forum under the throwaway test account used for this sweep — see §47.
+This is real production data (the account and forum are real, not a
+sandbox); it needs the §47 rules fix (then delete normally) or a manual
+Firestore-console removal.
+
+## 47. Deleting your own forum post fails with `permission-denied` — CONFIRMED, not fixed
+
+Found during the §46 sweep. Created a post as the signed-in account on that
+account's own bike forum, then tried to delete it as the same author.
+Blocked outright:
+
+```
+Could not delete: [cloud_firestore/permission-denied] The caller does not
+have permission to execute the specified operation.
+```
+
+The delete button, confirmation dialog ("Delete post? This removes the post
+and its replies from the forum. It cannot be undone."), and optimistic UI
+all behave correctly — the write itself is rejected server-side. Reads as a
+`firestore.rules` gap (the forum-post delete rule likely doesn't check
+`request.auth.uid == resource.data.authorId`, or that rule isn't deployed)
+rather than a client-side bug, consistent with the pattern already seen in
+§29/§35/§37/§42 of rules lagging behind shipped features in this project.
+
+**Not yet fixed.** Left a real, currently-undeletable test post live in the
+Suzuki Gixxer bike forum (see §46) until this is resolved.
+
+## 48. Export JSON / Export GPX silently do nothing on iOS — CONFIRMED, not fixed
+
+Found during the §46 sweep. Tapping either export button on the Ride
+Summary screen produces no visible effect whatsoever — no share sheet, no
+error, no snackbar. The device log shows an uncaught exception on every tap:
+
+```
+flutter: PlatformException(error, sharePositionOrigin: argument must be set,
+  {{0, 0}, {0, 0}} must be non-zero and within coordinate space of source view: {{0, 0}, {402, 874}}, null, null)
+#2  MethodChannelShare.shareXFiles (package:share_plus_platform_interface/method_channel/method_channel_share.dart:112:20)
+```
+
+**Root cause:** `ride_summary_screen.dart:632` — `await
+Share.shareXFiles([XFile(file.path)], subject: ...)` — never passes
+`sharePositionOrigin`. This iOS version enforces a non-zero anchor rect for
+the share popover's presentation, even on iPhone. The fix already exists
+elsewhere in the same file's own feature area: `active_ride_screen.dart:190
+–193` computes and passes `sharePositionOrigin: origin` correctly for the
+"share live location" button. Exporting just needs the same treatment
+applied to `_exportRide()`.
+
+**Not yet fixed.**
+
+## 49. Recorded rides can save with avg/max speed and moving-time all zero — no fallback when `Position.speed` is unreliable — CONFIRMED (needs on-device verification), not fixed
+
+Found during the §46 sweep's end-to-end recorded ride (2.2 km, simulated
+GPS movement via `xcrun simctl location start`). The live speedometer on
+the Active Ride screen stayed at `0 km/h` for the entire ride, while
+distance (→ 2.2 km) and the live average speed (→ 52 km/h) updated
+correctly from the same GPS stream. Once saved, it got worse: the Ride
+Summary and Rides tab both show `avg 0`, `max 0`, `moving 00:00`, `in jam
+02:11` — the whole ride reads as 100% stationary — and it propagates into
+the badge system ("Top speed, 0 of 3 earned").
+
+**Root cause:** `ride_recording_provider.dart:737` — `final speedMs =
+pos.speed < 0 ? 0.0 : pos.speed;` — reads the device's raw `Position.speed`
+field verbatim, with **no fallback** to a distance/time-derived speed when
+that field is zero or unreliable. `active_ride_screen.dart:328, 459–467`
+display it as-is. Distance and the live avg-speed readout are computed
+independently from GPS coordinate deltas (`motion_calculator.dart:19–41`,
+haversine-based), which is why only the speed-dependent numbers broke.
+
+**Open question, not yet resolved:** Xcode Simulator location playback is
+known not to populate a realistic `CLLocation.speed`, so this exact
+zero-speed condition may be specific to simulated GPS rather than something
+a real ride hits. But the code path has no fallback for it either way, and
+unreliable/zero GPS speed fields are a known real-world condition on some
+Android GPS chipsets too — and a ride's avg/max/moving-time are baked in at
+save time with no way to recompute after the fact if it does happen for
+real. **Next step: record one short real ride on a physical device and
+check whether avg/max speed come out non-zero** before deciding whether a
+distance/time-derived fallback is worth adding to `_onPosition`.
+
+---
+
+## 50. §35's Android licensing crash fixed by replacing the paid plugin, not buying the key — auto-tracking now runs on a free stack (2026-08-28)
+
+§35 root-caused the Android release-build "licensing error" crash to
+`flutter_background_geolocation`'s never-purchased licence key
+(`AndroidManifest.xml`'s `com.transistorsoft.locationmanager.license` still
+held the literal placeholder). The fix recorded there was "buy a key". The
+product decision made this session was different: **stay on the free tier
+for roughly the next three months** rather than spend on the licence
+pre-revenue, and replace the plugin instead.
+
+**What changed.** `auto_tracking_service.dart` was rewritten around two free
+(MIT) packages in place of the one paid one:
+
+- `flutter_activity_recognition` (`ActivityRecognitionClient` on Android,
+  `CMMotionActivityManager` on iOS) for the "are they moving" signal —
+  `IN_VEHICLE` and `ON_BICYCLE` are both treated as ride-shaped, since both
+  classifiers routinely mistake a motorcycle for a bicycle at low speed.
+- `flutter_foreground_task` for a persistent Android foreground service
+  (survives the app being swiped from recents, `autoRunOnBoot: true` for
+  reboot survival) that keeps that signal alive, replacing the plugin's own
+  bundled foreground service + headless dispatcher.
+- `geolocator` (already a dependency, used for in-ride recording) supplies
+  the actual GPS fixes once vehicle motion is seen — no second, nested
+  foreground-service request; the task handler's own service already
+  satisfies Android's "app has an active foreground service" requirement for
+  background location.
+
+The two isolate-side handlers the old plugin needed (a UI-isolate listener
+and a separate headless-isolate entry point, kept in sync by hand) collapse
+into **one** here: `flutter_foreground_task`'s task handler is the single
+place events are processed regardless of whether the app's UI is open,
+which is a real simplification, not just a swap.
+
+**What was removed.** The plugin itself (`pubspec.yaml`), its licence
+meta-data (`AndroidManifest.xml`), its Gradle repo/dependency-forcing block
+(`android/build.gradle.kts` — this alone made `flutter build apk` fail
+outright with `Project with path ':flutter_background_geolocation' could
+not be found` once the pubspec dependency was gone, until removed), and its
+iOS `BGTaskSchedulerPermittedIdentifiers` (`Info.plist`), replaced with the
+new plugins' equivalents. `ios/Runner/AppDelegate.swift` gained the plugin
+registrant callback `flutter_foreground_task`'s background BGTaskScheduler
+refresh needs to see this app's other plugins (geolocator, sqflite,
+shared_preferences) — without it, those calls would throw
+`MissingPluginException` the one time in ~15 minutes iOS actually runs the
+background task.
+
+**What was kept as-is.** `AutoDetectionDao`, the `auto_detections`/
+`auto_fixes` schema, and `AutoRideReconcilerService` — both the old and new
+implementations write through the same DAO, so nothing downstream of
+detection changed.
+
+**Verified this session:** `flutter analyze` clean, `flutter test` 862/862
+(unchanged from before this session — no test covered `auto_tracking_service.dart`
+directly), `flutter build apk --debug` and, critically, **`flutter build apk
+--release` — the exact build that used to crash on launch — now build clean
+with no licence gate at all**.
+
+**Not verified — no physical device available this session:**
+- Whether `flutter_activity_recognition`'s stream actually keeps delivering
+  once `flutter_foreground_task`'s service isolate is the only thing alive
+  (app UI closed or swiped away). The build compiling and the API being
+  correctly wired is not the same as this being observed to fire on a real
+  ride.
+- The schedule-window gating's cross-isolate `SharedPreferences.reload()`
+  read (`_AutoTrackingTaskHandler._withinScheduleWindow`) — reasoned through
+  carefully (this is exactly what `reload()` exists for) but never run.
+- Android OEM battery-killer resistance without Transistorsoft's tuned
+  handling — only the generic `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` prompt.
+- iOS end to end — Info.plist/AppDelegate changes are compile-checked only
+  (no iOS toolchain run in this session); see the "Known gap" note in
+  `auto_tracking_service.dart` for the force-quit limitation that's expected
+  by design, not a bug to chase.
+
+**Archived, not deleted:** the paid-plugin implementation and every
+platform-config line it needed live at
+`docs/archives/flutter_background_geolocation-2026-08-28/`, with restore
+instructions — see `HANDOFF_Document.md`'s Feature Backlog (under
+"Automatic ride tracking") for the pros/cons table that should drive whether
+it's ever worth reviving.

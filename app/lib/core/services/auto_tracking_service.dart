@@ -1,92 +1,221 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
-    as bg;
+import 'package:flutter_activity_recognition/flutter_activity_recognition.dart'
+    as ar;
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../database/daos/auto_detection_dao.dart';
 
-/// Entry point for the background isolate.
+const _serviceId = 1000;
+const _channelId = 'auto_tracking';
+
+/// Entry point for the foreground-service isolate.
 ///
 /// **Must be a top-level function annotated `@pragma('vm:entry-point')`** —
 /// the tree-shaker has no way to see that the platform side calls this, and
 /// without the annotation it is removed from release builds, producing an
 /// auto-tracker that works perfectly in debug and never fires in production.
-///
-/// This runs with **no access to the app's Riverpod container**, because it is
-/// a genuinely separate isolate with its own memory. That is the whole reason
-/// auto-tracking can't simply call `RideRecordingNotifier.startRide()`: the
-/// notifier and every field it holds live in the UI isolate and do not exist
-/// here. So this writes raw observations to SQLite and nothing else; turning
-/// them into a ride happens on the UI isolate at next launch, in
-/// `AutoRideReconcilerService`.
 @pragma('vm:entry-point')
-void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
-  // Plugins are not registered automatically in a background isolate. Without
-  // this, the first sqflite call throws MissingPluginException and the whole
-  // detection is silently lost.
-  DartPluginRegistrant.ensureInitialized();
+void autoTrackingTaskCallback() {
+  FlutterForegroundTask.setTaskHandler(_AutoTrackingTaskHandler());
+}
 
-  final dao = AutoDetectionDao();
+/// Runs for as long as the foreground service is alive — which, on Android,
+/// is until [AutoTrackingService.stop] is called, independent of whether the
+/// app's own UI is open, backgrounded, or swiped from recents.
+///
+/// Unlike the paid `flutter_background_geolocation` plugin this replaces,
+/// there is only **one** handler, not a UI-isolate/headless-isolate pair: the
+/// task handler isolate is the single place activity events and location
+/// fixes are ever processed, whether or not the app is in the foreground. See
+/// [AutoTrackingService]'s doc comment for the rest of the shape.
+class _AutoTrackingTaskHandler extends TaskHandler {
+  final _dao = AutoDetectionDao();
+  StreamSubscription<ar.Activity>? _activitySub;
+  StreamSubscription<Position>? _positionSub;
+  Timer? _stillnessTimer;
+  var _moving = false;
 
-  switch (event.name) {
-    case bg.Event.MOTIONCHANGE:
-      final location = event.event as bg.Location;
-      if (location.isMoving) {
-        await AutoTrackingService.beginDetection(
-          dao,
-          AutoTriggerSource.activityRecognition,
-        );
-      } else {
-        await AutoTrackingService.endDetection(dao);
-      }
-      break;
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    // Plugins are not registered automatically in every background-isolate
+    // context. Without this, the first sqflite/geolocator call can throw
+    // MissingPluginException and the whole detection is silently lost — see
+    // the equivalent guard the previous (paid-plugin) implementation carried,
+    // preserved here out of caution even though flutter_foreground_task's own
+    // FlutterEngine is expected to register plugins itself.
+    DartPluginRegistrant.ensureInitialized();
+    _activitySub =
+        ar.FlutterActivityRecognition.instance.activityStream.listen(_onActivity);
+  }
 
-    case bg.Event.LOCATION:
-      final location = event.event as bg.Location;
-      await AutoTrackingService.recordFix(dao, location);
-      break;
+  /// A ride-shaped activity report from the platform classifier.
+  ///
+  /// `ON_BICYCLE` is treated the same as `IN_VEHICLE`: Google's and Apple's
+  /// classifiers routinely mistake a motorcycle for a bicycle at low speed
+  /// (both are two-wheeled, non-pedestrian, engine noise aside — neither
+  /// classifier listens for engine noise), so excluding it would just move
+  /// the false-negative rate rather than remove it.
+  static bool _isVehicleLike(ar.ActivityType type) =>
+      type == ar.ActivityType.IN_VEHICLE || type == ar.ActivityType.ON_BICYCLE;
 
-    case bg.Event.TERMINATE:
-      // The app process is going away but the plugin keeps running. Nothing to
-      // do — every fix is already on disk (see AutoDetectionDao.appendFix) and
-      // a detection left open is closed by closeStaleRecordingDetections() at
-      // next launch.
-      break;
+  void _onActivity(ar.Activity activity) {
+    // LOW confidence is closer to noise than signal for a binary
+    // moving/not-moving decision — better to miss a brief flicker than open
+    // (or close) a detection on a guess the classifier itself doesn't trust.
+    if (activity.confidence == ar.ActivityConfidence.LOW) return;
+
+    if (_isVehicleLike(activity.type)) {
+      _stillnessTimer?.cancel();
+      _stillnessTimer = null;
+      if (_moving) return;
+      _moving = true;
+      unawaited(_maybeBegin());
+    } else if (_moving && _stillnessTimer == null) {
+      // Five minutes of non-vehicle activity before declaring the journey
+      // over — matches the paid plugin's stopTimeout, tuned against Dhaka
+      // traffic specifically: a long signal or a level crossing routinely
+      // exceeds two minutes, and splitting one commute into three "rides" is
+      // worse than a slightly late stop.
+      _stillnessTimer = Timer(const Duration(minutes: 5), () {
+        _stillnessTimer = null;
+        _moving = false;
+        unawaited(_positionSub?.cancel());
+        _positionSub = null;
+        unawaited(AutoTrackingService.endDetection(_dao));
+      });
+    }
+  }
+
+  /// Opens a detection and starts collecting fixes, unless the rider has
+  /// restricted auto-tracking to an active-hours window and the current time
+  /// falls outside it.
+  ///
+  /// **Reduced fidelity vs the paid plugin, by design-for-now:** the old
+  /// implementation pushed the schedule into the OS's own scheduler, which
+  /// stopped GPS entirely outside the window. This reads the window fresh out
+  /// of `SharedPreferences` (with `reload()` — this isolate's cached copy can
+  /// otherwise miss an edit made from the Settings screen's isolate) at the
+  /// moment a candidate trip starts, and only gates *starting* a detection.
+  /// A trip already in progress when the window ends is left to finish rather
+  /// than cut off mid-journey — simpler, and arguably the more honest
+  /// behaviour, but it does mean a rider who starts riding one minute before
+  /// their window closes keeps getting tracked past it.
+  Future<void> _maybeBegin() async {
+    if (!await _withinScheduleWindow()) {
+      _moving = false;
+      return;
+    }
+    await AutoTrackingService.beginDetection(
+      _dao,
+      AutoTriggerSource.activityRecognition,
+    );
+    _startPositionStream();
+  }
+
+  Future<bool> _withinScheduleWindow() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    if (!(prefs.getBool(AutoTrackingService.prefsScheduleEnabled) ?? false)) {
+      return true;
+    }
+    final startMin =
+        prefs.getInt(AutoTrackingService.prefsScheduleStartMin) ?? 7 * 60;
+    final endMin =
+        prefs.getInt(AutoTrackingService.prefsScheduleEndMin) ?? 22 * 60;
+    final nowMin = DateTime.now().hour * 60 + DateTime.now().minute;
+    return nowMin >= startMin && nowMin < endMin;
+  }
+
+  /// HIGH rather than NAVIGATION/bestForNavigation: nobody is watching a live
+  /// readout on an auto-tracked ride, and the post-hoc polyline is
+  /// indistinguishable. Same reasoning as the auto GPS profile in
+  /// `ride_recording_provider.dart`. No `AndroidSettings.
+  /// foregroundNotificationConfig` here — the task handler running at all
+  /// *is* this app's active foreground service (the "Watching for rides"
+  /// notification from [AutoTrackingService.start]), which is what lets
+  /// Android grant background location in the first place; a second, nested
+  /// foreground-service request from geolocator would be redundant at best
+  /// and a duplicate notification at worst.
+  void _startPositionStream() {
+    const settings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 20,
+    );
+    _positionSub =
+        Geolocator.getPositionStream(locationSettings: settings).listen(
+      (position) => unawaited(AutoTrackingService.recordFix(_dao, position)),
+      onError: (Object error) => debugPrint('[auto-tracking] position error $error'),
+    );
+  }
+
+  @override
+  void onRepeatEvent(DateTime timestamp) {
+    // Nothing to poll: activity and location both arrive as pushed stream
+    // events, not on a timer. The repeat event exists only because
+    // ForegroundTaskOptions.eventAction requires *some* action; kept as a
+    // no-op rather than removed so the intent (this is a deliberate choice,
+    // not an oversight) is visible to the next person reading this file.
+  }
+
+  @override
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
+    // The service going away is not the same as the journey ending — unlike
+    // TERMINATE in the old plugin, this can happen mid-ride (OS memory
+    // pressure, `allowAutoRestart` losing the race). Deliberately does NOT
+    // close an open detection here: every fix already on disk survives (see
+    // AutoDetectionDao.appendFix), and a detection left `recording` is closed
+    // by `closeStaleRecordingDetections()` at next launch, dated to its last
+    // real fix rather than to whenever the app happens to reopen.
+    await _activitySub?.cancel();
+    await _positionSub?.cancel();
+    _stillnessTimer?.cancel();
   }
 }
 
 /// Configures and owns background ride detection.
 ///
-/// ## Why a paid plugin
+/// ## Why not the paid plugin
 ///
-/// Reliable all-day trip detection needs four things that have to cooperate:
-/// platform activity recognition, iOS significant-location-change, an Android
-/// foreground service that survives OEM battery killers, and a headless Dart
-/// isolate. `flutter_background_geolocation` provides all four as one tested
-/// unit. The alternative was writing a native `LocationForegroundService` and
-/// moving recording state out of the 1,500-line `ride_recording_provider.dart`
-/// — weeks of work on the most safety-relevant file in the app, before anyone
-/// had confirmed the detection itself works.
+/// This is the free-tier stand-in for `flutter_background_geolocation`,
+/// adopted 2026-08-28 to avoid the licence purchase while the product is
+/// pre-revenue (see `docs/HANDOFF_Document.md`'s backlog for the paid
+/// plugin's pros/cons, and
+/// `docs/archives/flutter_background_geolocation-2026-08-28/` for its old
+/// implementation, kept in case the paid plugin is worth revisiting later).
+/// It combines three free (MIT) pieces instead of one paid one:
 ///
-/// **Licensing:** Android *release* builds require a licence key in
-/// `AndroidManifest.xml` (`com.transistorsoft.locationmanager.license`). Debug
-/// builds run unlicensed. Without a key, release builds log a licence error
-/// and the plugin refuses to start — so this is a hard gate before shipping,
-/// not a nag. See the manifest for where the key goes.
+/// - `flutter_activity_recognition` for the "are they moving" signal
+///   (`ActivityRecognitionClient` on Android, `CMMotionActivityManager` on
+///   iOS) — OS-managed, effectively free of battery cost.
+/// - `flutter_foreground_task` for a persistent Android foreground service
+///   that keeps that signal alive after the app is swiped from recents, plus
+///   `autoRunOnBoot` for surviving a reboot.
+/// - `geolocator` (already a dependency for in-ride recording) for the actual
+///   fixes, started only once vehicle motion is seen.
+///
+/// **Known gap, accepted for now:** on iOS, the task handler does not survive
+/// the rider force-quitting ThrottleIQ from the app switcher — only Android's
+/// foreground service does. `flutter_background_geolocation`'s iOS
+/// significant-location-change wake-up is *also* documented as not surviving
+/// a user-initiated force-quit (only an OS-initiated kill for memory), so the
+/// practical gap is narrower than it first looks, but it is not zero. Not
+/// gating the free-tier ship on this.
 ///
 /// ## Battery
 ///
-/// The whole design exists to keep GPS *off*. In the idle state the plugin
-/// runs platform activity recognition and, on iOS, significant-location-change
-/// — both OS-managed and effectively free. GPS is only started once the
-/// platform reports vehicle motion. Continuous GPS costs 5–10% per hour;
-/// this shape costs roughly 3–5% per *day* while not riding. Any change that
-/// polls location on a timer to "check if they're riding" destroys that and
-/// must not be made.
+/// Same shape as before: GPS stays off until the platform reports vehicle
+/// motion. The persistent foreground-service notification itself costs
+/// effectively nothing (no wakelock beyond `allowWakeLock: true`'s CPU
+/// keep-awake); the activity classifier is OS-managed. Any change that polls
+/// location on a timer to "check if they're riding" destroys that and must
+/// not be made.
 class AutoTrackingService {
   AutoTrackingService._();
   static final AutoTrackingService instance = AutoTrackingService._();
@@ -94,11 +223,14 @@ class AutoTrackingService {
   static const _uuid = Uuid();
   static const _prefsEnabled = 'auto_tracking_enabled';
   static const _prefsCurrentDetection = 'auto_tracking_current_detection';
-  static const _prefsScheduleEnabled = 'auto_tracking_schedule_enabled';
-  static const _prefsScheduleStartMin = 'auto_tracking_schedule_start_min';
-  static const _prefsScheduleEndMin = 'auto_tracking_schedule_end_min';
 
-  final _dao = AutoDetectionDao();
+  // Package-visible (not private) so the task-handler isolate above can read
+  // the same keys without a second copy of the string literals drifting out
+  // of sync.
+  static const prefsScheduleEnabled = 'auto_tracking_schedule_enabled';
+  static const prefsScheduleStartMin = 'auto_tracking_schedule_start_min';
+  static const prefsScheduleEndMin = 'auto_tracking_schedule_end_min';
+
   var _configured = false;
 
   /// Whether the rider has turned auto-tracking on.
@@ -123,12 +255,12 @@ class AutoTrackingService {
   /// keep getting exactly that.
   static Future<bool> isScheduleEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_prefsScheduleEnabled) ?? false;
+    return prefs.getBool(prefsScheduleEnabled) ?? false;
   }
 
   static Future<void> setScheduleEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefsScheduleEnabled, value);
+    await prefs.setBool(prefsScheduleEnabled, value);
   }
 
   /// The active window, as minutes since local midnight. Defaults to 7am–10pm
@@ -137,8 +269,8 @@ class AutoTrackingService {
   static Future<(int startMinutes, int endMinutes)> getScheduleWindow() async {
     final prefs = await SharedPreferences.getInstance();
     return (
-      prefs.getInt(_prefsScheduleStartMin) ?? 7 * 60,
-      prefs.getInt(_prefsScheduleEndMin) ?? 22 * 60,
+      prefs.getInt(prefsScheduleStartMin) ?? 7 * 60,
+      prefs.getInt(prefsScheduleEndMin) ?? 22 * 60,
     );
   }
 
@@ -148,26 +280,11 @@ class AutoTrackingService {
   static Future<void> setScheduleWindow(
       int startMinutes, int endMinutes) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_prefsScheduleStartMin, startMinutes);
-    await prefs.setInt(_prefsScheduleEndMin, endMinutes);
+    await prefs.setInt(prefsScheduleStartMin, startMinutes);
+    await prefs.setInt(prefsScheduleEndMin, endMinutes);
   }
 
-  /// The plugin's cron-like schedule string for the stored window (e.g.
-  /// `'1-7 07:00-22:00'` — every day, 7am to 10pm), or null when the rider
-  /// hasn't turned scheduling on, meaning "track all day" as before.
-  static Future<String?> _scheduleCronOrNull() async {
-    if (!await isScheduleEnabled()) return null;
-    final (start, end) = await getScheduleWindow();
-    String fmt(int minutes) {
-      final h = (minutes ~/ 60).toString().padLeft(2, '0');
-      final m = (minutes % 60).toString().padLeft(2, '0');
-      return '$h:$m';
-    }
-
-    return '1-7 ${fmt(start)}-${fmt(end)}';
-  }
-
-  /// Prepares the plugin. Safe to call more than once.
+  /// Prepares the foreground task. Safe to call more than once.
   ///
   /// Deliberately does **not** start tracking — [start] does, and only when
   /// the rider has opted in.
@@ -175,167 +292,101 @@ class AutoTrackingService {
     if (_configured) return;
     _configured = true;
 
-    bg.BackgroundGeolocation.onMotionChange(_onMotionChange);
-    bg.BackgroundGeolocation.onLocation(_onLocation, _onLocationError);
-    bg.BackgroundGeolocation.onActivityChange(_onActivityChange);
-
-    final schedule = await _scheduleCronOrNull();
-
-    await bg.BackgroundGeolocation.ready(bg.Config(
-      // Rider-configured active hours (Settings → auto-tracking → Active
-      // hours), or null for the original all-day behaviour. Only takes
-      // effect via startSchedule()/stopSchedule() below, not plain
-      // start()/stop() — see those methods.
-      schedule: schedule == null ? null : [schedule],
-
-      // ── Detection ────────────────────────────────────────────────────
-      // HIGH rather than NAVIGATION: nobody is watching a live readout on an
-      // auto-tracked ride, and the post-hoc polyline is indistinguishable.
-      // Same reasoning as the auto GPS profile in ride_recording_provider.
-      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-      distanceFilter: 20,
-
-      // Minutes of stillness before the plugin declares the journey over.
-      // Five is chosen against Dhaka traffic specifically: a long signal or a
-      // level crossing routinely exceeds two minutes, and splitting one
-      // commute into three "rides" is worse than a slightly late stop.
-      stopTimeout: 5,
-
-      // ── Survival ─────────────────────────────────────────────────────
-      stopOnTerminate: false,
-      startOnBoot: true,
-      enableHeadless: true,
-      heartbeatInterval: 60,
-
-      // ── Android foreground service ───────────────────────────────────
-      foregroundService: true,
-      notification: bg.Notification(
-        title: 'ThrottleIQ',
-        text: 'Watching for rides',
-        sticky: false,
-        priority: bg.Config.NOTIFICATION_PRIORITY_MIN,
+    // initCommunicationPort() is called once, at process start, in main.dart
+    // — not here. It has to run before the isolate that receives a restored
+    // (post-reboot, post-relaunch) service's messages exists, which is
+    // earlier than any rider opt-in check this method could gate on.
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: _channelId,
+        channelName: 'Auto-tracking',
+        channelDescription:
+            'Shown while ThrottleIQ is watching for a ride to start.',
+        priority: NotificationPriority.MIN,
+        onlyAlertOnce: true,
       ),
-
-      // The plugin's own request flow explains the "Always" upgrade better
-      // than a bare system dialog does.
-      locationAuthorizationRequest: 'Always',
-      backgroundPermissionRationale: bg.PermissionRationale(
-        title: 'Let ThrottleIQ record rides automatically?',
-        message:
-            'ThrottleIQ needs background location to notice when you start '
-            'riding and log the ride without you tapping start.',
-        positiveAction: 'Change to Always Allow',
-        negativeAction: 'Cancel',
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: false,
+        playSound: false,
       ),
-
-      // ── Storage ──────────────────────────────────────────────────────
-      // The plugin keeps its own SQLite store and HTTP uploader. Both are
-      // switched off: fixes go into this app's own `auto_fixes` table so the
-      // reconciler reads one source of truth, and ThrottleIQ uploads through
-      // its existing outbox, not a second network path.
-      autoSync: false,
-      maxDaysToPersist: 3,
-
-      // Verbose in debug only — this plugin is extremely chatty.
-      debug: false,
-      logLevel: kDebugMode ? bg.Config.LOG_LEVEL_WARNING : bg.Config.LOG_LEVEL_OFF,
-    ));
-
-    bg.BackgroundGeolocation.registerHeadlessTask(
-      backgroundGeolocationHeadlessTask,
+      foregroundTaskOptions: ForegroundTaskOptions(
+        // Push-driven (activity/location streams), not polled — see this
+        // class's "Battery" note. The repeat interval only feeds
+        // onRepeatEvent's deliberate no-op.
+        eventAction: ForegroundTaskEventAction.repeat(60000),
+        autoRunOnBoot: true,
+        autoRunOnMyPackageReplaced: true,
+        allowWakeLock: true,
+      ),
     );
   }
 
   /// Begins watching for rides. No-op unless the rider has opted in.
   ///
-  /// Goes through the plugin's scheduler ([bg.BackgroundGeolocation.
-  /// startSchedule]) rather than a plain [bg.BackgroundGeolocation.start]
-  /// when a daily active-hours window is set — the scheduler is what
-  /// actually turns tracking off outside that window and back on inside it,
-  /// entirely natively, so it keeps working across app restarts and reboots
-  /// without this Dart code needing to be running to flip anything.
+  /// Collects the two permissions this needs beyond location (already
+  /// gathered by [AutoTrackingNotifier.enable] before this is ever called):
+  /// activity recognition, without which the platform classifier never
+  /// starts, and — Android 13+ — the notification permission the persistent
+  /// "watching for rides" notification needs to actually show.
   Future<bool> start() async {
     if (!await isEnabled()) return false;
     await configure();
-    final scheduled = await isScheduleEnabled();
-    final state = scheduled
-        ? await bg.BackgroundGeolocation.startSchedule()
-        : await bg.BackgroundGeolocation.start();
-    return state.enabled;
+
+    final activityPermission =
+        await ar.FlutterActivityRecognition.instance.checkPermission();
+    if (activityPermission != ar.ActivityPermission.GRANTED) {
+      final requested =
+          await ar.FlutterActivityRecognition.instance.requestPermission();
+      if (requested != ar.ActivityPermission.GRANTED) return false;
+    }
+
+    if (Platform.isAndroid) {
+      if (await FlutterForegroundTask.checkNotificationPermission() !=
+          NotificationPermission.granted) {
+        await FlutterForegroundTask.requestNotificationPermission();
+      }
+      // Best-effort: several OEMs kill a foreground service anyway unless
+      // the app is exempted from battery optimization. Declining this
+      // dialog doesn't fail `start()` — the service still runs, just less
+      // reliably on those OEMs.
+      if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+      }
+    }
+
+    if (await FlutterForegroundTask.isRunningService) return true;
+    final result = await FlutterForegroundTask.startService(
+      serviceId: _serviceId,
+      serviceTypes: const [ForegroundServiceTypes.location],
+      notificationTitle: 'ThrottleIQ',
+      notificationText: 'Watching for rides',
+      callback: autoTrackingTaskCallback,
+    );
+    return result is ServiceRequestSuccess;
   }
 
   Future<void> stop() async {
-    if (!_configured) return;
-    // Per the plugin's own docs: `.stop()` does not halt the scheduler by
-    // itself, so a rider who had a schedule running would otherwise see
-    // tracking silently resume at the next scheduled start. Calling
-    // stopSchedule() unconditionally is harmless when no schedule was ever
-    // started.
-    await bg.BackgroundGeolocation.stopSchedule();
-    await bg.BackgroundGeolocation.stop();
-  }
-
-  /// Re-applies the active-hours window to an already-running tracker —
-  /// called when the rider edits the schedule from Settings without toggling
-  /// auto-tracking off and back on. No-op if auto-tracking itself is off;
-  /// the new window is picked up from [configure] the next time it's turned
-  /// on instead.
-  ///
-  /// **Not yet verified on a physical device** — built against the plugin's
-  /// documented `setConfig`/`startSchedule`/`stopSchedule` contract, same as
-  /// every other flutter_background_geolocation integration in this file,
-  /// but this specific live-update path hasn't been exercised on-device yet.
-  /// See docs/Issues.md.
-  Future<void> applyScheduleChange() async {
-    if (!_configured || !await isEnabled()) return;
-    final schedule = await _scheduleCronOrNull();
-    await bg.BackgroundGeolocation.setConfig(
-      bg.Config(schedule: schedule == null ? null : [schedule]),
-    );
-    if (schedule != null) {
-      await bg.BackgroundGeolocation.startSchedule();
-    } else {
-      await bg.BackgroundGeolocation.stopSchedule();
-      await bg.BackgroundGeolocation.start();
+    if (await FlutterForegroundTask.isRunningService) {
+      await FlutterForegroundTask.stopService();
     }
   }
 
-  // ── Event handlers (UI isolate) ───────────────────────────────────────
-  //
-  // These mirror the headless handlers exactly. Both paths exist because the
-  // plugin delivers to whichever isolate is alive: the UI isolate when the app
-  // is running, the headless one when it isn't. Keeping the two in step is why
-  // the actual work lives in the static helpers below rather than being
-  // written twice.
+  /// No-op: unlike the paid plugin's native OS scheduler, this
+  /// implementation reads the active-hours window fresh out of
+  /// `SharedPreferences` at the moment each candidate trip starts (see
+  /// `_AutoTrackingTaskHandler._withinScheduleWindow`), so there is nothing
+  /// to push into an already-running service. Kept as a method — rather than
+  /// deleted — so the call sites in `auto_tracking_provider.dart` that edit
+  /// the schedule don't need to know which implementation is behind this
+  /// service.
+  Future<void> applyScheduleChange() async {}
 
-  void _onMotionChange(bg.Location location) {
-    unawaited(location.isMoving
-        ? beginDetection(_dao, AutoTriggerSource.activityRecognition)
-        : endDetection(_dao));
-  }
-
-  void _onLocation(bg.Location location) => unawaited(recordFix(_dao, location));
-
-  void _onLocationError(bg.LocationError error) {
-    // Location errors during monitoring are expected and frequent (no sky
-    // view, permission revoked mid-journey, airplane mode). A dropped fix is
-    // survivable — the reconciler works from whatever arrived — so this is
-    // deliberately not surfaced to the rider.
-    debugPrint('[auto-tracking] location error ${error.code}: ${error.message}');
-  }
-
-  void _onActivityChange(bg.ActivityChangeEvent event) {
-    debugPrint(
-        '[auto-tracking] activity ${event.activity} @ ${event.confidence}%');
-  }
-
-  // ── Shared work, callable from either isolate ─────────────────────────
+  // ── Shared work, callable from the task-handler isolate or this one ────
 
   /// Opens a detection, unless one is already open.
   ///
   /// The id is held in `SharedPreferences` rather than in a field because the
-  /// two isolates cannot see each other's memory: the headless isolate may
-  /// open a detection that the UI isolate later has to close.
+  /// task-handler isolate and this one cannot see each other's memory.
   static Future<void> beginDetection(
     AutoDetectionDao dao,
     String triggerSource,
@@ -364,24 +415,22 @@ class AutoTrackingService {
   /// Appends a fix to the open detection.
   ///
   /// Fixes that arrive with no detection open are dropped rather than
-  /// implicitly opening one: the plugin emits occasional locations while
-  /// stationary (heartbeat, geofence evaluation), and treating those as the
-  /// start of a journey is how a parked bike becomes a 12-hour "ride".
-  static Future<void> recordFix(AutoDetectionDao dao, bg.Location location) async {
+  /// implicitly opening one: a fix can outlive its stillness timer closing
+  /// the detection, and treating a late straggler as the start of a new
+  /// journey is how a parked bike becomes a fresh "ride".
+  static Future<void> recordFix(AutoDetectionDao dao, Position position) async {
     final current = await dao.currentRecording();
     if (current == null) return;
 
-    final coords = location.coords;
     await dao.appendFix(
       detectionId: current['id'] as String,
-      timestamp: DateTime.tryParse(location.timestamp)?.toLocal() ??
-          DateTime.now(),
-      lat: coords.latitude,
-      lng: coords.longitude,
-      speedMs: coords.speed < 0 ? 0 : coords.speed,
-      accuracyM: coords.accuracy,
-      altitudeM: coords.altitude,
-      headingDeg: coords.heading < 0 ? null : coords.heading,
+      timestamp: position.timestamp,
+      lat: position.latitude,
+      lng: position.longitude,
+      speedMs: position.speed < 0 ? 0 : position.speed,
+      accuracyM: position.accuracy,
+      altitudeM: position.altitude,
+      headingDeg: position.heading < 0 ? null : position.heading,
     );
   }
 }

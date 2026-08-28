@@ -87,6 +87,17 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `Issues.md`; this list is a compact pointer, not the record itself.
 
+- **2026-08-28 (later still)** — Auto-tracking's licensing crash (§35) fixed
+  by replacing the paid `flutter_background_geolocation` plugin with a free
+  stand-in (`flutter_activity_recognition` + `flutter_foreground_task` +
+  the existing `geolocator` dependency) — a deliberate product decision to
+  stay on the free tier for roughly the next three months rather than buy the
+  licence key now (§50). `flutter build apk --release` now succeeds with no
+  licence-key gate at all, where it previously crashed on launch. Known gap:
+  on iOS the tracker doesn't survive the rider force-quitting the app (see
+  Known Limitations below). The old implementation is preserved in
+  `docs/archives/flutter_background_geolocation-2026-08-28/` in case the
+  paid plugin is worth revisiting — pros/cons in the Feature Backlog, Part 2.
 - **2026-08-28 (later same day)** — Three competitor-gap items shipped:
   **SafeQR** (`/safe-qr`, device-local scannable medical-info QR card, no
   backend), the Record screen's plain "Ride with friends" button replaced
@@ -253,6 +264,16 @@ Full technical detail and root causes for anything marked with a `§` live in
   `admin` custom claim; no in-app admin UI.
 - **ML features**: crash/pothole detection is threshold-based; no on-device
   model (see Part 3, Phase 4, for why and when this might change).
+- **Auto-tracking on iOS doesn't survive a force-quit**: the free-tier
+  detector (`flutter_foreground_task`, since 2026-08-28) keeps running after
+  the app is swiped from Android's recents, but on iOS the task is destroyed
+  the moment the rider force-quits ThrottleIQ from the app switcher —
+  documented plugin behaviour, not a bug in this app's use of it. Backgrounded
+  (not force-quit) still works. See `auto_tracking_service.dart`'s doc
+  comment and the Feature Backlog (Part 2) for the paid-plugin alternative,
+  whose iOS story is only somewhat better (its significant-location-change
+  wake-up also doesn't survive a *user-initiated* force-quit, only an
+  OS-initiated kill for memory).
 
 ### Deployment & CI/CD
 - **Build**: `flutter build apk` / `flutter build appbundle` for Android;
@@ -339,6 +360,10 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   tuning from an actual ride.
 - [ ] **GPS trail sync round-trip** — record, sync, reinstall, confirm the
   polyline comes back rather than an empty map.
+- [ ] **OS app icon border-flush fix** (added 2026-08-28, `Issues.md` §44) —
+  the squircle border now sits flush against the icon's outer edge instead
+  of floating inset; confirmed only by rendering the PNGs, not by a fresh
+  install on a physical device (unlike §43, which was device-verified).
 - [ ] **Home-screen widgets on a real launcher** (Android confirmed on an
   emulator, §31; iOS structurally wired but inert until an Apple Developer
   team is assigned in Xcode for both targets).
@@ -356,13 +381,18 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 ## 📋 To do
 
 ### Now (blocking any further distribution)
-- [ ] 🔴 **Buy the `flutter_background_geolocation` license key.** Every
-  Android release build crashes with a licensing error on launch —
-  `AndroidManifest.xml`'s `com.transistorsoft.locationmanager.license`
-  meta-data still holds the placeholder `PASTE_LICENCE_KEY_BEFORE_RELEASE`
-  (`Issues.md` §35). Buy at https://shop.transistorsoft.com for
-  `com.bft.throttleiq` (per-app-id, one-time), paste the key in, rebuild,
-  re-sign, re-upload.
+- [x] ~~Buy the `flutter_background_geolocation` license key~~ **RESOLVED
+  DIFFERENTLY, 2026-08-28** — instead of buying the key, the plugin was
+  replaced with a free stand-in (`flutter_activity_recognition` +
+  `flutter_foreground_task`, see `auto_tracking_service.dart`'s doc comment
+  and `Issues.md` §50). `flutter build apk --release` now succeeds with no
+  licence gate. Product decision: stay on the free tier for roughly the next
+  three months. Reconsider the paid plugin (pros/cons under "Proposed
+  features" in Part 2) if the free tier's gaps — mainly, weaker iOS survival
+  and no true OS-native scheduled start/stop — turn out to matter in
+  practice; the old implementation is archived at
+  `docs/archives/flutter_background_geolocation-2026-08-28/` and can be
+  dropped back in.
 - [ ] **Back up the signing keystore.** `throttleiq-release.keystore` +
   `app/android/key.properties` exist ONLY on the dev machine. If lost, the
   app can never be updated under the same identity → password manager /
@@ -473,7 +503,13 @@ the actual pre-launch QA punch list — ordered roughly by risk.
    needs it added, since Play expects the listing's developer name to match.
 3. **Create the app** in Play Console, then **rebuild the AAB** at the next
    version code (`flutter build appbundle --release`) — the last build
-   predates several shipped features.
+   predates several shipped features. **Watch the package name when creating
+   it**: as of 2026-08-28 the Play Console package list shows two
+   registrations — `com.bft.throlleiq` (typo, missing a "t") and
+   `com.bft.throttleiq` (correct). The app's actual `applicationId`
+   (`app/android/app/build.gradle.kts`) is `com.bft.throttleiq` — create/use
+   that one and let the typo registration lapse or delete it, so the AAB
+   upload doesn't get rejected for a package-name mismatch.
 4. **Upload to Internal testing track first** — exempt from the background-
    location review, so it's the fastest way to a real build on real devices.
 5. Fill in **Store listing** (`store_listing/store_listing.md`), **Data
@@ -553,11 +589,36 @@ group first matters more than speed.
   split by `userInitiated`, schema v11 (`is_auto`/`bike_confidence`/
   `auto_detections`/`auto_fixes`), the background trigger + reconciler, bike
   attribution with a correction card, and three new notification channels.
-  **Still blocking before this is trustworthy in production**: the
-  `flutter_background_geolocation` license key (see "Now" above — blocks
-  every Android release build, not just this feature), and an on-device
+  **Still blocking before this is trustworthy in production**: an on-device
   test of the full-screen crash-alert notification on an auto-started ride
   (see "Done, NOT yet verified").
+
+  **2026-08-28 — swapped the paid detection plugin for a free one, staying
+  free-tier for ~3 months.** The licence key for `flutter_background_geolocation`
+  was never bought (`Issues.md` §35 — the crash it caused). Rather than buy
+  it, the plugin was replaced with `flutter_activity_recognition` +
+  `flutter_foreground_task` (both MIT) — see `auto_tracking_service.dart`'s
+  doc comment for the new architecture and `Issues.md` §50 for the full
+  write-up. The old implementation is kept at
+  `docs/archives/flutter_background_geolocation-2026-08-28/` (code +
+  restore instructions) in case it's worth reviving. Pros/cons, for whoever
+  revisits this after the 3 months:
+
+  | | `flutter_background_geolocation` (paid) | Free stand-in (current) |
+  |---|---|---|
+  | Cost | One-time, per-app-id; price wasn't published without a quote from https://shop.transistorsoft.com | $0 |
+  | Android survives force-swipe from recents | Yes | Yes (`flutter_foreground_task`'s foreground service) |
+  | Android survives OEM battery killers | Tested/tuned by the vendor across OEMs | Best-effort — `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` prompt only, no vendor-specific handling |
+  | iOS survives a *user-initiated* force-quit | No (documented Apple platform limit, not a plugin gap) | No (same underlying limit) |
+  | iOS survives an *OS-initiated* kill (memory pressure) | Yes — significant-location-change relaunches the app | No — the task is simply gone until next manual open |
+  | Active-hours scheduling | Native OS-level start/stop — genuinely stops GPS outside the window | Dart-side gating at trip-start only; a trip already running when the window ends finishes uncut (see `auto_tracking_service.dart`) |
+  | Isolate architecture | Two handlers to keep in sync (UI isolate + headless isolate) | One handler — the foreground-service isolate runs regardless of whether the UI is open |
+  | Maintenance | Vendor-maintained, single dependency | Two free dependencies to track for breakage/abandonment (`flutter_activity_recognition` was last published ~24 months ago as of 2026-08-28 — check it's still alive before leaning on it long-term) |
+
+  **Revisit trigger:** if beta feedback shows the iOS gap or OEM battery-kill
+  reliability actually costing detected rides, or once there's revenue to
+  justify a recurring infra cost that used to be "should we spend money
+  pre-revenue" — not before.
 - 🔮 **Auto-pause in traffic.** Detect a stop (already possible — the
   recorder classifies `period_type` as moving/idle at the 1 m/s cutoff)
   and pause recording automatically. ~~surface the jam time back to the
