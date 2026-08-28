@@ -51,7 +51,7 @@ the single biggest lever in this document.
 - **Social reactions as re-entry triggers.** A rider shares a ride; a friend
   upvotes or comments. That's a natural external trigger ("someone reacted
   to your ride") but today it's invisible unless the rider happens to open
-  the feed. Once FCM is wired (already planned per `Assumptions Made.md`
+  the feed. Once FCM is wired (already planned per `assumptions.md`
   #17 for group-ride invites), route comment/upvote events through the same
   pipe — cheap incremental scope, not a new system.
 - **Weekly digest, not daily nag.** Given the loop is ride-frequency-driven
@@ -136,7 +136,7 @@ the single biggest lever in this document.
   count.
 - **Regional/friends comparison, scoped carefully.** The generic advice to
   add leaderboards is real but needs a privacy-aware shape given
-  `Assumptions Made.md`'s existing stance on home-location privacy: never
+  `assumptions.md`'s existing stance on home-location privacy: never
   rank by absolute location, only by opted-in metrics (total distance,
   fuel efficiency if/when tracked) among *followed* riders — mirroring the
   audience-tiered sharing model already built for the feed, not a new

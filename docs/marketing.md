@@ -185,7 +185,7 @@ locally resonant:
 - **Group-ride invite (retention loop, not acquisition — know the
   difference):** inviting a friend to a group ride requires them to
   already be a registered ThrottleIQ user (in-app notification only, no
-  SMS/push to outsiders — `Assumptions Made.md` #17). This strengthens
+  SMS/push to outsiders — `assumptions.md` #17). This strengthens
   retention among people who already installed together, but it will not
   pull in new users on its own. Don't market it as a growth driver; market
   it as a reason existing riding groups all install together up front.
@@ -196,6 +196,39 @@ locally resonant:
   building the public ride-summary page described in §3 turns the highest
   volume in-app action (finishing and sharing a ride) into a second real
   acquisition loop, not just the live-share one.
+- 🔮 **Milestone-gated "first to badge" promotion (idea, not built,
+  proposed 2026-08-28).** Once the app has reached roughly **100 organic
+  users** (a deliberate floor — this is a retention/word-of-mouth play for
+  an existing base, not a launch-day acquisition stunt, and running it too
+  early would mean giving prizes away to the same 20-30 closed-beta
+  testers who already installed for free), run a limited-time promotion on
+  top of the existing badge system (`Features.md` §3, bronze → diamond
+  tiers): the **first** riders to reach specific named badge tiers win a
+  small physical prize relevant to actually maintaining a bike — engine
+  oil, a chain cleaner/lube kit, etc. Which badges qualify and how many
+  winners per badge should be decided at the time it's run, based on
+  which tiers are still realistically reachable "first" by a fresh cohort
+  rather than already claimed by early testers.
+  - **Why this is worth doing over a generic giveaway**: it rewards actual
+    usage (riding enough to earn a real badge) rather than a follow/share
+    tap, and the prize category (oil, chain cleaner) reinforces the
+    Garage/maintenance-tracking identity that's already ThrottleIQ's
+    deepest differentiation (`Features.md` §5, `business_critique.md`).
+  - **Not yet solved, before this can run**: a claim/fulfilment path
+    (verify the badge was actually earned, collect a shipping address,
+    ship a physical item, cap it to one prize per person) — none of that
+    exists today. This is the same gap already flagged in
+    `HANDOFF_Document.md`'s "Badge completion reward" open question (an
+    all-badges-earned engine-oil promise); that item and this one are two
+    different concrete proposals riding on the same missing
+    infrastructure, and only one claim/fulfilment mechanism should
+    probably be built to serve both rather than two separate ones.
+  - **Cost/logistics are the real open question**: shipping a physical
+    item to riders across Bangladesh needs a courier relationship and a
+    per-unit cost budgeted before announcing it — don't promise it
+    publicly before that's worked out, for the same "don't promise what
+    isn't built yet" reason the crash-alert copy in this repo is kept
+    honest.
 
 ---
 
@@ -217,7 +250,7 @@ locally resonant:
 
 ## 8. Budget reality
 
-This is a solo-built app (per `README.md`/`pitch.md`) — the plan above is
+This is a solo-built app (per `README.md`/`pitch_and_marketing_materials.md`) — the plan above is
 built around **zero-to-low paid spend**: community seeding, organic
 Facebook groups, earned reviews, and one or two live club-ride
 appearances. Paid app-install ads in BD are relatively cheap but attract

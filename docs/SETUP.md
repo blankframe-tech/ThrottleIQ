@@ -23,12 +23,23 @@ flutter pub get
 ### 2. Firebase Project Setup
 
 1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Create a new project (or use existing): "ThrottleIQ"
+2. Create a new project (or use existing): "ThrottleIQ" — the live project is
+   `throttleiqfb` (asia-south1)
 3. Enable these services:
-   - Authentication (Email/Password)
+   - Authentication (Email/Password, Google Sign-In)
    - Firestore Database
-   - Storage (for images)
-   - Cloud Functions (for crash notifications)
+   - Cloud Messaging (bundled but not currently sending anything — see
+     `docs/HANDOFF_Document.md`'s Key facts table)
+4. **Not enabled, and not needed today:** Firebase Storage and Cloud
+   Functions both require the Blaze (pay-as-you-go) plan, which this project
+   isn't on. Photo uploads go to Cloudinary instead — create a free
+   Cloudinary account, an unsigned upload preset, and set the cloud
+   name/preset in `app/lib/core/services/cloudinary_upload_service.dart`
+   (production uses cloud name `vjvcigkt`; use your own for local dev so you
+   don't share a quota). Cloud Functions (crash-notification escalation)
+   exist as TypeScript source in `functions/src/` but can't deploy on Spark
+   — see `docs/backend_options.md` for the real cost estimate and
+   alternatives before turning on Blaze.
 
 ### 3. Download Google Services Files
 
@@ -69,7 +80,15 @@ keyAlias=throttleiq-release
 keyPassword=YOUR_KEY_PASSWORD
 ```
 
-⚠️ **Never commit key.properties to git** (already in `.gitignore`)
+⚠️ **Never commit key.properties to git** (already in `.gitignore`). **Back
+up the keystore file itself somewhere durable** — password manager or
+secure cloud, never git. Losing it means the app can never be updated under
+the same identity again.
+
+⚠️ On macOS, `/usr/bin/keytool` is Apple's stub and fails (sometimes
+silently, under `2>/dev/null`) if no JDK is on `PATH`. Use Android Studio's
+bundled runtime instead:
+`"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"`.
 
 ### 5. Run Locally
 
@@ -99,6 +118,10 @@ firebase use --add
 firebase deploy --only firestore:rules
 ```
 
+Test rules against the emulator before deploying: `npm run test:rules` from
+`scripts/` (needs a JVM — Android Studio's bundled JBR works if there's no
+`java` on `PATH`: `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`).
+
 ### 2. Create Firestore Indexes (if prompted)
 
 Firestore will suggest composite indexes on first complex query. Either:
@@ -109,64 +132,30 @@ Firestore will suggest composite indexes on first complex query. Either:
 firebase deploy --only firestore:indexes
 ```
 
-### 3. Deploy Storage Rules (optional)
+### 3. Storage — not currently used
 
-Create `storage.rules` with:
+Firebase Storage isn't enabled for this project (no `"storage"` key in
+`firebase.json`) — it requires the Blaze plan even within its free tier.
+Photo uploads (bike photos, profile pictures, forum images) go to Cloudinary
+instead, unsigned upload, cloud name `vjvcigkt`. If Storage is ever turned
+on, `storage.rules` exists in the repo with size/content-type constraints
+already written (`docs/Issues.md` §33.6/§33.15) but dormant.
 
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Users can only write to their own folder
-    match /users/{uid}/{allPaths=**} {
-      allow read, write: if request.auth.uid == uid;
-    }
-    match /places/{placeId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == resource.metadata.owner;
-    }
-  }
-}
-```
+## Cloud Functions — written, cannot deploy on the current plan
 
-Then deploy:
-
-```bash
-firebase deploy --only storage
-```
-
-## Cloud Functions (Optional - Crash Notifications)
-
-Create `functions/index.js`:
-
-```javascript
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-
-admin.initializeApp();
-
-exports.notifyOnCrash = functions.firestore
-  .document("liveSessions/{token}")
-  .onWrite(async (change) => {
-    const data = change.after.data();
-    if (data.status === "crash") {
-      const uid = data.uid;
-      const user = await admin.firestore().collection("users").doc(uid).get();
-      const contacts = user.data()?.emergencyContacts || [];
-      
-      // Send SMS/email via Twilio or Firebase email
-      // TODO: Implement notification logic
-      console.log(`Crash detected for ${uid}, notifying ${contacts.length} contacts`);
-    }
-  });
-```
-
-Deploy:
+`functions/src/*.ts` (TypeScript) implements the crash-notification
+escalation timer (pending → contacted → escalated) and a ride-identity
+reconciliation trigger. Both are real code, not stubs, but
+`firebase deploy --only functions` fails outright on this project's Spark
+billing plan (`artifactregistry.googleapis.com` can't be enabled without
+Blaze). See `docs/backend_options.md` for the actual cost estimate and two
+alternatives to upgrading before deploying anything here:
 
 ```bash
 cd functions
 npm install
-firebase deploy --only functions
+npm run build     # compiles to lib/, gitignored
+firebase deploy --only functions   # fails today — needs Blaze
 ```
 
 ## Build for Release
@@ -200,14 +189,6 @@ open ios/Runner.xcworkspace
 2. Fill in store listing (screenshots, description, privacy policy)
 3. Go through review (typically 24-48 hours)
 4. Release to internal testing first, then staged rollout
-
-## Environment Variables
-
-Set in `.env` (not committed) or Firebase project:
-
-```
-TIPSOI_MOCK=0  # Set to 1 for offline demo mode
-```
 
 ## Troubleshooting
 
@@ -244,47 +225,23 @@ flutter analyze
 # Format code
 dart format .
 
-# Lint
-flutter pub run custom_lint
-
-# Build all
-flutter pub run build_runner build
-
 # Dry run (see what would build)
 flutter build apk --release --analyze-size
 ```
 
-## CI/CD (GitHub Actions - Optional)
-
-Create `.github/workflows/build.yml`:
-
-```yaml
-name: Build & Test
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
-      - run: flutter build apk --release
-```
+No CI/CD pipeline exists in this repo yet — `flutter analyze && flutter test`
+before every push is the manual equivalent today.
 
 ---
 
 ## Support
 
-- **Issues**: Report bugs via GitHub Issues
+- **Issues**: tracked in `docs/Issues.md`, not GitHub Issues
+- **Full project status / to-do**: `docs/HANDOFF_Document.md`
 - **Firebase Docs**: https://firebase.google.com/docs
 - **Flutter Docs**: https://flutter.dev/docs
 - **Firestore Security**: https://firebase.google.com/docs/firestore/security
 
 ---
 
-**Last Updated**: 2026-07-12  
-**Next**: Run `flutter run` to start developing!
+**Last updated**: 2026-08-28

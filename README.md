@@ -1,13 +1,17 @@
 # 🏍️ ThrottleIQ — Machine Memory for Motorcycles
 
-**ThrottleIQ** is a open-source motorcycle ride tracking and intelligence platform that captures every detail of your rides: speed, acceleration, braking, routes, and machine maintenance. Built for riders who care about performance, safety, and keeping their bikes running flawlessly.
+**ThrottleIQ** is a source-available motorcycle ride tracking and intelligence platform that captures every detail of your rides: speed, acceleration, braking, routes, and machine maintenance. Built for riders who care about performance, safety, and keeping their bikes running flawlessly.
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** latest release `v2.0.0-beta.3+5` (Editorial BW redesign). A v2
-> social/community rework (open follow, audience-tiered sharing, upvote/downvote,
-> forums, places with map pins, per-bike service) is in progress on
-> `feat/v2-social` — see **`HANDOFF_V2.md`**. App id is `com.bft.throttleiq`.
+> **Status:** pre-launch beta, `1.0.0-beta.1+1`, tagged
+> [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1)
+> — a signed Android APK only, no Play Store/App Store listing yet. Core
+> ride recording, garage/maintenance, social (forums, feed, group rides),
+> POI directory and saved routes are all built and wired end-to-end. See
+> [`docs/HANDOFF_Document.md`](docs/HANDOFF_Document.md) for the full current
+> status and what's still unverified before launch. App id is
+> `com.bft.throttleiq`.
 
 ---
 
@@ -67,10 +71,12 @@
    flutter pub get
    ```
 
-3. **Set up Firebase** (see [SETUP.md](SETUP.md) for details):
+3. **Set up Firebase** (see [`docs/SETUP.md`](docs/SETUP.md) for details):
    - Create Firebase project at console.firebase.google.com
    - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
    - Place in `app/android/app/` and `app/ios/Runner/` respectively
+   - Set up a free Cloudinary account for photo uploads (Firebase Storage
+     isn't used — see `docs/SETUP.md`)
 
 4. **Run**:
    ```bash
@@ -101,11 +107,14 @@ Done! Ride is saved to local database and will auto-sync to cloud on next reconn
                    │ (auto-sync on resume + 5min intervals)
                    │
 ┌──────────────────▼──────────────────────────────────────┐
-│  Firebase Backend                                       │
-│  ├─ Firestore: User data, rides, bikes, POIs, reviews │
-│  ├─ Storage: POI photos, profile pictures              │
-│  ├─ Auth: Email/password + anonymous                  │
-│  └─ Cloud Functions: Crash notifications, exports     │
+│  Firebase + Cloudinary Backend                          │
+│  ├─ Firestore: user data, rides, bikes, POIs, reviews  │
+│  ├─ Cloudinary: photo uploads (not Firebase Storage —  │
+│  │   Storage needs the Blaze plan; see docs/SETUP.md)  │
+│  ├─ Auth: email/password + Google sign-in              │
+│  └─ Cloud Functions: written, can't deploy on Spark    │
+│      (crash-notification escalation — see              │
+│      docs/backend_options.md)                           │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -142,26 +151,17 @@ flutter test --watch
 flutter test --coverage
 ```
 
-### Test Suite (100+ tests, ~98% coverage)
+### Test Suite
 
-**Pure Logic** (TDD best practices, fixture-based):
-- **MotionCalculator** (28 tests): Acceleration, jerk, haversine distance calculations
-- **CrashDetector** (11 tests): Crash vs pothole, alert TTL, false positive guards
-- **PrivacyZoneClipper** (8 tests): Polyline clipping for home location privacy
-- **RatingAggregation** (18 tests): Average, distribution, edge cases
-- **RideDAO** (24 tests): CRUD, sync, cascade delete operations
-- **Data Models** (40+ tests): Serialization, equality, round-trips
-
-**Test Fixtures**:
-All tests use realistic data — real coordinates (Dhaka, Chattogram), sensor thresholds, known distances (~260km between cities).
-
-### TDD Approach
-
-All new features follow test-first:
-1. Write failing test with realistic fixture data
-2. Implement logic to pass test
-3. Refactor
-4. Commit with test included
+**847/847 green** as of 2026-08-28 (see `docs/HANDOFF_Document.md`'s Key
+facts table for how that grew). Pure-logic calculators (motion, crash
+detection, jerk/acceleration, privacy-zone clipping, rating aggregation) are
+fixture-tested against realistic data — real coordinates (Dhaka,
+Chattogram), sensor thresholds, known distances. DAOs run against real
+in-memory SQLite (`sqflite_common_ffi`), not mocks — a prior deadlock bug
+shipped specifically because map-based fakes couldn't see real transaction
+semantics (`docs/Issues.md` §7). Firestore rules have their own emulator
+suite: `npm run test:rules` from `scripts/`.
 
 **Example: Crash Detection**
 ```dart
@@ -178,16 +178,6 @@ test('DOES fire on crash: accel spike + jerk spike + speed→0 in 2s', () {
 });
 ```
 
-### Coverage Details
-
-See [TEST_SUMMARY.md](TEST_SUMMARY.md) for full breakdown:
-- 28 motion/acceleration tests
-- 11 crash detection tests
-- 18 rating aggregation tests
-- 24 database operation tests
-- 8 privacy/clipping tests
-- 40+ data model tests
-
 ---
 
 ## 📦 Dependencies
@@ -197,8 +187,8 @@ See [TEST_SUMMARY.md](TEST_SUMMARY.md) for full breakdown:
 - **sensors_plus**: Accelerometer/gyroscope data
 - **sqflite**: Local SQLite database
 - **cloud_firestore**: Firestore cloud backend
-- **firebase_auth**: User authentication
-- **firebase_storage**: Image uploads
+- **firebase_auth**, **google_sign_in**: User authentication
+- **firebase_crashlytics**: Crash reporting (added 2026-08-28)
 - **flutter_map**: Interactive map (ride polyline, POI)
 - **go_router**: Navigation (type-safe routing)
 - **connectivity_plus**: Detect online/offline state
@@ -216,7 +206,10 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 ### Data Ownership
 - **All user data** lives in `/users/{uid}/...` (Firestore rules enforce user-only access)
 - **Deleted rides** are purged from cloud on user request
-- **No tracking cookies or analytics** (Firebase Analytics wired but not queried)
+- **No behavioural analytics or advertising SDK.** Firebase Crashlytics
+  (added 2026-08-28) collects crash diagnostics only — stack traces, device
+  model, app version — never usage tracking. See
+  `public/privacy.html` and `store_listing/data_safety_and_permissions.md`.
 
 ### Ride Sharing
 - **Privacy zones**: Auto-clips first/last 200m from shared rides (home location safe)
@@ -257,9 +250,19 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 
 ## 📚 Documentation
 
-- [SETUP.md](SETUP.md) — Firebase setup, Android signing, iOS certificates
-- [ASSUMPTIONS.md](ASSUMPTIONS.md) — Architecture decisions, known limitations
-- [plan.md](plan.md) — Original audit (phases P0-P9+, feature map)
+Everything lives in [`docs/`](docs/README.md) — see that file for the full
+map. The essentials:
+
+- [`docs/HANDOFF_Document.md`](docs/HANDOFF_Document.md) — current status,
+  the pre-launch to-do list, and the feature backlog. Start here.
+- [`docs/features.md`](docs/features.md) — what a signed-in user can
+  actually do today, screen by screen.
+- [`docs/Issues.md`](docs/Issues.md) — the dated record of every bug found
+  and fixed, cited by section number (`§N`) from everywhere else.
+- [`docs/SETUP.md`](docs/SETUP.md) — Firebase setup, Cloudinary, Android
+  signing, iOS certificates.
+- [`docs/assumptions.md`](docs/assumptions.md) — non-obvious judgement calls
+  and why they were made.
 
 ---
 
@@ -280,26 +283,31 @@ Contributions welcome! Please:
 
 **ThrottleIQ Source-Available License (TSAL) v1.0** — See [LICENSE](LICENSE)
 
-In short: You can **view and audit** the source code (open-source), but cannot copy, fork, or build a competing app. All rights reserved.
+In short: You can **view and audit** the source code, but cannot copy, fork, or build a competing app. All rights reserved.
 
 ---
 
 ## 🗺️ Roadmap
 
-- **v1.0** (Beta, live now): Background tracking, crash detection, POI directory, cloud sync
-- **v1.1**: Crash escalation (SMS/email), in-app weather, leaderboards
-- **v2.0**: Curvy-route turn-by-turn nav, clubs & group events, in-app monetization (premium features)
+- **Now**: Play Store + App Store submission (see `docs/HANDOFF_Document.md`'s
+  "Play Store & App Store" section for the concrete step-by-step).
+- **Soon**: Crash-alert SMS/email escalation (code is written, blocked on
+  the Firebase Blaze billing plan — see `docs/backend_options.md`), turn-by-turn
+  route navigation tuning, full Bangla localization.
+- **Backlog**: lean-angle tracking, weekly riding reports, clubs & events,
+  a curvy-route planner with real routing — see `docs/HANDOFF_Document.md`
+  Part 2 for the full, competitor-researched feature map.
 
 ---
 
 ## 📞 Support & Feedback
 
-- **Report bugs**: [GitHub Issues](https://github.com/blankframe-tech/ThrottleIQ/issues)
-- **Feature requests**: Comment on issues or discussions
-- **Privacy questions**: See [ASSUMPTIONS.md](ASSUMPTIONS.md) "Security & Privacy"
+- **Report bugs**: tracked in `docs/Issues.md`
+- **Feature requests / backlog**: `docs/HANDOFF_Document.md` Part 2
+- **Privacy questions**: `public/privacy.html`
 
 ---
 
 **Built with ❤️ for riders. Safe travels! 🏍️**
 
-*Last updated: 2026-07-12*
+*Last updated: 2026-08-28*

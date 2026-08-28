@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-27 (§35, §36, §37, §38, §39)_
+_Last updated: 2026-08-28 (§35, §36, §37, §38, §40, §41, §42)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -485,7 +485,7 @@ sub-sections — one per pass — rather than overwriting this placeholder._
 
 ---
 
-## 10. Stop hook blocked every session end, unconditionally (2026-08-02)
+## 13a. Stop hook blocked every session end, unconditionally (2026-08-02)
 
 **Status:** Fixed.
 
@@ -1820,7 +1820,7 @@ and should already match across devices — worth a separate look only if it's
 ## 29. The auto-tracking working tree didn't compile — four separate breaks, none caught by `flutter analyze` alone (2026-08-17)
 
 **Status: Fixed.** The previous session's auto-tracking feature work (see
-`AUTO_TRACKING_PLAN.md`) and the §28 sync fix landed in the working tree
+`auto_tracking_plan.md`) and the §28 sync fix landed in the working tree
 uncommitted and unbuilt — its own writeup said the Flutter SDK wasn't
 reachable from that sandbox, so nothing past `flutter analyze` had run. This
 session had a real `flutter` on `PATH` and used it: `flutter analyze` alone
@@ -2613,6 +2613,40 @@ exactly as reported. Fixed with two new pieces:
 
 ## 38. No crash reporting is wired into the app at all — no visibility into production crashes (2026-08-27)
 
+**Status: FIXED (2026-08-28).** Added `firebase_crashlytics` (`app/pubspec.yaml`,
+resolved `4.1.3` against the existing `firebase_core ^3.1.0`). `main.dart` now
+wires all three error surfaces Flutter has to Crashlytics: `FlutterError.onError`
+(widget build/layout/paint errors), `PlatformDispatcher.instance.onError`
+(errors outside Flutter's own error zone), and a `runZonedGuarded` handler
+around `main()` (everything else, e.g. a bare async gap). Collection is gated
+off in debug builds (`setCrashlyticsCollectionEnabled(!kDebugMode)`) so local
+iteration doesn't pollute the dashboard — only real installs report.
+
+Native side: added the `com.google.firebase.crashlytics` Gradle plugin
+(`android/build.gradle.kts` project-level, applied in `android/app/build.gradle.kts`)
+— verified with `./gradlew :app:tasks --all`, which now lists
+`injectCrashlyticsMappingFileId{Debug,Profile,Release}`. iOS needs no manual
+wiring; the `firebase_crashlytics` podspec injects its own dSYM-upload build
+phase on `pod install`. Both `google-services.json` and
+`GoogleService-Info.plist` already exist in the repo, so no new Firebase
+console config is needed for crashes to start showing up in the Crashlytics
+dashboard once the app is (re)installed.
+
+Also updated `store_listing/data_safety_and_permissions.md` and
+`public/privacy.html`, both of which previously stated flatly that no
+crash-reporting SDK was bundled — that claim is no longer true and would have
+been a Play Data Safety misdeclaration and a privacy-policy inaccuracy had it
+shipped as-is. Added a "Crash logs" diagnostics row to the Data Safety
+answers and a crash-diagnostics row + corrected "what the app does not
+collect" bullet in the privacy policy.
+
+**Not verified this session:** an actual on-device crash reaching the
+Firebase console — no Flutter build/run was done against a real device or
+simulator, only `flutter pub get`, `flutter analyze`, and a Gradle
+configuration pass. Worth a real `FirebaseCrashlytics.instance.crash()` test
+call (temporarily, from a debug button) before relying on this for the
+organic-launch decision described below.
+
 Surfaced answering a launch-readiness/marketing question, not while working a
 ticket — confirmed by reading `app/pubspec.yaml`, not assumed.
 `store_listing/data_safety_and_permissions.md` already notes the *absence* of
@@ -2632,12 +2666,9 @@ is the natural fit given the app is already on Firebase) before the organic
 push, not after — otherwise the bug-finding phase produces no evidence trail
 to decide when it's over.
 
-Not fixed this session — flagged only. Add to the pre-launch checklist in
-`HANDOFF_Document.md`'s "Now (before inviting beta testers)" section.
-
 ---
 
-## 38. Default appearance changed to Calming/Curvy/Light for every new install/account — FIXED (2026-08-27)
+## 40. Default appearance changed to Calming/Curvy/Light for every new install/account — FIXED (2026-08-27)
 
 Requested directly by the project owner. `AppAppearance.defaultAppearance`
 (`theme_style_provider.dart`) was Carbon Mono/Boxy/Dark since the
@@ -2658,7 +2689,7 @@ no-op) and needed updating alongside the change — `flutter analyze` clean,
 
 ---
 
-## 39. `record` package's 5.x line doesn't compile for release — blocked the Beta V1 Android build (2026-08-27)
+## 41. `record` package's 5.x line doesn't compile for release — blocked the Beta V1 Android build (2026-08-27)
 
 Surfaced while cutting the Beta V1 release requested by the project owner.
 `pubspec.yaml`'s `record: ^5.1.2` (added for the group-ride push-to-talk
@@ -2684,3 +2715,72 @@ bumped together and actually match.
 `AudioEncoder` surface `group_ride_map_screen.dart` uses was unaffected by
 the major version jump — `flutter analyze` clean, `flutter build apk
 --release` succeeded (90.0MB), 826/826 tests still pass.
+
+---
+
+## 42. Anonymous per-road speed baseline + outlier insight — built, unit/rules-tested, `firestore.rules` NOT yet deployed (2026-08-28)
+
+The road-baseline feature proposed in `HANDOFF_Document.md`'s backlog (added
+2026-08-27) — save a ride's speed per rough road segment, pool it
+anonymously across riders, and flag a ride privately to its own rider when
+it was a real outlier for that segment (the "everyone does 30-50, one guy
+does 80" case). Built end to end this session; see `Features.md` §2 for the
+user-facing description. Three deliberate v1 simplifications, each swapping
+a blocked/paid dependency for a free or already-available one:
+
+- **Segment = geohash cell** (`domain/calculators/segment_speed_aggregator.dart`,
+  precision 7, ~150m), not true map-matching — no roads-API vendor/key
+  decision needed. Reuses `core/utils/geohash_util.dart`, already in the
+  codebase for POI directory.
+- **Weather = Open-Meteo's forecast endpoint** (`core/services/weather_service.dart`),
+  free and keyless, `past_days` param rather than the archive/reanalysis
+  endpoint (which has a multi-day ingestion lag and would have no data for a
+  ride that just finished).
+- **Aggregation = a bounded client-side Firestore read** (`CloudRepository.
+  fetchRoadSpeedSamples`, capped at 200 docs), not a Cloud Function — avoids
+  the Blaze-plan blocker that's already tracked for crash-alert delivery.
+
+**Privacy shape, not an afterthought:** pooled samples
+(`roadSpeedSamples/{segmentId}/samples`) carry no uid, no rideId, and no
+exact coordinates — only the coarse cell id, speed, weekday, hour, and
+weather code, enforced field-by-field in `firestore.rules` (`hasOnly` +
+type/range checks, mirroring the `groupRides/voiceNotes` bounded
+create-only pattern). The outlier comparison itself is shown only to the
+rider it's about, on their own ride summary — never posted, shared, or used
+to identify anyone. `public/privacy.html` §2 and §4 (Open-Meteo row) were
+updated in the same session, before any of this shipped, not after.
+
+**Verified:**
+- `domain/calculators/segment_speed_aggregator.dart` and `speed_baseline.dart`
+  — pure, unit-tested (`test/calculators/segment_speed_aggregator_test.dart`,
+  `speed_baseline_test.dart`), including the exact "30-50 baseline, 80 spike"
+  scenario from the original request.
+- `firestore.rules`' new `roadSpeedSamples` block — 13 new emulator-backed
+  tests in `scripts/test/rules/firestore_rules.test.js` (bounded shape,
+  no-owner create, deny update/delete, unauthenticated denied both ways),
+  full suite **57/57 green** via `npm run test:rules`.
+- `flutter analyze`: 0 errors. `flutter test`: **847/847 green**.
+
+**NOT yet verified — real gaps, not hedging:**
+- ⚠️ **`firestore.rules` has not been deployed.** Same trap this file has
+  flagged before (§24's note: "ship the app first, then the rules") — until
+  `firebase deploy --only firestore:rules` runs, the new `roadSpeedSamples`
+  rules exist only in this repo, and the deployed rules' default-deny
+  catch-all means writes to that collection will fail in production, not
+  silently succeed unsecured. Safe to deploy (append-only, additive), but
+  it's a required manual step before this feature does anything on a real
+  device.
+- `WeatherService` has never made a real HTTP call in this environment (no
+  live network access here) — its Open-Meteo request/response parsing is
+  reasoned through and defensively coded (best-effort, times out, returns
+  null on any shape mismatch) but not exercised against the live API.
+  `weatherCode` being consistently null on real samples for a while would be
+  the symptom if the endpoint or response shape has drifted.
+- No real ride has gone through `stopRide()` → `_publishSegmentBaselines()`
+  → a real Firestore write on a device.
+- **At launch, this will visibly do almost nothing for a long time** — the
+  outlier card needs `minSamples = 5` prior samples on the exact same
+  geohash cell to ever fire, and the pool starts empty. Expected, not a bug;
+  it fills in as ride volume grows.
+- No opt-out toggle yet — noted honestly in the privacy policy rather than
+  silently omitted.
