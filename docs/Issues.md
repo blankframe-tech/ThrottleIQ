@@ -3075,6 +3075,21 @@ with no licence gate at all**.
   `auto_tracking_service.dart` for the force-quit limitation that's expected
   by design, not a bug to chase.
 
+**Update, same day — iOS launch verified on a physical device.**
+`flutter build ios --release` → `xcrun devicectl device install app` →
+`devicectl device process launch` on Abraar's iPhone (iOS 27.0): the app
+installed and launched cleanly, and the process stayed up 15+ seconds past
+`main.dart`'s Firebase/notification/`AutoTrackingService.instance.configure()`
+init — no crash on startup, which is the concrete thing the
+`AppDelegate.swift` (`flutter_foreground_task` plugin-registrant callback)
+and `Info.plist` changes could have broken. **Still not verified**: actually
+toggling auto-tracking on-device (permission prompts, the foreground task
+starting) and anything visual (icon, bike-color picker) — no screenshot
+tooling exists for a physical iOS device in this environment, and a release
+build has no VM Service to query the widget tree either (see
+`HANDOFF_Document.md`'s operational notes). That needs a human looking at
+the screen.
+
 **Archived, not deleted:** the paid-plugin implementation and every
 platform-config line it needed live at
 `docs/archives/flutter_background_geolocation-2026-08-28/`, with restore
