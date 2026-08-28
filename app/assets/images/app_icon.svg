@@ -8,27 +8,21 @@
 
   <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
 
-  <circle cx="256" cy="256" r="230" fill="none" stroke="#F8FAFC" stroke-width="5"/>
-  <circle cx="256" cy="256" r="195" fill="none" stroke="#F8FAFC" stroke-width="2" opacity="0.4"/>
-  <!-- "THROTTLE IQ" set by hand along the r=150 arc — see throttleiq-icon-dark.svg. -->
-  <g font-family="Manrope, sans-serif" font-weight="800" font-size="27" fill="#F8FAFC" text-anchor="middle">
-    <text x="126" y="181" transform="rotate(-60 126 181)">T</text>
-    <text x="145" y="156" transform="rotate(-48 145 156)">H</text>
-    <text x="168" y="135" transform="rotate(-36 168 135)">R</text>
-    <text x="195" y="119" transform="rotate(-24 195 119)">O</text>
-    <text x="225" y="109" transform="rotate(-12 225 109)">T</text>
-    <text x="256" y="106">T</text>
-    <text x="287" y="109" transform="rotate(12 287 109)">L</text>
-    <text x="317" y="119" transform="rotate(24 317 119)">E</text>
-    <text x="368" y="156" transform="rotate(48 368 156)">I</text>
-    <text x="386" y="181" transform="rotate(60 386 181)">Q</text>
-  </g>
+  <!-- Squircle boundary, concentric with the icon's own corner radius rather than a circle,
+       inset by half the stroke width so its outer edge sits flush against the icon's edge. -->
+  <rect x="5" y="5" width="502" height="502" rx="107" fill="none" stroke="#F8FAFC" stroke-width="10"/>
 
-  <circle cx="112" cy="330" r="4" fill="#FF6A00"/>
-  <circle cx="400" cy="330" r="4" fill="#FF6A00"/>
+  <text x="256" y="128" font-family="Manrope, sans-serif" font-weight="900" font-size="62"
+        letter-spacing="3" fill="#F8FAFC" text-anchor="middle">THROTTLE</text>
 
-  <circle cx="144" cy="339" r="55" fill="none" stroke="#F8FAFC" stroke-width="8"/>
-  <circle cx="368" cy="339" r="55" fill="none" stroke="#F8FAFC" stroke-width="8"/>
-  <polyline points="105,318 170,308 209,245 261,230 294,271 368,308" fill="none" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="261" cy="230" r="9" fill="#FF6A00"/>
+  <circle cx="170" cy="300" r="62" fill="none" stroke="#F8FAFC" stroke-width="16"/>
+  <circle cx="342" cy="300" r="62" fill="none" stroke="#F8FAFC" stroke-width="16"/>
+  <circle cx="170" cy="300" r="9" fill="#FF6A00"/>
+  <circle cx="342" cy="300" r="9" fill="#FF6A00"/>
+  <polyline points="205,255 225,210 256,195 287,210 307,255"
+            fill="none" stroke="#F8FAFC" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="195" r="13" fill="#FF6A00"/>
+
+  <text x="256" y="432" font-family="Manrope, sans-serif" font-weight="900" font-size="80"
+        letter-spacing="4" fill="#F8FAFC" text-anchor="middle">IQ</text>
 </svg>
