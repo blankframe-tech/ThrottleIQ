@@ -369,15 +369,15 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 - [ ] **On-device verification that a crash actually reaches the Firebase
   Crashlytics console** — added 2026-08-28 (`Issues.md` §38), never run on a
   device or simulator.
-- [ ] **Deploy the updated `firestore.rules`** for the join-a-group-ride-by-
-  code feature (added 2026-08-28, `Features.md` §7b) — new
+- [x] ~~Deploy the updated `firestore.rules`~~ **DEPLOYED 2026-08-28** for
+  the join-a-group-ride-by-code feature (`Features.md` §7b) — new
   `groupRideJoinCodes` collection, a new `groupRides` update clause (a
   stranger adding themselves to `memberIds` on an active ride), and a
-  widened `members/{uid}` write clause. `npm run test:rules` is green
-  (72/72) against the local rules file, but joining by code will fail
-  against production (`throttleiqfb`) until `firebase deploy --only
-  firestore:rules` actually ships it — same "test then deploy" step every
-  other rules change in this file already calls out.
+  widened `members/{uid}` write clause. `npm run test:rules` was green
+  (72/72) beforehand; `firebase deploy --only firestore:rules --project
+  throttleiqfb` shipped it live. Joining by code should now work against
+  production — still needs the real-device check listed under "Done, but
+  NOT yet verified" above.
 - [x] ~~Close the two launch-blocking security findings~~ **CODE FIXED
   2026-08-12, DEPLOYED 2026-08-14.** Audit found 8 findings (`Issues.md`
   §24.1–§24.9); all fixed and the rules deploy is live on `throttleiqfb`.
