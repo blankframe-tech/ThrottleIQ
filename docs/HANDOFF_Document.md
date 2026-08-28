@@ -23,9 +23,14 @@ the full map of what lives where.
 
 Pre-launch, at **`1.0.0-beta.1+1`**, tagged
 [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1)
-(currently at commit `ea12fc2`) — a signed Android APK only; no AAB has been
-uploaded to Play Console and no App Store submission exists yet. Test suite:
-**865/865 green**, `flutter analyze` clean.
+(currently at commit `ea12fc2`). No App Store submission exists yet. **Play
+Console progress (2026-08-28):** developer account verified as an individual
+("Abrar Masud Nafiz"), app created under package `com.bft.throttleiq`, and
+the first release AAB built locally (`flutter build appbundle --release` →
+`app/build/app/outputs/bundle/release/app-release.aab`, versionCode 1) for
+upload to the Internal testing track — confirm in Play Console whether the
+upload/release creation was completed. Test suite: **865/865 green**,
+`flutter analyze` clean.
 
 **Built and wired end-to-end:** ride recording (offline-first, background
 GPS, crash detection with a cancellable countdown), garage + distance-based
@@ -495,23 +500,30 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 1. **Finish Play Console signup** ($25, one-time) —
    <https://play.google.com/console/signup>. Identity verification can take
    up to 48h — start this first.
-2. **Decide the publisher identity — blocks the listing.** The privacy
-   policy names no company (says "an independent, solo-developer project",
-   `the.abraar.rar@gmail.com`) after the old one named "Blankframe.tech"
-   (`blankframe.technologies@gmail.com`) — the GitHub org is
-   `blankframe-tech`. If Blankframe.tech is the real publisher, the policy
-   needs it added, since Play expects the listing's developer name to match.
-3. **Create the app** in Play Console, then **rebuild the AAB** at the next
-   version code (`flutter build appbundle --release`) — the last build
-   predates several shipped features. **Watch the package name when creating
-   it**: as of 2026-08-28 the Play Console package list shows two
-   registrations — `com.bft.throlleiq` (typo, missing a "t") and
-   `com.bft.throttleiq` (correct). The app's actual `applicationId`
-   (`app/android/app/build.gradle.kts`) is `com.bft.throttleiq` — create/use
-   that one and let the typo registration lapse or delete it, so the AAB
-   upload doesn't get rejected for a package-name mismatch.
+2. ~~**Decide the publisher identity**~~ **RESOLVED 2026-08-28** — Play
+   Console's Android developer verification page confirms the account is
+   registered as an **individual**, "Abrar Masud Nafiz" (Dhaka, BD), not a
+   company. That matches the current privacy policy's "independent,
+   solo-developer project" framing already — no "Blankframe.tech" company
+   name needs adding. (The old privacy policy naming "Blankframe.tech" /
+   `blankframe.technologies@gmail.com` is stale and can stay superseded.)
+3. ~~**Create the app** in Play Console~~ **DONE 2026-08-28** — created
+   under `com.bft.throttleiq` (the correct registration; `com.bft.throlleiq`
+   is an unused typo, left alone). First release AAB built at versionCode 1
+   (`flutter build appbundle --release`). **Every future upload** needs
+   `version:`/versionCode bumped in `pubspec.yaml` before rebuilding, per #8
+   below.
 4. **Upload to Internal testing track first** — exempt from the background-
    location review, so it's the fastest way to a real build on real devices.
+   AAB upload/release creation started 2026-08-28 — confirm in Play Console
+   whether it completed. That draft's warnings (no testers assigned yet, no
+   deobfuscation file) are addressed as of later the same day: testers still
+   need assigning in the console, but a **new** `app-release.aab` was
+   rebuilt with R8/ProGuard re-enabled (`Issues.md` §51) — upload it in
+   place of the first one, along with
+   `build/app/outputs/mapping/release/mapping.txt`, to close the
+   deobfuscation warning. Still versionCode 1 — the draft release hadn't
+   rolled out yet, so no version bump was needed to replace it.
 5. Fill in **Store listing** (`store_listing/store_listing.md`), **Data
    Safety form** (`store_listing/data_safety_and_permissions.md`), and the
    **Content rating questionnaire**.

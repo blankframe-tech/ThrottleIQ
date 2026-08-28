@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-28 (§35, §36, §37, §38, §40, §41, §42, §43, §44, §45, §46, §47, §48, §49)_
+_Last updated: 2026-08-29 (§35, §36, §37, §38, §40, §41, §42, §43, §44, §45, §46, §47, §48, §49, §50, §51, §52)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -3096,3 +3096,124 @@ platform-config line it needed live at
 instructions — see `HANDOFF_Document.md`'s Feature Backlog (under
 "Automatic ride tracking") for the pros/cons table that should drive whether
 it's ever worth reviving.
+
+---
+
+## 51. Android R8/ProGuard minification re-enabled — the never-verified release-launch crash from `build.gradle.kts`'s disable comment is now checked on an emulator (2026-08-28)
+
+`app/android/app/build.gradle.kts` had `isMinifyEnabled = false` /
+`isShrinkResources = false` since 2026-07-31, disabled to unblock a release
+build after R8 crashed the app on launch on a real device — a crash that was
+never root-caused with an actual stack trace, per that commit's own comment.
+`proguard-rules.pro` at the time only had keep rules for
+Firebase/Firestore/Play Core/SQLite/Riverpod plus a partial second batch
+(geolocator, google_sign_in, image_picker, permission_handler,
+flutter_local_notifications) added later without re-enabling minification.
+
+**Audited every plugin in `pubspec.yaml` with native Android code against
+that ruleset.** Found real gaps: the existing broad
+`-keep class io.flutter.plugins.** { *; }` rule's own comment claimed it
+covered `sensors_plus`/`battery_plus`/`device_info_plus`/`package_info_plus`,
+but none of those actually live under that package — they're
+`dev.fluttercommunity.plus.*`, which had no rule at all. Also missing
+entirely: `flutter_activity_recognition` and `flutter_foreground_task`
+(`com.pravera.*` — the auto-tracking stack from §50, added after the original
+partial ruleset), `record` (`com.llfbandit.record.*`), `just_audio` +
+`audio_session` (`com.ryanheise.*`), `home_widget` (`es.antonborri.home_widget.*`),
+`vibration` (`com.benjaminabel.vibration.*`), `flutter_timezone`
+(`net.wolverinebeach.flutter_timezone.*`), and `sqflite`'s plugin binding
+itself (`com.tekartik.sqflite.*` — distinct from the `org.sqlite.*` native-lib
+rule already present). None of these plugins ship their own consumer
+ProGuard rules, so the app's `proguard-rules.pro` was the only thing that
+could have kept them.
+
+**Fix:** added keep rules for every namespace above, re-enabled
+`isMinifyEnabled` / `isShrinkResources`, corrected the stale comment.
+
+**Verified this session (Pixel_10_Pro emulator, no physical Android device
+available):**
+- `flutter build apk --release` and `flutter build appbundle --release` both
+  build clean with the fuller ruleset (mapping.txt is now produced at
+  `build/app/outputs/mapping/release/mapping.txt` — this is also what
+  resolves Play Console's "no deobfuscation file" warning on the next
+  upload).
+- Installed the release APK fresh (had to `adb uninstall` first — a
+  version-code mismatch with whatever debug/profile build was already on the
+  emulator). App reaches the login screen (first frame) with no crash.
+- Tapped "Continue with Google": `google_sign_in`'s native call correctly
+  handed off to `com.google.android.gms`'s `MinuteMaidActivity` (confirmed
+  via `dumpsys window`), and the app process stayed alive throughout with no
+  `FATAL EXCEPTION` / `ClassNotFoundException` / `NoClassDefFoundError` in
+  logcat — this is the plugin whose reflection-heavy native bridging was the
+  likeliest single cause of the original crash, per the disable comment.
+
+**Not verified — needs a physical device and/or a logged-in test account,
+neither available this session:**
+- Real hardware, full stop. The original crash was device-specific; emulator
+  clean does not guarantee real-hardware clean.
+- Any flow past login: ride recording (`geolocator`'s foreground service),
+  auto-tracking (`flutter_activity_recognition` + `flutter_foreground_task`,
+  §50), push-to-talk voice notes (`record`/`just_audio`/`audio_session`),
+  and the four home-screen widgets (`home_widget` + the app's own
+  `*WidgetProvider` classes) — none of these were exercised, since reaching
+  them needs a real account and creating one would write to the production
+  Firebase project.
+
+Before the next Play Console upload: re-run at least the login + one ride
+flow on a real Android device. If a release-only crash resurfaces, check
+`adb logcat` for the exact missing class first — that's the one piece of
+evidence the original disable never had.
+
+---
+
+## 52. App icon swapped from the crest badge to the "Speed Gauge" mark (2026-08-29)
+
+Replaced `assets/images/app_icon.png` and `app_icon_adaptive_fg.png` — the
+squircle-border crest from §43/§44 — with the "Speed Gauge" artwork the user
+picked after reviewing two candidates (a stock `Icons.two_wheeler` glyph, a
+speed-gauge graphic, and a flat motorcycle silhouette) side by side across
+icon shapes/sizes in a design-preview Artifact.
+
+**Source:** `designs/logos1/Screenshot 2026-08-28 at 8.15.27 PM.png`
+(1148×1140, fully opaque, blue→green→orange arc with a glowing white needle
+on a near-black ground).
+
+**Processing (Pillow, no vector source exists for this mark — it's a
+screenshot, not a redraw):**
+- Center-cropped to 1140×1140, resized to 1024×1024 → `app_icon.png` (full
+  bleed; this is what iOS and legacy/Play-Store-listing Android use, since
+  those apply their own OS-level mask to an edge-to-edge square).
+- Same artwork scaled to 66.6% and centered on a transparent 1024×1024
+  canvas → `app_icon_adaptive_fg.png`, so the ring stays inside Android's
+  adaptive-icon safe zone regardless of which mask shape (circle/squircle/
+  rounded-square) an OEM launcher applies — matches the inset convention
+  the old crest icon already used.
+- Sampled the artwork's own border color (≈`#131317`, not pure black) and
+  set `adaptive_icon_background` to that in `pubspec.yaml`, so it's
+  invisible where it peeks out past the inset foreground, instead of
+  doubling two slightly-different darks.
+- Regenerated both platforms with `dart run flutter_launcher_icons`
+  (Android mipmaps + `drawable-*/ic_launcher_foreground.png` +
+  `colors.xml`'s `ic_launcher_background`; iOS `AppIcon.appiconset`).
+
+**Verified this session (Pixel_10_Pro emulator):** installed the rebuilt
+release APK fresh, launched with no crash (same R8-minified build path as
+§51 — nothing code-level changed here, only assets), then backgrounded to
+the home screen and screenshotted it: the gauge icon renders correctly in
+the hotseat, circle-masked by the launcher theme, fully legible at real
+launcher size.
+
+**Not touched, and now stale:** `assets/images/app_icon.svg` /
+`app_icon_adaptive_fg.svg` (the crest's vector source — kept as historical
+reference, no longer what `flutter_launcher_icons` reads from), and every
+marketing asset built from the crest — `designs/social/facebook/profile.html`
+(explicitly comments that it scales up "app_icon.svg's 512 mark") and the
+logo line in `docs/pitch_and_marketing_materials.md`. None of these were in
+scope for this change; whoever next touches marketing assets should know
+they no longer match the real app icon.
+
+**Not verified:** real hardware (same caveat as §51 — this session only has
+emulator access), and the in-app sign-in/splash mark
+(`assets/icons/throttleiq-icon-dark.svg`, rendered by `AppLogo` per
+`app_logo.dart`) is a **separate, deliberately untouched** asset — it's the
+in-app brand mark, not the OS app icon, and this change didn't touch it.
