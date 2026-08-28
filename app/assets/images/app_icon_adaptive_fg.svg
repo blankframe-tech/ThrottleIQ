@@ -1,0 +1,25 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="256" cy="256" r="156" fill="none" stroke="#F8FAFC" stroke-width="3.5"/>
+  <circle cx="256" cy="256" r="133" fill="none" stroke="#F8FAFC" stroke-width="1.4" opacity="0.4"/>
+  <!-- "THROTTLE IQ" set by hand along the r=102 arc — see throttleiq-icon-dark.svg. -->
+  <g font-family="Manrope, sans-serif" font-weight="800" font-size="18" fill="#F8FAFC" text-anchor="middle">
+    <text x="168" y="205" transform="rotate(-60 168 205)">T</text>
+    <text x="180" y="188" transform="rotate(-48 180 188)">H</text>
+    <text x="196" y="173" transform="rotate(-36 196 173)">R</text>
+    <text x="215" y="163" transform="rotate(-24 215 163)">O</text>
+    <text x="235" y="156" transform="rotate(-12 235 156)">T</text>
+    <text x="256" y="154">T</text>
+    <text x="277" y="156" transform="rotate(12 277 156)">L</text>
+    <text x="297" y="163" transform="rotate(24 297 163)">E</text>
+    <text x="332" y="188" transform="rotate(48 332 188)">I</text>
+    <text x="344" y="205" transform="rotate(60 344 205)">Q</text>
+  </g>
+
+  <circle cx="158" cy="306" r="2.7" fill="#FF6A00"/>
+  <circle cx="354" cy="306" r="2.7" fill="#FF6A00"/>
+
+  <circle cx="180" cy="312" r="37" fill="none" stroke="#F8FAFC" stroke-width="5.5"/>
+  <circle cx="332" cy="312" r="37" fill="none" stroke="#F8FAFC" stroke-width="5.5"/>
+  <polyline points="153,298 198,291 224,249 259,238 282,266 332,291" fill="none" stroke="#F8FAFC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="259" cy="238" r="6" fill="#FF6A00"/>
+</svg>

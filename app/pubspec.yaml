@@ -139,6 +139,13 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
+  # Android 8+ launchers mask the adaptive icon into whatever shape the
+  # device theme uses (circle, squircle, rounded square, teardrop...) — the
+  # foreground content is inset to Android's safe-zone circle so the crest
+  # survives any of them undamaged, rather than needing a separate asset per
+  # shape.
+  adaptive_icon_background: "#0B0D10"
+  adaptive_icon_foreground: "assets/images/app_icon_adaptive_fg.png"
 
 flutter:
   uses-material-design: true

@@ -672,7 +672,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = E7F3BFA0F4D36CF5F9E2801B /* Widget.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = ThrottleIQWidget/ThrottleIQWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -702,7 +702,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = E7F3BFA0F4D36CF5F9E2801B /* Widget.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = ThrottleIQWidget/ThrottleIQWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -892,7 +892,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = E7F3BFA0F4D36CF5F9E2801B /* Widget.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = ThrottleIQWidget/ThrottleIQWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;

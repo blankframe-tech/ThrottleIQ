@@ -1,42 +1,34 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="100%" stop-color="#F1F5F9"/>
+      <stop offset="0%" stop-color="#12161B"/>
+      <stop offset="100%" stop-color="#0B0D10"/>
     </linearGradient>
-    <linearGradient id="arcGrad" x1="165.49" y1="360.51" x2="346.51" y2="360.51" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3B82F6"/>
-      <stop offset="55%" stop-color="#60A5FA"/>
-      <stop offset="100%" stop-color="#22C55E"/>
-    </linearGradient>
-    <radialGradient id="tipGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#22C55E" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 
-  <!-- app-icon background -->
   <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect x="1" y="1" width="510" height="510" rx="111" fill="none" stroke="#E2E8F0" stroke-width="2"/>
 
-  <!-- gauge arc: throttle sweep -->
-  <path d="M 165.49,360.51 A 128,128 0 1 1 346.51,360.51"
-        fill="none" stroke="url(#arcGrad)" stroke-width="26" stroke-linecap="round"/>
-
-  <!-- subtle tick marks -->
-  <g stroke="#94A3B8" stroke-width="4" stroke-linecap="round" opacity="0.55">
-    <line x1="165.49" y1="360.51" x2="180.2" y2="349.9"/>
-    <line x1="197.8" y1="163.5" x2="207.6" y2="180.2"/>
-    <line x1="314.2" y1="163.5" x2="304.4" y2="180.2"/>
-    <line x1="346.51" y1="360.51" x2="331.8" y2="349.9"/>
+  <circle cx="256" cy="256" r="230" fill="none" stroke="#F8FAFC" stroke-width="5"/>
+  <circle cx="256" cy="256" r="195" fill="none" stroke="#F8FAFC" stroke-width="2" opacity="0.4"/>
+  <!-- "THROTTLE IQ" set by hand along the r=150 arc — see throttleiq-icon-dark.svg. -->
+  <g font-family="Manrope, sans-serif" font-weight="800" font-size="27" fill="#F8FAFC" text-anchor="middle">
+    <text x="126" y="181" transform="rotate(-60 126 181)">T</text>
+    <text x="145" y="156" transform="rotate(-48 145 156)">H</text>
+    <text x="168" y="135" transform="rotate(-36 168 135)">R</text>
+    <text x="195" y="119" transform="rotate(-24 195 119)">O</text>
+    <text x="225" y="109" transform="rotate(-12 225 109)">T</text>
+    <text x="256" y="106">T</text>
+    <text x="287" y="109" transform="rotate(12 287 109)">L</text>
+    <text x="317" y="119" transform="rotate(24 317 119)">E</text>
+    <text x="368" y="156" transform="rotate(48 368 156)">I</text>
+    <text x="386" y="181" transform="rotate(60 386 181)">Q</text>
   </g>
 
-  <!-- needle -->
-  <line x1="256" y1="270" x2="361.25" y2="231.7" stroke="#0F172A" stroke-width="9" stroke-linecap="round"/>
-  <circle cx="256" cy="270" r="16" fill="#FFFFFF" stroke="#0F172A" stroke-width="4"/>
+  <circle cx="112" cy="330" r="4" fill="#FF6A00"/>
+  <circle cx="400" cy="330" r="4" fill="#FF6A00"/>
 
-  <!-- intelligence pulse / data point at needle tip -->
-  <circle cx="376.28" cy="226.22" r="34" fill="url(#tipGlow)"/>
-  <circle cx="376.28" cy="226.22" r="11" fill="#22C55E"/>
-  <circle cx="376.28" cy="226.22" r="18" fill="none" stroke="#22C55E" stroke-width="2.5" opacity="0.6"/>
+  <circle cx="144" cy="339" r="55" fill="none" stroke="#F8FAFC" stroke-width="8"/>
+  <circle cx="368" cy="339" r="55" fill="none" stroke="#F8FAFC" stroke-width="8"/>
+  <polyline points="105,318 170,308 209,245 261,230 294,271 368,308" fill="none" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="261" cy="230" r="9" fill="#FF6A00"/>
 </svg>

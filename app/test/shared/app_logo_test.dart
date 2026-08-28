@@ -20,43 +20,18 @@ void main() {
   });
 
   group('AppLogo', () {
-    testWidgets('renders the light mark under the default appearance', (tester) async {
+    // The mark is a fixed brand identity now — one dark-only asset,
+    // regardless of the appearance the rest of the app is using.
+    testWidgets('always renders the dark mark', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(home: AppLogo(size: 40)),
-        ),
+        const MaterialApp(home: AppLogo(size: 40)),
       );
-      await tester.pump();
-
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
-    });
-
-    // The regression this file exists for: toggling brightness must swap the
-    // mark. AppLogo watches appearanceProvider directly, so a `const`
-    // constructor at the call site does not (and must not) prevent it.
-    testWidgets('swaps to the dark mark when brightness changes', (tester) async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: AppLogo(size: 40)),
-        ),
-      );
-      await tester.pump();
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
-
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
       await tester.pump();
 
       expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
     });
 
-    // The mark follows brightness directly, not the color mode — every color
-    // mode must get the mark matching whichever brightness it's paired with.
-    testWidgets('every color mode gets the mark matching the active brightness',
-        (tester) async {
+    testWidgets('renders the dark mark under every appearance', (tester) async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -74,58 +49,11 @@ void main() {
           await tester.pump();
           expect(
             assetNameOf(tester),
-            brightness == Brightness.dark
-                ? 'assets/icons/throttleiq-icon-dark.svg'
-                : 'assets/icons/throttleiq-icon-light.svg',
+            'assets/icons/throttleiq-icon-dark.svg',
             reason: '$mode/$brightness',
           );
         }
       }
-    });
-
-    testWidgets('swaps back to dark', (tester) async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: AppLogo(size: 40)),
-        ),
-      );
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.light);
-      await tester.pump();
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
-
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
-      await tester.pump();
-
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
-    });
-
-    // A `const AppLogo(...)` at the call site is how both existing usages are
-    // written. Const-ness canonicalizes the *widget*, not the element, so the
-    // element still rebuilds on a provider change — pin that, because it's the
-    // thing everyone assumes is the bug.
-    testWidgets('still swaps when constructed as const', (tester) async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            home: Column(children: [AppLogo(size: 40)]),
-          ),
-        ),
-      );
-      await tester.pump();
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-light.svg');
-
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
-      await tester.pump();
-
-      expect(assetNameOf(tester), 'assets/icons/throttleiq-icon-dark.svg');
     });
   });
 }
