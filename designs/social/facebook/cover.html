@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: 'StackSans';
+    src: local('Helvetica Neue'), local('Arial');
+  }
+  * { box-sizing: border-box; }
+  html,body {
+    margin:0; padding:0; width:1200px; height:630px; overflow:hidden;
+    background:#0B0D10;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  .canvas { position:relative; width:1200px; height:630px; }
+
+  .brandrow { position:absolute; top:104px; left:80px; display:flex; align-items:center; gap:18px; }
+  .wordmark { color:#F8FAFC; font-size:44px; font-weight:800; letter-spacing:0.5px; }
+  .wordmark .iq { color:#FF6A00; }
+
+  .tagline { position:absolute; top:180px; left:80px; color:#C8CDD4; font-size:22px; font-weight:500; letter-spacing:0.2px; }
+  .tagline-bn { position:absolute; top:214px; left:80px; color:#7A828C; font-size:16px; font-weight:400; }
+
+  .chiprow { position:absolute; top:302px; left:80px; width:1040px; display:flex; justify-content:space-between; }
+  .chip { width:236px; }
+  .chip .icon-wrap {
+    width:56px; height:56px; border-radius:14px; background:#161B21; border:1px solid #262E37;
+    display:flex; align-items:center; justify-content:center; margin-bottom:14px;
+  }
+  .chip .title { color:#F8FAFC; font-size:19px; font-weight:700; margin-bottom:6px; line-height:1.2; }
+  .chip .desc { color:#9AA2AC; font-size:14px; font-weight:400; line-height:1.4; }
+
+  .footer { position:absolute; top:478px; left:80px; color:#5C636D; font-size:15px; font-weight:500; letter-spacing:0.3px; }
+  .footer b { color:#FF6A00; }
+
+  svg.bgline { position:absolute; top:0; left:0; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- background -->
+  <svg class="bgline" width="1200" height="630" viewBox="0 0 1200 630">
+    <defs>
+      <radialGradient id="rg1" cx="82%" cy="18%" r="55%">
+        <stop offset="0%" stop-color="#1B2129"/>
+        <stop offset="100%" stop-color="#0B0D10" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="routegrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#22C55E"/>
+        <stop offset="35%" stop-color="#EAB308"/>
+        <stop offset="70%" stop-color="#FF6A00"/>
+        <stop offset="100%" stop-color="#EF4444"/>
+      </linearGradient>
+      <linearGradient id="fade" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#0B0D10" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#0B0D10" stop-opacity="0.9"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="1200" height="630" fill="#0B0D10"/>
+    <rect x="0" y="0" width="1200" height="630" fill="url(#rg1)"/>
+
+    <!-- faint topographic / route grid -->
+    <g opacity="0.10" stroke="#8FA0B3" stroke-width="1" fill="none">
+      <path d="M -50 80 C 250 20, 550 140, 900 60 S 1300 40, 1350 90"/>
+      <path d="M -50 200 C 300 150, 600 260, 950 190 S 1300 170, 1350 210"/>
+      <path d="M -50 560 C 300 500, 650 610, 1000 540 S 1300 520, 1350 560"/>
+    </g>
+
+    <!-- speed-colored route line, decorative, upper-right toward lower-right -->
+    <path d="M 760 -30 C 900 60, 980 40, 1060 130 S 1140 260, 1230 300"
+          fill="none" stroke="url(#routegrad)" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="760" cy="-30" r="0"/>
+    <g fill="#F8FAFC">
+      <circle cx="1060" cy="130" r="5" opacity="0.9"/>
+      <circle cx="1230" cy="300" r="6" opacity="0.95"/>
+    </g>
+
+    <path d="M 850 630 C 950 520, 1020 560, 1100 460 S 1180 340, 1240 300"
+          fill="none" stroke="url(#routegrad)" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- right-side gauge ring, mostly bleeding off-canvas -->
+    <circle cx="1180" cy="420" r="230" fill="none" stroke="#232A32" stroke-width="2"/>
+    <circle cx="1180" cy="420" r="190" fill="none" stroke="#1A2027" stroke-width="1"/>
+    <path d="M 1000 560 A 230 230 0 0 1 1080 205" fill="none" stroke="#FF6A00" stroke-width="10"
+          stroke-linecap="round" opacity="0.7"/>
+
+    <!-- left vignette so text sits on clean ground -->
+    <rect x="0" y="0" width="760" height="630" fill="#0B0D10" opacity="0.35"/>
+  </svg>
+
+  <!-- brand mark -->
+  <div class="brandrow">
+    <svg width="52" height="52" viewBox="0 0 512 512">
+      <rect x="0" y="0" width="512" height="512" rx="112" fill="#12161B"/>
+      <rect x="5" y="5" width="502" height="502" rx="107" fill="none" stroke="#2A313A" stroke-width="10"/>
+      <circle cx="170" cy="300" r="62" fill="none" stroke="#F8FAFC" stroke-width="16"/>
+      <circle cx="342" cy="300" r="62" fill="none" stroke="#F8FAFC" stroke-width="16"/>
+      <circle cx="170" cy="300" r="9" fill="#FF6A00"/>
+      <circle cx="342" cy="300" r="9" fill="#FF6A00"/>
+      <polyline points="205,255 225,210 256,195 287,210 307,255"
+                fill="none" stroke="#F8FAFC" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="256" cy="195" r="13" fill="#FF6A00"/>
+    </svg>
+    <div class="wordmark">Throttle<span class="iq">IQ</span></div>
+  </div>
+
+  <div class="tagline">Machine memory for motorcycles.</div>
+  <div class="tagline-bn">প্রতিটি রাইডের রেকর্ড, সিগন্যাল না থাকলেও।</div>
+
+  <!-- feature chips -->
+  <div class="chiprow">
+
+    <div class="chip">
+      <div class="icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h4l2-7 4 14 2-7h6" stroke="#FF6A00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="title">Ride Recording</div>
+      <div class="desc">Speed, braking &amp; route — fully offline</div>
+    </div>
+
+    <div class="chip">
+      <div class="icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2 1 21h22L12 2z" stroke="#FF6A00" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M12 9v5" stroke="#FF6A00" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="17.2" r="1.1" fill="#FF6A00"/>
+        </svg>
+      </div>
+      <div class="title">Crash Detection</div>
+      <div class="desc">Cancellable alert + live location share</div>
+    </div>
+
+    <div class="chip">
+      <div class="icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 1 5.4-5.4l-2.6 2.6-2-2z"
+                stroke="#FF6A00" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="title">Maintenance</div>
+      <div class="desc">Chain, oil, tires — by real distance</div>
+    </div>
+
+    <div class="chip">
+      <div class="icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <circle cx="8" cy="8" r="3" stroke="#FF6A00" stroke-width="2"/>
+          <circle cx="17" cy="8" r="3" stroke="#FF6A00" stroke-width="2"/>
+          <path d="M2.5 20c.7-3.2 3-5 5.5-5s4.8 1.8 5.5 5" stroke="#FF6A00" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 20c.6-2.8 2.6-4.4 4.7-4.4S21.3 17.2 21.9 20" stroke="#FF6A00" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="title">Ride With Friends</div>
+      <div class="desc">Live group maps &amp; saved routes</div>
+    </div>
+
+  </div>
+
+  <div class="footer">Built for Bangladesh's roads · <b>Free</b> · Offline-first</div>
+
+</div>
+</body>
+</html>

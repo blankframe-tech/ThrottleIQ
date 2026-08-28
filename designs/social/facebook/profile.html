@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;width:1000px;height:1000px;overflow:hidden;background:#0B0D10;}
+</style>
+</head>
+<body>
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="72%">
+      <stop offset="0%" stop-color="#181D24"/>
+      <stop offset="60%" stop-color="#0F1216"/>
+      <stop offset="100%" stop-color="#0B0D10"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF6A00" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FF6A00" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sweep" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6A00"/>
+      <stop offset="100%" stop-color="#FFB020"/>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <!-- full-bleed background; Facebook crops this to a circle, so keep it edge to edge -->
+  <rect x="0" y="0" width="1000" height="1000" fill="url(#bg)"/>
+
+  <!-- orange glow behind the mark -->
+  <circle cx="500" cy="500" r="360" fill="url(#glow)"/>
+
+  <!-- speedometer bezel dial, inset so it sits fully inside the circular safe zone -->
+  <circle cx="500" cy="500" r="430" fill="none" stroke="#1E242C" stroke-width="4"/>
+  <circle cx="500" cy="500" r="402" fill="none" stroke="#2A313A" stroke-width="2"/>
+
+  <!-- tick marks around the dial -->
+  <g id="ticks"></g>
+
+  <!-- progress sweep arc (gauge reading ~70%), orange -->
+  <circle cx="500" cy="500" r="430" fill="none" stroke="url(#sweep)" stroke-width="14"
+          stroke-linecap="round" stroke-dasharray="1621 2703"
+          transform="rotate(-215 500 500)"/>
+
+  <!-- brand mark: two gauge lenses + peak, scaled up from app_icon.svg's 512 mark, centered -->
+  <g transform="translate(500 500) scale(2.55) translate(-256 -300)">
+    <circle cx="170" cy="300" r="62" fill="none" stroke="#F8FAFC" stroke-width="16"/>
+    <circle cx="342" cy="300" r="62" fill="none" stroke="#F8FAFC" stroke-width="16"/>
+    <circle cx="170" cy="300" r="10" fill="#FF6A00"/>
+    <circle cx="342" cy="300" r="10" fill="#FF6A00"/>
+    <polyline points="205,255 225,210 256,195 287,210 307,255"
+              fill="none" stroke="#F8FAFC" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="256" cy="195" r="14" fill="#FF6A00"/>
+  </g>
+</svg>
+<script>
+  // draw 48 tick marks around the bezel, longer + orange every 6th (12 major ticks)
+  const svg = document.querySelector('svg');
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.getElementById('ticks');
+  const cx = 500, cy = 500, rOuter = 430;
+  const N = 48;
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const major = i % 4 === 0;
+    const len = major ? 26 : 12;
+    const rInner = rOuter - len;
+    const x1 = cx + Math.cos(angle) * rOuter;
+    const y1 = cy + Math.sin(angle) * rOuter;
+    const x2 = cx + Math.cos(angle) * rInner;
+    const y2 = cy + Math.sin(angle) * rInner;
+    const line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', major ? '#F8FAFC' : '#3A424C');
+    line.setAttribute('stroke-width', major ? 5 : 3);
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', major ? 0.9 : 0.55);
+    g.appendChild(line);
+  }
+</script>
+</body>
+</html>
