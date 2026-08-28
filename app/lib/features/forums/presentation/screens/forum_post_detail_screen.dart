@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -141,15 +142,20 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 12),
-            const SizedBox(width: 8),
-            Text(
-              post.userName,
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
-            ),
-          ],
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => context.push('/profile/${post.userId}'),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 12),
+              const SizedBox(width: 8),
+              Text(
+                post.userName,
+                style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         Text(
@@ -171,15 +177,20 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              UserAvatar(photoUrl: reply.userPhotoUrl, name: reply.userName, radius: 11),
-              const SizedBox(width: 8),
-              Text(
-                reply.userName,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-              ),
-            ],
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => context.push('/profile/${reply.userId}'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                UserAvatar(photoUrl: reply.userPhotoUrl, name: reply.userName, radius: 11),
+                const SizedBox(width: 8),
+                Text(
+                  reply.userName,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 6),
           Text(reply.body, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
