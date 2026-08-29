@@ -21,7 +21,15 @@ const QA_PASSWORD = 'QaSeed!2026';
 // 30 real Bangladesh-market motorcycles, commuter to high-range. Tier is
 // derived from `cc` at use time (see tierForCc), not stored here, so it
 // stays a single source of truth.
+//
+// Above 150cc, the catalog only draws from CFMoto and Royal Enfield: those
+// are, in practice, the only brands riders in this market actually talk
+// about once they're past the domestic commuter/mid-range class — everything
+// else in that displacement range (KTM, Kawasaki, most 150-400cc Japanese
+// sportbikes) is a grey-import rarity here, not a bike this crowd is
+// comparing notes on.
 const BIKE_CATALOG = [
+  // 150cc and under — the domestic commuter/mid-range market.
   { brand: 'Honda', model: 'CB Shine 125', year: 2022, cc: 125 },
   { brand: 'Bajaj', model: 'Discover 125', year: 2021, cc: 125 },
   { brand: 'TVS', model: 'Metro Plus 100', year: 2020, cc: 100 },
@@ -33,25 +41,26 @@ const BIKE_CATALOG = [
   { brand: 'Walton', model: 'Fizor 125', year: 2022, cc: 125 },
   { brand: 'Bajaj', model: 'CT 100', year: 2020, cc: 100 },
   { brand: 'Yamaha', model: 'FZS-Fi V3', year: 2022, cc: 149 },
-  { brand: 'Honda', model: 'CB150R Streetfire', year: 2021, cc: 150 },
-  { brand: 'Suzuki', model: 'Gixxer 155', year: 2021, cc: 155 },
-  { brand: 'Bajaj', model: 'Pulsar NS160', year: 2022, cc: 160 },
-  { brand: 'TVS', model: 'Apache RTR 160 4V', year: 2022, cc: 160 },
-  { brand: 'Yamaha', model: 'MT-15', year: 2023, cc: 155 },
-  { brand: 'Honda', model: 'X-Blade 160', year: 2021, cc: 160 },
-  { brand: 'Bajaj', model: 'Pulsar 150', year: 2020, cc: 150 },
-  { brand: 'TVS', model: 'Apache RTR 165RP', year: 2023, cc: 165 },
-  { brand: 'Suzuki', model: 'Gixxer SF 155', year: 2022, cc: 155 },
-  { brand: 'Yamaha', model: 'R15 V4', year: 2023, cc: 155 },
   { brand: 'Suzuki', model: 'GSX-R150', year: 2021, cc: 147 },
-  { brand: 'KTM', model: 'Duke 250', year: 2022, cc: 250 },
-  { brand: 'Honda', model: 'CBR250RR', year: 2022, cc: 250 },
-  { brand: 'Kawasaki', model: 'Ninja 300', year: 2021, cc: 296 },
+  { brand: 'Honda', model: 'CB150R Streetfire', year: 2021, cc: 150 },
+  { brand: 'Bajaj', model: 'Pulsar 150', year: 2020, cc: 150 },
+  // Above 150cc — CFMoto and Royal Enfield only.
+  { brand: 'CF Moto', model: 'SR 250', year: 2022, cc: 249 },
+  { brand: 'CF Moto', model: 'SR 250', year: 2023, cc: 249 },
+  { brand: 'CF Moto', model: 'SR 300', year: 2022, cc: 292 },
+  { brand: 'CF Moto', model: 'SR 300', year: 2023, cc: 292 },
+  { brand: 'CF Moto', model: 'CF Light 230 Dual', year: 2022, cc: 230 },
+  { brand: 'CF Moto', model: 'CF Light 230 Dual', year: 2023, cc: 230 },
+  { brand: 'Royal Enfield', model: 'Classic 350', year: 2021, cc: 349 },
   { brand: 'Royal Enfield', model: 'Classic 350', year: 2022, cc: 349 },
+  { brand: 'Royal Enfield', model: 'Bullet 350', year: 2022, cc: 346 },
+  { brand: 'Royal Enfield', model: 'Bullet 350', year: 2023, cc: 346 },
+  { brand: 'Royal Enfield', model: 'Meteor 350', year: 2021, cc: 349 },
+  { brand: 'Royal Enfield', model: 'Meteor 350', year: 2022, cc: 349 },
+  { brand: 'Royal Enfield', model: 'Hunter 350', year: 2023, cc: 349 },
+  { brand: 'Royal Enfield', model: 'Hunter 350', year: 2023, cc: 349 },
+  { brand: 'Royal Enfield', model: 'Himalayan 411', year: 2020, cc: 411 },
   { brand: 'Royal Enfield', model: 'Himalayan 411', year: 2021, cc: 411 },
-  { brand: 'Yamaha', model: 'YZF-R3', year: 2023, cc: 321 },
-  { brand: 'KTM', model: 'RC 390', year: 2023, cc: 373 },
-  { brand: 'Kawasaki', model: 'Z400', year: 2023, cc: 399 },
 ];
 
 const TOPICS = ['Road Trips', 'Maintenance', 'Mileage Talk', 'Mods & Accessories'];
@@ -69,9 +78,19 @@ function slugifyPart(value) {
     .replace(/^_+|_+$/g, '');
 }
 
+/** Port of app/lib/core/utils/slugify.dart's `normalizeModelFamily` — must
+ * stay exact so a rider's real Yamaha FZS forum and this catalog's seeded
+ * one are the same forum, not two. */
+function normalizeModelFamily(brand, model) {
+  if (brand.trim().toLowerCase() === 'yamaha' && /^fz-?s/i.test(model.trim())) {
+    return 'FZS';
+  }
+  return model;
+}
+
 function bikeForumSlug(brand, model) {
   const parts = [brand];
-  if (model && model.trim()) parts.push(model);
+  if (model && model.trim()) parts.push(normalizeModelFamily(brand, model));
   return parts.map(slugifyPart).join('__');
 }
 
@@ -102,6 +121,7 @@ module.exports = {
   BIKE_CATALOG,
   TOPICS,
   slugifyPart,
+  normalizeModelFamily,
   bikeForumSlug,
   generalForumSlug,
   tierForCc,

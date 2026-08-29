@@ -597,6 +597,19 @@ rider data.
 
 ## Live roster (seeded 2026-08-27)
 
+**Stale as of 2026-08-29 — `qa_seed_catalog.js`/`seed_qa_test_riders.js` were
+updated after this batch went live** (all-male rider names, Banglish forum
+post copy, and a bike catalog restricted above 150cc to CFMoto/Royal Enfield
+only — see git history on those two files). The table below is what's
+*actually in `throttleiqfb` right now*: the old mixed-gender names, the old
+English post copy, and the old catalog (which included KTM/Kawasaki/other
+150-400cc entries above 150cc). It will only match the current script output
+after someone runs `cleanup_qa_test_riders.js` followed by a fresh
+`seed_qa_test_riders.js --yes-i-really-mean-it` — both of which write
+publicly-visible changes to a live project other beta testers are using, so
+that reseed needs its own explicit go-ahead; it was not run as part of this
+update. Regenerate this table after that reseed.
+
 The 30 accounts actually created in `throttleiqfb`, pulled from Firestore
 after the run — see [Running it for real](#running-it-for-real) above for
 how to reproduce this listing (`qa_seed_catalog.allSeedableForumIds()` plus a

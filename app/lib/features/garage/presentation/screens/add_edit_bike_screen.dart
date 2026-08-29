@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/constants/bike_catalog.dart';
 import '../../../../core/constants/bike_colors.dart';
 import '../../../../core/utils/image_crop_io.dart';
 import '../../../../shared/screens/image_crop_screen.dart';
+import '../../../../shared/widgets/brand_model_field.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
 
@@ -223,20 +225,18 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              TextFormField(
+              BrandModelAutocompleteField(
                 controller: _brandCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                    labelText: 'Brand *', hintText: 'Yamaha'),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                labelText: 'Brand *',
+                hintText: 'Yamaha',
+                optionsBuilder: (_) => bikeCatalogBrands,
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              BrandModelAutocompleteField(
                 controller: _modelCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                    labelText: 'Model *', hintText: 'MT-15'),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                labelText: 'Model *',
+                hintText: 'MT-15',
+                optionsBuilder: (_) => modelsForBrand(_brandCtrl.text),
               ),
               const SizedBox(height: 12),
               Row(

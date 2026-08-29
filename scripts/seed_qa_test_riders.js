@@ -65,6 +65,7 @@ const {
   bikeForumSlug,
   generalForumSlug,
   tierForCc,
+  normalizeModelFamily,
 } = require('./qa_seed_catalog');
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
@@ -72,12 +73,12 @@ const CONFIRMATION_PHRASE = 'SEED QA TEST RIDERS';
 const BATCH_COMMIT_SIZE = 400;
 
 const RIDER_NAMES = [
-  'Tanvir Ahmed', 'Nusrat Jahan', 'Rakibul Islam', 'Farhana Akter', 'Shakil Hasan',
-  'Mitu Rahman', 'Imran Hossain', 'Sadia Islam', 'Kamrul Hasan', 'Rumana Akter',
-  'Mahmudul Hasan', 'Sabrina Yasmin', 'Arif Hossain', 'Tania Sultana', 'Nayeem Chowdhury',
-  'Jannatul Ferdous', 'Habibur Rahman', 'Shirin Akter', 'Rezaul Karim', 'Mahfuza Begum',
-  'Sohel Rana', 'Nasrin Sultana', 'Anisur Rahman', 'Farzana Haque', 'Jubayer Ahmed',
-  'Sultana Razia', 'Emon Khan', 'Rukhsana Parvin', 'Riyad Hossain', 'Moushumi Akter',
+  'Tanvir Ahmed', 'Mizanur Rahman', 'Rakibul Islam', 'Shafiqul Islam', 'Shakil Hasan',
+  'Golam Mostofa', 'Imran Hossain', 'Rashedul Karim', 'Kamrul Hasan', 'Faisal Ahmed',
+  'Mahmudul Hasan', 'Zahidul Islam', 'Arif Hossain', 'Aminul Haque', 'Nayeem Chowdhury',
+  'Shamsul Alam', 'Habibur Rahman', 'Delwar Hossain', 'Rezaul Karim', 'Nazmul Hasan',
+  'Sohel Rana', 'Iqbal Hossain', 'Anisur Rahman', 'Ashraful Islam', 'Jubayer Ahmed',
+  'Rafiqul Islam', 'Emon Khan', 'Monirul Islam', 'Riyad Hossain', 'Shariful Islam',
 ];
 
 const CITIES = [
@@ -132,10 +133,14 @@ const TIER_STATS = {
   },
 };
 
+// Banglish (Bengali written in Roman script, mixed freely with English
+// riding/mechanical terms) — how riders in these groups actually write, not
+// formal English. Kept short and template-friendly since these interpolate
+// into the post bodies below.
 const TIER_COMMENT = {
-  commuter: 'Handles Dhaka traffic and potholes without any drama, and fuel costs stay low.',
-  midrange: 'Good balance of power for overtaking on the highway and still manageable in city traffic.',
-  highrange: 'Definitely have to respect the power on wet roads during monsoon, but an absolute blast on the highway.',
+  commuter: 'Dhaka traffic ar pothole e kono drama nai, mileage o thik ache.',
+  midrange: 'Highway e overtake korar moto power ache, abar city te o easily chalano jay.',
+  highrange: 'Borsha kale bhija রাস্তায় thoda respect kore chalaite hoy, but highway te total moja.',
 };
 
 // ---------------------------------------------------------------------------
@@ -247,57 +252,64 @@ function buildRider(index, bike) {
 
   const bikeForumTemplates = [
     {
-      title: `${months} months with the ${bikeName} — full review`,
-      body: `Been riding my ${bike.brand} ${bike.model} (${bike.cc}cc) around ${city.name} for about ` +
-        `${months} months now, clocked ${odometer} km on the odometer. Getting around ${mileage} km/l in ` +
-        `mixed city and highway riding. ${TIER_COMMENT[tier]} Overall really happy with the ${bike.brand} ` +
-        `after-sales support in ${city.name}. Anyone else running the same bike — what mileage are you getting?`,
+      title: `${months} mash chalaitesi ${bikeName}, full review dilam`,
+      body: `Amar ${bike.brand} ${bike.model} (${bike.cc}cc) prai ${months} mash dhore ${city.name}-e chalaitesi, ` +
+        `odometer e uthse ${odometer} km. Mileage pacchi mota-muti ${mileage} km/l, city ar highway mix kore. ` +
+        `${TIER_COMMENT[tier]} ${bike.brand}-er after-sales service ${city.name}-e onek bhalo paisi. Ei bike ` +
+        `chalay emon keu ache naki ekhane, apnader mileage koto ashe bhai?`,
     },
     {
-      title: `What mileage should I expect from a ${bikeName}?`,
-      body: `Just picked up a ${bike.year} ${bike.brand} ${bike.model} and doing mostly ${city.name} city ` +
-        `riding with the occasional highway trip. Getting around ${mileage} km/l so far — is that normal for ` +
-        `this bike or should I get the carb/injector checked? Riding style is pretty relaxed, mostly under ` +
-        `${maxSpeed.toFixed(0)} km/h.`,
+      title: `${bikeName}-e mileage koto pawa uchit?`,
+      body: `Nunotun ${bike.year} ${bike.brand} ${bike.model} kinlam, mostly ${city.name}-er moddhei chalaitesi, ` +
+        `majhe majhe highway trip o hoy. Mileage pacchi around ${mileage} km/l, eta ki normal na carb/injector ` +
+        `check kora lagbe? Chalanor style relax type, beshirbhag somoy ${maxSpeed.toFixed(0)} km/h-er niche.`,
     },
     {
-      title: `First service done on my ${bikeName} — notes`,
-      body: `Just got the first service done on my ${bike.brand} ${bike.model} at ${odometer} km. Chain, oil, ` +
-        `and brake pads all checked out fine at the shop in ${city.name}. Anyone have a recommended service ` +
-        `interval for this model?`,
+      title: `${bikeName}-er first service korailam, kichu note`,
+      body: `Amar ${bike.brand} ${bike.model}-er first service korailam ${odometer} km-e. Chain, oil, brake pad ` +
+        `shob thik pelo ${city.name}-er shop theke. Ei model-er jonno recommended service interval ki keu bolte ` +
+        `parben?`,
     },
   ];
 
   const generalTopic = pick(TOPICS);
   const generalForumTemplates = {
     'Road Trips': {
-      title: `Weekend ride to ${tripCity.name} on the ${bikeName}`,
-      body: `Took the ${bike.brand} ${bike.model} out for a ${tripDistance} km round trip to ${tripCity.name} ` +
-        `last weekend. Left ${city.name} early morning to beat the traffic. Average speed came out to about ` +
-        `${avgSpeed.toFixed(0)} km/h with a top speed of ${maxSpeed.toFixed(0)} km/h on the open stretch. Bike ` +
-        `felt planted the whole way, no issues at all. Definitely doing this route again.`,
+      title: `${tripCity.name} tour dilam ${bikeName} niye, weekend e`,
+      body: `${bike.brand} ${bike.model} niye ${tripDistance} km-er round trip dilam ${tripCity.name}-e, gelo ` +
+        `weekend-e. ${city.name} theke bhor bhor rowna disilam jam thik result e. Average speed uthsilo ` +
+        `${avgSpeed.toFixed(0)} km/h ar top speed ${maxSpeed.toFixed(0)} km/h khola rastay. Bike puro stable ` +
+        `silo, kono issue hoy nai. Ei route abar dibo inshallah.`,
     },
     'Maintenance': {
-      title: `Chain and sprocket check on the ${bikeName}`,
-      body: `${odometer} km in on my ${bike.brand} ${bike.model} and the chain was starting to sound a bit ` +
-        `dry, so cleaned and lubed it this weekend in ${city.name}. Sprockets still look fine. What KM mark ` +
-        `is everyone replacing theirs at?`,
+      title: `${bikeName}-er chain-sprocket check dilam`,
+      body: `${odometer} km hoise amar ${bike.brand} ${bike.model}-e, chain ektu dry dry sound dicchilo, tai ` +
+        `ei weekend-e clean-lube kore dilam ${city.name}-e. Sprocket ekhono thik ache. Keu bolte parben kotokm ` +
+        `e chain-sprocket change kora uchit?`,
     },
     'Mileage Talk': {
-      title: `${mileage} km/l on the ${bikeName} — good or bad?`,
-      body: `Been logging fuel fill-ups on my ${bike.brand} ${bike.model} for the last ${months} months, mostly ` +
-        `${city.name} city riding. Averaging ${mileage} km/l. Curious how that compares to others on this bike.`,
+      title: `${mileage} km/l ${bikeName}-e, valo naki kharap?`,
+      body: `Last ${months} mash dhore fuel fill-up log rakhtesi ${bike.brand} ${bike.model}-e, mostly ` +
+        `${city.name}-er city riding. Average ${mileage} km/l ashtese. Onnora ei bike-e ki mileage pacchen, ` +
+        `janben please.`,
     },
     'Mods & Accessories': {
-      title: `Any recommended mods for the ${bikeName}?`,
-      body: `Riding a ${bike.brand} ${bike.model} for daily commute in ${city.name} plus the odd weekend trip. ` +
-        `Thinking about a windscreen and some crash guards. Anyone running mods on this bike who can share what ` +
-        `actually held up on Bangladeshi roads?`,
+      title: `${bikeName}-e kono mods recommend korben?`,
+      body: `${bike.brand} ${bike.model} daily use kori ${city.name}-e, weekend e majhe majhe long ride o hoy. ` +
+        `Windscreen ar crash guard lagabo bhabtesi. Ei bike-e mods lagaisen emon keu ache, Bangladesh-er rasta ` +
+        `te actually kaj hoise emon jinis share korben please.`,
     },
   };
 
+  // The forum a post lands in uses the normalized model family (e.g. every
+  // Yamaha FZS generation shares one "Yamaha FZS" forum) even though the
+  // post body below still talks about the rider's own specific model —
+  // matches how ForumRepository.getOrCreateForum normalizes on the app side.
+  const forumModel = normalizeModelFamily(bike.brand, bike.model);
+  const forumDisplayName = forumModel === bike.model ? bikeName : `${bike.brand} ${forumModel}`;
+
   const forumPosts = [
-    { forumType: 'bikeModel', forumId: bikeForumSlug(bike.brand, bike.model), forumDisplayName: bikeName, brand: bike.brand, model: bike.model, ...pick(bikeForumTemplates), createdAt: daysAgo(randomFloat(1, accountAgeDays - 1, 2)) },
+    { forumType: 'bikeModel', forumId: bikeForumSlug(bike.brand, bike.model), forumDisplayName, brand: bike.brand, model: forumModel, ...pick(bikeForumTemplates), createdAt: daysAgo(randomFloat(1, accountAgeDays - 1, 2)) },
     { forumType: 'general', forumId: generalForumSlug(generalTopic), forumDisplayName: generalTopic, topic: generalTopic, ...generalForumTemplates[generalTopic], createdAt: daysAgo(randomFloat(1, accountAgeDays - 1, 2)) },
   ];
 

@@ -20,9 +20,27 @@
 String bikeForumSlug(String brand, {String? model}) {
   final parts = [
     brand,
-    if (model != null && model.trim().isNotEmpty) model,
+    if (model != null && model.trim().isNotEmpty) normalizeModelFamily(brand, model),
   ];
   return parts.map(_slugifyPart).join('__');
+}
+
+/// Collapses a bike model name to its forum "family" name where multiple
+/// generations of one popular model would otherwise fragment the community
+/// across a near-empty forum per version.
+///
+/// Currently only Yamaha's FZ-S/FZS commuter naked bike, which ships in the
+/// Bangladesh market across v1 through v4 plus "Fi" trims all under one
+/// popular name — `FZS v2`, `FZ-S V3`, `FZS-Fi V3`, etc. all resolve to the
+/// single `Yamaha FZS` forum rather than one each. Hard-coded to this one
+/// model on purpose: it's a one-off convergence rule, not a general
+/// versioning scheme every brand/model needs.
+String normalizeModelFamily(String brand, String model) {
+  if (brand.trim().toLowerCase() == 'yamaha' &&
+      RegExp(r'^fz-?s', caseSensitive: false).hasMatch(model.trim())) {
+    return 'FZS';
+  }
+  return model;
 }
 
 String _slugifyPart(String value) {

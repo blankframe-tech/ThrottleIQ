@@ -3313,3 +3313,69 @@ search button does the same when it's the one in flight).
 **Verification:** `flutter analyze` clean (no new issues in any touched
 file), `flutter test` 862/862. Not re-verified on-device/simulator this
 session — no iOS toolchain run.
+
+---
+
+## 55. Forums read as fabricated, and a bug-fix ask surfaced a real forum-grouping gap (2026-08-29)
+
+Two asks in one session, both about the forums feeling less like a real
+Bangladeshi riding community and more like generated filler.
+
+**"Continue with Google" had no equivalent on Register.** Not actually a
+bug in the sign-in path — `AuthNotifier.signInWithGoogle()` calls
+`_auth.signInWithCredential(credential)`, and Firebase creates the account
+transparently the first time it sees a given Google credential, so an
+unregistered rider tapping "Continue with Google" on Login was never
+actually failing. The real gap was that `register_screen.dart` had no
+Google option at all, so there was no explicit "sign up with Google" path.
+**Fixed:** added the same "Continue with Google" button (→
+`signInWithGoogle()`) to the register screen.
+
+**QA seed forum content (`scripts/seed_qa_test_riders.js`,
+`scripts/qa_seed_catalog.js`) read as generic and inauthentic.** The 30
+fabricated QA/test riders' forum posts were formal English templates, the
+30 rider names were a roughly 50/50 male/female mix, and the bike catalog
+above 150cc included brands (KTM, Kawasaki, most Japanese 150-400cc
+sportbikes) that are grey-import rarities in this market rather than what
+this crowd actually discusses. **Changed:** all 30 rider names are now
+male; forum post templates are now Banglish (mixed Bengali/English, casual
+tone) instead of formal English; the catalog above 150cc is now CFMoto (SR
+250, SR 300, CF Light 230 Dual) and Royal Enfield only, ≤150cc unchanged
+(domestic commuter/mid-range brands).
+
+**Fixing the FZS UX ask surfaced a real (non-QA) forum-grouping gap.** While
+fixing the above, verifying it also surfaced that the *production* forum
+logic had no concept of model-family grouping: a real rider's "Yamaha FZS
+v2" and another's "Yamaha FZS-Fi V3" would resolve to two different forums
+(`yamaha__fzs_v2` vs. `yamaha__fzs-fi_v3`) even though they're the same
+popular bike, fragmenting the one forum a rider on this model would
+actually want into several near-empty ones. **Fixed in the real app, not
+just the seed script:** `core/utils/slugify.dart`'s new
+`normalizeModelFamily()` collapses any Yamaha FZ-S/FZS variant to `FZS`
+before slugifying, applied inside `bikeForumSlug` so both the forum id and
+(via `ForumRepository.getOrCreateForum`) the stored `model`/`displayName`
+agree. Hard-coded to this one model on purpose — a one-off convergence
+rule for a specific popular bike, not a general versioning scheme every
+brand needs. Unit-tested (`test/core/utils/slugify_test.dart`); mirrored in
+`qa_seed_catalog.js`'s JS port so `cleanup_qa_test_riders.js`'s exhaustive
+forum-id set stays exhaustive.
+
+**Not yet done — needs an explicit go-ahead, not run this session:** per
+`scripts/README.md`'s "Live roster" section, 30 QA accounts matching the
+*old* names/bikes/post copy are already live in the production
+`throttleiqfb` project (seeded 2026-08-27), visible to real beta testers.
+Editing the seed script doesn't retroactively change what's already
+posted — that needs `cleanup_qa_test_riders.js` (deletes the 30 live
+accounts, irreversible) followed by a fresh `seed_qa_test_riders.js
+--yes-i-really-mean-it` (writes new public content to the same live
+project). Both are live, publicly-visible, and one is destructive, so this
+was deliberately left for an explicit decision rather than run
+automatically. `scripts/README.md`'s roster table is flagged stale until
+that reseed happens.
+
+**Verification:** `flutter analyze` clean on all touched Dart files,
+`flutter test test/core/utils/slugify_test.dart test/features/forums/`
+57/57 green. `node -c` syntax-checked both touched JS files and dry-ran
+`seed_qa_test_riders.js` to confirm the catalog/name/post-copy changes and
+confirm `allSeedableForumIds()` still collapses the FZS entries onto one
+slug. No production data touched.

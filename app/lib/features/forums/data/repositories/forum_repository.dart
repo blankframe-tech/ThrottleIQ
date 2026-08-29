@@ -64,8 +64,13 @@ class ForumRepository {
     final docRef = _forums.doc(slug);
 
     final hasModel = model != null && model.trim().isNotEmpty;
+    // Same normalization bikeForumSlug applies to the slug — e.g. "FZS-Fi V3"
+    // and "FZ-S V2" both slug to the same forum, so the stored model/display
+    // name must say "FZS" too, not whichever rider's raw text happened to
+    // create the doc first.
+    final normalizedModel = hasModel ? normalizeModelFamily(brand, model) : null;
     final type = hasModel ? ForumType.bikeModel : ForumType.brand;
-    final displayName = hasModel ? '$brand $model' : brand;
+    final displayName = hasModel ? '$brand $normalizedModel' : brand;
 
     final snapshot = await _firestore.runTransaction((transaction) async {
       final existing = await transaction.get(docRef);
@@ -76,7 +81,7 @@ class ForumRepository {
       transaction.set(docRef, {
         'type': type.name,
         'brand': brand,
-        'model': model,
+        'model': normalizedModel,
         'displayName': displayName,
         'followerCount': 0,
         'postCount': 0,

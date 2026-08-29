@@ -21,33 +21,52 @@ the full map of what lives where.
 
 ### Current status
 
-Pre-launch, at **`1.0.0-beta.1+1`**, tagged
+Pre-launch, at **`1.0.0-beta.1+2`**, tagged
 [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1)
-(currently at commit `ea12fc2`). No App Store submission exists yet. **Play
-Console progress (2026-08-28):** developer account verified as an individual
-("Abrar Masud Nafiz"), app created under package `com.bft.throttleiq`, and
-the first release AAB built locally (`flutter build appbundle --release` →
-`app/build/app/outputs/bundle/release/app-release.aab`, versionCode 1) for
-upload to the Internal testing track — confirm in Play Console whether the
-upload/release creation was completed. **Google Cloud project
-`throttle-iq-gcc1`** (project number `439350192148`) exists and is linked for
-Play Console API access, set up 2026-08-29 to enable automated releases
-(service account + Google Play Developer API, e.g. via `fastlane supply` or
-Gradle Play Publisher). As of 2026-08-29: the Play Android Developer API is
-enabled and a `throttleiq-play-publisher` service account exists with a JSON
-key downloaded to `secrets/` (gitignored the same day — `/secrets/` and
-`*.json.key` added to `.gitignore` so the key can't be accidentally
-committed). **API access verified working 2026-08-29** — the service account
-was invited under Play Console's **Users and permissions** page (there's no
-longer a separate "API access" page; it's invited by pasting its
+(commit `ea12fc2` — versionCode 2's fixes are committed locally on top of it,
+not yet re-tagged or pushed to `origin`). No App Store submission exists yet.
+
+**Play Console — Internal testing track is live (2026-08-29):**
+versionCode 2 (`1.0.0-beta.1+2`) is uploaded and its release status is
+`completed` on the internal track — confirmed via the Android Publisher API,
+not just the console UI. versionCode 1 is superseded (it had reached
+`completed` too, resolving the earlier "confirm whether the upload
+completed" uncertainty). Release notes on this build: the GPS speed-fallback
+fix (§49), the iOS share-sheet crash fix (§48), and the forum UX fixes
+(§54, listed below).
+**Blocker: zero testers assigned.** The internal track's tester list came
+back empty via the API — nobody can install this build yet. Adding testers
+is Play Console UI-only: **Test and release → Internal testing → Testers**
+tab → paste emails into an "Email list". Confirmed the Android Publisher API
+*cannot* do this part — `edits.testers` only accepts a `googleGroups` field
+(a Google Group email), not individual tester addresses; passing a plain
+email 400s with "Invalid Google Groups". Six addresses were given to add
+this way (see chat/PR history, not reproduced here since they're not code
+context); more to be added later.
+
+**Google Cloud project `throttle-iq-gcc1`** (project number
+`439350192148`) is linked for Play Console API access, set up 2026-08-29 to
+enable automated releases (service account + Google Play Developer API).
+The Play Android Developer API is enabled; a `throttleiq-play-publisher`
+service account exists with a JSON key at `secrets/` (gitignored —
+`/secrets/` and `*.json.key` are in `.gitignore` so the key can't be
+accidentally committed). It was invited under Play Console's **Users and
+permissions** page (there's no longer a separate "API access" page — a
+service account is invited there by pasting its
 `...@throttle-iq-gcc1.iam.gserviceaccount.com` email like a human user, then
-granted per-app "Release to testing tracks" only) and confirmed end-to-end by
-creating and deleting a real Android Publisher API edit for
-`com.bft.throttleiq`. Reuse note: `gcloud auth print-access-token` needs
+granted per-app "Release to testing tracks" only) and is now the actual
+publishing path: this session used it directly via raw Android Publisher API
+calls (`edits` → `bundles.upload` → `tracks` → `:commit`) to ship versionCode
+2, end to end, with no fastlane/Gradle Play Publisher wrapper. **Reuse
+note:** `gcloud auth print-access-token` needs
 `--scopes=https://www.googleapis.com/auth/androidpublisher` explicitly — the
-default `cloud-platform` scope alone 403s against this API. **Still
-pending:** wiring up an actual CLI publishing tool (fastlane `supply` or
-Gradle Play Publisher). Test suite: **865/865 green**, `flutter analyze` clean.
+default `cloud-platform` scope alone 403s against this API. **Still open:**
+wrapping these raw calls in fastlane `supply` or Gradle Play Publisher for
+convenience (not required — the raw API path already works), and bumping
+`version:`/versionCode again before the *next* upload per the step below.
+Test suite: **862/862 green** (Flutter) + **73/73 green** (Firestore rules),
+`flutter analyze` clean (no errors; pre-existing lint-only warnings
+unrelated to this session's changes).
 
 **Built and wired end-to-end:** ride recording (offline-first, background
 GPS, crash detection with a cancellable countdown), garage + distance-based
@@ -109,6 +128,19 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `Issues.md`; this list is a compact pointer, not the record itself.
 
+- **2026-08-29** — Add/Edit Bike and onboarding's Brand/Model fields now
+  suggest from a real Bangladesh-market brand/model catalog as you type
+  (`core/constants/bike_catalog.dart` + `BrandModelAutocompleteField`),
+  while staying free text underneath so a custom brand/model still works.
+- **2026-08-29** — "Sign up with Google" added to the register screen (Google
+  was previously reachable only from Login); Yamaha FZ-S/FZS model
+  generations now converge on one `Yamaha FZS` forum instead of fragmenting
+  by version (`normalizeModelFamily()`, `slugify.dart`); and the QA seed
+  script's fabricated forum content was overhauled — all-male rider names,
+  Banglish post copy, and a bike catalog restricted above 150cc to
+  CFMoto/Royal Enfield only (§55). The 30 accounts already live in
+  `throttleiqfb` still reflect the old script output until a manual
+  cleanup+reseed — see "To do" above.
 - **2026-08-29** — Fixed all six defects from the §46 QA sweep: the
   export-crash `sharePositionOrigin` fix (§48), a GPS-speed fallback for
   when `Position.speed` is unreliable (§49), three forum UX gaps — posts
@@ -420,6 +452,18 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 
 ## 📋 To do
 
+- [ ] **Reseed the QA test riders.** `scripts/seed_qa_test_riders.js` /
+  `scripts/qa_seed_catalog.js` were updated 2026-08-29 (`Issues.md` §55) —
+  all-male rider names, Banglish forum post copy, and a bike catalog
+  restricted above 150cc to CFMoto/Royal Enfield only. The 30 accounts
+  actually live in `throttleiqfb` right now still have the *old* names/bike
+  catalog/English post copy (seeded 2026-08-27) — the script change alone
+  doesn't touch them. Needs `cleanup_qa_test_riders.js` (deletes the live
+  batch, irreversible) then a fresh `seed_qa_test_riders.js
+  --yes-i-really-mean-it` (writes new public content real beta testers will
+  see) — deliberately not run automatically since both write to a live
+  project. `scripts/README.md`'s "Live roster" table is stale until this
+  runs; regenerate it afterward.
 - [x] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-08-29** — the QA sweep's
   "can't delete your own forum post" (`Issues.md` §47) turned out not to be
   a rules-*text* bug: the post-delete rule already correctly allows the
@@ -555,20 +599,33 @@ the actual pre-launch QA punch list — ordered roughly by risk.
    (`flutter build appbundle --release`). **Every future upload** needs
    `version:`/versionCode bumped in `pubspec.yaml` before rebuilding, per #8
    below.
-4. **Upload to Internal testing track first** — exempt from the background-
-   location review, so it's the fastest way to a real build on real devices.
-   AAB upload/release creation started 2026-08-28 — confirm in Play Console
-   whether it completed. That draft's warnings (no testers assigned yet, no
-   deobfuscation file) are addressed as of later the same day: testers still
-   need assigning in the console, but a **new** `app-release.aab` was
-   rebuilt with R8/ProGuard re-enabled (`Issues.md` §51) — upload it in
-   place of the first one, along with
-   `build/app/outputs/mapping/release/mapping.txt`, to close the
-   deobfuscation warning. Still versionCode 1 — the draft release hadn't
-   rolled out yet, so no version bump was needed to replace it.
-5. Fill in **Store listing** (`store_listing/store_listing.md`), **Data
-   Safety form** (`store_listing/data_safety_and_permissions.md`), and the
-   **Content rating questionnaire**.
+4. ~~**Upload to Internal testing track first**~~ **DONE, ongoing** — exempt
+   from the background-location review, so it's the fastest way to a real
+   build on real devices. versionCode 1 fully completed
+   (`Issues.md` §51's R8/ProGuard rebuild included), and versionCode 2
+   shipped 2026-08-29 with the fixes in `Issues.md` §§47-49, 54, uploaded and
+   committed to the track via the Android Publisher API directly (service
+   account in `secrets/`, see "Current status" above for the exact call
+   sequence — no fastlane needed). **The one open item is testers:** the
+   track's tester list is empty; add emails under **Test and release →
+   Internal testing → Testers → Email list** in the console (API-only for
+   the release itself, but this specific step has no API — it 400s on a
+   plain email, only a Google Group works via `edits.testers`).
+5. ~~Fill in **Main store listing**~~ **DONE 2026-08-29** — title, short/full
+   description (from `store_listing/store_listing.md`), icon, feature
+   graphic, 6 phone screenshots (cropped from `screenshots/trail_social/` to
+   1206×2412 / 2:1 and converted PNG→JPEG to drop the alpha channel Play
+   rejects), and a contact email, all pushed live via the Android Publisher
+   API (`edits.listings.update` + `edits.images.upload`, no Console UI
+   needed — note the real path has no `imageTypes` segment:
+   `.../listings/{language}/{imageType}`, unlike what the API surface implies
+   at a glance). This was root-caused as *why* internal testers got "Item not
+   found" after opting in — Play can't render a listing with no icon/
+   description, even for a whitelisted tester. Still open: **Data Safety
+   form** (`store_listing/data_safety_and_permissions.md`) and the **Content
+   rating questionnaire** — both interactive Console-UI-only flows, not
+   reachable via this API. If "Item not found" recurs after this fix, look
+   there next.
 6. Submit the **Background Location Access declaration** — see the 🔴 note
    above. Gates closed/open/production testing.
 7. Once background-location clears: promote internal → closed beta →

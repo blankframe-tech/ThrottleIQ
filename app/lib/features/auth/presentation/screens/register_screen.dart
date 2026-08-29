@@ -34,13 +34,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           _emailCtrl.text.trim(),
           _passCtrl.text,
         );
-    if (mounted) {
-      final err = ref.read(authNotifierProvider).error;
-      if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mapFirebaseAuthError(err))),
-        );
-      }
+    _showErrorIfAny();
+  }
+
+  Future<void> _googleSignUp() async {
+    await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+    _showErrorIfAny();
+  }
+
+  void _showErrorIfAny() {
+    if (!mounted) return;
+    final err = ref.read(authNotifierProvider).error;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mapFirebaseAuthError(err))),
+      );
     }
   }
 
@@ -126,6 +134,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           height: 20, width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Text('Create Account'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: AppColors.textSecondary)),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('or',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ),
+                    Expanded(child: Divider(color: AppColors.textSecondary)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: loading ? null : _googleSignUp,
+                  icon: const Icon(Icons.g_mobiledata, size: 28),
+                  label: const Text('Sign up with Google'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: BorderSide(color: AppColors.textPrimary, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(

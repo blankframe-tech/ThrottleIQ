@@ -51,6 +51,33 @@ void main() {
       expect(b, 'royal__enfield_classic_350');
       expect(a, isNot(equals(b)));
     });
+
+    test('every Yamaha FZ-S/FZS generation converges on one forum', () {
+      final variants = ['FZS', 'FZ-S', 'FZS V2', 'FZ-S V2', 'FZS-Fi V3', 'fzs v4'];
+      for (final model in variants) {
+        expect(bikeForumSlug('Yamaha', model: model), 'yamaha__fzs');
+      }
+    });
+
+    test('a Yamaha model that only happens to start similarly is not merged', () {
+      expect(bikeForumSlug('Yamaha', model: 'FZ25'), isNot('yamaha__fzs'));
+    });
+
+    test('the FZS grouping only applies to Yamaha, not other brands', () {
+      expect(bikeForumSlug('Honda', model: 'FZS'), 'honda__fzs');
+    });
+  });
+
+  group('normalizeModelFamily', () {
+    test('collapses any FZ-S/FZS Yamaha generation to "FZS"', () {
+      expect(normalizeModelFamily('Yamaha', 'FZS-Fi V3'), 'FZS');
+      expect(normalizeModelFamily('yamaha', 'FZ-S V2'), 'FZS');
+    });
+
+    test('leaves other models untouched', () {
+      expect(normalizeModelFamily('Yamaha', 'MT-15'), 'MT-15');
+      expect(normalizeModelFamily('Royal Enfield', 'Classic 350'), 'Classic 350');
+    });
   });
 
   group('generalForumSlug', () {

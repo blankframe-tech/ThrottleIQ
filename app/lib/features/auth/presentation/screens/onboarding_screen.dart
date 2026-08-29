@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/constants/bike_catalog.dart';
+import '../../../../shared/widgets/brand_model_field.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -174,24 +176,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     },
                   ),
                 ] else ...[
-                  TextFormField(
+                  BrandModelAutocompleteField(
                     controller: _brandCtrl,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'Brand *',
-                      hintText: 'Yamaha, Honda, Bajaj...',
-                    ),
-                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    labelText: 'Brand *',
+                    hintText: 'Yamaha, Honda, Bajaj...',
+                    optionsBuilder: (_) => bikeCatalogBrands,
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  BrandModelAutocompleteField(
                     controller: _modelCtrl,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'Model *',
-                      hintText: 'FZ-S, CB300R, Pulsar...',
-                    ),
-                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    labelText: 'Model *',
+                    hintText: 'FZ-S, CB300R, Pulsar...',
+                    optionsBuilder: (_) => modelsForBrand(_brandCtrl.text),
                   ),
                   const SizedBox(height: 12),
                   Row(
