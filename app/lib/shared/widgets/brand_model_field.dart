@@ -10,7 +10,7 @@ import '../../core/constants/app_colors.dart';
 /// something that isn't in [optionsBuilder]'s list — a "custom" brand/model —
 /// works exactly as it did before this existed. The dropdown is a shortcut
 /// for the common case, not a constraint.
-class BrandModelAutocompleteField extends StatelessWidget {
+class BrandModelAutocompleteField extends StatefulWidget {
   const BrandModelAutocompleteField({
     super.key,
     required this.controller,
@@ -29,11 +29,31 @@ class BrandModelAutocompleteField extends StatelessWidget {
   final List<String> Function(String typed) optionsBuilder;
 
   @override
+  State<BrandModelAutocompleteField> createState() =>
+      _BrandModelAutocompleteFieldState();
+}
+
+class _BrandModelAutocompleteFieldState
+    extends State<BrandModelAutocompleteField> {
+  // RawAutocomplete asserts that textEditingController and focusNode are
+  // either both supplied or both left null — passing a controller alone
+  // (as this field used to) fails that assertion as soon as the widget
+  // builds.
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Autocomplete<String>(
-      textEditingController: controller,
+      textEditingController: widget.controller,
+      focusNode: _focusNode,
       optionsBuilder: (value) {
-        final options = optionsBuilder(value.text);
+        final options = widget.optionsBuilder(value.text);
         if (value.text.isEmpty) return options;
         final query = value.text.toLowerCase();
         return options.where((o) => o.toLowerCase().contains(query));
@@ -44,7 +64,8 @@ class BrandModelAutocompleteField extends StatelessWidget {
           focusNode: focusNode,
           onEditingComplete: onFieldSubmitted,
           style: TextStyle(color: AppColors.textPrimary),
-          decoration: InputDecoration(labelText: labelText, hintText: hintText),
+          decoration: InputDecoration(
+              labelText: widget.labelText, hintText: widget.hintText),
           validator: (v) => v == null || v.isEmpty ? 'Required' : null,
         );
       },

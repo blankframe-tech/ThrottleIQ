@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/follow_repository.dart';
 import '../../data/repositories/ride_share_repository.dart';
@@ -85,7 +86,12 @@ final visibleFeedProvider = Provider<List<SharedRideEntity>>((ref) {
   final rides = ref.watch(rideFeedNotifierProvider);
   final sort = ref.watch(feedSortProvider);
   final following = ref.watch(followingUidsProvider).valueOrNull ?? const <String>{};
-  return sortFeed(rides, sort, followingUids: following);
+  final blockedUids = ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+  
+  // Filter out any rides from blocked users
+  final unblockedRides = rides.where((ride) => !blockedUids.contains(ride.userId)).toList();
+  
+  return sortFeed(unblockedRides, sort, followingUids: following);
 });
 
 class RideFeedNotifier extends StateNotifier<List<SharedRideEntity>> {

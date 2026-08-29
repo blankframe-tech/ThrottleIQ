@@ -259,6 +259,44 @@ class _NoBikeCard extends StatelessWidget {
   }
 }
 
+/// Shown once, right before the OS location prompts, whenever the rider
+/// hasn't already granted "Allow all the time" — this is the in-app
+/// disclosure Play's background-location policy requires be distinct from
+/// the system dialog. Returns false (and shows nothing further) if the rider
+/// backs out here rather than proceeding to the OS prompts.
+Future<bool> _ensureLocationDisclosure(BuildContext context) async {
+  if (await Geolocator.checkPermission() == LocationPermission.always) {
+    return true;
+  }
+  if (!context.mounted) return false;
+  final proceed = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Background location'),
+      content: const Text(
+        'ThrottleIQ records your route, speed, and distance using your '
+        'location while a ride is active — including while your phone is '
+        "locked or in a pocket, so the ride isn't cut short. The next "
+        'screen will ask for "Allow all the time" location access. '
+        'Location is only used to record your ride, and tracking stops the '
+        'moment you end it.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Not now'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Continue'),
+        ),
+      ],
+    ),
+  );
+  return proceed ?? false;
+}
+
 /// Puts the blocked-recording reason (GPS off / no permission) in front of
 /// the rider immediately, as a SnackBar with a one-tap fix — the persistent
 /// card above the start control says the same thing, but it can sit below
@@ -302,6 +340,8 @@ class _HoldToStartControl extends ConsumerWidget {
       enabled: enabled,
       busy: status == RecordingStatus.starting,
       onStart: () async {
+        if (!await _ensureLocationDisclosure(context)) return;
+        if (!context.mounted) return;
         await ref.read(rideRecordingProvider.notifier).startRide();
         if (!context.mounted) return;
         final result = ref.read(rideRecordingProvider);
@@ -374,6 +414,11 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   void _onPanCancel() => _ctrl.animateTo(0.0, curve: Curves.easeOut);
 
   void _triggerStart() async {
+    if (!await _ensureLocationDisclosure(context)) {
+      _ctrl.animateTo(0.0, curve: Curves.easeOut);
+      return;
+    }
+    if (!mounted) return;
     await ref.read(rideRecordingProvider.notifier).startRide();
     if (!mounted) return;
     final result = ref.read(rideRecordingProvider);

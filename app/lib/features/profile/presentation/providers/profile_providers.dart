@@ -32,3 +32,11 @@ final riderBikesProvider =
     FutureProvider.family<List<BikeEntity>, String>((ref, uid) {
   return ref.watch(profileRepositoryProvider).getBikesFor(uid);
 });
+
+/// The current rider's set of blocked user IDs.
+final blockedUsersProvider = FutureProvider<Set<String>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const {};
+  final ids = await ref.watch(profileRepositoryProvider).getBlockedUserIds(user.uid);
+  return ids.toSet();
+});

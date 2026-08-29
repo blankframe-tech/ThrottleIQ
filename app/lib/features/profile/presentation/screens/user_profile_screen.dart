@@ -17,6 +17,7 @@ import '../../../social/presentation/providers/notification_providers.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 
 /// A rider's profile: avatar, bio, follow button, total km/rides, earned
 /// badges and (permission allowing) their garage. Reached by tapping a
@@ -36,6 +37,8 @@ import '../providers/profile_providers.dart';
 /// this screen renders as an explicit "This profile is private" state
 /// rather than a raw error. The garage section is gated separately by
 /// [canSeeBikes] / [UserProfileEntity.bikesVisibility].
+import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+
 class UserProfileScreen extends ConsumerWidget {
   /// The rider to show. Null → the signed-in rider's own profile.
   final String? uid;
@@ -70,6 +73,39 @@ class UserProfileScreen extends ConsumerWidget {
               onPressed: () => context.push('/profile/edit'),
               icon: Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
               label: Text('Edit', style: TextStyle(color: AppColors.primary)),
+            )
+          else if (targetUid != null)
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: AppColors.textPrimary),
+              onSelected: (value) async {
+                if (value == 'block' && myUid != null) {
+                  await ref.read(profileRepositoryProvider).blockUser(myUid, targetUid);
+                  ref.invalidate(blockedUsersProvider);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('User blocked')),
+                    );
+                    context.pop();
+                  }
+                } else if (value == 'report') {
+                  ReportBottomSheet.show(
+                    context,
+                    reportedId: targetUid,
+                    contentType: 'user',
+                    contentId: targetUid,
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'report',
+                  child: Text('Report User'),
+                ),
+                const PopupMenuItem(
+                  value: 'block',
+                  child: Text('Block User'),
+                ),
+              ],
             ),
         ],
       ),
@@ -166,31 +202,60 @@ class _ProfileBody extends ConsumerWidget {
           ),
           if (!isMe && myUid != null && isFollowingAsync != null) ...[
             const SizedBox(height: 16),
-            isFollowingAsync.when(
-              loading: () => const SizedBox(height: 40),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (isFollowing) => ElevatedButton(
-                onPressed: () {
-                  final repo = ref.read(followRepositoryProvider);
-                  if (isFollowing) {
-                    repo.unfollow(myUid!, profile.uid);
-                  } else {
-                    repo.follow(myUid!, profile.uid);
-                    final me = ref.read(myProfileProvider).valueOrNull;
-                    ref.read(notificationRepositoryProvider).notifyFollow(
-                          toUid: profile.uid,
-                          fromUid: myUid!,
-                          fromName: me?.bestName ?? 'A rider',
-                          fromPhotoUrl: me?.photoUrl,
-                        );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isFollowing ? AppColors.surfaceVariant : AppColors.primary,
-                  foregroundColor: isFollowing ? AppColors.textPrimary : Colors.white,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: isFollowingAsync.when(
+                    loading: () => const SizedBox(height: 40),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (isFollowing) => ElevatedButton(
+                      onPressed: () {
+                        final repo = ref.read(followRepositoryProvider);
+                        if (isFollowing) {
+                          repo.unfollow(myUid!, profile.uid);
+                        } else {
+                          repo.follow(myUid!, profile.uid);
+                          final me = ref.read(myProfileProvider).valueOrNull;
+                          ref.read(notificationRepositoryProvider).notifyFollow(
+                                toUid: profile.uid,
+                                fromUid: myUid!,
+                                fromName: me?.bestName ?? 'A rider',
+                                fromPhotoUrl: me?.photoUrl,
+                              );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isFollowing ? AppColors.surfaceVariant : AppColors.primary,
+                        foregroundColor: isFollowing ? AppColors.textPrimary : Colors.white,
+                      ),
+                      child: Text(isFollowing ? 'Following' : 'Follow'),
+                    ),
+                  ),
                 ),
-                child: Text(isFollowing ? 'Following' : 'Follow'),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      try {
+                        final chatId = await ref.read(chatRepositoryProvider).getOrCreateChat(myUid!, profile.uid);
+                        if (context.mounted) {
+                          context.push('/chats/$chatId', extra: profile);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
+                        }
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary),
+                    ),
+                    child: const Text('Message'),
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 24),

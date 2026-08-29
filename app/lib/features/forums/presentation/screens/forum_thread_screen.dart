@@ -12,6 +12,7 @@ import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
+import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 
 /// Post list for a single forum, with a "New post" FAB.
 class ForumThreadScreen extends ConsumerWidget {
@@ -389,6 +390,27 @@ class _PostCard extends ConsumerWidget {
                   tooltip: 'Delete post',
                   onPressed: () => _confirmDelete(context, ref),
                   icon: Icon(Icons.delete_outline, size: 18, color: AppColors.textTertiary),
+                )
+              else
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
+                  padding: EdgeInsets.zero,
+                  onSelected: (value) {
+                    if (value == 'report') {
+                      ReportBottomSheet.show(
+                        context,
+                        reportedId: post.userId,
+                        contentType: 'post',
+                        contentId: post.id,
+                      );
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Text('Report Post'),
+                    ),
+                  ],
                 ),
             ],
           ),

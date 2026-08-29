@@ -6,6 +6,12 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
+    <!-- No ads/attribution SDK is used; this gets merged in transitively by a
+         Firebase/Play-services dependency (Crashlytics/Google Sign-In). Strip
+         it so Play Console doesn't force an "app uses advertising ID"
+         declaration we can't honestly make. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+
     <!-- Sensors -->
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />

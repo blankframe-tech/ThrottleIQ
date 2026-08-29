@@ -343,6 +343,11 @@ service cloud.firestore {
            (request.resource.data.get('groupRideId', '') is string &&
             request.resource.data.get('groupRideId', '') != ''));
       }
+
+      // Blocked users subcollection
+      match /blocks/{blockedUid} {
+        allow read, write: if request.auth.uid == uid;
+      }
     }
 
     // Live sessions - readable by anyone with token (capability-based access)
@@ -1162,6 +1167,41 @@ service cloud.firestore {
           request.resource.data.createdAt == request.time;
 
         allow update, delete: if false;
+      }
+    }
+
+    // Reports collection (Trust & Safety)
+    match /reports/{reportId} {
+      // Admins can read/update/delete (update for status changes)
+      allow read, update, delete: if isAdmin();
+      // Any authenticated user can create a report, but only if they correctly stamp themselves as the reporter
+      allow create: if request.auth != null && request.resource.data.reporterId == request.auth.uid;
+    }
+
+    // Direct Messaging (Chats)
+    match /chats/{chatId} {
+      // User can read/write a chat if they are a participant.
+      // We check if their UID is in the participants array.
+      allow read, update: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null && request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants.size() == 2;
+      
+      match /messages/{messageId} {
+        // Can read/update (e.g. for read receipts/hiding) if they are a participant of the parent chat
+        allow read, update: if request.auth != null && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        
+        // Can create if they are a participant of the parent chat AND the sender is correctly attributed.
+        // We also check that the sender is not in the recipient's blocks subcollection.
+        allow create: if request.auth != null && 
+          request.resource.data.senderId == request.auth.uid &&
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
+          // Determine the recipient ID (the other participant)
+          // Since Firestore rules don't have a simple array.remove/filter to find the other ID dynamically in one expression,
+          // we ensure the recipient hasn't blocked the sender by checking that the sender doesn't exist in the blocks of ANY participant.
+          // Since the sender can't block themselves, checking all participants' block lists for the sender is a safe proxy.
+          !(exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/chats/$(chatId)).data.participants[0])/blocks/$(request.auth.uid))) &&
+          !(exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/chats/$(chatId)).data.participants[1])/blocks/$(request.auth.uid)));
       }
     }
 

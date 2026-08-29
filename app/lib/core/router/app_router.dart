@@ -18,6 +18,7 @@ import '../../features/maintenance/presentation/screens/add_maintenance_log_scre
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/blocked_users_screen.dart';
 import '../../features/profile/presentation/screens/safe_qr_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
@@ -37,6 +38,9 @@ import '../../features/poi_directory/presentation/screens/place_detail_screen.da
 import '../../features/poi_directory/presentation/screens/my_places_list_screen.dart';
 import '../../features/social/presentation/screens/my_shared_rides_screen.dart';
 import '../../shared/widgets/app_shell.dart';
+import '../../features/chat/presentation/screens/chat_list_screen.dart';
+import '../../features/chat/presentation/screens/chat_room_screen.dart';
+import '../../features/profile/domain/entities/user_profile_entity.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
 /// emits, without rebuilding [routerProvider] itself — rebuilding would
@@ -101,6 +105,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/blocked-users', builder: (_, __) => const BlockedUsersScreen()),
       GoRoute(path: '/safe-qr', builder: (_, __) => const SafeQrScreen()),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
       // The rider's OWN profile, read-only. Same screen as '/profile/:uid'
@@ -154,6 +159,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // before '/routes/:routeId' so the param route can't swallow them —
       // same ordering hazard as '/forums/create' and '/profile/edit'.
       GoRoute(path: '/routes', builder: (_, __) => const RoutesListScreen()),
+      GoRoute(path: '/chats', builder: (_, __) => const ChatListScreen()),
+      GoRoute(
+        path: '/chats/:chatId',
+        builder: (_, state) => ChatRoomScreen(
+          chatId: state.pathParameters['chatId']!,
+          otherUser: state.extra as UserProfileEntity,
+        ),
+      ),
       GoRoute(
         path: '/routes/save/:rideId',
         builder: (_, state) =>

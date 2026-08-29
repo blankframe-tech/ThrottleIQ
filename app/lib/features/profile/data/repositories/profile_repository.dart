@@ -275,6 +275,30 @@ class ProfileRepository {
         .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
         .toList();
   }
+
+  /// Blocks a user by adding their uid to the current user's blocks subcollection.
+  Future<void> blockUser(String currentUserId, String blockedUserId) async {
+    await _users
+        .doc(currentUserId)
+        .collection('blocks')
+        .doc(blockedUserId)
+        .set({'blockedAt': FieldValue.serverTimestamp()});
+  }
+
+  /// Unblocks a user by removing their uid from the current user's blocks subcollection.
+  Future<void> unblockUser(String currentUserId, String blockedUserId) async {
+    await _users
+        .doc(currentUserId)
+        .collection('blocks')
+        .doc(blockedUserId)
+        .delete();
+  }
+
+  /// Fetches the list of user IDs that the current user has blocked.
+  Future<List<String>> getBlockedUserIds(String currentUserId) async {
+    final snap = await _users.doc(currentUserId).collection('blocks').get();
+    return snap.docs.map((doc) => doc.id).toList();
+  }
 }
 
 class UsernameTakenException implements Exception {

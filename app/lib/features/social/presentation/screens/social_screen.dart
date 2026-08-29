@@ -25,6 +25,7 @@ import '../../domain/feed_sort.dart';
 import '../providers/follow_providers.dart';
 import '../providers/notification_providers.dart';
 import '../providers/ride_feed_provider.dart';
+import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 
 /// How long the header search waits after the last keystroke before querying.
 /// Rider search runs a Firestore prefix query per keystroke otherwise.
@@ -147,6 +148,14 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
             ),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline),
+              color: AppColors.primary,
+              tooltip: 'Messages',
+              onPressed: () => context.push('/chats'),
+            ),
+          ],
           bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
@@ -540,6 +549,26 @@ class _RideCardState extends ConsumerState<_RideCard> {
                       ),
                       Text(ride.userName,
                           style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
+                        padding: EdgeInsets.zero,
+                        onSelected: (value) {
+                          if (value == 'report') {
+                            ReportBottomSheet.show(
+                              context,
+                              reportedId: ride.userId,
+                              contentType: 'ride',
+                              contentId: ride.id,
+                            );
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'report',
+                            child: Text('Report Ride'),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   if ((ride.caption ?? '').trim().isNotEmpty) ...[
