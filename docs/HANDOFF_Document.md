@@ -21,19 +21,26 @@ the full map of what lives where.
 
 ### Current status
 
-Pre-launch, at **`1.0.0-beta.1+2`**, tagged
+Pre-launch, at **`1.0.0-beta.1+3`**, tagged
 [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1)
-(commit `ea12fc2` — versionCode 2's fixes are committed locally on top of it,
-not yet re-tagged or pushed to `origin`). No App Store submission exists yet.
+(commit `2f44dd0` — tag moved forward and pushed to `origin` 2026-08-29). No
+App Store submission exists yet.
 
 **Play Console — Internal testing track is live (2026-08-29):**
-versionCode 2 (`1.0.0-beta.1+2`) is uploaded and its release status is
-`completed` on the internal track — confirmed via the Android Publisher API,
-not just the console UI. versionCode 1 is superseded (it had reached
-`completed` too, resolving the earlier "confirm whether the upload
-completed" uncertainty). Release notes on this build: the GPS speed-fallback
-fix (§49), the iOS share-sheet crash fix (§48), and the forum UX fixes
-(§54, listed below).
+versionCode 3 (`1.0.0-beta.1+3`) is uploaded and its release status is
+`completed` on the internal track — confirmed via the Android Publisher API.
+versionCode 2 is superseded. Release notes on this build: Google sign-up on
+Register, Yamaha FZ-S/FZS forum grouping, brand/model autocomplete when
+adding a bike, and the forum-content overhaul (§55) — see `Issues.md` §56
+for the full release writeup. **Reuse note learned this round:** the
+Android Publisher media-upload endpoint needs an `/upload/` path segment
+(`.../upload/androidpublisher/v3/applications/...`), not the plain
+`.../androidpublisher/v3/applications/...` path used for every other call —
+using the wrong one gets the AAB parsed as JSON and a `400 Invalid JSON
+payload` error. Also: a failed upload attempt seems to invalidate the edit
+session (a retry against the same `editId` came back `400 This Edit has
+been deleted`) — start a fresh `edits` call after any failed attempt rather
+than retrying the same edit.
 **Blocker: zero testers assigned.** The internal track's tester list came
 back empty via the API — nobody can install this build yet. Adding testers
 is Play Console UI-only: **Test and release → Internal testing → Testers**
@@ -129,6 +136,12 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `Issues.md`; this list is a compact pointer, not the record itself.
 
+- **2026-08-29** — Shipped `1.0.0-beta.1+3` end to end: Play Console
+  internal track (versionCode 3, verified `completed`), the `beta-v1`
+  GitHub release moved forward with a new APK, and a real-device iOS run
+  (`flutter run --release` on a connected physical iPhone, confirmed
+  installed and launched). Full writeup, including two Android Publisher
+  API gotchas worth remembering next time, in `Issues.md` §56.
 - **2026-08-29** — Add/Edit Bike and onboarding's Brand/Model fields now
   suggest from a real Bangladesh-market brand/model catalog as you type
   (`core/constants/bike_catalog.dart` + `BrandModelAutocompleteField`),
@@ -622,11 +635,34 @@ the actual pre-launch QA punch list — ordered roughly by risk.
    `.../listings/{language}/{imageType}`, unlike what the API surface implies
    at a glance). This was root-caused as *why* internal testers got "Item not
    found" after opting in — Play can't render a listing with no icon/
-   description, even for a whitelisted tester. Still open: **Data Safety
-   form** (`store_listing/data_safety_and_permissions.md`) and the **Content
-   rating questionnaire** — both interactive Console-UI-only flows, not
-   reachable via this API. If "Item not found" recurs after this fix, look
-   there next.
+   description, even for a whitelisted tester. If "Item not found" recurs
+   after this fix, look there next.
+5a. ~~**Contact details**~~ **DONE 2026-08-29** — `contactEmail`/
+   `contactWebsite` pushed via `edits.details.update` + `edits.commit`
+   (`the.abraar.rar@gmail.com` / `http://www.blankframe.tech/throttle-iq/`),
+   verified by reading it back after commit. **App category has no API** —
+   confirmed against the `AppDetails` resource, which only exposes
+   `defaultLanguage`/`contactEmail`/`contactPhone`/`contactWebsite` — still
+   Console-UI-only (Store presence → Main store listing → Categorization):
+   set **Auto & Vehicles**.
+5b. **Data Safety form** — turns out `applications.dataSafety` *is* a real,
+   documented API (`POST .../applications/{packageName}/dataSafety`, body
+   `{"safetyLabels": "<csv>"}`, no edit/commit staging — it publishes
+   immediately). Google's own downloadable sample CSV
+   (linked from support.google.com/googleplay/android-developer/answer/10787469)
+   gives the real machine-readable schema; `store_listing/throttleiq_data_safety.csv`
+   was generated from it using the answers in
+   `store_listing/data_safety_and_permissions.md`. **Submission attempt
+   2026-08-29 was rejected (400)**: the live validator now requires
+   `PSL_SUPPORTED_ACCOUNT_CREATION_METHODS`, a field that's in neither
+   Google's sample CSV nor any public doc (likely the "Sign-in details"
+   section got folded into the same backing form). Nothing was written —
+   a 400 means no partial write. **Next step**: export the current CSV
+   for this app from Console (App content → Data safety → Export to CSV),
+   which will carry the real field name/choices for that question; merge it
+   into `throttleiq_data_safety.csv` and resubmit via the same endpoint.
+   **Content rating questionnaire** remains Console-UI-only — no API
+   resource exists for it at all.
 6. Submit the **Background Location Access declaration** — see the 🔴 note
    above. Gates closed/open/production testing.
 7. Once background-location clears: promote internal → closed beta →

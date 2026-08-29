@@ -3379,3 +3379,53 @@ that reseed happens.
 `seed_qa_test_riders.js` to confirm the catalog/name/post-copy changes and
 confirm `allSeedableForumIds()` still collapses the FZS entries onto one
 slug. No production data touched.
+
+---
+
+## 56. Release `1.0.0-beta.1+3` shipped — Play Console, GitHub, and a real-device iOS run (2026-08-29)
+
+Ships everything from §55 plus the earlier §47–§54 fixes that were sitting
+committed-but-unpublished. Full pipeline, all verified against the live
+services, not just a local build:
+
+- **Committed and pushed** the session's pending work (`9d21674`) and a
+  version bump (`2f44dd0`, `1.0.0-beta.1+2` → `+3` — Play requires a
+  strictly increasing versionCode per upload).
+- **Android**: `flutter build appbundle --release` (78.3MB AAB) and
+  `flutter build apk --release` (79.4MB APK), both from `2f44dd0`.
+- **Play Console internal track**: uploaded and committed via the raw
+  Android Publisher API (service account `throttleiq-play-publisher`,
+  `secrets/throttle-iq-gcc1-b9771877b5d4.json`) — `edits` → `bundles.upload`
+  → `tracks.update` → `edits:commit`. Verified live: versionCode 3, status
+  `completed`.
+  - **Two new gotchas found the hard way, added to the "Reuse note" in
+    `HANDOFF_Document.md`:** the media-upload call needs an `/upload/` path
+    segment the other Android Publisher calls don't use — hitting the plain
+    path gets the raw AAB binary parsed as JSON (`400 Invalid JSON payload
+    received... PK...`, the zip magic number, is the tell). And
+    a failed upload attempt appears to invalidate its `editId` — retrying
+    the same edit after a failure came back `400 This Edit has been
+    deleted`; the fix was starting a fresh `edits` call rather than reusing
+    the one from the failed attempt.
+  - Also hit a zsh footgun unrelated to the API: `"$EDIT_ID:commit"` in an
+    unbraced double-quoted string gets parsed as zsh's `:c` history-style
+    parameter modifier (command-path resolution), silently mangling the
+    URL to `.../edits/00869378264864888875ommit` (a 404, not an auth or API
+    error, so it's a chase-your-tail-worthy failure mode). `"${EDIT_ID}:commit"`
+    with explicit braces fixes it.
+- **GitHub release**: moved the `beta-v1` tag forward (force) to `2f44dd0`
+  and pushed it, per this project's established convention of reusing one
+  tag/release across the beta rather than cutting a new one each time —
+  appended a new dated section to the existing release notes body (matching
+  the "**Updated `<date>`** — same tag, moved forward..." pattern already
+  in every prior update), retitled to `v1.0.0-beta.1+3`, and re-uploaded
+  the APK asset (`--clobber`).
+- **iOS**: `flutter run --release -d <device-id>` on a connected physical
+  iPhone (Abraar's iPhone) — automatic signing under team `NJ4675FFUX`,
+  Xcode build succeeded (70.7s), installed and launched (7.3s), confirmed
+  attached and running with no crash output.
+
+**Not done this session, deliberately:** adding testers to the internal
+track's tester list (Play Console UI-only, see "Blocker" in
+`HANDOFF_Document.md`) and the QA-rider reseed flagged in §55 — neither was
+part of this release ask.
