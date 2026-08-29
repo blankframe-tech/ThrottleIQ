@@ -661,10 +661,53 @@ class _RideCardState extends ConsumerState<_RideCard> {
   /// with the photo count.
   Widget _buildMedia(SharedRideEntity ride) {
     const mediaHeight = 160.0;
-    final map = RideRouteMap(
+    
+    Widget buildMap(double h) => RideRouteMap(
       polyline: ride.polyline,
-      height: mediaHeight,
+      height: h,
       radius: AppDimensions.radiusLg,
+    );
+
+    final map = GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (_) => Dialog.fullscreen(
+            backgroundColor: AppColors.background,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: RideRouteMap(
+                    polyline: ride.polyline,
+                    height: double.infinity,
+                    radius: 0,
+                  ),
+                ),
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withValues(alpha: 0.8),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.close, color: AppColors.textPrimary),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      child: buildMap(mediaHeight),
     );
 
     if (ride.photoUrls.isEmpty) return map;
@@ -798,16 +841,53 @@ class _PhotoStripState extends State<_PhotoStrip> {
               physics: multiple
                   ? const PageScrollPhysics()
                   : const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, i) {
+                return GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => Dialog.fullscreen(
+                        backgroundColor: Colors.black,
+                        child: Stack(
+                          children: [
+                            InteractiveViewer(
+                              child: Center(
+                                child: CachedNetworkImage(
+                                  imageUrl: urls[i],
+                                  fit: BoxFit.contain,
+                                  placeholder: (_, __) => const Center(
+                                      child: CircularProgressIndicator(color: Colors.white)),
+                                  errorWidget: (_, __, ___) =>
+                                      const Icon(Icons.broken_image, color: Colors.white54, size: 48),
+                                ),
+                              ),
+                            ),
+                            SafeArea(
+                              child: Align(
+                                alignment: Alignment.topRight,
+                                child: IconButton(
+                                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: CachedNetworkImage(
+                    imageUrl: urls[i],
+                    height: widget.height,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        Container(height: widget.height, color: AppColors.background),
+                    errorWidget: (_, __, ___) =>
+                        Container(height: widget.height, color: AppColors.background),
+                  ),
+                );
+              },
               onPageChanged: (i) => setState(() => _page = i),
-              itemBuilder: (_, i) => CachedNetworkImage(
-                imageUrl: urls[i],
-                height: widget.height,
-                fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    Container(height: widget.height, color: AppColors.background),
-                errorWidget: (_, __, ___) =>
-                    Container(height: widget.height, color: AppColors.background),
-              ),
             ),
           ),
           if (multiple) ...[

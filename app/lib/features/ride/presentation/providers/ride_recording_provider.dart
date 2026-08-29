@@ -771,10 +771,23 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // field — so when the raw speed is unreliable, fall back to that same
     // haversine-derived speed rather than recording the fix as stationary.
     final derivedSpeedMs = deltaT > 0 ? distDelta / deltaT : 0.0;
-    final speedMs = (rawSpeedMs < SensorConstants.unreliableSpeedFallbackThresholdMs &&
-            derivedSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs)
-        ? derivedSpeedMs
-        : rawSpeedMs;
+    
+    // Stationary GPS Noise Gate: If the raw speed is near 0 and the distance moved
+    // is smaller than the GPS error margin (accuracy), we assume this is just GPS jitter.
+    final isStationaryNoise = rawSpeedMs < 0.5 && distDelta < pos.accuracy;
+    
+    double speedMs;
+    if (isStationaryNoise) {
+      speedMs = 0.0;
+      distDelta = 0.0;
+      accel = 0.0;
+      jerk = 0.0;
+    } else {
+      speedMs = (rawSpeedMs < SensorConstants.unreliableSpeedFallbackThresholdMs &&
+              derivedSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs)
+          ? derivedSpeedMs
+          : rawSpeedMs;
+    }
 
     if (speedMs > _maxSpeed) _maxSpeed = speedMs;
     _speedSum += speedMs;

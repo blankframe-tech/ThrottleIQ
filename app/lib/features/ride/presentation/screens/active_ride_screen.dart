@@ -9,6 +9,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
+import '../providers/live_ride_places_provider.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
@@ -46,6 +47,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
     final position = ref.watch(
         rideRecordingProvider.select((s) => s.currentPosition));
     final polyline = ref.read(rideRecordingProvider).polyline;
+    final places = ref.watch(liveRidePlacesProvider);
 
     if (position != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -81,9 +83,27 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
               ),
             ],
           ),
-        if (position != null)
-          MarkerLayer(
-            markers: [
+        MarkerLayer(
+          markers: [
+            for (final p in places)
+              Marker(
+                point: LatLng(p.latitude, p.longitude),
+                width: 32,
+                height: 32,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    p.category.icon,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            if (position != null)
               Marker(
                 point: position,
                 width: 22,
@@ -102,8 +122,8 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
+        ),
       ],
     );
   }

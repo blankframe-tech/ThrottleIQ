@@ -4,6 +4,8 @@ enum PlaceCategory {
   fuel,
   garage,
   parts,
+  aiCamera,
+  police,
 
   /// Biker cafes, rider-friendly eateries and scenic stop-offs — the
   /// "where do we meet / where do we stop" category, as opposed to the
@@ -18,6 +20,10 @@ enum PlaceCategory {
         return 'Garage';
       case PlaceCategory.parts:
         return 'Parts';
+      case PlaceCategory.aiCamera:
+        return 'AI Camera';
+      case PlaceCategory.police:
+        return 'Police / Cop';
       case PlaceCategory.recreation:
         return 'Recreation';
     }
@@ -31,6 +37,10 @@ enum PlaceCategory {
         return '🔧';
       case PlaceCategory.parts:
         return '🛒';
+      case PlaceCategory.aiCamera:
+        return '📸';
+      case PlaceCategory.police:
+        return '🚓';
       case PlaceCategory.recreation:
         return '☕';
     }
