@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import '../../poi_directory/data/repositories/place_repository.dart';
-import '../../poi_directory/domain/entities/place_entity.dart';
+import '../../../poi_directory/data/repositories/place_repository.dart';
+import '../../../poi_directory/domain/entities/place_entity.dart';
 import 'ride_recording_provider.dart';
 
 final liveRidePlacesProvider = StateNotifierProvider<LiveRidePlacesNotifier, List<PlaceEntity>>((ref) {
