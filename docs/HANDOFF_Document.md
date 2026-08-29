@@ -91,10 +91,11 @@ Crash reporting (Firebase Crashlytics) was wired in 2026-08-28 — see
 - **The Play Store / App Store submissions haven't started.** See "Play
   Store" below for the concrete step-by-step and the background-location
   review, which is the actual long pole, not a build step.
-- `flutter_background_geolocation`'s license key is still the
-  `PASTE_LICENCE_KEY_BEFORE_RELEASE` placeholder — every Android release
-  build crashes with a licensing error on launch until a real key is bought
-  (`Issues.md` §35). **This blocks any further distribution today.**
+- ~~`flutter_background_geolocation`'s license key is still the
+  `PASTE_LICENCE_KEY_BEFORE_RELEASE` placeholder~~ **RESOLVED 2026-08-28** —
+  this bullet was stale: the plugin itself was removed and replaced with a
+  free stand-in (`Issues.md` §50), so there's no license gate left to hit.
+  Not a distribution blocker.
 
 **What's unverified, in one place — everything else is verified by
 `flutter analyze` + the test suite + a clean release build only:**
