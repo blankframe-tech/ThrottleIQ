@@ -49,7 +49,7 @@ class BikePickerCard extends ConsumerWidget {
   /// reads as that bike's color, not just its name.
   final Color? accentColor;
 
-  static const double _height = 210;
+  static const double _height = 170;
 
   Future<void> _pickBike(
       BuildContext context, WidgetRef ref, List<BikeEntity> bikes) async {

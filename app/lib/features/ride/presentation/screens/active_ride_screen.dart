@@ -69,7 +69,8 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          subdomains: const ['a', 'b', 'c', 'd'],
           userAgentPackageName: 'com.bft.throttleiq',
         ),
         if (polyline.length > 1)
@@ -568,9 +569,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             label: Text(isPaused ? 'Resume' : 'Pause'),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(0, 52),
-                              backgroundColor: isPaused ? AppColors.surface : null,
+                              backgroundColor: isPaused 
+                                  ? AppColors.surface 
+                                  : AppColors.primary.withValues(alpha: 0.15),
                               foregroundColor: AppColors.primary,
-                              side: BorderSide(color: AppColors.primary),
+                              side: BorderSide(color: AppColors.primary, width: 2),
                             ),
                           ),
                         ),
@@ -838,7 +841,15 @@ class _RideStat extends StatelessWidget {
     return Column(
       children: [
         Text(value, style: display(18, letterSpacing: 0)),
-        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          label.toUpperCase(), 
+          style: TextStyle(
+            fontSize: 11, 
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+            color: AppColors.textPrimary.withValues(alpha: 0.85),
+          ),
+        ),
       ],
     );
   }

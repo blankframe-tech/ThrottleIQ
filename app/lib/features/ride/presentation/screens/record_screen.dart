@@ -139,7 +139,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
 
                       // 2. What you've done so far — the reason to go again.
                       const RiderStatStrip(),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 32),
 
                       // 3. Solo/Group choice. The widget owns the whole flow —
                       // friend picker or join-by-code, group-ride creation,
@@ -458,7 +458,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     // ThemeData, Carbon Mono a dark one (see AppTheme.build).
     final isLightPalette = Theme.of(context).brightness == Brightness.light;
     final trackColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
+        ? (isLightPalette ? AppColors.primary : AppColors.surfaceVariant)
         : AppColors.textTertiary;
     final fillColor =
         isLightPalette ? AppColors.primaryDark : AppColors.primary;

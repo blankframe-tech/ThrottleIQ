@@ -13,8 +13,8 @@ class AppTheme {
   /// Builds the [ThemeData] for the given [AppAppearance]. Reads current
   /// values off [AppColors] and [AppDimensions], both of which must already
   /// have had the matching [AppColorPalette] and [AppShapeProfile] applied
-  /// (see `theme_style_provider.dart`). Display/heading type uses IBM Plex
-  /// Mono; body uses IBM Plex Sans.
+  /// (see `theme_style_provider.dart`). Display/heading type uses Space Grotesk
+  /// (or IBM Plex Mono on Retro); body uses IBM Plex Sans (or IBM Plex Mono on Retro).
   ///
   /// Shape is per-appearance, not shared: Curvy gets rounded corners and
   /// roomier controls, Boxy keeps the sharp instrument-panel edges — see
@@ -37,27 +37,50 @@ class AppTheme {
     final bodyText = isMonoColorMode
         ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
         : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
+
+    TextStyle headingFont({
+      TextStyle? textStyle,
+      FontWeight? fontWeight,
+      double? letterSpacing,
+      double? fontSize,
+      Color? color,
+    }) {
+      return isMonoColorMode
+          ? GoogleFonts.ibmPlexMono(
+              textStyle: textStyle,
+              fontWeight: fontWeight,
+              letterSpacing: letterSpacing,
+              fontSize: fontSize,
+              color: color)
+          : GoogleFonts.spaceGrotesk(
+              textStyle: textStyle,
+              fontWeight: fontWeight,
+              letterSpacing: letterSpacing,
+              fontSize: fontSize,
+              color: color);
+    }
+
     final textTheme = bodyText
         .copyWith(
-          displayLarge: GoogleFonts.ibmPlexMono(
+          displayLarge: headingFont(
               textStyle: bodyText.displayLarge,
               fontWeight: FontWeight.w700,
               letterSpacing: -1),
-          displayMedium: GoogleFonts.ibmPlexMono(
+          displayMedium: headingFont(
               textStyle: bodyText.displayMedium,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5),
-          displaySmall: GoogleFonts.ibmPlexMono(
+          displaySmall: headingFont(
               textStyle: bodyText.displaySmall, fontWeight: FontWeight.w700),
-          headlineLarge: GoogleFonts.ibmPlexMono(
+          headlineLarge: headingFont(
               textStyle: bodyText.headlineLarge,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5),
-          headlineMedium: GoogleFonts.ibmPlexMono(
+          headlineMedium: headingFont(
               textStyle: bodyText.headlineMedium, fontWeight: FontWeight.w700),
-          headlineSmall: GoogleFonts.ibmPlexMono(
+          headlineSmall: headingFont(
               textStyle: bodyText.headlineSmall, fontWeight: FontWeight.w600),
-          titleLarge: GoogleFonts.ibmPlexMono(
+          titleLarge: headingFont(
               textStyle: bodyText.titleLarge, fontWeight: FontWeight.w600),
         )
         .apply(
@@ -106,7 +129,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        titleTextStyle: GoogleFonts.ibmPlexMono(
+        titleTextStyle: headingFont(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
@@ -162,7 +185,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          textStyle: GoogleFonts.ibmPlexMono(
+          textStyle: headingFont(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -180,7 +203,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          textStyle: GoogleFonts.ibmPlexMono(
+          textStyle: headingFont(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,

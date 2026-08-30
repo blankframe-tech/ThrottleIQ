@@ -587,9 +587,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _stat('${ride.distanceKm.toStringAsFixed(1)} km', 'Distance'),
-                      _divider(),
                       _stat('${ride.durationMinutes} min', 'Duration'),
-                      _divider(),
                       _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h', 'Max Speed'),
                     ],
                   ),
