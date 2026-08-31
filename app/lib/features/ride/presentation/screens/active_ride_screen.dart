@@ -69,9 +69,22 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.bft.throttleiq',
+          tileBuilder: (context, tileWidget, tile) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            if (!isDark) return tileWidget;
+            // Grayscale + Invert matrix to create a clean dark map from OSM
+            return ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                -0.2126, -0.7152, -0.0722, 0, 255,
+                -0.2126, -0.7152, -0.0722, 0, 255,
+                -0.2126, -0.7152, -0.0722, 0, 255,
+                0,       0,       0,       1, 0,
+              ]),
+              child: tileWidget,
+            );
+          },
         ),
         if (polyline.length > 1)
           PolylineLayer(
