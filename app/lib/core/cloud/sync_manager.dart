@@ -276,7 +276,8 @@ class SyncManager {
 
 /// Riverpod provider for SyncManager
 final syncManagerProvider = Provider<SyncManager>((ref) {
-  final syncManager = SyncManager(ref);
+  final outbox = ref.watch(outboxServiceProvider);
+  final syncManager = SyncManager(ref, outbox);
   ref.onDispose(() => syncManager.dispose());
   return syncManager;
 });

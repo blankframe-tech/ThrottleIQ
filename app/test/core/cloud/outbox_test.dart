@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
 import 'package:throttleiq/core/database/daos/outbox_dao.dart';
@@ -237,4 +238,20 @@ void main() {
       expect(OutboxService.decodePolylinePayload('not a list'), isEmpty);
     });
   });
+
+  group('outboxServiceProvider', () {
+    test('can be overridden in a ProviderContainer without live Firebase', () {
+      final fake = _FakeOutboxService();
+      final container = ProviderContainer(
+        overrides: [
+          outboxServiceProvider.overrideWithValue(fake),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(outboxServiceProvider), same(fake));
+    });
+  });
 }
+
+class _FakeOutboxService extends Fake implements OutboxService {}

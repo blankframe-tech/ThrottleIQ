@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../database/daos/outbox_dao.dart';
@@ -74,6 +75,14 @@ enum OutboxDeliveryResult {
 /// intent is on disk and will happen.** Callers may then ask for an immediate
 /// delivery attempt, but they never have to wait for one, and a failed attempt
 /// costs nothing — the row is still queued.
+/// Riverpod provider for [OutboxService]. Participates in the dependency graph
+/// and can be cleanly overridden in unit/integration tests.
+final outboxServiceProvider = Provider<OutboxService>((ref) {
+  final service = OutboxService();
+  ref.onDispose(() => service.dispose());
+  return service;
+});
+
 class OutboxService {
   OutboxService({
     OutboxDao? dao,
@@ -83,6 +92,7 @@ class OutboxService {
         _shareRepository = shareRepository ?? RideShareRepository(),
         _firestore = firestore ?? FirebaseFirestore.instance;
 
+  /// Deprecated backwards-compatibility accessor. Prefer reading [outboxServiceProvider].
   static final OutboxService instance = OutboxService();
 
   final OutboxDao _dao;

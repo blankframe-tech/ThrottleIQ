@@ -120,7 +120,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
       // travel with it), which is why nothing is uploaded here first: an
       // upload that succeeded while the Firestore write didn't would otherwise
       // have to be redone, orphaning the first copy.
-      final deliveredNow = await OutboxService.instance.enqueueShareRide(
+      final deliveredNow = await ref.read(outboxServiceProvider).enqueueShareRide(
         rideId: ride.id,
         userId: user.uid,
         userName: user.displayName ?? 'Rider',
