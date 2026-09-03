@@ -19,7 +19,7 @@ class UserAvatar extends StatelessWidget {
     final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.primary.withOpacity(0.15),
+      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
       backgroundImage: hasPhoto ? CachedNetworkImageProvider(photoUrl!) : null,
       child: hasPhoto
           ? null

@@ -182,7 +182,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _isPublic,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   onChanged: (v) => setState(() => _isPublic = v),
                   title: Text(
                     _isPublic ? 'Public' : 'Private',

@@ -354,7 +354,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary.withOpacity(0.15) : AppColors.surface,
+                        color: selected ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surface,
                         borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
                         border: Border.all(color: selected ? AppColors.primary : AppColors.border),
                       ),

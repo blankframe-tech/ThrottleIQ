@@ -139,7 +139,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                 value: reason,
                 groupValue: _selectedReason,
                 onChanged: (value) => setState(() => _selectedReason = value),
-                activeColor: AppColors.primary,
+                fillColor: WidgetStatePropertyAll(AppColors.primary),
                 contentPadding: EdgeInsets.zero,
                 dense: true,
               )),

@@ -105,7 +105,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.primary.withOpacity(0.15)
+                            ? AppColors.primary.withValues(alpha: 0.15)
                             : AppColors.surface,
                         borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
                         border: Border.all(

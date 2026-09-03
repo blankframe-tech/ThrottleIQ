@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uuid/uuid.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/emergency_contact_entity.dart';
-
-const _uuid = Uuid();
 
 final emergencyContactsProvider = StreamProvider.family<List<EmergencyContactEntity>, String>(
   (ref, uid) {
@@ -35,19 +32,18 @@ final emergencyContactsNotifierProvider =
   (ref) {
     final uid = ref.watch(currentUserProvider)?.uid;
     if (uid == null) {
-      return EmergencyContactsNotifier(null, ref);
+      return EmergencyContactsNotifier(null);
     }
-    return EmergencyContactsNotifier(uid, ref);
+    return EmergencyContactsNotifier(uid);
   },
 );
 
 class EmergencyContactsNotifier
     extends StateNotifier<AsyncValue<List<EmergencyContactEntity>>> {
   final String? _uid;
-  final Ref _ref;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  EmergencyContactsNotifier(this._uid, this._ref)
+  EmergencyContactsNotifier(this._uid)
       : super(const AsyncValue.loading()) {
     if (_uid != null) {
       _loadContacts();

@@ -185,7 +185,7 @@ class RouteDetailScreen extends ConsumerWidget {
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     value: route.isPublic,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     onChanged: (v) => _setPublic(context, ref, v),
                     title: Text(
                       route.isPublic ? 'Public' : 'Private',

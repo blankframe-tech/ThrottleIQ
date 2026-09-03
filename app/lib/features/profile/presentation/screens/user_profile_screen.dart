@@ -74,7 +74,7 @@ class UserProfileScreen extends ConsumerWidget {
               icon: Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
               label: Text('Edit', style: TextStyle(color: AppColors.primary)),
             )
-          else if (targetUid != null)
+          else
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert, color: AppColors.textPrimary),
               onSelected: (value) async {

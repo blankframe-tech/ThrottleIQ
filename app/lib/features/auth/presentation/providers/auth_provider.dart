@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/database/database_helper.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -133,6 +134,44 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       await GoogleSignIn().signOut();
     } catch (_) {/* not signed in via Google, or already signed out */}
     state = const AsyncValue.data(null);
+  }
+
+  /// Completely deletes the current rider's account:
+  /// 1. Remote Firestore document and username claim
+  /// 2. Local SQLite database records (rides, bikes, maintenance, etc.)
+  /// 3. Firebase Auth account
+  /// 4. Google Sign-In session
+  ///
+  /// Required by Apple App Store Review Guideline 5.1.1(v).
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      // 1. Delete remote profile and handle
+      try {
+        await _profiles.deleteUserAccount(uid);
+      } catch (_) {
+        // Non-fatal if offline or already removed
+      }
+
+      // 2. Wipe local SQLite data
+      try {
+        await DatabaseHelper.instance.deleteUserData(uid);
+      } catch (_) {
+        // Non-fatal
+      }
+
+      // 3. Delete Firebase Auth user (may throw FirebaseAuthException with 'requires-recent-login')
+      await user.delete();
+
+      // 4. Sign out external providers
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+    });
   }
 }
 

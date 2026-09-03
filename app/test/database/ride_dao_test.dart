@@ -1,14 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:throttleiq/core/database/daos/ride_dao.dart';
 
 void main() {
   group('RideDao', () {
-    late RideDao rideDao;
-
-    setUp(() {
-      rideDao = RideDao();
-    });
-
     group('Insert Operations', () {
       test('inserts a single ride record', () async {
         final rideData = {

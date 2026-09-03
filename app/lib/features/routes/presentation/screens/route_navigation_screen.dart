@@ -273,7 +273,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                       if (offRoute) ...[
                         const SizedBox(height: 8),
                         _Banner(
-                          background: AppColors.danger.withOpacity(0.15),
+                          background: AppColors.danger.withValues(alpha: 0.15),
                           child: Row(
                             children: [
                               Icon(Icons.warning_amber_rounded,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import '../database_helper.dart';
 
@@ -9,24 +10,60 @@ class RideDao {
 
   Future<List<Map<String, dynamic>>> getAllForUser(String userId) async {
     final db = await DatabaseHelper.instance.database;
-    return db.query('rides',
+    final rows = await db.query('rides',
         where: 'user_id = ? AND status = ?',
         whereArgs: [userId, 'completed'],
         orderBy: 'start_time DESC');
+    return _sanitizeAndHealRides(db, rows);
   }
 
   Future<List<Map<String, dynamic>>> getAllForBike(String bikeId) async {
     final db = await DatabaseHelper.instance.database;
-    return db.query('rides',
+    final rows = await db.query('rides',
         where: 'bike_id = ? AND status = ?',
         whereArgs: [bikeId, 'completed'],
         orderBy: 'start_time DESC');
+    return _sanitizeAndHealRides(db, rows);
   }
 
   Future<Map<String, dynamic>?> getById(String id) async {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query('rides', where: 'id = ?', whereArgs: [id]);
-    return rows.isEmpty ? null : rows.first;
+    if (rows.isEmpty) return null;
+    final healed = _sanitizeAndHealRides(db, rows);
+    return healed.first;
+  }
+
+  List<Map<String, dynamic>> _sanitizeAndHealRides(
+    Database db,
+    List<Map<String, dynamic>> rows,
+  ) {
+    final result = <Map<String, dynamic>>[];
+    for (final row in rows) {
+      final avgSpeed = (row['avg_speed_ms'] as num?)?.toDouble();
+      final maxSpeed = (row['max_speed_ms'] as num?)?.toDouble();
+      final distanceM = (row['distance_m'] as num?)?.toDouble() ?? 0.0;
+      final durationS = row['duration_s'] as int?;
+
+      if (avgSpeed != null && maxSpeed != null && maxSpeed > 0 && avgSpeed > maxSpeed) {
+        final healedAvg = (durationS != null && durationS > 0)
+            ? (distanceM / durationS).clamp(0.0, maxSpeed)
+            : maxSpeed;
+        final copy = Map<String, dynamic>.from(row);
+        copy['avg_speed_ms'] = healedAvg;
+        result.add(copy);
+
+        unawaited(db.update(
+          'rides',
+          {'avg_speed_ms': healedAvg},
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        ));
+      } else {
+        result.add(row);
+      }
+    }
+    return result;
   }
 
   Future<void> update(Map<String, dynamic> ride) async {
@@ -152,6 +189,17 @@ class RideDao {
         await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [bikeId]);
+    });
+  }
+
+  Future<void> deleteAllForUser(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      final rides = await txn.query('rides', where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
+      for (final ride in rides) {
+        await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
+      }
+      await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
     });
   }
 }

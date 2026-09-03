@@ -459,13 +459,88 @@ class SettingsScreen extends ConsumerWidget {
             label: Text(l10n.signOutAction),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 48),
+              foregroundColor: AppColors.textSecondary,
+              side: BorderSide(color: AppColors.border),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Delete account (Apple Guideline 5.1.1(v)) ──────────────────
+          TextButton.icon(
+            onPressed: () => _confirmDeleteAccount(context, ref),
+            icon: const Icon(Icons.delete_forever, size: 18),
+            label: const Text('Delete Account'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 48),
               foregroundColor: AppColors.danger,
-              side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppColors.border),
+        ),
+        title: Text(
+          'Delete Account?',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.danger,
+            ),
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Deleting account...')),
+      );
+      try {
+        await ref.read(authNotifierProvider.notifier).deleteAccount();
+        if (context.mounted) {
+          context.go('/auth/login');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting account: $e'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _showContactDialog(BuildContext context, WidgetRef ref) {

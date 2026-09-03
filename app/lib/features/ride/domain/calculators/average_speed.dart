@@ -12,13 +12,41 @@ import '../../../../core/constants/sensor_constants.dart';
 /// other tracking app defines it.
 ///
 /// Pure so it can be tested directly; see `average_speed_test.dart`.
-double averageSpeedMs({required double distanceM, required int movingSeconds}) {
+double averageSpeedMs({
+  required double distanceM,
+  required int movingSeconds,
+  double? maxSpeedMs,
+}) {
   if (movingSeconds <= 0 || distanceM <= 0) return 0;
-  return distanceM / movingSeconds;
+  final speed = distanceM / movingSeconds;
+  if (maxSpeedMs != null && maxSpeedMs > 0 && speed > maxSpeedMs) {
+    return maxSpeedMs;
+  }
+  return speed;
 }
 
 /// A single GPS fix reduced to what the moving-time calculation needs.
 typedef SpeedSample = ({DateTime time, double speedMs});
+
+/// Milliseconds spent actually moving across [samples].
+int movingMilliseconds(
+  List<SpeedSample> samples, {
+  double thresholdMs = SensorConstants.movingSpeedThresholdMs,
+  int maxGapSeconds = 60,
+}) {
+  if (samples.length < 2) return 0;
+
+  var totalMs = 0;
+  final maxGapMs = maxGapSeconds * 1000;
+  for (var i = 1; i < samples.length; i++) {
+    if (samples[i].speedMs < thresholdMs) continue;
+
+    final gapMs = samples[i].time.difference(samples[i - 1].time).inMilliseconds;
+    if (gapMs <= 0 || gapMs > maxGapMs) continue;
+    totalMs += gapMs;
+  }
+  return totalMs;
+}
 
 /// Seconds spent actually moving across [samples].
 ///
@@ -38,15 +66,7 @@ int movingSeconds(
   double thresholdMs = SensorConstants.movingSpeedThresholdMs,
   int maxGapSeconds = 60,
 }) {
-  if (samples.length < 2) return 0;
-
-  var total = 0;
-  for (var i = 1; i < samples.length; i++) {
-    if (samples[i].speedMs < thresholdMs) continue;
-
-    final gap = samples[i].time.difference(samples[i - 1].time).inSeconds;
-    if (gap <= 0 || gap > maxGapSeconds) continue;
-    total += gap;
-  }
-  return total;
+  final ms = movingMilliseconds(samples,
+      thresholdMs: thresholdMs, maxGapSeconds: maxGapSeconds);
+  return (ms / 1000).round();
 }

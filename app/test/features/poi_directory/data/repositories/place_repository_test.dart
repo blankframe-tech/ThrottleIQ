@@ -1,30 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
-import 'package:throttleiq/features/poi_directory/data/repositories/place_repository.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
 
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
-
-class MockCollectionReference extends Mock
-    implements CollectionReference<Map<String, dynamic>> {}
-
-class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {}
-
-class MockQuery extends Mock implements Query<Map<String, dynamic>> {}
-
-class MockQuerySnapshot extends Mock
-    implements QuerySnapshot<Map<String, dynamic>> {}
-
-class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {}
-
 void main() {
-  late PlaceRepository placeRepository;
-  late MockFirebaseFirestore mockFirestore;
-
   final testPlace = PlaceEntity(
       id: 'place1',
       name: 'Test Fuel Station',
@@ -42,11 +20,6 @@ void main() {
       ratingSum: 0,
       ratingCount: 0,
     );
-
-  setUp(() {
-    mockFirestore = MockFirebaseFirestore();
-    placeRepository = PlaceRepository(firestore: mockFirestore);
-  });
 
   group('PlaceRepository', () {
 
@@ -83,8 +56,6 @@ void main() {
   group('Distance Calculation', () {
     test('calculate distance between two coordinates', () {
       // Dhaka to Chittagong (approximately 261 km)
-      final repo = PlaceRepository(firestore: mockFirestore);
-
       // These are public methods, so we verify the math works
       expect(testPlace.latitude, isA<double>());
       expect(testPlace.longitude, isA<double>());

@@ -102,4 +102,59 @@ void main() {
       expect(row!['status'], 'active');
     });
   });
+
+  group('RideDao._sanitizeAndHealRides', () {
+    test('automatically heals corrupted avg_speed_ms > max_speed_ms', () async {
+      // Seed a corrupted ride like the 304 km/h bug: max = 13.0 m/s (~47 km/h), avg = 84.5 m/s (~304 km/h)
+      // distance = 11020m, duration = 1789s -> true avg = 6.16 m/s (~22.2 km/h)
+      await db.insert('rides', {
+        'id': 'corrupted-ride',
+        'user_id': 'rider-bob',
+        'bike_id': 'bike-1',
+        'start_time': DateTime(2026, 8, 30, 10, 0).toIso8601String(),
+        'distance_m': 11020.0,
+        'duration_s': 1789,
+        'max_speed_ms': 13.0,
+        'avg_speed_ms': 84.5,
+        'status': 'completed',
+        'synced': 1,
+        'created_at': DateTime(2026, 8, 30, 10, 0).toIso8601String(),
+      });
+
+      final rows = await rideDao.getAllForUser('rider-bob');
+      expect(rows.length, 1);
+      final healed = rows.first;
+      // Should heal to distance / duration: 11020 / 1789 = 6.16 m/s
+      expect(healed['avg_speed_ms'], closeTo(6.16, 0.05));
+
+      // Wait a tick for unawaited update to commit
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // Query raw db row to confirm SQLite row is updated
+      final rawRow = (await db.query('rides', where: 'id = ?', whereArgs: ['corrupted-ride'])).first;
+      expect(rawRow['avg_speed_ms'], closeTo(6.16, 0.05));
+    });
+  });
+
+  group('RideDao.deleteAllForUser', () {
+    test('deletes all rides and points for user', () async {
+      await seedRide('r-1', userId: 'user-to-delete');
+      await seedRide('r-2', userId: 'user-to-delete');
+      await seedRide('r-3', userId: 'other-user');
+      await db.insert('ride_points', {
+        'ride_id': 'r-1',
+        'timestamp': DateTime(2026, 1, 1).toIso8601String(),
+        'lat': 23.8,
+        'lng': 90.4,
+        'speed_ms': 10.0,
+      });
+
+      await rideDao.deleteAllForUser('user-to-delete');
+
+      expect(await rideDao.getAllForUser('user-to-delete'), isEmpty);
+      expect((await rideDao.getAllForUser('other-user')).length, 1);
+      final points = await db.query('ride_points', where: 'ride_id = ?', whereArgs: ['r-1']);
+      expect(points, isEmpty);
+    });
+  });
 }

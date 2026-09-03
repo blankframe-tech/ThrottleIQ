@@ -414,7 +414,6 @@ class CloudRepository {
   /// Generate GPX XML string from ride data
   String _generateGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
     final startTime = ride['startTime'] as String;
-    final endTime = ride['endTime'] as String?;
     final distanceKm = (ride['distanceM'] as num) / 1000;
 
     final buffer = StringBuffer();

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/chat_entity.dart';
 import '../../data/repositories/chat_repository.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
 
 final chatRepositoryProvider = Provider((ref) => ChatRepository());
 

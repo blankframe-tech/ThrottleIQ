@@ -452,4 +452,34 @@ class DatabaseHelper {
     await db.execute(_createAutoFixesIndexSql);
     await db.execute(_createAutoDetectionsIndexSql);
   }
+
+  /// Completely deletes all local database rows associated with [userId].
+  ///
+  /// Required for the Account Deletion flow (Apple App Store Guideline 5.1.1(v)).
+  /// Uses raw SQL statements inside a single transaction and does NOT invoke other DAOs.
+  Future<void> deleteUserData(String userId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      final rides = await txn.query('rides',
+          where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
+      for (final ride in rides) {
+        await txn.delete('ride_points',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
+      }
+      await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
+
+      final bikes = await txn.query('bikes',
+          where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
+      for (final bike in bikes) {
+        await txn.delete('maintenance_logs',
+            where: 'bike_id = ?', whereArgs: [bike['id']]);
+      }
+      await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
+      await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);
+      await txn.delete('deleted_bikes');
+      await txn.delete('outbox');
+      await txn.delete('auto_fixes');
+      await txn.delete('auto_detections');
+    });
+  }
 }

@@ -17,8 +17,17 @@ void main() {
       expect(averageSpeedMs(distanceM: 1000, movingSeconds: -5), 0);
     });
 
-    test('a ride that covered no ground averages zero', () {
-      expect(averageSpeedMs(distanceM: 0, movingSeconds: 300), 0);
+    test('clamps to maxSpeedMs when provided', () {
+      // 1000m in 10s = 100 m/s, but max is 20 m/s -> clamped to 20 m/s
+      expect(
+        averageSpeedMs(distanceM: 1000, movingSeconds: 10, maxSpeedMs: 20),
+        20.0,
+      );
+      // Within ceiling -> untouched
+      expect(
+        averageSpeedMs(distanceM: 1000, movingSeconds: 100, maxSpeedMs: 20),
+        10.0,
+      );
     });
   });
 
@@ -94,6 +103,18 @@ void main() {
     test('a fully stopped ride has no moving time', () {
       final samples = [for (var i = 0; i < 30; i++) _s(i, 0)];
       expect(movingSeconds(samples), 0);
+    });
+
+    test('accumulates sub-second fix intervals accurately (does not truncate to 0)', () {
+      // 10 fixes arriving every 450ms (typical at 40 km/h with 5m filter) = 4.05s moving
+      final t0 = DateTime(2026, 8, 1, 9, 0, 0);
+      final samples = [
+        for (var i = 0; i < 10; i++)
+          (time: t0.add(Duration(milliseconds: i * 450)), speedMs: 11.0),
+      ];
+      // In the old code, every 450ms gap evaluated to inSeconds == 0, resulting in 0s!
+      // In the new code, 9 gaps of 450ms = 4050ms -> 4s.
+      expect(movingSeconds(samples), 4);
     });
   });
 }

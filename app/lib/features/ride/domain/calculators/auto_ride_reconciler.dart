@@ -266,7 +266,11 @@ class AutoRideReconciler {
     return ReconcileOutcome.accepted(ReconciledRide(
       distanceM: distanceM,
       maxSpeedMs: maxSpeedMs,
-      avgSpeedMs: averageSpeedMs(distanceM: distanceM, movingSeconds: moving),
+      avgSpeedMs: averageSpeedMs(
+        distanceM: distanceM,
+        movingSeconds: moving,
+        maxSpeedMs: maxSpeedMs,
+      ),
       movingSeconds: moving,
       durationSeconds: duration,
       hardBrakeCount: detector.hardBrakeCount,

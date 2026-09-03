@@ -1061,3 +1061,40 @@ test('a stranger cannot write someone else\'s roster row via the code door', asy
     })
   );
 });
+
+test('a rider can delete their own users/{uid} document', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await setDoc(doc(admin.firestore(), 'users', ALICE), {
+      displayName: 'Alice',
+      email: 'alice@example.com',
+      visibility: 'public',
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(deleteDoc(doc(db, 'users', ALICE)));
+});
+
+test('a stranger cannot delete another rider\'s users/{uid} document', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await setDoc(doc(admin.firestore(), 'users', ALICE), {
+      displayName: 'Alice',
+      email: 'alice@example.com',
+      visibility: 'public',
+    });
+  });
+  const db = dbFor(MALLORY);
+  await assertFails(deleteDoc(doc(db, 'users', ALICE)));
+});
+
+test('a rider can delete their own livePointers/{uid} document', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await setDoc(doc(admin.firestore(), 'livePointers', ALICE), {
+      uid: ALICE,
+      token: 'tok-1',
+      active: true,
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(deleteDoc(doc(db, 'livePointers', ALICE)));
+});
+

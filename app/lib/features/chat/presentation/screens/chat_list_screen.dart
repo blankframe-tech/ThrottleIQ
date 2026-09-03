@@ -62,12 +62,9 @@ class ChatListScreen extends ConsumerWidget {
 
                   final lastMsg = chat.lastMessage;
                   String subtitle = 'Say hi!';
-                  bool isUnread = false;
 
                   if (lastMsg != null) {
                     subtitle = lastMsg['text'] ?? '';
-                    // If we are not the sender, and it's not marked read (we don't have read status on chat obj, but we can assume bold if needed)
-                    // We'd need unread count for real, but keeping simple for now.
                   }
 
                   return ListTile(
@@ -80,12 +77,10 @@ class ChatListScreen extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
-                    trailing: chat.updatedAt != null
-                        ? Text(
-                            DateFormat.MMMd().format(chat.updatedAt),
-                            style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
-                          )
-                        : null,
+                    trailing: Text(
+                      DateFormat.MMMd().format(chat.updatedAt),
+                      style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                    ),
                     onTap: () => context.push('/chats/${chat.id}', extra: profile),
                   );
                 },

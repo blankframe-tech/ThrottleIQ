@@ -59,7 +59,7 @@ class MyPlacesListScreen extends ConsumerWidget {
                         height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),

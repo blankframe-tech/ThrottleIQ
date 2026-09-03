@@ -202,6 +202,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   int _speedCount = 0;
 
   int _movingSeconds = 0;
+  int _movingMilliseconds = 0;
   DateTime? _lastFixTime;
   static const int _maxMovingGapSeconds = 60;
   DateTime? _activeStart;
@@ -328,6 +329,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _speedSum = 0;
     _speedCount = 0;
     _movingSeconds = 0;
+    _movingMilliseconds = 0;
     _lastFixTime = null;
     _accumulatedDuration = Duration.zero;
     _activeStart = DateTime.now();
@@ -504,8 +506,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     if (_lastFixTime != null &&
         speedMs >= SensorConstants.movingSpeedThresholdMs) {
-      final gap = timestamp.difference(_lastFixTime!).inSeconds;
-      if (gap > 0 && gap <= _maxMovingGapSeconds) _movingSeconds += gap;
+      final gapMs = timestamp.difference(_lastFixTime!).inMilliseconds;
+      if (gapMs > 0 && gapMs <= _maxMovingGapSeconds * 1000) {
+        _movingMilliseconds += gapMs;
+        _movingSeconds = (_movingMilliseconds / 1000).round();
+      }
     }
     _lastFixTime = timestamp;
 
@@ -738,9 +743,20 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final ride = state.ride!;
     final finalDuration = state.elapsed.inSeconds;
-    final avgSpeed = _movingSeconds > 0
-        ? averageSpeedMs(distanceM: _totalDistance, movingSeconds: _movingSeconds)
+    final derivedAvg = _movingMilliseconds > 0
+        ? averageSpeedMs(
+            distanceM: _totalDistance,
+            movingSeconds: _movingSeconds,
+            maxSpeedMs: _maxSpeed,
+          )
         : (_speedCount > 0 ? _speedSum / _speedCount : 0.0);
+    // Sanity check: average speed can never physically exceed max speed.
+    // If anomalies occur (e.g. truncated moving time), fallback to distance/duration or maxSpeed.
+    final avgSpeed = (_maxSpeed > 0 && derivedAvg > _maxSpeed)
+        ? (finalDuration > 0
+            ? (_totalDistance / finalDuration).clamp(0.0, _maxSpeed)
+            : _maxSpeed)
+        : derivedAvg;
 
     await _rideDao.finalizeRide(ride.id, {
       'end_time': DateTime.now().toIso8601String(),
@@ -809,6 +825,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _speedSum = aggregates.speedSum;
     _speedCount = aggregates.speedCount;
     _movingSeconds = aggregates.movingSeconds;
+    _movingMilliseconds = _movingSeconds * 1000;
     _lastFixTime = null;
 
     final snapshotSeconds =

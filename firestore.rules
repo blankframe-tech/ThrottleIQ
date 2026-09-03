@@ -223,11 +223,12 @@ service cloud.firestore {
       // writes are evaluated against the full resulting document, not just
       // the sent fields — so this only actually constrains a write that
       // introduces a NEW usernameLower value.
-      allow write: if request.auth.uid == uid &&
+      allow create, update: if request.auth.uid == uid &&
         (!('usernameLower' in request.resource.data) ||
          (resource != null &&
           resource.data.get('usernameLower', null) == request.resource.data.usernameLower) ||
          usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid));
+      allow delete: if request.auth.uid == uid;
 
       // User rides subcollection
       match /rides/{rideId} {
@@ -842,6 +843,7 @@ service cloud.firestore {
         request.resource.data.uid == uid;
       allow update: if request.auth != null && request.auth.uid == uid &&
         request.resource.data.uid == uid;
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // Follow graph — one edge doc per (follower → followee) at
