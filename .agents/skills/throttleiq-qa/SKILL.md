@@ -241,27 +241,55 @@ PASS / SKIPPED (schema not changed) / FAIL
 
 ---
 
+## Windows Path Note (username has spaces)
+
+The user profile `Abraar at Inovace` contains spaces. Flutter's native-assets
+hook passes paths with Unix-style single quotes, which Windows cmd doesn't
+honour. **Always run Flutter commands via the `C:\flutter` junction** and set
+`PUB_CACHE` to avoid the `'C:\Users\Abraar' is not recognized` error:
+
+```powershell
+$env:PUB_CACHE   = "C:\pubcache"   # junction → C:\Users\Abraar at Inovace\AppData\Local\Pub\Cache
+$env:FLUTTER_ROOT = "C:\flutter"   # junction → C:\Users\Abraar at Inovace\flutter
+C:\flutter\bin\flutter.bat test --reporter expanded --no-pub
+C:\flutter\bin\flutter.bat analyze --no-pub
+```
+
+Junctions are already created. If they disappear after a reboot, recreate with:
+```powershell
+New-Item -ItemType Junction -Path "C:\flutter"  -Target "C:\Users\Abraar at Inovace\flutter"  -Force
+New-Item -ItemType Junction -Path "C:\pubcache" -Target "C:\Users\Abraar at Inovace\AppData\Local\Pub\Cache" -Force
+```
+
+---
+
 ## Quick Reference: Running Individual Suites
 
-```bash
-# One test file
-flutter test app/test/calculators/crash_detector_test.dart
+```powershell
+# Full suite (Windows — always use junction paths)
+$env:PUB_CACHE = "C:\pubcache"; C:\flutter\bin\flutter.bat test --reporter expanded --no-pub
 
-# One test group
-flutter test --name "EventDetector - Crash Detection"
+# Static analysis
+$env:PUB_CACHE = "C:\pubcache"; C:\flutter\bin\flutter.bat analyze --no-pub
+
+# One test file
+C:\flutter\bin\flutter.bat test test/calculators/crash_detector_test.dart --no-pub
+
+# One test group by name
+C:\flutter\bin\flutter.bat test --name "EventDetector - Crash Detection" --no-pub
 
 # Database tests only
-flutter test app/test/database/
+C:\flutter\bin\flutter.bat test test/database/ --no-pub
 
 # Feature tests only
-flutter test app/test/features/
+C:\flutter\bin\flutter.bat test test/features/ --no-pub
 
-# Watch mode (re-run on save)
-flutter test --watch
+# Calculator tests only
+C:\flutter\bin\flutter.bat test test/calculators/ --no-pub
 
-# With verbose output
-flutter test --reporter expanded
+# With coverage
+$env:PUB_CACHE = "C:\pubcache"; C:\flutter\bin\flutter.bat test --coverage --no-pub
 
-# Firestore rules
-cd scripts && npm run test:rules
+# Firestore rules (from scripts/ directory)
+npm run test:rules
 ```
