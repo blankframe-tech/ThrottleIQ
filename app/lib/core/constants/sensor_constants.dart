@@ -6,8 +6,11 @@ class SensorConstants {
   static const double rapidAccelThreshold = 4.0; // m/s²
   static const double highJerkThreshold = 10.0; // m/s³
 
-  // Overspeed: 100 km/h in m/s
-  static const double overspeedThreshold = 27.8;
+  // Overspeed defaults and limits (km/h and m/s)
+  static const double minOverspeedKmh = 60.0;
+  static const double maxOverspeedKmh = 140.0;
+  static const double defaultOverspeedKmh = 100.0;
+  static const double overspeedThreshold = 27.8; // 100 km/h in m/s
 
   // Fatigue alert after 90 minutes of active riding
   static const int fatigueAlertSeconds = 5400;

@@ -22,6 +22,7 @@ import '../widgets/bike_confirmation_card.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/cloud/cloud_repository.dart';
+import '../../../../core/services/weather_service.dart';
 
 class RideSummaryScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -36,6 +37,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   List<double> _speedsMs = [];
   bool _polylineLoaded = false;
   ({double riderKmh, double baselineKmh})? _speedOutlier;
+  RideWeather? _weather;
+  bool _weatherChecked = false;
   // Anchors the iOS share popover to the tapped button (docs/Issues.md §48) —
   // without a non-zero sharePositionOrigin, UIActivityViewController throws
   // instead of presenting, same root cause active_ride_screen.dart's
@@ -95,9 +98,87 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     }
   }
 
+  Future<void> _fetchWeather(RideEntity ride) async {
+    if (_weatherChecked || _polyline.isEmpty) return;
+    _weatherChecked = true;
+    try {
+      final w = await WeatherService().fetchForRide(
+        lat: _polyline.first.latitude,
+        lng: _polyline.first.longitude,
+        at: ride.startTime,
+      );
+      if (mounted) {
+        setState(() => _weather = w);
+      }
+    } catch (e) {
+      debugPrint('[RideSummary] weather fetch failed: $e');
+    }
+  }
+
+  Widget _buildWeatherChip(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (!_weatherChecked && _weather == null) {
+      return const SizedBox.shrink();
+    }
+    if (_weather != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.onInk.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wb_sunny_outlined, size: 13, color: AppColors.onInk),
+            const SizedBox(width: 4),
+            Text(
+              '${_weather!.tempC.round()}°C',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.onInk,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Tooltip(
+      message: l10n.weatherUnavailableTooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.onInk.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.onInkMuted.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off, size: 13, color: AppColors.onInkMuted),
+            const SizedBox(width: 4),
+            Text(
+              '—',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.onInkMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rideAsync = ref.watch(rideDetailProvider(widget.rideId));
+    final rideVal = rideAsync.valueOrNull;
+    if (rideVal != null && !_weatherChecked && _polyline.isNotEmpty) {
+      unawaited(_fetchWeather(rideVal));
+    }
     final name = ref.watch(currentUserProvider)?.displayName?.split(' ').first;
     final l10n = AppLocalizations.of(context);
 
@@ -163,9 +244,15 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                               : l10n.niceRideGreeting,
                           style: display(24, color: AppColors.onInk)),
                       const SizedBox(height: 4),
-                      Text(_formatDate(ride.startTime),
-                          style: TextStyle(
-                              fontSize: 13, color: AppColors.onInkMuted)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(_formatDate(ride.startTime),
+                              style: TextStyle(
+                                  fontSize: 13, color: AppColors.onInkMuted)),
+                          _buildWeatherChip(context),
+                        ],
+                      ),
                     ],
                   ),
                 ),

@@ -84,6 +84,29 @@ void main() {
       expect(entries.single.attempts, 0);
     });
 
+    test('maintenance log outbox intent enqueues and round-trips correctly', () async {
+      await dao.enqueue(
+        id: 'maintenance:m-1',
+        kind: OutboxKind.maintenanceLog,
+        payload: {
+          'uid': 'user-1',
+          'log': {
+            'id': 'm-1',
+            'bike_id': 'bike-1',
+            'service_type': 'oilChange',
+            'cost': 450.0,
+          },
+        },
+      );
+
+      final entries = await dao.all();
+      expect(entries, hasLength(1));
+      expect(entries.single.kind, OutboxKind.maintenanceLog);
+      expect(entries.single.payload['uid'], 'user-1');
+      expect(entries.single.payload['log']['service_type'], 'oilChange');
+      expect(entries.single.payload['log']['cost'], 450.0);
+    });
+
     test('re-queuing the same id supersedes rather than duplicating', () async {
       // Sharing the same ride twice while offline must not post it twice.
       await dao.enqueue(

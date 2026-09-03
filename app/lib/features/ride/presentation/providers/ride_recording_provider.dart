@@ -20,6 +20,7 @@ import '../../../../core/services/home_widget_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../profile/presentation/providers/speed_alert_provider.dart';
 import '../../data/models/ride_model.dart';
 import '../../domain/calculators/average_speed.dart';
 import '../../domain/calculators/event_detector.dart';
@@ -331,6 +332,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _accumulatedDuration = Duration.zero;
     _activeStart = DateTime.now();
     _detector.reset();
+    _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
     _cadencePolicy.reset();
     _sensorCoordinator.reset();
     _persistenceCoordinator.resetCounts();
@@ -818,6 +820,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     _sensorCoordinator.reset();
     _detector.reset();
+    _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
     _cadencePolicy.reset();
 
     final last = fixes.last;

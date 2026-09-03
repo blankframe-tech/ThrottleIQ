@@ -9,7 +9,9 @@ import '../../../../core/theme/theme_style_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/widgets/auto_tracking_tile.dart';
+import '../../../../core/constants/sensor_constants.dart';
 import '../providers/emergency_contacts_provider.dart';
+import '../providers/speed_alert_provider.dart';
 import '../widgets/appearance_picker.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
@@ -240,6 +242,8 @@ class SettingsScreen extends ConsumerWidget {
           // ── Ride tracking ──────────────────────────────────────────────
           const AutoTrackingTile(),
           const AutoTrackingScheduleTile(),
+          const SizedBox(height: 12),
+          const _OverspeedLimitTile(),
 
           const SizedBox(height: 24),
 
@@ -603,6 +607,78 @@ class _SegmentedOption extends StatelessWidget {
                         : AppColors.textTertiary)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OverspeedLimitTile extends ConsumerWidget {
+  const _OverspeedLimitTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final limit = ref.watch(overspeedLimitProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.speed, color: AppColors.primary, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.overspeedSettingTitle,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.overspeedSettingSubtitle,
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${limit.round()} km/h',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: AppColors.primary.withValues(alpha: 0.2),
+              thumbColor: AppColors.primary,
+            ),
+            child: Slider(
+              value: limit,
+              min: SensorConstants.minOverspeedKmh,
+              max: SensorConstants.maxOverspeedKmh,
+              divisions: 16,
+              label: '${limit.round()} km/h',
+              onChanged: (val) {
+                ref.read(overspeedLimitProvider.notifier).setLimit(val);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

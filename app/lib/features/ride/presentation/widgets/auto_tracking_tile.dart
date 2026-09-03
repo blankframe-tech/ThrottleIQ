@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
+import 'auto_detection_history_sheet.dart';
 
 /// Settings control for automatic ride detection.
 ///
@@ -20,24 +22,85 @@ class AutoTrackingTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final enabled = ref.watch(autoTrackingEnabledProvider);
 
+    final isIos = defaultTargetPlatform == TargetPlatform.iOS;
+    final isEnabled = enabled.valueOrNull ?? false;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: SwitchListTile(
-        value: enabled.valueOrNull ?? false,
-        onChanged: enabled.isLoading
-            ? null
-            : (value) => _toggle(context, ref, value),
-        title: Text(
-          l10n.autoTrackingTileTitle,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(l10n.autoTrackingTileSubtitle),
-        secondary: Icon(Icons.motorcycle, color: AppColors.primary),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SwitchListTile(
+            value: isEnabled,
+            onChanged: enabled.isLoading
+                ? null
+                : (value) => _toggle(context, ref, value),
+            title: Text(
+              l10n.autoTrackingTileTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(l10n.autoTrackingTileSubtitle),
+            secondary: Icon(Icons.motorcycle, color: AppColors.primary),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          ),
+          if (isIos && isEnabled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.attention.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.attention.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: AppColors.attention),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.iosAutoTrackingAdvisory,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const Divider(height: 1),
+          InkWell(
+            onTap: () => AutoDetectionHistorySheet.show(context),
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.history, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.recentDetectionsTitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.chevron_right, size: 18, color: AppColors.textTertiary),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

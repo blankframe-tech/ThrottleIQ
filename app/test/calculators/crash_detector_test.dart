@@ -140,4 +140,22 @@ void main() {
       expect(detector.lastCrashSignal, isNull);
     });
   });
+
+  group('EventDetector - Overspeed Detection', () {
+    test('fires overspeed alert when exceeding default threshold (100 km/h ~ 27.8 m/s)', () {
+      final detector = EventDetector();
+      expect(detector.detect(accel: 0, jerk: 0, speedMs: 25.0), isNot(RideAlert.overspeed));
+      expect(detector.detect(accel: 0, jerk: 0, speedMs: 28.5), equals(RideAlert.overspeed));
+    });
+
+    test('respects custom configured overspeed threshold', () {
+      final detector = EventDetector(overspeedThresholdMs: 22.22); // 80 km/h
+      expect(detector.detect(accel: 0, jerk: 0, speedMs: 20.0), isNot(RideAlert.overspeed));
+      expect(detector.detect(accel: 0, jerk: 0, speedMs: 23.0), equals(RideAlert.overspeed));
+
+      detector.overspeedThreshold = 30.0;
+      expect(detector.detect(accel: 0, jerk: 0, speedMs: 28.0), isNot(RideAlert.overspeed));
+      expect(detector.detect(accel: 0, jerk: 0, speedMs: 31.0), equals(RideAlert.overspeed));
+    });
+  });
 }

@@ -610,5 +610,53 @@
   "safeQrLocalOnlyDisclaimer": "Saved only on this device — it is not backed up or synced.",
   "@safeQrLocalOnlyDisclaimer": {
     "description": "Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced."
+  },
+  "weatherUnavailableTooltip": "Weather data unavailable for this ride",
+  "@weatherUnavailableTooltip": {
+    "description": "Tooltip shown on the weather badge when weather could not be retrieved."
+  },
+  "weatherUnavailableLabel": "Weather unavailable",
+  "@weatherUnavailableLabel": {
+    "description": "Label shown when weather information could not be retrieved."
+  },
+  "overspeedSettingTitle": "Overspeed Warning Limit",
+  "@overspeedSettingTitle": {
+    "description": "Title for the overspeed limit slider in settings."
+  },
+  "overspeedSettingSubtitle": "Haptic and visual alert when exceeding this speed",
+  "@overspeedSettingSubtitle": {
+    "description": "Subtitle explaining the overspeed alert."
+  },
+  "iosAutoTrackingAdvisory": "For uninterrupted ride detection on iOS, keep ThrottleIQ in the background rather than force-closing it from the app switcher.",
+  "@iosAutoTrackingAdvisory": {
+    "description": "Advisory note for iOS users about app lifecycle constraint."
+  },
+  "recentDetectionsTitle": "Auto-Detection History",
+  "@recentDetectionsTitle": {
+    "description": "Title for auto-detection history sheet."
+  },
+  "recentDetectionsSubtitle": "Review recent trips recorded or discarded by auto-tracking",
+  "@recentDetectionsSubtitle": {
+    "description": "Subtitle for auto-detection history sheet."
+  },
+  "recentDetectionsEmpty": "No recent auto-detections logged yet.",
+  "@recentDetectionsEmpty": {
+    "description": "Empty state text for auto-detection history."
+  },
+  "rejectionTooShort": "Trip distance was too short",
+  "@rejectionTooShort": {
+    "description": "Humanized rejection reason for too short distance."
+  },
+  "rejectionTooSlow": "Speed was too low to classify as a ride",
+  "@rejectionTooSlow": {
+    "description": "Humanized rejection reason for too low speed."
+  },
+  "rejectionTooFewFixes": "Not enough GPS fixes captured",
+  "@rejectionTooFewFixes": {
+    "description": "Humanized rejection reason for insufficient GPS fixes."
+  },
+  "rejectionNoMovement": "No vehicle movement detected",
+  "@rejectionNoMovement": {
+    "description": "Humanized rejection reason for lack of movement."
   }
 }

@@ -401,4 +401,45 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get safeQrLocalOnlyDisclaimer =>
       'শুধুমাত্র এই ডিভাইসে সংরক্ষিত — এটি ব্যাকআপ বা সিঙ্ক করা হয় না।';
+
+  @override
+  String get weatherUnavailableTooltip =>
+      'এই রাইডের আবহাওয়ার তথ্য পাওয়া যায়নি';
+
+  @override
+  String get weatherUnavailableLabel => 'আবহাওয়া তথ্য নেই';
+
+  @override
+  String get overspeedSettingTitle => 'সর্বোচ্চ গতির সতর্কতা সীমা';
+
+  @override
+  String get overspeedSettingSubtitle =>
+      'এই গতি অতিক্রম করলে হ্যাপটিক ও ভিজ্যুয়াল সতর্কতা';
+
+  @override
+  String get iosAutoTrackingAdvisory =>
+      'iOS-এ নিরবচ্ছিন্ন রাইড শনাক্তকরণের জন্য অ্যাপ সুইচার থেকে সোয়াইপ করে বন্ধ না করে থ্রটলআইকিউ ব্যাকগ্রাউন্ডে চালু রাখুন।';
+
+  @override
+  String get recentDetectionsTitle => 'স্বয়ংক্রিয় শনাক্তকরণ ইতিহাস';
+
+  @override
+  String get recentDetectionsSubtitle =>
+      'স্বয়ংক্রিয়ভাবে রেকর্ডকৃত বা বাতিলকৃত সাম্প্রতিক ট্রিপ দেখুন';
+
+  @override
+  String get recentDetectionsEmpty =>
+      'এখনো কোনো স্বয়ংক্রিয় শনাক্তকরণ লগ নেই।';
+
+  @override
+  String get rejectionTooShort => 'ট্রিপের দূরত্ব খুব কম ছিল';
+
+  @override
+  String get rejectionTooSlow => 'গতি খুব কম ছিল বিধায় রাইড গণ্য হয়নি';
+
+  @override
+  String get rejectionTooFewFixes => 'পর্যাপ্ত জিপিএস তথ্য পাওয়া যায়নি';
+
+  @override
+  String get rejectionNoMovement => 'যানবাহনের চলাচল শনাক্ত হয়নি';
 }

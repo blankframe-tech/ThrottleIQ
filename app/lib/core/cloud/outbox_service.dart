@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../database/daos/outbox_dao.dart';
+import '../database/database_helper.dart';
 import '../../features/social/data/repositories/ride_share_repository.dart';
 
 /// The operations that can be queued for later delivery.
@@ -24,6 +25,9 @@ class OutboxKind {
   /// `/r/{username}` pointer. Queued because it runs on the end-of-ride path,
   /// which must never block on the network.
   static const String liveSessionTeardown = 'live_session_teardown';
+
+  /// Syncing a maintenance log entry to the rider's Firestore subcollection.
+  static const String maintenanceLog = 'maintenance_log';
 }
 
 /// How long an attempt is given before we stop waiting on it.
@@ -190,6 +194,27 @@ class OutboxService {
         OutboxDeliveryResult.delivered;
   }
 
+  Future<String> enqueueMaintenanceLog({
+    required String uid,
+    required Map<String, dynamic> logData,
+    bool attemptNow = true,
+  }) async {
+    final entryId = 'maintenance:${logData['id']}';
+    await _dao.enqueue(
+      id: entryId,
+      kind: OutboxKind.maintenanceLog,
+      payload: {
+        'uid': uid,
+        'log': logData,
+      },
+    );
+    _changes.add(null);
+    if (attemptNow) {
+      unawaited(_attemptOne(entryId));
+    }
+    return entryId;
+  }
+
   Future<OutboxDeliveryResult> _attemptOne(String id) async {
     final entries = await _dao.all();
     final entry = entries.where((e) => e.id == id).firstOrNull;
@@ -220,6 +245,7 @@ class OutboxService {
       final handled = switch (entry.kind) {
         OutboxKind.shareRide => await _deliverShareRide(entry),
         OutboxKind.liveSessionTeardown => await _deliverLiveTeardown(entry),
+        OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
         // An unrecognised kind is not going to start working later.
         _ => OutboxDeliveryResult.discarded,
       };
@@ -346,6 +372,43 @@ class OutboxService {
       // nothing left to tear down, so this is success, not a retry.
       if (e.code == 'not-found') return OutboxDeliveryResult.delivered;
       rethrow;
+    }
+  }
+
+  Future<OutboxDeliveryResult> _deliverMaintenanceLog(OutboxEntry entry) async {
+    final uid = entry.payload['uid'] as String?;
+    final log = entry.payload['log'] as Map<String, dynamic>?;
+    if (uid == null || log == null || log['id'] == null) {
+      return OutboxDeliveryResult.discarded;
+    }
+
+    final logId = log['id'].toString();
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('maintenance')
+          .doc(logId)
+          .set(log)
+          .timeout(kOutboxAttemptTimeout);
+
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.update(
+          'maintenance_logs',
+          {'synced': 1},
+          where: 'id = ?',
+          whereArgs: [logId],
+        );
+      } catch (e) {
+        debugPrint('[Outbox] local maintenance sync status update skipped: $e');
+      }
+
+      return OutboxDeliveryResult.delivered;
+    } on TimeoutException {
+      return OutboxDeliveryResult.deferred;
+    } on SocketException {
+      return OutboxDeliveryResult.deferred;
     }
   }
 

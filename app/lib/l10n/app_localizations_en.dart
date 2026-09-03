@@ -402,4 +402,44 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get safeQrLocalOnlyDisclaimer =>
       'Saved only on this device — it is not backed up or synced.';
+
+  @override
+  String get weatherUnavailableTooltip =>
+      'Weather data unavailable for this ride';
+
+  @override
+  String get weatherUnavailableLabel => 'Weather unavailable';
+
+  @override
+  String get overspeedSettingTitle => 'Overspeed Warning Limit';
+
+  @override
+  String get overspeedSettingSubtitle =>
+      'Haptic and visual alert when exceeding this speed';
+
+  @override
+  String get iosAutoTrackingAdvisory =>
+      'For uninterrupted ride detection on iOS, keep ThrottleIQ in the background rather than force-closing it from the app switcher.';
+
+  @override
+  String get recentDetectionsTitle => 'Auto-Detection History';
+
+  @override
+  String get recentDetectionsSubtitle =>
+      'Review recent trips recorded or discarded by auto-tracking';
+
+  @override
+  String get recentDetectionsEmpty => 'No recent auto-detections logged yet.';
+
+  @override
+  String get rejectionTooShort => 'Trip distance was too short';
+
+  @override
+  String get rejectionTooSlow => 'Speed was too low to classify as a ride';
+
+  @override
+  String get rejectionTooFewFixes => 'Not enough GPS fixes captured';
+
+  @override
+  String get rejectionNoMovement => 'No vehicle movement detected';
 }

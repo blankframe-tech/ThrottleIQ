@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/services/home_widget_service.dart';
-import '../../domain/entities/maintenance_entity.dart';
-import '../../data/models/maintenance_model.dart';
-import '../../../../core/database/daos/maintenance_dao.dart';
+import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/constants/sensor_constants.dart';
+import '../../../../core/database/daos/maintenance_dao.dart';
+import '../../../../core/services/home_widget_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../data/models/maintenance_model.dart';
+import '../../domain/entities/maintenance_entity.dart';
 
 const _uuid = Uuid();
 final _dao = MaintenanceDao();
@@ -48,7 +50,15 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
           : null,
       createdAt: DateTime.now(),
     );
-    await _dao.insert(MaintenanceModel.toMap(log));
+    final map = MaintenanceModel.toMap(log);
+    await _dao.insert(map);
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      unawaited(ref.read(outboxServiceProvider).enqueueMaintenanceLog(
+        uid: user.uid,
+        logData: map,
+      ));
+    }
     ref.invalidateSelf();
     // Keep the maintenance widget in step with what was just logged —
     // fire-and-forget, and a no-op wherever widgets aren't available.

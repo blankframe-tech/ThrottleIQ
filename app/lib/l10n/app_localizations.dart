@@ -823,6 +823,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved only on this device — it is not backed up or synced.'**
   String get safeQrLocalOnlyDisclaimer;
+
+  /// Tooltip shown on the weather badge when weather could not be retrieved.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather data unavailable for this ride'**
+  String get weatherUnavailableTooltip;
+
+  /// Label shown when weather information could not be retrieved.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather unavailable'**
+  String get weatherUnavailableLabel;
+
+  /// Title for the overspeed limit slider in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Overspeed Warning Limit'**
+  String get overspeedSettingTitle;
+
+  /// Subtitle explaining the overspeed alert.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptic and visual alert when exceeding this speed'**
+  String get overspeedSettingSubtitle;
+
+  /// Advisory note for iOS users about app lifecycle constraint.
+  ///
+  /// In en, this message translates to:
+  /// **'For uninterrupted ride detection on iOS, keep ThrottleIQ in the background rather than force-closing it from the app switcher.'**
+  String get iosAutoTrackingAdvisory;
+
+  /// Title for auto-detection history sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Detection History'**
+  String get recentDetectionsTitle;
+
+  /// Subtitle for auto-detection history sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Review recent trips recorded or discarded by auto-tracking'**
+  String get recentDetectionsSubtitle;
+
+  /// Empty state text for auto-detection history.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent auto-detections logged yet.'**
+  String get recentDetectionsEmpty;
+
+  /// Humanized rejection reason for too short distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip distance was too short'**
+  String get rejectionTooShort;
+
+  /// Humanized rejection reason for too low speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed was too low to classify as a ride'**
+  String get rejectionTooSlow;
+
+  /// Humanized rejection reason for insufficient GPS fixes.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough GPS fixes captured'**
+  String get rejectionTooFewFixes;
+
+  /// Humanized rejection reason for lack of movement.
+  ///
+  /// In en, this message translates to:
+  /// **'No vehicle movement detected'**
+  String get rejectionNoMovement;
 }
 
 class _AppLocalizationsDelegate

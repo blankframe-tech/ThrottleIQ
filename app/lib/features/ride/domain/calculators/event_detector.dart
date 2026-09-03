@@ -50,6 +50,12 @@ class EventDetector {
   static const Duration _crashWindow = Duration(seconds: 2);
   static const double _speedDropThreshold = 2.0; // m/s
 
+  double overspeedThreshold;
+
+  EventDetector({double? overspeedThresholdMs})
+      : overspeedThreshold =
+            overspeedThresholdMs ?? SensorConstants.overspeedThreshold;
+
   CrashSignal? lastCrashSignal;
 
   /// Classifies one fix.
@@ -157,7 +163,7 @@ class EventDetector {
     }
 
     // Other alerts
-    if (speedMs > SensorConstants.overspeedThreshold) {
+    if (speedMs > overspeedThreshold) {
       _lastAlert = RideAlert.overspeed;
       _lastAlertTime = now;
       return RideAlert.overspeed;
