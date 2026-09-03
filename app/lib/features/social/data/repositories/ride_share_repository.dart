@@ -120,13 +120,14 @@ class RideShareRepository {
   /// Gets a shared ride by ID.
   Future<SharedRideEntity?> getSharedRide(String rideId) async {
     final doc = await _firestore.collection('rides').doc(rideId).get();
-    if (!doc.exists) return null;
+    if (!doc.exists || doc.data() == null) return null;
 
     final model = RideShareModel.fromFirestore(
       doc.data()!,
       doc.id,
     );
-    return model.toEntity();
+    final hydrated = await _hydrate([model.toEntity()]);
+    return hydrated.firstOrNull;
   }
 
   /// Public rides (for discovery). Lines up with the `audience == 'public'`

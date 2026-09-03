@@ -7,14 +7,15 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   final String chatId;
-  final UserProfileEntity otherUser;
+  final UserProfileEntity? otherUser;
 
-  const ChatRoomScreen({super.key, required this.chatId, required this.otherUser});
+  const ChatRoomScreen({super.key, required this.chatId, this.otherUser});
 
   @override
   ConsumerState<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -26,10 +27,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final myUid = ref.read(currentUserProvider)?.uid;
-      if (myUid != null) {
-        ref.read(chatRepositoryProvider).markMessagesAsRead(widget.chatId, myUid);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final myUid = ref.read(currentUserProvider)?.uid;
+        if (myUid != null) {
+          await ref.read(chatRepositoryProvider).markMessagesAsRead(widget.chatId, myUid);
+        }
+      } catch (e) {
+        debugPrint('Failed to mark messages as read: $e');
       }
     });
   }
@@ -66,17 +71,28 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(chatMessagesProvider(widget.chatId));
     final myUid = ref.watch(currentUserProvider)?.uid;
+    final chatAsync = ref.watch(singleChatProvider(widget.chatId));
+    final fallbackOtherUid = chatAsync.valueOrNull?.participants.firstWhere(
+      (id) => id != myUid,
+      orElse: () => '',
+    );
+    final profileLookupUid = widget.otherUser?.uid ?? (fallbackOtherUid?.isNotEmpty == true ? fallbackOtherUid : null);
+    final resolvedOtherUser = widget.otherUser ?? (profileLookupUid != null ? ref.watch(profileProvider(profileLookupUid)).valueOrNull : null);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
-            UserAvatar(photoUrl: widget.otherUser.photoUrl, name: widget.otherUser.bestName, radius: 16),
+            UserAvatar(
+              photoUrl: resolvedOtherUser?.photoUrl,
+              name: resolvedOtherUser?.bestName ?? 'Rider',
+              radius: 16,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                widget.otherUser.bestName,
+                resolvedOtherUser?.bestName ?? 'Chat',
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 16),
               ),

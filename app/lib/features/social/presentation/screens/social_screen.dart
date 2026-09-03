@@ -514,7 +514,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
       child: Column(
         children: [
           InkWell(
-            onTap: _toggleExpanded,
+            onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             child: Padding(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -623,12 +623,33 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           size: 20,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 18),
-                      const SizedBox(width: 6),
-                      Text('${ride.comments}', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _toggleExpanded,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 18),
+                              const SizedBox(width: 6),
+                              Text('${ride.comments}', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                              const SizedBox(width: 4),
+                              Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.textSecondary, size: 16),
+                            ],
+                          ),
+                        ),
+                      ),
                       const Spacer(),
-                      Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.textSecondary),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Details', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                          const SizedBox(width: 2),
+                          Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
+                        ],
+                      ),
                     ],
                   ),
                 ],

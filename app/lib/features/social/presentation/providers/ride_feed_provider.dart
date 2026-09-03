@@ -55,6 +55,12 @@ final rideFeedProvider = FutureProvider<List<SharedRideEntity>>((ref) async {
   return sortFeed(byId.values.toList(), FeedSort.recent);
 });
 
+/// Fetches a single shared ride by ID.
+final sharedRideProvider = FutureProvider.autoDispose.family<SharedRideEntity?, String>((ref, rideId) async {
+  return RideShareRepository().getSharedRide(rideId);
+});
+
+
 /// The signed-in rider's own shared rides — reached from the garage header's
 /// user menu (My Shared Rides), not the feed. Unlike [rideFeedProvider] this
 /// isn't deduped/ranked against other visibility tiers; it's just "everything

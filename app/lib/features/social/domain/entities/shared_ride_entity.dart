@@ -142,6 +142,7 @@ class SharedRideEntity extends Equatable {
     String? caption,
     int? upvotes,
     int? downvotes,
+    List<LatLng>? polyline,
     Object? myVote = _unset,
   }) {
     return SharedRideEntity(
@@ -156,7 +157,7 @@ class SharedRideEntity extends Equatable {
       distanceKm: distanceKm,
       durationSeconds: durationSeconds,
       maxSpeedKmh: maxSpeedKmh,
-      polyline: polyline,
+      polyline: polyline ?? this.polyline,
       mapSnapshotUrl: mapSnapshotUrl,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,

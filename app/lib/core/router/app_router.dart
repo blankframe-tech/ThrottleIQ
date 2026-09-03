@@ -41,6 +41,8 @@ import '../../shared/widgets/app_shell.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
+import '../../features/social/presentation/screens/shared_ride_detail_screen.dart';
+import '../../features/social/domain/entities/shared_ride_entity.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
 /// emits, without rebuilding [routerProvider] itself — rebuilding would
@@ -155,6 +157,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Opened from the Stats "All rides" button, on top of the current
       // screen — same full-screen no-shell treatment as /ride/summary.
       GoRoute(path: '/rides/all', builder: (_, __) => const AllRidesScreen()),
+      GoRoute(
+        path: '/rides/shared/:rideId',
+        builder: (_, state) => SharedRideDetailScreen(
+          rideId: state.pathParameters['rideId']!,
+          initialRide: state.extra is SharedRideEntity ? state.extra as SharedRideEntity : null,
+        ),
+      ),
       // Saved routes. '/routes' and '/routes/save/:rideId' are both listed
       // before '/routes/:routeId' so the param route can't swallow them —
       // same ordering hazard as '/forums/create' and '/profile/edit'.
@@ -164,7 +173,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chats/:chatId',
         builder: (_, state) => ChatRoomScreen(
           chatId: state.pathParameters['chatId']!,
-          otherUser: state.extra as UserProfileEntity,
+          otherUser: state.extra is UserProfileEntity ? state.extra as UserProfileEntity : null,
         ),
       ),
       GoRoute(
