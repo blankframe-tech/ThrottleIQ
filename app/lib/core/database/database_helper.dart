@@ -102,9 +102,9 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute(
-          'ALTER TABLE ride_points ADD COLUMN period_type TEXT DEFAULT "moving"');
-      await db.execute('ALTER TABLE ride_points ADD COLUMN accuracy_m REAL');
+      await _addColumnIfMissing(
+          db, 'ride_points', 'period_type', 'period_type TEXT DEFAULT "moving"');
+      await _addColumnIfMissing(db, 'ride_points', 'accuracy_m', 'accuracy_m REAL');
     }
     if (oldVersion < 3) {
       await db.execute('''
@@ -148,19 +148,21 @@ class DatabaseHelper {
       ''');
     }
     if (oldVersion < 5) {
-      await db.execute('ALTER TABLE bikes ADD COLUMN odometer_km REAL');
+      await _addColumnIfMissing(db, 'bikes', 'odometer_km', 'odometer_km REAL');
     }
     if (oldVersion < 6) {
-      await db.execute('ALTER TABLE ride_points ADD COLUMN heading_deg REAL');
-      await db.execute('ALTER TABLE ride_points ADD COLUMN confidence INTEGER');
-      await db
-          .execute('ALTER TABLE ride_points ADD COLUMN imu_quality INTEGER');
-      await db
-          .execute('ALTER TABLE ride_points ADD COLUMN is_cornering INTEGER');
+      await _addColumnIfMissing(
+          db, 'ride_points', 'heading_deg', 'heading_deg REAL');
+      await _addColumnIfMissing(
+          db, 'ride_points', 'confidence', 'confidence INTEGER');
+      await _addColumnIfMissing(
+          db, 'ride_points', 'imu_quality', 'imu_quality INTEGER');
+      await _addColumnIfMissing(
+          db, 'ride_points', 'is_cornering', 'is_cornering INTEGER');
     }
     if (oldVersion < 7) {
-      await db
-          .execute('ALTER TABLE maintenance_logs ADD COLUMN custom_label TEXT');
+      await _addColumnIfMissing(
+          db, 'maintenance_logs', 'custom_label', 'custom_label TEXT');
     }
     if (oldVersion < 8) {
       await db.execute(_createDeletedBikesSql);
@@ -172,7 +174,7 @@ class DatabaseHelper {
       // (ride clock minus this) survive past the recording session — see
       // jam_time.dart. Existing rides finalized before this column existed
       // simply have no jam figure to show, rather than a guessed-at one.
-      await db.execute('ALTER TABLE rides ADD COLUMN moving_s INTEGER');
+      await _addColumnIfMissing(db, 'rides', 'moving_s', 'moving_s INTEGER');
     }
     if (oldVersion < 10) {
       await db.execute(_createOutboxSql);

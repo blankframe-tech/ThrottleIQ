@@ -494,10 +494,16 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         _RideStat(
                             label: 'Distance',
                             value: SpeedFormatter.distanceKm(rideState.distanceM)),
-                        const SizedBox(width: 28),
+                        const SizedBox(width: 24),
                         _RideStat(
                             label: 'Avg Speed',
                             value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                        if (rideState.confidence > 0) ...[
+                          const SizedBox(width: 24),
+                          _RideStat(
+                              label: 'Confidence',
+                              value: '${rideState.confidence}%'),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 8),

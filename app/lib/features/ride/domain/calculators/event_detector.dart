@@ -44,8 +44,8 @@ class EventDetector {
   DateTime? _highAccelStart; // When spike >8g started
   double _peakAccelSinceSpike = 0;
   double _peakJerkInWindow = 0;
-  List<_SpeedSample> _recentSpeeds = []; // Last 2s of speed samples
-  static const double _crashAccelThreshold = 80.0; // m/s² (~8.2g)
+  final List<_SpeedSample> _recentSpeeds = []; // Last 2s of speed samples
+  static const double _crashAccelThreshold = SensorConstants.crashAccelThreshold;
   static const double _crashJerkThreshold = 10.0; // m/s³
   static const Duration _crashWindow = Duration(seconds: 2);
   static const double _speedDropThreshold = 2.0; // m/s

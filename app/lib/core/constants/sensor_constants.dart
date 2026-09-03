@@ -19,6 +19,9 @@ class SensorConstants {
   // number in ride_recording_provider.dart's _onPosition)
   static const double maxGpsAccuracyM = 25.0;
 
+  // Crash detection threshold: peak acceleration spike (>8g threshold)
+  static const double crashAccelThreshold = 80.0; // m/s² (~8.2g)
+
   // Sensor validation ceilings — reject obviously-broken samples (NaN,
   // sensor glitches/clipping), not legitimate high-g crash spikes
   // (event_detector.dart's crash threshold is 80.0 m/s²)

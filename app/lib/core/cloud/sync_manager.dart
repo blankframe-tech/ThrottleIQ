@@ -35,6 +35,8 @@ class SyncManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Timer? _autoSyncTimer;
+  bool _autoSyncEnabled = false;
+  int _consecutiveFailures = 0;
   bool _isSyncing = false;
   SyncStatus _status = SyncStatus.idle;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
@@ -62,29 +64,46 @@ class SyncManager {
   void _initConnectivityListener() {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
       if (results.contains(ConnectivityResult.mobile) || results.contains(ConnectivityResult.wifi)) {
-        // Internet is back - try to sync
+        // Internet is back - reset failure counter and sync immediately
+        _consecutiveFailures = 0;
         _performSync();
       }
     });
   }
 
-  /// Start automatic sync with 5-minute interval
+  /// Start automatic sync with 5-minute interval or adaptive backoff on failure
   void startAutoSync() {
-    if (_autoSyncTimer != null) return; // Already running
+    if (_autoSyncEnabled) return;
+    _autoSyncEnabled = true;
 
     // Perform initial sync
     _performSync();
-
-    // Schedule periodic sync every 5 minutes
-    _autoSyncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      _performSync();
-    });
   }
 
   /// Stop automatic sync
   void stopAutoSync() {
+    _autoSyncEnabled = false;
     _autoSyncTimer?.cancel();
     _autoSyncTimer = null;
+  }
+
+  void _scheduleNextAutoSync() {
+    if (!_autoSyncEnabled) return;
+    _autoSyncTimer?.cancel();
+
+    Duration delay;
+    if (_status == SyncStatus.failure && _consecutiveFailures > 0) {
+      // Exponential backoff capped at 30 minutes on consecutive failures
+      delay = outboxBackoff(_consecutiveFailures);
+    } else {
+      delay = const Duration(minutes: 5);
+    }
+
+    _autoSyncTimer = Timer(delay, () {
+      if (_autoSyncEnabled) {
+        _performSync();
+      }
+    });
   }
 
   /// Perform sync with retry logic
@@ -99,7 +118,9 @@ class SyncManager {
 
     if (!hasInternet) {
       _status = SyncStatus.failure;
+      _consecutiveFailures++;
       _notifyListeners();
+      _scheduleNextAutoSync();
       return;
     }
 
@@ -226,8 +247,10 @@ class SyncManager {
       }
 
       _status = SyncStatus.success;
+      _consecutiveFailures = 0;
     } catch (e, stack) {
       _status = SyncStatus.failure;
+      _consecutiveFailures++;
       // Was a bare print() with no stack and no tag, which is why the sync
       // gap above took a database dump to diagnose rather than a glance at
       // the console. Everything reachable from here is now per-item
@@ -237,6 +260,7 @@ class SyncManager {
     } finally {
       _isSyncing = false;
       _notifyListeners();
+      _scheduleNextAutoSync();
     }
   }
 
