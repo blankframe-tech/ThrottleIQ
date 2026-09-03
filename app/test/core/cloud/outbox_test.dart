@@ -2,7 +2,6 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
 import 'package:throttleiq/core/database/daos/outbox_dao.dart';
@@ -205,6 +204,37 @@ void main() {
 
       await dao.delete('a');
       expect(await dao.pendingCount(), 2);
+    });
+  });
+
+  group('OutboxService.decodePolylinePayload', () {
+    test('decodes flat array format', () {
+      final flat = [23.8, 90.4, 23.9, 90.5];
+      final result = OutboxService.decodePolylinePayload(flat);
+      expect(result, hasLength(2));
+      expect(result[0].latitude, 23.8);
+      expect(result[0].longitude, 90.4);
+      expect(result[1].latitude, 23.9);
+      expect(result[1].longitude, 90.5);
+    });
+
+    test('decodes legacy nested array format', () {
+      final nested = [
+        [23.8, 90.4],
+        [23.9, 90.5],
+      ];
+      final result = OutboxService.decodePolylinePayload(nested);
+      expect(result, hasLength(2));
+      expect(result[0].latitude, 23.8);
+      expect(result[0].longitude, 90.4);
+      expect(result[1].latitude, 23.9);
+      expect(result[1].longitude, 90.5);
+    });
+
+    test('handles empty or non-list payloads gracefully', () {
+      expect(OutboxService.decodePolylinePayload(null), isEmpty);
+      expect(OutboxService.decodePolylinePayload([]), isEmpty);
+      expect(OutboxService.decodePolylinePayload('not a list'), isEmpty);
     });
   });
 }

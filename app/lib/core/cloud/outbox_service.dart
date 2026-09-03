@@ -141,10 +141,10 @@ class OutboxService {
         'rideDate': rideDate.toIso8601String(),
         'distanceKm': distanceKm,
         'durationSeconds': durationSeconds,
-        'maxSpeedKmh': maxSpeedKmh,
-        // Flattened to plain lists — the payload has to survive jsonEncode.
+        // Flat array of coordinates [lat, lng, lat, lng, ...] reduces outbox
+        // JSON row size significantly and eliminates nested list allocations.
         'polyline': [
-          for (final p in polyline) [p.latitude, p.longitude],
+          for (final p in polyline) ...[p.latitude, p.longitude],
         ],
         'audience': audience,
         'localPhotoPaths': localPhotoPaths,
@@ -278,11 +278,7 @@ class OutboxService {
       }
     }
 
-    final polyline = <LatLng>[
-      for (final pair in (p['polyline'] as List? ?? const []))
-        if (pair is List && pair.length == 2)
-          LatLng((pair[0] as num).toDouble(), (pair[1] as num).toDouble()),
-    ];
+    final polyline = decodePolylinePayload(p['polyline']);
 
     try {
       await _shareRepository
@@ -341,6 +337,32 @@ class OutboxService {
       if (e.code == 'not-found') return OutboxDeliveryResult.delivered;
       rethrow;
     }
+  }
+
+  /// Decodes polyline payload, supporting both modern flat format
+  /// `[lat0, lng0, lat1, lng1, ...]` and legacy nested format
+  /// `[[lat0, lng0], [lat1, lng1], ...]`.
+  @visibleForTesting
+  static List<LatLng> decodePolylinePayload(Object? raw) {
+    final polyline = <LatLng>[];
+    if (raw is List) {
+      if (raw.isNotEmpty && raw.first is num) {
+        for (var i = 0; i + 1 < raw.length; i += 2) {
+          final lat = (raw[i] as num).toDouble();
+          final lng = (raw[i + 1] as num).toDouble();
+          polyline.add(LatLng(lat, lng));
+        }
+      } else {
+        for (final pair in raw) {
+          if (pair is List && pair.length >= 2) {
+            final lat = (pair[0] as num).toDouble();
+            final lng = (pair[1] as num).toDouble();
+            polyline.add(LatLng(lat, lng));
+          }
+        }
+      }
+    }
+    return polyline;
   }
 
   @visibleForTesting
