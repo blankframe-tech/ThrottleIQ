@@ -21,13 +21,16 @@ import '../entities/vehicle_state.dart';
 /// cornering/braking/accelerating are true — anything "interesting," or
 /// anything the fusion engine isn't confident about, is always kept.
 ///
-/// The throttle itself is a plain "at most one persisted point per interval"
-/// rate limiter measured from the last point persisted for *any* reason —
-/// it doesn't track a separate clock per reason. A forced-through event
-/// point (a corner, say) resets the same clock a throttled steady point
-/// would have, rather than the two being tracked independently.
+/// The cadence policy tracks two separate clocks:
+/// 1. `_lastSteadyTimestamp`: regulates steady highway thinning (at most one
+///    point per `minPersistIntervalOnSteadyStretches`).
+/// 2. `_lastEventTimestamp`: marks forced events (corners, brakes, accels).
+///
+/// By decoupling the two clocks, a cornering maneuver does not postpone or
+/// starve the steady-highway waypoint cadence.
 class RecordingCadencePolicy {
-  DateTime? _lastPersistedTimestamp;
+  DateTime? _lastSteadyTimestamp;
+  DateTime? _lastEventTimestamp;
 
   /// Returns true if this fix should be added to the point buffer.
   /// [vehicleState] is null before the estimator has produced a state yet
@@ -38,32 +41,38 @@ class RecordingCadencePolicy {
     required VehicleState? vehicleState,
   }) {
     if (vehicleState == null) {
-      _lastPersistedTimestamp = timestamp;
+      _lastSteadyTimestamp = timestamp;
+      _lastEventTimestamp = timestamp;
       return true;
     }
 
-    final eligibleForThinning =
-        vehicleState.confidence >= SensorConstants.minConfidenceToThinRecording &&
-        !vehicleState.isCornering &&
-        !vehicleState.isBraking &&
-        !vehicleState.isAccelerating;
+    final isEvent =
+        vehicleState.confidence < SensorConstants.minConfidenceToThinRecording ||
+        vehicleState.isCornering ||
+        vehicleState.isBraking ||
+        vehicleState.isAccelerating;
 
-    if (!eligibleForThinning) {
-      _lastPersistedTimestamp = timestamp;
+    if (isEvent) {
+      _lastEventTimestamp = timestamp;
       return true;
     }
 
-    final last = _lastPersistedTimestamp;
-    if (last == null ||
-        timestamp.difference(last) >= SensorConstants.minPersistIntervalOnSteadyStretches) {
-      _lastPersistedTimestamp = timestamp;
+    final lastSteady = _lastSteadyTimestamp;
+    if (lastSteady == null ||
+        timestamp.difference(lastSteady) >=
+            SensorConstants.minPersistIntervalOnSteadyStretches) {
+      _lastSteadyTimestamp = timestamp;
       return true;
     }
 
     return false;
   }
 
+  DateTime? get lastSteadyTimestamp => _lastSteadyTimestamp;
+  DateTime? get lastEventTimestamp => _lastEventTimestamp;
+
   void reset() {
-    _lastPersistedTimestamp = null;
+    _lastSteadyTimestamp = null;
+    _lastEventTimestamp = null;
   }
 }

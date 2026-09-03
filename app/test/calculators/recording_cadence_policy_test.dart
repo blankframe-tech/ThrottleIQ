@@ -95,22 +95,29 @@ void main() {
       expect(result, isTrue);
     });
 
-    test('an event persist also resets the throttle clock for the steady fix right after it', () {
-      // The throttle is a simple "at most one persisted point per interval,
-      // full stop" rate limiter — it doesn't distinguish *why* the previous
-      // persist happened. A corner (always persisted) immediately followed
-      // by a steady fix still throttles against that corner's timestamp,
-      // same as it would against a prior steady fix.
+    test('an event does not reset the steady clock, maintaining straight-line cadence', () {
+      // t0: initial steady fix persisted on steady clock
       policy.shouldPersist(timestamp: t0, vehicleState: _state());
+
+      // t0 + 2s: cornering event persisted on event clock
       policy.shouldPersist(
-        timestamp: t0.add(const Duration(milliseconds: 100)),
+        timestamp: t0.add(const Duration(seconds: 2)),
         vehicleState: _state(isCornering: true),
       );
-      final result = policy.shouldPersist(
-        timestamp: t0.add(const Duration(milliseconds: 200)),
+
+      // t0 + 3s: steady fix within 5s of t0 is throttled
+      final result1 = policy.shouldPersist(
+        timestamp: t0.add(const Duration(seconds: 3)),
         vehicleState: _state(),
       );
-      expect(result, isFalse);
+      expect(result1, isFalse);
+
+      // t0 + 5s: steady fix after 5s from t0 is persisted (not pushed back to t0+7s)
+      final result2 = policy.shouldPersist(
+        timestamp: t0.add(const Duration(seconds: 5)),
+        vehicleState: _state(),
+      );
+      expect(result2, isTrue);
     });
 
     test('reset() clears the throttle so the next fix persists immediately', () {

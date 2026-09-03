@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/services/home_widget_service.dart';
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
@@ -363,6 +364,19 @@ void main() {
             HomeWidgetService.autoTrackingUri),
         isTrue,
       );
+    });
+  });
+
+  group('homeWidgetServiceProvider & refreshWithData', () {
+    test('homeWidgetServiceProvider provides the HomeWidgetService instance', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      expect(container.read(homeWidgetServiceProvider), same(HomeWidgetService.instance));
+    });
+
+    test('refreshWithData runs safely without throwing when widgets are unplaced', () async {
+      final service = HomeWidgetService();
+      await service.refreshWithData(rides: [], bikes: []);
     });
   });
 }

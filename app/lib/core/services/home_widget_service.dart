@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../constants/sensor_constants.dart';
@@ -14,6 +15,10 @@ import '../../features/maintenance/data/models/maintenance_model.dart';
 import '../../features/maintenance/domain/entities/maintenance_entity.dart';
 import '../../features/ride/data/models/ride_model.dart';
 import '../../features/ride/domain/entities/ride_entity.dart';
+
+final homeWidgetServiceProvider = Provider<HomeWidgetService>((ref) {
+  return HomeWidgetService.instance;
+});
 
 // ---------------------------------------------------------------------------
 // SharedPreferences / UserDefaults keys.
@@ -220,9 +225,19 @@ double _limitKmFor(ServiceType type) {
 /// failing to refresh is cosmetic; it must never take down app startup or a
 /// ride save, so everything here catches, logs and returns.
 class HomeWidgetService {
-  HomeWidgetService._();
+  HomeWidgetService({
+    RideDao? rideDao,
+    BikeDao? bikeDao,
+    MaintenanceDao? maintenanceDao,
+  })  : _rideDao = rideDao ?? RideDao(),
+        _bikeDao = bikeDao ?? BikeDao(),
+        _maintenanceDao = maintenanceDao ?? MaintenanceDao();
 
-  static final HomeWidgetService instance = HomeWidgetService._();
+  final RideDao _rideDao;
+  final BikeDao _bikeDao;
+  final MaintenanceDao _maintenanceDao;
+
+  static final HomeWidgetService instance = HomeWidgetService();
 
   /// Must match the App Group added to BOTH the Runner and ThrottleIQWidget
   /// targets in Xcode (see ios/ThrottleIQWidget/README.md). Ignored on Android.
@@ -417,7 +432,7 @@ class HomeWidgetService {
         return;
       }
 
-      final rideRows = await RideDao().getAllForUser(uid);
+      final rideRows = await _rideDao.getAllForUser(uid);
       final rides = rideRows.map(RideModel.fromMap).toList();
       final totalKm = rides.fold<double>(0, (sum, r) => sum + r.distanceKm);
       await publishRideStats(
@@ -426,14 +441,14 @@ class HomeWidgetService {
         rideCount: rides.length,
       );
 
-      final bikeRows = await BikeDao().getAllForUser(uid);
+      final bikeRows = await _bikeDao.getAllForUser(uid);
       final bikes = bikeRows.map(BikeModel.fromMap).toList();
       if (bikes.isEmpty) {
         await publishMaintenanceEmpty();
         return;
       }
       final bike = _preferredBike(bikes);
-      final logRows = await MaintenanceDao().getForBike(bike.id);
+      final logRows = await _maintenanceDao.getForBike(bike.id);
       final logs = logRows.map(MaintenanceModel.fromMap).toList();
       final next = computeNextService(
         currentOdometerKm: bike.currentOdometerKm,
@@ -451,6 +466,49 @@ class HomeWidgetService {
       );
     } catch (e, s) {
       _log('refreshFromLocalData failed', e, s);
+    }
+  }
+
+  /// Refreshes home widget data directly from domain entities without hitting SQLite.
+  /// Used by callers that already have state loaded in memory.
+  Future<void> refreshWithData({
+    required List<RideEntity> rides,
+    required List<BikeEntity> bikes,
+    List<MaintenanceEntity>? maintenanceLogs,
+  }) async {
+    try {
+      final totalKm = rides.fold<double>(0, (sum, r) => sum + r.distanceKm);
+      await publishRideStats(
+        weeklyKm: weeklyDistanceKm(rides),
+        totalKm: totalKm,
+        rideCount: rides.length,
+      );
+
+      if (bikes.isEmpty) {
+        await publishMaintenanceEmpty();
+        return;
+      }
+      final bike = _preferredBike(bikes);
+      final logs = maintenanceLogs ??
+          (await _maintenanceDao.getForBike(bike.id))
+              .map(MaintenanceModel.fromMap)
+              .toList();
+      final next = computeNextService(
+        currentOdometerKm: bike.currentOdometerKm,
+        logs: logs,
+      );
+      if (next == null) {
+        await publishMaintenanceEmpty();
+        return;
+      }
+      await publishMaintenance(
+        bikeName: bike.displayName,
+        nextServiceLabel: next.label,
+        kmUntilDue: next.kmUntilDue,
+        overdue: next.overdue,
+      );
+    } catch (e, s) {
+      _log('refreshWithData failed', e, s);
     }
   }
 
