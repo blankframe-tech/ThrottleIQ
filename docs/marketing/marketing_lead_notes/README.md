@@ -31,6 +31,12 @@ decision, are the two that matter most).
   week to week instead of staying a description.
 - [`press_fact_sheet.md`](press_fact_sheet.md) — a one-page reviewer/press
   fact sheet backing the outreach template's ask for an honest review.
+- [`tester_onboarding_message.md`](tester_onboarding_message.md) — the
+  EN/BN message to send the moment someone is actually added as a tester,
+  so recruitment doesn't stop at "yes" and silently churn.
+- [`faq_objection_handling.md`](faq_objection_handling.md) — answers for
+  the skeptical comments recruitment/launch posts will actually draw in
+  ad-skeptical BD moto Facebook groups.
 
 - [`throttle_brief.html`](throttle_brief.html) — a one-page visual status
   brief (blockers, decisions, segments, launch calendar). Open it directly
