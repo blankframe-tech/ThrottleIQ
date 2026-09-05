@@ -22,6 +22,7 @@ RIDE RECORDING
 RIDE HISTORY & STATS
 • Summary cards for every ride: max speed, distance, duration, hard-braking and rapid-acceleration counts
 • Automatically separates moving time from stops
+• Routes sync automatically across your devices
 • Export any ride as JSON or GPX to use in other tools
 
 CRASH DETECTION
@@ -66,6 +67,16 @@ motorcycle, ride tracker, GPS tracker, crash detection, bike maintenance, rider 
 - No claim of automatic SMS/email alerts to emergency contacts on no-response — that escalation path is currently mocked in the backend (Cloud Functions with Twilio/SendGrid aren't deployed yet, blocked on the Blaze billing plan — see `docs/HANDOFF_Document.md`'s "Soon" section and `docs/backend_options.md`). Only the manual live-share link and in-app countdown are described above, because those are the parts that actually work today.
 - No specific data-point-per-second or accuracy numbers, to avoid over-precise claims that could be read as guarantees.
 
-GPS route/track syncing across devices is now real (chunked `track` docs, `docs/Issues.md` §11) — the earlier draft of this listing didn't claim it because it wasn't built yet; safe to mention now if the description is revised.
+GPS route/track syncing across devices is now real (chunked `track` docs, `docs/Issues.md` §11) — added to the RIDE HISTORY & STATS section above (2026-09-05).
 
 Update this listing once the SMS/email escalation is actually wired up — that's a meaningful safety feature worth promoting once it's real.
+
+**Not yet added, worth considering:** the app now ships 7 selectable color
+families (Carbon Mono, Editorial, Nocturne, Trail Social, Calming, Retro,
+Analyst Blue) × 2 shape styles (boxy/curvy) × dark/light —
+`app/lib/core/theme/app_theme_style.dart` / `app_shape_profile.dart`. This
+isn't in the listing at all today and is a genuine differentiator (most
+ride-tracking apps don't offer this level of visual personalization) —
+holding off on adding a bullet for it here since it benefits from a real
+screenshot per look, which doesn't exist yet (see
+`docs/marketing/marketing_lead_notes/screenshot_shot_list.md`).
