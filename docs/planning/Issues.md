@@ -3429,3 +3429,50 @@ services, not just a local build:
 track's tester list (Play Console UI-only, see "Blocker" in
 `HANDOFF_Document.md`) and the QA-rider reseed flagged in §55 — neither was
 part of this release ask.
+
+---
+
+## 57. User report: "Continue with Google" fails and login screen shows the old logo (2026-09-05) — FIXED
+
+Both symptoms turned out to be exactly the two gaps §51 and §52 had already
+flagged as unverified.
+
+**Old logo on "Welcome back" — FIXED by removal, not replacement.** User
+asked for no logo at all on this screen rather than waiting on a redrawn
+Speed Gauge SVG. Removed the `AppLogo` widget and its now-unused import
+from `_ThrottleHeader` in `login_screen.dart` — the header is now just the
+"Welcome back" title + subtitle. `splash_screen.dart` still uses `AppLogo`
+(old crest mark) and was intentionally left untouched — out of scope for
+this report, which was specifically about the login screen.
+
+**"Continue with Google" not working — FIXED, root cause was a missing
+Firebase SHA-1, not a code defect.** Confirmed via `keytool` that the
+release keystore's SHA-1
+(`85:42:B8:AD:19:1E:6B:74:FC:85:27:4F:48:9D:BC:CE:4B:00:2F:10`) *was*
+already registered — ruling out §51's release-build hypothesis — but the
+**local debug keystore's** SHA-1
+(`DB:4C:88:76:40:B9:96:27:2D:CE:13:2E:A9:92:77:E6:D2:05:F4:1A`, from
+`~/.android/debug.keystore`) was not registered anywhere on the Firebase
+Android app (`1:603325098273:android:94694220f44cbf63fcf660`). Any debug
+build (i.e. ordinary `flutter run`, which is how this was almost certainly
+being tested) hit Google's `ApiException: 10` (`DEVELOPER_ERROR`) the
+instant the button was tapped. `auth_provider.dart`'s `signInWithGoogle()`
+needed no changes.
+
+**Fix applied (with user confirmation before touching the live Firebase
+project):** registered the debug SHA-1 via
+`firebase apps:android:sha:create` against the `throttleiqfb` project, then
+added the corresponding new `oauth_client` entry to the local (gitignored)
+`app/android/app/google-services.json` so a fresh local build's copy
+matches Firebase's records too. No app code changed for this half of the
+fix — it was purely a Firebase-project config gap.
+
+**Verified:** `firebase apps:android:sha:list` shows 3 registered SHA-1s
+post-fix (the two pre-existing ones plus the new debug one); the local
+`google-services.json` is valid JSON and both `com.bft.throttleiq` and
+`com.throttleiq.throttleiq` client blocks were preserved intact.
+
+**Not done / still open:** real-device verification of both fixes (this
+session has no physical device or emulator attached), and the splash
+screen's old-crest `AppLogo` — still there, still stale per §52, just not
+part of this report's scope.
