@@ -3546,3 +3546,47 @@ top... changes too").
 legal document, that's flagged for a human read-through first in
 `docs/marketing/marketing_lead_notes/NEEDS_YOUR_ATTENTION.md` rather than
 deployed autonomously.
+
+---
+
+## 60. Doc-map and cross-reference links broken by the 2026-08-28 restructure, repo-wide (2026-09-05)
+
+Noticed while linking to `docs/planning/HANDOFF_Document.md` etc. from
+this session's marketing work that plenty of *existing* links still used
+the pre-restructure flat `docs/` paths. Ran a full repo-wide markdown-link
+scan (every `.md` under `docs/`, `store_listing/`, and root `README.md`)
+to find the actual extent rather than fixing only the ones noticed by eye.
+
+**Found and fixed:**
+- `docs/README.md` (the doc map itself) — every link except `../README.md`
+  was broken: `HANDOFF_Document.md`, `Issues.md`, `features.md`,
+  `SETUP.md`, `assumptions.md`, `auto_tracking_plan.md`,
+  `backend_options.md`, and all four marketing docs needed their `planning/`
+  `guides/` `architecture/` `marketing/` prefixes restored. Also added a
+  row for the new `marketing/marketing_lead_notes/` folder.
+- Root `README.md`'s "Documentation" section (5 links) and the ASCII
+  architecture diagram's two path-referencing lines, which needed
+  re-flowing back to the diagram's 59-char box width after the corrected
+  paths made them overflow.
+- `docs/marketing/business_critique.md` and
+  `docs/marketing/pitch_and_marketing_materials.md` — stale bare-path
+  citations in prose (17 and 7 respectively).
+- `store_listing/store_listing.md` and `store_listing/app_content_remaining.md`
+  — same pattern, 2 each.
+- A link written relative to its own directory in
+  `pitch_and_marketing_materials.md` got double-prefixed by the first pass
+  of this fix (`docs/marketing/docs/marketing/marketing.md`) — caught by
+  the same scan and corrected.
+
+**Not touched:** `docs/optimizerplan.md`'s file references use
+`file:///f:/BlankFrameTechnologies/...` absolute Windows paths from a
+different machine's checkout — a different, pre-existing problem, and
+that doc's own header suggests it may already be superseded (its listed
+items match commit `e45bdb3`'s "complete optimizer items"). Left alone
+rather than guessed at.
+
+**Verified:** re-ran the same repo-wide scan after all fixes — 0 broken
+internal links remain across `docs/`, `store_listing/`, and `README.md`.
+
+**Not app behavior** — every fix in this entry is a documentation link,
+no Dart/backend code touched.
