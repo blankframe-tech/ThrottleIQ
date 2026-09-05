@@ -32,10 +32,9 @@ decision, are the two that matter most).
 - [`press_fact_sheet.md`](press_fact_sheet.md) — a one-page reviewer/press
   fact sheet backing the outreach template's ask for an honest review.
 
-**Visual summary:** a one-page status brief (blockers, decisions, segments,
-launch calendar) was also published as a Claude Artifact this session —
-ask if you'd like the link resurfaced, or regenerate from this folder's
-content if it's not handy.
+- [`throttle_brief.html`](throttle_brief.html) — a one-page visual status
+  brief (blockers, decisions, segments, launch calendar). Open it directly
+  in a browser; it's a static local file, not published anywhere.
 
 **Code changes made this session** (see git log, not duplicated here):
 fixed the landing page's primary CTA (`website_demo/index.html`) which

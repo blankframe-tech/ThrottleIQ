@@ -1,0 +1,326 @@
+<title>Throttle Brief</title>
+<style>
+  :root{
+    --bg:#0B0D10; --surface:#14181F; --surface-2:#191E26; --line:#232A33;
+    --text:#F5F7FA; --muted:#93A0AD; --muted-dim:#5E6B78;
+    --accent:#3B82F6; --accent-2:#60A5FA; --brand-orange:#FF6A00;
+    --crit:#EF4444; --crit-dim:#3A2020; --warn:#F5A524; --warn-dim:#332A18; --good:#22C55E; --good-dim:#16281D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF1F4; --line:#DDE2E8;
+      --text:#14181F; --muted:#5B6572; --muted-dim:#88919B;
+      --accent:#2563EB; --accent-2:#1D4ED8; --brand-orange:#E0590A;
+      --crit:#DC2626; --crit-dim:#FBE7E6; --warn:#B45309; --warn-dim:#FBF0DE; --good:#16A34A; --good-dim:#E4F5EA;
+      --shadow: 0 1px 2px rgba(20,24,31,0.08);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF1F4; --line:#DDE2E8;
+    --text:#14181F; --muted:#5B6572; --muted-dim:#88919B;
+    --accent:#2563EB; --accent-2:#1D4ED8; --brand-orange:#E0590A;
+    --crit:#DC2626; --crit-dim:#FBE7E6; --warn:#B45309; --warn-dim:#FBF0DE; --good:#16A34A; --good-dim:#E4F5EA;
+    --shadow: 0 1px 2px rgba(20,24,31,0.08);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B0D10; --surface:#14181F; --surface-2:#191E26; --line:#232A33;
+    --text:#F5F7FA; --muted:#93A0AD; --muted-dim:#5E6B78;
+    --accent:#3B82F6; --accent-2:#60A5FA; --brand-orange:#FF6A00;
+    --crit:#EF4444; --crit-dim:#3A2020; --warn:#F5A524; --warn-dim:#332A18; --good:#22C55E; --good-dim:#16281D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  @font-face{ font-family:'system'; src:local(system-ui); }
+  * { box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+  h1,h2,h3{ text-wrap: balance; font-family:'IBM Plex Sans', sans-serif; margin:0; }
+
+  .page{ max-width: 760px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .brand{ display:flex; align-items:center; gap: 12px; }
+  .brand svg{ width:34px; height:34px; flex-shrink:0; }
+  .brand-name{ font-size: 17px; font-weight: 600; letter-spacing: 0.2px; }
+  .brand-tag{ font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .meta{ text-align: right; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1.6px;
+    color: var(--accent-2); text-transform: uppercase; font-weight: 500;
+  }
+  .meta-date{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .lede{
+    margin-top: 28px; font-size: 18px; color: var(--text); max-width: 62ch;
+  }
+  .lede b{ color: var(--text); font-weight: 600; }
+  .lede .muted-run{ color: var(--muted); }
+
+  section{ margin-top: 48px; }
+  .section-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    margin-bottom: 16px;
+  }
+  .section-title{ font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+  .section-count{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted-dim); }
+
+  /* ---------- severity rows (blockers / decisions) ---------- */
+  .row-list{ display:flex; flex-direction:column; gap: 10px; }
+  .row{
+    display:flex; gap: 14px; padding: 16px 18px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .row.crit{ border-color: color-mix(in srgb, var(--crit) 45%, var(--line)); }
+  .row.warn{ border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+  .dot{
+    width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0;
+    box-shadow: 0 0 0 3px var(--dot-dim, transparent);
+  }
+  .dot.crit{ background: var(--crit); --dot-dim: var(--crit-dim); }
+  .dot.warn{ background: var(--warn); --dot-dim: var(--warn-dim); }
+  .dot.good{ background: var(--good); --dot-dim: var(--good-dim); }
+  .row-body{ flex: 1; min-width: 0; }
+  .row-title{ font-size: 15px; font-weight: 600; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .row-title .tag{
+    font-family:'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    padding: 2px 7px; border-radius: 4px; text-transform: uppercase; font-weight: 600;
+  }
+  .tag.crit{ color: var(--crit); background: var(--crit-dim); }
+  .tag.warn{ color: var(--warn); background: var(--warn-dim); }
+  .row-desc{ font-size: 14px; color: var(--muted); margin-top: 5px; max-width: 58ch; }
+  .row-action{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text); margin-top: 9px;
+    padding-top: 9px; border-top: 1px dashed var(--line); }
+  .row-action b{ color: var(--accent-2); font-weight: 500; }
+
+  /* ---------- segments ---------- */
+  .segments{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 620px){ .segments{ grid-template-columns: 1fr; } }
+  .seg-card{ background: var(--surface-2); border-radius: 10px; padding: 16px 16px 18px; }
+  .seg-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--accent-2); }
+  .seg-line{ font-size: 14.5px; margin-top: 8px; color: var(--text); }
+  .seg-channel{ font-size: 12.5px; color: var(--muted-dim); margin-top: 10px; }
+
+  /* ---------- shipped checklist ---------- */
+  .checklist{ display:flex; flex-direction:column; gap:2px; }
+  .check-item{ display:flex; align-items:flex-start; gap:12px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
+  .check-item:last-child{ border-bottom: none; }
+  .check-mark{ color: var(--good); font-size: 14px; margin-top: 1px; flex-shrink:0; width:16px; }
+  .check-text{ font-size: 14.5px; }
+  .check-text b{ font-weight: 600; }
+
+  /* ---------- calendar ---------- */
+  .cal-table{ width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .cal-table th{
+    text-align:left; font-family:'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted-dim); font-weight: 500; padding: 0 10px 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .cal-table td{ padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .cal-table tr:last-child td{ border-bottom: none; }
+  .wk{ font-family:'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--accent-2); white-space:nowrap; }
+  .phase-pill{
+    display:inline-block; font-family:'IBM Plex Mono', monospace; font-size: 10px; letter-spacing:0.5px;
+    padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--muted); white-space:nowrap;
+  }
+  .cal-channel{ color: var(--muted); }
+  .scroll-wrap{ overflow-x: auto; }
+
+  /* ---------- footer ---------- */
+  footer{ margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .filemap{ display:flex; flex-direction:column; gap:6px; }
+  .filemap .path{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--muted); }
+  .filemap .path b{ color: var(--text); font-weight:500; }
+  .footer-note{ font-size: 13px; color: var(--muted-dim); margin-top: 18px; }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="brand">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="arcGrad" x1="165.49" y1="360.51" x2="346.51" y2="360.51" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3B82F6"/>
+            <stop offset="55%" stop-color="#60A5FA"/>
+            <stop offset="100%" stop-color="#FF6A00"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="512" height="512" rx="112" fill="var(--surface)" stroke="var(--line)" stroke-width="4"/>
+        <path d="M 165.49,360.51 A 128,128 0 1 1 346.51,360.51" fill="none" stroke="url(#arcGrad)" stroke-width="30" stroke-linecap="round"/>
+        <line x1="256" y1="270" x2="361.25" y2="231.7" stroke="var(--text)" stroke-width="11" stroke-linecap="round"/>
+        <circle cx="256" cy="270" r="18" fill="var(--surface)" stroke="var(--text)" stroke-width="5"/>
+        <circle cx="376.28" cy="226.22" r="13" fill="#FF6A00"/>
+      </svg>
+      <div>
+        <div class="brand-name">ThrottleIQ</div>
+        <div class="brand-tag mono">com.bft.throttleiq &middot; pre-launch beta</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="eyebrow">Go-to-market status</div>
+      <div class="meta-date">2026-09-05 &middot; marketing-lead session</div>
+    </div>
+  </div>
+
+  <p class="lede">
+    <b>Two gauges are still in the red.</b> <span class="muted-run">Everything
+    else this session — copy, ASO, outreach, a phased launch calendar — is
+    written and shipped. Two things below need you specifically, because
+    nothing here can close them without Play Console access or a billing
+    decision.</span>
+  </p>
+
+  <section>
+    <div class="section-head">
+      <div class="section-title">Needs you &middot; blockers</div>
+      <div class="section-count mono">2 open</div>
+    </div>
+    <div class="row-list">
+      <div class="row crit">
+        <div class="dot crit"></div>
+        <div class="row-body">
+          <div class="row-title">Play Console internal-testing track has zero testers <span class="tag crit">blocker</span></div>
+          <div class="row-desc">A build is uploaded and status is <span class="mono">completed</span> — but the tester list came back empty. Nobody can install through Play right now, and it's UI-only (the Publisher API can't add individual emails).</div>
+          <div class="row-action">Play Console &rarr; <b>Test and release &rarr; Internal testing &rarr; Testers</b> &rarr; paste the email list.</div>
+        </div>
+      </div>
+      <div class="row crit">
+        <div class="dot crit"></div>
+        <div class="row-body">
+          <div class="row-title">Firebase Blaze billing still not enabled <span class="tag crit">recurring</span></div>
+          <div class="row-desc">Blocks crash-alert SMS/email escalation — the emotional core of every piece of marketing copy written for this app. Flagged across multiple past sessions; modeled cost is single-to-low-double-digit $/month at beta scale.</div>
+          <div class="row-action">Your call: enable Blaze (recommended in <b>backend_options.md</b>) — card-on-file decision, not a code one.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-title">Needs you &middot; decisions queued</div>
+      <div class="section-count mono">4 open</div>
+    </div>
+    <div class="row-list">
+      <div class="row warn">
+        <div class="dot warn"></div>
+        <div class="row-body">
+          <div class="row-title">Bangla store listing — review before publish <span class="tag warn">review</span></div>
+          <div class="row-desc">Full short/long description + keywords drafted and checked against the no-overclaim rule. Wants a native-speaker skim for tone before it goes into Play Console.</div>
+        </div>
+      </div>
+      <div class="row warn">
+        <div class="dot warn"></div>
+        <div class="row-body">
+          <div class="row-title">Badge-tier physical-prize promotion <span class="tag warn">gated</span></div>
+          <div class="row-desc">Oil / chain-lube kit for first riders to hit a badge tier. Needs a claim/fulfilment flow and a real BD courier quote before any public announcement — gated on ~100 organic users regardless.</div>
+        </div>
+      </div>
+      <div class="row warn">
+        <div class="dot warn"></div>
+        <div class="row-body">
+          <div class="row-title">Pitch deck &mdash; slide 10, "the ask" <span class="tag warn">unspecified</span></div>
+          <div class="row-desc">Funding, mentorship, pilot riders, distribution partners, or a city-launch budget — nothing in the repo states which. Say the word and it gets drafted.</div>
+        </div>
+      </div>
+      <div class="row warn">
+        <div class="dot warn"></div>
+        <div class="row-body">
+          <div class="row-title">QA-seeded forum content is live in production <span class="tag warn">go-ahead</span></div>
+          <div class="row-desc">30 test-rider accounts with dated, less-authentic copy are already visible to real testers. A cleanup + reseed script exists but touches live data — deliberately left for your go-ahead.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-title">Three riders, three pitches</div>
+    </div>
+    <div class="segments">
+      <div class="seg-card">
+        <div class="seg-eyebrow">Daily commuter</div>
+        <div class="seg-line">"Works when your signal doesn't." Offline-first, maintenance by real distance — the used-bike market's missing service record.</div>
+        <div class="seg-channel">BD moto Facebook groups, brand owners' groups</div>
+      </div>
+      <div class="seg-card">
+        <div class="seg-eyebrow">Enthusiast / touring</div>
+        <div class="seg-line">"Your bike's dash never showed you this." Real telemetry, live group maps, saved routes — built by someone who rides.</div>
+        <div class="seg-channel">Touring clubs, moto YouTube/reel reviewers</div>
+      </div>
+      <div class="seg-card">
+        <div class="seg-eyebrow">Anxious family</div>
+        <div class="seg-line">"You don't have to wait to find out." Not a direct user — the emotional force behind crash-detection adoption.</div>
+        <div class="seg-channel">Reached through the rider, not directly</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-title">Shipped this session</div>
+      <div class="section-count mono">8 items</div>
+    </div>
+    <div class="checklist">
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">Landing-page hero CTA fixed — pointed at the bare GitHub repo instead of a download, now goes to <b>releases/latest</b></span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">Stale version/test-count claims corrected on the landing page and <b>README.md</b></span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">Bangla Play Store listing drafted — short description, full long description, keywords</span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">ASO refresh notes against 2026 Play ranking practice — screenshot gap flagged</span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">Six outreach templates in EN/BN — testers, launch post, reviewers, touring clubs, garages</span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">Nine-week Phase 0/1 content calendar tying every template to a channel</span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text">Segment-specific social copy bank for ongoing organic posts</span></div>
+      <div class="check-item"><span class="check-mark">&#10003;</span><span class="check-text"><b>throttleiq-marketing</b> skill added so future sessions inherit this playbook</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-title">Launch calendar &middot; condensed</div>
+    </div>
+    <div class="scroll-wrap">
+      <table class="cal-table">
+        <thead><tr><th>Week</th><th>Phase</th><th>Action</th><th>Channel</th></tr></thead>
+        <tbody>
+          <tr><td class="wk">01</td><td><span class="phase-pill">phase 0</span></td><td>Close the tester-list blocker; recruit closed testers</td><td class="cal-channel">BD moto FB groups</td></tr>
+          <tr><td class="wk">02</td><td><span class="phase-pill">phase 0</span></td><td>Add testers as they respond; POI outreach begins</td><td class="cal-channel">Play Console, garages</td></tr>
+          <tr><td class="wk">03</td><td><span class="phase-pill">phase 0</span></td><td>Ship Bangla listing; fix issues from tester feedback</td><td class="cal-channel">Play Console</td></tr>
+          <tr><td class="wk">04</td><td><span class="phase-pill">phase 1</span></td><td>Public launch post, same + adjacent groups</td><td class="cal-channel">FB groups</td></tr>
+          <tr><td class="wk">05</td><td><span class="phase-pill">phase 1</span></td><td>Reviewer outreach; touring-club demo proposed</td><td class="cal-channel">YouTube/reels, clubs</td></tr>
+          <tr><td class="wk">06</td><td><span class="phase-pill">phase 1</span></td><td>First attribution data pull</td><td class="cal-channel">In-app field</td></tr>
+          <tr><td class="wk">07&ndash;08</td><td><span class="phase-pill">phase 1</span></td><td>Live club-ride demo, if a club said yes</td><td class="cal-channel">In-person</td></tr>
+          <tr><td class="wk">09</td><td><span class="phase-pill">phase 1</span></td><td>Retro: installs vs. Day-7/30 retention</td><td class="cal-channel">Internal</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <div class="section-title" style="margin-bottom:12px;">Full detail lives in</div>
+    <div class="filemap mono">
+      <div class="path"><b>docs/marketing/marketing_lead_notes/</b>NEEDS_YOUR_ATTENTION.md</div>
+      <div class="path"><b>docs/marketing/marketing_lead_notes/</b>store_listing_bn_addendum.md</div>
+      <div class="path"><b>docs/marketing/marketing_lead_notes/</b>aso_refresh_notes.md</div>
+      <div class="path"><b>docs/marketing/marketing_lead_notes/</b>outreach_templates.md</div>
+      <div class="path"><b>docs/marketing/marketing_lead_notes/</b>content_calendar_phase0_1.md</div>
+      <div class="path"><b>docs/marketing/marketing_lead_notes/</b>social_copy_bank.md</div>
+    </div>
+    <p class="footer-note">Grounded in <span class="mono">docs/marketing/*.md</span> and the live codebase, not template advice. No paid spend committed, no production data touched.</p>
+  </footer>
+
+</div>

@@ -3429,3 +3429,48 @@ services, not just a local build:
 track's tester list (Play Console UI-only, see "Blocker" in
 `HANDOFF_Document.md`) and the QA-rider reseed flagged in §55 — neither was
 part of this release ask.
+
+---
+
+## 57. Public landing page's primary CTA led to a dead end, and its badge/stats had drifted stale (2026-09-05)
+
+A marketing-focused session auditing `website_demo/index.html` (the actual
+deployed landing page) found the hero's primary button — labelled "Get the
+app on GitHub" — linked to the bare repo root
+(`https://github.com/blankframe-tech/ThrottleIQ`), not a download. A visitor
+clicking the one button styled as the primary call-to-action landed on
+source code, the same dead-end pattern already identified and fixed on
+`public/live-viewer.html`'s install CTA (see that file's `APP_LINKS`/
+`installCtaHtml()` comments) — this page just hadn't received the same fix.
+
+**Fixed:** the hero CTA now points at
+`https://github.com/blankframe-tech/ThrottleIQ/releases/latest` and reads
+"⬇ Download the Android beta", matching the copy/pattern already
+established on the live-viewer page. The secondary "View the source" /
+footer GitHub links were left pointing at the repo root — those are
+correctly labelled as source links, not install links.
+
+**Also found stale on the same page:** the hero badge read "Live beta
+v2.0.0-beta.5" — a version string that doesn't match either the old
+(`1.0.0-beta.1.x`) or current (`1.0.0-beta.2.2+7`, tag `beta-v2.2`)
+versioning scheme; it's a leftover from before the version line was reset
+2026-08-01 (`HANDOFF_Document.md`'s "Versioning history" section) that was
+never updated after. Also claimed "iOS & Android" availability, which
+overstates iOS distribution (device-run only, no TestFlight/App Store yet).
+The test-count stat read "363 automated tests", well under the actual
+verified count of 862 Flutter tests green (`HANDOFF_Document.md`, §56).
+**Fixed:** badge now reads "Pre-launch beta · Android APK, iOS by request";
+stat corrected to 862.
+
+**`README.md`'s status blockquote had the same drift:** still cited the
+retired `beta-v1` tag and `1.0.0-beta.1+1`. **Fixed:** synced to
+`beta-v2.2` / `1.0.0-beta.2.2+7`, and the `HANDOFF_Document.md` link
+corrected to its actual current path (`docs/planning/HANDOFF_Document.md`,
+it had moved during an earlier doc-restructure and the README link was
+never updated to match).
+
+**Not app behavior** — no Dart/backend code touched; this is public-facing
+marketing copy accuracy only. Full campaign work from the same session
+(Bangla store listing draft, outreach templates, launch calendar, tracking
+log, press fact sheet) lives in `docs/marketing/marketing_lead_notes/`,
+not duplicated here.
