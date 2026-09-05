@@ -189,7 +189,7 @@ out for you in traffic, all without needing a signal.*
 groups (per `docs/marketing/marketing.md` §5); local bike-repair garages and parts
 shops, offered a free Places-directory listing in exchange for word of
 mouth; street posters near fuel stops and garages (see the [street poster
-campaign](docs/marketing/marketing.md) built this session — Carbon Mono and Editorial
+campaign](marketing.md) built this session — Carbon Mono and Editorial
 directions target this group specifically).
 
 ### B. Enthusiast / touring riders
