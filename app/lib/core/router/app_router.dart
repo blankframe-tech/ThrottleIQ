@@ -14,6 +14,7 @@ import '../../features/ride/presentation/screens/active_ride_screen.dart';
 import '../../features/ride/presentation/screens/ride_summary_screen.dart';
 import '../../features/social/presentation/screens/ride_share_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
+import '../../features/maintenance/presentation/screens/maintenance_config_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
@@ -228,9 +229,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
             routes: [
               GoRoute(
+                path: 'configure',
+                builder: (_, state) => MaintenanceConfigScreen(
+                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                  isFirstTime:
+                      state.uri.queryParameters['isFirstTime'] == 'true',
+                ),
+              ),
+              GoRoute(
                 path: 'add',
                 builder: (_, state) => AddMaintenanceLogScreen(
                   bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                  initialServiceType: state.uri.queryParameters['serviceType'],
                 ),
               ),
             ],

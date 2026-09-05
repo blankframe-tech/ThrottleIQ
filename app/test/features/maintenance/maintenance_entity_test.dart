@@ -79,6 +79,53 @@ void main() {
       expect(_log(type: ServiceType.frontDiscPads).displayLabel, 'Front Disc Pads');
       expect(_log(type: ServiceType.rearDrumPads).displayLabel, 'Rear Drum Pads');
       expect(_log(type: ServiceType.radiatorCoolant).displayLabel, 'Radiator / Coolant');
+      expect(_log(type: ServiceType.oilFilter).displayLabel, 'Oil Filter');
+      expect(_log(type: ServiceType.chainTension).displayLabel, 'Chain Slack & Tension');
+      expect(_log(type: ServiceType.brakeRotors).displayLabel, 'Brake Rotors / Discs');
+      expect(_log(type: ServiceType.forkSeals).displayLabel, 'Fork Oil & Seals');
+      expect(_log(type: ServiceType.wheelBearings).displayLabel, 'Wheel Bearings');
+      expect(_log(type: ServiceType.driveBelt).displayLabel, 'Drive Belt');
+      expect(_log(type: ServiceType.throttleCables).displayLabel, 'Throttle & Cables');
+    });
+
+    test('every type has non-empty description and positive default interval', () {
+      for (final type in ServiceType.values) {
+        expect(type.description, isNotEmpty);
+        expect(type.defaultIntervalKm, greaterThan(0));
+      }
+    });
+
+    test('category grouping maps appropriately', () {
+      expect(ServiceType.oilChange.category, MaintenanceCategory.engine);
+      expect(ServiceType.oilFilter.category, MaintenanceCategory.engine);
+      expect(ServiceType.chain.category, MaintenanceCategory.drivetrain);
+      expect(ServiceType.frontDiscPads.category, MaintenanceCategory.braking);
+      expect(ServiceType.tire.category, MaintenanceCategory.chassisElectrical);
+    });
+  });
+
+  group('MaintenanceConfigEntity', () {
+    test('supports equality and copyWith', () {
+      const config = MaintenanceConfigEntity(
+        bikeId: 'bike-1',
+        serviceType: ServiceType.oilChange,
+        intervalKm: 1500,
+        isEnabled: true,
+      );
+
+      final modified = config.copyWith(intervalKm: 2000, isEnabled: false);
+      expect(modified.intervalKm, 2000);
+      expect(modified.isEnabled, false);
+      expect(modified.bikeId, 'bike-1');
+      expect(modified.serviceType, ServiceType.oilChange);
+
+      const clone = MaintenanceConfigEntity(
+        bikeId: 'bike-1',
+        serviceType: ServiceType.oilChange,
+        intervalKm: 1500,
+        isEnabled: true,
+      );
+      expect(config, equals(clone));
     });
   });
 }

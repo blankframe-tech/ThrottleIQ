@@ -69,6 +69,9 @@ app.*.map.json
 .venv/
 venv/
 env/
+__pycache__/
+*.py[cod]
+website_demo/assets/posters/fonts/
 
 # Firebase
 google-services.json

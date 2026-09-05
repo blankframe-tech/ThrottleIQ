@@ -28,7 +28,7 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 12);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 13);
 
   /// Runs the real migration ladder against an already-open database.
   ///
@@ -77,7 +77,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 12,
+      version: 13,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -200,7 +200,28 @@ class DatabaseHelper {
       await _addColumnIfMissing(
           db, 'bikes', 'color_value', 'color_value INTEGER');
     }
+    if (oldVersion < 13) {
+      // Per-bike maintenance tracking configurations and customizable intervals.
+      await db.execute(_createBikeMaintenanceConfigsSql);
+      await db.execute(_createBikeMaintenanceConfigsIndexSql);
+    }
   }
+
+  static const String _createBikeMaintenanceConfigsSql = '''
+    CREATE TABLE IF NOT EXISTS bike_maintenance_configs (
+      bike_id TEXT NOT NULL,
+      service_type TEXT NOT NULL,
+      interval_km REAL NOT NULL,
+      is_enabled INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (bike_id, service_type),
+      FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+    )
+  ''';
+
+  static const String _createBikeMaintenanceConfigsIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_bike_maintenance_configs_bike_id
+      ON bike_maintenance_configs(bike_id)
+  ''';
 
   /// One detected journey, from the moment the platform said "this device
   /// started moving in a vehicle" to the moment it said it stopped.
@@ -444,6 +465,8 @@ class DatabaseHelper {
       )
     ''');
 
+    await db.execute(_createBikeMaintenanceConfigsSql);
+    await db.execute(_createBikeMaintenanceConfigsIndexSql);
     await db.execute(_createDeletedBikesSql);
     await db.execute(_createOutboxSql);
     await db.execute(_createOutboxIndexSql);
@@ -471,6 +494,8 @@ class DatabaseHelper {
       final bikes = await txn.query('bikes',
           where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
       for (final bike in bikes) {
+        await txn.delete('bike_maintenance_configs',
+            where: 'bike_id = ?', whereArgs: [bike['id']]);
         await txn.delete('maintenance_logs',
             where: 'bike_id = ?', whereArgs: [bike['id']]);
       }

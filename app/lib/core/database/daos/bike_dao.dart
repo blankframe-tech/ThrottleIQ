@@ -52,6 +52,7 @@ class BikeDao {
       }
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
+      await txn.delete('bike_maintenance_configs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
 
       // Tombstone, written in the SAME transaction as the delete so the two
@@ -149,6 +150,19 @@ class BikeDao {
         synced = 0
       WHERE id = ?
     ''', [distanceM, DateTime.now().toIso8601String(), id]);
+  }
+
+  Future<void> updateOdometer(String id, double odometerKm) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      'bikes',
+      {
+        'odometer_km': odometerKm,
+        'synced': 0,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
 

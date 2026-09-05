@@ -126,8 +126,9 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               clearColor: _colorValue == null,
             ),
           );
+      if (mounted) context.pop();
     } else {
-      await ref.read(garageProvider.notifier).addBike(
+      final newBikeId = await ref.read(garageProvider.notifier).addBike(
             brand: _brandCtrl.text.trim(),
             model: _modelCtrl.text.trim(),
             year: int.tryParse(_yearCtrl.text),
@@ -136,9 +137,15 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             odometerKm: double.tryParse(_odometerCtrl.text),
             colorValue: _colorValue,
           );
+      if (mounted) {
+        if (newBikeId != null) {
+          context.pushReplacement(
+              '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true');
+        } else {
+          context.pop();
+        }
+      }
     }
-
-    if (mounted) context.pop();
   }
 
   @override
