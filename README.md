@@ -4,14 +4,15 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta, `1.0.0-beta.1+1`, tagged
-> [`beta-v1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v1)
-> — a signed Android APK only, no Play Store/App Store listing yet. Core
-> ride recording, garage/maintenance, social (forums, feed, group rides),
+> **Status:** pre-launch beta, `1.0.0-beta.2.2+7`, tagged
+> [`beta-v2.2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.2)
+> — a signed Android APK, plus a Play Console internal-testing build; no
+> public Play Store/App Store listing yet. Core ride recording,
+> garage/maintenance, social (forums, feed, direct messaging, group rides),
 > POI directory and saved routes are all built and wired end-to-end. See
-> [`docs/HANDOFF_Document.md`](docs/HANDOFF_Document.md) for the full current
-> status and what's still unverified before launch. App id is
-> `com.bft.throttleiq`.
+> [`docs/planning/HANDOFF_Document.md`](docs/planning/HANDOFF_Document.md)
+> for the full current status and what's still unverified before launch.
+> App id is `com.bft.throttleiq`.
 
 ---
 
