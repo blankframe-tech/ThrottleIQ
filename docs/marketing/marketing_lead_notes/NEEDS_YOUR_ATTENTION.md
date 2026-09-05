@@ -53,7 +53,27 @@ fictional. This is a billing/card-on-file decision, not a code decision;
 nobody but you can make it. The estimate and full tradeoff analysis
 (vs. migrating off Firebase, which the doc argues against) is in that file.
 
-## 3. Decide: publish the Bangla store-listing draft as-is?
+## 3. Found this session: the landing page has no deploy target
+
+I fixed `website_demo/index.html`'s dead-end CTA and stale version/test
+claims (see `Issues.md` §57), but while doing that found something more
+basic: **this page isn't deployed anywhere.** `firebase.json`'s Hosting
+`public` dir is `public/` (where `live-viewer.html` and `privacy.html`
+actually live), not `website_demo/` — and there's no GitHub Pages workflow,
+no `gh-pages` branch, no `CNAME`. It's been a local demo/mockup since it
+was added 2026-08-02, not a live URL anyone outside this repo can reach.
+
+If you want a public landing page (useful for the reviewer/press outreach
+in `outreach_templates.md` #3, which currently has nowhere to point
+someone besides the GitHub repo itself), the cheapest path is almost
+certainly adding it as a second Firebase Hosting site in the same project
+(`firebase hosting:sites:create`, then a `target` in `firebase.json`) since
+Firebase is already set up and paid for by the GitHub-releases APK
+workflow — but that's your infrastructure call, not mine to make silently.
+
+---
+
+## 4. Decide: publish the Bangla store-listing draft as-is?
 
 I drafted a full Bangla short/long description + keyword set at
 `store_listing_bn_addendum.md` in this folder, ready to paste into Play
@@ -67,7 +87,7 @@ can drift even when the literal claims are accurate.
 
 ---
 
-## 4. Decide: the badge-tier physical-prize promotion (oil/chain-lube kit)
+## 5. Decide: the badge-tier physical-prize promotion (oil/chain-lube kit)
 
 `marketing.md` §6 proposes a "first to reach badge tier X wins engine oil /
 a chain-cleaner kit" promotion, gated on reaching ~100 organic users. It's
@@ -86,7 +106,7 @@ to make, not something I should silently draft copy for.
 
 ---
 
-## 5. Decide: "the ask" — pitch deck slide 10
+## 6. Decide: "the ask" — pitch deck slide 10
 
 `pitch_and_marketing_materials.md` leaves the pitch deck's final slide as
 an open placeholder (funding / mentorship / pilot riders / distribution
@@ -96,7 +116,7 @@ your behalf. Tell me which direction (if any) and I'll draft the slide.
 
 ---
 
-## 6. Heads-up, not a blocker: QA-seeded forum content is stale in production
+## 7. Heads-up, not a blocker: QA-seeded forum content is stale in production
 
 `docs/planning/Issues.md` §55 flags that 30 QA test-rider accounts with
 old (less authentic) names/bike catalog/post copy are **already live** in

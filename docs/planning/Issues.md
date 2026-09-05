@@ -3474,3 +3474,12 @@ marketing copy accuracy only. Full campaign work from the same session
 (Bangla store listing draft, outreach templates, launch calendar, tracking
 log, press fact sheet) lives in `docs/marketing/marketing_lead_notes/`,
 not duplicated here.
+
+**Correction, same session:** `website_demo/` was checked against
+`firebase.json` (Hosting's `public` dir is `public/`, not `website_demo/`)
+and against `.github/` (no workflow) and the repo's branches (no
+`gh-pages`, no `CNAME`) — **this page has no deploy target at all today.**
+It's a local demo/mockup, not a currently-live public landing page, so the
+fix above is correct to have made but doesn't have a real-world effect
+until someone actually deploys it somewhere. Flagged in
+`NEEDS_YOUR_ATTENTION.md` rather than left implicit.
