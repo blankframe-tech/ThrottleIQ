@@ -11,6 +11,8 @@ import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
 import '../providers/live_ride_places_provider.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
+import '../../../indriyo/presentation/providers/indriyo_provider.dart';
+import '../../../indriyo/presentation/widgets/indriyo_mirror_hud.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -446,10 +448,33 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         ? 'Share live location'
                         : 'Turn on & share live location',
                   ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: () => ref.read(indriyoProvider.notifier).toggleHud(),
+                    icon: Icon(
+                      Icons.radar_rounded,
+                      color: ref.watch(indriyoSettingsProvider).isHudVisible
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                    ),
+                    tooltip: 'Toggle Indriyo ADAS Mirror',
+                  ),
                 ],
               ),
             ),
           ),
+
+          // ── Indriyo Digital Rearview Mirror HUD ───────────────────────────
+          if (ref.watch(indriyoSettingsProvider).isHudVisible)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 54,
+              left: 0,
+              right: 0,
+              child: IndriyoMirrorHud(
+                currentSpeedKmh: speedKmh,
+                onClose: () => ref.read(indriyoProvider.notifier).toggleHud(),
+              ),
+            ),
 
           // ── Speed + sensor display ────────────────────────────────────────
           Positioned(
