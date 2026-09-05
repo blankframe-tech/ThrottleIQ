@@ -1,7 +1,7 @@
 # ThrottleIQ — Pitch Deck & Marketing Materials
 
 Written 2026-08-23. Grounded in the app's actual current state — `docs/pitch.md`,
-`docs/marketing.md`, `store_listing/store_listing.md`, `docs/HANDOFF_Document.md`,
+`docs/marketing/marketing.md`, `store_listing/store_listing.md`, `docs/planning/HANDOFF_Document.md`,
 and the live codebase — not generic template copy. Two parts: a slide-by-slide
 pitch deck outline, then marketing materials broken out by the three real user
 groups this app actually serves.
@@ -10,7 +10,7 @@ Two things are deliberately left as placeholders rather than invented: the
 funding/partnership **ask** (nothing in this repo states one), and the
 **SMS/email crash escalation** (built in code but not deployed — Cloud
 Functions require the Blaze billing plan this project isn't on yet, per
-`docs/Issues.md` §24/§33). Every other claim below is checked against what
+`docs/planning/Issues.md` §24/§33). Every other claim below is checked against what
 the app actually does today.
 
 ---
@@ -103,7 +103,7 @@ Honest, current status, not the stale figures in older docs:
 - Localized into Bangla alongside English (bottom nav, Record screen, ride
   summary, and growing).
 - A recent security/bug-hardening pass closed 16 of 18 findings, including
-  two that would have been launch-blocking (`docs/Issues.md` §33) — this is
+  two that would have been launch-blocking (`docs/planning/Issues.md` §33) — this is
   a beta that's had a real audit pass, not just feature work.
 - **Not yet live:** automatic SMS/email crash-alert escalation (built,
   mocked pending the Blaze billing plan), Play Store / App Store listings,
@@ -113,7 +113,7 @@ Honest, current status, not the stale figures in older docs:
 
 - Wire the crash-detection escalation (SMS/email if an emergency contact
   doesn't acknowledge within 15 minutes) — blocked on a billing-plan
-  decision, not on code (see `docs/backend_options.md`).
+  decision, not on code (see `docs/architecture/backend_options.md`).
 - Turn-by-turn "curvy road" navigation for scenic/sport riders.
 - Clubs and group-ride events.
 - A premium tier (advanced analytics, unlimited history, priority support)
@@ -186,10 +186,10 @@ out for you in traffic, all without needing a signal.*
 > Completely free.)*
 
 **Channels:** BD motorcycle Facebook groups and brand-specific owners'
-groups (per `docs/marketing.md` §5); local bike-repair garages and parts
+groups (per `docs/marketing/marketing.md` §5); local bike-repair garages and parts
 shops, offered a free Places-directory listing in exchange for word of
 mouth; street posters near fuel stops and garages (see the [street poster
-campaign](docs/marketing.md) built this session — Carbon Mono and Editorial
+campaign](docs/marketing/marketing.md) built this session — Carbon Mono and Editorial
 directions target this group specifically).
 
 ### B. Enthusiast / touring riders

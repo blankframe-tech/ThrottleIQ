@@ -64,10 +64,10 @@ Suggested: Auto & Vehicles (alternative: Maps & Navigation)
 motorcycle, ride tracker, GPS tracker, crash detection, bike maintenance, rider community, motorcycle log, ride log
 
 ## Notes on what was deliberately left out (accuracy)
-- No claim of automatic SMS/email alerts to emergency contacts on no-response — that escalation path is currently mocked in the backend (Cloud Functions with Twilio/SendGrid aren't deployed yet, blocked on the Blaze billing plan — see `docs/HANDOFF_Document.md`'s "Soon" section and `docs/backend_options.md`). Only the manual live-share link and in-app countdown are described above, because those are the parts that actually work today.
+- No claim of automatic SMS/email alerts to emergency contacts on no-response — that escalation path is currently mocked in the backend (Cloud Functions with Twilio/SendGrid aren't deployed yet, blocked on the Blaze billing plan — see `docs/planning/HANDOFF_Document.md`'s "Soon" section and `docs/architecture/backend_options.md`). Only the manual live-share link and in-app countdown are described above, because those are the parts that actually work today.
 - No specific data-point-per-second or accuracy numbers, to avoid over-precise claims that could be read as guarantees.
 
-GPS route/track syncing across devices is now real (chunked `track` docs, `docs/Issues.md` §11) — added to the RIDE HISTORY & STATS section above (2026-09-05).
+GPS route/track syncing across devices is now real (chunked `track` docs, `docs/planning/Issues.md` §11) — added to the RIDE HISTORY & STATS section above (2026-09-05).
 
 Update this listing once the SMS/email escalation is actually wired up — that's a meaningful safety feature worth promoting once it's real.
 
