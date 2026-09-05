@@ -26,6 +26,16 @@ decision, are the two that matter most).
 - [`social_copy_bank.md`](social_copy_bank.md) — additional segment-specific
   short-form post captions (EN/BN) for ongoing organic posting, beyond the
   one-off outreach templates.
+- [`weekly_tracking_log.md`](weekly_tracking_log.md) — a fillable table
+  version of `marketing.md` §7's metrics, so tracking actually happens
+  week to week instead of staying a description.
+- [`press_fact_sheet.md`](press_fact_sheet.md) — a one-page reviewer/press
+  fact sheet backing the outreach template's ask for an honest review.
+
+**Visual summary:** a one-page status brief (blockers, decisions, segments,
+launch calendar) was also published as a Claude Artifact this session —
+ask if you'd like the link resurfaced, or regenerate from this folder's
+content if it's not handy.
 
 **Code changes made this session** (see git log, not duplicated here):
 fixed the landing page's primary CTA (`website_demo/index.html`) which
