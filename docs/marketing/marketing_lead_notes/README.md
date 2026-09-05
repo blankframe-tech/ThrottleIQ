@@ -17,6 +17,9 @@ decision, are the two that matter most).
 - [`aso_refresh_notes.md`](aso_refresh_notes.md) — how the existing
   `store_listing/store_listing.md` holds up against 2026 Play Store ranking
   practice, plus the screenshot gap worth closing before launch.
+- [`screenshot_shot_list.md`](screenshot_shot_list.md) — the missing
+  screenshots turned into an exact shot list, in segment-priority order,
+  with EN/BN caption overlay text for each.
 - [`outreach_templates.md`](outreach_templates.md) — ready-to-send EN/BN
   copy for closed-tester recruitment, launch announcements, reviewer
   outreach, touring-club outreach, and garage/parts-shop POI listing asks.
