@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
-import '../../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -179,8 +178,6 @@ class _ThrottleHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppLogo(size: 52),
-        const SizedBox(height: 20),
         Text('Welcome back',
             style: TextStyle(
                 fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
