@@ -96,6 +96,13 @@ capability exists in the app today (verified — no
 read the new rows yourself before that deploy goes out; I did not want to
 push a live privacy-policy change autonomously.
 
+**Companion fix, same gap:** also added a matching "Messages" row to
+`store_listing/data_safety_and_permissions.md` (the Play Console Data
+Safety worksheet) — that doc's own rule says it must stay consistent with
+`privacy.html`. That form only updates in Play Console when you paste the
+new answer in yourself; the file is a worksheet, not something wired to
+auto-submit.
+
 ## 5. Decide: publish the Bangla store-listing draft as-is?
 
 I drafted a full Bangla short/long description + keyword set at

@@ -46,6 +46,19 @@ Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. M
 |---|---|---|---|
 | Other user-generated content (forum posts, replies, comments, ride captions, place reviews) | Yes | Yes | App functionality (community features) |
 
+### Messages
+| Type | Collected? | Shared? | Purpose |
+|---|---|---|---|
+| Other in-app messages | Yes | No | App functionality (one-to-one direct messages between riders) |
+
+Source: `app/lib/features/chat/` — real, live one-to-one chat, message text
+stored in Firestore (`firestore.rules`' `/chats/{chatId}/messages`, readable
+only by the two participants). Mark "Shared: No" — unlike forum posts,
+these are never publicly readable. Added 2026-09-05 alongside the matching
+`public/privacy.html` update (that page had the same gap — see
+`docs/planning/Issues.md` §59); this is the second of the two places that
+page's own consistency rule (above) requires updating together.
+
 Note: **do not** declare "App interactions" for analytics. `app/pubspec.yaml` still has no `firebase_analytics` and no third-party behavioural-analytics SDK — nothing in the app tracks usage/interactions, and claiming otherwise on the form contradicts `public/privacy.html`. `firebase_crashlytics` **was** added (see Issues.md §38) — that's diagnostics, declared separately below, not "App activity."
 
 ### App info and performance (Diagnostics)
