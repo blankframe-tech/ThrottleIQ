@@ -3511,3 +3511,38 @@ as a bullet yet since a claim with no supporting screenshot is weaker than
 one that ships with proof.
 
 **Not app behavior** — copy-only, no Dart/backend touched.
+
+---
+
+## 59. `public/privacy.html` never disclosed direct messages as a data category (2026-09-05)
+
+Same audit pass. While checking that the privacy policy actually backs up
+a trust-FAQ claim being drafted for outreach ("the data table has the
+specifics"), found it said nothing about direct messages at all, even
+though `app/lib/features/chat/` (`chat_entity.dart`'s `MessageEntity`) is a
+real, live one-to-one chat feature and `firestore.rules`' `/chats/{chatId}`
+and its `/messages` subcollection have been storing message text since
+that feature shipped. This is a genuine disclosure gap, not a cosmetic one.
+
+**Verified before drafting a fix, not assumed:**
+- Rules (`firestore.rules` around `match /chats/{chatId}`) restrict
+  read/write to the two participants only — never public.
+- Chats are strictly one-to-one (`participants.size() == 2` enforced on
+  create).
+- No delete or hide capability exists anywhere in
+  `app/lib/features/chat/` today (`grep`-confirmed) — messages persist for
+  the life of the account, same as everything else this policy already
+  says has no automatic expiry.
+
+**Fixed:** added a "Direct messages" row to the data table, added "direct
+messages" to the Cloud Firestore services row's enumerated contents list,
+and bumped the effective date to 2026-09-05 per the page's own stated
+convention ("this page changes with it and the effective date at the
+top... changes too").
+
+**Not deployed.** `public/` is Firebase Hosting's real `public` dir (unlike
+`website_demo/`, see §57) — this change needs an explicit
+`firebase deploy --only hosting` to actually go live, and since it's a
+legal document, that's flagged for a human read-through first in
+`docs/marketing/marketing_lead_notes/NEEDS_YOUR_ATTENTION.md` rather than
+deployed autonomously.

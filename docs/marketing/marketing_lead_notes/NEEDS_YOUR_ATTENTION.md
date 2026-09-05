@@ -73,7 +73,30 @@ workflow — but that's your infrastructure call, not mine to make silently.
 
 ---
 
-## 4. Decide: publish the Bangla store-listing draft as-is?
+## 4. Review and deploy: privacy.html was missing direct-message disclosure
+
+While checking that `public/privacy.html` backs up the trust claims in
+`faq_objection_handling.md` ("the actual data table if you want specifics"),
+found that it said nothing about direct messages at all — a real, live
+feature (`app/lib/features/chat/`, one-to-one chats, message text stored in
+Firestore per `firestore.rules`' `/chats/{chatId}/messages` rules) that
+simply wasn't in the data table. That's a real disclosure gap, not a
+marketing nice-to-have: someone using DMs today has no way to know from
+the privacy policy that message text is stored.
+
+**Drafted a fix** (two rows in the data table + the Firestore services row
++ effective date bump to 2026-09-05) — checked against the actual code:
+one-to-one only, readable only by the two participants, no delete/hide
+capability exists in the app today (verified — no
+`deleteMessage`/`hideMessage`/similar in `app/lib/features/chat/`).
+
+**Did not deploy it.** `public/` is genuinely served by Firebase Hosting
+(unlike `website_demo/`), so this change only takes effect after
+`firebase deploy --only hosting` — and this is a legal document, so please
+read the new rows yourself before that deploy goes out; I did not want to
+push a live privacy-policy change autonomously.
+
+## 5. Decide: publish the Bangla store-listing draft as-is?
 
 I drafted a full Bangla short/long description + keyword set at
 `store_listing_bn_addendum.md` in this folder, ready to paste into Play
@@ -87,7 +110,7 @@ can drift even when the literal claims are accurate.
 
 ---
 
-## 5. Decide: the badge-tier physical-prize promotion (oil/chain-lube kit)
+## 6. Decide: the badge-tier physical-prize promotion (oil/chain-lube kit)
 
 `marketing.md` §6 proposes a "first to reach badge tier X wins engine oil /
 a chain-cleaner kit" promotion, gated on reaching ~100 organic users. It's
@@ -106,7 +129,7 @@ to make, not something I should silently draft copy for.
 
 ---
 
-## 6. Decide: "the ask" — pitch deck slide 10
+## 7. Decide: "the ask" — pitch deck slide 10
 
 `pitch_and_marketing_materials.md` leaves the pitch deck's final slide as
 an open placeholder (funding / mentorship / pilot riders / distribution
@@ -116,7 +139,7 @@ your behalf. Tell me which direction (if any) and I'll draft the slide.
 
 ---
 
-## 7. Heads-up, not a blocker: QA-seeded forum content is stale in production
+## 8. Heads-up, not a blocker: QA-seeded forum content is stale in production
 
 `docs/planning/Issues.md` §55 flags that 30 QA test-rider accounts with
 old (less authentic) names/bike catalog/post copy are **already live** in
