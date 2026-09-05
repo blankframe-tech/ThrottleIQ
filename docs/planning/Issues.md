@@ -3483,3 +3483,31 @@ It's a local demo/mockup, not a currently-live public landing page, so the
 fix above is correct to have made but doesn't have a real-world effect
 until someone actually deploys it somewhere. Flagged in
 `NEEDS_YOUR_ATTENTION.md` rather than left implicit.
+
+---
+
+## 58. `website_demo/ui.html` undersold the real Appearance system (2026-09-05)
+
+Same marketing-copy audit as §57. `website_demo/ui.html`'s hero read "Two
+themes, one app" and only named Carbon Mono / Editorial. Checked against
+`app/lib/core/theme/app_theme_style.dart`: the app actually exposes **7**
+selectable color families (`AppColorMode`: `carbonMono`, `editorial`,
+`nocturne`, `trailSocial`, `calming`, `retro`, `analystBlue`), each with an
+independent shape axis (`AppShapeVibe`: `boxy`/`curvy`, in
+`app_shape_profile.dart`) and independent dark/light brightness — a real,
+already-shipped personalization system well beyond what the page claimed.
+
+**Fixed:** hero copy now reads "One app, seven looks," names all seven
+families, and states the shape/brightness axes — while still only showing
+Carbon Mono and Editorial in the gallery below, since those are the only
+two with rendered screenshots today. Also corrected the page's meta
+description to match.
+
+**Also noted, not applied:** `store_listing/store_listing.md` doesn't
+mention this system at all — flagged inline in that file as a listing
+opportunity blocked on screenshots per family
+(`docs/marketing/marketing_lead_notes/screenshot_shot_list.md`), not added
+as a bullet yet since a claim with no supporting screenshot is weaker than
+one that ships with proof.
+
+**Not app behavior** — copy-only, no Dart/backend touched.
