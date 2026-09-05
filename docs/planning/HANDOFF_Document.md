@@ -448,7 +448,13 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   rider's on-disk database.
 - [ ] **Google sign-in end-to-end** and **Firestore rules under real traffic**
   (own rides readable, someone else's not) — config/rules are in place, only
-  ever exercised by the emulator and by reasoning, not a live account.
+  ever exercised by the emulator and by reasoning, not a live account. One
+  concrete gap closed 2026-09-05 (`Issues.md` §61/§57): the local debug
+  keystore's SHA-1 was never registered with the Firebase Android app,
+  which broke Google sign-in on every ordinary `flutter run` debug build
+  (`ApiException: 10`/`DEVELOPER_ERROR`) — registered via
+  `firebase apps:android:sha:create`. Still open: a real-device run of the
+  actual sign-in flow, not just the config check.
 - [x] ~~Run `scripts/seed_dhaka_places.js` against production~~ **DONE
   2026-08-12** — 395 places live in `throttleiqfb`. Still to check on a
   device: opening Places in Dhaka renders them, and "Import nearby" adds
