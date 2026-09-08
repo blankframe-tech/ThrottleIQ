@@ -30,6 +30,7 @@ class SensorConstants {
   // (event_detector.dart's crash threshold is 80.0 m/s²)
   static const double maxPlausibleAccelMs2 = 300.0;
   static const double maxPlausibleYawRateRadS = 34.9; // ~2000°/s
+  static const double maxPlausibleSpeedMs = 70.0; // ~252 km/h; reject GPS spikes & jumps
 
   // Motion classification
   static const double movingSpeedThresholdMs = 1.0; // matches existing periodType cutoff

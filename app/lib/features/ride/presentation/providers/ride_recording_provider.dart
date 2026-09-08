@@ -482,25 +482,29 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
     _skipNextDistanceDelta = false;
 
-    final derivedSpeedMs = deltaT > 0 ? distDelta / deltaT : 0.0;
-    final isStationaryNoise = rawSpeedMs < 0.5 && distDelta < pos.accuracy;
+    final hasValidDeltaT = deltaT >= 0.1;
+    final candidateDerivedSpeed = hasValidDeltaT ? distDelta / deltaT : 0.0;
+    final isPlausibleDerived = candidateDerivedSpeed <= SensorConstants.maxPlausibleSpeedMs;
+    final hasRawSpeed = rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
+        rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
 
     double speedMs;
-    if (isStationaryNoise) {
+    if (hasRawSpeed) {
+      speedMs = rawSpeedMs;
+    } else if (hasValidDeltaT &&
+        isPlausibleDerived &&
+        candidateDerivedSpeed >= SensorConstants.unreliableSpeedFallbackThresholdMs) {
+      speedMs = candidateDerivedSpeed;
+    } else {
       speedMs = 0.0;
       distDelta = 0.0;
       accel = 0.0;
       jerk = 0.0;
-    } else {
-      speedMs = (rawSpeedMs <
-                  SensorConstants.unreliableSpeedFallbackThresholdMs &&
-              derivedSpeedMs >=
-                  SensorConstants.unreliableSpeedFallbackThresholdMs)
-          ? derivedSpeedMs
-          : rawSpeedMs;
     }
 
-    if (speedMs > _maxSpeed) _maxSpeed = speedMs;
+    if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > _maxSpeed) {
+      _maxSpeed = speedMs;
+    }
     _speedSum += speedMs;
     _speedCount++;
 
@@ -743,26 +747,40 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final ride = state.ride!;
     final finalDuration = state.elapsed.inSeconds;
+
+    var effectiveMax = _maxSpeed;
+    if (effectiveMax > SensorConstants.maxPlausibleSpeedMs) {
+      effectiveMax = SensorConstants.maxPlausibleSpeedMs;
+    }
+
     final derivedAvg = _movingMilliseconds > 0
         ? averageSpeedMs(
             distanceM: _totalDistance,
             movingSeconds: _movingSeconds,
-            maxSpeedMs: _maxSpeed,
+            maxSpeedMs: effectiveMax > 0 ? effectiveMax : null,
           )
         : (_speedCount > 0 ? _speedSum / _speedCount : 0.0);
+
+    // Physical invariant: maximum speed can never be less than average speed.
+    // If max speed was unrecorded (e.g. zero GPS Doppler speed) but the vehicle moved,
+    // ensure max speed is at least the average speed.
+    if (effectiveMax < derivedAvg && derivedAvg <= SensorConstants.maxPlausibleSpeedMs) {
+      effectiveMax = derivedAvg;
+    }
+
     // Sanity check: average speed can never physically exceed max speed.
     // If anomalies occur (e.g. truncated moving time), fallback to distance/duration or maxSpeed.
-    final avgSpeed = (_maxSpeed > 0 && derivedAvg > _maxSpeed)
+    final avgSpeed = (effectiveMax > 0 && derivedAvg > effectiveMax)
         ? (finalDuration > 0
-            ? (_totalDistance / finalDuration).clamp(0.0, _maxSpeed)
-            : _maxSpeed)
+            ? (_totalDistance / finalDuration).clamp(0.0, effectiveMax)
+            : effectiveMax)
         : derivedAvg;
 
     await _rideDao.finalizeRide(ride.id, {
       'end_time': DateTime.now().toIso8601String(),
       'distance_m': _totalDistance,
       'avg_speed_ms': avgSpeed,
-      'max_speed_ms': _maxSpeed,
+      'max_speed_ms': effectiveMax,
       'duration_s': finalDuration,
       'moving_s': _movingSeconds,
       'hard_brake_count': _detector.hardBrakeCount,
