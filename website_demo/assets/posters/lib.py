@@ -25,6 +25,18 @@ SKINS = {
  "retro": dict(bg="#FAFAF7", surf="#FFFFFF", line="#0A0A0A", var="#EAEAE5",
     pri="#0A0A0A", priD="#000000", sec="#4A4A45", att="#1F1F1C",
     t1="#0A0A0A", t2="#56564F", t3="#86867E", danger="#0A0A0A", dark=False),
+ "editorialDark": dict(bg="#15130F", surf="#1E1B16", line="#35312A", var="#262219",
+    pri="#6B90F8", priD="#3B6CF6", sec="#F58C5F", att="#F58C5F",
+    t1="#F4F1EC", t2="#B0AAA0", t3="#7D786E", danger="#F0666B", dark=True),
+ "editorialLight": dict(bg="#F4F1EC", surf="#FAF9F6", line="#E8E5DF", var="#F0EEE9",
+    pri="#3B6CF6", priD="#2952C8", sec="#F2703C", att="#F2703C",
+    t1="#141414", t2="#6B6B6B", t3="#9A9A9A", danger="#E5484D", dark=False),
+ "calmingDark": dict(bg="#17170F", surf="#211F16", line="#3A3826", var="#262418",
+    pri="#A8C7AD", priD="#84A98B", sec="#DBB597", att="#D6A578",
+    t1="#F8F5EF", t2="#B4B0A5", t3="#837F72", danger="#DC7672", dark=True),
+ "calmingLight": dict(bg="#F8F5EF", surf="#FEFBF8", line="#E1DDD8", var="#EEEBE5",
+    pri="#84A98B", priD="#537D5C", sec="#BD8D65", att="#B88255",
+    t1="#2B2823", t2="#66635D", t3="#898680", danger="#C34F4B", dark=False),
 }
 
 SANS  = "DejaVu Sans"
