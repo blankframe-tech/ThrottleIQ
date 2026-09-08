@@ -64,6 +64,38 @@ void main() {
       });
     });
 
+    group('isPlausibleSpeed', () {
+      test('accepts stationary (0 m/s)', () {
+        expect(validator.isPlausibleSpeed(0.0), isTrue);
+      });
+
+      test('accepts a typical riding speed', () {
+        expect(validator.isPlausibleSpeed(15.0), isTrue); // ~54 km/h
+        expect(validator.isPlausibleSpeed(30.0), isTrue); // ~108 km/h
+      });
+
+      test('accepts the speed ceiling (70 m/s ~ 252 km/h)', () {
+        expect(validator.isPlausibleSpeed(70.0), isTrue);
+      });
+
+      test('rejects negative speeds', () {
+        expect(validator.isPlausibleSpeed(-0.1), isFalse);
+        expect(validator.isPlausibleSpeed(-10.0), isFalse);
+      });
+
+      test('rejects speeds past the ceiling', () {
+        expect(validator.isPlausibleSpeed(70.01), isFalse);
+        expect(validator.isPlausibleSpeed(120.0), isFalse);
+        expect(validator.isPlausibleSpeed(500.0), isFalse);
+      });
+
+      test('rejects NaN and infinite', () {
+        expect(validator.isPlausibleSpeed(double.nan), isFalse);
+        expect(validator.isPlausibleSpeed(double.infinity), isFalse);
+        expect(validator.isPlausibleSpeed(double.negativeInfinity), isFalse);
+      });
+    });
+
     group('isFreshTimestamp', () {
       test('accepts when there is no previous timestamp yet', () {
         expect(validator.isFreshTimestamp(DateTime(2026, 1, 1), null), isTrue);

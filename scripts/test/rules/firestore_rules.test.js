@@ -1098,3 +1098,68 @@ test('a rider can delete their own livePointers/{uid} document', async () => {
   await assertSucceeds(deleteDoc(doc(db, 'livePointers', ALICE)));
 });
 
+test('a rider can create a chat between themselves and another rider', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(db, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a stranger cannot read a chat they are not participant of', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  const db = dbFor(STRANGER);
+  await assertFails(getDoc(doc(db, 'chats', 'chat-alice-mallory')));
+});
+
+test('a participant can send a message to the chat', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(db, 'chats', 'chat-alice-mallory', 'messages', 'msg-1'), {
+      senderId: ALICE,
+      text: 'Hello Mallory!',
+      createdAt: serverTimestamp(),
+      isRead: false,
+    })
+  );
+});
+
+test('a blocked sender cannot send a message to the recipient', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+    // Mallory blocks Alice
+    await setDoc(doc(adminDb, 'users', MALLORY, 'blocks', ALICE), {
+      blockedAt: new Date(),
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', 'chat-alice-mallory', 'messages', 'msg-2'), {
+      senderId: ALICE,
+      text: 'Trying to reach you...',
+      createdAt: serverTimestamp(),
+      isRead: false,
+    })
+  );
+});
+
+

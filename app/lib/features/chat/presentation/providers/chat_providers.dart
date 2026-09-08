@@ -14,3 +14,8 @@ final userChatsProvider = StreamProvider.autoDispose<List<ChatEntity>>((ref) {
 final chatMessagesProvider = StreamProvider.autoDispose.family<List<MessageEntity>, String>((ref, chatId) {
   return ref.watch(chatRepositoryProvider).watchMessages(chatId);
 });
+
+final singleChatProvider = FutureProvider.autoDispose.family<ChatEntity?, String>((ref, chatId) {
+  return ref.watch(chatRepositoryProvider).getChat(chatId);
+});
+

@@ -9,7 +9,12 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 
 class AddMaintenanceLogScreen extends ConsumerStatefulWidget {
   final String bikeId;
-  const AddMaintenanceLogScreen({super.key, required this.bikeId});
+  final String? initialServiceType;
+  const AddMaintenanceLogScreen({
+    super.key,
+    required this.bikeId,
+    this.initialServiceType,
+  });
 
   @override
   ConsumerState<AddMaintenanceLogScreen> createState() => _AddMaintenanceLogScreenState();
@@ -21,19 +26,23 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
   final _costCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   final _customLabelCtrl = TextEditingController();
-  ServiceType _selectedType = ServiceType.oilChange;
+  late ServiceType _selectedType;
   DateTime _date = DateTime.now();
   bool _loading = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedType = widget.initialServiceType != null
+        ? ServiceTypeExt.fromString(widget.initialServiceType!)
+        : ServiceType.oilChange;
+
     // Pre-fill odometer from bike stats
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bikes = ref.read(garageProvider).valueOrNull ?? [];
       final bike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
       if (bike != null) {
-        _odometerCtrl.text = bike.totalDistanceKm.toStringAsFixed(0);
+        _odometerCtrl.text = bike.currentOdometerKm.toStringAsFixed(0);
       }
     });
   }

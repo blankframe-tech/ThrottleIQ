@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/cloud/outbox_service.dart';
-import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/database/daos/maintenance_dao.dart';
+import '../../../../core/database/daos/maintenance_config_dao.dart';
 import '../../../../core/services/home_widget_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../data/models/maintenance_model.dart';
+import '../../data/models/maintenance_config_model.dart';
 import '../../domain/entities/maintenance_entity.dart';
 
 const _uuid = Uuid();
@@ -71,46 +72,93 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
   }
 }
 
+final _configDao = MaintenanceConfigDao();
+
+final isMaintenanceCustomizedProvider =
+    FutureProvider.family<bool, String>((ref, bikeId) async {
+  return _configDao.hasCustomized(bikeId);
+});
+
+final maintenanceConfigProvider = AsyncNotifierProvider.family<
+    MaintenanceConfigNotifier, List<MaintenanceConfigEntity>, String>(
+  MaintenanceConfigNotifier.new,
+);
+
+class MaintenanceConfigNotifier
+    extends FamilyAsyncNotifier<List<MaintenanceConfigEntity>, String> {
+  @override
+  Future<List<MaintenanceConfigEntity>> build(String bikeId) async {
+    final rows = await _configDao.getConfigsForBike(bikeId);
+    if (rows.isNotEmpty) {
+      final savedConfigs = rows.map(MaintenanceConfigModel.fromMap).toList();
+      final existingTypes = savedConfigs.map((c) => c.serviceType).toSet();
+      final fullList = <MaintenanceConfigEntity>[...savedConfigs];
+      for (final type in ServiceType.values) {
+        if (type == ServiceType.custom) continue;
+        if (!existingTypes.contains(type)) {
+          fullList.add(MaintenanceConfigEntity(
+            bikeId: bikeId,
+            serviceType: type,
+            intervalKm: type.defaultIntervalKm,
+            isEnabled: false,
+          ));
+        }
+      }
+      return fullList;
+    }
+
+    // Default template when not yet customized:
+    return ServiceType.values
+        .where((t) => t != ServiceType.custom)
+        .map((t) => MaintenanceConfigEntity(
+              bikeId: bikeId,
+              serviceType: t,
+              intervalKm: t.defaultIntervalKm,
+              isEnabled: t.isRecommendedDefault,
+            ))
+        .toList();
+  }
+
+  Future<void> saveConfigs(List<MaintenanceConfigEntity> configs) async {
+    final bikeId = arg;
+    final maps = configs.map(MaintenanceConfigModel.toMap).toList();
+    await _configDao.saveConfigsForBike(bikeId, maps);
+    ref.invalidateSelf();
+    ref.invalidate(isMaintenanceCustomizedProvider(bikeId));
+    ref.invalidate(maintenanceRemindersProvider(bikeId));
+    unawaited(HomeWidgetService.instance.refreshFromLocalData());
+  }
+}
+
 final maintenanceRemindersProvider =
     Provider.family<List<MaintenanceReminder>, String>((ref, bikeId) {
   final bike = ref.watch(garageProvider).valueOrNull?.where((b) => b.id == bikeId).firstOrNull;
   final logs = ref.watch(maintenanceProvider(bikeId)).valueOrNull ?? [];
+  final configs = ref.watch(maintenanceConfigProvider(bikeId)).valueOrNull ?? [];
   if (bike == null) return [];
-  return _computeReminders(bike.currentOdometerKm, logs);
+  return _computeReminders(bike.currentOdometerKm, logs, configs);
 });
 
-/// Which service types get a proactive reminder card.
-///
-/// Deliberately NOT every [ServiceType]. The expanded list (spark plug,
-/// valve clearance, suspension, …) is there so a rider can *log* what they
-/// actually did, but rendering a reminder card per type would turn the
-/// maintenance screen into a wall of mostly-green cards and bury the ones
-/// that matter. Only the original four plus the two safety-critical brake
-/// items are reminded on; everything else is log-only.
-const _reminderTypes = [
-  ServiceType.oilChange,
-  ServiceType.airFilter,
-  ServiceType.chain,
-  ServiceType.tire,
-  ServiceType.brakeFluid,
-  ServiceType.frontDiscPads,
-];
-
 List<MaintenanceReminder> _computeReminders(
-    double currentKm, List<MaintenanceEntity> logs) {
+    double currentKm,
+    List<MaintenanceEntity> logs,
+    List<MaintenanceConfigEntity> configs) {
   final reminders = <MaintenanceReminder>[];
+  final enabledConfigs = configs.where((c) => c.isEnabled).toList();
 
-  for (final type in _reminderTypes) {
+  for (final config in enabledConfigs) {
+    final type = config.serviceType;
     final typeLogs = logs.where((l) => l.serviceType == type).toList()
       ..sort((a, b) => b.odometerKm.compareTo(a.odometerKm));
 
     final double lastKm = typeLogs.isEmpty ? 0 : typeLogs.first.odometerKm;
     final kmSince = currentKm - lastKm;
-    final (minKm, maxKm) = _thresholds(type);
+    final maxKm = config.intervalKm;
+    final dueSoonThreshold = maxKm > 1000 ? maxKm * 0.8 : (maxKm - 150).clamp(0.0, maxKm);
 
     final status = kmSince >= maxKm
         ? ReminderStatus.overdue
-        : kmSince >= minKm
+        : kmSince >= dueSoonThreshold
             ? ReminderStatus.dueSoon
             : ReminderStatus.ok;
 
@@ -122,25 +170,21 @@ List<MaintenanceReminder> _computeReminders(
       lastServiceDate: typeLogs.isEmpty ? null : typeLogs.first.date,
     ));
   }
+
+  // Sort: Overdue first, then Due Soon, then OK. Inside same status, highest wear ratio first.
+  reminders.sort((a, b) {
+    int rank(ReminderStatus s) => switch (s) {
+          ReminderStatus.overdue => 0,
+          ReminderStatus.dueSoon => 1,
+          ReminderStatus.ok => 2,
+        };
+    final rankDiff = rank(a.status).compareTo(rank(b.status));
+    if (rankDiff != 0) return rankDiff;
+    final aRatio = a.kmLimit > 0 ? a.kmSinceService / a.kmLimit : 0.0;
+    final bRatio = b.kmLimit > 0 ? b.kmSinceService / b.kmLimit : 0.0;
+    return bRatio.compareTo(aRatio);
+  });
+
   return reminders;
 }
 
-(double, double) _thresholds(ServiceType type) {
-  switch (type) {
-    case ServiceType.oilChange:
-      return (SensorConstants.oilChangeMinKm, SensorConstants.oilChangeMaxKm);
-    case ServiceType.airFilter:
-      return (SensorConstants.airFilterMinKm, SensorConstants.airFilterMaxKm);
-    case ServiceType.chain:
-      return (SensorConstants.chainLubeMinKm, SensorConstants.chainLubeMaxKm);
-    case ServiceType.tire:
-      return (SensorConstants.tireCheckMinKm, SensorConstants.tireCheckMaxKm);
-    case ServiceType.brakeFluid:
-      return (SensorConstants.brakeFluidMinKm, SensorConstants.brakeFluidMaxKm);
-    case ServiceType.frontDiscPads:
-      return (SensorConstants.discPadsMinKm, SensorConstants.discPadsMaxKm);
-    default:
-      // Log-only types (see _reminderTypes): never overdue, never due soon.
-      return (double.infinity, double.infinity);
-  }
-}

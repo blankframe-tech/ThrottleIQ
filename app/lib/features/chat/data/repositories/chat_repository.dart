@@ -13,11 +13,14 @@ class ChatRepository {
     return _firestore
         .collection('chats')
         .where('participants', arrayContains: userId)
-        .orderBy('updatedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => ChatModel.fromFirestore(doc.data(), doc.id))
-            .toList());
+        .map((snap) {
+      final chats = snap.docs
+          .map((doc) => ChatModel.fromFirestore(doc.data(), doc.id))
+          .toList();
+      chats.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      return chats;
+    });
   }
 
   Stream<List<MessageEntity>> watchMessages(String chatId) {
@@ -30,6 +33,12 @@ class ChatRepository {
         .map((snap) => snap.docs
             .map((doc) => MessageModel.fromFirestore(doc.data(), doc.id))
             .toList());
+  }
+
+  Future<ChatEntity?> getChat(String chatId) async {
+    final doc = await _firestore.collection('chats').doc(chatId).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return ChatModel.fromFirestore(doc.data()!, doc.id);
   }
 
   Future<String> getOrCreateChat(String currentUserId, String otherUserId) async {
@@ -96,13 +105,16 @@ class ChatRepository {
         .doc(chatId)
         .collection('messages')
         .where('isRead', isEqualTo: false)
-        .where('senderId', isNotEqualTo: currentUserId)
         .get();
 
-    if (unreadSnap.docs.isEmpty) return;
+    final docsToUpdate = unreadSnap.docs
+        .where((doc) => doc.data()['senderId'] != currentUserId)
+        .toList();
+
+    if (docsToUpdate.isEmpty) return;
 
     final batch = _firestore.batch();
-    for (final doc in unreadSnap.docs) {
+    for (final doc in docsToUpdate) {
       batch.update(doc.reference, {'isRead': true});
     }
     await batch.commit();

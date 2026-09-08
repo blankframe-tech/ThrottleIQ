@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
+import '../../constants/sensor_constants.dart';
 import '../database_helper.dart';
 
 class RideDao {
@@ -45,17 +46,69 @@ class RideDao {
       final distanceM = (row['distance_m'] as num?)?.toDouble() ?? 0.0;
       final durationS = row['duration_s'] as int?;
 
-      if (avgSpeed != null && maxSpeed != null && maxSpeed > 0 && avgSpeed > maxSpeed) {
-        final healedAvg = (durationS != null && durationS > 0)
-            ? (distanceM / durationS).clamp(0.0, maxSpeed)
-            : maxSpeed;
+      var healedAvg = avgSpeed;
+      var healedMax = maxSpeed;
+      var modified = false;
+
+      // 1. Heal corrupted massive max speeds (> 70 m/s ~ 252 km/h)
+      if (healedMax != null && healedMax > SensorConstants.maxPlausibleSpeedMs) {
+        final plausibleFallback = (healedAvg != null &&
+                healedAvg > 0 &&
+                healedAvg <= SensorConstants.maxPlausibleSpeedMs)
+            ? (healedAvg * 1.5).clamp(healedAvg, SensorConstants.maxPlausibleSpeedMs)
+            : SensorConstants.maxPlausibleSpeedMs;
+        healedMax = plausibleFallback;
+        modified = true;
+      }
+
+      // 2. Heal missing / zero max speed for moving rides (distance > 0)
+      final overallSpeed =
+          (durationS != null && durationS > 0) ? (distanceM / durationS) : 0.0;
+      if ((healedMax == null || healedMax <= 0) && distanceM > 0) {
+        if (healedAvg != null && healedAvg > 0) {
+          healedMax = healedAvg;
+        } else if (overallSpeed > 0) {
+          healedMax = overallSpeed.clamp(0.0, SensorConstants.maxPlausibleSpeedMs);
+        }
+        if (healedMax != null && healedMax > 0) {
+          modified = true;
+        }
+      }
+
+      // 3. Heal avg_speed > max_speed (physical impossibility)
+      if (healedAvg != null &&
+          healedMax != null &&
+          healedMax > 0 &&
+          healedAvg > healedMax) {
+        final fallbackAvg = (durationS != null && durationS > 0)
+            ? (distanceM / durationS).clamp(0.0, healedMax)
+            : healedMax;
+        healedAvg = fallbackAvg;
+        modified = true;
+      }
+
+      // 4. Physical invariant: top speed can never be less than average speed
+      if (healedAvg != null &&
+          healedMax != null &&
+          healedAvg > 0 &&
+          healedMax < healedAvg) {
+        healedMax = healedAvg;
+        modified = true;
+      }
+
+      if (modified) {
         final copy = Map<String, dynamic>.from(row);
-        copy['avg_speed_ms'] = healedAvg;
+        if (healedAvg != null) copy['avg_speed_ms'] = healedAvg;
+        if (healedMax != null) copy['max_speed_ms'] = healedMax;
         result.add(copy);
+
+        final updates = <String, dynamic>{};
+        if (healedAvg != null) updates['avg_speed_ms'] = healedAvg;
+        if (healedMax != null) updates['max_speed_ms'] = healedMax;
 
         unawaited(db.update(
           'rides',
-          {'avg_speed_ms': healedAvg},
+          updates,
           where: 'id = ?',
           whereArgs: [row['id']],
         ));

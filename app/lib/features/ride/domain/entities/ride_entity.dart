@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 // Prefixed: the calculator function shares its name with the [jamSeconds]
 // getter below, which would otherwise resolve to itself recursively.
+import '../../../../core/constants/sensor_constants.dart';
 import '../calculators/jam_time.dart' as jam_time;
 import 'bike_attribution.dart';
 
@@ -62,7 +63,16 @@ class RideEntity extends Equatable {
 
   double get distanceKm => distanceM / 1000;
   double get avgSpeedKmh => (avgSpeedMs ?? 0) * 3.6;
-  double get maxSpeedKmh => (maxSpeedMs ?? 0) * 3.6;
+  double get maxSpeedKmh {
+    final maxMs = maxSpeedMs ?? 0;
+    final avgMs = avgSpeedMs ?? 0;
+    final effectiveMs =
+        (maxMs <= 0 && avgMs > 0) ? avgMs : (maxMs < avgMs ? avgMs : maxMs);
+    final clampedMs = effectiveMs > SensorConstants.maxPlausibleSpeedMs
+        ? SensorConstants.maxPlausibleSpeedMs
+        : effectiveMs;
+    return clampedMs * 3.6;
+  }
 
   /// Seconds of this ride spent stopped in traffic while still recording —
   /// see jam_time.dart. Null rather than a guessed zero when either input is

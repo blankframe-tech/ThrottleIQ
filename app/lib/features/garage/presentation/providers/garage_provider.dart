@@ -20,7 +20,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     return rows.map(BikeModel.fromMap).toList();
   }
 
-  Future<void> addBike({
+  Future<String?> addBike({
     required String brand,
     required String model,
     int? year,
@@ -30,7 +30,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     int? colorValue,
   }) async {
     final uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
+    if (uid == null) return null;
     final bike = BikeEntity(
       id: _uuid.v4(),
       userId: uid,
@@ -49,6 +49,21 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     if (current.isEmpty) {
       await _dao.setActive(bike.id, uid);
     }
+    ref.invalidateSelf();
+    return bike.id;
+  }
+
+  /// Calibrates the bike's baseline odometer so `currentOdometerKm` matches
+  /// the physical instrument cluster reading captured during sync.
+  Future<void> syncOdometer({
+    required String bikeId,
+    required double newOdometerKm,
+  }) async {
+    final bikes = state.valueOrNull ?? [];
+    final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
+    if (bike == null) return;
+    final newBaseline = (newOdometerKm - bike.totalDistanceKm).clamp(0.0, double.infinity);
+    await _dao.updateOdometer(bikeId, newBaseline);
     ref.invalidateSelf();
   }
 

@@ -10,8 +10,9 @@ import uharfbuzz as hb
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 
-D = "/usr/share/fonts/truetype/dejavu"
 G = os.path.dirname(os.path.abspath(__file__))
+_local_d = f"{G}/fonts/dejavu"
+D = _local_d if os.path.isdir(_local_d) else "/usr/share/fonts/truetype/dejavu"
 
 class Face:
     _reg = {}

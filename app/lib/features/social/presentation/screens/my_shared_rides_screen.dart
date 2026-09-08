@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -80,6 +81,7 @@ class MySharedRidesScreen extends ConsumerWidget {
               itemBuilder: (_, i) {
                 final ride = rides[i];
                 return EditorialCard(
+                  onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
