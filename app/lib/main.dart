@@ -7,11 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/utils/bike_image_resolver.dart';
 
 void main() async {
   // Must run before anything else: this registers the port the auto-tracking
@@ -23,6 +25,9 @@ void main() async {
 
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    unawaited(getApplicationDocumentsDirectory().then((dir) {
+      BikeImageResolver.cachedDocumentsDirectoryPath = dir.path;
+    }).catchError((_) {}));
 
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,

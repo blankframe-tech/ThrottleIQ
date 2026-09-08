@@ -164,5 +164,31 @@ class BikeDao {
       whereArgs: [id],
     );
   }
+
+  Future<void> updateImagePath(String id, String imagePath) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      'bikes',
+      {
+        'image_path': imagePath,
+        'synced': 0,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Returns bikes for [userId] whose `image_path` is a local file path
+  /// (i.e. not null and not a remote http/https URL) so they can be uploaded
+  /// to the cloud.
+  Future<List<Map<String, dynamic>>> getBikesWithLocalImages(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query(
+      'bikes',
+      where:
+          "user_id = ? AND image_path IS NOT NULL AND image_path != '' AND image_path NOT LIKE 'http://%' AND image_path NOT LIKE 'https://%'",
+      whereArgs: [userId],
+    );
+  }
 }
 

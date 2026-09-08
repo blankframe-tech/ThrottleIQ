@@ -1,26 +1,17 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/bike_image_resolver.dart';
 
 /// The rider's own photo of a bike, with a guaranteed fallback.
 ///
-/// `BikeEntity.imagePath` is a **local device file path**, so it is unreliable
-/// in two distinct ways and both have to be handled at render time:
-///
-///  * it can be null — the rider never attached a photo, or the bike arrived
-///    from another device (`CloudRepository.downloadBikes` deliberately nulls
-///    `image_path` on pulled bikes, since a path from someone else's phone
-///    means nothing here);
-///  * it can be non-null but *stale* — the file was moved or cleaned up by the
-///    OS after the path was saved. `Image.file` only discovers this while
-///    decoding, i.e. asynchronously, and without an `errorBuilder` that
-///    surfaces as a red error box in the widget tree.
-///
-/// So: null/empty path short-circuits to the icon, and a decode failure falls
-/// back to the same icon via [Image.errorBuilder]. The bike tile never renders
-/// broken and never throws.
+/// Handles both local file paths and remote URLs (e.g. Cloudinary).
+/// For local paths, [BikeImageResolver] resolves stale container UUIDs across
+/// app rebuilds/updates. For remote URLs, [CachedNetworkImage] fetches and caches
+/// the photo across device reinstalls and multi-device logins.
 class BikePhoto extends StatelessWidget {
   final String? imagePath;
   final double? width;
@@ -40,6 +31,10 @@ class BikePhoto extends StatelessWidget {
   final Color? iconColor;
   final BoxFit fit;
 
+  /// Optional override for the documents directory (useful for unit testing
+  /// container UUID shifts).
+  final Directory? documentsDirectory;
+
   const BikePhoto({
     super.key,
     required this.imagePath,
@@ -50,6 +45,7 @@ class BikePhoto extends StatelessWidget {
     this.backgroundColor,
     this.iconColor,
     this.fit = BoxFit.cover,
+    this.documentsDirectory,
   });
 
   @override
@@ -58,21 +54,43 @@ class BikePhoto extends StatelessWidget {
     final radius =
         borderRadius ?? BorderRadius.circular(AppDimensions.radiusMd);
 
+    Widget content;
+    if (path == null || path.isEmpty) {
+      content = _fallback();
+    } else if (BikeImageResolver.isRemoteUrl(path)) {
+      content = CachedNetworkImage(
+        imageUrl: path,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (_, __) => _fallback(),
+        errorWidget: (_, __, ___) => _fallback(),
+      );
+    } else {
+      final resolved = BikeImageResolver.resolvePathSync(
+        path,
+        documentsDirectory: documentsDirectory,
+      );
+      if (resolved == null) {
+        content = _fallback();
+      } else {
+        content = Image.file(
+          File(resolved),
+          width: width,
+          height: height,
+          fit: fit,
+          // File deleted / unreadable / not an image any more.
+          errorBuilder: (_, __, ___) => _fallback(),
+        );
+      }
+    }
+
     return ClipRRect(
       borderRadius: radius,
       child: SizedBox(
         width: width,
         height: height,
-        child: path == null || path.isEmpty
-            ? _fallback()
-            : Image.file(
-                File(path),
-                width: width,
-                height: height,
-                fit: fit,
-                // File deleted / unreadable / not an image any more.
-                errorBuilder: (_, __, ___) => _fallback(),
-              ),
+        child: content,
       ),
     );
   }

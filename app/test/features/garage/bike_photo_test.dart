@@ -80,4 +80,45 @@ void main() {
     // errorBuilder tests above are the counterpoint to.
     expect(fallbackIcon, findsNothing);
   });
+
+  testWidgets('renders CachedNetworkImage when imagePath is a remote URL',
+      (tester) async {
+    const url = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
+    await pumpPhoto(tester, url);
+
+    expect(find.byWidgetPredicate((w) => w.runtimeType.toString() == 'CachedNetworkImage'), findsOneWidget);
+  });
+
+  testWidgets(
+      'renders photo when path had old container UUID but exists in documentsDirectory',
+      (tester) async {
+    final tempDir =
+        Directory.systemTemp.createTempSync('bike_photo_heal_test');
+    addTearDown(() => tempDir.deleteSync(recursive: true));
+    File('${tempDir.path}/bike_stale.png').writeAsBytesSync(base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4'
+        '2mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='));
+    const stalePath =
+        '/var/mobile/Containers/Data/Application/OLD-UUID/Documents/bike_stale.png';
+
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BikePhoto(
+              imagePath: stalePath,
+              documentsDirectory: tempDir,
+              width: 44,
+              height: 44,
+            ),
+          ),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pump();
+
+    expect(find.byType(Image), findsOneWidget);
+    expect(fallbackIcon, findsNothing);
+  });
 }

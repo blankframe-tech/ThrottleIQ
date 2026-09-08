@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -10,6 +10,8 @@ import '../database/database_helper.dart';
 import '../database/daos/bike_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../database/daos/ride_point_dao.dart';
+import '../services/cloudinary_upload_service.dart';
+import '../utils/bike_image_resolver.dart';
 import 'ride_track_codec.dart';
 
 class CloudRepository {
@@ -23,6 +25,15 @@ class CloudRepository {
   late final RideDao _rideDao = RideDao();
   late final RidePointDao _pointDao = RidePointDao();
   late final BikeDao _bikeDao = BikeDao();
+  CloudinaryUploadService? _uploadService;
+
+  CloudinaryUploadService get _cloudinaryUploadService =>
+      _uploadService ??= CloudinaryUploadService();
+
+  @visibleForTesting
+  void setCloudinaryUploadServiceForTesting(CloudinaryUploadService? service) {
+    _uploadService = service;
+  }
 
   /// Deletes a bike's remote copy, and the rides hanging off it.
   ///
@@ -102,10 +113,43 @@ class CloudRepository {
     }
   }
 
-  /// Upload unsynced bikes to Firestore and mark them as synced
+  /// Upload unsynced bikes to Firestore and mark them as synced.
+  ///
+  /// If a bike has a local photo, it is uploaded to Cloudinary first so the
+  /// photo survives app rebuilds and multi-device logins.
   Future<void> uploadBikes(String uid, List<Map<String, dynamic>> bikes) async {
+    final bikesToUpload = <Map<String, dynamic>>[];
+    for (final rawBike in bikes) {
+      final bike = Map<String, dynamic>.from(rawBike);
+      final imagePath = bike['image_path'] as String?;
+      if (imagePath != null &&
+          imagePath.isNotEmpty &&
+          !BikeImageResolver.isRemoteUrl(imagePath)) {
+        final resolved = BikeImageResolver.resolvePathSync(imagePath);
+        if (resolved != null && File(resolved).existsSync()) {
+          try {
+            final cloudUrl = await _cloudinaryUploadService.upload(
+              File(resolved),
+              folder: 'bikes/$uid',
+            );
+            bike['image_path'] = cloudUrl;
+            await _bikeDao.updateImagePath(bike['id'] as String, cloudUrl);
+          } catch (e) {
+            debugPrint(
+                '[CloudRepository] bike image upload to Cloudinary failed: $e');
+            // Keep local path in local DB, but avoid pushing a useless local path to Firestore.
+            bike['image_path'] = null;
+          }
+        } else {
+          // File does not exist locally, avoid pushing dead local path to Firestore.
+          bike['image_path'] = null;
+        }
+      }
+      bikesToUpload.add(bike);
+    }
+
     final batch = _firestore.batch();
-    for (final bike in bikes) {
+    for (final bike in bikesToUpload) {
       final docRef = _firestore.collection('users').doc(uid).collection('bikes').doc(bike['id']);
       batch.set(docRef, {
         ...bike,
@@ -175,17 +219,11 @@ class CloudRepository {
 
     for (final doc in snap.docs) {
       if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
-      final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
-      // A local file path from a *different* device is meaningless here —
-      // rather than let the UI try (and fail) to load a nonexistent file.
-      data['image_path'] = null;
-      // Never let a downloaded bike silently become "the" active bike
-      // alongside (or instead of) one already active locally; if nothing is
-      // active locally yet, let exactly the first pulled-down bike take it.
-      final wasActive = data['is_active'] == 1;
-      data['is_active'] =
-          (wasActive && !hasLocalActive && !pulledAnyActive) ? 1 : 0;
-      data['synced'] = 1;
+      final data = sanitizeDownloadedBikeData(
+        doc.data(),
+        hasLocalActive: hasLocalActive,
+        pulledAnyActive: pulledAnyActive,
+      );
       try {
         await db.insert('bikes', data, conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
@@ -199,6 +237,35 @@ class CloudRepository {
       if (data['is_active'] == 1) pulledAnyActive = true;
     }
     return pulledAny;
+  }
+
+  /// Sanitizes downloaded bike document data before inserting it into local SQLite.
+  /// Remote URLs (e.g. Cloudinary) are preserved so bike images sync across devices.
+  /// Stale local file paths from another device or platform are nulled out.
+  @visibleForTesting
+  static Map<String, dynamic> sanitizeDownloadedBikeData(
+    Map<String, dynamic> docData, {
+    required bool hasLocalActive,
+    required bool pulledAnyActive,
+  }) {
+    final data = Map<String, dynamic>.from(docData)..remove('syncedAt');
+    // A remote URL (Cloudinary) is valid on any device.
+    // A local file path from a different device is meaningless here.
+    final remoteImagePath = data['image_path'] as String?;
+    if (remoteImagePath != null &&
+        BikeImageResolver.isRemoteUrl(remoteImagePath)) {
+      data['image_path'] = remoteImagePath;
+    } else {
+      data['image_path'] = null;
+    }
+    // Never let a downloaded bike silently become "the" active bike
+    // alongside (or instead of) one already active locally; if nothing is
+    // active locally yet, let exactly the first pulled-down bike take it.
+    final wasActive = data['is_active'] == 1;
+    data['is_active'] =
+        (wasActive && !hasLocalActive && !pulledAnyActive) ? 1 : 0;
+    data['synced'] = 1;
+    return data;
   }
 
   /// Same "pull anything missing locally" shape as [downloadBikes], for

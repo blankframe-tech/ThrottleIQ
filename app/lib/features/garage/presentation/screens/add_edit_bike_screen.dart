@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,9 +9,12 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_catalog.dart';
 import '../../../../core/constants/bike_colors.dart';
+import '../../../../core/services/cloudinary_upload_service.dart';
+import '../../../../core/utils/bike_image_resolver.dart';
 import '../../../../core/utils/image_crop_io.dart';
 import '../../../../shared/screens/image_crop_screen.dart';
 import '../../../../shared/widgets/brand_model_field.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
 
@@ -100,9 +105,25 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final path = _imagePath;
     if (path == null) return;
 
+    String localSource = path;
+    if (BikeImageResolver.isRemoteUrl(path)) {
+      try {
+        final file = await DefaultCacheManager().getSingleFile(path);
+        localSource = file.path;
+      } catch (_) {
+        return;
+      }
+    } else {
+      final resolved = BikeImageResolver.resolvePathSync(path);
+      if (resolved != null) {
+        localSource = resolved;
+      }
+    }
+
+    if (!mounted) return;
     final cropped = await ImageCropScreen.open(
       context,
-      sourcePath: path,
+      sourcePath: localSource,
       title: 'Crop bike photo',
     );
     if (cropped == null || !mounted) return;
@@ -113,6 +134,24 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
+    String? savedImagePath = _imagePath;
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (savedImagePath != null &&
+        !BikeImageResolver.isRemoteUrl(savedImagePath) &&
+        uid != null) {
+      final resolved = BikeImageResolver.resolvePathSync(savedImagePath);
+      if (resolved != null && File(resolved).existsSync()) {
+        try {
+          final cloudUrl = await CloudinaryUploadService()
+              .upload(File(resolved), folder: 'bikes/$uid')
+              .timeout(const Duration(seconds: 8));
+          savedImagePath = cloudUrl;
+        } catch (_) {
+          // Offline or timeout: continue with local path; SyncManager will upload later.
+        }
+      }
+    }
+
     if (_existingBike != null) {
       await ref.read(garageProvider.notifier).updateBike(
             _existingBike!.copyWith(
@@ -120,7 +159,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               model: _modelCtrl.text.trim(),
               year: int.tryParse(_yearCtrl.text),
               cc: int.tryParse(_ccCtrl.text),
-              imagePath: _imagePath,
+              imagePath: savedImagePath,
               odometerKm: double.tryParse(_odometerCtrl.text),
               colorValue: _colorValue,
               clearColor: _colorValue == null,
@@ -133,7 +172,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             model: _modelCtrl.text.trim(),
             year: int.tryParse(_yearCtrl.text),
             cc: int.tryParse(_ccCtrl.text),
-            imagePath: _imagePath,
+            imagePath: savedImagePath,
             odometerKm: double.tryParse(_odometerCtrl.text),
             colorValue: _colorValue,
           );
@@ -188,7 +227,12 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       border: Border.all(color: AppColors.border),
                       image: _imagePath != null
                           ? DecorationImage(
-                              image: FileImage(File(_imagePath!)),
+                              image: BikeImageResolver.isRemoteUrl(_imagePath)
+                                  ? CachedNetworkImageProvider(_imagePath!)
+                                  : FileImage(File(
+                                      BikeImageResolver.resolvePathSync(
+                                              _imagePath) ??
+                                          _imagePath!)) as ImageProvider,
                               fit: BoxFit.cover)
                           : null,
                     ),

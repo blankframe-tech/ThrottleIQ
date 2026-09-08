@@ -186,11 +186,22 @@ class SyncManager {
       final unsyncedRides = await RideDao().getUnsynced(uid);
 
       // Fetch unsynced bikes — scoped to `uid` for the same reason.
-      final unsyncedBikes = await db.query(
+      // Also include any bikes whose photos are still stored as local files so
+      // their images get uploaded to Cloudinary.
+      final unsyncedBikes = (await db.query(
         'bikes',
         where: 'synced = ? AND user_id = ?',
         whereArgs: [0, uid],
-      );
+      )).toList();
+
+      final existingBikeIds =
+          unsyncedBikes.map((b) => b['id'] as String).toSet();
+      final bikesWithLocalImages = await BikeDao().getBikesWithLocalImages(uid);
+      for (final bike in bikesWithLocalImages) {
+        if (!existingBikeIds.contains(bike['id'] as String)) {
+          unsyncedBikes.add(bike);
+        }
+      }
 
       // Fetch unsynced maintenance logs. `maintenance_logs` has no `user_id`
       // column of its own — ownership is via `bike_id` — so scoping to `uid`
