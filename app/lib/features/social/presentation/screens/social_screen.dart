@@ -511,11 +511,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            InkWell(
+              onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             child: Padding(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
               child: Column(
@@ -547,8 +549,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           ],
                         ),
                       ),
-                      Text(ride.userName,
-                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      GestureDetector(
+                        onTap: () => context.push('/profile/${ride.userId}'),
+                        child: Text(
+                          ride.userName,
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                        ),
+                      ),
                       PopupMenuButton<String>(
                         icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
                         padding: EdgeInsets.zero,
@@ -664,7 +671,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
             ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   /// Media strip: the route map is always shown (Strava-style). Rider photos,
@@ -673,15 +681,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
   /// placeholder when the polyline is empty (privacy clipping can legitimately
   /// empty a short ride).
   ///
-  /// Multiple photos are a swipeable strip ([_PhotoStrip]) rather than a
-  /// collage: the map already owns half the card, so a 2×2 collage of three
-  /// photos would leave each one about 75 px wide — too small to read on a
-  /// phone. The strip keeps every photo at the full size a single photo used
-  /// to get, renders identically for 1, 2 or 3, and can't overflow, because
-  /// its width is whatever the Row hands it rather than something that grows
-  /// with the photo count.
+  /// Multiple photos (up to 3) render as a collage ([PhotoCollage]) beside the
+  /// map rather than a swipeable strip, showing all photos simultaneously at a
+  /// glance. Tapping any photo opens an interactive full-screen gallery lightbox.
+  /// Tapping the map opens the dedicated shared ride details screen.
   Widget _buildMedia(SharedRideEntity ride) {
-    const mediaHeight = 160.0;
+    final hasPhotos = ride.photoUrls.isNotEmpty;
+    final mediaHeight = hasPhotos ? 200.0 : 180.0;
     
     Widget buildMap(double h) => RideRouteMap(
       polyline: ride.polyline,
@@ -689,56 +695,20 @@ class _RideCardState extends ConsumerState<_RideCard> {
       radius: AppDimensions.radiusLg,
     );
 
-    final map = GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (_) => Dialog.fullscreen(
-            backgroundColor: AppColors.background,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: RideRouteMap(
-                    polyline: ride.polyline,
-                    height: double.infinity,
-                    radius: 0,
-                  ),
-                ),
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: IconButton(
-                        icon: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface.withValues(alpha: 0.8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.close, color: AppColors.textPrimary),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    final map = InkWell(
+      onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       child: buildMap(mediaHeight),
     );
 
-    if (ride.photoUrls.isEmpty) return map;
+    if (!hasPhotos) return map;
 
     return SizedBox(
       height: mediaHeight,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _PhotoStrip(urls: ride.photoUrls, height: mediaHeight)),
+          Expanded(child: PhotoCollage(urls: ride.photoUrls, height: mediaHeight)),
           const SizedBox(width: 8),
           Expanded(child: map),
         ],
@@ -754,12 +724,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
         const SizedBox(height: 8),
         if (_loadingComments)
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
           )
         else if ((_comments ?? const []).isEmpty)
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text('No comments yet', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           )
         else
@@ -820,23 +790,167 @@ class _RideCardState extends ConsumerState<_RideCard> {
   Widget _divider() => Container(width: 1, height: 28, color: AppColors.border);
 }
 
-/// A ride's photos as a horizontally swipeable strip, one photo per page,
-/// with a "2/3" counter and page dots once there's more than one.
+/// Renders 1, 2, or 3 photos as a collage beside the route map on a feed card.
 ///
-/// A single photo renders exactly as it did before multi-photo support: one
-/// page, no counter, no dots.
-class _PhotoStrip extends StatefulWidget {
+/// Unlike a swipeable strip, all photos are visible simultaneously:
+/// - 1 photo: full height
+/// - 2 photos: vertical split (top/bottom)
+/// - 3 photos: hero photo on top + 2 photos side-by-side on the bottom
+///
+/// Tapping any photo opens an interactive fullscreen gallery with pinch-to-zoom
+/// and swiping between photos.
+class PhotoCollage extends StatelessWidget {
   final List<String> urls;
   final double height;
-  const _PhotoStrip({required this.urls, required this.height});
+
+  const PhotoCollage({super.key, required this.urls, required this.height});
+
+  void _openGallery(BuildContext context, int initialIndex) {
+    showDialog(
+      context: context,
+      builder: (_) => FullScreenGalleryDialog(
+        urls: urls,
+        initialIndex: initialIndex,
+      ),
+    );
+  }
+
+  Widget _buildPhoto(BuildContext context, int index) {
+    return GestureDetector(
+      onTap: () => _openGallery(context, index),
+      child: SizedBox.expand(
+        child: CachedNetworkImage(
+          imageUrl: urls[index],
+          fit: BoxFit.cover,
+          placeholder: (_, __) => Container(color: AppColors.background),
+          errorWidget: (_, __, ___) => Container(
+            color: AppColors.background,
+            child: const Icon(Icons.broken_image, color: Colors.white24, size: 24),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
-  State<_PhotoStrip> createState() => _PhotoStripState();
+  Widget build(BuildContext context) {
+    if (urls.isEmpty) return const SizedBox.shrink();
+
+    Widget content;
+    if (urls.length == 1) {
+      content = _buildPhoto(context, 0);
+    } else if (urls.length == 2) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _buildPhoto(context, 0)),
+          const SizedBox(height: 2),
+          Expanded(child: _buildPhoto(context, 1)),
+        ],
+      );
+    } else if (urls.length == 3) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _buildPhoto(context, 0)),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _buildPhoto(context, 1)),
+                const SizedBox(width: 2),
+                Expanded(child: _buildPhoto(context, 2)),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      // 4 or more photos (defensive fallback): 2x2 grid
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _buildPhoto(context, 0)),
+                const SizedBox(width: 2),
+                Expanded(child: _buildPhoto(context, 1)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _buildPhoto(context, 2)),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildPhoto(context, 3),
+                      if (urls.length > 4)
+                        Container(
+                          color: Colors.black54,
+                          alignment: Alignment.center,
+                          child: Text(
+                            '+${urls.length - 3}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: SizedBox(
+        height: height,
+        child: content,
+      ),
+    );
+  }
 }
 
-class _PhotoStripState extends State<_PhotoStrip> {
-  final _controller = PageController();
-  int _page = 0;
+/// Fullscreen lightbox dialog allowing pinch-to-zoom and swiping between all photos.
+class FullScreenGalleryDialog extends StatefulWidget {
+  final List<String> urls;
+  final int initialIndex;
+
+  const FullScreenGalleryDialog({
+    super.key,
+    required this.urls,
+    required this.initialIndex,
+  });
+
+  @override
+  State<FullScreenGalleryDialog> createState() => _FullScreenGalleryDialogState();
+}
+
+class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
+  late final PageController _controller;
+  late int _page;
+
+  @override
+  void initState() {
+    super.initState();
+    _page = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
 
   @override
   void dispose() {
@@ -849,106 +963,71 @@ class _PhotoStripState extends State<_PhotoStrip> {
     final urls = widget.urls;
     final multiple = urls.length > 1;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black,
       child: Stack(
         children: [
           Positioned.fill(
             child: PageView.builder(
               controller: _controller,
               itemCount: urls.length,
-              // A single photo shouldn't swipe at all — there's nowhere to go,
-              // and a rubber-banding image reads as a broken card.
               physics: multiple
                   ? const PageScrollPhysics()
                   : const NeverScrollableScrollPhysics(),
+              onPageChanged: (i) => setState(() => _page = i),
               itemBuilder: (context, i) {
-                return GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => Dialog.fullscreen(
-                        backgroundColor: Colors.black,
-                        child: Stack(
-                          children: [
-                            InteractiveViewer(
-                              child: Center(
-                                child: CachedNetworkImage(
-                                  imageUrl: urls[i],
-                                  fit: BoxFit.contain,
-                                  placeholder: (_, __) => const Center(
-                                      child: CircularProgressIndicator(color: Colors.white)),
-                                  errorWidget: (_, __, ___) =>
-                                      const Icon(Icons.broken_image, color: Colors.white54, size: 48),
-                                ),
-                              ),
-                            ),
-                            SafeArea(
-                              child: Align(
-                                alignment: Alignment.topRight,
-                                child: IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                return InteractiveViewer(
+                  child: Center(
+                    child: CachedNetworkImage(
+                      imageUrl: urls[i],
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
                       ),
-                    );
-                  },
-                  child: CachedNetworkImage(
-                    imageUrl: urls[i],
-                    height: widget.height,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        Container(height: widget.height, color: AppColors.background),
-                    errorWidget: (_, __, ___) =>
-                        Container(height: widget.height, color: AppColors.background),
+                      errorWidget: (_, __, ___) => const Icon(
+                        Icons.broken_image,
+                        color: Colors.white54,
+                        size: 48,
+                      ),
+                    ),
                   ),
                 );
               },
-              onPageChanged: (i) => setState(() => _page = i),
             ),
           ),
-          if (multiple) ...[
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                ),
-                child: Text(
-                  '${_page + 1}/${urls.length}',
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.pop(context),
               ),
             ),
-            Positioned(
-              bottom: 6,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 0; i < urls.length; i++)
-                    Container(
-                      width: 5,
-                      height: 5,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i == _page ? Colors.white : Colors.white54,
+          ),
+          if (multiple)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                    ),
+                    child: Text(
+                      '${_page + 1}/${urls.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                ],
+                  ),
+                ),
               ),
             ),
-          ],
         ],
       ),
     );

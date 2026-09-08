@@ -3432,7 +3432,168 @@ part of this release ask.
 
 ---
 
-## 57. User report: "Continue with Google" fails and login screen shows the old logo (2026-09-05) — FIXED
+## 57. Public landing page's primary CTA led to a dead end, and its badge/stats had drifted stale (2026-09-05)
+
+A marketing-focused session auditing `website_demo/index.html` (the actual
+deployed landing page) found the hero's primary button — labelled "Get the
+app on GitHub" — linked to the bare repo root
+(`https://github.com/blankframe-tech/ThrottleIQ`), not a download. A visitor
+clicking the one button styled as the primary call-to-action landed on
+source code, the same dead-end pattern already identified and fixed on
+`public/live-viewer.html`'s install CTA (see that file's `APP_LINKS`/
+`installCtaHtml()` comments) — this page just hadn't received the same fix.
+
+**Fixed:** the hero CTA now points at
+`https://github.com/blankframe-tech/ThrottleIQ/releases/latest` and reads
+"⬇ Download the Android beta", matching the copy/pattern already
+established on the live-viewer page. The secondary "View the source" /
+footer GitHub links were left pointing at the repo root — those are
+correctly labelled as source links, not install links.
+
+**Also found stale on the same page:** the hero badge read "Live beta
+v2.0.0-beta.5" — a version string that doesn't match either the old
+(`1.0.0-beta.1.x`) or current (`1.0.0-beta.2.2+7`, tag `beta-v2.2`)
+versioning scheme; it's a leftover from before the version line was reset
+2026-08-01 (`HANDOFF_Document.md`'s "Versioning history" section) that was
+never updated after. Also claimed "iOS & Android" availability, which
+overstates iOS distribution (device-run only, no TestFlight/App Store yet).
+The test-count stat read "363 automated tests", well under the actual
+verified count of 862 Flutter tests green (`HANDOFF_Document.md`, §56).
+**Fixed:** badge now reads "Pre-launch beta · Android APK, iOS by request";
+stat corrected to 862.
+
+**`README.md`'s status blockquote had the same drift:** still cited the
+retired `beta-v1` tag and `1.0.0-beta.1+1`. **Fixed:** synced to
+`beta-v2.2` / `1.0.0-beta.2.2+7`, and the `HANDOFF_Document.md` link
+corrected to its actual current path (`docs/planning/HANDOFF_Document.md`,
+it had moved during an earlier doc-restructure and the README link was
+never updated to match).
+
+**Not app behavior** — no Dart/backend code touched; this is public-facing
+marketing copy accuracy only. Full campaign work from the same session
+(Bangla store listing draft, outreach templates, launch calendar, tracking
+log, press fact sheet) lives in `docs/marketing/marketing_lead_notes/`,
+not duplicated here.
+
+**Correction, same session:** `website_demo/` was checked against
+`firebase.json` (Hosting's `public` dir is `public/`, not `website_demo/`)
+and against `.github/` (no workflow) and the repo's branches (no
+`gh-pages`, no `CNAME`) — **this page has no deploy target at all today.**
+It's a local demo/mockup, not a currently-live public landing page, so the
+fix above is correct to have made but doesn't have a real-world effect
+until someone actually deploys it somewhere. Flagged in
+`NEEDS_YOUR_ATTENTION.md` rather than left implicit.
+
+---
+
+## 58. `website_demo/ui.html` undersold the real Appearance system (2026-09-05)
+
+Same marketing-copy audit as §57. `website_demo/ui.html`'s hero read "Two
+themes, one app" and only named Carbon Mono / Editorial. Checked against
+`app/lib/core/theme/app_theme_style.dart`: the app actually exposes **7**
+selectable color families (`AppColorMode`: `carbonMono`, `editorial`,
+`nocturne`, `trailSocial`, `calming`, `retro`, `analystBlue`), each with an
+independent shape axis (`AppShapeVibe`: `boxy`/`curvy`, in
+`app_shape_profile.dart`) and independent dark/light brightness — a real,
+already-shipped personalization system well beyond what the page claimed.
+
+**Fixed:** hero copy now reads "One app, seven looks," names all seven
+families, and states the shape/brightness axes — while still only showing
+Carbon Mono and Editorial in the gallery below, since those are the only
+two with rendered screenshots today. Also corrected the page's meta
+description to match.
+
+**Also noted, not applied:** `store_listing/store_listing.md` doesn't
+mention this system at all — flagged inline in that file as a listing
+opportunity blocked on screenshots per family
+(`docs/marketing/marketing_lead_notes/screenshot_shot_list.md`), not added
+as a bullet yet since a claim with no supporting screenshot is weaker than
+one that ships with proof.
+
+**Not app behavior** — copy-only, no Dart/backend touched.
+
+---
+
+## 59. `public/privacy.html` never disclosed direct messages as a data category (2026-09-05)
+
+Same audit pass. While checking that the privacy policy actually backs up
+a trust-FAQ claim being drafted for outreach ("the data table has the
+specifics"), found it said nothing about direct messages at all, even
+though `app/lib/features/chat/` (`chat_entity.dart`'s `MessageEntity`) is a
+real, live one-to-one chat feature and `firestore.rules`' `/chats/{chatId}`
+and its `/messages` subcollection have been storing message text since
+that feature shipped. This is a genuine disclosure gap, not a cosmetic one.
+
+**Verified before drafting a fix, not assumed:**
+- Rules (`firestore.rules` around `match /chats/{chatId}`) restrict
+  read/write to the two participants only — never public.
+- Chats are strictly one-to-one (`participants.size() == 2` enforced on
+  create).
+- No delete or hide capability exists anywhere in
+  `app/lib/features/chat/` today (`grep`-confirmed) — messages persist for
+  the life of the account, same as everything else this policy already
+  says has no automatic expiry.
+
+**Fixed:** added a "Direct messages" row to the data table, added "direct
+messages" to the Cloud Firestore services row's enumerated contents list,
+and bumped the effective date to 2026-09-05 per the page's own stated
+convention ("this page changes with it and the effective date at the
+top... changes too").
+
+**Not deployed.** `public/` is Firebase Hosting's real `public` dir (unlike
+`website_demo/`, see §57) — this change needs an explicit
+`firebase deploy --only hosting` to actually go live, and since it's a
+legal document, that's flagged for a human read-through first in
+`docs/marketing/marketing_lead_notes/NEEDS_YOUR_ATTENTION.md` rather than
+deployed autonomously.
+
+---
+
+## 60. Doc-map and cross-reference links broken by the 2026-08-28 restructure, repo-wide (2026-09-05)
+
+Noticed while linking to `docs/planning/HANDOFF_Document.md` etc. from
+this session's marketing work that plenty of *existing* links still used
+the pre-restructure flat `docs/` paths. Ran a full repo-wide markdown-link
+scan (every `.md` under `docs/`, `store_listing/`, and root `README.md`)
+to find the actual extent rather than fixing only the ones noticed by eye.
+
+**Found and fixed:**
+- `docs/README.md` (the doc map itself) — every link except `../README.md`
+  was broken: `HANDOFF_Document.md`, `Issues.md`, `features.md`,
+  `SETUP.md`, `assumptions.md`, `auto_tracking_plan.md`,
+  `backend_options.md`, and all four marketing docs needed their `planning/`
+  `guides/` `architecture/` `marketing/` prefixes restored. Also added a
+  row for the new `marketing/marketing_lead_notes/` folder.
+- Root `README.md`'s "Documentation" section (5 links) and the ASCII
+  architecture diagram's two path-referencing lines, which needed
+  re-flowing back to the diagram's 59-char box width after the corrected
+  paths made them overflow.
+- `docs/marketing/business_critique.md` and
+  `docs/marketing/pitch_and_marketing_materials.md` — stale bare-path
+  citations in prose (17 and 7 respectively).
+- `store_listing/store_listing.md` and `store_listing/app_content_remaining.md`
+  — same pattern, 2 each.
+- A link written relative to its own directory in
+  `pitch_and_marketing_materials.md` got double-prefixed by the first pass
+  of this fix (`docs/marketing/docs/marketing/marketing.md`) — caught by
+  the same scan and corrected.
+
+**Not touched:** `docs/optimizerplan.md`'s file references use
+`file:///f:/BlankFrameTechnologies/...` absolute Windows paths from a
+different machine's checkout — a different, pre-existing problem, and
+that doc's own header suggests it may already be superseded (its listed
+items match commit `e45bdb3`'s "complete optimizer items"). Left alone
+rather than guessed at.
+
+**Verified:** re-ran the same repo-wide scan after all fixes — 0 broken
+internal links remain across `docs/`, `store_listing/`, and `README.md`.
+
+**Not app behavior** — every fix in this entry is a documentation link,
+no Dart/backend code touched.
+
+---
+
+## 61. User report: "Continue with Google" fails and login screen shows the old logo (2026-09-05) — FIXED
 
 Both symptoms turned out to be exactly the two gaps §51 and §52 had already
 flagged as unverified.
@@ -3476,4 +3637,3 @@ post-fix (the two pre-existing ones plus the new debug one); the local
 session has no physical device or emulator attached), and the splash
 screen's old-crest `AppLogo` — still there, still stale per §52, just not
 part of this report's scope.
-

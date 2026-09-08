@@ -152,18 +152,20 @@ class AutoRideReconciler {
     RidePointEntity? lastPoint;
     final points = <Map<String, Object?>>[];
 
-    for (final fix in fixes) {
-      final speedMs = fix.speedMs < 0 ? 0.0 : fix.speedMs;
-      if (speedMs > maxSpeedMs) maxSpeedMs = speedMs;
+    final samples = <SpeedSample>[];
 
+    for (final fix in fixes) {
+      final rawSpeedMs = fix.speedMs < 0 ? 0.0 : fix.speedMs;
       double? accel;
       double? jerk;
       var distDelta = 0.0;
+      var deltaT = 0.0;
 
       if (lastPoint != null) {
+        deltaT = fix.timestamp.difference(lastPoint.timestamp).inMilliseconds / 1000.0;
         final result = calculator.calculate(
           prev: lastPoint,
-          currentSpeedMs: speedMs,
+          currentSpeedMs: rawSpeedMs,
           currentLat: fix.lat,
           currentLng: fix.lng,
           currentTime: fix.timestamp,
@@ -173,6 +175,28 @@ class AutoRideReconciler {
         distDelta = result.distanceDeltaM;
       }
 
+      final hasValidDeltaT = deltaT >= 0.1;
+      final candidateDerived = hasValidDeltaT ? distDelta / deltaT : 0.0;
+      final isPlausibleDerived = candidateDerived <= SensorConstants.maxPlausibleSpeedMs;
+      final hasRawSpeed = rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
+          rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
+
+      double speedMs;
+      if (hasRawSpeed) {
+        speedMs = rawSpeedMs;
+      } else if (hasValidDeltaT &&
+          isPlausibleDerived &&
+          candidateDerived >= SensorConstants.unreliableSpeedFallbackThresholdMs) {
+        speedMs = candidateDerived;
+      } else {
+        speedMs = 0.0;
+      }
+
+      if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > maxSpeedMs) {
+        maxSpeedMs = speedMs;
+      }
+
+      samples.add((time: fix.timestamp, speedMs: speedMs));
       distanceM += distDelta;
 
       estimator.addGpsSample(
@@ -247,13 +271,19 @@ class AutoRideReconciler {
       if (alert == RideAlert.crash) crashSuspected = true;
     }
 
-    final samples = <SpeedSample>[
-      for (final f in fixes)
-        (time: f.timestamp, speedMs: f.speedMs < 0 ? 0.0 : f.speedMs),
-    ];
     final moving = movingSeconds(samples);
     final duration =
         fixes.last.timestamp.difference(fixes.first.timestamp).inSeconds;
+
+    final avgSpeedMs = averageSpeedMs(
+      distanceM: distanceM,
+      movingSeconds: moving,
+      maxSpeedMs: maxSpeedMs > 0 ? maxSpeedMs : null,
+    );
+
+    if (maxSpeedMs < avgSpeedMs && avgSpeedMs <= SensorConstants.maxPlausibleSpeedMs) {
+      maxSpeedMs = avgSpeedMs;
+    }
 
     final rejection = _reject(
       distanceM: distanceM,
@@ -266,11 +296,7 @@ class AutoRideReconciler {
     return ReconcileOutcome.accepted(ReconciledRide(
       distanceM: distanceM,
       maxSpeedMs: maxSpeedMs,
-      avgSpeedMs: averageSpeedMs(
-        distanceM: distanceM,
-        movingSeconds: moving,
-        maxSpeedMs: maxSpeedMs,
-      ),
+      avgSpeedMs: avgSpeedMs,
       movingSeconds: moving,
       durationSeconds: duration,
       hardBrakeCount: detector.hardBrakeCount,

@@ -56,7 +56,31 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
   @override
   void dispose() {
     _commentController.dispose();
+    _mapController.dispose();
     super.dispose();
+  }
+
+  void _zoomIn() {
+    try {
+      final currentZoom = _mapController.camera.zoom;
+      _mapController.move(_mapController.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
+    } catch (_) {}
+  }
+
+  void _zoomOut() {
+    try {
+      final currentZoom = _mapController.camera.zoom;
+      _mapController.move(_mapController.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
+    } catch (_) {}
+  }
+
+  void _openFullScreenMap(List<LatLng> polyline, SharedRideEntity ride) {
+    if (polyline.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FullScreenRouteMapScreen(ride: ride, polyline: polyline),
+      ),
+    );
   }
 
   Future<void> _loadComments() async {
@@ -220,7 +244,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             final totalPaceSeconds = (ride.durationSeconds / ride.distanceKm).round();
             final paceMin = totalPaceSeconds ~/ 60;
             final paceSec = totalPaceSeconds % 60;
-            return "${paceMin}'${paceSec.toString().padLeft(2, '0')}\" /km";
+            return "$paceMin'${paceSec.toString().padLeft(2, '0')}\" /km";
           }()
         : '--';
 
@@ -328,6 +352,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all,
                 ),
+                onTap: (_, __) => _openFullScreenMap(polyline, ride),
               ),
               children: [
                 TileLayer(
@@ -376,6 +401,39 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               ],
             ),
 
+          // Tap map to expand hint pill
+          if (polyline.isNotEmpty)
+            Positioned(
+              left: 12,
+              top: 12,
+              child: GestureDetector(
+                onTap: () => _openFullScreenMap(polyline, ride),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.open_in_full, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Tap map to expand',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           // Map action controls overlay
           if (polyline.isNotEmpty)
             Positioned(
@@ -385,15 +443,48 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FloatingActionButton.small(
-                    heroTag: 'recenter_shared_map',
+                    heroTag: 'zoom_in_shared_map',
+                    key: const Key('map_zoom_in_button'),
                     backgroundColor: AppColors.surface.withValues(alpha: 0.9),
                     foregroundColor: AppColors.textPrimary,
+                    tooltip: 'Zoom In',
+                    onPressed: _zoomIn,
+                    child: const Icon(Icons.add, size: 20),
+                  ),
+                  const SizedBox(height: 6),
+                  FloatingActionButton.small(
+                    heroTag: 'zoom_out_shared_map',
+                    key: const Key('map_zoom_out_button'),
+                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    foregroundColor: AppColors.textPrimary,
+                    tooltip: 'Zoom Out',
+                    onPressed: _zoomOut,
+                    child: const Icon(Icons.remove, size: 20),
+                  ),
+                  const SizedBox(height: 6),
+                  FloatingActionButton.small(
+                    heroTag: 'recenter_shared_map',
+                    key: const Key('map_recenter_button'),
+                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    foregroundColor: AppColors.textPrimary,
+                    tooltip: 'Recenter Route',
                     onPressed: () => _recenterMap(polyline),
                     child: const Icon(Icons.my_location, size: 18),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
+                  FloatingActionButton.small(
+                    heroTag: 'fullscreen_shared_map',
+                    key: const Key('map_fullscreen_button'),
+                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    foregroundColor: AppColors.textPrimary,
+                    tooltip: 'Fullscreen Map',
+                    onPressed: () => _openFullScreenMap(polyline, ride),
+                    child: const Icon(Icons.fullscreen, size: 20),
+                  ),
+                  const SizedBox(height: 6),
                   FloatingActionButton.small(
                     heroTag: 'save_shared_route',
+                    key: const Key('map_save_route_button'),
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     tooltip: 'Save as Route',
@@ -504,7 +595,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             Expanded(
               child: _MetricCard(
                 title: 'Max Speed',
-                value: '${ride.maxSpeedKmh.toStringAsFixed(1)}',
+                value: ride.maxSpeedKmh.toStringAsFixed(1),
                 unit: 'km/h',
                 icon: Icons.speed,
                 accentColor: AppColors.primary,
@@ -514,7 +605,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             Expanded(
               child: _MetricCard(
                 title: 'Avg Speed',
-                value: '${ride.avgSpeedKmh.toStringAsFixed(1)}',
+                value: ride.avgSpeedKmh.toStringAsFixed(1),
                 unit: 'km/h',
                 icon: Icons.trending_up,
                 accentColor: AppColors.warning,
@@ -528,7 +619,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             Expanded(
               child: _MetricCard(
                 title: 'Distance',
-                value: '${ride.distanceKm.toStringAsFixed(1)}',
+                value: ride.distanceKm.toStringAsFixed(1),
                 unit: 'km',
                 icon: Icons.straighten,
                 accentColor: AppColors.secondary,
@@ -564,7 +655,100 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             ],
           ),
         ),
+        if (ride.polyline.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildRouteInfoCard(ride),
+        ],
       ],
+    );
+  }
+
+  Widget _buildRouteInfoCard(SharedRideEntity ride) {
+    if (ride.polyline.isEmpty) return const SizedBox.shrink();
+    final start = ride.polyline.first;
+    final end = ride.polyline.last;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.route, size: 20, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Route GPS Details',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${ride.polyline.length} track points',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('Start: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textPrimary)),
+              Text(
+                '${start.latitude.toStringAsFixed(4)}°, ${start.longitude.toStringAsFixed(4)}°',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          if (ride.polyline.length > 1) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.danger,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text('Finish: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textPrimary)),
+                Text(
+                  '${end.latitude.toStringAsFixed(4)}°, ${end.longitude.toStringAsFixed(4)}°',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const Key('explore_full_route_button'),
+              onPressed: () => _openFullScreenMap(ride.polyline, ride),
+              icon: const Icon(Icons.fullscreen, size: 18),
+              label: const Text('Explore Full Route on Map'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -804,6 +988,441 @@ class _MetricCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Dedicated full-screen interactive route map explorer.
+///
+/// Gives riders a large map canvas to pinch-zoom, pan, zoom in/out with
+/// dedicated buttons, recenter, and tap on route waypoints to inspect
+/// coordinates and progression details.
+class FullScreenRouteMapScreen extends StatefulWidget {
+  final SharedRideEntity ride;
+  final List<LatLng> polyline;
+
+  const FullScreenRouteMapScreen({
+    super.key,
+    required this.ride,
+    required this.polyline,
+  });
+
+  @override
+  State<FullScreenRouteMapScreen> createState() => _FullScreenRouteMapScreenState();
+}
+
+class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
+  final MapController _controller = MapController();
+  LatLng? _selectedPoint;
+  int? _selectedPointIndex;
+  bool _savingRoute = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _recenter() {
+    if (widget.polyline.isEmpty) return;
+    _controller.fitCamera(
+      CameraFit.coordinates(
+        coordinates: widget.polyline,
+        padding: const EdgeInsets.fromLTRB(40, 90, 40, 220),
+        maxZoom: 16,
+      ),
+    );
+  }
+
+  void _zoomIn() {
+    try {
+      final currentZoom = _controller.camera.zoom;
+      _controller.move(_controller.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
+    } catch (_) {}
+  }
+
+  void _zoomOut() {
+    try {
+      final currentZoom = _controller.camera.zoom;
+      _controller.move(_controller.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
+    } catch (_) {}
+  }
+
+  void _onMapTap(TapPosition tapPosition, LatLng point) {
+    if (widget.polyline.isEmpty) return;
+    const distance = Distance();
+    int closestIndex = 0;
+    double minDistance = double.infinity;
+    for (int i = 0; i < widget.polyline.length; i++) {
+      final d = distance.as(LengthUnit.Meter, point, widget.polyline[i]);
+      if (d < minDistance) {
+        minDistance = d;
+        closestIndex = i;
+      }
+    }
+    setState(() {
+      _selectedPoint = widget.polyline[closestIndex];
+      _selectedPointIndex = closestIndex;
+    });
+  }
+
+  Future<void> _saveRoute() async {
+    final ride = widget.ride;
+    setState(() => _savingRoute = true);
+    try {
+      final name = '${ride.userName}\'s ${ride.bikeName} Route';
+      await RouteRepository().saveRoute(
+        userId: ride.userId,
+        name: name,
+        polyline: widget.polyline,
+        distanceKm: ride.distanceKm,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Route saved to My Routes!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save route: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _savingRoute = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final polyline = widget.polyline;
+    final ride = widget.ride;
+    final start = polyline.isNotEmpty ? polyline.first : null;
+    final finish = polyline.length > 1 ? polyline.last : null;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // 1. Full-screen FlutterMap
+          FlutterMap(
+            mapController: _controller,
+            options: MapOptions(
+              initialCenter: polyline.first,
+              initialZoom: 13,
+              initialCameraFit: CameraFit.coordinates(
+                coordinates: polyline,
+                padding: const EdgeInsets.fromLTRB(40, 90, 40, 220),
+                maxZoom: 16,
+              ),
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
+              onTap: _onMapTap,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.bft.throttleiq',
+              ),
+              if (polyline.length > 1)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: polyline,
+                      color: AppColors.primary,
+                      strokeWidth: 5.0,
+                    ),
+                  ],
+                ),
+              MarkerLayer(
+                markers: [
+                  if (start != null)
+                    Marker(
+                      point: start,
+                      width: 60,
+                      height: 60,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'START',
+                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Icon(Icons.location_on, color: AppColors.success, size: 24),
+                        ],
+                      ),
+                    ),
+                  if (finish != null)
+                    Marker(
+                      point: finish,
+                      width: 60,
+                      height: 60,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.danger,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'FINISH',
+                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Icon(Icons.flag, color: AppColors.danger, size: 24),
+                        ],
+                      ),
+                    ),
+                  if (_selectedPoint != null)
+                    Marker(
+                      point: _selectedPoint!,
+                      width: 36,
+                      height: 36,
+                      child: Icon(Icons.navigation, color: AppColors.warning, size: 28),
+                    ),
+                ],
+              ),
+            ],
+          ),
+
+          // 2. Top Bar
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            ride.bikeName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            '${ride.userName} · ${ride.distanceKm.toStringAsFixed(1)} km',
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  CircleAvatar(
+                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    child: IconButton(
+                      icon: Icon(Icons.close, color: AppColors.textPrimary),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 3. Floating Zoom & Recenter controls
+          Positioned(
+            right: 16,
+            bottom: 210,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'fullscreen_zoom_in',
+                  key: const Key('fullscreen_zoom_in_button'),
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                  foregroundColor: AppColors.textPrimary,
+                  tooltip: 'Zoom In',
+                  onPressed: _zoomIn,
+                  child: const Icon(Icons.add, size: 20),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'fullscreen_zoom_out',
+                  key: const Key('fullscreen_zoom_out_button'),
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                  foregroundColor: AppColors.textPrimary,
+                  tooltip: 'Zoom Out',
+                  onPressed: _zoomOut,
+                  child: const Icon(Icons.remove, size: 20),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'fullscreen_recenter',
+                  key: const Key('fullscreen_recenter_button'),
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                  foregroundColor: AppColors.textPrimary,
+                  tooltip: 'Recenter Route',
+                  onPressed: _recenter,
+                  child: const Icon(Icons.my_location, size: 18),
+                ),
+              ],
+            ),
+          ),
+
+          // 4. Selected waypoint callout badge (if tapped)
+          if (_selectedPoint != null && _selectedPointIndex != null)
+            Positioned(
+              top: 80,
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  border: Border.all(color: AppColors.warning, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.place, color: AppColors.warning, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Waypoint #${_selectedPointIndex! + 1} of ${polyline.length}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Lat: ${_selectedPoint!.latitude.toStringAsFixed(5)}, Lng: ${_selectedPoint!.longitude.toStringAsFixed(5)}',
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                      onPressed: () => setState(() {
+                        _selectedPoint = null;
+                        _selectedPointIndex = null;
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // 5. Bottom Route Telemetry & Action Card
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: Container(
+              padding: const EdgeInsets.all(AppDimensions.paddingMd),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _telemetryMini('Distance', '${ride.distanceKm.toStringAsFixed(1)} km'),
+                      _telemetryMini('Duration', '${ride.durationMinutes} min'),
+                      _telemetryMini('Max Speed', '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
+                      _telemetryMini('Avg Speed', '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(height: 1, color: AppColors.border),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 14, color: AppColors.textTertiary),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${polyline.length} GPS points • Tap route to inspect waypoints',
+                        style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        key: const Key('fullscreen_save_route_button'),
+                        onPressed: _savingRoute ? null : _saveRoute,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: _savingRoute
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(strokeWidth: 1.5),
+                              )
+                            : const Icon(Icons.bookmark_add_outlined, size: 16),
+                        label: const Text('Save Route', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _telemetryMini(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+      ],
     );
   }
 }

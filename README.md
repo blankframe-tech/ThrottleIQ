@@ -72,12 +72,12 @@
    flutter pub get
    ```
 
-3. **Set up Firebase** (see [`docs/SETUP.md`](docs/SETUP.md) for details):
+3. **Set up Firebase** (see [`docs/guides/SETUP.md`](docs/guides/SETUP.md) for details):
    - Create Firebase project at console.firebase.google.com
    - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
    - Place in `app/android/app/` and `app/ios/Runner/` respectively
    - Set up a free Cloudinary account for photo uploads (Firebase Storage
-     isn't used — see `docs/SETUP.md`)
+     isn't used — see `docs/guides/SETUP.md`)
 
 4. **Run**:
    ```bash
@@ -110,12 +110,12 @@ Done! Ride is saved to local database and will auto-sync to cloud on next reconn
 ┌──────────────────▼──────────────────────────────────────┐
 │  Firebase + Cloudinary Backend                          │
 │  ├─ Firestore: user data, rides, bikes, POIs, reviews  │
-│  ├─ Cloudinary: photo uploads (not Firebase Storage —  │
-│  │   Storage needs the Blaze plan; see docs/SETUP.md)  │
+│  ├─ Cloudinary: photo uploads (not Firebase Storage —   │
+│  │   Storage needs Blaze plan; see guides/SETUP.md)     │
 │  ├─ Auth: email/password + Google sign-in              │
 │  └─ Cloud Functions: written, can't deploy on Spark    │
-│      (crash-notification escalation — see              │
-│      docs/backend_options.md)                           │
+│      (crash-notification escalation — see               │
+│      architecture/backend_options.md)                   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -154,14 +154,14 @@ flutter test --coverage
 
 ### Test Suite
 
-**847/847 green** as of 2026-08-28 (see `docs/HANDOFF_Document.md`'s Key
+**847/847 green** as of 2026-08-28 (see `docs/planning/HANDOFF_Document.md`'s Key
 facts table for how that grew). Pure-logic calculators (motion, crash
 detection, jerk/acceleration, privacy-zone clipping, rating aggregation) are
 fixture-tested against realistic data — real coordinates (Dhaka,
 Chattogram), sensor thresholds, known distances. DAOs run against real
 in-memory SQLite (`sqflite_common_ffi`), not mocks — a prior deadlock bug
 shipped specifically because map-based fakes couldn't see real transaction
-semantics (`docs/Issues.md` §7). Firestore rules have their own emulator
+semantics (`docs/planning/Issues.md` §7). Firestore rules have their own emulator
 suite: `npm run test:rules` from `scripts/`.
 
 **Example: Crash Detection**
@@ -254,15 +254,15 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 Everything lives in [`docs/`](docs/README.md) — see that file for the full
 map. The essentials:
 
-- [`docs/HANDOFF_Document.md`](docs/HANDOFF_Document.md) — current status,
+- [`docs/planning/HANDOFF_Document.md`](docs/planning/HANDOFF_Document.md) — current status,
   the pre-launch to-do list, and the feature backlog. Start here.
-- [`docs/features.md`](docs/features.md) — what a signed-in user can
+- [`docs/planning/features.md`](docs/planning/features.md) — what a signed-in user can
   actually do today, screen by screen.
-- [`docs/Issues.md`](docs/Issues.md) — the dated record of every bug found
+- [`docs/planning/Issues.md`](docs/planning/Issues.md) — the dated record of every bug found
   and fixed, cited by section number (`§N`) from everywhere else.
-- [`docs/SETUP.md`](docs/SETUP.md) — Firebase setup, Cloudinary, Android
+- [`docs/guides/SETUP.md`](docs/guides/SETUP.md) — Firebase setup, Cloudinary, Android
   signing, iOS certificates.
-- [`docs/assumptions.md`](docs/assumptions.md) — non-obvious judgement calls
+- [`docs/architecture/assumptions.md`](docs/architecture/assumptions.md) — non-obvious judgement calls
   and why they were made.
 
 ---
@@ -290,21 +290,21 @@ In short: You can **view and audit** the source code, but cannot copy, fork, or 
 
 ## 🗺️ Roadmap
 
-- **Now**: Play Store + App Store submission (see `docs/HANDOFF_Document.md`'s
+- **Now**: Play Store + App Store submission (see `docs/planning/HANDOFF_Document.md`'s
   "Play Store & App Store" section for the concrete step-by-step).
 - **Soon**: Crash-alert SMS/email escalation (code is written, blocked on
-  the Firebase Blaze billing plan — see `docs/backend_options.md`), turn-by-turn
+  the Firebase Blaze billing plan — see `docs/architecture/backend_options.md`), turn-by-turn
   route navigation tuning, full Bangla localization.
 - **Backlog**: lean-angle tracking, weekly riding reports, clubs & events,
-  a curvy-route planner with real routing — see `docs/HANDOFF_Document.md`
+  a curvy-route planner with real routing — see `docs/planning/HANDOFF_Document.md`
   Part 2 for the full, competitor-researched feature map.
 
 ---
 
 ## 📞 Support & Feedback
 
-- **Report bugs**: tracked in `docs/Issues.md`
-- **Feature requests / backlog**: `docs/HANDOFF_Document.md` Part 2
+- **Report bugs**: tracked in `docs/planning/Issues.md`
+- **Feature requests / backlog**: `docs/planning/HANDOFF_Document.md` Part 2
 - **Privacy questions**: `public/privacy.html`
 
 ---

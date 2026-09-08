@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../../../core/constants/sensor_constants.dart';
 import 'average_speed.dart';
 
 /// One GPS fix as it comes back off disk — the only columns the resume path
@@ -76,11 +77,15 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
   var distanceM = 0.0;
   var maxSpeedMs = 0.0;
   var speedSum = 0.0;
+  var validSpeedCount = 0;
 
   for (var i = 0; i < fixes.length; i++) {
     final speed = fixes[i].speedMs;
-    speedSum += speed;
-    if (speed > maxSpeedMs) maxSpeedMs = speed;
+    if (speed.isFinite && speed >= 0 && speed <= SensorConstants.maxPlausibleSpeedMs) {
+      speedSum += speed;
+      validSpeedCount++;
+      if (speed > maxSpeedMs) maxSpeedMs = speed;
+    }
     if (i > 0) {
       distanceM += haversineMeters(
         lat1: fixes[i - 1].lat,
@@ -91,14 +96,45 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
     }
   }
 
+  // If stored fixes lacked Doppler speed (speedMs == 0), derive from consecutive fixes
+  if (maxSpeedMs <= 0 && distanceM > 0 && fixes.length >= 2) {
+    var derivedSum = 0.0;
+    var derivedCount = 0;
+    for (var i = 1; i < fixes.length; i++) {
+      final dt = fixes[i].time.difference(fixes[i - 1].time).inMilliseconds / 1000.0;
+      if (dt >= 0.1) {
+        final d = haversineMeters(
+          lat1: fixes[i - 1].lat,
+          lng1: fixes[i - 1].lng,
+          lat2: fixes[i].lat,
+          lng2: fixes[i].lng,
+        );
+        // Ignore stationary jitter (< 1.5m)
+        if (d < 1.5) continue;
+        final derived = d / dt;
+        if (derived <= SensorConstants.maxPlausibleSpeedMs) {
+          derivedSum += derived;
+          derivedCount++;
+          if (derived > maxSpeedMs) maxSpeedMs = derived;
+        }
+      }
+    }
+    if (derivedCount > 0) {
+      speedSum = derivedSum;
+      validSpeedCount = derivedCount;
+    }
+  }
+
+  final movingSecs = movingSeconds(
+    [for (final f in fixes) (time: f.time, speedMs: f.speedMs)],
+  );
+
   return RideResumeAggregates(
     distanceM: distanceM,
     maxSpeedMs: maxSpeedMs,
     speedSum: speedSum,
-    speedCount: fixes.length,
-    movingSeconds: movingSeconds(
-      [for (final f in fixes) (time: f.time, speedMs: f.speedMs)],
-    ),
+    speedCount: validSpeedCount > 0 ? validSpeedCount : fixes.length,
+    movingSeconds: movingSecs,
     firstFixTime: fixes.first.time,
     lastFixTime: fixes.last.time,
   );

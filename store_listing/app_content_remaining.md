@@ -62,7 +62,7 @@ of anything else in the app.
 ## Government apps
 
 - **"Is this a government app?"** → **No.** ThrottleIQ is an independent,
-  solo-developer project (confirmed in `docs/HANDOFF_Document.md`'s publisher
+  solo-developer project (confirmed in `docs/planning/HANDOFF_Document.md`'s publisher
   identity note — registered as an individual, not a company or agency).
 
 ## Financial features
@@ -110,5 +110,5 @@ are separate from the description/screenshots pushed via the API.)
 **Still open after this doc**: the Data Safety form and Content rating
 questionnaire (`data_safety_and_permissions.md`) are the two Console-UI-only
 flows explicitly called out as not-yet-done in
-`docs/HANDOFF_Document.md`'s Play Store checklist item 5. Everything in this
+`docs/planning/HANDOFF_Document.md`'s Play Store checklist item 5. Everything in this
 file is new ground beyond what that checklist already tracked.

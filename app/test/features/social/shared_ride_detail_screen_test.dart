@@ -285,4 +285,60 @@ void main() {
 
     expect(find.text('No GPS track available for this ride'), findsOneWidget);
   });
+
+  testWidgets('SharedRideDetailScreen provides zoom controls and route GPS details', (tester) async {
+    await tester.pumpWidget(createWidgetUnderTest(testRide));
+    await tester.pumpAndSettle();
+
+    // Map zoom and action controls
+    expect(find.byKey(const Key('map_zoom_in_button')), findsOneWidget);
+    expect(find.byKey(const Key('map_zoom_out_button')), findsOneWidget);
+    expect(find.byKey(const Key('map_recenter_button')), findsOneWidget);
+    expect(find.byKey(const Key('map_fullscreen_button')), findsOneWidget);
+    expect(find.text('Tap map to expand'), findsOneWidget);
+
+    // Tap zoom buttons to verify they respond without exception
+    await tester.tap(find.byKey(const Key('map_zoom_in_button')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('map_zoom_out_button')));
+    await tester.pump();
+
+    // Route GPS details card
+    expect(find.text('Route GPS Details'), findsOneWidget);
+    expect(find.text('3 track points'), findsOneWidget);
+    expect(find.textContaining('23.8103°'), findsOneWidget);
+    expect(find.textContaining('23.8200°'), findsOneWidget);
+  });
+
+  testWidgets('Tapping fullscreen button opens FullScreenRouteMapScreen with interactive controls', (tester) async {
+    await tester.pumpWidget(createWidgetUnderTest(testRide));
+    await tester.pumpAndSettle();
+
+    // Tap fullscreen button on the embedded map
+    await tester.tap(find.byKey(const Key('map_fullscreen_button')));
+    await tester.pumpAndSettle();
+
+    // Verify FullScreenRouteMapScreen is open
+    expect(find.byType(FullScreenRouteMapScreen), findsOneWidget);
+    expect(find.text('START'), findsOneWidget);
+    expect(find.text('FINISH'), findsOneWidget);
+    expect(find.byKey(const Key('fullscreen_zoom_in_button')), findsOneWidget);
+    expect(find.byKey(const Key('fullscreen_zoom_out_button')), findsOneWidget);
+    expect(find.byKey(const Key('fullscreen_recenter_button')), findsOneWidget);
+    expect(find.text('3 GPS points • Tap route to inspect waypoints'), findsOneWidget);
+
+    // Zoom in and out in fullscreen
+    await tester.tap(find.byKey(const Key('fullscreen_zoom_in_button')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('fullscreen_zoom_out_button')));
+    await tester.pump();
+
+    // Close fullscreen view
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    // Back on detail screen
+    expect(find.byType(FullScreenRouteMapScreen), findsNothing);
+    expect(find.byType(SharedRideDetailScreen), findsOneWidget);
+  });
 }
