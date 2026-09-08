@@ -18,6 +18,21 @@ import '../providers/profile_providers.dart';
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
+  /// Shows a lightweight bottom sheet that prompts the user to write their
+  /// first bio. Called by the onboarding tour's final (Profile) slide.
+  ///
+  /// The sheet has a single multi-line bio field and a "Save bio" button.
+  /// It is intentionally minimal — full profile editing is still at
+  /// `/profile/edit`. Dismissable by dragging down or tapping outside.
+  static void showBioPromptSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _BioPromptSheet(),
+    );
+  }
+
   @override
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
@@ -260,6 +275,171 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bio-prompt bottom sheet
+// Shown by EditProfileScreen.showBioPromptSheet() at the end of onboarding.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BioPromptSheet extends ConsumerStatefulWidget {
+  const _BioPromptSheet();
+
+  @override
+  ConsumerState<_BioPromptSheet> createState() => _BioPromptSheetState();
+}
+
+class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
+  final _bioCtrl = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _bioCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveBio() async {
+    final bio = _bioCtrl.text.trim();
+    if (bio.isEmpty) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final uid = ref.read(currentUserProvider)?.uid;
+      if (uid != null) {
+        await ProfileRepository().updateProfile(uid: uid, bio: bio);
+      }
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Icon + heading
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE91E63).withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person, color: Color(0xFFE91E63), size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tell riders about yourself',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'A good bio gets you more followers.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Bio field
+          TextField(
+            controller: _bioCtrl,
+            autofocus: true,
+            maxLines: 3,
+            maxLength: 160,
+            style: TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'e.g. "FZ-S rider from Dhaka. Weekend tourer. Coffee & corners."',
+              hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: const Color(0xFFE91E63), width: 2),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Buttons
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Skip', style: TextStyle(color: AppColors.textTertiary)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _saveBio,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE91E63),
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Save bio'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
