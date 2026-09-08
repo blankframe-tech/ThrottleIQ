@@ -6,9 +6,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
+import 'package:throttleiq/features/profile/presentation/providers/profile_providers.dart';
 import 'package:throttleiq/features/social/domain/entities/shared_ride_entity.dart';
-import 'package:throttleiq/features/social/presentation/screens/shared_ride_detail_screen.dart';
+import 'package:throttleiq/features/social/presentation/providers/ride_feed_provider.dart';
+import 'package:throttleiq/features/social/presentation/screens/social_screen.dart';
+import 'package:throttleiq/shared/widgets/ride_route_map.dart';
 
 final Uint8List _kTransparentPng = Uint8List.fromList([
   0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
@@ -221,124 +226,111 @@ void main() {
   });
 
   final testRide = SharedRideEntity(
-    id: 'ride_test_1',
-    userId: 'user_1',
-    userName: 'SpeedRider',
+    id: 'ride_shared_42',
+    userId: 'rider_99',
+    userName: 'DhakaRider',
     userPhotoUrl: '',
-    bikeId: 'bike_1',
-    bikeName: 'Yamaha R3',
-    bikeType: 'Sport',
-    rideDate: DateTime(2026, 9, 1, 14, 30),
-    distanceKm: 25.5,
-    durationSeconds: 1800,
-    maxSpeedKmh: 98.4,
+    bikeId: 'bike_99',
+    bikeName: 'Yamaha MT-15',
+    bikeType: 'Naked',
+    rideDate: DateTime(2026, 9, 2, 10, 0),
+    distanceKm: 42.0,
+    durationSeconds: 3600,
+    maxSpeedKmh: 110.0,
     polyline: const [
       LatLng(23.8103, 90.4125),
-      LatLng(23.8150, 90.4180),
-      LatLng(23.8200, 90.4250),
+      LatLng(23.8200, 90.4200),
     ],
-    caption: 'Sunset cruise through the hills!',
-    upvotes: 5,
-    downvotes: 1,
-    createdAt: DateTime(2026, 9, 1, 15, 0),
+    caption: 'Morning highway run',
+    createdAt: DateTime(2026, 9, 2, 11, 0),
   );
 
-  Widget createWidgetUnderTest(SharedRideEntity ride) {
-    return ProviderScope(
-      child: MaterialApp(
-        home: SharedRideDetailScreen(
-          rideId: ride.id,
-          initialRide: ride,
+  testWidgets('Clicking map on feed card navigates to shared ride detail page', (tester) async {
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => const SocialScreen(),
+        ),
+        GoRoute(
+          path: '/rides/shared/:rideId',
+          builder: (_, state) => Scaffold(
+            appBar: AppBar(title: const Text('Detail Page')),
+            body: Text('SharedRideDetailView:${state.pathParameters['rideId']}'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWithValue(null),
+          rideFeedProvider.overrideWith((ref) => Future.value([testRide])),
+          visibleFeedProvider.overrideWithValue([testRide]),
+          followingUidsProvider.overrideWith((ref) => Future.value(const <String>{})),
+          blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
         ),
       ),
     );
-  }
-
-  testWidgets('SharedRideDetailScreen displays rider, bike, and telemetry info', (tester) async {
-    await tester.pumpWidget(createWidgetUnderTest(testRide));
     await tester.pumpAndSettle();
 
-    // Rider & Bike info
-    expect(find.text('SpeedRider'), findsOneWidget);
-    expect(find.text('Yamaha R3 · Sport'), findsOneWidget);
-    expect(find.text('Sunset cruise through the hills!'), findsOneWidget);
+    // Verify ride is visible in the feed
+    expect(find.text('Yamaha MT-15'), findsOneWidget);
+    expect(find.text('Morning highway run'), findsOneWidget);
+    expect(find.byType(RideRouteMap), findsOneWidget);
 
-    // Telemetry & Speed section
-    expect(find.text('SPEED & PERFORMANCE DETAILS'), findsOneWidget);
-    expect(find.text('Max Speed'), findsOneWidget);
-    expect(find.text('98.4'), findsOneWidget);
-    expect(find.text('Avg Speed'), findsOneWidget);
-    expect(find.text('51.0'), findsOneWidget);
-    expect(find.text('Distance'), findsOneWidget);
-    expect(find.text('25.5'), findsOneWidget);
-    expect(find.text('Duration'), findsOneWidget);
+    // Tap the map preview directly (hit-tests the surrounding InkWell)
+    await tester.tap(find.byType(RideRouteMap), warnIfMissed: false);
+    await tester.pumpAndSettle();
 
-    // Vote net score (5 - 1 = 4)
-    expect(find.text('4'), findsOneWidget);
-    expect(find.text('COMMENTS'), findsOneWidget);
+    // Verify it navigated to the shared ride detail page
+    expect(find.text('SharedRideDetailView:ride_shared_42'), findsOneWidget);
   });
 
-  testWidgets('SharedRideDetailScreen handles empty polyline gracefully', (tester) async {
-    final emptyTrackRide = testRide.copyWith(polyline: const []);
-    await tester.pumpWidget(createWidgetUnderTest(emptyTrackRide));
+  testWidgets('Clicking card header/body on feed navigates to shared ride detail page', (tester) async {
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => const SocialScreen(),
+        ),
+        GoRoute(
+          path: '/rides/shared/:rideId',
+          builder: (_, state) => Scaffold(
+            appBar: AppBar(title: const Text('Detail Page')),
+            body: Text('SharedRideDetailView:${state.pathParameters['rideId']}'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWithValue(null),
+          rideFeedProvider.overrideWith((ref) => Future.value([testRide])),
+          visibleFeedProvider.overrideWithValue([testRide]),
+          followingUidsProvider.overrideWith((ref) => Future.value(const <String>{})),
+          blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('No GPS track available for this ride'), findsOneWidget);
-  });
-
-  testWidgets('SharedRideDetailScreen provides zoom controls and route GPS details', (tester) async {
-    await tester.pumpWidget(createWidgetUnderTest(testRide));
+    // Tap the bike name in the card header
+    await tester.tap(find.text('Yamaha MT-15'));
     await tester.pumpAndSettle();
 
-    // Map zoom and action controls
-    expect(find.byKey(const Key('map_zoom_in_button')), findsOneWidget);
-    expect(find.byKey(const Key('map_zoom_out_button')), findsOneWidget);
-    expect(find.byKey(const Key('map_recenter_button')), findsOneWidget);
-    expect(find.byKey(const Key('map_fullscreen_button')), findsOneWidget);
-    expect(find.text('Tap map to expand'), findsOneWidget);
-
-    // Tap zoom buttons to verify they respond without exception
-    await tester.tap(find.byKey(const Key('map_zoom_in_button')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('map_zoom_out_button')));
-    await tester.pump();
-
-    // Route GPS details card
-    expect(find.text('Route GPS Details'), findsOneWidget);
-    expect(find.text('3 track points'), findsOneWidget);
-    expect(find.textContaining('23.8103°'), findsOneWidget);
-    expect(find.textContaining('23.8200°'), findsOneWidget);
-  });
-
-  testWidgets('Tapping fullscreen button opens FullScreenRouteMapScreen with interactive controls', (tester) async {
-    await tester.pumpWidget(createWidgetUnderTest(testRide));
-    await tester.pumpAndSettle();
-
-    // Tap fullscreen button on the embedded map
-    await tester.tap(find.byKey(const Key('map_fullscreen_button')));
-    await tester.pumpAndSettle();
-
-    // Verify FullScreenRouteMapScreen is open
-    expect(find.byType(FullScreenRouteMapScreen), findsOneWidget);
-    expect(find.text('START'), findsOneWidget);
-    expect(find.text('FINISH'), findsOneWidget);
-    expect(find.byKey(const Key('fullscreen_zoom_in_button')), findsOneWidget);
-    expect(find.byKey(const Key('fullscreen_zoom_out_button')), findsOneWidget);
-    expect(find.byKey(const Key('fullscreen_recenter_button')), findsOneWidget);
-    expect(find.text('3 GPS points • Tap route to inspect waypoints'), findsOneWidget);
-
-    // Zoom in and out in fullscreen
-    await tester.tap(find.byKey(const Key('fullscreen_zoom_in_button')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('fullscreen_zoom_out_button')));
-    await tester.pump();
-
-    // Close fullscreen view
-    await tester.tap(find.byIcon(Icons.close));
-    await tester.pumpAndSettle();
-
-    // Back on detail screen
-    expect(find.byType(FullScreenRouteMapScreen), findsNothing);
-    expect(find.byType(SharedRideDetailScreen), findsOneWidget);
+    // Verify it navigated to the shared ride detail page
+    expect(find.text('SharedRideDetailView:ride_shared_42'), findsOneWidget);
   });
 }

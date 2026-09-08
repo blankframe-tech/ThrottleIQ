@@ -61,7 +61,8 @@ class RideRouteMap extends StatelessWidget {
       borderRadius: BorderRadius.circular(radius),
       child: SizedBox(
         height: height,
-        child: FlutterMap(
+        child: IgnorePointer(
+          child: FlutterMap(
           options: MapOptions(
             initialCenter: polyline.first,
             initialZoom: polyline.length > 1 ? 13 : 15,
@@ -105,6 +106,7 @@ class RideRouteMap extends StatelessWidget {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

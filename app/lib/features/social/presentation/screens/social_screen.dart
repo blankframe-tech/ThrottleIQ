@@ -511,11 +511,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            InkWell(
+              onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             child: Padding(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
               child: Column(
@@ -547,8 +549,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           ],
                         ),
                       ),
-                      Text(ride.userName,
-                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      GestureDetector(
+                        onTap: () => context.push('/profile/${ride.userId}'),
+                        child: Text(
+                          ride.userName,
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                        ),
+                      ),
                       PopupMenuButton<String>(
                         icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
                         padding: EdgeInsets.zero,
@@ -664,7 +671,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
             ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   /// Media strip: the route map is always shown (Strava-style). Rider photos,
@@ -676,6 +684,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
   /// Multiple photos (up to 3) render as a collage ([PhotoCollage]) beside the
   /// map rather than a swipeable strip, showing all photos simultaneously at a
   /// glance. Tapping any photo opens an interactive full-screen gallery lightbox.
+  /// Tapping the map opens the dedicated shared ride details screen.
   Widget _buildMedia(SharedRideEntity ride) {
     final hasPhotos = ride.photoUrls.isNotEmpty;
     final mediaHeight = hasPhotos ? 200.0 : 180.0;
@@ -686,45 +695,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
       radius: AppDimensions.radiusLg,
     );
 
-    final map = GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (_) => Dialog.fullscreen(
-            backgroundColor: AppColors.background,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: RideRouteMap(
-                    polyline: ride.polyline,
-                    height: double.infinity,
-                    radius: 0,
-                  ),
-                ),
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: IconButton(
-                        icon: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface.withValues(alpha: 0.8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.close, color: AppColors.textPrimary),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    final map = InkWell(
+      onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       child: buildMap(mediaHeight),
     );
 
