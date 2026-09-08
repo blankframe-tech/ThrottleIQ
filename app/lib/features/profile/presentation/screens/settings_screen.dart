@@ -15,6 +15,7 @@ import '../providers/speed_alert_provider.dart';
 import '../widgets/appearance_picker.dart';
 import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
 import '../../../auth/presentation/widgets/tour_floating_banner.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -484,6 +485,50 @@ class SettingsScreen extends ConsumerWidget {
                                   color: AppColors.textPrimary)),
                           const SizedBox(height: 2),
                           Text('Replay interactive feature guides and safety walkthrough',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: AppColors.textTertiary, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+          // ── Bug Report ─────────────────────────────────────────────────
+          Material(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => BugReportSheet.show(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.bug_report_outlined,
+                        color: AppColors.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Send Bug Report',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text('Something broken? Let the team know',
                               style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary)),

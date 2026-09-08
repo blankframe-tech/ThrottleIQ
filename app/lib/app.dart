@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'core/cloud/sync_manager.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
@@ -12,6 +13,7 @@ import 'features/ride/data/repositories/auto_ride_reconciler_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/poi_directory/presentation/providers/places_provider.dart';
 import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 import 'l10n/app_localizations.dart';
@@ -26,6 +28,8 @@ class ThrottleIQApp extends ConsumerStatefulWidget {
 
 class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
     with WidgetsBindingObserver {
+  StreamSubscription<ServiceStatus>? _locationServiceSub;
+
   @override
   void initState() {
     super.initState();
@@ -61,10 +65,33 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       if (!mounted) return;
       ref.read(routerProvider).go('/settings');
     });
+
+    // Watches the OS location-service toggle. When the rider turns GPS back on
+    // after launching the app with it off, all location-dependent providers
+    // that entered an error state need to be reset so they retry immediately —
+    // otherwise the rider must force-quit and reopen the app.
+    //
+    // We guard on ServiceStatus.enabled only (not disabled): disabling while
+    // the app is open is handled per-screen already (geolocator stream errors),
+    // and we don't want to fire redundant invalidations on every status change.
+    _locationServiceSub = Geolocator.getServiceStatusStream().listen((status) {
+      if (status == ServiceStatus.enabled && mounted) {
+        _invalidateLocationProviders();
+      }
+    });
+  }
+
+  /// Clears the error state of every provider that depends on device GPS so
+  /// they re-run their checks immediately when the service becomes available.
+  void _invalidateLocationProviders() {
+    ref.invalidate(currentPositionProvider);
+    ref.invalidate(nearbyPlacesProvider);
+    ref.invalidate(autoTrackingEnabledProvider);
   }
 
   @override
   void dispose() {
+    _locationServiceSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -85,6 +112,9 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
     // reflect that immediately, not only after they next toggle it — see
     // AutoTrackingNotifier.build for the actual re-check this triggers.
     ref.invalidate(autoTrackingEnabledProvider);
+    // Also reset location-dependent providers so the Places tab and any other
+    // GPS feature recovers without a restart after the rider enables location.
+    _invalidateLocationProviders();
   }
 
   Future<void> _reconcileDetectedRides() async {

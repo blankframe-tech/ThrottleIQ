@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
@@ -51,7 +53,11 @@ class ChatListScreen extends ConsumerWidget {
       ),
       body: chatsAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: AppColors.danger))),
+        error: (e, _) => ErrorView(
+          error: e,
+          showBugReport: true,
+          onRetry: () => ref.invalidate(userChatsProvider),
+        ),
         data: (chats) {
           if (chats.isEmpty) {
             return Center(
@@ -179,7 +185,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = '$e';
+          _error = mapFirestoreError(e);
           _searching = false;
         });
       }
@@ -198,7 +204,9 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mapFirestoreError(e))),
+        );
       }
     }
   }
@@ -259,7 +267,19 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             if (_searching)
               const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
             else if (_error != null)
-              Center(child: Text('Search failed: $_error', style: TextStyle(color: AppColors.danger)))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.danger, fontSize: 13),
+                    ),
+                  ],
+                ),
+              )
             else if (_results.isEmpty && _searchController.text.isNotEmpty)
               Center(
                 child: Padding(

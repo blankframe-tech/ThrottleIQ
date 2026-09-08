@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../data/repositories/place_repository.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../data/services/overpass_service.dart';
@@ -22,6 +23,10 @@ const double placesSearchRadiusKm = 25;
 /// (`ride_recording_provider.dart`), but as a single point-in-time read
 /// (`getCurrentPosition`) rather than a continuous stream — the Places tab
 /// and the add-place form only need one fix, not live tracking.
+///
+/// Throws a user-friendly string (via [mapLocationError]) rather than a raw
+/// platform exception so every `.when(error:)` branch that consumes this can
+/// show the message directly without its own mapping layer.
 final currentPositionProvider = FutureProvider<Position>((ref) async {
   var permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
@@ -29,12 +34,16 @@ final currentPositionProvider = FutureProvider<Position>((ref) async {
   }
   if (permission == LocationPermission.denied ||
       permission == LocationPermission.deniedForever) {
-    throw Exception('Location permission is required to find nearby places.');
+    throw Exception(
+      'Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.',
+    );
   }
 
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    throw Exception('Location services are disabled. Please enable GPS.');
+    throw Exception(
+      'Location is turned off. Enable GPS in your device settings to use this feature.',
+    );
   }
 
   return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);

@@ -72,3 +72,38 @@ String mapFirebaseAuthError(dynamic error) {
   // leaks nothing internal.
   return 'Something went wrong. Please try again.';
 }
+
+/// Turns a location/GPS error into something a rider can act on.
+///
+/// Covers permission-denied, service-disabled, and generic exceptions thrown
+/// by [Geolocator] or the Places provider when the device GPS stack isn't
+/// ready.
+String mapLocationError(Object error) {
+  final raw = error.toString().toLowerCase();
+  if (raw.contains('service') && raw.contains('disabled') ||
+      raw.contains('services are disabled') ||
+      raw.contains('location services are off')) {
+    return 'Location is turned off. Enable GPS in your device settings to use this feature.';
+  }
+  if (raw.contains('permission') ||
+      raw.contains('denied') ||
+      raw.contains('required to find')) {
+    return 'Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.';
+  }
+  return 'Could not get your location. Check that GPS is on and try again.';
+}
+
+/// Returns true when [error] is a "location services off" error, so the UI
+/// can offer an "Open Location Settings" button instead of a generic retry.
+bool isLocationServicesError(Object error) {
+  final raw = error.toString().toLowerCase();
+  return (raw.contains('service') && raw.contains('disabled')) ||
+      raw.contains('services are disabled') ||
+      raw.contains('location services are off');
+}
+
+/// Returns true when [error] is a location permission denial.
+bool isLocationPermissionError(Object error) {
+  final raw = error.toString().toLowerCase();
+  return raw.contains('permission') || raw.contains('denied');
+}

@@ -11,6 +11,7 @@ import '../../../../core/constants/bike_colors.dart';
 import '../../../../core/constants/motorcycle_quotes.dart';
 import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/utils/greetings.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/presentation/widgets/ride_mode_selector.dart';
@@ -175,6 +176,17 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                                   ),
                                 ),
                               ],
+                              const SizedBox(height: 4),
+                              TextButton.icon(
+                                onPressed: () => BugReportSheet.show(context),
+                                icon: const Icon(Icons.bug_report_outlined, size: 14),
+                                label: const Text('Report a Problem'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.textTertiary,
+                                  textStyle: const TextStyle(fontSize: 12),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
                             ],
                           ),
                         ),

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
@@ -129,29 +132,93 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
               child: placesAsync.when(
                 loading: () =>
                     Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingLg),
-                    child: Text(
-                      '$e',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.danger),
+                error: (e, _) {
+                  final isServiceOff = isLocationServicesError(e);
+                  final isPermissionDenied = isLocationPermissionError(e);
+                  final isLocationIssue = isServiceOff || isPermissionDenied;
+                  final message = isLocationIssue
+                      ? mapLocationError(e)
+                      : mapFirestoreError(e);
+
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isLocationIssue
+                                ? Icons.location_off_outlined
+                                : Icons.error_outline_rounded,
+                            size: 48,
+                            color: AppColors.textTertiary,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            message,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (isServiceOff)
+                            ElevatedButton.icon(
+                              onPressed: () => Geolocator.openLocationSettings(),
+                              icon: const Icon(Icons.location_on_outlined, size: 18),
+                              label: const Text('Turn on Location'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                            )
+                          else if (isPermissionDenied)
+                            ElevatedButton.icon(
+                              onPressed: () => Geolocator.openAppSettings(),
+                              icon: const Icon(Icons.settings_outlined, size: 18),
+                              label: const Text('Open Settings'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                            )
+                          else
+                            OutlinedButton(
+                              onPressed: () {
+                                ref.invalidate(currentPositionProvider);
+                                ref.invalidate(nearbyPlacesProvider(_selectedCategory));
+                              },
+                              child: const Text('Try again'),
+                            ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: () => BugReportSheet.show(context),
+                            icon: const Icon(Icons.bug_report_outlined, size: 16),
+                            label: const Text('Report a Problem'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.textTertiary,
+                              textStyle: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
                 data: (places) {
                   if (places.isEmpty) {
                     return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(AppDimensions.paddingLg),
+                        padding: const EdgeInsets.all(AppDimensions.paddingLg),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.place_outlined, size: 64, color: AppColors.textTertiary),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text('No places nearby yet',
                                 style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Add a garage, fuel pump, parts shop, or biker cafe to help other riders.',
                               textAlign: TextAlign.center,

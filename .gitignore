@@ -91,7 +91,11 @@ key.properties
 
 # Google Cloud service account keys (NEVER commit — grants Play Publisher API access)
 /secrets/
+/secret/
 *.json.key
+
+# Local debug files
+bugs/
 
 # IDE
 .vscode/

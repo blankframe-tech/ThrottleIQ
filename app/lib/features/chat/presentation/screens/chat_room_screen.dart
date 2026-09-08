@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
@@ -62,7 +65,15 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to send: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(mapFirestoreError(e)),
+            action: SnackBarAction(
+              label: 'Report',
+              onPressed: () => BugReportSheet.show(context),
+            ),
+          ),
+        );
       }
     }
   }
@@ -105,7 +116,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           Expanded(
             child: messagesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => ErrorView(
+                error: e,
+                showBugReport: true,
+                onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatId)),
+              ),
               data: (messages) {
                 if (messages.isEmpty) {
                   return Center(child: Text('Say hi!', style: TextStyle(color: AppColors.textSecondary)));

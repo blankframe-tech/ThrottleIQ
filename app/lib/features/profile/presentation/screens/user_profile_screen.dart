@@ -7,7 +7,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/utils/badges.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
@@ -118,7 +120,7 @@ class UserProfileScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.lock_outline, size: 48, color: AppColors.textTertiary),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text('This profile is private',
                     style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
               ],
@@ -244,7 +246,15 @@ class _ProfileBody extends ConsumerWidget {
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(mapFirestoreError(e)),
+                              action: SnackBarAction(
+                                label: 'Report',
+                                onPressed: () => BugReportSheet.show(context),
+                              ),
+                            ),
+                          );
                         }
                       }
                     },

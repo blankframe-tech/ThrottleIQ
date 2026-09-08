@@ -10,6 +10,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
 import 'route_detail_screen.dart' show turnIcon;
@@ -106,11 +107,11 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
         ),
       ).listen(_onPosition, onError: (Object e) {
         if (!mounted) return;
-        setState(() => _locationError = 'Location error: $e');
+        setState(() => _locationError = mapLocationError(e));
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _locationError = 'Could not start location: $e');
+      setState(() => _locationError = mapLocationError(e));
     }
   }
 
