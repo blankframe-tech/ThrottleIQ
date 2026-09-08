@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../screens/onboarding_manifest.dart';
@@ -392,11 +391,11 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                               style: TextStyle(fontSize: 10, color: Colors.white60),
                             ),
                             const SizedBox(height: 4),
-                            Row(
+                            const Row(
                               children: [
-                                const Icon(Icons.speed, size: 11, color: Colors.white38),
-                                const SizedBox(width: 4),
-                                const Text(
+                                Icon(Icons.speed, size: 11, color: Colors.white38),
+                                SizedBox(width: 4),
+                                Text(
                                   '4,280 km logged',
                                   style: TextStyle(fontSize: 10, color: Colors.white70),
                                 ),
@@ -419,11 +418,11 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(Icons.build_outlined, size: 12, color: Colors.amberAccent),
-                            const SizedBox(width: 6),
-                            const Text(
+                            Icon(Icons.build_outlined, size: 12, color: Colors.amberAccent),
+                            SizedBox(width: 6),
+                            Text(
                               'Oil & Filter Due in 720 km',
                               style: TextStyle(fontSize: 10, color: Colors.white70),
                             ),
@@ -564,13 +563,13 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: Colors.white54,
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Text('AVG 52 · ', style: TextStyle(fontSize: 9, color: Colors.white38)),
                       Text('TOP 124', style: TextStyle(fontSize: 9, color: Colors.white60)),
                     ],
@@ -621,9 +620,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 ),
               ],
             ),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(Icons.touch_app, size: 16, color: Colors.white),
                 SizedBox(width: 6),
                 Text(
@@ -666,7 +665,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 child: Switch(
                   value: true,
                   onChanged: (_) {},
-                  activeColor: widget.accentColor,
+                  activeThumbColor: widget.accentColor,
                 ),
               ),
             ],
@@ -685,10 +684,10 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               children: [
                 Icon(Icons.filter_alt_outlined, size: 20, color: widget.accentColor),
                 const SizedBox(width: 8),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'Smart Non-Ride Filter Active',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
@@ -893,10 +892,10 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                     child: Icon(Icons.local_gas_station, color: widget.accentColor, size: 22),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Tejgaon Padma Octane 95',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
@@ -989,8 +988,8 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       CircleAvatar(radius: 12, backgroundColor: Colors.white24, child: Icon(Icons.person, size: 14, color: Colors.white)),
                       SizedBox(width: 8),
                       Text('Rahim K. · MT-15', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -1050,9 +1049,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 child: Icon(Icons.person, color: widget.accentColor, size: 22),
               ),
               const SizedBox(width: 10),
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text('Abraar · @blackbird', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
                   Text('Road Captain · Dhaka Metro', style: TextStyle(fontSize: 9, color: Colors.white54)),
                 ],
@@ -1092,10 +1091,10 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               children: [
                 Icon(Icons.qr_code, color: widget.accentColor, size: 24),
                 const SizedBox(width: 8),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('SafeQR Offline Medical Card', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
                       Text('Blood: O+ · ICE Emergency SOS Armed', style: TextStyle(fontSize: 8, color: Colors.white70)),
                     ],

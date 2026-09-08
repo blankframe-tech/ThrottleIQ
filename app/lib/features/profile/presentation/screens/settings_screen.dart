@@ -13,6 +13,8 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../providers/speed_alert_provider.dart';
 import '../widgets/appearance_picker.dart';
+import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
+import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -35,8 +37,10 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(l10n.settingsTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Stack(
+        children: [
+          ListView(
+            padding: const EdgeInsets.all(16),
         children: [
           // ── Profile ────────────────────────────────────────────────────
           Container(
@@ -272,7 +276,7 @@ class SettingsScreen extends ConsumerWidget {
 
           contacts.when(
             loading: () => Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Center(
                   child: CircularProgressIndicator(color: AppColors.primary)),
             ),
@@ -446,6 +450,53 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          Material(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () async {
+                await resetOnboardingTour();
+                if (context.mounted) {
+                  context.push('/auth/onboarding?demo=1');
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.play_circle_outline, color: AppColors.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('See Demo & Feature Tour',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text('Replay interactive feature guides and safety walkthrough',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: AppColors.textTertiary, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
           const SizedBox(height: 32),
 
@@ -477,7 +528,15 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+      const Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: TourFloatingBanner(),
+      ),
+    ],
+  ),
+);
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {

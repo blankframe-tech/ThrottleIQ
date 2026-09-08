@@ -154,9 +154,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ─── Tour navigation ────────────────────────────────────────────────────────
 
   Future<void> _skipTour() async {
-    await markOnboardingTourComplete();
+    if (!widget.demoMode) {
+      await markOnboardingTourComplete();
+    }
     if (!mounted) return;
-    context.go('/home/record');
+    ref.read(activeTourGuideProvider.notifier).state = null;
+    if (widget.demoMode && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/home/record');
+    }
   }
 
   Future<void> _advanceTour() async {
@@ -171,22 +178,47 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  /// "Show me" CTA: mark complete then jump to the slide's target route.
+  /// "Show me" CTA: opens the target route so the rider can inspect it live,
+  /// but DOES NOT mark the tour complete. Sets [activeTourGuideProvider] so that
+  /// a floating tour banner appears on the destination screen, letting the rider
+  /// return to the exact slide or proceed to the next guide!
   Future<void> _showMeFor(int slideIndex) async {
-    final route = kOnboardingSlides[slideIndex].showMeRoute;
-    await _finishTour(navigateTo: route ?? '/home/record');
+    final slide = kOnboardingSlides[slideIndex];
+    final route = slide.showMeRoute;
+    if (route == null) return;
+
+    ref.read(activeTourGuideProvider.notifier).state = TourGuideState(
+      currentSlideIndex: slideIndex,
+      totalSlides: kOnboardingSlides.length,
+      featureKey: slide.featureKey,
+      title: slide.title,
+      showMeRoute: route,
+    );
+
+    await context.push(route);
+
+    if (!mounted) return;
+    ref.read(activeTourGuideProvider.notifier).state = null;
+    if (_pageCtrl.hasClients && _pageCtrl.page?.round() != _tourSlide) {
+      _pageCtrl.jumpToPage(_tourSlide);
+    }
   }
 
   Future<void> _finishTour({required String navigateTo}) async {
-    await markOnboardingTourComplete();
+    if (!widget.demoMode) {
+      await markOnboardingTourComplete();
+    }
     if (!mounted) return;
+    ref.read(activeTourGuideProvider.notifier).state = null;
+
+    if (widget.demoMode && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
 
     // If this is the profile slide, show the bio prompt sheet after navigating.
     final isProfile = kOnboardingSlides[_tourSlide].featureKey == 'profile';
-    // Capture context-dependent objects before the async gap below.
     final router = GoRouter.of(context);
-    // ignore: use_build_context_synchronously — mounted checked above and below.
-    final ctx = context;
 
     router.go(navigateTo);
 
@@ -195,7 +227,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // bottom sheet opens on top of it.
       await Future.delayed(const Duration(milliseconds: 400));
       if (!mounted) return;
-      EditProfileScreen.showBioPromptSheet(ctx);
+      EditProfileScreen.showBioPromptSheet(context);
     }
   }
 
@@ -288,7 +320,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onPressed: () async {
                       // Skip bike + entire tour
                       await markOnboardingTourComplete();
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       context.go('/home/record');
                     },
                     child: Text('Skip for now',
@@ -378,24 +410,50 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ─── Tour builder ───────────────────────────────────────────────────────────
 
   Widget _buildTour() {
-    return PageView.builder(
-      controller: _pageCtrl,
-      physics: const ClampingScrollPhysics(),
-      onPageChanged: (i) => setState(() => _tourSlide = i),
-      itemCount: kOnboardingSlides.length,
-      itemBuilder: (context, i) {
-        final slide = kOnboardingSlides[i];
-        return OnboardingSlidePage(
-          key: ValueKey(slide.featureKey),
-          slide: slide,
-          totalSlides: kOnboardingSlides.length,
-          slideIndex: i,
-          isLastSlide: i == kOnboardingSlides.length - 1,
-          onNext: _advanceTour,
-          onSkip: _skipTour,
-          onShowMe: () => _showMeFor(i),
-        );
-      },
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageCtrl,
+          physics: const ClampingScrollPhysics(),
+          onPageChanged: (i) => setState(() => _tourSlide = i),
+          itemCount: kOnboardingSlides.length,
+          itemBuilder: (context, i) {
+            final slide = kOnboardingSlides[i];
+            return OnboardingSlidePage(
+              key: ValueKey(slide.featureKey),
+              slide: slide,
+              totalSlides: kOnboardingSlides.length,
+              slideIndex: i,
+              isLastSlide: i == kOnboardingSlides.length - 1,
+              onNext: _advanceTour,
+              onSkip: _skipTour,
+              onShowMe: () => _showMeFor(i),
+            );
+          },
+        ),
+        if (widget.demoMode)
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6.0, left: 10.0),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.black.withValues(alpha: 0.6),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
+                  tooltip: 'Exit demo',
+                  onPressed: () {
+                    ref.read(activeTourGuideProvider.notifier).state = null;
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      context.go('/settings');
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
