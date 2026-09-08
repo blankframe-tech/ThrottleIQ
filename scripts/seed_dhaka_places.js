@@ -616,6 +616,8 @@ function toPlaceDocument(candidate, { verified, createdAt }) {
     createdAt,
     ratingSum: 0,
     ratingCount: 0,
+    googleRating: 0.0,
+    googleRatingCount: 0,
     osmId: candidate.osmId,
   };
 }

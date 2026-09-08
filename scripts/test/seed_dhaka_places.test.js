@@ -301,6 +301,8 @@ test('toPlaceDocument writes exactly PlaceModel.toFirestore\'s fields', () => {
     'createdAt',
     'createdBy',
     'geohash',
+    'googleRating',
+    'googleRatingCount',
     'hours',
     'latitude',
     'longitude',
@@ -319,6 +321,8 @@ test('toPlaceDocument writes exactly PlaceModel.toFirestore\'s fields', () => {
   assert.deepEqual(doc.photoUrls, []);
   assert.equal(doc.ratingSum, 0);
   assert.equal(doc.ratingCount, 0);
+  assert.equal(doc.googleRating, 0.0);
+  assert.equal(doc.googleRatingCount, 0);
   assert.equal(doc.phone, null);
   assert.equal(doc.hours, null);
 });

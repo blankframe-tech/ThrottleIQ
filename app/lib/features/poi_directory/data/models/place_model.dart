@@ -17,6 +17,8 @@ class PlaceModel {
   final DateTime createdAt;
   final double ratingSum;
   final int ratingCount;
+  final double googleRating;
+  final int googleRatingCount;
   final String? osmId;
 
   const PlaceModel({
@@ -35,6 +37,8 @@ class PlaceModel {
     required this.createdAt,
     this.ratingSum = 0,
     this.ratingCount = 0,
+    this.googleRating = 0,
+    this.googleRatingCount = 0,
     this.osmId,
   });
 
@@ -55,6 +59,8 @@ class PlaceModel {
       createdAt: createdAt,
       ratingSum: ratingSum,
       ratingCount: ratingCount,
+      googleRating: googleRating,
+      googleRatingCount: googleRatingCount,
       osmId: osmId,
     );
   }
@@ -76,6 +82,8 @@ class PlaceModel {
       createdAt: entity.createdAt,
       ratingSum: entity.ratingSum,
       ratingCount: entity.ratingCount,
+      googleRating: entity.googleRating,
+      googleRatingCount: entity.googleRatingCount,
       osmId: entity.osmId,
     );
   }
@@ -97,7 +105,9 @@ class PlaceModel {
       createdBy: data['createdBy'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       ratingSum: (data['ratingSum'] as num?)?.toDouble() ?? 0.0,
-      ratingCount: data['ratingCount'] ?? 0,
+      ratingCount: (data['ratingCount'] as num?)?.toInt() ?? 0,
+      googleRating: (data['googleRating'] as num?)?.toDouble() ?? 0.0,
+      googleRatingCount: (data['googleRatingCount'] as num?)?.toInt() ?? 0,
       osmId: data['osmId'],
     );
   }
@@ -118,6 +128,8 @@ class PlaceModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'ratingSum': ratingSum,
       'ratingCount': ratingCount,
+      'googleRating': googleRating,
+      'googleRatingCount': googleRatingCount,
       'osmId': osmId,
     };
   }
@@ -138,6 +150,8 @@ class PlaceModel {
     DateTime? createdAt,
     double? ratingSum,
     int? ratingCount,
+    double? googleRating,
+    int? googleRatingCount,
     String? osmId,
   }) {
     return PlaceModel(
@@ -156,6 +170,8 @@ class PlaceModel {
       createdAt: createdAt ?? this.createdAt,
       ratingSum: ratingSum ?? this.ratingSum,
       ratingCount: ratingCount ?? this.ratingCount,
+      googleRating: googleRating ?? this.googleRating,
+      googleRatingCount: googleRatingCount ?? this.googleRatingCount,
       osmId: osmId ?? this.osmId,
     );
   }

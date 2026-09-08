@@ -277,14 +277,18 @@ class _PlaceHeader extends StatelessWidget {
                       Icon(Icons.star, size: 16, color: AppColors.warning),
                       const SizedBox(width: 2),
                       Text(
-                        place.ratingCount == 0 ? '—' : place.averageRating.toStringAsFixed(1),
+                        (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
+                            ? '—'
+                            : place.dualRatingDisplay,
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
                   Text(
-                    '${place.ratingCount} review${place.ratingCount == 1 ? '' : 's'}',
+                    (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
+                        ? 'Official point'
+                        : place.reviewsSummarySubtitle,
                     style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                 ],
@@ -327,6 +331,83 @@ class _PlaceHeader extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(place.hours!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               ],
+            ),
+          ],
+          if (place.category != PlaceCategory.police && place.category != PlaceCategory.aiCamera) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.map_outlined, size: 13, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Text('Google Maps',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          place.hasGoogleRating
+                              ? '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})'
+                              : '★ 0 (Not on Google)',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: AppColors.border,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.two_wheeler, size: 13, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text('ThrottleIQ',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          place.hasThrottleIqRating
+                              ? '★ ${place.averageRating.toStringAsFixed(1)} (${place.ratingCount})'
+                              : '★ 0 (0 reviews)',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           const SizedBox(height: 14),

@@ -383,7 +383,9 @@ class _PlaceCard extends StatelessWidget {
                   Icon(Icons.star, size: 14, color: AppColors.warning),
                   const SizedBox(width: 2),
                   Text(
-                    place.ratingCount == 0 ? '—' : place.averageRating.toStringAsFixed(1),
+                    (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
+                        ? '—'
+                        : place.dualRatingDisplay,
                     style: TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
@@ -391,8 +393,10 @@ class _PlaceCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${place.ratingCount} review${place.ratingCount == 1 ? '' : 's'}',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
+                    ? 'Official point'
+                    : place.reviewsSummarySubtitle,
+                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
               ),
             ],
           ),

@@ -170,6 +170,40 @@ void main() {
       expect(firestore['category'], equals('fuel'));
       expect(firestore['verified'], equals(false));
       expect(firestore['createdBy'], equals('user1'));
+      expect(firestore['googleRating'], equals(0.0));
+      expect(firestore['googleRatingCount'], equals(0));
+    });
+
+    test('PlaceModel preserves googleRating across conversions', () {
+      final model = PlaceModel(
+        id: 'place1',
+        name: 'Trust CNG',
+        category: 'fuel',
+        latitude: 23.8,
+        longitude: 90.4,
+        geohash: 'wh0r',
+        address: 'Dhaka',
+        verified: true,
+        createdBy: 'system:osm-seed-dhaka',
+        createdAt: DateTime(2024, 1, 1),
+        googleRating: 4.3,
+        googleRatingCount: 515,
+        ratingSum: 10,
+        ratingCount: 2,
+      );
+
+      final entity = model.toEntity();
+      expect(entity.googleRating, 4.3);
+      expect(entity.googleRatingCount, 515);
+      expect(entity.dualRatingDisplay, '4.3 + 5.0');
+
+      final backToModel = PlaceModel.fromEntity(entity);
+      expect(backToModel.googleRating, 4.3);
+      expect(backToModel.googleRatingCount, 515);
+
+      final json = backToModel.toFirestore();
+      expect(json['googleRating'], 4.3);
+      expect(json['googleRatingCount'], 515);
     });
   });
 }
