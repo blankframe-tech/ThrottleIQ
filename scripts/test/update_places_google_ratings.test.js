@@ -55,26 +55,21 @@ test('known places match exact overrides', () => {
   const gearx = calculateGoogleRating('GearX Bangladesh', 'parts');
   assert.strictEqual(gearx.rating, 4.7);
   assert.strictEqual(gearx.reviews, 850);
+
+  const hero = calculateGoogleRating('Hero service center(60 feet chapra masque mirpur)', 'garage');
+  assert.strictEqual(hero.rating, 4.4);
+  assert.strictEqual(hero.reviews, 95);
 });
 
-test('identifiable unique names return realistic ratings and review counts', () => {
-  const r1 = calculateGoogleRating('Al-Madina CNG Filling Station', 'fuel', 'node/1234');
-  assert.ok(r1.rating >= 3.7 && r1.rating <= 4.7, `Rating ${r1.rating} out of range`);
-  assert.ok(r1.reviews >= 50 && r1.reviews <= 600, `Reviews ${r1.reviews} out of range`);
+test('unverified or unknown places return 0.0 rating and 0 reviews', () => {
+  const unverifiedStation = calculateGoogleRating('Random Unlisted Pump 123', 'fuel', 'node/9999');
+  assert.deepStrictEqual(unverifiedStation, { rating: 0.0, reviews: 0 });
 
-  const r2 = calculateGoogleRating('Rahman Bike Center', 'garage', 'node/5678');
-  assert.ok(r2.rating >= 3.7 && r2.rating <= 4.7, `Rating ${r2.rating} out of range`);
-  assert.ok(r2.reviews >= 20 && r2.reviews <= 250, `Reviews ${r2.reviews} out of range`);
+  const unverifiedGarage = calculateGoogleRating('Local Alley Workshop', 'garage', 'node/8888');
+  assert.deepStrictEqual(unverifiedGarage, { rating: 0.0, reviews: 0 });
 
-  const r3 = calculateGoogleRating('Shakil Motorcycle Parts', 'parts', 'node/9012');
-  assert.ok(r3.rating >= 3.7 && r3.rating <= 4.7, `Rating ${r3.rating} out of range`);
-  assert.ok(r3.reviews >= 15 && r3.reviews <= 200, `Reviews ${r3.reviews} out of range`);
-});
-
-test('calculateGoogleRating is deterministic for same inputs', () => {
-  const first = calculateGoogleRating('City Auto Works', 'garage', 'way/999');
-  const second = calculateGoogleRating('City Auto Works', 'garage', 'way/999');
-  assert.deepStrictEqual(first, second);
+  const unverifiedParts = calculateGoogleRating('Obscure Spare Shack', 'parts', 'node/7777');
+  assert.deepStrictEqual(unverifiedParts, { rating: 0.0, reviews: 0 });
 });
 
 console.log(`\nResults: ${passed} passed, ${failed} failed\n`);
