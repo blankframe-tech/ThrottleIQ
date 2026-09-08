@@ -33,7 +33,14 @@ import '../widgets/onboarding_slide_page.dart';
 /// is set, so the redirect no longer fires; the screen self-manages Steps 2+
 /// using [onboardingTourCompleteProvider] / [markOnboardingTourComplete].
 class OnboardingScreen extends ConsumerStatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({
+    super.key,
+    this.demoMode = false,
+    this.initialSlide = 0,
+  });
+
+  final bool demoMode;
+  final int initialSlide;
 
   @override
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -63,7 +70,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _pageCtrl = PageController();
+    _step = widget.demoMode ? 2 : 0;
+    _tourSlide = widget.initialSlide.clamp(0, kOnboardingSlides.length - 1);
+    _pageCtrl = PageController(initialPage: _tourSlide);
     final email = ref.read(currentUserProvider)?.email;
     if (email != null) {
       _usernameCtrl.text = ProfileRepository().suggestUsernameBase(email);

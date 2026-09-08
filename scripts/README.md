@@ -8,10 +8,11 @@ Flutter app build and are not deployed with the Cloud Functions.
 |---|---|---|
 | [`reset_beta_data.js`](#-reset_beta_datajs--read-this-first) | Wipes **all** rider data and Auth accounts | **No** |
 | [`seed_dhaka_places.js`](#seed_dhaka_placesjs--seed-the-dhaka-places-directory) | Creates place documents for Dhaka's petrol pumps, garages and parts sellers, from OpenStreetMap | Yes — one query deletes the batch |
+| [`seed_ai_cameras.js`](#seed_ai_camerasjs--seed-dhaka-ai-traffic-enforcement-cameras) | Populates the `places` collection with Dhaka's 30+ DMP AI traffic enforcement cameras | Yes — one query deletes `createdBy == 'system:dmp-ai-camera-seed'` |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 
-All four share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
+All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
 be re-run. The [Setup](#setup) section below applies to all of them.
 

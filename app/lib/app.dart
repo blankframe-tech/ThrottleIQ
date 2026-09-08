@@ -15,6 +15,7 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'shared/widgets/keyboard_dismiss_wrapper.dart';
 
 class ThrottleIQApp extends ConsumerStatefulWidget {
   const ThrottleIQApp({super.key});
@@ -140,10 +141,16 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: const [Locale('en'), Locale('bn')],
         routerConfig: router,
+        builder: (context, child) => KeyboardDismissWrapper(
+          child: child ?? const SizedBox.shrink(),
+        ),
       );
     } catch (e) {
-      print('App initialization error: $e');
+      debugPrint('App initialization error: $e');
       return MaterialApp(
+        builder: (context, child) => KeyboardDismissWrapper(
+          child: child ?? const SizedBox.shrink(),
+        ),
         home: Scaffold(
           body: Center(
             child: Text('Error: $e'),

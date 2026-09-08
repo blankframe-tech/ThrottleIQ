@@ -1,34 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../screens/onboarding_manifest.dart';
+import 'onboarding_ui_mockups.dart';
 
-/// Full-bleed, animated feature spotlight slide.
-///
-/// Used inside the [OnboardingScreen] PageView for each entry in
-/// [kOnboardingSlides]. The slide is intentionally stateless — all
-/// animation is driven by the parent's [PageController] via the
-/// [pageProgress] value (0.0 = fully off-screen left, 1.0 = centred,
-/// 2.0 = fully off-screen right).
-///
-/// Layout:
-/// ```
-/// ┌─────────────────────────────────────────┐
-/// │  Skip tour (top-right)                  │
-/// │                                         │
-/// │       [Glowing hero icon — 88dp]        │
-/// │                                         │
-/// │       TITLE (28sp bold)                 │
-/// │       Subtitle (15sp, secondary)        │
-/// │                                         │
-/// │  ✓ Bullet                               │
-/// │  ✓ Bullet                               │
-/// │  ✓ Bullet                               │
-/// │                                         │
-/// │  ● ○ ○ ○ ○ ○ ○  (page dots)            │
-/// │                                         │
-/// │  [Show me →]       [Got it →]          │
-/// └─────────────────────────────────────────┘
-/// ```
+/// Full-bleed, animated feature spotlight slide with real UI mockup and callout pointers.
 class OnboardingSlidePage extends StatefulWidget {
   const OnboardingSlidePage({
     super.key,
@@ -56,7 +31,6 @@ class OnboardingSlidePage extends StatefulWidget {
 class _OnboardingSlidePageState extends State<OnboardingSlidePage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _anim;
-  late final Animation<double> _iconScale;
   late final Animation<double> _contentFade;
   late final Animation<Offset> _contentSlide;
 
@@ -64,11 +38,9 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
   void initState() {
     super.initState();
     _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 520));
-    _iconScale = CurvedAnimation(parent: _anim, curve: const Interval(0.0, 0.6, curve: Curves.elasticOut));
-    _contentFade = CurvedAnimation(parent: _anim, curve: const Interval(0.3, 1.0, curve: Curves.easeOut));
-    _contentSlide = Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _anim, curve: const Interval(0.3, 1.0, curve: Curves.easeOut)));
-    // Small delay so the slide-in PageView swipe finishes first.
+    _contentFade = CurvedAnimation(parent: _anim, curve: const Interval(0.2, 1.0, curve: Curves.easeOut));
+    _contentSlide = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _anim, curve: const Interval(0.2, 1.0, curve: Curves.easeOut)));
     Future.delayed(const Duration(milliseconds: 60), () {
       if (mounted) _anim.forward();
     });
@@ -89,148 +61,206 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Skip button ─────────────────────────────────────────────
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: widget.onSkip,
-                  child: Text(
-                    'Skip tour',
-                    style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
-                  ),
-                ),
-              ),
-
-              const Spacer(flex: 2),
-
-              // ── Hero icon with radial glow ───────────────────────────────
-              ScaleTransition(
-                scale: _iconScale,
-                child: Center(
-                  child: Container(
-                    width: 128,
-                    height: 128,
+              // ── Top header bar ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: accent.withValues(alpha: 0.12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.25),
-                          blurRadius: 40,
-                          spreadRadius: 8,
+                      color: accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: accent.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(slide.icon, size: 14, color: accent),
+                        const SizedBox(width: 5),
+                        Text(
+                          'GUIDE ${widget.slideIndex + 1} OF ${widget.totalSlides}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: accent,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ],
                     ),
-                    child: Icon(slide.icon, size: 64, color: accent),
                   ),
-                ),
-              ),
-
-              const SizedBox(height: 36),
-
-              // ── Title + subtitle ─────────────────────────────────────────
-              SlideTransition(
-                position: _contentSlide,
-                child: FadeTransition(
-                  opacity: _contentFade,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        slide.title,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        slide.subtitle,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
+                  TextButton(
+                    onPressed: widget.onSkip,
+                    child: Text(
+                      'Skip tour',
+                      style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+                    ),
                   ),
-                ),
+                ],
               ),
+              const SizedBox(height: 10),
 
-              const SizedBox(height: 32),
-
-              // ── Bullet points ────────────────────────────────────────────
+              // ── Title & Subtitle ──
               SlideTransition(
                 position: _contentSlide,
                 child: FadeTransition(
                   opacity: _contentFade,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: slide.bullets.map((bullet) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(top: 5, right: 10),
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: accent,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                bullet,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textPrimary,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
+                    children: [
+                      Text(
+                        slide.title,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.5,
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        slide.subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Centerpiece: UI Mockup with Pointer Pins ──
+              SlideTransition(
+                position: _contentSlide,
+                child: FadeTransition(
+                  opacity: _contentFade,
+                  child: OnboardingUiMockup(
+                    featureKey: slide.featureKey,
+                    accentColor: accent,
+                    pointers: slide.pointers,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Interactive Pointers Breakdown ──
+              Expanded(
+                child: SlideTransition(
+                  position: _contentSlide,
+                  child: FadeTransition(
+                    opacity: _contentFade,
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: slide.pointers.isNotEmpty
+                            ? slide.pointers.map((p) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 20,
+                                        height: 20,
+                                        margin: const EdgeInsets.only(top: 2, right: 8),
+                                        decoration: BoxDecoration(
+                                          color: accent.withValues(alpha: 0.18),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: accent, width: 1.2),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${p.number}',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                              color: accent,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: '${p.title}: ',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: p.description,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppColors.textSecondary,
+                                                  height: 1.3,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList()
+                            : slide.bullets.map((b) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6.0),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 5, right: 8),
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+                                      ),
+                                      Expanded(
+                                        child: Text(b, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                      ),
+                    ),
                   ),
                 ),
               ),
 
-              const Spacer(flex: 3),
-
-              // ── Page indicator dots ──────────────────────────────────────
+              // ── Dots Indicator ──
               _PageDots(
                 total: widget.totalSlides,
                 current: widget.slideIndex,
                 activeColor: accent,
               ),
+              const SizedBox(height: 14),
 
-              const SizedBox(height: 24),
-
-              // ── CTA buttons ──────────────────────────────────────────────
+              // ── Action Buttons ──
               Row(
                 children: [
-                  // "Show me" only when a route is provided
                   if (slide.showMeRoute != null) ...[
                     Expanded(
-                      child: OutlinedButton(
+                      child: OutlinedButton.icon(
                         onPressed: widget.onShowMe,
+                        icon: const Icon(Icons.open_in_new, size: 14),
+                        label: const Text('Show me'),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: accent.withValues(alpha: 0.6)),
                           foregroundColor: accent,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text('Show me'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -242,14 +272,14 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accent,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text(widget.isLastSlide ? 'Get Riding 🏍️' : 'Got it  →'),
                     ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
             ],
           ),
         ),

@@ -12,8 +12,30 @@ import 'package:flutter/material.dart';
 ///   - Keep [featureKey] values stable — they are used as map keys and for
 ///     the guardian's diff.
 ///
-/// Current manifest version: 1
-const int kOnboardingManifestVersion = 1;
+/// Current manifest version: 2
+const int kOnboardingManifestVersion = 2;
+
+/// A callout pointer on a visual UI mockup to "point and show, not just tell".
+class SlidePointer {
+  const SlidePointer({
+    required this.number,
+    required this.title,
+    required this.description,
+    this.icon,
+  });
+
+  /// 1-based index badge (1, 2, 3).
+  final int number;
+
+  /// Punchy callout title.
+  final String title;
+
+  /// Brief explanation pointing to this UI element.
+  final String description;
+
+  /// Optional icon representing the element.
+  final IconData? icon;
+}
 
 /// A single feature-spotlight slide in the onboarding tour.
 class OnboardingSlide {
@@ -25,6 +47,7 @@ class OnboardingSlide {
     required this.bullets,
     required this.accentColor,
     this.showMeRoute,
+    this.pointers = const [],
   });
 
   /// Stable identifier used by the guardian skill for diff comparisons.
@@ -46,8 +69,11 @@ class OnboardingSlide {
   final Color accentColor;
 
   /// Optional route path. When set, a "Show me →" secondary CTA appears.
-  /// Tapping it marks the tour complete and navigates there immediately.
+  /// Tapping it opens the target feature while preserving the tour guide.
   final String? showMeRoute;
+
+  /// Callout pointers that highlight exact UI elements on the screen mockup.
+  final List<SlidePointer> pointers;
 }
 
 /// The ordered list of feature-spotlight slides.
@@ -71,6 +97,26 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFF4CAF50),
     showMeRoute: '/home/profile',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: 'Active Motorcycle',
+        description: 'Tints the entire app theme and binds to your trip logs.',
+        icon: Icons.star_rounded,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'Service Countdown',
+        description: 'Real-time maintenance tracker based on actual km ridden.',
+        icon: Icons.speed,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'Add & Switch',
+        description: 'Manage multiple bikes and swap your active ride anytime.',
+        icon: Icons.swap_horiz,
+      ),
+    ],
   ),
 
   // ── 2. RIDE RECORDING ──────────────────────────────────────────────────────
@@ -88,6 +134,26 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFFFF5722),
     showMeRoute: '/home/record',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: 'Cockpit Telemetry',
+        description: 'Live Doppler speed, lean angle arc, and GPS telemetry.',
+        icon: Icons.speed,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'Hold 1s to Record',
+        description: 'Hold 1s to start or stop; prevents accidental touches.',
+        icon: Icons.touch_app,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'Crash Shield',
+        description: 'Impact & tumble detection with 60s emergency cancellation.',
+        icon: Icons.security,
+      ),
+    ],
   ),
 
   // ── 3. AUTO TRACKING ───────────────────────────────────────────────────────
@@ -104,6 +170,26 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFF2196F3),
     showMeRoute: '/settings',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: 'Smart Detection',
+        description: 'Detects motorcycle movement via IMU sensors & speed.',
+        icon: Icons.auto_awesome,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'Non-Ride Filter',
+        description: 'Ignores walking, bus rides, and minor phone jostling.',
+        icon: Icons.filter_alt,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'Zero Interaction',
+        description: 'Runs silently in background; review rides when done.',
+        icon: Icons.battery_charging_full,
+      ),
+    ],
   ),
 
   // ── 4. MAINTENANCE ─────────────────────────────────────────────────────────
@@ -120,6 +206,26 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFFFF9800),
     showMeRoute: '/home/maintenance',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: '13+ Service Items',
+        description: 'Track engine oil, chain lube, brake fluid, coolant, and more.',
+        icon: Icons.build_circle,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'Due Badges',
+        description: 'Color-coded progress bars alert you before intervals expire.',
+        icon: Icons.warning_amber_rounded,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'Log & Reset',
+        description: 'Record maintenance notes and reset the interval odometer.',
+        icon: Icons.check_circle_outline,
+      ),
+    ],
   ),
 
   // ── 5. PLACES ──────────────────────────────────────────────────────────────
@@ -136,6 +242,26 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFF9C27B0),
     showMeRoute: '/home/places',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: '395+ Rider POIs',
+        description: 'Verified fuel stations, workshops, parts, and rider cafes.',
+        icon: Icons.local_gas_station,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'Navigate & Record',
+        description: 'Opens Google Maps directions and begins ride telemetry.',
+        icon: Icons.navigation,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'Rider Reviews',
+        description: 'Rate octane purity, mechanic honesty, and parking security.',
+        icon: Icons.rate_review,
+      ),
+    ],
   ),
 
   // ── 6. SOCIAL & FORUMS ─────────────────────────────────────────────────────
@@ -153,6 +279,26 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFF00BCD4),
     showMeRoute: '/home/social',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: 'Privacy Zones',
+        description: '200m buffer automatically clipped at home & work endpoints.',
+        icon: Icons.lock_outline,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'Group PIN & Intercom',
+        description: 'Live map tracking and Bluetooth helmet PTT intercom.',
+        icon: Icons.headset_mic,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'Bike Model Forums',
+        description: 'Discuss mods, issues, and meets with owners of your bike.',
+        icon: Icons.forum,
+      ),
+    ],
   ),
 
   // ── 7. PROFILE ─────────────────────────────────────────────────────────────
@@ -169,5 +315,25 @@ const List<OnboardingSlide> kOnboardingSlides = [
     ],
     accentColor: Color(0xFFE91E63),
     showMeRoute: '/home/profile',
+    pointers: [
+      SlidePointer(
+        number: 1,
+        title: 'Rider Stats',
+        description: 'Showcase total km, safety score, and peak achievements.',
+        icon: Icons.badge,
+      ),
+      SlidePointer(
+        number: 2,
+        title: 'SafeQR Card',
+        description: 'Offline medical card for emergency responders on the road.',
+        icon: Icons.qr_code,
+      ),
+      SlidePointer(
+        number: 3,
+        title: 'SOS Contacts',
+        description: 'Automated SMS / alert notification to trusted contacts on crash.',
+        icon: Icons.contact_phone,
+      ),
+    ],
   ),
 ];

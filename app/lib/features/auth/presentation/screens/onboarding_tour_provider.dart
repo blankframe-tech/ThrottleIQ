@@ -27,3 +27,47 @@ Future<void> markOnboardingTourComplete() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setBool(_tourKey, true);
 }
+
+/// Clears the tour completion flag in SharedPreferences so the tour can replay.
+Future<void> resetOnboardingTour() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(_tourKey);
+}
+
+/// Represents the state of an in-progress tour guide while the user is inspecting
+/// a destination screen via "Show me".
+class TourGuideState {
+  const TourGuideState({
+    required this.currentSlideIndex,
+    required this.totalSlides,
+    required this.featureKey,
+    required this.title,
+    this.showMeRoute,
+  });
+
+  final int currentSlideIndex;
+  final int totalSlides;
+  final String featureKey;
+  final String title;
+  final String? showMeRoute;
+
+  TourGuideState copyWith({
+    int? currentSlideIndex,
+    int? totalSlides,
+    String? featureKey,
+    String? title,
+    String? showMeRoute,
+  }) {
+    return TourGuideState(
+      currentSlideIndex: currentSlideIndex ?? this.currentSlideIndex,
+      totalSlides: totalSlides ?? this.totalSlides,
+      featureKey: featureKey ?? this.featureKey,
+      title: title ?? this.title,
+      showMeRoute: showMeRoute ?? this.showMeRoute,
+    );
+  }
+}
+
+/// Active tour guide state when the user has tapped "Show me" and is currently
+/// exploring an in-app feature with the option to return or jump to the next guide.
+final activeTourGuideProvider = StateProvider<TourGuideState?>((ref) => null);

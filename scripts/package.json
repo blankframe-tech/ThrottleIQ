@@ -16,10 +16,11 @@
     "seed:qa-riders:dry-run": "node seed_qa_test_riders.js --dry-run",
     "seed:qa-riders:execute": "node seed_qa_test_riders.js --yes-i-really-mean-it",
     "seed:qa-riders:cleanup:dry-run": "node cleanup_qa_test_riders.js --dry-run",
-    "seed:qa-riders:cleanup:execute": "node cleanup_qa_test_riders.js --yes-i-really-mean-it",
+    "seed:ai-cameras:dry-run": "node seed_ai_cameras.js --dry-run",
+    "seed:ai-cameras:execute": "node seed_ai_cameras.js --yes-i-really-mean-it",
     "test": "node --test \"test/*.test.js\"",
     "test:rules": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" firebase emulators:exec --project=throttleiq-rules-test --only firestore \"'$npm_node_execpath' --test test/rules/*.test.js\"",
-    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js && node --check seed_qa_test_riders.js && node --check cleanup_qa_test_riders.js && node --check qa_seed_catalog.js"
+    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js && node --check seed_qa_test_riders.js && node --check cleanup_qa_test_riders.js && node --check qa_seed_catalog.js && node --check seed_ai_cameras.js"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0"

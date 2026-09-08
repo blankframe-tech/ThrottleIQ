@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../features/auth/presentation/widgets/tour_floating_banner.dart';
 import '../../l10n/app_localizations.dart';
 
 /// The bottom-nav destinations, in display order — a location's index in this
@@ -62,7 +63,17 @@ class AppShell extends StatelessWidget {
     final idx = _currentIndex(context);
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      body: child,
+      body: Stack(
+        children: [
+          child,
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: TourFloatingBanner(),
+          ),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
