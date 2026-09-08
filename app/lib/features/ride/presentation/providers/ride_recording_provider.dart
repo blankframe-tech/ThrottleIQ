@@ -68,6 +68,7 @@ class RideRecordingState {
   final double maxSpeedMs;
   final double distanceM;
   final Duration elapsed;
+  final int movingSeconds;
   final RideAlert activeAlert;
   final String? error;
 
@@ -102,6 +103,7 @@ class RideRecordingState {
     this.maxSpeedMs = 0,
     this.distanceM = 0,
     this.elapsed = Duration.zero,
+    this.movingSeconds = 0,
     this.activeAlert = RideAlert.none,
     this.error,
     this.blockKind = RecordingBlockKind.none,
@@ -123,6 +125,7 @@ class RideRecordingState {
     double? maxSpeedMs,
     double? distanceM,
     Duration? elapsed,
+    int? movingSeconds,
     RideAlert? activeAlert,
     String? error,
     RecordingBlockKind? blockKind,
@@ -143,6 +146,7 @@ class RideRecordingState {
       maxSpeedMs: maxSpeedMs ?? this.maxSpeedMs,
       distanceM: distanceM ?? this.distanceM,
       elapsed: elapsed ?? this.elapsed,
+      movingSeconds: movingSeconds ?? this.movingSeconds,
       activeAlert: activeAlert ?? this.activeAlert,
       error: error,
       blockKind: blockKind ?? RecordingBlockKind.none,
@@ -398,6 +402,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
             distanceFilter: distanceFilter,
             activityType: ActivityType.automotiveNavigation,
             pauseLocationUpdatesAutomatically: false,
+            showBackgroundLocationIndicator: true,
             allowBackgroundLocationUpdates: true,
           )
         : AndroidSettings(
@@ -490,11 +495,28 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     double speedMs;
     if (hasRawSpeed) {
-      speedMs = rawSpeedMs;
+      if (_lastPoint != null && hasValidDeltaT) {
+        final maxAllowedSpeed =
+            _lastPoint!.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
+        speedMs = (rawSpeedMs > maxAllowedSpeed && _lastPoint!.speedMs > 0)
+            ? maxAllowedSpeed
+            : rawSpeedMs;
+      } else {
+        speedMs = rawSpeedMs;
+      }
     } else if (hasValidDeltaT &&
         isPlausibleDerived &&
+        distDelta > 10.0 &&
         candidateDerivedSpeed >= SensorConstants.unreliableSpeedFallbackThresholdMs) {
-      speedMs = candidateDerivedSpeed;
+      if (_lastPoint != null) {
+        final maxAllowedSpeed =
+            _lastPoint!.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
+        speedMs = (candidateDerivedSpeed > maxAllowedSpeed && _lastPoint!.speedMs > 0)
+            ? maxAllowedSpeed
+            : candidateDerivedSpeed;
+      } else {
+        speedMs = candidateDerivedSpeed;
+      }
     } else {
       speedMs = 0.0;
       distDelta = 0.0;
@@ -508,11 +530,24 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _speedSum += speedMs;
     _speedCount++;
 
-    if (_lastFixTime != null &&
-        speedMs >= SensorConstants.movingSpeedThresholdMs) {
+    if (_lastFixTime != null) {
       final gapMs = timestamp.difference(_lastFixTime!).inMilliseconds;
-      if (gapMs > 0 && gapMs <= _maxMovingGapSeconds * 1000) {
-        _movingMilliseconds += gapMs;
+      if (gapMs > 0) {
+        if (gapMs <= _maxMovingGapSeconds * 1000) {
+          if (speedMs >= SensorConstants.movingSpeedThresholdMs) {
+            _movingMilliseconds += gapMs;
+          }
+        } else if (distDelta > 50.0) {
+          final gapSeconds = gapMs / 1000.0;
+          final gapSpeedMs = distDelta / gapSeconds;
+          if (gapSpeedMs >= SensorConstants.movingSpeedThresholdMs) {
+            _movingMilliseconds += gapMs;
+          } else {
+            final estimatedMovingSeconds =
+                (distDelta / 5.0).clamp(1.0, gapSeconds);
+            _movingMilliseconds += (estimatedMovingSeconds * 1000).round();
+          }
+        }
         _movingSeconds = (_movingMilliseconds / 1000).round();
       }
     }
@@ -602,6 +637,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       currentSpeedMs: speedMs,
       maxSpeedMs: _maxSpeed,
       distanceM: _totalDistance,
+      movingSeconds: _movingSeconds,
       polyline: _polyline,
       polylineVersion: state.polylineVersion + 1,
       currentPosition: here,

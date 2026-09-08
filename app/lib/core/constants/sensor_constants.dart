@@ -31,6 +31,7 @@ class SensorConstants {
   static const double maxPlausibleAccelMs2 = 300.0;
   static const double maxPlausibleYawRateRadS = 34.9; // ~2000°/s
   static const double maxPlausibleSpeedMs = 70.0; // ~252 km/h; reject GPS spikes & jumps
+  static const double maxPhysicalAccelMs2 = 12.0; // ~1.2g; maximum physically plausible motorcycle acceleration
 
   // Motion classification
   static const double movingSpeedThresholdMs = 1.0; // matches existing periodType cutoff

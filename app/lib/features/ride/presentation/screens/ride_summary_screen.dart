@@ -541,6 +541,13 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         child: FlutterMap(
           options: MapOptions(
             initialCenter: startCenter,
+            initialCameraFit: _polyline.length > 1
+                ? CameraFit.coordinates(
+                    coordinates: _polyline,
+                    padding: const EdgeInsets.all(24),
+                    maxZoom: 16,
+                  )
+                : null,
             initialZoom: _polyline.length > 1 ? 13 : 15,
             interactionOptions:
                 const InteractionOptions(flags: InteractiveFlag.none),
@@ -549,6 +556,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.bft.throttleiq',
+              tileProvider: NetworkTileProvider(
+                headers: const {
+                  'User-Agent': 'ThrottleIQ/1.0 (contact@blankframe.com)',
+                },
+              ),
             ),
             if (_polyline.length > 1)
               PolylineLayer(

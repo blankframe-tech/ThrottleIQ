@@ -183,11 +183,28 @@ class AutoRideReconciler {
 
       double speedMs;
       if (hasRawSpeed) {
-        speedMs = rawSpeedMs;
+        if (lastPoint != null && hasValidDeltaT) {
+          final maxAllowedSpeed =
+              lastPoint.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
+          speedMs = (rawSpeedMs > maxAllowedSpeed && lastPoint.speedMs > 0)
+              ? maxAllowedSpeed
+              : rawSpeedMs;
+        } else {
+          speedMs = rawSpeedMs;
+        }
       } else if (hasValidDeltaT &&
           isPlausibleDerived &&
+          distDelta > 10.0 &&
           candidateDerived >= SensorConstants.unreliableSpeedFallbackThresholdMs) {
-        speedMs = candidateDerived;
+        if (lastPoint != null) {
+          final maxAllowedSpeed =
+              lastPoint.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
+          speedMs = (candidateDerived > maxAllowedSpeed && lastPoint.speedMs > 0)
+              ? maxAllowedSpeed
+              : candidateDerived;
+        } else {
+          speedMs = candidateDerived;
+        }
       } else {
         speedMs = 0.0;
       }

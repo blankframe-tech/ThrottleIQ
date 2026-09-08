@@ -347,9 +347,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final isPaused = rideState.status == RecordingStatus.paused;
     final speedKmh = rideState.currentSpeedMs * 3.6;
     final accel = rideState.sensorAccelMs2;
-    final avgSpeedKmh = rideState.elapsed.inSeconds > 0
-        ? (rideState.distanceM / rideState.elapsed.inSeconds) * 3.6
-        : 0.0;
+    final avgSpeedKmh = rideState.movingSeconds > 0
+        ? (rideState.distanceM / rideState.movingSeconds) * 3.6
+        : (rideState.elapsed.inSeconds > 0
+            ? (rideState.distanceM / rideState.elapsed.inSeconds) * 3.6
+            : 0.0);
 
     return Scaffold(
       body: Stack(

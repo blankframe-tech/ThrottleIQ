@@ -190,6 +190,65 @@ void main() {
       expect(outcome.isAccepted, isTrue);
       expect(outcome.ride!.maxSpeedMs, lessThanOrEqualTo(SensorConstants.maxPlausibleSpeedMs));
     });
+
+    test('acceleration gating clamps sudden impossible speed jump during auto reconciliation', () {
+      final reconciler = AutoRideReconciler();
+      final t0 = DateTime(2026, 8, 16, 9);
+      final fixes = <StagedFix>[];
+      var lat = 23.8103;
+      const lng = 90.4125;
+      const normalSpeedMs = 15.0; // 54 km/h
+
+      for (var s = 0; s <= 60; s += 1) {
+        // At s=30, instantaneous Doppler glitch of 60 m/s (~216 km/h) in 1 second
+        final speed = (s == 30) ? 60.0 : normalSpeedMs;
+        fixes.add((
+          timestamp: t0.add(Duration(seconds: s)),
+          lat: lat,
+          lng: lng,
+          speedMs: speed,
+          accuracyM: 5.0,
+          altitudeM: 10.0,
+          headingDeg: 0.0,
+        ));
+        lat += (normalSpeedMs * 1) / mPerDegLat;
+      }
+
+      final outcome = reconciler.reconcile(fixes);
+      expect(outcome.isAccepted, isTrue);
+      // Max speed cannot jump from 15 to 60 in 1s; it must be clamped by maxPhysicalAccelMs2 (15 + 12 = 27 m/s)
+      expect(outcome.ride!.maxSpeedMs, lessThanOrEqualTo(normalSpeedMs + SensorConstants.maxPhysicalAccelMs2 + 0.1));
+    });
+
+    test('rejects stationary GPS coordinate drift when Doppler speed is 0', () {
+      final reconciler = AutoRideReconciler();
+      final t0 = DateTime(2026, 8, 16, 9);
+      final fixes = <StagedFix>[];
+      const startLat = 23.8103;
+      const startLng = 90.4125;
+
+      // 60 seconds of sitting at a traffic light with 3m wander
+      for (var s = 0; s <= 60; s += 2) {
+        final wander = (s % 4 == 0) ? 0.00003 : 0.0; // ~3.3 meters
+        fixes.add((
+          timestamp: t0.add(Duration(seconds: s)),
+          lat: startLat + wander,
+          lng: startLng,
+          speedMs: 0.0,
+          accuracyM: 8.0,
+          altitudeM: 10.0,
+          headingDeg: 0.0,
+        ));
+      }
+
+      final outcome = reconciler.reconcile(fixes);
+      // stationary ride should be rejected or have 0 max speed
+      if (outcome.isAccepted) {
+        expect(outcome.ride!.maxSpeedMs, 0.0);
+      } else {
+        expect(outcome.isAccepted, isFalse);
+      }
+    });
   });
 
   group('RideDao real SQLite speed healing', () {

@@ -144,10 +144,19 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   /// foreground-service request from geolocator would be redundant at best
   /// and a duplicate notification at worst.
   void _startPositionStream() {
-    const settings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 20,
-    );
+    final settings = Platform.isIOS
+        ? AppleSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 20,
+            activityType: ActivityType.automotiveNavigation,
+            pauseLocationUpdatesAutomatically: false,
+            showBackgroundLocationIndicator: true,
+            allowBackgroundLocationUpdates: true,
+          )
+        : const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 20,
+          );
     _positionSub =
         Geolocator.getPositionStream(locationSettings: settings).listen(
       (position) => unawaited(AutoTrackingService.recordFix(_dao, position)),
