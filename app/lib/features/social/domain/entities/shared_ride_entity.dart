@@ -50,7 +50,7 @@ class SharedRideEntity extends Equatable {
   final DateTime rideDate;
   final double distanceKm;
   final int durationSeconds;
-  final double maxSpeedKmh;
+  final double _maxSpeedKmh;
   final List<LatLng> polyline;
   final String? mapSnapshotUrl;
   final int likes;
@@ -99,7 +99,7 @@ class SharedRideEntity extends Equatable {
     required this.rideDate,
     required this.distanceKm,
     required this.durationSeconds,
-    required this.maxSpeedKmh,
+    required double maxSpeedKmh,
     required this.polyline,
     this.mapSnapshotUrl,
     this.likes = 0,
@@ -114,7 +114,7 @@ class SharedRideEntity extends Equatable {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
-  });
+  }) : _maxSpeedKmh = maxSpeedKmh;
 
   /// The ride's lead photo — the first of [photoUrls], or null when it has
   /// none. Kept as the single-photo accessor so callers that only ever want
@@ -125,6 +125,18 @@ class SharedRideEntity extends Equatable {
   int get durationMinutes => durationSeconds ~/ 60;
   double get avgSpeedKmh =>
       durationSeconds > 0 ? (distanceKm / durationSeconds) * 3600 : 0;
+
+  /// Top speed achieved during the ride. Guaranteed to never be less than
+  /// [avgSpeedKmh] for moving rides to preserve physical reality even if
+  /// hardware fixes didn't report Doppler speed or legacy data omitted it.
+  double get maxSpeedKmh {
+    final avg = avgSpeedKmh;
+    if (distanceKm > 0 && (_maxSpeedKmh <= 0 || _maxSpeedKmh < avg)) {
+      return avg;
+    }
+    return _maxSpeedKmh;
+  }
+
   int get netScore => upvotes - downvotes;
 
   /// Sentinel so [copyWith] can distinguish "leave myVote alone" from
@@ -133,6 +145,9 @@ class SharedRideEntity extends Equatable {
   static const _unset = Object();
 
   SharedRideEntity copyWith({
+    double? distanceKm,
+    int? durationSeconds,
+    double? maxSpeedKmh,
     int? likes,
     int? comments,
     bool? isLikedByCurrentUser,
@@ -154,9 +169,9 @@ class SharedRideEntity extends Equatable {
       bikeName: bikeName,
       bikeType: bikeType,
       rideDate: rideDate,
-      distanceKm: distanceKm,
-      durationSeconds: durationSeconds,
-      maxSpeedKmh: maxSpeedKmh,
+      distanceKm: distanceKm ?? this.distanceKm,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      maxSpeedKmh: maxSpeedKmh ?? this.maxSpeedKmh,
       polyline: polyline ?? this.polyline,
       mapSnapshotUrl: mapSnapshotUrl,
       likes: likes ?? this.likes,

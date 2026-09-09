@@ -58,7 +58,7 @@ class RideShareModel {
     required this.rideDate,
     required this.distanceKm,
     required this.durationSeconds,
-    required this.maxSpeedKmh,
+    required double maxSpeedKmh,
     required this.polyline,
     this.mapSnapshotUrl,
     this.likes = 0,
@@ -73,7 +73,11 @@ class RideShareModel {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
-  });
+  }) : maxSpeedKmh = (distanceKm > 0 &&
+                durationSeconds > 0 &&
+                maxSpeedKmh < ((distanceKm / durationSeconds) * 3600))
+            ? ((distanceKm / durationSeconds) * 3600)
+            : maxSpeedKmh;
 
   /// The lead photo, or null — also what gets written to the legacy
   /// `photoUrl` field.
@@ -141,7 +145,13 @@ class RideShareModel {
       rideDate: _parseDate(data['rideDate']),
       distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0,
       durationSeconds: (data['durationSeconds'] as num?)?.toInt() ?? 0,
-      maxSpeedKmh: (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
+      maxSpeedKmh: () {
+        final dist = (data['distanceKm'] as num?)?.toDouble() ?? 0;
+        final dur = (data['durationSeconds'] as num?)?.toInt() ?? 0;
+        final maxSpd = (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0;
+        final avgSpd = dur > 0 ? (dist / dur) * 3600 : 0.0;
+        return (dist > 0 && (maxSpd <= 0 || maxSpd < avgSpd)) ? avgSpd : maxSpd;
+      }(),
       polyline: polylineList,
       mapSnapshotUrl: data['mapSnapshotUrl'] as String?,
       likes: (data['likes'] as num?)?.toInt() ?? 0,

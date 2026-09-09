@@ -321,7 +321,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
 
   Widget _buildInteractiveMap(List<LatLng> polyline, SharedRideEntity ride) {
     return Container(
-      height: 280,
+      height: 310,
       width: double.infinity,
       color: AppColors.surface,
       child: Stack(
@@ -647,9 +647,9 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
           ),
           child: Row(
             children: [
-              Icon(Icons.directions_bike, size: 20, color: AppColors.primary),
+              Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
               const SizedBox(width: 12),
-              Text('Average Pace', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text('Riding Pace', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               const Spacer(),
               Text(paceFormatted, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary, fontSize: 14)),
             ],
@@ -744,7 +744,17 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               key: const Key('explore_full_route_button'),
               onPressed: () => _openFullScreenMap(ride.polyline, ride),
               icon: const Icon(Icons.fullscreen, size: 18),
-              label: const Text('Explore Full Route on Map'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Explore Full Route on Map',
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
             ),
           ),
         ],

@@ -93,15 +93,20 @@ class OutboxService {
     RideShareRepository? shareRepository,
     FirebaseFirestore? firestore,
   })  : _dao = dao ?? OutboxDao(),
-        _shareRepository = shareRepository ?? RideShareRepository(),
-        _firestore = firestore ?? FirebaseFirestore.instance;
+        _explicitShareRepository = shareRepository,
+        _explicitFirestore = firestore;
 
   /// Deprecated backwards-compatibility accessor. Prefer reading [outboxServiceProvider].
   static final OutboxService instance = OutboxService();
 
   final OutboxDao _dao;
-  final RideShareRepository _shareRepository;
-  final FirebaseFirestore _firestore;
+  RideShareRepository? _explicitShareRepository;
+  FirebaseFirestore? _explicitFirestore;
+
+  RideShareRepository get _shareRepository =>
+      _explicitShareRepository ??= RideShareRepository();
+  FirebaseFirestore get _firestore =>
+      _explicitFirestore ??= FirebaseFirestore.instance;
 
   bool _draining = false;
 
@@ -155,6 +160,7 @@ class OutboxService {
         'rideDate': rideDate.toIso8601String(),
         'distanceKm': distanceKm,
         'durationSeconds': durationSeconds,
+        'maxSpeedKmh': maxSpeedKmh,
         // Flat array of coordinates [lat, lng, lat, lng, ...] reduces outbox
         // JSON row size significantly and eliminates nested list allocations.
         'polyline': [
@@ -315,6 +321,13 @@ class OutboxService {
     }
 
     final polyline = decodePolylinePayload(p['polyline']);
+    final dist = (p['distanceKm'] as num?)?.toDouble() ?? 0;
+    final dur = (p['durationSeconds'] as num?)?.toInt() ?? 0;
+    var maxSpd = (p['maxSpeedKmh'] as num?)?.toDouble() ?? 0;
+    final avgSpd = dur > 0 ? (dist / dur) * 3600 : 0.0;
+    if (dist > 0 && (maxSpd <= 0 || maxSpd < avgSpd)) {
+      maxSpd = avgSpd;
+    }
 
     try {
       await _shareRepository
@@ -328,9 +341,9 @@ class OutboxService {
             bikeType: p['bikeType'] as String? ?? 'Motorcycle',
             rideDate: DateTime.tryParse(p['rideDate'] as String? ?? '') ??
                 entry.createdAt,
-            distanceKm: (p['distanceKm'] as num?)?.toDouble() ?? 0,
-            durationSeconds: (p['durationSeconds'] as num?)?.toInt() ?? 0,
-            maxSpeedKmh: (p['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
+            distanceKm: dist,
+            durationSeconds: dur,
+            maxSpeedKmh: maxSpd,
             polyline: polyline,
             mapSnapshotUrl: null,
             audience: p['audience'] as String? ?? 'public',

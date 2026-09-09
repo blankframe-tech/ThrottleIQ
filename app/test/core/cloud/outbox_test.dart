@@ -84,6 +84,35 @@ void main() {
       expect(entries.single.attempts, 0);
     });
 
+    test('enqueueShareRide persists maxSpeedKmh and all fields in payload', () async {
+      final service = OutboxService(dao: dao);
+      final enqueued = await service.enqueueShareRide(
+        rideId: 'ride-test-1',
+        userId: 'user-1',
+        userName: 'Zulfikar',
+        userPhotoUrl: 'https://example.com/photo.jpg',
+        bikeId: 'bike-1',
+        bikeName: 'Honda CBR',
+        bikeType: '160cc',
+        rideDate: DateTime.parse('2026-09-09T10:00:00Z'),
+        distanceKm: 4.0,
+        durationSeconds: 956,
+        maxSpeedKmh: 48.5,
+        polyline: const [],
+        audience: 'public',
+        attemptNow: false,
+      );
+
+      expect(enqueued, isFalse);
+      final entries = await dao.all();
+      expect(entries, hasLength(1));
+      final payload = entries.single.payload;
+      expect(payload['rideId'], 'ride-test-1');
+      expect(payload['distanceKm'], 4.0);
+      expect(payload['durationSeconds'], 956);
+      expect(payload['maxSpeedKmh'], 48.5);
+    });
+
     test('maintenance log outbox intent enqueues and round-trips correctly', () async {
       await dao.enqueue(
         id: 'maintenance:m-1',
