@@ -131,4 +131,45 @@ void main() {
     expect(await dao.hasCustomized('bike-123'), isFalse);
     expect(await dao.getConfigsForBike('bike-123'), isEmpty);
   });
+
+  test('saves and retrieves custom notes for specs and extra info', () async {
+    final configs = [
+      MaintenanceConfigModel.toMap(const MaintenanceConfigEntity(
+        bikeId: 'bike-123',
+        serviceType: ServiceType.oilChange,
+        intervalKm: 2500,
+        isEnabled: true,
+        notes: 'Shell Advance Ultra 10W-40 (1.2L capacity)',
+      )),
+      MaintenanceConfigModel.toMap(const MaintenanceConfigEntity(
+        bikeId: 'bike-123',
+        serviceType: ServiceType.fuel,
+        intervalKm: 320,
+        isEnabled: true,
+        notes: 'Octane 95, 14L Tank',
+      )),
+      MaintenanceConfigModel.toMap(const MaintenanceConfigEntity(
+        bikeId: 'bike-123',
+        serviceType: ServiceType.tire,
+        intervalKm: 12000,
+        isEnabled: true,
+        notes: 'Front: 120/70 ZR17 (DOT 1024), Rear: 180/55 ZR17 (DOT 1224)',
+      )),
+    ];
+
+    await dao.saveConfigsForBike('bike-123', configs);
+
+    final retrieved = await dao.getConfigsForBike('bike-123');
+    expect(retrieved, hasLength(3));
+
+    final entities = retrieved.map(MaintenanceConfigModel.fromMap).toList();
+    final oil = entities.firstWhere((e) => e.serviceType == ServiceType.oilChange);
+    expect(oil.notes, 'Shell Advance Ultra 10W-40 (1.2L capacity)');
+
+    final fuel = entities.firstWhere((e) => e.serviceType == ServiceType.fuel);
+    expect(fuel.notes, 'Octane 95, 14L Tank');
+
+    final tire = entities.firstWhere((e) => e.serviceType == ServiceType.tire);
+    expect(tire.notes, 'Front: 120/70 ZR17 (DOT 1024), Rear: 180/55 ZR17 (DOT 1224)');
+  });
 }

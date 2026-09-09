@@ -209,15 +209,78 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                 ),
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesCtrl,
-                maxLines: 3,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
-                  hintText: 'e.g. Used Motul 10W40...',
-                  alignLabelWithHint: true,
-                ),
+              Builder(
+                builder: (context) {
+                  final configs = ref
+                          .watch(maintenanceConfigProvider(widget.bikeId))
+                          .valueOrNull ??
+                      [];
+                  final currentConfig = configs
+                      .where((c) => c.serviceType == _selectedType)
+                      .firstOrNull;
+                  final specNote = currentConfig?.notes;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: _notesCtrl,
+                        maxLines: 3,
+                        style: TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: 'Notes (optional)',
+                          hintText: (specNote != null && specNote.isNotEmpty)
+                              ? 'Configured spec: $specNote'
+                              : (_selectedType == ServiceType.fuel
+                                  ? 'e.g. Octane 95, 12L fill-up, Jamuna oil...'
+                                  : 'e.g. Used Motul 10W40...'),
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      if (specNote != null && specNote.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        GestureDetector(
+                          onTap: () {
+                            if (_notesCtrl.text.isEmpty) {
+                              _notesCtrl.text = specNote;
+                            } else if (!_notesCtrl.text.contains(specNote)) {
+                              _notesCtrl.text =
+                                  '${_notesCtrl.text} ($specNote)';
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusSm),
+                              border: Border.all(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_circle_outline,
+                                    size: 12, color: AppColors.primary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Insert spec: $specNote',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 24),
               ElevatedButton(

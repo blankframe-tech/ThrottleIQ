@@ -7,6 +7,7 @@ class MaintenanceConfigModel {
         serviceType: ServiceTypeExt.fromString(m['service_type'] as String),
         intervalKm: (m['interval_km'] as num).toDouble(),
         isEnabled: (m['is_enabled'] as int) == 1,
+        notes: m['notes'] as String?,
       );
 
   static Map<String, dynamic> toMap(MaintenanceConfigEntity e) => {
@@ -14,5 +15,8 @@ class MaintenanceConfigModel {
         'service_type': e.serviceType.name,
         'interval_km': e.intervalKm,
         'is_enabled': e.isEnabled ? 1 : 0,
+        'notes': (e.notes != null && e.notes!.trim().isNotEmpty)
+            ? e.notes!.trim()
+            : null,
       };
 }

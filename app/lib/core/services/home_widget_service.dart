@@ -195,6 +195,8 @@ NextServiceDue? computeNextService({
 
 double _limitKmFor(ServiceType type) {
   switch (type) {
+    case ServiceType.fuel:
+      return 300.0;
     case ServiceType.oilChange:
       return SensorConstants.oilChangeMaxKm;
     case ServiceType.airFilter:

@@ -125,8 +125,20 @@ class MaintenanceConfigNotifier
     await _configDao.saveConfigsForBike(bikeId, maps);
     ref.invalidateSelf();
     ref.invalidate(isMaintenanceCustomizedProvider(bikeId));
-    ref.invalidate(maintenanceRemindersProvider(bikeId));
     unawaited(HomeWidgetService.instance.refreshFromLocalData());
+  }
+
+  Future<void> updateSingleConfig(MaintenanceConfigEntity updated) async {
+    final current = state.valueOrNull ?? await build(arg);
+    final index =
+        current.indexWhere((c) => c.serviceType == updated.serviceType);
+    final List<MaintenanceConfigEntity> updatedList;
+    if (index >= 0) {
+      updatedList = List.of(current)..[index] = updated;
+    } else {
+      updatedList = [...current, updated];
+    }
+    await saveConfigs(updatedList);
   }
 }
 
@@ -168,6 +180,7 @@ List<MaintenanceReminder> _computeReminders(
       kmSinceService: kmSince,
       kmLimit: maxKm,
       lastServiceDate: typeLogs.isEmpty ? null : typeLogs.first.date,
+      notes: config.notes,
     ));
   }
 

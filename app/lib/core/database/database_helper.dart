@@ -28,7 +28,7 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 13);
+  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 14);
 
   /// Runs the real migration ladder against an already-open database.
   ///
@@ -77,7 +77,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 13,
+      version: 14,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -205,6 +205,11 @@ class DatabaseHelper {
       await db.execute(_createBikeMaintenanceConfigsSql);
       await db.execute(_createBikeMaintenanceConfigsIndexSql);
     }
+    if (oldVersion < 14) {
+      // Extra info / notes on bike maintenance configs (e.g. oil brand, tyre dates/sizes).
+      await _addColumnIfMissing(
+          db, 'bike_maintenance_configs', 'notes', 'notes TEXT');
+    }
   }
 
   static const String _createBikeMaintenanceConfigsSql = '''
@@ -213,6 +218,7 @@ class DatabaseHelper {
       service_type TEXT NOT NULL,
       interval_km REAL NOT NULL,
       is_enabled INTEGER NOT NULL DEFAULT 1,
+      notes TEXT,
       PRIMARY KEY (bike_id, service_type),
       FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
     )

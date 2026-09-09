@@ -25,6 +25,7 @@ enum ServiceType {
   wheelBearings,
   driveBelt,
   throttleCables,
+  fuel,
   custom,
 }
 
@@ -75,6 +76,7 @@ extension ServiceTypeExt on ServiceType {
       case ServiceType.wheelBearings: return 'Wheel Bearings';
       case ServiceType.driveBelt: return 'Drive Belt';
       case ServiceType.throttleCables: return 'Throttle & Cables';
+      case ServiceType.fuel: return 'Fuel';
       case ServiceType.custom: return 'Custom';
     }
   }
@@ -121,6 +123,8 @@ extension ServiceTypeExt on ServiceType {
         return 'Inspect front & rear wheel bearings for play/roughness.';
       case ServiceType.driveBelt:
         return 'Check belt deflection, teeth condition & tension.';
+      case ServiceType.fuel:
+        return 'Track fuel refills, tank range, and fuel type.';
       case ServiceType.custom:
         return 'Rider-defined maintenance check.';
     }
@@ -134,6 +138,7 @@ extension ServiceTypeExt on ServiceType {
       case ServiceType.radiatorCoolant:
       case ServiceType.sparkPlug:
       case ServiceType.valveClearance:
+      case ServiceType.fuel:
         return MaintenanceCategory.engine;
       case ServiceType.chain:
       case ServiceType.chainTension:
@@ -158,6 +163,7 @@ extension ServiceTypeExt on ServiceType {
 
   double get defaultIntervalKm {
     switch (this) {
+      case ServiceType.fuel: return 300;
       case ServiceType.oilChange: return 1500;
       case ServiceType.oilFilter: return 3000;
       case ServiceType.chain: return 600;
@@ -185,6 +191,7 @@ extension ServiceTypeExt on ServiceType {
   /// Sensible default recommendation for most motorcycles.
   bool get isRecommendedDefault {
     switch (this) {
+      case ServiceType.fuel:
       case ServiceType.oilChange:
       case ServiceType.oilFilter:
       case ServiceType.chain:
@@ -255,6 +262,7 @@ class MaintenanceReminder {
   final double kmSinceService;
   final double kmLimit;
   final DateTime? lastServiceDate;
+  final String? notes;
 
   const MaintenanceReminder({
     required this.serviceType,
@@ -262,6 +270,7 @@ class MaintenanceReminder {
     required this.kmSinceService,
     required this.kmLimit,
     this.lastServiceDate,
+    this.notes,
   });
 }
 
@@ -270,12 +279,14 @@ class MaintenanceConfigEntity extends Equatable {
   final ServiceType serviceType;
   final double intervalKm;
   final bool isEnabled;
+  final String? notes;
 
   const MaintenanceConfigEntity({
     required this.bikeId,
     required this.serviceType,
     required this.intervalKm,
     this.isEnabled = true,
+    this.notes,
   });
 
   MaintenanceConfigEntity copyWith({
@@ -283,16 +294,18 @@ class MaintenanceConfigEntity extends Equatable {
     ServiceType? serviceType,
     double? intervalKm,
     bool? isEnabled,
+    String? notes,
   }) {
     return MaintenanceConfigEntity(
       bikeId: bikeId ?? this.bikeId,
       serviceType: serviceType ?? this.serviceType,
       intervalKm: intervalKm ?? this.intervalKm,
       isEnabled: isEnabled ?? this.isEnabled,
+      notes: notes ?? this.notes,
     );
   }
 
   @override
-  List<Object?> get props => [bikeId, serviceType, intervalKm, isEnabled];
+  List<Object?> get props => [bikeId, serviceType, intervalKm, isEnabled, notes];
 }
 

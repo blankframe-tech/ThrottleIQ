@@ -7,6 +7,7 @@ import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
+import '../widgets/edit_maintenance_check_sheet.dart';
 
 class MaintenanceConfigScreen extends ConsumerStatefulWidget {
   final String bikeId;
@@ -92,69 +93,17 @@ class _MaintenanceConfigScreenState
     });
   }
 
-  Future<void> _editInterval(MaintenanceConfigEntity item) async {
-    final ctrl = TextEditingController(text: item.intervalKm.toStringAsFixed(0));
-    final result = await showDialog<double>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Set ${item.serviceType.label} Interval', style: display(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter the recommended service interval in kilometers according to your motorcycle manual.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'Service Interval (km)',
-                suffixText: 'km',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              children: [1000, 1500, 3000, 5000, 10000, 15000].map((preset) {
-                return ActionChip(
-                  label: Text('${preset.toString()} km',
-                      style: const TextStyle(fontSize: 11)),
-                  onPressed: () => ctrl.text = preset.toString(),
-                  backgroundColor: AppColors.surfaceVariant,
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textTertiary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final val = double.tryParse(ctrl.text.trim());
-              if (val != null && val > 0) {
-                Navigator.of(ctx).pop(val);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+  Future<void> _editItem(MaintenanceConfigEntity item) async {
+    final updated = await EditMaintenanceCheckSheet.show(
+      context,
+      config: item,
+      persistImmediately: false,
     );
-
-    if (result != null && mounted) {
+    if (updated != null && mounted) {
       setState(() {
         _items = _items!.map((c) {
           if (c.serviceType == item.serviceType) {
-            return c.copyWith(intervalKm: result);
+            return updated;
           }
           return c;
         }).toList();
@@ -181,6 +130,8 @@ class _MaintenanceConfigScreenState
 
   IconData _iconForService(ServiceType type) {
     switch (type) {
+      case ServiceType.fuel:
+        return Icons.local_gas_station;
       case ServiceType.oilChange:
       case ServiceType.oilFilter:
         return Icons.opacity;
@@ -448,12 +399,35 @@ class _MaintenanceConfigScreenState
                         height: 1.2,
                       ),
                     ),
+                    if (item.notes != null &&
+                        item.notes!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.notes,
+                              size: 11, color: AppColors.primary),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              item.notes!.trim(),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () => _editInterval(item),
+                onTap: () => _editItem(item),
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
