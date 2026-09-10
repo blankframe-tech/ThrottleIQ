@@ -59,6 +59,29 @@ void main() {
       expect(detector.lastCrashSignal!.hadSpeedDrop, isTrue);
     });
 
+    test(
+        'DOES fire when accel and jerk spike in the SAME sample '
+        '(docs/Issues.md §62, found in a follow-up audit)', () {
+      // A real impact's jerk peak coincides with — not follows — its accel
+      // peak, since jerk is acceleration's derivative. This is arguably the
+      // MORE realistic single-instant crash signature than the multi-sample
+      // one above, and it used to be silently dropped: the accel-spike
+      // block (which opens the crash window) ran AFTER the jerk-tracking
+      // block, so the very sample that opened the window had its own jerk
+      // value discarded from `_peakJerkInWindow`.
+      detector.detect(accel: 0, jerk: 0, speedMs: 15.0);
+
+      // Impact: accel AND jerk cross their thresholds in the same call.
+      detector.detect(accel: 90.0, jerk: 12.0, speedMs: 15.0);
+
+      // Speed drops to 0 within 2s.
+      final alert = detector.detect(accel: -85.0, jerk: -2.0, speedMs: 0.5);
+
+      expect(alert, equals(RideAlert.crash));
+      expect(detector.lastCrashSignal, isNotNull);
+      expect(detector.lastCrashSignal!.hadJerkSpike, isTrue);
+    });
+
     test('crash alert TTL: resets after 2s window', () {
       // Set up initial conditions
       detector.detect(accel: 0, jerk: 0, speedMs: 15.0);

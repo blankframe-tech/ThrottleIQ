@@ -137,41 +137,62 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   }
 
   /// Completely deletes the current rider's account:
-  /// 1. Remote Firestore document and username claim
+  /// 1. Firebase Auth account
   /// 2. Local SQLite database records (rides, bikes, maintenance, etc.)
-  /// 3. Firebase Auth account
-  /// 4. Google Sign-In session
+  /// 3. Google Sign-In session
+  ///
+  /// The Firestore profile document and username claim are cleaned up
+  /// separately, server-side — see `functions/src/account-deletion.ts`'s
+  /// `onUserAccountDeleted` trigger.
   ///
   /// Required by Apple App Store Review Guideline 5.1.1(v).
+  ///
+  /// docs/Issues.md §62 (follow-up audit): this used to delete the Firestore
+  /// profile and wipe every local record FIRST, and only attempt
+  /// `user.delete()` last — the one step most likely to fail
+  /// (`FirebaseAuthException` 'requires-recent-login' fires whenever the
+  /// session is more than ~5 minutes old, i.e. almost any real "delete my
+  /// account" tap). That failure was silently swallowed by
+  /// `AsyncValue.guard` (it captures the error into `state` but does not
+  /// rethrow), so callers awaiting this method saw no exception and reported
+  /// success — even though the rider's Firestore profile and local ride/
+  /// bike/maintenance history were already permanently gone. Deleting the
+  /// Auth account FIRST means a failure here (still possible, still surfaced
+  /// below) hasn't touched anything else yet; the local wipe only runs once
+  /// that's confirmed to have actually succeeded.
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user == null) return;
     final uid = user.uid;
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      // 1. Delete remote profile and handle
-      try {
-        await _profiles.deleteUserAccount(uid);
-      } catch (_) {
-        // Non-fatal if offline or already removed
-      }
+    final result = await AsyncValue.guard(() async {
+      // 1. Delete the Firebase Auth account. May throw
+      // FirebaseAuthException('requires-recent-login') — if it does,
+      // nothing below has run, so nothing has been destroyed.
+      await user.delete();
 
-      // 2. Wipe local SQLite data
+      // 2. Only reached once the Auth account is actually gone: wipe local
+      // SQLite data (no server auth dependency) and sign out of Google.
       try {
         await DatabaseHelper.instance.deleteUserData(uid);
       } catch (_) {
-        // Non-fatal
+        // Non-fatal — the account is gone either way.
       }
-
-      // 3. Delete Firebase Auth user (may throw FirebaseAuthException with 'requires-recent-login')
-      await user.delete();
-
-      // 4. Sign out external providers
       try {
         await GoogleSignIn().signOut();
       } catch (_) {}
     });
+    state = result;
+
+    // AsyncValue.guard captures a thrown error into `state` but does not
+    // rethrow it. Every caller (e.g. settings_screen.dart) awaits this
+    // method inside its own try/catch expecting a thrown exception on
+    // failure — without this rethrow, a failed deletion silently looked
+    // like success to the UI, which was the actual bug.
+    if (result.hasError) {
+      Error.throwWithStackTrace(result.error!, result.stackTrace!);
+    }
   }
 }
 

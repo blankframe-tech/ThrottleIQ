@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-09-10 (§62)_
+_Last updated: 2026-09-10 (§62, §63)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -4119,3 +4119,140 @@ Google, and the account-switch data-leak class of bug from §33.1 is
 already closed for rides/bikes/maintenance (just not for the four tables
 in §62.9). The `public/live-viewer.html` Firebase Web API key is the
 already-documented §1 non-issue, re-confirmed.
+
+---
+
+## 63. Follow-up audit sweep — 3 parallel reviews on ground §62 didn't cover, 3 findings, 2 fixed same session (2026-09-10)
+
+Requested explicitly as a second pass after §62, targeting areas the first
+sweep hadn't reached: native platform config (`app/android`, `app/ios`),
+CI, dependency versions, the Cloudinary upload service, the remaining
+Dart feature modules (auth beyond a shallow pass, forums, poi_directory,
+routes, stats), the three "god widget" screens flagged but not read in
+depth, and a dedicated deep-dive on the safety-critical motion-fusion/
+crash-detection calculators. Two genuine, verified bugs were found and
+fixed; one (Cloudinary) is a real risk with no safe code-only fix available
+this session. Everything else checked came back clean or already covered.
+
+Verification after the fixes below: `flutter analyze` clean (still the same
+~99 pre-existing info-level lints), `flutter test` **1021/1021** (was
+1020 — added 1 new crash-detector regression test, confirmed to fail
+against the pre-fix code via `git stash`), `cd functions && npm run build`
+clean. Not deployed.
+
+### 63.1 Account deletion silently destroys all user data even when the Firebase Auth deletion step fails, with a false "success" outcome — CRITICAL
+
+**Status: FIXED.** `AuthNotifier.deleteAccount()`
+(`app/lib/features/auth/presentation/providers/auth_provider.dart`) used to
+run, in order: delete the Firestore profile + username claim → wipe the
+local SQLite DB → `await user.delete()` (Firebase Auth) → sign out of
+Google — all wrapped in `state = await AsyncValue.guard(...)`, which
+captures a thrown error into `state` but does **not** rethrow it. Firebase
+Auth's `user.delete()` commonly throws `requires-recent-login` (any session
+older than ~5 minutes — i.e. almost any real "open Settings and tap Delete
+Account" flow), and since that failure was never rethrown, the caller
+(`settings_screen.dart`'s `try { await ...deleteAccount(); context.go(...)
+} catch (e) {...}`) never saw an exception — the Firestore profile and every
+local ride/bike/maintenance record were already permanently gone, but the
+UI reported success and navigated to login with the Auth account (and its
+credentials) still fully intact, so signing back in silently recreated a
+blank profile as if nothing had happened. A real, common-path, irreversible
+data-loss bug in the App-Store-mandated account-deletion flow.
+
+Fixed by reordering so `user.delete()` runs FIRST — a failure there now
+touches nothing else — and by making `deleteAccount()` actually rethrow the
+captured error (`Error.throwWithStackTrace`) so callers' existing
+try/catch blocks work as they always assumed. This reordering has a
+structural consequence: once `user.delete()` succeeds the client is no
+longer authenticated as that uid, and `firestore.rules` requires exactly
+that to delete `users/{uid}`/`usernames/{handle}` — so the client can no
+longer reliably clean those up itself afterward. That cleanup moved
+server-side: new `functions/src/account-deletion.ts`'s
+`onUserAccountDeleted` (a v1 `functions.auth.user().onDelete()` trigger,
+chosen over a v2 blocking `identity` function specifically because it needs
+no Identity Platform upgrade) runs with Admin SDK privileges whenever an
+Auth account is actually deleted, regardless of the client's own
+connectivity/timing. `ProfileRepository.deleteUserAccount()` (the old
+client-side version of this cleanup) was deleted outright as dead code once
+its only call site was removed.
+
+**Not yet deployed** — until `firebase deploy --only functions` is run, a
+successful account deletion leaves the Firestore profile/username claim
+orphaned (a real but much lesser regression than the CRITICAL bug this
+fixes: the rider's own data is gone either way once they've confirmed
+deletion, and an orphaned doc is a cleanup gap, not a false "it's all gone"
+that turned out to only be half true). No automated regression test was
+added: `AuthNotifier`'s constructor eagerly instantiates `ProfileRepository()`,
+which touches `FirebaseFirestore.instance` and requires
+`Firebase.initializeApp()` — this repo has no Firebase-test-app
+bootstrapping convention anywhere (confirmed via repo-wide search), so
+unit-testing anything on this notifier needs that infrastructure built
+first. Verified instead via careful manual tracing of the new ordering
+against `firestore.rules`' actual permission model, plus `flutter analyze`.
+
+### 63.2 Crash detector drops the jerk signal from the exact sample that opens its crash-accel window — false negative on a realistic single-impact crash — HIGH (safety-critical)
+
+**Status: FIXED.** `EventDetector.detect()`
+(`app/lib/features/ride/domain/calculators/event_detector.dart`) ran its
+jerk-tracking block BEFORE its accel-spike block in the same call. Jerk is
+acceleration's derivative, so a real impact's jerk peak coincides with —
+not follows — its accel peak; but on the one sample where accel first
+crosses the crash threshold, `_highAccelStart` was still `null` when that
+same sample's jerk value was checked moments earlier in the code, so its
+contribution to `_peakJerkInWindow` was silently discarded even though the
+accel-spike block set `_highAccelStart` moments later in the very same
+call. A single-sample impact — accel and jerk spiking together, then
+settling as the bike tumbles — is arguably the *more* realistic crash
+signature than two separate spikes on two separate samples, and it could
+fail to register as a crash at all. Verified by hand-tracing
+`detect(accel: 90, jerk: 12, ...)` then `detect(accel: -85, jerk: -8,
+speedMs: 0.5)` — accel spike, jerk spike, and speed collapsing from normal
+to near-zero in one sample interval (textbook crash) — never returning
+`RideAlert.crash`.
+
+Fixed by reordering the two blocks (accel-spike detection now runs first),
+which preserves the existing anti-false-positive invariant from §33.8 (a
+jerk spike from a call chronologically before any accel spike is still
+correctly excluded — only the ordering *within* the one call that opens the
+window changed) while closing the false-negative gap. New test:
+`app/test/calculators/crash_detector_test.dart` ("DOES fire when accel and
+jerk spike in the SAME sample") — confirmed to fail against the pre-fix
+ordering via `git stash` (only this one test failed; all others were
+unaffected, confirming the fix doesn't disturb the two- sample case) and
+pass after.
+
+### 63.3 Cloudinary unsigned upload preset lets anyone who decompiles the app bypass it entirely — MEDIUM (no safe code-only fix this session)
+
+**Status: NOT FIXED — flagged, no code change made.**
+`app/lib/core/services/cloudinary_upload_service.dart:28-39` embeds a cloud
+name and an *unsigned* upload preset as plain Dart constants — trivially
+extractable from a strings dump of the compiled APK/IPA, no reverse
+engineering needed. Because the preset is unsigned by design (that's the
+whole point of an unsigned preset — no API key/secret required), anyone
+holding these two strings can `POST` directly to Cloudinary's own API
+(`/image/upload` and `/video/upload`, the latter also accepting arbitrary
+audio per this file's own comment) with any `folder` of their choosing,
+completely bypassing Firebase Auth and the app itself. Concrete abuse:
+quota-exhaustion against the project's Cloudinary free tier (denial of
+service by cost), or hosting arbitrary/objectionable content under this
+project's Cloudinary account, risking a ToS suspension that would take down
+avatar/ride-photo/voice-note uploads for every real user at once.
+
+This isn't a bug in the file — the comment there is correct that "nothing
+secret is embedded here," that's inherent to how unsigned presets work —
+and the real fix (switching to signed uploads, where an authenticated
+Cloud Function mints a short-lived signature using a `CLOUDINARY_API_SECRET`
+that only ever lives server-side) is a genuine architecture change, not a
+bug fix: a new callable Cloud Function, a client-side change to request a
+signature before every upload, and end-to-end verification against a real
+Cloudinary account and deployed Functions environment this session has no
+access to. Attempting it blind risks silently breaking every upload path
+(avatars, ride photos, voice notes) with no way to verify the fix actually
+works. **Immediate, lower-risk mitigation that doesn't require code
+changes:** check Cloudinary console → Settings → Upload →
+`throttleiq_unsigned` for a file-size cap and format allowlist — if neither
+is set, add them; that alone closes the worst of the quota-exhaustion/
+content-hosting abuse without touching a single line of app code. The
+signed-upload architecture change is a real follow-up worth doing but
+belongs in its own session with Cloudinary/Functions credentials in hand to
+verify against.

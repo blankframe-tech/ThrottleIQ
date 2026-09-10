@@ -300,28 +300,14 @@ class ProfileRepository {
     return snap.docs.map((doc) => doc.id).toList();
   }
 
-  /// Completely deletes the user's account data from Firestore.
-  ///
-  /// Required by Apple App Store Review Guideline 5.1.1(v).
-  /// Releases the claimed username handle so it can be reclaimed,
-  /// removes the `livePointers/{uid}` document, and deletes `users/{uid}`.
-  Future<void> deleteUserAccount(String uid) async {
-    final profile = await getProfile(uid);
-    if (profile?.username != null) {
-      final handleLower = profile!.username!.toLowerCase();
-      try {
-        await _usernames.doc(handleLower).delete();
-      } catch (_) {
-        // Non-fatal if handle was already deleted or missing
-      }
-    }
-    try {
-      await _firestore.collection('livePointers').doc(uid).delete();
-    } catch (_) {
-      // Non-fatal if pointer did not exist
-    }
-    await _users.doc(uid).delete();
-  }
+  // Account deletion's Firestore cleanup (release the username handle,
+  // delete livePointers/{uid} and users/{uid}) used to live here, called
+  // from the client before deleting the Firebase Auth account. Removed:
+  // docs/Issues.md §62 moved it server-side, to
+  // functions/src/account-deletion.ts's onUserAccountDeleted trigger, since
+  // it has to run with Admin privileges once the Auth account is actually
+  // gone, not from a client that's about to lose its own auth token trying
+  // to write these same documents. See AuthNotifier.deleteAccount().
 }
 
 class UsernameTakenException implements Exception {

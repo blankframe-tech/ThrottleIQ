@@ -91,6 +91,29 @@ class EventDetector {
     _recentSpeeds.add(_SpeedSample(speedMs: speedMs, timestamp: now));
     _recentSpeeds.removeWhere((s) => now.difference(s.timestamp) > _crashWindow);
 
+    // Detect high-acceleration spike (>8g threshold). Runs BEFORE the jerk
+    // tracking below — docs/Issues.md §62 (found in a follow-up audit): a
+    // real impact's jerk peak coincides with its accel peak (jerk is
+    // acceleration's derivative), so the sample that first crosses the
+    // accel threshold is exactly the sample whose jerk value matters most.
+    // With the blocks in the other order, `_highAccelStart` was still null
+    // when THIS sample's jerk was checked below, silently dropping it from
+    // `_peakJerkInWindow` even though `_highAccelStart` gets set moments
+    // later in the same call — a single-sample impact (accel and jerk
+    // spiking together, as most real crashes do) could fail to register a
+    // crash at all. Opening the window here first means the jerk check
+    // below sees it already open for this sample too.
+    if (accel != null && accel.abs() > _crashAccelThreshold) {
+      if (_highAccelStart == null) {
+        _highAccelStart = now;
+        _peakAccelSinceSpike = accel.abs();
+      } else {
+        _peakAccelSinceSpike = (_peakAccelSinceSpike > accel.abs())
+            ? _peakAccelSinceSpike
+            : accel.abs();
+      }
+    }
+
     // Track jerk. highJerkCount is a ride-wide tally (any high-jerk moment,
     // used for the ride summary), but _peakJerkInWindow feeds the crash
     // check below and must only reflect jerk that happened WHILE an
@@ -104,18 +127,6 @@ class EventDetector {
         _peakJerkInWindow = (_peakJerkInWindow == 0)
             ? jerk.abs()
             : (_peakJerkInWindow + jerk.abs()) / 2; // Moving avg
-      }
-    }
-
-    // Detect high-acceleration spike (>8g threshold)
-    if (accel != null && accel.abs() > _crashAccelThreshold) {
-      if (_highAccelStart == null) {
-        _highAccelStart = now;
-        _peakAccelSinceSpike = accel.abs();
-      } else {
-        _peakAccelSinceSpike = (_peakAccelSinceSpike > accel.abs())
-            ? _peakAccelSinceSpike
-            : accel.abs();
       }
     }
 

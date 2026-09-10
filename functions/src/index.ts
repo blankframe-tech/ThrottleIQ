@@ -17,3 +17,4 @@
 export * from './crash-notifications';
 export * from './ride-identity';
 export * from './chat-moderation';
+export * from './account-deletion';
