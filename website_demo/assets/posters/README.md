@@ -1,3 +1,29 @@
+## V2 — one visual, one line, a QR code
+
+`illus.py` + `posters_v2.py` generate a second, louder pass on the same 24
+concepts: one big flat-icon illustration per poster (a line-art rider figure,
+or a prop icon — traffic light, fuel pump, black box, shield, etc., all
+defined in `illus.py`), 1-2 huge headline words, and a QR in the bottom-right
+corner. No instrument panels, no stat rows — clickbait-y on purpose, meant to
+read from across the street. Same skin-per-poster and campaign IDs as v1
+(QR links get a `_v2` campaign suffix for separate attribution).
+
+```bash
+.venv/bin/python3 posters_v2.py          # writes svg/v2/*.svg
+.venv/bin/python3 -c "
+import cairosvg, glob, os
+for f in glob.glob('svg/v2/*.svg'):
+    n = os.path.basename(f)[:-4]
+    cairosvg.svg2png(url=f, write_to=f'print/v2/{n}@2x.png', output_width=2000, output_height=3000)
+    cairosvg.svg2png(url=f, write_to=f'web/v2/{n}.png', output_width=800, output_height=1200)
+"
+```
+
+Output lives in `print/v2/`, `web/v2/`, `svg/v2/` — the v1 files above are
+untouched.
+
+---
+
 # ThrottleIQ Street Posters — Dhaka
 
 Twelve placement-specific posters. Each one borrows a different skin from the app's
