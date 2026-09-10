@@ -43,7 +43,13 @@
  *
  * Flags:
  *   --email <address>      Default: rider.admin@example.com
- *   --password <password>  Default: Test@123
+ *   --password <password>  Default: none — a strong random password is
+ *                           generated on first creation and printed once; an
+ *                           already-existing account's password is left
+ *                           untouched unless you pass this flag (or set
+ *                           PLAY_REVIEW_PASSWORD) explicitly. docs/Issues.md
+ *                           §62.10: this used to default to a hardcoded
+ *                           'Test@123' on a permanent production account.
  *   --display-name <name>  Default: "ThrottleIQ Reviewer"
  *   --username <handle>    Default: derived from the email's local part
  *   --dry-run              Explicit form of the default. Prints the planned
@@ -56,15 +62,24 @@
  */
 
 let admin;
+const crypto = require('node:crypto');
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 const CONFIRMATION_PHRASE = 'CREATE REVIEW ACCOUNT';
 
 const DEFAULTS = {
   email: 'rider.admin@example.com',
-  password: 'Test@123',
   displayName: 'ThrottleIQ Reviewer',
 };
+
+// docs/Issues.md §62.10: no more hardcoded default password. 16 chars drawn
+// from a mixed-class alphabet (base64url is close enough — it already mixes
+// upper/lower/digits; '-'/'_' round out the "special character" class most
+// review forms ask for) via crypto.randomBytes, so it's only ever generated
+// once per real account and never derivable from the repo.
+function generatePassword() {
+  return crypto.randomBytes(16).toString('base64url').slice(0, 20);
+}
 
 const log = (...args) => console.log(...args);
 const warn = (...args) => console.warn(...args);
@@ -93,7 +108,11 @@ function suggestUsernameBase(email) {
 function parseArgs(argv) {
   const opts = {
     email: DEFAULTS.email,
-    password: DEFAULTS.password,
+    // No default: null means "not explicitly supplied" — see
+    // resolvePassword(), which decides between generating one (new account)
+    // and leaving an existing account's password untouched.
+    password: process.env.PLAY_REVIEW_PASSWORD || null,
+    passwordExplicit: Boolean(process.env.PLAY_REVIEW_PASSWORD),
     displayName: DEFAULTS.displayName,
     username: null,
     confirmed: false,
@@ -109,8 +128,8 @@ function parseArgs(argv) {
     } else if (arg === '--non-interactive') opts.nonInteractive = true;
     else if (arg === '--email') opts.email = argv[++i];
     else if (arg.startsWith('--email=')) opts.email = arg.slice('--email='.length);
-    else if (arg === '--password') opts.password = argv[++i];
-    else if (arg.startsWith('--password=')) opts.password = arg.slice('--password='.length);
+    else if (arg === '--password') { opts.password = argv[++i]; opts.passwordExplicit = true; }
+    else if (arg.startsWith('--password=')) { opts.password = arg.slice('--password='.length); opts.passwordExplicit = true; }
     else if (arg === '--display-name') opts.displayName = argv[++i];
     else if (arg.startsWith('--display-name=')) opts.displayName = arg.slice('--display-name='.length);
     else if (arg === '--username') opts.username = argv[++i];
@@ -135,7 +154,10 @@ reviewer sign-in account.
 
 Flags:
   --email <address>       Default: ${DEFAULTS.email}
-  --password <password>   Default: ${DEFAULTS.password}
+  --password <password>   Default: none. On first creation a strong random
+                           password is generated and printed once. If the
+                           account already exists, its password is left
+                           untouched unless you pass this flag.
   --display-name <name>   Default: ${DEFAULTS.displayName}
   --username <handle>     Default: derived from the email's local part
   --dry-run               Explicit form of the default.
@@ -146,6 +168,7 @@ Flags:
 Environment (only needed for a real run):
   FIREBASE_PROJECT_ID              Must equal '${EXPECTED_PROJECT_ID}'.
   GOOGLE_APPLICATION_CREDENTIALS   Path to a service-account JSON key.
+  PLAY_REVIEW_PASSWORD             Optional — same effect as --password.
 `;
 
 function assertProjectEnv() {
@@ -203,7 +226,7 @@ async function main() {
   rule('=');
   log('');
   log(`  Email:         ${opts.email}`);
-  log(`  Password:      ${opts.password}`);
+  log(`  Password:      ${opts.passwordExplicit ? opts.password : '(auto-generated on creation; left unchanged if the account already exists)'}`);
   log(`  Display name:  ${opts.displayName}`);
   log(`  Username:      @${opts.username}`);
   log('');
@@ -238,27 +261,39 @@ async function main() {
 
   await confirmRealWrite({ nonInteractive: opts.nonInteractive });
 
+  // docs/Issues.md §62.10: a fresh account with no explicit password always
+  // gets a freshly generated one (never a hardcoded default); an
+  // already-existing account's password is left untouched unless the caller
+  // explicitly asked to change it — re-running this script for the routine
+  // "sync profile fields" case must not silently invalidate whatever's
+  // already on file in Play Console.
   let userRecord;
   let created;
+  let passwordWasSet = false;
   try {
+    const password = opts.password || generatePassword();
     userRecord = await auth.createUser({
       email: opts.email,
-      password: opts.password,
+      password,
       displayName: opts.displayName,
       emailVerified: true,
     });
+    opts.password = password;
+    passwordWasSet = true;
     created = true;
     log(`  Created Auth user ${opts.email} (uid: ${userRecord.uid}).`);
   } catch (err) {
     if (err && err.code === 'auth/email-already-exists') {
       userRecord = await auth.getUserByEmail(opts.email);
-      await auth.updateUser(userRecord.uid, {
-        password: opts.password,
-        displayName: opts.displayName,
-        emailVerified: true,
-      });
+      const update = { displayName: opts.displayName, emailVerified: true };
+      if (opts.passwordExplicit) {
+        update.password = opts.password;
+        passwordWasSet = true;
+      }
+      await auth.updateUser(userRecord.uid, update);
       created = false;
-      log(`  ${opts.email} already existed (uid: ${userRecord.uid}) — updated password/displayName.`);
+      log(`  ${opts.email} already existed (uid: ${userRecord.uid}) — updated displayName` +
+        `${passwordWasSet ? '/password' : ' (password left unchanged — pass --password to change it)'}.`);
     } else {
       throw err;
     }
@@ -302,7 +337,13 @@ async function main() {
   log('');
   log('  Paste these into Play Console → App content → App access → Admin Account:');
   log(`    Username, email address, or phone number:  ${opts.email}`);
-  log(`    Password:                                   ${opts.password}`);
+  if (passwordWasSet) {
+    log(`    Password:                                   ${opts.password}`);
+    log('');
+    log('  SAVE THIS PASSWORD NOW — it is generated once and never printed again.');
+  } else {
+    log('    Password:                                   (unchanged — use the one already on file)');
+  }
   log('');
 }
 

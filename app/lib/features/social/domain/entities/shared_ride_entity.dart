@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/ride_speed_invariant.dart';
+
 /// How many rider-taken photos one shared ride may carry.
 ///
 /// The feed card shows the photos beside the route map (each gets half the
@@ -128,14 +130,14 @@ class SharedRideEntity extends Equatable {
 
   /// Top speed achieved during the ride. Guaranteed to never be less than
   /// [avgSpeedKmh] for moving rides to preserve physical reality even if
-  /// hardware fixes didn't report Doppler speed or legacy data omitted it.
-  double get maxSpeedKmh {
-    final avg = avgSpeedKmh;
-    if (distanceKm > 0 && (_maxSpeedKmh <= 0 || _maxSpeedKmh < avg)) {
-      return avg;
-    }
-    return _maxSpeedKmh;
-  }
+  /// hardware fixes didn't report Doppler speed or legacy data omitted it,
+  /// and never above what's physically plausible for a motorcycle — see
+  /// [RideSpeedInvariant] (docs/Issues.md §62.8: this used to have no
+  /// ceiling at all).
+  double get maxSpeedKmh => RideSpeedInvariant.reconcile(
+        avgSpeedKmh: avgSpeedKmh,
+        rawMaxSpeedKmh: _maxSpeedKmh,
+      );
 
   int get netScore => upvotes - downvotes;
 

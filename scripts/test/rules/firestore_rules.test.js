@@ -1162,4 +1162,242 @@ test('a blocked sender cannot send a message to the recipient', async () => {
   );
 });
 
+// docs/Issues.md §62.4: a chat participant used to be able to rewrite ANY
+// field on the chat doc or a message, including `participants` itself (an
+// unconsented third party added to a DM) or another rider's message text.
+test('a participant cannot add a third party to a 1:1 chat via update', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    updateDoc(doc(db, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY, STRANGER],
+    })
+  );
+});
+
+test('a participant CAN update lastMessage/updatedAt only', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    updateDoc(doc(db, 'chats', 'chat-alice-mallory'), {
+      lastMessage: { senderId: ALICE, text: 'hi', createdAt: new Date() },
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a recipient can mark a message as read, but not rewrite its text', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory', 'messages', 'msg-3'), {
+      senderId: ALICE,
+      text: 'Hello Mallory!',
+      createdAt: new Date(),
+      isRead: false,
+    });
+  });
+  const mallory = dbFor(MALLORY);
+  await assertSucceeds(
+    updateDoc(doc(mallory, 'chats', 'chat-alice-mallory', 'messages', 'msg-3'), {
+      isRead: true,
+    })
+  );
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory', 'messages', 'msg-4'), {
+      senderId: ALICE,
+      text: 'Another one',
+      createdAt: new Date(),
+      isRead: false,
+    });
+  });
+  await assertFails(
+    updateDoc(doc(mallory, 'chats', 'chat-alice-mallory', 'messages', 'msg-4'), {
+      text: 'tampered',
+    })
+  );
+});
+
+test('the sender cannot mark their own message as read (undoing an isToxic hide)', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory', 'messages', 'msg-5'), {
+      senderId: ALICE,
+      text: '*** This message was hidden by automated moderation ***',
+      isToxic: true,
+      createdAt: new Date(),
+      isRead: false,
+    });
+  });
+  const alice = dbFor(ALICE);
+  await assertFails(
+    updateDoc(doc(alice, 'chats', 'chat-alice-mallory', 'messages', 'msg-5'), {
+      isToxic: false,
+      text: 'unhidden text',
+    })
+  );
+});
+
+// docs/Issues.md §62.1: the shared-ride owner's own create/update branch used
+// to accept any distance/speed/counter values with no plausibility check.
+function sharedRideData(overrides = {}) {
+  return {
+    userId: ALICE,
+    userName: 'Alice',
+    userPhotoUrl: '',
+    bikeId: 'bike-1',
+    bikeName: 'Bike',
+    bikeType: 'sport',
+    rideDate: new Date(),
+    distanceKm: 50,
+    durationSeconds: 3600,
+    maxSpeedKmh: 90,
+    polyline: [],
+    createdAt: new Date(),
+    audience: 'public',
+    allowedUserIds: [],
+    likes: 0,
+    comments: 0,
+    upvotes: 0,
+    downvotes: 0,
+    ...overrides,
+  };
+}
+
+test('sharing a ride with plausible stats succeeds', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(setDoc(doc(db, 'rides', 'ride-new-1'), sharedRideData()));
+});
+
+test('sharing a ride with a fabricated 9999 km/h top speed is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'rides', 'ride-new-2'), sharedRideData({ maxSpeedKmh: 9999 }))
+  );
+});
+
+test('sharing a ride pre-loaded with fake upvotes is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'rides', 'ride-new-3'), sharedRideData({ upvotes: 50000 }))
+  );
+});
+
+test('the owner cannot inflate their own ride upvotes/maxSpeed via a plain update', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', 'ride-existing-1'), sharedRideData());
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    updateDoc(doc(db, 'rides', 'ride-existing-1'), { maxSpeedKmh: 500 })
+  );
+  await assertFails(
+    updateDoc(doc(db, 'rides', 'ride-existing-1'), { upvotes: 999 })
+  );
+});
+
+test('the owner CAN edit a caption on an existing share without touching stats', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', 'ride-existing-2'), sharedRideData());
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(db, 'rides', 'ride-existing-2'), sharedRideData({ caption: 'great ride' }), { merge: true })
+  );
+});
+
+// docs/Issues.md §62.2: users/{uid}.publicStats used to accept any value with
+// no server-side validation at all.
+test('a rider cannot fabricate an absurd lifetime distance on their public stats', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 999999, totalRides: 1, badgeIds: [] } },
+      { merge: true }
+    )
+  );
+});
+
+test('a rider CAN post a plausible first public-stats snapshot', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 120, totalRides: 3, badgeIds: ['first_ride'] } },
+      { merge: true }
+    )
+  );
+});
+
+test('public stats cannot go backwards or drop an already-earned badge', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', ALICE), {
+      publicStats: { totalDistanceKm: 500, totalRides: 10, badgeIds: ['first_ride', 'km_100'] },
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 100, totalRides: 10, badgeIds: ['first_ride', 'km_100'] } },
+      { merge: true }
+    )
+  );
+  await assertFails(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 600, totalRides: 11, badgeIds: ['first_ride'] } },
+      { merge: true }
+    )
+  );
+});
+
+// docs/Issues.md §62.5: reports used to validate only reporterId, so a client
+// could fabricate a report already marked 'actioned' against anyone.
+test('a fabricated pre-actioned report is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(doc(db, 'reports', 'report-1'), {
+      reporterId: MALLORY,
+      reportedId: ALICE,
+      contentType: 'chat',
+      contentId: 'msg-1',
+      reason: 'spam',
+      status: 'actioned',
+    })
+  );
+});
+
+test('a well-formed pending report from the real reporter succeeds', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(doc(db, 'reports', 'report-2'), {
+      reporterId: MALLORY,
+      reportedId: ALICE,
+      contentType: 'chat',
+      contentId: 'msg-1',
+      reason: 'spam',
+      status: 'pending',
+    })
+  );
+});
+
 

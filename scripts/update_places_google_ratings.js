@@ -165,7 +165,19 @@ function calculateGoogleRating(name, category, osmId = '') {
 async function main() {
   const args = process.argv.slice(2);
   const writeForReal = args.includes('--yes-i-really-mean-it');
-  const projectId = process.env.FIREBASE_PROJECT_ID || EXPECTED_PROJECT_ID;
+  // docs/Issues.md §62.10: this used to silently fall back to
+  // EXPECTED_PROJECT_ID (the live project) if FIREBASE_PROJECT_ID was simply
+  // forgotten — every sibling script here (reset_beta_data.js,
+  // seed_dhaka_places.js, seed_qa_test_riders.js, cleanup_qa_test_riders.js,
+  // set_admin_claim.js) hard-fails instead. This reads from Firestore even
+  // in dry-run mode (only the final write is gated below), so it always
+  // needed real credentials/a real project — requiring the env var costs
+  // nothing that worked before.
+  if (!process.env.FIREBASE_PROJECT_ID) {
+    console.error(`Refusing to run: FIREBASE_PROJECT_ID is not set. Set it to '${EXPECTED_PROJECT_ID}' to run.`);
+    process.exit(1);
+  }
+  const projectId = process.env.FIREBASE_PROJECT_ID;
 
   console.log('='.repeat(70));
   console.log(`  ThrottleIQ Places Google Rating Enrichment — Project: '${projectId}'`);

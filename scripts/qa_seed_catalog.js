@@ -16,7 +16,10 @@
  */
 
 const QA_EMAIL_DOMAIN = 'qa-seed.invalid';
-const QA_PASSWORD = 'QaSeed!2026';
+// docs/Issues.md §62.10: there used to be one shared QA_PASSWORD constant
+// here, printed to stdout on every seed_qa_test_riders.js run (and so into
+// CI logs) for all 30 accounts. Each rider now gets its own random password
+// instead — see generateRiderPassword() in seed_qa_test_riders.js.
 
 // 30 real Bangladesh-market motorcycles, commuter to high-range. Tier is
 // derived from `cc` at use time (see tierForCc), not stored here, so it
@@ -117,7 +120,6 @@ function allSeedableForumIds() {
 
 module.exports = {
   QA_EMAIL_DOMAIN,
-  QA_PASSWORD,
   BIKE_CATALOG,
   TOPICS,
   slugifyPart,

@@ -537,8 +537,11 @@ scripted use). Each account:
 
 - signs up with Firebase Auth at `<handle>@qa-seed.invalid` (`.invalid` is the
   IANA-reserved TLD for exactly this — RFC 2606 — so it can never collide with
-  a real rider's email), password `QaSeed!2026`, and the custom claim
-  `{ qaSeed: true }`
+  a real rider's email), its own randomly-generated password (docs/Issues.md
+  §62.10 — no more shared hardcoded password; the passwords for accounts
+  created by a real run are written to a local, gitignored
+  `qa_seed_passwords.<timestamp>.json`, never printed to stdout/CI logs), and
+  the custom claim `{ qaSeed: true }`
 - gets a `users/{uid}` profile + claimed `usernames/{handle}`, one bike in
   `users/{uid}/bikes`, and 4-8 backdated rides in `users/{uid}/rides`
 - shares 1-2 of those rides to the public `rides` feed

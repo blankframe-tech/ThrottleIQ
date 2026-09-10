@@ -96,9 +96,6 @@ class OutboxService {
         _explicitShareRepository = shareRepository,
         _explicitFirestore = firestore;
 
-  /// Deprecated backwards-compatibility accessor. Prefer reading [outboxServiceProvider].
-  static final OutboxService instance = OutboxService();
-
   final OutboxDao _dao;
   RideShareRepository? _explicitShareRepository;
   FirebaseFirestore? _explicitFirestore;
@@ -108,7 +105,25 @@ class OutboxService {
   FirebaseFirestore get _firestore =>
       _explicitFirestore ??= FirebaseFirestore.instance;
 
-  bool _draining = false;
+  /// Serializes every delivery attempt — [drain] and [_attemptOne] alike —
+  /// so two never run concurrently. docs/Issues.md §62.7: [_attemptOne] (run
+  /// synchronously from `enqueueShareRide` et al.) used to be unguarded
+  /// while a boolean `_draining` flag protected only [drain] from itself. A
+  /// rider tapping "share ride" the instant a timer-triggered `drain()` was
+  /// already running could get both calling `_deliverShareRide` on the same
+  /// entry at once — double-uploading a photo to Cloudinary and racing on
+  /// `_dao.updatePayload` (last write wins, so one photo URL could vanish).
+  /// Chaining every call onto this future serializes them regardless of
+  /// which method they came in through; each link swallows its own error so
+  /// one failed attempt doesn't wedge the chain for the next caller, while
+  /// the original error still propagates to whoever awaited that attempt.
+  Future<void> _queue = Future<void>.value();
+
+  Future<T> _serialized<T>(Future<T> Function() action) {
+    final result = _queue.then((_) => action());
+    _queue = result.then((_) {}, onError: (_) {});
+    return result;
+  }
 
   /// Fires whenever the queue's depth may have changed, so a UI badge can
   /// refresh without polling.
@@ -221,29 +236,32 @@ class OutboxService {
     return entryId;
   }
 
-  Future<OutboxDeliveryResult> _attemptOne(String id) async {
-    final entries = await _dao.all();
-    final entry = entries.where((e) => e.id == id).firstOrNull;
-    if (entry == null) return OutboxDeliveryResult.delivered;
-    return _deliver(entry);
+  Future<OutboxDeliveryResult> _attemptOne(String id) {
+    return _serialized(() async {
+      final entries = await _dao.all();
+      final entry = entries.where((e) => e.id == id).firstOrNull;
+      if (entry == null) return OutboxDeliveryResult.delivered;
+      return _deliver(entry);
+    });
   }
 
   /// Replays every entry whose backoff has elapsed.
   ///
-  /// Reentrancy-guarded: [SyncManager] calls this from a periodic timer, from
-  /// its connectivity listener and on login, and those can easily overlap.
-  Future<void> drain() async {
-    if (_draining) return;
-    _draining = true;
-    try {
-      final due = await _dao.due();
-      for (final entry in due) {
-        await _deliver(entry);
+  /// Reentrancy-guarded via [_serialized]: [SyncManager] calls this from a
+  /// periodic timer, from its connectivity listener and on login, and those
+  /// can easily overlap — and it must also never run concurrently with a
+  /// caller-triggered [_attemptOne] (see [_serialized]'s doc comment).
+  Future<void> drain() {
+    return _serialized(() async {
+      try {
+        final due = await _dao.due();
+        for (final entry in due) {
+          await _deliver(entry);
+        }
+      } finally {
+        _changes.add(null);
       }
-    } finally {
-      _draining = false;
-      _changes.add(null);
-    }
+    });
   }
 
   Future<OutboxDeliveryResult> _deliver(OutboxEntry entry) async {

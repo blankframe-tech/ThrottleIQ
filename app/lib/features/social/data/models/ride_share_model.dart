@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/ride_speed_invariant.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 
 /// Accepts a Firestore Timestamp (has toDate()), a DateTime, or an ISO
@@ -73,11 +74,11 @@ class RideShareModel {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
-  }) : maxSpeedKmh = (distanceKm > 0 &&
-                durationSeconds > 0 &&
-                maxSpeedKmh < ((distanceKm / durationSeconds) * 3600))
-            ? ((distanceKm / durationSeconds) * 3600)
-            : maxSpeedKmh;
+  }) : maxSpeedKmh = RideSpeedInvariant.reconcileFromDistance(
+          distanceKm: distanceKm,
+          durationSeconds: durationSeconds,
+          rawMaxSpeedKmh: maxSpeedKmh,
+        );
 
   /// The lead photo, or null — also what gets written to the legacy
   /// `photoUrl` field.
@@ -145,13 +146,9 @@ class RideShareModel {
       rideDate: _parseDate(data['rideDate']),
       distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0,
       durationSeconds: (data['durationSeconds'] as num?)?.toInt() ?? 0,
-      maxSpeedKmh: () {
-        final dist = (data['distanceKm'] as num?)?.toDouble() ?? 0;
-        final dur = (data['durationSeconds'] as num?)?.toInt() ?? 0;
-        final maxSpd = (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0;
-        final avgSpd = dur > 0 ? (dist / dur) * 3600 : 0.0;
-        return (dist > 0 && (maxSpd <= 0 || maxSpd < avgSpd)) ? avgSpd : maxSpd;
-      }(),
+      // The constructor itself runs this through RideSpeedInvariant, so this
+      // just needs to hand it the raw stored value.
+      maxSpeedKmh: (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
       polyline: polylineList,
       mapSnapshotUrl: data['mapSnapshotUrl'] as String?,
       likes: (data['likes'] as num?)?.toInt() ?? 0,

@@ -206,7 +206,17 @@ class AutoRideReconciler {
           speedMs = candidateDerived;
         }
       } else {
+        // docs/Issues.md §62 (found while fixing §62.8): the live recorder's
+        // equivalent branch (ride_recording_provider.dart) also zeroes
+        // distDelta/accel/jerk when a sample is rejected as implausible —
+        // this branch didn't, so a rejected sample's distance was still
+        // being added to the ride total below, letting a reconciled/
+        // auto-detected ride over-accumulate distance in a way a
+        // live-recorded ride cannot.
         speedMs = 0.0;
+        distDelta = 0.0;
+        accel = 0.0;
+        jerk = 0.0;
       }
 
       if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > maxSpeedMs) {

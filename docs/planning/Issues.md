@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-08-29 (§35, §36, §37, §38, §40, §41, §42, §43, §44, §45, §46, §47, §48, §49, §50, §51, §52)_
+_Last updated: 2026-09-10 (§62)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -3637,3 +3637,485 @@ post-fix (the two pre-existing ones plus the new debug one); the local
 session has no physical device or emulator attached), and the splash
 screen's old-crest `AppLogo` — still there, still stale per §52, just not
 part of this report's scope.
+
+---
+
+## 62. Full-repo bug/vulnerability/architecture sweep — 4 parallel reviews, 26 findings, most fixed same session (2026-09-10)
+
+**Status: FIXED or MITIGATED for §62.1 through §62.10, plus 2 more bugs
+(§62.14, §62.15) surfaced and fixed during the fix pass itself.** Several of
+§62.1-§62.10 are marked PARTIALLY FIXED rather than FIXED where full closure
+would have required a riskier change (a Cloud Function doing server-side
+badge/stat aggregation, rerouting the crash-alert write through the outbox,
+a local-DB schema migration) that this pass judged unsafe to make blind
+without a live device/project to verify against — each such item says
+exactly what was mitigated vs. what's still open, and why. §62.11 stays
+deferred exactly as it already was pre-audit (its own comment already
+explains why). §62.12-§62.13 are architecture notes, not single fixes; not
+attempted this session (real App Check/rate-limiting and the
+God-repository/theming/duplicated-rules refactors are bigger, higher-risk
+changes than a bug-fix pass — see each note for why).
+
+Four independent read-only passes first — (1) `firestore.rules` +
+`storage.rules` + `functions/src/*`, (2) `app/lib/core/**`, (3)
+`app/lib/features/**`, (4) `scripts/`/`public/`/deploy config — then every
+fixable finding fixed in four parallel follow-up passes over non-overlapping
+files, plus the rules changes made directly (highest blast-radius file, kept
+under direct control) with new emulator tests. Verification, run after every
+change landed: `flutter analyze` clean (0 new issues — same ~99 pre-existing
+info-level lints as before this session); `flutter test` **1020/1020**
+passing (app/); `npm run test:rules` **94/94** passing (was 80 — added 14
+covering §62.1/§62.2/§62.4/§62.5); `npm test` (scripts/) **33/33** passing;
+`cd functions && npm run build` clean. Nothing here has been deployed —
+`firebase deploy --only firestore:rules,functions` is still required before
+any of the rules/Functions fixes protect a real rider, same caveat as every
+other rules change in this file.
+
+### 62.1 Shared-ride documents are fully client-writable after the anti-fraud counter checks pass — leaderboard/social-proof forgery — CRITICAL
+
+**Status: FIXED.** Added `rideStatsPlausible()` (distance/duration/speed
+bounds + the average-speed floor, matching `SensorConstants` generously) and
+required it, plus zeroed engagement counters and a recognized `audience`,
+on both `create` and the owner's `update` branch; the owner branch also now
+requires likes/comments/upvotes/downvotes stay unchanged (those move only
+through the bump-validated branch). Applied the same `status`-enum
+tightening to the group-ride creator branch, deliberately NOT locking
+`memberIds`/`invitedIds` there too (the creator legitimately writes both —
+kicking a member, `inviteUsers`' arrayUnion — and there's no leaderboard
+fraud vector on group rides, so a fuller lockdown was judged not worth the
+risk of breaking those flows blind). New tests:
+`scripts/test/rules/firestore_rules.test.js` (share with plausible stats
+succeeds; fabricated 9999 km/h denied; pre-loaded fake upvotes denied; owner
+can't inflate stats/upvotes via update; owner CAN edit a caption without
+touching stats).
+
+`firestore.rules:447-451` only pins `userId` immutable on `update`; every
+other field (`distanceKm`, `maxSpeedKmh`, `avgSpeedKmh`, `likes`,
+`upvotes`, `downvotes`, `comments`, `audience`, `allowedUserIds`) is
+unconstrained for the ride's own owner. The elaborate `likeBumpValid`/
+`voteBumpValid` machinery (rules:94-158,471-487) only constrains *other*
+users reacting to a ride — it does nothing to stop the author.
+`RideShareRepository.shareRide`
+(`app/lib/features/social/data/repositories/ride_share_repository.dart:43-118`)
+writes these fields straight from caller-supplied values, and the only
+sanity/ceiling checks (`SensorConstants.maxPlausibleSpeedMs`) live in the
+app's own UI code path (`ride_share_screen.dart:132-134`), not in rules.
+Anyone signed in (modified APK, or a script with a valid ID token) can
+write `maxSpeedKmh: 9999`/fabricated `distanceKm`/inflated `upvotes`
+directly to their own `rides/{id}` doc and it becomes canonical truth in
+the social feed and leaderboards. Same architectural flaw, lower blast
+radius, on group rides: the creator-update clause at `firestore.rules:913-917`
+is equally unbounded. **Fix:** add field-level `request.resource.data`
+validation (type + plausible-range checks) to the shared-ride and
+group-ride update/create rules, mirroring the existing bump-validation
+pattern used for likes/votes.
+
+### 62.2 Public profile stats and earned badges are entirely client-authored — CRITICAL
+
+**Status: PARTIALLY FIXED / MITIGATED — full closure deferred.** Added
+`publicStatsValid()`: `totalDistanceKm`/`totalRides` can now only move up
+(never erase a real total) and are capped at generous absolute ceilings
+(500,000 km / 100,000 rides) no real rider could plausibly reach;
+`badgeIds` must remain a superset of what was already earned (no un-earning)
+and is capped at 200 entries. This stops the concrete forgery this was
+written against (an instant six-figure fake total, or every badge in the
+catalog with zero rides) without requiring a per-write delta cap — which
+would have been unsafe here, since `updatePublicStats` recomputes the
+rider's FULL lifetime total from local data on every ride finalize (not an
+incremental delta), so a small-delta bound would false-reject a legitimate
+large recompute (e.g. after a reinstall restores years of ride history). It
+deliberately does NOT re-derive totals from the rides subcollection
+server-side, which is what would close the gap completely — that needs the
+badge-criteria logic in `core/utils/badges.dart` ported to a Cloud Function
+and verified end-to-end against a live project, which this pass couldn't do
+safely without deploy/device access. Left as an open follow-up. `earnedBadges/{uid}`
+was left unchanged: its own comment already establishes it's not currently
+read by anything user-facing (the profile screen reads `publicStats.badgeIds`,
+not this subcollection — confirmed via grep) — it's "groundwork for future
+partner-discount lookup," so locking it down now was judged lower priority
+than the field that's actually displayed. New tests:
+`firestore_rules.test.js` (absurd distance denied; plausible first snapshot
+succeeds; stats can't go backwards or drop a badge).
+
+`firestore.rules:226-231` lets a signed-in owner write any field on their
+own `users/{uid}` doc except `usernameLower`, so `publicStats.totalDistanceKm`/
+`totalRides`/`badgeIds` (written by
+`ProfileRepository.updatePublicStats`,
+`app/lib/features/profile/data/repositories/profile_repository.dart:167-181`)
+are never validated server-side. Separately, `earnedBadges/{uid}` is
+`allow read, write: if request.auth.uid == uid` with no condition check
+(`firestore.rules:292-294`), and
+`ChallengeRepository.earnBadge`/`earnMilestoneBadge`
+(`app/lib/features/social/data/repositories/challenge_repository.dart:109-155`)
+let the client stamp any badge ID for itself. A rider can self-grant every
+milestone badge and set any lifetime-distance total shown on their public
+profile without ever riding. **Fix:** move badge-earning and public-stat
+aggregation into a Cloud Function trigger off verified ride writes, and
+lock both fields to `write: if false` for direct client writes.
+
+### 62.3 Crash-alert pipeline is broken end-to-end — client never retries, server escalation can't run — CRITICAL (safety feature)
+
+**Status: PARTIALLY FIXED.** The server-side half is fixed: added the
+missing `crashNotifications` composite index (`status` ASC, `contactedAt`
+ASC, COLLECTION_GROUP scope) to `firestore.indexes.json`, so
+`escalateCrashAlert` can actually run instead of throwing
+`FAILED_PRECONDITION` on every invocation — confirmed `functions/src/index.ts`
+already wires up all three function modules correctly (the "nothing had a
+wired entry point" concern didn't apply to the current code). The
+client-side half — routing `CrashCoordinator.dispatchEmergencyNotification`
+through the outbox for guaranteed delivery instead of a one-shot best-effort
+write — was NOT attempted this session: it touches the live crash-recording
+path with no device available to verify against, so it's left as a
+follow-up rather than risking the actual safety feature on an unverified
+change. This index fix still needs `firebase deploy --only
+firestore:indexes` before it does anything in production.
+
+Two independent bugs combine into total failure of the one feature meant
+to matter most in a real emergency. Client side:
+`CrashCoordinator.dispatchEmergencyNotification`
+(`app/lib/features/ride/presentation/providers/helpers/crash_coordinator.dart:80-99`)
+is a single best-effort Firestore `add()` guarded only by a
+timeout+`debugPrint` (lines 101-110) — unlike ordinary ride data, which
+goes through the durable `outbox_service.dart` retry queue, this write is
+simply dropped on failure or if offline at the moment the crash countdown
+expires (`ride_recording_provider.dart:940`). Server side, even when the
+notification doc is created,
+`functions/src/crash-notifications.ts:184-189`'s `escalateCrashAlert`
+query (`collectionGroup('crashNotifications').where('status','==','contacted').where('contactedAt','<=',...)`)
+has no matching composite index in `firestore.indexes.json`, so it throws
+`FAILED_PRECONDITION` on every scheduled run — the follow-up escalation
+for an unconfirmed contact silently never fires today. **Fix:** route the
+crash notification write through the outbox for guaranteed delivery, and
+add the missing composite index (then verify the function actually runs
+via a manual trigger, since `functions/src/index.ts`'s own comment notes
+nothing in `functions/` had a wired entry point until recently).
+
+### 62.4 Chat participants and messages are fully rewritable by any participant — IDOR — CRITICAL
+
+**Status: FIXED.** Chat-doc `update` is now restricted to exactly
+`lastMessage`/`updatedAt` (`participants` is immutable as a side effect of
+the allow-list, not a separate check). Message `update` is now restricted to
+exactly `isRead: true` by a participant who is NOT the sender — closing both
+the "rewrite another rider's message text/senderId" hole and the "flip
+`isToxic` back to false, undoing the moderation hide" hole in one rule,
+since `chat-moderation.ts`'s own write goes through the Admin SDK and
+bypasses rules entirely, so it's unaffected. New tests:
+`firestore_rules.test.js` (can't add a third party via update; CAN update
+lastMessage/updatedAt; recipient can mark read but not rewrite text; sender
+can't mark their own toxic-hidden message read).
+
+`firestore.rules:1184-1207`: `allow update: if auth.uid in
+resource.data.participants` has no field-level restriction, so either
+party to a chat can rewrite `participants` itself — silently adding a
+third uid to a 1:1 DM and granting a stranger full read access to the
+whole conversation history without the other party's consent — or rewrite
+any message's `text`/`senderId`, or flip a moderation-hidden `isToxic`
+message back to visible, undoing `chat-moderation.ts`'s auto-hide. **Fix:**
+restrict `participants` to immutable after create, and restrict message
+updates to a narrow allow-list (e.g. `isToxic`/`reportedBy` only, never
+`text`/`senderId`).
+
+### 62.5 Chat toxicity filter is a 6-word English substring list — false sense of safety — HIGH
+
+**Status: PARTIALLY FIXED.** The dishonest-status half is fixed: the
+auto-filed report now starts `status: 'pending'` instead of `'actioned'`, so
+it correctly waits for real admin review instead of claiming to already be
+resolved (with a comment on `TOXIC_KEYWORDS` flagging it as a known-weak
+placeholder). The keyword list itself is unchanged — replacing substring
+matching with real NLP moderation (Bangla/Banglish-aware) is a real feature
+project, not a bug fix, and out of scope here. The `reports/{reportId}`
+create-validation half is fixed under §62 too: it now requires
+`reporterId`/`reportedId`/`contentType`/`reason` to be well-shaped and
+`status` to start `'pending'`, closing the "fabricate a pre-actioned report"
+hole this finding also flagged. New tests: `firestore_rules.test.js`
+(fabricated pre-actioned report denied; well-formed pending report
+succeeds).
+
+`functions/src/chat-moderation.ts:7-14,26`:
+`TOXIC_KEYWORDS = ["idiot","stupid","jerk","dumb","hate","ugly"]` matched
+via `.includes()`. Catches nothing in Bangla/Banglish (the app's actual
+user base), nothing with trivial evasion (spacing/leetspeak), and
+false-positives on innocuous text ("I hate potholes"). It auto-files a
+`reports` doc already stamped `status: 'actioned'` even though nothing was
+verified, so downstream tooling trusts unreviewed content as resolved.
+Compounding this, `reports/{reportId}` create validation
+(`firestore.rules:1176-1181`) only checks `reporterId` — any client can
+also fabricate a pre-`'actioned'` report against an arbitrary target, and
+there's no rate limit on report creation (spam/false-report flooding).
+
+### 62.6 Sync layer: one bad row blocks an entire batch for bikes/maintenance (but not rides) — HIGH
+
+**Status: FIXED.** `uploadBikes`/`uploadMaintenance` now try the batch first
+and, on any failure, fall back to per-item writes (each wrapped in its own
+try/catch, logged and skipped on rejection rather than aborting the rest) —
+same shape `uploadRides` already used. Verified via `flutter analyze` +
+`flutter test` (no dedicated new test added: this codebase's existing
+convention, per `outbox_test.dart`'s own doc comment, deliberately excludes
+Firestore-dependent delivery logic from unit tests in favor of
+emulator/manual passes, and no mock-Firestore convention exists here to
+extend for this).
+
+`app/lib/core/cloud/cloud_repository.dart:120-165` (`uploadBikes`) and
+`:168-183` (`uploadMaintenance`) have no per-item retry fallback after a
+batch failure, unlike `uploadRides` (`:77-114`), which explicitly exists
+to stop one bad row from sinking the whole batch (comment at :70-76). If
+Firestore rejects any single bike/log in a batch, `batch.commit()` throws
+uncaught and *no* item in that batch — including otherwise-valid ones —
+gets marked synced, every cycle. **Fix:** apply the same per-item retry
+pattern already used for rides.
+
+### 62.7 Outbox race: concurrent `_attemptOne` and `drain()` can double-upload photos and lose a URL — HIGH
+
+**Status: FIXED.** Replaced the `_draining` boolean (which only protected
+`drain()` from itself) with a `Future`-chain mutex (`_serialized`) that both
+`drain()` and `_attemptOne` now go through, so the two can never run
+concurrently regardless of which one a caller triggers. Each link in the
+chain swallows its own error so one failed attempt doesn't wedge the queue
+for the next caller, while the real error still propagates to whoever
+awaited that specific attempt. Verified via `flutter test
+test/core/cloud/`.
+
+`app/lib/core/cloud/outbox_service.dart:224-247`'s `_attemptOne` (called
+synchronously from `enqueueShareRide`/`enqueueLiveSessionTeardown`/
+`enqueueMaintenanceLog`) is not guarded by the `_draining` reentrancy flag
+that protects `drain()`. If a rider taps "share ride" the instant a
+timer/connectivity-triggered `drain()` is already running, both can call
+`_deliverShareRide` (`:286-359`) on the same outbox entry concurrently:
+both see `uploaded.length < localPaths.length`, both re-upload the same
+photo to Cloudinary, and race on `_dao.updatePayload` (`:309-314`) —
+last write wins, so one photo URL can be silently lost. **Fix:** guard
+`_attemptOne` with the same reentrancy check, or key it per-entry-id.
+
+### 62.8 Duplicated max-speed invariant enforcement, no shared ceiling outside one code path — HIGH
+
+**Status: FIXED.** Extracted one shared implementation,
+`RideSpeedInvariant` (new file, `app/lib/core/utils/ride_speed_invariant.dart`):
+`reconcile()` floors max speed up to average and clamps it to a ceiling
+derived from `SensorConstants.maxPlausibleSpeedMs` (no second magic
+number); `reconcileFromDistance()` is the distance/duration convenience
+wrapper. All four call sites now delegate to it — `RideEntity.maxSpeedKmh`
+(refactored, output verified mathematically unchanged), `RideShareModel`'s
+constructor and `fromFirestore` (the latter's own third reimplementation
+was deleted outright, not just fixed, since the constructor already
+reconciles), and `SharedRideEntity.maxSpeedKmh`. New test file:
+`app/test/core/utils/ride_speed_invariant_test.dart` (8 cases: normal,
+floor, ceiling, zero-duration). The related GPS-plausibility duplication
+between `ride_recording_provider.dart` and `auto_ride_reconciler.dart` was
+investigated but deliberately NOT consolidated — it turned out the two had
+already drifted (see §62.14, a new, more specific bug found and fixed while
+investigating this one), and touching either file's live/replay motion
+logic further without a device to verify against was judged too risky for
+this pass.
+
+The "max speed ≥ avg speed" floor is independently re-implemented in three
+places — `RideShareModel`'s constructor (`ride_share_model.dart:76-80`),
+`SharedRideEntity.maxSpeedKmh` (`shared_ride_entity.dart:132-138`), and an
+inline lambda in `RideShareModel.fromFirestore` (`:148-154`) — but *none*
+of them apply the upper-bound clamp
+(`SensorConstants.maxPlausibleSpeedMs`) that `RideEntity.maxSpeedKmh` does
+(`ride_entity.dart:66-75`). This is exactly the class of bug commit
+`0d94b70` ("restore maxSpeed in shared rides, enforce speed invariants")
+already had to fix once, now fixed in three duplicate spots instead of
+one shared function — it can silently regress in any one of them, and
+combines with §62.1 (no server-side ceiling either) to leave GPS-jump
+speeds essentially unbounded on the way to the social feed. Related:
+`ride_recording_provider.dart:490-527` and
+`auto_ride_reconciler.dart:150-213` independently re-implement the same
+physical-acceleration GPS-plausibility bound with slightly different
+shapes — a tuning fix to one is easy to miss in the other.
+
+### 62.9 `deleteUserData` wipes unscoped tables on shared devices — MEDIUM
+
+**Status: PARTIALLY FIXED.** `outbox` is fixed properly: every entry's JSON
+payload already carries the owning uid (`userId` or `uid`, depending on
+`OutboxKind`), so rows are now attributed and deleted by parsing that
+payload — no schema change needed. `deleted_bikes`/`auto_fixes`/
+`auto_detections` turned out to have NO owner column anywhere in their
+schema or their writers (a real schema gap, not just a missing `WHERE`) —
+properly fixing those needs a migration plus backfilling every writer,
+including the background auto-detection isolate, which this pass couldn't
+verify end-to-end without a device. Rather than guess at a migration, this
+pass stops unconditionally wiping those three tables (the previous
+behavior); the new worst case is the deleted account's own rows lingering
+locally in those three tables (a cleanliness gap, not a confidentiality
+one — never exposed to anyone but whoever's signed into the device), which
+is strictly safer than the old behavior of silently deleting another signed-in
+rider's live queue. Full fix (the schema migration) left as a follow-up.
+New test: `app/test/database/delete_user_data_test.dart` (3 cases).
+
+`app/lib/core/database/database_helper.dart:489-515` deletes
+`deleted_bikes`, `outbox`, `auto_fixes`, and `auto_detections` entirely,
+with no `WHERE user_id = ?` filter, while `rides`/`bikes`/`user_profiles`
+are correctly scoped. On a shared device with a second signed-in account,
+deleting account A wipes account B's pending outbox writes (in-flight ride
+shares/maintenance syncs), bike-deletion tombstones, and any in-progress
+auto-tracking detection for account B. Same family of bug as §33.1,
+different tables.
+
+### 62.10 Operational: weak/shared credentials and unencrypted keys on disk — MEDIUM
+
+**Status: FIXED (the fixable parts).** `create_review_account.js` no longer
+hardcodes `Test@123` — it generates a random 20-char password (once, for a
+new account) unless one is explicitly supplied, and no longer silently
+resets an existing account's password on re-run. `seed_qa_test_riders.js`
+now generates a unique random password per rider instead of one shared
+`QaSeed!2026` constant, and writes them to a local `0o600`,
+gitignore-covered file (`scripts/qa_seed_passwords.<timestamp>.json`)
+instead of printing them to stdout/CI logs. `update_places_google_ratings.js`
+now hard-fails if `FIREBASE_PROJECT_ID` is unset, matching every sibling
+script, instead of silently defaulting to the live project. `node --check`
+clean on all edited files; `npm test` (scripts/) 33/33 passing, no test
+needed updating (none hardcoded the old defaults). The unencrypted
+`secret/creds.txt`/`secrets/*.json` files on disk are a local-machine
+hygiene matter (password manager / keychain), not something a code fix
+addresses — left as a standing recommendation, not a task this session
+could "fix." `seed_police_checkposts.js`/`_v2`/`_v3` dedup remains
+out of scope (§62.13).
+
+Not a repo leak (all covered by `.gitignore`, confirmed untracked via
+`git ls-files`), but real operational risk: `scripts/create_review_account.js:65-66,246-249`
+hardcodes `rider.admin@example.com` / `Test@123` for a permanent,
+never-cleaned-up Play Store review account in the **live production**
+project; `seed_qa_test_riders.js` uses one shared password (`QaSeed!2026`)
+across up to 30 real, publicly-visible production accounts, and prints it
+to stdout/CI logs on every run; `secret/creds.txt` and
+`secrets/throttle-iq-gcc1-*.json` (a live GCP service-account key) sit
+unencrypted on disk with no password-manager/keychain protection. Also,
+`scripts/update_places_google_ratings.js:168` silently falls back to the
+live `throttleiqfb` project ID if `FIREBASE_PROJECT_ID` is unset, unlike
+every sibling script, which hard-fails — the weakest production-write
+guard of any script in the directory.
+
+### 62.11 Storage rules: ride-share photos ignore ride audience — MEDIUM (dormant)
+
+**Status: still deferred, unchanged.** This was already correctly deferred
+before this audit — `storage.rules`' own comment (§33.6) already explains
+why: no Storage emulator test harness exists to verify a cross-service rule
+(`firestore.get(...)` from within a Storage rule) against, and the file
+isn't even deployed today (`storage` absent from `firebase.json`). Re-fixing
+it blind now would repeat the exact mistake that comment already warned
+against. Left exactly as-is.
+
+`storage.rules:59-64` grants `read: if request.auth != null` on
+`rideShares/{uid}/{filename}` unconditionally, not gated by the matching
+ride's `public`/`followers`/`mutual` audience the way the Firestore doc
+itself is. Currently inert — `storage` isn't wired in `firebase.json` and
+the client has no `firebase_storage` dependency — but if Storage is ever
+turned on without this fix, a "followers-only" ride's photos become
+readable by any authenticated user, silently breaking the privacy model
+users believe they have. Already flagged in the file's own comments as
+unresolved.
+
+### 62.12 No App Check, no rate limiting anywhere — MEDIUM
+
+All Cloud Functions are background triggers, not callables, so there's no
+missing-auth-on-callable issue — but there's also no App Check enforcement
+and nothing in the rules throttles write volume for ride shares, forum
+posts, chat messages, or reviews. Combined with §62.1/§62.2/§62.5, a
+scripted client can cheaply flood leaderboards, self-grant badges, or spam
+feeds at effectively unlimited rate.
+
+### 62.14 Three smaller fixes made during the same pass (not separately numbered in the original standalone report's Issues.md summary, but present in the full report delivered to the user as findings #13/#14 and an architecture note)
+
+**Status: ALL FIXED.**
+
+- `app/lib/core/cloud/sync_manager.dart` (~lines 112,141): `_auth.currentUser`
+  was null-checked once at entry, then force-unwrapped (`!`) after two more
+  `await`s (connectivity check, `_outbox.drain()`). A sign-out in that window
+  threw into the generic catch and was recorded as a sync *failure*
+  (triggering backoff) instead of "skip silently, signed out." Now a
+  mid-sync sign-out is detected and the sync cleanly returns to idle instead.
+- `app/lib/core/database/daos/ride_dao.dart` (~line 109): the unawaited
+  self-heal `db.update(...)` fired from inside read methods had no error
+  handling — a transient sqflite error during the heal write vanished
+  silently. Now has a `.catchError` that logs via `debugPrint` instead of
+  dropping the error, without making the read path await the heal (that
+  would change its performance characteristics, which wasn't the bug).
+- `app/lib/core/cloud/outbox_service.dart`: the dead `OutboxService.instance`
+  static singleton (separate from the Riverpod-provided instance used
+  everywhere) turned out to have one real call site after all — a
+  `SyncManager` optional-parameter default — not zero as the original note
+  assumed. Fixed properly: the default now constructs a fresh `OutboxService()`
+  instead of sharing the dead singleton, and the singleton itself was deleted,
+  closing what would otherwise have been a silent second never-drained queue
+  if that default path were ever actually exercised.
+
+Verified via `flutter analyze` (clean) and `flutter test test/database/
+test/core/cloud/` (100/100, including 3 new tests for the `deleteUserData`
+fix in §62.9).
+
+### 62.15 GPS-jump distance inflation in the auto-ride reconciler (found and fixed while fixing §62.8) — MEDIUM
+
+**Status: FIXED.** While consolidating the duplicated max-speed logic for
+§62.8, comparing `ride_recording_provider.dart`'s and
+`auto_ride_reconciler.dart`'s GPS-plausibility branches surfaced a real,
+separate bug: the live recorder zeroes `distDelta`/`accel`/`jerk` when a
+sample is rejected as physically implausible
+(`ride_recording_provider.dart`'s equivalent branch), but
+`auto_ride_reconciler.dart`'s matching branch only zeroed `speedMs` — the
+rejected sample's fabricated position-derived distance was still being
+added to the ride total (`distanceM += distDelta` ran unconditionally
+afterward). A single isolated GPS glitch on an auto-detected ride could
+therefore inflate its recorded distance by however far the glitch jumped,
+in a way a live-recorded ride cannot. Fixed by mirroring the live recorder's
+behavior exactly: `distDelta`/`accel`/`jerk` are now zeroed in that branch
+too. New test:
+`app/test/calculators/auto_ride_reconciler_test.dart` ("a trailing
+implausible GPS jump with no raw speed signal does not inflate distance") —
+confirmed failing before the fix (distance inflated by the full ~5.5 km
+synthetic jump) and passing after.
+
+**Known remaining gap, not fixed:** this only closes the case where the
+glitched fix itself is fully rejected (no raw speed signal AND implausible
+derived speed). A single isolated GPS outlier also corrupts the position
+`lastPoint` that the *next* fix measures its own distance from, and if that
+next fix's own raw/reported speed happens to look plausible on its own
+terms, its distance-from-a-corrupted-reference-point is still trusted in
+both files today. Actually fixing that needs the motion-fusion logic in
+both files to track a separate "last known-good position" from "last raw
+fix," which is a real design change to code that runs on live GPS streams
+in both the live-recording and auto-detection paths — too risky to make
+blind in this pass without a device to verify against. Left as a follow-up;
+the synthetic reproduction is in the test file above if picked up later.
+
+### 62.13 Architecture notes (not bugs, but raise the odds of the next one) — none attempted this session
+
+- `firestore.rules` is a 1216-line monolith that grew patch-by-patch (many
+  inline comments cite specific past `Issues.md` fixes) rather than from
+  an upfront threat model — exactly how §62.1's broad owner-update clause
+  could silently outflank the narrow, well-validated bump-counter rules
+  sitting right next to it.
+- Counter-bump validation (`likeBumpValid`/`voteBumpValid`/`newDocBy`/
+  `docRemoved`) is duplicated per collection (rides' likes/votes/comments,
+  forum posts' votes/replies) instead of generalized once.
+- `cloud_repository.dart` (538 lines) is a God-repository spanning bikes,
+  rides, maintenance, tracks, and exports; it also contains a second,
+  independent GPX/JSON export implementation
+  (`exportToJSON`/`exportToGPX`/`_generateGPX`, `:448-515`) that duplicates
+  `export_service.dart:24-121` with different target directories and no
+  `<bounds>` computation — a fix to one will drift from the other.
+- Theming (`theme_style_provider.dart:179-183`) pushes appearance into
+  mutable static facades (`AppColors`/`AppDimensions`/`AppTypography`,
+  ~565 call sites per the codebase's own comment) and force-remounts the
+  entire app subtree on every appearance change, destroying transient
+  navigation/scroll state each time.
+- `isAdmin` is hardcoded to one email client-side
+  (`forum_permissions.dart:5,10-11`) and manually mirrored in
+  `firestore.rules:87-91` — not currently spoofable, but the two can drift
+  silently since nothing ties them together.
+- `scripts/seed_police_checkposts.js`/`_v2.js`/`_v3.js` reimplement the
+  same geohash-encoder/dry-run scaffolding three times (~500 lines) for
+  what should be one shared module plus data files.
+
+### Verified non-issues (worth recording so they aren't re-flagged)
+
+No SQL injection (all DAO queries are parameter-bound), no hardcoded
+Firebase/API secrets in Dart or JS source, no XSS in any `public/`/
+`website_demo/` HTML (the one `innerHTML` use in `live-viewer.html:820`
+only renders hardcoded constants), no `child_process` usage anywhere in
+`scripts/`, no unguarded `BuildContext`-after-`await` in the screens
+sampled, `AuthNotifier.signOut` correctly signs out of both Firebase and
+Google, and the account-switch data-leak class of bug from §33.1 is
+already closed for rides/bikes/maintenance (just not for the four tables
+in §62.9). The `public/live-viewer.html` Firebase Web API key is the
+already-documented §1 non-issue, re-confirmed.

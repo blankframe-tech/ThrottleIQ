@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:sqflite/sqflite.dart';
 import '../../constants/sensor_constants.dart';
 import '../database_helper.dart';
@@ -106,12 +107,20 @@ class RideDao {
         if (healedAvg != null) updates['avg_speed_ms'] = healedAvg;
         if (healedMax != null) updates['max_speed_ms'] = healedMax;
 
+        // docs/Issues.md §62 (core services): a self-heal write fired from a
+        // read path has no caller to report failure to, but it must not
+        // vanish silently either — a transient sqflite error (locked DB,
+        // disk full) here used to be dropped into an unobserved microtask
+        // with no error handler at all.
         unawaited(db.update(
           'rides',
           updates,
           where: 'id = ?',
           whereArgs: [row['id']],
-        ));
+        ).catchError((Object e) {
+          debugPrint('[RideDao] self-heal write failed for ride ${row['id']}: $e');
+          return 0;
+        }));
       } else {
         result.add(row);
       }

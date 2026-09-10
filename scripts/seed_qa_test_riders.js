@@ -56,10 +56,12 @@
  */
 
 let admin;
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
   QA_EMAIL_DOMAIN,
-  QA_PASSWORD,
   BIKE_CATALOG,
   TOPICS,
   bikeForumSlug,
@@ -67,6 +69,14 @@ const {
   tierForCc,
   normalizeModelFamily,
 } = require('./qa_seed_catalog');
+
+// docs/Issues.md §62.10: no more shared hardcoded password across all 30
+// accounts, printed to stdout (and so into CI logs) on every run — each
+// rider now gets its own random password, written once to a local
+// gitignored file (see writePasswordFile) instead.
+function generateRiderPassword() {
+  return crypto.randomBytes(12).toString('base64url');
+}
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 const CONFIRMATION_PHRASE = 'SEED QA TEST RIDERS';
@@ -317,6 +327,7 @@ function buildRider(index, bike) {
     index,
     handle,
     email,
+    password: generateRiderPassword(),
     displayName: fullName,
     bio: `${bikeName} rider based in ${city.name}. QA test account.`,
     photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(handle)}`,
@@ -392,9 +403,11 @@ Environment (only needed for a real run):
   FIREBASE_PROJECT_ID              Must equal '${EXPECTED_PROJECT_ID}'.
   GOOGLE_APPLICATION_CREDENTIALS   Path to a service-account JSON key.
 
-Every account uses the @${QA_EMAIL_DOMAIN} email domain (password: ${QA_PASSWORD})
-and every document carries qaSeed: true. See cleanup_qa_test_riders.js to
-remove the whole batch.
+Every account uses the @${QA_EMAIL_DOMAIN} email domain, with its own random
+password (written to scripts/qa_seed_passwords.<timestamp>.json on a real
+run — see the summary printed at the end — never a shared password, never
+printed to stdout), and every document carries qaSeed: true. See
+cleanup_qa_test_riders.js to remove the whole batch.
 `;
 
 // ---------------------------------------------------------------------------
@@ -446,7 +459,7 @@ async function confirmRealWrite({ nonInteractive }) {
 async function writeRider(db, auth, admin, rider) {
   const userRecord = await auth.createUser({
     email: rider.email,
-    password: QA_PASSWORD,
+    password: rider.password,
     displayName: rider.displayName,
     photoURL: rider.photoUrl,
   });
@@ -650,7 +663,7 @@ async function main() {
     log(`  Backdated rides:   ${totalRides}`);
     log(`  Shared to feed:    ${totalShared}`);
     log(`  Forum posts:       ${totalPosts}`);
-    log(`  Email domain:      @${QA_EMAIL_DOMAIN}  (password: ${QA_PASSWORD})`);
+    log(`  Email domain:      @${QA_EMAIL_DOMAIN}  (each rider gets its own random password)`);
     log('');
     rule('-');
     log('  Sample rider:');
@@ -682,11 +695,13 @@ async function main() {
   await new Promise((resolve) => setTimeout(resolve, 5000));
 
   let created = 0, skipped = 0, failed = 0;
+  const createdRiders = [];
   for (const rider of riders) {
     process.stdout.write(`  ${rider.handle} (${rider.bike.brand} ${rider.bike.model}) … `);
     try {
       const result = await writeRider(db, auth, admin, rider);
       created += 1;
+      createdRiders.push(rider);
       log(`created (${rider.rides.length} rides, ${rider.sharedRides.length} shared, ${result.postCount} posts)`);
     } catch (err) {
       if (err && err.code === 'auth/email-already-exists') {
@@ -700,6 +715,18 @@ async function main() {
     }
   }
 
+  // docs/Issues.md §62.10: passwords for the accounts actually created this
+  // run go to a local gitignored file, never to stdout/CI logs. A skipped
+  // rider already existed from a previous run, so this run's freshly
+  // generated password was never actually set on it — only list ones we
+  // just created.
+  let passwordFile = null;
+  if (createdRiders.length > 0) {
+    passwordFile = path.join(__dirname, `qa_seed_passwords.${Date.now()}.json`);
+    const payload = Object.fromEntries(createdRiders.map((r) => [r.email, r.password]));
+    fs.writeFileSync(passwordFile, JSON.stringify(payload, null, 2), { mode: 0o600 });
+  }
+
   log('');
   rule('=');
   log('  SUMMARY');
@@ -707,6 +734,10 @@ async function main() {
   log(`  created  ${created}`);
   log(`  skipped  ${skipped}`);
   log(`  failed   ${failed}`);
+  if (passwordFile) {
+    log(`  passwords for the ${createdRiders.length} newly-created account(s) written to:`);
+    log(`    ${passwordFile}`);
+  }
   rule('=');
   log('');
   log('  Run cleanup_qa_test_riders.js (dry-run first) when you are done testing.');

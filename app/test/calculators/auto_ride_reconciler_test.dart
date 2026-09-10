@@ -135,6 +135,39 @@ void main() {
       // ride_id is stamped by the caller, not the reconciler.
       expect(first.containsKey('ride_id'), isFalse);
     });
+
+    test(
+        'a trailing implausible GPS jump with no raw speed signal does not '
+        'inflate distance (docs/Issues.md §62, found while fixing §62.8)', () {
+      // A steady 5-minute commute (~3330 m), with the FINAL fix corrupted
+      // into a multi-km teleport reporting an implausible speed — both the
+      // raw reported speed and the position-derived speed for that fix are
+      // implausible, so it must fall into the reject branch. Put at the
+      // TAIL specifically so there's no subsequent fix to interact with —
+      // isolating exactly the bug that was fixed (that branch used to leave
+      // distDelta non-zero, so the rejected sample's fabricated distance
+      // still landed in the total) without touching the separate, harder
+      // "how should the fix right after a glitch treat its now-corrupted
+      // reference point" question this test deliberately doesn't explore.
+      final fixes = _journey(speedMs: 11.1, seconds: 300)
+          .map((f) => f)
+          .toList(growable: true);
+      final last = fixes.last;
+      fixes[fixes.length - 1] = (
+        timestamp: last.timestamp,
+        lat: last.lat + 0.05, // ~5.5 km north in a single 1s tick
+        lng: last.lng,
+        speedMs: 250.0, // far above SensorConstants.maxPlausibleSpeedMs
+        accuracyM: last.accuracyM,
+        altitudeM: last.altitudeM,
+        headingDeg: last.headingDeg,
+      );
+
+      final ride = reconciler.reconcile(fixes).ride!;
+
+      // Without the fix, this would be inflated by ~5.5 km to ~8700 m.
+      expect(ride.distanceM, closeTo(3330, 100));
+    });
   });
 
   group('replay honesty', () {

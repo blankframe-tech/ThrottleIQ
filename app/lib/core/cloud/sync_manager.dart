@@ -19,8 +19,17 @@ enum SyncStatus { idle, syncing, success, failure }
 
 /// Manages automatic sync of local data to Firestore
 class SyncManager {
+  // docs/Issues.md §62.13: `outbox` is always passed explicitly in
+  // production (see the `syncManagerProvider` below) — this default only
+  // matters for a bare `SyncManager()`/`SyncManager(ref)` construction
+  // (ad-hoc tests). It used to fall back to a static `OutboxService.instance`
+  // singleton, a second, never-drained OutboxService with its own DAO and
+  // its own `_changes` StreamController that's never disposed — a latent
+  // trap for any future caller that hit this path. A fresh instance per
+  // construction is no worse for the (currently nonexistent) callers of the
+  // bare constructor and removes the trap entirely.
   SyncManager([this._ref, OutboxService? outbox])
-      : _outbox = outbox ?? OutboxService.instance {
+      : _outbox = outbox ?? OutboxService() {
     _initConnectivityListener();
   }
 
@@ -138,7 +147,19 @@ class SyncManager {
     await _outbox.drain();
 
     try {
-      final uid = _auth.currentUser!.uid;
+      // docs/Issues.md §62.13/14: `_auth.currentUser` was checked once at
+      // entry (line ~121) then force-unwrapped here, two `await`s later (the
+      // connectivity check, and `_outbox.drain()` above). A rider signing
+      // out in that window used to throw here, land in the generic `catch`
+      // below, and get recorded as a sync *failure* (incrementing
+      // `_consecutiveFailures` and scheduling backoff) — the correct
+      // behavior is "skip silently, signed out," not a failed sync.
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        _status = SyncStatus.idle;
+        return;
+      }
+      final uid = currentUser.uid;
       final db = await DatabaseHelper.instance.database;
 
       // Pull down anything that exists in the cloud but not locally yet —

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -486,6 +488,37 @@ class DatabaseHelper {
   ///
   /// Required for the Account Deletion flow (Apple App Store Guideline 5.1.1(v)).
   /// Uses raw SQL statements inside a single transaction and does NOT invoke other DAOs.
+  ///
+  /// docs/Issues.md §62.9: this used to also unconditionally wipe
+  /// `deleted_bikes`, `outbox`, `auto_fixes`, and `auto_detections` in full —
+  /// unlike `rides`/`bikes`/`user_profiles` above, none of those four tables
+  /// carry a `user_id` column, so on a shared device, deleting account A's
+  /// data wiped account B's pending outbox writes (in-flight ride shares/
+  /// maintenance syncs), bike-deletion tombstones, and any in-progress
+  /// auto-tracking detection for account B too — the same bug class as
+  /// §33.1, fixed there via a `WHERE user_id = ?` these tables don't have a
+  /// column for.
+  ///
+  /// `outbox` is fixed properly here: every entry's JSON payload already
+  /// carries the owning uid (`userId` for a share, `uid` for a live-session
+  /// teardown or maintenance log — see OutboxKind in outbox_service.dart), so
+  /// rows can be attributed and scoped without a schema change.
+  ///
+  /// `deleted_bikes`/`auto_fixes`/`auto_detections` have no owner
+  /// information anywhere in their schema or their writers, so there is no
+  /// safe way to tell "this row belongs to the account being deleted" from
+  /// "this row belongs to whoever else is using this device" without a
+  /// migration (a new `user_id` column, backfilled at every write site,
+  /// including the background auto-detection path) that this pass can't
+  /// verify end-to-end without a device. Rather than guess, this pass simply
+  /// stops wiping them here: the worst outcome is that the deleted account's
+  /// own leftover rows in these three tables linger locally (a minor
+  /// cleanliness gap, not a confidentiality/data-loss one — they're never
+  /// exposed to anyone but whoever is signed into this device, and only ever
+  /// checked against by uuid, not identity), which is a strictly safer
+  /// failure mode than the previous behavior of silently deleting another
+  /// signed-in rider's live queue. Tracked as a follow-up in docs/Issues.md
+  /// §62 once these tables can be properly attributed.
   Future<void> deleteUserData(String userId) async {
     final db = await database;
     await db.transaction((txn) async {
@@ -507,10 +540,28 @@ class DatabaseHelper {
       }
       await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);
-      await txn.delete('deleted_bikes');
-      await txn.delete('outbox');
-      await txn.delete('auto_fixes');
-      await txn.delete('auto_detections');
+
+      final outboxRows = await txn.query('outbox', columns: ['id', 'payload']);
+      for (final row in outboxRows) {
+        if (_outboxPayloadOwner(row['payload'] as String?) == userId) {
+          await txn.delete('outbox', where: 'id = ?', whereArgs: [row['id']]);
+        }
+      }
     });
+  }
+
+  /// The uid an outbox row's JSON payload claims to belong to, or null if it
+  /// can't be determined — see [deleteUserData]. Every real payload shape
+  /// (share/live-teardown/maintenance-log — see OutboxKind in
+  /// outbox_service.dart) carries one of these two keys.
+  static String? _outboxPayloadOwner(String? rawPayload) {
+    if (rawPayload == null) return null;
+    try {
+      final decoded = jsonDecode(rawPayload);
+      if (decoded is! Map) return null;
+      return (decoded['userId'] ?? decoded['uid']) as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

@@ -157,6 +157,62 @@ service cloud.firestore {
         (downvotesAfter - downvotesBefore) == (after == -1 ? 1 : 0) - (before == -1 ? 1 : 0);
     }
 
+    // docs/Issues.md §62.1: a shared ride's own `allow update` (below) used to
+    // only pin `userId` immutable — every other field, including the stats
+    // shown on the social feed and any leaderboard built on them, was
+    // unbounded for the ride's own author. This is the backstop: independent
+    // of whatever the client computed, `distanceKm`/`durationSeconds` must be
+    // non-negative and within a generous single-ride ceiling (3000 km / 7
+    // days — far beyond anything a real continuous ride could be, but chosen
+    // wide specifically to avoid rejecting a real, if extreme, ride), and
+    // `maxSpeedKmh` must both stay under a generous physical ceiling (260
+    // km/h — above SensorConstants.maxPlausibleSpeedMs's 252 km/h client-side
+    // clamp, so a legitimately-clamped value is never rejected here) and
+    // never fall below the ride's own implied average speed (the same
+    // invariant `RideEntity.maxSpeedKmh`/`SharedRideEntity.maxSpeedKmh`
+    // enforce client-side — see docs/Issues.md §62.8 for why that can't be
+    // trusted alone). A half-km/h epsilon absorbs floating-point rounding.
+    function rideStatsPlausible(data) {
+      let avgSpeedKmh = (data.distanceKm / data.durationSeconds) * 3600;
+      return data.distanceKm is number && data.distanceKm >= 0 && data.distanceKm <= 3000 &&
+        data.durationSeconds is number && data.durationSeconds > 0 && data.durationSeconds <= 604800 &&
+        data.maxSpeedKmh is number && data.maxSpeedKmh >= 0 && data.maxSpeedKmh <= 260 &&
+        data.maxSpeedKmh >= avgSpeedKmh - 0.5;
+    }
+
+    // docs/Issues.md §62.2: `users/{uid}.publicStats` (shown on the public
+    // profile) and its `badgeIds` used to be entirely client-authored with no
+    // server validation at all. RidePersistenceCoordinator.updatePublicStats
+    // recomputes the rider's FULL lifetime total from local data on every
+    // ride finalize (not an incremental delta), so this can't require a
+    // small per-write delta the way the ride-share bump counters do without
+    // false-rejecting a legitimate large recompute (e.g. after a reinstall
+    // restores years of ride history). Instead this bounds the two things
+    // that make a self-reported stat actually dangerous: it can only ever
+    // move up (never erase a real total, never un-earn a badge) and it can
+    // never exceed a ceiling no real rider could plausibly reach, which is
+    // enough to stop the concrete forgery this was written against (setting
+    // totalDistanceKm to an arbitrary six-figure number, or badgeIds to every
+    // badge in the catalog with zero rides behind it). It intentionally does
+    // NOT re-derive the totals from the rides subcollection server-side —
+    // that would close the gap completely, but needs the badge-criteria
+    // logic in core/utils/badges.dart ported to a Cloud Function and
+    // verified end-to-end against a live project, which this pass couldn't
+    // do safely without deploy/device access. Tracked as deferred in
+    // docs/Issues.md §62.
+    function publicStatsValid(existingProfile, incomingStats) {
+      let oldStats = existingProfile != null ? existingProfile.get('publicStats', {}) : {};
+      let oldKm = oldStats.get('totalDistanceKm', 0);
+      let oldRides = oldStats.get('totalRides', 0);
+      let oldBadges = oldStats.get('badgeIds', []);
+      return incomingStats.totalDistanceKm is number &&
+        incomingStats.totalDistanceKm >= oldKm && incomingStats.totalDistanceKm <= 500000 &&
+        incomingStats.totalRides is int &&
+        incomingStats.totalRides >= oldRides && incomingStats.totalRides <= 100000 &&
+        incomingStats.badgeIds is list && incomingStats.badgeIds.size() <= 200 &&
+        incomingStats.badgeIds.hasAll(oldBadges);
+    }
+
     // Whether `handle` is claimed by `uid` in usernames/{handle}, evaluated
     // AFTER the current write (existsAfter/getAfter, not exists/get) — used
     // to validate a users/{uid} profile write's usernameLower field below.
@@ -227,7 +283,9 @@ service cloud.firestore {
         (!('usernameLower' in request.resource.data) ||
          (resource != null &&
           resource.data.get('usernameLower', null) == request.resource.data.usernameLower) ||
-         usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid));
+         usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid)) &&
+        (!('publicStats' in request.resource.data) ||
+         publicStatsValid(resource == null ? null : resource.data, request.resource.data.publicStats));
       allow delete: if request.auth.uid == uid;
 
       // User rides subcollection
@@ -444,11 +502,42 @@ service cloud.firestore {
       // attempted. Guard it explicitly: a nonexistent doc has no data to
       // protect, so it's always safe to let the read through.
       allow read: if resource == null || rideVisibleTo(resource.data);
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // docs/Issues.md §62.1: a fresh share must start with zeroed
+      // engagement counters (an attacker could otherwise launch a share
+      // pre-loaded with fabricated upvotes), a recognized `audience`, an
+      // empty `allowedUserIds` for a public share (the array only means
+      // anything for followers/mutual — see rideVisibleTo), and
+      // plausible stats (rideStatsPlausible).
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.audience in ['public', 'followers', 'mutual'] &&
+        (request.resource.data.audience != 'public' ||
+         request.resource.data.get('allowedUserIds', []) == []) &&
+        request.resource.data.get('likes', 0) == 0 &&
+        request.resource.data.get('comments', 0) == 0 &&
+        request.resource.data.get('upvotes', 0) == 0 &&
+        request.resource.data.get('downvotes', 0) == 0 &&
+        rideStatsPlausible(request.resource.data);
       // Owner can update/delete the ride freely, but may not reassign
-      // authorship (userId is immutable on this branch).
+      // authorship (userId is immutable on this branch), and — same fix as
+      // create, docs/Issues.md §62.1 — may not use this branch to touch the
+      // engagement counters (those move only through the bump-validated
+      // branch below, regardless of who's writing), set an unrecognized
+      // audience, pad allowedUserIds on a public share, or push
+      // distance/duration/speed outside plausible bounds. This is what an
+      // "edit an existing share" call (RideShareRepository.shareRide on an
+      // existing doc) actually looks like: it always resends the full
+      // stats/audience shape but omits the counter fields entirely, so a
+      // merge write naturally leaves them unchanged and satisfies this.
       allow update: if request.auth != null && resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == resource.data.userId;
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.audience in ['public', 'followers', 'mutual'] &&
+        (request.resource.data.audience != 'public' ||
+         request.resource.data.get('allowedUserIds', []) == []) &&
+        request.resource.data.get('likes', 0) == resource.data.get('likes', 0) &&
+        request.resource.data.get('comments', 0) == resource.data.get('comments', 0) &&
+        request.resource.data.get('upvotes', 0) == resource.data.get('upvotes', 0) &&
+        request.resource.data.get('downvotes', 0) == resource.data.get('downvotes', 0) &&
+        rideStatsPlausible(request.resource.data);
       // Any authenticated user who can see the ride may bump the engagement
       // counters, but cannot touch any other field or set an arbitrary value.
       // Three disjoint shapes:
@@ -912,9 +1001,18 @@ service cloud.firestore {
 
       allow update: if request.auth != null && (
         // 1. The creator: status changes, removing a member, ending the ride.
-        //    May never reassign authorship.
+        //    May never reassign authorship. docs/Issues.md §62 (architecture
+        //    notes): this clause is the same "unbounded owner branch"
+        //    pattern as the shared-ride one fixed in §62.1, but group-ride
+        //    fields aren't part of any public leaderboard, and memberIds/
+        //    invitedIds are legitimately written from here too (kicking a
+        //    member, inviteUsers' arrayUnion) in ways a field-level lock
+        //    would need care not to break without a live device to verify
+        //    against — so only `status` is bounded here for now; the
+        //    broader lockdown is deferred, tracked in docs/Issues.md §62.
         (resource.data.creatorId == request.auth.uid &&
-         request.resource.data.creatorId == resource.data.creatorId) ||
+         request.resource.data.creatorId == resource.data.creatorId &&
+         request.resource.data.get('status', 'planned') in ['planned', 'active', 'completed']) ||
 
         // 2. An invited rider accepting or declining. The roster is no longer
         //    here — it lives in the members subcollection below, where a
@@ -1176,23 +1274,59 @@ service cloud.firestore {
     match /reports/{reportId} {
       // Admins can read/update/delete (update for status changes)
       allow read, update, delete: if isAdmin();
-      // Any authenticated user can create a report, but only if they correctly stamp themselves as the reporter
-      allow create: if request.auth != null && request.resource.data.reporterId == request.auth.uid;
+      // Any authenticated user can create a report, but only if they correctly
+      // stamp themselves as the reporter, target a real (non-empty) id, and
+      // leave it in the 'pending' state a real report always starts in —
+      // docs/Issues.md §62.5: this used to validate only reporterId, so a
+      // client could create a report already stamped 'actioned' (skipping
+      // review entirely) against an arbitrary reportedId. The automated
+      // moderation function (chat-moderation.ts) writes via the Admin SDK,
+      // which bypasses rules entirely, so it's unaffected by this.
+      allow create: if request.auth != null &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.reportedId is string &&
+        request.resource.data.reportedId.size() > 0 &&
+        request.resource.data.contentType is string &&
+        request.resource.data.reason is string &&
+        request.resource.data.get('status', 'pending') == 'pending';
     }
 
     // Direct Messaging (Chats)
     match /chats/{chatId} {
-      // User can read/write a chat if they are a participant.
-      // We check if their UID is in the participants array.
-      allow read, update: if request.auth != null && request.auth.uid in resource.data.participants;
+      // User can read a chat if they are a participant.
+      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
+      // docs/Issues.md §62.4: update used to allow a participant to rewrite
+      // ANY field, including `participants` itself — silently adding a third
+      // uid to a 1:1 DM and handing them the whole conversation without the
+      // other party's consent. The only real update
+      // (ChatRepository.sendMessage's batch) only ever touches
+      // `lastMessage`/`updatedAt`, so restricting to exactly those two keeps
+      // `participants` immutable as a side effect of the allow-list, not a
+      // separate check that could itself be gamed.
+      allow update: if request.auth != null && request.auth.uid in resource.data.participants &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'updatedAt']);
       allow create: if request.auth != null && request.auth.uid in request.resource.data.participants &&
         request.resource.data.participants.size() == 2;
-      
+
       match /messages/{messageId} {
-        // Can read/update (e.g. for read receipts/hiding) if they are a participant of the parent chat
-        allow read, update: if request.auth != null && 
+        // Can read if a participant of the parent chat.
+        allow read: if request.auth != null &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        
+
+        // docs/Issues.md §62.4: update used to allow a participant to rewrite
+        // ANY field of ANY message, including the other person's `text`/
+        // `senderId`, or flip a moderation-hidden `isToxic` back to false,
+        // undoing chat-moderation.ts's auto-hide (which itself writes via
+        // the Admin SDK and so is unaffected by this rule). The only real
+        // client update (ChatRepository.markMessagesAsRead) flips `isRead`
+        // to true on a message the caller did NOT send — restricting to
+        // exactly that shape closes both holes at once.
+        allow update: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
+          request.auth.uid != resource.data.senderId &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']) &&
+          request.resource.data.isRead == true;
+
         // Can create if they are a participant of the parent chat AND the sender is correctly attributed.
         // We also check that the sender is not in the recipient's blocks subcollection.
         allow create: if request.auth != null && 

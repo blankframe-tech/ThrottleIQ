@@ -117,7 +117,13 @@ class CloudRepository {
   ///
   /// If a bike has a local photo, it is uploaded to Cloudinary first so the
   /// photo survives app rebuilds and multi-device logins.
+  ///
+  /// Same batch-then-per-item-retry shape as [uploadRides] (see its comment):
+  /// one bike Firestore rejects must not strand every other bike in the
+  /// batch un-synced forever.
   Future<void> uploadBikes(String uid, List<Map<String, dynamic>> bikes) async {
+    if (bikes.isEmpty) return;
+
     final bikesToUpload = <Map<String, dynamic>>[];
     for (final rawBike in bikes) {
       final bike = Map<String, dynamic>.from(rawBike);
@@ -148,37 +154,75 @@ class CloudRepository {
       bikesToUpload.add(bike);
     }
 
-    final batch = _firestore.batch();
-    for (final bike in bikesToUpload) {
-      final docRef = _firestore.collection('users').doc(uid).collection('bikes').doc(bike['id']);
-      batch.set(docRef, {
-        ...bike,
-        'syncedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    await batch.commit();
+    final bikesCollection = _firestore.collection('users').doc(uid).collection('bikes');
+    Map<String, dynamic> payload(Map<String, dynamic> bike) => {
+          ...bike,
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
 
-    // Mark all bikes as synced in local DB
-    for (final bike in bikes) {
-      await _updateBikeSyncedStatus(bike['id'], true);
+    try {
+      final batch = _firestore.batch();
+      for (final bike in bikesToUpload) {
+        batch.set(bikesCollection.doc(bike['id']), payload(bike));
+      }
+      await batch.commit();
+      for (final bike in bikes) {
+        await _updateBikeSyncedStatus(bike['id'], true);
+      }
+      return;
+    } catch (e) {
+      debugPrint(
+          '[CloudRepository] batched bike upload failed (${bikesToUpload.length} bikes), '
+          'retrying individually: $e');
+    }
+
+    for (final bike in bikesToUpload) {
+      try {
+        await bikesCollection.doc(bike['id']).set(payload(bike));
+        await _updateBikeSyncedStatus(bike['id'] as String, true);
+      } catch (e) {
+        debugPrint('[CloudRepository] bike upload rejected for ${bike['id']}: $e');
+      }
     }
   }
 
-  /// Upload unsynced maintenance logs to Firestore and mark them as synced
+  /// Upload unsynced maintenance logs to Firestore and mark them as synced.
+  ///
+  /// Same batch-then-per-item-retry shape as [uploadRides]: one bad log must
+  /// not strand every other log in the batch un-synced forever.
   Future<void> uploadMaintenance(String uid, List<Map<String, dynamic>> logs) async {
-    final batch = _firestore.batch();
-    for (final log in logs) {
-      final docRef = _firestore.collection('users').doc(uid).collection('maintenance').doc(log['id']);
-      batch.set(docRef, {
-        ...log,
-        'syncedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    await batch.commit();
+    if (logs.isEmpty) return;
 
-    // Mark all maintenance logs as synced in local DB
+    final maintenanceCollection =
+        _firestore.collection('users').doc(uid).collection('maintenance');
+    Map<String, dynamic> payload(Map<String, dynamic> log) => {
+          ...log,
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
+
+    try {
+      final batch = _firestore.batch();
+      for (final log in logs) {
+        batch.set(maintenanceCollection.doc(log['id']), payload(log));
+      }
+      await batch.commit();
+      for (final log in logs) {
+        await _updateMaintenanceSyncedStatus(log['id'], true);
+      }
+      return;
+    } catch (e) {
+      debugPrint(
+          '[CloudRepository] batched maintenance upload failed (${logs.length} logs), '
+          'retrying individually: $e');
+    }
+
     for (final log in logs) {
-      await _updateMaintenanceSyncedStatus(log['id'], true);
+      try {
+        await maintenanceCollection.doc(log['id']).set(payload(log));
+        await _updateMaintenanceSyncedStatus(log['id'], true);
+      } catch (e) {
+        debugPrint('[CloudRepository] maintenance upload rejected for ${log['id']}: $e');
+      }
     }
   }
 
