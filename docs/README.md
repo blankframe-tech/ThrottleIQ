@@ -22,6 +22,7 @@ below.
 
 | File | What it's for |
 |---|---|
+| [`../arch.md`](../arch.md) | High-level system architecture: layers, state estimation pipeline, offline-first sync, and safety invariants. |
 | [`guides/SETUP.md`](guides/SETUP.md) | Local dev setup: Firebase, Cloudinary, Android signing, iOS certificates, build commands. |
 | [`architecture/assumptions.md`](architecture/assumptions.md) | Every non-obvious judgement call made without asking, and why — read before questioning why something was scoped a certain way. |
 | [`architecture/auto_tracking_plan.md`](architecture/auto_tracking_plan.md) | The background auto-tracking feature's design decisions and implementation status. |

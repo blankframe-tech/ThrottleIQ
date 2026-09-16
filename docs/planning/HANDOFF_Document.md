@@ -136,6 +136,14 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `Issues.md`; this list is a compact pointer, not the record itself.
 
+- **2026-09-11** — Fixed chat/messaging showing `permission-denied`
+  everywhere (chat list on open, starting a new chat from search) —
+  root-caused to a stale/undeployed `firestore.rules` ruleset, same
+  pattern as §47, not a code bug (`Issues.md` §64). `firebase deploy
+  --only firestore:rules --project throttleiqfb` released the live
+  ruleset, which also carried the §62/§63 chat-IDOR and
+  ride/profile-stat-forgery rule fixes live for the first time. Needs
+  on-device re-verification (see "Done, but NOT yet verified" above).
 - **2026-08-29** — Shipped `1.0.0-beta.1+3` end to end: Play Console
   internal track (versionCode 3, verified `completed`), the `beta-v1`
   GitHub release moved forward with a new APK, and a real-device iOS run
@@ -380,6 +388,13 @@ These exist in code/config but have never been exercised against the real
 backend or a real device. **Treat each as unproven until tested.** This is
 the actual pre-launch QA punch list — ordered roughly by risk.
 
+- [ ] **Chat/messaging, end to end after the 2026-09-11 rules deploy**
+  (`Issues.md` §64) — a user reported `permission-denied` on the chat list
+  and on starting a new chat, root-caused to a stale/undeployed
+  `firestore.rules` ruleset (same pattern as §47) and fixed by redeploying.
+  Not yet re-tested on a device: Social → message icon → chat list loads;
+  New message → search a rider → select them → chat opens and a message
+  sends both ways; mark-as-read; the blocked-sender rejection.
 - [ ] 🔴 **Push-to-talk voice notes** (group rides, added 2026-08-27). Mic
   capture and Bluetooth-headset routing can't be verified without real
   hardware — `flutter analyze`/tests/rules-emulator tests all pass, but none
@@ -472,6 +487,22 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 
 ## 📋 To do
 
+- [x] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-09-11** — same
+  stale/undeployed-ruleset pattern as §47, this time on the chat feature:
+  a user reported messaging showed `permission-denied` everywhere (chat
+  list on open, and starting a new chat from search). Code review found no
+  bug in `chat_repository.dart` or in `firestore.rules`' `match
+  /chats/{chatId}` block — every client read/write matched the rules
+  exactly. The rules text was correct in the repo but had likely never
+  been released live since the chat feature (`75b7b19`) and/or the
+  §62.4 chat-IDOR tightening (`9f6aaf8`) were committed — this repo has no
+  CI that deploys `firestore.rules` on merge, only a manual step.
+  `firebase deploy --only firestore:rules --project throttleiqfb` compiled
+  and released successfully (`Issues.md` §64). This deploy also released
+  the §62/§62.1/§62.2/§62.4 ride/profile-stat-forgery and chat-IDOR rule
+  fixes, which per §62/§63's own notes were verified but never deployed
+  either. **Still needs on-device re-verification** — see "Done, but NOT
+  yet verified" below.
 - [ ] **Reseed the QA test riders.** `scripts/seed_qa_test_riders.js` /
   `scripts/qa_seed_catalog.js` were updated 2026-08-29 (`Issues.md` §55) —
   all-male rider names, Banglish forum post copy, and a bike catalog

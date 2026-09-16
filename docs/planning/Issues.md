@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-09-10 (§62, §63)_
+_Last updated: 2026-09-11 (§63.1 deploy-blocked note)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -4122,7 +4122,48 @@ already-documented §1 non-issue, re-confirmed.
 
 ---
 
-## 63. Follow-up audit sweep — 3 parallel reviews on ground §62 didn't cover, 3 findings, 2 fixed same session (2026-09-10)
+## 64. User report: chat/messaging shows `permission-denied` everywhere — stale/undeployed rules, same pattern as §47 — FIXED (2026-09-11)
+
+User reported "the messaging thing" shows errors on the app. Narrowed via
+follow-up: tapping the message icon from the Social screen (pushes to
+`/chats`, `ChatListScreen` → `userChatsProvider` → `watchUserChats`) shows a
+permission error immediately; searching for a rider in "New message" works
+(reads `users`), but selecting any search result to start a chat
+(`getOrCreateChat` → `chats` collection query + `.add()`) also shows a
+permission error. Both symptoms are on the `chats` collection specifically.
+
+**Root-caused, not a code bug — same pattern as §47/§29/§35/§37/§42.**
+Reviewed `app/lib/features/chat/data/repositories/chat_repository.dart`
+against `firestore.rules`' `match /chats/{chatId}` block line-by-line: every
+read/write the client makes (`watchUserChats`'s `arrayContains` query,
+`getOrCreateChat`'s existing-chat query and `.add()`, `sendMessage`'s batch,
+`markMessagesAsRead`'s `isRead`-only update) matches the current rules file
+exactly, including the stricter §62.4 IDOR-fix update rules. No logic bug
+found in either the rules or the client code. The chat feature's Firestore
+rules were added in `75b7b19` ("Feat: Add Trust & Safety... Chat
+Messaging") and modified again in `9f6aaf8` (§62.4) — and this repo has no
+CI that deploys `firestore.rules` on merge; it's a manual
+`firebase deploy --only firestore:rules` step. If the live ruleset predates
+either of those commits, every `/chats/**` operation falls through to the
+catch-all `match /{document=**} { allow read, write: if false; }` at the
+bottom of the rules file, which produces exactly this symptom (denied on
+list, denied on create, nothing chat-specific in the client at fault).
+
+**Fixed this session (user-approved, since it pushes straight to the
+production project):** ran
+`firebase deploy --only firestore:rules --project throttleiqfb`. CLI
+output: `cloud.firestore: rules file firestore.rules compiled
+successfully... firestore: released rules firestore.rules to
+cloud.firestore` (one pre-existing, harmless compiler warning at rules line
+288 — a null/map type hint inside `publicStatsValid`'s ternary — did not
+block the deploy). This also released the §62/§62.4 chat-IDOR and §62.1/
+§62.2 ride/profile-stat-forgery rule fixes, which per §62/§63's own notes
+were verified but never deployed either — so this single deploy closes
+that backlog too.
+
+**Still needed: on-device re-verification** (not done this session — no
+device/emulator access): Social → message icon → chat list loads; New
+message → search → select a rider → chat opens and a message sends.
 
 Requested explicitly as a second pass after §62, targeting areas the first
 sweep hadn't reached: native platform config (`app/android`, `app/ios`),
@@ -4189,6 +4230,25 @@ bootstrapping convention anywhere (confirmed via repo-wide search), so
 unit-testing anything on this notifier needs that infrastructure built
 first. Verified instead via careful manual tracing of the new ordering
 against `firestore.rules`' actual permission model, plus `flutter analyze`.
+
+**Deploy attempted 2026-09-11, blocked — needs your action:** `firebase
+deploy --only functions:onUserAccountDeleted` fails with "Your project
+throttleiqfb must be on the Blaze (pay-as-you-go) plan to complete this
+command" — Cloud Functions require Blaze even for a trigger that will cost
+effectively nothing at this project's volume (fires once per account
+deletion). Upgrade at
+https://console.firebase.google.com/project/throttleiqfb/usage/details,
+then `firebase deploy --only functions:onUserAccountDeleted` deploys just
+this trigger without touching the four other already-live functions. (Also
+hit, and worked around by temporarily dropping `predeploy` from
+`firebase.json` for the deploy attempt itself, then restoring it — unrelated
+to the Blaze block: the Firebase CLI's bundled npm throws `Cannot read
+properties of undefined (reading 'stdin')` on its predeploy hook in this
+environment, even though `npm run build` run directly succeeds cleanly. If
+deploying again from a shell where that CLI bug reproduces, either drop
+`predeploy` for the one deploy and restore it after, or run `npm run build`
+in `functions/` first and pass `--only functions:onUserAccountDeleted`
+against the already-built `lib/`.)
 
 ### 63.2 Crash detector drops the jerk signal from the exact sample that opens its crash-accel window — false negative on a realistic single-impact crash — HIGH (safety-critical)
 
