@@ -1,3 +1,34 @@
+## V3 — street-ad ("Lalamove style"), 1080×1350
+
+`posters_v3.py` builds a third pass in the flat-icon Dhaka-billboard grammar
+seen on delivery-app OOH ads (Lalamove, Pathao): a street scene with two
+riders checking phones, a live-map card floating between them, a huge
+yellow-fill/black-outline headline, two orange callout badges, and a QR
+footer. Vector, not photo — same HarfBuzz-shaped Bangla outlines as v1/v2,
+so it needs no photoshoot and no fonts installed to open. One poster per
+segment (never blends commuter/enthusiast/family copy in one asset, per
+`docs/marketing/marketing.md`); campaign IDs get a `_v3` suffix.
+
+| id | Segment | Hook |
+|---|---|---|
+| `v3-01-family-live-share` | Anxious family | আপনার বাইকার কোথায় আছে? — family sees the rider's live position once they turn Live Share on (opt-in, not automatic) |
+| `v3-02-crew-beacon` | Enthusiast/crew | বন্ধু তুই কই এখন? — the whole crew on one live map once Group Beacon is on |
+
+```bash
+.venv/bin/python3 posters_v3.py          # writes svg/v3/*.svg
+.venv/bin/python3 -c "
+import cairosvg, glob, os
+for f in glob.glob('svg/v3/*.svg'):
+    n = os.path.basename(f)[:-4]
+    cairosvg.svg2png(url=f, write_to=f'print/v3/{n}@2x.png', output_width=2160, output_height=2700)
+    cairosvg.svg2png(url=f, write_to=f'web/v3/{n}.png', output_width=1080, output_height=1350)
+"
+```
+
+Output lives in `print/v3/`, `web/v3/`, `svg/v3/`.
+
+---
+
 ## V2 — one visual, one line, a QR code
 
 `illus.py` + `posters_v2.py` generate a second, louder pass on the same 24

@@ -128,15 +128,17 @@ def bfit(text, max_w, start, latin, tracking=0.0, min_size=9):
     return s
 
 def btext(x, y, text, size, fill, latin=SANS_B, anchor="start", tracking=0.0,
-          opacity=None):
+          opacity=None, stroke=None, stroke_width=0):
     """Shaped text as outlines. Baseline at y."""
     glyphs, w = layout(text, size, latin, tracking)
     if anchor == "middle": x -= w / 2
     elif anchor == "end":  x -= w
     o = f' opacity="{opacity}"' if opacity is not None else ""
+    s = (f' stroke="{stroke}" stroke-width="{stroke_width}" '
+         f'stroke-linejoin="round" paint-order="stroke fill"') if stroke else ""
     parts = [f'<path d="{d}" transform="translate({x+dx:.2f},{y+dy:.2f}) '
              f'scale({sc:.6f},{-sc:.6f})"/>' for d, dx, dy, sc in glyphs]
-    return f'<g fill="{fill}"{o}>{"".join(parts)}</g>'
+    return f'<g fill="{fill}"{o}{s}>{"".join(parts)}</g>'
 
 def bline(x, y, text, size, fill, latin=COND_B, max_w=880, anchor="start",
           tracking=0.0, opacity=None):
