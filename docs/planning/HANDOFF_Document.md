@@ -148,7 +148,16 @@ Full technical detail and root causes for anything marked with a `§` live in
   sequential-await patterns on the social feed and delete flows. One
   related item (cold-resume aggregate rebuild) was flagged but
   deliberately left unfixed — see `Issues.md` §65 for the full
-  before/after on all of it.
+  before/after on all of it. Shipped same day as
+  [`beta-v2.8`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.8)
+  (`1.0.0-beta.2.8+14`): `flutter analyze`/`flutter test` (1021/1021) clean,
+  release build installed and launched on a real connected iPhone via
+  `flutter build ios --release` + `xcrun devicectl` (not `flutter run
+  --release`, which left two stray idle processes attached to the device
+  and never installed the new build — worth remembering next time), and
+  both `app-release.apk`/`app-release.aab` built and attached to the
+  GitHub release. Not yet uploaded to Play Console or TestFlight — this
+  was a GitHub-release-only cut.
 - **2026-09-11** — Fixed chat/messaging showing `permission-denied`
   everywhere (chat list on open, starting a new chat from search) —
   root-caused to a stale/undeployed `firestore.rules` ruleset, same
