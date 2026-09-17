@@ -660,6 +660,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   }
 
   Future<void> enableLiveSharing() async {
+    final wasEnabled = _liveCoordinator.isLiveShareEnabled;
     final token = await _liveCoordinator.enableLiveSharing(
       uid: _ref.read(currentUserProvider)?.uid,
       rideId: state.ride?.id,
@@ -672,6 +673,29 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (token != null && state.liveSessionToken != token) {
       state = state.copyWith(liveSessionToken: token);
     }
+    // Only start the ticking timer once, the first time sharing turns on —
+    // it reads state fresh on every tick (see startPeriodicPublishing's doc
+    // comment), so it doesn't need restarting just because this was called
+    // again on an already-shared ride.
+    if (!wasEnabled && _liveCoordinator.isLiveShareEnabled) {
+      _startLiveSessionTimer();
+    }
+  }
+
+  /// Builds the periodic live-share publish closure, reading `state` and
+  /// `_lastPoint` fresh on every tick rather than once at setup time.
+  void _startLiveSessionTimer() {
+    _liveCoordinator.startPeriodicPublishing(
+      onTick: () => _liveCoordinator.publishLiveSession(
+        uid: _ref.read(currentUserProvider)?.uid,
+        rideId: state.ride?.id,
+        lastLat: _lastPoint?.lat,
+        lastLng: _lastPoint?.lng,
+        currentSpeedMs: state.currentSpeedMs,
+        crashDetected: state.crashDetected,
+        status: state.status,
+      ),
+    );
   }
 
   Future<void> pauseRide() async {
@@ -683,6 +707,23 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _accelSub?.pause();
     _gyroSub?.pause();
     state = state.copyWith(status: RecordingStatus.paused);
+    // Stop the 10s live-share tick — otherwise it keeps republishing a stale
+    // fix (and burning battery/network) for as long as the ride sits paused.
+    // One best-effort publish lets a live viewer see "paused" instead of
+    // just going quiet; not awaited since pausing must never wait on the
+    // network.
+    if (_liveCoordinator.isLiveShareEnabled) {
+      _liveCoordinator.pausePeriodicPublishing();
+      unawaited(_liveCoordinator.publishLiveSession(
+        uid: _ref.read(currentUserProvider)?.uid,
+        rideId: state.ride?.id,
+        lastLat: _lastPoint?.lat,
+        lastLng: _lastPoint?.lng,
+        currentSpeedMs: state.currentSpeedMs,
+        crashDetected: state.crashDetected,
+        status: state.status,
+      ));
+    }
     await _persistenceCoordinator.persistElapsed(state.elapsed, force: true);
   }
 
@@ -709,22 +750,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _startTimer();
       _persistenceCoordinator.startFlushTimer();
       if (_liveCoordinator.isLiveShareEnabled) {
-        _liveCoordinator.startPeriodicPublishing(
-          onTick: () => _liveCoordinator.publishLiveSession(
-            uid: _ref.read(currentUserProvider)?.uid,
-            rideId: state.ride?.id,
-            lastLat: _lastPoint?.lat,
-            lastLng: _lastPoint?.lng,
-            currentSpeedMs: state.currentSpeedMs,
-            crashDetected: state.crashDetected,
-            status: state.status,
-          ),
-        );
+        _startLiveSessionTimer();
       }
     } else {
       _locationSub?.resume();
       _accelSub?.resume();
       _gyroSub?.resume();
+      // Warm resume: pauseRide() suspended the live-share tick, so restart it.
+      if (_liveCoordinator.isLiveShareEnabled) {
+        _startLiveSessionTimer();
+      }
     }
 
     state = state.copyWith(

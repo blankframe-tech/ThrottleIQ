@@ -44,7 +44,14 @@ class LiveSessionCoordinator {
     );
   }
 
-  /// Starts live session publishing with explicit rider opt-in.
+  /// Marks sharing as opted-in and publishes the first snapshot.
+  ///
+  /// Deliberately does NOT start the periodic timer itself: that requires a
+  /// callback the caller re-invokes for every tick so each publish reads the
+  /// rider's *current* position/status (see [startPeriodicPublishing]'s doc
+  /// comment for why a closure over these plain values instead would freeze
+  /// the shared position at whatever it was the instant sharing was turned
+  /// on). Callers should follow this with [startPeriodicPublishing].
   Future<String?> enableLiveSharing({
     required String? uid,
     required String? rideId,
@@ -59,7 +66,7 @@ class LiveSessionCoordinator {
       return null;
     }
     _liveShareEnabled = true;
-    final token = await publishLiveSession(
+    return publishLiveSession(
       uid: uid,
       rideId: rideId,
       lastLat: lastLat,
@@ -68,27 +75,31 @@ class LiveSessionCoordinator {
       crashDetected: crashDetected,
       status: status,
     );
-
-    startPeriodicPublishing(
-      onTick: () => publishLiveSession(
-        uid: uid,
-        rideId: rideId,
-        lastLat: lastLat,
-        lastLng: lastLng,
-        currentSpeedMs: currentSpeedMs,
-        crashDetected: crashDetected,
-        status: status,
-      ),
-    );
-
-    return token;
   }
 
+  /// Starts (or restarts) the periodic publish tick.
+  ///
+  /// [onTick] must read fresh state on every call rather than closing over
+  /// values captured once — this used to be the caller's job done wrong: the
+  /// old `enableLiveSharing` built this closure from its own parameters, so
+  /// every 10s tick republished the exact position/speed/status the rider had
+  /// at the moment they tapped "share", forever. A live viewer's map simply
+  /// never moved. Both call sites (`RideRecordingNotifier.enableLiveSharing`
+  /// and its `resumeRide` cold-start path) now pass a closure that re-reads
+  /// `state`/`_lastPoint` at call time instead.
   void startPeriodicPublishing({required VoidCallback onTick}) {
     _liveSessionTimer?.cancel();
     _liveSessionTimer = Timer.periodic(_liveSessionUpdateInterval, (_) {
       onTick();
     });
+  }
+
+  /// Suspends periodic publishing without clearing the session/token —
+  /// used while a ride is paused so a stale position isn't republished every
+  /// 10s. [startPeriodicPublishing] resumes it.
+  void pausePeriodicPublishing() {
+    _liveSessionTimer?.cancel();
+    _liveSessionTimer = null;
   }
 
   /// Publishes the current live session snapshot to Firestore.
@@ -128,17 +139,19 @@ class LiveSessionCoordinator {
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
 
-      await _bestEffortWrite(
-        'live session publish',
-        () => _firestore
-            .collection('liveSessions')
-            .doc(token)
-            .set(session.toFirestore()),
-      );
-
-      if (existingToken == null) {
-        await _publishLivePointer(uid, token);
-      }
+      // Independent docs — run concurrently rather than sequentially so the
+      // first share tap (the only time both fire together) isn't stuck
+      // waiting on two back-to-back 8s timeouts on a bad connection.
+      await Future.wait([
+        _bestEffortWrite(
+          'live session publish',
+          () => _firestore
+              .collection('liveSessions')
+              .doc(token)
+              .set(session.toFirestore()),
+        ),
+        if (existingToken == null) _publishLivePointer(uid, token),
+      ]);
 
       return token;
     } catch (e) {

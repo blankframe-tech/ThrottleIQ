@@ -668,17 +668,22 @@ class GroupRideRepository {
   Future<void> deleteGroupRide(String groupRideId) async {
     final docRef = _rideRef(groupRideId);
 
-    for (final subcollection in [
+    // Fetch every subcollection concurrently, then fire every delete at
+    // once — sequential await-per-doc used to stall proportionally to
+    // member/invite/voice-note count.
+    const subcollections = [
       'memberLocations',
       'invitations',
       'members',
       'voiceNotes',
-    ]) {
-      final snapshot = await docRef.collection(subcollection).get();
-      for (final doc in snapshot.docs) {
-        await doc.reference.delete();
-      }
-    }
+    ];
+    final snapshots = await Future.wait(
+      subcollections.map((name) => docRef.collection(name).get()),
+    );
+    await Future.wait([
+      for (final snapshot in snapshots)
+        for (final doc in snapshot.docs) doc.reference.delete(),
+    ]);
 
     // Delete the group ride
     await docRef.delete();

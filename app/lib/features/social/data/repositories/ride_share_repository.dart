@@ -191,16 +191,22 @@ class RideShareRepository {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null || entities.isEmpty) return entities;
 
-    final likedFlags = await Future.wait(entities.map((ride) => _firestore
+    // Likes and votes are independent reads. Starting both `Future.wait`
+    // batches before awaiting either (rather than awaiting the first before
+    // starting the second) runs them concurrently, halving the round-trip
+    // latency this adds to every feed/list load.
+    final likedFlagsFuture = Future.wait(entities.map((ride) => _firestore
         .collection('rides')
         .doc(ride.id)
         .collection('likes')
         .doc(currentUserId)
         .get()
         .then((doc) => doc.exists)));
-
-    final votes = await Future.wait(
+    final votesFuture = Future.wait(
         entities.map((ride) => getMyVote(ride.id, currentUserId)));
+
+    final likedFlags = await likedFlagsFuture;
+    final votes = await votesFuture;
 
     return [
       for (var i = 0; i < entities.length; i++)
@@ -354,17 +360,17 @@ class RideShareRepository {
   Future<void> deleteSharedRide(String rideId) async {
     final docRef = _firestore.collection('rides').doc(rideId);
 
-    // Delete all comments and likes
-    final comments =
-        await docRef.collection('comments').get();
-    for (final comment in comments.docs) {
-      await comment.reference.delete();
-    }
-
-    final likes = await docRef.collection('likes').get();
-    for (final like in likes.docs) {
-      await like.reference.delete();
-    }
+    // Fetch both subcollections concurrently, then fire every delete at
+    // once rather than awaiting them one at a time — a popular ride with
+    // many comments/likes used to stall proportionally to that count.
+    final commentsFuture = docRef.collection('comments').get();
+    final likesFuture = docRef.collection('likes').get();
+    final comments = await commentsFuture;
+    final likes = await likesFuture;
+    await Future.wait([
+      for (final comment in comments.docs) comment.reference.delete(),
+      for (final like in likes.docs) like.reference.delete(),
+    ]);
 
     // Delete the ride
     await docRef.delete();

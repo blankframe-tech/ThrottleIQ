@@ -140,6 +140,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   // styling it's documented for on iPad — which is what made the button
   // look like it silently did nothing.
   final GlobalKey _shareButtonKey = GlobalKey();
+  // Guards against a re-tap while the first enableLiveSharing() call is
+  // still in flight (up to 8s per Firestore write on a slow connection) and
+  // drives the button's spinner so the tap doesn't read as unresponsive.
+  bool _sharingLive = false;
   // stopRide() resets the provider state to idle *before* _stopRide() gets
   // to run its own post-stop navigation (context.go to either the share or
   // summary screen) — stopRide()'s `state = ...` assignment notifies this
@@ -196,22 +200,28 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   /// `enableLiveSharing()` is a no-op if sharing is already on, so re-tapping
   /// to re-share an in-progress session is still just one call.
   Future<void> _shareLiveLocation() async {
-    final notifier = ref.read(rideRecordingProvider.notifier);
-    await notifier.enableLiveSharing();
-    final token = ref.read(rideRecordingProvider).liveSessionToken;
-    if (token == null || !mounted) return;
+    if (_sharingLive) return;
+    setState(() => _sharingLive = true);
+    try {
+      final notifier = ref.read(rideRecordingProvider.notifier);
+      await notifier.enableLiveSharing();
+      final token = ref.read(rideRecordingProvider).liveSessionToken;
+      if (token == null || !mounted) return;
 
-    // See _shareButtonKey's doc comment for why this is computed at all.
-    Rect? origin;
-    final box = _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize) {
-      origin = box.localToGlobal(Offset.zero) & box.size;
+      // See _shareButtonKey's doc comment for why this is computed at all.
+      Rect? origin;
+      final box = _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize) {
+        origin = box.localToGlobal(Offset.zero) & box.size;
+      }
+      Share.share(
+        'Follow my ride live: $_liveShareBaseUrl/$token',
+        subject: 'ThrottleIQ live ride',
+        sharePositionOrigin: origin,
+      );
+    } finally {
+      if (mounted) setState(() => _sharingLive = false);
     }
-    Share.share(
-      'Follow my ride live: $_liveShareBaseUrl/$token',
-      subject: 'ThrottleIQ live ride',
-      sharePositionOrigin: origin,
-    );
   }
 
   Future<void> _stopRide() async {
@@ -434,16 +444,25 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   const SizedBox(width: 8),
                   IconButton(
                     key: _shareButtonKey,
-                    onPressed: _shareLiveLocation,
+                    onPressed: _sharingLive ? null : _shareLiveLocation,
                     // Filled once sharing is actually on, outlined beforehand
                     // — the icon itself communicates the opt-in state, since
                     // tapping it is what turns sharing on in the first place.
-                    icon: Icon(
-                      rideState.liveSessionToken != null
-                          ? Icons.share_location
-                          : Icons.location_disabled,
-                      color: AppColors.textPrimary,
-                    ),
+                    icon: _sharingLive
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.textPrimary,
+                            ),
+                          )
+                        : Icon(
+                            rideState.liveSessionToken != null
+                                ? Icons.share_location
+                                : Icons.location_disabled,
+                            color: AppColors.textPrimary,
+                          ),
                     tooltip: rideState.liveSessionToken != null
                         ? 'Share live location'
                         : 'Turn on & share live location',

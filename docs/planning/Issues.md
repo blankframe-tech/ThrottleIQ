@@ -1,6 +1,6 @@
 # Issues
 
-_Last updated: 2026-09-11 (§63.1 deploy-blocked note)_
+_Last updated: 2026-09-17 (§65.0–§65.5 fixed)_
 
 Tracked problems found during review/QA that aren't simple TODOs (those live
 in `HANDOFF_Document.md`'s "To do" section). One `##` section per issue.
@@ -4316,3 +4316,196 @@ content-hosting abuse without touching a single line of app code. The
 signed-upload architecture change is a real follow-up worth doing but
 belongs in its own session with Cloudinary/Functions credentials in hand to
 verify against.
+
+---
+
+## 65. User report: app feels "clunky and slow to respond" during ride sharing and pause/resume — MOSTLY FIXED (2026-09-17)
+
+User reported general sluggishness specifically around sharing a live ride
+and pausing/resuming recording. Started as a read-only audit (via a
+research subagent plus direct verification of every claim against the
+live code); §65.1–§65.5 and the newly-found §65.0 were then fixed in the
+same session. §65.6 is flagged but not fixed. File:line references below
+are relative to `app/`, as originally written; some line numbers have
+shifted slightly now that the fixes are in.
+
+Verification: `flutter analyze` clean (same ~99 pre-existing info-level
+lints as §64), `flutter test` **1021/1021** (no new tests added — none of
+these fixes had unit-testable seams without deeper refactoring; verified
+by reasoning through the change plus analyze+full-suite-green, not by a
+regression test).
+
+### 65.0 Live-shared position was frozen from the moment sharing was turned on — CRITICAL, found while fixing §65.1/§65.2, FIXED
+
+Not part of the original audit — found while implementing the §65.1/§65.2
+fixes below, verifying by hand how `LiveSessionCoordinator`'s periodic
+timer actually re-published a position.
+
+`LiveSessionCoordinator.enableLiveSharing()` (`live_session_coordinator.dart`,
+old lines 47-85) started its own 10-second `Timer.periodic` whose `onTick`
+closure was built from that method's own **parameters**
+(`uid`/`rideId`/`lastLat`/`lastLng`/`currentSpeedMs`/`crashDetected`/`status`)
+— plain values captured once, at the instant the rider first tapped the
+share button. Every subsequent tick for the rest of the ride republished
+that exact same snapshot. `_onPosition` (the per-GPS-fix hot path in
+`ride_recording_provider.dart`) never calls into the live coordinator at
+all, so nothing else kept it fresh either. Net effect: anyone following a
+rider's live-share link saw them planted at one point on the map for the
+entire ride, silently, with no error surfaced anywhere — this is a
+correctness bug, not just a slowness one, and a considerably worse "clunky
+ride sharing" experience than the loading-feedback issue in §65.1. The one
+path that happened to work correctly was the cold-start branch of
+`resumeRide()` (`ride_recording_provider.dart:735-746` at audit time),
+which built its own periodic closure reading `state`/`_lastPoint` live —
+this only ran after an app-kill-and-relaunch mid-ride, so it masked the bug
+in exactly the scenario someone doing a quick device check after a
+force-close would hit, while every ordinary "tap share and keep riding"
+case stayed broken.
+
+**Fixed:** `LiveSessionCoordinator.enableLiveSharing()` no longer starts
+its own timer — it only publishes the first snapshot and returns. Starting
+the periodic timer is now the caller's job via
+`startPeriodicPublishing({required onTick})`, and `RideRecordingNotifier`
+has a single `_startLiveSessionTimer()` helper (used by
+`enableLiveSharing()`, `resumeRide()`'s cold-start branch, and the
+warm-resume branch — see §65.2) whose `onTick` closure reads `state` and
+`_lastPoint` fresh on every call, matching the pattern the cold-start
+branch already used correctly. `LiveSessionCoordinator.publishLiveSession`
+itself was untouched — it already read whatever was passed to it, the
+bug was purely in what got closed over for the *periodic* calls.
+
+### 65.1 Live-share button gives zero feedback and can sit dead for up to ~16s — HIGH, likely primary cause, FIXED
+
+`active_ride_screen.dart:437` wires the share icon directly to
+`onPressed: _shareLiveLocation` with no loading indicator and no disabling
+of the button. `_shareLiveLocation` (`active_ride_screen.dart:198-215`)
+awaits `RideRecordingNotifier.enableLiveSharing()`
+(`ride_recording_provider.dart:662-675`), which awaits
+`LiveSessionCoordinator.enableLiveSharing()`
+(`live_session_coordinator.dart:48-85`) — that method runs **two
+sequential** Firestore writes (the session doc, then the `livePointers`
+doc), each independently wrapped in an 8-second timeout
+(`kOutboxAttemptTimeout` in `outbox_service.dart:42`, used at
+`live_session_coordinator.dart:131` and `:152`). On a weak connection —
+this app's whole market is Bangladesh riders, where that's the common
+case, not the edge case — a single tap can appear completely frozen for up
+to ~16 seconds. Worse: `_liveShareEnabled` flips `true` synchronously on
+the very first tap (`live_session_coordinator.dart:61`), but
+`_currentLiveSessionToken` isn't set until the network call resolves
+(`:109`) — so a rider who re-taps during that window, thinking the first
+tap didn't register, gets `null` back immediately and nothing visibly
+happens, reinforcing the "unresponsive" impression.
+
+**Fixed:** `active_ride_screen.dart` now has a `_sharingLive` bool that
+disables the button and swaps its icon for a `CircularProgressIndicator`
+for the duration of `_shareLiveLocation()`, so a slow tap reads as
+"working" instead of "broken", and a re-tap while in flight is a no-op
+instead of racing. Separately, `LiveSessionCoordinator.publishLiveSession`
+now fires the session-doc write and (on first share) the `livePointers`
+write via `Future.wait` instead of one after the other, roughly halving
+the worst-case wait on that first tap (two independent 8s-timeout writes
+running concurrently instead of sequentially).
+
+### 65.2 Pausing a live-shared ride doesn't stop the live-share heartbeat — MEDIUM, FIXED
+
+`RideRecordingNotifier.pauseRide()` (`ride_recording_provider.dart:677-687`)
+pauses the GPS and sensor subscriptions but never touches
+`_liveCoordinator`. `LiveSessionCoordinator`'s 10-second
+`Timer.periodic` (`live_session_coordinator.dart:89`) keeps firing
+Firestore `.set()` calls with the last (stale) coordinates for as long as
+the ride stays paused — only stopped when the ride is stopped or
+cancelled (`_tearDownLiveShare`). Pure wasted battery/network work
+competing with whatever else is happening on a paused screen, and
+plausibly contributes to "feels busy" during a pause.
+
+**Fixed:** `LiveSessionCoordinator` gained `pausePeriodicPublishing()`
+(cancels the timer without clearing the token/enabled flag, unlike
+`reset()`/`tearDownLiveShare()`). `pauseRide()` now calls it — plus fires
+one best-effort (`unawaited`) publish reflecting the paused status, so a
+live viewer sees "paused" instead of the feed just going quiet — and both
+branches of `resumeRide()` (cold-start and warm) now restart the timer via
+the same `_startLiveSessionTimer()` helper introduced for §65.0.
+
+### 65.3 Post-ride "Share" does a synchronous full-route JSON encode on the UI thread — MEDIUM, FIXED
+
+`OutboxDao.enqueue` (`app/lib/core/database/daos/outbox_dao.dart:75`) calls
+`jsonEncode(payload)` inline on the calling isolate — not via `compute()`.
+This is invoked the instant the rider taps "Share" in
+`ride_share_screen.dart:123` → `OutboxService.enqueueShareRide`
+(`outbox_service.dart:144-193`), whose payload includes the ride's entire
+flattened polyline (`outbox_service.dart:181-183`). For a long ride
+(thousands of GPS points) this is a plausible visible hitch at the exact
+moment Share is tapped. (Photo uploads in the same flow are already
+handled well — sequential per-photo with an 8s timeout each and a proper
+`_sharing` spinner state in `ride_share_screen.dart:111,157-159` — the
+JSON encode is the one un-mitigated piece.)
+
+**Fixed:** `OutboxDao.enqueue`/`updatePayload` now encode the payload via
+`compute(_encodeOutboxPayload, payload)` (a top-level function, required
+by `compute`) instead of calling `jsonEncode` inline, moving the work off
+the UI isolate for every outbox write, not just shares.
+
+### 65.4 Social/feed screens do 2×N sequential Firestore round-trips — MEDIUM (adjacent), FIXED
+
+`RideShareRepository._hydrate` (`ride_share_repository.dart:188-206`)
+fetches a like-doc and a vote-doc per ride via two separate `Future.wait`
+batches that run one after the other rather than concurrently. Called from
+`getPublicRides`, `getSharedToMe`, and `getMyRides` — a 20-ride feed does
+40 extra reads across two serial waves before anything renders. Not
+sharing/pause-resume itself, but it's the screen a rider lands on right
+after sharing, so it compounds the "everything near sharing is slow"
+perception.
+
+**Fixed:** `_hydrate` now starts both `Future.wait` batches (likes, votes)
+before awaiting either, so they run concurrently instead of one after the
+other — same number of reads, roughly half the added latency.
+
+### 65.5 Sequential (non-batched) delete loops — LOW, FIXED
+
+`RideShareRepository.deleteSharedRide` (`ride_share_repository.dart:354-371`)
+and `GroupRideRepository.deleteGroupRide` (`group_ride_repository.dart:667-681`)
+each `await` one document delete at a time instead of using a `WriteBatch`
+or parallelizing. Unsharing a popular ride, or leaving a busy group ride,
+stalls proportional to comment/like/member count.
+
+**Fixed:** both now fetch their subcollection(s) concurrently (`Future.wait`
+on the `.get()` calls) and then fire every `.delete()` at once via a single
+`Future.wait`, instead of one `await` per document. Not converted to a
+Firestore `WriteBatch` — these can exceed 500 writes in principle
+(unlikely at this app's scale, but not impossible for the group-ride case
+with `memberLocations`+`invitations`+`members`+`voiceNotes` combined), and
+parallel deletes have no such limit.
+
+### 65.6 Cold-resume can freeze the launch frame on a long interrupted ride — LOW/MEDIUM
+
+`RideRecordingNotifier.restoreInterruptedRide`
+(`ride_recording_provider.dart:842-929`, run at app launch when a ride was
+killed while paused) does a fully synchronous aggregate rebuild
+(`ride_resume.dart`'s `rebuildRideAggregates`, two linear passes) plus a
+point-by-point polyline reconstruction, all on the main isolate. For a ride
+with many thousands of stored points this is a plausible freeze right when
+the "we kept your ride" recovery banner should appear — which is itself a
+resume path.
+
+**Not investigated as bugs, confirmed as already well-engineered** (ruled
+out during this audit, worth recording so a future pass doesn't re-check
+them): the map widget (`active_ride_screen.dart`'s `const _RouteMap()`)
+is deliberately const to skip rebuild on every tick; the sensor fusion
+pipeline (`sensor_fusion_coordinator.dart`) already throttles UI pushes to
+5Hz against a 20Hz sample rate; the outbox's ride-point buffering
+(`ride_persistence_coordinator.dart`) batches SQLite writes sensibly; the
+polyline outbox payload already uses the flat-array format called for in
+`docs/optimizerplan.md` item 15 (that item is stale/done).
+
+**Status: §65.0–§65.5 fixed this session. §65.6 not fixed** — deliberately
+deferred rather than rushed: `rebuildRideAggregates` and the
+`_appendToPolyline` replay loop both mutate/read the notifier's own
+instance state incrementally, so moving them to a `compute()` isolate
+needs restructuring into "compute pure aggregates off-thread, then apply
+once on the main isolate" rather than a drop-in change, and on reflection
+the actual cost here is smaller than it first looked: `_appendToPolyline`
+already decimates to a 2000-point cap in amortized-O(n) work, and
+`rebuildRideAggregates` is two cheap linear passes — likely tens of
+milliseconds even for a multi-hour ride, not the freeze originally
+suspected. Left as a documented low-priority item rather than risking a
+main-isolate/state-mutation refactor for a marginal, unconfirmed gain.

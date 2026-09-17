@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-08-29 · Branch: `main`_
+_Last updated: 2026-09-17 · Branch: `main`_
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
@@ -136,6 +136,19 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `Issues.md`; this list is a compact pointer, not the record itself.
 
+- **2026-09-17** — Fixed a user-reported "clunky and slow" feel around
+  live-sharing and pause/resume, plus a more serious bug found while
+  fixing it: the live-share periodic timer was republishing a rider's
+  position/status from the instant sharing was turned on, frozen, for the
+  rest of the ride — anyone on the live link saw them stuck at one point
+  on the map the whole time. Also fixed: no loading feedback on the
+  live-share button (could sit dead up to ~16s on a slow connection),
+  pausing didn't stop the live-share heartbeat, a synchronous full-route
+  JSON encode on the UI thread when tapping "Share", and a few N+1/
+  sequential-await patterns on the social feed and delete flows. One
+  related item (cold-resume aggregate rebuild) was flagged but
+  deliberately left unfixed — see `Issues.md` §65 for the full
+  before/after on all of it.
 - **2026-09-11** — Fixed chat/messaging showing `permission-denied`
   everywhere (chat list on open, starting a new chat from search) —
   root-caused to a stale/undeployed `firestore.rules` ruleset, same

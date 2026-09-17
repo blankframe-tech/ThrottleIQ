@@ -1,8 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:sqflite/sqflite.dart';
 
 import '../database_helper.dart';
+
+/// Top-level so [compute] can hand it to a worker isolate. A share-ride
+/// payload carries the ride's full polyline, which can be large enough that
+/// encoding it inline on the calling isolate is a visible hitch right when
+/// the rider taps "Share" — see docs/planning/Issues.md §65.3.
+String _encodeOutboxPayload(Map<String, dynamic> payload) => jsonEncode(payload);
 
 /// One queued cloud write, as it comes back off disk.
 class OutboxEntry {
@@ -67,12 +74,13 @@ class OutboxDao {
     required Map<String, dynamic> payload,
   }) async {
     final db = await DatabaseHelper.instance.database;
+    final encoded = await compute(_encodeOutboxPayload, payload);
     await db.insert(
       'outbox',
       {
         'id': id,
         'kind': kind,
-        'payload': jsonEncode(payload),
+        'payload': encoded,
         'created_at': DateTime.now().toIso8601String(),
         'attempts': 0,
         'next_attempt_at': null,
@@ -140,9 +148,10 @@ class OutboxDao {
     required Map<String, dynamic> payload,
   }) async {
     final db = await DatabaseHelper.instance.database;
+    final encoded = await compute(_encodeOutboxPayload, payload);
     await db.update(
       'outbox',
-      {'payload': jsonEncode(payload)},
+      {'payload': encoded},
       where: 'id = ?',
       whereArgs: [id],
     );
