@@ -36,6 +36,23 @@ class RideDao {
     return healed.first;
   }
 
+  /// The id of [userId]'s most recently completed ride, or null if they have
+  /// none. The sole input to "which ride is still eligible for the
+  /// change-bike correction" — only the ride you just finished, never an
+  /// older one further back in history.
+  Future<String?> getMostRecentCompletedId(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query(
+      'rides',
+      columns: ['id'],
+      where: 'user_id = ? AND status = ?',
+      whereArgs: [userId, 'completed'],
+      orderBy: 'start_time DESC',
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first['id'] as String;
+  }
+
   List<Map<String, dynamic>> _sanitizeAndHealRides(
     Database db,
     List<Map<String, dynamic>> rows,

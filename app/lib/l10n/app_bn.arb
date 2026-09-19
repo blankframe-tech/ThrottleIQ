@@ -114,6 +114,8 @@
   "bikeConfirmationTitle": "এটি কোন বাইকে হয়েছে?",
   "bikeConfirmationBody": "আমরা এই রাইডটি স্বয়ংক্রিয়ভাবে শনাক্ত করে আপনার সক্রিয় বাইকে যুক্ত করেছি। সার্ভিস রিমাইন্ডার সঠিক রাখতে নিশ্চিত করুন।",
   "bikeConfirmationUpdatedMessage": "রাইড আপডেট হয়েছে।",
+  "loggedToBikeLabel": "{bikeName}-এ লগ করা হয়েছে",
+  "changeBikeSheetTitle": "বাইক পরিবর্তন করুন",
 
   "rideModeSoloLabel": "একা",
   "rideModeGroupLabel": "গ্রুপ",

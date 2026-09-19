@@ -1049,3 +1049,12 @@ final rideDetailProvider =
   final row = await dao.getById(rideId);
   return row != null ? RideModel.fromMap(row) : null;
 });
+
+/// The id of the signed-in rider's most recently completed ride, or null if
+/// they have none. Gates the "change bike" correction on the ride summary
+/// screen to only the ride just finished — see `ChangeBikeControl`.
+final latestCompletedRideIdProvider = FutureProvider<String?>((ref) async {
+  final uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) return null;
+  return RideDao().getMostRecentCompletedId(uid);
+});

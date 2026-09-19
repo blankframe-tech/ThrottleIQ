@@ -319,6 +319,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bikeConfirmationUpdatedMessage => 'Ride updated.';
 
   @override
+  String loggedToBikeLabel(String bikeName) {
+    return 'Logged to $bikeName';
+  }
+
+  @override
+  String get changeBikeSheetTitle => 'Change bike';
+
+  @override
   String get rideModeSoloLabel => 'Solo';
 
   @override

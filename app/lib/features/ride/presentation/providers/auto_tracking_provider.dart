@@ -7,8 +7,10 @@ import '../../../../core/services/auto_tracking_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../stats/presentation/providers/rider_stats_provider.dart';
 import '../../data/models/ride_model.dart';
 import '../../domain/entities/ride_entity.dart';
+import 'ride_recording_provider.dart';
 
 /// Whether the rider has turned auto-tracking on, and the plumbing to change
 /// it.
@@ -207,6 +209,10 @@ class RideAttribution {
     await RideDao().confirmBikeAttribution(ride.id, bikeId);
     _ref.invalidate(garageProvider);
     _ref.invalidate(unconfirmedAutoRidesProvider);
+    _ref.invalidate(rideDetailProvider(ride.id));
+    _ref.invalidate(riderStatsProvider);
+    _ref.invalidate(rideHistoryProvider(ride.bikeId));
+    _ref.invalidate(rideHistoryProvider(bikeId));
   }
 }
 

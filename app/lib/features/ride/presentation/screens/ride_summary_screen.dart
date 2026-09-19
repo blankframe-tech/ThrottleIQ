@@ -19,6 +19,7 @@ import '../../domain/calculators/speed_segments.dart';
 import '../../domain/calculators/segment_speed_aggregator.dart';
 import '../../domain/calculators/speed_baseline.dart';
 import '../widgets/bike_confirmation_card.dart';
+import '../widgets/change_bike_control.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/cloud/cloud_repository.dart';
@@ -232,6 +233,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 // app guessed and the rider hasn't confirmed — see
                 // BikeConfirmationCard. No-op on every other ride.
                 BikeConfirmationCard(ride: ride),
+
+                // Lets the rider fix a wrong bike pick, but only on the ride
+                // they just finished — see ChangeBikeControl. No-op on
+                // every older ride, and a no-op when BikeConfirmationCard
+                // above is already showing for this same ride.
+                ChangeBikeControl(ride: ride),
 
                 // ── Black "nice ride" header ─────────────────────────────
                 InkPanel(
@@ -557,7 +564,9 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.bft.throttleiq',
               tileProvider: NetworkTileProvider(
-                headers: const {
+                // Not const: flutter_map adds its own User-Agent entry to
+                // this map, and an unmodifiable one throws on first build.
+                headers: {
                   'User-Agent': 'ThrottleIQ/1.0 (contact@blankframe.com)',
                 },
               ),

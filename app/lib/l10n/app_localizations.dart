@@ -674,6 +674,18 @@ abstract class AppLocalizations {
   /// **'Ride updated.'**
   String get bikeConfirmationUpdatedMessage;
 
+  /// Row on the ride summary screen (most recent ride only) showing which bike the ride was logged to, next to a Change action.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged to {bikeName}'**
+  String loggedToBikeLabel(String bikeName);
+
+  /// Title of the bottom sheet that picks a different bike for the most recent completed ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Change bike'**
+  String get changeBikeSheetTitle;
+
   /// Segment label for riding alone, in the Solo/Group choice on the Record screen.
   ///
   /// In en, this message translates to:

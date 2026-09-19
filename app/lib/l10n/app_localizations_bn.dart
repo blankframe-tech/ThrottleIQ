@@ -319,6 +319,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String get bikeConfirmationUpdatedMessage => 'রাইড আপডেট হয়েছে।';
 
   @override
+  String loggedToBikeLabel(String bikeName) {
+    return '$bikeName-এ লগ করা হয়েছে';
+  }
+
+  @override
+  String get changeBikeSheetTitle => 'বাইক পরিবর্তন করুন';
+
+  @override
   String get rideModeSoloLabel => 'একা';
 
   @override

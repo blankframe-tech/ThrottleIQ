@@ -37,12 +37,13 @@ void main() {
     required String userId,
     String status = 'completed',
     int synced = 0,
+    DateTime? startTime,
   }) async {
     await db.insert('rides', {
       'id': rideId,
       'user_id': userId,
       'bike_id': 'bike-1',
-      'start_time': DateTime(2026, 1, 1).toIso8601String(),
+      'start_time': (startTime ?? DateTime(2026, 1, 1)).toIso8601String(),
       'distance_m': 0,
       'status': status,
       'synced': synced,
@@ -132,6 +133,28 @@ void main() {
       // Query raw db row to confirm SQLite row is updated
       final rawRow = (await db.query('rides', where: 'id = ?', whereArgs: ['corrupted-ride'])).first;
       expect(rawRow['avg_speed_ms'], closeTo(6.16, 0.05));
+    });
+  });
+
+  group('RideDao.getMostRecentCompletedId', () {
+    test('returns the completed ride with the latest start_time', () async {
+      await seedRide('ride-oldest', userId: 'alice', startTime: DateTime(2026, 1, 1));
+      await seedRide('ride-newest', userId: 'alice', startTime: DateTime(2026, 3, 1));
+      await seedRide('ride-middle', userId: 'alice', startTime: DateTime(2026, 2, 1));
+
+      expect(await rideDao.getMostRecentCompletedId('alice'), 'ride-newest');
+    });
+
+    test('ignores another rider\'s rides and non-completed rides', () async {
+      await seedRide('ride-alice-old', userId: 'alice', startTime: DateTime(2026, 1, 1));
+      await seedRide('ride-bob-newer', userId: 'bob', startTime: DateTime(2026, 6, 1));
+      await seedRide('ride-alice-active', userId: 'alice', status: 'active', startTime: DateTime(2026, 9, 1));
+
+      expect(await rideDao.getMostRecentCompletedId('alice'), 'ride-alice-old');
+    });
+
+    test('returns null when the rider has no completed rides', () async {
+      expect(await rideDao.getMostRecentCompletedId('nobody'), isNull);
     });
   });
 

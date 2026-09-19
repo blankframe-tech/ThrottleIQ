@@ -503,6 +503,22 @@
     "description": "Snackbar shown after the rider confirms or corrects which bike an auto-detected ride was on."
   },
 
+  "loggedToBikeLabel": "Logged to {bikeName}",
+  "@loggedToBikeLabel": {
+    "description": "Row on the ride summary screen (most recent ride only) showing which bike the ride was logged to, next to a Change action.",
+    "placeholders": {
+      "bikeName": {
+        "type": "String",
+        "example": "Yamaha FZS"
+      }
+    }
+  },
+
+  "changeBikeSheetTitle": "Change bike",
+  "@changeBikeSheetTitle": {
+    "description": "Title of the bottom sheet that picks a different bike for the most recent completed ride."
+  },
+
   "rideModeSoloLabel": "Solo",
   "@rideModeSoloLabel": {
     "description": "Segment label for riding alone, in the Solo/Group choice on the Record screen."
