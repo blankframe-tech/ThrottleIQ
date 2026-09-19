@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
@@ -59,6 +60,40 @@ Duration outboxBackoff(int attempts) {
   return scaled > cap ? cap : scaled;
 }
 
+/// After this many rejections that retrying can't fix, an entry is retired
+/// to [OutboxStatus.dead] — §69.O4. Not 1: a `permission-denied` can be a
+/// token that hasn't refreshed yet, or rules that are mid-deploy.
+const int kOutboxMaxPermanentFailures = 3;
+
+/// After this many failed attempts of any kind, an entry is retired too.
+/// With [outboxBackoff] capped at 30 minutes that is several hours of
+/// genuinely trying — past that, something is wrong that the rider should
+/// see rather than the queue silently retrying every half hour forever.
+const int kOutboxMaxAttempts = 20;
+
+/// Firestore error codes a retry will not change: the server looked at the
+/// write and said no. Everything else (`unavailable`, `deadline-exceeded`,
+/// `aborted`, a socket error, a Cloudinary hiccup…) is transient.
+const Set<String> kOutboxPermanentErrorCodes = {
+  'permission-denied',
+  'invalid-argument',
+  'not-found',
+  'failed-precondition',
+};
+
+/// Whether [error] is a rejection that retrying won't fix. See
+/// [kOutboxPermanentErrorCodes].
+bool isPermanentOutboxError(Object error) =>
+    error is FirebaseException &&
+    kOutboxPermanentErrorCodes.contains(error.code);
+
+/// The uid a queued entry belongs to, or null if its payload doesn't say.
+/// Every real payload carries one of these two keys (see [OutboxKind]).
+String? outboxEntryOwner(OutboxEntry entry) {
+  final owner = entry.payload['userId'] ?? entry.payload['uid'];
+  return owner is String ? owner : null;
+}
+
 /// Outcome of trying to deliver one queued operation.
 enum OutboxDeliveryResult {
   /// Landed in the cloud. The row is gone.
@@ -92,11 +127,25 @@ class OutboxService {
     OutboxDao? dao,
     RideShareRepository? shareRepository,
     FirebaseFirestore? firestore,
+    String? Function()? currentUid,
+    Future<OutboxDeliveryResult> Function(OutboxEntry entry)? deliverOverride,
   })  : _dao = dao ?? OutboxDao(),
         _explicitShareRepository = shareRepository,
-        _explicitFirestore = firestore;
+        _explicitFirestore = firestore,
+        _currentUid =
+            currentUid ?? (() => FirebaseAuth.instance.currentUser?.uid),
+        _deliverOverride = deliverOverride;
 
   final OutboxDao _dao;
+
+  /// Who is signed in right now. Injected so tests can switch accounts
+  /// without a live FirebaseAuth.
+  final String? Function() _currentUid;
+
+  /// Test-only: replaces the per-kind handlers, so the retry/dead-letter
+  /// policy in [_deliver] can be exercised without Firestore.
+  final Future<OutboxDeliveryResult> Function(OutboxEntry entry)?
+      _deliverOverride;
   RideShareRepository? _explicitShareRepository;
   FirebaseFirestore? _explicitFirestore;
 
@@ -133,6 +182,24 @@ class OutboxService {
   Future<int> pendingCount() => _dao.pendingCount();
   Future<int> pendingShareCount() =>
       _dao.pendingCountOfKind(OutboxKind.shareRide);
+
+  /// Entries the queue gave up on — Settings → Sync issues.
+  Future<List<OutboxEntry>> deadEntries() => _dao.dead();
+  Future<int> deadCount() => _dao.deadCount();
+
+  /// The rider's "Retry" on a dead entry: back in line with fresh counters,
+  /// and one attempt straight away. Returns true if that attempt delivered.
+  Future<bool> retryDead(String id) async {
+    await _dao.revive(id);
+    _changes.add(null);
+    return await _attemptOne(id) == OutboxDeliveryResult.delivered;
+  }
+
+  /// The rider's "Discard" on a dead entry. The intent is gone for good.
+  Future<void> discard(String id) async {
+    await _serialized(() => _dao.delete(id));
+    _changes.add(null);
+  }
 
   /// Queues a ride share and, unless [attemptNow] is false, tries to deliver
   /// it straight away.
@@ -257,11 +324,22 @@ class OutboxService {
   /// periodic timer, from its connectivity listener and on login, and those
   /// can easily overlap — and it must also never run concurrently with a
   /// caller-triggered [_attemptOne] (see [_serialized]'s doc comment).
+  ///
+  /// Only the signed-in rider's own entries are replayed — §69.O4. On a
+  /// shared phone, account A's queued share used to be attempted under B's
+  /// credentials: rules reject it (it names A), so it failed forever, or —
+  /// for a write the rules didn't pin to the author — landed as B. Another
+  /// account's rows are left exactly as they are (no attempt counted) until
+  /// that account signs back in. An entry with no owner in its payload is
+  /// still attempted: its handler rejects it as malformed.
   Future<void> drain() {
     return _serialized(() async {
       try {
         final due = await _dao.due();
+        final uid = _currentUid();
         for (final entry in due) {
+          final owner = outboxEntryOwner(entry);
+          if (owner != null && owner != uid) continue;
           await _deliver(entry);
         }
       } finally {
@@ -272,19 +350,23 @@ class OutboxService {
 
   Future<OutboxDeliveryResult> _deliver(OutboxEntry entry) async {
     try {
-      final handled = switch (entry.kind) {
-        OutboxKind.shareRide => await _deliverShareRide(entry),
-        OutboxKind.liveSessionTeardown => await _deliverLiveTeardown(entry),
-        OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
-        // An unrecognised kind is not going to start working later.
-        _ => OutboxDeliveryResult.discarded,
-      };
+      final override = _deliverOverride;
+      final handled = override != null
+          ? await override(entry)
+          : switch (entry.kind) {
+              OutboxKind.shareRide => await _deliverShareRide(entry),
+              OutboxKind.liveSessionTeardown =>
+                await _deliverLiveTeardown(entry),
+              OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
+              // An unrecognised kind is not going to start working later.
+              _ => OutboxDeliveryResult.discarded,
+            };
 
       if (handled == OutboxDeliveryResult.deferred) {
-        await _dao.recordFailure(
-          id: entry.id,
+        await _recordFailure(
+          entry,
           error: 'not delivered (offline or timed out)',
-          nextAttemptAt: DateTime.now().add(outboxBackoff(entry.attempts)),
+          permanent: false,
         );
       } else {
         await _dao.delete(entry.id);
@@ -294,17 +376,43 @@ class OutboxService {
     } catch (e) {
       // A thrown error is different from a timeout: the request reached
       // something that rejected it. Still retried — a permissions error can
-      // resolve once rules are deployed or a token refreshes — but recorded so
-      // it is visible rather than silent.
+      // resolve once rules are deployed or a token refreshes — but only up
+      // to [kOutboxMaxPermanentFailures] times for a rejection retrying
+      // can't fix, after which the entry is parked for the rider (§69.O4)
+      // instead of retried every 30 minutes for the life of the install.
       debugPrint('[Outbox] ${entry.kind} ${entry.id} failed: $e');
-      await _dao.recordFailure(
-        id: entry.id,
+      await _recordFailure(
+        entry,
         error: e.toString(),
-        nextAttemptAt: DateTime.now().add(outboxBackoff(entry.attempts)),
+        permanent: isPermanentOutboxError(e),
       );
       _changes.add(null);
       return OutboxDeliveryResult.deferred;
     }
+  }
+
+  /// Records one failed attempt, retiring the entry to [OutboxStatus.dead]
+  /// once it has hit either give-up threshold.
+  Future<void> _recordFailure(
+    OutboxEntry entry, {
+    required String error,
+    required bool permanent,
+  }) async {
+    final attempts = entry.attempts + 1;
+    final permanentFailures = entry.permanentFailures + (permanent ? 1 : 0);
+    final dead = permanentFailures >= kOutboxMaxPermanentFailures ||
+        attempts >= kOutboxMaxAttempts;
+    if (dead) {
+      debugPrint('[Outbox] ${entry.kind} ${entry.id} gave up after '
+          '$attempts attempts ($permanentFailures permanent)');
+    }
+    await _dao.recordFailure(
+      id: entry.id,
+      error: error,
+      nextAttemptAt: DateTime.now().add(outboxBackoff(entry.attempts)),
+      permanent: permanent,
+      dead: dead,
+    );
   }
 
   Future<OutboxDeliveryResult> _deliverShareRide(OutboxEntry entry) async {
@@ -392,26 +500,34 @@ class OutboxService {
 
     try {
       if (token != null) {
-        await _firestore.collection('liveSessions').doc(token).update({
-          'status': 'completed',
-          'active': false,
-          'updatedAt': DateTime.now().toIso8601String(),
-        }).timeout(kOutboxAttemptTimeout);
+        try {
+          // `shareable: false` is what actually revokes the link — §78.7.
+          // The `get` rule keys on it (plus `expiresAt`), not on `active`,
+          // so without it an ended ride's last position stayed publicly
+          // readable by anyone holding the link for the rest of the 24h TTL.
+          await _firestore.collection('liveSessions').doc(token).update({
+            'status': 'completed',
+            'active': false,
+            'shareable': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }).timeout(kOutboxAttemptTimeout);
+        } on FirebaseException catch (e) {
+          // The session doc is already gone (the rider tapped "Stop sharing
+          // now", or it was never written) — nothing left to revoke, but
+          // the pointer below still needs clearing, so carry on rather than
+          // returning early as this used to.
+          if (e.code != 'not-found') rethrow;
+        }
       }
       await _firestore.collection('livePointers').doc(uid).set({
         'uid': uid,
         'token': null,
         'active': false,
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
+        'updatedAt': FieldValue.serverTimestamp(),
       }).timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
       return OutboxDeliveryResult.deferred;
-    } on FirebaseException catch (e) {
-      // The session doc is already gone (or was never written) — there is
-      // nothing left to tear down, so this is success, not a retry.
-      if (e.code == 'not-found') return OutboxDeliveryResult.delivered;
-      rethrow;
     }
   }
 

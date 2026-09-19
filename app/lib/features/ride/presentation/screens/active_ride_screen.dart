@@ -224,6 +224,52 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     }
   }
 
+  /// Once sharing is on, the same button offers the way back out — §78.7.
+  /// Before this, the only way to revoke a live link was to end the ride
+  /// (and even that left it readable until the 24h expiry).
+  Future<void> _onLiveShareTap() async {
+    if (ref.read(rideRecordingProvider).liveSessionToken == null) {
+      return _shareLiveLocation();
+    }
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.share, color: AppColors.textPrimary),
+              title: Text('Share link again',
+                  style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, 'share'),
+            ),
+            ListTile(
+              leading: Icon(Icons.location_off, color: AppColors.danger),
+              title: Text('Stop sharing now',
+                  style: TextStyle(color: AppColors.danger)),
+              subtitle: Text(
+                'The link stops working. Your ride keeps recording.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              onTap: () => Navigator.pop(sheetContext, 'stop'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (action == 'share') {
+      await _shareLiveLocation();
+    } else if (action == 'stop') {
+      await ref.read(rideRecordingProvider.notifier).stopLiveSharing();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Live sharing stopped')),
+      );
+    }
+  }
+
   Future<void> _stopRide() async {
     var shareAfterEnd = false;
     final confirmed = await showDialog<bool>(
@@ -444,7 +490,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   const SizedBox(width: 8),
                   IconButton(
                     key: _shareButtonKey,
-                    onPressed: _sharingLive ? null : _shareLiveLocation,
+                    onPressed: _sharingLive ? null : _onLiveShareTap,
                     // Filled once sharing is actually on, outlined beforehand
                     // — the icon itself communicates the opt-in state, since
                     // tapping it is what turns sharing on in the first place.
@@ -464,7 +510,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             color: AppColors.textPrimary,
                           ),
                     tooltip: rideState.liveSessionToken != null
-                        ? 'Share live location'
+                        ? 'Live sharing on'
                         : 'Turn on & share live location',
                   ),
                 ],

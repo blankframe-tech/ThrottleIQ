@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 14;
+  static const int schemaVersion = 16;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -229,6 +229,17 @@ class DatabaseHelper {
       await _addColumnIfMissing(
           db, 'bike_maintenance_configs', 'notes', 'notes TEXT');
     }
+    if (oldVersion < 16) {
+      // Outbox dead-letter state (§69.O4). Every step from v10 on runs
+      // against an install that already has `outbox`, but the create is
+      // IF NOT EXISTS and cheap, and keeps a partial test schema (or a
+      // re-run) from failing the ALTERs below on a missing table.
+      await db.execute(_createOutboxSql);
+      await _addColumnIfMissing(db, 'outbox', 'status',
+          "status TEXT NOT NULL DEFAULT 'pending'");
+      await _addColumnIfMissing(db, 'outbox', 'permanent_failures',
+          'permanent_failures INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   static const String _createBikeMaintenanceConfigsSql = '''
@@ -336,6 +347,12 @@ class DatabaseHelper {
   ///
   /// `next_attempt_at` carries the exponential backoff, so one permanently
   /// failing row can't spin the drain loop.
+  ///
+  /// `status` is `pending` or `dead` (v16, §69.O4). A row that keeps being
+  /// rejected — `permanent_failures` counts rejections Firestore will never
+  /// change its mind about, e.g. `permission-denied` — stops being retried
+  /// and waits in Settings → Sync issues for the rider to retry or discard
+  /// it, rather than burning battery on a doomed write forever.
   static const String _createOutboxSql = '''
     CREATE TABLE IF NOT EXISTS outbox (
       id TEXT PRIMARY KEY,
@@ -344,7 +361,9 @@ class DatabaseHelper {
       created_at TEXT NOT NULL,
       attempts INTEGER NOT NULL DEFAULT 0,
       next_attempt_at TEXT,
-      last_error TEXT
+      last_error TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      permanent_failures INTEGER NOT NULL DEFAULT 0
     )
   ''';
 

@@ -11,6 +11,19 @@ import '../database_helper.dart';
 /// the rider taps "Share" — see DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §65.3.
 String _encodeOutboxPayload(Map<String, dynamic> payload) => jsonEncode(payload);
 
+/// `outbox.status` values. See `_createOutboxSql` in [DatabaseHelper].
+class OutboxStatus {
+  OutboxStatus._();
+
+  /// Waiting for (or between) delivery attempts. The drain loop's only input.
+  static const String pending = 'pending';
+
+  /// Given up on automatically — §69.O4. Kept, not deleted, because it is
+  /// still the rider's intent: Settings → Sync issues lets them retry or
+  /// discard it.
+  static const String dead = 'dead';
+}
+
 /// One queued cloud write, as it comes back off disk.
 class OutboxEntry {
   final String id;
@@ -26,6 +39,15 @@ class OutboxEntry {
   final DateTime? nextAttemptAt;
   final String? lastError;
 
+  /// [OutboxStatus.pending] or [OutboxStatus.dead].
+  final String status;
+
+  /// How many of [attempts] were rejections that retrying can't fix (see
+  /// `isPermanentOutboxError` in `outbox_service.dart`).
+  final int permanentFailures;
+
+  bool get isDead => status == OutboxStatus.dead;
+
   const OutboxEntry({
     required this.id,
     required this.kind,
@@ -34,6 +56,8 @@ class OutboxEntry {
     required this.attempts,
     required this.nextAttemptAt,
     required this.lastError,
+    this.status = OutboxStatus.pending,
+    this.permanentFailures = 0,
   });
 
   factory OutboxEntry.fromRow(Map<String, dynamic> row) {
@@ -51,6 +75,8 @@ class OutboxEntry {
           ? null
           : DateTime.tryParse(row['next_attempt_at'] as String),
       lastError: row['last_error'] as String?,
+      status: row['status'] as String? ?? OutboxStatus.pending,
+      permanentFailures: (row['permanent_failures'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -85,6 +111,10 @@ class OutboxDao {
         'attempts': 0,
         'next_attempt_at': null,
         'last_error': null,
+        // Explicit, so re-queuing a dead intent (e.g. sharing the same ride
+        // again) brings it back to life rather than inheriting its old state.
+        'status': OutboxStatus.pending,
+        'permanent_failures': 0,
       },
       // Replace rather than fail: callers derive deterministic ids for
       // operations that are naturally single-valued (one teardown per live
@@ -94,7 +124,8 @@ class OutboxDao {
     );
   }
 
-  /// Rows ready to attempt now, oldest intent first.
+  /// Rows ready to attempt now, oldest intent first. Dead rows are never
+  /// due — only [revive] puts one back in line.
   ///
   /// Ordering by `created_at` rather than by id matters: a rider who ends a
   /// ride and then shares it offline expects them replayed in that order, and
@@ -105,7 +136,8 @@ class OutboxDao {
     final stamp = (now ?? DateTime.now()).toIso8601String();
     final rows = await db.query(
       'outbox',
-      where: 'next_attempt_at IS NULL OR next_attempt_at <= ?',
+      where: "status != 'dead' AND "
+          '(next_attempt_at IS NULL OR next_attempt_at <= ?)',
       whereArgs: [stamp],
       orderBy: 'created_at ASC',
       limit: limit,
@@ -120,19 +152,63 @@ class OutboxDao {
   }
 
   /// How many intents are still waiting — drives the "queued" UI badge.
+  /// Dead rows aren't waiting on anything but the rider, so they're counted
+  /// by [deadCount] instead; counting them here would show "will post when
+  /// you're back online" forever for a write that never will.
   Future<int> pendingCount() async {
     final db = await DatabaseHelper.instance.database;
-    final rows = await db.rawQuery('SELECT COUNT(*) AS c FROM outbox');
+    final rows = await db.rawQuery(
+      "SELECT COUNT(*) AS c FROM outbox WHERE status != 'dead'",
+    );
     return (rows.first['c'] as num?)?.toInt() ?? 0;
   }
 
   Future<int> pendingCountOfKind(String kind) async {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.rawQuery(
-      'SELECT COUNT(*) AS c FROM outbox WHERE kind = ?',
+      "SELECT COUNT(*) AS c FROM outbox WHERE kind = ? AND status != 'dead'",
       [kind],
     );
     return (rows.first['c'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Rows the drain loop has given up on, oldest first — Settings → Sync
+  /// issues.
+  Future<List<OutboxEntry>> dead() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query(
+      'outbox',
+      where: 'status = ?',
+      whereArgs: [OutboxStatus.dead],
+      orderBy: 'created_at ASC',
+    );
+    return rows.map(OutboxEntry.fromRow).toList();
+  }
+
+  Future<int> deadCount() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.rawQuery(
+      "SELECT COUNT(*) AS c FROM outbox WHERE status = 'dead'",
+    );
+    return (rows.first['c'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Puts a dead row back in line with a clean slate, as if just queued —
+  /// the rider's "Retry". The counters reset too: otherwise a single further
+  /// rejection would kill it again immediately.
+  Future<void> revive(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      'outbox',
+      {
+        'status': OutboxStatus.pending,
+        'attempts': 0,
+        'permanent_failures': 0,
+        'next_attempt_at': null,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   /// Rewrites a row's payload mid-flight.
@@ -163,20 +239,29 @@ class OutboxDao {
   }
 
   /// Records a failed attempt and schedules the next one.
+  ///
+  /// [permanent] counts it toward `permanent_failures`; [dead] retires the
+  /// row. The caller decides both (see `OutboxService._deliver`) so the
+  /// give-up policy lives in one place, not split between here and there.
   Future<void> recordFailure({
     required String id,
     required String error,
     required DateTime nextAttemptAt,
+    bool permanent = false,
+    bool dead = false,
   }) async {
     final db = await DatabaseHelper.instance.database;
     await db.rawUpdate(
       'UPDATE outbox SET attempts = attempts + 1, next_attempt_at = ?, '
-      'last_error = ? WHERE id = ?',
+      'last_error = ?, permanent_failures = permanent_failures + ?, '
+      'status = ? WHERE id = ?',
       [
         nextAttemptAt.toIso8601String(),
         // Bounded: a stack trace in a queue row is worth nothing and can be
         // arbitrarily long.
         error.length > 500 ? error.substring(0, 500) : error,
+        permanent ? 1 : 0,
+        dead ? OutboxStatus.dead : OutboxStatus.pending,
         id,
       ],
     );

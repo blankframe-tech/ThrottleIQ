@@ -133,6 +133,9 @@ class RideRecordingState {
     bool? crashDetected,
     int? crashCountdown,
     String? liveSessionToken,
+    // `liveSessionToken: null` means "keep", like every field here — this is
+    // how "Stop sharing now" actually clears it.
+    bool clearLiveSessionToken = false,
     int? confidence,
     bool? restoredFromPreviousSession,
   }) {
@@ -153,7 +156,9 @@ class RideRecordingState {
       sensorAccelMs2: sensorAccelMs2 ?? this.sensorAccelMs2,
       crashDetected: crashDetected ?? this.crashDetected,
       crashCountdown: crashCountdown ?? this.crashCountdown,
-      liveSessionToken: liveSessionToken ?? this.liveSessionToken,
+      liveSessionToken: clearLiveSessionToken
+          ? null
+          : (liveSessionToken ?? this.liveSessionToken),
       confidence: confidence ?? this.confidence,
       restoredFromPreviousSession:
           restoredFromPreviousSession ?? this.restoredFromPreviousSession,
@@ -680,6 +685,18 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (!wasEnabled && _liveCoordinator.isLiveShareEnabled) {
       _startLiveSessionTimer();
     }
+  }
+
+  /// "Stop sharing now" — revokes the live link without ending the ride
+  /// (§78.7). See [LiveSessionCoordinator.stopSharingNow].
+  Future<void> stopLiveSharing() async {
+    if (state.liveSessionToken == null && !_liveCoordinator.isLiveShareEnabled) {
+      return;
+    }
+    state = state.copyWith(clearLiveSessionToken: true);
+    await _liveCoordinator.stopSharingNow(
+      uid: _ref.read(currentUserProvider)?.uid,
+    );
   }
 
   /// Builds the periodic live-share publish closure, reading `state` and
