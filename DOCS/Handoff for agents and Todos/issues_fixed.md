@@ -4997,3 +4997,97 @@ Verified: `flutter analyze` clean (whole project), `flutter test`
 codebase doesn't unit-test `RideShareRepository` (no fake-Firestore
 harness; only DAOs get real in-memory SQLite coverage). Not yet manually
 verified against a real shared post.
+
+---
+
+## 77. Feature: private ride summary restyled to match the social ride-detail screen, plus new telemetry (2026-09-20)
+
+**Status:** Shipped, not yet visually verified on a device (build device
+went `unavailable` mid-session — see "Not yet verified" below).
+
+Requested directly: the private ride summary screen (reached after ending
+a ride, or from any past ride in history) looked plainer than the social
+shared-ride-detail screen, and should be restyled to match — "but with
+more details and telemetry download and all extra features you can think
+of."
+
+**Shared widgets extracted** (so both screens draw from one implementation
+instead of two copies drifting apart):
+- `shared/widgets/metric_card.dart` (`MetricCard`) — the icon+accent-color
+  stat tile, pulled out of the social screen's private `_MetricCard`.
+- `shared/widgets/riding_score_badge.dart` (`RidingScoreBadge`) — the
+  gamified tier-colored score badge, pulled out of `_RidingScoreBadge`.
+- `shared/widgets/full_screen_route_map_screen.dart`
+  (`FullScreenRouteMapScreen`) — the full-screen interactive route
+  explorer (pinch-zoom, tap-to-inspect waypoints, save-route action),
+  generalized off `SharedRideEntity` to plain primitives
+  (`polyline`/`title`/`subtitle`/stats + an `onSaveRoute(BuildContext)`
+  callback) so a private ride can push the same explorer with its own
+  save-route behavior. `shared_ride_detail_screen.dart` now imports all
+  three instead of defining its own; its own copies (~550 lines) were
+  deleted. `ride_line_chart.dart` gained an optional `xLabels` override so
+  its existing sparkline (until now only used for "stat over time across
+  rides") can also plot "value over one ride's route" without pretending
+  the x-axis is dates.
+
+**Ride summary screen (`ride_summary_screen.dart`) changes:**
+- The 4-stat row, jam-time row, and hard-brake/rapid-accel/high-jerk row
+  are now icon+color `MetricCard` tiles instead of plain `StatCell`s in a
+  divided row — matching the social screen's per-metric color coding
+  (distance=secondary, duration=success, avg=warning, max=primary, etc.).
+- The riding score is now the shared `RidingScoreBadge` (tier-colored,
+  icon, big number) instead of a flat black number tile + separate label
+  card.
+- New **Riding Pace** card (min'sec"/km — same formula the social screen
+  already used, now also shown privately).
+- The route map is now **interactive** (pinch/zoom/pan, was
+  `InteractiveFlag.none`) with a "tap map to expand" hint, and a FAB stack
+  (zoom in/out, recenter, fullscreen, save-as-route) — while keeping this
+  screen's own superior feature, the speed-banded polyline coloring, rather
+  than reverting to the social screen's flat line.
+- New **Route GPS Details** card (track-point count, start/end
+  coordinates, "Explore Full Route on Map").
+- **Save as Route** is now reachable directly from ride summary (map FAB
+  and the Route GPS Details card's full-screen map) via the existing
+  `/routes/save/:rideId` form — previously only reachable via the separate
+  share flow.
+- New **Speed Profile** mini chart (speed-over-route, `RideLineChart`,
+  downsampled to 60 points via a new generic `core/utils/downsample.dart`,
+  factored out of the polyline-only `downsamplePolyline`).
+- New **Elevation Gain/Loss + Elevation Profile** section — entirely new
+  surfaced data: `ride_points.altitude_m` has been recorded since early on
+  but was never shown anywhere. New pure calculator
+  `domain/calculators/elevation_profile.dart` (`elevationGainLoss`,
+  smooths raw altitude with a moving-average window before summing deltas,
+  the same "don't trust raw deltas" principle `jam_time.dart`/
+  `speed_baseline.dart` already apply) returns null — hiding the whole
+  section — when altitude is mostly missing, too short a sample, or
+  variation is within noise floor, rather than showing a fabricated
+  number. Most existing rides on phones with no barometer will show
+  nothing here, honestly.
+- New **CSV telemetry export** (`ExportService.exportRideToCSV`) alongside
+  the existing JSON/GPX — every raw per-point column the recorder captured
+  (speed, acceleration, jerk, altitude, heading, GPS accuracy, cornering
+  flag, period type), for a rider who wants to drop a ride into a
+  spreadsheet rather than just replay its route. The export row grew from
+  2 buttons to a `Wrap` of 3 under a new "Telemetry" section label.
+- Fully localized (English + Bengali) — new ARB keys for every new label;
+  the pace/GPS-coordinate/chart values themselves stay numeric like the
+  rest of the screen's existing duration formatting.
+
+**No change to the social screen's behavior or appearance** — it now reads
+from the shared widgets but renders identically; `shared_ride_detail_screen_test.dart`
+(unchanged assertions, just re-pointed to import `FullScreenRouteMapScreen`
+from its new location) still passes.
+
+Verified: `flutter analyze` clean (whole project), `flutter test`
+1048/1048 (new coverage: `test/core/utils/downsample_test.dart`,
+`test/calculators/elevation_profile_test.dart`; the CSV export itself has
+no dedicated test, consistent with `exportRideToJSON`/`exportRideToGPX`
+never having had one either). **Not yet verified on a device** — the
+connected iPhone (`Abraar's iPhone`) went `unavailable`
+(`xcrun devicectl list devices`) partway through this session, after the
+last successful build/install/launch (§75's device check). Re-run
+`flutter build ios --release -d <device>` + `xcrun devicectl device
+install/launch` once it reconnects, and tap through a real ride summary
+before calling this visually done.

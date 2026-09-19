@@ -69,6 +69,18 @@ bike-name/type snapshot taken once at share time, and `RideAttribution
 `RideShareRepository.updateSharedRideBikeInfo()` patch call, best-effort
 and a no-op for a ride that was never shared.
 
+**Latest feature (2026-09-20, issues_fixed.md §77):** Private ride summary
+restyled to match the social shared-ride-detail screen's look — icon+color
+metric tiles, the gamified score badge, an interactive/expandable map with
+save-as-route, a Route GPS Details card — plus new telemetry the screen
+never surfaced before: a Speed Profile chart, an Elevation Gain/Loss +
+Profile section (from previously-unused `ride_points.altitude_m`, gated to
+only show with honest signal), and a CSV telemetry export alongside the
+existing JSON/GPX. `MetricCard`/`RidingScoreBadge`/`FullScreenRouteMapScreen`
+are now shared widgets both screens draw from. **Not yet visually
+verified** — the build device disconnected mid-session; see §77 for the
+re-verify steps.
+
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
 the Vehicle State Engine architecture/roadmap. Update it (don't fork a new
