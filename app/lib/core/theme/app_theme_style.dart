@@ -63,6 +63,14 @@ class AppColorPalette {
   /// handed around on its own still knows what it is.
   final bool isDark;
 
+  /// Whether surfaces in this palette should carry a hard, unblurred offset
+  /// shadow (`4px 4px 0 border`, no blur) instead of no shadow at all.
+  /// Defaulted to `false` so every existing palette needs no change — only
+  /// [retroLight]/[retroDark] opt in, matching the "Retro (Rawblock)" style
+  /// direction's `box-shadow:8px 8px 0 #1a1a1a`. See `AppCard`/`StatCard`,
+  /// the two shared surfaces that read this.
+  final bool hasHardShadow;
+
   const AppColorPalette({
     required this.background,
     required this.surface,
@@ -87,6 +95,7 @@ class AppColorPalette {
     required this.shimmerBase,
     required this.shimmerHighlight,
     required this.isDark,
+    this.hasHardShadow = false,
   });
 
   // ── Carbon Mono ─────────────────────────────────────────────────────────
@@ -378,63 +387,69 @@ class AppColorPalette {
   );
 
   // ── Retro ───────────────────────────────────────────────────────────────
-  // The deck's old monochrome terminal: no chroma anywhere, severity encoded
-  // in value rather than hue (see the design note on `retroLight` — it
-  // applies identically, mirrored, to `retroDark`). The dark companion
-  // inverts which end is "ink": on paper, the boldest mark is black-on-white;
-  // on the terminal-dark companion, it's white-on-black, so `ink`/`onInk`
-  // swap roles rather than just darkening in place.
+  // "Retro (Rawblock)" from the style-direction deck: blocky 70s-poster
+  // energy — cream paper, thick black rules, hard offset shadows (no blur),
+  // mustard/rust accents, no rounded corners. Values are converted from the
+  // deck's OKLCH swatches (background `oklch(.95 .02 70)`, accent
+  // `oklch(.65 .15 55)`, alert `oklch(.55 .18 25)`). The dark companion keeps
+  // the same mustard/rust hues (lightened, like every other mode's dark
+  // variant) and inverts which end is "ink" — on paper the boldest mark is
+  // black-on-cream; on the dark companion it's cream-on-near-black — so
+  // `ink`/`onInk` swap roles rather than just darkening in place. Both opt
+  // into [hasHardShadow].
 
   static const AppColorPalette retroLight = AppColorPalette(
-    background: Color(0xFFFAFAF7),
+    background: Color(0xFFF8ECE0),
     surface: Color(0xFFFFFFFF),
-    border: Color(0xFF0A0A0A), // the hard rule, not a hairline tint
-    surfaceVariant: Color(0xFFEAEAE5),
-    ink: Color(0xFF0A0A0A),
-    onInk: Color(0xFFFAFAF7),
-    onInkMuted: Color(0xFF9A9A93),
-    primary: Color(0xFF0A0A0A), // the accent is ink; there is no accent hue
-    primaryHighlight: Color(0xFF3D3D39),
-    primaryDark: Color(0xFF000000),
-    secondary: Color(0xFF4A4A45),
-    secondaryLight: Color(0xFF7C7C75),
-    attention: Color(0xFF1F1F1C),
-    success: Color(0xFF5C5C56), // recedes
-    warning: Color(0xFF333330),
-    danger: Color(0xFF0A0A0A), // loudest mark on paper
-    textPrimary: Color(0xFF0A0A0A),
-    textSecondary: Color(0xFF56564F),
-    textTertiary: Color(0xFF86867E),
-    overlayDark: Color(0xCC0A0A0A),
-    shimmerBase: Color(0xFFE6E6E1),
-    shimmerHighlight: Color(0xFFF5F5F1),
+    border: Color(0xFF1A1A1A), // the hard rule, not a hairline tint
+    surfaceVariant: Color(0xFFEBDBC9),
+    ink: Color(0xFF1A1A1A),
+    onInk: Color(0xFFF8ECE0),
+    onInkMuted: Color(0xFF978D82),
+    primary: Color(0xFFD3721E), // mustard
+    primaryHighlight: Color(0xFFF7A062),
+    primaryDark: Color(0xFFA44100),
+    secondary: Color(0xFF534C44), // warm neutral, not a second accent hue
+    secondaryLight: Color(0xFF777068),
+    attention: Color(0xFFC53637), // rust
+    success: Color(0xFF518046), // olive, recedes
+    warning: Color(0xFFBB6802), // burnt amber
+    danger: Color(0xFFC53637), // rust — the deck's one alert color
+    textPrimary: Color(0xFF1A1A1A),
+    textSecondary: Color(0xFF534C44),
+    textTertiary: Color(0xFF978D82),
+    overlayDark: Color(0xCC1A1A1A),
+    shimmerBase: Color(0xFFEBDBC9),
+    shimmerHighlight: Color(0xFFF3E5D6),
     isDark: false,
+    hasHardShadow: true,
   );
 
   static const AppColorPalette retroDark = AppColorPalette(
-    background: Color(0xFF0A0A0A),
-    surface: Color(0xFF121212),
-    border: Color(0xFFFAFAF7), // the hard rule, inverted: matches `ink` exactly
-    surfaceVariant: Color(0xFF1C1C1A),
-    ink: Color(0xFFFAFAF7), // boldest fill is white-on-black here
-    onInk: Color(0xFF0A0A0A),
-    onInkMuted: Color(0xFF6B6B66),
-    primary: Color(0xFFFAFAF7), // the accent is onInk; still no accent hue
-    primaryHighlight: Color(0xFFC6C6C0),
-    primaryDark: Color(0xFFFFFFFF),
-    secondary: Color(0xFFB5B5AE),
-    secondaryLight: Color(0xFFD8D8D2),
-    attention: Color(0xFFE0E0DA),
-    success: Color(0xFF8A8A83), // recedes toward the background
-    warning: Color(0xFFC2C2BB),
-    danger: Color(0xFFFAFAF7), // loudest mark on black
-    textPrimary: Color(0xFFFAFAF7),
-    textSecondary: Color(0xFFA8A8A1),
-    textTertiary: Color(0xFF6E6E68),
-    overlayDark: Color(0xCC0A0A0A),
-    shimmerBase: Color(0xFF1C1C1A),
-    shimmerHighlight: Color(0xFF2A2A26),
+    background: Color(0xFF130C05),
+    surface: Color(0xFF1D1409),
+    border: Color(0xFFFCF4EB), // the hard rule, inverted: matches `ink` exactly
+    surfaceVariant: Color(0xFF2B1F11),
+    ink: Color(0xFFFCF4EB), // boldest fill is cream-on-near-black here
+    onInk: Color(0xFF130C05),
+    onInkMuted: Color(0xFF6B6157),
+    primary: Color(0xFFF7A062), // brighter mustard for contrast on dark
+    primaryHighlight: Color(0xFFFFBD8E),
+    primaryDark: Color(0xFFD3721E),
+    secondary: Color(0xFFA1968B),
+    secondaryLight: Color(0xFFB4ACA4),
+    attention: Color(0xFFEA6A64), // rust, lightened
+    success: Color(0xFF6FAA62),
+    warning: Color(0xFFE59B5B),
+    danger: Color(0xFFEA6A64),
+    textPrimary: Color(0xFFFCF4EB),
+    textSecondary: Color(0xFFA1968B),
+    textTertiary: Color(0xFF6B6157),
+    overlayDark: Color(0xCC0A0603),
+    shimmerBase: Color(0xFF2B1F11),
+    shimmerHighlight: Color(0xFF322618),
     isDark: true,
+    hasHardShadow: true,
   );
 
   // ── Analyst Blue ────────────────────────────────────────────────────────

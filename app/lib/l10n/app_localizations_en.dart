@@ -84,7 +84,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeRetroLabel => 'Retro';
 
   @override
-  String get themeRetroDescription => 'Black-and-white terminal, no color';
+  String get themeRetroDescription => 'Blocky 70s poster, mustard & rust';
 
   @override
   String get themeAnalystBlueLabel => 'Analyst Blue';

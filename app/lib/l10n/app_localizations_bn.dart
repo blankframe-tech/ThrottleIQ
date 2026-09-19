@@ -84,7 +84,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get themeRetroLabel => 'রেট্রো';
 
   @override
-  String get themeRetroDescription => 'সাদা-কালো টার্মিনাল, কোনো রং নেই';
+  String get themeRetroDescription => '70-দশকের পোস্টার, সরিষা ও মরিচা রং';
 
   @override
   String get themeAnalystBlueLabel => 'অ্যানালিস্ট ব্লু';

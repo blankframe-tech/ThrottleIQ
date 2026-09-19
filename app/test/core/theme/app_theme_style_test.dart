@@ -364,12 +364,17 @@ void main() {
     });
   });
 
-  group('Retro, the black-and-white terminal color mode', () {
-    void checkMonochrome(AppColorPalette retro, String label) {
-      // The direction is "no chroma anywhere". A token that drifts back to a
-      // hue (a copy-pasted red danger, say) is the failure this catches, and
-      // it is invisible in review because a slightly-red near-black still
-      // reads as black in a diff.
+  group('Retro, the Rawblock color mode', () {
+    double channelSpread(Color color) {
+      final channels = [color.r, color.g, color.b];
+      return channels.reduce(max) - channels.reduce(min);
+    }
+
+    void checkNeutral(AppColorPalette retro, String label) {
+      // Paper, rule and ink stay a warm near-neutral — the ground the
+      // mustard/rust accents sit on. A token that drifts to real chroma here
+      // (a copy-pasted accent color, say) reads as the background itself
+      // going off-color, which is easy to miss in review at a glance.
       final tokens = <String, Color>{
         'background': retro.background,
         'surface': retro.surface,
@@ -378,15 +383,6 @@ void main() {
         'ink': retro.ink,
         'onInk': retro.onInk,
         'onInkMuted': retro.onInkMuted,
-        'primary': retro.primary,
-        'primaryHighlight': retro.primaryHighlight,
-        'primaryDark': retro.primaryDark,
-        'secondary': retro.secondary,
-        'secondaryLight': retro.secondaryLight,
-        'attention': retro.attention,
-        'success': retro.success,
-        'warning': retro.warning,
-        'danger': retro.danger,
         'textPrimary': retro.textPrimary,
         'textSecondary': retro.textSecondary,
         'textTertiary': retro.textTertiary,
@@ -395,45 +391,75 @@ void main() {
       };
 
       tokens.forEach((name, color) {
-        final channels = [color.r, color.g, color.b];
-        final spread = channels.reduce(max) - channels.reduce(min);
-        // Paper white/near-black isn't pure #FFF/#000 and carries a trace of
-        // warmth, so a few percent of channel spread is the design. A real
-        // hue is an order of magnitude away.
-        expect(spread, lessThan(0.05),
-            reason: '$label.$name is not neutral: $color (channel spread $spread)');
+        final spread = channelSpread(color);
+        expect(spread, lessThan(0.15),
+            reason: '$label.$name is not warm-neutral: $color (channel spread $spread)');
       });
     }
 
-    test('retroLight is strictly monochrome', () =>
-        checkMonochrome(AppColorPalette.retroLight, 'retroLight'));
-    test('retroDark is strictly monochrome', () =>
-        checkMonochrome(AppColorPalette.retroDark, 'retroDark'));
+    void checkAccented(AppColorPalette retro, String label) {
+      // The "Retro (Rawblock)" style direction is mustard + rust on cream
+      // paper, not black-and-white — a token that has drifted back to a
+      // neutral grey (a copy-pasted borderline value, say) is the failure
+      // this catches.
+      final tokens = <String, Color>{
+        'primary': retro.primary,
+        'primaryHighlight': retro.primaryHighlight,
+        'primaryDark': retro.primaryDark,
+        'attention': retro.attention,
+        'warning': retro.warning,
+        'danger': retro.danger,
+      };
 
-    test('severity is encoded in value, since it cannot be in hue', () {
-      // danger louder than warning louder than success — see the palette's
-      // note on the grey ramp standing in for red/amber/green. retroDark
-      // inverts the DIRECTION (danger is the brightest mark on black, not
-      // the darkest), so each palette is checked against its own polarity.
-      final light = AppColorPalette.retroLight;
-      expect(light.danger.computeLuminance(), lessThan(light.warning.computeLuminance()));
-      expect(light.warning.computeLuminance(), lessThan(light.success.computeLuminance()));
+      tokens.forEach((name, color) {
+        final spread = channelSpread(color);
+        expect(spread, greaterThan(0.18),
+            reason: '$label.$name has lost its mustard/rust chroma: $color (channel spread $spread)');
+      });
+    }
 
-      final dark = AppColorPalette.retroDark;
-      expect(dark.danger.computeLuminance(), greaterThan(dark.warning.computeLuminance()));
-      expect(dark.warning.computeLuminance(), greaterThan(dark.success.computeLuminance()));
+    test('retroLight keeps paper/rule/text tokens warm-neutral', () =>
+        checkNeutral(AppColorPalette.retroLight, 'retroLight'));
+    test('retroDark keeps paper/rule/text tokens warm-neutral', () =>
+        checkNeutral(AppColorPalette.retroDark, 'retroDark'));
+
+    test('retroLight accent tokens carry real mustard/rust chroma', () =>
+        checkAccented(AppColorPalette.retroLight, 'retroLight'));
+    test('retroDark accent tokens carry real mustard/rust chroma', () =>
+        checkAccented(AppColorPalette.retroDark, 'retroDark'));
+
+    test('danger stays a distinct hue family from success in both brightnesses', () {
+      // Severity used to be encoded in value alone (monochrome); now that
+      // Retro has real hues, danger (rust) and success (olive) must sit far
+      // enough apart in hue that they're never confusable with each other.
+      for (final retro in [AppColorPalette.retroLight, AppColorPalette.retroDark]) {
+        final dangerHue = HSLColor.fromColor(retro.danger).hue;
+        final successHue = HSLColor.fromColor(retro.success).hue;
+        final gap = (dangerHue - successHue).abs();
+        final wrapped = gap > 180 ? 360 - gap : gap;
+        expect(wrapped, greaterThan(60),
+            reason:
+                '${retro.isDark ? "retroDark" : "retroLight"} danger ($dangerHue°) too close to success ($successHue°)');
+      }
     });
 
     test('keeps a full-strength rule rather than a hairline tint', () {
       // The heavy rule is the direction; softening it to a tint of the
       // background would leave a bland theme. Both palettes' border matches
-      // their own `ink` exactly — retroLight's is black-on-white, retroDark's
+      // their own `ink` exactly — retroLight's is black-on-cream, retroDark's
       // inverts `ink` itself to be the pale tone, so the rule is still the
       // boldest mark available either way. See the palette's doc comment.
       expect(AppColorPalette.retroLight.border.toARGB32(),
           AppColorPalette.retroLight.ink.toARGB32());
       expect(AppColorPalette.retroDark.border.toARGB32(),
           AppColorPalette.retroDark.ink.toARGB32());
+    });
+
+    test('opts into the hard offset shadow', () {
+      // The "8px 8px 0 #1a1a1a" no-blur shadow is as much a part of the
+      // Rawblock direction as the color story — see AppCard/StatCard.
+      expect(AppColorPalette.retroLight.hasHardShadow, isTrue);
+      expect(AppColorPalette.retroDark.hasHardShadow, isTrue);
     });
   });
 }

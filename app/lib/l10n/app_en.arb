@@ -126,7 +126,7 @@
     "description": "Name of the Retro color mode. Product name — kept recognisable across languages."
   },
 
-  "themeRetroDescription": "Black-and-white terminal, no color",
+  "themeRetroDescription": "Blocky 70s poster, mustard & rust",
   "@themeRetroDescription": {
     "description": "One-line description under the Retro color option."
   },

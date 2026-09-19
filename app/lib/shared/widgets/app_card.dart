@@ -18,17 +18,25 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hardShadow = AppColors.hasHardShadow;
+    final radius = BorderRadius.circular(AppDimensions.radiusXl);
     return Material(
       color: color ?? AppColors.surface,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: radius,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        borderRadius: radius,
         child: Container(
           padding: padding ?? const EdgeInsets.all(AppDimensions.paddingMd),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-            border: Border.all(color: AppColors.border),
+            borderRadius: radius,
+            border: Border.all(
+              color: AppColors.border,
+              width: hardShadow ? 2 : 1,
+            ),
+            boxShadow: hardShadow
+                ? [BoxShadow(color: AppColors.border, offset: const Offset(4, 4))]
+                : null,
           ),
           child: child,
         ),

@@ -57,4 +57,8 @@ class AppColors {
   static Color get overlayDark => _current.overlayDark;
   static Color get shimmerBase => _current.shimmerBase;
   static Color get shimmerHighlight => _current.shimmerHighlight;
+
+  // Whether the active palette wants a hard, unblurred offset shadow on
+  // surfaces (Retro's "Rawblock" direction) rather than no shadow at all.
+  static bool get hasHardShadow => _current.hasHardShadow;
 }

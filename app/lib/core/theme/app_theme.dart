@@ -23,18 +23,21 @@ class AppTheme {
   ///
   /// Retro remains the one color mode that is more than shape and color: it
   /// drops body type to monospace regardless of which shape/brightness it's
-  /// paired with, which is the only style branch left in this method. See
+  /// paired with, and its mustard accent always takes dark ink text rather
+  /// than the white/surface foreground every other mode's primary button
+  /// gets — matching the "Retro (Rawblock)" deck direction, where the accent
+  /// fill is light enough that white text would fail contrast. See
   /// [AppColorPalette.retroLight]/[AppColorPalette.retroDark].
   static ThemeData build(AppAppearance appearance) {
     final isDark = appearance.brightness == Brightness.dark;
     final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
 
-    final isMonoColorMode = appearance.colorMode == AppColorMode.retro;
+    final isRetro = appearance.colorMode == AppColorMode.retro;
 
     // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Retro, where a
     // proportional body face would break the illusion the rest of the
     // direction is building.
-    final bodyText = isMonoColorMode
+    final bodyText = isRetro
         ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
         : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText
@@ -156,7 +159,12 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: isDark ? AppColors.surface : Colors.white,
+          // Retro's mustard accent is a mid-light fill in both brightnesses,
+          // so it always takes dark ink text rather than flipping with
+          // brightness the way every other mode's white/surface text does.
+          foregroundColor: isRetro
+              ? const Color(0xFF1A1A1A)
+              : (isDark ? AppColors.surface : Colors.white),
           elevation: 0,
           minimumSize: Size.fromHeight(AppDimensions.controlHeight),
           shape: RoundedRectangleBorder(

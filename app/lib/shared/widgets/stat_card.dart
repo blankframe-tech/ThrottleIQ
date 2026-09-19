@@ -22,15 +22,20 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hardShadow = AppColors.hasHardShadow;
+    final borderColor = isPrimary ? AppColors.primary : AppColors.border;
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(
-          color: isPrimary ? AppColors.primary : AppColors.border,
-          width: isPrimary ? 1.5 : 1,
+          color: borderColor,
+          width: isPrimary || hardShadow ? 1.5 : 1,
         ),
+        boxShadow: hardShadow
+            ? [BoxShadow(color: AppColors.border, offset: const Offset(3, 3))]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

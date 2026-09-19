@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// One-line description under the Retro color option.
   ///
   /// In en, this message translates to:
-  /// **'Black-and-white terminal, no color'**
+  /// **'Blocky 70s poster, mustard & rust'**
   String get themeRetroDescription;
 
   /// Name of the Analyst Blue color mode. Product name — kept recognisable across languages.
