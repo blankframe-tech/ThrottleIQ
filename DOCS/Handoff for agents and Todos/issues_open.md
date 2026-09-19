@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§72**.
+New issues go at the end of this file with the next free number: **§79**.
 
 ---
 
@@ -399,3 +399,99 @@ Other color modes in Light don't do this. It is probably a Retro-light palette t
 `surfaceVariant`/`ink`-style color used as a card fill) rather than a
 per-screen bug. It needs a design decision: intentional "ink block" styling,
 or a token to lighten. Not changed.
+
+## 78. Antigravity grill verification: new open issues (surfaced 2026-09-20)
+
+The four external critiques in `ANTIGRAVRITY_GRILL/` were checked claim by
+claim against master `a0c906b`. The verdicts, evidence, and fix
+instructions for every item are in `ANTIGRAVRITY_GRILL/claude_sol.md`.
+Several grill claims turned out false or already fixed; see that file's §6.
+Nothing was changed in code. Items already tracked elsewhere are only
+cross-referenced here: §33.5/§63.3 (Cloudinary), 69.O1 (voice URLs),
+69.O2 (account deletion), 69.O3 (crash cancel), 69.O4 (outbox poison pill,
+which also replays another user's entries), 69.O5 (l10n: 38 screens),
+69.O8 (full-screen intent), and 69.O10 (crash rides don't sync; the crash
+path also never writes the ride's stats).
+
+**Safety / data integrity (HIGH)**
+- **78.1 Crash detection can never fire on a live ride.** `EventDetector.detect`
+  is called only from `_onPosition` with GPS-derived accel
+  (`motion_calculator.dart:31`). It can't reach the 80 m/s² threshold, because
+  speeds above 70 m/s are rejected. The IMU never reaches the crash path
+  (`sensor_fusion_coordinator.dart:61-113`). `crash_detector_test.dart` is green
+  only because it passes synthetic values straight into `detect()`.
+- **78.2 Jerk "peak" is a running average** (`event_detector.dart:127-129`).
+  It should be `max`.
+- **78.3 Hard-brake/rapid-accel counts are inflated.** Both the IMU and GPS
+  paths increment them. Worse, the 2 s cooldown only refreshes when
+  `sensorAlert != state.activeAlert`, and `activeAlert` is never cleared
+  mid-ride. So after the first hard brake, every 50 ms IMU sample below
+  −4 m/s² increments `hardBrakeCount`.
+- **78.4 `CloudRepository.downloadRideTrack` is never called.** Maps are blank
+  for rides restored on a new device (`ride_summary_screen.dart:73`).
+- **78.5 A failed track upload is never retried.** The ride is already
+  `synced=1` (`sync_manager.dart:268-285`).
+- **78.6 Deleting a bike deletes all its rides** locally (`bike_dao.dart:41-57`)
+  and remotely. `deleteBikeRemote` is also one batch (500-op cap), and it
+  orphans the `track` subcollections.
+- **78.7 Ended live sessions stay publicly readable until `expiresAt`.**
+  The teardown (`outbox_service.dart:395`) never sets `shareable:false`, and
+  there is no `allow delete` rule on `liveSessions`.
+
+**Privacy (MEDIUM)**
+- **78.8 `PrivacyZoneClipper` trims 200 m of *path*, not a 200 m *radius*.**
+  GPS drift near home can use up the budget and leave the home area in the
+  shared track.
+- **78.9 `auto_detections`/`auto_fixes` have no `user_id`.** Pending rows from
+  user A get reconciled to user B (`auto_ride_reconciler_service.dart:62-76`).
+  This was noted as a follow-up in `database_helper.dart:524-537` but never
+  numbered until now.
+
+**Correctness (MEDIUM/LOW)**
+- **78.10 Voice notes after the first get cut off.** `_voicePlayer` is never
+  `stop()`ped, so `playing` stays true. For the next clip, `play()` returns
+  immediately and `finally` deactivates the session
+  (`group_ride_map_screen.dart:~340`).
+- **78.11 A GPS gap of up to 60 s is counted entirely as moving time** when
+  the fix after the gap is moving (`ride_recording_provider.dart:536`).
+- **78.12 Gyro heading problems** (`vehicle_state_estimator.dart:143`): raw `gz`
+  is added to a clockwise heading, so the sign is inverted. It is also only
+  valid when the phone lies flat.
+- **78.13 Calibrator fallback reads pothole spikes as hard braking**
+  (`accel_axis_calibrator.dart:19`).
+- **78.14 `getOrCreateChat` scans all of the user's chats**, and simultaneous
+  taps create duplicate rooms. Use a deterministic id.
+- **78.15 Firestore-model `as double` casts** can throw on integer
+  coordinates (`ride_share_model.dart:143`, `route_model.dart:58`,
+  `group_ride_model.dart:259`). The SQLite paths are safe because the
+  columns are REAL.
+
+**Infra / policy**
+- **78.16 All 8 `TileLayer`s hit `tile.openstreetmap.org` directly, with no
+  cache.** This goes against OSM's tile usage policy, and the map is blank
+  offline.
+- **78.17 `getNearbyPlaces` downloads the whole `places` collection**
+  (`place_repository.dart:159`), even though a `geohash` is already stored.
+- **78.18 There is no CI (`.github/` is missing).** The release keystore
+  exists only on this laptop (gitignored, at the repo root). Back it up and
+  confirm Play App Signing.
+
+**UX**
+- **78.19 The default Calming Light `primary` `#84A98B` on white is
+  2.62:1** (`app_theme_style.dart:345`), below the 4.5:1 AA minimum. The
+  existing `#537D5C` gives 4.71:1.
+- **78.20 The pause scrim covers the stats panel**
+  (`active_ride_screen.dart:543`).
+- **78.21 Route navigation doesn't record the ride** (so it has no crash
+  pipeline).
+- **78.22 Place "Directions" silently calls `startRide()`**
+  (`place_detail_screen.dart:448`).
+- **78.23 Add Place saves Dhaka coordinates when no location was picked**
+  (`add_place_screen.dart:141`).
+- **78.24 SafeQR has no save/share/print.** The ride-share screen's close
+  button calls `context.go('/home/record')` instead of popping
+  (`ride_share_screen.dart:262`).
+- **78.25 Emergency contacts copy implies alerts are sent.** Only fine print
+  says otherwise. The pitch (`iDEA_PITCH_SUBMISSION.md` Slide 9, lines
+  36/76/107) also claims working crash detection and a team that the repo
+  history doesn't show.

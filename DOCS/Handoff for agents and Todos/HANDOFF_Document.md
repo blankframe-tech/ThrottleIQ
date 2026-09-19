@@ -1,6 +1,18 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-19 · Branch: `master`_
+_Last updated: 2026-09-20 · Branch: `master`_
+
+**Grill verification (2026-09-20, issues_open.md §78):** The four external
+critiques in `ANTIGRAVRITY_GRILL/` were checked against the code. The
+verdicts and fix instructions are in `ANTIGRAVRITY_GRILL/claude_sol.md`.
+No code changed. Top findings:
+- Crash detection can't fire on a real ride (§78.1).
+- Deleting a bike wipes its rides (§78.6).
+- Ended live links stay readable (§78.7).
+- The release keystore has no backup and there's no CI (§78.18).
+- The default theme fails AA contrast (§78.19).
+
+The recommended execution order is in claude_sol.md §5.
 
 **Latest cleanup (2026-09-19, issues_fixed.md §69.13):** Closed six of the
 §69 critique pass's 16 open items — removed the unused `firebase_messaging`
