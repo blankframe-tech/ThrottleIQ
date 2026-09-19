@@ -513,6 +513,12 @@ class _PlaceActions extends ConsumerWidget {
           const SizedBox(width: 8),
           OutlinedButton.icon(
             onPressed: () => _call(context, tel),
+            // The theme's minimumSize is Size.fromHeight (infinite width),
+            // which inside a Row with no Expanded fails layout and blanks
+            // the whole screen for any place that has a phone number.
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size(0, AppDimensions.controlHeight),
+            ),
             icon: const Icon(Icons.phone, size: 18),
             label: const Text('Call'),
           ),
