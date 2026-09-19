@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../screens/onboarding_manifest.dart';
 import '../screens/onboarding_tour_provider.dart';
 
@@ -26,7 +27,9 @@ class TourFloatingBanner extends ConsumerWidget {
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF181D22),
+          // Theme ink rather than a hardcoded near-black, so the banner
+          // follows the rider's palette (claude_sol.md §3.4.4).
+          color: AppColors.ink,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: accent.withValues(alpha: 0.6), width: 1.5),
           boxShadow: [
@@ -71,10 +74,10 @@ class TourFloatingBanner extends ConsumerWidget {
                     tourState.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.onInk,
                     ),
                   ),
                 ],
@@ -117,8 +120,8 @@ class TourFloatingBanner extends ConsumerWidget {
                   }
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white30),
-                  foregroundColor: Colors.white,
+                  side: BorderSide(color: AppColors.onInkMuted),
+                  foregroundColor: AppColors.onInk,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -126,15 +129,15 @@ class TourFloatingBanner extends ConsumerWidget {
                 child: const Text('Next →', style: TextStyle(fontSize: 11)),
               ),
             ],
-            const SizedBox(width: 4),
-            InkWell(
-              onTap: () {
+            // 48 dp target; the old InkWell was ~24 dp (claude_sol.md §3.4.5).
+            IconButton(
+              tooltip: 'Close guide',
+              icon: Icon(Icons.close, size: 20, color: AppColors.onInkMuted),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+              onPressed: () {
                 ref.read(activeTourGuideProvider.notifier).state = null;
               },
-              child: const Padding(
-                padding: EdgeInsets.all(4.0),
-                child: Icon(Icons.close, size: 16, color: Colors.white54),
-              ),
             ),
           ],
         ),

@@ -64,4 +64,30 @@ class AppTypography {
         : GoogleFonts.spaceGrotesk(textStyle: resolved);
     return styled.copyWith(fontFamilyFallback: bengaliFallback);
   }
+
+  /// Cockpit type floor for the live-ride screens, read at a glance from a
+  /// handlebar mount: labels never below [cockpitLabelSize], values never
+  /// below [cockpitValueSize] (claude_sol.md §3.1.2). Use these rather than
+  /// literals so the floor can't quietly drift back down one widget at a time.
+  static const double cockpitLabelSize = 14;
+  static const double cockpitValueSize = 20;
+
+  /// Small caption under/next to a live value ("Distance", "BRAKE").
+  static TextStyle cockpitLabel({
+    Color? color,
+    FontWeight weight = FontWeight.w500,
+    double letterSpacing = 0,
+  }) =>
+      TextStyle(
+        fontSize: cockpitLabelSize,
+        fontWeight: weight,
+        color: color ?? AppColors.textSecondary,
+        letterSpacing: letterSpacing,
+        fontFamilyFallback: bengaliFallback,
+      );
+
+  /// A live secondary value (distance, average speed, g-force). The primary
+  /// speed readout is far larger and keeps its own `display(64)`.
+  static TextStyle cockpitValue({Color? color, FontWeight weight = FontWeight.w700}) =>
+      display(cockpitValueSize, weight: weight, color: color, letterSpacing: 0);
 }

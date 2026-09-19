@@ -293,32 +293,24 @@ class _BikeCard extends ConsumerWidget {
                 const SizedBox(height: 14),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                // behavior: opaque is required here — this GestureDetector is
-                // nested inside the whole card's own onTap (navigates to bike
-                // detail, above). Without it, a plain GestureDetector only
-                // hit-tests the painted pixels of its child (the Text/Icon
-                // glyphs), not the full row — Row defaults to
-                // MainAxisSize.max, so it stretches the width of the card,
-                // but most of that width is empty space the child doesn't
-                // paint into. A tap landing in that empty space fell through
-                // to the outer card's onTap instead, silently sending riders
-                // to bike detail instead of maintenance — reported as
-                // "maintenance page is lost, I can't find it anywhere,"
-                // because the row LOOKED like a full-width tappable link but
-                // usually wasn't. opaque makes the whole row a real hit
-                // target regardless of what's painted there.
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => context.go('/home/maintenance?bikeId=${bike.id}'),
-                  child: Row(
-                    children: [
-                      Text('Tap for maintenance',
-                          style: display(14,
-                              letterSpacing: 0, color: AppColors.primary)),
-                      const SizedBox(width: 6),
-                      Icon(Icons.arrow_forward, size: 16, color: AppColors.primary),
-                    ],
+                // A real button with a full-width, 48 dp target rather than a
+                // ~28 dp text row nested in the card's own onTap: a tap
+                // anywhere on it goes to maintenance, never falls through to
+                // bike detail (claude_sol.md §3.2.2). Pushed rather than
+                // go()-ed so the Maintenance screen's back bar returns here.
+                TextButton.icon(
+                  onPressed: () =>
+                      context.push('/home/maintenance?bikeId=${bike.id}'),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    alignment: Alignment.centerLeft,
+                    padding: EdgeInsets.zero,
+                    foregroundColor: AppColors.primary,
                   ),
+                  icon: const Icon(Icons.build_outlined, size: 18),
+                  label: Text('Maintenance',
+                      style: display(14,
+                          letterSpacing: 0, color: AppColors.primary)),
                 ),
               ],
             ),

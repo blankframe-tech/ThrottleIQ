@@ -263,7 +263,12 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         title: const Text('Share ride'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.go('/home/record'),
+          // Pop when there's somewhere to pop to; the "End ride + Share"
+          // path arrives via context.go, so fall back to this ride's summary
+          // rather than wiping the stack to the Record tab.
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go('/ride/summary/${widget.rideId}'),
         ),
       ),
       body: SingleChildScrollView(

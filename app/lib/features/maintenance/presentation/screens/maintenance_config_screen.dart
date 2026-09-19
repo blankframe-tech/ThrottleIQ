@@ -121,7 +121,11 @@ class _MaintenanceConfigScreenState
 
     if (!mounted) return;
 
-    if (widget.isFirstTime) {
+    // First-time setup is now opened on top of wherever the rider was (the
+    // "Bike added" SnackBar or bike detail), so it pops back there too
+    // instead of go()-ing to the Maintenance tab and dropping the stack.
+    // go() stays only as the fallback for a deep link with nothing beneath.
+    if (widget.isFirstTime && !context.canPop()) {
       context.go('/home/maintenance?bikeId=${widget.bikeId}');
     } else {
       context.pop();

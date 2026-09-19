@@ -49,4 +49,18 @@ void main() {
       }
     });
   });
+
+  group('cockpit tokens', () {
+    test('hold the live-ride legibility floor (labels 14, values 20)', () {
+      expect(AppTypography.cockpitLabel().fontSize, greaterThanOrEqualTo(14));
+      late TextStyle value;
+      runZonedGuarded(() => value = AppTypography.cockpitValue(), (e, _) {
+        if (!e.toString().contains('google_fonts') &&
+            !e.toString().contains('was not found in the application assets')) {
+          throw e;
+        }
+      });
+      expect(value.fontSize, greaterThanOrEqualTo(20));
+    });
+  });
 }

@@ -320,6 +320,30 @@ abstract class AppLocalizations {
   /// **'Logged if a crash is detected and you don\'t respond within 60 seconds. Automatic SMS/email alerts aren\'t live yet.'**
   String get emergencyContactsDescription;
 
+  /// Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (claude_sol.md §3.6.3) — adding a contact must not read as being protected.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ does not yet alert these contacts automatically.'**
+  String get emergencyContactsNotAlertedBanner;
+
+  /// Title of the one-time acknowledgement dialog shown after the rider adds their first emergency contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts aren\'t alerted yet'**
+  String get emergencyContactsAckTitle;
+
+  /// Body of the one-time emergency-contact acknowledgement dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ saved this contact, but it can\'t send them an SMS or email after a crash yet. Until it can, tell someone your route before you ride.'**
+  String get emergencyContactsAckBody;
+
+  /// Dismisses the one-time emergency-contact acknowledgement dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand'**
+  String get emergencyContactsAckAction;
+
   /// Empty state for the emergency contact list.
   ///
   /// In en, this message translates to:
@@ -626,11 +650,17 @@ abstract class AppLocalizations {
   /// **'Telemetry'**
   String get telemetrySectionLabel;
 
-  /// Label on the ride summary screen's pace card, showing minutes-per-km.
+  /// Label on the ride summary screen's speed card, showing average speed over moving time in km/h. Key kept from when this card showed a runner's min/km pace.
   ///
   /// In en, this message translates to:
-  /// **'Riding Pace'**
+  /// **'Avg moving speed'**
   String get ridingPaceLabel;
+
+  /// Label for the moving-time vs stopped-time line on the ride summary's speed card, e.g. '42m / 8m'.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving / stopped'**
+  String get movingStoppedLabel;
 
   /// Header of the card showing GPS track-point count and start/end coordinates on the ride summary screen.
   ///
@@ -919,6 +949,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved only on this device — it is not backed up or synced.'**
   String get safeQrLocalOnlyDisclaimer;
+
+  /// Button that exports the SafeQR card as a PNG through the system share sheet (which also offers Save to Photos/Files), e.g. to set as a lock-screen wallpaper or print as a helmet sticker.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or share QR image'**
+  String get safeQrShareImageAction;
+
+  /// Snackbar shown when rendering the SafeQR card to an image fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the QR image.'**
+  String get safeQrShareImageFailed;
 
   /// Tooltip shown on the weather badge when weather could not be retrieved.
   ///

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -270,6 +271,34 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 4),
+          // A warning-colored banner, not fine print: until crash alerts
+          // actually send, having contacts here must not read as being
+          // protected (claude_sol.md §3.6.3).
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.warning),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.emergencyContactsNotAlertedBanner,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             l10n.emergencyContactsDescription,
             style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
@@ -653,11 +682,44 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  void _showContactDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+  /// SharedPreferences flag: the "contacts aren't alerted yet" dialog has
+  /// been acknowledged once and never needs showing again.
+  static const _contactsAckKey = 'emergency_contacts_not_alerted_ack';
+
+  Future<void> _showContactDialog(BuildContext context, WidgetRef ref) async {
+    final wasEmpty =
+        ref.read(emergencyContactsNotifierProvider).valueOrNull?.isEmpty ?? true;
+    final added = await showDialog<bool>(
       context: context,
       builder: (_) => const _AddContactDialog(),
     );
+    if (added != true || !wasEmpty || !context.mounted) return;
+
+    // One-time acknowledgement on the rider's first contact — the moment
+    // they're most likely to assume that contact will now be told about a
+    // crash. See emergencyContactsNotAlertedBanner.
+    final prefs = await SharedPreferences.getInstance();
+    if ((prefs.getBool(_contactsAckKey) ?? false) || !context.mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        icon: Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 32),
+        title: Text(l10n.emergencyContactsAckTitle,
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
+        content: Text(l10n.emergencyContactsAckBody,
+            style: TextStyle(color: AppColors.textSecondary)),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.emergencyContactsAckAction),
+          ),
+        ],
+      ),
+    );
+    await prefs.setBool(_contactsAckKey, true);
   }
 }
 
@@ -700,7 +762,7 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
           phone: phone,
           email: email.isEmpty ? null : email,
         );
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override

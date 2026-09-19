@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -437,15 +438,53 @@ class _PlaceActions extends ConsumerWidget {
   /// On iOS, if that fails outright we retry with Apple Maps, which is always
   /// present. A failure on either is reported rather than swallowed: a button
   /// that silently does nothing is worse than one that says why.
+  /// SharedPreferences key for a remembered "Record this ride?" answer —
+  /// `'record'` or `'directions'`; absent means ask every time.
+  static const directionsChoiceKey = 'place_directions_record_choice';
+
+  /// Whether to record a ride alongside the directions. Asked rather than
+  /// assumed (claude_sol.md §3.2.2): the button used to start a recording
+  /// silently, which a rider who only wanted the route never agreed to.
+  /// Returns null when the rider backed out of the sheet, in which case
+  /// nothing launches at all.
+  Future<bool?> _shouldRecord(BuildContext context, WidgetRef ref) async {
+    // A ride already running is just carried on — nothing to ask.
+    final status = ref.read(rideRecordingProvider).status;
+    if (status != RecordingStatus.idle && status != RecordingStatus.completed) {
+      return false;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final remembered = prefs.getString(directionsChoiceKey);
+    if (remembered == 'record') return true;
+    if (remembered == 'directions') return false;
+    if (!context.mounted) return null;
+
+    final answer = await showModalBottomSheet<(bool, bool)>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (_) => const _RecordChoiceSheet(),
+    );
+    if (answer == null) return null;
+    final (record, dontAskAgain) = answer;
+    if (dontAskAgain) {
+      await prefs.setString(directionsChoiceKey, record ? 'record' : 'directions');
+    }
+    return record;
+  }
+
   Future<void> _openDirections(BuildContext context, WidgetRef ref) async {
+    final record = await _shouldRecord(context, ref);
+    if (record == null) return;
+
     // Started *before* handing off to the external app, not after: once
     // launchUrl backgrounds ThrottleIQ, there is no foreground window left for
     // a location-permission prompt to appear in. Silently no-ops (see
-    // RideRecordingNotifier.startRide) if a ride is already active/paused, if
-    // there's no bike, or if permission is missing — a rider who only wanted
-    // directions should never see an error from the ride the tap also
-    // started.
-    unawaited(ref.read(rideRecordingProvider.notifier).startRide());
+    // RideRecordingNotifier.startRide) if there's no bike or permission is
+    // missing — a rider who only wanted directions should never see an error
+    // from the ride the tap also started.
+    if (record) {
+      unawaited(ref.read(rideRecordingProvider.notifier).startRide());
+    }
 
     final google = googleMapsDirectionsUri(
       latitude: place.latitude,
@@ -568,6 +607,68 @@ class _ReviewTile extends StatelessWidget {
             Text(review.text, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// "Record this ride in ThrottleIQ?" asked before the Directions hand-off.
+/// Pops `(record, dontAskAgain)`.
+class _RecordChoiceSheet extends StatefulWidget {
+  const _RecordChoiceSheet();
+
+  @override
+  State<_RecordChoiceSheet> createState() => _RecordChoiceSheetState();
+}
+
+class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
+  bool _dontAskAgain = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Record this ride in ThrottleIQ?',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
+            const SizedBox(height: 6),
+            Text(
+              'Your maps app gives the directions. ThrottleIQ can log the '
+              'trip in the background at the same time.',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, (true, _dontAskAgain)),
+              icon: const Icon(Icons.fiber_manual_record, size: 18),
+              label: const Text('Record & go'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(context, (false, _dontAskAgain)),
+              icon: const Icon(Icons.directions, size: 18),
+              label: const Text('Just directions'),
+            ),
+            const SizedBox(height: 4),
+            CheckboxListTile(
+              value: _dontAskAgain,
+              onChanged: (v) => setState(() => _dontAskAgain = v ?? false),
+              title: Text("Don't ask again",
+                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              activeColor: AppColors.primary,
+            ),
+          ],
+        ),
       ),
     );
   }

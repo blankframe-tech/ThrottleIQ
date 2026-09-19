@@ -177,11 +177,24 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             colorValue: _colorValue,
           );
       if (mounted) {
+        // Back to the garage with an offer, rather than straight into the
+        // maintenance setup (which then redirected a second time on save —
+        // claude_sol.md §3.2.4). Maintenance already works on default
+        // intervals, so setting them up is optional, not a required step.
+        // Router and messenger are captured before the pop unmounts us.
+        final router = GoRouter.of(context);
+        final messenger = ScaffoldMessenger.of(context);
+        context.pop();
         if (newBikeId != null) {
-          context.pushReplacement(
-              '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true');
-        } else {
-          context.pop();
+          messenger.showSnackBar(SnackBar(
+            content: const Text('Bike added.'),
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: 'Set service intervals',
+              onPressed: () => router.push(
+                  '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true'),
+            ),
+          ));
         }
       }
     }
