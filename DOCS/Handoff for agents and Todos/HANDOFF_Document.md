@@ -14,11 +14,24 @@ No code changed. Top findings:
 
 The recommended execution order is in claude_sol.md §5.
 
-**Founder-only items from the grill (2026-09-20):** Account actions,
-pending decisions, Blaze-gated work, and deploys that need confirmation
-are listed in `DOCS/needs_attention.md`. Fixes for the code-doable §78 and
-§69 items are in progress on branch `fix/grill-78`. They are not merged
-or verified yet.
+**Grill fixes landed on branch `fix/grill-78` (2026-09-20, issues_fixed.md §78):**
+Six parallel agents fixed the code-doable §78 items plus 69.O4, 69.O6 and
+69.O10. Merged into `fix/grill-78` only, not `master`/`main`, and nothing
+is deployed. `flutter analyze` is clean, `flutter test` passes 1174/1174,
+the rules emulator passes 112/112, and the functions build passes.
+
+What changed:
+- The DB schema is now v16.
+- Bikes are archived instead of deleted.
+- A new crash detector is in place but switched off.
+- CI is added (`.github/workflows/ci.yml`).
+- All map tiles go through one cached layer.
+- Functions are on Node 22.
+
+Still open is in issues_open.md §78.
+
+Founder-only items (accounts, decisions, Blaze, deploys) are in
+`DOCS/needs_attention.md`.
 
 **Latest cleanup (2026-09-19, issues_fixed.md §69.13):** Closed six of the
 §69 critique pass's 16 open items — removed the unused `firebase_messaging`

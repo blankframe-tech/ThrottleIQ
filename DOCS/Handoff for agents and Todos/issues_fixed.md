@@ -5094,12 +5094,26 @@ before calling this visually done.
 
 ---
 
-## 78. Antigravity grill fixes, branch `fix/grill-78` (2026-09-20, in progress)
+## 78. Antigravity grill fixes, branch `fix/grill-78` (2026-09-20)
 
-The open items are in `issues_open.md` §78. Fixes are being done by
-parallel agents, one per area, and merged into `fix/grill-78`. They are
-not merged to `master` or `main` yet. Each part below is recorded as it
-lands.
+These are fixes for the code-doable items in `issues_open.md` §78 and three
+from §69 (O4, O6, O10). Six parallel agents did the work, one per area
+(parts A–F below). All six parts are merged into `fix/grill-78`. They are
+**not merged to `master`/`main` and not deployed.** What's still open stays
+in `issues_open.md` §78.
+
+**Verified on the combined branch:**
+- `flutter analyze` is clean.
+- `flutter test` passes 1174/1174 (baseline 1048).
+- The rules emulator passes 112/112 (baseline 98).
+- `functions` builds with `npm run build`.
+
+**Schema:** `DatabaseHelper.schemaVersion` is now 16.
+- v15 (part B): `rides.track_synced`, `bikes.archived`,
+  `auto_detections.user_id`.
+- v16 (part C): `outbox.status`, `outbox.permanent_failures`.
+- Both steps are gated on `newVersion`, so partial-schema migration tests
+  stop where they should.
 
 ### 78.A Crash and sensor pipeline (commit 5882f59)
 - **78.1:** new `ImpactDetector`
@@ -5137,3 +5151,149 @@ Verified: `flutter analyze` clean, `flutter test` 1086/1086 (38 new).
 - Every impact threshold is uncalibrated.
 - The hysteresis and the 5 s alert expiry haven't been felt on a real
   ride.
+
+### 78.B Local database and sync (commit c2d75e1)
+- **69.O10 (sync half):** `RideDao.getUnsynced` and the history lists
+  include `status = 'crash'`. The lists don't show a "crash" badge yet.
+- **78.5:** new `rides.track_synced` column. `SyncManager.syncPendingTracks`
+  retries a trail until its upload succeeds. `finalizeRide` resets the
+  flag. Existing rides re-upload their trail once, which is safe because
+  chunks are keyed by index. `track_synced` is stripped from the Firestore
+  payload so older app versions don't break.
+- **78.4:** `RideTrackLoader.load` reads local points, else downloads them
+  from the cloud. The summary, share, save-route and export screens use it.
+  The summary map shows "Fetching route…" and "Route not available"
+  states.
+- **78.9:** `auto_detections.user_id` is stamped from the uid saved with
+  `FlutterForegroundTask.saveData`. It is set before auto-tracking starts
+  and removed on sign-out. The reconciler is scoped to the owner.
+  - Unowned legacy rows older than 7 days are discarded.
+  - Newer unowned rows are claimed only if no other rider's rides or bikes
+    are on the device.
+- **78.6 + claude_sol §1.3.3:** bikes are archived, not deleted.
+  - The garage and all pickers hide archived bikes. Stats and ride lists
+    still include their rides.
+  - A collapsible "Archived bikes" section offers Unarchive.
+  - Deleting a bike together with its rides is still possible, but the
+    rider has to type the bike's name first.
+  - The remote delete runs in chunks of ≤400 and deletes each ride's
+    `track` subcollection.
+
+### 78.C Live links and outbox (commit b90e05f)
+- **78.7:** ending a ride now sets `shareable:false` and uses a
+  server-timestamp `updatedAt`. The teardown also clears
+  `livePointers/{uid}` when the session doc is already gone.
+  - The owner can delete the doc (`allow delete` rule).
+  - The live-share button on the active ride screen opens "Share link
+    again" and "Stop sharing now".
+  - A new rules test file, `live_sessions_rules.test.js`, has 4 tests.
+- **69.O4:**
+  - `drain()` only replays entries owned by the signed-in rider.
+  - Permanent Firestore errors mark an entry `dead` after 3 failures, and
+    any entry is marked dead after 20 attempts.
+  - A new Settings → "Sync issues" screen (`/sync-issues`) lists dead
+    entries with Retry and Discard. The tile appears only when there are
+    dead entries. Its strings aren't localized yet.
+  - `_attemptOne`, the immediate attempt right after enqueue, is not
+    scoped to the signed-in rider.
+
+### 78.D Social, chat, places (commits 3f20621, a78fd9c)
+- **78.8:** `PrivacyZoneClipper` clips by straight-line radius (200–349 m,
+  stable per rider via `seedForUid`). Only the leading and trailing runs
+  are trimmed.
+- **claude_sol §1.6.1:** `core/utils/geo_math.dart` replaces all six
+  haversine copies. The `motion_calculator.dart` copy was swapped in a
+  follow-up commit.
+- **78.15:** `core/utils/num_cast.dart` (`asDouble`) replaces every raw
+  `] as double` cast. CI now blocks new ones.
+- **78.14:** DM ids are fixed (`dmId`): the two uids sorted and joined.
+  - Chats are created in a transaction, with a one-time fallback to find
+    an existing chat with an old random id.
+  - The rules require that id on create. **Builds from before this
+    change can't start new chats once the rules are deployed.** Chats
+    that already exist still work.
+- **Chat UX:**
+  - `profileProvider` is now autoDispose.
+  - The chat list hides blocked riders.
+  - When either rider has blocked the other, a "You can't message this
+    rider" banner replaces the input. A narrow new rule lets a blocked
+    rider read the one block doc naming them.
+  - A failed send restores the typed text and offers Retry.
+- **claude_sol §3.5.2:** the profile screen now tells apart a private
+  profile, being offline, and other load errors, with Retry where it
+  helps.
+- **78.17:** the nearby-places query uses geohash ranges.
+  `GeohashUtil.coverCircle` picks the precision: 25 km uses precision 4
+  with at most 12 cells. There is a new composite index on (`category`,
+  `geohash`), not deployed.
+- **78.10:** the voice queue awaits `_voicePlayer.stop()` in `finally`.
+- **claude_sol §2.3.3:** the OSM import writes in batches of 400 with
+  `osm_…` doc ids.
+
+### 78.E UI and copy (commit cecdd04)
+- **78.19:** the Calming Light primary is now `#537D5C` (4.71:1 on
+  white). `palette_contrast_test.dart` checks all 14 palette and
+  appearance combinations. Only Calming Light was failing.
+- **78.20:** the pause dimming now covers only the map.
+- **claude_sol §3.1.1:** the end-ride dialog is replaced by
+  `EndRideSheet`. It has a 72 dp hold-to-end button (1.2 s), a 56 dp share
+  row, and a 56 dp "Keep riding" button.
+- **claude_sol §3.1.2:** the cockpit text has a minimum size (labels 14,
+  values 20) through `AppTypography.cockpitLabel`/`cockpitValue`.
+- **78.22:** Directions asks "Record & go" or "Just directions", with a
+  "Don't ask again" option.
+- **78.23:** Add Place won't save without a picked location.
+- **78.24:** SafeQR can share its QR code as a PNG. Print sticker is not
+  done (the `printing` package isn't a dependency). The share screen's
+  close button now pops back instead of jumping to the Record tab.
+- **78.25 (in-app part):** a warning banner on Emergency Contacts, plus a
+  one-time acknowledgement when the first contact is added. It's in EN and
+  BN, and **the Bangla needs a native-speaker review**.
+- **Maintenance:** the Maintenance screen gets a back button, and bike
+  detail gets a "Service & maintenance" card. Adding a bike pops back with
+  a "Set service intervals" SnackBar action. The configure screen pops when
+  it's the first-time setup.
+- **Smaller items:**
+  - Tour banner colors come from the theme, with a 48 dp close button.
+  - Notification bell on the Social and Record screens.
+  - "Browse routes →" button.
+  - 48 dp maintenance button on the garage card.
+  - Avg moving speed plus moving/stopped time replace pace on the ride
+    summary.
+- **Found, not fixed:** `HoldToStartButton` has the same same-frame
+  press/release flaw that the new button fixes.
+
+### 78.F Infrastructure (commit 992a0ba)
+- **78.18 (CI part):** `.github/workflows/ci.yml` has three jobs.
+  - `flutter`: Flutter 3.44.9, analyze, test, and the blocking cast
+    guard.
+  - `rules`: JDK 21 plus `npm run test:rules:ci`.
+  - `functions`: build.
+  - It hasn't run on GitHub yet.
+- **78.16:** `shared/widgets/app_tile_layer.dart` is used at all 8 map
+  sites.
+  - The URL, key and attribution come from `--dart-define TILE_*`, and
+    default to OSM.
+  - The User-Agent now names the app and a contact.
+  - Tiles are cached on disk for 30 days (`flutter_map_cache` 2.1,
+    `dio_cache_interceptor` 4, `http_cache_file_store` 2).
+  - **Release builds without the `TILE_*` defines still hit OSM directly.**
+    A tile provider has to be picked (`DOCS/needs_attention.md`).
+- **69.O6:** `functions` now runs on Node 22 with `firebase-functions` 7
+  and `firebase-admin` 14.
+  - Three functions moved to v2. `onUserAccountDeleted` stays on the v1
+    API.
+  - Not deployed (Blaze). Any 1st-gen copies of the migrated functions
+    must be deleted before the first deploy.
+
+### Not verified on a device (whole §78 batch)
+- Crash detector thresholds (part A), plus the hysteresis and the alert
+  expiry.
+- Downloading a trail on a fresh install, and the background isolate
+  reading the saved uid.
+- Voice queue with 3 clips.
+- The chat create transaction against live Firestore.
+- The end-ride sheet's feel.
+- Cockpit fonts on 360 dp phones.
+- SafeQR PNG sharing.
+- All the new sheets, banners and dialogs.

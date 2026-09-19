@@ -17,6 +17,15 @@ _Added 2026-09-20. These items came out of the Antigravity grill verification (`
 - [ ] **d. Profile tab:** rename it to "Garage"?
 - [ ] **e. §74:** are the dark cards on Retro Light intentional?
 
+## New from the fix pass (branch `fix/grill-78`)
+
+- [ ] **Merge `fix/grill-78`** into `master`/`main` once you've looked it over. Then test it on a device (list in `issues_fixed.md` §78, "Not verified on a device").
+- [ ] **Pick a map tile provider** (MapTiler, Stadia, Thunderforest, or self-hosted Protomaps). Pass its URL, key and attribution as `--dart-define TILE_URL_TEMPLATE / TILE_API_KEY / TILE_ATTRIBUTION` in release builds, and restrict the key to `com.bft.throttleiq`. Without them, release builds still hit OSM's servers.
+- [ ] **Turn on branch protection** for `main`, and make the `flutter`, `rules` and `functions` CI checks required after the first run.
+- [ ] **Have a native speaker review the new Bangla strings** (emergency banner and acknowledgement, SafeQR share, moving/stopped).
+- [ ] **Deploy order:** ship the app build before deploying `firestore.rules`. The new chat rule rejects chat creation from older builds.
+- [ ] **Turning on crash detection** (`SensorConstants.impactDetectorLiveEnabled`) waits on decision b plus field and drop tests.
+
 ## Needs Blaze
 
 - [ ] Real SMS and escalation
@@ -26,4 +35,5 @@ _Added 2026-09-20. These items came out of the Antigravity grill verification (`
 
 ## Deploys
 
-- [ ] Rules and hosting, after the fixes land. These go public, so confirm before each deploy.
+- [ ] `firestore.rules` and `firestore.indexes.json` (the new places index), after the fixes are merged. These go public, so confirm before each deploy.
+- [ ] `functions` (now on Node 22) once Blaze is on. Delete any 1st-gen copies of `reconcileRideIdentity`, `onCrashNotification` and `escalateCrashAlert` first.
