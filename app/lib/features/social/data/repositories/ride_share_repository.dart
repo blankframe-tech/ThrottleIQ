@@ -321,7 +321,7 @@ class RideShareRepository {
     // Both writes go in ONE transaction, and the bump carries the new
     // comment's id, so firestore.rules can require that the `comments` tally
     // only moves when a matching comment doc is actually created in the same
-    // commit (docs/Issues.md §24.7). Two separate calls, as this used to do,
+    // commit (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.7). Two separate calls, as this used to do,
     // gave the rule nothing to check the bump against.
     await _firestore.runTransaction((transaction) async {
       transaction.set(commentRef, comment);

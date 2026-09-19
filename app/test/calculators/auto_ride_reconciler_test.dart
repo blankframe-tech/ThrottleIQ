@@ -138,7 +138,7 @@ void main() {
 
     test(
         'a trailing implausible GPS jump with no raw speed signal does not '
-        'inflate distance (docs/Issues.md §62, found while fixing §62.8)', () {
+        'inflate distance (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62, found while fixing §62.8)', () {
       // A steady 5-minute commute (~3330 m), with the FINAL fix corrupted
       // into a multi-km teleport reporting an implausible speed — both the
       // raw reported speed and the position-derived speed for that fix are

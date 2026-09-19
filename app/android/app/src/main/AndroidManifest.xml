@@ -121,15 +121,6 @@
             android:foregroundServiceType="location"
             android:exported="false" />
 
-        <!-- Firebase Messaging -->
-        <service
-            android:name="com.google.firebase.messaging.FirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
         <!-- Home-screen App Widgets.
              Must be exported: the launcher process sends APPWIDGET_UPDATE
              broadcasts to them from outside the app. Data comes from the

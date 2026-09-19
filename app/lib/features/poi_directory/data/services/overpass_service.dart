@@ -45,7 +45,7 @@ class OverpassService {
     required double longitude,
     required double radiusMeters,
   }) async {
-    // docs/Issues.md §33.16: latitude/longitude/radiusMeters are spliced
+    // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.16: latitude/longitude/radiusMeters are spliced
     // directly into the query text below, so a non-finite value (NaN/
     // Infinity — e.g. from a corrupted last-known-location) would render as
     // the literal strings "NaN"/"Infinity" and produce a malformed query.

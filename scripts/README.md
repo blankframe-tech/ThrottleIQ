@@ -603,63 +603,60 @@ Requires the confirmation phrase `DELETE QA SEED DATA`, same as
 irreversible, but scoped only to the tagged QA batch — it cannot touch real
 rider data.
 
-## Live roster (seeded 2026-08-27)
+## Live roster (reseeded 2026-09-19)
 
-**Stale as of 2026-08-29 — `qa_seed_catalog.js`/`seed_qa_test_riders.js` were
-updated after this batch went live** (all-male rider names, Banglish forum
-post copy, and a bike catalog restricted above 150cc to CFMoto/Royal Enfield
-only — see git history on those two files). The table below is what's
-*actually in `throttleiqfb` right now*: the old mixed-gender names, the old
-English post copy, and the old catalog (which included KTM/Kawasaki/other
-150-400cc entries above 150cc). It will only match the current script output
-after someone runs `cleanup_qa_test_riders.js` followed by a fresh
-`seed_qa_test_riders.js --yes-i-really-mean-it` — both of which write
-publicly-visible changes to a live project other beta testers are using, so
-that reseed needs its own explicit go-ahead; it was not run as part of this
-update. Regenerate this table after that reseed.
-
-The 30 accounts actually created in `throttleiqfb`, pulled from Firestore
-after the run — see [Running it for real](#running-it-for-real) above for
-how to reproduce this listing (`qa_seed_catalog.allSeedableForumIds()` plus a
-`qaSeed == true` query per forum/user).
+The previous 2026-08-27 batch (mixed-gender names, English forum posts, a
+catalog with KTM/Kawasaki/other >150cc entries) was deleted via
+`cleanup_qa_test_riders.js --yes-i-really-mean-it` and replaced with a fresh
+`seed_qa_test_riders.js --yes-i-really-mean-it` run against the then-current
+script (all-male rider names, Banglish forum post copy, a bike catalog
+restricted above 150cc to CFMoto/Royal Enfield only — §55/§69.13 in
+`issues_fixed.md`). The table below is what's *actually in `throttleiqfb`
+right now*, pulled from Firestore after the run — see
+[Running it for real](#running-it-for-real) above for how to reproduce this
+listing (`qa_seed_catalog.allSeedableForumIds()` plus a `qaSeed == true`
+query per forum/user).
 
 | Handle | Name | Bike | City |
 |---|---|---|---|
 | tanvir01 | Tanvir Ahmed | Honda CB Shine 125 | Dhaka |
-| nusrat02 | Nusrat Jahan | Bajaj Discover 125 | Chattogram |
+| mizanur02 | Mizanur Rahman | Bajaj Discover 125 | Chattogram |
 | rakibul03 | Rakibul Islam | TVS Metro Plus 100 | Sylhet |
-| farhana04 | Farhana Akter | Hero Splendor Plus | Rajshahi |
+| shafiqul04 | Shafiqul Islam | Hero Splendor Plus | Rajshahi |
 | shakil05 | Shakil Hasan | Yamaha Saluto 125 | Cox's Bazar |
-| mitu06 | Mitu Rahman | Suzuki Hayate EP | Bogura |
+| golam06 | Golam Mostofa | Suzuki Hayate EP | Bogura |
 | imran07 | Imran Hossain | Runner Turbo 100 | Cumilla |
-| sadia08 | Sadia Islam | Lifan KP100 | Khulna |
+| rashedul08 | Rashedul Karim | Lifan KP100 | Khulna |
 | kamrul09 | Kamrul Hasan | Walton Fizor 125 | Rangpur |
-| rumana10 | Rumana Akter | Bajaj CT 100 | Mymensingh |
+| faisal10 | Faisal Ahmed | Bajaj CT 100 | Mymensingh |
 | mahmudul11 | Mahmudul Hasan | Yamaha FZS-Fi V3 | Dhaka |
-| sabrina12 | Sabrina Yasmin | Honda CB150R Streetfire | Chattogram |
-| arif13 | Arif Hossain | Suzuki Gixxer 155 | Sylhet |
-| tania14 | Tania Sultana | Bajaj Pulsar NS160 | Rajshahi |
-| nayeem15 | Nayeem Chowdhury | TVS Apache RTR 160 4V | Cox's Bazar |
-| jannatul16 | Jannatul Ferdous | Yamaha MT-15 | Bogura |
-| habibur17 | Habibur Rahman | Honda X-Blade 160 | Cumilla |
-| shirin18 | Shirin Akter | Bajaj Pulsar 150 | Khulna |
-| rezaul19 | Rezaul Karim | TVS Apache RTR 165RP | Rangpur |
-| mahfuza20 | Mahfuza Begum | Suzuki Gixxer SF 155 | Mymensingh |
-| sohel21 | Sohel Rana | Yamaha R15 V4 | Dhaka |
-| nasrin22 | Nasrin Sultana | Suzuki GSX-R150 | Chattogram |
-| anisur23 | Anisur Rahman | KTM Duke 250 | Sylhet |
-| farzana24 | Farzana Haque | Honda CBR250RR | Rajshahi |
-| jubayer25 | Jubayer Ahmed | Kawasaki Ninja 300 | Cox's Bazar |
-| sultana26 | Sultana Razia | Royal Enfield Classic 350 | Bogura |
-| emon27 | Emon Khan | Royal Enfield Himalayan 411 | Cumilla |
-| rukhsana28 | Rukhsana Parvin | Yamaha YZF-R3 | Khulna |
-| riyad29 | Riyad Hossain | KTM RC 390 | Rangpur |
-| moushumi30 | Moushumi Akter | Kawasaki Z400 | Mymensingh |
+| zahidul12 | Zahidul Islam | Suzuki GSX-R150 | Chattogram |
+| arif13 | Arif Hossain | Honda CB150R Streetfire | Sylhet |
+| aminul14 | Aminul Haque | Bajaj Pulsar 150 | Rajshahi |
+| nayeem15 | Nayeem Chowdhury | CF Moto SR 250 | Cox's Bazar |
+| shamsul16 | Shamsul Alam | CF Moto SR 250 | Bogura |
+| habibur17 | Habibur Rahman | CF Moto SR 300 | Cumilla |
+| delwar18 | Delwar Hossain | CF Moto SR 300 | Khulna |
+| rezaul19 | Rezaul Karim | CF Moto CF Light 230 Dual | Rangpur |
+| nazmul20 | Nazmul Hasan | CF Moto CF Light 230 Dual | Mymensingh |
+| sohel21 | Sohel Rana | Royal Enfield Classic 350 | Dhaka |
+| iqbal22 | Iqbal Hossain | Royal Enfield Classic 350 | Chattogram |
+| anisur23 | Anisur Rahman | Royal Enfield Bullet 350 | Sylhet |
+| ashraful24 | Ashraful Islam | Royal Enfield Bullet 350 | Rajshahi |
+| jubayer25 | Jubayer Ahmed | Royal Enfield Meteor 350 | Cox's Bazar |
+| rafiqul26 | Rafiqul Islam | Royal Enfield Meteor 350 | Bogura |
+| emon27 | Emon Khan | Royal Enfield Hunter 350 | Cumilla |
+| monirul28 | Monirul Islam | Royal Enfield Hunter 350 | Khulna |
+| riyad29 | Riyad Hossain | Royal Enfield Himalayan 411 | Rangpur |
+| shariful30 | Shariful Islam | Royal Enfield Himalayan 411 | Mymensingh |
 
-**Where their posts are** — 60 posts across 34 forums: one post per rider in
-their own bike's model forum (30 forums, e.g. `forums/honda__cb_shine_125`),
-plus general topic forums — **Road Trips** (5 posts), **Maintenance** (11),
-**Mileage Talk** (8), **Mods & Accessories** (6).
+**Where their posts are** — 60 posts across 26 forums: one post per rider in
+their own bike's model forum (21 distinct model forums — several riders now
+share a forum, since the catalog only has 9 distinct bikes above 150cc:
+CFMoto SR 250/SR 300/CF Light 230 Dual and Royal Enfield Classic 350/Bullet
+350/Meteor 350/Hunter 350/Himalayan 411, 2 posts each), plus general topic
+forums — **Road Trips** (4 posts), **Maintenance** (11), **Mileage Talk**
+(9), **Mods & Accessories** (6).
 
 ## Syntax check
 

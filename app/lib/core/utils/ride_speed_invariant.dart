@@ -4,7 +4,7 @@ import '../constants/sensor_constants.dart';
 /// and never above a physically-plausible ceiling" invariant that a ride's
 /// stats must satisfy wherever they're displayed or shared.
 ///
-/// docs/Issues.md §62.8: this floor was independently reimplemented in three
+/// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.8: this floor was independently reimplemented in three
 /// places (RideEntity.maxSpeedKmh, RideShareModel's constructor and
 /// fromFirestore, SharedRideEntity.maxSpeedKmh) and only one of them also
 /// applied the upper-bound clamp — so a shared ride's maxSpeedKmh could be

@@ -89,20 +89,6 @@
       ]
     },
     {
-      "collectionGroup": "liveSessions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "expiresAt",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "routes",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

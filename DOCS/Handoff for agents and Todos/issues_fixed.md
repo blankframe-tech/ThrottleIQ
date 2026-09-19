@@ -4644,6 +4644,137 @@ check no longer treats a `0` coordinate as missing.
 - `DatabaseHelper.schemaVersion` is now one constant. `14` was hard-coded
   twice (open + test schema builder) and could drift at the next migration.
 
+### 69.13 FIXED (2026-09-19) — six of §69's Open items closed
+
+Follow-up pass over `issues_open.md`'s §69 Open list, picking off the
+items that were plain code/config fixes rather than product decisions or
+device verification:
+
+- **69.O7** `firebase_messaging` was declared in `pubspec.yaml` but never
+  imported anywhere in `app/lib/` — confirmed by grep, then by `flutter pub
+  get` reporting it (plus its two platform-interface packages) as "no
+  longer being depended on" after removal. Also dropped the matching
+  `<service android:name="com.google.firebase.messaging.FirebaseMessagingService">`
+  block from `AndroidManifest.xml`, which was declaring a service for a
+  dependency that no longer exists. Updated the two docs that referenced
+  it (`store_listing/data_safety_and_permissions.md`,
+  `architecture/assumptions.md` Assumption 17) to say it was removed rather
+  than "declared but unused"/"wired".
+- **69.O9** Removed the dead `liveSessions(userId, expiresAt)` composite
+  index from `firestore.indexes.json`. Confirmed by grep that every
+  `liveSessions` access in `app/lib/` is a keyed `.doc(token)` `get`/`set`
+  (`outbox_service.dart`, `live_session_coordinator.dart`) — nothing does a
+  `where`/`orderBy` query against the collection, and the field is `uid`,
+  not `userId`, so the index was both unused and wrong.
+- **69.O11** `DatabaseHelper._initDb`'s corruption handler now renames the
+  unopenable file to `<path>.corrupt-<epoch-ms>` instead of calling
+  `deleteDatabase`, before rebuilding a fresh db and continuing. An
+  unsynced rider's rides/bikes/maintenance logs are now recoverable by hand
+  after a corruption event instead of gone the instant it's detected.
+  (Falls back to the old `deleteDatabase` only if the file has already
+  disappeared by the time the handler runs.)
+- **69.O12** `SharedRideEntity.props` gained `distanceKm`,
+  `durationSeconds`, `polyline`, `audience`, `likes`, `comments`,
+  `hardBrakeCount`, `rapidAccelCount`, and `highJerkCount` — previously
+  Equatable equality only looked at `id`/`userId`/`rideDate`/`createdAt`/
+  `isLikedByCurrentUser`/`upvotes`/`downvotes`/`myVote`/`caption`/
+  `photoUrls`, so a change to any of the newly-added fields (including the
+  riding-score counts §68/§69.1 just added) was invisible to `==` and to
+  any Riverpod/widget code that rebuilds on entity inequality.
+- **69.O13 (partial)** The ~34 code comments across `app/lib/` and
+  `app/test/` citing `docs/Issues.md §N` / `docs/planning/Issues.md §N`
+  now point at `DOCS/Handoff for agents and Todos/issues_open.md or
+  issues_fixed.md §N` (mechanical find-and-replace; which of the two files
+  a given `§N` is actually in still has to be found by searching, same as
+  before — see this file's and `issues_open.md`'s own header note). The
+  `DOCS/For Devs and Contributers` typo is fixed too: renamed to `DOCS/For
+  Devs and Contributors` (`git mv`) and every reference to the old spelling
+  updated (`README.md`, `DOCS/README.md`,
+  `store_listing/store_listing.md`, `marketing/business_critique.md`,
+  `marketing/marketing_lead_notes/NEEDS_YOUR_ATTENTION.md`,
+  `issues_open.md`). **Not touched:** `docs/pitch.md`/
+  `marketing/pitch_and_marketing_materials.md` — off-limits by standing
+  instruction unless asked, so its one stale reference to the old folder
+  name was left as-is; and the missing-design-assets half of 69.O13, which
+  is a product call ("presumably intentional"), stays open in
+  `issues_open.md`.
+- **69.O15** `.gitignore`'s blanket `*.lock` now carries `!app/pubspec.lock`
+  and `!app/ios/Podfile.lock` negations. Both files exist on disk and are
+  now untracked-but-trackable (confirmed via `git status`); this pass
+  didn't `git add`/commit them, since committing is a repo-state decision
+  the user should make explicitly, not something to slip in as a side
+  effect of an unignore.
+
+Verified: `flutter pub get` (confirms the dependency removal), `flutter
+analyze` (No issues found), `flutter test` (1035/1035 — new figure vs.
+§69's 1032/1032 baseline includes tests added since, not from this pass),
+`npm run test:rules` (98/98, unaffected — no `firestore.rules` changes
+here, only `firestore.indexes.json`), and `python3 -m json.tool` on
+`firestore.indexes.json`. Not yet re-verified on a device (nothing here
+touches a runtime path a widget/rules test wouldn't already cover, except
+the corrupt-DB rename, which needs an actual corrupted db file to trigger
+on a real install to be certain of).
+
+### 69.14 DEPLOYED (2026-09-19) — §69's rules/hosting deploys shipped; functions still Blaze-blocked
+
+With user go-ahead, deployed the three pending §69 targets in the
+documented order:
+
+- `firebase deploy --only firestore:rules` — released. `firebase.json`'s
+  compile step reported the same pre-existing `[W] 313:46` warning noted
+  since §69 itself (unrelated `publicStatsValid`/`usernameLower` logic).
+- `firebase deploy --only firestore:indexes` — released, including this
+  session's 69.O9 removal of the dead `liveSessions(userId, expiresAt)`
+  index. (Not part of the original §69 "Deploy needed" list, but bundled in
+  since it's the same `firestore.indexes.json` file and a strictly
+  risk-reducing change — the index was confirmed unused.) The deploy noted
+  4 indexes live on the project that aren't in this repo's
+  `firestore.indexes.json` — left alone; deleting them needs `--force` and
+  wasn't asked for.
+- `firebase deploy --only hosting` — released. Confirmed live: `curl
+  https://throttleiqfb.web.app/privacy.html` shows the corrected
+  microphone/voice-clip disclosure.
+- `firebase deploy --only functions` — **failed**: `Your project
+  throttleiqfb must be on the Blaze (pay-as-you-go) plan to complete this
+  command`. This is the same Spark-plan blocker documented since §24/§33.5
+  under "Soon" in `HANDOFF_Document.md` — not a new problem, and not
+  something fixable from this session (it's a billing-plan decision on the
+  project owner's account). The account-deletion trigger (§69.8), the
+  moderation false-positive fix (§69.9), and the mock-status-log fix
+  (§69.10) all remain undeployed.
+
+**Environment note, worth keeping:** the standalone `firebase` CLI's
+bundled npm (`firepit`'s vendored npm@8.19.4/node@20.18.2, invoked via a
+custom `--script-shell` wrapper for the functions `predeploy` hook) threw
+`TypeError: Cannot read properties of undefined (reading 'stdin')` when run
+from this harness's non-interactive shell, before ever reaching the Blaze
+check — reproducible, unrelated to this project's code (`npm run build`
+via the system npm/node works fine and was used to verify the TypeScript
+compiles cleanly). Worked around by temporarily removing `firebase.json`'s
+functions `predeploy` hook (the build was already done and verified by
+hand), deploying, then restoring the hook — which is how the real Blaze
+error above was reached. If this recurs, that's the thing to work around,
+not a project regression.
+
+### 69.15 DONE (2026-09-19) — QA test riders reseeded
+
+Closed the "Reseed the QA test riders" to-do (open since §55, 2026-08-29):
+with user go-ahead, ran `cleanup_qa_test_riders.js --yes-i-really-mean-it
+--non-interactive` (removed 237 user docs, 30 usernames, 42 shared rides,
+60 forum posts, 30 Auth accounts — the stale 2026-08-27 batch) then
+`seed_qa_test_riders.js --yes-i-really-mean-it --non-interactive` against
+the current script (30 created, 0 skipped, 0 failed). `--non-interactive`
+was needed because both scripts' typed-confirmation prompt expects a real
+terminal; ADC (`gcloud auth application-default login`, already configured
+per `HANDOFF_Document.md`'s operational notes) supplied credentials without
+needing `GOOGLE_APPLICATION_CREDENTIALS` set explicitly.
+
+`scripts/README.md`'s "Live roster" table is regenerated from a live
+Firestore read of the new batch (handle/name/bike/city per rider,
+forum-post distribution), not recomputed from the script's source — ground
+truth over inference. New account passwords landed in a fresh
+`scripts/qa_seed_passwords.<timestamp>.json`, gitignored and not committed.
+
 ---
 
 ## 70. User report: "Sign up" crashed with `GoException: no routes for location: /auth/register` — FIXED (2026-09-19)

@@ -2,6 +2,38 @@
 
 _Last updated: 2026-09-19 · Branch: `master`_
 
+**Latest cleanup (2026-09-19, issues_fixed.md §69.13):** Closed six of the
+§69 critique pass's 16 open items — removed the unused `firebase_messaging`
+dependency (and its manifest service declaration), dropped a dead/wrong
+Firestore index, made corrupt-local-db recovery back the file up instead of
+deleting it outright, fixed `SharedRideEntity.props` to cover the fields
+Equatable was blind to (including the riding-score counts), corrected the
+`docs/Issues.md` code-comment citations and the `For Devs and Contributers`
+folder typo repo-wide, and un-gitignored `app/pubspec.lock`/
+`app/ios/Podfile.lock` (not yet committed — see "To do" below).
+`flutter analyze` clean, `flutter test` 1035/1035, rules emulator 98/98.
+
+**Deploys shipped same day (2026-09-19):** `firestore.rules` (§69's
+riding-score-null and voice-note-delete fixes, verified 98/98 against the
+emulator first) and `firestore.indexes.json` (the §69.O9 dead index
+dropped) are now **live**. `hosting` is live too — the corrected
+privacy policy (mic/voice-clip disclosure) is confirmed serving at
+`https://throttleiqfb.web.app/privacy.html`. **`functions` deploy is still
+blocked** — attempted and failed with `Your project throttleiqfb must be on
+the Blaze (pay-as-you-go) plan`, confirming the pre-existing blocker in
+"Soon" below is still exactly where it was; nothing code-side changed that.
+The account-deletion trigger (§69.8) and the other §69 function fixes
+remain undeployed until Blaze is enabled.
+
+**QA test riders reseeded (2026-09-19):** ran
+`cleanup_qa_test_riders.js --yes-i-really-mean-it` (deleted the stale
+2026-08-27 batch: 237 user docs, 30 usernames, 42 shared rides, 60 forum
+posts, 30 Auth accounts) then `seed_qa_test_riders.js --yes-i-really-mean-it`
+against the current script — the "Reseed the QA test riders" to-do below is
+done. `scripts/README.md`'s Live roster table is regenerated from the new
+live data. New account passwords are in a gitignored
+`scripts/qa_seed_passwords.<timestamp>.json`, not committed.
+
 **Latest fix (2026-09-19, issues_fixed.md §70):** "Sign up" crashed with
 `GoException: no routes for location: /auth/register` — the route was
 simply never registered in `app_router.dart`. Fixed by adding the
@@ -44,13 +76,12 @@ Pre-launch. **Current version: `1.0.0-beta.2.9+15`**, tagged
 Console internal track still holds the older `1.0.0-beta.1+3` build
 described next. No App Store submission exists yet.
 
-**Pending deploys (2026-09-19, issues_fixed.md §69):** `firestore.rules` (riding-
-score null fix, group-ride voice-note delete), `functions/` (recursive
-account-deletion cleanup, moderation false-positive fix; the account-deletion
-trigger has *never* been deployed), and hosting (`public/privacy.html` now
-discloses group-ride voice clips and in-app deletion). Deploy functions
-before hosting, because the updated privacy page describes automatic cloud
-cleanup.
+**Deploys from issues_fixed.md §69 (originally logged 2026-09-19 as
+pending): rules, indexes, and hosting shipped same day — see "Deploys
+shipped same day" above.** `functions/` is still pending, blocked on the
+Blaze plan (see "Soon" below) — the recursive account-deletion cleanup and
+moderation false-positive fix, plus the account-deletion trigger itself
+(which has *never* been deployed), all remain undeployed until then.
 
 **Play Console — Internal testing track is live (2026-08-29):**
 versionCode 3 (`1.0.0-beta.1+3`) is uploaded and its release status is
@@ -483,13 +514,15 @@ These exist in code/config but have never been exercised against the real
 backend or a real device. **Treat each as unproven until tested.** This is
 the actual pre-launch QA punch list — ordered roughly by risk.
 
-- [ ] 🔴 **§69 deploys + checks** (2026-09-19). Deploy rules, then functions,
-  then hosting (see "Pending deploys" at the top). Then on a device:
-  delete a group ride that has a voice note (it should fully disappear);
-  start a crash countdown and tap Stop (no `crashNotifications` doc should
-  appear); delete a throwaway account and confirm `users/{uid}` and its
-  `rides`/`bikes` subcollections are gone in the console. Update the Play
-  Data Safety form for Audio (`DOCS/General/store_listing/`).
+- [ ] 🔴 **§69 device checks, now that rules/hosting are live (2026-09-19).**
+  Rules and hosting shipped — see "Deploys shipped same day" at the top.
+  **Functions did not** (Blaze-blocked), so skip the account-deletion check
+  below until that's deployed. On a device: delete a group ride that has a
+  voice note (it should fully disappear); start a crash countdown and tap
+  Stop (no `crashNotifications` doc should appear). Once functions are
+  eventually deployed: delete a throwaway account and confirm `users/{uid}`
+  and its `rides`/`bikes` subcollections are gone in the console. Update
+  the Play Data Safety form for Audio (`DOCS/General/store_listing/`).
 - [ ] **Chat/messaging, end to end after the 2026-09-11 rules deploy**
   (`issues_fixed.md` §64) — a user reported `permission-denied` on the chat list
   and on starting a new chat, root-caused to a stale/undeployed
@@ -621,18 +654,19 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   fixes, which per §62/§63's own notes were verified but never deployed
   either. **Still needs on-device re-verification** — see "Done, but NOT
   yet verified" below.
-- [ ] **Reseed the QA test riders.** `scripts/seed_qa_test_riders.js` /
-  `scripts/qa_seed_catalog.js` were updated 2026-08-29 (`issues_fixed.md` §55) —
-  all-male rider names, Banglish forum post copy, and a bike catalog
-  restricted above 150cc to CFMoto/Royal Enfield only. The 30 accounts
-  actually live in `throttleiqfb` right now still have the *old* names/bike
-  catalog/English post copy (seeded 2026-08-27) — the script change alone
-  doesn't touch them. Needs `cleanup_qa_test_riders.js` (deletes the live
-  batch, irreversible) then a fresh `seed_qa_test_riders.js
-  --yes-i-really-mean-it` (writes new public content real beta testers will
-  see) — deliberately not run automatically since both write to a live
-  project. `scripts/README.md`'s "Live roster" table is stale until this
-  runs; regenerate it afterward.
+- [x] ~~Reseed the QA test riders~~ **DONE 2026-09-19.**
+  `scripts/seed_qa_test_riders.js`/`scripts/qa_seed_catalog.js` were updated
+  2026-08-29 (`issues_fixed.md` §55) — all-male rider names, Banglish forum
+  post copy, and a bike catalog restricted above 150cc to CFMoto/Royal
+  Enfield only — but the 30 live accounts still reflected the old
+  2026-08-27 batch until now. Ran `cleanup_qa_test_riders.js
+  --yes-i-really-mean-it` (removed 237 user docs, 30 usernames, 42 shared
+  rides, 60 forum posts, 30 Auth accounts) then `seed_qa_test_riders.js
+  --yes-i-really-mean-it`, both `--non-interactive` (scripted, ADC via
+  `gcloud auth application-default login`, ran under the harness rather
+  than a human terminal). 30 new accounts created, 0 failed.
+  `scripts/README.md`'s "Live roster" table is regenerated from the new
+  live data.
 - [x] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-08-29** — the QA sweep's
   "can't delete your own forum post" (`issues_fixed.md` §47) turned out not to be
   a rules-*text* bug: the post-delete rule already correctly allows the
@@ -981,7 +1015,7 @@ group first matters more than speed.
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
 | Latest release | [`beta-v2.9`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.9), `1.0.0-beta.2.9+15` (2026-09-19). Signed `app-release.apk` + `app-release.aab` attached to the GitHub release. Not yet on Play Console or TestFlight; the internal track still has `1.0.0-beta.1+3`. The old `beta-v1`/`v2`/`v3` history is under "Versioning history" above. |
-| Test suite | 1032/1032 green and `flutter analyze` reporting no issues, as of 2026-09-19 (`issues_fixed.md` §69). Plus Node tests in `scripts/` (`npm test`) for the seed scripts' pure logic, and `npm run test:rules` (Firestore emulator, 98/98 green; needs the Android Studio JBR, which the script sets via `JAVA_HOME`). DAOs run against real in-memory SQLite via `sqflite_common_ffi`. See `issues_fixed.md` §7 for why that mattered |
+| Test suite | 1035/1035 green and `flutter analyze` reporting no issues, as of 2026-09-19 (`issues_fixed.md` §69.13). Plus Node tests in `scripts/` (`npm test`) for the seed scripts' pure logic, and `npm run test:rules` (Firestore emulator, 98/98 green; needs the Android Studio JBR, which the script sets via `JAVA_HOME`). DAOs run against real in-memory SQLite via `sqflite_common_ffi`. See `issues_fixed.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `assumptions.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`issues_fixed.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |

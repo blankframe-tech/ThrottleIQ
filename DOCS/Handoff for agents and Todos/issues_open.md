@@ -310,15 +310,23 @@ no fix needed.**
 
 ### Open — found, not fixed (each needs a decision or a bigger change)
 
-- **69.O1 🔴 Privacy policy contradicted the app on the microphone.**
-  `public/privacy.html` §1 said "no microphone", but group-ride push-to-talk
-  records audio (`RECORD_AUDIO`, `record` package), uploads it to
-  Cloudinary and shares it with ride members. The page text is corrected in
-  this pass (voice clips added to §1, §4 and §5), **but it isn't deployed**.
-  The Play Data Safety answers need "Audio → Voice or sound recordings:
-  collected, shared" too. `store_listing/data_safety_and_permissions.md`
-  is updated to match. Voice-note Cloudinary URLs are public to anyone who
-  has the URL.
+> **69.O7, 69.O9, 69.O11, 69.O12, and 69.O15 were fixed 2026-09-19** (and
+> part of 69.O13 — see that entry below) — full writeup in
+> `issues_fixed.md` §69. Removed from this list.
+
+- **69.O1 (partially fixed 2026-09-19) Privacy policy contradicted the app
+  on the microphone.** `public/privacy.html` §1 said "no microphone", but
+  group-ride push-to-talk records audio (`RECORD_AUDIO`, `record` package),
+  uploads it to Cloudinary and shares it with ride members. The page text
+  was corrected (voice clips added to §1, §4 and §5) and **is now deployed**
+  — confirmed live at `https://throttleiqfb.web.app/privacy.html`.
+  `store_listing/data_safety_and_permissions.md` is updated to match.
+  **Still open:** the actual Play Console Data Safety form itself needs the
+  "Audio → Voice or sound recordings: collected, shared" answer set — that's
+  a Play Console UI action, not a file in this repo, so it can't be done
+  from a code change. Voice-note Cloudinary URLs are also still public to
+  anyone who has the URL (a narrower restatement of §33.5/§63.3's unsigned-
+  upload issue).
 - **69.O2 Account-deletion scope** (see 69.8): decide whether authored
   community content gets anonymized or deleted, and cover Cloudinary assets
   (ride photos, avatars, voice clips). None of those are deleted today.
@@ -339,34 +347,20 @@ no fix needed.**
   Node 20, which Google has deprecated for Cloud Functions (decommission is
   scheduled for late Oct 2026). `firebase-functions` is `^4.8` (current
   major is 6+). Upgrade before the next functions deploy.
-- **69.O7 `firebase_messaging` is declared but unused**, per the Data
-  Safety doc. Remove it, or wire it up.
 - **69.O8 `USE_FULL_SCREEN_INTENT`** (crash alert). Since Android 14, Play
   restricts full-screen intents to calling/alarm apps unless a declaration
   is approved. Needs a Play Console declaration or a fallback.
-- **69.O9 Stale index:** `firestore.indexes.json` has
-  `liveSessions(userId, expiresAt)`, but live sessions store the owner as
-  `uid` and nothing queries that shape.
 - **69.O10 `crash`-status rides never sync.** `_onCrashDetected` writes
   `status: 'crash'`, and `RideDao.getUnsynced` only uploads `completed`. A
   ride that's killed while in the crash state stays local-only.
-- **69.O11 Corrupt-DB recovery deletes the DB outright**
-  (`DatabaseHelper._initDb`). Unsynced rides are lost. Renaming the file to
-  a `.corrupt` backup first would keep them recoverable.
-- **69.O12 `SharedRideEntity.props` omits most fields**, including the new
-  score counts, `distanceKm` and `polyline`. Equatable equality won't
-  notice changes to them.
-- **69.O13 Docs reorganization loose ends:** code comments still cite
-  `docs/Issues.md §N` / `docs/planning/…` (now
-  `DOCS/Handoff for agents and Todos/…`). `DOCS/For Devs and Contributers`
-  is misspelled ("Contributors"). A few design assets deleted from
-  `designs/` (logo concepts `logos1/*`, `logo_preview_demo.html`, the
-  Facebook profile mockup, `docs/new/*` reference images) weren't carried
-  into `DOCS/`. Presumably intentional; they're still in git history.
-- **69.O15 Lockfiles are gitignored.** `.gitignore`'s `*.lock` excludes
-  `app/pubspec.lock` and `app/ios/Podfile.lock`. For an app (not a
-  library), both should be committed so every build resolves the same
-  dependency versions.
+- **69.O13 Docs reorganization loose ends (partially fixed 2026-09-19,
+  issues_fixed.md §69): a few design assets deleted from `designs/`** (logo
+  concepts `logos1/*`, `logo_preview_demo.html`, the Facebook profile
+  mockup, `docs/new/*` reference images) weren't carried into `DOCS/`.
+  Presumably intentional; they're still in git history. (The stale
+  `docs/Issues.md` code-comment citations and the `For Devs and
+  Contributers` misspelling, also flagged under this number, are fixed —
+  see `issues_fixed.md` §69.)
 - **69.O16 `docs/` vs `DOCS/` casing: RESOLVED in the 2026-09-19 reorg
   commit.** On this case-insensitive disk (`core.ignorecase=true`), `git add`
   had quietly staged all 330 moved files under the old lower-case `docs/`,
@@ -379,8 +373,36 @@ no fix needed.**
 
 ### Deploy needed
 
-- `firebase deploy --only firestore:rules` — 69.1, 69.2.
+- ~~`firebase deploy --only firestore:rules` — 69.1, 69.2.~~ **DEPLOYED
+  2026-09-19** — see `issues_fixed.md` §69.13.
 - `firebase deploy --only functions` — 69.8, 69.9, 69.10 (and
   `onUserAccountDeleted` itself has never been deployed, per its own doc
-  comment). Consider doing 69.O6 first.
-- `firebase deploy --only hosting` — 69.O1's privacy-page correction.
+  comment). Consider doing 69.O6 first. **Attempted 2026-09-19, blocked**:
+  `Your project throttleiqfb must be on the Blaze (pay-as-you-go) plan to
+  complete this command` — same pre-existing blocker as the rest of "Soon"
+  in `HANDOFF_Document.md`, not something this attempt changed.
+- ~~`firebase deploy --only hosting` — 69.O1's privacy-page correction.~~
+  **DEPLOYED 2026-09-19** — confirmed live at
+  `https://throttleiqfb.web.app/privacy.html`.
+
+---
+
+## 70. Marketing-asset audit: Safety Check-In screen copy overclaims live delivery (surfaced 2026-09-19)
+
+While building install-ad creatives (`DOCS/General/posters/social/`) from the
+existing UI screenshot sheets (`DOCS/General/website_demo/assets/ui/`), the
+Safety Check-In screen's own copy reads: *"Looked like a hard stop. We'll
+gently check in with your emergency contacts if we don't hear from you"*,
+with a "Notify contacts now" link — no caveat that delivery isn't live.
+This is the same underlying gap as §69.O3/§33 (crash-alert SMS/email is
+mock end-to-end, blocked on Blaze billing) and the same risk already flagged
+for Settings in §32 (*"Emergency Contacts is exposed in Settings while
+explicitly non-functional... a safety feature presented as available but
+inert risks a false sense of security"*) — except the Settings screen at
+least says "aren't live yet," and this one doesn't. Two of the six ad
+creatives (`social-05-family-parent`, `social-06-family-spouse`) embed this
+exact screenshot verbatim; the surrounding ad copy was written to stay
+opt-in-only and avoid the overclaim, but the screenshot's own on-screen text
+does not. Before either creative runs as a paid ad, either crop/blur that
+line out of the screenshot, or add the same "aren't live yet" caveat to the
+in-app copy itself (consistent with Settings) and re-crop.

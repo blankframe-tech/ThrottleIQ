@@ -272,9 +272,10 @@ reintroducing the old code. A stuck `test/database/` run is the signature.
 ## Assumption 17 — group-ride invites are in-app, not push
 
 The ask says invitees "will be sent a notification". `firebase_messaging`
-is wired, but the Cloud Function that would actually *send* a push is an
-explicit stub (`functions/src/crash-notifications.ts` is mocked, and no
-group-ride function exists).
+was declared but never actually wired to anything (removed 2026-09-19,
+issues_fixed.md §69.O7), and the Cloud Function that would actually *send*
+a push is an explicit stub (`functions/src/crash-notifications.ts` is
+mocked, and no group-ride function exists).
 
 **Taken:** write the in-app notification, which is what
 `notifications_screen.dart` reads and which works today. A real push

@@ -45,7 +45,7 @@ class ForumThreadScreen extends ConsumerWidget {
     ).then((posted) {
       // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
       // which inserts the new post into forumPostsNotifierProvider directly
-      // instead (docs/Issues.md §54).
+      // instead (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §54).
       if (posted == true) {
         ref.invalidate(forumsForGarageProvider);
       }
@@ -172,7 +172,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
   final _bodyController = TextEditingController();
   bool _submitting = false;
   // Only set once the rider has tried to submit — an empty field isn't an
-  // error until then (docs/Issues.md §54: submitting blank/title-only used
+  // error until then (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §54: submitting blank/title-only used
   // to just silently do nothing, with no inline error, shake, or disabled
   // button to say the tap even registered).
   bool _titleError = false;

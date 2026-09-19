@@ -4,7 +4,7 @@ import 'package:throttleiq/core/database/daos/ride_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
 
 /// Exercises RideDao.getUnsynced/finalizeRide against a REAL in-memory
-/// SQLite database — regression cover for docs/Issues.md §33.1 and §33.3.
+/// SQLite database — regression cover for DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.1 and §33.3.
 ///
 /// §33.1: `getUnsynced()` used to have no `user_id` filter at all, so
 /// SyncManager's upload pass would happily hand a DIFFERENT rider's

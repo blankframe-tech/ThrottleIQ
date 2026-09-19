@@ -38,7 +38,7 @@ open task in the whole GTM plan right now.
 ## 2. 🔴 Recurring, unresolved: turn on Firebase Blaze billing
 
 This isn't new to this session, but it's important enough for marketing
-specifically that I'm re-surfacing it: `DOCS/For Devs and Contributers/architecture/backend_options.md`
+specifically that I'm re-surfacing it: `DOCS/For Devs and Contributors/architecture/backend_options.md`
 recommends enabling Blaze (pay-as-you-go, no base fee, modeled at
 single-to-low-double-digit $/month at beta scale) and it's still not done.
 `docs/marketing/business_critique.md` names this as the single biggest gap

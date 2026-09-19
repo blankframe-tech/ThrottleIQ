@@ -6,7 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/database/daos/outbox_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
 
-/// docs/Issues.md §62.9: `DatabaseHelper.deleteUserData` used to wipe the
+/// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.9: `DatabaseHelper.deleteUserData` used to wipe the
 /// `outbox` table entirely, regardless of which user's row it was — on a
 /// shared device, deleting account A's data silently destroyed account B's
 /// still-pending outbox writes (an in-flight ride share, a maintenance log

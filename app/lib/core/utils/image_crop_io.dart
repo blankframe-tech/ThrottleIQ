@@ -29,7 +29,7 @@ Future<String> writeCroppedImage({
 }) async {
   final bytes = await File(sourcePath).readAsBytes();
 
-  // docs/Issues.md §33.11: check the header-declared dimensions (cheap —
+  // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.11: check the header-declared dimensions (cheap —
   // `startDecode` parses dimensions without decoding pixel data) before the
   // full pixel decode below, which would otherwise happily materialize a
   // multi-gigabyte bitmap for a crafted file with tiny compressed bytes but

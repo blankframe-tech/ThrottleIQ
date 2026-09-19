@@ -1,6 +1,10 @@
 # Dart / Flutter / Plugins - See https://dart.dev/guides/libraries/private-files
 *.class
 *.lock
+# This is an app, not a library — commit the lockfiles so every build
+# resolves the same dependency versions (issues_fixed.md §69.O15).
+!app/pubspec.lock
+!app/ios/Podfile.lock
 *.log
 *.pot
 *.pub

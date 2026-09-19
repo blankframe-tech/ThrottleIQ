@@ -17,7 +17,7 @@ folders, were consolidated into three audience folders:
 | Folder | For |
 |---|---|
 | `Handoff for agents and Todos/` | Living status, the bug record, the feature list, and working to-do/critique notes. The folder an agent or new contributor opens first. |
-| `For Devs and Contributers/` | Setup guide, architecture decisions, archived experiments. |
+| `For Devs and Contributors/` | Setup guide, architecture decisions, archived experiments. |
 | `General/` | Business, marketing, store listing, design references, website demo. |
 
 > **Old paths in code comments.** Hundreds of source comments cite

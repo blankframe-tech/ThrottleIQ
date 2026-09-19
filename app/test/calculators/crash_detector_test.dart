@@ -61,7 +61,7 @@ void main() {
 
     test(
         'DOES fire when accel and jerk spike in the SAME sample '
-        '(docs/Issues.md §62, found in a follow-up audit)', () {
+        '(DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62, found in a follow-up audit)', () {
       // A real impact's jerk peak coincides with — not follows — its accel
       // peak, since jerk is acceleration's derivative. This is arguably the
       // MORE realistic single-instant crash signature than the multi-sample

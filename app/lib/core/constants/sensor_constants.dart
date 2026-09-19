@@ -41,7 +41,7 @@ class SensorConstants {
   // of Android GPS chipsets) report Position.speed as near-zero even while
   // genuinely moving. When the raw field reads below this floor, the recorder
   // falls back to a haversine distance/time-derived speed for that fix
-  // instead of recording the ride as stationary (docs/Issues.md §49). Reuses
+  // instead of recording the ride as stationary (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §49). Reuses
   // movingSpeedThresholdMs's cutoff — the same value already used to decide
   // "is this fix idle or moving" everywhere else.
   static const double unreliableSpeedFallbackThresholdMs = movingSpeedThresholdMs;

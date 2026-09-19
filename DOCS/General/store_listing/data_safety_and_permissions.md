@@ -90,7 +90,7 @@ Source: `app/lib/main.dart` wires `FlutterError.onError`, `PlatformDispatcher.in
 |---|---|---|---|
 | Device or other IDs | Yes | No | App functionality (Firebase installation ID, created by the Firebase SDKs) |
 
-Note: `firebase_messaging` is declared in `pubspec.yaml` but nothing in `app/lib/` calls it — no FCM registration token is requested or stored today. Do not describe push tokens as collected until that is actually wired up.
+Note: `firebase_messaging` was declared in `pubspec.yaml` but nothing in `app/lib/` ever called it — removed 2026-09-19 (issues_fixed.md §69.O7) rather than left as dead weight. No FCM registration token is requested or stored today. Do not describe push tokens as collected unless the dependency is added back and actually wired up.
 
 ### Is all user data encrypted in transit?
 **Yes** (Firebase/Cloudinary use HTTPS/TLS)

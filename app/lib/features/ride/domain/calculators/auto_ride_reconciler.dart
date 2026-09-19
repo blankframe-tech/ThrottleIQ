@@ -206,7 +206,7 @@ class AutoRideReconciler {
           speedMs = candidateDerived;
         }
       } else {
-        // docs/Issues.md §62 (found while fixing §62.8): the live recorder's
+        // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 (found while fixing §62.8): the live recorder's
         // equivalent branch (ride_recording_provider.dart) also zeroes
         // distDelta/accel/jerk when a sample is rejected as implausible —
         // this branch didn't, so a rejected sample's distance was still

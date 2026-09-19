@@ -9,7 +9,7 @@ import 'package:throttleiq/core/database/daos/outbox_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
 
 /// Covers the offline write queue behind "end a ride / share a ride with no
-/// connection" (docs/Issues.md §25).
+/// connection" (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §25).
 ///
 /// The DAO half runs against a REAL in-memory SQLite, same reasoning as
 /// `bike_dao_delete_test.dart`: the queue's whole job is to still be there

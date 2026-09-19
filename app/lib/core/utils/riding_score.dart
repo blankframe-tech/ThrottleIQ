@@ -14,7 +14,7 @@ int computeRidingScore({
 /// `scoreAggressiveLabel` l10n keys — this is the pure half of that mapping,
 /// kept Flutter-free so it can be shared by both the private ride summary
 /// screen and the shared-ride feed/detail cards without either owning the
-/// thresholds independently (see docs/Issues.md §62.8 for what happens when
+/// thresholds independently (see DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.8 for what happens when
 /// a plausibility rule gets reimplemented in more than one place).
 enum RidingScoreTier { smooth, steady, aggressive }
 

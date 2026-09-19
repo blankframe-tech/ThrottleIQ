@@ -92,7 +92,7 @@ class EventDetector {
     _recentSpeeds.removeWhere((s) => now.difference(s.timestamp) > _crashWindow);
 
     // Detect high-acceleration spike (>8g threshold). Runs BEFORE the jerk
-    // tracking below — docs/Issues.md §62 (found in a follow-up audit): a
+    // tracking below — DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 (found in a follow-up audit): a
     // real impact's jerk peak coincides with its accel peak (jerk is
     // acceleration's derivative), so the sample that first crosses the
     // accel threshold is exactly the sample whose jerk value matters most.
@@ -117,7 +117,7 @@ class EventDetector {
     // Track jerk. highJerkCount is a ride-wide tally (any high-jerk moment,
     // used for the ride summary), but _peakJerkInWindow feeds the crash
     // check below and must only reflect jerk that happened WHILE an
-    // accel-spike window is open — docs/Issues.md §33.8: this used to update
+    // accel-spike window is open — DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.8: this used to update
     // unconditionally, so a jerk spike seconds before an unrelated
     // high-accel event still counted as "in window" by the time the crash
     // check ran, inflating false-positive crash detections.

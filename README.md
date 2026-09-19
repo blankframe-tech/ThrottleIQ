@@ -303,7 +303,7 @@ In short: You can **view and audit** the source code, but cannot copy, fork, or 
   "Play Store & App Store" section for the concrete step-by-step).
 - **Soon**: Crash-alert SMS/email escalation (the Cloud Function exists but
   delivery is still a mock; real sending needs Twilio/SendGrid and the Firebase
-  Blaze billing plan. See `DOCS/For Devs and Contributers/architecture/backend_options.md`), turn-by-turn
+  Blaze billing plan. See `DOCS/For Devs and Contributors/architecture/backend_options.md`), turn-by-turn
   route navigation tuning, full Bangla localization.
 - **Backlog**: lean-angle tracking, weekly riding reports, clubs & events,
   a curvy-route planner with real routing. See `HANDOFF_Document.md`

@@ -4,7 +4,7 @@ Written 2026-08-23. This is a skeptic's read, not a pitch — the goal is to
 find the load-bearing weaknesses before a real investor, partner, or the
 founder's own runway does. Grounded in the actual repo state (`docs/pitch.md`,
 `docs/marketing/marketing.md`, `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`, `DOCS/Handoff for agents and Todos/issues_open.md`,
-`docs/marketing/hooked_throttleiq.md`, `DOCS/For Devs and Contributers/architecture/backend_options.md`, live code) — every
+`docs/marketing/hooked_throttleiq.md`, `DOCS/For Devs and Contributors/architecture/backend_options.md`, live code) — every
 claim below points at something real, not a generic "startups are hard"
 essay.
 
@@ -42,7 +42,7 @@ doesn't actually do what it emotionally promises yet: the SMS/email
 escalation to emergency contacts is mocked end-to-end
 (`functions/src/crash-notifications.ts`), blocked on a Cloud Functions
 deploy that in turn is blocked on a billing-plan decision
-(`DOCS/For Devs and Contributers/architecture/backend_options.md`) that's been sitting unresolved across multiple
+(`DOCS/For Devs and Contributors/architecture/backend_options.md`) that's been sitting unresolved across multiple
 sessions. This isn't a rounding error — it's the single feature most likely
 to make someone install the app for a family member, and it currently
 degrades to "a link the rider has to remember to turn on and manually
@@ -141,7 +141,7 @@ cheap premium tier, B2B2C partnerships with dealerships/insurers) — not a
 Western-market SaaS-style premium-tier assumption. Nothing in this repo has
 priced what "a very large number of BD riders at near-zero ARPU" actually
 means for sustaining even the modest current cloud costs
-(`DOCS/For Devs and Contributers/architecture/backend_options.md`'s own $20–30/month estimate was for 10K DAU —
+(`DOCS/For Devs and Contributors/architecture/backend_options.md`'s own $20–30/month estimate was for 10K DAU —
 worth re-running that model with an actual monetization assumption
 attached, not just a usage assumption).
 

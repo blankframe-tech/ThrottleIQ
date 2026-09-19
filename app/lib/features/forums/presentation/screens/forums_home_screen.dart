@@ -26,7 +26,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
   // The brand/topic currently being resolved (getOrCreateForum can be a
   // multi-second Firestore transaction on first open) — null when nothing is
   // in flight. Tracking *which* entry, not just a bool, lets the tapped row
-  // itself show a spinner (docs/Issues.md §54: opening a brand forum used to
+  // itself show a spinner (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §54: opening a brand forum used to
   // just disable the row with no visible feedback at all, "for a moment it
   // reads as broken rather than loading" — the per-bike tiles above never had
   // this problem because their forum is already resolved before the tile

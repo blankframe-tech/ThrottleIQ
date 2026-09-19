@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// condition and may be corrected by retrying with a backoff...")` — the
 /// SDK's own retry-policy explanation, meant for a developer reading logs —
 /// was landing verbatim in the Social feed and Forums screens any time the
-/// device was offline. See docs/Issues.md for the report this fixed.
+/// device was offline. See DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md for the report this fixed.
 String mapFirestoreError(Object error) {
   if (error is FirebaseException) {
     return switch (error.code) {
@@ -64,7 +64,7 @@ String mapFirebaseAuthError(dynamic error) {
     return 'Permission denied. Please check your account settings.';
   }
 
-  // docs/Issues.md §33.17: this used to be `return error.toString();` — any
+  // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.17: this used to be `return error.toString();` — any
   // error that reached here (not a FirebaseAuthException, no recognizable
   // "network"/"permission" substring) had its raw exception text, which can
   // include internal type/stack details, put directly into a user-facing

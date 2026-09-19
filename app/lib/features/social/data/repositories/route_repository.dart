@@ -21,7 +21,7 @@ class RouteRepository {
   /// save screen makes for that state, so a personal route deliberately keeps
   /// its real endpoints. Privacy-zone clipping happens in [setPublic], at the
   /// moment a route actually becomes readable by anyone else — see that
-  /// method's doc comment (docs/Issues.md §24.3).
+  /// method's doc comment (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.3).
   Future<String> saveRoute({
     required String userId,
     required String name,
@@ -131,7 +131,7 @@ class RouteRepository {
   /// (owner-only). [makePublic] is the one-way shorthand kept for callers that
   /// only ever publish.
   ///
-  /// Going public permanently clips the stored polyline (docs/Issues.md
+  /// Going public permanently clips the stored polyline (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md
   /// §24.3) — strips ~200m off each end, same as
   /// [RideShareRepository.shareRide] does for shared rides. Route *sharing*
   /// always did this; route *publishing* stored the raw trail verbatim, so

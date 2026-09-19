@@ -39,7 +39,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   ({double riderKmh, double baselineKmh})? _speedOutlier;
   RideWeather? _weather;
   bool _weatherChecked = false;
-  // Anchors the iOS share popover to the tapped button (docs/Issues.md §48) —
+  // Anchors the iOS share popover to the tapped button (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §48) —
   // without a non-zero sharePositionOrigin, UIActivityViewController throws
   // instead of presenting, same root cause active_ride_screen.dart's
   // _shareButtonKey was added for.

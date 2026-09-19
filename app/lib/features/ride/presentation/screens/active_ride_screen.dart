@@ -194,7 +194,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     _alertCtrl.forward(from: 0);
   }
 
-  /// Tapping this button IS the opt-in (docs/Issues.md §24.1). Publishing
+  /// Tapping this button IS the opt-in (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.1). Publishing
   /// used to start the instant a ride began, whether or not the rider ever
   /// meant to share it; now nothing is published until this runs.
   /// `enableLiveSharing()` is a no-op if sharing is already on, so re-tapping

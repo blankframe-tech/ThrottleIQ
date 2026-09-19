@@ -107,7 +107,7 @@ class RideDao {
         if (healedAvg != null) updates['avg_speed_ms'] = healedAvg;
         if (healedMax != null) updates['max_speed_ms'] = healedMax;
 
-        // docs/Issues.md §62 (core services): a self-heal write fired from a
+        // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 (core services): a self-heal write fired from a
         // read path has no caller to report failure to, but it must not
         // vanish silently either — a transient sqflite error (locked DB,
         // disk full) here used to be dropped into an unobserved microtask
@@ -138,7 +138,7 @@ class RideDao {
   /// pass a `status` (crash detection writing `'crash'`, a dismissed false
   /// positive writing `'active'`) must have it win.
   ///
-  /// docs/Issues.md §33.3: this used to spread `data` first and hardcode
+  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.3: this used to spread `data` first and hardcode
   /// `'status': 'completed'` after it, so the literal always overrode
   /// whatever status the caller asked for — `status: 'crash'` was silently
   /// rewritten to `'completed'` the instant it was written, and a dismissed
@@ -154,7 +154,7 @@ class RideDao {
     );
   }
 
-  /// docs/Issues.md §33.1: scoped to [userId] — this feeds directly into
+  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.1: scoped to [userId] — this feeds directly into
   /// SyncManager's upload pass, and an unscoped query would happily hand
   /// another rider's still-unsynced rides to whichever account is currently
   /// signed in on this device.

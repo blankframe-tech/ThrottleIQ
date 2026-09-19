@@ -16,7 +16,7 @@ class LiveSessionEntity extends Equatable {
   final DateTime updatedAt;
   final DateTime expiresAt;
 
-  /// Explicit opt-in marker — docs/Issues.md §24.1. `_publishLiveSession`
+  /// Explicit opt-in marker — DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.1. `_publishLiveSession`
   /// only ever runs after the rider has actively turned sharing on, so this
   /// is always `true` for a doc this app writes. It exists as a
   /// belt-and-suspenders field the Firestore rule also checks

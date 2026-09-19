@@ -201,7 +201,7 @@ class PlaceRepository {
 
   /// Search places by name (prefix match).
   ///
-  /// docs/Issues.md §33.12: the upper bound used to be `query + 'z'`, which
+  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.12: the upper bound used to be `query + 'z'`, which
   /// only brackets every continuation of [query] when every possible next
   /// character sorts below U+007A — true for plain ASCII, false for this
   /// app's Bengali place names (U+0980–U+09FF), which sort above `'z'` and so
