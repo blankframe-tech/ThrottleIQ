@@ -14,6 +14,12 @@ No code changed. Top findings:
 
 The recommended execution order is in claude_sol.md §5.
 
+**Founder-only items from the grill (2026-09-20):** Account actions,
+pending decisions, Blaze-gated work, and deploys that need confirmation
+are listed in `DOCS/needs_attention.md`. Fixes for the code-doable §78 and
+§69 items are in progress on branch `fix/grill-78`. They are not merged
+or verified yet.
+
 **Latest cleanup (2026-09-19, issues_fixed.md §69.13):** Closed six of the
 §69 critique pass's 16 open items — removed the unused `firebase_messaging`
 dependency (and its manifest service declaration), dropped a dead/wrong

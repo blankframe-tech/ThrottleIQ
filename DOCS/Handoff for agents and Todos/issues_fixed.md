@@ -5091,3 +5091,49 @@ last successful build/install/launch (§75's device check). Re-run
 `flutter build ios --release -d <device>` + `xcrun devicectl device
 install/launch` once it reconnects, and tap through a real ride summary
 before calling this visually done.
+
+---
+
+## 78. Antigravity grill fixes, branch `fix/grill-78` (2026-09-20, in progress)
+
+The open items are in `issues_open.md` §78. Fixes are being done by
+parallel agents, one per area, and merged into `fix/grill-78`. They are
+not merged to `master` or `main` yet. Each part below is recorded as it
+lands.
+
+### 78.A Crash and sensor pipeline (commit 5882f59)
+- **78.1:** new `ImpactDetector`
+  (`features/ride/domain/calculators/impact_detector.dart`).
+  - Input: raw `UserAccelerometerEvent` samples, taken before the
+    low-pass filter.
+  - Spike: ≥ 39 m/s² (provisional), or 3 samples in a row at the ride's
+    highest reading (for phones whose sensor clips).
+  - Confirmation: a GPS stop within 5 s, then 3 s of stillness or the
+    phone tipping more than 45°.
+  - **Live wiring is off:** `SensorConstants.impactDetectorLiveEnabled =
+    false`. It stays off until the founder chooses how alerts are sent
+    (`DOCS/needs_attention.md` b) and the field and drop tests in
+    claude_sol §1.1.1 step 6 pass.
+  - The GPS-accel crash branch is off the live path
+    (`detect(detectCrash: false)`).
+- **78.2:** the jerk peak uses `math.max`.
+- **78.3 / 78.13:** hard-brake and rapid-accel counts have one owner
+  (GPS before axis calibration, IMU after). Counting uses hysteresis
+  (trigger −4, re-arm −2), and the cooldown refreshes on every counted
+  event. Brake, accel and overspeed alerts expire after 5 s. The IMU
+  raises no events before calibration.
+- **78.11:** GPS gaps between 3 s and 60 s credit moving time from
+  distance ÷ average speed (`movingMsForGap`). `resumeRide` resets the
+  last fix time, so the paused interval isn't counted as moving.
+- **69.O10 (stats half):** the pure function `buildFinalRideStats` is
+  shared by `stopRide` and the crash finalize. The crash finalize now
+  writes full stats and starts an upload. That upload includes crash rides
+  only once the `getUnsynced` change from part B lands.
+
+Verified: `flutter analyze` clean, `flutter test` 1086/1086 (38 new).
+**Not verified:**
+- No test drives the full `RideRecordingNotifier`. The pipeline test stops
+  at `SensorFusionCoordinator`.
+- Every impact threshold is uncalibrated.
+- The hysteresis and the 5 s alert expiry haven't been felt on a real
+  ride.
