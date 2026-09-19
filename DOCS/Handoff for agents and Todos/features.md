@@ -291,6 +291,46 @@ Added 2026-08-01, expanded to four widgets 2026-08-17. Styled Carbon Mono (carbo
 
 ---
 
+## Changes on branch `fix/grill-78` (2026-09-20, not yet on `master`)
+
+These come from the grill fix pass (`issues_fixed.md` §78). None of them has been checked on a device yet.
+
+- **Record a ride (§2):**
+  - Ending a ride uses a bottom sheet with a hold-to-end button (1.2 s), a share toggle, and "Keep riding".
+  - Pausing dims only the map, not the stats.
+  - Cockpit text has a minimum size (labels 14, values 20).
+  - During a live share, the share button offers "Share link again" and "Stop sharing now".
+  - The new crash detector is in the code but switched off (`impactDetectorLiveEnabled`).
+- **Ride summary:**
+  - Pace is replaced by average moving speed plus moving/stopped time.
+  - The map downloads the route from the cloud if it isn't on the phone, with loading and "Route not available" states.
+- **Garage (§4):**
+  - Removing a bike archives it by default.
+  - The garage has a collapsible "Archived bikes" section with Unarchive.
+  - Deleting a bike together with its rides requires typing the bike's name.
+  - Bike detail has a "Service & maintenance" card.
+  - Adding a bike returns to the garage with a "Set service intervals" action.
+- **Maintenance (§5):** the screen has a back button when opened from a bike.
+- **Places (§6):**
+  - "Directions" asks whether to record the ride.
+  - Add Place requires picking a location.
+  - "Browse routes →" is a button, not a filter chip.
+  - Nearby places come from a geohash query.
+- **Social and chat (§7):**
+  - The chat list hides blocked riders.
+  - A chat where either rider has blocked the other shows a banner instead of the input.
+  - A failed send restores the typed text and offers Retry.
+  - The profile screen tells apart private, offline and other errors.
+  - The notification bell is on the Social and Record screens.
+- **Profile and settings (§8):**
+  - Emergency Contacts shows a warning banner that alerts are not sent automatically yet, plus a one-time acknowledgement when the first contact is added.
+  - SafeQR has "Save or share QR image".
+  - Settings → "Sync issues" appears only when outbox writes have failed for good.
+- **Maps:** every map uses the shared cached `AppTileLayer` with an OSM attribution line.
+- **Theme:** the Calming Light primary color is now `#537D5C`, for contrast.
+
+---
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
