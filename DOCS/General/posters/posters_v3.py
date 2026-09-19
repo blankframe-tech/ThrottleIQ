@@ -131,12 +131,18 @@ def ground_pin(cx, cy, r=40):
               f'fill="none" stroke="{INK}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>')
     return "".join(o)
 
-def map_card(x, y, w, h, live_label="LIVE"):
+def map_card(x, y, w, h, live_label="LIVE", dot_color="#3BB273", dim=False, pulse=True):
+    """`dim`/`dot_color`/`pulse` let a poster reuse this same card for a
+    non-live readout (offline recording, a saved route, a jam-time stat)
+    instead of an active live-share/group-beacon session — a muted map,
+    a steady (non-pulsing) marker, and a pill color/label that say so."""
     o = [f'<rect x="{x}" y="{y+14}" width="{w}" height="{h}" rx="34" fill="#000000" opacity="0.22"/>']
     o.append(rect(x, y, w, h, fill=CARD_BG, rx=34))
     p = 14
     mx, my, mw, mh = x + p, y + p, w - 2*p, h - 2*p
-    o.append(rect(mx, my, mw, mh, fill=MAP_BG, rx=22))
+    map_fill = "#D9DEE4" if dim else MAP_BG
+    route_color = "#8A93A0" if dim else ACCENT
+    o.append(rect(mx, my, mw, mh, fill=map_fill, rx=22))
     # faint street grid
     for gx in range(1, 4):
         xx = mx + mw * gx / 4
@@ -148,14 +154,17 @@ def map_card(x, y, w, h, live_label="LIVE"):
     sx, sy = mx + mw * 0.24, my + mh * 0.30
     ex, ey = mx + mw * 0.72, my + mh * 0.66
     cxp, cyp = mx + mw * 0.42, my + mh * 0.70
-    o.append(f'<path d="M {sx},{sy} Q {cxp},{cyp} {ex},{ey}" fill="none" stroke="{ACCENT}" '
+    o.append(f'<path d="M {sx},{sy} Q {cxp},{cyp} {ex},{ey}" fill="none" stroke="{route_color}" '
               f'stroke-width="9" stroke-linecap="round" stroke-dasharray="2 20"/>')
-    o.append(f'<circle cx="{sx}" cy="{sy}" r="11" fill="{CARD_BG}" stroke="{ACCENT}" stroke-width="6"/>')
-    o.append(f'<circle cx="{ex}" cy="{ey}" r="17" fill="{ACCENT}"/>')
-    o.append(f'<circle cx="{ex}" cy="{ey}" r="17" fill="none" stroke="{ACCENT}" stroke-width="6" opacity="0.4"><animate attributeName="r" values="17;30;17" dur="2s" repeatCount="indefinite"/></circle>')
-    # LIVE pill
-    o.append(rect(mx + 12, my + 12, 108, 34, fill=INK, rx=17))
-    o.append(f'<circle cx="{mx+28}" cy="{my+29}" r="5" fill="#3BB273"/>')
+    o.append(f'<circle cx="{sx}" cy="{sy}" r="11" fill="{CARD_BG}" stroke="{route_color}" stroke-width="6"/>')
+    o.append(f'<circle cx="{ex}" cy="{ey}" r="17" fill="{route_color}"/>')
+    if pulse:
+        o.append(f'<circle cx="{ex}" cy="{ey}" r="17" fill="none" stroke="{route_color}" stroke-width="6" opacity="0.4"><animate attributeName="r" values="17;30;17" dur="2s" repeatCount="indefinite"/></circle>')
+    # status pill (LIVE / NO SIGNAL / ROUTE / IN JAM, etc.) — sized off the
+    # real shaped width so a longer label than "LIVE"/"CREW" doesn't clip.
+    pill_w = max(108, tw(live_label, 20, MONO, True, 2) + 46)
+    o.append(rect(mx + 12, my + 12, pill_w, 34, fill=INK, rx=17))
+    o.append(f'<circle cx="{mx+28}" cy="{my+29}" r="5" fill="{dot_color}"/>')
     o.append(txt(mx + 42, my + 36, live_label, 20, "#FFFFFF", MONO, tracking=2))
     # wordmark, bottom-left of map like a map-provider credit
     o.append(txt(mx + 12, my + mh - 12, "ThrottleIQ", 18, "#4A5568", SANS))
@@ -188,13 +197,14 @@ def footer(campaign):
     o.append(qr_svg(f"{BASE}?c={campaign}", 44, y0 + 24, 104, dark="#000000", light="#FFFFFF", uid=campaign))
     o.append(txt(168, y0 + 54, "SCAN", 32, ACCENT, COND, tracking=2))
     o.append(txt(168, y0 + 82, "ThrottleIQ নামান", 22, "#F4F4F4", SANS))
-    o.append(txt(168, y0 + 108, "FREE · OFFLINE-FIRST · iOS + ANDROID", 15, "#8A8F98", MONO, tracking=1))
+    o.append(txt(168, y0 + 108, "FREE · OFFLINE-FIRST · ANDROID NOW · iOS শীঘ্রই", 14, "#8A8F98", MONO, tracking=0.5))
     o.append(txt(W - 44, y0 + 58, "ThrottleIQ", 34, "#FFFFFF", SANS, anchor="end", tracking=-1))
     o.append(txt(W - 44, y0 + 84, "MACHINE MEMORY FOR MOTORCYCLES", 13, "#6B7078", MONO, anchor="end", tracking=1.5))
     o.append(txt(W - 44, y0 + 112, "ঢাকায় তৈরি, ঢাকার রাস্তার জন্য", 18, "#8A8F98", SANS, anchor="end"))
     return "".join(o)
 
-def poster(campaign, headline, subhead, badge_l, badge_r, road_tag, live_label="LIVE"):
+def poster(campaign, headline, subhead, badge_l, badge_r, road_tag, live_label="LIVE",
+           dot_color="#3BB273", dim=False, pulse=True):
     body, (vp_x, vp_y) = scene()
     o = [body]
     # the map's route pin, dropped onto the actual road
@@ -215,7 +225,7 @@ def poster(campaign, headline, subhead, badge_l, badge_r, road_tag, live_label="
     o.append(badge(W - 250, badge_y, 220, 118, badge_r))
     # map card, center
     card_w, card_h = 460, 360
-    o.append(map_card(W/2 - card_w/2, 470, card_w, card_h, live_label))
+    o.append(map_card(W/2 - card_w/2, 470, card_w, card_h, live_label, dot_color, dim, pulse))
     # logo, top right
     o.append(logo_mark(W - 60, 34, 44))
     o.append(txt(W - 74, 66, "ThrottleIQ", 30, "#FFFFFF", SANS, anchor="end", tracking=-1))
@@ -244,6 +254,55 @@ POSTERS = [
         road_tag="GROUP BEACON",
         live_label="CREW",
     ),
+    dict(
+        id="v3-03-offline-record",
+        campaign="offline_record_v3",
+        headline=["সিগন্যাল না থাকলেও,", "রেকর্ড হতে থাকে।"],
+        subhead="টাওয়ার ছাড়াই GPS চলে, নেট ফিরলেই রাইড নিজে থেকে সিঙ্ক হয়ে যায়।",
+        badge_l=["টাওয়ার", "নেই"],
+        badge_r=["রেকর্ড", "চলছে"],
+        road_tag="OFFLINE-FIRST",
+        live_label="NO SIGNAL",
+        dot_color="#9AA3AC",
+        dim=True,
+        pulse=False,
+    ),
+    dict(
+        id="v3-04-saved-crew-route",
+        campaign="saved_route_v3",
+        headline=["রাস্তা সেভ থাকলে,", "কেউ হারায় না।"],
+        subhead="সেভ করা রুট বাকিরাও পাবে, নিজে নিজেই টার্ন-বাই-টার্ন চালাতে পারবে।",
+        badge_l=["রুট", "সেভ থাকে"],
+        badge_r=["সবাই", "একই পথে"],
+        road_tag="SAVED ROUTE",
+        live_label="ROUTE",
+        dot_color="#3B6CF6",
+        dim=False,
+        pulse=False,
+    ),
+    dict(
+        id="v3-05-family-return-eta",
+        campaign="family_eta_v3",
+        headline=["আসতে আসতে", "কতদূর?"],
+        subhead="লাইভ শেয়ার অন করলে, বাসায় বসেই বুঝবেন উনি কোথায় আছেন।",
+        badge_l=["রাইডার", "অন করলে"],
+        badge_r=["বাসায়", "লাইভ দেখা"],
+        road_tag="LIVE SHARE",
+        live_label="LIVE",
+    ),
+    dict(
+        id="v3-06-jam-time-proof",
+        campaign="jam_proof_v3",
+        headline=["আজও ৪৭ মিনিট", "জ্যামে দাঁড়িয়ে?"],
+        subhead="রাইড শেষে দেখবেন কতটা সময় জ্যামে গেছে, কতটা আসল চালানোয়।",
+        badge_l=["জ্যামে", "কত মিনিট?"],
+        badge_r=["আসল রাইড", "আলাদা করে"],
+        road_tag="TIME IN JAM",
+        live_label="IN JAM",
+        dot_color="#F5A623",
+        dim=False,
+        pulse=False,
+    ),
 ]
 
 if __name__ == "__main__":
@@ -251,7 +310,8 @@ if __name__ == "__main__":
     os.makedirs(out_dir, exist_ok=True)
     for p in POSTERS:
         doc = poster(p["campaign"], p["headline"], p["subhead"], p["badge_l"],
-                     p["badge_r"], p["road_tag"], p["live_label"])
+                     p["badge_r"], p["road_tag"], p.get("live_label", "LIVE"),
+                     p.get("dot_color", "#3BB273"), p.get("dim", False), p.get("pulse", True))
         path = os.path.join(out_dir, f'{p["id"]}.svg')
         with open(path, "w", encoding="utf-8") as f:
             f.write(doc)

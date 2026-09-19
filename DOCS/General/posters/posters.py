@@ -22,7 +22,7 @@ def qr_block(x, y, s, skin, campaign, cta_top, cta_bot, frame_c=None, qr_dark=No
     o.append(txt(tx, y + 92, cta_top, 25, skin["t1"], MONO))
     o.append(txt(tx, y + 124, cta_bot, 25, skin["t1"], MONO))
     o.append(txt(tx, y + 176, "FREE · OFFLINE-FIRST", 17, skin["t3"], MONO))
-    o.append(txt(tx, y + 200, "iOS + ANDROID", 17, skin["t3"], MONO))
+    o.append(txt(tx, y + 200, "ANDROID NOW · iOS SOON", 17, skin["t3"], MONO))
     return "".join(o)
 
 def dline(x, y, s, size, fill, font=COND, max_w=880, tracking=0, anchor="start", weight="bold"):

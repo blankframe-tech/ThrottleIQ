@@ -13,6 +13,22 @@ segment (never blends commuter/enthusiast/family copy in one asset, per
 |---|---|---|
 | `v3-01-family-live-share` | Anxious family | আপনার বাইকার কোথায় আছে? — family sees the rider's live position once they turn Live Share on (opt-in, not automatic) |
 | `v3-02-crew-beacon` | Enthusiast/crew | বন্ধু তুই কই এখন? — the whole crew on one live map once Group Beacon is on |
+| `v3-03-offline-record` | Daily commuter | সিগন্যাল না থাকলেও, রেকর্ড হতে থাকে। — GPS keeps recording with no tower, syncs itself once the net's back. Map card renders dimmed/grey with a steady (non-pulsing) marker and a "NO SIGNAL" pill instead of the live-green "LIVE" one — same `map_card()`, using its new `dim`/`dot_color`/`pulse` params |
+| `v3-04-saved-crew-route` | Enthusiast/touring | রাস্তা সেভ থাকলে, কেউ হারায় না। — a route saved from a past ride, so the rest of the crew can navigate the same path turn-by-turn on their own; distinct from `v3-02`'s "where's everyone right now" live-position hook — this one's about a route planned *before* the ride, not live positions during it. Blue, non-pulsing "ROUTE" marker |
+| `v3-05-family-return-eta` | Anxious family | আসতে আসতে কতদূর? — a spouse/family member waiting at home, not the "where's my rider right now" framing of `v3-01`; same strict opt-in-only Live Share language |
+| `v3-06-jam-time-proof` | Daily commuter | আজও ৪৭ মিনিট জ্যামে দাঁড়িয়ে? — the ride summary's real moving-vs-jam split, recast in this series' street-ad grammar (v1's `01-jam-counter-signal` concept). Amber, non-pulsing "IN JAM" marker. **The `47` is a placeholder shaped like real app output — swap for an actual aggregate before printing at volume**, same as v1 poster 01 |
+
+Segments deliberately not extended into v3 this pass: garage/resale-proof,
+per-km fuel cost, and the AI-camera/benchmark concepts (v1 `#03`, `#09`,
+`#19`–`#24`) don't have a live-map-shaped visual hook the way the six above
+do — forcing them into this card-and-pin grammar would be the same
+"diluting one asset to cover two ideas" mistake the segment-separation rule
+warns against, just applied to a visual instead of a message; they stay
+v1/v2-only. Also skipped: any push-to-talk/voice-note angle (real feature,
+but not a map/location concept, so it doesn't fit this series either) and
+anything resembling the shared-ride-summary acquisition loop or a
+badge/reward physical-prize promotion — both are proposed-but-not-built per
+`marketing.md`, not shipped claims.
 
 ```bash
 .venv/bin/python3 posters_v3.py          # writes svg/v3/*.svg
@@ -26,6 +42,17 @@ for f in glob.glob('svg/v3/*.svg'):
 ```
 
 Output lives in `print/v3/`, `web/v3/`, `svg/v3/`.
+
+**QR campaigns:**
+
+```
+v3-01 https://blankframe.tech/ThrottleIQ/install?c=family_live_v3
+v3-02 https://blankframe.tech/ThrottleIQ/install?c=crew_beacon_v3
+v3-03 https://blankframe.tech/ThrottleIQ/install?c=offline_record_v3
+v3-04 https://blankframe.tech/ThrottleIQ/install?c=saved_route_v3
+v3-05 https://blankframe.tech/ThrottleIQ/install?c=family_eta_v3
+v3-06 https://blankframe.tech/ThrottleIQ/install?c=jam_proof_v3
+```
 
 ---
 
