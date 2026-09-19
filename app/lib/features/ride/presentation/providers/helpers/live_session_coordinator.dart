@@ -121,6 +121,11 @@ class LiveSessionCoordinator {
 
       final batteryLevel = await BatteryService.getBatteryLevel();
 
+      // "Stop sharing now" can land while this tick was awaiting the battery
+      // read above. Publishing anyway would re-create the doc the rider just
+      // deleted — with `shareable: true` — under the very link they revoked.
+      if (!_liveShareEnabled || _currentLiveSessionToken != token) return null;
+
       final session = LiveSessionEntity(
         token: token,
         uid: uid,
@@ -148,7 +153,13 @@ class LiveSessionCoordinator {
           () => _firestore
               .collection('liveSessions')
               .doc(token)
-              .set(session.toFirestore()),
+              // Server time, not the phone's clock — §78.7. The entity
+              // writes a client Timestamp; a rider whose clock is off would
+              // otherwise look stale (or impossibly fresh) to the viewer.
+              .set({
+                ...session.toFirestore(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              }),
         ),
         if (existingToken == null) _publishLivePointer(uid, token),
       ]);
@@ -168,24 +179,90 @@ class LiveSessionCoordinator {
         'uid': uid,
         'token': token,
         'active': true,
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
+        'updatedAt': FieldValue.serverTimestamp(),
       }),
     );
   }
 
   /// Updates live session status ('riding', 'paused', 'crash', 'completed').
+  ///
+  /// `completed` also revokes the link (`shareable: false`) — §78.7, same as
+  /// the outbox teardown: the rules' `get` keys on `shareable`, not `active`.
   Future<void> updateLiveSessionStatus(LiveSessionStatus status) async {
     final token = _currentLiveSessionToken;
     if (token == null) return;
+    final completed = status == LiveSessionStatus.completed;
 
     await _bestEffortWrite(
       'live session status',
       () => _firestore.collection('liveSessions').doc(token).update({
         'status': status.toString().split('.').last,
-        'active': status != LiveSessionStatus.completed,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'active': !completed,
+        if (completed) 'shareable': false,
+        'updatedAt': FieldValue.serverTimestamp(),
       }),
     );
+  }
+
+  /// "Stop sharing now": revokes the live link mid-ride — §78.7.
+  ///
+  /// Deletes `liveSessions/{token}` outright (the rider asked for it gone,
+  /// not just hidden) and clears the `/r/{username}` pointer. Recording
+  /// carries on; the rider can share again, which mints a fresh token, so
+  /// the revoked link stays dead.
+  ///
+  /// Both writes go straight to Firestore rather than through the outbox:
+  /// the SDK's own offline queue persists them and keeps them in order
+  /// relative to a later re-share's pointer write, which a separately
+  /// drained outbox entry could not guarantee (a late teardown would clear
+  /// the NEW pointer). If the delete is rejected — e.g. the rules granting
+  /// it aren't deployed yet — it falls back to `shareable: false`, which the
+  /// existing owner-update rule allows and which closes the link just the
+  /// same.
+  Future<void> stopSharingNow({required String? uid}) async {
+    final token = _currentLiveSessionToken;
+    _currentLiveSessionToken = null;
+    _liveShareEnabled = false;
+    _liveSessionTimer?.cancel();
+    _liveSessionTimer = null;
+
+    await Future.wait([
+      if (token != null) _revokeSession(token),
+      if (uid != null)
+        _bestEffortWrite(
+          'live pointer clear',
+          () => _firestore.collection('livePointers').doc(uid).set({
+            'uid': uid,
+            'token': null,
+            'active': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }),
+        ),
+    ]);
+  }
+
+  Future<void> _revokeSession(String token) async {
+    final doc = _firestore.collection('liveSessions').doc(token);
+    try {
+      await doc.delete().timeout(kOutboxAttemptTimeout);
+    } on TimeoutException {
+      debugPrint('[LiveSession] session delete not confirmed within '
+          '${kOutboxAttemptTimeout.inSeconds}s — queued by Firestore, moving on');
+    } on FirebaseException catch (e) {
+      debugPrint('[LiveSession] session delete rejected ($e) — '
+          'falling back to shareable:false');
+      await _bestEffortWrite(
+        'live session revoke',
+        () => doc.update({
+          'status': 'completed',
+          'active': false,
+          'shareable': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }),
+      );
+    } catch (e) {
+      debugPrint('[LiveSession] session delete failed: $e');
+    }
   }
 
   /// Ends the live session and clears the permanent pointer durably via [OutboxService].

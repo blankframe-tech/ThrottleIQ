@@ -13,6 +13,7 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../providers/speed_alert_provider.dart';
 import '../widgets/appearance_picker.dart';
+import 'sync_issues_screen.dart';
 import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
 import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
@@ -399,6 +400,11 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
+          // ── Sync issues (§69.O4) ───────────────────────────────────────
+          // Only shown while the outbox has given up on something, so the
+          // rider isn't handed a permanent "0 issues" row to wonder about.
+          const _SyncIssuesTile(),
+
           // ── Privacy & Safety ───────────────────────────────────────────
           Row(
             children: [
@@ -745,6 +751,62 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
 /// by the Language control (three segments) and by Appearance's Vibe and
 /// Brightness controls (two segments each) — Color has too many options for
 /// this shape and uses [ColorModeDropdown] instead.
+class _SyncIssuesTile extends ConsumerWidget {
+  const _SyncIssuesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(syncIssuesProvider).valueOrNull?.length ?? 0;
+    if (count == 0) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => context.push('/sync-issues'),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.warning),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.sync_problem, color: AppColors.warning, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Sync issues',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                          count == 1
+                              ? "1 update couldn't be sent"
+                              : "$count updates couldn't be sent",
+                          style: TextStyle(
+                              fontSize: 12, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right,
+                    color: AppColors.textTertiary, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SegmentedOption extends StatelessWidget {
   const _SegmentedOption({
     required this.label,

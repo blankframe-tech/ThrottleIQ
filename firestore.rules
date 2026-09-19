@@ -481,6 +481,12 @@ service cloud.firestore {
       // Only the ride owner (uid) can write
       allow create: if request.auth.uid == request.resource.data.uid;
       allow update: if request.auth.uid == resource.data.uid;
+      // The rider's "Stop sharing now" (live_session_coordinator.dart
+      // `stopSharingNow`) deletes the session outright rather than waiting
+      // for ride end or the 24h `expiresAt` — §78.7. Owner only; a viewer
+      // holding the link can read it but never revoke someone else's share.
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.uid;
     }
 
     // Crash notifications - the client only ever CREATEs one (see
