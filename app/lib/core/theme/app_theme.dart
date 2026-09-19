@@ -28,6 +28,15 @@ class AppTheme {
   /// gets — matching the "Retro (Rawblock)" deck direction, where the accent
   /// fill is light enough that white text would fail contrast. See
   /// [AppColorPalette.retroLight]/[AppColorPalette.retroDark].
+  /// Text/icon color drawn on a filled `primary` button for [palette].
+  /// Pulled out of [build] so the WCAG contrast test can check every
+  /// palette against exactly what the button renders.
+  static Color primaryButtonForeground(AppColorPalette palette,
+          {required bool isRetro}) =>
+      isRetro
+          ? const Color(0xFF1A1A1A)
+          : (palette.isDark ? palette.surface : Colors.white);
+
   static ThemeData build(AppAppearance appearance) {
     final isDark = appearance.brightness == Brightness.dark;
     final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
@@ -162,9 +171,9 @@ class AppTheme {
           // Retro's mustard accent is a mid-light fill in both brightnesses,
           // so it always takes dark ink text rather than flipping with
           // brightness the way every other mode's white/surface text does.
-          foregroundColor: isRetro
-              ? const Color(0xFF1A1A1A)
-              : (isDark ? AppColors.surface : Colors.white),
+          foregroundColor: primaryButtonForeground(
+              AppColorPalette.forMode(appearance.colorMode, appearance.brightness),
+              isRetro: isRetro),
           elevation: 0,
           minimumSize: Size.fromHeight(AppDimensions.controlHeight),
           shape: RoundedRectangleBorder(

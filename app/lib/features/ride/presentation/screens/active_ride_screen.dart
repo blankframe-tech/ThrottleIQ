@@ -6,10 +6,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
 import '../providers/live_ride_places_provider.dart';
+import '../widgets/end_ride_sheet.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
@@ -150,7 +152,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   // widget's ref.watch synchronously, so the idle-redirect below used to
   // schedule its own postFrameCallback to '/home/record' first and clobber
   // whichever destination _stopRide() actually wanted, e.g. "Share ride"
-  // being checked in the end-ride dialog never actually landing on the share
+  // being on in the end-ride sheet never actually landing on the share
   // screen. Suppress the generic redirect while we're driving navigation
   // ourselves.
   bool _endingRide = false;
@@ -225,60 +227,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   }
 
   Future<void> _stopRide() async {
-    var shareAfterEnd = false;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('End Ride?', style: TextStyle(color: AppColors.textPrimary)),
-          content: Text('Your ride will be saved.',
-              style: TextStyle(color: AppColors.textSecondary)),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
-          actions: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel')),
-                    GestureDetector(
-                      onTap: () => setDialogState(() => shareAfterEnd = !shareAfterEnd),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Share ride',
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                          Checkbox(
-                            value: shareAfterEnd,
-                            activeColor: AppColors.primary,
-                            onChanged: (v) =>
-                                setDialogState(() => shareAfterEnd = v ?? false),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                    child: const Text('End Ride'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-    if (confirmed != true) return;
+    // Bottom sheet with a hold-to-end control rather than an AlertDialog —
+    // see showEndRideSheet for why. A null choice means "keep riding".
+    final choice = await showEndRideSheet(context);
+    if (!mounted || choice == null) return;
+    final shareAfterEnd = choice.share;
     _endingRide = true;
     final rideId = await ref.read(rideRecordingProvider.notifier).stopRide();
     if (!mounted) return;
@@ -377,6 +330,21 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           // Polyline of the entire ride many times a second.
           const _RouteMap(),
 
+          // ── Pause dim ─────────────────────────────────────────────────────
+          // Directly above the map and nothing else: pausing darkens the
+          // route so the state reads at a glance, while the top bar (with the
+          // amber PAUSED pill), the speed panel and the controls stay at full
+          // contrast. It used to cover the stats too, which is exactly when a
+          // stopped rider glances down at them.
+          if (isPaused)
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: Color(0xCC000000)),
+                ),
+              ),
+            ),
+
           // ── Alert overlay flash ───────────────────────────────────────────
           AnimatedBuilder(
             animation: _alertColor,
@@ -436,10 +404,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   const Spacer(),
                   Text(
                     SpeedFormatter.durationFromDuration(rideState.elapsed),
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary),
+                    style: AppTypography.cockpitValue(),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
@@ -506,8 +471,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         style: display(64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
                       ),
                     ),
-                    Text('km/h',
-                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                    Text('km/h', style: AppTypography.cockpitLabel()),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -535,19 +499,6 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
             ),
           ),
-
-          // ── Pause dim ─────────────────────────────────────────────────────
-          // Sits above the map/top bar/speed panel but below the bottom
-          // controls, so pausing darkens everything except the buttons you'd
-          // actually reach for.
-          if (isPaused)
-            const Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(color: Color(0xCC000000)),
-                ),
-              ),
-            ),
 
           // ── Bottom controls ───────────────────────────────────────────────
           Positioned(
@@ -787,12 +738,12 @@ class _GForceBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('BRAKE', style: TextStyle(fontSize: 9, color: AppColors.textTertiary, letterSpacing: 0.5)),
+            Text('BRAKE', style: AppTypography.cockpitLabel(letterSpacing: 0.5)),
             Text(
               '${gForce.abs().toStringAsFixed(2)}g',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+              style: AppTypography.cockpitValue(color: color, weight: FontWeight.w600),
             ),
-            Text('ACCEL', style: TextStyle(fontSize: 9, color: AppColors.textTertiary, letterSpacing: 0.5)),
+            Text('ACCEL', style: AppTypography.cockpitLabel(letterSpacing: 0.5)),
           ],
         ),
         const SizedBox(height: 4),
@@ -847,8 +798,8 @@ class _StatusPill extends StatelessWidget {
           Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 7),
           Text(label,
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.onInk)),
+              style: AppTypography.cockpitLabel(
+                  weight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.onInk)),
         ],
       ),
     );
@@ -864,8 +815,8 @@ class _RideStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: display(18, letterSpacing: 0)),
-        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(value, style: AppTypography.cockpitValue()),
+        Text(label, style: AppTypography.cockpitLabel()),
       ],
     );
   }

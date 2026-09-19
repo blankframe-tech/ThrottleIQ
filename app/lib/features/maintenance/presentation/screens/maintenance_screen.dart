@@ -40,6 +40,14 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     _selectedBikeId = widget.bikeId;
   }
 
+  /// Back-only app bar when this screen was pushed (from bike detail or the
+  /// garage card) rather than opened as the Maintenance tab — there was no
+  /// way back otherwise short of the system gesture (claude_sol.md §3.2.3).
+  /// Untitled because the body's own header already says "Maintenance".
+  PreferredSizeWidget? _backBar(BuildContext context) => context.canPop()
+      ? AppBar(backgroundColor: AppColors.background, toolbarHeight: 48)
+      : null;
+
   @override
   Widget build(BuildContext context) {
     final bikes = ref.watch(garageProvider).valueOrNull ?? [];
@@ -52,6 +60,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     if (activeBike == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
+        appBar: _backBar(context),
         body: SafeArea(
           child: Center(
             child: Column(
@@ -94,6 +103,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: _backBar(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 12,

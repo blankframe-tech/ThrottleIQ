@@ -186,6 +186,26 @@
     "description": "Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — docs/Issues.md §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
   },
 
+  "emergencyContactsNotAlertedBanner": "ThrottleIQ does not yet alert these contacts automatically.",
+  "@emergencyContactsNotAlertedBanner": {
+    "description": "Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (claude_sol.md §3.6.3) — adding a contact must not read as being protected."
+  },
+
+  "emergencyContactsAckTitle": "Contacts aren't alerted yet",
+  "@emergencyContactsAckTitle": {
+    "description": "Title of the one-time acknowledgement dialog shown after the rider adds their first emergency contact."
+  },
+
+  "emergencyContactsAckBody": "ThrottleIQ saved this contact, but it can't send them an SMS or email after a crash yet. Until it can, tell someone your route before you ride.",
+  "@emergencyContactsAckBody": {
+    "description": "Body of the one-time emergency-contact acknowledgement dialog."
+  },
+
+  "emergencyContactsAckAction": "I understand",
+  "@emergencyContactsAckAction": {
+    "description": "Dismisses the one-time emergency-contact acknowledgement dialog."
+  },
+
   "emergencyContactsEmpty": "No contacts yet — add someone you trust.",
   "@emergencyContactsEmpty": {
     "description": "Empty state for the emergency contact list."
@@ -463,9 +483,14 @@
     "description": "Section header above the JSON/GPX/CSV export buttons on the ride summary screen."
   },
 
-  "ridingPaceLabel": "Riding Pace",
+  "ridingPaceLabel": "Avg moving speed",
   "@ridingPaceLabel": {
-    "description": "Label on the ride summary screen's pace card, showing minutes-per-km."
+    "description": "Label on the ride summary screen's speed card, showing average speed over moving time in km/h. Key kept from when this card showed a runner's min/km pace."
+  },
+
+  "movingStoppedLabel": "Moving / stopped",
+  "@movingStoppedLabel": {
+    "description": "Label for the moving-time vs stopped-time line on the ride summary's speed card, e.g. '42m / 8m'."
   },
 
   "routeGpsDetailsLabel": "Route GPS Details",
@@ -699,6 +724,14 @@
   "safeQrLocalOnlyDisclaimer": "Saved only on this device — it is not backed up or synced.",
   "@safeQrLocalOnlyDisclaimer": {
     "description": "Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced."
+  },
+  "safeQrShareImageAction": "Save or share QR image",
+  "@safeQrShareImageAction": {
+    "description": "Button that exports the SafeQR card as a PNG through the system share sheet (which also offers Save to Photos/Files), e.g. to set as a lock-screen wallpaper or print as a helmet sticker."
+  },
+  "safeQrShareImageFailed": "Couldn't create the QR image.",
+  "@safeQrShareImageFailed": {
+    "description": "Snackbar shown when rendering the SafeQR card to an image fails."
   },
   "weatherUnavailableTooltip": "Weather data unavailable for this ride",
   "@weatherUnavailableTooltip": {

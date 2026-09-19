@@ -121,6 +121,20 @@ class AppLocalizationsBn extends AppLocalizations {
       'দুর্ঘটনা ধরা পড়লে ও আপনি 60 সেকেন্ডের মধ্যে সাড়া না দিলে তা লগ করা হবে — স্বয়ংক্রিয় SMS/ইমেইল সতর্কতা এখনো চালু হয়নি।';
 
   @override
+  String get emergencyContactsNotAlertedBanner =>
+      'ThrottleIQ এখনো এই যোগাযোগগুলোকে স্বয়ংক্রিয়ভাবে সতর্ক করে না।';
+
+  @override
+  String get emergencyContactsAckTitle => 'যোগাযোগগুলোকে এখনো সতর্ক করা হয় না';
+
+  @override
+  String get emergencyContactsAckBody =>
+      'ThrottleIQ এই যোগাযোগটি সংরক্ষণ করেছে, কিন্তু দুর্ঘটনার পরে এখনো তাঁকে SMS বা ইমেইল পাঠাতে পারে না। যতদিন না পারে, রাইডে বের হওয়ার আগে কাউকে আপনার রুট জানিয়ে রাখুন।';
+
+  @override
+  String get emergencyContactsAckAction => 'বুঝেছি';
+
+  @override
   String get emergencyContactsEmpty =>
       'এখনো কাউকে যোগ করা হয়নি — বিশ্বাস করেন এমন কাউকে রাখুন।';
 
@@ -289,7 +303,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get telemetrySectionLabel => 'টেলিমেট্রি';
 
   @override
-  String get ridingPaceLabel => 'রাইডিং পেস';
+  String get ridingPaceLabel => 'গড় চলন্ত গতি';
+
+  @override
+  String get movingStoppedLabel => 'চলমান / থেমে থাকা';
 
   @override
   String get routeGpsDetailsLabel => 'রুট GPS বিবরণ';
@@ -459,6 +476,12 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get safeQrLocalOnlyDisclaimer =>
       'শুধুমাত্র এই ডিভাইসে সংরক্ষিত — এটি ব্যাকআপ বা সিঙ্ক করা হয় না।';
+
+  @override
+  String get safeQrShareImageAction => 'QR ছবি সংরক্ষণ বা শেয়ার করুন';
+
+  @override
+  String get safeQrShareImageFailed => 'QR ছবি তৈরি করা গেল না।';
 
   @override
   String get weatherUnavailableTooltip =>

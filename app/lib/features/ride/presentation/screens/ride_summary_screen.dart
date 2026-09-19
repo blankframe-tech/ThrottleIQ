@@ -510,16 +510,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     }
   }
 
+  /// Average *moving* speed, replacing a runner's min/km pace that meant
+  /// nothing to a motorcyclist (claude_sol.md §3.3.4). Falls back to elapsed
+  /// time for older rides with no moving time recorded.
   Widget _buildPaceCard(AppLocalizations l10n, RideEntity ride) {
-    final durationSeconds = ride.durationSeconds ?? 0;
-    final paceFormatted = (ride.distanceKm > 0 && durationSeconds > 0)
-        ? () {
-            final totalPaceSeconds = (durationSeconds / ride.distanceKm).round();
-            final paceMin = totalPaceSeconds ~/ 60;
-            final paceSec = totalPaceSeconds % 60;
-            return "$paceMin'${paceSec.toString().padLeft(2, '0')}\"";
-          }()
+    final moving = ride.movingSeconds;
+    final seconds = (moving != null && moving > 0) ? moving : (ride.durationSeconds ?? 0);
+    final avgKmh = (ride.distanceKm > 0 && seconds > 0)
+        ? (ride.distanceKm / (seconds / 3600)).toStringAsFixed(0)
         : '--';
+    final stopped = ride.jamSeconds;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -527,18 +527,37 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Text(l10n.ridingPaceLabel,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          const Spacer(),
-          Text('$paceFormatted/km',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                  fontSize: 14)),
+          Row(
+            children: [
+              Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Text(l10n.ridingPaceLabel,
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              const Spacer(),
+              Text('$avgKmh km/h',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      fontSize: 14)),
+            ],
+          ),
+          if (moving != null && stopped != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const SizedBox(width: 32),
+                Text(l10n.movingStoppedLabel,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                const Spacer(),
+                Text(
+                    '${SpeedFormatter.durationFromSeconds(moving)} / '
+                    '${SpeedFormatter.durationFromSeconds(stopped)}',
+                    style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+              ],
+            ),
+          ],
         ],
       ),
     );

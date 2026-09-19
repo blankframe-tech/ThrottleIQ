@@ -121,6 +121,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Logged if a crash is detected and you don\'t respond within 60 seconds. Automatic SMS/email alerts aren\'t live yet.';
 
   @override
+  String get emergencyContactsNotAlertedBanner =>
+      'ThrottleIQ does not yet alert these contacts automatically.';
+
+  @override
+  String get emergencyContactsAckTitle => 'Contacts aren\'t alerted yet';
+
+  @override
+  String get emergencyContactsAckBody =>
+      'ThrottleIQ saved this contact, but it can\'t send them an SMS or email after a crash yet. Until it can, tell someone your route before you ride.';
+
+  @override
+  String get emergencyContactsAckAction => 'I understand';
+
+  @override
   String get emergencyContactsEmpty =>
       'No contacts yet — add someone you trust.';
 
@@ -289,7 +303,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get telemetrySectionLabel => 'Telemetry';
 
   @override
-  String get ridingPaceLabel => 'Riding Pace';
+  String get ridingPaceLabel => 'Avg moving speed';
+
+  @override
+  String get movingStoppedLabel => 'Moving / stopped';
 
   @override
   String get routeGpsDetailsLabel => 'Route GPS Details';
@@ -460,6 +477,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get safeQrLocalOnlyDisclaimer =>
       'Saved only on this device — it is not backed up or synced.';
+
+  @override
+  String get safeQrShareImageAction => 'Save or share QR image';
+
+  @override
+  String get safeQrShareImageFailed => 'Couldn\'t create the QR image.';
 
   @override
   String get weatherUnavailableTooltip =>

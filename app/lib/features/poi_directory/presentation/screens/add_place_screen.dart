@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -18,7 +19,9 @@ import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
-/// real fix is available yet.
+/// real fix is available yet. Only ever the map's *initial camera* — never a
+/// saved location (claude_sol.md §3.5.3): a place saved here without a real
+/// fix or a deliberate pin used to land in central Dhaka.
 const _fallbackCenter = LatLng(23.8103, 90.4125);
 
 /// "Add a place" form — the location defaults to the rider's current GPS fix
@@ -47,6 +50,26 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   /// True while the "use the pin's location" reverse-geocode is in flight.
   bool _lookingUpAddress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed the pick from the rider's GPS fix as soon as there is one, so the
+    // common case ("add the place I'm standing at") needs no panning. Never
+    // overwrites a pin the rider has already moved.
+    ref.listenManual<AsyncValue<Position>>(currentPositionProvider, (_, next) {
+      final pos = next.valueOrNull;
+      if (pos != null && _pickedLocation == null) {
+        _pickedLocation = LatLng(pos.latitude, pos.longitude);
+      }
+    }, fireImmediately: true);
+  }
+
+  void _showPickLocationHint() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Pick the location on the map first.')),
+    );
+  }
 
   @override
   void dispose() {
@@ -105,7 +128,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   /// [NominatimService].
   Future<void> _fillAddressFromPin() async {
     if (_lookingUpAddress) return;
-    final location = _pickedLocation ?? _fallbackCenter;
+    final location = _pickedLocation;
+    if (location == null) return _showPickLocationHint();
 
     setState(() => _lookingUpAddress = true);
     try {
@@ -138,7 +162,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
 
-    final location = _pickedLocation ?? _fallbackCenter;
+    final location = _pickedLocation;
+    if (location == null) return _showPickLocationHint();
 
     setState(() => _submitting = true);
     try {
@@ -339,7 +364,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 // reactive to prop changes on an already-mounted map.
                 key: ValueKey(initialCenter),
                 initialCenter: initialCenter,
-                onLocationChanged: (latLng) => _pickedLocation = latLng,
+                // The picker also reports its initial camera, which with no
+                // GPS fix is the Dhaka fallback — that isn't a pick.
+                onLocationChanged: (latLng) {
+                  if (latLng != _fallbackCenter) _pickedLocation = latLng;
+                },
               ),
               const SizedBox(height: 20),
               Text('Category', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),

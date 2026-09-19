@@ -13,7 +13,9 @@ import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/notification_bell_button.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_mode_selector.dart';
 import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
@@ -113,12 +115,17 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Settings and Notifications used to live here as icon
-                      // buttons; both moved to the Profile tab's header, next to
-                      // the rest of the account-level chrome (see
-                      // GarageScreen) — this screen has no title bar of its
-                      // own, and the hero below is the header.
-                      const SizedBox(height: 4),
+                      // Settings lives on the Profile tab's header (see
+                      // GarageScreen). The notification bell is back here as
+                      // well, since an unread badge only on the Profile tab
+                      // went unseen (claude_sol.md §3.2.6). This screen has no
+                      // title bar of its own, and the hero below is the header.
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: NotificationBellButton(
+                            unreadCount:
+                                ref.watch(unreadNotificationCountProvider)),
+                      ),
 
                       // 1. Hero — the bike, at full width, wearing the greeting.
                       // The casual line carries the rider's name when the picked

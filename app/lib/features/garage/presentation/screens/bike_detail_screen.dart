@@ -10,6 +10,8 @@ import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../maintenance/domain/entities/maintenance_entity.dart';
+import '../../../maintenance/presentation/providers/maintenance_provider.dart';
 
 class BikeDetailScreen extends ConsumerWidget {
   final String bikeId;
@@ -126,6 +128,8 @@ class BikeDetailScreen extends ConsumerWidget {
                 label: const Text('Discuss this bike'),
               ),
             ),
+            const SizedBox(height: 16),
+            _ServiceCard(bikeId: bikeId),
             const SizedBox(height: 24),
 
             // Ride history
@@ -269,5 +273,82 @@ class BikeDetailScreen extends ConsumerWidget {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+}
+
+/// "Service & maintenance" summary for one bike: the most urgent check and a
+/// way into the full list. Bike detail had no maintenance entry point at all
+/// (claude_sol.md §3.2.3), so the only route in was the Maintenance tab with
+/// whichever bike happened to be active.
+class _ServiceCard extends ConsumerWidget {
+  final String bikeId;
+  const _ServiceCard({required this.bikeId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Sorted most-urgent first by the provider.
+    final reminders = ref.watch(maintenanceRemindersProvider(bikeId));
+    final next = reminders.firstOrNull;
+
+    final (String summary, Color tone) = switch (next) {
+      null => ('Using default service intervals', AppColors.textSecondary),
+      MaintenanceReminder(status: ReminderStatus.overdue) => (
+          '${next.serviceType.label} · overdue by '
+              '${(next.kmSinceService - next.kmLimit).toStringAsFixed(0)} km',
+          AppColors.danger,
+        ),
+      _ => (
+          '${next.serviceType.label} · due in '
+              '${(next.kmLimit - next.kmSinceService).clamp(0, double.infinity).toStringAsFixed(0)} km',
+          next.status == ReminderStatus.dueSoon
+              ? AppColors.warning
+              : AppColors.textSecondary,
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.build_outlined, size: 20, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text('Service & maintenance',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text('Next: $summary', style: TextStyle(fontSize: 14, color: tone)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                onPressed: () =>
+                    context.push('/home/maintenance/configure?bikeId=$bikeId'),
+                child: const Text('Intervals'),
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                onPressed: () =>
+                    context.push('/home/maintenance?bikeId=$bikeId'),
+                icon: const Icon(Icons.arrow_forward, size: 18),
+                label: const Text('View all'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

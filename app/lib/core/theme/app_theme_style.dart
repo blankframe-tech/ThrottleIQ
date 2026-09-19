@@ -342,9 +342,12 @@ class AppColorPalette {
     ink: Color(0xFF2B2823),
     onInk: Color(0xFFF8F5EF),
     onInkMuted: Color(0xFFB1ADA7),
-    primary: Color(0xFF84A98B),
-    primaryHighlight: Color(0xFFA8C7AD),
-    primaryDark: Color(0xFF537D5C),
+    // Darker sage so white button text clears WCAG AA (4.71:1). The old,
+    // lighter #84A98B only reached 2.62:1, so it now lives on as the
+    // non-text highlight fill. See test/core/theme/palette_contrast_test.dart.
+    primary: Color(0xFF537D5C),
+    primaryHighlight: Color(0xFF84A98B),
+    primaryDark: Color(0xFF3D5E45),
     secondary: Color(0xFFBD8D65),
     secondaryLight: Color(0xFFDBB597),
     attention: Color(0xFFB88255),

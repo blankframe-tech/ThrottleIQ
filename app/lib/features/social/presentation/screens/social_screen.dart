@@ -26,6 +26,7 @@ import '../../domain/entities/shared_ride_entity.dart';
 import '../../domain/feed_sort.dart';
 import '../providers/follow_providers.dart';
 import '../providers/notification_providers.dart';
+import '../../../../shared/widgets/notification_bell_button.dart';
 import '../providers/ride_feed_provider.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 
@@ -156,6 +157,12 @@ class _SocialScreenState extends State<SocialScreen> {
               color: AppColors.primary,
               tooltip: 'Messages',
               onPressed: () => context.push('/chats'),
+            ),
+            // Scoped Consumer so an unread-count change rebuilds only the
+            // bell, not the search field and tab bar.
+            Consumer(
+              builder: (_, ref, __) => NotificationBellButton(
+                  unreadCount: ref.watch(unreadNotificationCountProvider)),
             ),
           ],
           bottom: TabBar(
