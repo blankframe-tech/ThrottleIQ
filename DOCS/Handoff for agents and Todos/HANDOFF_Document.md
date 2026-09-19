@@ -57,6 +57,10 @@ behind maintenance reminders someone acted on). Reuses the existing
 new persistence path; see §75 for the full detail and for a related fix
 (that method now invalidates the ride/stats providers it changes, which
 also benefits the pre-existing auto-detected-ride confirmation flow).
+Built in release mode and installed/launched on a real device (Abraar's
+iPhone, via `flutter build ios --release` + `xcrun devicectl`) same day —
+confirms the app starts and runs, not a tap-through of this specific
+feature yet.
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
