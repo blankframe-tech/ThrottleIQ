@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -6,7 +9,9 @@ import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/services/auto_tracking_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../garage/data/models/bike_model.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/data/repositories/ride_share_repository.dart';
 import '../../../stats/presentation/providers/rider_stats_provider.dart';
 import '../../data/models/ride_model.dart';
 import '../../domain/entities/ride_entity.dart';
@@ -213,6 +218,30 @@ class RideAttribution {
     _ref.invalidate(riderStatsProvider);
     _ref.invalidate(rideHistoryProvider(ride.bikeId));
     _ref.invalidate(rideHistoryProvider(bikeId));
+    unawaited(_resyncSharedRideBike(ride.id, bikeId));
+  }
+
+  /// If [rideId] was already posted to the social feed, patches its
+  /// denormalized `bikeId`/`bikeName`/`bikeType` to match the correction —
+  /// otherwise the shared card would keep showing the wrong bike forever
+  /// (the share is a snapshot taken once at share time, not a live
+  /// reference). Best-effort: a network hiccup here must not undo the local
+  /// correction that already succeeded, and most rides were never shared at
+  /// all, which `updateSharedRideBikeInfo` treats as a normal no-op.
+  Future<void> _resyncSharedRideBike(String rideId, String bikeId) async {
+    try {
+      final bikeRow = await BikeDao().getById(bikeId);
+      if (bikeRow == null) return;
+      final bike = BikeModel.fromMap(bikeRow);
+      await RideShareRepository().updateSharedRideBikeInfo(
+        rideId,
+        bikeId: bikeId,
+        bikeName: bike.displayName,
+        bikeType: bike.cc != null ? '${bike.cc}cc' : 'Motorcycle',
+      );
+    } catch (e) {
+      debugPrint('[RideAttribution] shared-post bike resync failed for $rideId: $e');
+    }
   }
 }
 

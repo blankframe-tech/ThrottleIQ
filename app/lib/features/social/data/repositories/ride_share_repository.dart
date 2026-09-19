@@ -123,6 +123,33 @@ class RideShareRepository {
     return rideId;
   }
 
+  /// Patches a previously shared ride's bike name/type after the rider
+  /// corrects which bike the ride was actually on (see `ChangeBikeControl`
+  /// and `RideAttribution.confirm`). The share is a denormalized snapshot
+  /// taken at share time — without this, a bike correction would silently
+  /// stop at the local ride row, leaving an already-posted card showing the
+  /// wrong bike forever.
+  ///
+  /// `update()` throwing `not-found` just means this ride was never shared,
+  /// which is the common case, not an error worth surfacing to the rider.
+  Future<void> updateSharedRideBikeInfo(
+    String rideId, {
+    required String bikeId,
+    required String bikeName,
+    required String bikeType,
+  }) async {
+    try {
+      await _firestore.collection('rides').doc(rideId).update({
+        'bikeId': bikeId,
+        'bikeName': bikeName,
+        'bikeType': bikeType,
+      });
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found') return;
+      rethrow;
+    }
+  }
+
   /// Gets a shared ride by ID.
   Future<SharedRideEntity?> getSharedRide(String rideId) async {
     final doc = await _firestore.collection('rides').doc(rideId).get();
