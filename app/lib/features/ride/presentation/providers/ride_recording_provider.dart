@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/cloud/outbox_service.dart';
+import '../../../../core/cloud/sync_manager.dart';
 import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/database/daos/bike_dao.dart';
 import '../../../../core/database/daos/ride_dao.dart';
@@ -24,6 +25,7 @@ import '../../../profile/presentation/providers/speed_alert_provider.dart';
 import '../../data/models/ride_model.dart';
 import '../../domain/calculators/average_speed.dart';
 import '../../domain/calculators/event_detector.dart';
+import '../../domain/calculators/final_ride_stats.dart';
 import '../../domain/calculators/motion_calculator.dart';
 import '../../domain/calculators/recording_cadence_policy.dart';
 import '../../domain/calculators/ride_resume.dart';
@@ -179,6 +181,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     NotificationService.instance.onCrashDismissed = () {
       if (state.crashDetected) unawaited(dismissCrashAlert());
     };
+    // Only ever called while SensorConstants.impactDetectorLiveEnabled.
+    _sensorCoordinator.onImpactCrash = _onImpactCrash;
   }
 
   final Ref _ref;
@@ -197,7 +201,19 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   StreamSubscription<Position>? _locationSub;
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
   StreamSubscription<GyroscopeEvent>? _gyroSub;
+  // Gravity-including accelerometer, for ImpactDetector's orientation check.
+  // Only subscribed while the impact detector is live.
+  StreamSubscription<AccelerometerEvent>? _gravitySub;
   Timer? _elapsedTimer;
+
+  /// When [RideRecordingState.activeAlert] was last set to a transient alert.
+  /// Brake/accel/overspeed alerts clear after [_alertTtl] so the banner
+  /// doesn't stay up for the rest of the ride (§78.3).
+  DateTime? _activeAlertAt;
+  static const Duration _alertTtl = Duration(seconds: 5);
+
+  /// The signal behind the current crash alert, for the dismissal report.
+  CrashSignal? _lastCrashSignal;
 
   RidePointEntity? _lastPoint;
   double _totalDistance = 0;
@@ -341,6 +357,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
     _cadencePolicy.reset();
     _sensorCoordinator.reset();
+    _activeAlertAt = null;
+    _lastCrashSignal = null;
     _persistenceCoordinator.resetCounts();
     _liveCoordinator.reset();
     _crashCoordinator.dispose();
@@ -432,6 +450,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _gyroSub = gyroscopeEventStream(
       samplingPeriod: const Duration(milliseconds: 50),
     ).listen(_onGyro);
+    if (_sensorCoordinator.impactDetectionEnabled) {
+      _gravitySub = accelerometerEventStream(
+        samplingPeriod: const Duration(milliseconds: 50),
+      ).listen(_onGravity);
+    }
   }
 
   void _onGyro(GyroscopeEvent event) {
@@ -439,12 +462,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _sensorCoordinator.onGyroEvent(event);
   }
 
+  void _onGravity(AccelerometerEvent event) {
+    if (state.status != RecordingStatus.active) return;
+    _sensorCoordinator.onGravityEvent(event);
+  }
+
   void _onSensor(UserAccelerometerEvent event) {
     if (state.status != RecordingStatus.active) return;
     _sensorCoordinator.onAccelEvent(
       event: event,
       detector: _detector,
-      currentActiveAlert: state.activeAlert,
       onUiPush: (filteredAccel) {
         if (mounted) {
           state = state.copyWith(sensorAccelMs2: filteredAccel);
@@ -452,10 +479,37 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       },
       onAlertTriggered: (alert) {
         if (mounted) {
+          _activeAlertAt = DateTime.now();
           state = state.copyWith(activeAlert: alert);
         }
       },
     );
+  }
+
+  /// [activeAlert] with transient alerts expired after [_alertTtl]. Fatigue
+  /// is left sticky, as before: the detector re-raises it every 10 s, and
+  /// expiring it would make the banner blink.
+  RideAlert _alertAfterTtl(DateTime now) {
+    final current = state.activeAlert;
+    if (current != RideAlert.hardBraking &&
+        current != RideAlert.rapidAccel &&
+        current != RideAlert.overspeed) {
+      return current;
+    }
+    final setAt = _activeAlertAt;
+    if (setAt != null && now.difference(setAt) < _alertTtl) return current;
+    return RideAlert.none;
+  }
+
+  /// A crash confirmed by [ImpactDetector]. Same confidence gate the GPS
+  /// crash path had: don't act on a signal derived from garbage sensor data.
+  void _onImpactCrash(CrashSignal signal) {
+    if (!mounted || state.status != RecordingStatus.active) return;
+    final confidence =
+        _sensorCoordinator.estimator.currentState?.confidence ?? 100;
+    if (confidence < SensorConstants.minConfidenceForCrashAlert) return;
+    _lastCrashSignal = signal;
+    unawaited(_onCrashDetected());
   }
 
   void _onPosition(Position pos) {
@@ -533,27 +587,22 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (_lastFixTime != null) {
       final gapMs = timestamp.difference(_lastFixTime!).inMilliseconds;
       if (gapMs > 0) {
-        if (gapMs <= _maxMovingGapSeconds * 1000) {
-          if (speedMs >= SensorConstants.movingSpeedThresholdMs) {
-            _movingMilliseconds += gapMs;
-          }
-        } else if (distDelta > 50.0) {
-          final gapSeconds = gapMs / 1000.0;
-          final gapSpeedMs = distDelta / gapSeconds;
-          if (gapSpeedMs >= SensorConstants.movingSpeedThresholdMs) {
-            _movingMilliseconds += gapMs;
-          } else {
-            final estimatedMovingSeconds =
-                (distDelta / 5.0).clamp(1.0, gapSeconds);
-            _movingMilliseconds += (estimatedMovingSeconds * 1000).round();
-          }
-        }
+        _movingMilliseconds += movingMsForGap(
+          gapMs: gapMs,
+          prevSpeedMs: _lastPoint?.speedMs ?? 0,
+          speedMs: speedMs,
+          distanceM: distDelta,
+          maxGapSeconds: _maxMovingGapSeconds,
+        );
         _movingSeconds = (_movingMilliseconds / 1000).round();
       }
     }
     _lastFixTime = timestamp;
 
     _sensorCoordinator.pairGpsAccel(accel);
+    // Wall clock, not the fix's own timestamp: the impact detector's IMU
+    // samples are stamped on arrival, and the two must share one clock.
+    _sensorCoordinator.onGpsSpeed(DateTime.now(), speedMs);
 
     _totalDistance += distDelta;
     final periodType = speedMs < 1 ? 'idle' : 'moving';
@@ -608,28 +657,31 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       });
     }
 
+    // Crash detection is off this path (it could never fire here — §78.1);
+    // it lives in ImpactDetector, behind impactDetectorLiveEnabled. Brake/
+    // accel counts belong to the IMU once its axis is calibrated, and to
+    // this GPS path before that — never both (§78.3).
     final alert = _detector.detect(
       jerk: jerk,
       accel: accel,
       speedMs: speedMs,
       elapsedSeconds: state.elapsed.inSeconds,
       at: timestamp,
+      detectCrash: false,
+      countLongitudinal: !_sensorCoordinator.axisCalibrator.isCalibrated,
     );
 
-    final trustworthy = (vehicleState?.confidence ?? 100) >=
-        SensorConstants.minConfidenceForCrashAlert;
-    final effectiveAlert =
-        (alert == RideAlert.crash && !trustworthy) ? RideAlert.none : alert;
-
-    if (effectiveAlert == RideAlert.crash) {
-      _onCrashDetected();
-    } else if (effectiveAlert != RideAlert.none &&
-        effectiveAlert != state.activeAlert) {
+    if (alert != RideAlert.none && alert != state.activeAlert) {
       HapticService.alertPattern();
     }
 
-    final alertToShow =
-        effectiveAlert != RideAlert.none ? effectiveAlert : state.activeAlert;
+    final RideAlert alertToShow;
+    if (alert != RideAlert.none) {
+      _activeAlertAt = DateTime.now();
+      alertToShow = alert;
+    } else {
+      alertToShow = _alertAfterTtl(DateTime.now());
+    }
     final here = LatLng(pos.latitude, pos.longitude);
     _appendToPolyline(here);
 
@@ -650,9 +702,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _elapsedTimer?.cancel();
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (state.status == RecordingStatus.active) {
+        // Expire stale alerts here too: a stopped bike gets no GPS fixes
+        // (distance filter), so _onPosition alone can't be relied on.
         state = state.copyWith(
           elapsed:
               _accumulatedDuration + DateTime.now().difference(_activeStart!),
+          activeAlert: _alertAfterTtl(DateTime.now()),
         );
         unawaited(_persistenceCoordinator.persistElapsed(state.elapsed));
       }
@@ -706,6 +761,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _locationSub?.pause();
     _accelSub?.pause();
     _gyroSub?.pause();
+    _gravitySub?.pause();
     state = state.copyWith(status: RecordingStatus.paused);
     // Stop the 10s live-share tick — otherwise it keeps republishing a stale
     // fix (and burning battery/network) for as long as the ride sits paused.
@@ -741,6 +797,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     _activeStart = DateTime.now();
     _skipNextDistanceDelta = true;
+    // The first fix after a resume must not credit the paused interval as
+    // moving time (it would, via movingMsForGap, if both ends were moving).
+    _lastFixTime = null;
     _userInitiated = true;
 
     if (coldStart) {
@@ -756,6 +815,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _locationSub?.resume();
       _accelSub?.resume();
       _gyroSub?.resume();
+      _gravitySub?.resume();
       // Warm resume: pauseRide() suspended the live-share tick, so restart it.
       if (_liveCoordinator.isLiveShareEnabled) {
         _startLiveSessionTimer();
@@ -778,9 +838,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _locationSub?.cancel();
     _accelSub?.cancel();
     _gyroSub?.cancel();
+    _gravitySub?.cancel();
     _locationSub = null;
     _accelSub = null;
     _gyroSub = null;
+    _gravitySub = null;
     _elapsedTimer?.cancel();
     _persistenceCoordinator.dispose();
     _crashCoordinator.dispose();
@@ -804,9 +866,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _locationSub?.cancel();
     _accelSub?.cancel();
     _gyroSub?.cancel();
+    _gravitySub?.cancel();
     _locationSub = null;
     _accelSub = null;
     _gyroSub = null;
+    _gravitySub = null;
     _elapsedTimer?.cancel();
     // Flush BEFORE dispose. dispose() fires its own unawaited flush, which
     // empties the buffer synchronously — so an awaited flush placed after it
@@ -826,47 +890,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     await _persistenceCoordinator.clearRecordingState();
 
     final ride = state.ride!;
-    final finalDuration = state.elapsed.inSeconds;
-
-    var effectiveMax = _maxSpeed;
-    if (effectiveMax > SensorConstants.maxPlausibleSpeedMs) {
-      effectiveMax = SensorConstants.maxPlausibleSpeedMs;
-    }
-
-    final derivedAvg = _movingMilliseconds > 0
-        ? averageSpeedMs(
-            distanceM: _totalDistance,
-            movingSeconds: _movingSeconds,
-            maxSpeedMs: effectiveMax > 0 ? effectiveMax : null,
-          )
-        : (_speedCount > 0 ? _speedSum / _speedCount : 0.0);
-
-    // Physical invariant: maximum speed can never be less than average speed.
-    // If max speed was unrecorded (e.g. zero GPS Doppler speed) but the vehicle moved,
-    // ensure max speed is at least the average speed.
-    if (effectiveMax < derivedAvg && derivedAvg <= SensorConstants.maxPlausibleSpeedMs) {
-      effectiveMax = derivedAvg;
-    }
-
-    // Sanity check: average speed can never physically exceed max speed.
-    // If anomalies occur (e.g. truncated moving time), fallback to distance/duration or maxSpeed.
-    final avgSpeed = (effectiveMax > 0 && derivedAvg > effectiveMax)
-        ? (finalDuration > 0
-            ? (_totalDistance / finalDuration).clamp(0.0, effectiveMax)
-            : effectiveMax)
-        : derivedAvg;
-
-    await _rideDao.finalizeRide(ride.id, {
-      'end_time': DateTime.now().toIso8601String(),
-      'distance_m': _totalDistance,
-      'avg_speed_ms': avgSpeed,
-      'max_speed_ms': effectiveMax,
-      'duration_s': finalDuration,
-      'moving_s': _movingSeconds,
-      'hard_brake_count': _detector.hardBrakeCount,
-      'rapid_accel_count': _detector.rapidAccelCount,
-      'high_jerk_count': _detector.highJerkCount,
-    });
+    await _rideDao.finalizeRide(ride.id, _buildFinalStats());
 
     final bikeDao = BikeDao();
     await bikeDao.incrementStats(ride.bikeId, _totalDistance);
@@ -882,6 +906,22 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     state = const RideRecordingState();
     return rideId;
   }
+
+  /// The ride summary columns — see [buildFinalRideStats]. Shared by
+  /// [stopRide] and [_onCrashDetected] (§69.O10).
+  Map<String, dynamic> _buildFinalStats() => buildFinalRideStats(
+        endTime: DateTime.now(),
+        distanceM: _totalDistance,
+        maxSpeedMs: _maxSpeed,
+        speedSum: _speedSum,
+        speedCount: _speedCount,
+        movingMilliseconds: _movingMilliseconds,
+        movingSeconds: _movingSeconds,
+        durationSeconds: state.elapsed.inSeconds,
+        hardBrakeCount: _detector.hardBrakeCount,
+        rapidAccelCount: _detector.rapidAccelCount,
+        highJerkCount: _detector.highJerkCount,
+      );
 
   Future<void> restoreInterruptedRide() async {
     if (state.status != RecordingStatus.idle) return;
@@ -990,19 +1030,26 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       },
     ));
 
+    // Full stats, not just status + end_time: this may be the last write
+    // the ride ever gets if the phone doesn't survive (§69.O10).
     await _rideDao.finalizeRide(state.ride!.id, {
+      ..._buildFinalStats(),
       'status': 'crash',
-      'end_time': DateTime.now().toIso8601String(),
     });
 
     await _liveCoordinator.updateLiveSessionStatus(LiveSessionStatus.crash);
+
+    // Push it up now, while the phone still works. Best-effort: SyncManager
+    // no-ops when signed out or offline, and only uploads what its unsynced
+    // query selects.
+    unawaited(_ref.read(syncManagerProvider).sync());
   }
 
   Future<void> dismissCrashAlert() async {
     await _crashCoordinator.dismissCrashAlert(
       uid: _ref.read(currentUserProvider)?.uid,
       rideId: state.ride?.id,
-      lastCrashSignal: _detector.lastCrashSignal,
+      lastCrashSignal: _lastCrashSignal,
     );
     state = state.copyWith(crashDetected: false, crashCountdown: 60);
 
@@ -1027,6 +1074,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _locationSub?.cancel();
     _accelSub?.cancel();
     _gyroSub?.cancel();
+    _gravitySub?.cancel();
     _elapsedTimer?.cancel();
     _crashCoordinator.dispose();
     _liveCoordinator.dispose();

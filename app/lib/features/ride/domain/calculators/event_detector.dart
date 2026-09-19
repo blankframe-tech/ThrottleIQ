@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../../../core/constants/sensor_constants.dart';
 
 enum RideAlert { none, hardBraking, rapidAccel, overspeed, fatigue, crash }
@@ -6,7 +8,7 @@ class CrashSignal {
   final double peakAccelerationMs2;
   final double peakJerkMs3;
   final DateTime detectedAt;
-  final bool hadHighAccelSpike; // >8g
+  final bool hadHighAccelSpike; // above the crash/impact threshold
   final bool hadJerkSpike; // >10 m/s³
   final bool hadSpeedDrop; // speed -> 0 within 2s
 
@@ -50,6 +52,12 @@ class EventDetector {
   static const Duration _crashWindow = Duration(seconds: 2);
   static const double _speedDropThreshold = 2.0; // m/s
 
+  // Edge-trigger state for the GPS-path brake/accel counters (§78.3): a
+  // sustained brake across several fixes counts once, then re-arms only
+  // after the GPS acceleration comes back past the re-arm level.
+  bool _brakeArmed = true;
+  bool _accelArmed = true;
+
   double overspeedThreshold;
 
   EventDetector({double? overspeedThresholdMs})
@@ -78,12 +86,24 @@ class EventDetector {
   /// Optional rather than required only so the existing live call sites and
   /// the crash-detector test suite keep compiling unchanged; treat it as
   /// required in any new code.
+  ///
+  /// [detectCrash] gates the GPS-derived crash branch. The live recorder
+  /// passes false: that branch needs an 80 m/s² GPS speed delta, which a
+  /// live ride can never produce (§78.1), so live crash detection belongs to
+  /// `ImpactDetector`. The replay path keeps the default.
+  ///
+  /// [countLongitudinal] gates the hard-brake / rapid-accel counters and
+  /// alerts. There must be exactly one owner of those counts (§78.3): the
+  /// live recorder hands them to the IMU once its axis is calibrated and
+  /// passes false from then on.
   RideAlert detect({
     double? jerk,
     double? accel,
     double speedMs = 0,
     int elapsedSeconds = 0,
     DateTime? at,
+    bool detectCrash = true,
+    bool countLongitudinal = true,
   }) {
     final now = at ?? DateTime.now();
 
@@ -103,7 +123,7 @@ class EventDetector {
     // spiking together, as most real crashes do) could fail to register a
     // crash at all. Opening the window here first means the jerk check
     // below sees it already open for this sample too.
-    if (accel != null && accel.abs() > _crashAccelThreshold) {
+    if (detectCrash && accel != null && accel.abs() > _crashAccelThreshold) {
       if (_highAccelStart == null) {
         _highAccelStart = now;
         _peakAccelSinceSpike = accel.abs();
@@ -124,9 +144,9 @@ class EventDetector {
     if (jerk != null && jerk.abs() > SensorConstants.highJerkThreshold) {
       highJerkCount++;
       if (_highAccelStart != null) {
-        _peakJerkInWindow = (_peakJerkInWindow == 0)
-            ? jerk.abs()
-            : (_peakJerkInWindow + jerk.abs()) / 2; // Moving avg
+        // Peak, not a running average — averaging [14, 5.5] gave 9.75,
+        // dropping a real 14 m/s³ spike under the 10 m/s³ threshold (§78.2).
+        _peakJerkInWindow = math.max(_peakJerkInWindow, jerk.abs());
       }
     }
 
@@ -158,14 +178,24 @@ class EventDetector {
 
     // Hard braking / rapid acceleration (below the crash threshold).
     // Counters feed the ride summary; the returned alert drives UI/haptics.
-    if (accel != null && accel.abs() <= _crashAccelThreshold) {
-      if (accel <= SensorConstants.hardBrakingThreshold) {
+    // Edge-triggered with hysteresis, so a brake spanning several fixes is
+    // one event rather than one per fix.
+    if (countLongitudinal && accel != null) {
+      if (accel > SensorConstants.hardBrakingRearmThreshold) _brakeArmed = true;
+      if (accel < SensorConstants.rapidAccelRearmThreshold) _accelArmed = true;
+    }
+    if (countLongitudinal &&
+        accel != null &&
+        accel.abs() <= _crashAccelThreshold) {
+      if (_brakeArmed && accel <= SensorConstants.hardBrakingThreshold) {
+        _brakeArmed = false;
         hardBrakeCount++;
         _lastAlert = RideAlert.hardBraking;
         _lastAlertTime = now;
         return RideAlert.hardBraking;
       }
-      if (accel >= SensorConstants.rapidAccelThreshold) {
+      if (_accelArmed && accel >= SensorConstants.rapidAccelThreshold) {
+        _accelArmed = false;
         rapidAccelCount++;
         _lastAlert = RideAlert.rapidAccel;
         _lastAlertTime = now;
@@ -220,6 +250,8 @@ class EventDetector {
     highJerkCount = 0;
     _lastAlert = null;
     _lastAlertTime = null;
+    _brakeArmed = true;
+    _accelArmed = true;
     _resetCrashState();
     lastCrashSignal = null;
   }
