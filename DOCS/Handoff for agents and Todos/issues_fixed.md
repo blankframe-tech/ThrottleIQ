@@ -4837,3 +4837,125 @@ Verified: `flutter analyze` clean on all touched files, new
 `maintenance_provider_test.dart` coverage (`resetItems` group: resets ticked
 types while preserving prior history, no-op on empty selection). Not yet
 manually tried in a running app.
+
+---
+
+## 72. Marketing-asset audit: two overclaims caught and fixed before any ad ran (2026-09-19)
+
+Surfaced while building install-driving marketing assets (`DOCS/General/posters/`,
+`DOCS/General/posters/social/`) — nothing shipped to users, but both would
+have overclaimed to a public ad/poster audience had they gone out as-is.
+
+**72.1 — Safety Check-In screenshot implied live crash-contact delivery.**
+The real app screenshot used in two social-ad creatives
+(`social-05-family-parent`, `social-06-family-spouse`, cropped from
+`DOCS/General/website_demo/assets/ui/{carbon-mono,editorial-bw}.png`) carries
+its own on-screen copy: *"Looked like a hard stop. We'll gently check in
+with your emergency contacts if we don't hear from you"* plus a "Notify
+contacts now" link — with no caveat that delivery isn't live. Same
+underlying gap as §69.O3/§33 (crash-alert SMS/email is mock end-to-end,
+blocked on Blaze billing) and the same risk already flagged for Settings in
+§32 (which at least says "aren't live yet" — this screen didn't). The
+surrounding ad copy was already written to stay opt-in-only, but the
+screenshot's own text didn't match.
+
+**Fix:** masked the paragraph and the "Notify contacts now" line out of both
+cropped screenshot PNGs in `DOCS/General/posters/social/screenshots/`
+(background-color rectangles, precisely bounded so the "Everything okay?"
+title, checkmark, progress bar and primary button are untouched), then
+regenerated both creatives. Re-running `crop_screenshots.py` from the
+source sheets will undo this masking — the fix lives in the derived
+`screenshots/*.png` files, not the source UI sheets — so a future re-crop
+needs the same redaction reapplied (or the in-app copy fixed to add the
+same "aren't live yet" caveat Settings has, which would make this
+unnecessary).
+
+**72.2 — Street-poster footer claimed iOS availability that doesn't exist.**
+Every v1 poster (`posters.py`'s shared `qr_block()`, all 24 posters) and
+both original v3 posters (`posters_v3.py`'s `footer()`) printed "iOS +
+ANDROID" — but per `HANDOFF_Document.md`, no App Store listing or
+TestFlight build exists yet. Only the newer social-ad creatives
+(`social.py`) had already been written with the honest "ANDROID NOW · iOS
+শীঘ্রই" framing.
+
+**Fix:** `posters.py` line 25 now reads "ANDROID NOW · iOS SOON";
+`posters_v3.py`'s footer now reads "FREE · OFFLINE-FIRST · ANDROID NOW ·
+iOS শীঘ্রই" (matching `social.py`'s wording, font size dropped 15→14 to
+match its proven-safe width). All 24 v1 posters and all 6 v3 posters
+regenerated (svg/print/web) via the existing `.venv` cairosvg pipeline; v2
+was unaffected (its `qr_corner()` never had this text).
+
+Verified: all regenerated SVGs are well-formed, spot-checked PNGs show no
+text overflow and no visible mask seams. No git commands run — the poster
+directories are still mid-reorg and untracked, left for the user to stage.
+
+## 73. Two screens that failed to render, found by the automated UI screenshot tour — FIXED (2026-09-19)
+
+Both surfaced while building the 28-combination screenshot set
+(`DOCS/General/screenshots_ui/`, tour in `app/integration_test/ui_tour_test.dart`).
+Both were in committed code and hit real users, not just the tour.
+
+**73.1 — Ride summary map threw "Cannot modify unmodifiable map".**
+`ride_summary_screen.dart`'s `TileLayer` passed
+`NetworkTileProvider(headers: const {...})`. flutter_map writes its own
+`User-Agent` entry into that map, so the `const` map threw on first build and
+the map section rendered as an error box (a red screen in debug). **Fix:**
+dropped the `const` (with a comment saying why).
+
+**73.2 — Place detail rendered blank for any place with a phone number.**
+The Directions/Call row puts the Call `OutlinedButton` in a `Row` without
+`Expanded`, and the theme's `OutlinedButton` `minimumSize` is
+`Size.fromHeight(...)`, which means infinite width. Layout failed ("BoxConstraints forces an
+infinite width") and the whole detail list below the app bar came out empty.
+**Fix:** the Call button now sets its own
+`minimumSize: Size(0, AppDimensions.controlHeight)`. Other buttons were left
+alone. Any other theme-styled button placed in a `Row` without
+`Expanded` would hit the same trap.
+
+---
+
+## 75. Feature: "Change bike" correction for the most recently finished ride (2026-09-19)
+
+**Status:** Shipped.
+
+Requested: a way to fix a wrong bike pick after ending a ride, for the case
+where the rider forgot to switch the active bike before starting. Scoped
+deliberately to **only the single most recently completed ride** — not any
+ride in history — since an older ride's bike may already be the basis for
+distance-based maintenance reminders someone has acted on, and a
+general "edit any past ride's bike" control would invite silently rewriting
+stats far from where the mis-tap happened.
+
+New `ChangeBikeControl` (`presentation/widgets/change_bike_control.dart`) on
+the ride summary screen (`ride_summary_screen.dart`) shows a "Logged to
+{bike} · CHANGE" row, visible only when: the rider has 2+ bikes, this ride's
+id matches the new `latestCompletedRideIdProvider` (backed by
+`RideDao.getMostRecentCompletedId()`, `ORDER BY start_time DESC LIMIT 1`
+scoped to `status = 'completed'`), and `BikeConfirmationCard` (the existing
+prompt for an unconfirmed auto-detected ride) isn't already showing for the
+same ride — the two controls are never both visible at once. Tapping it
+opens the same bottom-sheet bike picker pattern as `BikePickerCard`
+(`bike_picker_card.dart`'s `BikeRow`).
+
+**No new persistence path** — reused `RideAttribution.confirm()`
+(`auto_tracking_provider.dart`), previously reachable only from
+`BikeConfirmationCard`'s auto-detected-ride flow. It already moves
+per-bike distance/ride-count stats via `BikeDao.moveRideStats()` and sets
+`bike_confidence: confirmed` + `synced: 0` via
+`RideDao.confirmBikeAttribution()`, so the corrected bike reaches Firestore
+on the next normal sync pass with no Firestore-specific update call needed.
+
+`confirm()` now also invalidates `rideDetailProvider(ride.id)`,
+`riderStatsProvider`, and `rideHistoryProvider` for both the old and new
+bike id — previously it only invalidated `garageProvider` and
+`unconfirmedAutoRidesProvider`, so the ride summary screen and stats
+wouldn't reflect a correction until the next unrelated refetch. This also
+improves the pre-existing `BikeConfirmationCard` flow, which shares the same
+method.
+
+Localized (`loggedToBikeLabel`, `changeBikeSheetTitle` — English + Bengali).
+
+Verified: `flutter analyze` clean (whole project), `flutter test` 1038/1038
+including new `RideDao.getMostRecentCompletedId` coverage
+(`test/database/ride_dao_sync_and_finalize_test.dart`) and the ARB parity
+test. Not yet manually tried in a running app.

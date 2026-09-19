@@ -48,6 +48,16 @@ now" rather than deleting history, because maintenance logs have no
 delete-sync/tombstone mechanism yet (see §71 for the gap this leaves open
 if a true history-wipe is wanted later).
 
+**Latest feature (2026-09-19, issues_fixed.md §75):** "Change bike" on the
+ride summary screen — a rider who picked the wrong bike before starting can
+now correct it after the ride ends, but only for the single most recent
+completed ride (older rides stay locked, since their bike may already be
+behind maintenance reminders someone acted on). Reuses the existing
+`RideAttribution.confirm()` stats-safe reassignment service rather than a
+new persistence path; see §75 for the full detail and for a related fix
+(that method now invalidates the ride/stats providers it changes, which
+also benefits the pre-existing auto-detected-ride confirmation flow).
+
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
 the Vehicle State Engine architecture/roadmap. Update it (don't fork a new
@@ -1037,6 +1047,7 @@ group first matters more than speed.
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`issues_fixed.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
 | DB schema | **v11** (`is_auto`/`bike_confidence` on `rides`, plus `auto_detections`/`auto_fixes` for auto-tracking, added 2026-08-16 — `auto_tracking_plan.md`). v10 added `outbox`, the offline write queue (`issues_fixed.md` §25); v9 added `rides.moving_s`; v7 added `custom_label` on `maintenance_logs` |
 | Offline writes | Anything the rider explicitly asked for that needs the cloud goes through `core/cloud/outbox_service.dart`, **not** a bare `await` on Firestore. An awaited Firestore write with no connection never completes — it doesn't throw — so a direct `await` on a user-facing path hangs the app. `SyncManager` drains the queue on connectivity change, login, and its 5-minute timer. Optional telemetry uses `_bestEffortWrite()` (same idea, just a timeout, no durability) |
+| UI screenshot set | `DOCS/General/screenshots_ui/`: every screen in all 28 appearance combinations (7 colors × Curvy/Boxy × Light/Dark), with one walkthrough PDF per combination, captured 2026-09-19 on the `rider@example.com` test account. Regenerate after UI changes with `app/scripts/ui_tour/run_tour.sh` then `build_docs.py`; the commands are in that folder's README. The tour is `app/integration_test/ui_tour_test.dart`. It is launched directly on the simulator rather than through `flutter test`, because reinstalls reset the location permission and the prompt would cover the screenshots |
 
 ---
 

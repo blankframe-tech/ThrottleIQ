@@ -385,24 +385,17 @@ no fix needed.**
   **DEPLOYED 2026-09-19** — confirmed live at
   `https://throttleiqfb.web.app/privacy.html`.
 
----
+## 74. Retro / Light: some cards render near-black on the light page (surfaced 2026-09-19)
 
-## 70. Marketing-asset audit: Safety Check-In screen copy overclaims live delivery (surfaced 2026-09-19)
+Seen in the UI screenshot set (`DOCS/General/screenshots_ui/21_retro_curvy_light`
+and `23_retro_boxy_light`). A few surfaces are near-black blocks on Retro's
+light cream background, with low-contrast text inside:
+- the "Your bikes" forum cards on Social → Forums
+- the Places list rows
+- My Places rows
+- the forum post card
 
-While building install-ad creatives (`DOCS/General/posters/social/`) from the
-existing UI screenshot sheets (`DOCS/General/website_demo/assets/ui/`), the
-Safety Check-In screen's own copy reads: *"Looked like a hard stop. We'll
-gently check in with your emergency contacts if we don't hear from you"*,
-with a "Notify contacts now" link — no caveat that delivery isn't live.
-This is the same underlying gap as §69.O3/§33 (crash-alert SMS/email is
-mock end-to-end, blocked on Blaze billing) and the same risk already flagged
-for Settings in §32 (*"Emergency Contacts is exposed in Settings while
-explicitly non-functional... a safety feature presented as available but
-inert risks a false sense of security"*) — except the Settings screen at
-least says "aren't live yet," and this one doesn't. Two of the six ad
-creatives (`social-05-family-parent`, `social-06-family-spouse`) embed this
-exact screenshot verbatim; the surrounding ad copy was written to stay
-opt-in-only and avoid the overclaim, but the screenshot's own on-screen text
-does not. Before either creative runs as a paid ad, either crop/blur that
-line out of the screenshot, or add the same "aren't live yet" caveat to the
-in-app copy itself (consistent with Settings) and re-crop.
+Other color modes in Light don't do this. It is probably a Retro-light palette token (a
+`surfaceVariant`/`ink`-style color used as a card fill) rather than a
+per-screen bug. It needs a design decision: intentional "ink block" styling,
+or a token to lighten. Not changed.
