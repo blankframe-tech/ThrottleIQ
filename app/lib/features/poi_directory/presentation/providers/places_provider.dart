@@ -119,21 +119,24 @@ Future<int> importNearbyOsmPlaces(WidgetRef ref) async {
       await _placeRepository.getExistingOsmIds(candidates.map((c) => c.osmId).toList());
   final newCandidates = candidates.where((c) => !existingOsmIds.contains(c.osmId)).toList();
 
-  for (final candidate in newCandidates) {
-    await _placeRepository.addPlace(PlaceEntity(
-      id: '', // Firestore assigns the id via addPlace()'s collection.add().
-      name: candidate.name,
-      category: candidate.category,
-      latitude: candidate.latitude,
-      longitude: candidate.longitude,
-      geohash: GeohashUtils.encode(candidate.latitude, candidate.longitude),
-      address: candidate.address,
-      phone: candidate.phone,
-      createdBy: uid,
-      createdAt: DateTime.now(),
-      osmId: candidate.osmId,
-    ));
-  }
+  // One batched write per 400 places (ids `osm_<type>_<id>`) instead of an
+  // awaited add() per place.
+  await _placeRepository.addPlacesBatched([
+    for (final candidate in newCandidates)
+      PlaceEntity(
+        id: '', // Ignored on write; the repository picks `osm_...` ids.
+        name: candidate.name,
+        category: candidate.category,
+        latitude: candidate.latitude,
+        longitude: candidate.longitude,
+        geohash: GeohashUtils.encode(candidate.latitude, candidate.longitude),
+        address: candidate.address,
+        phone: candidate.phone,
+        createdBy: uid,
+        createdAt: DateTime.now(),
+        osmId: candidate.osmId,
+      ),
+  ]);
 
   if (newCandidates.isNotEmpty) {
     ref.invalidate(nearbyPlacesProvider);

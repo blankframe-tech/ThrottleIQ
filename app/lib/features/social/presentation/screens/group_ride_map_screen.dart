@@ -339,10 +339,28 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       await session.setActive(true);
       await _voicePlayer.setUrl(note.audioUrl);
       await _voicePlayer.play();
+      // play() normally completes when the clip does, but only if the player
+      // wasn't already `playing`. Belt and braces: also wait for the clip to
+      // actually finish, capped just past the rules' 60 s voice-note ceiling
+      // so a stalled stream can't wedge the queue.
+      if (_voicePlayer.processingState != ProcessingState.completed &&
+          _voicePlayer.processingState != ProcessingState.idle) {
+        await _voicePlayer.processingStateStream
+            .firstWhere((s) => s == ProcessingState.completed || s == ProcessingState.idle)
+            .timeout(const Duration(seconds: 70));
+      }
     } catch (_) {
       // A clip that fails to load/play is skipped rather than stalling the
       // rest of the queue — one bad URL must not silence the whole group.
     } finally {
+      // §78.10: after a clip completes just_audio leaves `playing == true`,
+      // and play() on an already-playing player returns immediately. Without
+      // this stop(), every clip after the first returned at once and the
+      // next setUrl() cut it off. stop() resets `playing` so the next clip's
+      // play() waits for it to finish.
+      try {
+        await _voicePlayer.stop();
+      } catch (_) {}
       await _deactivateVoiceAudioSession();
       if (mounted) {
         setState(() {

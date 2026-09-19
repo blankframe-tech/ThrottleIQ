@@ -41,6 +41,42 @@ class PlaceRepository {
     return docRef.id;
   }
 
+  /// Firestore caps a batch at 500 writes; stay well under it.
+  static const int importBatchSize = 400;
+
+  /// Deterministic doc id for an OSM-imported place, e.g. `node/123` →
+  /// `osm_node_123` (a `/` in a doc id would be read as a path separator).
+  /// Two imports of the same OSM feature land on the same doc instead of
+  /// creating a duplicate.
+  static String osmDocId(String osmId) =>
+      'osm_${osmId.replaceAll('/', '_')}';
+
+  /// Adds many places in [importBatchSize]-write batches (the OSM import
+  /// used to await one `add()` per place, sequentially). Places with an
+  /// `osmId` get [osmDocId]; others get an auto id.
+  ///
+  /// Callers still filter out already-imported `osmId`s first
+  /// ([getExistingOsmIds]): a `set` onto an existing place is an update,
+  /// which firestore.rules denies, and one denied write fails its batch.
+  Future<void> addPlacesBatched(List<PlaceEntity> places) async {
+    final collection = _firestore.collection(_collection);
+    for (var i = 0; i < places.length; i += importBatchSize) {
+      final chunk = places.sublist(
+        i,
+        i + importBatchSize > places.length ? places.length : i + importBatchSize,
+      );
+      final batch = _firestore.batch();
+      for (final place in chunk) {
+        final osmId = place.osmId;
+        final ref = osmId != null && osmId.isNotEmpty
+            ? collection.doc(osmDocId(osmId))
+            : collection.doc();
+        batch.set(ref, PlaceModel.fromEntity(place).toFirestore());
+      }
+      await batch.commit();
+    }
+  }
+
   /// Update a place
   Future<void> updatePlace(String placeId, PlaceEntity place) async {
     final model = PlaceModel.fromEntity(place);

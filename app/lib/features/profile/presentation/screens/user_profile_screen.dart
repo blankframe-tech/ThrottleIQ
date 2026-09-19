@@ -19,6 +19,7 @@ import '../../../social/presentation/providers/notification_providers.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/profile_load_error_view.dart';
 import '../../../chat/presentation/providers/chat_providers.dart';
 
 /// A rider's profile: avatar, bio, follow button, total km/rides, earned
@@ -113,19 +114,9 @@ class UserProfileScreen extends ConsumerWidget {
       ),
       body: profileAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lock_outline, size: 48, color: AppColors.textTertiary),
-                const SizedBox(height: 12),
-                Text('This profile is private',
-                    style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
-              ],
-            ),
-          ),
+        error: (e, _) => ProfileLoadErrorView(
+          failure: classifyProfileError(e),
+          onRetry: () => ref.invalidate(profileProvider(targetUid)),
         ),
         data: (profile) {
           if (profile == null) {

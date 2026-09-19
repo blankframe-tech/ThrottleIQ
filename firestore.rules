@@ -431,6 +431,11 @@ service cloud.firestore {
       // Blocked users subcollection
       match /blocks/{blockedUid} {
         allow read, write: if request.auth.uid == uid;
+        // §78 chat UX: the blocked rider may fetch the ONE doc naming them
+        // (never list the collection), so the chat room can show "You can't
+        // message this rider" up front. The messages create rule below
+        // already reveals the same fact by rejecting their sends.
+        allow get: if request.auth != null && request.auth.uid == blockedUid;
       }
     }
 
@@ -1327,7 +1332,15 @@ service cloud.firestore {
     // Direct Messaging (Chats)
     match /chats/{chatId} {
       // User can read a chat if they are a participant.
-      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
+      // §78.14: ChatRepository.getOrCreateChat reads the deterministic DM id
+      // (`<uidA>_<uidB>`, sorted) before and inside the create transaction,
+      // i.e. while it may not exist yet. A missing doc has no `resource`, so
+      // that read is allowed only when the caller's own uid is one of the
+      // two id halves: you can probe whether YOUR chat with someone exists,
+      // never whether two other riders have one.
+      allow read: if request.auth != null && (
+        (resource == null && request.auth.uid in chatId.split('_')) ||
+        (resource != null && request.auth.uid in resource.data.participants));
       // docs/Issues.md §62.4: update used to allow a participant to rewrite
       // ANY field, including `participants` itself — silently adding a third
       // uid to a 1:1 DM and handing them the whole conversation without the
@@ -1338,8 +1351,21 @@ service cloud.firestore {
       // separate check that could itself be gamed.
       allow update: if request.auth != null && request.auth.uid in resource.data.participants &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'updatedAt']);
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.participants &&
-        request.resource.data.participants.size() == 2;
+      // §78.14: new chats must live at the deterministic DM id with
+      // `participants` stored sorted, so the doc id alone names the pair and
+      // two concurrent "Message" taps can't create two rooms. Only
+      // `participants`/`updatedAt` may be set at create (lastMessage arrives
+      // via the update path above). Legacy random-id chats already exist and
+      // keep working through read/update; only creating new ones that way is
+      // closed. Messages' block check below indexes participants[0]/[1]
+      // directly, which is fine because every chat is a 2-person DM.
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasOnly(['participants', 'updatedAt']) &&
+        request.resource.data.participants is list &&
+        request.resource.data.participants.size() == 2 &&
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants[0] < request.resource.data.participants[1] &&
+        chatId == request.resource.data.participants[0] + '_' + request.resource.data.participants[1];
 
       match /messages/{messageId} {
         // Can read if a participant of the parent chat.

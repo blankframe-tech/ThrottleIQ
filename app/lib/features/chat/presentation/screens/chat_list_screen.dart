@@ -58,7 +58,12 @@ class ChatListScreen extends ConsumerWidget {
           showBugReport: true,
           onRetry: () => ref.invalidate(userChatsProvider),
         ),
-        data: (chats) {
+        data: (allChats) {
+          final chats = visibleChats(
+            allChats,
+            myUid: myUid,
+            blocked: ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{},
+          );
           if (chats.isEmpty) {
             return Center(
               child: Padding(

@@ -143,6 +143,13 @@ void main() {
     expect(fake.fetchedIds, {'fuel'});
   });
 
+  test('OSM imports get a deterministic, path-safe doc id', () {
+    expect(PlaceRepository.osmDocId('node/123456'), 'osm_node_123456');
+    expect(PlaceRepository.osmDocId('way/9'), 'osm_way_9');
+    expect(PlaceRepository.osmDocId('node/1'), isNot(contains('/')));
+    expect(PlaceRepository.importBatchSize, lessThanOrEqualTo(500));
+  });
+
   group('GeohashUtil.coverCircle', () {
     test('every point within the radius falls in a returned cell', () {
       final rng = math.Random(7);

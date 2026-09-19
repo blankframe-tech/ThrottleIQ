@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/utils/geo_math.dart';
 import 'average_speed.dart';
