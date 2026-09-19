@@ -45,6 +45,13 @@ class CloudRepository {
   /// Best-effort by design — the caller marks the tombstone synced only when
   /// this returns without throwing, so an offline delete is simply retried on
   /// the next sync while the local tombstone keeps the bike gone meanwhile.
+  ///
+  /// Only reached by an explicit "delete bike and all its rides" — the
+  /// default is now archiving, which deletes nothing. Each ride's `track`
+  /// chunks go too (Firestore never deletes a subcollection with its parent,
+  /// so they used to be orphaned), and the deletes are committed in chunks
+  /// because a single batch fails outright past 500 writes — which a bike
+  /// with a long history reached easily once track chunks are counted.
   Future<void> deleteBikeRemote(String uid, String bikeId) async {
     final userDoc = _firestore.collection('users').doc(uid);
 
@@ -53,12 +60,37 @@ class CloudRepository {
         .where('bike_id', isEqualTo: bikeId)
         .get();
 
-    final batch = _firestore.batch();
+    // Children before parents, and the bike last: if a later chunk fails,
+    // the retry re-queries by bike_id and still finds the rides it missed.
+    final refs = <DocumentReference>[];
     for (final ride in rides.docs) {
-      batch.delete(ride.reference);
+      final track = await ride.reference.collection('track').get();
+      refs.addAll(track.docs.map((d) => d.reference));
     }
-    batch.delete(userDoc.collection('bikes').doc(bikeId));
-    await batch.commit();
+    refs.addAll(rides.docs.map((d) => d.reference));
+    refs.add(userDoc.collection('bikes').doc(bikeId));
+    await _deleteInChunks(refs);
+  }
+
+  /// Firestore caps a batch at 500 writes; 400 leaves headroom.
+  static const deleteChunkSize = 400;
+
+  /// Splits [refs] into batches of at most [deleteChunkSize], in order.
+  /// Pulled out so the chunking itself is testable without Firestore.
+  @visibleForTesting
+  static List<List<T>> chunkForDelete<T>(List<T> refs) => [
+        for (var i = 0; i < refs.length; i += deleteChunkSize)
+          refs.sublist(i, (i + deleteChunkSize).clamp(0, refs.length)),
+      ];
+
+  Future<void> _deleteInChunks(List<DocumentReference> refs) async {
+    for (final chunk in chunkForDelete(refs)) {
+      final batch = _firestore.batch();
+      for (final ref in chunk) {
+        batch.delete(ref);
+      }
+      await batch.commit();
+    }
   }
 
   /// Upload unsynced rides to Firestore and mark them as synced.
@@ -79,7 +111,7 @@ class CloudRepository {
 
     final collection = _firestore.collection('users').doc(uid).collection('rides');
     Map<String, dynamic> payload(Map<String, dynamic> ride) => {
-          ...ride,
+          ...ridePayload(ride),
           'syncedAt': FieldValue.serverTimestamp(),
         };
 
@@ -111,6 +143,31 @@ class CloudRepository {
         debugPrint('[CloudRepository] ride upload rejected for ${ride['id']}: $e');
       }
     }
+  }
+
+  /// A local ride row as it should be written to Firestore.
+  ///
+  /// `track_synced` is this device's own bookkeeping (has *my* copy of the
+  /// trail gone up?) and means nothing to another device. It's also a column
+  /// older app versions don't have, and [downloadRides] inserts cloud fields
+  /// verbatim, so shipping it would make every new ride fail to download on
+  /// a device that hasn't updated yet.
+  @visibleForTesting
+  static Map<String, dynamic> ridePayload(Map<String, dynamic> ride) =>
+      Map<String, dynamic>.from(ride)..remove('track_synced');
+
+  /// A local bike row as it should be written to Firestore.
+  ///
+  /// `archived` is only sent when set. A not-archived bike looks exactly as it
+  /// did before the column existed, so a device on an older app version — whose
+  /// [downloadBikes] inserts cloud fields verbatim into a table without that
+  /// column — keeps downloading it. `set` replaces the whole doc, so unarchiving
+  /// removes the field, which reads back as 0.
+  @visibleForTesting
+  static Map<String, dynamic> bikePayload(Map<String, dynamic> bike) {
+    final out = Map<String, dynamic>.from(bike);
+    if (out['archived'] != 1) out.remove('archived');
+    return out;
   }
 
   /// Upload unsynced bikes to Firestore and mark them as synced.
@@ -156,7 +213,7 @@ class CloudRepository {
 
     final bikesCollection = _firestore.collection('users').doc(uid).collection('bikes');
     Map<String, dynamic> payload(Map<String, dynamic> bike) => {
-          ...bike,
+          ...bikePayload(bike),
           'syncedAt': FieldValue.serverTimestamp(),
         };
 
@@ -356,6 +413,11 @@ class CloudRepository {
       if (localIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
+      // Whatever trail this ride has is already in the cloud — it came from
+      // there. Left at the column default (0), the track pass would go on to
+      // "upload" a trail this device doesn't hold; harmless (no local points
+      // means nothing is written) but a wasted read per downloaded ride.
+      data['track_synced'] = 1;
       try {
         await db.insert('rides', data, conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;

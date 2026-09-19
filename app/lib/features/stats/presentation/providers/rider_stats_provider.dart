@@ -16,7 +16,9 @@ final rideSortProvider = StateProvider<RideSort>((ref) => RideSort.recent);
 
 final riderStatsProvider = FutureProvider<RiderStatsSummary>((ref) async {
   final uid = ref.watch(currentUserProvider)?.uid;
-  final bikes = ref.watch(garageProvider).valueOrNull ?? [];
+  // Archived bikes included: their rides are still counted below, so the
+  // per-bike figures (most-used bike) must be able to name them too.
+  final bikes = ref.watch(allBikesProvider).valueOrNull ?? [];
   if (uid == null) return RiderStatsSummary.empty;
 
   final rows = await RideDao().getAllForUser(uid);

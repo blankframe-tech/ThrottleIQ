@@ -5,16 +5,17 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../database/daos/ride_point_dao.dart';
+import 'ride_track_loader.dart';
 
 /// Service for exporting ride data to various formats.
 ///
 /// Files are written to the app documents directory (Downloads is not
 /// accessible via path_provider on Android); callers surface them with the
 /// system share sheet (share_plus) so the user can save or send anywhere.
+///
+/// Points come through [RideTrackLoader], so a ride restored onto a new phone
+/// exports its cloud trail rather than an empty file.
 class ExportService {
-  final RidePointDao _ridePointDao = RidePointDao();
-
   Future<Directory> _exportDir() async {
     final docs = await getApplicationDocumentsDirectory();
     final dir = Directory('${docs.path}/exports');
@@ -32,7 +33,7 @@ class ExportService {
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
-      final points = await _ridePointDao.getForRide(rideId);
+      final points = await RideTrackLoader.load(rideId);
 
       final jsonData = {
         'ride': ride,
@@ -61,7 +62,7 @@ class ExportService {
       final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.csv';
       final file = File('${directory.path}/$fileName');
 
-      final points = await _ridePointDao.getForRide(rideId);
+      final points = await RideTrackLoader.load(rideId);
 
       final buffer = StringBuffer();
       buffer.writeln('timestamp,lat,lng,speed_ms,speed_kmh,altitude_m,'
@@ -103,7 +104,7 @@ class ExportService {
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
-      final points = await _ridePointDao.getForRide(rideId);
+      final points = await RideTrackLoader.load(rideId);
 
       final gpxContent = _generateGPX(ride, points);
       await file.writeAsString(gpxContent, flush: true);

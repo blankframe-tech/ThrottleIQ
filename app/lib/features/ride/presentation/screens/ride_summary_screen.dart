@@ -27,7 +27,7 @@ import '../../domain/calculators/speed_baseline.dart';
 import '../widgets/bike_confirmation_card.dart';
 import '../widgets/change_bike_control.dart';
 import '../providers/ride_recording_provider.dart';
-import '../../../../core/database/daos/ride_point_dao.dart';
+import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/cloud/cloud_repository.dart';
 import '../../../../core/services/weather_service.dart';
 
@@ -70,12 +70,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     super.dispose();
   }
 
+  // Local trail, else the cloud copy (a ride restored onto a new phone has
+  // no local points) — see RideTrackLoader. The `mounted` check matters now
+  // that a network round trip sits before setState.
   Future<void> _loadPolyline() async {
-    final dao = RidePointDao();
-    final points = await dao.getForRide(widget.rideId);
+    final points = await RideTrackLoader.load(widget.rideId);
+    if (!mounted) return;
     setState(() {
       _polyline = points
-          .map((p) => LatLng(p['lat'] as double, p['lng'] as double))
+          .map((p) => LatLng(
+              (p['lat'] as num).toDouble(), (p['lng'] as num).toDouble()))
           .toList();
       _speedsMs = points.map((p) => (p['speed_ms'] as num).toDouble()).toList();
       _altitudesM =
@@ -609,7 +613,32 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           border: Border.all(color: AppColors.border),
         ),
-        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 12),
+            Text('Fetching route…',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ],
+        ),
+      );
+    }
+    if (_polyline.isEmpty) {
+      // Neither this phone nor the cloud has a trail (a ride recorded with no
+      // GPS fix, or one whose trail never uploaded) — say so instead of
+      // drawing an empty map centred on nothing.
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Center(
+          child: Text('Route not available',
+              style: TextStyle(color: AppColors.textSecondary)),
+        ),
       );
     }
     // Falls back to a single primary-color line if speeds weren't captured

@@ -27,6 +27,11 @@ class BikeEntity extends Equatable {
   /// at the call site rather than assuming this is always set.
   final int? colorValue;
 
+  /// Retired from the garage but kept, with its rides, for history and stats.
+  /// Hidden from the garage list and every bike picker; see
+  /// `BikeDao.setArchived`.
+  final bool isArchived;
+
   final DateTime createdAt;
 
   const BikeEntity({
@@ -43,6 +48,7 @@ class BikeEntity extends Equatable {
     this.lastRideAt,
     this.odometerKm,
     this.colorValue,
+    this.isArchived = false,
     required this.createdAt,
   });
 
@@ -70,6 +76,7 @@ class BikeEntity extends Equatable {
     double? odometerKm,
     int? colorValue,
     bool clearColor = false,
+    bool? isArchived,
   }) {
     return BikeEntity(
       id: id,
@@ -85,6 +92,7 @@ class BikeEntity extends Equatable {
       lastRideAt: lastRideAt ?? this.lastRideAt,
       odometerKm: odometerKm ?? this.odometerKm,
       colorValue: clearColor ? null : (colorValue ?? this.colorValue),
+      isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt,
     );
   }
@@ -100,6 +108,7 @@ class BikeEntity extends Equatable {
         imagePath,
         isActive,
         odometerKm,
-        colorValue
+        colorValue,
+        isArchived
       ];
 }

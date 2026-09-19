@@ -6,9 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/cloud/outbox_service.dart';
+import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -60,11 +60,13 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
   }
 
   Future<void> _loadPolyline() async {
-    final dao = RidePointDao();
-    final points = await dao.getForRide(widget.rideId);
+    final points = await RideTrackLoader.load(widget.rideId);
     if (!mounted) return;
     setState(() {
-      _polyline = points.map((p) => LatLng(p['lat'] as double, p['lng'] as double)).toList();
+      _polyline = points
+          .map((p) => LatLng(
+              (p['lat'] as num).toDouble(), (p['lng'] as num).toDouble()))
+          .toList();
     });
   }
 
@@ -110,7 +112,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
 
     setState(() => _sharing = true);
     try {
-      final bikes = ref.read(garageProvider).valueOrNull ?? [];
+      // allBikesProvider: a ride on an archived bike still names its bike.
+      final bikes = await ref.read(allBikesProvider.future);
       final bike = bikes.where((b) => b.id == ride.bikeId).firstOrNull;
 
       // Handed to the outbox rather than written straight to Firestore. The

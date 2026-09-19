@@ -142,11 +142,20 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // Auto-tracking is per-rider: it needs a uid to attribute detected
           // rides to, and reconciling before sign-in would have nothing to
           // attach them to. Both no-op unless the rider has opted in.
-          unawaited(AutoTrackingService.instance.start());
+          //
+          // The owner is saved before the service starts so its very first
+          // detection is stamped with this rider (claude_sol §1.4.2).
+          final uid = next.valueOrNull!.uid;
+          unawaited(AutoTrackingService.setOwner(uid)
+              .then((_) => AutoTrackingService.instance.start()));
           unawaited(_reconcileDetectedRides());
         } else {
           sync.stopAutoSync();
-          unawaited(AutoTrackingService.instance.stop());
+          // Stop first, then forget the owner, so nothing detected in between
+          // can be stamped with the rider who just signed out.
+          unawaited(AutoTrackingService.instance
+              .stop()
+              .then((_) => AutoTrackingService.setOwner(null)));
         }
       });
 

@@ -8,6 +8,10 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 final _dao = BikeDao();
 const _uuid = Uuid();
 
+/// The rider's garage: every bike they still ride. Archived bikes are left
+/// out, so the garage list and every bike picker built on this hide them
+/// without each needing its own filter. Screens that must resolve a ride's
+/// bike whatever its state (stats, sharing) use [allBikesProvider].
 final garageProvider =
     AsyncNotifierProvider<GarageNotifier, List<BikeEntity>>(GarageNotifier.new);
 
@@ -72,8 +76,22 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     ref.invalidateSelf();
   }
 
+  /// Hard delete: the bike, its rides and their trails, here and (via the
+  /// tombstone) in the cloud. Only for the explicit "delete bike and all its
+  /// rides" action; [archiveBike] is the default.
   Future<void> deleteBike(String id) async {
     await _dao.delete(id);
+    ref.invalidateSelf();
+  }
+
+  /// Retires a bike while keeping its rides, totals and maintenance history.
+  Future<void> archiveBike(String id) async {
+    await _dao.setArchived(id, true);
+    ref.invalidateSelf();
+  }
+
+  Future<void> unarchiveBike(String id) async {
+    await _dao.setArchived(id, false);
     ref.invalidateSelf();
   }
 
@@ -92,4 +110,24 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
 final activeBikeProvider = Provider<BikeEntity?>((ref) {
   final bikes = ref.watch(garageProvider).valueOrNull ?? [];
   return bikes.where((b) => b.isActive).firstOrNull;
+});
+
+/// Every bike the rider has, archived ones included. For resolving a ride's
+/// bike (a ride on an archived bike is still a ride) and for totals that
+/// should not change just because a bike was retired.
+///
+/// Watches [garageProvider] only to rebuild whenever the garage changes —
+/// archive/unarchive/edit all invalidate it.
+final allBikesProvider = FutureProvider<List<BikeEntity>>((ref) async {
+  ref.watch(garageProvider);
+  final uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) return [];
+  final rows = await _dao.getAllForUser(uid, includeArchived: true);
+  return rows.map(BikeModel.fromMap).toList();
+});
+
+/// The "Archived bikes" section of the garage.
+final archivedBikesProvider = Provider<List<BikeEntity>>((ref) {
+  final bikes = ref.watch(allBikesProvider).valueOrNull ?? const [];
+  return bikes.where((b) => b.isArchived).toList();
 });

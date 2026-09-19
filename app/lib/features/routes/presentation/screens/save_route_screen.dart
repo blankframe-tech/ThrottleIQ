@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/database/daos/ride_point_dao.dart';
+import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -14,8 +14,9 @@ import '../providers/route_providers.dart';
 
 /// "Save this ride as a route" — reached from the end-of-ride share step.
 ///
-/// Re-derives the ride's trail from [RidePointDao] rather than having it
-/// threaded through the router, the same way RideShareScreen does.
+/// Re-derives the ride's trail via [RideTrackLoader] (local, else the cloud
+/// copy) rather than having it threaded through the router, the same way
+/// RideShareScreen does.
 class SaveRouteScreen extends ConsumerStatefulWidget {
   final String rideId;
   const SaveRouteScreen({super.key, required this.rideId});
@@ -48,11 +49,12 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
   }
 
   Future<void> _loadPolyline() async {
-    final points = await RidePointDao().getForRide(widget.rideId);
+    final points = await RideTrackLoader.load(widget.rideId);
     if (!mounted) return;
     setState(() {
       _polyline = points
-          .map((p) => LatLng(p['lat'] as double, p['lng'] as double))
+          .map((p) => LatLng(
+              (p['lat'] as num).toDouble(), (p['lng'] as num).toDouble()))
           .toList();
       _loadingTrail = false;
     });

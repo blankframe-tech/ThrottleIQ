@@ -4,6 +4,16 @@ import 'package:sqflite/sqflite.dart';
 import '../../constants/sensor_constants.dart';
 import '../database_helper.dart';
 
+/// Matches a ride that has finished recording and belongs in the rider's
+/// history. `crash` is a finished ride too — it ended because crash detection
+/// fired — and leaving it out (the old `status = 'completed'` filter) meant a
+/// crash ride never synced and never appeared in any list. See
+/// DOCS §69.O10 / claude_sol §1.2.2.
+///
+/// Literal rather than bound parameters so it composes into the existing
+/// `where:` strings without shifting every call site's `whereArgs`.
+const _finishedStatusSql = "status IN ('completed', 'crash')";
+
 class RideDao {
   Future<void> insert(Map<String, dynamic> ride) async {
     final db = await DatabaseHelper.instance.database;
@@ -13,8 +23,8 @@ class RideDao {
   Future<List<Map<String, dynamic>>> getAllForUser(String userId) async {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query('rides',
-        where: 'user_id = ? AND status = ?',
-        whereArgs: [userId, 'completed'],
+        where: 'user_id = ? AND $_finishedStatusSql',
+        whereArgs: [userId],
         orderBy: 'start_time DESC');
     return _sanitizeAndHealRides(db, rows);
   }
@@ -22,8 +32,8 @@ class RideDao {
   Future<List<Map<String, dynamic>>> getAllForBike(String bikeId) async {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query('rides',
-        where: 'bike_id = ? AND status = ?',
-        whereArgs: [bikeId, 'completed'],
+        where: 'bike_id = ? AND $_finishedStatusSql',
+        whereArgs: [bikeId],
         orderBy: 'start_time DESC');
     return _sanitizeAndHealRides(db, rows);
   }
@@ -161,11 +171,15 @@ class RideDao {
   /// rewritten to `'completed'` the instant it was written, and a dismissed
   /// crash's `status: 'active'` never stuck either. `status: 'crash'` was
   /// never actually persisted anywhere.
+  ///
+  /// Also resets `track_synced`: finalizing is the last point the trail can
+  /// change, so whatever copy of it reached the cloud before (a resumed ride,
+  /// a crash that was dismissed and re-finalized) is now stale.
   Future<void> finalizeRide(String id, Map<String, dynamic> data) async {
     final db = await DatabaseHelper.instance.database;
     await db.update(
       'rides',
-      {'status': 'completed', ...data, 'synced': 0},
+      {'status': 'completed', ...data, 'synced': 0, 'track_synced': 0},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -175,16 +189,39 @@ class RideDao {
   /// SyncManager's upload pass, and an unscoped query would happily hand
   /// another rider's still-unsynced rides to whichever account is currently
   /// signed in on this device.
+  ///
+  /// Includes `crash` rides (§69.O10): a crash ride is the one whose record
+  /// matters most, and it used to be the one that never left the phone.
   Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
     final db = await DatabaseHelper.instance.database;
     return db.query('rides',
-        where: 'user_id = ? AND synced = 0 AND status = ?',
-        whereArgs: [userId, 'completed']);
+        where: 'user_id = ? AND synced = 0 AND $_finishedStatusSql',
+        whereArgs: [userId]);
   }
 
   Future<void> markSynced(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.update('rides', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Rides whose metadata is in the cloud but whose GPS trail isn't yet.
+  ///
+  /// Separate from [getUnsynced] because the two uploads fail independently:
+  /// `synced` flips as soon as the ride doc lands, and a trail upload that
+  /// failed afterwards used to be forgotten for good. See claude_sol §1.3.2.
+  Future<List<Map<String, dynamic>>> getTrackUnsynced(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query('rides',
+        columns: ['id'],
+        where: 'user_id = ? AND synced = 1 AND track_synced = 0 '
+            'AND $_finishedStatusSql',
+        whereArgs: [userId]);
+  }
+
+  Future<void> markTrackSynced(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('rides', {'track_synced': 1},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> updateSyncedStatus(String id, bool synced) async {
@@ -241,10 +278,10 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     return db.query(
       'rides',
-      where: 'user_id = ? AND status = ? AND start_time >= ? AND start_time < ?',
+      where: 'user_id = ? AND $_finishedStatusSql '
+          'AND start_time >= ? AND start_time < ?',
       whereArgs: [
         userId,
-        'completed',
         from.toIso8601String(),
         to.toIso8601String(),
       ],
