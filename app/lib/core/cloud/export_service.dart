@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:throttleiq/core/utils/num_cast.dart';
 
 import 'ride_track_loader.dart';
 
@@ -129,8 +130,8 @@ class ExportService {
     buffer.writeln('    <time>$startTime</time>');
 
     if (ridePoints.isNotEmpty) {
-      final lats = ridePoints.map<double>((p) => p['lat'] as double).toList();
-      final lngs = ridePoints.map<double>((p) => p['lng'] as double).toList();
+      final lats = ridePoints.map<double>((p) => asDouble(p['lat'])).toList();
+      final lngs = ridePoints.map<double>((p) => asDouble(p['lng'])).toList();
 
       final minLat = lats.reduce((a, b) => a < b ? a : b);
       final maxLat = lats.reduce((a, b) => a > b ? a : b);

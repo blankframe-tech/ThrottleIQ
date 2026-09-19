@@ -9,6 +9,7 @@ import 'package:throttleiq/core/database/daos/ride_dao.dart';
 import 'package:throttleiq/core/database/daos/ride_point_dao.dart';
 import 'package:throttleiq/core/services/weather_service.dart';
 import 'package:throttleiq/core/utils/badges.dart';
+import 'package:throttleiq/core/utils/num_cast.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
 import 'package:throttleiq/features/garage/data/models/bike_model.dart';
 import 'package:throttleiq/features/profile/data/repositories/profile_repository.dart';
@@ -144,16 +145,16 @@ class RidePersistenceCoordinator {
     final segments = averageSpeedPerSegment([
       for (final r in rows)
         (
-          lat: r['lat'] as double,
-          lng: r['lng'] as double,
+          lat: asDouble(r['lat']),
+          lng: asDouble(r['lng']),
           speedMs: (r['speed_ms'] as num).toDouble()
         ),
     ]);
     if (segments.isEmpty) return;
 
     final weather = await _weatherService.fetchForRide(
-      lat: rows.first['lat'] as double,
-      lng: rows.first['lng'] as double,
+      lat: asDouble(rows.first['lat']),
+      lng: asDouble(rows.first['lng']),
       at: startTime,
     );
 
