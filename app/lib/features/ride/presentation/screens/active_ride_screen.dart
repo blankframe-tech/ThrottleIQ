@@ -11,6 +11,7 @@ import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
 import '../providers/live_ride_places_provider.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
+import '../../../../shared/widgets/app_tile_layer.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -68,10 +69,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         ),
       ),
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.bft.throttleiq',
-        ),
+        const AppTileLayer(),
         if (polyline.length > 1)
           PolylineLayer(
             key: ValueKey(version),

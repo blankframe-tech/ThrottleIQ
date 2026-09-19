@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/formatters/speed_formatter.dart';
+import 'app_tile_layer.dart';
 
 /// Dedicated full-screen interactive route map explorer.
 ///
@@ -144,10 +145,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
               onTap: _onMapTap,
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.bft.throttleiq',
-              ),
+              const AppTileLayer(),
               if (polyline.length > 1)
                 PolylineLayer(
                   polylines: [

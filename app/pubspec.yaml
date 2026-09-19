@@ -28,6 +28,12 @@ dependencies:
 
   # Maps & Location
   flutter_map: ^7.0.2
+  # On-disk tile cache for every map (see shared/widgets/app_tile_layer.dart).
+  # flutter_map_cache 2.x supports flutter_map 6-8 and needs
+  # dio_cache_interceptor 4.x, whose file store is http_cache_file_store.
+  flutter_map_cache: ^2.1.0
+  dio_cache_interceptor: ^4.0.7
+  http_cache_file_store: ^2.0.2
   latlong2: ^0.9.1
   geolocator: ^11.0.0
 

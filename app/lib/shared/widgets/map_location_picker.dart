@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
+import 'app_tile_layer.dart';
 
 /// A "drop a pin" location picker: the map pans freely underneath a fixed
 /// center pin (the same interaction pattern Google/Uber use for pin-drop) —
@@ -43,11 +44,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 onPositionChanged: (camera, hasGesture) =>
                     widget.onLocationChanged(camera.center),
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.bft.throttleiq',
-                ),
+              children: const [
+                AppTileLayer(),
               ],
             ),
             // Fixed center pin — the map moves, this stays put. Offset up by
