@@ -65,7 +65,7 @@ void main() {
   });
 
   group('UserChallengeProgress', () {
-    final progress = UserChallengeProgress(
+    const progress = UserChallengeProgress(
       challengeId: 'challenge1',
       userId: 'user1',
       currentValue: 250.0,

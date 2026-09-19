@@ -30,7 +30,7 @@ npm test
 ## Security-rules tests
 
 `test/rules/firestore_rules.test.js` exercises `firestore.rules` against the
-Firestore emulator — the engagement-counter clauses (`docs/Issues.md` §24.7)
+Firestore emulator — the engagement-counter clauses (`issues_fixed.md` §24.7)
 and the moderation helpers (§24.11). **Run this before any
 `firebase deploy --only firestore:rules`.**
 
@@ -537,7 +537,7 @@ scripted use). Each account:
 
 - signs up with Firebase Auth at `<handle>@qa-seed.invalid` (`.invalid` is the
   IANA-reserved TLD for exactly this — RFC 2606 — so it can never collide with
-  a real rider's email), its own randomly-generated password (docs/Issues.md
+  a real rider's email), its own randomly-generated password (issues_fixed.md
   §62.10 — no more shared hardcoded password; the passwords for accounts
   created by a real run are written to a local, gitignored
   `qa_seed_passwords.<timestamp>.json`, never printed to stdout/CI logs), and

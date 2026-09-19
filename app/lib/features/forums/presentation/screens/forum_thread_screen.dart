@@ -105,14 +105,14 @@ class ForumThreadScreen extends ConsumerWidget {
           if (posts.isEmpty) {
             return Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.forum_outlined, size: 64, color: AppColors.textTertiary),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text('No posts yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text('Be the first to ask a question or share something.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),

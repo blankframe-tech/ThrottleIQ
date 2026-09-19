@@ -211,16 +211,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             rapidAccel: ride.rapidAccelCount,
             highJerk: ride.highJerkCount,
           );
-          final scoreColor = score >= 80
-              ? AppColors.success
-              : score >= 60
-                  ? AppColors.attention
-                  : AppColors.danger;
-          final scoreLabel = score >= 80
-              ? l10n.scoreSmoothLabel
-              : score >= 60
-                  ? l10n.scoreSteadyLabel
-                  : l10n.scoreAggressiveLabel;
+          final scoreColor = switch (ridingScoreTier(score)) {
+            RidingScoreTier.smooth => AppColors.success,
+            RidingScoreTier.steady => AppColors.attention,
+            RidingScoreTier.aggressive => AppColors.danger,
+          };
+          final scoreLabel = switch (ridingScoreTier(score)) {
+            RidingScoreTier.smooth => l10n.scoreSmoothLabel,
+            RidingScoreTier.steady => l10n.scoreSteadyLabel,
+            RidingScoreTier.aggressive => l10n.scoreAggressiveLabel,
+          };
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0,

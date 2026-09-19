@@ -17,6 +17,10 @@ const TOXIC_KEYWORDS = [
   "ugly",
 ];
 
+const TOXIC_KEYWORD_PATTERNS = TOXIC_KEYWORDS.map(
+  (word) => new RegExp(`\\b${word}\\b`)
+);
+
 export const onMessageCreate = onDocumentCreated(
   "chats/{chatId}/messages/{messageId}",
   async (event) => {
@@ -26,8 +30,10 @@ export const onMessageCreate = onDocumentCreated(
     const messageData = snapshot.data();
     const text = messageData.text?.toLowerCase() || "";
 
-    // Simple toxicity check
-    const isToxic = TOXIC_KEYWORDS.some((word) => text.includes(word));
+    // Whole-word match only. A plain substring check hid perfectly innocent
+    // messages: "whatever" contains "hate", "dumbbell" contains "dumb",
+    // "beef jerky" contains "jerk".
+    const isToxic = TOXIC_KEYWORD_PATTERNS.some((re) => re.test(text));
 
     if (isToxic) {
       logger.info(`Toxic message detected in chat ${event.params.chatId}, hiding message.`);

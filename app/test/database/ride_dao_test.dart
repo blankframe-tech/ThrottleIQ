@@ -57,7 +57,7 @@ void main() {
 
     group('Query Operations', () {
       test('retrieves rides for a specific user', () async {
-        final userId = 'user-001';
+        const userId = 'user-001';
 
         // Create test data
         final rides = [
@@ -89,7 +89,7 @@ void main() {
       });
 
       test('retrieves rides for a specific bike', () async {
-        final bikeId = 'bike-001';
+        const bikeId = 'bike-001';
 
         final rides = [
           {
@@ -122,7 +122,7 @@ void main() {
       });
 
       test('retrieves ride by id', () async {
-        final rideId = 'ride-001';
+        const rideId = 'ride-001';
 
         final rides = [
           {

@@ -139,7 +139,7 @@ class BikeDetailScreen extends ConsumerWidget {
                 if (rides.isEmpty) {
                   return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(32),
                       child: Text('No rides yet for this bike',
                           style: TextStyle(color: AppColors.textTertiary)),
                     ),

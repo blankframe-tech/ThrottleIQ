@@ -9,7 +9,7 @@ void main() {
       userId: 'user1',
       stars: 4,
       text: 'Great place!',
-      imageUrls: [],
+      imageUrls: const [],
       createdAt: DateTime.now(),
       flagged: false,
     );
@@ -30,7 +30,7 @@ void main() {
         userId: 'user1',
         stars: 4,
         text: 'Great place!',
-        imageUrls: [],
+        imageUrls: const [],
         createdAt: testReview.createdAt,
         flagged: false,
       );
@@ -137,7 +137,7 @@ void main() {
       const ratingSum = 18.0; // 5 + 4 + 3 + 3 + 3
       const ratingCount = 5;
 
-      final averageRating = ratingSum / ratingCount;
+      const averageRating = ratingSum / ratingCount;
 
       expect(averageRating, equals(3.6));
     });
@@ -146,7 +146,7 @@ void main() {
       const ratingSum = 0.0;
       const ratingCount = 0;
 
-      final averageRating = ratingCount == 0 ? 0.0 : ratingSum / ratingCount;
+      const averageRating = ratingCount == 0 ? 0.0 : ratingSum / ratingCount;
 
       expect(averageRating, equals(0.0));
     });

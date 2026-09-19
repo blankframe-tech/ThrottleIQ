@@ -48,6 +48,12 @@ class RideShareModel {
   final int downvotes;
   final int? myVote;
 
+  /// See [SharedRideEntity.hardBrakeCount] — null (all three together) on a
+  /// ride shared before riding-score sharing existed.
+  final int? hardBrakeCount;
+  final int? rapidAccelCount;
+  final int? highJerkCount;
+
   RideShareModel({
     required this.id,
     required this.userId,
@@ -74,6 +80,9 @@ class RideShareModel {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
+    this.hardBrakeCount,
+    this.rapidAccelCount,
+    this.highJerkCount,
   }) : maxSpeedKmh = RideSpeedInvariant.reconcileFromDistance(
           distanceKm: distanceKm,
           durationSeconds: durationSeconds,
@@ -117,6 +126,9 @@ class RideShareModel {
       'caption': caption,
       'upvotes': upvotes,
       'downvotes': downvotes,
+      'hardBrakeCount': hardBrakeCount,
+      'rapidAccelCount': rapidAccelCount,
+      'highJerkCount': highJerkCount,
     };
   }
 
@@ -171,6 +183,11 @@ class RideShareModel {
       caption: data['caption'] as String?,
       upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
       downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
+      // Absent on every ride shared before riding-score sharing existed —
+      // left null rather than defaulted to 0, see [SharedRideEntity.hardBrakeCount].
+      hardBrakeCount: (data['hardBrakeCount'] as num?)?.toInt(),
+      rapidAccelCount: (data['rapidAccelCount'] as num?)?.toInt(),
+      highJerkCount: (data['highJerkCount'] as num?)?.toInt(),
     );
   }
 
@@ -201,6 +218,9 @@ class RideShareModel {
       upvotes: upvotes,
       downvotes: downvotes,
       myVote: myVote,
+      hardBrakeCount: hardBrakeCount,
+      rapidAccelCount: rapidAccelCount,
+      highJerkCount: highJerkCount,
     );
   }
 }

@@ -58,6 +58,9 @@ class RideShareRepository {
     List<String> photoUrls = const [],
     String? routeId,
     String? caption,
+    int? hardBrakeCount,
+    int? rapidAccelCount,
+    int? highJerkCount,
   }) async {
     // Apply privacy-zone clipping (strips ~200 m off each end to hide
     // home/work). On a short or near-home ride the clip can consume the whole
@@ -99,6 +102,9 @@ class RideShareRepository {
       // future caller skips the composer.
       photoUrls: normalizeRidePhotoUrls(photoUrls),
       caption: caption,
+      hardBrakeCount: hardBrakeCount,
+      rapidAccelCount: rapidAccelCount,
+      highJerkCount: highJerkCount,
     );
 
     final docRef = _firestore.collection('rides').doc(rideId);

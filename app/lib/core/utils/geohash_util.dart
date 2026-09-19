@@ -53,12 +53,18 @@ class GeohashUtil {
         int bit = (idx >> i) & 1;
         if (isEven) {
           double mid = (lngMin + lngMax) / 2;
-          if (bit == 1) lngMin = mid;
-          else lngMax = mid;
+          if (bit == 1) {
+            lngMin = mid;
+          } else {
+            lngMax = mid;
+          }
         } else {
           double mid = (latMin + latMax) / 2;
-          if (bit == 1) latMin = mid;
-          else latMax = mid;
+          if (bit == 1) {
+            latMin = mid;
+          } else {
+            latMax = mid;
+          }
         }
         isEven = !isEven;
       }

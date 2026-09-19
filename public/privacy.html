@@ -163,7 +163,7 @@
   <div class="container">
     <div class="header">
       <h1>🏍️ ThrottleIQ Privacy Policy</h1>
-      <p>Effective date: 5 September 2026</p>
+      <p>Effective date: 19 September 2026</p>
     </div>
 
     <div class="content">
@@ -232,6 +232,11 @@
             <td>Uploaded to Cloudinary (see §4). Bike photos stay on your phone only</td>
           </tr>
           <tr>
+            <td><strong>Voice clips</strong> — short push-to-talk recordings (under 60 seconds each), only while you hold the talk button inside a group ride</td>
+            <td>So riders on the same group ride can talk to each other hands-free</td>
+            <td>Uploaded to Cloudinary (see §4) and playable by the other members of that group ride. The microphone is never used at any other time</td>
+          </tr>
+          <tr>
             <td><strong>Crash diagnostics</strong> — if the app itself crashes or hits an unhandled error, a stack trace, the device model/OS version, and app version</td>
             <td>So bugs that crash the app get fixed, instead of going unnoticed</td>
             <td>Firebase Crashlytics. This is separate from the ride-crash detection in §7 — it's about the <em>app</em> crashing, not you. Off while testing in debug builds; only real installs report</td>
@@ -254,7 +259,7 @@
         <li><strong>No advertising, and no data sold or shared with advertisers or data brokers. Ever.</strong></li>
         <li><strong>No behavioural analytics.</strong> The app does not bundle Google Analytics, Firebase Analytics, or any third-party tracker, so there is no usage-tracking profile of you. It does use Firebase Crashlytics to catch app crashes — see the crash-diagnostics row in the table above — but that only fires when the app itself breaks, not to track what you do in it.</li>
         <li><strong>No push notifications.</strong> Notifications you see are generated on your own phone or read from your own account records. Google's messaging library is bundled with the app and, like every Firebase app, the Firebase SDKs give your installation an anonymous identifier — but ThrottleIQ never reads, stores, or sends anything to a push token, and nobody can push a message to your phone through it.</li>
-        <li><strong>No contact list, no SMS, no microphone, no camera roll scanning.</strong> Photos are chosen one at a time through your phone's own picker.</li>
+        <li><strong>No contact list, no SMS, no camera roll scanning.</strong> Photos are chosen one at a time through your phone's own picker. The microphone is used only for the group-ride voice clips described above, and only while you hold the talk button.</li>
       </ul>
 
       <h2>2. What actually leaves your phone</h2>
@@ -351,7 +356,7 @@
           </tr>
           <tr>
             <td><strong>Cloudinary</strong> — cloud name <code>vjvcigkt</code></td>
-            <td>Only the image files you choose to upload: your profile picture and any photo you attach to a shared ride. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides, your location, or your account details.</td>
+            <td>Only the files you choose to upload: your profile picture, any photo you attach to a shared ride, and group-ride voice clips. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides, your location, or your account details.</td>
           </tr>
           <tr>
             <td><strong>OpenStreetMap tile servers</strong> — <code>tile.openstreetmap.org</code></td>
@@ -390,7 +395,8 @@
         visibility to mutual follows, or make it private, in profile settings.</li>
         <li><strong>Rides are private until you share them.</strong> When you share one, you pick
         the audience: public, your followers, or mutual follows only. A shared ride carries its
-        route line, stats, your name and photo, the bike, and any caption or photo you attached.</li>
+        route line, stats (including a riding score worked out from counts of hard braking and rapid acceleration on that ride), your name and photo, the bike, and any caption or photo you attached.</li>
+        <li><strong>Group-ride voice clips</strong> can be heard by the other members of that group ride.</li>
         <li><strong>Route trimming.</strong> When a ride is shared, roughly the first and last 200
         metres of the route are cut off before it is uploaded, so the shared trace does not begin
         or end at your front door. If a ride is short enough that trimming consumes the whole
@@ -460,8 +466,14 @@
 
       <h2>9. Deleting your account and your data</h2>
 
-      <p>There is currently <strong>no in-app "delete my account" button</strong> — it is being
-      built. Until it ships, the process is:</p>
+      <p><strong>In the app:</strong> Settings → Delete account removes your sign-in credential
+      and everything the app stored on your phone straight away. Your cloud records — profile,
+      username reservation, ride summaries and GPS trails, bikes, maintenance logs, saved routes,
+      emergency contacts, badges, notifications, shared rides, live sessions, crash alerts, and
+      follows — are then removed automatically. Photos, voice clips, and things you posted in
+      other people's threads are handled by email, as below.</p>
+
+      <p><strong>By email</strong> (also the route if you can no longer sign in):</p>
 
       <ol>
         <li>Email <a href="mailto:the.abraar.rar@gmail.com">the.abraar.rar@gmail.com</a> from
@@ -522,7 +534,7 @@
       </p>
 
       <div class="meta">
-        <p>ThrottleIQ — Privacy Policy · Effective 1 August 2026</p>
+        <p>ThrottleIQ — Privacy Policy · Effective 19 September 2026</p>
         <p>Published at https://throttleiqfb.web.app/privacy.html</p>
       </div>
 

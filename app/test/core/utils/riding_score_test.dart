@@ -24,4 +24,21 @@ void main() {
       );
     });
   });
+
+  group('ridingScoreTier', () {
+    test('80 and above is smooth', () {
+      expect(ridingScoreTier(80), RidingScoreTier.smooth);
+      expect(ridingScoreTier(100), RidingScoreTier.smooth);
+    });
+
+    test('60 to 79 is steady', () {
+      expect(ridingScoreTier(60), RidingScoreTier.steady);
+      expect(ridingScoreTier(79), RidingScoreTier.steady);
+    });
+
+    test('below 60 is aggressive', () {
+      expect(ridingScoreTier(59), RidingScoreTier.aggressive);
+      expect(ridingScoreTier(0), RidingScoreTier.aggressive);
+    });
+  });
 }

@@ -532,7 +532,7 @@ class CloudRepository {
     buffer.writeln('<gpx version="1.1" creator="ThrottleIQ" xmlns="http://www.topografix.com/GPX/1/1">');
     buffer.writeln('  <metadata>');
     buffer.writeln('    <name>Motorcycle Ride</name>');
-    buffer.writeln('    <time>${startTime}</time>');
+    buffer.writeln('    <time>$startTime</time>');
     buffer.writeln('    <bounds minlat="0" minlon="0" maxlat="0" maxlon="0" />');
     buffer.writeln('  </metadata>');
     buffer.writeln('  <trk>');

@@ -189,6 +189,17 @@ class LiveSessionCoordinator {
   }
 
   /// Ends the live session and clears the permanent pointer durably via [OutboxService].
+  ///
+  /// Only awaits the local, near-instant durable enqueue (`attemptNow:
+  /// false`) — never the Firestore round-trip. This used to await
+  /// [OutboxService.enqueueLiveSessionTeardown]'s default `attemptNow: true`,
+  /// which blocks on an up-to-8s network write; since every caller of this
+  /// method (`stopRide`, `cancelRide`, `restoreInterruptedRide`) sits
+  /// directly on a rider-facing tap or the app-launch path, that made
+  /// ending a ride on a slow/flaky connection feel frozen. The teardown is
+  /// still guaranteed queued by the time this returns, so nothing is lost if
+  /// the app is killed a moment later — [SyncManager]'s periodic drain (or
+  /// the next natural outbox attempt) delivers it in the background.
   Future<void> tearDownLiveShare({
     required String? uid,
     required OutboxService outbox,
@@ -204,6 +215,7 @@ class LiveSessionCoordinator {
     await outbox.enqueueLiveSessionTeardown(
       uid: uid,
       token: token,
+      attemptNow: false,
     );
   }
 

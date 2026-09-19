@@ -63,7 +63,7 @@ void main() async {
         return true;
       };
     } catch (e) {
-      print('Firebase initialization error: $e');
+      debugPrint('Firebase initialization error: $e');
     }
 
     // Home-screen widgets: fire-and-forget. Every call inside is no-op safe, so

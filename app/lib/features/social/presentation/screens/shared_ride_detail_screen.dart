@@ -8,6 +8,8 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../core/utils/riding_score.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -637,6 +639,10 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             ),
           ],
         ),
+        if (ride.ridingScore != null) ...[
+          const SizedBox(height: 12),
+          _RidingScoreBadge(score: ride.ridingScore!),
+        ],
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -936,6 +942,65 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Gamified riding-score card: a big tier-colored number plus a tier label,
+/// so it reads as a rank the rider earned rather than another stat tile.
+/// Only rendered when [SharedRideEntity.ridingScore] is non-null — see that
+/// getter's doc comment for why an old shared ride has no honest score to
+/// show rather than falling back to a possibly-false 100.
+class _RidingScoreBadge extends StatelessWidget {
+  final int score;
+
+  const _RidingScoreBadge({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tier = ridingScoreTier(score);
+    final (color, label, icon) = switch (tier) {
+      RidingScoreTier.smooth => (AppColors.success, l10n.scoreSmoothLabel, Icons.emoji_events),
+      RidingScoreTier.steady => (AppColors.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
+      RidingScoreTier.aggressive => (AppColors.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '$score',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color, height: 1),
+          ),
+          const SizedBox(width: 4),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('/100', style: TextStyle(fontSize: 13, color: color)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.ridingScoreLabel,
+                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                const SizedBox(height: 2),
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              ],
+            ),
+          ),
+          Icon(icon, color: color, size: 26),
+        ],
+      ),
     );
   }
 }

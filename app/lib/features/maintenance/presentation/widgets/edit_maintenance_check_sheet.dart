@@ -297,7 +297,7 @@ class _EditMaintenanceCheckSheetState
                     Switch.adaptive(
                       value: _isEnabled,
                       onChanged: (v) => setState(() => _isEnabled = v),
-                      activeColor: AppColors.primary,
+                      activeTrackColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -305,7 +305,7 @@ class _EditMaintenanceCheckSheetState
               const SizedBox(height: 16),
 
               // Service Interval
-              EditorialLabel('Service Interval'),
+              const EditorialLabel('Service Interval'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _intervalCtrl,
@@ -366,7 +366,7 @@ class _EditMaintenanceCheckSheetState
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  EditorialLabel('Specifications & Extra Info'),
+                  const EditorialLabel('Specifications & Extra Info'),
                   Text(
                     'Optional text',
                     style: TextStyle(

@@ -114,7 +114,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                           const SizedBox(height: 12),
                           if (_replies.isEmpty)
                             Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Text('No replies yet — be the first to help out.',
                                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                             )

@@ -201,13 +201,13 @@ class ChallengeRepository {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
     final endOfMonth = DateTime(now.year, now.month + 1, 1)
-        .subtract(Duration(days: 1));
+        .subtract(const Duration(days: 1));
 
     // Check if challenges for this month already exist
     final existing = await _firestore
         .collection('challenges')
         .where('startDate', isGreaterThanOrEqualTo: startOfMonth)
-        .where('startDate', isLessThan: endOfMonth.add(Duration(days: 1)))
+        .where('startDate', isLessThan: endOfMonth.add(const Duration(days: 1)))
         .get();
 
     if (existing.docs.isNotEmpty) {

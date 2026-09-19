@@ -81,7 +81,7 @@ class _RoutesTab extends ConsumerWidget {
         if (routes.isEmpty) {
           return Center(
             child: Padding(
-              padding: EdgeInsets.all(AppDimensions.paddingLg),
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

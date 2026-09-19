@@ -77,7 +77,7 @@ class PlaceRepository {
     final querySnapshot = await _firestore
         .collection(_collection)
         .where('geohash', isGreaterThanOrEqualTo: geohashPrefix)
-        .where('geohash', isLessThan: geohashPrefix + '~')
+        .where('geohash', isLessThan: '$geohashPrefix~')
         .get();
     return querySnapshot.docs
         .map((doc) => PlaceModel.fromFirestore(doc).toEntity())

@@ -5,9 +5,9 @@ import 'package:throttleiq/features/social/domain/entities/shared_ride_entity.da
 void main() {
   group('SharedRideEntity', () {
     final testPolyline = [
-      LatLng(0.0, 0.0),
-      LatLng(0.001, 0.001),
-      LatLng(0.002, 0.002),
+      const LatLng(0.0, 0.0),
+      const LatLng(0.001, 0.001),
+      const LatLng(0.002, 0.002),
     ];
 
     final testRide = SharedRideEntity(
@@ -106,6 +106,58 @@ void main() {
 
       expect(a, isNot(equals(b)));
       expect(a, equals(testRide.copyWith(caption: 'A')));
+    });
+
+    test('ridingScore is null when the event counts were never shared', () {
+      expect(testRide.hardBrakeCount, isNull);
+      expect(testRide.ridingScore, isNull);
+    });
+
+    test('ridingScore computes once all three counts are present', () {
+      final withCounts = SharedRideEntity(
+        id: testRide.id,
+        userId: testRide.userId,
+        userName: testRide.userName,
+        userPhotoUrl: testRide.userPhotoUrl,
+        bikeId: testRide.bikeId,
+        bikeName: testRide.bikeName,
+        bikeType: testRide.bikeType,
+        rideDate: testRide.rideDate,
+        distanceKm: testRide.distanceKm,
+        durationSeconds: testRide.durationSeconds,
+        maxSpeedKmh: testRide.maxSpeedKmh,
+        polyline: testRide.polyline,
+        createdAt: testRide.createdAt,
+        hardBrakeCount: 2,
+        rapidAccelCount: 1,
+        highJerkCount: 0,
+      );
+
+      expect(withCounts.ridingScore, 100 - (2 * 5) - (1 * 3));
+    });
+
+    test('ridingScore stays null if any one of the three counts is missing', () {
+      final partial = SharedRideEntity(
+        id: testRide.id,
+        userId: testRide.userId,
+        userName: testRide.userName,
+        userPhotoUrl: testRide.userPhotoUrl,
+        bikeId: testRide.bikeId,
+        bikeName: testRide.bikeName,
+        bikeType: testRide.bikeType,
+        rideDate: testRide.rideDate,
+        distanceKm: testRide.distanceKm,
+        durationSeconds: testRide.durationSeconds,
+        maxSpeedKmh: testRide.maxSpeedKmh,
+        polyline: testRide.polyline,
+        createdAt: testRide.createdAt,
+        hardBrakeCount: 0,
+        rapidAccelCount: 0,
+        // highJerkCount deliberately omitted (null) — should suppress the
+        // score entirely rather than silently treat it as zero.
+      );
+
+      expect(partial.ridingScore, isNull);
     });
 
     test('has no photos by default', () {

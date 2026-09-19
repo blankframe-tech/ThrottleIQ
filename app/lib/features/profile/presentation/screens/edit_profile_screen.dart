@@ -404,7 +404,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: const Color(0xFFE91E63), width: 2),
+                borderSide: const BorderSide(color: Color(0xFFE91E63), width: 2),
               ),
             ),
           ),

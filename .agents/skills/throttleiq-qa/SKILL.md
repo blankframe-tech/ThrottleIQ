@@ -23,7 +23,7 @@ ThrottleIQ has four test layers. Know which layer is relevant to the change:
 | Layer | Location | Runner | What it covers |
 |---|---|---|---|
 | **Calculator unit tests** | `app/test/calculators/` | `flutter test` | Pure-logic classes: `EventDetector`, `MotionCalculator`, `VehicleStateEstimator`, `AccelAxisCalibrator`, `RecordingCadencePolicy`, etc. No I/O. |
-| **Database tests (real SQLite)** | `app/test/database/` | `flutter test` | DAOs exercised against a real in-memory SQLite via `sqflite_common_ffi`. **Do not mock these** — mocks cannot catch deadlock regressions (Issues.md §7). |
+| **Database tests (real SQLite)** | `app/test/database/` | `flutter test` | DAOs exercised against a real in-memory SQLite via `sqflite_common_ffi`. **Do not mock these** — mocks cannot catch deadlock regressions (issues_fixed.md §7). |
 | **Feature / integration tests** | `app/test/features/` | `flutter test` | Repository + provider-level behaviour per feature (ride, garage, social, etc.). |
 | **Firestore rules tests** | `scripts/test/rules/` | `npm run test:rules` (from `scripts/`) | Security rules exercised against the Firebase emulator. |
 
@@ -58,7 +58,7 @@ flutter test --reporter expanded
 
 Key behaviours to watch for:
 - **Hanging tests** (no output for > 20 s) almost always mean a DAO is calling
-  another DAO from inside a transaction (deadlock, Issues.md §7). If this
+  another DAO from inside a transaction (deadlock, issues_fixed.md §7). If this
   happens, check the `database/` tests first.
 - The `@Timeout(Duration(seconds: 20))` on `bike_dao_delete_test.dart` is
   intentional — a hang here is a regression signal, not a flake.

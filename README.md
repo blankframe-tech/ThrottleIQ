@@ -4,13 +4,14 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta, `1.0.0-beta.2.2+7`, tagged
-> [`beta-v2.2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.2)
-> — a signed Android APK, plus a Play Console internal-testing build; no
+> **Status:** pre-launch beta, `1.0.0-beta.2.8+14`, tagged
+> [`beta-v2.8`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.8)
+> — a signed Android APK/AAB on the GitHub release, plus an earlier Play
+> Console internal-testing build; no
 > public Play Store/App Store listing yet. Core ride recording,
 > garage/maintenance, social (forums, feed, direct messaging, group rides),
 > POI directory and saved routes are all built and wired end-to-end. See
-> [`docs/planning/HANDOFF_Document.md`](docs/planning/HANDOFF_Document.md)
+> [`HANDOFF_Document.md`](DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md)
 > for the full current status and what's still unverified before launch.
 > App id is `com.bft.throttleiq`.
 
@@ -72,12 +73,12 @@
    flutter pub get
    ```
 
-3. **Set up Firebase** (see [`docs/guides/SETUP.md`](docs/guides/SETUP.md) for details):
+3. **Set up Firebase** (see [`SETUP.md`](DOCS/For%20Devs%20and%20Contributers/guides/SETUP.md) for details):
    - Create Firebase project at console.firebase.google.com
    - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
    - Place in `app/android/app/` and `app/ios/Runner/` respectively
    - Set up a free Cloudinary account for photo uploads (Firebase Storage
-     isn't used — see `docs/guides/SETUP.md`)
+     isn't used — see `SETUP.md`)
 
 4. **Run**:
    ```bash
@@ -154,15 +155,15 @@ flutter test --coverage
 
 ### Test Suite
 
-**847/847 green** as of 2026-08-28 (see `docs/planning/HANDOFF_Document.md`'s Key
-facts table for how that grew). Pure-logic calculators (motion, crash
+**1032/1032 green**, with `flutter analyze` reporting no issues, as of
+2026-09-19 (see `HANDOFF_Document.md`'s Key facts table for how that grew). Pure-logic calculators (motion, crash
 detection, jerk/acceleration, privacy-zone clipping, rating aggregation) are
 fixture-tested against realistic data — real coordinates (Dhaka,
 Chattogram), sensor thresholds, known distances. DAOs run against real
 in-memory SQLite (`sqflite_common_ffi`), not mocks — a prior deadlock bug
 shipped specifically because map-based fakes couldn't see real transaction
-semantics (`docs/planning/Issues.md` §7). Firestore rules have their own emulator
-suite: `npm run test:rules` from `scripts/`.
+semantics (`issues_fixed.md` §7). Firestore rules have their own emulator
+suite (98 tests): `npm run test:rules` from `scripts/`.
 
 **Example: Crash Detection**
 ```dart
@@ -205,12 +206,18 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 ## 🔒 Security & Privacy
 
 ### Data Ownership
-- **All user data** lives in `/users/{uid}/...` (Firestore rules enforce user-only access)
+- **Private data** (ride history, GPS tracks, bikes, maintenance, emergency
+  contacts) lives under `/users/{uid}/...`, owner-only per `firestore.rules`.
+  Anything you choose to share (feed rides, forum posts, reviews, live
+  sessions, group rides) lives in top-level collections with per-feature
+  visibility rules.
+- **Account deletion** is in-app (Settings → Delete Account). Cloud cleanup
+  runs in the `onUserAccountDeleted` Cloud Function (see `functions/README.md`).
 - **Deleted rides** are purged from cloud on user request
 - **No behavioural analytics or advertising SDK.** Firebase Crashlytics
   (added 2026-08-28) collects crash diagnostics only — stack traces, device
   model, app version — never usage tracking. See
-  `public/privacy.html` and `store_listing/data_safety_and_permissions.md`.
+  `public/privacy.html` and `DOCS/General/store_listing/data_safety_and_permissions.md`.
 
 ### Ride Sharing
 - **Privacy zones**: Auto-clips first/last 200m from shared rides (home location safe)
@@ -251,18 +258,20 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 
 ## 📚 Documentation
 
-Everything lives in [`docs/`](docs/README.md) — see that file for the full
+Everything lives in [`DOCS/`](DOCS/README.md). See that file for the full
 map. The essentials:
 
-- [`docs/planning/HANDOFF_Document.md`](docs/planning/HANDOFF_Document.md) — current status,
+- [`HANDOFF_Document.md`](DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md): current status,
   the pre-launch to-do list, and the feature backlog. Start here.
-- [`docs/planning/features.md`](docs/planning/features.md) — what a signed-in user can
+- [`features.md`](DOCS/Handoff%20for%20agents%20and%20Todos/features.md): what a signed-in user can
   actually do today, screen by screen.
-- [`docs/planning/Issues.md`](docs/planning/Issues.md) — the dated record of every bug found
-  and fixed, cited by section number (`§N`) from everywhere else.
-- [`docs/guides/SETUP.md`](docs/guides/SETUP.md) — Firebase setup, Cloudinary, Android
+- [`issues_open.md`](DOCS/Handoff%20for%20agents%20and%20Todos/issues_open.md) /
+  [`issues_fixed.md`](DOCS/Handoff%20for%20agents%20and%20Todos/issues_fixed.md):
+  unresolved issues, and the dated record of every resolved one, cited by
+  section number (`§N`) from everywhere else.
+- [`SETUP.md`](DOCS/For%20Devs%20and%20Contributers/guides/SETUP.md): Firebase setup, Cloudinary, Android
   signing, iOS certificates.
-- [`docs/architecture/assumptions.md`](docs/architecture/assumptions.md) — non-obvious judgement calls
+- [`assumptions.md`](DOCS/For%20Devs%20and%20Contributers/architecture/assumptions.md): non-obvious judgement calls
   and why they were made.
 
 ---
@@ -290,21 +299,22 @@ In short: You can **view and audit** the source code, but cannot copy, fork, or 
 
 ## 🗺️ Roadmap
 
-- **Now**: Play Store + App Store submission (see `docs/planning/HANDOFF_Document.md`'s
+- **Now**: Play Store + App Store submission (see `HANDOFF_Document.md`'s
   "Play Store & App Store" section for the concrete step-by-step).
-- **Soon**: Crash-alert SMS/email escalation (code is written, blocked on
-  the Firebase Blaze billing plan — see `docs/architecture/backend_options.md`), turn-by-turn
+- **Soon**: Crash-alert SMS/email escalation (the Cloud Function exists but
+  delivery is still a mock; real sending needs Twilio/SendGrid and the Firebase
+  Blaze billing plan. See `DOCS/For Devs and Contributers/architecture/backend_options.md`), turn-by-turn
   route navigation tuning, full Bangla localization.
 - **Backlog**: lean-angle tracking, weekly riding reports, clubs & events,
-  a curvy-route planner with real routing — see `docs/planning/HANDOFF_Document.md`
+  a curvy-route planner with real routing. See `HANDOFF_Document.md`
   Part 2 for the full, competitor-researched feature map.
 
 ---
 
 ## 📞 Support & Feedback
 
-- **Report bugs**: tracked in `docs/planning/Issues.md`
-- **Feature requests / backlog**: `docs/planning/HANDOFF_Document.md` Part 2
+- **Report bugs**: tracked in `DOCS/Handoff for agents and Todos/issues_open.md`
+- **Feature requests / backlog**: `HANDOFF_Document.md` Part 2
 - **Privacy questions**: `public/privacy.html`
 
 ---

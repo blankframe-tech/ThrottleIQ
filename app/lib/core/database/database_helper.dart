@@ -30,7 +30,8 @@ class DatabaseHelper {
   /// Builds the full schema on an already-open database. Used by
   /// [overrideDatabaseForTesting] callers so a test DB matches production.
   @visibleForTesting
-  Future<void> createSchemaForTesting(Database db) => _onCreate(db, 14);
+  Future<void> createSchemaForTesting(Database db) =>
+      _onCreate(db, schemaVersion);
 
   /// Runs the real migration ladder against an already-open database.
   ///
@@ -58,6 +59,11 @@ class DatabaseHelper {
     'database corrupt',
   ];
 
+  /// Current schema version. One constant so the production open and the
+  /// test schema builder can't drift apart when the next migration lands —
+  /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
+  static const int schemaVersion = 14;
+
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
     return _corruptionMarkers.any((marker) => message.contains(marker));
@@ -79,7 +85,7 @@ class DatabaseHelper {
   Future<Database> _openDb(String path) {
     return openDatabase(
       path,
-      version: 14,
+      version: schemaVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,

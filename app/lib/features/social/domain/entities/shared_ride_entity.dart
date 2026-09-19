@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/riding_score.dart';
 import '../../../../core/utils/ride_speed_invariant.dart';
 
 /// How many rider-taken photos one shared ride may carry.
@@ -90,6 +91,27 @@ class SharedRideEntity extends Equatable {
   /// [isLikedByCurrentUser]).
   final int? myVote;
 
+  /// Event counts behind [ridingScore]. Null (all three together, never
+  /// individually) on a ride shared before this field existed — there's no
+  /// honest zero to default to, since "never recorded" and "recorded zero
+  /// hard brakes" mean different things and only the former should hide the
+  /// score badge rather than show a false 100.
+  final int? hardBrakeCount;
+  final int? rapidAccelCount;
+  final int? highJerkCount;
+
+  /// 0-100 riding score for this ride, or null when the counts behind it
+  /// weren't shared (see [hardBrakeCount]). Same formula as the private
+  /// per-ride summary — [computeRidingScore] — so a shared ride's badge
+  /// always matches what its rider saw right after finishing.
+  int? get ridingScore {
+    final brakes = hardBrakeCount;
+    final accel = rapidAccelCount;
+    final jerk = highJerkCount;
+    if (brakes == null || accel == null || jerk == null) return null;
+    return computeRidingScore(hardBrakes: brakes, rapidAccel: accel, highJerk: jerk);
+  }
+
   const SharedRideEntity({
     required this.id,
     required this.userId,
@@ -116,6 +138,9 @@ class SharedRideEntity extends Equatable {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
+    this.hardBrakeCount,
+    this.rapidAccelCount,
+    this.highJerkCount,
   }) : _maxSpeedKmh = maxSpeedKmh;
 
   /// The ride's lead photo — the first of [photoUrls], or null when it has
@@ -188,6 +213,9 @@ class SharedRideEntity extends Equatable {
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
       myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
+      hardBrakeCount: hardBrakeCount,
+      rapidAccelCount: rapidAccelCount,
+      highJerkCount: highJerkCount,
     );
   }
 

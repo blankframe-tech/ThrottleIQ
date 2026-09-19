@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -42,7 +43,7 @@ class ExportService {
       await file.writeAsString(jsonEncode(jsonData), flush: true);
       return file;
     } catch (e) {
-      print('Error exporting to JSON: $e');
+      debugPrint('Error exporting to JSON: $e');
       return null;
     }
   }
@@ -63,7 +64,7 @@ class ExportService {
       await file.writeAsString(gpxContent, flush: true);
       return file;
     } catch (e) {
-      print('Error exporting to GPX: $e');
+      debugPrint('Error exporting to GPX: $e');
       return null;
     }
   }

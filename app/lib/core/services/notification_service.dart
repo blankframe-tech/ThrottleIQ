@@ -163,7 +163,7 @@ class NotificationService {
       'Crash detected',
       'Contacting your emergency contacts in ${secondsRemaining}s unless you '
           'tap "I\'m OK".',
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           crashChannelId,
           'Crash alerts',
@@ -175,7 +175,7 @@ class NotificationService {
           autoCancel: false,
           playSound: true,
           enableVibration: true,
-          actions: const [
+          actions: [
             AndroidNotificationAction(
               actionImOk,
               "I'm OK",
@@ -184,7 +184,7 @@ class NotificationService {
             ),
           ],
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentSound: true,
           interruptionLevel: InterruptionLevel.critical,

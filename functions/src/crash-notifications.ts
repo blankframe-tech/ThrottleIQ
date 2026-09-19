@@ -11,7 +11,7 @@ interface CrashNotification {
   timestamp: string;
   lastLat?: number;
   lastLng?: number;
-  status: 'pending' | 'contacted' | 'acknowledged';
+  status: 'pending' | 'contacted' | 'acknowledged' | 'escalated';
 }
 
 interface EmergencyContact {
@@ -97,7 +97,9 @@ async function sendContactNotification(
   lastLat?: number,
   lastLng?: number
 ): Promise<void> {
-  const location = lastLat && lastLng
+  // Explicit null checks — a truthiness check would treat a legitimate 0
+  // coordinate (equator / prime meridian) as "no location".
+  const location = lastLat != null && lastLng != null
     ? `https://maps.google.com/?q=${lastLat},${lastLng}`
     : 'Location unavailable';
 
@@ -150,7 +152,9 @@ ThrottleIQ Safety Team
       rideId,
       timestamp: new Date().toISOString(),
       method: contact.phone ? 'sms' : 'email',
-      status: 'sent',
+      // Not 'sent': delivery is still a MOCK, and a log that says 'sent'
+      // would be read as proof a contact was reached when nobody was.
+      status: 'mock_not_sent',
     });
 }
 
@@ -225,6 +229,6 @@ async function sendFollowUpAlert(uid: string, rideId: string): Promise<void> {
       rideId,
       timestamp: new Date().toISOString(),
       type: 'escalation',
-      status: 'sent',
+      status: 'mock_not_sent', // see sendContactNotification
     });
 }

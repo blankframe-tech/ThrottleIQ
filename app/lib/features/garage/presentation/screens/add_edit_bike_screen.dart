@@ -242,7 +242,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                             children: [
                               Icon(Icons.add_a_photo_outlined,
                                   color: AppColors.textSecondary, size: 28),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               Text('Add Photo',
                                   style: TextStyle(
                                       fontSize: 12,

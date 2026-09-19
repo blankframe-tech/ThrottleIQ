@@ -140,7 +140,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   children: [
                     Expanded(child: Divider(color: AppColors.textSecondary)),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text('or',
                           style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                     ),

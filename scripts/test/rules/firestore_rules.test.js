@@ -687,7 +687,7 @@ test('a voice note stamped with a client clock instead of serverTimestamp() is d
   );
 });
 
-test('a sent voice note cannot be updated or deleted by anyone, including its sender', async () => {
+test('a sent voice note cannot be updated by anyone, including its sender', async () => {
   let noteRef;
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     noteRef = doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes'));
@@ -696,7 +696,21 @@ test('a sent voice note cannot be updated or deleted by anyone, including its se
 
   const db = dbFor(ALICE);
   await assertFails(updateDoc(doc(db, noteRef.path), { durationMs: 5000 }));
-  await assertFails(deleteDoc(doc(db, noteRef.path)));
+});
+
+// GroupRideRepository.deleteGroupRide() deletes every voice note before the
+// ride doc; with delete pinned to false, deleting a ride with any clip failed
+// half-way through.
+test('only the ride creator can delete a voice note', async () => {
+  let noteRef;
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    noteRef = doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes'));
+    await setDoc(noteRef, voiceNoteData());
+  });
+
+  await assertFails(deleteDoc(doc(dbFor(MALLORY), noteRef.path)));
+  await assertFails(deleteDoc(doc(dbFor(STRANGER), noteRef.path)));
+  await assertSucceeds(deleteDoc(doc(dbFor(ALICE), noteRef.path)));
 });
 
 test('an invited-but-not-yet-joined rider can still read voice notes', async () => {
@@ -1284,6 +1298,40 @@ function sharedRideData(overrides = {}) {
 test('sharing a ride with plausible stats succeeds', async () => {
   const db = dbFor(ALICE);
   await assertSucceeds(setDoc(doc(db, 'rides', 'ride-new-1'), sharedRideData()));
+});
+
+// Riding-score event counts: RideShareModel.toMap() writes them as explicit
+// nulls when unknown (e.g. an outbox share queued before score-sharing
+// existed). `data.get(key, default)` doesn't substitute for a present null,
+// so the rule has to accept null itself.
+test('sharing a ride with null riding-score counts succeeds', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(db, 'rides', 'ride-new-score-null'),
+      sharedRideData({ hardBrakeCount: null, rapidAccelCount: null, highJerkCount: null })
+    )
+  );
+});
+
+test('sharing a ride with plausible riding-score counts succeeds', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(db, 'rides', 'ride-new-score-ok'),
+      sharedRideData({ hardBrakeCount: 2, rapidAccelCount: 1, highJerkCount: 7 })
+    )
+  );
+});
+
+test('sharing a ride with negative riding-score counts is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(db, 'rides', 'ride-new-score-neg'),
+      sharedRideData({ hardBrakeCount: -50, rapidAccelCount: 0, highJerkCount: 0 })
+    )
+  );
 });
 
 test('sharing a ride with a fabricated 9999 km/h top speed is denied', async () => {

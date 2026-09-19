@@ -29,7 +29,7 @@ void main() {
 
   group('isSpeedOutlier', () {
     test('never flags below the minimum sample count, no matter the speed', () {
-      final baseline = (sampleCount: 4, meanKmh: 35.0, stddevKmh: 5.0);
+      const baseline = (sampleCount: 4, meanKmh: 35.0, stddevKmh: 5.0);
       expect(isSpeedOutlier(120, baseline, minSamples: 5), isFalse);
     });
 
@@ -45,7 +45,7 @@ void main() {
     });
 
     test('a flat (zero-stddev) baseline still requires the absolute delta', () {
-      final baseline = (sampleCount: 10, meanKmh: 0.0, stddevKmh: 0.0);
+      const baseline = (sampleCount: 10, meanKmh: 0.0, stddevKmh: 0.0);
       expect(isSpeedOutlier(5, baseline), isFalse); // under minDeltaKmh
       expect(isSpeedOutlier(25, baseline), isTrue);
     });
@@ -53,12 +53,12 @@ void main() {
     test('a small absolute gap is never flagged even with a huge z-score', () {
       // stddev is tiny, so a few km/h over produces a large z — but the
       // absolute-delta floor should still block it.
-      final baseline = (sampleCount: 10, meanKmh: 30.0, stddevKmh: 0.5);
+      const baseline = (sampleCount: 10, meanKmh: 30.0, stddevKmh: 0.5);
       expect(isSpeedOutlier(35, baseline), isFalse); // only +5, under minDeltaKmh
     });
 
     test('respects custom thresholds', () {
-      final baseline = (sampleCount: 10, meanKmh: 30.0, stddevKmh: 5.0);
+      const baseline = (sampleCount: 10, meanKmh: 30.0, stddevKmh: 5.0);
       expect(
         isSpeedOutlier(40, baseline, zThreshold: 1.5, minDeltaKmh: 5),
         isTrue,

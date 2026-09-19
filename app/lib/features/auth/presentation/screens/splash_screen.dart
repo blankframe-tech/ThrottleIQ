@@ -39,8 +39,8 @@ class SplashScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _ThrottleIQLogo(),
-            SizedBox(height: 32),
+            const _ThrottleIQLogo(),
+            const SizedBox(height: 32),
             SizedBox(
               width: 24,
               height: 24,

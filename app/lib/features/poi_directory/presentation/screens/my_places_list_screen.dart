@@ -28,12 +28,12 @@ class MyPlacesListScreen extends ConsumerWidget {
           if (places.isEmpty) {
             return Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.place_outlined, size: 64, color: AppColors.textTertiary),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text("You haven't added any places yet",
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
                   ],

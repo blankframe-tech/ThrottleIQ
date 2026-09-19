@@ -136,6 +136,9 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         audience: _audience,
         localPhotoPaths: _imagePaths,
         caption: caption.isEmpty ? null : caption,
+        hardBrakeCount: ride.hardBrakeCount,
+        rapidAccelCount: ride.rapidAccelCount,
+        highJerkCount: ride.highJerkCount,
       );
 
       if (!mounted) return;

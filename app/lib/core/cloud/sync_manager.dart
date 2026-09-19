@@ -69,10 +69,16 @@ class SyncManager {
     }
   }
 
+  /// Any transport other than `none` can carry traffic. Checking only
+  /// mobile/wifi treated a rider on ethernet or a VPN-only result as offline
+  /// forever: no sync, and every cycle counted as a failure.
+  static bool _hasNetwork(List<ConnectivityResult> results) =>
+      results.any((r) => r != ConnectivityResult.none);
+
   /// Initialize connectivity listener
   void _initConnectivityListener() {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
-      if (results.contains(ConnectivityResult.mobile) || results.contains(ConnectivityResult.wifi)) {
+      if (_hasNetwork(results)) {
         // Internet is back - reset failure counter and sync immediately
         _consecutiveFailures = 0;
         _performSync();
@@ -120,12 +126,17 @@ class SyncManager {
     if (_isSyncing) return;
     if (_auth.currentUser == null) return;
 
+    // Claimed BEFORE the first await. Set after the connectivity check (as it
+    // used to be), two triggers landing together — startAutoSync() and the
+    // connectivity listener's initial event, say — both passed the guard
+    // above and ran two full sync passes concurrently.
+    _isSyncing = true;
+
     // Check connectivity first
     final connectivityResult = await _connectivity.checkConnectivity();
-    final hasInternet = connectivityResult.contains(ConnectivityResult.mobile) ||
-        connectivityResult.contains(ConnectivityResult.wifi);
 
-    if (!hasInternet) {
+    if (!_hasNetwork(connectivityResult)) {
+      _isSyncing = false;
       _status = SyncStatus.failure;
       _consecutiveFailures++;
       _notifyListeners();
@@ -133,7 +144,6 @@ class SyncManager {
       return;
     }
 
-    _isSyncing = true;
     _status = SyncStatus.syncing;
     _notifyListeners();
 
@@ -144,9 +154,13 @@ class SyncManager {
     // freshly-restored connection that a share would otherwise sit behind it.
     // Failures inside drain() are recorded per-entry and never thrown, so this
     // cannot abort the sync that follows.
-    await _outbox.drain();
-
     try {
+      // Inside the try so an unexpected throw (e.g. the outbox table itself
+      // failing to open) still reaches the `finally` below. Outside it, the
+      // throw escaped with `_isSyncing` stuck at true, and every later
+      // `_performSync` returned immediately for the rest of the session.
+      await _outbox.drain();
+
       // docs/Issues.md §62.13/14: `_auth.currentUser` was checked once at
       // entry (line ~121) then force-unwrapped here, two `await`s later (the
       // connectivity check, and `_outbox.drain()` above). A rider signing

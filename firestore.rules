@@ -157,6 +157,30 @@ service cloud.firestore {
         (downvotesAfter - downvotesBefore) == (after == -1 ? 1 : 0) - (before == -1 ? 1 : 0);
     }
 
+    // The riding-score event counts (optional — null/absent on a ride shared
+    // before score-sharing existed, which the client treats as "no badge"
+    // rather than a fabricated perfect score). Where present each must be a
+    // non-negative integer and — since these are self-reported the same way
+    // distance/speed are — bounded the same generous way: no more than one
+    // event per second of the ride, which no real ride gets close to but
+    // stops a client claiming e.g. -50 hard brakes to always show a 100.
+    //
+    // `get(key, default)` only falls back to the default when the key is
+    // ABSENT — RideShareModel.toMap() writes these keys with an explicit
+    // null when the counts are unknown (e.g. an outbox share enqueued before
+    // this field existed), and `null is int` is false, so each count must
+    // accept null explicitly or those shares are rejected outright.
+    function scoreCountPlausible(count, durationSeconds) {
+      return count == null ||
+        (count is int && count >= 0 && count <= durationSeconds);
+    }
+
+    function ridingScoreCountsPlausible(data) {
+      return scoreCountPlausible(data.get('hardBrakeCount', null), data.durationSeconds) &&
+        scoreCountPlausible(data.get('rapidAccelCount', null), data.durationSeconds) &&
+        scoreCountPlausible(data.get('highJerkCount', null), data.durationSeconds);
+    }
+
     // docs/Issues.md §62.1: a shared ride's own `allow update` (below) used to
     // only pin `userId` immutable — every other field, including the stats
     // shown on the social feed and any leaderboard built on them, was
@@ -177,7 +201,8 @@ service cloud.firestore {
       return data.distanceKm is number && data.distanceKm >= 0 && data.distanceKm <= 3000 &&
         data.durationSeconds is number && data.durationSeconds > 0 && data.durationSeconds <= 604800 &&
         data.maxSpeedKmh is number && data.maxSpeedKmh >= 0 && data.maxSpeedKmh <= 260 &&
-        data.maxSpeedKmh >= avgSpeedKmh - 0.5;
+        data.maxSpeedKmh >= avgSpeedKmh - 0.5 &&
+        ridingScoreCountsPlausible(data);
     }
 
     // docs/Issues.md §62.2: `users/{uid}.publicStats` (shown on the public
@@ -1185,7 +1210,15 @@ service cloud.firestore {
           request.resource.data.durationMs <= 60000 &&
           request.resource.data.createdAt == request.time;
 
-        allow update, delete: if false;
+        // Clips are immutable, but the ride's creator must be able to delete
+        // them: GroupRideRepository.deleteGroupRide() deletes every
+        // subcollection doc before the ride itself. With delete pinned to
+        // `false`, deleting any ride that had even one voice note failed with
+        // permission-denied AFTER members/invitations were already gone,
+        // leaving a half-deleted ride behind.
+        allow update: if false;
+        allow delete: if request.auth != null &&
+          request.auth.uid == ride().creatorId;
       }
 
       // Live positions, one document per rider at `memberLocations/{uid}`.

@@ -24,7 +24,7 @@ These rules apply to every coding task in this project without exception.
 
 5. **Never mock DAOs in database tests.** Use real in-memory SQLite via
    `sqflite_common_ffi` — see `app/test/database/bike_dao_delete_test.dart`.
-   Mocks cannot catch the deadlock class of bug documented in Issues.md §7.
+   Mocks cannot catch the deadlock class of bug documented in issues_fixed.md §7.
 
 6. **Never call another DAO from inside a transaction.** This produces a silent
    deadlock that hangs the app rather than throwing. CI will time out; a real

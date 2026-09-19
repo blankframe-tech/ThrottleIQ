@@ -13,7 +13,7 @@ void main() {
       address: 'Test Address',
       phone: '+880123456789',
       hours: '24/7',
-      photoUrls: [],
+      photoUrls: const [],
       verified: false,
       createdBy: 'user1',
       createdAt: DateTime.now(),

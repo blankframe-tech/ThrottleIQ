@@ -35,6 +35,11 @@ import * as logger from "firebase-functions/logger";
  * upgrade (a project-level change this pass has no way to make or verify),
  * and "clean up after the fact" is exactly this trigger's designed purpose.
  *
+ * Still NOT covered: community content the rider authored inside other
+ * people's spaces (forum posts/replies, place reviews, comments on others'
+ * rides, group-ride membership, chats). Those need an anonymize-vs-delete
+ * product decision, not just a delete call.
+ *
  * NOT yet deployed by this pass — requires `firebase deploy --only
  * functions` before it actually runs. Until deployed, a successful account
  * deletion leaves the Firestore profile/username claim orphaned (a lesser,
@@ -67,8 +72,38 @@ export const onUserAccountDeleted = functionsV1.auth.user().onDelete(async (user
     logger.warn(`onUserAccountDeleted: failed to delete livePointers for ${uid}`, e);
   }
 
+  // Everything else the rider owns. Each step is isolated so one failure
+  // doesn't strand the rest; all of them are idempotent, so a retry is safe.
+  //
+  // `recursiveDelete` rather than `.delete()`: deleting a Firestore document
+  // does NOT delete its subcollections. A plain `users/{uid}.delete()` left
+  // the rider's cloud ride history, GPS tracks, bikes, maintenance logs,
+  // emergency contacts (third-party PII), badges, notifications and blocks
+  // all in place, orphaned under a parent that no longer exists.
+  const ownedQueries: Array<[string, FirebaseFirestore.Query]> = [
+    // Shared rides on the social feed, with their likes/votes/comments.
+    ["rides", db.collection("rides").where("userId", "==", uid)],
+    ["liveSessions", db.collection("liveSessions").where("uid", "==", uid)],
+    ["crashNotifications", db.collection("crashNotifications").where("uid", "==", uid)],
+    // Follow edges in both directions, so counts elsewhere stop including
+    // a rider who no longer exists.
+    ["follows (out)", db.collection("follows").where("followerUid", "==", uid)],
+    ["follows (in)", db.collection("follows").where("followeeUid", "==", uid)],
+  ];
+
+  for (const [label, query] of ownedQueries) {
+    try {
+      const snap = await query.get();
+      for (const doc of snap.docs) {
+        await db.recursiveDelete(doc.ref);
+      }
+    } catch (e) {
+      logger.error(`onUserAccountDeleted: failed to delete ${label} for ${uid}`, e);
+    }
+  }
+
   try {
-    await db.collection("users").doc(uid).delete();
+    await db.recursiveDelete(db.collection("users").doc(uid));
   } catch (e) {
     logger.error(`onUserAccountDeleted: failed to delete profile for ${uid}`, e);
   }

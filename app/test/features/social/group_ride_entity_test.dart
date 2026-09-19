@@ -46,7 +46,7 @@ void main() {
   });
 
   group('GroupRideEntity', () {
-    final startTime = DateTime.now().add(Duration(hours: 2));
+    final startTime = DateTime.now().add(const Duration(hours: 2));
     final members = [
       GroupRideMember(
         userId: 'user1',

@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/riding_score.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
@@ -578,6 +580,10 @@ class _RideCardState extends ConsumerState<_RideCard> {
                       ),
                     ],
                   ),
+                  if (ride.ridingScore != null) ...[
+                    const SizedBox(height: 10),
+                    _RidingScoreChip(score: ride.ridingScore!),
+                  ],
                   if ((ride.caption ?? '').trim().isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Text(
@@ -788,6 +794,47 @@ class _RideCardState extends ConsumerState<_RideCard> {
   }
 
   Widget _divider() => Container(width: 1, height: 28, color: AppColors.border);
+}
+
+/// Small tier-colored riding-score pill for a feed card — the "gamified"
+/// half of sharing a ride's score: a number a rider earned, not just another
+/// stat. Only shown when [SharedRideEntity.ridingScore] is non-null (see
+/// that getter's doc comment).
+class _RidingScoreChip extends StatelessWidget {
+  final int score;
+
+  const _RidingScoreChip({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tier = ridingScoreTier(score);
+    final (color, label, icon) = switch (tier) {
+      RidingScoreTier.smooth => (AppColors.success, l10n.scoreSmoothLabel, Icons.emoji_events),
+      RidingScoreTier.steady => (AppColors.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
+      RidingScoreTier.aggressive => (AppColors.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 5),
+          Text('$score',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+          const SizedBox(width: 4),
+          Text('· $label', style: TextStyle(fontSize: 12, color: color)),
+        ],
+      ),
+    );
+  }
 }
 
 /// Renders 1, 2, or 3 photos as a collage beside the route map on a feed card.

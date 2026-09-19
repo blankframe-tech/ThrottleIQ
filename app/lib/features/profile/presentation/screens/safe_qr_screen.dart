@@ -123,7 +123,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
                         child: Text(
                           l10n.safeQrEmptyStateHint,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 13, color: Colors.black45),
                         ),
                       ),

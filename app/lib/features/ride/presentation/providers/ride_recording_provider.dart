@@ -808,11 +808,20 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _accelSub = null;
     _gyroSub = null;
     _elapsedTimer?.cancel();
+    // Flush BEFORE dispose. dispose() fires its own unawaited flush, which
+    // empties the buffer synchronously — so an awaited flush placed after it
+    // found nothing to wait on, and a failed insert would re-queue the last
+    // fixes into a buffer nobody reads again.
+    await _persistenceCoordinator.flushPointBuffer();
     _persistenceCoordinator.dispose();
+    // Same as cancelRide(): a crash countdown still running when the rider
+    // taps Stop would otherwise keep ticking and dispatch an emergency alert
+    // ~60 s later for a ride the rider just ended by hand.
+    _crashCoordinator.dispose();
+    unawaited(NotificationService.instance.cancelCrashAlert());
     WidgetsBinding.instance.removeObserver(this);
 
     await _tearDownLiveShare();
-    await _persistenceCoordinator.flushPointBuffer();
     await WakelockPlus.disable();
     await _persistenceCoordinator.clearRecordingState();
 

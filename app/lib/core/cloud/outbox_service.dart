@@ -159,6 +159,9 @@ class OutboxService {
     List<String> uploadedPhotoUrls = const [],
     String? routeId,
     String? caption,
+    int? hardBrakeCount,
+    int? rapidAccelCount,
+    int? highJerkCount,
     bool attemptNow = true,
   }) async {
     await _dao.enqueue(
@@ -186,6 +189,9 @@ class OutboxService {
         'uploadedPhotoUrls': uploadedPhotoUrls,
         'routeId': routeId,
         'caption': caption,
+        'hardBrakeCount': hardBrakeCount,
+        'rapidAccelCount': rapidAccelCount,
+        'highJerkCount': highJerkCount,
       },
     );
     _changes.add(null);
@@ -368,6 +374,9 @@ class OutboxService {
             photoUrls: uploaded,
             routeId: p['routeId'] as String?,
             caption: p['caption'] as String?,
+            hardBrakeCount: (p['hardBrakeCount'] as num?)?.toInt(),
+            rapidAccelCount: (p['rapidAccelCount'] as num?)?.toInt(),
+            highJerkCount: (p['highJerkCount'] as num?)?.toInt(),
           )
           .timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;

@@ -86,7 +86,7 @@ graph TD
 
 ## 3. Directory Structure
 
-The project lives under [`app/lib/`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib) following a modular, feature-oriented structure:
+The project lives under [`app/lib/`](app/lib) following a modular, feature-oriented structure:
 
 ```
 app/lib/
@@ -128,23 +128,23 @@ app/lib/
 
 ## 4. Telemetry Pipeline & Vehicle State Engine
 
-The core computational logic lives in pure domain calculators under [`app/lib/features/ride/domain/calculators/`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators).
+The core computational logic lives in pure domain calculators under [`app/lib/features/ride/domain/calculators/`](app/lib/features/ride/domain/calculators).
 
 ### The 10-Layer Architecture
 1. **Sensor Collection**: Ingests GPS fixes via `geolocator` and accelerometer/gyroscope streams via `sensors_plus`.
-2. **Validation ([`SensorValidator`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/sensor_validator.dart))**: Filters out anomalies—rejects negative elapsed times, speed spikes exceeding physical bounds (>80 m/s), non-finite floats, and GPS accuracy circles $>25\,\text{m}$.
+2. **Validation ([`SensorValidator`](app/lib/features/ride/domain/calculators/sensor_validator.dart))**: Filters out anomalies—rejects negative elapsed times, speed spikes exceeding physical bounds (>80 m/s), non-finite floats, and GPS accuracy circles $>25\,\text{m}$.
 3. **Time Synchronization**: Event-driven timestamping preserving device microsecond clocks across sensor types.
-4. **Sensor Fusion ([`VehicleStateEstimator`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart))**:
+4. **Sensor Fusion ([`VehicleStateEstimator`](app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart))**:
    - Complementary filter blending GPS course over ground with integrated gyroscope $z$-axis (yaw rate).
    - High-accuracy GPS updates ($\le 8\,\text{m}$) bias heading heavily toward GPS ($95\%$), while degraded GPS leans on gyro dead-reckoning ($60\%$).
 5. **Confidence Engine**: Dynamically calculates a $0-100$ heuristic score based on GPS horizontal dilution of precision and IMU jitter.
 6. **Motion Classification**: Derives instantaneous states (`isMoving`, `isStopped`, `isCornering`, `isBraking`, `isAccelerating`).
-7. **Event Detection ([`EventDetector`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/event_detector.dart))**:
+7. **Event Detection ([`EventDetector`](app/lib/features/ride/domain/calculators/event_detector.dart))**:
    - **Crash Detection Rule**:
      $$\text{Accel Spike} > 8g \;(78.48\,\text{m/s}^2) \;\land\; \text{Jerk} > 10\,\text{m/s}^3 \;\land\; \text{Speed Drop to } <2.0\,\text{m/s within } 2.0\,\text{s}$$
    - Crash signals require confidence validation to avoid triggering on phone drops or tunnel GPS dropouts.
    - Triggers an immediate maximum haptic pulse and initiates a **60-second cancellable countdown** on the UI.
-8. **Adaptive Recording ([`RecordingCadencePolicy`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/recording_cadence_policy.dart))**:
+8. **Adaptive Recording ([`RecordingCadencePolicy`](app/lib/features/ride/domain/calculators/recording_cadence_policy.dart))**:
    - Thins points stored to SQLite during steady cruising (saves disk space and write I/O) while capturing dense points ($1\,\text{s}$ or $3\,\text{m}$) during dynamic maneuvering (braking, cornering, accelerating).
 9. **Map Matching**: (Deferred / roadmap).
 10. **Analytics**: Post-ride calculations of average speed (excluding extended idle periods $>60\,\text{s}$), lean estimates, jam duration, and safety scores.
@@ -154,17 +154,17 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 ## 5. Storage & Cloud Synchronization Architecture
 
 ### Local Storage (SQLite)
-- Maintained by [`DatabaseHelper`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/database/database_helper.dart).
+- Maintained by [`DatabaseHelper`](app/lib/core/database/database_helper.dart).
 - Migrations use `_addColumnIfMissing` to avoid `ALTER TABLE` lockouts and database recreation.
 - `ride_points` table stores full high-fidelity trajectories (`lat`, `lng`, `speed`, `accel`, `heading`, `confidence`, `imu_quality`, `is_cornering`).
 
-### Outbox Pattern ([`OutboxService`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/outbox_service.dart))
+### Outbox Pattern ([`OutboxService`](app/lib/core/cloud/outbox_service.dart))
 - Network writes are queued into the SQLite `outbox` table before the UI callback completes.
 - **Contract**: Once `enqueue()` returns, the operation is guaranteed to persist and eventually reach the cloud.
 - `kOutboxAttemptTimeout = Duration(seconds: 8)`: If Firestore does not acknowledge within 8 seconds, the write is treated as `deferred` rather than throwing, preventing UI freezes during offline usage.
 - Exponential backoff: $30\,\text{s} \to 1\,\text{m} \to 2\,\text{m} \dots \text{capped at } 30\,\text{m}$.
 
-### Cloud Sync Engine ([`SyncManager`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/sync_manager.dart))
+### Cloud Sync Engine ([`SyncManager`](app/lib/core/cloud/sync_manager.dart))
 - Triggered on:
   1. App resume (`AppLifecycleState.resumed`).
   2. User authentication state changes.
@@ -176,12 +176,19 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
   3. Push local deletions first.
   4. Upload unsynced local rows (`synced = 0`).
 
-### Firestore Track Chunking ([`RideTrackCodec`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/ride_track_codec.dart))
+### Firestore Track Chunking ([`RideTrackCodec`](app/lib/core/cloud/ride_track_codec.dart))
 - Long rides generate thousands of telemetry points. Writing one document per point exhausts read/write quotas; writing all points to one document breaches Firestore's 1 MiB limit.
-- **Chunking Strategy**: Points are grouped into 500-point arrays and stored in subcollection documents `/users/{uid}/rides/{rideId}/tracks/{chunkIndex}` using compact positional lists `[lat, lng, tsMillis, speed, accel, heading, confidence]`.
+- **Chunking Strategy**: Points are grouped into 500-point chunks (`trackChunkSize`) and stored in subcollection documents `/users/{uid}/rides/{rideId}/track/{chunkIndex}` as one flat positional array with a stride of 5: `[lat, lng, tsMillis, speed, accel, lat, lng, …]`. Firestore rejects nested arrays, which is why it's flat. Heading/confidence/IMU fields stay local-only in `ride_points`.
 
 ### Media Uploads
-- Direct-to-storage architecture using **Cloudinary** ([`CloudinaryUploadService`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/cloudinary_upload_service.dart)) via unsigned REST requests. Bypasses Firebase Storage to avoid Blaze billing lock-in while preserving free-tier quotas.
+- Direct-to-storage architecture using **Cloudinary** ([`CloudinaryUploadService`](app/lib/core/services/cloudinary_upload_service.dart)) via unsigned REST requests. Bypasses Firebase Storage to avoid Blaze billing lock-in while preserving free-tier quotas.
+
+### Server side (`functions/`)
+Cloud Functions only backstop what the client can't be trusted with or can't do after the fact. See `functions/README.md`:
+- `onUserAccountDeleted`: recursive cleanup of a deleted rider's cloud data.
+- `reconcileRideIdentity`: overwrites a shared ride's display name/photo from the profile doc (anti-impersonation).
+- `onMessageCreate`: keyword chat moderation (placeholder).
+- `onCrashNotification` / `escalateCrashAlert`: crash-alert fan-out and escalation. **Delivery is still a mock**; nothing is actually sent.
 
 ---
 
@@ -189,21 +196,21 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 
 1. **Foreground Service**:
    - Background tracking uses `flutter_foreground_task` and `geolocator`'s native foreground service notification to prevent Android OEM OS battery killers from terminating the recording isolate.
-2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/auto_tracking_service.dart))**:
+2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](app/lib/core/services/auto_tracking_service.dart))**:
    - Operates an isolated background entry point (`autoTrackingTaskCallback`).
    - Listens for Activity Recognition transitions (e.g., `IN_VEHICLE` / `ON_BICYCLE`).
    - Persists detected trip chunks to the `auto_detections` SQLite table.
-3. **Reconciliation ([`AutoRideReconcilerService`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart))**:
-   - On app foregrounding, re-evaluates pending detected rides using [`AutoRideReconciler`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/auto_ride_reconciler.dart).
+3. **Reconciliation ([`AutoRideReconcilerService`](app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart))**:
+   - On app foregrounding, re-evaluates pending detected rides using [`AutoRideReconciler`](app/lib/features/ride/domain/calculators/auto_ride_reconciler.dart).
    - Prompts the rider to categorize the journey or links it to their primary motorcycle.
 
 ---
 
 ## 7. Navigation & Routing Architecture
 
-- Routing is implemented via `GoRouter` in [`app_router.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/router/app_router.dart).
+- Routing is implemented via `GoRouter` in [`app_router.dart`](app/lib/core/router/app_router.dart).
 - **Core Navigation Structure**:
-  - `ShellRoute` with [`AppShell`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/shared/widgets/app_shell.dart) hosts the 5 primary tabs:
+  - `ShellRoute` with [`AppShell`](app/lib/shared/widgets/app_shell.dart) hosts the 5 primary tabs:
     - **Social** (`/home/social`): Feed, ride sharing, group rides.
     - **Stats** (`/home/stats`): Aggregated metrics, riding scores, badges.
     - **Record** (`/home/record`): Live recording dashboard.

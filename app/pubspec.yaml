@@ -135,6 +135,12 @@ dependencies:
   # plain text a phone camera app already reads.
   qr_flutter: ^4.1.0
 
+  # Imported directly by add_edit_bike_screen.dart (fetching a remote bike
+  # photo to a local file for re-cropping). It was only ever a transitive dependency
+  # of cached_network_image, which the depend_on_referenced_packages lint
+  # flags.
+  flutter_cache_manager: ^3.4.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

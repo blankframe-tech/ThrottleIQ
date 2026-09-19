@@ -134,15 +134,22 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          ..._reasons.map((reason) => RadioListTile<String>(
-                title: Text(reason, style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-                value: reason,
-                groupValue: _selectedReason,
-                onChanged: (value) => setState(() => _selectedReason = value),
-                fillColor: WidgetStatePropertyAll(AppColors.primary),
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-              )),
+          RadioGroup<String>(
+            groupValue: _selectedReason,
+            onChanged: (value) => setState(() => _selectedReason = value),
+            child: Column(
+              children: [
+                for (final reason in _reasons)
+                  RadioListTile<String>(
+                    title: Text(reason, style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+                    value: reason,
+                    fillColor: WidgetStatePropertyAll(AppColors.primary),
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: _detailsController,

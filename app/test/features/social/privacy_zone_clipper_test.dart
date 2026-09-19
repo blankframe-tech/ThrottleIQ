@@ -6,9 +6,9 @@ void main() {
   group('PrivacyZoneClipper', () {
     test('clips short polylines completely', () {
       final polyline = [
-        LatLng(40.7128, -74.0060), // NYC
-        LatLng(40.7130, -74.0058),
-        LatLng(40.7132, -74.0056),
+        const LatLng(40.7128, -74.0060), // NYC
+        const LatLng(40.7130, -74.0058),
+        const LatLng(40.7132, -74.0056),
       ];
 
       final clipped = PrivacyZoneClipper.clipPolyline(polyline);
@@ -49,8 +49,8 @@ void main() {
     });
 
     test('haversine distance calculation', () {
-      final point1 = LatLng(0.0, 0.0);
-      final point2 = LatLng(0.0, 0.0008983); // ~100m at equator
+      const point1 = LatLng(0.0, 0.0);
+      const point2 = LatLng(0.0, 0.0008983); // ~100m at equator
 
       final distance = PrivacyZoneClipper.haversineDistance(point1, point2);
 
@@ -66,15 +66,15 @@ void main() {
     });
 
     test('single point polyline returns empty', () {
-      final polyline = [LatLng(40.7128, -74.0060)];
+      final polyline = [const LatLng(40.7128, -74.0060)];
       final clipped = PrivacyZoneClipper.clipPolyline(polyline);
       expect(clipped.isEmpty, true);
     });
 
     test('two point polyline returns empty', () {
       final polyline = [
-        LatLng(40.7128, -74.0060),
-        LatLng(40.7130, -74.0058),
+        const LatLng(40.7128, -74.0060),
+        const LatLng(40.7130, -74.0058),
       ];
       final clipped = PrivacyZoneClipper.clipPolyline(polyline);
       expect(clipped.isEmpty, true);
