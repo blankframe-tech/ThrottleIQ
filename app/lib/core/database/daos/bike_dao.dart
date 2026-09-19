@@ -7,9 +7,67 @@ class BikeDao {
     await db.insert('bikes', bike, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<List<Map<String, dynamic>>> getAllForUser(String userId) async {
+  /// The rider's bikes. Archived bikes are left out unless [includeArchived]
+  /// — the garage, every bike picker and the home widget want only bikes the
+  /// rider still rides, while stats want every bike their rides point at.
+  Future<List<Map<String, dynamic>>> getAllForUser(
+    String userId, {
+    bool includeArchived = false,
+  }) async {
     final db = await DatabaseHelper.instance.database;
-    return db.query('bikes', where: 'user_id = ?', whereArgs: [userId], orderBy: 'created_at DESC');
+    return db.query('bikes',
+        where: includeArchived ? 'user_id = ?' : 'user_id = ? AND archived = 0',
+        whereArgs: [userId],
+        orderBy: 'created_at DESC');
+  }
+
+  Future<List<Map<String, dynamic>>> getArchivedForUser(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query('bikes',
+        where: 'user_id = ? AND archived = 1',
+        whereArgs: [userId],
+        orderBy: 'created_at DESC');
+  }
+
+  /// Archives or unarchives a bike. Its rides, maintenance logs and totals
+  /// are untouched — that is the whole point of archiving over [delete],
+  /// which takes the bike's ride history with it (claude_sol §2.1.1).
+  ///
+  /// An archived bike can't stay the active one (it's hidden from every
+  /// picker, so the rider couldn't switch away from it), so archiving the
+  /// active bike hands "active" to the most recently added bike still in the
+  /// garage, in the same transaction. `synced = 0` so the flag reaches the
+  /// cloud copy.
+  Future<void> setArchived(String id, bool archived) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      final rows = await txn.query('bikes',
+          columns: ['user_id', 'is_active'], where: 'id = ?', whereArgs: [id]);
+      if (rows.isEmpty) return;
+      final wasActive = rows.first['is_active'] == 1;
+      await txn.update(
+        'bikes',
+        {
+          'archived': archived ? 1 : 0,
+          if (archived) 'is_active': 0,
+          'synced': 0,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (archived && wasActive) {
+        final next = await txn.query('bikes',
+            columns: ['id'],
+            where: 'user_id = ? AND archived = 0',
+            whereArgs: [rows.first['user_id']],
+            orderBy: 'created_at DESC',
+            limit: 1);
+        if (next.isNotEmpty) {
+          await txn.update('bikes', {'is_active': 1},
+              where: 'id = ?', whereArgs: [next.first['id']]);
+        }
+      }
+    });
   }
 
   Future<Map<String, dynamic>?> getById(String id) async {
@@ -24,7 +82,8 @@ class BikeDao {
   }
 
   /// Deletes a bike and everything hanging off it: its rides, those rides'
-  /// GPS points, and its maintenance logs.
+  /// GPS points, and its maintenance logs. Only for the explicit "delete bike
+  /// and all its rides" action — the default is [setArchived].
   ///
   /// Every statement runs on `txn`, deliberately. The previous version called
   /// `RideDao.deleteForBike()` / `MaintenanceDao.deleteForBike()` from inside

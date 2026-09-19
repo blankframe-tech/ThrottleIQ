@@ -17,7 +17,12 @@ class BikeDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bikes = ref.watch(garageProvider).valueOrNull ?? [];
+    // allBikesProvider, not garageProvider: an archived bike is still
+    // openable (from the garage's "Archived bikes" section) to unarchive it.
+    // Falls back to the garage while that list is still loading.
+    final bikes = ref.watch(allBikesProvider).valueOrNull ??
+        ref.watch(garageProvider).valueOrNull ??
+        [];
     final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
     final ridesAsync = ref.watch(rideHistoryProvider(bikeId));
 
@@ -30,7 +35,9 @@ class BikeDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(bike.displayName),
+        title: Text(bike.isArchived
+            ? '${bike.displayName} (archived)'
+            : bike.displayName),
         actions: [
           IconButton(
             icon: const Icon(Icons.forum_outlined),
@@ -41,10 +48,18 @@ class BikeDetailScreen extends ConsumerWidget {
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.go('/home/profile/$bikeId/edit'),
           ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.danger),
-            onPressed: () => _confirmDelete(context, ref),
-          ),
+          if (bike.isArchived)
+            IconButton(
+              icon: const Icon(Icons.unarchive_outlined),
+              tooltip: 'Unarchive bike',
+              onPressed: () => _unarchive(context, ref),
+            )
+          else
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: AppColors.danger),
+              tooltip: 'Archive or delete bike',
+              onPressed: () => _confirmRemove(context, ref, bike),
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -217,7 +232,7 @@ class BikeDetailScreen extends ConsumerWidget {
     }
   }
 
-  // Pops with a bool result rather than popping-then-navigating inline: a
+  // Pops with a result rather than popping-then-navigating inline: a
   // Navigator.pop immediately followed by a context.go/push in the same
   // synchronous callback races the dialog's imperative route removal
   // against go_router's declarative page-list update on the same
@@ -228,27 +243,64 @@ class BikeDetailScreen extends ConsumerWidget {
   // active_ride_screen.dart's stop-ride confirm, already safe) guarantees
   // the dialog's route is completely gone before anything else touches
   // the Navigator.
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+  //
+  // Archive is the primary choice (claude_sol §2.1.1): the only option this
+  // dialog used to offer was a delete that took every ride on the bike with
+  // it, which is rarely what "I sold this bike" means.
+  Future<void> _confirmRemove(
+      BuildContext context, WidgetRef ref, BikeEntity bike) async {
+    final choice = await showDialog<_RemoveChoice>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text('Delete Bike?', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text('Remove ${bike.displayName}?',
+            style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
-            'All ride history for this bike will be deleted.',
+            'Archiving hides this bike from your garage and bike pickers. '
+            'Its rides stay in your history and stats, and you can unarchive '
+            'it any time.',
             style: TextStyle(color: AppColors.textSecondary)),
+        actionsOverflowDirection: VerticalDirection.up,
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel')),
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+            key: const Key('bike-delete-with-rides'),
+            onPressed: () =>
+                Navigator.pop(dialogContext, _RemoveChoice.deleteWithRides),
+            child: Text('Delete bike and all its rides',
+                style: TextStyle(color: AppColors.danger)),
+          ),
+          FilledButton(
+            key: const Key('bike-archive'),
+            onPressed: () =>
+                Navigator.pop(dialogContext, _RemoveChoice.archive),
+            child: const Text('Archive bike (keep rides)'),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (choice == null || !context.mounted) return;
+
+    if (choice == _RemoveChoice.archive) {
+      try {
+        await ref.read(garageProvider.notifier).archiveBike(bikeId);
+        if (context.mounted) context.go('/home/profile');
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not archive this bike: $e')),
+        );
+      }
+      return;
+    }
+
+    final typed = await showDialog<bool>(
+      context: context,
+      builder: (_) => TypeToDeleteBikeDialog(bike: bike),
+    );
+    if (typed != true || !context.mounted) return;
 
     // Awaited, and errors surfaced. Previously this was fire-and-forget and
     // navigated away regardless, so when the delete failed (it deadlocked —
@@ -265,9 +317,98 @@ class BikeDetailScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _unarchive(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(garageProvider.notifier).unarchiveBike(bikeId);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bike is back in your garage')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not unarchive this bike: $e')),
+      );
+    }
+  }
+
   String _formatDate(DateTime dt) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+}
+
+enum _RemoveChoice { archive, deleteWithRides }
+
+/// Second step of the destructive path: the rider types the bike's name
+/// before "Delete" enables. Deleting takes every ride on the bike with it,
+/// here and in the cloud, and there is no undo.
+class TypeToDeleteBikeDialog extends StatefulWidget {
+  final BikeEntity bike;
+  const TypeToDeleteBikeDialog({super.key, required this.bike});
+
+  /// What the rider has to type: brand and model, without the year, so the
+  /// check is about intent rather than punctuation.
+  static String confirmationText(BikeEntity bike) =>
+      '${bike.brand} ${bike.model}'.trim();
+
+  @override
+  State<TypeToDeleteBikeDialog> createState() => _TypeToDeleteBikeDialogState();
+}
+
+class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool get _matches =>
+      _controller.text.trim().toLowerCase() ==
+      TypeToDeleteBikeDialog.confirmationText(widget.bike).toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    final expected = TypeToDeleteBikeDialog.confirmationText(widget.bike);
+    final rides = widget.bike.rideCount;
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: Text('Delete bike and all its rides?',
+          style: TextStyle(color: AppColors.textPrimary)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+              'This permanently deletes $rides ride${rides == 1 ? '' : 's'}, '
+              "their routes and this bike's maintenance log, on this phone "
+              'and in the cloud. Type "$expected" to confirm.',
+              style: TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('bike-delete-confirm-field'),
+            controller: _controller,
+            autofocus: true,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(hintText: expected),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel')),
+        TextButton(
+          key: const Key('bike-delete-confirm'),
+          onPressed: _matches ? () => Navigator.pop(context, true) : null,
+          child: Text('Delete',
+              style: TextStyle(
+                  color: _matches ? AppColors.danger : AppColors.textTertiary)),
+        ),
+      ],
+    );
   }
 }

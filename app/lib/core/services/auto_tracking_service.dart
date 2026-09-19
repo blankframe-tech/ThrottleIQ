@@ -115,6 +115,7 @@ class _AutoTrackingTaskHandler extends TaskHandler {
     await AutoTrackingService.beginDetection(
       _dao,
       AutoTriggerSource.activityRecognition,
+      userId: await AutoTrackingService.readOwner(),
     );
     _startPositionStream();
   }
@@ -380,6 +381,37 @@ class AutoTrackingService {
     }
   }
 
+  /// Key under which the signed-in rider's uid is handed to the task-handler
+  /// isolate, which has no FirebaseAuth of its own.
+  static const ownerKey = 'uid';
+
+  /// Records which rider new detections belong to (claude_sol §1.4.2), or
+  /// clears it on sign-out ([uid] null). Called from `app.dart`'s auth
+  /// listener, so it's current before [start] runs and gone once the rider
+  /// signs out — a detection opened with no owner is never attributed to
+  /// whoever signs in next.
+  ///
+  /// `FlutterForegroundTask.saveData` rather than SharedPreferences: it is
+  /// the plugin's own channel for exactly this, readable from the handler.
+  static Future<void> setOwner(String? uid) async {
+    if (uid == null) {
+      await FlutterForegroundTask.removeData(key: ownerKey);
+    } else {
+      await FlutterForegroundTask.saveData(key: ownerKey, value: uid);
+    }
+  }
+
+  static Future<String?> readOwner() async {
+    try {
+      return await FlutterForegroundTask.getData<String>(key: ownerKey);
+    } catch (e) {
+      // An unreadable owner must not cost the rider the detection; it's
+      // recorded unowned and handled by AutoDetectionDao.claimUnowned.
+      debugPrint('[auto-tracking] owner read failed: $e');
+      return null;
+    }
+  }
+
   /// No-op: unlike the paid plugin's native OS scheduler, this
   /// implementation reads the active-hours window fresh out of
   /// `SharedPreferences` at the moment each candidate trip starts (see
@@ -398,8 +430,9 @@ class AutoTrackingService {
   /// task-handler isolate and this one cannot see each other's memory.
   static Future<void> beginDetection(
     AutoDetectionDao dao,
-    String triggerSource,
-  ) async {
+    String triggerSource, {
+    String? userId,
+  }) async {
     final existing = await dao.currentRecording();
     if (existing != null) return;
 
@@ -408,6 +441,7 @@ class AutoTrackingService {
       id: id,
       startedAt: DateTime.now(),
       triggerSource: triggerSource,
+      userId: userId,
     );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsCurrentDetection, id);

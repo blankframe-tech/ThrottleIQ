@@ -66,18 +66,23 @@ class GarageScreen extends ConsumerWidget {
                     child: Text('Error: $e',
                         style: TextStyle(color: AppColors.danger))),
                 data: (bikes) {
-                  if (bikes.isEmpty) return const _EmptyGarage();
+                  final archived = ref.watch(archivedBikesProvider);
+                  if (bikes.isEmpty && archived.isEmpty) {
+                    return const _EmptyGarage();
+                  }
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
                         AppDimensions.paddingMd, AppDimensions.paddingLg),
-                    itemCount: bikes.length + 1,
+                    itemCount: bikes.length + 1 + (archived.isEmpty ? 0 : 1),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => i < bikes.length
                         ? _BikeCard(bike: bikes[i])
-                        : DashedAddButton(
-                            label: 'Add a bike',
-                            onTap: () => context.go('/home/profile/add'),
-                          ),
+                        : i == bikes.length
+                            ? DashedAddButton(
+                                label: 'Add a bike',
+                                onTap: () => context.go('/home/profile/add'),
+                              )
+                            : _ArchivedBikesSection(bikes: archived),
                   );
                 },
               ),
@@ -319,6 +324,48 @@ class _BikeCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bikes the rider archived: out of the garage and every picker, but with
+/// their rides still in history and stats. Collapsed by default — these are
+/// bikes the rider chose to put away.
+class _ArchivedBikesSection extends ConsumerWidget {
+  final List<BikeEntity> bikes;
+  const _ArchivedBikesSection({required this.bikes});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return EditorialCard(
+      padding: EdgeInsets.zero,
+      child: Theme(
+        // ExpansionTile draws its own dividers when expanded; inside a card
+        // with its own border they read as stray lines.
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: const Key('archived-bikes-section'),
+          leading: Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary),
+          title: Text('Archived bikes (${bikes.length})',
+              style: display(16, letterSpacing: 0)),
+          children: [
+            for (final bike in bikes)
+              ListTile(
+                title: Text(bike.displayName),
+                subtitle: Text(
+                    '${bike.rideCount} rides · '
+                    '${SpeedFormatter.distanceKm(bike.totalDistanceM)}',
+                    style: TextStyle(color: AppColors.textSecondary)),
+                onTap: () => context.go('/home/profile/${bike.id}'),
+                trailing: TextButton(
+                  onPressed: () =>
+                      ref.read(garageProvider.notifier).unarchiveBike(bike.id),
+                  child: const Text('Unarchive'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

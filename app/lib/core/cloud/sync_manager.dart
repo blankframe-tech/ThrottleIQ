@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
+import 'package:flutter/foundation.dart'
+    show VoidCallback, debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/daos/bike_dao.dart';
@@ -267,22 +268,14 @@ class SyncManager {
       // Upload to Firestore
       if (unsyncedRides.isNotEmpty) {
         await _cloudRepository.uploadRides(uid, unsyncedRides);
-
-        // Then each ride's GPS trail, strictly after the ride doc exists so a
-        // track can never point at a missing parent. A trail failure is
-        // logged and skipped rather than aborting the whole sync — the ride
-        // metadata is already safely up, and losing a polyline is far less
-        // bad than leaving the rest of the queue unsynced.
-        for (final ride in unsyncedRides) {
-          final rideId = ride['id'] as String?;
-          if (rideId == null) continue;
-          try {
-            await _cloudRepository.uploadRideTrack(uid, rideId);
-          } catch (e) {
-            debugPrint('[SyncManager] track upload failed for $rideId: $e');
-          }
-        }
       }
+
+      // Then GPS trails, strictly after the ride docs exist so a track can
+      // never point at a missing parent. Driven by `track_synced`, not by
+      // `unsyncedRides`: looping over the rides just uploaded meant a trail
+      // that failed once was never tried again, because by the next cycle
+      // its ride was already `synced = 1` (claude_sol §1.3.2).
+      await syncPendingTracks(uid, RideDao(), _cloudRepository.uploadRideTrack);
 
       if (unsyncedBikes.isNotEmpty) {
         await _cloudRepository.uploadBikes(uid, unsyncedBikes);
@@ -312,6 +305,31 @@ class SyncManager {
 
   /// Manual sync trigger
   Future<void> sync() => _performSync();
+
+  /// Uploads the GPS trail of every ride whose metadata is synced but whose
+  /// trail isn't, marking each one `track_synced` only once its upload
+  /// returns. A failure is logged and left at 0 for the next cycle rather
+  /// than aborting the sync — the ride metadata is already safely up, and one
+  /// bad trail must not hold the others back. Returns how many uploaded.
+  @visibleForTesting
+  static Future<int> syncPendingTracks(
+    String uid,
+    RideDao rideDao,
+    Future<void> Function(String uid, String rideId) uploadTrack,
+  ) async {
+    var uploaded = 0;
+    for (final ride in await rideDao.getTrackUnsynced(uid)) {
+      final rideId = ride['id'] as String;
+      try {
+        await uploadTrack(uid, rideId);
+        await rideDao.markTrackSynced(rideId);
+        uploaded++;
+      } catch (e) {
+        debugPrint('[SyncManager] track upload failed for $rideId: $e');
+      }
+    }
+    return uploaded;
+  }
 
   /// Cleanup resources
   void dispose() {

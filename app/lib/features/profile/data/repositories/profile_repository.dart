@@ -234,7 +234,10 @@ class ProfileRepository {
       data['created_at'] ??= DateTime.now().toIso8601String();
       // One malformed cloud doc must not blank out the whole garage.
       try {
-        bikes.add(BikeModel.fromMap(data));
+        final bike = BikeModel.fromMap(data);
+        // Archived bikes are out of the rider's own garage; they shouldn't
+        // be on show in it to anyone else either.
+        if (!bike.isArchived) bikes.add(bike);
       } catch (_) {
         continue;
       }

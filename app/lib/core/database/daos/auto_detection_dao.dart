@@ -31,10 +31,23 @@ class AutoTriggerSource {
 /// reads, computes in Dart, then writes based on what it read without wrapping
 /// the pair in a transaction.
 class AutoDetectionDao {
+  /// Discard reason for a pre-v15 detection (no owner recorded) that was
+  /// never claimed — see [discardStaleUnowned].
+  static const unownedLegacyReason = 'unowned_legacy';
+
+  /// How long an unowned detection is kept waiting to be claimed.
+  static const unownedMaxAge = Duration(days: 7);
+
+  /// [userId] is the rider signed in when the detection opened, as handed to
+  /// the background isolate by `AutoTrackingService.setOwner`. Null only when
+  /// no owner had been saved yet (the service restarted after an app update,
+  /// before the app itself was opened); such rows are treated like pre-v15
+  /// ones — see [claimUnowned].
   Future<void> insertDetection({
     required String id,
     required DateTime startedAt,
     required String triggerSource,
+    String? userId,
   }) async {
     final db = await DatabaseHelper.instance.database;
     await db.insert(
@@ -45,6 +58,7 @@ class AutoDetectionDao {
         'trigger_source': triggerSource,
         'status': AutoDetectionStatus.recording,
         'created_at': DateTime.now().toIso8601String(),
+        'user_id': userId,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -134,14 +148,86 @@ class AutoDetectionDao {
     );
   }
 
-  Future<List<Map<String, dynamic>>> pendingDetections() async {
+  /// Detections waiting to become [userId]'s rides.
+  ///
+  /// Scoped to the owner (claude_sol §1.4.2): this used to return every
+  /// pending row, and the reconciler attributed all of them to whoever was
+  /// signed in — on a shared phone, rider A's commute became rider B's ride,
+  /// on B's bike, counted toward B's service interval.
+  Future<List<Map<String, dynamic>>> pendingDetections(String userId) async {
     final db = await DatabaseHelper.instance.database;
     return db.query(
       'auto_detections',
-      where: 'status = ?',
-      whereArgs: [AutoDetectionStatus.pending],
+      where: 'status = ? AND user_id = ?',
+      whereArgs: [AutoDetectionStatus.pending, userId],
       orderBy: 'started_at ASC',
     );
+  }
+
+  /// Discards pending/recording detections with no owner that started before
+  /// [now] minus [unownedMaxAge]. Returns how many.
+  ///
+  /// These are rows written before v15 (or in the post-update window described
+  /// on [insertDetection]) that [claimUnowned] never claimed. After a week no
+  /// one is going to recognise the journey, and holding them longer only
+  /// keeps their raw fixes on disk.
+  Future<int> discardStaleUnowned(DateTime now) async {
+    final db = await DatabaseHelper.instance.database;
+    final cutoff = now.subtract(unownedMaxAge).toIso8601String();
+    return db.transaction((txn) async {
+      final rows = await txn.query('auto_detections',
+          columns: ['id'],
+          where: 'user_id IS NULL AND status IN (?, ?) AND started_at < ?',
+          whereArgs: [
+            AutoDetectionStatus.pending,
+            AutoDetectionStatus.recording,
+            cutoff,
+          ]);
+      for (final row in rows) {
+        await txn.update(
+          'auto_detections',
+          {
+            'status': AutoDetectionStatus.discarded,
+            'discard_reason': unownedLegacyReason,
+          },
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        );
+        await txn.delete('auto_fixes',
+            where: 'detection_id = ?', whereArgs: [row['id']]);
+      }
+      return rows.length;
+    });
+  }
+
+  /// Gives unowned pending detections to [userId], but only when this device
+  /// has never held another rider's data. Returns how many were claimed.
+  ///
+  /// The simplest rule that is still safe. An unowned row carries no hint of
+  /// whose it was, so on a phone only one rider has used — the common case,
+  /// and the one where refusing would silently drop real rides — it can only
+  /// be theirs. If any ride or bike on this device belongs to someone else,
+  /// the row could be either rider's, so it is left unclaimed and
+  /// [discardStaleUnowned] drops it after [unownedMaxAge]. Losing a
+  /// pre-update detection on a shared phone is the lesser harm than putting
+  /// one rider's journey on another's bike.
+  Future<int> claimUnowned(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.transaction((txn) async {
+      final others = await txn.rawQuery('''
+        SELECT 1 FROM rides WHERE user_id != ?
+        UNION ALL
+        SELECT 1 FROM bikes WHERE user_id != ?
+        LIMIT 1
+      ''', [userId, userId]);
+      if (others.isNotEmpty) return 0;
+      return txn.update(
+        'auto_detections',
+        {'user_id': userId},
+        where: 'user_id IS NULL AND status = ?',
+        whereArgs: [AutoDetectionStatus.pending],
+      );
+    });
   }
 
   Future<List<Map<String, dynamic>>> fixesFor(String detectionId) async {

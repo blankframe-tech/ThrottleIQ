@@ -59,15 +59,23 @@ class AutoRideReconcilerService {
       // and reconcile it like any other rather than abandoning the ride.
       await _detectionDao.closeStaleRecordingDetections();
 
-      final pending = await _detectionDao.pendingDetections();
-      if (pending.isEmpty) return const [];
-
       final uid = _ref.read(currentUserProvider)?.uid;
       if (uid == null) {
         // Signed out. Leave the rows pending rather than discarding them —
         // the rides happened, and attributing them needs a user.
         return const [];
       }
+
+      // Detections with no recorded owner (pre-v15 rows): drop the stale
+      // ones, and claim the rest only if this device has never held another
+      // rider's data. See AutoDetectionDao.claimUnowned.
+      await _detectionDao.discardStaleUnowned(DateTime.now());
+      await _detectionDao.claimUnowned(uid);
+
+      // Only this rider's detections. Another rider's stay pending for when
+      // they sign back in on this device (claude_sol §1.4.2).
+      final pending = await _detectionDao.pendingDetections(uid);
+      if (pending.isEmpty) return const [];
 
       final createdRideIds = <String>[];
       for (final detection in pending) {

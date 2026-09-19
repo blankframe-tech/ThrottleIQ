@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 14;
+  static const int schemaVersion = 15;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -229,6 +229,35 @@ class DatabaseHelper {
       await _addColumnIfMissing(
           db, 'bike_maintenance_configs', 'notes', 'notes TEXT');
     }
+    // Also gated on newVersion so upgradeSchemaForTesting(db, from, to)
+    // stops at `to`: the v13/v14 migration tests build only the tables those
+    // steps touch and would otherwise hit this step's `rides` ALTER. In
+    // production newVersion is always schemaVersion, so this changes nothing.
+    if (oldVersion < 15 && newVersion >= 15) {
+      // Whether a ride's GPS trail (not just its metadata row) has reached
+      // Firestore. `synced` alone flipped to 1 before the trail upload was
+      // attempted, so a failed trail upload was never retried — the ride
+      // looked backed up while its points existed only on this phone.
+      //
+      // Every existing row starts at 0, synced or not: a ride already marked
+      // synced may be one whose trail upload failed, and there is no record
+      // of which. Re-uploading once is safe because track chunks are keyed
+      // by index and written with `set` (see CloudRepository.uploadRideTrack).
+      await _addColumnIfMissing(db, 'rides', 'track_synced',
+          'track_synced INTEGER NOT NULL DEFAULT 0');
+      // Archiving hides a bike from the garage and pickers while keeping its
+      // rides — the alternative used to be deleting the bike, which deleted
+      // its whole ride history with it.
+      await _addColumnIfMissing(
+          db, 'bikes', 'archived', 'archived INTEGER NOT NULL DEFAULT 0');
+      // The rider an auto-detection belongs to, stamped by the background
+      // isolate. Without it the reconciler handed every pending detection to
+      // whoever happened to be signed in. Existing rows stay NULL — nothing
+      // on disk says whose they were; see AutoDetectionDao.pendingDetections
+      // for how those are handled.
+      await _addColumnIfMissing(
+          db, 'auto_detections', 'user_id', 'user_id TEXT');
+    }
   }
 
   static const String _createBikeMaintenanceConfigsSql = '''
@@ -265,6 +294,10 @@ class DatabaseHelper {
   ///   reconciled  — became `ride_id`; fixes can be pruned
   ///   discarded   — too short/slow to be a ride, or the rider said it wasn't
   ///
+  /// `user_id` (v15) is the rider signed in when the background isolate
+  /// opened the row; NULL on rows written before v15 — see
+  /// `AutoDetectionDao.pendingDetections`.
+  ///
   /// `trigger_source` records what woke us (activity recognition vs
   /// significant location change vs a paired device). Kept because the whole
   /// point of the first release is measuring which triggers produce real rides
@@ -278,7 +311,8 @@ class DatabaseHelper {
       status TEXT NOT NULL DEFAULT 'recording',
       ride_id TEXT,
       discard_reason TEXT,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      user_id TEXT
     )
   ''';
 
@@ -391,6 +425,7 @@ class DatabaseHelper {
         last_ride_at TEXT,
         odometer_km REAL,
         color_value INTEGER,
+        archived INTEGER NOT NULL DEFAULT 0,
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )
@@ -416,6 +451,7 @@ class DatabaseHelper {
         is_auto INTEGER NOT NULL DEFAULT 0,
         bike_confidence TEXT NOT NULL DEFAULT 'high',
         synced INTEGER NOT NULL DEFAULT 0,
+        track_synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
       )
     ''');
@@ -536,6 +572,10 @@ class DatabaseHelper {
   /// failure mode than the previous behavior of silently deleting another
   /// signed-in rider's live queue. Tracked as a follow-up in DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md
   /// §62 once these tables can be properly attributed.
+  ///
+  /// Since v15 `auto_detections` does carry a `user_id`, so rows stamped with
+  /// this account are deleted below. Pre-v15 rows (NULL owner) are still left
+  /// alone, as is `deleted_bikes`.
   Future<void> deleteUserData(String userId) async {
     final db = await database;
     await db.transaction((txn) async {
@@ -557,6 +597,12 @@ class DatabaseHelper {
       }
       await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);
+
+      // v15 gave auto_detections an owner. Only rows stamped with this uid
+      // go; unowned legacy rows are left alone for the reason given above.
+      // Their auto_fixes follow via ON DELETE CASCADE.
+      await txn.delete('auto_detections',
+          where: 'user_id = ?', whereArgs: [userId]);
 
       final outboxRows = await txn.query('outbox', columns: ['id', 'payload']);
       for (final row in outboxRows) {
