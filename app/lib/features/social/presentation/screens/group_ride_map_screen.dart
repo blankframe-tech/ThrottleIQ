@@ -23,6 +23,7 @@ import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
+import '../../../../shared/widgets/app_tile_layer.dart';
 
 /// How often this device publishes its own position to the group.
 ///
@@ -792,10 +793,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         initialZoom: 14,
       ),
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.bft.throttleiq',
-        ),
+        const AppTileLayer(),
         MarkerLayer(
           markers: [
             for (final m in members)

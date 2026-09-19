@@ -1,5 +1,5 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 // A basic set of toxic keywords for automated moderation demonstration.
@@ -51,13 +51,13 @@ export const onMessageCreate = onDocumentCreated(
       // resolved). This write goes through the Admin SDK, which bypasses
       // firestore.rules entirely, but the semantics should still be honest:
       // hiding the message is automated, closing the report isn't.
-      await admin.firestore().collection("reports").add({
+      await getFirestore().collection("reports").add({
         reporterId: "system",
         reportedId: messageData.senderId,
         contentType: "chat",
         contentId: snapshot.ref.id,
         reason: "Automated toxicity detection",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         status: "pending",
       });
     }

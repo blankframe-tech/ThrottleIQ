@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
+import 'app_tile_layer.dart';
 
 /// A small, non-interactive map that draws a ride's recorded route — the
 /// Strava-style trace shown on social feed cards.
@@ -75,10 +76,7 @@ class RideRouteMap extends StatelessWidget {
                 const InteractionOptions(flags: InteractiveFlag.none),
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.bft.throttleiq',
-            ),
+            const AppTileLayer(),
             if (polyline.length > 1)
               PolylineLayer(
                 polylines: [

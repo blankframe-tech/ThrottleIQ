@@ -24,22 +24,24 @@
  * and joining against users/{uid} at read time.
  */
 
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import * as logger from 'firebase-functions/logger';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
 
 /**
  * Firestore handle, resolved lazily rather than at module load.
  *
- * `admin.initializeApp()` lives in crash-notifications.ts, and index.ts's
+ * `initializeApp()` lives in crash-notifications.ts, and index.ts's
  * `export *` order decides which module's top level runs first — grabbing
- * `admin.firestore()` at import time here would throw if this module happened
+ * `getFirestore()` at import time here would throw if this module happened
  * to load first. Resolving inside the trigger sidesteps the ordering question
  * entirely, and the guard means it still works if this ever becomes the only
  * module deployed.
  */
-function firestore(): admin.firestore.Firestore {
-  if (admin.apps.length === 0) admin.initializeApp();
-  return admin.firestore();
+function firestore(): Firestore {
+  if (getApps().length === 0) initializeApp();
+  return getFirestore();
 }
 
 /** What a ride's identity fields should be, per the profile doc. */
@@ -72,20 +74,20 @@ async function canonicalIdentityFor(
  * re-triggers the function, the second pass finds both fields already
  * canonical, and it stops there.
  */
-export const reconcileRideIdentity = functions.firestore
-  .document('rides/{rideId}')
-  .onWrite(async (change, context) => {
-    const after = change.after;
+export const reconcileRideIdentity = onDocumentWritten(
+  'rides/{rideId}',
+  async (event) => {
+    const after = event.data?.after;
     // Deletes have nothing to reconcile.
-    if (!after.exists) return;
+    if (!after || !after.exists) return;
 
     const ride = after.data() ?? {};
     const uid = ride.userId;
     if (typeof uid !== 'string' || uid === '') {
       // Shouldn't happen — rules require userId on create — but a malformed
       // doc must not crash the trigger for every other ride.
-      functions.logger.warn('ride has no usable userId', {
-        rideId: context.params.rideId,
+      logger.warn('ride has no usable userId', {
+        rideId: event.params.rideId,
       });
       return;
     }
@@ -95,8 +97,8 @@ export const reconcileRideIdentity = functions.firestore
       // No profile doc yet (a ride shared before the profile is written).
       // Leaving the client-supplied values is the lesser evil versus blanking
       // a legitimate rider's name; the next write reconciles it.
-      functions.logger.info('no profile doc for ride author; leaving as-is', {
-        rideId: context.params.rideId,
+      logger.info('no profile doc for ride author; leaving as-is', {
+        rideId: event.params.rideId,
       });
       return;
     }
@@ -113,10 +115,11 @@ export const reconcileRideIdentity = functions.firestore
     // Note for anyone reading the logs later: this fires on every legitimate
     // profile-name change too, not only on spoofing, so it is logged at info
     // and without the old value (which may be attacker-supplied text).
-    functions.logger.info('reconciled ride identity from profile', {
-      rideId: context.params.rideId,
+    logger.info('reconciled ride identity from profile', {
+      rideId: event.params.rideId,
       fields: Object.keys(patch),
     });
 
     await after.ref.update(patch);
-  });
+  }
+);

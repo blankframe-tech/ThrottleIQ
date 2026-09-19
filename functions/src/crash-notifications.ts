@@ -1,9 +1,11 @@
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-admin.initializeApp();
+initializeApp();
 
-const db = admin.firestore();
+const db = getFirestore();
 
 interface CrashNotification {
   uid: string;
@@ -26,9 +28,11 @@ interface EmergencyContact {
  * Sends SMS/email to emergency contacts
  * Escalates if no ACK in 15 minutes
  */
-export const onCrashNotification = functions.firestore
-  .document('crashNotifications/{notificationId}')
-  .onCreate(async (snap, context) => {
+export const onCrashNotification = onDocumentCreated(
+  'crashNotifications/{notificationId}',
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
     const notification = snap.data() as CrashNotification;
     const { uid, rideId, lastLat, lastLng } = notification;
 
@@ -68,12 +72,13 @@ export const onCrashNotification = functions.firestore
       });
 
       // Schedule escalation check in 15 minutes
-      scheduleEscalation(uid, rideId, context.eventId);
+      scheduleEscalation(uid, rideId, event.id);
     } catch (error) {
       console.error(`Error processing crash notification: ${error}`);
       throw error;
     }
-  });
+  }
+);
 
 /**
  * Send notification to a contact via SMS or email.
@@ -178,9 +183,9 @@ function scheduleEscalation(
  * Escalation check: sends follow-up if no ACK after 15 min
  * Triggered by Pub/Sub scheduler
  */
-export const escalateCrashAlert = functions
-  .pubsub.schedule('every 15 minutes')
-  .onRun(async (context) => {
+export const escalateCrashAlert = onSchedule(
+  'every 15 minutes',
+  async () => {
     try {
       // Find crash notifications that are still 'contacted' after 15+ minutes
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
@@ -210,7 +215,8 @@ export const escalateCrashAlert = functions
     } catch (error) {
       console.error(`Error in escalation check: ${error}`);
     }
-  });
+  }
+);
 
 /**
  * Send follow-up escalation alert

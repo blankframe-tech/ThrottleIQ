@@ -20,6 +20,7 @@ import '../../data/repositories/route_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../providers/ride_feed_provider.dart';
+import '../../../../shared/widgets/app_tile_layer.dart';
 
 class SharedRideDetailScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -380,10 +381,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                 onTap: (_, __) => _openFullScreenMap(polyline, ride),
               ),
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.bft.throttleiq',
-                ),
+                const AppTileLayer(),
                 if (polyline.length > 1)
                   PolylineLayer(
                     polylines: [

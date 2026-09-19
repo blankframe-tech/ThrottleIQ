@@ -15,6 +15,7 @@ import '../../../../core/utils/geo_math.dart';
 import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
 import 'route_detail_screen.dart' show turnIcon;
+import '../../../../shared/widgets/app_tile_layer.dart';
 
 /// How close the rider must get to a turn's point before it's considered done
 /// and the banner advances to the next one.
@@ -191,10 +192,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                   initialZoom: 16,
                 ),
                 children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.bft.throttleiq',
-                  ),
+                  const AppTileLayer(),
                   PolylineLayer(
                     polylines: [
                       Polyline(

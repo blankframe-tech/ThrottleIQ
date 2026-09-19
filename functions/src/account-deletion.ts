@@ -1,5 +1,5 @@
 import * as functionsV1 from "firebase-functions/v1";
-import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 /**
@@ -51,7 +51,7 @@ import * as logger from "firebase-functions/logger";
  */
 export const onUserAccountDeleted = functionsV1.auth.user().onDelete(async (user) => {
   const uid = user.uid;
-  const db = admin.firestore();
+  const db = getFirestore();
 
   const profileSnap = await db.collection("users").doc(uid).get();
   const username = profileSnap.exists

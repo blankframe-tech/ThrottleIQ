@@ -46,6 +46,9 @@ Two things worth knowing about how this is wired:
   Studio's bundled JBR (`/Applications/Android Studio.app/Contents/jbr/…`),
   the same runtime the `keytool` workaround in `HANDOFF_Document.md` uses. If
   Android Studio isn't installed, set `JAVA_HOME` to any JDK 17+ instead.
+  CI (`.github/workflows/ci.yml`) runs `npm run test:rules:ci` instead, the
+  same command without the hardcoded `JAVA_HOME`; it installs a JDK with
+  `actions/setup-java` first.
 - **These tests live in `test/rules/`, not `test/`, on purpose.** `npm test`'s
   glob is `test/*.test.js` and is deliberately non-recursive, so the
   pure-function tests above stay fast and emulator-free.
