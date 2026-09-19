@@ -10,6 +10,7 @@ import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
 import '../widgets/edit_maintenance_check_sheet.dart';
 import '../widgets/odometer_sync_sheet.dart';
+import '../widgets/reset_maintenance_log_sheet.dart';
 
 const double _kmToMi = 0.621371;
 
@@ -205,6 +206,23 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                         ),
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Reset service log',
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          ResetMaintenanceLogSheet.show(context, activeBike),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.all(10),
+                        minimumSize: const Size(40, 40),
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        ),
+                      ),
+                      child: const Icon(Icons.restart_alt, size: 18),
                     ),
                   ),
                 ],

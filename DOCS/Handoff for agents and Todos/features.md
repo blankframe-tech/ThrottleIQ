@@ -161,6 +161,7 @@ chrome rather than the bike list alone:
 - **Add service log screen** (`/home/maintenance/add`).
 - **Service types** (expanded 2026-08-01): the original Oil Change / Air Filter / Chain Lube / Tire Check plus Radiator-Coolant, Front Disc Pads, Rear Drum Pads, Brake Fluid, Spark Plug, Battery, Valve Clearance, Clutch Cable and Suspension — and a **Custom** type that requires the rider to name the service ("What did you service?"), shown by that name in the log list.
 - **Reminders** cover the original four plus brake fluid and front disc pads. The rest are log-only by design: a card per type would bury the ones that matter. See `_reminderTypes` in `maintenance_provider.dart`.
+- **Reset Service Log** (added 2026-09-19, `issues_fixed.md` §71) — a `restart_alt` action on the Maintenance screen's action bar opens a checklist of every tracked check (status + km-since-service shown per row); ticking some or all and confirming logs each as serviced today at the bike's current odometer, resetting its due date while keeping prior history. Deliberately additive rather than deletion-based — maintenance logs have no delete-sync/tombstone mechanism yet, so a delete-based reset would resurrect already-synced entries on the next cloud sync.
 
 ## 6. Places / POI directory (`features/poi_directory`) — bottom nav tab "Places"
 

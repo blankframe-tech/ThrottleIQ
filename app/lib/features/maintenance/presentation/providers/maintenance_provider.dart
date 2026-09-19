@@ -70,6 +70,37 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
     await _dao.delete(id);
     ref.invalidateSelf();
   }
+
+  /// "Master service log" reset: logs each of [serviceTypes] as serviced
+  /// now at [odometerKm], resetting its due-date countdown without
+  /// touching prior history (mirrors what tapping "Log" does per item).
+  Future<void> resetItems(
+    List<ServiceType> serviceTypes, {
+    required double odometerKm,
+  }) async {
+    if (serviceTypes.isEmpty) return;
+    final bikeId = arg;
+    final now = DateTime.now();
+    final user = ref.read(currentUserProvider);
+    final outbox = ref.read(outboxServiceProvider);
+    for (final type in serviceTypes) {
+      final log = MaintenanceEntity(
+        id: _uuid.v4(),
+        bikeId: bikeId,
+        serviceType: type,
+        date: now,
+        odometerKm: odometerKm,
+        createdAt: now,
+      );
+      final map = MaintenanceModel.toMap(log);
+      await _dao.insert(map);
+      if (user != null) {
+        unawaited(outbox.enqueueMaintenanceLog(uid: user.uid, logData: map));
+      }
+    }
+    ref.invalidateSelf();
+    unawaited(HomeWidgetService.instance.refreshFromLocalData());
+  }
 }
 
 final _configDao = MaintenanceConfigDao();

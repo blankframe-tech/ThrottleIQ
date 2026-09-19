@@ -4643,3 +4643,66 @@ check no longer treats a `0` coordinate as missing.
   dependency of `cached_network_image`.
 - `DatabaseHelper.schemaVersion` is now one constant. `14` was hard-coded
   twice (open + test schema builder) and could drift at the next migration.
+
+---
+
+## 70. User report: "Sign up" crashed with `GoException: no routes for location: /auth/register` — FIXED (2026-09-19)
+
+**Status:** Fixed.
+
+Tapping "Sign up" on the login screen (`login_screen.dart:136`,
+`context.go('/auth/register')`) threw a `GoException`. Root cause: no
+`GoRoute` for `/auth/register` was ever registered in
+`app_router.dart` — only `/auth/login` and `/auth/onboarding` exist under
+`/auth`. `RegisterScreen` (`register_screen.dart`) exists and links back to
+`/auth/login`, but was never wired into the router at all.
+
+Fix: imported `RegisterScreen` and added
+`GoRoute(path: '/auth/register', builder: (_, __) => const RegisterScreen())`
+in `app_router.dart`, alongside the `/auth/login` and `/auth/onboarding`
+entries. `computeAuthRedirect`'s existing `loc.startsWith('/auth')` check
+already covers the new path generically (an authenticated user landing on
+`/auth/register` gets redirected to `/home/record`, same as `/auth/login`)
+— no redirect-logic changes needed.
+
+Added a regression test in `app_router_test.dart` covering
+`computeAuthRedirect` for `/auth/register` (signed-out stays put, signed-in
+gets bounced to `/home/record`, same as `/auth/login`). `flutter analyze`
+clean. Not yet verified by tapping through on a running app/device.
+
+---
+
+## 71. Feature: "Reset Service Log" — bulk mark-as-serviced for maintenance items (2026-09-19)
+
+**Status:** Shipped.
+
+Added a way to reset multiple tracked maintenance checks at once instead of
+logging each one individually. New `restart_alt` icon button on the
+Maintenance screen's action bar (`maintenance_screen.dart`, next to "Sync
+Odo"/"Customize"/"Log") opens `ResetMaintenanceLogSheet`
+(`presentation/widgets/reset_maintenance_log_sheet.dart`), a checklist of
+every tracked check (icon, current OK/Due soon/Overdue status, km since last
+service) with "Select All"/"Clear" and per-item checkboxes — tick some or
+all, confirm via an `AlertDialog`, and each ticked item resets its interval
+countdown.
+
+**Design decision (asked the user explicitly, since the two options have
+very different data-safety properties):** "reset" logs a fresh
+`MaintenanceEntity` dated now at the bike's current odometer for each
+ticked `ServiceType` — the same insert+outbox path `addLog` already uses —
+rather than deleting prior log history. This was the deliberate choice: the
+codebase has no delete-sync/tombstone mechanism for maintenance logs (unlike
+bikes, which have a `deleted_bikes` table), so a delete-based "reset" would
+have had already-synced logs silently reappear after the next
+`downloadMaintenance()` pass. That gap still exists and would need new
+plumbing (outbox delete kind + Firestore delete + local exclusion list,
+mirroring the bikes pattern) if a true history-wipe is ever wanted.
+
+New `MaintenanceNotifier.resetItems(serviceTypes, {required odometerKm})` in
+`maintenance_provider.dart` batches the inserts and outbox enqueues, then
+invalidates state once.
+
+Verified: `flutter analyze` clean on all touched files, new
+`maintenance_provider_test.dart` coverage (`resetItems` group: resets ticked
+types while preserving prior history, no-op on empty selection). Not yet
+manually tried in a running app.

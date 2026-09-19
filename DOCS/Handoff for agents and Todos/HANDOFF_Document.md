@@ -1,6 +1,20 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-19 · Branch: `main`_
+_Last updated: 2026-09-19 · Branch: `master`_
+
+**Latest fix (2026-09-19, issues_fixed.md §70):** "Sign up" crashed with
+`GoException: no routes for location: /auth/register` — the route was
+simply never registered in `app_router.dart`. Fixed by adding the
+`GoRoute`/import, plus a regression test; not yet verified on a running app
+or device.
+
+**Latest feature (2026-09-19, issues_fixed.md §71):** "Reset Service Log" —
+a new action on the Maintenance screen lets the rider tick some or all
+tracked maintenance checks and mark them serviced today in one go, instead
+of logging each individually. Deliberately implemented as "log serviced
+now" rather than deleting history, because maintenance logs have no
+delete-sync/tombstone mechanism yet (see §71 for the gap this leaves open
+if a true history-wipe is wanted later).
 
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
