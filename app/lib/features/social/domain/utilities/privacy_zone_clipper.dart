@@ -1,97 +1,83 @@
-import 'dart:math' as math;
-
 import 'package:latlong2/latlong.dart';
 
-/// Clips a polyline by removing the first and last ~200m
-/// to prevent home location leaks in shared rides.
-class PrivacyZoneClipper {
-  static const double privacyZoneDistanceMeters = 200.0;
-  static const double earthRadiusMeters = 6371000.0;
+import '../../../../core/utils/geo_math.dart';
 
-  /// Clips the polyline by removing first/last ~200m segments.
-  /// Returns a new list of LatLng points with endpoints removed.
-  static List<LatLng> clipPolyline(List<LatLng> polyline) {
+/// Hides the start and end of a shared ride so the polyline doesn't lead
+/// back to the rider's front door.
+///
+/// This used to walk ~200 m of *path* in from each end. Path distance says
+/// nothing about where the rider actually is: GPS drift while the bike sits
+/// in the driveway can pile up 200 m of "distance" without leaving the gate,
+/// and the clipped line then starts right at home. It now clips by *radius*:
+/// every leading/trailing point within `r` metres (straight-line) of the
+/// start or end is dropped, whatever route got it there.
+///
+/// `r` isn't a fixed 200 m either. A fixed radius lets anyone who sees a few
+/// of a rider's shares intersect the circles' edges and triangulate the
+/// center. Each rider gets a stable jitter on top of the base radius, seeded
+/// from their uid ([seedForUid]), so `r` is 200-349 m, the same on every
+/// ride (averaging many shares doesn't reveal it) but different per rider.
+///
+/// Only leading and trailing hidden runs are trimmed. A loop ride that
+/// passes near home mid-ride keeps that middle section, since the share
+/// model stores a single polyline and splitting it is a larger change.
+class PrivacyZoneClipper {
+  /// Base radius; the per-rider jitter adds 0-149 m on top.
+  static const double privacyZoneDistanceMeters = 200.0;
+
+  /// Span of the per-rider jitter added to the base radius, in metres.
+  static const int jitterSpanMeters = 150;
+
+  /// The hidden radius for a given [seed]: [radiusM] plus 0-149 m.
+  static double radiusFor(int seed, {double radiusM = privacyZoneDistanceMeters}) =>
+      radiusM + (seed.abs() % jitterSpanMeters);
+
+  /// A stable 31-bit seed for [uid] (FNV-1a over its UTF-16 code units).
+  ///
+  /// `String.hashCode` isn't used because Dart doesn't promise it's stable
+  /// across platforms or SDK versions, and a seed that changed between app
+  /// updates would hand out a second circle edge to triangulate against.
+  static int seedForUid(String uid) {
+    var hash = 0x811c9dc5;
+    for (final unit in uid.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 0x01000193) & 0xffffffff;
+    }
+    return hash & 0x7fffffff;
+  }
+
+  /// Returns [polyline] with every leading point within the jittered radius
+  /// of either endpoint removed, and likewise every trailing point. Returns
+  /// an empty list when nothing is left outside the zones (a short ride, or
+  /// one that never left the neighbourhood).
+  static List<LatLng> clipPolyline(
+    List<LatLng> polyline, {
+    double radiusM = privacyZoneDistanceMeters,
+    int seed = 0,
+  }) {
     if (polyline.length < 3) {
       return [];
     }
 
-    final startClipIndex = _findClipIndex(polyline, 0, privacyZoneDistanceMeters);
-    final endClipIndex = _findClipIndex(
-      polyline,
-      polyline.length - 1,
-      privacyZoneDistanceMeters,
-      reverse: true,
-    );
+    final start = polyline.first;
+    final end = polyline.last;
+    final r = radiusFor(seed, radiusM: radiusM);
+    bool hidden(LatLng p) =>
+        haversineMetersLatLng(p, start) <= r || haversineMetersLatLng(p, end) <= r;
 
-    if (startClipIndex >= endClipIndex) {
+    var i = 0;
+    while (i < polyline.length && hidden(polyline[i])) {
+      i++;
+    }
+    var j = polyline.length - 1;
+    while (j >= 0 && hidden(polyline[j])) {
+      j--;
+    }
+
+    if (i >= j) {
       return [];
     }
 
-    return polyline.sublist(startClipIndex, endClipIndex + 1);
+    return polyline.sublist(i, j + 1);
   }
-
-  /// Finds the index to start/end clipping at by walking along the polyline
-  /// until we've covered the target distance.
-  static int _findClipIndex(
-    List<LatLng> polyline,
-    int startIndex,
-    double targetDistanceMeters, {
-    bool reverse = false,
-  }) {
-    double accumulatedDistance = 0.0;
-    int currentIndex = startIndex;
-
-    if (!reverse) {
-      while (currentIndex < polyline.length - 1) {
-        final distance = haversineDistance(
-          polyline[currentIndex],
-          polyline[currentIndex + 1],
-        );
-        accumulatedDistance += distance;
-
-        if (accumulatedDistance >= targetDistanceMeters) {
-          return currentIndex + 1;
-        }
-        currentIndex++;
-      }
-      return polyline.length - 1;
-    } else {
-      while (currentIndex > 0) {
-        final distance = haversineDistance(
-          polyline[currentIndex],
-          polyline[currentIndex - 1],
-        );
-        accumulatedDistance += distance;
-
-        if (accumulatedDistance >= targetDistanceMeters) {
-          return currentIndex - 1;
-        }
-        currentIndex--;
-      }
-      return 0;
-    }
-  }
-
-  /// Haversine distance between two lat/lng points in meters.
-  static double haversineDistance(LatLng point1, LatLng point2) {
-    final lat1Rad = _toRadians(point1.latitude);
-    final lat2Rad = _toRadians(point2.latitude);
-    final deltaLat = _toRadians(point2.latitude - point1.latitude);
-    final deltaLng = _toRadians(point2.longitude - point1.longitude);
-
-    final a = (math.sin(deltaLat / 2) * math.sin(deltaLat / 2)) +
-        (math.cos(lat1Rad) *
-            math.cos(lat2Rad) *
-            math.sin(deltaLng / 2) *
-            math.sin(deltaLng / 2));
-
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-
-    return earthRadiusMeters * c;
-  }
-
-  static double _toRadians(double degrees) {
-    return degrees * (math.pi / 180.0);
-  }
-
 }

@@ -1,6 +1,5 @@
-import 'dart:math';
-
 import '../../../../core/constants/sensor_constants.dart';
+import '../../../../core/utils/geo_math.dart';
 import 'average_speed.dart';
 
 /// One GPS fix as it comes back off disk — the only columns the resume path
@@ -88,10 +87,10 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
     }
     if (i > 0) {
       distanceM += haversineMeters(
-        lat1: fixes[i - 1].lat,
-        lng1: fixes[i - 1].lng,
-        lat2: fixes[i].lat,
-        lng2: fixes[i].lng,
+        fixes[i - 1].lat,
+        fixes[i - 1].lng,
+        fixes[i].lat,
+        fixes[i].lng,
       );
     }
   }
@@ -104,10 +103,10 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
       final dt = fixes[i].time.difference(fixes[i - 1].time).inMilliseconds / 1000.0;
       if (dt >= 0.1) {
         final d = haversineMeters(
-          lat1: fixes[i - 1].lat,
-          lng1: fixes[i - 1].lng,
-          lat2: fixes[i].lat,
-          lng2: fixes[i].lng,
+          fixes[i - 1].lat,
+          fixes[i - 1].lng,
+          fixes[i].lat,
+          fixes[i].lng,
         );
         // Ignore stationary jitter (< 1.5m)
         if (d < 1.5) continue;
@@ -138,20 +137,4 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
     firstFixTime: fixes.first.time,
     lastFixTime: fixes.last.time,
   );
-}
-
-/// Great-circle distance between two WGS84 coordinates, in metres.
-double haversineMeters({
-  required double lat1,
-  required double lng1,
-  required double lat2,
-  required double lng2,
-}) {
-  const earthRadiusM = 6371000.0;
-  final dLat = (lat2 - lat1) * pi / 180;
-  final dLng = (lng2 - lng1) * pi / 180;
-  final a = sin(dLat / 2) * sin(dLat / 2) +
-      cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLng / 2) * sin(dLng / 2);
-  final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-  return earthRadiusM * c;
 }

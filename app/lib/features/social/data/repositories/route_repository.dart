@@ -159,7 +159,10 @@ class RouteRepository {
     final rawPolyline = data == null
         ? const <LatLng>[]
         : RouteModel.fromFirestore(data, routeId).polyline;
-    final clipped = PrivacyZoneClipper.clipPolyline(rawPolyline);
+    final clipped = PrivacyZoneClipper.clipPolyline(
+      rawPolyline,
+      seed: PrivacyZoneClipper.seedForUid(userId),
+    );
 
     await docRef.update({
       'isPublic': true,

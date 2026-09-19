@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/num_cast.dart';
 import '../../domain/entities/route_entity.dart';
 
 class RouteModel {
@@ -55,8 +56,8 @@ class RouteModel {
             ?.cast<Map<String, dynamic>>()
             .map(
               (point) => LatLng(
-                point['lat'] as double,
-                point['lng'] as double,
+                asDouble(point['lat']),
+                asDouble(point['lng']),
               ),
             )
             .toList() ??

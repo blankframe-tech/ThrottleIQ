@@ -1112,14 +1112,123 @@ test('a rider can delete their own livePointers/{uid} document', async () => {
   await assertSucceeds(deleteDoc(doc(db, 'livePointers', ALICE)));
 });
 
-test('a rider can create a chat between themselves and another rider', async () => {
+// §78.14: new chats live at the deterministic DM id `<uidA>_<uidB>` (sorted),
+// created in a transaction by ChatRepository.getOrCreateChat. The
+// `chat-alice-mallory` docs seeded below stand in for legacy random-id chats,
+// which must keep working for read/update/messages.
+const DM_ID = `${ALICE}_${MALLORY}`; // ALICE < MALLORY
+
+test('a rider can create a chat at the deterministic DM id', async () => {
   const db = dbFor(ALICE);
   await assertSucceeds(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('the getOrCreateChat transaction (read missing DM, then create) succeeds', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    runTransaction(db, async (tx) => {
+      const ref = doc(db, 'chats', DM_ID);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) {
+        tx.set(ref, { participants: [ALICE, MALLORY], updatedAt: serverTimestamp() });
+      }
+    })
+  );
+});
+
+test('creating a chat at a random (legacy-style) id is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
     setDoc(doc(db, 'chats', 'chat-alice-mallory'), {
       participants: [ALICE, MALLORY],
       updatedAt: serverTimestamp(),
     })
   );
+});
+
+test('creating a DM with participants out of sorted order is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [MALLORY, ALICE],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a stranger cannot create a DM between two other riders', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a DM created with an extra field (e.g. a forged lastMessage) is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+      lastMessage: { senderId: MALLORY, text: 'forged' },
+    })
+  );
+});
+
+test('a rider cannot DM themselves', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', `${ALICE}_${ALICE}`), {
+      participants: [ALICE, ALICE],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a rider can probe their own not-yet-created DM, but not two other riders\'', async () => {
+  await assertSucceeds(getDoc(doc(dbFor(ALICE), 'chats', DM_ID)));
+  await assertFails(getDoc(doc(dbFor(STRANGER), 'chats', DM_ID)));
+});
+
+test('a stranger still cannot read an existing DM', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  await assertSucceeds(getDoc(doc(dbFor(MALLORY), 'chats', DM_ID)));
+  await assertFails(getDoc(doc(dbFor(STRANGER), 'chats', DM_ID)));
+});
+
+test('a blocked rider can get() the one block doc naming them, but not list or read others', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'users', MALLORY, 'blocks', ALICE), { blockedAt: new Date() });
+    await setDoc(doc(adminDb, 'users', MALLORY, 'blocks', STRANGER), { blockedAt: new Date() });
+  });
+  const alice = dbFor(ALICE);
+  await assertSucceeds(getDoc(doc(alice, 'users', MALLORY, 'blocks', ALICE)));
+  await assertFails(getDoc(doc(alice, 'users', MALLORY, 'blocks', STRANGER)));
+  await assertFails(getDocs(collection(alice, 'users', MALLORY, 'blocks')));
+  await assertFails(setDoc(doc(alice, 'users', MALLORY, 'blocks', ALICE), { blockedAt: new Date() }));
+});
+
+test('a legacy random-id chat is still readable by its participants', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory'), {
+      participants: [MALLORY, ALICE], // legacy docs were never sorted
+      updatedAt: new Date(),
+    });
+  });
+  await assertSucceeds(getDoc(doc(dbFor(ALICE), 'chats', 'chat-alice-mallory')));
 });
 
 test('a stranger cannot read a chat they are not participant of', async () => {

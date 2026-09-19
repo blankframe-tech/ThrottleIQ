@@ -41,27 +41,62 @@ class ChatRepository {
     return ChatModel.fromFirestore(doc.data()!, doc.id);
   }
 
+  /// The deterministic id of the 1:1 chat between [a] and [b]: both uids,
+  /// sorted, joined with `_`. Order-independent, so both riders land on the
+  /// same document no matter who opens the chat first.
+  /// `firestore.rules` requires new chats to use exactly this id, with
+  /// `participants` stored in the same sorted order.
+  static String dmId(String a, String b) =>
+      (a.compareTo(b) < 0) ? '${a}_$b' : '${b}_$a';
+
+  /// Returns the chat between the two riders, creating it if needed.
+  ///
+  /// This used to scan every chat the caller was in (O(N) reads per open)
+  /// and then `add()` a random-id doc, so two riders tapping "Message" at
+  /// the same moment each created their own room. Chats now live at
+  /// [dmId] and are created inside a transaction, so concurrent opens
+  /// converge on one document.
   Future<String> getOrCreateChat(String currentUserId, String otherUserId) async {
-    // Check if chat exists
+    if (currentUserId == otherUserId) {
+      throw ArgumentError.value(otherUserId, 'otherUserId', 'cannot chat with yourself');
+    }
+    final id = dmId(currentUserId, otherUserId);
+    final ref = _firestore.collection('chats').doc(id);
+
+    final existing = await ref.get();
+    if (existing.exists) return id;
+
+    // Legacy fallback: chats created before deterministic ids have random
+    // ids. Check for one once, before creating the deterministic room, so an
+    // existing conversation isn't split in two. Remove after a release or
+    // two, once those rooms have aged out.
+    final legacyId = await _findLegacyChat(currentUserId, otherUserId);
+    if (legacyId != null) return legacyId;
+
+    await _firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) {
+        tx.set(ref, {
+          'participants': [currentUserId, otherUserId]..sort(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    });
+    return id;
+  }
+
+  Future<String?> _findLegacyChat(String currentUserId, String otherUserId) async {
     final snap = await _firestore
         .collection('chats')
         .where('participants', arrayContains: currentUserId)
         .get();
-
     for (final doc in snap.docs) {
       final participants = List<String>.from(doc.data()['participants'] ?? []);
-      if (participants.contains(otherUserId)) {
+      if (participants.length == 2 && participants.contains(otherUserId)) {
         return doc.id;
       }
     }
-
-    // Create new chat
-    final newChatRef = await _firestore.collection('chats').add({
-      'participants': [currentUserId, otherUserId],
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-
-    return newChatRef.id;
+    return null;
   }
 
   Future<void> sendMessage({

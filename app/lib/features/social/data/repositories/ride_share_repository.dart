@@ -62,13 +62,17 @@ class RideShareRepository {
     int? rapidAccelCount,
     int? highJerkCount,
   }) async {
-    // Apply privacy-zone clipping (strips ~200 m off each end to hide
+    // Apply privacy-zone clipping (drops every point within the rider's
+    // 200-350 m jittered radius of either end, to hide
     // home/work). On a short or near-home ride the clip can consume the whole
     // track — that must NOT block sharing (this was the "share throws an
     // error" bug). Instead we share with NO route line at all, which is the
     // privacy-safe outcome anyway: the ride still posts, the feed card just
     // shows stats without a map trace.
-    final clippedPolyline = PrivacyZoneClipper.clipPolyline(polyline);
+    final clippedPolyline = PrivacyZoneClipper.clipPolyline(
+      polyline,
+      seed: PrivacyZoneClipper.seedForUid(userId),
+    );
 
     final allowedUserIds = switch (audience) {
       'followers' => await _followRepository.getFollowers(userId),

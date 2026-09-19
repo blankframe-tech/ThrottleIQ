@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -5,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
-import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -56,7 +56,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     if (myUid == null) return;
 
     _textController.clear();
-    
+
     try {
       await ref.read(chatRepositoryProvider).sendMessage(
         chatId: widget.chatId,
@@ -64,19 +64,33 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         text: text,
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(mapFirestoreError(e)),
-            action: SnackBarAction(
-              label: 'Report',
-              onPressed: () => BugReportSheet.show(context),
-            ),
-          ),
-        );
+      if (!mounted) return;
+      // Offline sends are queued by Firestore and never land here; a
+      // rejected write (e.g. permission-denied after a block) does. Give the
+      // rider their words back instead of silently eating them, unless
+      // they've already started typing something new.
+      if (_textController.text.isEmpty) _textController.text = text;
+      if (e is FirebaseException && e.code == 'permission-denied') {
+        // Most likely a block the room didn't know about yet; re-check so
+        // the banner appears.
+        final otherUid = _otherUid;
+        if (otherUid != null) ref.invalidate(chatBlockedProvider(otherUid));
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mapFirestoreError(e)),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _sendMessage,
+          ),
+        ),
+      );
     }
   }
+
+  /// The other participant's uid, once known (from the route extra, or the
+  /// chat doc for a deep link).
+  String? _otherUid;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +103,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     );
     final profileLookupUid = widget.otherUser?.uid ?? (fallbackOtherUid?.isNotEmpty == true ? fallbackOtherUid : null);
     final resolvedOtherUser = widget.otherUser ?? (profileLookupUid != null ? ref.watch(profileProvider(profileLookupUid)).valueOrNull : null);
+    _otherUid = profileLookupUid;
+    final blocked = profileLookupUid != null &&
+        (ref.watch(chatBlockedProvider(profileLookupUid)).valueOrNull ?? false);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -185,6 +202,34 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               },
             ),
           ),
+          if (blocked)
+            Container(
+              key: const Key('chat-blocked-banner'),
+              width: double.infinity,
+              padding: EdgeInsets.only(
+                left: AppDimensions.paddingMd,
+                right: AppDimensions.paddingMd,
+                top: 14,
+                bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 14,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.block, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "You can't message this rider",
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
           Container(
             padding: EdgeInsets.only(
               left: AppDimensions.paddingMd,

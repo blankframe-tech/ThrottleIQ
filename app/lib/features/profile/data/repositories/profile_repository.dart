@@ -297,6 +297,19 @@ class ProfileRepository {
         .delete();
   }
 
+  /// Whether [otherUserId] has blocked [currentUserId]. Reads the single
+  /// `users/{other}/blocks/{me}` doc, which firestore.rules lets the blocked
+  /// rider `get` (never list) so the chat room can explain why sending is
+  /// off instead of failing with a permission error.
+  Future<bool> isBlockedBy(String otherUserId, String currentUserId) async {
+    final snap = await _users
+        .doc(otherUserId)
+        .collection('blocks')
+        .doc(currentUserId)
+        .get();
+    return snap.exists;
+  }
+
   /// Fetches the list of user IDs that the current user has blocked.
   Future<List<String>> getBlockedUserIds(String currentUserId) async {
     final snap = await _users.doc(currentUserId).collection('blocks').get();

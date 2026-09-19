@@ -1,5 +1,4 @@
-import 'dart:math' as math;
-
+import 'package:throttleiq/core/utils/geo_math.dart';
 import 'package:throttleiq/core/utils/geohash_util.dart';
 
 class GeohashUtils {
@@ -99,20 +98,6 @@ class GeohashUtils {
     required double lat2,
     required double lng2,
   }) {
-    const earthRadius = 6371.0; // km
-
-    final dLat = _toRadian(lat2 - lat1);
-    final dLng = _toRadian(lng2 - lng1);
-
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_toRadian(lat1)) *
-            math.cos(_toRadian(lat2)) *
-            math.sin(dLng / 2) *
-            math.sin(dLng / 2);
-
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return earthRadius * c;
+    return haversineMeters(lat1, lng1, lat2, lng2) / 1000.0;
   }
-
-  static double _toRadian(double degree) => degree * (math.pi / 180);
 }

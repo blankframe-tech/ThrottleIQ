@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 /// Geohash utility for spatial indexing (null-safe, no external dependency)
 class GeohashUtil {
   static const String _base32 = "0123456789bcdefghjkmnpqrstuvwxyz";
@@ -182,5 +184,63 @@ class GeohashUtil {
       w,
       _adjacent(n, 'w'), // nw
     ];
+  }
+
+  // ── Radius cover ────────────────────────────────────────────────────────
+
+  /// Upper bound on how many cells [coverCircle] returns. Each one is a
+  /// separate Firestore range query, so this caps the fan-out.
+  static const int maxCoverCells = 16;
+
+  /// Geohash cells (all at one precision) that together contain every point
+  /// within [radiusKm] of ([lat], [lng]). Used to turn "places near me" into
+  /// a handful of `geohash` range queries instead of a whole-collection read.
+  ///
+  /// Picks the finest precision at which the circle's bounding box spans at
+  /// most [maxCoverCells] cells, then lists exactly those cells. For a 5 km
+  /// radius that's precision 5 (~4.9 km cells): the center cell plus its
+  /// neighbors. For 25 km it's precision 4. The result over-fetches (a box
+  /// around a circle, rounded out to whole cells), so callers still apply an
+  /// exact distance filter afterwards.
+  static List<String> coverCircle(double lat, double lng, double radiusKm) {
+    // Degrees of latitude/longitude the radius spans. Longitude degrees
+    // shrink with cos(lat); clamp so a pole doesn't divide by zero.
+    final dLat = radiusKm / 111.32;
+    final cosLat = math.cos(lat * math.pi / 180).abs().clamp(0.01, 1.0);
+    final dLng = math.min(180.0, radiusKm / (111.32 * cosLat));
+    final latLo = math.max(-90.0, lat - dLat);
+    final latHi = math.min(89.999999, lat + dLat);
+
+    for (var precision = 9; precision >= 1; precision--) {
+      // A precision-p hash carries 5p bits; longitude takes the extra one
+      // when 5p is odd.
+      final lngBits = (5 * precision + 1) ~/ 2;
+      final latBits = (5 * precision) ~/ 2;
+      final cellLat = 180.0 / (1 << latBits);
+      final cellLng = 360.0 / (1 << lngBits);
+
+      final rowLo = ((latLo + 90) / cellLat).floor();
+      final rowHi = ((latHi + 90) / cellLat).floor();
+      final colLo = ((lng - dLng + 180) / cellLng).floor();
+      final colHi = ((lng + dLng + 180) / cellLng).floor();
+      final count = (rowHi - rowLo + 1) * (colHi - colLo + 1);
+      if (count > maxCoverCells && precision > 1) continue;
+
+      final colsTotal = 1 << lngBits;
+      final cells = <String>{};
+      for (var row = rowLo; row <= rowHi; row++) {
+        for (var col = colLo; col <= colHi; col++) {
+          // Wrap longitude across the antimeridian.
+          final c = ((col % colsTotal) + colsTotal) % colsTotal;
+          cells.add(encode(
+            -90 + (row + 0.5) * cellLat,
+            -180 + (c + 0.5) * cellLng,
+            precision: precision,
+          ));
+        }
+      }
+      return cells.toList();
+    }
+    return const [];
   }
 }
