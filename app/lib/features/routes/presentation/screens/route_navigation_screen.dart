@@ -11,6 +11,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/utils/geo_math.dart';
 import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
 import 'route_detail_screen.dart' show turnIcon;
@@ -138,7 +139,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
     var next = _currentTurn;
     while (next < turns.length - 1) {
       final target = route.polyline[turns[next].pointIndex];
-      if (haversineMeters(here, target) > _turnReachedM) break;
+      if (haversineMetersLatLng(here, target) > _turnReachedM) break;
       next++;
     }
     if (next != _currentTurn) setState(() => _currentTurn = next);
@@ -173,7 +174,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
           final offRoute = nearest != null && nearest.distanceM > _offRouteM;
 
           final metresToTurn = (_position != null && turn != null)
-              ? haversineMeters(
+              ? haversineMetersLatLng(
                   _position!, route.polyline[turn.pointIndex])
               : null;
 

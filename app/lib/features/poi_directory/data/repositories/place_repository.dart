@@ -1,7 +1,9 @@
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:throttleiq/core/utils/geo_math.dart';
+import 'package:throttleiq/core/utils/geohash_util.dart';
 import 'package:throttleiq/core/services/cloudinary_upload_service.dart';
 import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
@@ -155,48 +157,80 @@ class PlaceRepository {
     return found;
   }
 
-  /// Get nearby places (within radius, sorted by distance)
+  /// Get nearby places (within radius, sorted by distance).
+  ///
+  /// This used to read the entire `places` collection and filter in Dart,
+  /// so every rider paid for every place in the country on each refresh.
+  /// Now it issues one `geohash` range query per cell of
+  /// [GeohashUtil.coverCircle] (at most [GeohashUtil.maxCoverCells], in
+  /// parallel), dedupes, and applies the exact haversine filter. The
+  /// category-filtered case needs the (`category`, `geohash`) composite
+  /// index in `firestore.indexes.json`.
   Future<List<PlaceEntity>> getNearbyPlaces({
     required double latitude,
     required double longitude,
     required double radiusKm,
     PlaceCategory? category,
-  }) async {
-    // Get all places in the region and filter by distance in memory
-    // In production, consider using a proper geo-querying library
-    final places = await getAllPlaces(category: category);
+  }) {
+    return nearbyViaGeohashRanges(
+      latitude: latitude,
+      longitude: longitude,
+      radiusKm: radiusKm,
+      category: category,
+      fetchRange: _fetchGeohashRange,
+    );
+  }
 
-    final nearby = <PlaceEntity>[];
-    for (final place in places) {
-      final distance = _calculateDistance(latitude, longitude, place.latitude, place.longitude);
-      if (distance <= radiusKm) {
-        nearby.add(place);
-      }
+  Future<List<PlaceEntity>> _fetchGeohashRange(
+    String prefix,
+    PlaceCategory? category,
+  ) async {
+    Query<Map<String, dynamic>> query = _firestore.collection(_collection);
+    if (category != null) {
+      query = query.where('category', isEqualTo: category.name);
     }
-
-    // Sort by distance
-    nearby.sort((a, b) {
-      final distA = _calculateDistance(latitude, longitude, a.latitude, a.longitude);
-      final distB = _calculateDistance(latitude, longitude, b.latitude, b.longitude);
-      return distA.compareTo(distB);
-    });
-
-    return nearby;
+    final snap = await query
+        .where('geohash', isGreaterThanOrEqualTo: prefix)
+        .where('geohash', isLessThan: '$prefix~')
+        .get();
+    return snap.docs
+        .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
+        .toList();
   }
 
-  /// Calculate distance between two coordinates (Haversine formula)
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const r = 6371; // Earth radius in km
-    final dLat = _toRad(lat2 - lat1);
-    final dLon = _toRad(lon2 - lon1);
-    final a = (math.sin(dLat / 2) * math.sin(dLat / 2)) +
-        (math.cos(_toRad(lat1)) * math.cos(_toRad(lat2)) * math.sin(dLon / 2) * math.sin(dLon / 2));
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return r * c;
-  }
+  /// The query plan behind [getNearbyPlaces], with the Firestore read
+  /// injected as [fetchRange] (every place whose geohash starts with the
+  /// given prefix) so tests can run it against an in-memory fake.
+  @visibleForTesting
+  static Future<List<PlaceEntity>> nearbyViaGeohashRanges({
+    required double latitude,
+    required double longitude,
+    required double radiusKm,
+    PlaceCategory? category,
+    required Future<List<PlaceEntity>> Function(
+      String prefix,
+      PlaceCategory? category,
+    ) fetchRange,
+  }) async {
+    final cells = GeohashUtil.coverCircle(latitude, longitude, radiusKm);
+    final batches =
+        await Future.wait(cells.map((cell) => fetchRange(cell, category)));
 
-  double _toRad(double deg) {
-    return deg * (3.14159265359 / 180);
+    final seen = <String>{};
+    final withDistance = <(PlaceEntity, double)>[];
+    for (final place in batches.expand((batch) => batch)) {
+      if (!seen.add(place.id)) continue;
+      final km = haversineMeters(
+            latitude,
+            longitude,
+            place.latitude,
+            place.longitude,
+          ) /
+          1000.0;
+      if (km <= radiusKm) withDistance.add((place, km));
+    }
+    withDistance.sort((a, b) => a.$2.compareTo(b.$2));
+    return [for (final (place, _) in withDistance) place];
   }
 
   /// Search places by name (prefix match).

@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/num_cast.dart';
 import '../../../../core/utils/ride_speed_invariant.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 
@@ -140,8 +141,8 @@ class RideShareModel {
             ?.cast<Map<String, dynamic>>()
             .map(
               (point) => LatLng(
-                point['lat'] as double,
-                point['lng'] as double,
+                asDouble(point['lat']),
+                asDouble(point['lng']),
               ),
             )
             .toList() ??

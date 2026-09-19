@@ -19,6 +19,8 @@ import 'dart:math' as math;
 import 'package:equatable/equatable.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/utils/geo_math.dart';
+
 /// The shape of a manoeuvre at one point along a route.
 enum TurnKind {
   start,
@@ -76,29 +78,8 @@ class TurnInstruction extends Equatable {
       'TurnInstruction($kind @ $pointIndex, ${distanceFromStartM.toStringAsFixed(0)}m, "$text")';
 }
 
-const double _earthRadiusM = 6371000.0;
-
 double _rad(double deg) => deg * math.pi / 180.0;
 double _deg(double rad) => rad * 180.0 / math.pi;
-
-/// Great-circle distance between two points, in metres.
-///
-/// The app already has three private copies of this formula
-/// (`GeohashUtils.calculateDistance` returns km and lives in the POI feature,
-/// `RideRecordingNotifier._haversineMeters` is private, `MotionCalculator`
-/// keeps its own) — none of them is both public and metre-denominated, so
-/// rather than reach across features for a km value and multiply it back up,
-/// this module exposes its own metre version as a first-class testable helper.
-double haversineMeters(LatLng a, LatLng b) {
-  final dLat = _rad(b.latitude - a.latitude);
-  final dLng = _rad(b.longitude - a.longitude);
-  final h = math.sin(dLat / 2) * math.sin(dLat / 2) +
-      math.cos(_rad(a.latitude)) *
-          math.cos(_rad(b.latitude)) *
-          math.sin(dLng / 2) *
-          math.sin(dLng / 2);
-  return _earthRadiusM * 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h));
-}
 
 /// Standard forward azimuth from [from] to [to], normalized to [0, 360).
 /// 0 = due north, 90 = due east.
@@ -216,13 +197,13 @@ List<TurnInstruction> buildTurnInstructions(
   // rather than against the simplified working copy.
   final cumulative = List<double>.filled(polyline.length, 0);
   for (var i = 1; i < polyline.length; i++) {
-    cumulative[i] = cumulative[i - 1] + haversineMeters(polyline[i - 1], polyline[i]);
+    cumulative[i] = cumulative[i - 1] + haversineMetersLatLng(polyline[i - 1], polyline[i]);
   }
 
   // Simplify: indices into the original polyline.
   final kept = <int>[0];
   for (var i = 1; i < polyline.length; i++) {
-    if (haversineMeters(polyline[kept.last], polyline[i]) >= minSegmentM) {
+    if (haversineMetersLatLng(polyline[kept.last], polyline[i]) >= minSegmentM) {
       kept.add(i);
     }
   }
@@ -237,7 +218,7 @@ List<TurnInstruction> buildTurnInstructions(
   for (var j = 0; j + 1 < kept.length; j++) {
     final a = polyline[kept[j]];
     final b = polyline[kept[j + 1]];
-    if (haversineMeters(a, b) < 1e-6) continue;
+    if (haversineMetersLatLng(a, b) < 1e-6) continue;
     segmentStart.add(kept[j]);
     bearings.add(bearingDegrees(a, b));
   }
@@ -246,7 +227,7 @@ List<TurnInstruction> buildTurnInstructions(
   // point): no usable heading anywhere. Fall back to the straight line from
   // first to last so the rider still gets a start + arrive pair.
   if (bearings.isEmpty) {
-    final fallbackBearing = haversineMeters(polyline.first, polyline[lastIndex]) < 1e-6
+    final fallbackBearing = haversineMetersLatLng(polyline.first, polyline[lastIndex]) < 1e-6
         ? 0.0
         : bearingDegrees(polyline.first, polyline[lastIndex]);
     return [
@@ -350,9 +331,9 @@ List<TurnInstruction> buildTurnInstructions(
 ) {
   if (polyline.isEmpty) return null;
   var bestIndex = 0;
-  var bestDistance = haversineMeters(polyline[0], position);
+  var bestDistance = haversineMetersLatLng(polyline[0], position);
   for (var i = 1; i < polyline.length; i++) {
-    final d = haversineMeters(polyline[i], position);
+    final d = haversineMetersLatLng(polyline[i], position);
     if (d < bestDistance) {
       bestDistance = d;
       bestIndex = i;
@@ -367,7 +348,7 @@ double remainingDistanceM(List<LatLng> polyline, int fromIndex) {
   if (polyline.length < 2 || fromIndex >= polyline.length - 1) return 0;
   var total = 0.0;
   for (var i = math.max(fromIndex, 0); i + 1 < polyline.length; i++) {
-    total += haversineMeters(polyline[i], polyline[i + 1]);
+    total += haversineMetersLatLng(polyline[i], polyline[i + 1]);
   }
   return total;
 }

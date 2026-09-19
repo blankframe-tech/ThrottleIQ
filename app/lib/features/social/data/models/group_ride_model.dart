@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/num_cast.dart';
 import '../../domain/entities/group_ride_entity.dart';
 
 /// Normalizes whatever Firestore hands back for a timestamp-ish field.
@@ -256,8 +257,8 @@ class GroupRideModel {
             ?.cast<Map<String, dynamic>>()
             .map(
               (point) => LatLng(
-                point['lat'] as double,
-                point['lng'] as double,
+                asDouble(point['lat']),
+                asDouble(point['lng']),
               ),
             )
             .toList() ??

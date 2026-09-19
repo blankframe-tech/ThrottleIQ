@@ -79,29 +79,4 @@ void main() {
       expect(aggregates.span, const Duration(hours: 1));
     });
   });
-
-  group('haversineMeters', () {
-    test('is zero for a point against itself', () {
-      expect(
-        haversineMeters(lat1: 23.81, lng1: 90.41, lat2: 23.81, lng2: 90.41),
-        0,
-      );
-    });
-
-    test('measures a known short hop', () {
-      // 0.001° of latitude is ~111.2m anywhere on the globe.
-      expect(
-        haversineMeters(lat1: 23.810, lng1: 90.41, lat2: 23.811, lng2: 90.41),
-        closeTo(111.2, 0.5),
-      );
-    });
-
-    test('is symmetric', () {
-      final there =
-          haversineMeters(lat1: 23.81, lng1: 90.41, lat2: 23.92, lng2: 90.52);
-      final back =
-          haversineMeters(lat1: 23.92, lng1: 90.52, lat2: 23.81, lng2: 90.41);
-      expect(there, closeTo(back, 0.0001));
-    });
-  });
 }

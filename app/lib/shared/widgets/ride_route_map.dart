@@ -11,7 +11,7 @@ import '../../core/constants/app_dimensions.dart';
 /// Auto-fits the camera to the polyline's bounds (with a little padding) and
 /// marks the start/end. Degrades gracefully: an empty polyline renders a
 /// bordered placeholder rather than a blank world map. That case is normal,
-/// not an error — PrivacyZoneClipper strips ~200 m off each end at share
+/// not an error — PrivacyZoneClipper hides 200-350 m around each end at share
 /// time and can legitimately consume a short ride's entire track.
 class RideRouteMap extends StatelessWidget {
   final List<LatLng> polyline;
