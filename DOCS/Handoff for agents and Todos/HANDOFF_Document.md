@@ -70,8 +70,8 @@ map of what lives where.
 
 ### Current status
 
-Pre-launch. **Current version: `1.0.0-beta.2.9+15`**, tagged
-[`beta-v2.9`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.9)
+Pre-launch. **Current version: `1.0.0-beta.2.10+16`**, tagged
+[`beta-v2.10`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.10)
 (2026-09-19, GitHub release only; see that milestone below). The Play
 Console internal track still holds the older `1.0.0-beta.1+3` build
 described next. No App Store submission exists yet.
@@ -193,6 +193,22 @@ artifacts aren't committed, so any commit after a build invalidates it.
 Full technical detail and root causes for anything marked with a `§` live in
 `issues_open.md`; this list is a compact pointer, not the record itself.
 
+- **2026-09-19** — Closed six of §69's Open items (`issues_fixed.md`
+  §69.13: unused `firebase_messaging` removed, dead Firestore index
+  dropped, corrupt-db recovery now backs up instead of deleting, `
+  SharedRideEntity.props` fixed, stale doc citations/folder typo fixed
+  repo-wide, lockfiles un-gitignored and committed), deployed §69's
+  pending `firestore.rules`/`firestore.indexes.json`/`hosting` to
+  production (`functions` still Blaze-blocked, §69.14), and reseeded the
+  30 live QA test-rider accounts with the corrected batch (§69.15,
+  closing the to-do open since §55). Shipped as
+  [`beta-v2.10`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.10)
+  (`1.0.0-beta.2.10+16`): `flutter analyze` clean, `flutter test`
+  (1035/1035), rules emulator (98/98), APK verified signed with the real
+  release key (`apksigner verify`, V2 scheme, BlankFrame Technologies
+  cert) rather than just built. GitHub-release-only cut — not yet
+  uploaded to Play Console or TestFlight. Not yet installed/launched on a
+  real device this round (see the Handoff checklist).
 - **2026-09-19** — Full-repo critique pass (`issues_fixed.md` §69): 12 fixes,
   16 open items logged. The high-severity ones: §68's riding-score rule
   rejected shares whose counts were `null`; deleting a group ride with any
@@ -1014,7 +1030,7 @@ group first matters more than speed.
 | File storage | Cloudinary (unsigned upload, cloud name `vjvcigkt`), **not** Firebase Storage — see the "Soon" section above for why. **Needs a manual check** (`issues_fixed.md` §24.9): the unsigned preset `throttleiq_unsigned` is client-extractable from the APK by design — that's not itself a bug — but confirm in the Cloudinary dashboard (Settings → Upload → Upload presets) that it restricts resource type, file size, and has moderation enabled, so a pulled-preset client can't be used for quota exhaustion or hosting arbitrary/illegal content. This needs dashboard login, so it wasn't something fixable from a code change |
 | Signing keystore | `throttleiq-release.keystore` (repo root, gitignored) — **back it up**. Its SHA-1 is registered with the Android OAuth client (verified 2026-08-11); `keytool` needs Android Studio's bundled JDK on this machine |
 | Local pub cache / Android SDK paths | Machine-specific — whatever's in your own `flutter doctor` output, not fixed values to copy |
-| Latest release | [`beta-v2.9`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.9), `1.0.0-beta.2.9+15` (2026-09-19). Signed `app-release.apk` + `app-release.aab` attached to the GitHub release. Not yet on Play Console or TestFlight; the internal track still has `1.0.0-beta.1+3`. The old `beta-v1`/`v2`/`v3` history is under "Versioning history" above. |
+| Latest release | [`beta-v2.10`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.10), `1.0.0-beta.2.10+16` (2026-09-19). Signed `app-release.apk` + `app-release.aab` attached to the GitHub release; signing verified with `apksigner verify` (V2 scheme, BlankFrame Technologies cert). Not yet on Play Console or TestFlight; the internal track still has `1.0.0-beta.1+3`. The old `beta-v1`/`v2`/`v3` history is under "Versioning history" above. |
 | Test suite | 1035/1035 green and `flutter analyze` reporting no issues, as of 2026-09-19 (`issues_fixed.md` §69.13). Plus Node tests in `scripts/` (`npm test`) for the seed scripts' pure logic, and `npm run test:rules` (Firestore emulator, 98/98 green; needs the Android Studio JBR, which the script sets via `JAVA_HOME`). DAOs run against real in-memory SQLite via `sqflite_common_ffi`. See `issues_fixed.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `assumptions.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
