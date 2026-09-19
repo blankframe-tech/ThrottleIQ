@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:throttleiq/features/social/domain/entities/shared_ride_entity.dart';
 import 'package:throttleiq/features/social/presentation/screens/shared_ride_detail_screen.dart';
+import 'package:throttleiq/shared/widgets/full_screen_route_map_screen.dart';
 
 final Uint8List _kTransparentPng = Uint8List.fromList([
   0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,

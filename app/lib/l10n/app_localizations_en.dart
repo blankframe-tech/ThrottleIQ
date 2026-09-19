@@ -280,7 +280,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportGpxAction => 'Export GPX';
 
   @override
+  String get exportCsvAction => 'Export CSV';
+
+  @override
   String get exportFailedMessage => 'Export failed';
+
+  @override
+  String get telemetrySectionLabel => 'Telemetry';
+
+  @override
+  String get ridingPaceLabel => 'Riding Pace';
+
+  @override
+  String get routeGpsDetailsLabel => 'Route GPS Details';
+
+  @override
+  String trackPointsCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count track points',
+      one: '1 track point',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get startPointLabel => 'Start';
+
+  @override
+  String get finishPointLabel => 'Finish';
+
+  @override
+  String get exploreFullRouteAction => 'Explore Full Route on Map';
+
+  @override
+  String get saveAsRouteAction => 'Save as Route';
+
+  @override
+  String get mapExpandHintLabel => 'Tap map to expand';
+
+  @override
+  String get elevationGainLabel => 'Elevation Gain';
+
+  @override
+  String get elevationLossLabel => 'Elevation Loss';
+
+  @override
+  String get elevationProfileLabel => 'Elevation Profile';
+
+  @override
+  String get speedProfileLabel => 'Speed Profile';
 
   @override
   String get rideExportShareSubject => 'ThrottleIQ ride export';

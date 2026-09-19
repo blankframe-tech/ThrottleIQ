@@ -31,12 +31,19 @@ class RideLineChart extends StatelessWidget {
   /// Unit suffix for the peak label, e.g. 'km'.
   final String? unit;
 
+  /// Explicit `[start, end]` x-axis labels, overriding [dates]. For a series
+  /// that isn't chronological at all (e.g. a value-over-route-progress
+  /// profile), where "date" has no meaning but the series still has a
+  /// meaningful start and end to label.
+  final List<String>? xLabels;
+
   const RideLineChart({
     super.key,
     required this.values,
     this.color,
     this.dates,
     this.unit,
+    this.xLabels,
   });
 
   @override
@@ -178,6 +185,8 @@ class RideLineChart extends StatelessWidget {
 
   /// `[start, end]` labels for the x-axis.
   List<String> _xLabels() {
+    final explicit = xLabels;
+    if (explicit != null && explicit.length == 2) return explicit;
     final d = dates;
     if (d != null && d.length == values.length) {
       return [_formatDate(d.first), _formatDate(d.last)];

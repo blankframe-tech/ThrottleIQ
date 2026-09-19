@@ -8,9 +8,10 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
-import '../../../../core/utils/riding_score.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/full_screen_route_map_screen.dart';
+import '../../../../shared/widgets/metric_card.dart';
+import '../../../../shared/widgets/riding_score_badge.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
@@ -80,7 +81,29 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     if (polyline.isEmpty) return;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => FullScreenRouteMapScreen(ride: ride, polyline: polyline),
+        builder: (_) => FullScreenRouteMapScreen(
+          polyline: polyline,
+          title: ride.bikeName,
+          subtitle: '${ride.userName} · ${ride.distanceKm.toStringAsFixed(1)} km',
+          distanceKm: ride.distanceKm,
+          durationSeconds: ride.durationSeconds,
+          maxSpeedKmh: ride.maxSpeedKmh,
+          avgSpeedKmh: ride.avgSpeedKmh,
+          onSaveRoute: (ctx) async {
+            final name = '${ride.userName}\'s ${ride.bikeName} Route';
+            await RouteRepository().saveRoute(
+              userId: ride.userId,
+              name: name,
+              polyline: polyline,
+              distanceKm: ride.distanceKm,
+            );
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                const SnackBar(content: Text('Route saved to My Routes!')),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -595,7 +618,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
         Row(
           children: [
             Expanded(
-              child: _MetricCard(
+              child: MetricCard(
                 title: 'Max Speed',
                 value: ride.maxSpeedKmh.toStringAsFixed(1),
                 unit: 'km/h',
@@ -605,7 +628,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _MetricCard(
+              child: MetricCard(
                 title: 'Avg Speed',
                 value: ride.avgSpeedKmh.toStringAsFixed(1),
                 unit: 'km/h',
@@ -619,7 +642,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
         Row(
           children: [
             Expanded(
-              child: _MetricCard(
+              child: MetricCard(
                 title: 'Distance',
                 value: ride.distanceKm.toStringAsFixed(1),
                 unit: 'km',
@@ -629,7 +652,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _MetricCard(
+              child: MetricCard(
                 title: 'Duration',
                 value: SpeedFormatter.durationFromSeconds(ride.durationSeconds),
                 unit: '',
@@ -641,7 +664,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
         ),
         if (ride.ridingScore != null) ...[
           const SizedBox(height: 12),
-          _RidingScoreBadge(score: ride.ridingScore!),
+          RidingScoreBadge(score: ride.ridingScore!),
         ],
         const SizedBox(height: 12),
         Container(
@@ -946,558 +969,3 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
   }
 }
 
-/// Gamified riding-score card: a big tier-colored number plus a tier label,
-/// so it reads as a rank the rider earned rather than another stat tile.
-/// Only rendered when [SharedRideEntity.ridingScore] is non-null — see that
-/// getter's doc comment for why an old shared ride has no honest score to
-/// show rather than falling back to a possibly-false 100.
-class _RidingScoreBadge extends StatelessWidget {
-  final int score;
-
-  const _RidingScoreBadge({required this.score});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final tier = ridingScoreTier(score);
-    final (color, label, icon) = switch (tier) {
-      RidingScoreTier.smooth => (AppColors.success, l10n.scoreSmoothLabel, Icons.emoji_events),
-      RidingScoreTier.steady => (AppColors.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
-      RidingScoreTier.aggressive => (AppColors.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        children: [
-          Text(
-            '$score',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color, height: 1),
-          ),
-          const SizedBox(width: 4),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text('/100', style: TextStyle(fontSize: 13, color: color)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.ridingScoreLabel,
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                const SizedBox(height: 2),
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              ],
-            ),
-          ),
-          Icon(icon, color: color, size: 26),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String unit;
-  final IconData icon;
-  final Color accentColor;
-
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.unit,
-    required this.icon,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: accentColor),
-              const SizedBox(width: 6),
-              Text(title, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              if (unit.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Text(
-                  unit,
-                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Dedicated full-screen interactive route map explorer.
-///
-/// Gives riders a large map canvas to pinch-zoom, pan, zoom in/out with
-/// dedicated buttons, recenter, and tap on route waypoints to inspect
-/// coordinates and progression details.
-class FullScreenRouteMapScreen extends StatefulWidget {
-  final SharedRideEntity ride;
-  final List<LatLng> polyline;
-
-  const FullScreenRouteMapScreen({
-    super.key,
-    required this.ride,
-    required this.polyline,
-  });
-
-  @override
-  State<FullScreenRouteMapScreen> createState() => _FullScreenRouteMapScreenState();
-}
-
-class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
-  final MapController _controller = MapController();
-  LatLng? _selectedPoint;
-  int? _selectedPointIndex;
-  bool _savingRoute = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _recenter() {
-    if (widget.polyline.isEmpty) return;
-    _controller.fitCamera(
-      CameraFit.coordinates(
-        coordinates: widget.polyline,
-        padding: const EdgeInsets.fromLTRB(40, 90, 40, 220),
-        maxZoom: 16,
-      ),
-    );
-  }
-
-  void _zoomIn() {
-    try {
-      final currentZoom = _controller.camera.zoom;
-      _controller.move(_controller.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
-    } catch (_) {}
-  }
-
-  void _zoomOut() {
-    try {
-      final currentZoom = _controller.camera.zoom;
-      _controller.move(_controller.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
-    } catch (_) {}
-  }
-
-  void _onMapTap(TapPosition tapPosition, LatLng point) {
-    if (widget.polyline.isEmpty) return;
-    const distance = Distance();
-    int closestIndex = 0;
-    double minDistance = double.infinity;
-    for (int i = 0; i < widget.polyline.length; i++) {
-      final d = distance.as(LengthUnit.Meter, point, widget.polyline[i]);
-      if (d < minDistance) {
-        minDistance = d;
-        closestIndex = i;
-      }
-    }
-    setState(() {
-      _selectedPoint = widget.polyline[closestIndex];
-      _selectedPointIndex = closestIndex;
-    });
-  }
-
-  Future<void> _saveRoute() async {
-    final ride = widget.ride;
-    setState(() => _savingRoute = true);
-    try {
-      final name = '${ride.userName}\'s ${ride.bikeName} Route';
-      await RouteRepository().saveRoute(
-        userId: ride.userId,
-        name: name,
-        polyline: widget.polyline,
-        distanceKm: ride.distanceKm,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Route saved to My Routes!')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save route: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _savingRoute = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final polyline = widget.polyline;
-    final ride = widget.ride;
-    final start = polyline.isNotEmpty ? polyline.first : null;
-    final finish = polyline.length > 1 ? polyline.last : null;
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // 1. Full-screen FlutterMap
-          FlutterMap(
-            mapController: _controller,
-            options: MapOptions(
-              initialCenter: polyline.first,
-              initialZoom: 13,
-              initialCameraFit: CameraFit.coordinates(
-                coordinates: polyline,
-                padding: const EdgeInsets.fromLTRB(40, 90, 40, 220),
-                maxZoom: 16,
-              ),
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all,
-              ),
-              onTap: _onMapTap,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.bft.throttleiq',
-              ),
-              if (polyline.length > 1)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: polyline,
-                      color: AppColors.primary,
-                      strokeWidth: 5.0,
-                    ),
-                  ],
-                ),
-              MarkerLayer(
-                markers: [
-                  if (start != null)
-                    Marker(
-                      point: start,
-                      width: 60,
-                      height: 60,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.success,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'START',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Icon(Icons.location_on, color: AppColors.success, size: 24),
-                        ],
-                      ),
-                    ),
-                  if (finish != null)
-                    Marker(
-                      point: finish,
-                      width: 60,
-                      height: 60,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.danger,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'FINISH',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Icon(Icons.flag, color: AppColors.danger, size: 24),
-                        ],
-                      ),
-                    ),
-                  if (_selectedPoint != null)
-                    Marker(
-                      point: _selectedPoint!,
-                      width: 36,
-                      height: 36,
-                      child: Icon(Icons.navigation, color: AppColors.warning, size: 28),
-                    ),
-                ],
-              ),
-            ],
-          ),
-
-          // 2. Top Bar
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                    child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            ride.bikeName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            '${ride.userName} · ${ride.distanceKm.toStringAsFixed(1)} km',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  CircleAvatar(
-                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                    child: IconButton(
-                      icon: Icon(Icons.close, color: AppColors.textPrimary),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 3. Floating Zoom & Recenter controls
-          Positioned(
-            right: 16,
-            bottom: 210,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton.small(
-                  heroTag: 'fullscreen_zoom_in',
-                  key: const Key('fullscreen_zoom_in_button'),
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                  foregroundColor: AppColors.textPrimary,
-                  tooltip: 'Zoom In',
-                  onPressed: _zoomIn,
-                  child: const Icon(Icons.add, size: 20),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton.small(
-                  heroTag: 'fullscreen_zoom_out',
-                  key: const Key('fullscreen_zoom_out_button'),
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                  foregroundColor: AppColors.textPrimary,
-                  tooltip: 'Zoom Out',
-                  onPressed: _zoomOut,
-                  child: const Icon(Icons.remove, size: 20),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton.small(
-                  heroTag: 'fullscreen_recenter',
-                  key: const Key('fullscreen_recenter_button'),
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                  foregroundColor: AppColors.textPrimary,
-                  tooltip: 'Recenter Route',
-                  onPressed: _recenter,
-                  child: const Icon(Icons.my_location, size: 18),
-                ),
-              ],
-            ),
-          ),
-
-          // 4. Selected waypoint callout badge (if tapped)
-          if (_selectedPoint != null && _selectedPointIndex != null)
-            Positioned(
-              top: 80,
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.warning, width: 1.5),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.place, color: AppColors.warning, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Waypoint #${_selectedPointIndex! + 1} of ${polyline.length}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            'Lat: ${_selectedPoint!.latitude.toStringAsFixed(5)}, Lng: ${_selectedPoint!.longitude.toStringAsFixed(5)}',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 16),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                      onPressed: () => setState(() {
-                        _selectedPoint = null;
-                        _selectedPointIndex = null;
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // 5. Bottom Route Telemetry & Action Card
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: Container(
-              padding: const EdgeInsets.all(AppDimensions.paddingMd),
-              decoration: BoxDecoration(
-                color: AppColors.surface.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                border: Border.all(color: AppColors.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _telemetryMini('Distance', '${ride.distanceKm.toStringAsFixed(1)} km'),
-                      _telemetryMini('Duration', '${ride.durationMinutes} min'),
-                      _telemetryMini('Max Speed', '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
-                      _telemetryMini('Avg Speed', '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(height: 1, color: AppColors.border),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 14, color: AppColors.textTertiary),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${polyline.length} GPS points • Tap route to inspect waypoints',
-                        style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
-                      ),
-                      const Spacer(),
-                      TextButton.icon(
-                        key: const Key('fullscreen_save_route_button'),
-                        onPressed: _savingRoute ? null : _saveRoute,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        icon: _savingRoute
-                            ? const SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(strokeWidth: 1.5),
-                              )
-                            : const Icon(Icons.bookmark_add_outlined, size: 16),
-                        label: const Text('Save Route', style: TextStyle(fontSize: 12)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _telemetryMini(String label, String value) {
-    return Column(
-      children: [
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-      ],
-    );
-  }
-}

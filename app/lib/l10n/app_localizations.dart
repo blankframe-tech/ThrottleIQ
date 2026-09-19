@@ -608,11 +608,95 @@ abstract class AppLocalizations {
   /// **'Export GPX'**
   String get exportGpxAction;
 
-  /// Snackbar shown when a JSON/GPX ride export fails.
+  /// Button that exports the ride's full per-point telemetry as a CSV file. CSV is a file-format name and stays untranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get exportCsvAction;
+
+  /// Snackbar shown when a JSON/GPX/CSV ride export fails.
   ///
   /// In en, this message translates to:
   /// **'Export failed'**
   String get exportFailedMessage;
+
+  /// Section header above the JSON/GPX/CSV export buttons on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Telemetry'**
+  String get telemetrySectionLabel;
+
+  /// Label on the ride summary screen's pace card, showing minutes-per-km.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding Pace'**
+  String get ridingPaceLabel;
+
+  /// Header of the card showing GPS track-point count and start/end coordinates on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route GPS Details'**
+  String get routeGpsDetailsLabel;
+
+  /// Count of raw GPS track points recorded for a ride, shown on the Route GPS Details card.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 track point} other{{count} track points}}'**
+  String trackPointsCountLabel(int count);
+
+  /// Label before the ride's starting coordinates on the Route GPS Details card.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get startPointLabel;
+
+  /// Label before the ride's ending coordinates on the Route GPS Details card.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get finishPointLabel;
+
+  /// Button that opens the full-screen interactive route map from the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Full Route on Map'**
+  String get exploreFullRouteAction;
+
+  /// Map action button/tooltip that opens the save-route screen for this ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Route'**
+  String get saveAsRouteAction;
+
+  /// Hint pill overlaid on the ride summary screen's route map, inviting a tap to open the full-screen map.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap map to expand'**
+  String get mapExpandHintLabel;
+
+  /// Label for the ride's estimated total climb, on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation Gain'**
+  String get elevationGainLabel;
+
+  /// Label for the ride's estimated total descent, on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation Loss'**
+  String get elevationLossLabel;
+
+  /// Header above the ride's altitude-over-route mini chart on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation Profile'**
+  String get elevationProfileLabel;
+
+  /// Header above the ride's speed-over-route mini chart on the ride summary screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed Profile'**
+  String get speedProfileLabel;
 
   /// Subject line of the share-sheet action used to send an exported ride file. ThrottleIQ is the product name and stays untranslated.
   ///

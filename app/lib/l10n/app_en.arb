@@ -448,9 +448,82 @@
     "description": "Button that exports the ride as a GPX file. GPX is a file-format name and stays untranslated."
   },
 
+  "exportCsvAction": "Export CSV",
+  "@exportCsvAction": {
+    "description": "Button that exports the ride's full per-point telemetry as a CSV file. CSV is a file-format name and stays untranslated."
+  },
+
   "exportFailedMessage": "Export failed",
   "@exportFailedMessage": {
-    "description": "Snackbar shown when a JSON/GPX ride export fails."
+    "description": "Snackbar shown when a JSON/GPX/CSV ride export fails."
+  },
+
+  "telemetrySectionLabel": "Telemetry",
+  "@telemetrySectionLabel": {
+    "description": "Section header above the JSON/GPX/CSV export buttons on the ride summary screen."
+  },
+
+  "ridingPaceLabel": "Riding Pace",
+  "@ridingPaceLabel": {
+    "description": "Label on the ride summary screen's pace card, showing minutes-per-km."
+  },
+
+  "routeGpsDetailsLabel": "Route GPS Details",
+  "@routeGpsDetailsLabel": {
+    "description": "Header of the card showing GPS track-point count and start/end coordinates on the ride summary screen."
+  },
+
+  "trackPointsCountLabel": "{count, plural, =1{1 track point} other{{count} track points}}",
+  "@trackPointsCountLabel": {
+    "description": "Count of raw GPS track points recorded for a ride, shown on the Route GPS Details card.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "startPointLabel": "Start",
+  "@startPointLabel": {
+    "description": "Label before the ride's starting coordinates on the Route GPS Details card."
+  },
+
+  "finishPointLabel": "Finish",
+  "@finishPointLabel": {
+    "description": "Label before the ride's ending coordinates on the Route GPS Details card."
+  },
+
+  "exploreFullRouteAction": "Explore Full Route on Map",
+  "@exploreFullRouteAction": {
+    "description": "Button that opens the full-screen interactive route map from the ride summary screen."
+  },
+
+  "saveAsRouteAction": "Save as Route",
+  "@saveAsRouteAction": {
+    "description": "Map action button/tooltip that opens the save-route screen for this ride."
+  },
+
+  "mapExpandHintLabel": "Tap map to expand",
+  "@mapExpandHintLabel": {
+    "description": "Hint pill overlaid on the ride summary screen's route map, inviting a tap to open the full-screen map."
+  },
+
+  "elevationGainLabel": "Elevation Gain",
+  "@elevationGainLabel": {
+    "description": "Label for the ride's estimated total climb, on the ride summary screen."
+  },
+
+  "elevationLossLabel": "Elevation Loss",
+  "@elevationLossLabel": {
+    "description": "Label for the ride's estimated total descent, on the ride summary screen."
+  },
+
+  "elevationProfileLabel": "Elevation Profile",
+  "@elevationProfileLabel": {
+    "description": "Header above the ride's altitude-over-route mini chart on the ride summary screen."
+  },
+
+  "speedProfileLabel": "Speed Profile",
+  "@speedProfileLabel": {
+    "description": "Header above the ride's speed-over-route mini chart on the ride summary screen."
   },
 
   "rideExportShareSubject": "ThrottleIQ ride export",

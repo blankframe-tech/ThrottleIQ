@@ -280,7 +280,57 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exportGpxAction => 'GPX এক্সপোর্ট করুন';
 
   @override
+  String get exportCsvAction => 'CSV এক্সপোর্ট করুন';
+
+  @override
   String get exportFailedMessage => 'এক্সপোর্ট ব্যর্থ হয়েছে';
+
+  @override
+  String get telemetrySectionLabel => 'টেলিমেট্রি';
+
+  @override
+  String get ridingPaceLabel => 'রাইডিং পেস';
+
+  @override
+  String get routeGpsDetailsLabel => 'রুট GPS বিবরণ';
+
+  @override
+  String trackPointsCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি ট্র্যাক পয়েন্ট',
+      one: '1টি ট্র্যাক পয়েন্ট',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get startPointLabel => 'শুরু';
+
+  @override
+  String get finishPointLabel => 'শেষ';
+
+  @override
+  String get exploreFullRouteAction => 'সম্পূর্ণ রুট ম্যাপে দেখুন';
+
+  @override
+  String get saveAsRouteAction => 'রুট হিসেবে সেভ করুন';
+
+  @override
+  String get mapExpandHintLabel => 'বড় করতে ম্যাপে ট্যাপ করুন';
+
+  @override
+  String get elevationGainLabel => 'উচ্চতা বৃদ্ধি';
+
+  @override
+  String get elevationLossLabel => 'উচ্চতা হ্রাস';
+
+  @override
+  String get elevationProfileLabel => 'উচ্চতার প্রোফাইল';
+
+  @override
+  String get speedProfileLabel => 'গতির প্রোফাইল';
 
   @override
   String get rideExportShareSubject => 'ThrottleIQ রাইড এক্সপোর্ট';

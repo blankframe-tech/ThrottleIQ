@@ -9,12 +9,18 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/cloud/export_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/downsample.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../core/utils/riding_score.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/full_screen_route_map_screen.dart';
+import '../../../../shared/widgets/metric_card.dart';
+import '../../../../shared/widgets/riding_score_badge.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../stats/presentation/widgets/ride_line_chart.dart';
 import '../../domain/entities/ride_entity.dart';
+import '../../domain/calculators/elevation_profile.dart';
 import '../../domain/calculators/speed_segments.dart';
 import '../../domain/calculators/segment_speed_aggregator.dart';
 import '../../domain/calculators/speed_baseline.dart';
@@ -25,6 +31,8 @@ import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/cloud/cloud_repository.dart';
 import '../../../../core/services/weather_service.dart';
 
+enum _ExportFormat { json, gpx, csv }
+
 class RideSummaryScreen extends ConsumerStatefulWidget {
   final String rideId;
   const RideSummaryScreen({super.key, required this.rideId});
@@ -34,8 +42,10 @@ class RideSummaryScreen extends ConsumerStatefulWidget {
 }
 
 class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
+  final MapController _mapController = MapController();
   List<LatLng> _polyline = [];
   List<double> _speedsMs = [];
+  List<double?> _altitudesM = [];
   bool _polylineLoaded = false;
   ({double riderKmh, double baselineKmh})? _speedOutlier;
   RideWeather? _weather;
@@ -46,11 +56,18 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   // _shareButtonKey was added for.
   final GlobalKey _exportJsonButtonKey = GlobalKey();
   final GlobalKey _exportGpxButtonKey = GlobalKey();
+  final GlobalKey _exportCsvButtonKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _loadPolyline();
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPolyline() async {
@@ -61,6 +78,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           .map((p) => LatLng(p['lat'] as double, p['lng'] as double))
           .toList();
       _speedsMs = points.map((p) => (p['speed_ms'] as num).toDouble()).toList();
+      _altitudesM =
+          points.map((p) => (p['altitude_m'] as num?)?.toDouble()).toList();
       _polylineLoaded = true;
     });
     unawaited(_checkSpeedOutlier());
@@ -212,16 +231,6 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             rapidAccel: ride.rapidAccelCount,
             highJerk: ride.highJerkCount,
           );
-          final scoreColor = switch (ridingScoreTier(score)) {
-            RidingScoreTier.smooth => AppColors.success,
-            RidingScoreTier.steady => AppColors.attention,
-            RidingScoreTier.aggressive => AppColors.danger,
-          };
-          final scoreLabel = switch (ridingScoreTier(score)) {
-            RidingScoreTier.smooth => l10n.scoreSmoothLabel,
-            RidingScoreTier.steady => l10n.scoreSteadyLabel,
-            RidingScoreTier.aggressive => l10n.scoreAggressiveLabel,
-          };
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0,
@@ -265,49 +274,55 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── 4-stat row ───────────────────────────────────────────
-                EditorialCard(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: StatCell(
-                          value: ride.distanceKm.toStringAsFixed(1),
-                          label: l10n.distanceStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueSize: 20,
-                        ),
+                // ── Core stats, icon+color coded — same treatment as the
+                // social shared-ride-detail screen's metric tiles.
+                Row(
+                  children: [
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.maxSpeedStatLabel,
+                        value: ride.maxSpeedKmh.toStringAsFixed(0),
+                        unit: 'km/h',
+                        icon: Icons.speed,
+                        accentColor: AppColors.primary,
                       ),
-                      _vDivider(),
-                      Expanded(
-                        child: StatCell(
-                          value: SpeedFormatter.durationFromSeconds(
-                              ride.durationSeconds ?? 0),
-                          label: l10n.durationStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueSize: 20,
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.avgSpeedStatLabel,
+                        value: ride.avgSpeedKmh.toStringAsFixed(0),
+                        unit: 'km/h',
+                        icon: Icons.trending_up,
+                        accentColor: AppColors.warning,
                       ),
-                      _vDivider(),
-                      Expanded(
-                        child: StatCell(
-                          value: ride.avgSpeedKmh.toStringAsFixed(0),
-                          label: l10n.avgSpeedStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueSize: 20,
-                        ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.distanceStatLabel,
+                        value: ride.distanceKm.toStringAsFixed(1),
+                        unit: 'km',
+                        icon: Icons.straighten,
+                        accentColor: AppColors.secondary,
                       ),
-                      _vDivider(),
-                      Expanded(
-                        child: StatCell(
-                          value: ride.maxSpeedKmh.toStringAsFixed(0),
-                          label: l10n.maxSpeedStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueSize: 20,
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.durationStatLabel,
+                        value: SpeedFormatter.durationFromSeconds(
+                            ride.durationSeconds ?? 0),
+                        unit: '',
+                        icon: Icons.timer_outlined,
+                        accentColor: AppColors.success,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
 
@@ -318,137 +333,104 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 // here, so the card is skipped rather than showing a 0 that
                 // looks like "no jam" when it really means "unknown".
                 if (ride.jamSeconds != null) ...[
-                  EditorialCard(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: StatCell(
-                            value: SpeedFormatter.durationFromSeconds(
-                                ride.movingSeconds ?? 0),
-                            label: l10n.movingStatLabel,
-                            align: CrossAxisAlignment.center,
-                            valueSize: 20,
-                          ),
-                        ),
-                        _vDivider(),
-                        Expanded(
-                          child: StatCell(
-                            value: SpeedFormatter.durationFromSeconds(
-                                ride.jamSeconds!),
-                            label: l10n.jamStatLabel,
-                            align: CrossAxisAlignment.center,
-                            valueColor: ride.jamSeconds! > 0
-                                ? AppColors.attention
-                                : null,
-                            valueSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // ── Score tile + rating ──────────────────────────────────
-                IntrinsicHeight(
-                  child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    InkPanel(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('$score',
-                              style: display(34, color: AppColors.onInk)),
-                          Text(scoreLabel.toUpperCase(),
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: AppColors.onInkMuted)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: EditorialCard(
-                        padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            EditorialLabel(l10n.ridingScoreLabel),
-                            const SizedBox(height: 6),
-                            Text(scoreLabel,
-                                style: display(18, letterSpacing: 0, color: scoreColor)),
-                            const SizedBox(height: 2),
-                            Text(l10n.outOf100Label,
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textSecondary)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                ),
-                const SizedBox(height: 12),
-
-                // ── Events ───────────────────────────────────────────────
-                EditorialCard(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                  child: Row(
+                  Row(
                     children: [
                       Expanded(
-                        child: StatCell(
-                          value: '${ride.hardBrakeCount}',
-                          label: l10n.hardBrakesStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueColor:
-                              ride.hardBrakeCount > 0 ? AppColors.danger : null,
-                          valueSize: 20,
+                        child: MetricCard(
+                          title: l10n.movingStatLabel,
+                          value: SpeedFormatter.durationFromSeconds(
+                              ride.movingSeconds ?? 0),
+                          unit: '',
+                          icon: Icons.directions,
+                          accentColor: AppColors.success,
                         ),
                       ),
-                      _vDivider(),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: StatCell(
-                          value: '${ride.rapidAccelCount}',
-                          label: l10n.rapidAccelStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueColor: ride.rapidAccelCount > 0
+                        child: MetricCard(
+                          title: l10n.jamStatLabel,
+                          value: SpeedFormatter.durationFromSeconds(
+                              ride.jamSeconds!),
+                          unit: '',
+                          icon: Icons.traffic,
+                          accentColor: ride.jamSeconds! > 0
                               ? AppColors.attention
-                              : null,
-                          valueSize: 20,
-                        ),
-                      ),
-                      _vDivider(),
-                      Expanded(
-                        child: StatCell(
-                          value: '${ride.highJerkCount}',
-                          label: l10n.highJerkStatLabel,
-                          align: CrossAxisAlignment.center,
-                          valueColor:
-                              ride.highJerkCount > 0 ? AppColors.attention : null,
-                          valueSize: 20,
+                              : AppColors.textTertiary,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                ],
+
+                // ── Riding score, gamified badge (matches the social
+                // shared-ride-detail screen instead of a flat number tile).
+                RidingScoreBadge(score: score),
+                const SizedBox(height: 12),
+
+                // ── Events ───────────────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.hardBrakesStatLabel,
+                        value: '${ride.hardBrakeCount}',
+                        unit: '',
+                        icon: Icons.warning_amber_rounded,
+                        accentColor: ride.hardBrakeCount > 0
+                            ? AppColors.danger
+                            : AppColors.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.rapidAccelStatLabel,
+                        value: '${ride.rapidAccelCount}',
+                        unit: '',
+                        icon: Icons.bolt,
+                        accentColor: ride.rapidAccelCount > 0
+                            ? AppColors.attention
+                            : AppColors.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: MetricCard(
+                        title: l10n.highJerkStatLabel,
+                        value: '${ride.highJerkCount}',
+                        unit: '',
+                        icon: Icons.vibration,
+                        accentColor: ride.highJerkCount > 0
+                            ? AppColors.attention
+                            : AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+
+                // ── Riding pace ──────────────────────────────────────────
+                _buildPaceCard(l10n, ride),
                 const SizedBox(height: 16),
 
                 // ── Map ──────────────────────────────────────────────────
                 EditorialLabel(l10n.routeSectionLabel),
                 const SizedBox(height: 10),
-                _buildMap(ride, startCenter),
+                _buildMap(ride, startCenter, l10n),
                 _buildSpeedLegend(l10n),
                 _buildSpeedOutlierCard(l10n),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                _buildRouteInfoCard(l10n, ride),
+                const SizedBox(height: 16),
+
+                // ── Telemetry profiles ───────────────────────────────────
+                // Both charted from data the recorder already captured but
+                // never surfaced anywhere before: per-point speed always,
+                // per-point altitude only when the device actually had a
+                // usable barometer/GPS-altitude fix for this ride.
+                _buildSpeedProfileSection(l10n),
+                _buildElevationSection(l10n),
 
                 // ── Actions ──────────────────────────────────────────────
                 Row(
@@ -471,24 +453,38 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
+                const SizedBox(height: 16),
+
+                // ── Telemetry export ─────────────────────────────────────
+                EditorialLabel(l10n.telemetrySectionLabel),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
-                    Expanded(
-                      child: TextButton.icon(
-                        key: _exportJsonButtonKey,
-                        onPressed: () => _exportRide(ride, gpx: false, buttonKey: _exportJsonButtonKey),
-                        icon: const Icon(Icons.data_object, size: 18),
-                        label: Text(l10n.exportJsonAction),
-                      ),
+                    TextButton.icon(
+                      key: _exportJsonButtonKey,
+                      onPressed: () => _exportRide(ride,
+                          format: _ExportFormat.json,
+                          buttonKey: _exportJsonButtonKey),
+                      icon: const Icon(Icons.data_object, size: 18),
+                      label: Text(l10n.exportJsonAction),
                     ),
-                    Expanded(
-                      child: TextButton.icon(
-                        key: _exportGpxButtonKey,
-                        onPressed: () => _exportRide(ride, gpx: true, buttonKey: _exportGpxButtonKey),
-                        icon: const Icon(Icons.route, size: 18),
-                        label: Text(l10n.exportGpxAction),
-                      ),
+                    TextButton.icon(
+                      key: _exportGpxButtonKey,
+                      onPressed: () => _exportRide(ride,
+                          format: _ExportFormat.gpx,
+                          buttonKey: _exportGpxButtonKey),
+                      icon: const Icon(Icons.route, size: 18),
+                      label: Text(l10n.exportGpxAction),
+                    ),
+                    TextButton.icon(
+                      key: _exportCsvButtonKey,
+                      onPressed: () => _exportRide(ride,
+                          format: _ExportFormat.csv,
+                          buttonKey: _exportCsvButtonKey),
+                      icon: const Icon(Icons.table_chart_outlined, size: 18),
+                      label: Text(l10n.exportCsvAction),
                     ),
                   ],
                 ),
@@ -514,10 +510,90 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     }
   }
 
-  Widget _vDivider() =>
-      Container(width: 1, height: 34, color: AppColors.border);
+  Widget _buildPaceCard(AppLocalizations l10n, RideEntity ride) {
+    final durationSeconds = ride.durationSeconds ?? 0;
+    final paceFormatted = (ride.distanceKm > 0 && durationSeconds > 0)
+        ? () {
+            final totalPaceSeconds = (durationSeconds / ride.distanceKm).round();
+            final paceMin = totalPaceSeconds ~/ 60;
+            final paceSec = totalPaceSeconds % 60;
+            return "$paceMin'${paceSec.toString().padLeft(2, '0')}\"";
+          }()
+        : '--';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Text(l10n.ridingPaceLabel,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          const Spacer(),
+          Text('$paceFormatted/km',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  fontSize: 14)),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildMap(RideEntity ride, LatLng startCenter) {
+  void _zoomIn() {
+    try {
+      final currentZoom = _mapController.camera.zoom;
+      _mapController.move(_mapController.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
+    } catch (_) {}
+  }
+
+  void _zoomOut() {
+    try {
+      final currentZoom = _mapController.camera.zoom;
+      _mapController.move(_mapController.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
+    } catch (_) {}
+  }
+
+  void _recenterMap() {
+    if (_polyline.isEmpty) return;
+    _mapController.fitCamera(
+      CameraFit.coordinates(
+        coordinates: _polyline,
+        padding: const EdgeInsets.all(32),
+        maxZoom: 16,
+      ),
+    );
+  }
+
+  void _openFullScreenMap(RideEntity ride) {
+    if (_polyline.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FullScreenRouteMapScreen(
+          polyline: _polyline,
+          title: _formatDate(ride.startTime),
+          subtitle: '${ride.distanceKm.toStringAsFixed(1)} km · '
+              '${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
+          distanceKm: ride.distanceKm,
+          durationSeconds: ride.durationSeconds ?? 0,
+          maxSpeedKmh: ride.maxSpeedKmh,
+          avgSpeedKmh: ride.avgSpeedKmh,
+          // The richer save-route form (name, description, public toggle)
+          // rather than the social screen's quick auto-named save — this is
+          // the rider's own ride, so they get the full "My Routes" flow that
+          // already exists at /routes/save/:rideId instead of a one-tap
+          // stand-in for it.
+          onSaveRoute: (ctx) => ctx.push('/routes/save/${ride.id}'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMap(RideEntity ride, LatLng startCenter, AppLocalizations l10n) {
     if (ride.mapSnapshotPath != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
@@ -544,80 +620,173 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
       child: SizedBox(
-        height: 200,
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: startCenter,
-            initialCameraFit: _polyline.length > 1
-                ? CameraFit.coordinates(
-                    coordinates: _polyline,
-                    padding: const EdgeInsets.all(24),
-                    maxZoom: 16,
-                  )
-                : null,
-            initialZoom: _polyline.length > 1 ? 13 : 15,
-            interactionOptions:
-                const InteractionOptions(flags: InteractiveFlag.none),
-          ),
+        height: 280,
+        child: Stack(
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.bft.throttleiq',
-              tileProvider: NetworkTileProvider(
-                // Not const: flutter_map adds its own User-Agent entry to
-                // this map, and an unmodifiable one throws on first build.
-                headers: {
-                  'User-Agent': 'ThrottleIQ/1.0 (contact@blankframe.com)',
-                },
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: startCenter,
+                initialCameraFit: _polyline.length > 1
+                    ? CameraFit.coordinates(
+                        coordinates: _polyline,
+                        padding: const EdgeInsets.all(24),
+                        maxZoom: 16,
+                      )
+                    : null,
+                initialZoom: _polyline.length > 1 ? 13 : 15,
+                interactionOptions:
+                    const InteractionOptions(flags: InteractiveFlag.all),
+                onTap: _polyline.isEmpty ? null : (_, __) => _openFullScreenMap(ride),
               ),
-            ),
-            if (_polyline.length > 1)
-              PolylineLayer(
-                polylines: speedSegments.isNotEmpty
-                    ? [
-                        for (final segment in speedSegments)
-                          Polyline(
-                            points: segment.points,
-                            color: _speedBandColor(segment.band),
-                            strokeWidth: 4,
-                          ),
-                      ]
-                    : [
-                        Polyline(
-                            points: _polyline,
-                            color: AppColors.primary,
-                            strokeWidth: 4),
-                      ],
-              ),
-            if (_polyline.isNotEmpty)
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: _polyline.first,
-                    width: 16,
-                    height: 16,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.success,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.bft.throttleiq',
+                  tileProvider: NetworkTileProvider(
+                    // Not const: flutter_map adds its own User-Agent entry to
+                    // this map, and an unmodifiable one throws on first build.
+                    headers: {
+                      'User-Agent': 'ThrottleIQ/1.0 (contact@blankframe.com)',
+                    },
                   ),
-                  if (_polyline.length > 1)
-                    Marker(
-                      point: _polyline.last,
-                      width: 16,
-                      height: 16,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.danger,
-                          border: Border.all(color: Colors.white, width: 2),
+                ),
+                if (_polyline.length > 1)
+                  PolylineLayer(
+                    polylines: speedSegments.isNotEmpty
+                        ? [
+                            for (final segment in speedSegments)
+                              Polyline(
+                                points: segment.points,
+                                color: _speedBandColor(segment.band),
+                                strokeWidth: 4,
+                              ),
+                          ]
+                        : [
+                            Polyline(
+                                points: _polyline,
+                                color: AppColors.primary,
+                                strokeWidth: 4),
+                          ],
+                  ),
+                if (_polyline.isNotEmpty)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _polyline.first,
+                        width: 16,
+                        height: 16,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.success,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
                         ),
                       ),
+                      if (_polyline.length > 1)
+                        Marker(
+                          point: _polyline.last,
+                          width: 16,
+                          height: 16,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.danger,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+
+            if (_polyline.isNotEmpty)
+              Positioned(
+                left: 12,
+                top: 12,
+                child: GestureDetector(
+                  onTap: () => _openFullScreenMap(ride),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                      border: Border.all(color: AppColors.border),
                     ),
-                ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.open_in_full, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          l10n.mapExpandHintLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            if (_polyline.isNotEmpty)
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'ride_summary_zoom_in',
+                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                      foregroundColor: AppColors.textPrimary,
+                      tooltip: 'Zoom In',
+                      onPressed: _zoomIn,
+                      child: const Icon(Icons.add, size: 20),
+                    ),
+                    const SizedBox(height: 6),
+                    FloatingActionButton.small(
+                      heroTag: 'ride_summary_zoom_out',
+                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                      foregroundColor: AppColors.textPrimary,
+                      tooltip: 'Zoom Out',
+                      onPressed: _zoomOut,
+                      child: const Icon(Icons.remove, size: 20),
+                    ),
+                    const SizedBox(height: 6),
+                    FloatingActionButton.small(
+                      heroTag: 'ride_summary_recenter',
+                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                      foregroundColor: AppColors.textPrimary,
+                      tooltip: 'Recenter Route',
+                      onPressed: _recenterMap,
+                      child: const Icon(Icons.my_location, size: 18),
+                    ),
+                    const SizedBox(height: 6),
+                    FloatingActionButton.small(
+                      heroTag: 'ride_summary_fullscreen',
+                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                      foregroundColor: AppColors.textPrimary,
+                      tooltip: 'Fullscreen Map',
+                      onPressed: () => _openFullScreenMap(ride),
+                      child: const Icon(Icons.fullscreen, size: 20),
+                    ),
+                    const SizedBox(height: 6),
+                    FloatingActionButton.small(
+                      heroTag: 'ride_summary_save_route',
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      tooltip: l10n.saveAsRouteAction,
+                      onPressed: () => context.push('/routes/save/${ride.id}'),
+                      child: const Icon(Icons.bookmark_add_outlined, size: 18),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),
@@ -720,7 +889,186 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     );
   }
 
-  Future<void> _exportRide(RideEntity ride, {required bool gpx, required GlobalKey buttonKey}) async {
+  Widget _buildRouteInfoCard(AppLocalizations l10n, RideEntity ride) {
+    if (_polyline.isEmpty) return const SizedBox.shrink();
+    final start = _polyline.first;
+    final end = _polyline.last;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.route, size: 20, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                l10n.routeGpsDetailsLabel,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                l10n.trackPointsCountLabel(_polyline.length),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.success),
+              ),
+              const SizedBox(width: 8),
+              Text('${l10n.startPointLabel}: ',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textPrimary)),
+              Text(
+                '${start.latitude.toStringAsFixed(4)}°, ${start.longitude.toStringAsFixed(4)}°',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          if (_polyline.length > 1) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.danger),
+                ),
+                const SizedBox(width: 8),
+                Text('${l10n.finishPointLabel}: ',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textPrimary)),
+                Text(
+                  '${end.latitude.toStringAsFixed(4)}°, ${end.longitude.toStringAsFixed(4)}°',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openFullScreenMap(ride),
+              icon: const Icon(Icons.fullscreen, size: 18),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.exploreFullRouteAction,
+                  maxLines: 1,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A speed-over-route mini chart — every ride with a GPS track has this,
+  /// unlike elevation below, since speed is always sampled (altitude
+  /// depends on the device having a usable fix).
+  Widget _buildSpeedProfileSection(AppLocalizations l10n) {
+    if (_speedsMs.length < 2) return const SizedBox.shrink();
+    final speedsKmh = [for (final s in _speedsMs) s * 3.6];
+    final chartValues = downsample(speedsKmh, 60);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          EditorialLabel(l10n.speedProfileLabel),
+          const SizedBox(height: 8),
+          RideLineChart(
+            values: chartValues,
+            color: AppColors.primary,
+            unit: 'km/h',
+            xLabels: [l10n.startPointLabel, l10n.finishPointLabel],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Elevation gain/loss + an altitude-over-route mini chart — only when
+  /// `elevationGainLoss` finds enough honest signal to report (see that
+  /// function's doc comment). Most rides on a phone with no barometer, or a
+  /// GPS fix too coarse to resolve altitude, will have nothing here, and
+  /// this section simply doesn't render rather than guessing.
+  Widget _buildElevationSection(AppLocalizations l10n) {
+    final elevation = elevationGainLoss(_altitudesM);
+    if (elevation == null) return const SizedBox.shrink();
+
+    final altitudes = _altitudesM.whereType<double>().toList();
+    final chartValues = downsample(altitudes, 60);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  title: l10n.elevationGainLabel,
+                  value: elevation.gainM.toStringAsFixed(0),
+                  unit: 'm',
+                  icon: Icons.trending_up,
+                  accentColor: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: MetricCard(
+                  title: l10n.elevationLossLabel,
+                  value: elevation.lossM.toStringAsFixed(0),
+                  unit: 'm',
+                  icon: Icons.trending_down,
+                  accentColor: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+          if (chartValues.length >= 2) ...[
+            const SizedBox(height: 12),
+            EditorialLabel(l10n.elevationProfileLabel),
+            const SizedBox(height: 8),
+            RideLineChart(
+              values: chartValues,
+              color: AppColors.secondary,
+              unit: 'm',
+              xLabels: [l10n.startPointLabel, l10n.finishPointLabel],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportRide(
+    RideEntity ride, {
+    required _ExportFormat format,
+    required GlobalKey buttonKey,
+  }) async {
     final service = ExportService();
     final rideMap = {
       'id': ride.id,
@@ -734,9 +1082,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       'rapidAccelCount': ride.rapidAccelCount,
       'highJerkCount': ride.highJerkCount,
     };
-    final file = gpx
-        ? await service.exportRideToGPX(rideMap)
-        : await service.exportRideToJSON(rideMap);
+    final file = await switch (format) {
+      _ExportFormat.json => service.exportRideToJSON(rideMap),
+      _ExportFormat.gpx => service.exportRideToGPX(rideMap),
+      _ExportFormat.csv => service.exportRideToCSV(rideMap),
+    };
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
     if (file == null) {
