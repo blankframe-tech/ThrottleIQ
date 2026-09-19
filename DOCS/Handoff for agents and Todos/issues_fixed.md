@@ -4959,3 +4959,41 @@ Verified: `flutter analyze` clean (whole project), `flutter test` 1038/1038
 including new `RideDao.getMostRecentCompletedId` coverage
 (`test/database/ride_dao_sync_and_finalize_test.dart`) and the ARB parity
 test. Not yet manually tried in a running app.
+
+---
+
+## 76. Fix: "Change bike" didn't update an already-shared social post (2026-09-19)
+
+**Status:** Shipped.
+
+Reported the same day §75 shipped: correcting a ride's bike via the new
+`ChangeBikeControl` left an already-shared social post showing the old
+bike forever.
+
+**Cause:** `RideShareRepository.shareRide()` denormalizes `bikeId`/
+`bikeName`/`bikeType` onto the Firestore `rides/{rideId}` doc once, at
+share time, resolved from whatever bike was in the garage when the rider
+tapped Share (`ride_share_screen.dart`'s `_share()`). It is a snapshot, not
+a live reference to the ride's bike. `RideAttribution.confirm()` — the
+method behind both `ChangeBikeControl` and the pre-existing
+`BikeConfirmationCard` — only ever touched the local SQLite `rides` row and
+per-bike stats; nothing re-invoked the share path, and no update/resync
+method for an existing share existed at all.
+
+**Fix:** new `RideShareRepository.updateSharedRideBikeInfo(rideId, {bikeId,
+bikeName, bikeType})` patches just those three fields on the shared doc via
+`.update()`. `RideAttribution.confirm()` now calls it (fire-and-forget,
+`unawaited`) after the local correction succeeds, looking up the new
+bike's `displayName`/`cc` via `BikeDao().getById()` +
+`BikeModel.fromMap()`. `update()` throwing `not-found` (the ride was never
+shared — the common case) is treated as a normal no-op, not an error;
+any other failure is caught and logged, never surfaced to the rider or
+allowed to undo the local fix that already happened. No `firestore.rules`
+change needed — the existing owner-update rule already allows a partial
+field patch that leaves stats/audience/engagement counters untouched.
+
+Verified: `flutter analyze` clean (whole project), `flutter test`
+1038/1038. No dedicated test added for the Firestore call itself — this
+codebase doesn't unit-test `RideShareRepository` (no fake-Firestore
+harness; only DAOs get real in-memory SQLite coverage). Not yet manually
+verified against a real shared post.

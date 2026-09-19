@@ -62,6 +62,13 @@ iPhone, via `flutter build ios --release` + `xcrun devicectl`) same day —
 confirms the app starts and runs, not a tap-through of this specific
 feature yet.
 
+**Latest fix (2026-09-19, issues_fixed.md §76):** §75's "Change bike" didn't
+update an already-shared social post — the share is a denormalized
+bike-name/type snapshot taken once at share time, and `RideAttribution
+.confirm()` never touched it. Fixed with a new, targeted
+`RideShareRepository.updateSharedRideBikeInfo()` patch call, best-effort
+and a no-op for a ride that was never shared.
+
 This is the single living handoff doc for the project: current status, known
 limitations, the near-term to-do list, the longer-term feature backlog, and
 the Vehicle State Engine architecture/roadmap. Update it (don't fork a new
