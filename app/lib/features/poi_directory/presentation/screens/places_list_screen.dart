@@ -120,20 +120,16 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
             ),
             // Routes live under Places because both answer "where should I
             // ride?" — one as a destination, the other as the road there. It
-            // navigates rather than filters, so it's a distinct button below
-            // the chips instead of a chip that looked like one more filter
-            // (claude_sol.md §3.2.5).
+            // navigates rather than filters, so it's a distinct, full-width
+            // button below the chips instead of a chip that looked like one
+            // more filter (claude_sol.md §3.2.5).
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push('/routes'),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
-                  icon: const Icon(Icons.route, size: 18),
-                  label: const Text('Browse routes →'),
-                ),
+                  AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 0),
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/routes'),
+                icon: const Icon(Icons.route, size: 18),
+                label: const Text('Browse routes →'),
               ),
             ),
             Expanded(
