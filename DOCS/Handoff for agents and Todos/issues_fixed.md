@@ -5360,4 +5360,10 @@ on the next rules pass.
 
 Verified: `flutter analyze` clean, `flutter test` 1174/1174.
 
-**Not done:** the live data migration — see `issues_open.md` §80.
+**Live data migrated (2026-09-20).** On the §79 post
+(`5a905c0a-…`), each of the 14 `likes/{uid}` docs became
+`votes/{uid} = {value: 1}`: 1 upvote → **15** (14 seeded + 1 real), like
+docs deleted, `likes` field removed. A full sweep of the `rides`
+collection found **no like documents on any other ride**.
+`seed_qa_test_riders.js` no longer writes a `likes` count (33 script tests
+still pass). What remains is cosmetic — see `issues_open.md` §80.

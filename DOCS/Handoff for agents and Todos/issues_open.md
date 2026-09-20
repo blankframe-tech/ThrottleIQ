@@ -476,24 +476,16 @@ working on top of it.
 
 ---
 
-## 80. Retired `likes`: code is done, the live data still needs migrating (2026-09-20)
+## 80. Retired `likes`: 97 QA-seed rides still carry a dead `likes` number (2026-09-20)
 
-**Code: FIXED** — see `issues_fixed.md` §80. `likes` is gone from the
-entity, model, repository, feed provider and the My Shared Rides card;
-upvotes/downvotes are the only engagement model now.
+**Code and the real data: DONE** — see `issues_fixed.md` §80.
 
-**Still open — a one-off data migration that needs a human to run it.**
-The sandbox refuses Firestore writes from this session ("Modify Shared
-Resources"), so it was never applied. The script is
-`migrate_likes_to_votes.js` (in the session scratchpad; move it into
-`scripts/` if it's worth keeping). For the §79 post it would:
-- turn each of the 14 `likes/{uid}` docs into `votes/{uid} = {value: 1}`,
-  taking that post from 1 upvote to 15 (14 seeded + 1 real);
-- delete the like docs and the `likes` field.
-
-Until it runs, that post keeps 14 like docs and a `likes: 14` field that
-no build reads. Other rides may carry old like docs too — the script takes
-`--ride <id>`, so it needs a sweep over every ride, not just this one.
+**What's left:** a sweep of the feed found **no like documents anywhere**,
+but 97 shared rides still carry a `likes` integer on the ride doc. All 97
+are `qashare_*` QA seed rides whose counts were fabricated by
+`seed_qa_test_riders.js`; that script no longer writes the field. Nothing
+reads it, so this is cosmetic — clear it on the next reseed, or with a
+`FieldValue.delete()` sweep.
 
 `firestore.rules` still has its `likes` clauses (the create rule defaults
-`likes` to 0, so it keeps passing). Clean them up on the next rules pass.
+the field to 0, so it keeps passing). Drop them on the next rules pass.
