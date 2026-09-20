@@ -376,8 +376,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
 
           // ── Pause dim ─────────────────────────────────────────────────────
           // Directly above the map and nothing else: pausing darkens the
-          // route so the state reads at a glance, while the top bar (with the
-          // amber PAUSED pill), the speed panel and the controls stay at full
+          // route so the state reads at a glance, while the top bar, the speed
+          // panel and the controls stay at full
           // contrast. It used to cover the stats too, which is exactly when a
           // stopped rider glances down at them.
           if (isPaused)
@@ -444,7 +444,6 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
               child: Row(
                 children: [
-                  _StatusPill(isPaused: isPaused),
                   const Spacer(),
                   Text(
                     SpeedFormatter.durationFromDuration(rideState.elapsed),
@@ -818,34 +817,6 @@ class _GForceBar extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final bool isPaused;
-  const _StatusPill({required this.isPaused});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isPaused ? AppColors.attention : AppColors.danger;
-    final label = isPaused ? 'PAUSED' : 'RECORDING';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
-          const SizedBox(width: 7),
-          Text(label,
-              style: AppTypography.cockpitLabel(
-                  weight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.onInk)),
-        ],
-      ),
     );
   }
 }

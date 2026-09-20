@@ -5367,3 +5367,20 @@ docs deleted, `likes` field removed. A full sweep of the `rides`
 collection found **no like documents on any other ride**.
 `seed_qa_test_riders.js` no longer writes a `likes` count (33 script tests
 still pass). What remains is cosmetic — see `issues_open.md` §80.
+
+---
+
+## 81. Active ride screen: RECORDING / PAUSED status pill removed (2026-09-20)
+
+**Change (owner request, not a bug):** the `_StatusPill` widget at the top-left
+of `active_ride_screen.dart` (red dot + "RECORDING", amber dot + "PAUSED") is
+deleted, along with its use in the header row. The elapsed timer and the
+live-share icon remain, right-aligned via the existing `Spacer`.
+
+**Side effect to know about:** the pill was the only text label for the
+paused state in the header. Paused is still shown by the glowing Resume
+button and the dark scrim over the map (`if (isPaused)`), but a rider glancing at the header no
+longer sees a word saying so.
+
+Verified: `dart analyze` clean on the file. `flutter test` not re-run; no test
+referenced the pill. Not checked on a device.
