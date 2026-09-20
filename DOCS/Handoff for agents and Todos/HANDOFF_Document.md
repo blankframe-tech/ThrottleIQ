@@ -1,6 +1,57 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-20 · Branch: `master`_
+_Last updated: 2026-09-20 · Branch: `main`_
+
+**Version bumped to `1.0.0-beta.3.0.2+19`, shipped as GitHub release
+`beta-v3.0.2`** (signed APK + AAB attached, built from `5600ecb`). Fixes
+the Places category-filter bug (issues_fixed.md §82: the `(category,
+geohash)` Firestore composite index existed in `firestore.indexes.json`
+but was never deployed — now deployed to `throttleiqfb`, plus a
+`failed-precondition` case added to `mapFirestoreError` so a future
+missing/building index shows a clear message instead of a generic one).
+Also carries the likes→votes retirement, the Places "Browse routes"
+button fix, and the active-ride status-pill removal already on `main`.
+
+**Not installed on the physical iPhone this round.** `flutter run
+--release -d <device>` over wireless debugging failed 4/4 times, all at
+the same Xcode step (`Preparing`/`Connecting to Abraar's iPhone... Xcode
+will continue when the operation completes`, then "Timed out waiting for
+all destinations... to become available") — the Xcode build itself
+succeeded each time; only the wireless device connection timed out. A
+wired (USB) connection should be more reliable next time this is tried.
+
+**Full-app critique pass (2026-09-20, issues_open.md §81):** A read-only
+review of UI/UX, codebase, architecture and flow. **No code changed.**
+Writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`; 31 sub-items summarized in
+`issues_open.md` §81. Items already tracked in §32/§78 were not repeated.
+Top findings not previously written down:
+- Onboarding's first-run tour advertises the disabled crash detector
+  ("Crash Shield", `onboarding_manifest.dart:152`), as do README.md:35 and
+  arch.md:5 — §32 only covered the Settings surface (§81.1).
+- `crash-notifications.ts:67` marks a notification `status: 'contacted'`
+  although nothing was sent (§81.2).
+- Account deletion leaves every Cloudinary asset, plus comments, forum
+  posts, chats, places and reviews (§81.15).
+- The Cloudinary unsigned preset is an open, unauthenticated upload
+  endpoint (§81.16).
+- `AppColors` being a mutable static forces a whole-app remount on every
+  theme change (`app.dart:172`) and rules out OS dark-mode support (§81.9).
+- The social feed has no pagination (~60 posts, ever) and the "Following"
+  chip filters client-side over a 20-item slice, so it can show empty to a
+  rider with real follows (§81.20).
+- 15 screens render failures as a raw `'$e'` exception dump (§81.21);
+  accessibility is unimplemented — 0 `semanticLabel`, 0 text-scale handling
+  (§81.22).
+- 43 screens, 1 screen test file, 0 goldens (§81.28).
+
+§81.31 is the meta-point: §32's safety finding was written 2026-08-17 and
+is still open. Suggest triaging §32/§78/§81 into one list ordered by
+consequence-to-the-rider before commissioning further review passes.
+
+**Note on the path above:** `ANTIGRAVRITY_GRILL/` (the misspelled directory
+referenced in the next paragraph, and by ~30 `claude_sol` comments in
+`app/lib`) **no longer exists in the repo.** The new writeup is in
+`ANTIGRAVITY_GRILL/` (correct spelling). See §81.29.
 
 **Grill verification (2026-09-20, issues_open.md §78):** The four external
 critiques in `ANTIGRAVRITY_GRILL/` were checked against the code. The
