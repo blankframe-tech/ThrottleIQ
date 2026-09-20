@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§79**. (§78 sub-items run to 78.30.)
+New issues go at the end of this file with the next free number: **§80**. (§78 sub-items run to 78.30.)
 
 ---
 
@@ -443,3 +443,33 @@ What remains open:
     rider.
   - **78.30** Crash rides now show in history lists, but without a
     "crash" badge.
+
+## 79. Places screen: "Browse routes →" button clashes visually with its neighbors — FIXED (2026-09-20)
+
+> Full writeup in `issues_fixed.md` §79.
+
+---
+
+## 79. QA-seed likes/comments written to the live feed, and the cleanup script doesn't remove them (2026-09-20)
+
+On request, 14 likes and 3 comments were written by hand onto the
+founder's public shared ride `5a905c0a-a468-46a0-823c-b43ae3573c82`
+("Saturday state of mind"), using 14 of the 30 `qaSeed` rider accounts.
+The post's `likes`/`comments` tallies were set to match the documents, so
+the rules' tally checks still hold and the in-app like/comment flow keeps
+working on top of it.
+
+- Every document carries `qaSeed: true`, like the rest of the seeded
+  content.
+- **The gap:** `cleanup_qa_test_riders.js` deletes seeded users,
+  usernames, shared rides and forum posts, but **not** likes or comments a
+  seeded account left on someone else's post. So these 17 documents
+  survive a cleanup, and their counter bumps stay on a real rider's post.
+  Either extend the cleanup script (a `collectionGroup` sweep for
+  `qaSeed == true` on `likes`/`comments`, decrementing each parent's
+  tally) or write a one-off remover.
+- This is on `throttleiqfb`, the same project real beta testers use, so
+  the comments are visible to them.
+- Fabricated engagement on a founder post shouldn't be used as evidence of
+  traction in the pitch or store listing. See §72 for the earlier
+  marketing-overclaim pass.

@@ -5303,3 +5303,29 @@ Verified: `flutter analyze` clean, `flutter test` 1086/1086 (38 new).
 - Cockpit fonts on 360 dp phones.
 - SafeQR PNG sharing.
 - All the new sheets, banners and dialogs.
+
+## 79. Places screen: "Browse routes →" button clashes visually with its neighbors — FIXED (2026-09-20)
+
+Surfaced by a user question ("why does the routes button look like a
+clusterfuck") and fixed same session. `places_list_screen.dart:126-134`.
+Two separate problems:
+
+- **Inconsistency bug:** the button hardcoded
+  `OutlinedButton.styleFrom(minimumSize: const Size(0, 48))` instead of
+  inheriting the theme default (`Size.fromHeight(AppDimensions.controlHeight)`,
+  52dp boxy / 54dp curvy per `app_theme.dart:190-206`) — it was the only
+  button in the app shorter than the theme and not skin-aware. **Fix:**
+  dropped the `style:` override entirely; it now inherits the theme like
+  every other `OutlinedButton` does.
+- **Design collision:** the button was deliberately shrink-wrapped +
+  left-aligned (`Align(alignment: Alignment.centerLeft)`) to read as
+  distinct from the category-chip row above it (comment citing
+  `claude_sol.md §3.2.5` — navigation, not a filter). But it sat right under
+  those pill-shaped, small, non-mono chips with only 8dp of padding, so the
+  "this is different" intent read as "these don't match." **Fix:** removed
+  the `Align`/custom `minimumSize` so it's now a normal full-width
+  `OutlinedButton.icon` (matches the app's other themed buttons), and bumped
+  the top padding above it from `8` to `AppDimensions.paddingMd` (16) for
+  clearer separation from the chip row.
+
+`flutter analyze` on the file: no issues. Not yet verified on a device/simulator screenshot.
