@@ -62,7 +62,7 @@ void main() {
           {'lat': 40.7300, 'lng': -74.0150},
         ],
         'mapSnapshotUrl': null,
-        'likes': 5,
+        'upvotes': 5,
         'comments': 2,
         'createdAt': DateTime(2024, 1, 15, 12, 0),
         'audience': 'public',
@@ -76,7 +76,7 @@ void main() {
       expect(restored.userId, 'user1');
       expect(restored.distanceKm, 50.0);
       expect(restored.polyline.length, 3);
-      expect(restored.likes, 5);
+      expect(restored.upvotes, 5);
     });
 
     test('converts to entity', () {
@@ -351,7 +351,6 @@ void main() {
       final restored = RideShareModel.fromFirestore(minimalData, 'ride1');
 
       expect(restored.mapSnapshotUrl, null);
-      expect(restored.likes, 0);
       expect(restored.comments, 0);
       expect(restored.audience, 'public');
     });

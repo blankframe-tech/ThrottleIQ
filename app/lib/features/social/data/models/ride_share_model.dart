@@ -31,9 +31,7 @@ class RideShareModel {
   final double maxSpeedKmh;
   final List<LatLng> polyline;
   final String? mapSnapshotUrl;
-  final int likes;
   final int comments;
-  final bool isLikedByCurrentUser;
   final DateTime createdAt;
   final String audience;
   final List<String> allowedUserIds;
@@ -69,9 +67,7 @@ class RideShareModel {
     required double maxSpeedKmh,
     required this.polyline,
     this.mapSnapshotUrl,
-    this.likes = 0,
     this.comments = 0,
-    this.isLikedByCurrentUser = false,
     required this.createdAt,
     this.audience = 'public',
     this.allowedUserIds = const [],
@@ -111,7 +107,6 @@ class RideShareModel {
           .map((point) => {'lat': point.latitude, 'lng': point.longitude})
           .toList(),
       'mapSnapshotUrl': mapSnapshotUrl,
-      'likes': likes,
       'comments': comments,
       'createdAt': createdAt,
       'audience': audience,
@@ -164,7 +159,6 @@ class RideShareModel {
       maxSpeedKmh: (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
       polyline: polylineList,
       mapSnapshotUrl: data['mapSnapshotUrl'] as String?,
-      likes: (data['likes'] as num?)?.toInt() ?? 0,
       comments: (data['comments'] as num?)?.toInt() ?? 0,
       createdAt: _parseDate(data['createdAt']),
       audience: data['audience'] as String? ?? 'public',
@@ -207,9 +201,7 @@ class RideShareModel {
       maxSpeedKmh: maxSpeedKmh,
       polyline: polyline,
       mapSnapshotUrl: mapSnapshotUrl,
-      likes: likes,
       comments: comments,
-      isLikedByCurrentUser: isLikedByCurrentUser,
       createdAt: createdAt,
       audience: audience,
       allowedUserIds: allowedUserIds,

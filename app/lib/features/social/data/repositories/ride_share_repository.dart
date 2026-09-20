@@ -94,9 +94,7 @@ class RideShareRepository {
       maxSpeedKmh: maxSpeedKmh,
       polyline: clippedPolyline,
       mapSnapshotUrl: mapSnapshotUrl,
-      likes: 0,
       comments: 0,
-      isLikedByCurrentUser: false,
       createdAt: DateTime.now(),
       audience: audience,
       allowedUserIds: allowedUserIds,
@@ -117,7 +115,6 @@ class RideShareRepository {
     final data = sharedRide.toFirestore();
     if (existing.exists) {
       // Don't wipe engagement accumulated since the ride was first shared.
-      data.remove('likes');
       data.remove('comments');
       data.remove('upvotes');
       data.remove('downvotes');
@@ -228,51 +225,13 @@ class RideShareRepository {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null || entities.isEmpty) return entities;
 
-    // Likes and votes are independent reads. Starting both `Future.wait`
-    // batches before awaiting either (rather than awaiting the first before
-    // starting the second) runs them concurrently, halving the round-trip
-    // latency this adds to every feed/list load.
-    final likedFlagsFuture = Future.wait(entities.map((ride) => _firestore
-        .collection('rides')
-        .doc(ride.id)
-        .collection('likes')
-        .doc(currentUserId)
-        .get()
-        .then((doc) => doc.exists)));
-    final votesFuture = Future.wait(
+    final votes = await Future.wait(
         entities.map((ride) => getMyVote(ride.id, currentUserId)));
-
-    final likedFlags = await likedFlagsFuture;
-    final votes = await votesFuture;
 
     return [
       for (var i = 0; i < entities.length; i++)
-        entities[i].copyWith(isLikedByCurrentUser: likedFlags[i], myVote: votes[i]),
+        entities[i].copyWith(myVote: votes[i]),
     ];
-  }
-
-  /// Likes or unlikes a ride. Idempotent: checks the like doc's existence
-  /// inside a transaction so re-liking/re-unliking never double-counts.
-  Future<void> toggleLike(String rideId, String userId, bool like) async {
-    final docRef = _firestore.collection('rides').doc(rideId);
-    final likeRef = docRef.collection('likes').doc(userId);
-
-    await _firestore.runTransaction((transaction) async {
-      final likeDoc = await transaction.get(likeRef);
-      final alreadyLiked = likeDoc.exists;
-      if (alreadyLiked == like) return; // Already in the desired state.
-
-      if (like) {
-        transaction.set(likeRef, {
-          'userId': userId,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-        transaction.update(docRef, {'likes': FieldValue.increment(1)});
-      } else {
-        transaction.delete(likeRef);
-        transaction.update(docRef, {'likes': FieldValue.increment(-1)});
-      }
-    });
   }
 
   /// The signed-in rider's own vote on a ride, if any (1 upvote / -1
@@ -399,8 +358,10 @@ class RideShareRepository {
 
     // Fetch both subcollections concurrently, then fire every delete at
     // once rather than awaiting them one at a time — a popular ride with
-    // many comments/likes used to stall proportionally to that count.
+    // many comments/votes used to stall proportionally to that count.
     final commentsFuture = docRef.collection('comments').get();
+    // `likes` is a retired engagement model (issues_fixed.md §81); legacy
+    // docs are still swept up here so a delete leaves nothing behind.
     final likesFuture = docRef.collection('likes').get();
     final comments = await commentsFuture;
     final likes = await likesFuture;

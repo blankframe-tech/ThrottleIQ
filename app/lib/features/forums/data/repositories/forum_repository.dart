@@ -296,7 +296,7 @@ class ForumRepository {
 
   /// Follows a forum. Idempotent: checks the follow doc's existence inside a
   /// transaction so re-following never double-counts `followerCount` (same
-  /// bug class as Phase 2's original `toggleLike`, fixed here up front).
+  /// bug class as the old ride-share `toggleLike`, fixed here up front).
   Future<void> followForum(String forumId, String userId) async {
     final followRef = _forumFollows.doc('${userId}_$forumId');
     final forumRef = _forums.doc(forumId);
@@ -457,7 +457,7 @@ class ForumRepository {
 
   /// Hydrates the signed-in rider's vote state onto each post — entity-only,
   /// never stored on the post doc itself (mirrors
-  /// RideShareRepository._hydrate's isLikedByCurrentUser/myVote pattern).
+  /// RideShareRepository._hydrate's myVote pattern).
   ///
   /// Reads each vote from the post's OWN `forumId`, not a shared one for the
   /// whole list — required since [getPosts] can now return posts merged in

@@ -71,7 +71,7 @@ final myRidesProvider = FutureProvider<List<SharedRideEntity>>((ref) async {
   return RideShareRepository().getMyRides(uid);
 });
 
-/// Holds the feed list locally so likes/votes can be toggled optimistically
+/// Holds the feed list locally so votes can be toggled optimistically
 /// without waiting on a Firestore round-trip. Seeded from [rideFeedProvider]
 /// once it resolves.
 final rideFeedNotifierProvider =
@@ -105,37 +105,6 @@ class RideFeedNotifier extends StateNotifier<List<SharedRideEntity>> {
 
   final Ref _ref;
   final _repo = RideShareRepository();
-
-  Future<void> toggleLike(String rideId) async {
-    final uid = _ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
-
-    final ride = state.where((r) => r.id == rideId).firstOrNull;
-    if (ride == null) return;
-    final liking = !ride.isLikedByCurrentUser;
-
-    // Optimistic update first.
-    state = [
-      for (final r in state)
-        if (r.id == rideId)
-          r.copyWith(
-            isLikedByCurrentUser: liking,
-            likes: r.likes + (liking ? 1 : -1),
-          )
-        else
-          r,
-    ];
-
-    try {
-      await _repo.toggleLike(rideId, uid, liking);
-    } catch (_) {
-      // Revert on failure.
-      state = [
-        for (final r in state)
-          if (r.id == rideId) ride else r,
-      ];
-    }
-  }
 
   /// Casts/changes/clears a vote (1 upvote, -1 downvote). Tapping the same
   /// arrow again clears it, mirroring RideShareRepository.vote's toggle rule.
@@ -177,7 +146,7 @@ class RideFeedNotifier extends StateNotifier<List<SharedRideEntity>> {
   }
 
   /// Patches the cached comment count for [rideId] after a successful post,
-  /// mirroring the optimistic list-patch pattern used by [toggleLike].
+  /// mirroring the optimistic list-patch pattern used by [vote].
   void incrementCommentCount(String rideId) {
     state = [
       for (final r in state)

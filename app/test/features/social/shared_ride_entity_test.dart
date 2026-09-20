@@ -36,23 +36,23 @@ void main() {
 
     test('copyWith preserves unchanged fields', () {
       final updated = testRide.copyWith(
-        likes: 5,
-        isLikedByCurrentUser: true,
+        comments: 5,
+        myVote: 1,
       );
 
       expect(updated.id, testRide.id);
       expect(updated.userId, testRide.userId);
-      expect(updated.likes, 5);
-      expect(updated.isLikedByCurrentUser, true);
+      expect(updated.comments, 5);
+      expect(updated.myVote, 1);
     });
 
     test('copyWith updates specified fields', () {
       final updated = testRide.copyWith(
-        likes: 10,
+        upvotes: 10,
         comments: 3,
       );
 
-      expect(updated.likes, 10);
+      expect(updated.upvotes, 10);
       expect(updated.comments, 3);
       expect(updated.distanceKm, testRide.distanceKm);
     });

@@ -56,9 +56,7 @@ class SharedRideEntity extends Equatable {
   final double _maxSpeedKmh;
   final List<LatLng> polyline;
   final String? mapSnapshotUrl;
-  final int likes;
   final int comments;
-  final bool isLikedByCurrentUser;
   final DateTime createdAt;
 
   /// Who can see this ride: `public` / `followers` / `mutual`. Followers/
@@ -87,8 +85,7 @@ class SharedRideEntity extends Equatable {
 
   /// The signed-in rider's own vote on this ride: 1, -1, or null (none).
   /// Entity-only — hydrated from the `votes/{uid}` subcollection at read
-  /// time, never stored on the ride doc itself (mirrors
-  /// [isLikedByCurrentUser]).
+  /// time, never stored on the ride doc itself.
   final int? myVote;
 
   /// Event counts behind [ridingScore]. Null (all three together, never
@@ -126,9 +123,7 @@ class SharedRideEntity extends Equatable {
     required double maxSpeedKmh,
     required this.polyline,
     this.mapSnapshotUrl,
-    this.likes = 0,
     this.comments = 0,
-    this.isLikedByCurrentUser = false,
     required this.createdAt,
     this.audience = 'public',
     this.allowedUserIds = const [],
@@ -175,9 +170,7 @@ class SharedRideEntity extends Equatable {
     double? distanceKm,
     int? durationSeconds,
     double? maxSpeedKmh,
-    int? likes,
     int? comments,
-    bool? isLikedByCurrentUser,
     String? audience,
     List<String>? allowedUserIds,
     List<String>? photoUrls,
@@ -201,9 +194,7 @@ class SharedRideEntity extends Equatable {
       maxSpeedKmh: maxSpeedKmh ?? this.maxSpeedKmh,
       polyline: polyline ?? this.polyline,
       mapSnapshotUrl: mapSnapshotUrl,
-      likes: likes ?? this.likes,
       comments: comments ?? this.comments,
-      isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
       createdAt: createdAt,
       audience: audience ?? this.audience,
       allowedUserIds: allowedUserIds ?? this.allowedUserIds,
@@ -229,8 +220,6 @@ class SharedRideEntity extends Equatable {
         durationSeconds,
         polyline,
         audience,
-        isLikedByCurrentUser,
-        likes,
         comments,
         upvotes,
         downvotes,

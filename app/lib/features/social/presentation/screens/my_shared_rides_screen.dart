@@ -110,11 +110,6 @@ class MySharedRidesScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.favorite_border, size: 14, color: AppColors.textTertiary),
-                          const SizedBox(width: 4),
-                          Text('${ride.likes}',
-                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
-                          const SizedBox(width: 12),
                           Icon(Icons.mode_comment_outlined,
                               size: 14, color: AppColors.textTertiary),
                           const SizedBox(width: 4),
