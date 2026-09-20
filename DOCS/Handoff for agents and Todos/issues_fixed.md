@@ -5329,3 +5329,35 @@ Two separate problems:
   clearer separation from the chip row.
 
 `flutter analyze` on the file: no issues. Not yet verified on a device/simulator screenshot.
+
+---
+
+## 80. `likes` retired: votes are the only engagement model (2026-09-20)
+
+Found while seeding §79: 14 likes were written to a post and never showed
+up in the app, though the comments did.
+
+**Why:** two engagement models were live at once. The feed
+(`social_screen.dart`) and the ride detail screen show
+`upvotes`/`downvotes` backed by `votes/{uid}`. The like count was rendered
+in exactly one place, the My Shared Rides card
+(`my_shared_rides_screen.dart:113`), so a like was invisible to everyone
+but the rider who left it — and every feed load still paid an extra
+per-ride read to hydrate `isLikedByCurrentUser`.
+
+**Fixed (commit d7a915b):** `likes` and `isLikedByCurrentUser` are removed
+from `SharedRideEntity`, `RideShareModel`, `RideShareRepository`
+(including `toggleLike` and the like half of `_hydrate`) and
+`RideFeedNotifier`. The heart is gone from the My Shared Rides card. The
+share-delete path still sweeps legacy `likes` subcollection docs, so
+deleting a ride leaves nothing behind. Two ride-share tests were
+re-pointed from `likes` to `upvotes`/`comments`.
+
+`firestore.rules` is untouched and still passes: its create clause reads
+`request.resource.data.get('likes', 0) == 0`, which holds now that the
+client never writes the field. The rules' `likes` clauses can be dropped
+on the next rules pass.
+
+Verified: `flutter analyze` clean, `flutter test` 1174/1174.
+
+**Not done:** the live data migration — see `issues_open.md` §80.

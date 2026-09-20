@@ -115,62 +115,11 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ---
 
-### 1.3 Map Locked North-Up & The Static Dot (Spatial Disorientation)
-* **The Crime:** In both [`active_ride_screen.dart:159-163`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L159-L163) and [`route_navigation_screen.dart:106-113`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart#L106-L113):
-  ```dart
-  _mapCtrl.move(currentPoint, _mapCtrl.camera.zoom);
-  ```
-  - `_mapCtrl.rotate()` is **never called**.
-  - In `active_ride_screen.dart`, the user's position is a static non-directional circle:
-    ```dart
-    CircleAvatar(backgroundColor: AppColors.primary, radius: 10)
-    ```
-  - In `route_navigation_screen.dart`, the vehicle marker is an `Icons.navigation` glyph permanently pointing toward the top of the phone screen, regardless of vehicle heading!
-* **The Reality Check:**
-  - If a rider travels South on a highway, the map stays North-up. When they take a left turn onto an off-ramp, their screen shows the dot moving **to the right and down**.
-  - A rider's brain must execute a 180-degree mental rotation while navigating traffic. This is a notorious cause of missed exits and dangerous sudden lane changes.
-* **The Fix:** Bind GPS bearing / gyro heading to camera rotation: `_mapCtrl.rotate(-bearing)`. Keep the vehicle heading pointing straight UP, rotating the world under the bike.
+---
 
 ---
 
-### 1.4 Zero Audio Turn Guidance (The Head-Down Riding Death Wish)
-* **The Crime:** Inspect [`route_navigation_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart).
-  - Turn cues are calculated purely as distance steps:
-    ```dart
-    Text('${nextStep.distanceRemainingMeters.round()}m ahead', style: TextStyle(fontSize: 22))
-    ```
-  - There is **zero integration with `flutter_tts`**, zero audio prompts, and zero Bluetooth headset profile handling (A2DP/HFP).
-* **The Reality Check:**
-  - 95% of touring motorcyclists ride with helmet communicators (Cardo PackTalk, Sena, or Bluetooth earbuds).
-  - Safe motorcycle navigation is 90% audio (*"In 500 meters, take the second exit at the roundabout"*) and 10% visual confirmation.
-  - Forcing a motorcyclist to stare down at a 6-inch screen mounted between their triple clamps to know when a turn is coming is unacceptable.
-
 ---
-
-### 1.5 Landscape Cockpit Obliteration
-* **The Crime:** Most dedicated motorcycle mounts (Beeline, QuadLock horizontal stem mount, SP Connect) place the phone in landscape mode to avoid blocking the motorcycle's actual instrument cluster.
-* Look at [`active_ride_screen.dart:330-360`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L330-L360):
-  ```dart
-  Positioned(top: 16, left: 16, right: 16, child: TopBar()),
-  Positioned(bottom: 160, left: 16, right: 16, child: SpeedAndLeanCard()),
-  Positioned(bottom: 24, left: 16, right: 16, child: ControlButtons()),
-  ```
-* **The Reality Check:**
-  - A typical smartphone in landscape has a logical vertical height of ~390dp.
-  - `top: 16` + `TopBar (~60dp)` + `SpeedAndLeanCard (~220dp)` + `bottom: 160` + `ControlButtons (~80dp)` = **536dp of vertical space required!**
-  - Result: On a landscape handlebar mount, the speed card collides with and renders directly over top of the TopBar and control buttons. The app is completely broken in landscape.
-* **The Fix:** Use `OrientationBuilder`. In landscape, place the map on the left 50% and a high-contrast digital instrument cluster on the right 50%.
-
----
-
-### 1.6 The Paused-Ride Scrim Disaster
-* **The Crime:** As identified in [`issues_open.md:50-53`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/../DOCS/Handoff%20for%20agents%20and%20Todos/issues_open.md#L50-L53):
-  When a ride is paused, the app drops a dark, translucent modal scrim across the **entire screen**, including the speed, distance, lean, and duration stats card.
-* **The Reality Check:**
-  - Why does a rider pause? Usually when stopped at a traffic light, railway crossing, or scenic overlook.
-  - That stop is the **single moment** the rider actually has time to look down and inspect their numbers!
-  - Dimming the telemetry card into a washed-out grey-on-black mush at the exact moment the rider looks at it is completely backwards.
-* **The Fix:** Scrim the map background only. Keep the telemetry cluster fully bright, high-contrast, and prominently badged with an amber "PAUSED" indicator.
 
 ---
 
@@ -232,36 +181,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ---
 
-### 2.3 The Maintenance Screen Dead-End & The Missing Link
-* **The Crime:**
-  1. Open [`maintenance_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/maintenance/presentation/maintenance_screen.dart). **It has no `AppBar` and no back button.** It lives inside `ShellRoute`, so the bottom navigation bar is present, but there is no arrow or button to go back to the screen that summoned it.
-  2. Open [`bike_detail_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/bike_detail_screen.dart). Search for any mention of maintenance or service logs. **There is none.**
-* **The Reality Check:**
-  - A user viewing a specific bike in their garage has zero access to that bike's maintenance history!
-  - If a user enters `MaintenanceScreen` from anywhere, they cannot "go back" to where they came from without tapping a bottom nav tab to reset the stack.
-* **The Fix:** Add a standard `AppBar` with `automaticallyImplyLeading: true` to `MaintenanceScreen`. Add a prominent "Service & Maintenance Records" section with full status cards inside `BikeDetailScreen`.
-
 ---
-
-### 2.4 The Add-Bike Hijacking Loop
-* **The Crime:** Look at [`add_edit_bike_screen.dart:156-162`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/add_edit_bike_screen.dart#L156-L162):
-  ```dart
-  if (widget.bikeId == null) {
-    context.pushReplacement('/maintenance/config?bikeId=$id');
-  } else {
-    context.pop();
-  }
-  ```
-  Then in [`maintenance_config_screen.dart:182`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/maintenance/presentation/maintenance_config_screen.dart#L182):
-  ```dart
-  context.pushReplacement('/maintenance?bikeId=${widget.bikeId}');
-  ```
-* **The Reality Check:**
-  - A user adds their motorcycle. They hit "Save".
-  - Instead of seeing their newly added motorcycle in their garage, they are forcibly redirected to configure maintenance intervals.
-  - Once they configure maintenance, they are redirected again into the maintenance log screen (which, as shown above, has no back button!).
-  - The user is completely hijacked across two route replacements without their consent.
-* **The Fix:** When a bike is saved, `context.pop()` immediately back to the Garage. Show an in-context banner or SnackBar: *"Yamaha R15 added! [Set Maintenance Intervals]"*. Let the user choose whether to configure intervals now or later.
 
 ---
 
@@ -282,33 +202,9 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ---
 
-### 2.6 The Global Notification Blindspot
-* **The Crime:** Where is the notification bell icon located in ThrottleIQ?
-  - Home tab? No.
-  - Social tab? No.
-  - Chat room list? No.
-  - It is buried exclusively in the top AppBar of [`garage_screen.dart:81-86`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/garage_screen.dart#L81-L86).
-* **The Reality Check:**
-  - Notifications in ThrottleIQ cover social comments, group ride invitations, chat pings, and safety alerts.
-  - None of those relate directly to the Garage.
-  - A user hanging out in the Social or Home tab will never see unread notification badges because the bell icon is sequestered on a completely unrelated tab.
-
 ---
 
 ## 3. Inverted Mental Models: Navigation vs. Recording
-
-### 3.1 "Navigate" Does NOT Record a Ride
-* **The Crime:** Look at [`routes_list_screen.dart:254`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/routes_list_screen.dart#L254) and [`route_navigation_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart):
-  - A rider finds a great twisty mountain route. They hit **"Navigate"**.
-  - `RouteNavigationScreen` opens and guides them along the polyline.
-  - **It does NOT record the ride.**
-  - **It does NOT track maximum lean angle or G-forces.**
-  - **It does NOT run crash detection (`event_detector.dart`).**
-  - When the rider finishes the route, the screen closes and nothing is saved to their ride log.
-* **The Reality Check:**
-  - Every rider expects that when they are riding a route inside a motorcycle telemetry app, the app is recording their telemetry!
-  - If a rider has an accident while following a route in `RouteNavigationScreen`, **the automated emergency crash workflow is 100% dead**.
-* **The Fix:** Unify navigation and recording into a single execution engine. When starting navigation, automatically start a recording session bound to that route ID.
 
 ---
 
@@ -394,33 +290,6 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ---
 
-### 4.2 WCAG AA Contrast Failure in Default Theme (`calmingLight`)
-* **The Crime:** In [`app_colors.dart:12-21`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/theme/app_colors.dart#L12-L21):
-  ```dart
-  static const calmingLight = ThemePalette(
-    primary: Color(0xFF84A98B),   // Muted Sage Green
-    accent: Color(0xFF52796F),
-    background: Color(0xFFF7F9F6),
-    surface: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF2F3E46),
-  );
-  ```
-  Primary buttons throughout the app use:
-  ```dart
-  backgroundColor: AppColors.primary, // #84A98B
-  foregroundColor: Colors.white,      // #FFFFFF
-  ```
-* **The Contrast Mathematics:**
-  - `#84A98B` (Sage Green) relative luminance: ~0.37
-  - `#FFFFFF` (White) relative luminance: 1.0
-  - **Calculated Contrast Ratio: 2.62:1**
-  - **WCAG AA Minimum Required: 4.5:1**
-  - **WCAG AAA Minimum Required: 7.0:1**
-* **The Reality Check:**
-  - The out-of-the-box default theme for new users fails basic accessibility standards by a massive margin.
-  - In direct sunlight outdoors, white text on `#84A98B` is virtually invisible.
-* **The Fix:** Replace `#84A98B` with a darker forest/racing green (`#2D5A43`, contrast 5.2:1) or use dark text (`#1A252C`) on buttons.
-
 ---
 
 ### 4.3 Inverted Dark Mode Contrast: Dark-on-Red "End Ride" Button
@@ -464,25 +333,6 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ---
 
-### 4.5 Sub-48dp Touch Targets (Fitts's Law Violations)
-* **The Crime:** Look at [`tour_floating_banner.dart:130-138`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/auth/presentation/widgets/tour_floating_banner.dart#L130-L138):
-  ```dart
-  InkWell(
-    onTap: () {
-      ref.read(activeTourGuideProvider.notifier).state = null;
-    },
-    child: const Padding(
-      padding: EdgeInsets.all(4.0),
-      child: Icon(Icons.close, size: 16, color: Colors.white54),
-    ),
-  )
-  ```
-* **The Reality Check:**
-  - An icon of size 16 with 4dp padding gives a total touch bounding box of **24 x 24 dp**.
-  - Apple Human Interface Guidelines and Google Material Design both mandate a **minimum touch target of 48 x 48 dp** for bare hands.
-  - For gloved hands on a motorcycle, touch targets should be **56 x 56 dp minimum**.
-  - Tapping this close icon on a moving or idling motorcycle requires microsurgical precision.
-
 ---
 
 ## 5. Data Loss, State Inconsistencies & Edge-Case Traps
@@ -507,48 +357,9 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ---
 
-### 5.2 The "Fake Private Profile" Error Screen
-* **The Crime:** Look at [`user_profile_screen.dart:78-95`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/profile/presentation/user_profile_screen.dart#L78-L95):
-  ```dart
-  profileAsync.when(
-    data: (profile) {
-      if (profile == null) {
-        return const Center(child: Text('This profile is private or not found'));
-      }
-      return _buildProfile(context, profile);
-    },
-    error: (e, _) => const Center(child: Text('This profile is private or not found')),
-  )
-  ```
-* **The Reality Check:**
-  - If a rider is offline, if Firebase has a 503 outage, or if a network request times out, the app tells the user: **"This profile is private or not found"**.
-  - This falsely implies the rider blocked them or marked their account private, when in fact the phone simply lost cellular connectivity!
-* **The Fix:** Never mask network errors as privacy blocks. Show a dedicated offline/error state with an explicit retry button.
-
 ---
 
-### 5.3 Silent GPS Fallback to Dhaka, Bangladesh
-* **The Crime:** Look at [`add_place_screen.dart:187-191`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/places/presentation/add_place_screen.dart#L187-L191):
-  ```dart
-  final lat = _selectedLocation?.latitude ?? 23.8103;
-  final lng = _selectedLocation?.longitude ?? 90.4125;
-  ```
-* **The Reality Check:**
-  - If a rider in California, Germany, or Chittagong opens "Add Place" before their phone acquires a GPS satellite lock, the coordinates silently default to `23.8103, 90.4125` (Dhaka).
-  - When they tap Save, their local café or twisty road is saved in the middle of Old Dhaka!
-* **The Fix:** If GPS has not acquired a fix, disable the Save button and display: *"Acquiring GPS fix..."*.
-
 ---
-
-### 5.4 The SafeQR Dead End
-* **The Crime:** Inspect [`safe_qr_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/profile/presentation/safe_qr_screen.dart).
-  - The screen renders an ICE (In Case of Emergency) QR code containing medical info and emergency contacts.
-  - **There is no Save to Photos button.**
-  - **There is no Share / Print button.**
-* **The Reality Check:**
-  - A SafeQR code is completely useless if it only lives on the rider's phone screen. If the rider crashes, the phone screen might be shattered or locked.
-  - The entire premise of emergency QR stickers is to **print them out and stick them on the rider's helmet, tank, or jacket**.
-  - Showing a QR code on a mobile screen with no way to export, save as image, or print is an unfinished feature.
 
 ---
 
@@ -566,16 +377,6 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ## 6. More Hard Pills to Swallow
 
-### 6.1 The "Built for Bangladesh" Localization Mirage
-In the iDEA pitch and marketing materials, ThrottleIQ is pitched as *"Bangladesh's first indigenous two-wheeler telemetry platform built specifically for local road conditions."*
-
-**Yet in the code:**
-- **39 production screens have zero Bengali strings.**
-- The entire active ride screen, emergency alert dialogs, crash countdown, maintenance logs, and login screens are **100% English only**.
-- Emergency crash countdown: *"CRASH DETECTED! Alerting emergency contacts in 30s..."*
-  If a commuter in rural Bogura or Sylhet crashes and a bystander picks up their phone, they will see English technical copy that most local bystanders will not understand.
-- For a project seeking Bangladeshi government grants, having zero Bengali localization on life-saving safety screens is an indefensible oversight.
-
 ---
 
 ### 6.2 The "Social" Feed Ghost Town
@@ -585,15 +386,6 @@ The Social tab has sub-sections for *Feed*, *Community Routes*, *Group Rides*, a
 - If 20 riders use the app, the feed is an empty, desolate screen with no onboarding suggestions or demo rides.
 
 ---
-
-### 6.3 False Sense of Security in Emergency Features
-Look at [`settings_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/settings/presentation/settings_screen.dart):
-Under "Emergency Contacts", it allows users to enter names and phone numbers, with fine-print text:
-> *"Logged if a crash is detected... Automatic SMS/email alerts aren't live yet."*
-
-**This is a liability nightmare.**
-Users do not read fine print. A rider who enters their mother's or spouse's phone number into an "Emergency Contacts" section genuinely believes the app will text them if they crash.
-Shipping an inactive safety feature that openly admits it won't alert anyone gives riders a false sense of security that could have tragic real-world consequences.
 
 ---
 

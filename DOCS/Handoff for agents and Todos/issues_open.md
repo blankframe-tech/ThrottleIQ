@@ -476,26 +476,24 @@ working on top of it.
 
 ---
 
-## 80. The `likes` counter is still written and enforced, but no screen shows it (surfaced 2026-09-20)
+## 80. Retired `likes`: code is done, the live data still needs migrating (2026-09-20)
 
-Found while seeding §79's engagement: 14 likes were written to a post and
-never appeared in the app, though the comments did.
+**Code: FIXED** — see `issues_fixed.md` §80. `likes` is gone from the
+entity, model, repository, feed provider and the My Shared Rides card;
+upvotes/downvotes are the only engagement model now.
 
-- `RideShareRepository.toggleLike` still maintains `rides/{id}.likes` and
-  the `likes/{uid}` subcollection, `RideShareModel` still parses `likes`,
-  and `firestore.rules` still bounds the tally.
-- **Nothing renders it.** `social_screen.dart` and
-  `shared_ride_detail_screen.dart` show `upvotes`/`downvotes` (the
-  `votes/{uid}` model) instead. A grep for `likes` in
-  `features/social/presentation` finds no count display.
-- So a like is invisible to everyone except the rider who left it (the
-  heart's filled state), and the two engagement models are live at once.
+**Still open — a one-off data migration that needs a human to run it.**
+The sandbox refuses Firestore writes from this session ("Modify Shared
+Resources"), so it was never applied. The script is
+`migrate_likes_to_votes.js` (in the session scratchpad; move it into
+`scripts/` if it's worth keeping). For the §79 post it would:
+- turn each of the 14 `likes/{uid}` docs into `votes/{uid} = {value: 1}`,
+  taking that post from 1 upvote to 15 (14 seeded + 1 real);
+- delete the like docs and the `likes` field.
 
-Decide one:
-- (a) Drop likes: remove `toggleLike`, the field, the subcollection and
-  the rules clause, and migrate existing like docs into votes; or
-- (b) Bring the like count back into the cards alongside votes and say
-  what each one means.
+Until it runs, that post keeps 14 like docs and a `likes: 14` field that
+no build reads. Other rides may carry old like docs too — the script takes
+`--ride <id>`, so it needs a sweep over every ride, not just this one.
 
-Either way there is data on disk already: the §79 post carries 14 like
-docs that no one can see.
+`firestore.rules` still has its `likes` clauses (the create rule defaults
+`likes` to 0, so it keeps passing). Clean them up on the next rules pass.
