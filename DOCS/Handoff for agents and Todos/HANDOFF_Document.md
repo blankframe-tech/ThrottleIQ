@@ -17,8 +17,13 @@ The recommended execution order is in claude_sol.md §5.
 **Branching changed (2026-09-20): `master` is gone; `main` is the only
 line.** `master` was fully contained in `main` and was deleted locally and
 on `origin`. Anything that used to target `master` targets `main` now.
-Version bumped to `1.0.0-beta.3.0.1+18` for release `beta_v3.0.1` (release
-and device build in progress at the time of writing).
+Version is `1.0.0-beta.3.0.1+18`, shipped as GitHub release
+**`beta_v3.0.1`** (signed APK + AAB attached, built from `09607fd`). The
+same build is **installed and launched on the physical iPhone 15** — the
+first time this batch has run on real hardware, so the device checks in
+issues_fixed.md §78 can now be worked through. Maps in that build still
+use OSM's own tile servers, because no `TILE_*` defines were passed; fine
+for beta, not for Play production (`DOCS/needs_attention.md`).
 
 **Grill fixes landed on `main` (2026-09-20, issues_fixed.md §78):**
 Six parallel agents fixed the code-doable §78 items plus 69.O4, 69.O6 and
