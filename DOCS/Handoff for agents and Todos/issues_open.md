@@ -403,9 +403,8 @@ or a token to lighten. Not changed.
 ## 78. Antigravity grill verification: still open (surfaced 2026-09-20)
 
 The full verdicts and fix instructions are in
-`ANTIGRAVRITY_GRILL/claude_sol.md`. Most §78 items were **fixed on branch
-`fix/grill-78` on 2026-09-20** (not merged to `master`/`main`, not
-deployed). That work is written up in `issues_fixed.md` §78, which also
+`ANTIGRAVRITY_GRILL/claude_sol.md`. Most §78 items were **fixed on 2026-09-20** and are
+now on `main` (e351b6c), though not deployed and not device-tested. That work is written up in `issues_fixed.md` §78, which also
 lists what still needs a device check.
 
 What remains open:

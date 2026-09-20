@@ -5098,9 +5098,15 @@ before calling this visually done.
 
 These are fixes for the code-doable items in `issues_open.md` §78 and three
 from §69 (O4, O6, O10). Six parallel agents did the work, one per area
-(parts A–F below). All six parts are merged into `fix/grill-78`. They are
-**not merged to `master`/`main` and not deployed.** What's still open stays
-in `issues_open.md` §78.
+(parts A–F below). All six parts were merged into `fix/grill-78`, which was
+then fast-forwarded into **`main` and pushed (e351b6c, 2026-09-20)**. That
+push also carried the 39 older `master` commits that had never reached
+`main`. **Nothing is deployed**, and none of it has run on a device. What's
+still open stays in `issues_open.md` §78.
+
+**Before the next `firestore.rules` deploy:** ship an app build from this
+code first. The new chat-create rule rejects chats from older builds
+(§78.27). CI has never run on GitHub; this push is its first run.
 
 **Verified on the combined branch:**
 - `flutter analyze` is clean.

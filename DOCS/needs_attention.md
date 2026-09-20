@@ -17,9 +17,10 @@ _Added 2026-09-20. These items came out of the Antigravity grill verification (`
 - [ ] **d. Profile tab:** rename it to "Garage"?
 - [ ] **e. §74:** are the dark cards on Retro Light intentional?
 
-## New from the fix pass (branch `fix/grill-78`)
+## New from the fix pass (on `main` as e351b6c)
 
-- [ ] **Merge `fix/grill-78`** into `master`/`main` once you've looked it over. Then test it on a device (list in `issues_fixed.md` §78, "Not verified on a device").
+- [ ] **Test the fix pass on a device** (list in `issues_fixed.md` §78, "Not verified on a device"). It is on `main` but has never run on real hardware.
+- [ ] **Check the first CI run** on GitHub. The rules job is the most likely to need a tweak.
 - [ ] **Pick a map tile provider** (MapTiler, Stadia, Thunderforest, or self-hosted Protomaps). Pass its URL, key and attribution as `--dart-define TILE_URL_TEMPLATE / TILE_API_KEY / TILE_ATTRIBUTION` in release builds, and restrict the key to `com.bft.throttleiq`. Without them, release builds still hit OSM's servers.
 - [ ] **Turn on branch protection** for `main`, and make the `flutter`, `rules` and `functions` CI checks required after the first run.
 - [ ] **Have a native speaker review the new Bangla strings** (emergency banner and acknowledgement, SafeQR share, moving/stopped).

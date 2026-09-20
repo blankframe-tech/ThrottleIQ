@@ -14,10 +14,11 @@ No code changed. Top findings:
 
 The recommended execution order is in claude_sol.md §5.
 
-**Grill fixes landed on branch `fix/grill-78` (2026-09-20, issues_fixed.md §78):**
+**Grill fixes landed on `main` (2026-09-20, issues_fixed.md §78):**
 Six parallel agents fixed the code-doable §78 items plus 69.O4, 69.O6 and
-69.O10. Merged into `fix/grill-78` only, not `master`/`main`, and nothing
-is deployed. `flutter analyze` is clean, `flutter test` passes 1174/1174,
+69.O10. `fix/grill-78` was fast-forwarded into **`main` and pushed
+(e351b6c)**, along with the 39 older `master` commits that had never
+reached `main`. Local `master` is still behind. Nothing is deployed. `flutter analyze` is clean, `flutter test` passes 1174/1174,
 the rules emulator passes 112/112, and the functions build passes.
 
 What changed:

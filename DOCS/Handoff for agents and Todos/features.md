@@ -291,7 +291,7 @@ Added 2026-08-01, expanded to four widgets 2026-08-17. Styled Carbon Mono (carbo
 
 ---
 
-## Changes on branch `fix/grill-78` (2026-09-20, not yet on `master`)
+## Changes from the grill fix pass (2026-09-20, on `main` as e351b6c)
 
 These come from the grill fix pass (`issues_fixed.md` §78). None of them has been checked on a device yet.
 
