@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§80**. (§78 sub-items run to 78.30.)
+New issues go at the end of this file with the next free number: **§81**. (§78 sub-items run to 78.30.)
 
 ---
 
@@ -473,3 +473,29 @@ working on top of it.
 - Fabricated engagement on a founder post shouldn't be used as evidence of
   traction in the pitch or store listing. See §72 for the earlier
   marketing-overclaim pass.
+
+---
+
+## 80. The `likes` counter is still written and enforced, but no screen shows it (surfaced 2026-09-20)
+
+Found while seeding §79's engagement: 14 likes were written to a post and
+never appeared in the app, though the comments did.
+
+- `RideShareRepository.toggleLike` still maintains `rides/{id}.likes` and
+  the `likes/{uid}` subcollection, `RideShareModel` still parses `likes`,
+  and `firestore.rules` still bounds the tally.
+- **Nothing renders it.** `social_screen.dart` and
+  `shared_ride_detail_screen.dart` show `upvotes`/`downvotes` (the
+  `votes/{uid}` model) instead. A grep for `likes` in
+  `features/social/presentation` finds no count display.
+- So a like is invisible to everyone except the rider who left it (the
+  heart's filled state), and the two engagement models are live at once.
+
+Decide one:
+- (a) Drop likes: remove `toggleLike`, the field, the subcollection and
+  the rules clause, and migrate existing like docs into votes; or
+- (b) Bring the like count back into the cards alongside votes and say
+  what each one means.
+
+Either way there is data on disk already: the §79 post carries 14 like
+docs that no one can see.
