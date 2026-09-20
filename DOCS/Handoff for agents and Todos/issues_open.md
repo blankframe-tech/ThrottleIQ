@@ -489,3 +489,9 @@ reads it, so this is cosmetic — clear it on the next reseed, or with a
 
 `firestore.rules` still has its `likes` clauses (the create rule defaults
 the field to 0, so it keeps passing). Drop them on the next rules pass.
+
+---
+
+## 82. User report: Places category chips (Fuel/Garage/etc.) fail with "Something went wrong, try again" — "All" works — FIXED (2026-09-20)
+
+> Full writeup in `issues_fixed.md` §82.

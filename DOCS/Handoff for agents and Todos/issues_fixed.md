@@ -5384,3 +5384,50 @@ longer sees a word saying so.
 
 Verified: `dart analyze` clean on the file. `flutter test` not re-run; no test
 referenced the pill. Not checked on a device.
+
+---
+
+## 82. Places category chips (Fuel/Garage/etc.) fail with "Something went wrong, try again" — "All" works (2026-09-20)
+
+**User report:** on the Places screen, selecting "All" showed results, but
+tapping any specific category chip (Fuel, Garage, ...) failed with the
+generic "Something went wrong, try again." error.
+
+**Root cause:** the category-filtered nearby-places query needs a
+Firestore composite index on `(category ASC, geohash ASC)`
+(`app/lib/features/poi_directory/data/repositories/place_repository.dart`,
+`_fetchGeohashRange`). That index was added to `firestore.indexes.json`
+(lines 77-90) in commit `3f20621` (2026-09-20, "fix(geo): radius privacy
+clipper, shared haversine, num casts, geohash nearby query") but was
+**never deployed** to the live `throttleiqfb` project — already flagged
+as "not deployed" in §78.17 below.
+
+- Tapping "All" (`_selectedCategory = null`) skips the `category`
+  equality filter entirely, so only the existing geohash-range query
+  runs — no missing index needed, works fine.
+- Tapping any specific chip adds
+  `.where('category', isEqualTo: category.name)` alongside the geohash
+  range filter, which requires the composite index. Firestore throws
+  `FirebaseException(code: 'failed-precondition')`.
+- `app/lib/core/utils/firebase_error_mapper.dart` (`mapFirestoreError`)
+  had no case for `failed-precondition`, so it fell through to the
+  generic "Something went wrong loading this. Please try again."
+  message, masking the real cause.
+- Same failure pattern as the crash-alert escalation index (§~3774) and
+  the Discover/Rider-forums indexes (§178): index defined in the JSON
+  file, never pushed live.
+
+**Fix:**
+1. Ran `firebase deploy --only firestore:indexes --project throttleiqfb`
+   — the pending `(category, geohash)` composite index on `places` is
+   now deployed (confirmed via `firebase firestore:indexes`). Index
+   builds are async; allow it a few minutes to finish for large
+   collections.
+2. Added a `'failed-precondition'` branch to `mapFirestoreError`
+   (`app/lib/core/utils/firebase_error_mapper.dart`) returning "This
+   isn't ready yet. Please try again in a few minutes." so a future
+   missing/building index is recognizable instead of showing the same
+   generic message as every other error.
+
+Verified: `flutter test test/core/utils/firebase_error_mapper_test.dart`
+— 11/11 passed.

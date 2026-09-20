@@ -19,6 +19,12 @@ String mapFirestoreError(Object error) {
       'not-found' => 'That could not be found — it may have been removed.',
       'resource-exhausted' =>
         'Too many requests right now. Please try again in a moment.',
+      // A required Firestore composite index is missing or still building —
+      // see DOCS/Handoff for agents and Todos/issues_open.md §81. Distinct
+      // from the generic message so this failure mode is recognizable in
+      // logs/screenshots instead of looking identical to every other error.
+      'failed-precondition' =>
+        "This isn't ready yet. Please try again in a few minutes.",
       _ => 'Something went wrong loading this. Please try again.',
     };
   }
