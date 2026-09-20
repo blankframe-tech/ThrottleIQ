@@ -14,6 +14,12 @@ No code changed. Top findings:
 
 The recommended execution order is in claude_sol.md §5.
 
+**Branching changed (2026-09-20): `master` is gone; `main` is the only
+line.** `master` was fully contained in `main` and was deleted locally and
+on `origin`. Anything that used to target `master` targets `main` now.
+Version bumped to `1.0.0-beta.3.0.1+18` for release `beta_v3.0.1` (release
+and device build in progress at the time of writing).
+
 **Grill fixes landed on `main` (2026-09-20, issues_fixed.md §78):**
 Six parallel agents fixed the code-doable §78 items plus 69.O4, 69.O6 and
 69.O10. `fix/grill-78` was fast-forwarded into **`main` and pushed
