@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -76,7 +77,7 @@ class _ThrottleIQLogo extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Ride smarter. Track deeper.',
+          context.l10n.rideSmarterTrackDeeper,
           style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
         ),
       ],

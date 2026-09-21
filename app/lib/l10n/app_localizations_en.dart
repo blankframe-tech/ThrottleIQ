@@ -551,4 +551,592 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get liveShareStopDescription =>
       'The link stops working. Your ride keeps recording.';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get emailRequired => 'Email required';
+
+  @override
+  String get invalidEmail => 'Invalid email';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get passwordTooShort => 'Password too short';
+
+  @override
+  String get signIn => 'Sign In';
+
+  @override
+  String get orDivider => 'or';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get noAccountPrompt => 'Don\'t have an account? ';
+
+  @override
+  String get signUp => 'Sign Up';
+
+  @override
+  String get welcomeBack => 'Welcome back';
+
+  @override
+  String get signInSubtitle => 'Sign in to continue tracking your rides';
+
+  @override
+  String get yourGarage => 'Your Garage';
+
+  @override
+  String get everyBikeOwnTracked => 'Every bike you own, tracked in one place.';
+
+  @override
+  String get addUnlimitedBikesBrand =>
+      'Add unlimited bikes — brand, model, year, CC';
+
+  @override
+  String get bikesPaintColorTints =>
+      'Your bike\'s paint color tints the whole app';
+
+  @override
+  String get tapAnyBikeView => 'Tap any bike to view full history & details';
+
+  @override
+  String get switchActiveBikeBefore => 'Switch active bike before each ride';
+
+  @override
+  String get activeMotorcycle => 'Active Motorcycle';
+
+  @override
+  String get tintsEntireAppTheme =>
+      'Tints the entire app theme and binds to your trip logs.';
+
+  @override
+  String get serviceCountdown => 'Service Countdown';
+
+  @override
+  String get realTimeMaintenanceTracker =>
+      'Real-time maintenance tracker based on actual km ridden.';
+
+  @override
+  String get addSwitch => 'Add & Switch';
+
+  @override
+  String get manageMultipleBikesSwap =>
+      'Manage multiple bikes and swap your active ride anytime.';
+
+  @override
+  String get startRide => 'Start a Ride';
+
+  @override
+  String get holdButtonThrottleiqDoes =>
+      'Hold the button. ThrottleIQ does the rest.';
+
+  @override
+  String get holdStartRecordTab => 'Hold-to-start on the Record tab to begin';
+
+  @override
+  String get gpsSensorFusionCaptures =>
+      'GPS + sensor fusion captures every moment';
+
+  @override
+  String get continuesRecordingBackground =>
+      'Continues recording in the background';
+
+  @override
+  String get pausedRideSurvivesApp =>
+      'A paused ride survives the app being closed';
+
+  @override
+  String get shareLiveLocationWith =>
+      'Share your live location with family in real time';
+
+  @override
+  String get cockpitTelemetry => 'Cockpit Telemetry';
+
+  @override
+  String get liveGpsSpeedDistance =>
+      'Live GPS speed, distance, and ride telemetry as you go.';
+
+  @override
+  String get hold1sRecord => 'Hold 1s to Record';
+
+  @override
+  String get hold1sStartStop =>
+      'Hold 1s to start or stop; prevents accidental touches.';
+
+  @override
+  String get liveShare => 'Live Share';
+
+  @override
+  String get sendRevocableLinkSo =>
+      'Send a revocable link so family can follow your ride.';
+
+  @override
+  String get autoTracking => 'Auto Tracking';
+
+  @override
+  String get ridesThatDetectRecord =>
+      'Rides that detect and record themselves.';
+
+  @override
+  String get enableOnceSettingsAuto =>
+      'Enable once in Settings → Auto-Tracking';
+
+  @override
+  String get activityRecognitionStartsRecording =>
+      'Activity recognition starts recording when you ride';
+
+  @override
+  String get shortWalksSubwayTrips =>
+      'Short walks and subway trips are filtered out';
+
+  @override
+  String get eachAutoDetectedRide =>
+      'Each auto-detected ride appears ready to review';
+
+  @override
+  String get smartDetection => 'Smart Detection';
+
+  @override
+  String get detectsMotorcycleMovementVia =>
+      'Detects motorcycle movement via IMU sensors & speed.';
+
+  @override
+  String get nonRideFilter => 'Non-Ride Filter';
+
+  @override
+  String get ignoresWalkingBusRides =>
+      'Ignores walking, bus rides, and minor phone jostling.';
+
+  @override
+  String get zeroInteraction => 'Zero Interaction';
+
+  @override
+  String get runsSilentlyBackgroundReview =>
+      'Runs silently in background; review rides when done.';
+
+  @override
+  String get maintenance => 'Maintenance';
+
+  @override
+  String get neverForgetAnotherOil => 'Never forget another oil change.';
+
+  @override
+  String get alertsWhenYoureDue =>
+      'Alerts when you\'re due for oil, filter, chain lube…';
+
+  @override
+  String get logServiceResetCountdown => 'Log a service to reset the countdown';
+
+  @override
+  String get addCustomIntervalsAny =>
+      'Add custom intervals for any part you care about';
+
+  @override
+  String get n13ServiceItems => '13+ Service Items';
+
+  @override
+  String get trackEngineOilChain =>
+      'Track engine oil, chain lube, brake fluid, coolant, and more.';
+
+  @override
+  String get dueBadges => 'Due Badges';
+
+  @override
+  String get colorCodedProgressBars =>
+      'Color-coded progress bars alert you before intervals expire.';
+
+  @override
+  String get logReset => 'Log & Reset';
+
+  @override
+  String get recordMaintenanceNotesReset =>
+      'Record maintenance notes and reset the interval odometer.';
+
+  @override
+  String get riderPlaces => 'Rider Places';
+
+  @override
+  String get everyGaragePumpViewpoint =>
+      'Every garage, pump, and viewpoint near you.';
+
+  @override
+  String get fuelStationsRepairShops =>
+      'Fuel stations, repair shops, spare parts & cafes';
+
+  @override
+  String get tapDirectionsOpensMaps =>
+      'Tap Directions → opens Maps, and offers to record';
+
+  @override
+  String get addRatePlacesHelp => 'Add and rate places to help the community';
+
+  @override
+  String get n395RiderPois => '395+ Rider POIs';
+
+  @override
+  String get verifiedFuelStationsWorkshops =>
+      'Verified fuel stations, workshops, parts, and rider cafes.';
+
+  @override
+  String get navigateRecord => 'Navigate & Record';
+
+  @override
+  String get opensMapsAppCan =>
+      'Opens your maps app, and can record the trip alongside it.';
+
+  @override
+  String get riderReviews => 'Rider Reviews';
+
+  @override
+  String get rateOctanePurityMechanic =>
+      'Rate octane purity, mechanic honesty, and parking security.';
+
+  @override
+  String get rideTogether => 'Ride Together';
+
+  @override
+  String get ridingCommunityAllOne =>
+      'Your riding community, all in one place.';
+
+  @override
+  String get shareRidesFeedHome =>
+      'Share rides to the feed — home location is hidden';
+
+  @override
+  String get startGroupRideWith =>
+      'Start a group ride with a 6-character join code';
+
+  @override
+  String get pushTalkIntercomBluetooth =>
+      'Push-to-talk intercom for your Bluetooth helmet';
+
+  @override
+  String get bikeModelForumsTalk =>
+      'Bike-model forums — talk to FZ-S, Pulsar & CBR riders';
+
+  @override
+  String get directMessageAnyRider =>
+      'Direct message any rider on the platform';
+
+  @override
+  String get privacyZones => 'Privacy Zones';
+
+  @override
+  String get eachRidesStartEnd =>
+      'Each ride\'s start and end are clipped before it is shared.';
+
+  @override
+  String get groupPinIntercom => 'Group PIN & Intercom';
+
+  @override
+  String get liveMapTrackingBluetooth =>
+      'Live map tracking and Bluetooth helmet PTT intercom.';
+
+  @override
+  String get bikeModelForums => 'Bike Model Forums';
+
+  @override
+  String get discussModsIssuesMeets =>
+      'Discuss mods, issues, and meets with owners of your bike.';
+
+  @override
+  String get yourProfile => 'Your Profile';
+
+  @override
+  String get makeItYoursAdd => 'Make it yours — add a bio to stand out.';
+
+  @override
+  String get publicProfileWithStats =>
+      'Public profile with your stats & shared rides';
+
+  @override
+  String get handleLetsOtherRiders =>
+      'Your @handle lets other riders find and follow you';
+
+  @override
+  String get controlWhoSeesProfile =>
+      'Control who sees your profile and your bikes';
+
+  @override
+  String get safeqrOfflineEmergencyMedical =>
+      'SafeQR: an offline emergency medical card';
+
+  @override
+  String get riderStats => 'Rider Stats';
+
+  @override
+  String get showcaseTotalKmSafety =>
+      'Showcase total km, safety score, and peak achievements.';
+
+  @override
+  String get safeqrCard => 'SafeQR Card';
+
+  @override
+  String get offlineMedicalCardEmergency =>
+      'Offline medical card for emergency responders on the road.';
+
+  @override
+  String get keepUp5Contacts =>
+      'Keep up to 5 contacts on file for a responder to reach.';
+
+  @override
+  String get thatUsernameTakenTry => 'That username is taken — try another.';
+
+  @override
+  String errorWithDetail(Object e) {
+    return 'Error: $e';
+  }
+
+  @override
+  String get whatShouldWeCall => 'What should we call you?';
+
+  @override
+  String get addFirstBike => 'Add your first bike';
+
+  @override
+  String get nameHandleSoCommunity =>
+      'Your name and @handle so the community can find you.';
+
+  @override
+  String get throttleiqTracksRidesMaintenance =>
+      'ThrottleIQ tracks rides and maintenance per bike.';
+
+  @override
+  String get continueAction => 'Continue →';
+
+  @override
+  String get addBikeTakeTour => 'Add bike & take the tour';
+
+  @override
+  String get backArrow => '← Back';
+
+  @override
+  String get skipNow => 'Skip for now';
+
+  @override
+  String get fullName => 'Full Name *';
+
+  @override
+  String get eGRahimHossain => 'e.g. Rahim Hossain';
+
+  @override
+  String get nameRequired => 'Name is required';
+
+  @override
+  String get username => 'Username *';
+
+  @override
+  String get lettersNumbersUnderscore3 =>
+      'Letters, numbers, underscore · 3–20 chars';
+
+  @override
+  String get n320CharactersLetters =>
+      '3-20 characters: letters, numbers, underscore';
+
+  @override
+  String get brand => 'Brand *';
+
+  @override
+  String get model => 'Model *';
+
+  @override
+  String get year => 'Year';
+
+  @override
+  String get engineCc => 'Engine CC';
+
+  @override
+  String get exitDemo => 'Exit demo';
+
+  @override
+  String get yourInfo => 'Your Info';
+
+  @override
+  String get yourBike => 'Your Bike';
+
+  @override
+  String get featureTour => 'Feature Tour';
+
+  @override
+  String get createAccount => 'Create Account';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get joinThrottleiq => 'Join ThrottleIQ';
+
+  @override
+  String get trackEveryRideRemember => 'Track every ride, remember every mile';
+
+  @override
+  String get n6Characters => '6+ characters';
+
+  @override
+  String get min6Characters => 'Min 6 characters';
+
+  @override
+  String get confirmPassword => 'Confirm Password';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get signUpWithGoogle => 'Sign up with Google';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account? ';
+
+  @override
+  String get rideSmarterTrackDeeper => 'Ride smarter. Track deeper.';
+
+  @override
+  String guideProgress(Object slideIndex, Object totalSlides) {
+    return 'GUIDE $slideIndex OF $totalSlides';
+  }
+
+  @override
+  String get skipTour => 'Skip tour';
+
+  @override
+  String get showMe => 'Show me';
+
+  @override
+  String get getRiding => 'Get Riding 🏍️';
+
+  @override
+  String get gotIt => 'Got it  →';
+
+  @override
+  String get myGarage => 'My Garage';
+
+  @override
+  String get addBike => 'Add Bike';
+
+  @override
+  String get active => 'ACTIVE';
+
+  @override
+  String get n4280KmLogged => '4,280 km logged';
+
+  @override
+  String get oilFilterDue720 => 'Oil & Filter Due in 720 km';
+
+  @override
+  String get themeTint => 'Theme Tint:';
+
+  @override
+  String get gpsLocked => 'GPS LOCKED';
+
+  @override
+  String get avg52 => 'AVG 52 · ';
+
+  @override
+  String get top124 => 'TOP 124';
+
+  @override
+  String get distance => 'DISTANCE';
+
+  @override
+  String get moving31m => 'MOVING 31m';
+
+  @override
+  String get hold1sStart => 'HOLD 1s TO START';
+
+  @override
+  String get autoTrackingSettings => 'Auto-Tracking Settings';
+
+  @override
+  String get smartNonRideFilter => 'Smart Non-Ride Filter Active';
+
+  @override
+  String get walkingBusesSubwayRides =>
+      'Walking, buses & subway rides automatically ignored';
+
+  @override
+  String get detectedRide => 'Detected Ride';
+
+  @override
+  String get autoSaved => 'AUTO SAVED';
+
+  @override
+  String get maintenanceSchedule => 'Maintenance Schedule';
+
+  @override
+  String get logService => '+ Log Service';
+
+  @override
+  String get engineOilFilter => 'Engine Oil & Filter';
+
+  @override
+  String get due320Km => 'Due in 320 km';
+
+  @override
+  String get chainCleanLube => 'Chain Clean & Lube';
+
+  @override
+  String get good850Km => 'Good for 850 km';
+
+  @override
+  String get brakeFluidFlush => 'Brake Fluid Flush';
+
+  @override
+  String get good2100Km => 'Good for 2,100 km';
+
+  @override
+  String get n49VerifiedPure => '★ 4.9 · Verified Pure Fuel · Open 24/7';
+
+  @override
+  String get directions => 'Directions';
+
+  @override
+  String get riderFeed => 'Rider Feed';
+
+  @override
+  String get n2hAgo => '2h ago';
+
+  @override
+  String get morningTwistiesThrough300 =>
+      'Morning twisties through 300 Feet Highway!';
+
+  @override
+  String get privacyZone200mEndpoints => 'Privacy Zone: 200m Endpoints Clipped';
+
+  @override
+  String get roadCaptainDhakaMetro => 'Road Captain · Dhaka Metro';
+
+  @override
+  String get kmRidden => 'KM RIDDEN';
+
+  @override
+  String get safetyScore => 'SAFETY SCORE';
+
+  @override
+  String get safeqrOfflineMedicalCard => 'SafeQR Offline Medical Card';
+
+  @override
+  String get bloodOIceEmergency => 'Blood: O+ · ICE Emergency SOS Armed';
+
+  @override
+  String guideProgressDot(Object slideIndex, Object total) {
+    return 'GUIDE · $slideIndex OF $total';
+  }
+
+  @override
+  String get backTour => 'Back to Tour';
+
+  @override
+  String get next => 'Next →';
+
+  @override
+  String get closeGuide => 'Close guide';
 }

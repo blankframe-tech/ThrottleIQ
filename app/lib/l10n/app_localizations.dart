@@ -1087,6 +1087,1062 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The link stops working. Your ride keeps recording.'**
   String get liveShareStopDescription;
+
+  /// Label in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Email required'**
+  String get emailRequired;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email'**
+  String get invalidEmail;
+
+  /// Label in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// Tooltip in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get showPassword;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Password too short'**
+  String get passwordTooShort;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get signIn;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get orDivider;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? '**
+  String get noAccountPrompt;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Up'**
+  String get signUp;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get welcomeBack;
+
+  /// Text in login_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to continue tracking your rides'**
+  String get signInSubtitle;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Garage'**
+  String get yourGarage;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Every bike you own, tracked in one place.'**
+  String get everyBikeOwnTracked;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Add unlimited bikes — brand, model, year, CC'**
+  String get addUnlimitedBikesBrand;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your bike\'s paint color tints the whole app'**
+  String get bikesPaintColorTints;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap any bike to view full history & details'**
+  String get tapAnyBikeView;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch active bike before each ride'**
+  String get switchActiveBikeBefore;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Motorcycle'**
+  String get activeMotorcycle;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Tints the entire app theme and binds to your trip logs.'**
+  String get tintsEntireAppTheme;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Countdown'**
+  String get serviceCountdown;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time maintenance tracker based on actual km ridden.'**
+  String get realTimeMaintenanceTracker;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Add & Switch'**
+  String get addSwitch;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage multiple bikes and swap your active ride anytime.'**
+  String get manageMultipleBikesSwap;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a Ride'**
+  String get startRide;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold the button. ThrottleIQ does the rest.'**
+  String get holdButtonThrottleiqDoes;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold-to-start on the Record tab to begin'**
+  String get holdStartRecordTab;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS + sensor fusion captures every moment'**
+  String get gpsSensorFusionCaptures;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continues recording in the background'**
+  String get continuesRecordingBackground;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'A paused ride survives the app being closed'**
+  String get pausedRideSurvivesApp;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your live location with family in real time'**
+  String get shareLiveLocationWith;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Cockpit Telemetry'**
+  String get cockpitTelemetry;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Live GPS speed, distance, and ride telemetry as you go.'**
+  String get liveGpsSpeedDistance;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold 1s to Record'**
+  String get hold1sRecord;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold 1s to start or stop; prevents accidental touches.'**
+  String get hold1sStartStop;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Share'**
+  String get liveShare;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a revocable link so family can follow your ride.'**
+  String get sendRevocableLinkSo;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Tracking'**
+  String get autoTracking;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides that detect and record themselves.'**
+  String get ridesThatDetectRecord;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable once in Settings → Auto-Tracking'**
+  String get enableOnceSettingsAuto;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity recognition starts recording when you ride'**
+  String get activityRecognitionStartsRecording;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Short walks and subway trips are filtered out'**
+  String get shortWalksSubwayTrips;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Each auto-detected ride appears ready to review'**
+  String get eachAutoDetectedRide;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Detection'**
+  String get smartDetection;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Detects motorcycle movement via IMU sensors & speed.'**
+  String get detectsMotorcycleMovementVia;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-Ride Filter'**
+  String get nonRideFilter;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignores walking, bus rides, and minor phone jostling.'**
+  String get ignoresWalkingBusRides;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero Interaction'**
+  String get zeroInteraction;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs silently in background; review rides when done.'**
+  String get runsSilentlyBackgroundReview;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get maintenance;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Never forget another oil change.'**
+  String get neverForgetAnotherOil;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts when you\'re due for oil, filter, chain lube…'**
+  String get alertsWhenYoureDue;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a service to reset the countdown'**
+  String get logServiceResetCountdown;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Add custom intervals for any part you care about'**
+  String get addCustomIntervalsAny;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'13+ Service Items'**
+  String get n13ServiceItems;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Track engine oil, chain lube, brake fluid, coolant, and more.'**
+  String get trackEngineOilChain;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Badges'**
+  String get dueBadges;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Color-coded progress bars alert you before intervals expire.'**
+  String get colorCodedProgressBars;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Log & Reset'**
+  String get logReset;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Record maintenance notes and reset the interval odometer.'**
+  String get recordMaintenanceNotesReset;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Places'**
+  String get riderPlaces;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Every garage, pump, and viewpoint near you.'**
+  String get everyGaragePumpViewpoint;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel stations, repair shops, spare parts & cafes'**
+  String get fuelStationsRepairShops;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Directions → opens Maps, and offers to record'**
+  String get tapDirectionsOpensMaps;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Add and rate places to help the community'**
+  String get addRatePlacesHelp;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'395+ Rider POIs'**
+  String get n395RiderPois;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified fuel stations, workshops, parts, and rider cafes.'**
+  String get verifiedFuelStationsWorkshops;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate & Record'**
+  String get navigateRecord;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens your maps app, and can record the trip alongside it.'**
+  String get opensMapsAppCan;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Reviews'**
+  String get riderReviews;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate octane purity, mechanic honesty, and parking security.'**
+  String get rateOctanePurityMechanic;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Together'**
+  String get rideTogether;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your riding community, all in one place.'**
+  String get ridingCommunityAllOne;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Share rides to the feed — home location is hidden'**
+  String get shareRidesFeedHome;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a group ride with a 6-character join code'**
+  String get startGroupRideWith;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Push-to-talk intercom for your Bluetooth helmet'**
+  String get pushTalkIntercomBluetooth;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike-model forums — talk to FZ-S, Pulsar & CBR riders'**
+  String get bikeModelForumsTalk;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct message any rider on the platform'**
+  String get directMessageAnyRider;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Zones'**
+  String get privacyZones;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Each ride\'s start and end are clipped before it is shared.'**
+  String get eachRidesStartEnd;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Group PIN & Intercom'**
+  String get groupPinIntercom;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Live map tracking and Bluetooth helmet PTT intercom.'**
+  String get liveMapTrackingBluetooth;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike Model Forums'**
+  String get bikeModelForums;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Discuss mods, issues, and meets with owners of your bike.'**
+  String get discussModsIssuesMeets;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Profile'**
+  String get yourProfile;
+
+  /// Subtitle in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it yours — add a bio to stand out.'**
+  String get makeItYoursAdd;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Public profile with your stats & shared rides'**
+  String get publicProfileWithStats;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your @handle lets other riders find and follow you'**
+  String get handleLetsOtherRiders;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Control who sees your profile and your bikes'**
+  String get controlWhoSeesProfile;
+
+  /// Text in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'SafeQR: an offline emergency medical card'**
+  String get safeqrOfflineEmergencyMedical;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Stats'**
+  String get riderStats;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Showcase total km, safety score, and peak achievements.'**
+  String get showcaseTotalKmSafety;
+
+  /// Title in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'SafeQR Card'**
+  String get safeqrCard;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline medical card for emergency responders on the road.'**
+  String get offlineMedicalCardEmergency;
+
+  /// Description in onboarding_manifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep up to 5 contacts on file for a responder to reach.'**
+  String get keepUp5Contacts;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'That username is taken — try another.'**
+  String get thatUsernameTakenTry;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {e}'**
+  String errorWithDetail(Object e);
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we call you?'**
+  String get whatShouldWeCall;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first bike'**
+  String get addFirstBike;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name and @handle so the community can find you.'**
+  String get nameHandleSoCommunity;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ tracks rides and maintenance per bike.'**
+  String get throttleiqTracksRidesMaintenance;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue →'**
+  String get continueAction;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add bike & take the tour'**
+  String get addBikeTakeTour;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'← Back'**
+  String get backArrow;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skipNow;
+
+  /// LabelText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name *'**
+  String get fullName;
+
+  /// HintText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Rahim Hossain'**
+  String get eGRahimHossain;
+
+  /// Validator in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get nameRequired;
+
+  /// LabelText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Username *'**
+  String get username;
+
+  /// HelperText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, numbers, underscore · 3–20 chars'**
+  String get lettersNumbersUnderscore3;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'3-20 characters: letters, numbers, underscore'**
+  String get n320CharactersLetters;
+
+  /// LabelText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand *'**
+  String get brand;
+
+  /// LabelText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Model *'**
+  String get model;
+
+  /// LabelText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get year;
+
+  /// LabelText in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine CC'**
+  String get engineCc;
+
+  /// Tooltip in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit demo'**
+  String get exitDemo;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Info'**
+  String get yourInfo;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Bike'**
+  String get yourBike;
+
+  /// Text in onboarding_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature Tour'**
+  String get featureTour;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get createAccount;
+
+  /// Tooltip in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Join ThrottleIQ'**
+  String get joinThrottleiq;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Track every ride, remember every mile'**
+  String get trackEveryRideRemember;
+
+  /// HintText in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'6+ characters'**
+  String get n6Characters;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Min 6 characters'**
+  String get min6Characters;
+
+  /// LabelText in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPassword;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up with Google'**
+  String get signUpWithGoogle;
+
+  /// Text in register_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? '**
+  String get alreadyHaveAccount;
+
+  /// Text in splash_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride smarter. Track deeper.'**
+  String get rideSmarterTrackDeeper;
+
+  /// Text in onboarding_slide_page.
+  ///
+  /// In en, this message translates to:
+  /// **'GUIDE {slideIndex} OF {totalSlides}'**
+  String guideProgress(Object slideIndex, Object totalSlides);
+
+  /// Text in onboarding_slide_page.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip tour'**
+  String get skipTour;
+
+  /// Text in onboarding_slide_page.
+  ///
+  /// In en, this message translates to:
+  /// **'Show me'**
+  String get showMe;
+
+  /// Text in onboarding_slide_page.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Riding 🏍️'**
+  String get getRiding;
+
+  /// Text in onboarding_slide_page.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it  →'**
+  String get gotIt;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'My Garage'**
+  String get myGarage;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Bike'**
+  String get addBike;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE'**
+  String get active;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'4,280 km logged'**
+  String get n4280KmLogged;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Oil & Filter Due in 720 km'**
+  String get oilFilterDue720;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme Tint:'**
+  String get themeTint;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS LOCKED'**
+  String get gpsLocked;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'AVG 52 · '**
+  String get avg52;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'TOP 124'**
+  String get top124;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'DISTANCE'**
+  String get distance;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'MOVING 31m'**
+  String get moving31m;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'HOLD 1s TO START'**
+  String get hold1sStart;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Tracking Settings'**
+  String get autoTrackingSettings;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Non-Ride Filter Active'**
+  String get smartNonRideFilter;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Walking, buses & subway rides automatically ignored'**
+  String get walkingBusesSubwayRides;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected Ride'**
+  String get detectedRide;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTO SAVED'**
+  String get autoSaved;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance Schedule'**
+  String get maintenanceSchedule;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Log Service'**
+  String get logService;
+
+  /// Title in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine Oil & Filter'**
+  String get engineOilFilter;
+
+  /// DueText in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Due in 320 km'**
+  String get due320Km;
+
+  /// Title in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain Clean & Lube'**
+  String get chainCleanLube;
+
+  /// DueText in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Good for 850 km'**
+  String get good850Km;
+
+  /// Title in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Brake Fluid Flush'**
+  String get brakeFluidFlush;
+
+  /// DueText in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Good for 2,100 km'**
+  String get good2100Km;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'★ 4.9 · Verified Pure Fuel · Open 24/7'**
+  String get n49VerifiedPure;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions'**
+  String get directions;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Feed'**
+  String get riderFeed;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'2h ago'**
+  String get n2hAgo;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning twisties through 300 Feet Highway!'**
+  String get morningTwistiesThrough300;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Zone: 200m Endpoints Clipped'**
+  String get privacyZone200mEndpoints;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Road Captain · Dhaka Metro'**
+  String get roadCaptainDhakaMetro;
+
+  /// _statCol in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'KM RIDDEN'**
+  String get kmRidden;
+
+  /// _statCol in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'SAFETY SCORE'**
+  String get safetyScore;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'SafeQR Offline Medical Card'**
+  String get safeqrOfflineMedicalCard;
+
+  /// Text in onboarding_ui_mockups.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood: O+ · ICE Emergency SOS Armed'**
+  String get bloodOIceEmergency;
+
+  /// Text in tour_floating_banner.
+  ///
+  /// In en, this message translates to:
+  /// **'GUIDE · {slideIndex} OF {total}'**
+  String guideProgressDot(Object slideIndex, Object total);
+
+  /// Text in tour_floating_banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Tour'**
+  String get backTour;
+
+  /// Text in tour_floating_banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Next →'**
+  String get next;
+
+  /// Tooltip in tour_floating_banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Close guide'**
+  String get closeGuide;
 }
 
 class _AppLocalizationsDelegate

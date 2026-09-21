@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../screens/onboarding_manifest.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Renders a real, high-fidelity UI mockup with callout pointer pins for each feature.
 class OnboardingUiMockup extends StatefulWidget {
@@ -286,9 +287,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'My Garage',
-                style: TextStyle(
+              Text(
+                context.l10n.myGarage,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -306,7 +307,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                     Icon(Icons.add, size: 12, color: widget.accentColor),
                     const SizedBox(width: 3),
                     Text(
-                      'Add Bike',
+                      context.l10n.addBike,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -374,9 +375,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                                     color: widget.accentColor,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text(
-                                    'ACTIVE',
-                                    style: TextStyle(
+                                  child: Text(
+                                    context.l10n.active,
+                                    style: const TextStyle(
                                       fontSize: 8,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black,
@@ -391,13 +392,13 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                               style: TextStyle(fontSize: 10, color: Colors.white60),
                             ),
                             const SizedBox(height: 4),
-                            const Row(
+                            Row(
                               children: [
-                                Icon(Icons.speed, size: 11, color: Colors.white38),
-                                SizedBox(width: 4),
+                                const Icon(Icons.speed, size: 11, color: Colors.white38),
+                                const SizedBox(width: 4),
                                 Text(
-                                  '4,280 km logged',
-                                  style: TextStyle(fontSize: 10, color: Colors.white70),
+                                  context.l10n.n4280KmLogged,
+                                  style: const TextStyle(fontSize: 10, color: Colors.white70),
                                 ),
                               ],
                             ),
@@ -418,13 +419,13 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.build_outlined, size: 12, color: Colors.amberAccent),
-                            SizedBox(width: 6),
+                            const Icon(Icons.build_outlined, size: 12, color: Colors.amberAccent),
+                            const SizedBox(width: 6),
                             Text(
-                              'Oil & Filter Due in 720 km',
-                              style: TextStyle(fontSize: 10, color: Colors.white70),
+                              context.l10n.oilFilterDue720,
+                              style: const TextStyle(fontSize: 10, color: Colors.white70),
                             ),
                           ],
                         ),
@@ -458,9 +459,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
           // Palette tint strip
           Row(
             children: [
-              const Text(
-                'Theme Tint:',
-                style: TextStyle(fontSize: 10, color: Colors.white54),
+              Text(
+                context.l10n.themeTint,
+                style: const TextStyle(fontSize: 10, color: Colors.white54),
               ),
               const SizedBox(width: 8),
               _colorDot(const Color(0xFF4CAF50), isSelected: true),
@@ -512,9 +513,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                     ),
                   ),
                   const SizedBox(width: 5),
-                  const Text(
-                    'GPS LOCKED',
-                    style: TextStyle(
+                  Text(
+                    context.l10n.gpsLocked,
+                    style: const TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       color: Colors.greenAccent,
@@ -573,10 +574,10 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                       ],
                     ),
                   ),
-                  const Row(
+                  Row(
                     children: [
-                      Text('AVG 52 · ', style: TextStyle(fontSize: 9, color: Colors.white38)),
-                      Text('TOP 124', style: TextStyle(fontSize: 9, color: Colors.white60)),
+                      Text(context.l10n.avg52, style: const TextStyle(fontSize: 9, color: Colors.white38)),
+                      Text(context.l10n.top124, style: const TextStyle(fontSize: 9, color: Colors.white60)),
                     ],
                   ),
                 ],
@@ -592,7 +593,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 ),
                 child: Column(
                   children: [
-                    const Text('DISTANCE', style: TextStyle(fontSize: 8, color: Colors.white54)),
+                    Text(context.l10n.distance, style: const TextStyle(fontSize: 8, color: Colors.white54)),
                     const SizedBox(height: 2),
                     Text(
                       '36.4 km',
@@ -603,7 +604,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text('MOVING 31m', style: TextStyle(fontSize: 8, color: Colors.white38)),
+                    Text(context.l10n.moving31m, style: const TextStyle(fontSize: 8, color: Colors.white38)),
                   ],
                 ),
               ),
@@ -625,14 +626,14 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 ),
               ],
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.touch_app, size: 16, color: Colors.white),
-                SizedBox(width: 6),
+                const Icon(Icons.touch_app, size: 16, color: Colors.white),
+                const SizedBox(width: 6),
                 Text(
-                  'HOLD 1s TO START',
-                  style: TextStyle(
+                  context.l10n.hold1sStart,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -661,9 +662,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Auto-Tracking Settings',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
+              Text(
+                context.l10n.autoTrackingSettings,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
               ),
               Transform.scale(
                 scale: 0.75,
@@ -689,17 +690,17 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               children: [
                 Icon(Icons.filter_alt_outlined, size: 20, color: widget.accentColor),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Smart Non-Ride Filter Active',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                        context.l10n.smartNonRideFilter,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
                       ),
                       Text(
-                        'Walking, buses & subway rides automatically ignored',
-                        style: TextStyle(fontSize: 9, color: Colors.white60),
+                        context.l10n.walkingBusesSubwayRides,
+                        style: const TextStyle(fontSize: 9, color: Colors.white60),
                       ),
                     ],
                   ),
@@ -723,11 +724,11 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Detected Ride', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(context.l10n.detectedRide, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
-                      child: const Text('AUTO SAVED', style: TextStyle(fontSize: 8, color: Colors.greenAccent, fontWeight: FontWeight.w800)),
+                      child: Text(context.l10n.autoSaved, style: const TextStyle(fontSize: 8, color: Colors.greenAccent, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
@@ -754,11 +755,11 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Maintenance Schedule', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+              Text(context.l10n.maintenanceSchedule, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(color: widget.accentColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                child: Text('+ Log Service', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: widget.accentColor)),
+                child: Text(context.l10n.logService, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: widget.accentColor)),
               ),
             ],
           ),
@@ -766,8 +767,8 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
 
           // Item 1
           _maintenanceRow(
-            title: 'Engine Oil & Filter',
-            dueText: 'Due in 320 km',
+            title: context.l10n.engineOilFilter,
+            dueText: context.l10n.due320Km,
             progress: 0.85,
             progressColor: Colors.amberAccent,
             isAlert: true,
@@ -776,8 +777,8 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
 
           // Item 2
           _maintenanceRow(
-            title: 'Chain Clean & Lube',
-            dueText: 'Good for 850 km',
+            title: context.l10n.chainCleanLube,
+            dueText: context.l10n.good850Km,
             progress: 0.25,
             progressColor: Colors.greenAccent,
             isAlert: false,
@@ -786,8 +787,8 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
 
           // Item 3
           _maintenanceRow(
-            title: 'Brake Fluid Flush',
-            dueText: 'Good for 2,100 km',
+            title: context.l10n.brakeFluidFlush,
+            dueText: context.l10n.good2100Km,
             progress: 0.40,
             progressColor: Colors.greenAccent,
             isAlert: false,
@@ -897,17 +898,17 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                     child: Icon(Icons.local_gas_station, color: widget.accentColor, size: 22),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Tejgaon Padma Octane 95',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         Text(
-                          '★ 4.9 · Verified Pure Fuel · Open 24/7',
-                          style: TextStyle(fontSize: 9, color: Colors.white70),
+                          context.l10n.n49VerifiedPure,
+                          style: const TextStyle(fontSize: 9, color: Colors.white70),
                         ),
                       ],
                     ),
@@ -918,9 +919,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                       color: widget.accentColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      'Directions',
-                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                    child: Text(
+                      context.l10n.directions,
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ],
@@ -965,7 +966,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Rider Feed', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+              Text(context.l10n.riderFeed, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(color: widget.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
@@ -993,17 +994,17 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      CircleAvatar(radius: 12, backgroundColor: Colors.white24, child: Icon(Icons.person, size: 14, color: Colors.white)),
-                      SizedBox(width: 8),
-                      Text('Rahim K. · MT-15', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Spacer(),
-                      Text('2h ago', style: TextStyle(fontSize: 9, color: Colors.white38)),
+                      const CircleAvatar(radius: 12, backgroundColor: Colors.white24, child: Icon(Icons.person, size: 14, color: Colors.white)),
+                      const SizedBox(width: 8),
+                      const Text('Rahim K. · MT-15', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const Spacer(),
+                      Text(context.l10n.n2hAgo, style: const TextStyle(fontSize: 9, color: Colors.white38)),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Morning twisties through 300 Feet Highway!', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                  Text(context.l10n.morningTwistiesThrough300, style: const TextStyle(fontSize: 10, color: Colors.white70)),
                   const Spacer(),
 
                   // Polyline preview with privacy shield
@@ -1020,7 +1021,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                           children: [
                             Icon(Icons.shield_outlined, size: 12, color: widget.accentColor),
                             const SizedBox(width: 4),
-                            const Text('Privacy Zone: 200m Endpoints Clipped', style: TextStyle(fontSize: 9, color: Colors.white70)),
+                            Text(context.l10n.privacyZone200mEndpoints, style: const TextStyle(fontSize: 9, color: Colors.white70)),
                           ],
                         ),
                         const Text('54.2 km', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -1054,11 +1055,11 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 child: Icon(Icons.person, color: widget.accentColor, size: 22),
               ),
               const SizedBox(width: 10),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Abraar · @blackbird', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
-                  Text('Road Captain · Dhaka Metro', style: TextStyle(fontSize: 9, color: Colors.white54)),
+                  const Text('Abraar · @blackbird', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+                  Text(context.l10n.roadCaptainDhakaMetro, style: const TextStyle(fontSize: 9, color: Colors.white54)),
                 ],
               ),
             ],
@@ -1076,9 +1077,9 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _statCol('18,420', 'KM RIDDEN'),
+                _statCol('18,420', context.l10n.kmRidden),
                 _statCol('142', 'RIDES'),
-                _statCol('98/100', 'SAFETY SCORE'),
+                _statCol('98/100', context.l10n.safetyScore),
               ],
             ),
           ),
@@ -1096,12 +1097,12 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               children: [
                 Icon(Icons.qr_code, color: widget.accentColor, size: 24),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('SafeQR Offline Medical Card', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text('Blood: O+ · ICE Emergency SOS Armed', style: TextStyle(fontSize: 8, color: Colors.white70)),
+                      Text(context.l10n.safeqrOfflineMedicalCard, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text(context.l10n.bloodOIceEmergency, style: const TextStyle(fontSize: 8, color: Colors.white70)),
                     ],
                   ),
                 ),

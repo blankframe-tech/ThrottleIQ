@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// ONBOARDING MANIFEST — single source of truth for the ThrottleIQ feature-tour.
 ///
@@ -76,44 +77,48 @@ class OnboardingSlide {
   final List<SlidePointer> pointers;
 }
 
-/// The ordered list of feature-spotlight slides.
+/// The ordered list of feature-spotlight slides, in the rider's language.
 ///
 /// Guardian checks:
 ///   1. Every [featureKey] must map to a real route or nav tab.
 ///   2. No real tab/major feature should be absent from this list.
 ///   3. The manifest version must be bumped whenever this list changes.
-const List<OnboardingSlide> kOnboardingSlides = [
+/// How many slides [onboardingSlides] returns. A plain constant because
+/// `initState` needs it and cannot read localizations; a test keeps it honest.
+const int kOnboardingSlideCount = 7;
+
+List<OnboardingSlide> onboardingSlides(AppLocalizations l10n) => [
   // ── 1. GARAGE ──────────────────────────────────────────────────────────────
   OnboardingSlide(
     featureKey: 'garage',
     icon: Icons.two_wheeler,
-    title: 'Your Garage',
-    subtitle: 'Every bike you own, tracked in one place.',
+    title: l10n.yourGarage,
+    subtitle: l10n.everyBikeOwnTracked,
     bullets: [
-      'Add unlimited bikes — brand, model, year, CC',
-      'Your bike\'s paint color tints the whole app',
-      'Tap any bike to view full history & details',
-      'Switch active bike before each ride',
+      l10n.addUnlimitedBikesBrand,
+      l10n.bikesPaintColorTints,
+      l10n.tapAnyBikeView,
+      l10n.switchActiveBikeBefore,
     ],
-    accentColor: Color(0xFF4CAF50),
+    accentColor: const Color(0xFF4CAF50),
     showMeRoute: '/home/profile',
     pointers: [
       SlidePointer(
         number: 1,
-        title: 'Active Motorcycle',
-        description: 'Tints the entire app theme and binds to your trip logs.',
+        title: l10n.activeMotorcycle,
+        description: l10n.tintsEntireAppTheme,
         icon: Icons.star_rounded,
       ),
       SlidePointer(
         number: 2,
-        title: 'Service Countdown',
-        description: 'Real-time maintenance tracker based on actual km ridden.',
+        title: l10n.serviceCountdown,
+        description: l10n.realTimeMaintenanceTracker,
         icon: Icons.speed,
       ),
       SlidePointer(
         number: 3,
-        title: 'Add & Switch',
-        description: 'Manage multiple bikes and swap your active ride anytime.',
+        title: l10n.addSwitch,
+        description: l10n.manageMultipleBikesSwap,
         icon: Icons.swap_horiz,
       ),
     ],
@@ -123,34 +128,34 @@ const List<OnboardingSlide> kOnboardingSlides = [
   OnboardingSlide(
     featureKey: 'ride_recording',
     icon: Icons.radio_button_checked,
-    title: 'Start a Ride',
-    subtitle: 'Hold the button. ThrottleIQ does the rest.',
+    title: l10n.startRide,
+    subtitle: l10n.holdButtonThrottleiqDoes,
     bullets: [
-      'Hold-to-start on the Record tab to begin',
-      'GPS + sensor fusion captures every moment',
-      'Continues recording in the background',
-      'A paused ride survives the app being closed',
-      'Share your live location with family in real time',
+      l10n.holdStartRecordTab,
+      l10n.gpsSensorFusionCaptures,
+      l10n.continuesRecordingBackground,
+      l10n.pausedRideSurvivesApp,
+      l10n.shareLiveLocationWith,
     ],
-    accentColor: Color(0xFFFF5722),
+    accentColor: const Color(0xFFFF5722),
     showMeRoute: '/home/record',
     pointers: [
       SlidePointer(
         number: 1,
-        title: 'Cockpit Telemetry',
-        description: 'Live GPS speed, distance, and ride telemetry as you go.',
+        title: l10n.cockpitTelemetry,
+        description: l10n.liveGpsSpeedDistance,
         icon: Icons.speed,
       ),
       SlidePointer(
         number: 2,
-        title: 'Hold 1s to Record',
-        description: 'Hold 1s to start or stop; prevents accidental touches.',
+        title: l10n.hold1sRecord,
+        description: l10n.hold1sStartStop,
         icon: Icons.touch_app,
       ),
       SlidePointer(
         number: 3,
-        title: 'Live Share',
-        description: 'Send a revocable link so family can follow your ride.',
+        title: l10n.liveShare,
+        description: l10n.sendRevocableLinkSo,
         icon: Icons.share_location,
       ),
     ],
@@ -160,33 +165,33 @@ const List<OnboardingSlide> kOnboardingSlides = [
   OnboardingSlide(
     featureKey: 'auto_tracking',
     icon: Icons.sensors,
-    title: 'Auto Tracking',
-    subtitle: 'Rides that detect and record themselves.',
+    title: l10n.autoTracking,
+    subtitle: l10n.ridesThatDetectRecord,
     bullets: [
-      'Enable once in Settings → Auto-Tracking',
-      'Activity recognition starts recording when you ride',
-      'Short walks and subway trips are filtered out',
-      'Each auto-detected ride appears ready to review',
+      l10n.enableOnceSettingsAuto,
+      l10n.activityRecognitionStartsRecording,
+      l10n.shortWalksSubwayTrips,
+      l10n.eachAutoDetectedRide,
     ],
-    accentColor: Color(0xFF2196F3),
+    accentColor: const Color(0xFF2196F3),
     showMeRoute: '/settings',
     pointers: [
       SlidePointer(
         number: 1,
-        title: 'Smart Detection',
-        description: 'Detects motorcycle movement via IMU sensors & speed.',
+        title: l10n.smartDetection,
+        description: l10n.detectsMotorcycleMovementVia,
         icon: Icons.auto_awesome,
       ),
       SlidePointer(
         number: 2,
-        title: 'Non-Ride Filter',
-        description: 'Ignores walking, bus rides, and minor phone jostling.',
+        title: l10n.nonRideFilter,
+        description: l10n.ignoresWalkingBusRides,
         icon: Icons.filter_alt,
       ),
       SlidePointer(
         number: 3,
-        title: 'Zero Interaction',
-        description: 'Runs silently in background; review rides when done.',
+        title: l10n.zeroInteraction,
+        description: l10n.runsSilentlyBackgroundReview,
         icon: Icons.battery_charging_full,
       ),
     ],
@@ -196,36 +201,36 @@ const List<OnboardingSlide> kOnboardingSlides = [
   OnboardingSlide(
     featureKey: 'maintenance',
     icon: Icons.build,
-    title: 'Maintenance',
-    subtitle: 'Never forget another oil change.',
+    title: l10n.maintenance,
+    subtitle: l10n.neverForgetAnotherOil,
     bullets: [
       '13+ service types tracked by actual km ridden',
-      'Alerts when you\'re due for oil, filter, chain lube…',
-      'Log a service to reset the countdown',
-      'Add custom intervals for any part you care about',
+      l10n.alertsWhenYoureDue,
+      l10n.logServiceResetCountdown,
+      l10n.addCustomIntervalsAny,
     ],
-    accentColor: Color(0xFFFF9800),
+    accentColor: const Color(0xFFFF9800),
     showMeRoute: '/home/maintenance',
     pointers: [
       SlidePointer(
         number: 1,
-        title: '13+ Service Items',
+        title: l10n.n13ServiceItems,
         description:
-            'Track engine oil, chain lube, brake fluid, coolant, and more.',
+            l10n.trackEngineOilChain,
         icon: Icons.build_circle,
       ),
       SlidePointer(
         number: 2,
-        title: 'Due Badges',
+        title: l10n.dueBadges,
         description:
-            'Color-coded progress bars alert you before intervals expire.',
+            l10n.colorCodedProgressBars,
         icon: Icons.warning_amber_rounded,
       ),
       SlidePointer(
         number: 3,
-        title: 'Log & Reset',
+        title: l10n.logReset,
         description:
-            'Record maintenance notes and reset the interval odometer.',
+            l10n.recordMaintenanceNotesReset,
         icon: Icons.check_circle_outline,
       ),
     ],
@@ -235,36 +240,36 @@ const List<OnboardingSlide> kOnboardingSlides = [
   OnboardingSlide(
     featureKey: 'places',
     icon: Icons.place,
-    title: 'Rider Places',
-    subtitle: 'Every garage, pump, and viewpoint near you.',
+    title: l10n.riderPlaces,
+    subtitle: l10n.everyGaragePumpViewpoint,
     bullets: [
       '395+ rider POIs pre-seeded across Dhaka metro',
-      'Fuel stations, repair shops, spare parts & cafes',
-      'Tap Directions → opens Maps, and offers to record',
-      'Add and rate places to help the community',
+      l10n.fuelStationsRepairShops,
+      l10n.tapDirectionsOpensMaps,
+      l10n.addRatePlacesHelp,
     ],
-    accentColor: Color(0xFF9C27B0),
+    accentColor: const Color(0xFF9C27B0),
     showMeRoute: '/home/places',
     pointers: [
       SlidePointer(
         number: 1,
-        title: '395+ Rider POIs',
+        title: l10n.n395RiderPois,
         description:
-            'Verified fuel stations, workshops, parts, and rider cafes.',
+            l10n.verifiedFuelStationsWorkshops,
         icon: Icons.local_gas_station,
       ),
       SlidePointer(
         number: 2,
-        title: 'Navigate & Record',
+        title: l10n.navigateRecord,
         description:
-            'Opens your maps app, and can record the trip alongside it.',
+            l10n.opensMapsAppCan,
         icon: Icons.navigation,
       ),
       SlidePointer(
         number: 3,
-        title: 'Rider Reviews',
+        title: l10n.riderReviews,
         description:
-            'Rate octane purity, mechanic honesty, and parking security.',
+            l10n.rateOctanePurityMechanic,
         icon: Icons.rate_review,
       ),
     ],
@@ -274,36 +279,36 @@ const List<OnboardingSlide> kOnboardingSlides = [
   OnboardingSlide(
     featureKey: 'social_forums',
     icon: Icons.people,
-    title: 'Ride Together',
-    subtitle: 'Your riding community, all in one place.',
+    title: l10n.rideTogether,
+    subtitle: l10n.ridingCommunityAllOne,
     bullets: [
-      'Share rides to the feed — home location is hidden',
-      'Start a group ride with a 6-character join code',
-      'Push-to-talk intercom for your Bluetooth helmet',
-      'Bike-model forums — talk to FZ-S, Pulsar & CBR riders',
-      'Direct message any rider on the platform',
+      l10n.shareRidesFeedHome,
+      l10n.startGroupRideWith,
+      l10n.pushTalkIntercomBluetooth,
+      l10n.bikeModelForumsTalk,
+      l10n.directMessageAnyRider,
     ],
-    accentColor: Color(0xFF00BCD4),
+    accentColor: const Color(0xFF00BCD4),
     showMeRoute: '/home/social',
     pointers: [
       SlidePointer(
         number: 1,
-        title: 'Privacy Zones',
+        title: l10n.privacyZones,
         description:
-            'Each ride\'s start and end are clipped before it is shared.',
+            l10n.eachRidesStartEnd,
         icon: Icons.lock_outline,
       ),
       SlidePointer(
         number: 2,
-        title: 'Group PIN & Intercom',
-        description: 'Live map tracking and Bluetooth helmet PTT intercom.',
+        title: l10n.groupPinIntercom,
+        description: l10n.liveMapTrackingBluetooth,
         icon: Icons.headset_mic,
       ),
       SlidePointer(
         number: 3,
-        title: 'Bike Model Forums',
+        title: l10n.bikeModelForums,
         description:
-            'Discuss mods, issues, and meets with owners of your bike.',
+            l10n.discussModsIssuesMeets,
         icon: Icons.forum,
       ),
     ],
@@ -313,34 +318,34 @@ const List<OnboardingSlide> kOnboardingSlides = [
   OnboardingSlide(
     featureKey: 'profile',
     icon: Icons.person,
-    title: 'Your Profile',
-    subtitle: 'Make it yours — add a bio to stand out.',
+    title: l10n.yourProfile,
+    subtitle: l10n.makeItYoursAdd,
     bullets: [
-      'Public profile with your stats & shared rides',
-      'Your @handle lets other riders find and follow you',
-      'Control who sees your profile and your bikes',
-      'SafeQR: an offline emergency medical card',
+      l10n.publicProfileWithStats,
+      l10n.handleLetsOtherRiders,
+      l10n.controlWhoSeesProfile,
+      l10n.safeqrOfflineEmergencyMedical,
     ],
-    accentColor: Color(0xFFE91E63),
+    accentColor: const Color(0xFFE91E63),
     showMeRoute: '/home/profile',
     pointers: [
       SlidePointer(
         number: 1,
-        title: 'Rider Stats',
-        description: 'Showcase total km, safety score, and peak achievements.',
+        title: l10n.riderStats,
+        description: l10n.showcaseTotalKmSafety,
         icon: Icons.badge,
       ),
       SlidePointer(
         number: 2,
-        title: 'SafeQR Card',
+        title: l10n.safeqrCard,
         description:
-            'Offline medical card for emergency responders on the road.',
+            l10n.offlineMedicalCardEmergency,
         icon: Icons.qr_code,
       ),
       SlidePointer(
         number: 3,
-        title: 'Emergency Contacts',
-        description: 'Keep up to 5 contacts on file for a responder to reach.',
+        title: l10n.emergencyContactsSection,
+        description: l10n.keepUp5Contacts,
         icon: Icons.contact_phone,
       ),
     ],

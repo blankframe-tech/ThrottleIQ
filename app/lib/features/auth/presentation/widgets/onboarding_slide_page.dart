@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../screens/onboarding_manifest.dart';
 import 'onboarding_ui_mockups.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Full-bleed, animated feature spotlight slide with real UI mockup and callout pointers.
 class OnboardingSlidePage extends StatefulWidget {
@@ -81,7 +82,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                         Icon(slide.icon, size: 14, color: accent),
                         const SizedBox(width: 5),
                         Text(
-                          'GUIDE ${widget.slideIndex + 1} OF ${widget.totalSlides}',
+                          context.l10n.guideProgress(widget.slideIndex + 1, widget.totalSlides),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -95,7 +96,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                   TextButton(
                     onPressed: widget.onSkip,
                     child: Text(
-                      'Skip tour',
+                      context.l10n.skipTour,
                       style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
                     ),
                   ),
@@ -255,7 +256,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                       child: OutlinedButton.icon(
                         onPressed: widget.onShowMe,
                         icon: const Icon(Icons.open_in_new, size: 14),
-                        label: const Text('Show me'),
+                        label: Text(context.l10n.showMe),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: accent.withValues(alpha: 0.6)),
                           foregroundColor: accent,
@@ -274,7 +275,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: Text(widget.isLastSlide ? 'Get Riding 🏍️' : 'Got it  →'),
+                      child: Text(widget.isLastSlide ? context.l10n.getRiding : context.l10n.gotIt),
                     ),
                   ),
                 ],

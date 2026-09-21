@@ -704,5 +704,730 @@
   "liveShareStopDescription": "The link stops working. Your ride keeps recording.",
   "@liveShareStopDescription": {
     "description": "Sub-label under 'Stop sharing now'."
+  },
+  "email": "Email",
+  "@email": {
+    "description": "Label in login_screen."
+  },
+  "emailRequired": "Email required",
+  "@emailRequired": {
+    "description": "Text in login_screen."
+  },
+  "invalidEmail": "Invalid email",
+  "@invalidEmail": {
+    "description": "Text in login_screen."
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Label in login_screen."
+  },
+  "showPassword": "Show password",
+  "@showPassword": {
+    "description": "Tooltip in login_screen."
+  },
+  "passwordTooShort": "Password too short",
+  "@passwordTooShort": {
+    "description": "Text in login_screen."
+  },
+  "signIn": "Sign In",
+  "@signIn": {
+    "description": "Text in login_screen."
+  },
+  "orDivider": "or",
+  "@orDivider": {
+    "description": "Text in login_screen."
+  },
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Text in login_screen."
+  },
+  "noAccountPrompt": "Don't have an account? ",
+  "@noAccountPrompt": {
+    "description": "Text in login_screen."
+  },
+  "signUp": "Sign Up",
+  "@signUp": {
+    "description": "Text in login_screen."
+  },
+  "welcomeBack": "Welcome back",
+  "@welcomeBack": {
+    "description": "Text in login_screen."
+  },
+  "signInSubtitle": "Sign in to continue tracking your rides",
+  "@signInSubtitle": {
+    "description": "Text in login_screen."
+  },
+  "yourGarage": "Your Garage",
+  "@yourGarage": {
+    "description": "Title in onboarding_manifest."
+  },
+  "everyBikeOwnTracked": "Every bike you own, tracked in one place.",
+  "@everyBikeOwnTracked": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "addUnlimitedBikesBrand": "Add unlimited bikes — brand, model, year, CC",
+  "@addUnlimitedBikesBrand": {
+    "description": "Text in onboarding_manifest."
+  },
+  "bikesPaintColorTints": "Your bike's paint color tints the whole app",
+  "@bikesPaintColorTints": {
+    "description": "Text in onboarding_manifest."
+  },
+  "tapAnyBikeView": "Tap any bike to view full history & details",
+  "@tapAnyBikeView": {
+    "description": "Text in onboarding_manifest."
+  },
+  "switchActiveBikeBefore": "Switch active bike before each ride",
+  "@switchActiveBikeBefore": {
+    "description": "Text in onboarding_manifest."
+  },
+  "activeMotorcycle": "Active Motorcycle",
+  "@activeMotorcycle": {
+    "description": "Title in onboarding_manifest."
+  },
+  "tintsEntireAppTheme": "Tints the entire app theme and binds to your trip logs.",
+  "@tintsEntireAppTheme": {
+    "description": "Description in onboarding_manifest."
+  },
+  "serviceCountdown": "Service Countdown",
+  "@serviceCountdown": {
+    "description": "Title in onboarding_manifest."
+  },
+  "realTimeMaintenanceTracker": "Real-time maintenance tracker based on actual km ridden.",
+  "@realTimeMaintenanceTracker": {
+    "description": "Description in onboarding_manifest."
+  },
+  "addSwitch": "Add & Switch",
+  "@addSwitch": {
+    "description": "Title in onboarding_manifest."
+  },
+  "manageMultipleBikesSwap": "Manage multiple bikes and swap your active ride anytime.",
+  "@manageMultipleBikesSwap": {
+    "description": "Description in onboarding_manifest."
+  },
+  "startRide": "Start a Ride",
+  "@startRide": {
+    "description": "Title in onboarding_manifest."
+  },
+  "holdButtonThrottleiqDoes": "Hold the button. ThrottleIQ does the rest.",
+  "@holdButtonThrottleiqDoes": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "holdStartRecordTab": "Hold-to-start on the Record tab to begin",
+  "@holdStartRecordTab": {
+    "description": "Text in onboarding_manifest."
+  },
+  "gpsSensorFusionCaptures": "GPS + sensor fusion captures every moment",
+  "@gpsSensorFusionCaptures": {
+    "description": "Text in onboarding_manifest."
+  },
+  "continuesRecordingBackground": "Continues recording in the background",
+  "@continuesRecordingBackground": {
+    "description": "Text in onboarding_manifest."
+  },
+  "pausedRideSurvivesApp": "A paused ride survives the app being closed",
+  "@pausedRideSurvivesApp": {
+    "description": "Text in onboarding_manifest."
+  },
+  "shareLiveLocationWith": "Share your live location with family in real time",
+  "@shareLiveLocationWith": {
+    "description": "Text in onboarding_manifest."
+  },
+  "cockpitTelemetry": "Cockpit Telemetry",
+  "@cockpitTelemetry": {
+    "description": "Title in onboarding_manifest."
+  },
+  "liveGpsSpeedDistance": "Live GPS speed, distance, and ride telemetry as you go.",
+  "@liveGpsSpeedDistance": {
+    "description": "Description in onboarding_manifest."
+  },
+  "hold1sRecord": "Hold 1s to Record",
+  "@hold1sRecord": {
+    "description": "Title in onboarding_manifest."
+  },
+  "hold1sStartStop": "Hold 1s to start or stop; prevents accidental touches.",
+  "@hold1sStartStop": {
+    "description": "Description in onboarding_manifest."
+  },
+  "liveShare": "Live Share",
+  "@liveShare": {
+    "description": "Title in onboarding_manifest."
+  },
+  "sendRevocableLinkSo": "Send a revocable link so family can follow your ride.",
+  "@sendRevocableLinkSo": {
+    "description": "Description in onboarding_manifest."
+  },
+  "autoTracking": "Auto Tracking",
+  "@autoTracking": {
+    "description": "Title in onboarding_manifest."
+  },
+  "ridesThatDetectRecord": "Rides that detect and record themselves.",
+  "@ridesThatDetectRecord": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "enableOnceSettingsAuto": "Enable once in Settings → Auto-Tracking",
+  "@enableOnceSettingsAuto": {
+    "description": "Text in onboarding_manifest."
+  },
+  "activityRecognitionStartsRecording": "Activity recognition starts recording when you ride",
+  "@activityRecognitionStartsRecording": {
+    "description": "Text in onboarding_manifest."
+  },
+  "shortWalksSubwayTrips": "Short walks and subway trips are filtered out",
+  "@shortWalksSubwayTrips": {
+    "description": "Text in onboarding_manifest."
+  },
+  "eachAutoDetectedRide": "Each auto-detected ride appears ready to review",
+  "@eachAutoDetectedRide": {
+    "description": "Text in onboarding_manifest."
+  },
+  "smartDetection": "Smart Detection",
+  "@smartDetection": {
+    "description": "Title in onboarding_manifest."
+  },
+  "detectsMotorcycleMovementVia": "Detects motorcycle movement via IMU sensors & speed.",
+  "@detectsMotorcycleMovementVia": {
+    "description": "Description in onboarding_manifest."
+  },
+  "nonRideFilter": "Non-Ride Filter",
+  "@nonRideFilter": {
+    "description": "Title in onboarding_manifest."
+  },
+  "ignoresWalkingBusRides": "Ignores walking, bus rides, and minor phone jostling.",
+  "@ignoresWalkingBusRides": {
+    "description": "Description in onboarding_manifest."
+  },
+  "zeroInteraction": "Zero Interaction",
+  "@zeroInteraction": {
+    "description": "Title in onboarding_manifest."
+  },
+  "runsSilentlyBackgroundReview": "Runs silently in background; review rides when done.",
+  "@runsSilentlyBackgroundReview": {
+    "description": "Description in onboarding_manifest."
+  },
+  "maintenance": "Maintenance",
+  "@maintenance": {
+    "description": "Title in onboarding_manifest."
+  },
+  "neverForgetAnotherOil": "Never forget another oil change.",
+  "@neverForgetAnotherOil": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "alertsWhenYoureDue": "Alerts when you're due for oil, filter, chain lube…",
+  "@alertsWhenYoureDue": {
+    "description": "Text in onboarding_manifest."
+  },
+  "logServiceResetCountdown": "Log a service to reset the countdown",
+  "@logServiceResetCountdown": {
+    "description": "Text in onboarding_manifest."
+  },
+  "addCustomIntervalsAny": "Add custom intervals for any part you care about",
+  "@addCustomIntervalsAny": {
+    "description": "Text in onboarding_manifest."
+  },
+  "n13ServiceItems": "13+ Service Items",
+  "@n13ServiceItems": {
+    "description": "Title in onboarding_manifest."
+  },
+  "trackEngineOilChain": "Track engine oil, chain lube, brake fluid, coolant, and more.",
+  "@trackEngineOilChain": {
+    "description": "Description in onboarding_manifest."
+  },
+  "dueBadges": "Due Badges",
+  "@dueBadges": {
+    "description": "Title in onboarding_manifest."
+  },
+  "colorCodedProgressBars": "Color-coded progress bars alert you before intervals expire.",
+  "@colorCodedProgressBars": {
+    "description": "Description in onboarding_manifest."
+  },
+  "logReset": "Log & Reset",
+  "@logReset": {
+    "description": "Title in onboarding_manifest."
+  },
+  "recordMaintenanceNotesReset": "Record maintenance notes and reset the interval odometer.",
+  "@recordMaintenanceNotesReset": {
+    "description": "Description in onboarding_manifest."
+  },
+  "riderPlaces": "Rider Places",
+  "@riderPlaces": {
+    "description": "Title in onboarding_manifest."
+  },
+  "everyGaragePumpViewpoint": "Every garage, pump, and viewpoint near you.",
+  "@everyGaragePumpViewpoint": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "fuelStationsRepairShops": "Fuel stations, repair shops, spare parts & cafes",
+  "@fuelStationsRepairShops": {
+    "description": "Text in onboarding_manifest."
+  },
+  "tapDirectionsOpensMaps": "Tap Directions → opens Maps, and offers to record",
+  "@tapDirectionsOpensMaps": {
+    "description": "Text in onboarding_manifest."
+  },
+  "addRatePlacesHelp": "Add and rate places to help the community",
+  "@addRatePlacesHelp": {
+    "description": "Text in onboarding_manifest."
+  },
+  "n395RiderPois": "395+ Rider POIs",
+  "@n395RiderPois": {
+    "description": "Title in onboarding_manifest."
+  },
+  "verifiedFuelStationsWorkshops": "Verified fuel stations, workshops, parts, and rider cafes.",
+  "@verifiedFuelStationsWorkshops": {
+    "description": "Description in onboarding_manifest."
+  },
+  "navigateRecord": "Navigate & Record",
+  "@navigateRecord": {
+    "description": "Title in onboarding_manifest."
+  },
+  "opensMapsAppCan": "Opens your maps app, and can record the trip alongside it.",
+  "@opensMapsAppCan": {
+    "description": "Description in onboarding_manifest."
+  },
+  "riderReviews": "Rider Reviews",
+  "@riderReviews": {
+    "description": "Title in onboarding_manifest."
+  },
+  "rateOctanePurityMechanic": "Rate octane purity, mechanic honesty, and parking security.",
+  "@rateOctanePurityMechanic": {
+    "description": "Description in onboarding_manifest."
+  },
+  "rideTogether": "Ride Together",
+  "@rideTogether": {
+    "description": "Title in onboarding_manifest."
+  },
+  "ridingCommunityAllOne": "Your riding community, all in one place.",
+  "@ridingCommunityAllOne": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "shareRidesFeedHome": "Share rides to the feed — home location is hidden",
+  "@shareRidesFeedHome": {
+    "description": "Text in onboarding_manifest."
+  },
+  "startGroupRideWith": "Start a group ride with a 6-character join code",
+  "@startGroupRideWith": {
+    "description": "Text in onboarding_manifest."
+  },
+  "pushTalkIntercomBluetooth": "Push-to-talk intercom for your Bluetooth helmet",
+  "@pushTalkIntercomBluetooth": {
+    "description": "Text in onboarding_manifest."
+  },
+  "bikeModelForumsTalk": "Bike-model forums — talk to FZ-S, Pulsar & CBR riders",
+  "@bikeModelForumsTalk": {
+    "description": "Text in onboarding_manifest."
+  },
+  "directMessageAnyRider": "Direct message any rider on the platform",
+  "@directMessageAnyRider": {
+    "description": "Text in onboarding_manifest."
+  },
+  "privacyZones": "Privacy Zones",
+  "@privacyZones": {
+    "description": "Title in onboarding_manifest."
+  },
+  "eachRidesStartEnd": "Each ride's start and end are clipped before it is shared.",
+  "@eachRidesStartEnd": {
+    "description": "Description in onboarding_manifest."
+  },
+  "groupPinIntercom": "Group PIN & Intercom",
+  "@groupPinIntercom": {
+    "description": "Title in onboarding_manifest."
+  },
+  "liveMapTrackingBluetooth": "Live map tracking and Bluetooth helmet PTT intercom.",
+  "@liveMapTrackingBluetooth": {
+    "description": "Description in onboarding_manifest."
+  },
+  "bikeModelForums": "Bike Model Forums",
+  "@bikeModelForums": {
+    "description": "Title in onboarding_manifest."
+  },
+  "discussModsIssuesMeets": "Discuss mods, issues, and meets with owners of your bike.",
+  "@discussModsIssuesMeets": {
+    "description": "Description in onboarding_manifest."
+  },
+  "yourProfile": "Your Profile",
+  "@yourProfile": {
+    "description": "Title in onboarding_manifest."
+  },
+  "makeItYoursAdd": "Make it yours — add a bio to stand out.",
+  "@makeItYoursAdd": {
+    "description": "Subtitle in onboarding_manifest."
+  },
+  "publicProfileWithStats": "Public profile with your stats & shared rides",
+  "@publicProfileWithStats": {
+    "description": "Text in onboarding_manifest."
+  },
+  "handleLetsOtherRiders": "Your @handle lets other riders find and follow you",
+  "@handleLetsOtherRiders": {
+    "description": "Text in onboarding_manifest."
+  },
+  "controlWhoSeesProfile": "Control who sees your profile and your bikes",
+  "@controlWhoSeesProfile": {
+    "description": "Text in onboarding_manifest."
+  },
+  "safeqrOfflineEmergencyMedical": "SafeQR: an offline emergency medical card",
+  "@safeqrOfflineEmergencyMedical": {
+    "description": "Text in onboarding_manifest."
+  },
+  "riderStats": "Rider Stats",
+  "@riderStats": {
+    "description": "Title in onboarding_manifest."
+  },
+  "showcaseTotalKmSafety": "Showcase total km, safety score, and peak achievements.",
+  "@showcaseTotalKmSafety": {
+    "description": "Description in onboarding_manifest."
+  },
+  "safeqrCard": "SafeQR Card",
+  "@safeqrCard": {
+    "description": "Title in onboarding_manifest."
+  },
+  "offlineMedicalCardEmergency": "Offline medical card for emergency responders on the road.",
+  "@offlineMedicalCardEmergency": {
+    "description": "Description in onboarding_manifest."
+  },
+  "keepUp5Contacts": "Keep up to 5 contacts on file for a responder to reach.",
+  "@keepUp5Contacts": {
+    "description": "Description in onboarding_manifest."
+  },
+  "thatUsernameTakenTry": "That username is taken — try another.",
+  "@thatUsernameTakenTry": {
+    "description": "Text in onboarding_screen."
+  },
+  "errorWithDetail": "Error: {e}",
+  "@errorWithDetail": {
+    "description": "Text in onboarding_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "whatShouldWeCall": "What should we call you?",
+  "@whatShouldWeCall": {
+    "description": "Text in onboarding_screen."
+  },
+  "addFirstBike": "Add your first bike",
+  "@addFirstBike": {
+    "description": "Text in onboarding_screen."
+  },
+  "nameHandleSoCommunity": "Your name and @handle so the community can find you.",
+  "@nameHandleSoCommunity": {
+    "description": "Text in onboarding_screen."
+  },
+  "throttleiqTracksRidesMaintenance": "ThrottleIQ tracks rides and maintenance per bike.",
+  "@throttleiqTracksRidesMaintenance": {
+    "description": "Text in onboarding_screen."
+  },
+  "continueAction": "Continue →",
+  "@continueAction": {
+    "description": "Text in onboarding_screen."
+  },
+  "addBikeTakeTour": "Add bike & take the tour",
+  "@addBikeTakeTour": {
+    "description": "Text in onboarding_screen."
+  },
+  "backArrow": "← Back",
+  "@backArrow": {
+    "description": "Text in onboarding_screen."
+  },
+  "skipNow": "Skip for now",
+  "@skipNow": {
+    "description": "Text in onboarding_screen."
+  },
+  "fullName": "Full Name *",
+  "@fullName": {
+    "description": "LabelText in onboarding_screen."
+  },
+  "eGRahimHossain": "e.g. Rahim Hossain",
+  "@eGRahimHossain": {
+    "description": "HintText in onboarding_screen."
+  },
+  "nameRequired": "Name is required",
+  "@nameRequired": {
+    "description": "Validator in onboarding_screen."
+  },
+  "username": "Username *",
+  "@username": {
+    "description": "LabelText in onboarding_screen."
+  },
+  "lettersNumbersUnderscore3": "Letters, numbers, underscore · 3–20 chars",
+  "@lettersNumbersUnderscore3": {
+    "description": "HelperText in onboarding_screen."
+  },
+  "n320CharactersLetters": "3-20 characters: letters, numbers, underscore",
+  "@n320CharactersLetters": {
+    "description": "Text in onboarding_screen."
+  },
+  "brand": "Brand *",
+  "@brand": {
+    "description": "LabelText in onboarding_screen."
+  },
+  "model": "Model *",
+  "@model": {
+    "description": "LabelText in onboarding_screen."
+  },
+  "year": "Year",
+  "@year": {
+    "description": "LabelText in onboarding_screen."
+  },
+  "engineCc": "Engine CC",
+  "@engineCc": {
+    "description": "LabelText in onboarding_screen."
+  },
+  "exitDemo": "Exit demo",
+  "@exitDemo": {
+    "description": "Tooltip in onboarding_screen."
+  },
+  "yourInfo": "Your Info",
+  "@yourInfo": {
+    "description": "Text in onboarding_screen."
+  },
+  "yourBike": "Your Bike",
+  "@yourBike": {
+    "description": "Text in onboarding_screen."
+  },
+  "featureTour": "Feature Tour",
+  "@featureTour": {
+    "description": "Text in onboarding_screen."
+  },
+  "createAccount": "Create Account",
+  "@createAccount": {
+    "description": "Text in register_screen."
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Tooltip in register_screen."
+  },
+  "joinThrottleiq": "Join ThrottleIQ",
+  "@joinThrottleiq": {
+    "description": "Text in register_screen."
+  },
+  "trackEveryRideRemember": "Track every ride, remember every mile",
+  "@trackEveryRideRemember": {
+    "description": "Text in register_screen."
+  },
+  "n6Characters": "6+ characters",
+  "@n6Characters": {
+    "description": "HintText in register_screen."
+  },
+  "min6Characters": "Min 6 characters",
+  "@min6Characters": {
+    "description": "Text in register_screen."
+  },
+  "confirmPassword": "Confirm Password",
+  "@confirmPassword": {
+    "description": "LabelText in register_screen."
+  },
+  "passwordsDoNotMatch": "Passwords do not match",
+  "@passwordsDoNotMatch": {
+    "description": "Text in register_screen."
+  },
+  "signUpWithGoogle": "Sign up with Google",
+  "@signUpWithGoogle": {
+    "description": "Text in register_screen."
+  },
+  "alreadyHaveAccount": "Already have an account? ",
+  "@alreadyHaveAccount": {
+    "description": "Text in register_screen."
+  },
+  "rideSmarterTrackDeeper": "Ride smarter. Track deeper.",
+  "@rideSmarterTrackDeeper": {
+    "description": "Text in splash_screen."
+  },
+  "guideProgress": "GUIDE {slideIndex} OF {totalSlides}",
+  "@guideProgress": {
+    "description": "Text in onboarding_slide_page.",
+    "placeholders": {
+      "slideIndex": {
+        "type": "Object"
+      },
+      "totalSlides": {
+        "type": "Object"
+      }
+    }
+  },
+  "skipTour": "Skip tour",
+  "@skipTour": {
+    "description": "Text in onboarding_slide_page."
+  },
+  "showMe": "Show me",
+  "@showMe": {
+    "description": "Text in onboarding_slide_page."
+  },
+  "getRiding": "Get Riding 🏍️",
+  "@getRiding": {
+    "description": "Text in onboarding_slide_page."
+  },
+  "gotIt": "Got it  →",
+  "@gotIt": {
+    "description": "Text in onboarding_slide_page."
+  },
+  "myGarage": "My Garage",
+  "@myGarage": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "addBike": "Add Bike",
+  "@addBike": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "active": "ACTIVE",
+  "@active": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "n4280KmLogged": "4,280 km logged",
+  "@n4280KmLogged": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "oilFilterDue720": "Oil & Filter Due in 720 km",
+  "@oilFilterDue720": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "themeTint": "Theme Tint:",
+  "@themeTint": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "gpsLocked": "GPS LOCKED",
+  "@gpsLocked": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "avg52": "AVG 52 · ",
+  "@avg52": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "top124": "TOP 124",
+  "@top124": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "distance": "DISTANCE",
+  "@distance": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "moving31m": "MOVING 31m",
+  "@moving31m": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "hold1sStart": "HOLD 1s TO START",
+  "@hold1sStart": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "autoTrackingSettings": "Auto-Tracking Settings",
+  "@autoTrackingSettings": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "smartNonRideFilter": "Smart Non-Ride Filter Active",
+  "@smartNonRideFilter": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "walkingBusesSubwayRides": "Walking, buses & subway rides automatically ignored",
+  "@walkingBusesSubwayRides": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "detectedRide": "Detected Ride",
+  "@detectedRide": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "autoSaved": "AUTO SAVED",
+  "@autoSaved": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "maintenanceSchedule": "Maintenance Schedule",
+  "@maintenanceSchedule": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "logService": "+ Log Service",
+  "@logService": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "engineOilFilter": "Engine Oil & Filter",
+  "@engineOilFilter": {
+    "description": "Title in onboarding_ui_mockups."
+  },
+  "due320Km": "Due in 320 km",
+  "@due320Km": {
+    "description": "DueText in onboarding_ui_mockups."
+  },
+  "chainCleanLube": "Chain Clean & Lube",
+  "@chainCleanLube": {
+    "description": "Title in onboarding_ui_mockups."
+  },
+  "good850Km": "Good for 850 km",
+  "@good850Km": {
+    "description": "DueText in onboarding_ui_mockups."
+  },
+  "brakeFluidFlush": "Brake Fluid Flush",
+  "@brakeFluidFlush": {
+    "description": "Title in onboarding_ui_mockups."
+  },
+  "good2100Km": "Good for 2,100 km",
+  "@good2100Km": {
+    "description": "DueText in onboarding_ui_mockups."
+  },
+  "n49VerifiedPure": "★ 4.9 · Verified Pure Fuel · Open 24/7",
+  "@n49VerifiedPure": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "directions": "Directions",
+  "@directions": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "riderFeed": "Rider Feed",
+  "@riderFeed": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "n2hAgo": "2h ago",
+  "@n2hAgo": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "morningTwistiesThrough300": "Morning twisties through 300 Feet Highway!",
+  "@morningTwistiesThrough300": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "privacyZone200mEndpoints": "Privacy Zone: 200m Endpoints Clipped",
+  "@privacyZone200mEndpoints": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "roadCaptainDhakaMetro": "Road Captain · Dhaka Metro",
+  "@roadCaptainDhakaMetro": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "kmRidden": "KM RIDDEN",
+  "@kmRidden": {
+    "description": "_statCol in onboarding_ui_mockups."
+  },
+  "safetyScore": "SAFETY SCORE",
+  "@safetyScore": {
+    "description": "_statCol in onboarding_ui_mockups."
+  },
+  "safeqrOfflineMedicalCard": "SafeQR Offline Medical Card",
+  "@safeqrOfflineMedicalCard": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "bloodOIceEmergency": "Blood: O+ · ICE Emergency SOS Armed",
+  "@bloodOIceEmergency": {
+    "description": "Text in onboarding_ui_mockups."
+  },
+  "guideProgressDot": "GUIDE · {slideIndex} OF {total}",
+  "@guideProgressDot": {
+    "description": "Text in tour_floating_banner.",
+    "placeholders": {
+      "slideIndex": {
+        "type": "Object"
+      },
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "backTour": "Back to Tour",
+  "@backTour": {
+    "description": "Text in tour_floating_banner."
+  },
+  "next": "Next →",
+  "@next": {
+    "description": "Text in tour_floating_banner."
+  },
+  "closeGuide": "Close guide",
+  "@closeGuide": {
+    "description": "Tooltip in tour_floating_banner."
   }
 }

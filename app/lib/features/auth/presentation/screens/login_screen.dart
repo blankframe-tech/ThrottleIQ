@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -69,29 +70,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 40),
                 _field(
                   controller: _emailCtrl,
-                  label: 'Email',
+                  label: context.l10n.email,
                   hint: 'rider@example.com',
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email required';
-                    if (!v.contains('@')) return 'Invalid email';
+                    if (v == null || v.isEmpty) return context.l10n.emailRequired;
+                    if (!v.contains('@')) return context.l10n.invalidEmail;
                     return null;
                   },
                 ),
                 const SizedBox(height: 12),
                 _field(
                   controller: _passCtrl,
-                  label: 'Password',
+                  label: context.l10n.password,
                   hint: '••••••••',
                   obscure: _obscure,
                   suffix: IconButton(
-                    tooltip: 'Show password',
+                    tooltip: context.l10n.showPassword,
                     icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
                         color: context.palette.textSecondary, size: 20),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6) return 'Password too short';
+                    if (v == null || v.length < 6) return context.l10n.passwordTooShort;
                     return null;
                   },
                 ),
@@ -102,7 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ? const SizedBox(
                           height: 20, width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Sign In'),
+                      : Text(context.l10n.signIn),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -110,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Expanded(child: Divider(color: context.palette.textSecondary)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or',
+                      child: Text(context.l10n.orDivider,
                           style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
                     ),
                     Expanded(child: Divider(color: context.palette.textSecondary)),
@@ -120,7 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 OutlinedButton.icon(
                   onPressed: loading ? null : _googleSignIn,
                   icon: const Icon(Icons.g_mobiledata, size: 28),
-                  label: const Text('Continue with Google'),
+                  label: Text(context.l10n.continueWithGoogle),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: context.palette.textPrimary,
                     side: BorderSide(color: context.palette.textPrimary, width: 1.5),
@@ -131,11 +132,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account? ",
+                    Text(context.l10n.noAccountPrompt,
                         style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/register'),
-                      child: const Text('Sign Up'),
+                      child: Text(context.l10n.signUp),
                     ),
                   ],
                 ),
@@ -179,11 +180,11 @@ class _ThrottleHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Welcome back',
+        Text(context.l10n.welcomeBack,
             style: TextStyle(
                 fontSize: 26, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
         const SizedBox(height: 6),
-        Text('Sign in to continue tracking your rides',
+        Text(context.l10n.signInSubtitle,
             style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
       ],
     );

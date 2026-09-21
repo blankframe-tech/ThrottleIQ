@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../screens/onboarding_manifest.dart';
 import '../screens/onboarding_tour_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Floating banner shown when a rider taps "Show me" in the tour and is
 /// viewing an in-app feature screen. Prevents losing the remaining guides
@@ -19,7 +20,7 @@ class TourFloatingBanner extends ConsumerWidget {
     final slideIndex = tourState.currentSlideIndex;
     final total = tourState.totalSlides;
     final hasNext = slideIndex < total - 1;
-    final slide = kOnboardingSlides[slideIndex];
+    final slide = onboardingSlides(context.l10n)[slideIndex];
     final accent = slide.accentColor;
 
     return SafeArea(
@@ -61,7 +62,7 @@ class TourFloatingBanner extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'GUIDE · ${slideIndex + 1} OF $total',
+                    context.l10n.guideProgressDot(slideIndex + 1, total),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -100,14 +101,14 @@ class TourFloatingBanner extends ConsumerWidget {
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text('Back to Tour', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              child: Text(context.l10n.backTour, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
             ),
             if (hasNext) ...[
               const SizedBox(width: 6),
               OutlinedButton(
                 onPressed: () {
                   final nextIndex = slideIndex + 1;
-                  final nextSlide = kOnboardingSlides[nextIndex];
+                  final nextSlide = onboardingSlides(context.l10n)[nextIndex];
                   ref.read(activeTourGuideProvider.notifier).state = TourGuideState(
                     currentSlideIndex: nextIndex,
                     totalSlides: total,
@@ -126,12 +127,12 @@ class TourFloatingBanner extends ConsumerWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Next →', style: TextStyle(fontSize: 11)),
+                child: Text(context.l10n.next, style: const TextStyle(fontSize: 11)),
               ),
             ],
             // 48 dp target; the old InkWell was ~24 dp (grill §3.4.5).
             IconButton(
-              tooltip: 'Close guide',
+              tooltip: context.l10n.closeGuide,
               icon: Icon(Icons.close, size: 20, color: context.palette.onInkMuted),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints.tightFor(width: 48, height: 48),
