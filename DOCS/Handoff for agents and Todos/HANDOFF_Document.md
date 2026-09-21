@@ -18,6 +18,7 @@ to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PL
 | **Functions** | ❌ Not deployable — Spark plan, no `artifactregistry` (Node 20 dies late Oct 2026) |
 | **App build** | `pubspec` is now `1.0.0-beta.3.1.0+20`, committed and pushed (`main` @ `6fb12ae`); APK and AAB are built from it. **The GitHub release `beta-v3.1.0` was not created** — the session's auto-mode classifier declined the publish step, so the live release is still `beta-v3.0.2`. Everything since 3.0.2 (App Check, analytics, route navigation, i18n, print sticker, cockpit perf) is **on `main` but in no tester's hands** |
 | **App Check enforcement** | Console action, only after a release containing the code is what riders run |
+| **Founder's iPhone** | ✅ `1.0.0-beta.3.1.0+20` **release build installed and launched** 2026-09-21 (`flutter run --release -d 00008120-001E5D190A85A01E`; Xcode build 106 s, install+launch 7.3 s). First real-hardware run of everything since 3.0.2 — launch only so far; nothing on the device test list has been exercised yet |
 
 The order that matters: **release → hosting (`privacy.html`) → App Check enforcement**.
 Rules are already ahead of the app, which is the safe direction here.
