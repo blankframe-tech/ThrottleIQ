@@ -12,6 +12,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -36,11 +37,11 @@ class ChatListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Messages'),
+        title: Text(context.l10n.messages),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_comment_outlined),
-            tooltip: 'New message',
+            tooltip: context.l10n.newMessage,
             onPressed: () => _showNewChatModal(context, ref),
           ),
         ],
@@ -48,7 +49,7 @@ class ChatListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNewChatModal(context, ref),
         icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-        label: const Text('New Message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        label: Text(context.l10n.newMessageTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         backgroundColor: context.palette.primary,
       ),
       body: chatsAsync.when(
@@ -73,12 +74,12 @@ class ChatListScreen extends ConsumerWidget {
                   children: [
                     Icon(Icons.chat_bubble_outline, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text('No messages yet', style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
+                    Text(context.l10n.noMessagesYet, style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => _showNewChatModal(context, ref),
                       icon: const Icon(Icons.send, size: 18),
-                      label: const Text('Start a Conversation'),
+                      label: Text(context.l10n.startConversation),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.palette.primary,
                         foregroundColor: Colors.white,
@@ -104,13 +105,13 @@ class ChatListScreen extends ConsumerWidget {
               final otherProfileAsync = ref.watch(profileProvider(otherUserId));
               
               return otherProfileAsync.when(
-                loading: () => const ListTile(title: Text('Loading...')),
+                loading: () => ListTile(title: Text(context.l10n.loading)),
                 error: (_, __) => const SizedBox.shrink(),
                 data: (profile) {
                   if (profile == null) return const SizedBox.shrink();
 
                   final lastMsg = chat.lastMessage;
-                  String subtitle = 'Say hi!';
+                  String subtitle = context.l10n.sayHi;
 
                   if (lastMsg != null) {
                     subtitle = lastMsg['text'] ?? '';
@@ -235,7 +236,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             Row(
               children: [
                 Text(
-                  'New Message',
+                  context.l10n.newMessageTitle,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -244,7 +245,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: context.l10n.close,
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                   color: context.palette.textSecondary,
@@ -257,7 +258,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
               autofocus: true,
               style: TextStyle(color: context.palette.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Search rider by @username or email...',
+                hintText: context.l10n.searchRiderByUsername,
                 hintStyle: TextStyle(color: context.palette.textTertiary),
                 prefixIcon: Icon(Icons.search, color: context.palette.textTertiary),
                 filled: true,
@@ -290,7 +291,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text('No riders found for "${_searchController.text}"',
+                  child: Text(context.l10n.noRidersFoundFor(_searchController.text),
                       style: TextStyle(color: context.palette.textSecondary)),
                 ),
               )

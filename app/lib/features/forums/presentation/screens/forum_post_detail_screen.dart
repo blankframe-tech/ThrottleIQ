@@ -10,6 +10,7 @@ import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/entities/forum_reply_entity.dart';
 import '../providers/forum_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Post body + replies list + reply composer.
 class ForumPostDetailScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to post reply: $e')),
+        SnackBar(content: Text(context.l10n.failedPostReply(e))),
       );
     }
   }
@@ -90,12 +91,12 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Post')),
+      appBar: AppBar(title: Text(context.l10n.post)),
       body: _loading
           ? Center(child: CircularProgressIndicator(color: context.palette.primary))
           : _post == null
               ? Center(
-                  child: Text('Post not found', style: TextStyle(color: context.palette.textSecondary)))
+                  child: Text(context.l10n.postNotFound, style: TextStyle(color: context.palette.textSecondary)))
               : Column(
                   children: [
                     Expanded(
@@ -115,7 +116,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                           if (_replies.isEmpty)
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Text('No replies yet — be the first to help out.',
+                              child: Text(context.l10n.noRepliesYetBe,
                                   style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                             )
                           else
@@ -210,14 +211,14 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
               style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Write a reply...',
+                hintText: context.l10n.writeReply,
                 hintStyle: TextStyle(color: context.palette.textTertiary),
               ),
               onSubmitted: (_) => _submitReply(),
             ),
           ),
           IconButton(
-            tooltip: 'Send',
+            tooltip: context.l10n.send,
             icon: Icon(Icons.send, color: context.palette.primary),
             onPressed: _submitReply,
           ),

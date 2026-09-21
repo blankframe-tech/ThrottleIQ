@@ -13,6 +13,7 @@ import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -80,7 +81,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         SnackBar(
           content: Text(mapFirestoreError(e)),
           action: SnackBarAction(
-            label: 'Retry',
+            label: context.l10n.retry,
             onPressed: _sendMessage,
           ),
         ),
@@ -114,13 +115,13 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           children: [
             UserAvatar(
               photoUrl: resolvedOtherUser?.photoUrl,
-              name: resolvedOtherUser?.bestName ?? 'Rider',
+              name: resolvedOtherUser?.bestName ?? context.l10n.riderFallbackName,
               radius: 16,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                resolvedOtherUser?.bestName ?? 'Chat',
+                resolvedOtherUser?.bestName ?? context.l10n.chat,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 16),
               ),
@@ -140,7 +141,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               ),
               data: (messages) {
                 if (messages.isEmpty) {
-                  return Center(child: Text('Say hi!', style: TextStyle(color: context.palette.textSecondary)));
+                  return Center(child: Text(context.l10n.sayHi, style: TextStyle(color: context.palette.textSecondary)));
                 }
                 
                 return ListView.builder(
@@ -222,7 +223,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "You can't message this rider",
+                      context.l10n.cantMessageThisRider,
                       style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
                     ),
                   ),
@@ -250,7 +251,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: null,
                     decoration: InputDecoration(
-                      hintText: 'Message...',
+                      hintText: context.l10n.messageHint,
                       hintStyle: TextStyle(color: context.palette.textTertiary),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
@@ -270,7 +271,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    tooltip: 'Send',
+                    tooltip: context.l10n.send,
                     icon: const Icon(Icons.send, color: Colors.white, size: 20),
                     onPressed: _sendMessage,
                   ),

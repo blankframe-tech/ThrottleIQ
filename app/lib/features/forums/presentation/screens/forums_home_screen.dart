@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../providers/forum_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Forums tab inside SocialScreen: "Your bikes" forums (auto-created from the
 /// garage) first, then a simple brand search/discover list to find and
@@ -73,7 +74,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open forum: $e')),
+        SnackBar(content: Text(context.l10n.couldNotOpenForum(e))),
       );
     } finally {
       if (mounted) setState(() => _resolvingEntry = null);
@@ -90,7 +91,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open forum: $e')),
+        SnackBar(content: Text(context.l10n.couldNotOpenForum(e))),
       );
     } finally {
       if (mounted) setState(() => _resolvingEntry = null);
@@ -106,7 +107,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       children: [
         Text(
-          'Your bikes',
+          context.l10n.yourBikes,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
@@ -117,7 +118,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           data: (forums) {
             if (forums.isEmpty) {
               return Text(
-                'Add a bike to your garage to see its forum here.',
+                context.l10n.addBikeGarageSee,
                 style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
@@ -136,7 +137,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           children: [
             Expanded(
               child: Text(
-                'Rider forums',
+                context.l10n.riderForums,
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
               ),
@@ -149,7 +150,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
                 if (context.mounted) ref.invalidate(customForumsProvider);
               },
               icon: Icon(Icons.add, size: 18, color: context.palette.primary),
-              label: Text('Create', style: TextStyle(color: context.palette.primary)),
+              label: Text(context.l10n.create, style: TextStyle(color: context.palette.primary)),
             ),
           ],
         ),
@@ -161,7 +162,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
           data: (forums) {
             if (forums.isEmpty) {
               return Text(
-                'No rider-made forums yet. Create the first one.',
+                context.l10n.noRiderMadeForums,
                 style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
@@ -177,7 +178,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Find a forum',
+          context.l10n.findForum,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
@@ -188,7 +189,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
                 controller: _searchController,
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Search a brand, e.g. Yamaha',
+                  hintText: context.l10n.searchBrandEG,
                   hintStyle: TextStyle(color: context.palette.textTertiary),
                 ),
                 onSubmitted: _openBrandForum,
@@ -196,7 +197,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              tooltip: 'Search forums',
+              tooltip: context.l10n.searchForums,
               icon: _resolvingEntry != null &&
                       _resolvingEntry == _searchController.text.trim()
                   ? SizedBox(
@@ -218,7 +219,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         // getting a top-level section. Brands lead because the search box
         // directly above them searches brands.
         _DiscoverGroup(
-          label: 'Brands',
+          label: context.l10n.brands,
           icon: Icons.two_wheeler,
           entries: _popularBrands,
           resolvingEntry: _resolvingEntry,
@@ -226,7 +227,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         ),
         const SizedBox(height: 16),
         _DiscoverGroup(
-          label: 'Topics',
+          label: context.l10n.topics,
           icon: Icons.topic_outlined,
           entries: _generalTopics,
           resolvingEntry: _resolvingEntry,
@@ -363,14 +364,14 @@ class _ForumCard extends ConsumerWidget {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                 ),
                 Text(
-                  '${forum.postCount} posts · ${forum.followerCount} followers',
+                  context.l10n.postsFollowers(forum.postCount, forum.followerCount),
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
           ),
           IconButton(
-            tooltip: 'Notification settings',
+            tooltip: context.l10n.notificationSettings,
             icon: Icon(
               isFollowing ? Icons.notifications_active : Icons.notifications_none,
               color: isFollowing ? context.palette.primary : context.palette.textSecondary,

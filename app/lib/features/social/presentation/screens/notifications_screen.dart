@@ -10,6 +10,7 @@ import '../../domain/entities/app_notification_entity.dart';
 import '../providers/group_ride_providers.dart';
 import '../providers/notification_providers.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -41,7 +42,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: Text(context.l10n.notifications)),
       body: notificationsAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
@@ -60,7 +61,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   children: [
                     Icon(Icons.notifications_none, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text('No notifications yet',
+                    Text(context.l10n.noNotificationsYet,
                         style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
@@ -134,7 +135,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
       setState(() => _accepting = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text("Couldn't join the ride: $e")));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.couldntJoinRide(e))));
       return;
     }
     if (!mounted) return;
@@ -178,7 +179,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                     const SizedBox(height: 2),
                     Text(
                         notification.isActionableGroupRideInvite
-                            ? '${_relativeTime()} · tap to join'
+                            ? context.l10n.tapJoin(_relativeTime())
                             : _relativeTime(),
                         style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                   ],

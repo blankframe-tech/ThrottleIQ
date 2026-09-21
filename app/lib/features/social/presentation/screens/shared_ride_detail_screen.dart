@@ -21,6 +21,7 @@ import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../providers/ride_feed_provider.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class SharedRideDetailScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -82,7 +83,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     if (polyline.isEmpty) return;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => FullScreenRouteMapScreen(
+        builder: (ctx) => FullScreenRouteMapScreen(
           polyline: polyline,
           title: ride.bikeName,
           subtitle: '${ride.userName} · ${ride.distanceKm.toStringAsFixed(1)} km',
@@ -100,7 +101,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             );
             if (ctx.mounted) {
               ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(content: Text('Route saved to My Routes!')),
+                SnackBar(content: Text(ctx.l10n.routeSavedMyRoutes)),
               );
             }
           },
@@ -145,7 +146,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to post comment: $e')),
+        SnackBar(content: Text(context.l10n.failedPostComment(e))),
       );
     }
   }
@@ -182,7 +183,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
         _localUpvotes = prevUp;
         _localDownvotes = prevDown;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Vote failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.voteFailed(e))));
     }
   }
 
@@ -201,12 +202,12 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Route saved to My Routes!')),
+        SnackBar(content: Text(context.l10n.routeSavedMyRoutes)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save route: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSaveRoute(e))),
       );
     } finally {
       if (mounted) setState(() => _savingRoute = false);
@@ -232,7 +233,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     if (ride == null && liveRideAsync.isLoading) {
       return Scaffold(
         backgroundColor: context.palette.background,
-        appBar: AppBar(title: const Text('Ride Details')),
+        appBar: AppBar(title: Text(context.l10n.rideDetails)),
         body: Center(child: CircularProgressIndicator(color: context.palette.primary)),
       );
     }
@@ -240,14 +241,14 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     if (ride == null) {
       return Scaffold(
         backgroundColor: context.palette.background,
-        appBar: AppBar(title: const Text('Ride Details')),
+        appBar: AppBar(title: Text(context.l10n.rideDetails)),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.error_outline, size: 48, color: context.palette.textTertiary),
               const SizedBox(height: 12),
-              Text('Ride not found or removed', style: TextStyle(color: context.palette.textSecondary)),
+              Text(context.l10n.rideNotFoundRemoved, style: TextStyle(color: context.palette.textSecondary)),
             ],
           ),
         ),
@@ -292,7 +293,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(value: 'report', child: Text('Report Ride')),
+              PopupMenuItem(value: 'report', child: Text(context.l10n.reportRide)),
             ],
           ),
         ],
@@ -359,7 +360,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                 children: [
                   Icon(Icons.map_outlined, size: 40, color: context.palette.textTertiary),
                   const SizedBox(height: 8),
-                  Text('No GPS track available for this ride',
+                  Text(context.l10n.noGpsTrackAvailable,
                       style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
                 ],
               ),
@@ -444,7 +445,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                       Icon(Icons.open_in_full, size: 14, color: context.palette.primary),
                       const SizedBox(width: 6),
                       Text(
-                        'Tap map to expand',
+                        context.l10n.mapExpandHintLabel,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -470,7 +471,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                     key: const Key('map_zoom_in_button'),
                     backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     foregroundColor: context.palette.textPrimary,
-                    tooltip: 'Zoom In',
+                    tooltip: context.l10n.zoomIn,
                     onPressed: _zoomIn,
                     child: const Icon(Icons.add, size: 20),
                   ),
@@ -480,7 +481,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                     key: const Key('map_zoom_out_button'),
                     backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     foregroundColor: context.palette.textPrimary,
-                    tooltip: 'Zoom Out',
+                    tooltip: context.l10n.zoomOut,
                     onPressed: _zoomOut,
                     child: const Icon(Icons.remove, size: 20),
                   ),
@@ -490,7 +491,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                     key: const Key('map_recenter_button'),
                     backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     foregroundColor: context.palette.textPrimary,
-                    tooltip: 'Recenter Route',
+                    tooltip: context.l10n.recenterRoute,
                     onPressed: () => _recenterMap(polyline),
                     child: const Icon(Icons.my_location, size: 18),
                   ),
@@ -500,7 +501,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                     key: const Key('map_fullscreen_button'),
                     backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     foregroundColor: context.palette.textPrimary,
-                    tooltip: 'Fullscreen Map',
+                    tooltip: context.l10n.fullscreenMap,
                     onPressed: () => _openFullScreenMap(polyline, ride),
                     child: const Icon(Icons.fullscreen, size: 20),
                   ),
@@ -510,7 +511,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                     key: const Key('map_save_route_button'),
                     backgroundColor: context.palette.primary,
                     foregroundColor: Colors.white,
-                    tooltip: 'Save as Route',
+                    tooltip: context.l10n.saveAsRouteAction,
                     onPressed: _savingRoute ? null : () => _saveAsRoute(ride),
                     child: _savingRoute
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -611,13 +612,13 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const EditorialLabel('Speed & Performance Details'),
+        EditorialLabel(context.l10n.speedPerformanceDetails),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: MetricCard(
-                title: 'Max Speed',
+                title: context.l10n.maxSpeed,
                 value: ride.maxSpeedKmh.toStringAsFixed(1),
                 unit: 'km/h',
                 icon: Icons.speed,
@@ -627,7 +628,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             const SizedBox(width: 12),
             Expanded(
               child: MetricCard(
-                title: 'Avg Speed',
+                title: context.l10n.avgSpeed,
                 value: ride.avgSpeedKmh.toStringAsFixed(1),
                 unit: 'km/h',
                 icon: Icons.trending_up,
@@ -641,7 +642,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
           children: [
             Expanded(
               child: MetricCard(
-                title: 'Distance',
+                title: context.l10n.distanceLabel,
                 value: ride.distanceKm.toStringAsFixed(1),
                 unit: 'km',
                 icon: Icons.straighten,
@@ -651,7 +652,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             const SizedBox(width: 12),
             Expanded(
               child: MetricCard(
-                title: 'Duration',
+                title: context.l10n.duration,
                 value: SpeedFormatter.durationFromSeconds(ride.durationSeconds),
                 unit: '',
                 icon: Icons.timer_outlined,
@@ -676,7 +677,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             children: [
               Icon(Icons.two_wheeler, size: 20, color: context.palette.primary),
               const SizedBox(width: 12),
-              Text('Riding Pace', style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+              Text(context.l10n.ridingPace, style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
               const Spacer(),
               Text(paceFormatted, style: TextStyle(fontWeight: FontWeight.bold, color: context.palette.textPrimary, fontSize: 14)),
             ],
@@ -710,7 +711,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               Icon(Icons.route, size: 20, color: context.palette.primary),
               const SizedBox(width: 8),
               Text(
-                'Route GPS Details',
+                context.l10n.routeGpsDetailsLabel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -719,7 +720,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               ),
               const Spacer(),
               Text(
-                '${ride.polyline.length} track points',
+                context.l10n.trackPoints(ride.polyline.length),
                 style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
               ),
             ],
@@ -736,7 +737,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              Text('Start: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
+              Text(context.l10n.startColon, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
               Text(
                 '${start.latitude.toStringAsFixed(4)}°, ${start.longitude.toStringAsFixed(4)}°',
                 style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
@@ -756,7 +757,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('Finish: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
+                Text(context.l10n.finishColon, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
                 Text(
                   '${end.latitude.toStringAsFixed(4)}°, ${end.longitude.toStringAsFixed(4)}°',
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
@@ -774,12 +775,12 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
-              label: const FittedBox(
+              label: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  'Explore Full Route on Map',
+                  context.l10n.exploreFullRouteAction,
                   maxLines: 1,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -793,7 +794,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const EditorialLabel('Ride Photos'),
+        EditorialLabel(context.l10n.ridePhotos),
         const SizedBox(height: 10),
         SizedBox(
           height: 130,
@@ -862,7 +863,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Upvote',
+            tooltip: context.l10n.upvote,
             icon: Icon(
               Icons.arrow_upward,
               color: _localVote == 1 ? context.palette.primary : context.palette.textSecondary,
@@ -875,7 +876,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.palette.textPrimary),
           ),
           IconButton(
-            tooltip: 'Downvote',
+            tooltip: context.l10n.downvote,
             icon: Icon(
               Icons.arrow_downward,
               color: _localVote == -1 ? context.palette.danger : context.palette.textSecondary,
@@ -886,7 +887,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
           const Spacer(),
           Icon(Icons.chat_bubble_outline, size: 20, color: context.palette.textSecondary),
           const SizedBox(width: 8),
-          Text('${_comments?.length ?? 0} comments', style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
+          Text(context.l10n.commentsCount(_comments?.length ?? 0), style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
         ],
       ),
     );
@@ -905,7 +906,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
           Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('No comments yet. Be the first to comment!',
+              child: Text(context.l10n.noCommentsYetBe,
                   style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
             ),
           )
@@ -955,7 +956,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                 controller: _commentController,
                 style: TextStyle(color: context.palette.textPrimary, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Add a comment...',
+                  hintText: context.l10n.addComment,
                   hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                   filled: true,
                   fillColor: context.palette.surface,
@@ -970,7 +971,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             ),
             const SizedBox(width: 8),
             IconButton(
-              tooltip: 'Send',
+              tooltip: context.l10n.send,
               icon: Icon(Icons.send, color: context.palette.primary),
               onPressed: _submitComment,
             ),

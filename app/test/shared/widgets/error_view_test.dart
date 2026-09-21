@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/shared/widgets/error_view.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 void main() {
   group('ErrorView', () {
     testWidgets('renders friendly mapped message for network error', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: ErrorView(
               error: Exception('Failed host lookup: firestore.googleapis.com'),
@@ -24,6 +27,8 @@ void main() {
       var retried = false;
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: ErrorView(
               error: Exception('Some error'),
@@ -41,6 +46,8 @@ void main() {
     testWidgets('renders Report a Problem button when showBugReport is true', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: ErrorView(
               error: Exception('Some error'),

@@ -6,6 +6,7 @@ import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme_context.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// The acceptance test for issues §83.9: an appearance change must reach every
 /// widget WITHOUT unmounting the app.
@@ -30,6 +31,8 @@ void main() {
         child: Consumer(builder: (context, ref, _) {
           final appearance = ref.watch(appearanceProvider);
           return MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
             // Deliberately no `key: ValueKey(appearance)`.
             theme: themeFor(appearance),
             themeAnimationDuration: Duration.zero,
@@ -101,7 +104,9 @@ void main() {
   testWidgets('a tree with no registered tokens falls back to the default appearance',
       (tester) async {
     // A bare MaterialApp — what most widget tests pump — has no extensions.
-    await tester.pumpWidget(const MaterialApp(home: _Probe()));
+    await tester.pumpWidget(const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,home: _Probe()));
 
     expect(tester.widget<Container>(find.byKey(_Probe.swatch)).color,
         AppColorPalette.calmingLight.primary);

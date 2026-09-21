@@ -10,6 +10,7 @@ import '../providers/group_ride_providers.dart';
 import '../providers/notification_providers.dart';
 import 'group_ride_friend_picker.dart';
 import 'join_group_ride_by_code_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Explicit Solo/Group choice on the Record screen, sitting where the plain
 /// "Ride with friends" button used to — an up-front choice is more
@@ -48,7 +49,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
     setState(() => _busy = true);
 
     final inviterName = (user.displayName ?? '').trim().isEmpty
-        ? 'A rider'
+        ? context.l10n.aRider
         : user.displayName!.trim();
 
     final invitees = [
@@ -66,7 +67,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
         creatorId: user.uid,
         creatorName: inviterName,
         creatorPhotoUrl: user.photoURL ?? '',
-        name: "$inviterName's group ride",
+        name: context.l10n.inviterGroupRide(inviterName),
         startTime: DateTime.now(),
         // The ride is live the moment it's created — this isn't a scheduled
         // "planned" meet-up, the creator's recording starts immediately.
@@ -109,7 +110,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text("Couldn't start the group ride: $e")),
+          SnackBar(content: Text(context.l10n.couldntStartGroupRide(e))),
         );
     }
   }

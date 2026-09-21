@@ -1365,4 +1365,626 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get addBikeBeforeRecording =>
       'Please add a bike before recording a ride.';
+
+  @override
+  String get aRider => 'A rider';
+
+  @override
+  String livePositionsUnavailable(Object e) {
+    return 'Live positions unavailable: $e';
+  }
+
+  @override
+  String get locationPermissionOffGroup =>
+      'Location permission is off — the group can\'t see you. You can still see them.';
+
+  @override
+  String locationUnavailable(Object e) {
+    return 'Location unavailable: $e';
+  }
+
+  @override
+  String get leaveGroupRide => 'Leave group ride?';
+
+  @override
+  String get othersStopSeeingPosition =>
+      'The others stop seeing your position. Your own ride recording keeps running — end it from the ride screen.';
+
+  @override
+  String get stay => 'Stay';
+
+  @override
+  String get leave => 'Leave';
+
+  @override
+  String couldntLeave(Object e) {
+    return 'Couldn\'t leave: $e';
+  }
+
+  @override
+  String get microphoneAccessOffCan =>
+      'Microphone access is off — you can still hear the group.';
+
+  @override
+  String couldntStartRecording(Object e) {
+    return 'Couldn\'t start recording: $e';
+  }
+
+  @override
+  String couldntSendVoiceNote(Object e) {
+    return 'Couldn\'t send voice note: $e';
+  }
+
+  @override
+  String get groupRide => 'Group ride';
+
+  @override
+  String get thisGroupRideNo => 'This group ride no longer exists.';
+
+  @override
+  String get recordingReleaseSend => 'Recording — release to send';
+
+  @override
+  String playing(Object note) {
+    return 'Playing $note…';
+  }
+
+  @override
+  String get holdTalk => 'Hold to talk';
+
+  @override
+  String get unmuteVoiceNotes => 'Unmute voice notes';
+
+  @override
+  String get muteVoiceNotes => 'Mute voice notes';
+
+  @override
+  String get nobodyThisRideYet => 'Nobody is on this ride yet.';
+
+  @override
+  String ridingJoined(Object joinedCount) {
+    return 'Riding — $joinedCount';
+  }
+
+  @override
+  String invitedWaiting(Object pendingCount) {
+    return 'Invited — $pendingCount waiting';
+  }
+
+  @override
+  String get hasntJoinedYet => 'Hasn\'t joined yet';
+
+  @override
+  String you(Object userName) {
+    return '$userName (you)';
+  }
+
+  @override
+  String get waitingFirstPosition => 'Waiting for the first position…';
+
+  @override
+  String get deleteSharedRide => 'Delete shared ride?';
+
+  @override
+  String get thisRemovesItFrom =>
+      'This removes it from the feed for everyone. Your local ride history is unaffected.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get mySharedRides => 'My Shared Rides';
+
+  @override
+  String get haventSharedAnyRides => 'You haven\'t shared any rides yet';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get noNotificationsYet => 'No notifications yet';
+
+  @override
+  String couldntJoinRide(Object e) {
+    return 'Couldn\'t join the ride: $e';
+  }
+
+  @override
+  String tapJoin(Object relativeTime) {
+    return '$relativeTime · tap to join';
+  }
+
+  @override
+  String get anyoneThrottleiq => 'Anyone on ThrottleIQ';
+
+  @override
+  String get peopleWhoFollow => 'People who follow you';
+
+  @override
+  String get ridersFollowEachOther => 'Riders you follow each other';
+
+  @override
+  String canAddUpPhotos(Object maxRidePhotos) {
+    return 'You can add up to $maxRidePhotos photos. Remove one to add another.';
+  }
+
+  @override
+  String onlyPhotosPerRide(Object maxRidePhotos, Object remaining) {
+    return 'Only $maxRidePhotos photos per ride — kept the first $remaining.';
+  }
+
+  @override
+  String get rideShared => 'Ride shared';
+
+  @override
+  String get savedWellPostIt =>
+      'Saved — we\'ll post it when you\'re back online';
+
+  @override
+  String failedShareRide(Object e) {
+    return 'Failed to share ride: $e';
+  }
+
+  @override
+  String addUpRideBike(Object maxRidePhotos) {
+    return 'Add up to $maxRidePhotos ride or bike photos';
+  }
+
+  @override
+  String get shareRide => 'Share ride';
+
+  @override
+  String get saySomethingAboutThis => 'Say something about this ride';
+
+  @override
+  String get photosOptional => 'Photos (optional)';
+
+  @override
+  String get whoCanSeeThis => 'Who can see this';
+
+  @override
+  String get saveAsRoute => 'Save as route';
+
+  @override
+  String get routeSavedMyRoutes => 'Route saved to My Routes!';
+
+  @override
+  String failedPostComment(Object e) {
+    return 'Failed to post comment: $e';
+  }
+
+  @override
+  String voteFailed(Object e) {
+    return 'Vote failed: $e';
+  }
+
+  @override
+  String couldNotSaveRoute(Object e) {
+    return 'Could not save route: $e';
+  }
+
+  @override
+  String get rideDetails => 'Ride Details';
+
+  @override
+  String get rideNotFoundRemoved => 'Ride not found or removed';
+
+  @override
+  String get reportRide => 'Report Ride';
+
+  @override
+  String get noGpsTrackAvailable => 'No GPS track available for this ride';
+
+  @override
+  String get speedPerformanceDetails => 'Speed & Performance Details';
+
+  @override
+  String get maxSpeed => 'Max Speed';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String get ridingPace => 'Riding Pace';
+
+  @override
+  String trackPoints(Object polylineCount) {
+    return '$polylineCount track points';
+  }
+
+  @override
+  String get startColon => 'Start: ';
+
+  @override
+  String get finishColon => 'Finish: ';
+
+  @override
+  String get ridePhotos => 'Ride Photos';
+
+  @override
+  String get upvote => 'Upvote';
+
+  @override
+  String get downvote => 'Downvote';
+
+  @override
+  String commentsCount(Object comments) {
+    return '$comments comments';
+  }
+
+  @override
+  String get noCommentsYetBe => 'No comments yet. Be the first to comment!';
+
+  @override
+  String get addComment => 'Add a comment...';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get searchRidersForums => 'Search riders and forums';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get feed => 'Feed';
+
+  @override
+  String get forums => 'Forums';
+
+  @override
+  String nothingFoundTryUsername(Object query) {
+    return 'Nothing found for \"$query\".\nTry a @username, an email, or a forum name.';
+  }
+
+  @override
+  String couldntSearchRiders(Object error) {
+    return 'Couldn\'t search riders: $error';
+  }
+
+  @override
+  String get noRidersMatchThat => 'No riders match that.';
+
+  @override
+  String couldntSearchForums(Object error) {
+    return 'Couldn\'t search forums: $error';
+  }
+
+  @override
+  String get noForumsMatchThat => 'No forums match that.';
+
+  @override
+  String followersPosts(Object followerCount, Object postCount) {
+    return '$followerCount followers · $postCount posts';
+  }
+
+  @override
+  String get nothingFromRidersYet => 'Nothing from your riders yet';
+
+  @override
+  String get noRidesYet => 'No rides yet';
+
+  @override
+  String get searchRidersAboveFollow =>
+      'Search for riders above and follow them to fill this in.';
+
+  @override
+  String get shareRideFromIts =>
+      'Share a ride from its summary screen to get things started.';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get youreAllCaughtUp => 'You\'re all caught up';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get noCommentsYet => 'No comments yet';
+
+  @override
+  String get following => 'Following';
+
+  @override
+  String get follow => 'Follow';
+
+  @override
+  String get rideWithFriends => 'Ride with friends';
+
+  @override
+  String selectedCount(Object selectedCount, Object maxGroupRideFriends) {
+    return '$selectedCount/$maxGroupRideFriends selected';
+  }
+
+  @override
+  String pickRidersRideStarts(
+      Object minGroupRideFriends, Object maxGroupRideFriends) {
+    return 'Pick $minGroupRideFriends–$maxGroupRideFriends riders. Your ride starts recording right away; they join from their notifications.';
+  }
+
+  @override
+  String get usernameEmail => '@username or email';
+
+  @override
+  String get startGroupRide => 'Start group ride';
+
+  @override
+  String startGroupRideWithCount(Object selectedCount) {
+    return 'Start group ride with $selectedCount';
+  }
+
+  @override
+  String get searchByUsernameEmail => 'Search by @username or email';
+
+  @override
+  String get noRidersFound => 'No riders found';
+
+  @override
+  String inviterGroupRide(Object inviterName) {
+    return '$inviterName\'s group ride';
+  }
+
+  @override
+  String couldntStartGroupRide(Object e) {
+    return 'Couldn\'t start the group ride: $e';
+  }
+
+  @override
+  String get signCreateForum => 'Sign in to create a forum.';
+
+  @override
+  String couldNotCreateForum(Object e) {
+    return 'Could not create the forum: $e';
+  }
+
+  @override
+  String get createForum => 'Create a forum';
+
+  @override
+  String get eGSundayBreakfast => 'e.g. Sunday Breakfast Rides';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get whatsThisForumAbout => 'What\'s this forum about?';
+
+  @override
+  String get youllBeAbleModerate =>
+      'You\'ll be able to moderate posts here and add other riders as maintainers.';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String failedPostReply(Object e) {
+    return 'Failed to post reply: $e';
+  }
+
+  @override
+  String get post => 'Post';
+
+  @override
+  String get postNotFound => 'Post not found';
+
+  @override
+  String get noRepliesYetBe => 'No replies yet — be the first to help out.';
+
+  @override
+  String get writeReply => 'Write a reply...';
+
+  @override
+  String get forum => 'Forum';
+
+  @override
+  String get unfollow => 'Unfollow';
+
+  @override
+  String get manageMaintainers => 'Manage maintainers';
+
+  @override
+  String get newPost => 'New post';
+
+  @override
+  String get noPostsYet => 'No posts yet';
+
+  @override
+  String get beFirstAskQuestion =>
+      'Be the first to ask a question or share something.';
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get titleRequired => 'Title is required';
+
+  @override
+  String get whatsGoing => 'What\'s going on?';
+
+  @override
+  String get saySomethingBeforePosting => 'Say something before posting';
+
+  @override
+  String get couldntRecordVoteCheck =>
+      'Couldn\'t record your vote — check your connection and try again.';
+
+  @override
+  String get deletePostQuestion => 'Delete post?';
+
+  @override
+  String get thisRemovesPostIts =>
+      'This removes the post and its replies from the forum. It cannot be undone.';
+
+  @override
+  String couldNotDelete(Object e) {
+    return 'Could not delete: $e';
+  }
+
+  @override
+  String get deletePost => 'Delete post';
+
+  @override
+  String get reportPost => 'Report Post';
+
+  @override
+  String fromUser(Object displayName) {
+    return 'from $displayName';
+  }
+
+  @override
+  String couldNotUpdateMaintainers(Object e) {
+    return 'Could not update maintainers: $e';
+  }
+
+  @override
+  String get maintainers => 'Maintainers';
+
+  @override
+  String get maintainersCanDeletePosts =>
+      'Maintainers can delete posts and replies in this forum.';
+
+  @override
+  String get noMaintainersYet => 'No maintainers yet.';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get addByRiderUid => 'Add by rider UID';
+
+  @override
+  String couldNotOpenForum(Object e) {
+    return 'Could not open forum: $e';
+  }
+
+  @override
+  String get yourBikes => 'Your bikes';
+
+  @override
+  String get addBikeGarageSee =>
+      'Add a bike to your garage to see its forum here.';
+
+  @override
+  String get riderForums => 'Rider forums';
+
+  @override
+  String get noRiderMadeForums =>
+      'No rider-made forums yet. Create the first one.';
+
+  @override
+  String get findForum => 'Find a forum';
+
+  @override
+  String get searchBrandEG => 'Search a brand, e.g. Yamaha';
+
+  @override
+  String get searchForums => 'Search forums';
+
+  @override
+  String get brands => 'Brands';
+
+  @override
+  String get topics => 'Topics';
+
+  @override
+  String postsFollowers(Object postCount, Object followerCount) {
+    return '$postCount posts · $followerCount followers';
+  }
+
+  @override
+  String get notificationSettings => 'Notification settings';
+
+  @override
+  String get newMessage => 'New message';
+
+  @override
+  String get newMessageTitle => 'New Message';
+
+  @override
+  String get noMessagesYet => 'No messages yet';
+
+  @override
+  String get startConversation => 'Start a Conversation';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get sayHi => 'Say hi!';
+
+  @override
+  String get searchRiderByUsername => 'Search rider by @username or email...';
+
+  @override
+  String noRidersFoundFor(Object text) {
+    return 'No riders found for \"$text\"';
+  }
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get chat => 'Chat';
+
+  @override
+  String get cantMessageThisRider => 'You can\'t message this rider';
+
+  @override
+  String get messageHint => 'Message...';
+
+  @override
+  String get spamMisleading => 'Spam or misleading';
+
+  @override
+  String get harassmentBullying => 'Harassment or bullying';
+
+  @override
+  String get hateSpeech => 'Hate speech';
+
+  @override
+  String get inappropriateContent => 'Inappropriate content';
+
+  @override
+  String get reportSubmittedSuccessfullyWe =>
+      'Report submitted successfully. We will review it shortly.';
+
+  @override
+  String failedSubmitReport(Object e) {
+    return 'Failed to submit report: $e';
+  }
+
+  @override
+  String get report => 'Report';
+
+  @override
+  String get whyReportingThis => 'Why are you reporting this?';
+
+  @override
+  String get additionalDetailsOptional => 'Additional details (optional)';
+
+  @override
+  String get submitReport => 'Submit Report';
+
+  @override
+  String get audiencePublic => 'Public';
+
+  @override
+  String get audienceFollowers => 'Followers';
+
+  @override
+  String get audienceMutual => 'Mutual';
+
+  @override
+  String get selfHarm => 'Self-harm';
+
+  @override
+  String get otherReason => 'Other';
+
+  @override
+  String followMyRideLive(String url) {
+    return 'Follow my ride live: $url';
+  }
 }

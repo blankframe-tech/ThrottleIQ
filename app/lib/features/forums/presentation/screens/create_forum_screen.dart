@@ -7,6 +7,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../providers/forum_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// "Create a forum" — a rider names their own discussion board (route
 /// `/forums/create`). The creator becomes its first maintainer, so they can
@@ -37,7 +38,7 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to create a forum.')),
+        SnackBar(content: Text(context.l10n.signCreateForum)),
       );
       return;
     }
@@ -64,7 +65,7 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not create the forum: $e')),
+        SnackBar(content: Text(context.l10n.couldNotCreateForum(e))),
       );
     }
   }
@@ -73,12 +74,12 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Create a forum')),
+      appBar: AppBar(title: Text(context.l10n.createForum)),
       body: ListView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         children: [
           Text(
-            'Name',
+            context.l10n.contactNameField,
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 8),
@@ -87,13 +88,13 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
             style: TextStyle(color: context.palette.textPrimary),
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              hintText: 'e.g. Sunday Breakfast Rides',
+              hintText: context.l10n.eGSundayBreakfast,
               hintStyle: TextStyle(color: context.palette.textTertiary),
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Description (optional)',
+            context.l10n.descriptionOptional,
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 8),
@@ -102,13 +103,13 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
             style: TextStyle(color: context.palette.textPrimary),
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: "What's this forum about?",
+              hintText: context.l10n.whatsThisForumAbout,
               hintStyle: TextStyle(color: context.palette.textTertiary),
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            "You'll be able to moderate posts here and add other riders as maintainers.",
+            context.l10n.youllBeAbleModerate,
             style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 24),
@@ -120,7 +121,7 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : const Text('Create', style: TextStyle(color: Colors.white)),
+                : Text(context.l10n.create, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

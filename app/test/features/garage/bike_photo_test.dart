@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/garage/presentation/widgets/bike_photo.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// [BikePhoto] renders a *local device file path* that the app cannot trust:
 /// it may be null (never set, or nulled out by `CloudRepository.downloadBikes`
@@ -16,6 +17,8 @@ void main() {
   Future<void> pumpPhoto(WidgetTester tester, String? path) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: BikePhoto(imagePath: path, width: 44, height: 44),
         ),
@@ -104,6 +107,8 @@ void main() {
     await tester.runAsync(() async {
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: BikePhoto(
               imagePath: stalePath,

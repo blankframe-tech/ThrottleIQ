@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/shared/widgets/app_card.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// issues §74: on Retro (the only palette with a hard, blur-less offset
 /// shadow) `AppCard` rendered as a solid block of the border color, because
@@ -11,6 +12,8 @@ import 'package:throttleiq/shared/widgets/app_card.dart';
 /// after it.
 void main() {
   Widget host(AppColorPalette palette, Widget child) => MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(extensions: [palette, AppShapeProfile.boxy]),
         themeAnimationDuration: Duration.zero,
         home: Scaffold(body: Center(child: child)),

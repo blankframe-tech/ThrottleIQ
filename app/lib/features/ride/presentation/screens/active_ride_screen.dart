@@ -216,7 +216,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
         origin = box.localToGlobal(Offset.zero) & box.size;
       }
       Share.share(
-        'Follow my ride live: $_liveShareBaseUrl/$token',
+        context.l10n.followMyRideLive('$_liveShareBaseUrl/$token'),
         subject: context.l10n.throttleiqLiveRide,
         sharePositionOrigin: origin,
       );

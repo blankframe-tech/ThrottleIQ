@@ -2569,6 +2569,1063 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please add a bike before recording a ride.'**
   String get addBikeBeforeRecording;
+
+  /// FromName in notification_repository (+2 more).
+  ///
+  /// In en, this message translates to:
+  /// **'A rider'**
+  String get aRider;
+
+  /// SetState in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Live positions unavailable: {e}'**
+  String livePositionsUnavailable(Object e);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is off — the group can\'t see you. You can still see them.'**
+  String get locationPermissionOffGroup;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Location unavailable: {e}'**
+  String locationUnavailable(Object e);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave group ride?'**
+  String get leaveGroupRide;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'The others stop seeing your position. Your own ride recording keeps running — end it from the ride screen.'**
+  String get othersStopSeeingPosition;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay'**
+  String get stay;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get leave;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t leave: {e}'**
+  String couldntLeave(Object e);
+
+  /// SetState in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off — you can still hear the group.'**
+  String get microphoneAccessOffCan;
+
+  /// SetState in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start recording: {e}'**
+  String couldntStartRecording(Object e);
+
+  /// SetState in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send voice note: {e}'**
+  String couldntSendVoiceNote(Object e);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Group ride'**
+  String get groupRide;
+
+  /// Message in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This group ride no longer exists.'**
+  String get thisGroupRideNo;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording — release to send'**
+  String get recordingReleaseSend;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Playing {note}…'**
+  String playing(Object note);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to talk'**
+  String get holdTalk;
+
+  /// Tooltip in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute voice notes'**
+  String get unmuteVoiceNotes;
+
+  /// Tooltip in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute voice notes'**
+  String get muteVoiceNotes;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody is on this ride yet.'**
+  String get nobodyThisRideYet;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding — {joinedCount}'**
+  String ridingJoined(Object joinedCount);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited — {pendingCount} waiting'**
+  String invitedWaiting(Object pendingCount);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Hasn\'t joined yet'**
+  String get hasntJoinedYet;
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{userName} (you)'**
+  String you(Object userName);
+
+  /// Text in group_ride_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the first position…'**
+  String get waitingFirstPosition;
+
+  /// Text in my_shared_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete shared ride?'**
+  String get deleteSharedRide;
+
+  /// Text in my_shared_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes it from the feed for everyone. Your local ride history is unaffected.'**
+  String get thisRemovesItFrom;
+
+  /// Text in forum_thread_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// Text in my_shared_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'My Shared Rides'**
+  String get mySharedRides;
+
+  /// Text in my_shared_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t shared any rides yet'**
+  String get haventSharedAnyRides;
+
+  /// Text in notifications_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// Text in notifications_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get noNotificationsYet;
+
+  /// Text in notifications_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t join the ride: {e}'**
+  String couldntJoinRide(Object e);
+
+  /// Text in notifications_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{relativeTime} · tap to join'**
+  String tapJoin(Object relativeTime);
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone on ThrottleIQ'**
+  String get anyoneThrottleiq;
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'People who follow you'**
+  String get peopleWhoFollow;
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riders you follow each other'**
+  String get ridersFollowEachOther;
+
+  /// _showCapMessage in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {maxRidePhotos} photos. Remove one to add another.'**
+  String canAddUpPhotos(Object maxRidePhotos);
+
+  /// _showCapMessage in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {maxRidePhotos} photos per ride — kept the first {remaining}.'**
+  String onlyPhotosPerRide(Object maxRidePhotos, Object remaining);
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride shared'**
+  String get rideShared;
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved — we\'ll post it when you\'re back online'**
+  String get savedWellPostIt;
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share ride: {e}'**
+  String failedShareRide(Object e);
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add up to {maxRidePhotos} ride or bike photos'**
+  String addUpRideBike(Object maxRidePhotos);
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share ride'**
+  String get shareRide;
+
+  /// HintText in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Say something about this ride'**
+  String get saySomethingAboutThis;
+
+  /// EditorialLabel in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos (optional)'**
+  String get photosOptional;
+
+  /// EditorialLabel in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see this'**
+  String get whoCanSeeThis;
+
+  /// Text in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as route'**
+  String get saveAsRoute;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route saved to My Routes!'**
+  String get routeSavedMyRoutes;
+
+  /// Text in shared_ride_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to post comment: {e}'**
+  String failedPostComment(Object e);
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote failed: {e}'**
+  String voteFailed(Object e);
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save route: {e}'**
+  String couldNotSaveRoute(Object e);
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Details'**
+  String get rideDetails;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride not found or removed'**
+  String get rideNotFoundRemoved;
+
+  /// Text in shared_ride_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Report Ride'**
+  String get reportRide;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No GPS track available for this ride'**
+  String get noGpsTrackAvailable;
+
+  /// EditorialLabel in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed & Performance Details'**
+  String get speedPerformanceDetails;
+
+  /// Title in shared_ride_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Max Speed'**
+  String get maxSpeed;
+
+  /// Title in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding Pace'**
+  String get ridingPace;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{polylineCount} track points'**
+  String trackPoints(Object polylineCount);
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Start: '**
+  String get startColon;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish: '**
+  String get finishColon;
+
+  /// EditorialLabel in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Photos'**
+  String get ridePhotos;
+
+  /// Tooltip in forum_thread_screen (+2 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Upvote'**
+  String get upvote;
+
+  /// Tooltip in forum_thread_screen (+2 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Downvote'**
+  String get downvote;
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{comments} comments'**
+  String commentsCount(Object comments);
+
+  /// Text in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet. Be the first to comment!'**
+  String get noCommentsYetBe;
+
+  /// HintText in shared_ride_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment...'**
+  String get addComment;
+
+  /// Tooltip in chat_room_screen (+3 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// HintText in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search riders and forums'**
+  String get searchRidersForums;
+
+  /// Tooltip in chat_list_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed'**
+  String get feed;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Forums'**
+  String get forums;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found for \"{query}\".\nTry a @username, an email, or a forum name.'**
+  String nothingFoundTryUsername(Object query);
+
+  /// _SectionMessage in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t search riders: {error}'**
+  String couldntSearchRiders(Object error);
+
+  /// _SectionMessage in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No riders match that.'**
+  String get noRidersMatchThat;
+
+  /// _SectionMessage in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t search forums: {error}'**
+  String couldntSearchForums(Object error);
+
+  /// _SectionMessage in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No forums match that.'**
+  String get noForumsMatchThat;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{followerCount} followers · {postCount} posts'**
+  String followersPosts(Object followerCount, Object postCount);
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing from your riders yet'**
+  String get nothingFromRidersYet;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No rides yet'**
+  String get noRidesYet;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for riders above and follow them to fill this in.'**
+  String get searchRidersAboveFollow;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a ride from its summary screen to get things started.'**
+  String get shareRideFromIts;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get youreAllCaughtUp;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet'**
+  String get noCommentsYet;
+
+  /// Text in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Following'**
+  String get following;
+
+  /// Text in forum_thread_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Follow'**
+  String get follow;
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride with friends'**
+  String get rideWithFriends;
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedCount}/{maxGroupRideFriends} selected'**
+  String selectedCount(Object selectedCount, Object maxGroupRideFriends);
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick {minGroupRideFriends}–{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications.'**
+  String pickRidersRideStarts(
+      Object minGroupRideFriends, Object maxGroupRideFriends);
+
+  /// HintText in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'@username or email'**
+  String get usernameEmail;
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Start group ride'**
+  String get startGroupRide;
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Start group ride with {selectedCount}'**
+  String startGroupRideWithCount(Object selectedCount);
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by @username or email'**
+  String get searchByUsernameEmail;
+
+  /// Text in group_ride_friend_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'No riders found'**
+  String get noRidersFound;
+
+  /// Name in ride_mode_selector.
+  ///
+  /// In en, this message translates to:
+  /// **'{inviterName}\'s group ride'**
+  String inviterGroupRide(Object inviterName);
+
+  /// Text in ride_mode_selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start the group ride: {e}'**
+  String couldntStartGroupRide(Object e);
+
+  /// Text in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to create a forum.'**
+  String get signCreateForum;
+
+  /// Text in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the forum: {e}'**
+  String couldNotCreateForum(Object e);
+
+  /// Text in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a forum'**
+  String get createForum;
+
+  /// HintText in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Sunday Breakfast Rides'**
+  String get eGSundayBreakfast;
+
+  /// Text in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get descriptionOptional;
+
+  /// HintText in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s this forum about?'**
+  String get whatsThisForumAbout;
+
+  /// Text in create_forum_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be able to moderate posts here and add other riders as maintainers.'**
+  String get youllBeAbleModerate;
+
+  /// Text in create_forum_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// Text in forum_post_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to post reply: {e}'**
+  String failedPostReply(Object e);
+
+  /// Text in forum_post_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get post;
+
+  /// Text in forum_post_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Post not found'**
+  String get postNotFound;
+
+  /// Text in forum_post_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No replies yet — be the first to help out.'**
+  String get noRepliesYetBe;
+
+  /// HintText in forum_post_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a reply...'**
+  String get writeReply;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Forum'**
+  String get forum;
+
+  /// Tooltip in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfollow'**
+  String get unfollow;
+
+  /// Tooltip in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage maintainers'**
+  String get manageMaintainers;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'New post'**
+  String get newPost;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet'**
+  String get noPostsYet;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to ask a question or share something.'**
+  String get beFirstAskQuestion;
+
+  /// HintText in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get title;
+
+  /// ErrorText in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get titleRequired;
+
+  /// HintText in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s going on?'**
+  String get whatsGoing;
+
+  /// ErrorText in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Say something before posting'**
+  String get saySomethingBeforePosting;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t record your vote — check your connection and try again.'**
+  String get couldntRecordVoteCheck;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete post?'**
+  String get deletePostQuestion;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the post and its replies from the forum. It cannot be undone.'**
+  String get thisRemovesPostIts;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete: {e}'**
+  String couldNotDelete(Object e);
+
+  /// Tooltip in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete post'**
+  String get deletePost;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Post'**
+  String get reportPost;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'from {displayName}'**
+  String fromUser(Object displayName);
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update maintainers: {e}'**
+  String couldNotUpdateMaintainers(Object e);
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintainers'**
+  String get maintainers;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintainers can delete posts and replies in this forum.'**
+  String get maintainersCanDeletePosts;
+
+  /// Text in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No maintainers yet.'**
+  String get noMaintainersYet;
+
+  /// Tooltip in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// HintText in forum_thread_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add by rider UID'**
+  String get addByRiderUid;
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open forum: {e}'**
+  String couldNotOpenForum(Object e);
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your bikes'**
+  String get yourBikes;
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a bike to your garage to see its forum here.'**
+  String get addBikeGarageSee;
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider forums'**
+  String get riderForums;
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No rider-made forums yet. Create the first one.'**
+  String get noRiderMadeForums;
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a forum'**
+  String get findForum;
+
+  /// HintText in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a brand, e.g. Yamaha'**
+  String get searchBrandEG;
+
+  /// Tooltip in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search forums'**
+  String get searchForums;
+
+  /// Label in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Brands'**
+  String get brands;
+
+  /// Label in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Topics'**
+  String get topics;
+
+  /// Text in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{postCount} posts · {followerCount} followers'**
+  String postsFollowers(Object postCount, Object followerCount);
+
+  /// Tooltip in forums_home_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notificationSettings;
+
+  /// Tooltip in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get newMessage;
+
+  /// Text in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'New Message'**
+  String get newMessageTitle;
+
+  /// Text in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get noMessagesYet;
+
+  /// Text in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a Conversation'**
+  String get startConversation;
+
+  /// Text in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// Text in chat_list_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Say hi!'**
+  String get sayHi;
+
+  /// HintText in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search rider by @username or email...'**
+  String get searchRiderByUsername;
+
+  /// Text in chat_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No riders found for \"{text}\"'**
+  String noRidersFoundFor(Object text);
+
+  /// Label in chat_room_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// Text in chat_room_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get chat;
+
+  /// Text in chat_room_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t message this rider'**
+  String get cantMessageThisRider;
+
+  /// HintText in chat_room_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Message...'**
+  String get messageHint;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam or misleading'**
+  String get spamMisleading;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or bullying'**
+  String get harassmentBullying;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Hate speech'**
+  String get hateSpeech;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Inappropriate content'**
+  String get inappropriateContent;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted successfully. We will review it shortly.'**
+  String get reportSubmittedSuccessfullyWe;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit report: {e}'**
+  String failedSubmitReport(Object e);
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get report;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Why are you reporting this?'**
+  String get whyReportingThis;
+
+  /// LabelText in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional details (optional)'**
+  String get additionalDetailsOptional;
+
+  /// Text in report_bottom_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Report'**
+  String get submitReport;
+
+  /// Post audience option: visible to everyone on ThrottleIQ.
+  ///
+  /// In en, this message translates to:
+  /// **'Public'**
+  String get audiencePublic;
+
+  /// Post audience option: visible to people who follow the rider.
+  ///
+  /// In en, this message translates to:
+  /// **'Followers'**
+  String get audienceFollowers;
+
+  /// Post audience option: visible to riders who follow each other.
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual'**
+  String get audienceMutual;
+
+  /// Report reason option (label only; the stored value stays English).
+  ///
+  /// In en, this message translates to:
+  /// **'Self-harm'**
+  String get selfHarm;
+
+  /// Report reason option (label only; the stored value stays English).
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get otherReason;
+
+  /// Message body sent with the live-ride link when the rider shares it (the rider's own outgoing text).
+  ///
+  /// In en, this message translates to:
+  /// **'Follow my ride live: {url}'**
+  String followMyRideLive(String url);
 }
 
 class _AppLocalizationsDelegate

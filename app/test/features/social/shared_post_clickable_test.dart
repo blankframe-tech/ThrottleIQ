@@ -14,6 +14,7 @@ import 'package:throttleiq/features/social/domain/entities/shared_ride_entity.da
 import 'package:throttleiq/features/social/presentation/providers/ride_feed_provider.dart';
 import 'package:throttleiq/features/social/presentation/screens/social_screen.dart';
 import 'package:throttleiq/shared/widgets/ride_route_map.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 final Uint8List _kTransparentPng = Uint8List.fromList([
   0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
@@ -277,6 +278,8 @@ void main() {
           blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
         ],
         child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),
       ),
@@ -328,6 +331,8 @@ void main() {
           blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
         ],
         child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),
       ),

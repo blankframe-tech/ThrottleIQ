@@ -14,14 +14,19 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../l10n/app_localizations.dart';
 
 const _captionMaxLength = 280;
 
-const _audienceOptions = [
-  ('public', 'Public', 'Anyone on ThrottleIQ'),
-  ('followers', 'Followers', 'People who follow you'),
-  ('mutual', 'Mutual', 'Riders you follow each other'),
-];
+/// (value stored on the post, label, description). The value is what is
+/// written to Firestore and matched by the rules, so it never changes with the
+/// rider's language; only the label and description shown here do.
+List<(String, String, String)> _audienceOptions(AppLocalizations l10n) => [
+      ('public', l10n.audiencePublic, l10n.anyoneThrottleiq),
+      ('followers', l10n.audienceFollowers, l10n.peopleWhoFollow),
+      ('mutual', l10n.audienceMutual, l10n.ridersFollowEachOther),
+    ];
 
 /// End-of-ride share step: up to [kMaxRidePhotos] photos + audience tier,
 /// reached from
@@ -79,7 +84,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     final remaining = kMaxRidePhotos - _imagePaths.length;
     if (remaining <= 0) {
       _showCapMessage(
-          'You can add up to $kMaxRidePhotos photos. Remove one to add another.');
+          context.l10n.canAddUpPhotos(kMaxRidePhotos));
       return;
     }
 
@@ -92,7 +97,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
 
     if (picked.length > remaining) {
       _showCapMessage(
-          'Only $kMaxRidePhotos photos per ride — kept the first $remaining.');
+          context.l10n.onlyPhotosPerRide(kMaxRidePhotos, remaining));
     }
   }
 
@@ -148,8 +153,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(deliveredNow
-              ? 'Ride shared'
-              : "Saved — we'll post it when you're back online"),
+              ? context.l10n.rideShared
+              : context.l10n.savedWellPostIt),
         ),
       );
       context.go('/home/social');
@@ -158,7 +163,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
       // itself), not a network problem — those are absorbed by the outbox.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to share ride: $e')),
+        SnackBar(content: Text(context.l10n.failedShareRide(e))),
       );
     } finally {
       if (mounted) setState(() => _sharing = false);
@@ -186,7 +191,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
               children: [
                 Icon(Icons.add_a_photo_outlined, color: context.palette.textTertiary, size: 32),
                 const SizedBox(height: 8),
-                Text('Add up to $kMaxRidePhotos ride or bike photos',
+                Text(context.l10n.addUpRideBike(kMaxRidePhotos),
                     style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
@@ -260,9 +265,9 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
       backgroundColor: context.palette.background,
       appBar: AppBar(
         backgroundColor: context.palette.background,
-        title: const Text('Share ride'),
+        title: Text(context.l10n.shareRide),
         leading: IconButton(
-          tooltip: 'Close',
+          tooltip: context.l10n.close,
           icon: const Icon(Icons.close),
           // Pop when there's somewhere to pop to; the "End ride + Share"
           // path arrives via context.go, so fall back to this ride's summary
@@ -286,7 +291,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: context.palette.textPrimary, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Say something about this ride',
+                hintText: context.l10n.saySomethingAboutThis,
                 hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                 counterStyle: TextStyle(color: context.palette.textTertiary, fontSize: 11),
               ),
@@ -294,7 +299,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const EditorialLabel('Photos (optional)'),
+                EditorialLabel(context.l10n.photosOptional),
                 const Spacer(),
                 Text('${_imagePaths.length}/$kMaxRidePhotos',
                     style: TextStyle(color: context.palette.textTertiary, fontSize: 12)),
@@ -303,13 +308,13 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             const SizedBox(height: 10),
             _buildPhotoPicker(),
             const SizedBox(height: 24),
-            const EditorialLabel('Who can see this'),
+            EditorialLabel(context.l10n.whoCanSeeThis),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final option in _audienceOptions)
+                for (final option in _audienceOptions(context.l10n))
                   GestureDetector(
                     onTap: () => setState(() => _audience = option.$1),
                     child: EditorialPill(
@@ -322,7 +327,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _audienceOptions.firstWhere((o) => o.$1 == _audience).$3,
+              _audienceOptions(context.l10n).firstWhere((o) => o.$1 == _audience).$3,
               style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
             ),
             const SizedBox(height: 24),
@@ -334,7 +339,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                   ? null
                   : () => context.push('/routes/save/${widget.rideId}'),
               icon: const Icon(Icons.route_outlined, size: 18),
-              label: const Text('Save as route'),
+              label: Text(context.l10n.saveAsRoute),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 44),
               ),
@@ -348,7 +353,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Share'),
+                  : Text(context.l10n.shareAction),
             ),
           ],
         ),

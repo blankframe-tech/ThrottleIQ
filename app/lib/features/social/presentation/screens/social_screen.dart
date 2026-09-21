@@ -30,6 +30,7 @@ import '../../../../shared/widgets/notification_bell_button.dart';
 import '../providers/ride_feed_provider.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// How long the header search waits after the last keystroke before querying.
 /// Rider search runs a Firestore prefix query per keystroke otherwise.
@@ -129,7 +130,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 filled: true,
                 fillColor: context.palette.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                hintText: 'Search riders and forums',
+                hintText: context.l10n.searchRidersForums,
                 hintStyle:
                     TextStyle(color: context.palette.textTertiary, fontSize: 14),
                 prefixIcon: Icon(Icons.search,
@@ -137,7 +138,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 suffixIcon: _controller.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Close',
+                        tooltip: context.l10n.close,
                         icon: Icon(Icons.close,
                             color: context.palette.textSecondary, size: 18),
                         onPressed: _clear,
@@ -161,7 +162,7 @@ class _SocialScreenState extends State<SocialScreen> {
             IconButton(
               icon: const Icon(Icons.chat_bubble_outline),
               color: context.palette.primary,
-              tooltip: 'Messages',
+              tooltip: context.l10n.messages,
               onPressed: () => context.push('/chats'),
             ),
             // Scoped Consumer so an unread-count change rebuilds only the
@@ -175,9 +176,9 @@ class _SocialScreenState extends State<SocialScreen> {
             labelColor: context.palette.primary,
             unselectedLabelColor: context.palette.textSecondary,
             indicatorColor: context.palette.primary,
-            tabs: const [
-              Tab(text: 'Feed'),
-              Tab(text: 'Forums'),
+            tabs: [
+              Tab(text: context.l10n.feed),
+              Tab(text: context.l10n.forums),
             ],
           ),
         ),
@@ -230,7 +231,7 @@ class _SearchResults extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Text(
-            'Nothing found for "$query".\nTry a @username, an email, or a forum name.',
+            context.l10n.nothingFoundTryUsername(query),
             textAlign: TextAlign.center,
             style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
           ),
@@ -246,9 +247,9 @@ class _SearchResults extends ConsumerWidget {
         if (ridersAsync.isLoading)
           const _SectionSpinner()
         else if (ridersAsync.hasError)
-          _SectionMessage('Couldn\'t search riders: ${ridersAsync.error}')
+          _SectionMessage(context.l10n.couldntSearchRiders(ridersAsync.error ?? ''))
         else if (riders.isEmpty)
-          const _SectionMessage('No riders match that.')
+          _SectionMessage(context.l10n.noRidersMatchThat)
         else
           for (final rider in riders) ...[
             _RiderResultTile(rider: rider),
@@ -260,9 +261,9 @@ class _SearchResults extends ConsumerWidget {
         if (forumsAsync.isLoading)
           const _SectionSpinner()
         else if (forumsAsync.hasError)
-          _SectionMessage('Couldn\'t search forums: ${forumsAsync.error}')
+          _SectionMessage(context.l10n.couldntSearchForums(forumsAsync.error ?? ''))
         else if (forums.isEmpty)
-          const _SectionMessage('No forums match that.')
+          _SectionMessage(context.l10n.noForumsMatchThat)
         else
           for (final forum in forums) ...[
             _ForumResultTile(forum: forum),
@@ -336,7 +337,7 @@ class _ForumResultTile extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: context.palette.textPrimary)),
                   Text(
-                      '${forum.followerCount} followers · ${forum.postCount} posts',
+                      context.l10n.followersPosts(forum.followerCount, forum.postCount),
                       style: TextStyle(
                           fontSize: 12, color: context.palette.textSecondary)),
                 ],
@@ -467,15 +468,15 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                         const SizedBox(height: 16),
                         Text(
                             following
-                                ? 'Nothing from your riders yet'
-                                : 'No rides yet',
+                                ? context.l10n.nothingFromRidersYet
+                                : context.l10n.noRidesYet,
                             style: TextStyle(
                                 color: context.palette.textSecondary, fontSize: 16)),
                         const SizedBox(height: 8),
                         Text(
                             following
-                                ? 'Search for riders above and follow them to fill this in.'
-                                : 'Share a ride from its summary screen to get things started.',
+                                ? context.l10n.searchRidersAboveFollow
+                                : context.l10n.shareRideFromIts,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: context.palette.textTertiary, fontSize: 14)),
@@ -555,7 +556,7 @@ class _FeedFooter extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
             const SizedBox(height: 8),
-            OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+            OutlinedButton(onPressed: onRetry, child: Text(context.l10n.tryAgain)),
           ],
         ),
       );
@@ -563,7 +564,7 @@ class _FeedFooter extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
-        child: Text("You're all caught up",
+        child: Text(context.l10n.youreAllCaughtUp,
             style: TextStyle(color: context.palette.textTertiary, fontSize: 13)),
       ),
     );
@@ -635,7 +636,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to post comment: $e')),
+        SnackBar(content: Text(context.l10n.failedPostComment(e))),
       );
     }
   }
@@ -718,9 +719,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
                             }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'report',
-                              child: Text('Report Ride'),
+                              child: Text(context.l10n.reportRide),
                             ),
                           ],
                         ),
@@ -752,7 +753,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         _stat('${ride.durationMinutes} min', 'Duration'),
                         _divider(),
                         _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-                            'Max Speed'),
+                            context.l10n.maxSpeed),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -761,7 +762,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                     Row(
                       children: [
                         IconButton(
-                          tooltip: 'Upvote',
+                          tooltip: context.l10n.upvote,
                           padding: EdgeInsets.zero,
                           constraints:
                               const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -782,7 +783,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                                 fontWeight: FontWeight.w600,
                                 color: context.palette.textPrimary)),
                         IconButton(
-                          tooltip: 'Downvote',
+                          tooltip: context.l10n.downvote,
                           padding: EdgeInsets.zero,
                           constraints:
                               const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -830,7 +831,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Details',
+                            Text(context.l10n.details,
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: context.palette.primary,
@@ -915,7 +916,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
         else if ((_comments ?? const []).isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text('No comments yet',
+            child: Text(context.l10n.noCommentsYet,
                 style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
           )
         else
@@ -949,14 +950,14 @@ class _RideCardState extends ConsumerState<_RideCard> {
                 style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: 'Add a comment...',
+                  hintText: context.l10n.addComment,
                   hintStyle: TextStyle(color: context.palette.textTertiary),
                 ),
                 onSubmitted: (_) => _submitComment(),
               ),
             ),
             IconButton(
-              tooltip: 'Send',
+              tooltip: context.l10n.send,
               icon: Icon(Icons.send, color: context.palette.primary, size: 20),
               onPressed: _submitComment,
             ),
@@ -1257,7 +1258,7 @@ class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
             child: Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                tooltip: 'Close',
+                tooltip: context.l10n.close,
                 icon: const Icon(Icons.close, color: Colors.white, size: 28),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -1362,7 +1363,7 @@ class _RiderResultTile extends ConsumerWidget {
                     ref.read(notificationRepositoryProvider).notifyFollow(
                           toUid: rider.uid,
                           fromUid: myUid,
-                          fromName: me?.bestName ?? 'A rider',
+                          fromName: me?.bestName ?? context.l10n.aRider,
                           fromPhotoUrl: me?.photoUrl,
                         );
                   }
@@ -1371,7 +1372,7 @@ class _RiderResultTile extends ConsumerWidget {
                   minimumSize: const Size(0, 32),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                child: Text(isFollowing ? 'Following' : 'Follow'),
+                child: Text(isFollowing ? context.l10n.following : context.l10n.follow),
               ),
             ),
         ],

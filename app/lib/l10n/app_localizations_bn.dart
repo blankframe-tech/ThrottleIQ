@@ -1370,4 +1370,627 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get addBikeBeforeRecording =>
       'রাইড রেকর্ড করার আগে একটি বাইক যোগ করুন।';
+
+  @override
+  String get aRider => 'একজন রাইডার';
+
+  @override
+  String livePositionsUnavailable(Object e) {
+    return 'লাইভ পজিশন পাওয়া যাচ্ছে না: $e';
+  }
+
+  @override
+  String get locationPermissionOffGroup =>
+      'লোকেশন অনুমতি বন্ধ — গ্রুপ আপনাকে দেখতে পাচ্ছে না। আপনি তাদের দেখতে পাচ্ছেন।';
+
+  @override
+  String locationUnavailable(Object e) {
+    return 'লোকেশন পাওয়া যাচ্ছে না: $e';
+  }
+
+  @override
+  String get leaveGroupRide => 'গ্রুপ রাইড ছেড়ে যাবেন?';
+
+  @override
+  String get othersStopSeeingPosition =>
+      'অন্যরা আর আপনার অবস্থান দেখতে পাবে না। আপনার নিজের রাইড রেকর্ডিং চলতেই থাকবে — রাইড স্ক্রিন থেকে সেটি শেষ করুন।';
+
+  @override
+  String get stay => 'থাকুন';
+
+  @override
+  String get leave => 'ছেড়ে যান';
+
+  @override
+  String couldntLeave(Object e) {
+    return 'ছেড়ে যাওয়া যায়নি: $e';
+  }
+
+  @override
+  String get microphoneAccessOffCan =>
+      'মাইক্রোফোন বন্ধ আছে — আপনি এখনও গ্রুপের কথা শুনতে পাবেন।';
+
+  @override
+  String couldntStartRecording(Object e) {
+    return 'রেকর্ডিং শুরু করা যায়নি: $e';
+  }
+
+  @override
+  String couldntSendVoiceNote(Object e) {
+    return 'ভয়েস নোট পাঠানো যায়নি: $e';
+  }
+
+  @override
+  String get groupRide => 'গ্রুপ রাইড';
+
+  @override
+  String get thisGroupRideNo => 'এই গ্রুপ রাইডটি আর নেই।';
+
+  @override
+  String get recordingReleaseSend => 'রেকর্ড হচ্ছে — পাঠাতে ছেড়ে দিন';
+
+  @override
+  String playing(Object note) {
+    return '$note চলছে…';
+  }
+
+  @override
+  String get holdTalk => 'কথা বলতে ধরে রাখুন';
+
+  @override
+  String get unmuteVoiceNotes => 'ভয়েস নোট আনমিউট করুন';
+
+  @override
+  String get muteVoiceNotes => 'ভয়েস নোট মিউট করুন';
+
+  @override
+  String get nobodyThisRideYet => 'এই রাইডে এখনো কেউ নেই।';
+
+  @override
+  String ridingJoined(Object joinedCount) {
+    return 'রাইডে আছেন — $joinedCount';
+  }
+
+  @override
+  String invitedWaiting(Object pendingCount) {
+    return 'আমন্ত্রিত — $pendingCount জন অপেক্ষায়';
+  }
+
+  @override
+  String get hasntJoinedYet => 'এখনো যোগ দেননি';
+
+  @override
+  String you(Object userName) {
+    return '$userName (আপনি)';
+  }
+
+  @override
+  String get waitingFirstPosition => 'প্রথম অবস্থানের অপেক্ষায়…';
+
+  @override
+  String get deleteSharedRide => 'শেয়ার করা রাইড মুছবেন?';
+
+  @override
+  String get thisRemovesItFrom =>
+      'এতে সবার ফিড থেকে এটি সরে যাবে। আপনার ফোনের রাইড ইতিহাস অপরিবর্তিত থাকবে।';
+
+  @override
+  String get delete => 'মুছুন';
+
+  @override
+  String get mySharedRides => 'আমার শেয়ার করা রাইড';
+
+  @override
+  String get haventSharedAnyRides => 'আপনি এখনো কোনো রাইড শেয়ার করেননি';
+
+  @override
+  String get notifications => 'নোটিফিকেশন';
+
+  @override
+  String get noNotificationsYet => 'এখনো কোনো নোটিফিকেশন নেই';
+
+  @override
+  String couldntJoinRide(Object e) {
+    return 'রাইডে যোগ দেওয়া যায়নি: $e';
+  }
+
+  @override
+  String tapJoin(Object relativeTime) {
+    return '$relativeTime · যোগ দিতে ট্যাপ করুন';
+  }
+
+  @override
+  String get anyoneThrottleiq => 'ThrottleIQ-র যে কেউ';
+
+  @override
+  String get peopleWhoFollow => 'যারা আপনাকে ফলো করে';
+
+  @override
+  String get ridersFollowEachOther => 'যাদের সাথে আপনারা পরস্পরকে ফলো করেন';
+
+  @override
+  String canAddUpPhotos(Object maxRidePhotos) {
+    return 'আপনি সর্বোচ্চ $maxRidePhotosটি ছবি যোগ করতে পারবেন। আরেকটি যোগ করতে একটি সরিয়ে দিন।';
+  }
+
+  @override
+  String onlyPhotosPerRide(Object maxRidePhotos, Object remaining) {
+    return 'প্রতি রাইডে শুধু $maxRidePhotosটি ছবি — প্রথম $remainingটি রাখা হয়েছে।';
+  }
+
+  @override
+  String get rideShared => 'রাইড শেয়ার হয়েছে';
+
+  @override
+  String get savedWellPostIt => 'সেভ হয়েছে — অনলাইনে ফিরলে আমরা পোস্ট করে দেব';
+
+  @override
+  String failedShareRide(Object e) {
+    return 'রাইড শেয়ার করা যায়নি: $e';
+  }
+
+  @override
+  String addUpRideBike(Object maxRidePhotos) {
+    return 'রাইড বা বাইকের সর্বোচ্চ $maxRidePhotosটি ছবি যোগ করুন';
+  }
+
+  @override
+  String get shareRide => 'রাইড শেয়ার করুন';
+
+  @override
+  String get saySomethingAboutThis => 'এই রাইড নিয়ে কিছু লিখুন';
+
+  @override
+  String get photosOptional => 'ছবি (ঐচ্ছিক)';
+
+  @override
+  String get whoCanSeeThis => 'কে এটি দেখতে পাবে';
+
+  @override
+  String get saveAsRoute => 'রুট হিসেবে সেভ করুন';
+
+  @override
+  String get routeSavedMyRoutes => 'রুটটি আমার রুটে সেভ হয়েছে!';
+
+  @override
+  String failedPostComment(Object e) {
+    return 'কমেন্ট পোস্ট করা যায়নি: $e';
+  }
+
+  @override
+  String voteFailed(Object e) {
+    return 'ভোট দেওয়া যায়নি: $e';
+  }
+
+  @override
+  String couldNotSaveRoute(Object e) {
+    return 'রুট সেভ করা যায়নি: $e';
+  }
+
+  @override
+  String get rideDetails => 'রাইডের বিবরণ';
+
+  @override
+  String get rideNotFoundRemoved => 'রাইড পাওয়া যায়নি অথবা সরানো হয়েছে';
+
+  @override
+  String get reportRide => 'রাইড রিপোর্ট করুন';
+
+  @override
+  String get noGpsTrackAvailable => 'এই রাইডের কোনো GPS ট্র্যাক নেই';
+
+  @override
+  String get speedPerformanceDetails => 'গতি ও পারফরম্যান্সের বিবরণ';
+
+  @override
+  String get maxSpeed => 'সর্বোচ্চ গতি';
+
+  @override
+  String get duration => 'সময়কাল';
+
+  @override
+  String get ridingPace => 'রাইডিং পেস';
+
+  @override
+  String trackPoints(Object polylineCount) {
+    return '$polylineCountটি ট্র্যাক পয়েন্ট';
+  }
+
+  @override
+  String get startColon => 'শুরু: ';
+
+  @override
+  String get finishColon => 'শেষ: ';
+
+  @override
+  String get ridePhotos => 'রাইডের ছবি';
+
+  @override
+  String get upvote => 'আপভোট';
+
+  @override
+  String get downvote => 'ডাউনভোট';
+
+  @override
+  String commentsCount(Object comments) {
+    return '$commentsটি কমেন্ট';
+  }
+
+  @override
+  String get noCommentsYetBe =>
+      'এখনো কোনো কমেন্ট নেই। প্রথম কমেন্টটি আপনিই করুন!';
+
+  @override
+  String get addComment => 'কমেন্ট লিখুন...';
+
+  @override
+  String get send => 'পাঠান';
+
+  @override
+  String get searchRidersForums => 'রাইডার ও ফোরাম খুঁজুন';
+
+  @override
+  String get messages => 'মেসেজ';
+
+  @override
+  String get feed => 'ফিড';
+
+  @override
+  String get forums => 'ফোরাম';
+
+  @override
+  String nothingFoundTryUsername(Object query) {
+    return '\"$query\" এর জন্য কিছু পাওয়া যায়নি।\\n@ইউজারনেম, ইমেইল বা ফোরামের নাম দিয়ে চেষ্টা করুন।';
+  }
+
+  @override
+  String couldntSearchRiders(Object error) {
+    return 'রাইডার খোঁজা যায়নি: $error';
+  }
+
+  @override
+  String get noRidersMatchThat => 'এমন কোনো রাইডার নেই।';
+
+  @override
+  String couldntSearchForums(Object error) {
+    return 'ফোরাম খোঁজা যায়নি: $error';
+  }
+
+  @override
+  String get noForumsMatchThat => 'এমন কোনো ফোরাম নেই।';
+
+  @override
+  String followersPosts(Object followerCount, Object postCount) {
+    return '$followerCount ফলোয়ার · $postCountটি পোস্ট';
+  }
+
+  @override
+  String get nothingFromRidersYet => 'আপনার রাইডারদের কাছ থেকে এখনো কিছু নেই';
+
+  @override
+  String get noRidesYet => 'এখনো কোনো রাইড নেই';
+
+  @override
+  String get searchRidersAboveFollow =>
+      'এটি ভরাতে উপরে রাইডার খুঁজে তাদের ফলো করুন।';
+
+  @override
+  String get shareRideFromIts =>
+      'শুরু করতে রাইডের সারসংক্ষেপ স্ক্রিন থেকে একটি রাইড শেয়ার করুন।';
+
+  @override
+  String get tryAgain => 'আবার চেষ্টা করুন';
+
+  @override
+  String get youreAllCaughtUp => 'সবকিছু দেখা হয়ে গেছে';
+
+  @override
+  String get details => 'বিবরণ';
+
+  @override
+  String get noCommentsYet => 'এখনো কোনো কমেন্ট নেই';
+
+  @override
+  String get following => 'ফলো করছেন';
+
+  @override
+  String get follow => 'ফলো করুন';
+
+  @override
+  String get rideWithFriends => 'বন্ধুদের সাথে রাইড';
+
+  @override
+  String selectedCount(Object selectedCount, Object maxGroupRideFriends) {
+    return '$selectedCount/$maxGroupRideFriends জন নির্বাচিত';
+  }
+
+  @override
+  String pickRidersRideStarts(
+      Object minGroupRideFriends, Object maxGroupRideFriends) {
+    return '$minGroupRideFriends–$maxGroupRideFriends জন রাইডার বেছে নিন। আপনার রাইড সাথে সাথেই রেকর্ড শুরু করবে; তারা নোটিফিকেশন থেকে যোগ দেবে।';
+  }
+
+  @override
+  String get usernameEmail => '@ইউজারনেম বা ইমেইল';
+
+  @override
+  String get startGroupRide => 'গ্রুপ রাইড শুরু করুন';
+
+  @override
+  String startGroupRideWithCount(Object selectedCount) {
+    return '$selectedCount জনকে নিয়ে গ্রুপ রাইড শুরু করুন';
+  }
+
+  @override
+  String get searchByUsernameEmail => '@ইউজারনেম বা ইমেইল দিয়ে খুঁজুন';
+
+  @override
+  String get noRidersFound => 'কোনো রাইডার পাওয়া যায়নি';
+
+  @override
+  String inviterGroupRide(Object inviterName) {
+    return '$inviterName-এর গ্রুপ রাইড';
+  }
+
+  @override
+  String couldntStartGroupRide(Object e) {
+    return 'গ্রুপ রাইড শুরু করা যায়নি: $e';
+  }
+
+  @override
+  String get signCreateForum => 'ফোরাম তৈরি করতে সাইন ইন করুন।';
+
+  @override
+  String couldNotCreateForum(Object e) {
+    return 'ফোরাম তৈরি করা যায়নি: $e';
+  }
+
+  @override
+  String get createForum => 'একটি ফোরাম তৈরি করুন';
+
+  @override
+  String get eGSundayBreakfast => 'যেমন: রবিবারের ব্রেকফাস্ট রাইড';
+
+  @override
+  String get descriptionOptional => 'বিবরণ (ঐচ্ছিক)';
+
+  @override
+  String get whatsThisForumAbout => 'এই ফোরাম কী নিয়ে?';
+
+  @override
+  String get youllBeAbleModerate =>
+      'এখানে আপনি পোস্ট মডারেট করতে পারবেন এবং অন্য রাইডারদের মেইনটেইনার হিসেবে যোগ করতে পারবেন।';
+
+  @override
+  String get create => 'তৈরি করুন';
+
+  @override
+  String failedPostReply(Object e) {
+    return 'রিপ্লাই পোস্ট করা যায়নি: $e';
+  }
+
+  @override
+  String get post => 'পোস্ট';
+
+  @override
+  String get postNotFound => 'পোস্ট পাওয়া যায়নি';
+
+  @override
+  String get noRepliesYetBe =>
+      'এখনো কোনো রিপ্লাই নেই — প্রথম সাহায্যকারী আপনিই হোন।';
+
+  @override
+  String get writeReply => 'রিপ্লাই লিখুন...';
+
+  @override
+  String get forum => 'ফোরাম';
+
+  @override
+  String get unfollow => 'আনফলো করুন';
+
+  @override
+  String get manageMaintainers => 'মেইনটেইনার পরিচালনা করুন';
+
+  @override
+  String get newPost => 'নতুন পোস্ট';
+
+  @override
+  String get noPostsYet => 'এখনো কোনো পোস্ট নেই';
+
+  @override
+  String get beFirstAskQuestion => 'প্রথম প্রশ্নটি করুন বা কিছু শেয়ার করুন।';
+
+  @override
+  String get title => 'শিরোনাম';
+
+  @override
+  String get titleRequired => 'শিরোনাম দিতে হবে';
+
+  @override
+  String get whatsGoing => 'কী হচ্ছে?';
+
+  @override
+  String get saySomethingBeforePosting => 'পোস্ট করার আগে কিছু লিখুন';
+
+  @override
+  String get couldntRecordVoteCheck =>
+      'আপনার ভোট রেকর্ড করা যায়নি — সংযোগ দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get deletePostQuestion => 'পোস্ট মুছবেন?';
+
+  @override
+  String get thisRemovesPostIts =>
+      'এতে ফোরাম থেকে পোস্ট ও তার সব রিপ্লাই মুছে যাবে। এটি আর ফিরিয়ে আনা যাবে না।';
+
+  @override
+  String couldNotDelete(Object e) {
+    return 'মুছে ফেলা যায়নি: $e';
+  }
+
+  @override
+  String get deletePost => 'পোস্ট মুছুন';
+
+  @override
+  String get reportPost => 'পোস্ট রিপোর্ট করুন';
+
+  @override
+  String fromUser(Object displayName) {
+    return '$displayName এর কাছ থেকে';
+  }
+
+  @override
+  String couldNotUpdateMaintainers(Object e) {
+    return 'মেইনটেইনার হালনাগাদ করা যায়নি: $e';
+  }
+
+  @override
+  String get maintainers => 'মেইনটেইনার';
+
+  @override
+  String get maintainersCanDeletePosts =>
+      'মেইনটেইনাররা এই ফোরামের পোস্ট ও রিপ্লাই মুছতে পারেন।';
+
+  @override
+  String get noMaintainersYet => 'এখনো কোনো মেইনটেইনার নেই।';
+
+  @override
+  String get remove => 'সরিয়ে দিন';
+
+  @override
+  String get addByRiderUid => 'রাইডার UID দিয়ে যোগ করুন';
+
+  @override
+  String couldNotOpenForum(Object e) {
+    return 'ফোরাম খোলা যায়নি: $e';
+  }
+
+  @override
+  String get yourBikes => 'আপনার বাইক';
+
+  @override
+  String get addBikeGarageSee =>
+      'এখানে বাইকের ফোরাম দেখতে আপনার গ্যারেজে একটি বাইক যোগ করুন।';
+
+  @override
+  String get riderForums => 'রাইডার ফোরাম';
+
+  @override
+  String get noRiderMadeForums =>
+      'এখনো কোনো রাইডার-তৈরি ফোরাম নেই। প্রথমটি আপনিই তৈরি করুন।';
+
+  @override
+  String get findForum => 'ফোরাম খুঁজুন';
+
+  @override
+  String get searchBrandEG => 'ব্র্যান্ড খুঁজুন, যেমন Yamaha';
+
+  @override
+  String get searchForums => 'ফোরাম খুঁজুন';
+
+  @override
+  String get brands => 'ব্র্যান্ড';
+
+  @override
+  String get topics => 'বিষয়';
+
+  @override
+  String postsFollowers(Object postCount, Object followerCount) {
+    return '$postCountটি পোস্ট · $followerCount ফলোয়ার';
+  }
+
+  @override
+  String get notificationSettings => 'নোটিফিকেশন সেটিংস';
+
+  @override
+  String get newMessage => 'নতুন মেসেজ';
+
+  @override
+  String get newMessageTitle => 'নতুন মেসেজ';
+
+  @override
+  String get noMessagesYet => 'এখনো কোনো মেসেজ নেই';
+
+  @override
+  String get startConversation => 'কথোপকথন শুরু করুন';
+
+  @override
+  String get loading => 'লোড হচ্ছে...';
+
+  @override
+  String get sayHi => 'হাই বলুন!';
+
+  @override
+  String get searchRiderByUsername =>
+      '@ইউজারনেম বা ইমেইল দিয়ে রাইডার খুঁজুন...';
+
+  @override
+  String noRidersFoundFor(Object text) {
+    return '\"$text\" এর জন্য কোনো রাইডার পাওয়া যায়নি';
+  }
+
+  @override
+  String get retry => 'আবার চেষ্টা';
+
+  @override
+  String get chat => 'চ্যাট';
+
+  @override
+  String get cantMessageThisRider => 'আপনি এই রাইডারকে মেসেজ করতে পারবেন না';
+
+  @override
+  String get messageHint => 'মেসেজ...';
+
+  @override
+  String get spamMisleading => 'স্প্যাম বা বিভ্রান্তিকর';
+
+  @override
+  String get harassmentBullying => 'হয়রানি বা বুলিং';
+
+  @override
+  String get hateSpeech => 'ঘৃণামূলক বক্তব্য';
+
+  @override
+  String get inappropriateContent => 'অনুপযুক্ত কনটেন্ট';
+
+  @override
+  String get reportSubmittedSuccessfullyWe =>
+      'রিপোর্ট সফলভাবে জমা হয়েছে। আমরা শীঘ্রই এটি পর্যালোচনা করব।';
+
+  @override
+  String failedSubmitReport(Object e) {
+    return 'রিপোর্ট জমা দেওয়া যায়নি: $e';
+  }
+
+  @override
+  String get report => 'রিপোর্ট';
+
+  @override
+  String get whyReportingThis => 'কেন এটি রিপোর্ট করছেন?';
+
+  @override
+  String get additionalDetailsOptional => 'অতিরিক্ত বিবরণ (ঐচ্ছিক)';
+
+  @override
+  String get submitReport => 'রিপোর্ট জমা দিন';
+
+  @override
+  String get audiencePublic => 'পাবলিক';
+
+  @override
+  String get audienceFollowers => 'ফলোয়ার';
+
+  @override
+  String get audienceMutual => 'পারস্পরিক';
+
+  @override
+  String get selfHarm => 'নিজের ক্ষতি করা';
+
+  @override
+  String get otherReason => 'অন্যান্য';
+
+  @override
+  String followMyRideLive(String url) {
+    return 'আমার রাইড লাইভ অনুসরণ করুন: $url';
+  }
 }

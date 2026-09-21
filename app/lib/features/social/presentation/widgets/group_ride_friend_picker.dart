@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../domain/utilities/group_ride_selection.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Modal sheet that searches riders by @username (or exact email) and lets the
 /// rider pick between [kMinGroupRideFriends] and [kMaxGroupRideFriends] of
@@ -137,7 +138,7 @@ class _GroupRideFriendPickerSheetState
               children: [
                 Expanded(
                   child: Text(
-                    'Ride with friends',
+                    context.l10n.rideWithFriends,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -156,7 +157,7 @@ class _GroupRideFriendPickerSheetState
                         BorderRadius.circular(context.shape.radiusFull),
                   ),
                   child: Text(
-                    '${_selected.length}/$kMaxGroupRideFriends selected',
+                    context.l10n.selectedCount(_selected.length, kMaxGroupRideFriends),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -170,9 +171,7 @@ class _GroupRideFriendPickerSheetState
             ),
             const SizedBox(height: 4),
             Text(
-              'Pick $kMinGroupRideFriends–$kMaxGroupRideFriends riders. '
-              'Your ride starts recording right away; they join from their '
-              'notifications.',
+              context.l10n.pickRidersRideStarts(kMinGroupRideFriends, kMaxGroupRideFriends),
               style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 12),
@@ -180,9 +179,9 @@ class _GroupRideFriendPickerSheetState
               controller: _controller,
               autofocus: true,
               style: TextStyle(color: context.palette.textPrimary),
-              decoration: const InputDecoration(
-                hintText: '@username or email',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: context.l10n.usernameEmail,
+                prefixIcon: const Icon(Icons.search),
               ),
               onChanged: _search,
             ),
@@ -224,8 +223,8 @@ class _GroupRideFriendPickerSheetState
                     : () => Navigator.of(context).pop(_selected.values.toList()),
                 child: Text(
                   _selected.isEmpty
-                      ? 'Start group ride'
-                      : 'Start group ride with ${_selected.length}',
+                      ? context.l10n.startGroupRide
+                      : context.l10n.startGroupRideWithCount(_selected.length),
                 ),
               ),
             ),
@@ -243,8 +242,8 @@ class _GroupRideFriendPickerSheetState
       return Center(
         child: Text(
           _controller.text.trim().isEmpty
-              ? 'Search by @username or email'
-              : 'No riders found',
+              ? context.l10n.searchByUsernameEmail
+              : context.l10n.noRidersFound,
           style: TextStyle(color: context.palette.textSecondary),
         ),
       );

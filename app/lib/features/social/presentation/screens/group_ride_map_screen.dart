@@ -25,6 +25,7 @@ import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// How often this device publishes its own position to the group.
 ///
@@ -151,7 +152,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       },
       onError: (Object e) {
         if (!mounted) return;
-        setState(() => _locationError = 'Live positions unavailable: $e');
+        setState(() => _locationError = context.l10n.livePositionsUnavailable(e));
       },
     );
 
@@ -183,14 +184,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         // else move, they just don't appear on the group's maps.
         _locationError = granted
             ? null
-            : 'Location permission is off — the group can\'t see you. '
-                'You can still see them.';
+            : context.l10n.locationPermissionOffGroup;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _hasLocationPermission = false;
-        _locationError = 'Location unavailable: $e';
+        _locationError = context.l10n.locationUnavailable(e);
       });
     }
   }
@@ -244,19 +244,18 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave group ride?'),
-        content: const Text(
-          'The others stop seeing your position. Your own ride recording '
-          'keeps running — end it from the ride screen.',
+        title: Text(dialogContext.l10n.leaveGroupRide),
+        content: Text(
+          dialogContext.l10n.othersStopSeeingPosition,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Stay'),
+            child: Text(dialogContext.l10n.stay),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('Leave', style: TextStyle(color: dialogContext.palette.danger)),
+            child: Text(dialogContext.l10n.leave, style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -279,7 +278,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       setState(() => _leaving = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text("Couldn't leave: $e")));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.couldntLeave(e))));
       return;
     }
     if (!mounted) return;
@@ -409,7 +408,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     if (!mounted) return;
     if (!status.isGranted) {
       setState(() => _voiceNoteError =
-          'Microphone access is off — you can still hear the group.');
+          context.l10n.microphoneAccessOffCan);
       return;
     }
 
@@ -445,7 +444,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     } catch (e) {
       await _deactivateVoiceAudioSession();
       if (!mounted) return;
-      setState(() => _voiceNoteError = "Couldn't start recording: $e");
+      setState(() => _voiceNoteError = context.l10n.couldntStartRecording(e));
     }
   }
 
@@ -500,7 +499,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
           );
     } catch (e) {
       if (mounted) {
-        setState(() => _voiceNoteError = "Couldn't send voice note: $e");
+        setState(() => _voiceNoteError = context.l10n.couldntSendVoiceNote(e));
       }
     } finally {
       unawaited(file.delete().catchError((_) => file));
@@ -615,11 +614,11 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Group ride'),
+        title: Text(context.l10n.groupRide),
         actions: [
           TextButton(
             onPressed: _leaving ? null : _leave,
-            child: Text('Leave', style: TextStyle(color: context.palette.danger)),
+            child: Text(context.l10n.leave, style: TextStyle(color: context.palette.danger)),
           ),
         ],
       ),
@@ -629,8 +628,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         error: (e, _) => _ErrorState(message: mapFirestoreError(e)),
         data: (ride) {
           if (ride == null) {
-            return const _ErrorState(
-              message: 'This group ride no longer exists.',
+            return _ErrorState(
+              message: context.l10n.thisGroupRideNo,
             );
           }
 
@@ -701,12 +700,12 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Widget _buildVoiceNoteBar() {
     final busy = _isSendingVoiceNote;
     final label = _isRecordingVoiceNote
-        ? 'Recording — release to send'
+        ? context.l10n.recordingReleaseSend
         : busy
             ? 'Sending…'
             : _isPlayingVoiceNote
-                ? 'Playing ${_playingVoiceNoteSender ?? 'voice note'}…'
-                : 'Hold to talk';
+                ? context.l10n.playing(_playingVoiceNoteSender ?? 'voice note')
+                : context.l10n.holdTalk;
     final accent = _isRecordingVoiceNote ? context.palette.danger : context.palette.primary;
 
     return Container(
@@ -763,8 +762,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             IconButton(
               onPressed: _toggleVoiceNotesMuted,
               tooltip: _voiceNotesMuted
-                  ? 'Unmute voice notes'
-                  : 'Mute voice notes',
+                  ? context.l10n.unmuteVoiceNotes
+                  : context.l10n.muteVoiceNotes,
               icon: Icon(
                 _voiceNotesMuted ? Icons.volume_off : Icons.volume_up,
                 color: _voiceNotesMuted
@@ -940,7 +939,7 @@ class _MemberList extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Text(
-            'Nobody is on this ride yet.',
+            context.l10n.nobodyThisRideYet,
             style: TextStyle(color: context.palette.textSecondary),
           ),
         ),
@@ -959,7 +958,7 @@ class _MemberList extends StatelessWidget {
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         children: [
           Text(
-            'Riding — ${joined.length}',
+            context.l10n.ridingJoined(joined.length),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -972,7 +971,7 @@ class _MemberList extends StatelessWidget {
           if (pending.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              'Invited — ${pending.length} waiting',
+              context.l10n.invitedWaiting(pending.length),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -996,7 +995,7 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = view.isPending
-        ? 'Hasn\'t joined yet'
+        ? context.l10n.hasntJoinedYet
         : view.isDeclined
             ? 'Declined'
             : view.lastSeenLabel;
@@ -1027,7 +1026,7 @@ class _MemberRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              view.isMe ? '${view.member.userName} (you)' : view.member.userName,
+              view.isMe ? context.l10n.you(view.member.userName) : view.member.userName,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
@@ -1092,7 +1091,7 @@ class _NoPositionsHint extends StatelessWidget {
           border: Border.all(color: context.palette.border),
         ),
         child: Text(
-          'Waiting for the first position…',
+          context.l10n.waitingFirstPosition,
           style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
         ),
       ),

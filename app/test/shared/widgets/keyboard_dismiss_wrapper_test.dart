@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/shared/widgets/keyboard_dismiss_wrapper.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 void main() {
   group('KeyboardDismissWrapper', () {
@@ -9,6 +10,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -49,6 +52,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -84,6 +89,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -125,6 +132,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -166,6 +175,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -202,6 +213,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -251,6 +264,8 @@ void main() {
     testWidgets('safely does nothing when no focus node is active', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),

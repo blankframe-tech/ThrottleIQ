@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/garage/domain/entities/bike_entity.dart';
 import 'package:throttleiq/features/garage/presentation/screens/bike_detail_screen.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// The destructive path of bike removal (claude_sol §2.1.1): "Delete" stays
 /// disabled until the rider types the bike's name.
@@ -19,6 +20,8 @@ void main() {
   Future<List<bool?>> pump(WidgetTester tester) async {
     final results = <bool?>[];
     await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
       home: Builder(
         builder: (context) => TextButton(
           onPressed: () async => results.add(await showDialog<bool>(

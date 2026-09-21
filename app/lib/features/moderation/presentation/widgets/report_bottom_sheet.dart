@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/report_repository.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class ReportBottomSheet extends ConsumerStatefulWidget {
   final String reportedId;
@@ -50,7 +51,10 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
   final _detailsController = TextEditingController();
   bool _isSubmitting = false;
 
-  final List<String> _reasons = [
+  /// The reason strings are what is stored on the report and read by
+  /// moderators, so they stay English whatever the reporter's language; only
+  /// what the reporter sees is localized (see [_reasonLabel]).
+  static const List<String> _reasons = [
     'Spam or misleading',
     'Harassment or bullying',
     'Hate speech',
@@ -58,6 +62,15 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
     'Self-harm',
     'Other',
   ];
+
+  String _reasonLabel(String reason) => switch (reason) {
+        'Spam or misleading' => context.l10n.spamMisleading,
+        'Harassment or bullying' => context.l10n.harassmentBullying,
+        'Hate speech' => context.l10n.hateSpeech,
+        'Inappropriate content' => context.l10n.inappropriateContent,
+        'Self-harm' => context.l10n.selfHarm,
+        _ => context.l10n.otherReason,
+      };
 
   @override
   void dispose() {
@@ -86,14 +99,14 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Report submitted successfully. We will review it shortly.')),
+          SnackBar(content: Text(context.l10n.reportSubmittedSuccessfullyWe)),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit report: $e'), backgroundColor: context.palette.danger),
+          SnackBar(content: Text(context.l10n.failedSubmitReport(e)), backgroundColor: context.palette.danger),
         );
       }
     }
@@ -111,7 +124,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Report',
+                context.l10n.report,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -119,7 +132,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                 ),
               ),
               IconButton(
-                tooltip: 'Close',
+                tooltip: context.l10n.close,
                 icon: Icon(Icons.close, color: context.palette.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -127,7 +140,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Why are you reporting this?',
+            context.l10n.whyReportingThis,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -142,7 +155,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
               children: [
                 for (final reason in _reasons)
                   RadioListTile<String>(
-                    title: Text(reason, style: TextStyle(color: context.palette.textPrimary, fontSize: 14)),
+                    title: Text(_reasonLabel(reason), style: TextStyle(color: context.palette.textPrimary, fontSize: 14)),
                     value: reason,
                     fillColor: WidgetStatePropertyAll(context.palette.primary),
                     contentPadding: EdgeInsets.zero,
@@ -157,7 +170,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
             style: TextStyle(color: context.palette.textPrimary),
             maxLines: 3,
             decoration: InputDecoration(
-              labelText: 'Additional details (optional)',
+              labelText: context.l10n.additionalDetailsOptional,
               labelStyle: TextStyle(color: context.palette.textTertiary),
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: context.palette.border),
@@ -186,7 +199,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                : Text(context.l10n.submitReport, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

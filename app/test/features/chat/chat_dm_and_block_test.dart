@@ -9,6 +9,7 @@ import 'package:throttleiq/features/chat/presentation/providers/chat_providers.d
 import 'package:throttleiq/features/chat/presentation/screens/chat_room_screen.dart';
 import 'package:throttleiq/features/profile/domain/entities/user_profile_entity.dart';
 import 'package:throttleiq/features/profile/presentation/widgets/profile_load_error_view.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 void main() {
   group('ChatRepository.dmId', () {
@@ -49,6 +50,8 @@ void main() {
             chatBlockedProvider('other').overrideWith((ref) async => blocked),
           ],
           child: const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
             home: ChatRoomScreen(
               chatId: 'c1',
               otherUser: UserProfileEntity(uid: 'other', displayName: 'Other'),
@@ -100,6 +103,8 @@ void main() {
     testWidgets('offline view offers Retry; private view does not', (tester) async {
       var retried = 0;
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: ProfileLoadErrorView(
             failure: ProfileLoadFailure.offline,
@@ -112,6 +117,8 @@ void main() {
       expect(retried, 1);
 
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: ProfileLoadErrorView(
             failure: ProfileLoadFailure.private,

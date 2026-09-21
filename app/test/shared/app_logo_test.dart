@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/shared/widgets/app_logo.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// Pulls the asset path out of whatever `SvgPicture.asset` built.
 String assetNameOf(WidgetTester tester) {
@@ -24,7 +25,9 @@ void main() {
     // regardless of the appearance the rest of the app is using.
     testWidgets('always renders the dark mark', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: AppLogo(size: 40)),
+        const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,home: AppLogo(size: 40)),
       );
       await tester.pump();
 
@@ -38,7 +41,9 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(home: AppLogo(size: 40)),
+          child: const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,home: AppLogo(size: 40)),
         ),
       );
 

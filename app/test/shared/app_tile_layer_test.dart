@@ -4,11 +4,14 @@ import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:throttleiq/shared/widgets/app_tile_layer.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 void main() {
   Future<void> pumpMap(WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: SizedBox(
           width: 300,
           height: 300,

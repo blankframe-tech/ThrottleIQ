@@ -1729,5 +1729,919 @@
   "addBikeBeforeRecording": "Please add a bike before recording a ride.",
   "@addBikeBeforeRecording": {
     "description": "Error shown when the rider tries to record with no bike."
+  },
+  "aRider": "A rider",
+  "@aRider": {
+    "description": "FromName in notification_repository (+2 more)."
+  },
+  "livePositionsUnavailable": "Live positions unavailable: {e}",
+  "@livePositionsUnavailable": {
+    "description": "SetState in group_ride_map_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "locationPermissionOffGroup": "Location permission is off — the group can't see you. You can still see them.",
+  "@locationPermissionOffGroup": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "locationUnavailable": "Location unavailable: {e}",
+  "@locationUnavailable": {
+    "description": "Text in group_ride_map_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "leaveGroupRide": "Leave group ride?",
+  "@leaveGroupRide": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "othersStopSeeingPosition": "The others stop seeing your position. Your own ride recording keeps running — end it from the ride screen.",
+  "@othersStopSeeingPosition": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "stay": "Stay",
+  "@stay": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "leave": "Leave",
+  "@leave": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "couldntLeave": "Couldn't leave: {e}",
+  "@couldntLeave": {
+    "description": "Text in group_ride_map_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "microphoneAccessOffCan": "Microphone access is off — you can still hear the group.",
+  "@microphoneAccessOffCan": {
+    "description": "SetState in group_ride_map_screen."
+  },
+  "couldntStartRecording": "Couldn't start recording: {e}",
+  "@couldntStartRecording": {
+    "description": "SetState in group_ride_map_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldntSendVoiceNote": "Couldn't send voice note: {e}",
+  "@couldntSendVoiceNote": {
+    "description": "SetState in group_ride_map_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "groupRide": "Group ride",
+  "@groupRide": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "thisGroupRideNo": "This group ride no longer exists.",
+  "@thisGroupRideNo": {
+    "description": "Message in group_ride_map_screen."
+  },
+  "recordingReleaseSend": "Recording — release to send",
+  "@recordingReleaseSend": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "playing": "Playing {note}…",
+  "@playing": {
+    "description": "Text in group_ride_map_screen.",
+    "placeholders": {
+      "note": {
+        "type": "Object"
+      }
+    }
+  },
+  "holdTalk": "Hold to talk",
+  "@holdTalk": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "unmuteVoiceNotes": "Unmute voice notes",
+  "@unmuteVoiceNotes": {
+    "description": "Tooltip in group_ride_map_screen."
+  },
+  "muteVoiceNotes": "Mute voice notes",
+  "@muteVoiceNotes": {
+    "description": "Tooltip in group_ride_map_screen."
+  },
+  "nobodyThisRideYet": "Nobody is on this ride yet.",
+  "@nobodyThisRideYet": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "ridingJoined": "Riding — {joinedCount}",
+  "@ridingJoined": {
+    "description": "Text in group_ride_map_screen.",
+    "placeholders": {
+      "joinedCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "invitedWaiting": "Invited — {pendingCount} waiting",
+  "@invitedWaiting": {
+    "description": "Text in group_ride_map_screen.",
+    "placeholders": {
+      "pendingCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "hasntJoinedYet": "Hasn't joined yet",
+  "@hasntJoinedYet": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "you": "{userName} (you)",
+  "@you": {
+    "description": "Text in group_ride_map_screen.",
+    "placeholders": {
+      "userName": {
+        "type": "Object"
+      }
+    }
+  },
+  "waitingFirstPosition": "Waiting for the first position…",
+  "@waitingFirstPosition": {
+    "description": "Text in group_ride_map_screen."
+  },
+  "deleteSharedRide": "Delete shared ride?",
+  "@deleteSharedRide": {
+    "description": "Text in my_shared_rides_screen."
+  },
+  "thisRemovesItFrom": "This removes it from the feed for everyone. Your local ride history is unaffected.",
+  "@thisRemovesItFrom": {
+    "description": "Text in my_shared_rides_screen."
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Text in forum_thread_screen (+1 more)."
+  },
+  "mySharedRides": "My Shared Rides",
+  "@mySharedRides": {
+    "description": "Text in my_shared_rides_screen."
+  },
+  "haventSharedAnyRides": "You haven't shared any rides yet",
+  "@haventSharedAnyRides": {
+    "description": "Text in my_shared_rides_screen."
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Text in notifications_screen."
+  },
+  "noNotificationsYet": "No notifications yet",
+  "@noNotificationsYet": {
+    "description": "Text in notifications_screen."
+  },
+  "couldntJoinRide": "Couldn't join the ride: {e}",
+  "@couldntJoinRide": {
+    "description": "Text in notifications_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "tapJoin": "{relativeTime} · tap to join",
+  "@tapJoin": {
+    "description": "Text in notifications_screen.",
+    "placeholders": {
+      "relativeTime": {
+        "type": "Object"
+      }
+    }
+  },
+  "anyoneThrottleiq": "Anyone on ThrottleIQ",
+  "@anyoneThrottleiq": {
+    "description": "Text in ride_share_screen."
+  },
+  "peopleWhoFollow": "People who follow you",
+  "@peopleWhoFollow": {
+    "description": "Text in ride_share_screen."
+  },
+  "ridersFollowEachOther": "Riders you follow each other",
+  "@ridersFollowEachOther": {
+    "description": "Text in ride_share_screen."
+  },
+  "canAddUpPhotos": "You can add up to {maxRidePhotos} photos. Remove one to add another.",
+  "@canAddUpPhotos": {
+    "description": "_showCapMessage in ride_share_screen.",
+    "placeholders": {
+      "maxRidePhotos": {
+        "type": "Object"
+      }
+    }
+  },
+  "onlyPhotosPerRide": "Only {maxRidePhotos} photos per ride — kept the first {remaining}.",
+  "@onlyPhotosPerRide": {
+    "description": "_showCapMessage in ride_share_screen.",
+    "placeholders": {
+      "maxRidePhotos": {
+        "type": "Object"
+      },
+      "remaining": {
+        "type": "Object"
+      }
+    }
+  },
+  "rideShared": "Ride shared",
+  "@rideShared": {
+    "description": "Text in ride_share_screen."
+  },
+  "savedWellPostIt": "Saved — we'll post it when you're back online",
+  "@savedWellPostIt": {
+    "description": "Text in ride_share_screen."
+  },
+  "failedShareRide": "Failed to share ride: {e}",
+  "@failedShareRide": {
+    "description": "Text in ride_share_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "addUpRideBike": "Add up to {maxRidePhotos} ride or bike photos",
+  "@addUpRideBike": {
+    "description": "Text in ride_share_screen.",
+    "placeholders": {
+      "maxRidePhotos": {
+        "type": "Object"
+      }
+    }
+  },
+  "shareRide": "Share ride",
+  "@shareRide": {
+    "description": "Text in ride_share_screen."
+  },
+  "saySomethingAboutThis": "Say something about this ride",
+  "@saySomethingAboutThis": {
+    "description": "HintText in ride_share_screen."
+  },
+  "photosOptional": "Photos (optional)",
+  "@photosOptional": {
+    "description": "EditorialLabel in ride_share_screen."
+  },
+  "whoCanSeeThis": "Who can see this",
+  "@whoCanSeeThis": {
+    "description": "EditorialLabel in ride_share_screen."
+  },
+  "saveAsRoute": "Save as route",
+  "@saveAsRoute": {
+    "description": "Text in ride_share_screen."
+  },
+  "routeSavedMyRoutes": "Route saved to My Routes!",
+  "@routeSavedMyRoutes": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "failedPostComment": "Failed to post comment: {e}",
+  "@failedPostComment": {
+    "description": "Text in shared_ride_detail_screen (+1 more).",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "voteFailed": "Vote failed: {e}",
+  "@voteFailed": {
+    "description": "Text in shared_ride_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotSaveRoute": "Could not save route: {e}",
+  "@couldNotSaveRoute": {
+    "description": "Text in shared_ride_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "rideDetails": "Ride Details",
+  "@rideDetails": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "rideNotFoundRemoved": "Ride not found or removed",
+  "@rideNotFoundRemoved": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "reportRide": "Report Ride",
+  "@reportRide": {
+    "description": "Text in shared_ride_detail_screen (+1 more)."
+  },
+  "noGpsTrackAvailable": "No GPS track available for this ride",
+  "@noGpsTrackAvailable": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "speedPerformanceDetails": "Speed & Performance Details",
+  "@speedPerformanceDetails": {
+    "description": "EditorialLabel in shared_ride_detail_screen."
+  },
+  "maxSpeed": "Max Speed",
+  "@maxSpeed": {
+    "description": "Title in shared_ride_detail_screen (+1 more)."
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Title in shared_ride_detail_screen."
+  },
+  "ridingPace": "Riding Pace",
+  "@ridingPace": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "trackPoints": "{polylineCount} track points",
+  "@trackPoints": {
+    "description": "Text in shared_ride_detail_screen.",
+    "placeholders": {
+      "polylineCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "startColon": "Start: ",
+  "@startColon": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "finishColon": "Finish: ",
+  "@finishColon": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "ridePhotos": "Ride Photos",
+  "@ridePhotos": {
+    "description": "EditorialLabel in shared_ride_detail_screen."
+  },
+  "upvote": "Upvote",
+  "@upvote": {
+    "description": "Tooltip in forum_thread_screen (+2 more)."
+  },
+  "downvote": "Downvote",
+  "@downvote": {
+    "description": "Tooltip in forum_thread_screen (+2 more)."
+  },
+  "commentsCount": "{comments} comments",
+  "@commentsCount": {
+    "description": "Text in shared_ride_detail_screen.",
+    "placeholders": {
+      "comments": {
+        "type": "Object"
+      }
+    }
+  },
+  "noCommentsYetBe": "No comments yet. Be the first to comment!",
+  "@noCommentsYetBe": {
+    "description": "Text in shared_ride_detail_screen."
+  },
+  "addComment": "Add a comment...",
+  "@addComment": {
+    "description": "HintText in shared_ride_detail_screen (+1 more)."
+  },
+  "send": "Send",
+  "@send": {
+    "description": "Tooltip in chat_room_screen (+3 more)."
+  },
+  "searchRidersForums": "Search riders and forums",
+  "@searchRidersForums": {
+    "description": "HintText in social_screen."
+  },
+  "messages": "Messages",
+  "@messages": {
+    "description": "Tooltip in chat_list_screen (+1 more)."
+  },
+  "feed": "Feed",
+  "@feed": {
+    "description": "Text in social_screen."
+  },
+  "forums": "Forums",
+  "@forums": {
+    "description": "Text in social_screen."
+  },
+  "nothingFoundTryUsername": "Nothing found for \"{query}\".\nTry a @username, an email, or a forum name.",
+  "@nothingFoundTryUsername": {
+    "description": "Text in social_screen.",
+    "placeholders": {
+      "query": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldntSearchRiders": "Couldn't search riders: {error}",
+  "@couldntSearchRiders": {
+    "description": "_SectionMessage in social_screen.",
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "noRidersMatchThat": "No riders match that.",
+  "@noRidersMatchThat": {
+    "description": "_SectionMessage in social_screen."
+  },
+  "couldntSearchForums": "Couldn't search forums: {error}",
+  "@couldntSearchForums": {
+    "description": "_SectionMessage in social_screen.",
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "noForumsMatchThat": "No forums match that.",
+  "@noForumsMatchThat": {
+    "description": "_SectionMessage in social_screen."
+  },
+  "followersPosts": "{followerCount} followers · {postCount} posts",
+  "@followersPosts": {
+    "description": "Text in social_screen.",
+    "placeholders": {
+      "followerCount": {
+        "type": "Object"
+      },
+      "postCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "nothingFromRidersYet": "Nothing from your riders yet",
+  "@nothingFromRidersYet": {
+    "description": "Text in social_screen."
+  },
+  "noRidesYet": "No rides yet",
+  "@noRidesYet": {
+    "description": "Text in social_screen."
+  },
+  "searchRidersAboveFollow": "Search for riders above and follow them to fill this in.",
+  "@searchRidersAboveFollow": {
+    "description": "Text in social_screen."
+  },
+  "shareRideFromIts": "Share a ride from its summary screen to get things started.",
+  "@shareRideFromIts": {
+    "description": "Text in social_screen."
+  },
+  "tryAgain": "Try again",
+  "@tryAgain": {
+    "description": "Text in social_screen."
+  },
+  "youreAllCaughtUp": "You're all caught up",
+  "@youreAllCaughtUp": {
+    "description": "Text in social_screen."
+  },
+  "details": "Details",
+  "@details": {
+    "description": "Text in social_screen."
+  },
+  "noCommentsYet": "No comments yet",
+  "@noCommentsYet": {
+    "description": "Text in social_screen."
+  },
+  "following": "Following",
+  "@following": {
+    "description": "Text in social_screen."
+  },
+  "follow": "Follow",
+  "@follow": {
+    "description": "Text in forum_thread_screen (+1 more)."
+  },
+  "rideWithFriends": "Ride with friends",
+  "@rideWithFriends": {
+    "description": "Text in group_ride_friend_picker."
+  },
+  "selectedCount": "{selectedCount}/{maxGroupRideFriends} selected",
+  "@selectedCount": {
+    "description": "Text in group_ride_friend_picker.",
+    "placeholders": {
+      "selectedCount": {
+        "type": "Object"
+      },
+      "maxGroupRideFriends": {
+        "type": "Object"
+      }
+    }
+  },
+  "pickRidersRideStarts": "Pick {minGroupRideFriends}–{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications.",
+  "@pickRidersRideStarts": {
+    "description": "Text in group_ride_friend_picker.",
+    "placeholders": {
+      "minGroupRideFriends": {
+        "type": "Object"
+      },
+      "maxGroupRideFriends": {
+        "type": "Object"
+      }
+    }
+  },
+  "usernameEmail": "@username or email",
+  "@usernameEmail": {
+    "description": "HintText in group_ride_friend_picker."
+  },
+  "startGroupRide": "Start group ride",
+  "@startGroupRide": {
+    "description": "Text in group_ride_friend_picker."
+  },
+  "startGroupRideWithCount": "Start group ride with {selectedCount}",
+  "@startGroupRideWithCount": {
+    "description": "Text in group_ride_friend_picker.",
+    "placeholders": {
+      "selectedCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "searchByUsernameEmail": "Search by @username or email",
+  "@searchByUsernameEmail": {
+    "description": "Text in group_ride_friend_picker."
+  },
+  "noRidersFound": "No riders found",
+  "@noRidersFound": {
+    "description": "Text in group_ride_friend_picker."
+  },
+  "inviterGroupRide": "{inviterName}'s group ride",
+  "@inviterGroupRide": {
+    "description": "Name in ride_mode_selector.",
+    "placeholders": {
+      "inviterName": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldntStartGroupRide": "Couldn't start the group ride: {e}",
+  "@couldntStartGroupRide": {
+    "description": "Text in ride_mode_selector.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "signCreateForum": "Sign in to create a forum.",
+  "@signCreateForum": {
+    "description": "Text in create_forum_screen."
+  },
+  "couldNotCreateForum": "Could not create the forum: {e}",
+  "@couldNotCreateForum": {
+    "description": "Text in create_forum_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "createForum": "Create a forum",
+  "@createForum": {
+    "description": "Text in create_forum_screen."
+  },
+  "eGSundayBreakfast": "e.g. Sunday Breakfast Rides",
+  "@eGSundayBreakfast": {
+    "description": "HintText in create_forum_screen."
+  },
+  "descriptionOptional": "Description (optional)",
+  "@descriptionOptional": {
+    "description": "Text in create_forum_screen."
+  },
+  "whatsThisForumAbout": "What's this forum about?",
+  "@whatsThisForumAbout": {
+    "description": "HintText in create_forum_screen."
+  },
+  "youllBeAbleModerate": "You'll be able to moderate posts here and add other riders as maintainers.",
+  "@youllBeAbleModerate": {
+    "description": "Text in create_forum_screen."
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Text in create_forum_screen (+1 more)."
+  },
+  "failedPostReply": "Failed to post reply: {e}",
+  "@failedPostReply": {
+    "description": "Text in forum_post_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "post": "Post",
+  "@post": {
+    "description": "Text in forum_post_detail_screen (+1 more)."
+  },
+  "postNotFound": "Post not found",
+  "@postNotFound": {
+    "description": "Text in forum_post_detail_screen."
+  },
+  "noRepliesYetBe": "No replies yet — be the first to help out.",
+  "@noRepliesYetBe": {
+    "description": "Text in forum_post_detail_screen."
+  },
+  "writeReply": "Write a reply...",
+  "@writeReply": {
+    "description": "HintText in forum_post_detail_screen."
+  },
+  "forum": "Forum",
+  "@forum": {
+    "description": "Text in forum_thread_screen."
+  },
+  "unfollow": "Unfollow",
+  "@unfollow": {
+    "description": "Tooltip in forum_thread_screen."
+  },
+  "manageMaintainers": "Manage maintainers",
+  "@manageMaintainers": {
+    "description": "Tooltip in forum_thread_screen."
+  },
+  "newPost": "New post",
+  "@newPost": {
+    "description": "Text in forum_thread_screen."
+  },
+  "noPostsYet": "No posts yet",
+  "@noPostsYet": {
+    "description": "Text in forum_thread_screen."
+  },
+  "beFirstAskQuestion": "Be the first to ask a question or share something.",
+  "@beFirstAskQuestion": {
+    "description": "Text in forum_thread_screen."
+  },
+  "title": "Title",
+  "@title": {
+    "description": "HintText in forum_thread_screen."
+  },
+  "titleRequired": "Title is required",
+  "@titleRequired": {
+    "description": "ErrorText in forum_thread_screen."
+  },
+  "whatsGoing": "What's going on?",
+  "@whatsGoing": {
+    "description": "HintText in forum_thread_screen."
+  },
+  "saySomethingBeforePosting": "Say something before posting",
+  "@saySomethingBeforePosting": {
+    "description": "ErrorText in forum_thread_screen."
+  },
+  "couldntRecordVoteCheck": "Couldn't record your vote — check your connection and try again.",
+  "@couldntRecordVoteCheck": {
+    "description": "Text in forum_thread_screen."
+  },
+  "deletePostQuestion": "Delete post?",
+  "@deletePostQuestion": {
+    "description": "Text in forum_thread_screen."
+  },
+  "thisRemovesPostIts": "This removes the post and its replies from the forum. It cannot be undone.",
+  "@thisRemovesPostIts": {
+    "description": "Text in forum_thread_screen."
+  },
+  "couldNotDelete": "Could not delete: {e}",
+  "@couldNotDelete": {
+    "description": "Text in forum_thread_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "deletePost": "Delete post",
+  "@deletePost": {
+    "description": "Tooltip in forum_thread_screen."
+  },
+  "reportPost": "Report Post",
+  "@reportPost": {
+    "description": "Text in forum_thread_screen."
+  },
+  "fromUser": "from {displayName}",
+  "@fromUser": {
+    "description": "Text in forum_thread_screen.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotUpdateMaintainers": "Could not update maintainers: {e}",
+  "@couldNotUpdateMaintainers": {
+    "description": "Text in forum_thread_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "maintainers": "Maintainers",
+  "@maintainers": {
+    "description": "Text in forum_thread_screen."
+  },
+  "maintainersCanDeletePosts": "Maintainers can delete posts and replies in this forum.",
+  "@maintainersCanDeletePosts": {
+    "description": "Text in forum_thread_screen."
+  },
+  "noMaintainersYet": "No maintainers yet.",
+  "@noMaintainersYet": {
+    "description": "Text in forum_thread_screen."
+  },
+  "remove": "Remove",
+  "@remove": {
+    "description": "Tooltip in forum_thread_screen."
+  },
+  "addByRiderUid": "Add by rider UID",
+  "@addByRiderUid": {
+    "description": "HintText in forum_thread_screen."
+  },
+  "couldNotOpenForum": "Could not open forum: {e}",
+  "@couldNotOpenForum": {
+    "description": "Text in forums_home_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "yourBikes": "Your bikes",
+  "@yourBikes": {
+    "description": "Text in forums_home_screen."
+  },
+  "addBikeGarageSee": "Add a bike to your garage to see its forum here.",
+  "@addBikeGarageSee": {
+    "description": "Text in forums_home_screen."
+  },
+  "riderForums": "Rider forums",
+  "@riderForums": {
+    "description": "Text in forums_home_screen."
+  },
+  "noRiderMadeForums": "No rider-made forums yet. Create the first one.",
+  "@noRiderMadeForums": {
+    "description": "Text in forums_home_screen."
+  },
+  "findForum": "Find a forum",
+  "@findForum": {
+    "description": "Text in forums_home_screen."
+  },
+  "searchBrandEG": "Search a brand, e.g. Yamaha",
+  "@searchBrandEG": {
+    "description": "HintText in forums_home_screen."
+  },
+  "searchForums": "Search forums",
+  "@searchForums": {
+    "description": "Tooltip in forums_home_screen."
+  },
+  "brands": "Brands",
+  "@brands": {
+    "description": "Label in forums_home_screen."
+  },
+  "topics": "Topics",
+  "@topics": {
+    "description": "Label in forums_home_screen."
+  },
+  "postsFollowers": "{postCount} posts · {followerCount} followers",
+  "@postsFollowers": {
+    "description": "Text in forums_home_screen.",
+    "placeholders": {
+      "postCount": {
+        "type": "Object"
+      },
+      "followerCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "notificationSettings": "Notification settings",
+  "@notificationSettings": {
+    "description": "Tooltip in forums_home_screen."
+  },
+  "newMessage": "New message",
+  "@newMessage": {
+    "description": "Tooltip in chat_list_screen."
+  },
+  "newMessageTitle": "New Message",
+  "@newMessageTitle": {
+    "description": "Text in chat_list_screen."
+  },
+  "noMessagesYet": "No messages yet",
+  "@noMessagesYet": {
+    "description": "Text in chat_list_screen."
+  },
+  "startConversation": "Start a Conversation",
+  "@startConversation": {
+    "description": "Text in chat_list_screen."
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Text in chat_list_screen."
+  },
+  "sayHi": "Say hi!",
+  "@sayHi": {
+    "description": "Text in chat_list_screen (+1 more)."
+  },
+  "searchRiderByUsername": "Search rider by @username or email...",
+  "@searchRiderByUsername": {
+    "description": "HintText in chat_list_screen."
+  },
+  "noRidersFoundFor": "No riders found for \"{text}\"",
+  "@noRidersFoundFor": {
+    "description": "Text in chat_list_screen.",
+    "placeholders": {
+      "text": {
+        "type": "Object"
+      }
+    }
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Label in chat_room_screen."
+  },
+  "chat": "Chat",
+  "@chat": {
+    "description": "Text in chat_room_screen."
+  },
+  "cantMessageThisRider": "You can't message this rider",
+  "@cantMessageThisRider": {
+    "description": "Text in chat_room_screen."
+  },
+  "messageHint": "Message...",
+  "@messageHint": {
+    "description": "HintText in chat_room_screen."
+  },
+  "spamMisleading": "Spam or misleading",
+  "@spamMisleading": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "harassmentBullying": "Harassment or bullying",
+  "@harassmentBullying": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "hateSpeech": "Hate speech",
+  "@hateSpeech": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "inappropriateContent": "Inappropriate content",
+  "@inappropriateContent": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "reportSubmittedSuccessfullyWe": "Report submitted successfully. We will review it shortly.",
+  "@reportSubmittedSuccessfullyWe": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "failedSubmitReport": "Failed to submit report: {e}",
+  "@failedSubmitReport": {
+    "description": "Text in report_bottom_sheet.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "report": "Report",
+  "@report": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "whyReportingThis": "Why are you reporting this?",
+  "@whyReportingThis": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "additionalDetailsOptional": "Additional details (optional)",
+  "@additionalDetailsOptional": {
+    "description": "LabelText in report_bottom_sheet."
+  },
+  "submitReport": "Submit Report",
+  "@submitReport": {
+    "description": "Text in report_bottom_sheet."
+  },
+  "audiencePublic": "Public",
+  "@audiencePublic": {
+    "description": "Post audience option: visible to everyone on ThrottleIQ."
+  },
+  "audienceFollowers": "Followers",
+  "@audienceFollowers": {
+    "description": "Post audience option: visible to people who follow the rider."
+  },
+  "audienceMutual": "Mutual",
+  "@audienceMutual": {
+    "description": "Post audience option: visible to riders who follow each other."
+  },
+  "selfHarm": "Self-harm",
+  "@selfHarm": {
+    "description": "Report reason option (label only; the stored value stays English)."
+  },
+  "otherReason": "Other",
+  "@otherReason": {
+    "description": "Report reason option (label only; the stored value stays English)."
+  },
+  "followMyRideLive": "Follow my ride live: {url}",
+  "@followMyRideLive": {
+    "description": "Message body sent with the live-ride link when the rider shares it (the rider's own outgoing text).",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
   }
 }

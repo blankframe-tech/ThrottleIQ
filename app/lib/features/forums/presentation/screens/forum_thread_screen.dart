@@ -13,6 +13,7 @@ import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Post list for a single forum, with a "New post" FAB.
 class ForumThreadScreen extends ConsumerWidget {
@@ -66,17 +67,17 @@ class ForumThreadScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(forumAsync.valueOrNull?.displayName ?? 'Forum'),
+        title: Text(forumAsync.valueOrNull?.displayName ?? context.l10n.forum),
         actions: [
           IconButton(
             icon: Icon(isFollowing ? Icons.notifications_active : Icons.notifications_none),
-            tooltip: isFollowing ? 'Unfollow' : 'Follow',
+            tooltip: isFollowing ? context.l10n.unfollow : context.l10n.follow,
             onPressed: () => _toggleFollow(context, ref, isFollowing),
           ),
           if (showMaintainers)
             IconButton(
               icon: const Icon(Icons.manage_accounts_outlined),
-              tooltip: 'Manage maintainers',
+              tooltip: context.l10n.manageMaintainers,
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
@@ -94,7 +95,7 @@ class ForumThreadScreen extends ConsumerWidget {
         onPressed: () => _showNewPostSheet(context, ref),
         backgroundColor: context.palette.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New post', style: TextStyle(color: Colors.white)),
+        label: Text(context.l10n.newPost, style: const TextStyle(color: Colors.white)),
       ),
       body: postsAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
@@ -111,9 +112,9 @@ class ForumThreadScreen extends ConsumerWidget {
                   children: [
                     Icon(Icons.forum_outlined, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text('No posts yet', style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
+                    Text(context.l10n.noPostsYet, style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                     const SizedBox(height: 8),
-                    Text('Be the first to ask a question or share something.',
+                    Text(context.l10n.beFirstAskQuestion,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
                   ],
@@ -237,7 +238,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'New post',
+            context.l10n.newPost,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 12),
@@ -248,8 +249,8 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
               if (_titleError) setState(() => _titleError = false);
             },
             decoration: InputDecoration(
-              hintText: 'Title',
-              errorText: _titleError ? 'Title is required' : null,
+              hintText: context.l10n.title,
+              errorText: _titleError ? context.l10n.titleRequired : null,
             ),
           ),
           const SizedBox(height: 8),
@@ -261,8 +262,8 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
               if (_bodyError) setState(() => _bodyError = false);
             },
             decoration: InputDecoration(
-              hintText: "What's going on?",
-              errorText: _bodyError ? 'Say something before posting' : null,
+              hintText: context.l10n.whatsGoing,
+              errorText: _bodyError ? context.l10n.saySomethingBeforePosting : null,
             ),
           ),
           const SizedBox(height: 16),
@@ -274,7 +275,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : const Text('Post', style: TextStyle(color: Colors.white)),
+                : Text(context.l10n.post, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -293,7 +294,7 @@ class _PostCard extends ConsumerWidget {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't record your vote — check your connection and try again.")),
+        SnackBar(content: Text(context.l10n.couldntRecordVoteCheck)),
       );
     }
   }
@@ -303,19 +304,19 @@ class _PostCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.palette.surface,
-        title: Text('Delete post?', style: TextStyle(color: ctx.palette.textPrimary)),
+        title: Text(ctx.l10n.deletePostQuestion, style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
-          'This removes the post and its replies from the forum. It cannot be undone.',
+          ctx.l10n.thisRemovesPostIts,
           style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel', style: TextStyle(color: ctx.palette.textSecondary)),
+            child: Text(ctx.l10n.cancelAction, style: TextStyle(color: ctx.palette.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: ctx.palette.danger)),
+            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -334,7 +335,7 @@ class _PostCard extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete: $e')),
+        SnackBar(content: Text(context.l10n.couldNotDelete(e))),
       );
     }
   }
@@ -387,7 +388,7 @@ class _PostCard extends ConsumerWidget {
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  tooltip: 'Delete post',
+                  tooltip: context.l10n.deletePost,
                   onPressed: () => _confirmDelete(context, ref),
                   icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textTertiary),
                 )
@@ -406,9 +407,9 @@ class _PostCard extends ConsumerWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'report',
-                      child: Text('Report Post'),
+                      child: Text(context.l10n.reportPost),
                     ),
                   ],
                 ),
@@ -423,7 +424,7 @@ class _PostCard extends ConsumerWidget {
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
-                    'from ${mergedFrom.displayName}',
+                    context.l10n.fromUser(mergedFrom.displayName),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         fontSize: 11, color: context.palette.textTertiary, fontStyle: FontStyle.italic),
@@ -448,7 +449,7 @@ class _PostCard extends ConsumerWidget {
           Row(
             children: [
               IconButton(
-                tooltip: 'Upvote',
+                tooltip: context.l10n.upvote,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, 1),
@@ -459,7 +460,7 @@ class _PostCard extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               IconButton(
-                tooltip: 'Downvote',
+                tooltip: context.l10n.downvote,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, -1),
@@ -513,7 +514,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not update maintainers: $e')),
+        SnackBar(content: Text(context.l10n.couldNotUpdateMaintainers(e))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -544,19 +545,19 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Maintainers',
+            context.l10n.maintainers,
             style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
-            'Maintainers can delete posts and replies in this forum.',
+            context.l10n.maintainersCanDeletePosts,
             style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           if (maintainers.isEmpty)
             Text(
-              'No maintainers yet.',
+              context.l10n.noMaintainersYet,
               style: TextStyle(fontSize: 13, color: context.palette.textTertiary),
             )
           else
@@ -577,7 +578,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      tooltip: 'Remove',
+                      tooltip: context.l10n.remove,
                       onPressed: _busy
                           ? null
                           : () => _run(() =>
@@ -595,7 +596,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
                   controller: _uidCtrl,
                   style: TextStyle(color: context.palette.textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Add by rider UID',
+                    hintText: context.l10n.addByRiderUid,
                     hintStyle: TextStyle(color: context.palette.textTertiary),
                   ),
                   onSubmitted: (_) => _add(),
@@ -603,7 +604,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: 'New post',
+                tooltip: context.l10n.newPost,
                 onPressed: _busy ? null : _add,
                 icon: Icon(Icons.add, color: context.palette.primary),
               ),

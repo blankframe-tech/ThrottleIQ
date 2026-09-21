@@ -9,6 +9,7 @@ import '../../../../shared/widgets/editorial.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../providers/ride_feed_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 const _audienceLabels = {
   'public': 'Public',
@@ -27,14 +28,13 @@ class MySharedRidesScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.palette.surface,
-        title: const Text('Delete shared ride?'),
-        content: const Text('This removes it from the feed for everyone. '
-            'Your local ride history is unaffected.'),
+        title: Text(ctx.l10n.deleteSharedRide),
+        content: Text(ctx.l10n.thisRemovesItFrom),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(ctx.l10n.cancelAction)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: TextStyle(color: ctx.palette.danger)),
+            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -50,7 +50,7 @@ class MySharedRidesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('My Shared Rides')),
+      appBar: AppBar(title: Text(context.l10n.mySharedRides)),
       body: ridesAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
@@ -67,7 +67,7 @@ class MySharedRidesScreen extends ConsumerWidget {
                   children: [
                     Icon(Icons.ios_share, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text("You haven't shared any rides yet",
+                    Text(context.l10n.haventSharedAnyRides,
                         style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
@@ -99,7 +99,7 @@ class MySharedRidesScreen extends ConsumerWidget {
                             filled: false,
                           ),
                           IconButton(
-                            tooltip: 'Delete',
+                            tooltip: context.l10n.delete,
                             icon: Icon(Icons.delete_outline,
                                 color: context.palette.textTertiary, size: 18),
                             onPressed: () => _delete(context, ref, ride.id),
