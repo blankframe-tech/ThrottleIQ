@@ -49,7 +49,7 @@ class DatabaseHelper {
   /// Substrings SQLite actually uses for a file that is unopenable/unreadable
   /// as a database, as opposed to a transient failure (disk full, file
   /// locked by another process, a momentary I/O error) that happens to throw
-  /// from the same call. DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.9: the previous catch treated ANY
+  /// from the same call. issues §33.9: the previous catch treated ANY
   /// exception here as the one documented corruption case it was written
   /// for, and deleted the whole database — turning a transient error into
   /// permanent data loss of every local ride/bike/maintenance record.
@@ -121,9 +121,10 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
+      await _addColumnIfMissing(db, 'ride_points', 'period_type',
+          'period_type TEXT DEFAULT "moving"');
       await _addColumnIfMissing(
-          db, 'ride_points', 'period_type', 'period_type TEXT DEFAULT "moving"');
-      await _addColumnIfMissing(db, 'ride_points', 'accuracy_m', 'accuracy_m REAL');
+          db, 'ride_points', 'accuracy_m', 'accuracy_m REAL');
     }
     if (oldVersion < 3) {
       await db.execute('''
@@ -264,8 +265,8 @@ class DatabaseHelper {
       // IF NOT EXISTS and cheap, and keeps a partial test schema (or a
       // re-run) from failing the ALTERs below on a missing table.
       await db.execute(_createOutboxSql);
-      await _addColumnIfMissing(db, 'outbox', 'status',
-          "status TEXT NOT NULL DEFAULT 'pending'");
+      await _addColumnIfMissing(
+          db, 'outbox', 'status', "status TEXT NOT NULL DEFAULT 'pending'");
       await _addColumnIfMissing(db, 'outbox', 'permanent_failures',
           'permanent_failures INTEGER NOT NULL DEFAULT 0');
     }
@@ -372,7 +373,7 @@ class DatabaseHelper {
   /// server acknowledgement. A `try`/`catch` around it catches nothing and the
   /// caller hangs forever. That is what made "end ride" and "share ride"
   /// unusable without a connection: the rider tapped the button and the app
-  /// sat there. See DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §25.
+  /// sat there. See issues §25.
   ///
   /// Rows are the rider's *intent*, recorded the instant they tap, and are
   /// replayed by [SyncManager] when connectivity returns. `payload` is JSON
@@ -561,7 +562,7 @@ class DatabaseHelper {
   /// Required for the Account Deletion flow (Apple App Store Guideline 5.1.1(v)).
   /// Uses raw SQL statements inside a single transaction and does NOT invoke other DAOs.
   ///
-  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.9: this used to also unconditionally wipe
+  /// issues §62.9: this used to also unconditionally wipe
   /// `deleted_bikes`, `outbox`, `auto_fixes`, and `auto_detections` in full —
   /// unlike `rides`/`bikes`/`user_profiles` above, none of those four tables
   /// carry a `user_id` column, so on a shared device, deleting account A's
@@ -589,7 +590,7 @@ class DatabaseHelper {
   /// exposed to anyone but whoever is signed into this device, and only ever
   /// checked against by uuid, not identity), which is a strictly safer
   /// failure mode than the previous behavior of silently deleting another
-  /// signed-in rider's live queue. Tracked as a follow-up in DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md
+  /// signed-in rider's live queue. Tracked as a follow-up in the issues log
   /// §62 once these tables can be properly attributed.
   ///
   /// Since v15 `auto_detections` does carry a `user_id`, so rows stamped with
@@ -620,8 +621,8 @@ class DatabaseHelper {
       // v15 gave auto_detections an owner. Only rows stamped with this uid
       // go; unowned legacy rows are left alone for the reason given above.
       // Their auto_fixes follow via ON DELETE CASCADE.
-      await txn.delete('auto_detections',
-          where: 'user_id = ?', whereArgs: [userId]);
+      await txn
+          .delete('auto_detections', where: 'user_id = ?', whereArgs: [userId]);
 
       final outboxRows = await txn.query('outbox', columns: ['id', 'payload']);
       for (final row in outboxRows) {

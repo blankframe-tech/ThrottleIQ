@@ -51,7 +51,7 @@ class SensorConstants {
   static const double impactSaturationFloorMs2 = 19.6; // ~2 g
 
   // Master switch for live crash alerts from ImpactDetector. OFF until the
-  // founder decides how crash alerts are delivered (see claude_sol §2.1:
+  // founder decides how crash alerts are delivered (see grill §2.1:
   // escalation is still a mock) and the thresholds above are field-
   // validated. While false, the ride recorder builds no ImpactDetector
   // pipeline and live rides behave exactly as before, except that the
@@ -75,7 +75,7 @@ class SensorConstants {
   // of Android GPS chipsets) report Position.speed as near-zero even while
   // genuinely moving. When the raw field reads below this floor, the recorder
   // falls back to a haversine distance/time-derived speed for that fix
-  // instead of recording the ride as stationary (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §49). Reuses
+  // instead of recording the ride as stationary (issues §49). Reuses
   // movingSpeedThresholdMs's cutoff — the same value already used to decide
   // "is this fix idle or moving" everywhere else.
   static const double unreliableSpeedFallbackThresholdMs = movingSpeedThresholdMs;

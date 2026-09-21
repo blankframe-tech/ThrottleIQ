@@ -8,7 +8,7 @@ import 'event_detector.dart' show CrashSignal;
 /// Near-misses (a spike that never confirmed) are exactly the data needed to
 /// calibrate [SensorConstants.impactThreshold], so every spike produces one of
 /// these whether or not it became a crash. They're kept in memory only — no
-/// table exists for them yet (claude_sol §1.1.1 step 4 needs a schema change).
+/// table exists for them yet (grill §1.1.1 step 4 needs a schema change).
 class ImpactCandidate {
   final DateTime spikeAt;
   final double peakAccelMs2;
@@ -46,7 +46,7 @@ class ImpactCandidate {
 /// Replaces the GPS-derived crash branch in `EventDetector.detect`, which
 /// could never fire on a live ride: it needed an 80 m/s² GPS speed delta,
 /// and speeds above `maxPlausibleSpeedMs` are rejected before they get there
-/// (claude_sol §1.1.1).
+/// (grill §1.1.1).
 ///
 /// **Spike.** A sample whose magnitude `|a| = sqrt(x²+y²+z²)` reaches
 /// [impactThreshold], or [_saturationRun] consecutive samples within 2% of

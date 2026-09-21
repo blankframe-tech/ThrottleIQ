@@ -385,7 +385,7 @@ class AutoTrackingService {
   /// isolate, which has no FirebaseAuth of its own.
   static const ownerKey = 'uid';
 
-  /// Records which rider new detections belong to (claude_sol §1.4.2), or
+  /// Records which rider new detections belong to (grill §1.4.2), or
   /// clears it on sign-out ([uid] null). Called from `app.dart`'s auth
   /// listener, so it's current before [start] runs and gone once the rider
   /// signs out — a detection opened with no owner is never attributed to

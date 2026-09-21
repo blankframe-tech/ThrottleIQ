@@ -35,7 +35,7 @@ class LiveSessionCoordinator {
   /// Create a cryptographically secure live share session token.
   ///
   /// Uses `Random.secure()` so the ~190 bits of entropy cannot be guessed from
-  /// the system clock (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.2).
+  /// the system clock (issues §24.2).
   String createLiveSessionToken() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     final rnd = Random.secure();

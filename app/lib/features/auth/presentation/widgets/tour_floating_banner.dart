@@ -28,7 +28,7 @@ class TourFloatingBanner extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           // Theme ink rather than a hardcoded near-black, so the banner
-          // follows the rider's palette (claude_sol.md §3.4.4).
+          // follows the rider's palette (grill §3.4.4).
           color: AppColors.ink,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: accent.withValues(alpha: 0.6), width: 1.5),
@@ -129,7 +129,7 @@ class TourFloatingBanner extends ConsumerWidget {
                 child: const Text('Next →', style: TextStyle(fontSize: 11)),
               ),
             ],
-            // 48 dp target; the old InkWell was ~24 dp (claude_sol.md §3.4.5).
+            // 48 dp target; the old InkWell was ~24 dp (grill §3.4.5).
             IconButton(
               tooltip: 'Close guide',
               icon: Icon(Icons.close, size: 20, color: AppColors.onInkMuted),

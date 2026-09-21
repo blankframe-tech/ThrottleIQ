@@ -8,7 +8,7 @@ import '../database_helper.dart';
 /// Top-level so [compute] can hand it to a worker isolate. A share-ride
 /// payload carries the ride's full polyline, which can be large enough that
 /// encoding it inline on the calling isolate is a visible hitch right when
-/// the rider taps "Share" — see DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §65.3.
+/// the rider taps "Share" — see issues §65.3.
 String _encodeOutboxPayload(Map<String, dynamic> payload) => jsonEncode(payload);
 
 /// `outbox.status` values. See `_createOutboxSql` in [DatabaseHelper].

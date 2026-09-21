@@ -20,7 +20,7 @@ enum SyncStatus { idle, syncing, success, failure }
 
 /// Manages automatic sync of local data to Firestore
 class SyncManager {
-  // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.13: `outbox` is always passed explicitly in
+  // issues §62.13: `outbox` is always passed explicitly in
   // production (see the `syncManagerProvider` below) — this default only
   // matters for a bare `SyncManager()`/`SyncManager(ref)` construction
   // (ad-hoc tests). It used to fall back to a static `OutboxService.instance`
@@ -162,7 +162,7 @@ class SyncManager {
       // `_performSync` returned immediately for the rest of the session.
       await _outbox.drain();
 
-      // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.13/14: `_auth.currentUser` was checked once at
+      // issues §62.13/14: `_auth.currentUser` was checked once at
       // entry (line ~121) then force-unwrapped here, two `await`s later (the
       // connectivity check, and `_outbox.drain()` above). A rider signing
       // out in that window used to throw here, land in the generic `catch`
@@ -195,7 +195,7 @@ class SyncManager {
       // was restarted. That is the "phone says 43 rides / 119 km, second
       // device says 20 / 26" report: both devices held identical rows, the
       // second one was just showing a pre-download snapshot of them
-      // (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §28). Invalidate on the download's own return value
+      // (issues §28). Invalidate on the download's own return value
       // rather than piggybacking on pulledBikes, which is false in exactly
       // the case that matters.
       if (pulledRides) {
@@ -212,7 +212,7 @@ class SyncManager {
       // completed) but pure garbage in the cloud, and a ride still being
       // recorded would sync a half-written row.
       //
-      // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.1: scoped to `uid` (the CURRENTLY signed-in
+      // issues §33.1: scoped to `uid` (the CURRENTLY signed-in
       // rider), same as the bikes/maintenance queries below. Without this, a
       // rider who recorded offline and signed out before it synced would
       // have their still-unsynced rows uploaded under whichever account
@@ -274,7 +274,7 @@ class SyncManager {
       // never point at a missing parent. Driven by `track_synced`, not by
       // `unsyncedRides`: looping over the rides just uploaded meant a trail
       // that failed once was never tried again, because by the next cycle
-      // its ride was already `synced = 1` (claude_sol §1.3.2).
+      // its ride was already `synced = 1` (grill §1.3.2).
       await syncPendingTracks(uid, RideDao(), _cloudRepository.uploadRideTrack);
 
       if (unsyncedBikes.isNotEmpty) {

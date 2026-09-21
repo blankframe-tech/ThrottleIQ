@@ -67,7 +67,7 @@ class AppTypography {
 
   /// Cockpit type floor for the live-ride screens, read at a glance from a
   /// handlebar mount: labels never below [cockpitLabelSize], values never
-  /// below [cockpitValueSize] (claude_sol.md §3.1.2). Use these rather than
+  /// below [cockpitValueSize] (grill §3.1.2). Use these rather than
   /// literals so the floor can't quietly drift back down one widget at a time.
   static const double cockpitLabelSize = 14;
   static const double cockpitValueSize = 20;

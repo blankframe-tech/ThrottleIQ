@@ -73,7 +73,7 @@ class AutoRideReconcilerService {
       await _detectionDao.claimUnowned(uid);
 
       // Only this rider's detections. Another rider's stay pending for when
-      // they sign back in on this device (claude_sol §1.4.2).
+      // they sign back in on this device (grill §1.4.2).
       final pending = await _detectionDao.pendingDetections(uid);
       if (pending.isEmpty) return const [];
 

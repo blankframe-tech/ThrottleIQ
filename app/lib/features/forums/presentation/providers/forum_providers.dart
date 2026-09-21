@@ -252,7 +252,7 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
   }
 
   /// Prepends a just-created post to the local list so the thread shows it
-  /// immediately (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §54).
+  /// immediately (issues §54).
   ///
   /// Deliberately NOT a `ref.invalidate(forumPostsProvider(forumId))` +
   /// refetch: `createPost` writes `createdAt: FieldValue.serverTimestamp()`,

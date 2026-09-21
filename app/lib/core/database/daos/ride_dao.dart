@@ -8,7 +8,7 @@ import '../database_helper.dart';
 /// history. `crash` is a finished ride too — it ended because crash detection
 /// fired — and leaving it out (the old `status = 'completed'` filter) meant a
 /// crash ride never synced and never appeared in any list. See
-/// DOCS §69.O10 / claude_sol §1.2.2.
+/// issues §69.O10 / grill §1.2.2.
 ///
 /// Literal rather than bound parameters so it composes into the existing
 /// `where:` strings without shifting every call site's `whereArgs`.
@@ -134,7 +134,7 @@ class RideDao {
         if (healedAvg != null) updates['avg_speed_ms'] = healedAvg;
         if (healedMax != null) updates['max_speed_ms'] = healedMax;
 
-        // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 (core services): a self-heal write fired from a
+        // issues §62 (core services): a self-heal write fired from a
         // read path has no caller to report failure to, but it must not
         // vanish silently either — a transient sqflite error (locked DB,
         // disk full) here used to be dropped into an unobserved microtask
@@ -165,7 +165,7 @@ class RideDao {
   /// pass a `status` (crash detection writing `'crash'`, a dismissed false
   /// positive writing `'active'`) must have it win.
   ///
-  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.3: this used to spread `data` first and hardcode
+  /// issues §33.3: this used to spread `data` first and hardcode
   /// `'status': 'completed'` after it, so the literal always overrode
   /// whatever status the caller asked for — `status: 'crash'` was silently
   /// rewritten to `'completed'` the instant it was written, and a dismissed
@@ -185,7 +185,7 @@ class RideDao {
     );
   }
 
-  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.1: scoped to [userId] — this feeds directly into
+  /// issues §33.1: scoped to [userId] — this feeds directly into
   /// SyncManager's upload pass, and an unscoped query would happily hand
   /// another rider's still-unsynced rides to whichever account is currently
   /// signed in on this device.
@@ -208,7 +208,7 @@ class RideDao {
   ///
   /// Separate from [getUnsynced] because the two uploads fail independently:
   /// `synced` flips as soon as the ride doc lands, and a trail upload that
-  /// failed afterwards used to be forgotten for good. See claude_sol §1.3.2.
+  /// failed afterwards used to be forgotten for good. See grill §1.3.2.
   Future<List<Map<String, dynamic>>> getTrackUnsynced(String userId) async {
     final db = await DatabaseHelper.instance.database;
     return db.query('rides',

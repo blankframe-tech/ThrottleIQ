@@ -150,7 +150,7 @@ class AutoDetectionDao {
 
   /// Detections waiting to become [userId]'s rides.
   ///
-  /// Scoped to the owner (claude_sol §1.4.2): this used to return every
+  /// Scoped to the owner (grill §1.4.2): this used to return every
   /// pending row, and the reconciler attributed all of them to whoever was
   /// signed in — on a shared phone, rider A's commute became rider B's ride,
   /// on B's bike, counted toward B's service interval.

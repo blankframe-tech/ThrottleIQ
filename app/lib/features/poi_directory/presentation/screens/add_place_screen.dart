@@ -20,7 +20,7 @@ import '../providers/places_provider.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
 /// real fix is available yet. Only ever the map's *initial camera* — never a
-/// saved location (claude_sol.md §3.5.3): a place saved here without a real
+/// saved location (grill §3.5.3): a place saved here without a real
 /// fix or a deliberate pin used to land in central Dhaka.
 const _fallbackCenter = LatLng(23.8103, 90.4125);
 

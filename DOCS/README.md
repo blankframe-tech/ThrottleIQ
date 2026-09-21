@@ -20,19 +20,30 @@ folders, were consolidated into three audience folders:
 | `For Devs and Contributors/` | Setup guide, architecture decisions, archived experiments. |
 | `General/` | Business, marketing, store listing, design references, website demo. |
 
-> **Old paths in code comments.** Hundreds of source comments cite
-> `docs/Issues.md §N` or `docs/planning/Issues.md §N`. `Issues.md` was
-> split on 2026-09-19 into [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) and
-> [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md), with section numbers unchanged.
-> Look for `## N.` in `issues_fixed.md` first; if it isn't there, or the
-> section says part of it is still open, check `issues_open.md`.
+## Ticket references in source comments
+
+Source comments cite two different numbering schemes. Both were normalised on
+2026-09-20 (issues_open.md §83.29) so that neither names a file path — paths
+move, section numbers don't.
+
+| In a comment | Means |
+|---|---|
+| `issues §N` | Section `## N.` of [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) if resolved, else [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md). Look in `issues_fixed.md` first; if it isn't there, or the section says part of it is still open, check `issues_open.md`. |
+| `grill §N` | The 2026-09-20 external-critique verification pass, originally written up in `ANTIGRAVRITY_GRILL/claude_sol.md`. **That file is no longer in the repo** — it was deleted in commit `fc11e99`; recover it with `git show fc11e99^:"ANTIGRAVRITY_GRILL/claude_sol.md"`. The surviving in-repo record is issues §78. |
+
+Do not write a file path into a new code comment — write `issues §N`. Three
+earlier conventions all rotted: `docs/Issues.md §N` (the `docs/` tree was
+renamed `DOCS/` and `Issues.md` was split on 2026-09-19), `claude_sol.md §N`
+(deleted), and a 78-character `DOCS/Handoff for agents and Todos/issues_open.md
+or issues_fixed.md §N` that appeared in 28 files and could not decide which of
+the two files it meant.
 
 ## Living docs, kept up to date every session
 
 | File | What it's for |
 |---|---|
 | [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md) | The single source of truth for project status: what's shipped, what's verified, the pre-launch to-do list, the feature backlog, and the Vehicle State Engine architecture. Update it whenever status changes. |
-| [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) | Every unresolved issue, plus follow-ups left over from fixed ones. New issues go here with the next free number (§70). Once fixed, a section moves to `issues_fixed.md` and keeps its number. |
+| [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) | Every unresolved issue, plus follow-ups left over from fixed ones. New issues go here with the next free number — see that file's own header, which tracks it. Once fixed, a section moves to `issues_fixed.md` and keeps its number. |
 | [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) | The dated, numbered record of every resolved issue (§1–§69): root causes, fixes, verification. Other docs cite it by section (`§N`), so the numbers are stable. The latest full-repo review is §69. |
 | [`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) | What a signed-in user can actually do today, organized by the bottom-nav tabs. Update it whenever screens or flows change. |
 

@@ -122,7 +122,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
             // ride?" — one as a destination, the other as the road there. It
             // navigates rather than filters, so it's a distinct, full-width
             // button below the chips instead of a chip that looked like one
-            // more filter (claude_sol.md §3.2.5).
+            // more filter (grill §3.2.5).
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 0),

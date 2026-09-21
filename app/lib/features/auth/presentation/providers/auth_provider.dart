@@ -113,7 +113,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   /// Signs out and, on a device someone else may sign into next, makes sure
   /// nothing of this rider's is left behind to leak into the next account.
   ///
-  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.1/§33.10: this used to be a bare `_auth.signOut()`.
+  /// issues §33.1/§33.10: this used to be a bare `_auth.signOut()`.
   /// Two gaps that closed:
   ///   - `GoogleSignIn().signOut()` — without it, a later `signInWithGoogle()`
   ///     on the same device could silently reauthenticate the account that
@@ -147,7 +147,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   ///
   /// Required by Apple App Store Review Guideline 5.1.1(v).
   ///
-  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 (follow-up audit): this used to delete the Firestore
+  /// issues §62 (follow-up audit): this used to delete the Firestore
   /// profile and wipe every local record FIRST, and only attempt
   /// `user.delete()` last — the one step most likely to fail
   /// (`FirebaseAuthException` 'requires-recent-login' fires whenever the

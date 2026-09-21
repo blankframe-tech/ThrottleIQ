@@ -179,7 +179,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       if (mounted) {
         // Back to the garage with an offer, rather than straight into the
         // maintenance setup (which then redirected a second time on save —
-        // claude_sol.md §3.2.4). Maintenance already works on default
+        // grill §3.2.4). Maintenance already works on default
         // intervals, so setting them up is optional, not a required step.
         // Router and messenger are captured before the pop unmounts us.
         final router = GoRouter.of(context);

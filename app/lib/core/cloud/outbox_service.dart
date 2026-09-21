@@ -155,7 +155,7 @@ class OutboxService {
       _explicitFirestore ??= FirebaseFirestore.instance;
 
   /// Serializes every delivery attempt — [drain] and [_attemptOne] alike —
-  /// so two never run concurrently. DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.7: [_attemptOne] (run
+  /// so two never run concurrently. issues §62.7: [_attemptOne] (run
   /// synchronously from `enqueueShareRide` et al.) used to be unguarded
   /// while a boolean `_draining` flag protected only [drain] from itself. A
   /// rider tapping "share ride" the instant a timer-triggered `drain()` was

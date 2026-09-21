@@ -11,7 +11,7 @@ class ImageCompressionUtils {
   /// phone camera's default JPEG output, but bounds worst-case decoded
   /// memory to ~200MB instead of whatever a crafted file's header claims).
   ///
-  /// DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.11: `img.decodeImage` fully decodes into an
+  /// issues §33.11: `img.decodeImage` fully decodes into an
   /// uncompressed bitmap with no size check beforehand. A small file whose
   /// header declares huge pixel dimensions (a decompression bomb) could
   /// decode to gigabytes of raw RGBA and crash the app. Checking the header

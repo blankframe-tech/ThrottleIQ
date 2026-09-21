@@ -31,7 +31,7 @@ class BikeDao {
 
   /// Archives or unarchives a bike. Its rides, maintenance logs and totals
   /// are untouched — that is the whole point of archiving over [delete],
-  /// which takes the bike's ride history with it (claude_sol §2.1.1).
+  /// which takes the bike's ride history with it (grill §2.1.1).
   ///
   /// An archived bike can't stay the active one (it's hidden from every
   /// picker, so the rider couldn't switch away from it), so archiving the

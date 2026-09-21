@@ -1,6 +1,6 @@
 /**
  * Server-side reconciliation of the denormalized rider identity on shared
- * rides (docs/Issues.md §24.9).
+ * rides (issues §24.9).
  *
  * `rides/{rideId}` stores `userName`/`userPhotoUrl` alongside `userId` so a
  * feed card can render without an extra profile read per row. `firestore.rules`

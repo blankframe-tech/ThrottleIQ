@@ -319,7 +319,7 @@ class ProfileRepository {
   // Account deletion's Firestore cleanup (release the username handle,
   // delete livePointers/{uid} and users/{uid}) used to live here, called
   // from the client before deleting the Firebase Auth account. Removed:
-  // DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 moved it server-side, to
+  // issues §62 moved it server-side, to
   // functions/src/account-deletion.ts's onUserAccountDeleted trigger, since
   // it has to run with Admin privileges once the Auth account is actually
   // gone, not from a client that's about to lose its own auth token trying

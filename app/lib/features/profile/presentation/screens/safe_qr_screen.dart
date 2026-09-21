@@ -74,7 +74,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
   }
 
   /// Renders the QR card to a PNG and hands it to the system share sheet,
-  /// which also offers Save to Photos/Files (claude_sol.md §3.5.4). The
+  /// which also offers Save to Photos/Files (grill §3.5.4). The
   /// in-app card is useless to a first responder when the phone is locked;
   /// an exported image can be a lock-screen wallpaper or a helmet sticker.
   Future<void> _shareQrImage() async {

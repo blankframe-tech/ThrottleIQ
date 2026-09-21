@@ -16,7 +16,7 @@ class EndRideChoice {
 /// The end-ride confirmation, sized for a gloved thumb on a moving bike.
 ///
 /// Replaced a stock `AlertDialog` whose Cancel and "Share ride" checkbox were
-/// ~40 dp targets tucked beside each other (claude_sol.md §3.1.1). Every
+/// ~40 dp targets tucked beside each other (grill §3.1.1). Every
 /// control here is full width and at least 56 dp tall, and ending the ride is
 /// a 1.2 s press-and-hold rather than a tap, so a bump or a mis-aimed thumb
 /// can't save a ride the rider meant to keep recording.

@@ -152,7 +152,7 @@ class SharedRideEntity extends Equatable {
   /// [avgSpeedKmh] for moving rides to preserve physical reality even if
   /// hardware fixes didn't report Doppler speed or legacy data omitted it,
   /// and never above what's physically plausible for a motorcycle — see
-  /// [RideSpeedInvariant] (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62.8: this used to have no
+  /// [RideSpeedInvariant] (issues §62.8: this used to have no
   /// ceiling at all).
   double get maxSpeedKmh => RideSpeedInvariant.reconcile(
         avgSpeedKmh: avgSpeedKmh,

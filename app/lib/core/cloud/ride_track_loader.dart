@@ -15,7 +15,7 @@ typedef RideTrackDownloader = Future<bool> Function(String uid, String rideId);
 /// never does eagerly — the trail is fetched from the cloud and the local
 /// table read again. [CloudRepository.downloadRideTrack] existed for this but
 /// was never called, so every such ride showed a blank map, an empty share
-/// card, an unsaveable route and an empty export (claude_sol §1.3.1). One
+/// card, an unsaveable route and an empty export (grill §1.3.1). One
 /// helper so those four screens can't drift apart again.
 class RideTrackLoader {
   RideTrackLoader._();
