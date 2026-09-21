@@ -29,6 +29,7 @@ import '../providers/notification_providers.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
 import '../providers/ride_feed_provider.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 
 /// How long the header search waits after the last keystroke before querying.
 /// Rider search runs a Firestore prefix query per keystroke otherwise.
@@ -36,21 +37,22 @@ const _searchDebounce = Duration(milliseconds: 250);
 
 /// Riders matching the header search box. Autodisposed per query string so a
 /// long session doesn't accumulate one cached result list per typed prefix.
-final _riderSearchProvider =
-    FutureProvider.autoDispose.family<List<UserProfileEntity>, String>((ref, query) async {
+final _riderSearchProvider = FutureProvider.autoDispose
+    .family<List<UserProfileEntity>, String>((ref, query) async {
   final q = query.trim();
   if (q.isEmpty) return const [];
   final repo = ProfileRepository();
   // An email needs the exact-match query; anything else (with or without a
   // leading @) is a username prefix. Same rule the old Find-riders sheet used.
-  final looksLikeEmail = q.contains('@') && q.contains('.') && !q.startsWith('@');
+  final looksLikeEmail =
+      q.contains('@') && q.contains('.') && !q.startsWith('@');
   return looksLikeEmail ? repo.searchByEmail(q) : repo.searchByUsername(q);
 });
 
 /// Forums matching the header search box. See
 /// [ForumRepository.searchForums] for why this is an in-memory filter.
-final _forumSearchProvider =
-    FutureProvider.autoDispose.family<List<ForumEntity>, String>((ref, query) async {
+final _forumSearchProvider = FutureProvider.autoDispose
+    .family<List<ForumEntity>, String>((ref, query) async {
   final q = query.trim();
   if (q.isEmpty) return const [];
   return ForumRepository().searchForums(q);
@@ -128,12 +130,16 @@ class _SocialScreenState extends State<SocialScreen> {
                 fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 hintText: 'Search riders and forums',
-                hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
-                prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                hintStyle:
+                    TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                prefixIcon: Icon(Icons.search,
+                    color: AppColors.textSecondary, size: 20),
                 suffixIcon: _controller.text.isEmpty
                     ? null
                     : IconButton(
-                        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                        tooltip: 'Close',
+                        icon: Icon(Icons.close,
+                            color: AppColors.textSecondary, size: 18),
                         onPressed: _clear,
                       ),
                 border: OutlineInputBorder(
@@ -213,10 +219,9 @@ class _SearchResults extends ConsumerWidget {
     final forumsAsync = ref.watch(_forumSearchProvider(query));
 
     // Never offer to follow yourself.
-    final riders =
-        (ridersAsync.valueOrNull ?? const <UserProfileEntity>[])
-            .where((r) => r.uid != myUid)
-            .toList();
+    final riders = (ridersAsync.valueOrNull ?? const <UserProfileEntity>[])
+        .where((r) => r.uid != myUid)
+        .toList();
     final forums = forumsAsync.valueOrNull ?? const <ForumEntity>[];
 
     final stillLoading = ridersAsync.isLoading || forumsAsync.isLoading;
@@ -274,7 +279,8 @@ class _SectionSpinner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        child:
+            Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
 }
 
@@ -314,7 +320,8 @@ class _ForumResultTile extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.forum_outlined, color: AppColors.primary, size: 20),
+              child: Icon(Icons.forum_outlined,
+                  color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -328,8 +335,10 @@ class _ForumResultTile extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary)),
-                  Text('${forum.followerCount} followers · ${forum.postCount} posts',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text(
+                      '${forum.followerCount} followers · ${forum.postCount} posts',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -341,12 +350,44 @@ class _ForumResultTile extends StatelessWidget {
   }
 }
 
-class _FeedTab extends ConsumerWidget {
+class _FeedTab extends ConsumerStatefulWidget {
   const _FeedTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final feedAsync = ref.watch(rideFeedProvider);
+  ConsumerState<_FeedTab> createState() => _FeedTabState();
+}
+
+class _FeedTabState extends ConsumerState<_FeedTab> {
+  final _scrollController = ScrollController();
+
+  /// How close to the bottom (in pixels) the rider gets before the next page
+  /// starts loading — roughly two cards, so the spinner rarely shows.
+  static const _loadMoreThreshold = 600.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      ref.read(rideFeedNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feed = ref.watch(rideFeedNotifierProvider);
     final sort = ref.watch(feedSortProvider);
 
     return Column(
@@ -366,7 +407,8 @@ class _FeedTab extends ConsumerWidget {
               itemBuilder: (_, i) {
                 final option = FeedSort.values[i];
                 return GestureDetector(
-                  onTap: () => ref.read(feedSortProvider.notifier).state = option,
+                  onTap: () =>
+                      ref.read(feedSortProvider.notifier).state = option,
                   child: EditorialPill(
                     option.label,
                     filled: option == sort,
@@ -378,12 +420,24 @@ class _FeedTab extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: feedAsync.when(
-            loading: () => Center(
-                child: CircularProgressIndicator(color: AppColors.primary)),
-            error: (e, _) =>
-                ErrorView(error: e, onRetry: () => ref.invalidate(rideFeedProvider)),
-            data: (_) {
+          child: Builder(
+            builder: (context) {
+              if (feed.isLoading) {
+                return Center(
+                    child: CircularProgressIndicator(color: AppColors.primary));
+              }
+              // An error with nothing already on screen is a dead end and gets
+              // the full retry view. An error while paging is not — the rider
+              // still has a readable feed, so it surfaces as a footer instead
+              // (see the list below) rather than replacing what they're
+              // reading.
+              if (feed.error != null && feed.rides.isEmpty) {
+                return ErrorView(
+                  error: feed.error!,
+                  onRetry: () =>
+                      ref.read(rideFeedNotifierProvider.notifier).refresh(),
+                );
+              }
               // "Following" filters against the follow graph, so until that
               // has loaded the filtered feed is empty for a reason that has
               // nothing to do with who the rider follows — show the spinner
@@ -411,34 +465,107 @@ class _FeedTab extends ConsumerWidget {
                             size: 64,
                             color: AppColors.textTertiary),
                         const SizedBox(height: 16),
-                        Text(following ? 'Nothing from your riders yet' : 'No rides yet',
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                        Text(
+                            following
+                                ? 'Nothing from your riders yet'
+                                : 'No rides yet',
+                            style: TextStyle(
+                                color: AppColors.textSecondary, fontSize: 16)),
                         const SizedBox(height: 8),
                         Text(
                             following
                                 ? 'Search for riders above and follow them to fill this in.'
                                 : 'Share a ride from its summary screen to get things started.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+                            style: TextStyle(
+                                color: AppColors.textTertiary, fontSize: 14)),
                       ],
                     ),
                   ),
                 );
               }
+              // One trailing slot for the paging footer: a spinner while the
+              // next page loads, a retry row if it failed, "you're all caught
+              // up" once every source is exhausted.
+              final showFooter =
+                  feed.isLoadingMore || feed.hasMore || feed.error != null;
               return RefreshIndicator(
-                onRefresh: () => ref.refresh(rideFeedProvider.future),
+                onRefresh: () =>
+                    ref.read(rideFeedNotifierProvider.notifier).refresh(),
                 color: AppColors.primary,
                 child: ListView.separated(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  itemCount: rides.length,
+                  itemCount: rides.length + (showFooter ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) => _RideCard(ride: rides[i]),
+                  itemBuilder: (_, i) {
+                    if (i < rides.length) return _RideCard(ride: rides[i]);
+                    return _FeedFooter(
+                      isLoading: feed.isLoadingMore,
+                      error: feed.error,
+                      onRetry: () => ref
+                          .read(rideFeedNotifierProvider.notifier)
+                          .loadMore(),
+                    );
+                  },
                 ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Trailing row of the feed list: paging spinner, paging-error retry, or the
+/// end-of-feed marker. A paging failure lands here rather than replacing the
+/// feed the rider is already reading.
+class _FeedFooter extends StatelessWidget {
+  const _FeedFooter({
+    required this.isLoading,
+    required this.error,
+    required this.onRetry,
+  });
+
+  final bool isLoading;
+  final Object? error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+            child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: AppColors.primary),
+        )),
+      );
+    }
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          children: [
+            Text(mapFirestoreError(error!),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+            const SizedBox(height: 8),
+            OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: Text("You're all caught up",
+            style: TextStyle(color: AppColors.textTertiary, fontSize: 13)),
+      ),
     );
   }
 }
@@ -501,7 +628,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
         userPhotoUrl: user.photoURL ?? '',
         text: text,
       );
-      ref.read(rideFeedNotifierProvider.notifier).incrementCommentCount(widget.ride.id);
+      ref
+          .read(rideFeedNotifierProvider.notifier)
+          .incrementCommentCount(widget.ride.id);
       await _loadComments();
     } catch (e) {
       if (!mounted) return;
@@ -525,167 +654,208 @@ class _RideCardState extends ConsumerState<_RideCard> {
         child: Column(
           children: [
             InkWell(
-              onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
+              onTap: () =>
+                  context.push('/rides/shared/${ride.id}', extra: ride),
               borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingMd),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(Icons.two_wheeler, color: AppColors.primary, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ride.bikeName,
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                            ),
-                            Text(ride.bikeType,
-                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.push('/profile/${ride.userId}'),
-                        child: Text(
-                          ride.userName,
-                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
-                        padding: EdgeInsets.zero,
-                        onSelected: (value) {
-                          if (value == 'report') {
-                            ReportBottomSheet.show(
-                              context,
-                              reportedId: ride.userId,
-                              contentType: 'ride',
-                              contentId: ride.id,
-                            );
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'report',
-                            child: Text('Report Ride'),
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  if (ride.ridingScore != null) ...[
-                    const SizedBox(height: 10),
-                    _RidingScoreChip(score: ride.ridingScore!),
-                  ],
-                  if ((ride.caption ?? '').trim().isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      ride.caption!.trim(),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  _buildMedia(ride),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _stat('${ride.distanceKm.toStringAsFixed(1)} km', 'Distance'),
-                      _divider(),
-                      _stat('${ride.durationMinutes} min', 'Duration'),
-                      _divider(),
-                      _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h', 'Max Speed'),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(height: 1, color: AppColors.border),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                        onPressed: () =>
-                            ref.read(rideFeedNotifierProvider.notifier).vote(ride.id, 1),
-                        icon: Icon(
-                          Icons.arrow_upward,
-                          color: ride.myVote == 1 ? AppColors.primary : AppColors.textSecondary,
-                          size: 20,
+                          child: Icon(Icons.two_wheeler,
+                              color: AppColors.primary, size: 22),
                         ),
-                      ),
-                      Text('${ride.netScore}',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                        onPressed: () =>
-                            ref.read(rideFeedNotifierProvider.notifier).vote(ride.id, -1),
-                        icon: Icon(
-                          Icons.arrow_downward,
-                          color: ride.myVote == -1 ? AppColors.danger : AppColors.textSecondary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: _toggleExpanded,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 18),
-                              const SizedBox(width: 6),
-                              Text('${ride.comments}', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                              const SizedBox(width: 4),
-                              Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.textSecondary, size: 16),
+                              Text(
+                                ride.bikeName,
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary),
+                              ),
+                              Text(ride.bikeType,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary)),
                             ],
                           ),
                         ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Details', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 2),
-                          Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
-                        ],
+                        GestureDetector(
+                          onTap: () => context.push('/profile/${ride.userId}'),
+                          child: Text(
+                            ride.userName,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert,
+                              color: AppColors.textTertiary, size: 18),
+                          padding: EdgeInsets.zero,
+                          onSelected: (value) {
+                            if (value == 'report') {
+                              ReportBottomSheet.show(
+                                context,
+                                reportedId: ride.userId,
+                                contentType: 'ride',
+                                contentId: ride.id,
+                              );
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'report',
+                              child: Text('Report Ride'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (ride.ridingScore != null) ...[
+                      const SizedBox(height: 10),
+                      _RidingScoreChip(score: ride.ridingScore!),
+                    ],
+                    if ((ride.caption ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        ride.caption!.trim(),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 14, color: AppColors.textPrimary),
                       ),
                     ],
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    _buildMedia(ride),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _stat('${ride.distanceKm.toStringAsFixed(1)} km',
+                            'Distance'),
+                        _divider(),
+                        _stat('${ride.durationMinutes} min', 'Duration'),
+                        _divider(),
+                        _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
+                            'Max Speed'),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(height: 1, color: AppColors.border),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Upvote',
+                          padding: EdgeInsets.zero,
+                          constraints:
+                              const BoxConstraints(minWidth: 36, minHeight: 36),
+                          onPressed: () => ref
+                              .read(rideFeedNotifierProvider.notifier)
+                              .vote(ride.id, 1),
+                          icon: Icon(
+                            Icons.arrow_upward,
+                            color: ride.myVote == 1
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        ),
+                        Text('${ride.netScore}',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary)),
+                        IconButton(
+                          tooltip: 'Downvote',
+                          padding: EdgeInsets.zero,
+                          constraints:
+                              const BoxConstraints(minWidth: 36, minHeight: 36),
+                          onPressed: () => ref
+                              .read(rideFeedNotifierProvider.notifier)
+                              .vote(ride.id, -1),
+                          icon: Icon(
+                            Icons.arrow_downward,
+                            color: ride.myVote == -1
+                                ? AppColors.danger
+                                : AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: _toggleExpanded,
+                          borderRadius:
+                              BorderRadius.circular(AppDimensions.radiusSm),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.chat_bubble_outline,
+                                    color: AppColors.textSecondary, size: 18),
+                                const SizedBox(width: 6),
+                                Text('${ride.comments}',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textSecondary)),
+                                const SizedBox(width: 4),
+                                Icon(
+                                    _expanded
+                                        ? Icons.expand_less
+                                        : Icons.expand_more,
+                                    color: AppColors.textSecondary,
+                                    size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Details',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(width: 2),
+                            Icon(Icons.chevron_right,
+                                size: 16, color: AppColors.primary),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingMd, 0, AppDimensions.paddingMd, AppDimensions.paddingMd),
-              child: _buildComments(),
-            ),
-        ],
+            if (_expanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0,
+                    AppDimensions.paddingMd, AppDimensions.paddingMd),
+                child: _buildComments(),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   /// Media strip: the route map is always shown (Strava-style). Rider photos,
@@ -701,12 +871,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
   Widget _buildMedia(SharedRideEntity ride) {
     final hasPhotos = ride.photoUrls.isNotEmpty;
     final mediaHeight = hasPhotos ? 200.0 : 180.0;
-    
+
     Widget buildMap(double h) => RideRouteMap(
-      polyline: ride.polyline,
-      height: h,
-      radius: AppDimensions.radiusLg,
-    );
+          polyline: ride.polyline,
+          height: h,
+          radius: AppDimensions.radiusLg,
+        );
 
     final map = InkWell(
       onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
@@ -721,7 +891,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: PhotoCollage(urls: ride.photoUrls, height: mediaHeight)),
+          Expanded(
+              child: PhotoCollage(urls: ride.photoUrls, height: mediaHeight)),
           const SizedBox(width: 8),
           Expanded(child: map),
         ],
@@ -738,12 +909,14 @@ class _RideCardState extends ConsumerState<_RideCard> {
         if (_loadingComments)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            child: Center(
+                child: CircularProgressIndicator(color: AppColors.primary)),
           )
         else if ((_comments ?? const []).isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text('No comments yet', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            child: Text('No comments yet',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           )
         else
           ..._comments!.map((c) => Padding(
@@ -754,11 +927,14 @@ class _RideCardState extends ConsumerState<_RideCard> {
                       TextSpan(
                         text: '${c.userName}  ',
                         style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary),
                       ),
                       TextSpan(
                         text: c.text,
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(
+                            fontSize: 13, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -780,6 +956,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
               ),
             ),
             IconButton(
+              tooltip: 'Send',
               icon: Icon(Icons.send, color: AppColors.primary, size: 20),
               onPressed: _submitComment,
             ),
@@ -793,9 +970,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
     return Column(
       children: [
         Text(value,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        Text(label,
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
       ],
     );
   }
@@ -817,9 +998,21 @@ class _RidingScoreChip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final tier = ridingScoreTier(score);
     final (color, label, icon) = switch (tier) {
-      RidingScoreTier.smooth => (AppColors.success, l10n.scoreSmoothLabel, Icons.emoji_events),
-      RidingScoreTier.steady => (AppColors.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
-      RidingScoreTier.aggressive => (AppColors.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
+      RidingScoreTier.smooth => (
+          AppColors.success,
+          l10n.scoreSmoothLabel,
+          Icons.emoji_events
+        ),
+      RidingScoreTier.steady => (
+          AppColors.attention,
+          l10n.scoreSteadyLabel,
+          Icons.thumb_up_alt_rounded
+        ),
+      RidingScoreTier.aggressive => (
+          AppColors.danger,
+          l10n.scoreAggressiveLabel,
+          Icons.warning_amber_rounded
+        ),
     };
 
     return Container(
@@ -835,7 +1028,8 @@ class _RidingScoreChip extends StatelessWidget {
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 5),
           Text('$score',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+              style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(width: 4),
           Text('· $label', style: TextStyle(fontSize: 12, color: color)),
         ],
@@ -879,7 +1073,8 @@ class PhotoCollage extends StatelessWidget {
           placeholder: (_, __) => Container(color: AppColors.background),
           errorWidget: (_, __, ___) => Container(
             color: AppColors.background,
-            child: const Icon(Icons.broken_image, color: Colors.white24, size: 24),
+            child:
+                const Icon(Icons.broken_image, color: Colors.white24, size: 24),
           ),
         ),
       ),
@@ -992,7 +1187,8 @@ class FullScreenGalleryDialog extends StatefulWidget {
   });
 
   @override
-  State<FullScreenGalleryDialog> createState() => _FullScreenGalleryDialogState();
+  State<FullScreenGalleryDialog> createState() =>
+      _FullScreenGalleryDialogState();
 }
 
 class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
@@ -1053,6 +1249,7 @@ class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
             child: Align(
               alignment: Alignment.topRight,
               child: IconButton(
+                tooltip: 'Close',
                 icon: const Icon(Icons.close, color: Colors.white, size: 28),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -1065,10 +1262,12 @@ class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.black54,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusFull),
                     ),
                     child: Text(
                       '${_page + 1}/${urls.length}',
@@ -1114,7 +1313,10 @@ class _RiderResultTile extends ConsumerWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               child: Row(
                 children: [
-                  UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
+                  UserAvatar(
+                      photoUrl: rider.photoUrl,
+                      name: rider.bestName,
+                      radius: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -1127,7 +1329,9 @@ class _RiderResultTile extends ConsumerWidget {
                                 color: AppColors.textPrimary)),
                         if (rider.username != null)
                           Text('@${rider.username}',
-                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
                       ],
                     ),
                   ),

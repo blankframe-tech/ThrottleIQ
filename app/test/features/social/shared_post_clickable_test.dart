@@ -267,7 +267,11 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserProvider.overrideWithValue(null),
-          rideFeedProvider.overrideWith((ref) => Future.value([testRide])),
+          // visibleFeedProvider is what the list renders; the seeded notifier
+          // supplies the loading/paging state the tab reads alongside it, and
+          // keeps both off Firestore.
+          rideFeedNotifierProvider
+              .overrideWith((ref) => RideFeedNotifier.seeded(ref, [testRide])),
           visibleFeedProvider.overrideWithValue([testRide]),
           followingUidsProvider.overrideWith((ref) => Future.value(const <String>{})),
           blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
@@ -314,7 +318,11 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserProvider.overrideWithValue(null),
-          rideFeedProvider.overrideWith((ref) => Future.value([testRide])),
+          // visibleFeedProvider is what the list renders; the seeded notifier
+          // supplies the loading/paging state the tab reads alongside it, and
+          // keeps both off Firestore.
+          rideFeedNotifierProvider
+              .overrideWith((ref) => RideFeedNotifier.seeded(ref, [testRide])),
           visibleFeedProvider.overrideWithValue([testRide]),
           followingUidsProvider.overrideWith((ref) => Future.value(const <String>{})),
           blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),

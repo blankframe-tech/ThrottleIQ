@@ -309,7 +309,9 @@ Future<void> applyCombo(Combo combo) async {
   final n = c.read(appearanceProvider.notifier);
   await n.setColorMode(combo.color);
   await n.setShapeVibe(combo.vibe);
-  await n.setBrightness(combo.brightness);
+  await n.setBrightnessMode(combo.brightness == Brightness.dark
+      ? AppBrightnessMode.dark
+      : AppBrightnessMode.light);
   await wait(800);
 }
 
@@ -347,7 +349,13 @@ Future<void> loadData() async {
       }
     }
   }
-  final feed = await safe('feed', () => c.read(rideFeedProvider.future).timeout(const Duration(seconds: 20)));
+  final feed = await safe('feed', () async {
+    // The feed is a paginating StateNotifier now, not a Future — read the
+    // first page it loads on construction.
+    final notifier = c.read(rideFeedNotifierProvider.notifier);
+    await notifier.refresh().timeout(const Duration(seconds: 20));
+    return c.read(rideFeedNotifierProvider).rides;
+  });
   if (feed != null && feed.isNotEmpty) {
     final other = feed.firstWhere((r) => r.userId != data.uid, orElse: () => feed.first);
     data.sharedRideId = other.id;
