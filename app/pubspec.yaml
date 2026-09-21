@@ -145,6 +145,7 @@ dependencies:
   # of cached_network_image, which the depend_on_referenced_packages lint
   # flags.
   flutter_cache_manager: ^3.4.2
+  firebase_app_check: ^0.3.2+10
 
 dev_dependencies:
   flutter_test:
