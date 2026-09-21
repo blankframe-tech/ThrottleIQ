@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:flutter/material.dart';
@@ -78,15 +80,20 @@ class AppTileLayer extends StatelessWidget {
     keyBuilder: _cacheKey,
   );
 
-  /// Under `flutter test` the plain network provider is used instead, as it
-  /// was before the cache existed. The cached one fetches through Dio, which
-  /// schedules zero-length timers per tile, and any screen test that ends
-  /// right after panning or zooming a map would then fail on "a Timer is
-  /// still pending". Tiles never load in tests either way (the test HTTP
-  /// client answers 400), so nothing under test changes.
+  /// Under `flutter test`, every tile resolves to a single transparent pixel
+  /// and **no HTTP request is made at all**.
+  ///
+  /// Two reasons. The cached provider fetches through Dio, which schedules
+  /// zero-length timers per tile, so any screen test ending right after a map
+  /// pan or zoom failed on "a Timer is still pending". And the plain
+  /// `NetworkTileProvider` this used to fall back to did reach the network —
+  /// a `flutter test` run emitted a wall of
+  /// `ClientException ... uri=https://tile.openstreetmap.org/...`, which is
+  /// flaky, slow, and rude to a volunteer-funded service that asks apps not to
+  /// bulk-fetch from it (new_gravity.md §2 / issues_open.md §81).
   static final TileProvider _tileProvider =
       Platform.environment.containsKey('FLUTTER_TEST')
-          ? NetworkTileProvider(headers: _headers())
+          ? _BlankTileProvider(headers: _headers())
           : cachedTileProvider;
 
   /// The cache key is the tile URL with the API key removed, so rotating the
@@ -205,4 +212,23 @@ class _DeferredTileStore extends CacheStore {
 
   @override
   Future<void> close() async => (await _store).close();
+}
+
+/// Serves a 1×1 transparent PNG for every tile, without touching the network.
+/// Test-only — see [AppTileLayer._tileProvider].
+class _BlankTileProvider extends TileProvider {
+  /// Still carries the app's User-Agent even though nothing is fetched, so the
+  /// header contract stays observable under test — that identifying UA is a
+  /// tile-policy requirement and worth keeping a test on.
+  _BlankTileProvider({super.headers});
+
+  /// A 1×1 fully transparent PNG.
+  static final Uint8List _pixel = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA'
+    '60e6kgAAAABJRU5ErkJggg==',
+  );
+
+  @override
+  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) =>
+      MemoryImage(_pixel);
 }
