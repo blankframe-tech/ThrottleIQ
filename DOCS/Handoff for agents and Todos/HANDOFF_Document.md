@@ -166,11 +166,19 @@ token facades are gone and `key: ValueKey(appearance)` is deleted, so changing
 appearance re-themes the app in place instead of unmounting it (issues_fixed.md
 §83.9 rest). §74 (Retro/Light near-black cards) is fixed too — it was an
 `AppCard` paint-order bug, not a palette token. `flutter analyze` zero,
-`flutter test` **1206/1206**. **Not yet verified in the real app:** a UI-tour
-before/after screenshot diff (`app/scripts/ui_tour/run_tour.sh`, `main` vs
-`appcolors`, same combos) was started but not completed at the time of writing —
-so the automated tests prove the mechanism, not that all ~1,940 rewritten sites
-render the same. Run it before merging. Anything written against `AppColors.x` /
+`flutter test` **1206/1206**. **Verified in the real app (2026-09-21):** UI tour (`app/scripts/ui_tour/run_tour.sh`),
+`main` vs `appcolors`, `carbonMono_curvy_dark` + `retro_boxy_light`, iPhone 17 Pro
+simulator, 181 screenshot pairs diffed. **148 are pixel-identical** below the
+status bar. The only material differences are the §74 screens (Retro Places /
+Forums / My Places / forum post), which is the intended fix, confirmed by eye.
+Residual <0.7% differences are non-token: the Record screen's randomised
+greeting, and the sign-in fade-in caught at a different frame. **One open
+observation:** Carbon's "All rides" shows a route-map thumbnail on the first card
+after but not before; that widget's data path (local `ride_points`) is untouched,
+and a re-run of the `main` baseline was started to confirm it is data state —
+treat it as unconfirmed until that is recorded here. Only 2 of 28 combos were
+run; the rest are covered by the token-level tests, not by screenshots.
+Anything written against `AppColors.x` /
 `AppDimensions.radius*` / `display(18)` on another branch must move to
 `context.palette.x` / `context.shape.radius*` / `display(context, 18)`.
 
