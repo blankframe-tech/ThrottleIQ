@@ -172,11 +172,14 @@ simulator, 181 screenshot pairs diffed. **148 are pixel-identical** below the
 status bar. The only material differences are the §74 screens (Retro Places /
 Forums / My Places / forum post), which is the intended fix, confirmed by eye.
 Residual <0.7% differences are non-token: the Record screen's randomised
-greeting, and the sign-in fade-in caught at a different frame. **One open
-observation:** Carbon's "All rides" shows a route-map thumbnail on the first card
-after but not before; that widget's data path (local `ride_points`) is untouched,
-and a re-run of the `main` baseline was started to confirm it is data state —
-treat it as unconfirmed until that is recorded here. Only 2 of 28 combos were
+greeting, and the sign-in fade-in caught at a different frame. **One thing looked like
+a difference and wasn't:** Carbon's "All rides" showed a route-map thumbnail on the
+first card after but not before. Re-running the `main` baseline produced the
+thumbnail too and matched `appcolors` exactly (0.00%) on all three All-rides
+screens, while the first `main` run differed from its own re-run by 15% — so it was
+local ride-point data warming between runs, not the migration. Re-run against
+`main` vs `appcolors`: 80 of 90 Carbon screens identical, the rest <0.7% (greeting
+text, fade-in frames). Only 2 of 28 combos were
 run; the rest are covered by the token-level tests, not by screenshots.
 Anything written against `AppColors.x` /
 `AppDimensions.radius*` / `display(18)` on another branch must move to
