@@ -24,6 +24,7 @@ import '../../domain/utilities/group_ride_members.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 
 /// How often this device publishes its own position to the group.
 ///
@@ -625,7 +626,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       body: rideAsync.when(
         loading: () =>
             Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => _ErrorState(message: '$e'),
+        error: (e, _) => _ErrorState(message: mapFirestoreError(e)),
         data: (ride) {
           if (ride == null) {
             return const _ErrorState(

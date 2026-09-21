@@ -217,6 +217,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
             ),
           ),
           IconButton(
+            tooltip: 'Send',
             icon: Icon(Icons.send, color: AppColors.primary),
             onPressed: _submitReply,
           ),

@@ -13,6 +13,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// The Profile tab's root screen (route `/home/profile`).
 ///
@@ -62,9 +63,10 @@ class GarageScreen extends ConsumerWidget {
               child: bikesAsync.when(
                 loading: () => Center(
                     child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, _) => Center(
-                    child: Text('Error: $e',
-                        style: TextStyle(color: AppColors.danger))),
+                error: (e, _) => ErrorView(
+                  error: e,
+                  onRetry: () => ref.invalidate(garageProvider),
+                ),
                 data: (bikes) {
                   final archived = ref.watch(archivedBikesProvider);
                   if (bikes.isEmpty && archived.isEmpty) {
@@ -296,7 +298,7 @@ class _BikeCard extends ConsumerWidget {
                 // A real button with a full-width, 48 dp target rather than a
                 // ~28 dp text row nested in the card's own onTap: a tap
                 // anywhere on it goes to maintenance, never falls through to
-                // bike detail (claude_sol.md §3.2.2). Pushed rather than
+                // bike detail (grill §3.2.2). Pushed rather than
                 // go()-ed so the Maintenance screen's back bar returns here.
                 TextButton.icon(
                   onPressed: () =>

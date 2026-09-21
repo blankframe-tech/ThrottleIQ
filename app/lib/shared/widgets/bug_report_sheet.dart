@@ -108,6 +108,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
               ),
               const Spacer(),
               IconButton(
+                tooltip: 'Close',
                 icon: const Icon(Icons.close),
                 color: AppColors.textSecondary,
                 onPressed: () => Navigator.of(context).pop(),

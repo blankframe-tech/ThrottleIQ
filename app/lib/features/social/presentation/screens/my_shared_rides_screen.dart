@@ -8,6 +8,7 @@ import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../providers/ride_feed_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 const _audienceLabels = {
   'public': 'Public',
@@ -52,8 +53,10 @@ class MySharedRidesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('My Shared Rides')),
       body: ridesAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(myRidesProvider),
+        ),
         data: (rides) {
           if (rides.isEmpty) {
             return Center(
@@ -96,6 +99,7 @@ class MySharedRidesScreen extends ConsumerWidget {
                             filled: false,
                           ),
                           IconButton(
+                            tooltip: 'Delete',
                             icon: Icon(Icons.delete_outline,
                                 color: AppColors.textTertiary, size: 18),
                             onPressed: () => _delete(context, ref, ride.id),

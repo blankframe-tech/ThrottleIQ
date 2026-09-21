@@ -12,6 +12,7 @@ import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../maintenance/domain/entities/maintenance_entity.dart';
 import '../../../maintenance/presentation/providers/maintenance_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 class BikeDetailScreen extends ConsumerWidget {
   final String bikeId;
@@ -153,7 +154,10 @@ class BikeDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             ridesAsync.when(
               loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-              error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
+              error: (e, _) => ErrorView(
+                error: e,
+                onRetry: () => ref.invalidate(rideHistoryProvider(bikeId)),
+              ),
               data: (rides) {
                 if (rides.isEmpty) {
                   return Center(
@@ -248,7 +252,7 @@ class BikeDetailScreen extends ConsumerWidget {
   // the dialog's route is completely gone before anything else touches
   // the Navigator.
   //
-  // Archive is the primary choice (claude_sol §2.1.1): the only option this
+  // Archive is the primary choice (grill §2.1.1): the only option this
   // dialog used to offer was a delete that took every ride on the bike with
   // it, which is rarely what "I sold this bike" means.
   Future<void> _confirmRemove(
@@ -419,7 +423,7 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
 
 /// "Service & maintenance" summary for one bike: the most urgent check and a
 /// way into the full list. Bike detail had no maintenance entry point at all
-/// (claude_sol.md §3.2.3), so the only route in was the Maintenance tab with
+/// (grill §3.2.3), so the only route in was the Maintenance tab with
 /// whichever bike happened to be active.
 class _ServiceCard extends ConsumerWidget {
   final String bikeId;

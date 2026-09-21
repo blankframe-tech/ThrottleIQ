@@ -851,6 +851,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
       child: Row(
         children: [
           IconButton(
+            tooltip: 'Upvote',
             icon: Icon(
               Icons.arrow_upward,
               color: _localVote == 1 ? AppColors.primary : AppColors.textSecondary,
@@ -863,6 +864,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
           IconButton(
+            tooltip: 'Downvote',
             icon: Icon(
               Icons.arrow_downward,
               color: _localVote == -1 ? AppColors.danger : AppColors.textSecondary,
@@ -957,6 +959,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
             ),
             const SizedBox(width: 8),
             IconButton(
+              tooltip: 'Send',
               icon: Icon(Icons.send, color: AppColors.primary),
               onPressed: _submitComment,
             ),

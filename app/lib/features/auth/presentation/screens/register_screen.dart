@@ -61,6 +61,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       appBar: AppBar(
         title: const Text('Create Account'),
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/auth/login'),
         ),
@@ -105,6 +106,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     labelText: 'Password',
                     hintText: '6+ characters',
                     suffixIcon: IconButton(
+                      tooltip: 'Show password',
                       icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
                           color: AppColors.textSecondary, size: 20),
                       onPressed: () => setState(() => _obscure = !_obscure),

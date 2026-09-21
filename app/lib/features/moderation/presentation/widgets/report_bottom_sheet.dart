@@ -119,6 +119,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                 ),
               ),
               IconButton(
+                tooltip: 'Close',
                 icon: Icon(Icons.close, color: AppColors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),

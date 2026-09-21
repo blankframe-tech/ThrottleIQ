@@ -10,6 +10,7 @@ import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_sort.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/ride_route_thumbnail.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// How many rides are revealed at a time.
 const int allRidesPageSize = 20;
@@ -79,6 +80,7 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
@@ -90,7 +92,10 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
           loading: () => Center(
               child: CircularProgressIndicator(color: AppColors.primary)),
           error: (e, _) => Center(
-              child: Text('$e', style: TextStyle(color: AppColors.danger))),
+              child: ErrorView(
+                error: e,
+                onRetry: () => ref.invalidate(riderStatsProvider),
+              )),
           data: (stats) {
             // Same fallback as the Rides tab: an older cached summary has no
             // allRides, and an empty page would be a lie.

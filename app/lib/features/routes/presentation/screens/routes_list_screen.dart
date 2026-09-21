@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../social/domain/entities/route_entity.dart';
 import '../providers/route_providers.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// Saved routes: the rider's own, plus public ones from everyone else.
 ///
@@ -75,8 +76,10 @@ class _RoutesTab extends ConsumerWidget {
     return routesAsync.when(
       loading: () =>
           Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      error: (e, _) =>
-          Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+      error: (e, _) => ErrorView(
+        error: e,
+        onRetry: () => ref.invalidate(provider),
+      ),
       data: (routes) {
         if (routes.isEmpty) {
           return Center(

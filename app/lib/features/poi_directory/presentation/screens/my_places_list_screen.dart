@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../providers/places_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// Places the signed-in rider added themselves — reached from the garage
 /// header's user menu (`garage_screen.dart`'s `_UserMenuButton`). Derived
@@ -23,7 +24,10 @@ class MyPlacesListScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('My Places')),
       body: placesAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(myPlacesProvider),
+        ),
         data: (places) {
           if (places.isEmpty) {
             return Center(

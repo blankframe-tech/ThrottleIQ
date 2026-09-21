@@ -270,6 +270,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
+                    tooltip: 'Send',
                     icon: const Icon(Icons.send, color: Colors.white, size: 20),
                     onPressed: _sendMessage,
                   ),

@@ -11,6 +11,7 @@ import '../../../social/data/repositories/route_repository.dart';
 import '../../domain/route_permissions.dart';
 import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// One saved route: the line on a map, its stats, its turn list, and the
 /// entry point into navigation.
@@ -131,7 +132,10 @@ class RouteDetailScreen extends ConsumerWidget {
         loading: () =>
             Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+            ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(routeByIdProvider(_lookup)),
+        ),
         data: (route) {
           if (route == null) {
             return Center(

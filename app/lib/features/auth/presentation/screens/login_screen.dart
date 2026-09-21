@@ -85,6 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   hint: '••••••••',
                   obscure: _obscure,
                   suffix: IconButton(
+                    tooltip: 'Show password',
                     icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
                         color: AppColors.textSecondary, size: 20),
                     onPressed: () => setState(() => _obscure = !_obscure),

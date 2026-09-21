@@ -11,6 +11,7 @@ import '../providers/maintenance_provider.dart';
 import '../widgets/edit_maintenance_check_sheet.dart';
 import '../widgets/odometer_sync_sheet.dart';
 import '../widgets/reset_maintenance_log_sheet.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 const double _kmToMi = 0.621371;
 
@@ -42,7 +43,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
   /// Back-only app bar when this screen was pushed (from bike detail or the
   /// garage card) rather than opened as the Maintenance tab — there was no
-  /// way back otherwise short of the system gesture (claude_sol.md §3.2.3).
+  /// way back otherwise short of the system gesture (grill §3.2.3).
   /// Untitled because the body's own header already says "Maintenance".
   PreferredSizeWidget? _backBar(BuildContext context) => context.canPop()
       ? AppBar(backgroundColor: AppColors.background, toolbarHeight: 48)
@@ -350,8 +351,11 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               logsAsync.when(
                 loading: () => Center(
                     child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, _) =>
-                    Text('$e', style: TextStyle(color: AppColors.danger)),
+                error: (e, _) => ErrorView(
+                  error: e,
+                  onRetry: () =>
+                      ref.invalidate(maintenanceProvider(activeBike.id)),
+                ),
                 data: (logs) {
                   if (logs.isEmpty) {
                     return Padding(
@@ -1318,6 +1322,7 @@ class _LogTile extends ConsumerWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Delete',
             icon: Icon(Icons.delete_outline, color: AppColors.textTertiary, size: 18),
             onPressed: () async {
               final confirm = await showDialog<bool>(

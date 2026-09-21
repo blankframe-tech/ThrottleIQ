@@ -31,6 +31,7 @@ import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/cloud/cloud_repository.dart';
 import '../../../../core/services/weather_service.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 enum _ExportFormat { json, gpx, csv }
 
@@ -51,7 +52,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   ({double riderKmh, double baselineKmh})? _speedOutlier;
   RideWeather? _weather;
   bool _weatherChecked = false;
-  // Anchors the iOS share popover to the tapped button (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §48) —
+  // Anchors the iOS share popover to the tapped button (issues §48) —
   // without a non-zero sharePositionOrigin, UIActivityViewController throws
   // instead of presenting, same root cause active_ride_screen.dart's
   // _shareButtonKey was added for.
@@ -212,6 +213,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         leading: IconButton(
+          tooltip: 'Close',
           icon: const Icon(Icons.close),
           onPressed: () => _dismiss(context),
         ),
@@ -219,8 +221,10 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       body: rideAsync.when(
         loading: () =>
             Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(rideDetailProvider(widget.rideId)),
+        ),
         data: (ride) {
           if (ride == null) {
             return Center(
@@ -516,7 +520,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   }
 
   /// Average *moving* speed, replacing a runner's min/km pace that meant
-  /// nothing to a motorcyclist (claude_sol.md §3.3.4). Falls back to elapsed
+  /// nothing to a motorcyclist (grill §3.3.4). Falls back to elapsed
   /// time for older rides with no moving time recorded.
   Widget _buildPaceCard(AppLocalizations l10n, RideEntity ride) {
     final moving = ride.movingSeconds;

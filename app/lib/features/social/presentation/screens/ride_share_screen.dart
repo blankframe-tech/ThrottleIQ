@@ -262,6 +262,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         backgroundColor: AppColors.background,
         title: const Text('Share ride'),
         leading: IconButton(
+          tooltip: 'Close',
           icon: const Icon(Icons.close),
           // Pop when there's somewhere to pop to; the "End ride + Share"
           // path arrives via context.go, so fall back to this ride's summary

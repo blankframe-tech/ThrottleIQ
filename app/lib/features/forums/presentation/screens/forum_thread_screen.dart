@@ -45,7 +45,7 @@ class ForumThreadScreen extends ConsumerWidget {
     ).then((posted) {
       // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
       // which inserts the new post into forumPostsNotifierProvider directly
-      // instead (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §54).
+      // instead (issues §54).
       if (posted == true) {
         ref.invalidate(forumsForGarageProvider);
       }
@@ -172,7 +172,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
   final _bodyController = TextEditingController();
   bool _submitting = false;
   // Only set once the rider has tried to submit — an empty field isn't an
-  // error until then (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §54: submitting blank/title-only used
+  // error until then (issues §54: submitting blank/title-only used
   // to just silently do nothing, with no inline error, shake, or disabled
   // button to say the tap even registered).
   bool _titleError = false;
@@ -448,6 +448,7 @@ class _PostCard extends ConsumerWidget {
           Row(
             children: [
               IconButton(
+                tooltip: 'Upvote',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, 1),
@@ -458,6 +459,7 @@ class _PostCard extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
               IconButton(
+                tooltip: 'Downvote',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, -1),
@@ -601,6 +603,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
               ),
               const SizedBox(width: 8),
               IconButton(
+                tooltip: 'New post',
                 onPressed: _busy ? null : _add,
                 icon: Icon(Icons.add, color: AppColors.primary),
               ),

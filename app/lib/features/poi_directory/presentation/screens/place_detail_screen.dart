@@ -16,6 +16,7 @@ import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
 import '../../domain/place_directions.dart';
 import '../providers/places_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
 ///
@@ -108,8 +109,10 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
       appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? 'Place')),
       body: placeAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(placeDetailProvider(widget.placeId)),
+        ),
         data: (place) {
           if (place == null) {
             return Center(
@@ -166,6 +169,7 @@ class _PlaceDetailBody extends ConsumerWidget {
           children: [
             for (int i = 1; i <= 5; i++)
               IconButton(
+                tooltip: 'Rate this place',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: () => onStarsChanged(i),
@@ -209,7 +213,10 @@ class _PlaceDetailBody extends ConsumerWidget {
         const SizedBox(height: 12),
         reviewsAsync.when(
           loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
+          error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () => ref.invalidate(reviewsForPlaceProvider(place.id)),
+          ),
           data: (reviews) {
             if (reviews.isEmpty) {
               return Text(
@@ -443,7 +450,7 @@ class _PlaceActions extends ConsumerWidget {
   static const directionsChoiceKey = 'place_directions_record_choice';
 
   /// Whether to record a ride alongside the directions. Asked rather than
-  /// assumed (claude_sol.md §3.2.2): the button used to start a recording
+  /// assumed (grill §3.2.2): the button used to start a recording
   /// silently, which a rider who only wanted the route never agreed to.
   /// Returns null when the rider backed out of the sheet, in which case
   /// nothing launches at all.

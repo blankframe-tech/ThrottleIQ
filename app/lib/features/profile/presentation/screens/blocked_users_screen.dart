@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/profile_providers.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 class BlockedUsersScreen extends ConsumerWidget {
   const BlockedUsersScreen({super.key});
@@ -18,7 +19,10 @@ class BlockedUsersScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Blocked Users')),
       body: blockedUidsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(blockedUsersProvider),
+        ),
         data: (blockedUids) {
           if (blockedUids.isEmpty) {
             return Center(

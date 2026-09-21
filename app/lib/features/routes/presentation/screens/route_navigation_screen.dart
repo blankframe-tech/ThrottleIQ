@@ -16,6 +16,7 @@ import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
 import 'route_detail_screen.dart' show turnIcon;
 import '../../../../shared/widgets/app_tile_layer.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// How close the rider must get to a turn's point before it's considered done
 /// and the banner advances to the next one.
@@ -156,7 +157,10 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
         loading: () =>
             Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+            ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(routeByIdProvider(_lookup)),
+        ),
         data: (route) {
           if (route == null || route.polyline.length < 2) {
             return Center(

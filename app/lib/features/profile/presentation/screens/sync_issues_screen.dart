@@ -4,6 +4,7 @@ import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/daos/outbox_dao.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 /// The signed-in rider's outbox entries that the queue gave up on — §69.O4.
 ///
@@ -47,7 +48,10 @@ class SyncIssuesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Sync issues')),
       body: issuesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(syncIssuesProvider),
+        ),
         data: (issues) {
           if (issues.isEmpty) {
             return Center(

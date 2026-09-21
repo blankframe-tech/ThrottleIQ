@@ -225,6 +225,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   CircleAvatar(
                     backgroundColor: AppColors.surface.withValues(alpha: 0.9),
                     child: IconButton(
+                      tooltip: 'Back',
                       icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -266,6 +267,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   CircleAvatar(
                     backgroundColor: AppColors.surface.withValues(alpha: 0.9),
                     child: IconButton(
+                      tooltip: 'Close',
                       icon: Icon(Icons.close, color: AppColors.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -356,6 +358,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                       ),
                     ),
                     IconButton(
+                      tooltip: 'Close',
                       icon: const Icon(Icons.close, size: 16),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 24, minHeight: 24),

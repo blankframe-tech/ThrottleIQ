@@ -13,6 +13,7 @@ import '../providers/rider_stats_provider.dart';
 import '../widgets/badge_grid.dart';
 import '../widgets/ride_line_chart.dart';
 import 'all_rides_screen.dart';
+import '../../../../shared/widgets/error_view.dart';
 
 const _ranks = [
   'New Rider',
@@ -46,7 +47,10 @@ class StatsScreen extends ConsumerWidget {
           loading: () => Center(
               child: CircularProgressIndicator(color: AppColors.primary)),
           error: (e, _) => Center(
-              child: Text('$e', style: TextStyle(color: AppColors.danger))),
+              child: ErrorView(
+                error: e,
+                onRetry: () => ref.invalidate(riderStatsProvider),
+              )),
           data: (stats) {
             // Sort the whole history, then cap — never the other way round.
             // Falls back to recentRides so an older cached summary (which has

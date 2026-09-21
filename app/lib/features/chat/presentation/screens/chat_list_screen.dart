@@ -244,6 +244,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: 'Close',
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                   color: AppColors.textSecondary,
