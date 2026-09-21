@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/utils/geo_math.dart';
@@ -14,9 +15,12 @@ import '../../../../core/utils/geo_math.dart';
 ///
 /// `r` isn't a fixed 200 m either. A fixed radius lets anyone who sees a few
 /// of a rider's shares intersect the circles' edges and triangulate the
-/// center. Each rider gets a stable jitter on top of the base radius, seeded
-/// from their uid ([seedForUid]), so `r` is 200-349 m, the same on every
-/// ride (averaging many shares doesn't reveal it) but different per rider.
+/// center. Each rider gets a stable jitter on top of the base radius, so `r`
+/// is 200-349 m — the same on every one of their rides, different per rider.
+///
+/// The jitter seed comes from `PrivacyZoneSalt`: a random value stored in an
+/// owner-only document. It used to be derived from the uid, which defeated
+/// the whole point — see [seedForUid] and issues §83.17.
 ///
 /// Only leading and trailing hidden runs are trimmed. A loop ride that
 /// passes near home mid-ride keeps that middle section, since the share
@@ -29,14 +33,21 @@ class PrivacyZoneClipper {
   static const int jitterSpanMeters = 150;
 
   /// The hidden radius for a given [seed]: [radiusM] plus 0-149 m.
-  static double radiusFor(int seed, {double radiusM = privacyZoneDistanceMeters}) =>
+  static double radiusFor(int seed,
+          {double radiusM = privacyZoneDistanceMeters}) =>
       radiusM + (seed.abs() % jitterSpanMeters);
 
   /// A stable 31-bit seed for [uid] (FNV-1a over its UTF-16 code units).
   ///
-  /// `String.hashCode` isn't used because Dart doesn't promise it's stable
-  /// across platforms or SDK versions, and a seed that changed between app
-  /// updates would hand out a second circle edge to triangulate against.
+  /// **Do not use this to seed a real clip.** The uid is a plaintext field on
+  /// every shared ride document, and this function is in a source-available
+  /// repo, so anyone reading the feed can recompute a rider's exact radius —
+  /// which makes triangulating their home *easier* than a fixed radius would
+  /// (issues §83.17). Use `PrivacyZoneSalt.forUid` instead.
+  ///
+  /// Kept only so the existing tests can still generate a deterministic,
+  /// realistic-looking seed value without reaching for Firestore.
+  @visibleForTesting
   static int seedForUid(String uid) {
     var hash = 0x811c9dc5;
     for (final unit in uid.codeUnits) {
@@ -63,7 +74,8 @@ class PrivacyZoneClipper {
     final end = polyline.last;
     final r = radiusFor(seed, radiusM: radiusM);
     bool hidden(LatLng p) =>
-        haversineMetersLatLng(p, start) <= r || haversineMetersLatLng(p, end) <= r;
+        haversineMetersLatLng(p, start) <= r ||
+        haversineMetersLatLng(p, end) <= r;
 
     var i = 0;
     while (i < polyline.length && hidden(polyline[i])) {

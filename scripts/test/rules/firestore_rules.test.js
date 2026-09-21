@@ -553,7 +553,7 @@ test('a notification spoofing fromUid as someone else is still denied', async ()
 test('a rider can create their own pending crash notification', async () => {
   const db = dbFor(MALLORY);
   await assertSucceeds(
-    setDoc(doc(db, 'crashNotifications', 'crash-1'), {
+    setDoc(doc(db, 'crashNotifications', RIDE_ID), {
       uid: MALLORY,
       rideId: RIDE_ID,
       status: 'pending',
@@ -564,7 +564,7 @@ test('a rider can create their own pending crash notification', async () => {
 test('a crash notification created with a non-pending status is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
-    setDoc(doc(db, 'crashNotifications', 'crash-1'), {
+    setDoc(doc(db, 'crashNotifications', RIDE_ID), {
       uid: MALLORY,
       rideId: RIDE_ID,
       status: 'acknowledged',
@@ -572,10 +572,25 @@ test('a crash notification created with a non-pending status is denied', async (
   );
 });
 
+// §83.19: the document id must BE the rideId, which makes a retried crash
+// sequence idempotent instead of creating a second alert for the same ride.
+// This is NOT an abuse bound — a client can invent an id and match rideId to
+// it. Rules can't limit request volume; App Check is the control for that.
+test('a crash notification whose id is not the rideId is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(doc(db, 'crashNotifications', 'some-other-id'), {
+      uid: MALLORY,
+      rideId: RIDE_ID,
+      status: 'pending',
+    })
+  );
+});
+
 test('a rider cannot rewrite their own crash notification status after creation', async () => {
   // The exact §33.18 exploit: suppress the escalation by self-acknowledging.
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), 'crashNotifications', 'crash-1'), {
+    await setDoc(doc(ctx.firestore(), 'crashNotifications', RIDE_ID), {
       uid: MALLORY,
       rideId: RIDE_ID,
       status: 'pending',
@@ -583,7 +598,7 @@ test('a rider cannot rewrite their own crash notification status after creation'
   });
   const db = dbFor(MALLORY);
   await assertFails(
-    updateDoc(doc(db, 'crashNotifications', 'crash-1'), { status: 'acknowledged' })
+    updateDoc(doc(db, 'crashNotifications', RIDE_ID), { status: 'acknowledged' })
   );
 });
 

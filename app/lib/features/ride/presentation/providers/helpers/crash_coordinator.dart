@@ -85,9 +85,14 @@ class CrashCoordinator {
   }) async {
     if (uid == null || rideId == null) return;
 
+    // Keyed by rideId rather than an auto-id, which makes this idempotent:
+    // one alert per ride, however many times the sequence is driven. With
+    // `.add()` every retry — and every notification a signed-in client cared
+    // to POST — created another document and another function invocation, with
+    // nothing in firestore.rules bounding it (issues §83.19).
     await _bestEffortWrite(
       'crash notification',
-      () => _firestore.collection('crashNotifications').add({
+      () => _firestore.collection('crashNotifications').doc(rideId).set({
         'uid': uid,
         'rideId': rideId,
         'timestamp': DateTime.now().toIso8601String(),

@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import '../../domain/entities/route_entity.dart';
 import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/route_model.dart';
+import '../../domain/utilities/privacy_zone_salt.dart';
 
 class RouteRepository {
   static final RouteRepository _instance = RouteRepository._internal();
@@ -13,6 +14,7 @@ class RouteRepository {
   RouteRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
 
   /// Saves a new route from a completed ride.
   ///
@@ -21,7 +23,7 @@ class RouteRepository {
   /// save screen makes for that state, so a personal route deliberately keeps
   /// its real endpoints. Privacy-zone clipping happens in [setPublic], at the
   /// moment a route actually becomes readable by anyone else — see that
-  /// method's doc comment (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.3).
+  /// method's doc comment (issues §24.3).
   Future<String> saveRoute({
     required String userId,
     required String name,
@@ -30,7 +32,8 @@ class RouteRepository {
     required List<LatLng> polyline,
     String? mapSnapshotUrl,
   }) async {
-    final routeRef = _firestore.collection('users').doc(userId).collection('routes').doc();
+    final routeRef =
+        _firestore.collection('users').doc(userId).collection('routes').doc();
 
     final route = RouteModel(
       id: routeRef.id,
@@ -78,8 +81,7 @@ class RouteRepository {
         .get();
 
     return querySnapshot.docs
-        .map((doc) =>
-            RouteModel.fromFirestore(doc.data(), doc.id).toEntity())
+        .map((doc) => RouteModel.fromFirestore(doc.data(), doc.id).toEntity())
         .toList();
   }
 
@@ -131,7 +133,7 @@ class RouteRepository {
   /// (owner-only). [makePublic] is the one-way shorthand kept for callers that
   /// only ever publish.
   ///
-  /// Going public permanently clips the stored polyline (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md
+  /// Going public permanently clips the stored polyline (the issues log
   /// §24.3) — strips ~200m off each end, same as
   /// [RideShareRepository.shareRide] does for shared rides. Route *sharing*
   /// always did this; route *publishing* stored the raw trail verbatim, so
@@ -146,8 +148,11 @@ class RouteRepository {
   /// without a line to draw. Turning a route private does NOT need a read
   /// first — it never touches the polyline.
   Future<void> setPublic(String userId, String routeId, bool isPublic) async {
-    final docRef =
-        _firestore.collection('users').doc(userId).collection('routes').doc(routeId);
+    final docRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('routes')
+        .doc(routeId);
 
     if (!isPublic) {
       await docRef.update({'isPublic': false});
@@ -161,13 +166,14 @@ class RouteRepository {
         : RouteModel.fromFirestore(data, routeId).polyline;
     final clipped = PrivacyZoneClipper.clipPolyline(
       rawPolyline,
-      seed: PrivacyZoneClipper.seedForUid(userId),
+      seed: await _privacySalt.forUid(userId),
     );
 
     await docRef.update({
       'isPublic': true,
-      'polyline':
-          clipped.map((point) => {'lat': point.latitude, 'lng': point.longitude}).toList(),
+      'polyline': clipped
+          .map((point) => {'lat': point.latitude, 'lng': point.longitude})
+          .toList(),
     });
   }
 

@@ -66,7 +66,7 @@ service cloud.firestore {
     // check is only cosmetic (it hides buttons); this is what actually stops
     // a non-admin from deleting other riders' content.
     //
-    // docs/Issues.md §24.9: prefers the `admin` custom claim
+    // issues §24.9: prefers the `admin` custom claim
     // (request.auth.token.admin) — set via scripts/set_admin_claim.js, which
     // only this project's own service-account credentials can run — over the
     // email-string comparison this used to be exclusively. A custom claim can
@@ -83,7 +83,7 @@ service cloud.firestore {
     // rule that calls this, including through the `||` chains in
     // canModerateForum() and the clauses that use it, denying writes that
     // should have been allowed on their other branch. Caught by the rules
-    // tests in scripts/test/rules/ (docs/Issues.md §24.11).
+    // tests in scripts/test/rules/ (issues §24.11).
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.get('admin', false) == true ||
@@ -93,7 +93,7 @@ service cloud.firestore {
 
     // Ties an engagement-counter bump to the SAME transaction
     // creating/deleting the per-user doc it's supposed to represent —
-    // docs/Issues.md §24.7. Before this, a tally like `likes` or
+    // issues §24.7. Before this, a tally like `likes` or
     // `upvotes`/`downvotes` could move by exactly ±1 per REQUEST, but
     // nothing capped the number of requests: a client could loop the same
     // update and drive any tally to an arbitrary value, since the rule never
@@ -181,7 +181,7 @@ service cloud.firestore {
         scoreCountPlausible(data.get('highJerkCount', null), data.durationSeconds);
     }
 
-    // docs/Issues.md §62.1: a shared ride's own `allow update` (below) used to
+    // issues §62.1: a shared ride's own `allow update` (below) used to
     // only pin `userId` immutable — every other field, including the stats
     // shown on the social feed and any leaderboard built on them, was
     // unbounded for the ride's own author. This is the backstop: independent
@@ -194,7 +194,7 @@ service cloud.firestore {
     // clamp, so a legitimately-clamped value is never rejected here) and
     // never fall below the ride's own implied average speed (the same
     // invariant `RideEntity.maxSpeedKmh`/`SharedRideEntity.maxSpeedKmh`
-    // enforce client-side — see docs/Issues.md §62.8 for why that can't be
+    // enforce client-side — see issues §62.8 for why that can't be
     // trusted alone). A half-km/h epsilon absorbs floating-point rounding.
     function rideStatsPlausible(data) {
       let avgSpeedKmh = (data.distanceKm / data.durationSeconds) * 3600;
@@ -205,7 +205,7 @@ service cloud.firestore {
         ridingScoreCountsPlausible(data);
     }
 
-    // docs/Issues.md §62.2: `users/{uid}.publicStats` (shown on the public
+    // issues §62.2: `users/{uid}.publicStats` (shown on the public
     // profile) and its `badgeIds` used to be entirely client-authored with no
     // server validation at all. RidePersistenceCoordinator.updatePublicStats
     // recomputes the rider's FULL lifetime total from local data on every
@@ -224,7 +224,7 @@ service cloud.firestore {
     // logic in core/utils/badges.dart ported to a Cloud Function and
     // verified end-to-end against a live project, which this pass couldn't
     // do safely without deploy/device access. Tracked as deferred in
-    // docs/Issues.md §62.
+    // issues §62.
     function publicStatsValid(existingProfile, incomingStats) {
       let oldStats = existingProfile != null ? existingProfile.get('publicStats', {}) : {};
       let oldKm = oldStats.get('totalDistanceKm', 0);
@@ -285,7 +285,7 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if profileVisibleTo(uid, resource.data);
 
-      // Owner-only, PLUS docs/Issues.md §24.5: a usernameLower change must be
+      // Owner-only, PLUS issues §24.5: a usernameLower change must be
       // backed by a real claim in usernames/{handle}. This rule used to be a
       // bare `request.auth.uid == uid` with no field validation at all.
       // ProfileRepository.setUsername() claims usernames/{handle} in a
@@ -345,6 +345,38 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == uid;
       }
 
+      // Owner-only private settings. Currently holds `zoneSalt`, the random
+      // per-rider value PrivacyZoneClipper jitters its hidden radius with.
+      //
+      // It MUST NOT be readable by anyone else: the whole reason it exists is
+      // that the previous seed was derived from the uid, which every viewer of
+      // a shared ride already has, so the "you can't triangulate my home"
+      // property was never real (issues §83.17). A salt a viewer can read is
+      // exactly as useless as a salt a viewer can compute.
+      //
+      // Note this sits under users/{uid}, whose *profile document* is publicly
+      // readable — a subcollection does NOT inherit the parent document's
+      // read rule, so this is genuinely private.
+      match /private/{docId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+
+      // Ledger of Cloudinary uploads (public_id + resource type), written by
+      // CloudinaryUploadService on every upload so that account deletion has a
+      // manifest of media to destroy — an unsigned upload preset can't
+      // authorise a destroy, so the sweep has to run server-side from this
+      // (issues §83.15, functions/src/account-deletion.ts).
+      //
+      // Create-only for the rider: they add rows by uploading and may read
+      // their own, but must not edit or delete one — a row the rider could
+      // remove is a row that lets them hide media from their own deletion
+      // sweep. The Admin SDK bypasses these rules, so the sweep still reads
+      // and the recursiveDelete still cleans up.
+      match /cloudinaryAssets/{assetId} {
+        allow read, create: if request.auth.uid == uid;
+        allow update, delete: if false;
+      }
+
       // Saved routes. Unlike the owner-only subcollections around it, a route
       // marked public is readable by any signed-in rider — that's the whole
       // point of the Discover tab. Writes stay owner-only, so nobody can
@@ -383,7 +415,7 @@ service cloud.firestore {
       // Bounded so a rider can only ever write a notification claiming to
       // be from themselves, never spoof another uid as the source. Reads/
       // updates (marking read)/deletes stay owner-only.
-      // docs/Issues.md §33.4: `fromUid == request.auth.uid` alone bounded WHO
+      // issues §33.4: `fromUid == request.auth.uid` alone bounded WHO
       // a notification could claim to be from, but nothing bounded the
       // `{uid}` it landed in (any signed-in rider could target any victim)
       // or the free-text content — `fromName`/`fromPhotoUrl`/`type` were
@@ -458,7 +490,7 @@ service cloud.firestore {
       // collection and dropping `list` breaks no existing flow.
       //
       // `shareable == true` is required IN ADDITION to knowing the token —
-      // docs/Issues.md §24.1. The premise this rule used to rely on ("a rider
+      // issues §24.1. The premise this rule used to rely on ("a rider
       // only appears here because they published a shareable live session in
       // the first place") was false: the client called
       // `_startLiveSessionPublishing()` unconditionally from `startRide()`,
@@ -472,7 +504,7 @@ service cloud.firestore {
       // means any legacy doc written before this field existed reads as
       // NOT shareable — fail closed, not open.
       //
-      // docs/Issues.md §33.2: ALSO requires `expiresAt` to be in the future.
+      // issues §33.2: ALSO requires `expiresAt` to be in the future.
       // The client (public/live-viewer.html) enforced the 24h TTL only in
       // its own JS — nothing stopped a caller from skipping the page
       // entirely and reading the doc straight off the Firestore REST API
@@ -502,17 +534,37 @@ service cloud.firestore {
     // which is not subject to these rules at all — so the client never
     // legitimately needs update/delete here.
     //
-    // docs/Issues.md §33.18: this used to be a bare `allow write`, which also
+    // issues §33.18: this used to be a bare `allow write`, which also
     // covers update — a rider could freely rewrite their own doc's `status`
     // after creation (e.g. straight to 'acknowledged'), which could suppress
     // the escalation this collection exists to drive once real delivery
     // ships (currently mocked — Cloud Functions can't deploy on this
-    // project's billing plan, docs/Issues.md §24). Scoping to `create` only,
+    // project's billing plan, issues §24). Scoping to `create` only,
     // with the shape the client actually writes, closes that off; no
     // `allow update`/`allow delete` is granted at all.
+    // The document id IS the rideId (see CrashCoordinator). That makes the
+    // write idempotent — the crash sequence can be retried, or driven twice,
+    // without creating a second alert and a second function invocation for the
+    // same ride, which `.add()` did (issues §83.19).
+    //
+    // It does NOT stop deliberate abuse, and shouldn't be read as doing so: a
+    // client is free to invent an id and send `rideId` to match it. Rules
+    // cannot bound request volume. The real control is Firebase App Check,
+    // which is not enabled on this project yet — tracked in issues §83.19.
+    //
+    // Requiring the ride to exist under users/{uid}/rides was considered and
+    // rejected: recording is offline-first, so a crash can fire before the
+    // ride has ever reached Firestore, and the rule would then reject the one
+    // write that matters most.
+    //
+    // Only `create` is exposed: the Cloud Function moves the doc through its
+    // later states with Admin privileges, and a client that could rewrite
+    // `status` could mark its own alert `acknowledged` and silence the
+    // escalation sweep.
     match /crashNotifications/{documentId} {
       allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.uid &&
+        request.resource.data.get('rideId', '') == documentId &&
         request.resource.data.get('status', '') == 'pending';
       allow read: if request.auth != null && request.auth.uid == resource.data.uid;
     }
@@ -538,7 +590,7 @@ service cloud.firestore {
       // attempted. Guard it explicitly: a nonexistent doc has no data to
       // protect, so it's always safe to let the read through.
       allow read: if resource == null || rideVisibleTo(resource.data);
-      // docs/Issues.md §62.1: a fresh share must start with zeroed
+      // issues §62.1: a fresh share must start with zeroed
       // engagement counters (an attacker could otherwise launch a share
       // pre-loaded with fabricated upvotes), a recognized `audience`, an
       // empty `allowedUserIds` for a public share (the array only means
@@ -555,7 +607,7 @@ service cloud.firestore {
         rideStatsPlausible(request.resource.data);
       // Owner can update/delete the ride freely, but may not reassign
       // authorship (userId is immutable on this branch), and — same fix as
-      // create, docs/Issues.md §62.1 — may not use this branch to touch the
+      // create, issues §62.1 — may not use this branch to touch the
       // engagement counters (those move only through the bump-validated
       // branch below, regardless of who's writing), set an unrecognized
       // audience, pad allowedUserIds on a public share, or push
@@ -579,10 +631,10 @@ service cloud.firestore {
       // Three disjoint shapes:
       //   - likes: ±1 (legacy heart; kept for back-compat), tied to the
       //     caller's own likes/{uid} doc being created/deleted in the same
-      //     transaction (docs/Issues.md §24.7 — see likeBumpValid above).
+      //     transaction (issues §24.7 — see likeBumpValid above).
       //   - comments: +1, now tied to the comment doc named by the bump's own
       //     `lastCommentId` being created by the caller in the same
-      //     transaction (docs/Issues.md §24.7 — see newDocBy above).
+      //     transaction (issues §24.7 — see newDocBy above).
       //     addComment() was made transactional to close this; a client that
       //     loops the bump with no comment posted, or that points it at a
       //     comment that already existed, now fails.
@@ -658,7 +710,7 @@ service cloud.firestore {
       // ever incrementing/decrementing by exactly one.
       // Every forum — not just rider-created ('custom') ones — must stamp its
       // creator as the caller and seed the maintainer list with exactly that
-      // same uid, or omit both fields entirely. docs/Issues.md §24.4: this
+      // same uid, or omit both fields entirely. issues §24.4: this
       // constraint used to apply ONLY when type == 'custom', so for any other
       // type (e.g. 'bikeModel') createdBy/maintainerIds were unconstrained.
       // Forum ids are deterministic slugs (bikeForumSlug/generalForumSlug),
@@ -707,7 +759,7 @@ service cloud.firestore {
           request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0;
         // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
         // the reply doc named by `lastReplyId` being created in the same
-        // transaction (docs/Issues.md §24.7 — addReply() was made
+        // transaction (issues §24.7 — addReply() was made
         // transactional to allow this, mirroring addComment() on rides); a
         // deleteReply -1; or a votePost bounded upvotes/downvotes change tied
         // to the caller's own votes/{uid} doc via voteBumpValid (same fix and
@@ -732,7 +784,7 @@ service cloud.firestore {
            // canModerateForum(forumId)`, which was wrong: `resource` here is
            // the POST, so it checked the POST's author, not the reply's. A
            // rider deleting their own reply on someone else's post had the
-           // whole batch denied (docs/Issues.md §24.11).
+           // whole batch denied (issues §24.11).
            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'lastReplyId']) &&
             request.resource.data.replyCount == resource.data.replyCount - 1 &&
             request.resource.data.get('lastReplyId', '') is string &&
@@ -797,7 +849,7 @@ service cloud.firestore {
     // Standalone top-level collection: `places/{placeId}`. There is
     // deliberately NO nested `places/{placeId}/reviews` block here — the
     // draft this was adapted from (app/firestore_rules_poi_directory.txt,
-    // deleted per docs/Issues.md §33.14: it was inert, unreferenced by
+    // deleted per issues §33.14: it was inert, unreferenced by
     // firebase.json, and materially weaker than these rules) assumed that
     // shape, but ReviewRepository actually reads/writes a
     // standalone top-level `reviews` collection filtered by `placeId` (see
@@ -933,7 +985,7 @@ service cloud.firestore {
     // someone else's handle.
     //
     // `get`, deliberately NOT `read` — same reasoning as `liveSessions`
-    // below (docs/Issues.md §3): `read` = `get` + `list`, and a `list` grant
+    // below (issues §3): `read` = `get` + `list`, and a `list` grant
     // here would let anyone enumerate every handle→uid pair. `allow get: if
     // true` (no auth required) rather than gating on `request.auth != null`
     // because the permanent share link (`/r/{username}`) is resolved by
@@ -1037,7 +1089,7 @@ service cloud.firestore {
 
       allow update: if request.auth != null && (
         // 1. The creator: status changes, removing a member, ending the ride.
-        //    May never reassign authorship. docs/Issues.md §62 (architecture
+        //    May never reassign authorship. issues §62 (architecture
         //    notes): this clause is the same "unbounded owner branch"
         //    pattern as the shared-ride one fixed in §62.1, but group-ride
         //    fields aren't part of any public leaderboard, and memberIds/
@@ -1045,7 +1097,7 @@ service cloud.firestore {
         //    member, inviteUsers' arrayUnion) in ways a field-level lock
         //    would need care not to break without a live device to verify
         //    against — so only `status` is bounded here for now; the
-        //    broader lockdown is deferred, tracked in docs/Issues.md §62.
+        //    broader lockdown is deferred, tracked in issues §62.
         (resource.data.creatorId == request.auth.uid &&
          request.resource.data.creatorId == resource.data.creatorId &&
          request.resource.data.get('status', 'planned') in ['planned', 'active', 'completed']) ||
@@ -1057,7 +1109,7 @@ service cloud.firestore {
         //    themselves to memberIds, remove exactly themselves from
         //    invitedIds.
         //
-        //    docs/Issues.md §24.6: invitedIds' new value must be EXACTLY the
+        //    issues §24.6: invitedIds' new value must be EXACTLY the
         //    old list with the caller removed — not just "caller isn't in
         //    it anymore". The previous `!(auth.uid in new invitedIds)` check
         //    bounded only whether the caller stayed out, not what else
@@ -1321,7 +1373,7 @@ service cloud.firestore {
       // Any authenticated user can create a report, but only if they correctly
       // stamp themselves as the reporter, target a real (non-empty) id, and
       // leave it in the 'pending' state a real report always starts in —
-      // docs/Issues.md §62.5: this used to validate only reporterId, so a
+      // issues §62.5: this used to validate only reporterId, so a
       // client could create a report already stamped 'actioned' (skipping
       // review entirely) against an arbitrary reportedId. The automated
       // moderation function (chat-moderation.ts) writes via the Admin SDK,
@@ -1347,7 +1399,7 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         (resource == null && request.auth.uid in chatId.split('_')) ||
         (resource != null && request.auth.uid in resource.data.participants));
-      // docs/Issues.md §62.4: update used to allow a participant to rewrite
+      // issues §62.4: update used to allow a participant to rewrite
       // ANY field, including `participants` itself — silently adding a third
       // uid to a 1:1 DM and handing them the whole conversation without the
       // other party's consent. The only real update
@@ -1378,7 +1430,7 @@ service cloud.firestore {
         allow read: if request.auth != null &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
 
-        // docs/Issues.md §62.4: update used to allow a participant to rewrite
+        // issues §62.4: update used to allow a participant to rewrite
         // ANY field of ANY message, including the other person's `text`/
         // `senderId`, or flip a moderation-hidden `isToxic` back to false,
         // undoing chat-moderation.ts's auto-hide (which itself writes via
