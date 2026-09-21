@@ -385,6 +385,25 @@ What remains open:
   2026-09-21:** merge navigation into the active-ride cockpit so following a
   saved route records it like any other ride. Today the two core loops don't
   compose — you can follow a route and end up with no ride logged.
+  **NOT DONE (2026-09-21) — deliberately, with a plan.** It is not a one-line hook:
+  `RouteNavigationScreen` (402 lines) owns its **own** `Geolocator.getPositionStream`,
+  its own permission/services checks and its own progress/off-route/ETA logic, entirely
+  independent of `RideRecordingNotifier` (which owns GPS, sensors, the foreground
+  service, persistence, live-share and crash coordination). Doing it properly means:
+  1. A `NavigationSession` provider (route + `buildTurnInstructions` result + current
+     step/progress) that is **fed by the recorder's fixes**, so there is one GPS stream,
+     not two. Extract the progress/off-route/ETA maths out of the screen first; it has no
+     tests today.
+  2. `RideRecordingNotifier.startRide(routeId: …)` (or a session started alongside it) and
+     an optional route id on the ride record, so history can say "followed route X".
+  3. A navigation overlay in `active_ride_screen` (turn banner, remaining/ETA, off-route
+     state); `RouteNavigationScreen` becomes "start recording + open the cockpit".
+  4. Decide what happens when the rider ends the ride mid-route, or pauses.
+  Risks: it touches the app's core loop, which no automated test drives end to end (§83.28),
+  and it needs a phone on a bike (or a GPX-replaying simulator) to verify. The
+  approved-but-unbuilt design is the reason this is left open rather than half-done.
+  The Places "Record this ride in ThrottleIQ?" prompt shows the pattern for recording
+  alongside an external maps app.
 - ~~**78.24 SafeQR has no "Print sticker"**~~ **DONE 2026-09-21** — see `issues_fixed.md` §78.24.
 - **78.25 The pitch** (`iDEA_PITCH_SUBMISSION.md` Slide 9, lines
   36/76/107) still claims working crash detection and a team the repo
