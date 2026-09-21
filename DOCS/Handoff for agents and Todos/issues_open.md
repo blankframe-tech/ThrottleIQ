@@ -505,11 +505,11 @@ sub-items fixed on 2026-09-21 (safety claims, EventDetector, feed pagination,
 account deletion, privacy salt, error states, comment rot). Full original
 writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`.
 
-**Where the fixed work lives:** branch `fix/critique-83`, pushed, **not
-merged into `main`** (10 commits, `da3aab5..c6c7213`). Nothing is deployed —
-the new `rides (userId, audience, createdAt)` index, the two new rules
-subcollections and the functions all still need pushing; see
-`HANDOFF_Document.md` for the exact commands and what breaks until then.
+**Where the fixed work lives:** merged to `main` and pushed 2026-09-21
+(`b32165e..49c6b0e`). Firestore **rules and indexes are deployed and
+verified**; **functions are not** — still blocked on Blaze, which is why the
+Cloudinary deletion sweep and the account-deletion anonymization in §83.15 do
+not run yet. See `HANDOFF_Document.md` for the verification detail.
 
 What is still open:
 

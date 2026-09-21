@@ -28,25 +28,38 @@ install on this device, go straight to USB.
 clean, `flutter test` **1195/1195** (+21 new), rules emulator **113/113**,
 `functions/` build clean.
 
-**WHERE THIS LIVES: branch `fix/critique-83`, pushed to origin, NOT merged.**
-Ten commits, `da3aab5..c6c7213`. `main` is untouched. Land it with
-`git checkout main && git merge --ff-only fix/critique-83 && git push`, the
-same pattern `fix/grill-78` used.
+**MERGED TO `main` and PUSHED (2026-09-21), `b32165e..49c6b0e`** — eleven
+commits, fast-forwarded from `fix/critique-83`. 112 files, +4123/-832.
 
-**NOTHING IS DEPLOYED, and three deploys are needed before parts of this
-work stop being inert:**
-1. `firebase deploy --only firestore:indexes` — the new composite index
-   `rides (userId, audience, createdAt)` backs the "Following" chip's query.
-   **Until it is live that chip throws `failed-precondition`**, which is the
-   same trap as §82 and §178: index written to the JSON file, never pushed.
-2. `firebase deploy --only firestore:rules` — two new owner-only
+**Rules and indexes are DEPLOYED to `throttleiqfb`; functions are NOT.**
+1. ✅ `firestore:indexes` — deployed and **verified live**: the new composite
+   `rides (userId, audience, createdAt)` that backs the "Following" chip is
+   present, and every index in `firestore.indexes.json` is live (0 missing).
+   Verified with `firebase firestore:indexes --project throttleiqfb`. Note
+   when checking this yourself: Firestore appends an implicit `__name__` field
+   to every composite index, so a naive diff against the JSON file reports
+   false mismatches — strip it before comparing.
+2. ✅ `firestore:rules` — deployed. Includes the two new owner-only
    subcollections (`private`, `cloudinaryAssets`) and the crash-notification
-   id constraint. The app writes to `cloudinaryAssets` on every upload, so
-   until the rules ship those writes are denied (harmlessly — the ledger
-   write is best-effort and never fails an upload, but nothing is recorded).
-3. `firebase deploy --only functions` — still blocked on the Blaze plan. Note
-   the account-deletion trigger has **never** been deployed, so the Cloudinary
-   sweep and the anonymization added here do not run at all yet.
+   id constraint.
+3. ❌ `functions` — still blocked on the Blaze plan, unchanged. The
+   account-deletion trigger has **never** been deployed, so neither the
+   Cloudinary sweep nor the anonymization added in this pass runs yet.
+
+Two things the deploy surfaced, neither introduced by this pass:
+- **A rules compiler warning at `firestore.rules:313`:** "Invalid type.
+  Received one of [null]. Expected one of [map]." It is the
+  `publicStatsValid(resource == null ? null : resource.data, …)` call added
+  by §62. **Benign** — the function's first line is
+  `existingProfile != null ? … : {}`, so the null is handled; the compiler
+  is just conservative about a deliberately-nullable parameter. Left alone
+  rather than papered over.
+- **4 indexes exist in the project but not in `firestore.indexes.json`:**
+  `liveSessions (userId, expiresAt)`, `rides (allowedUserIds, createdAt)`,
+  `rides (isPrivate, createdAt)`, `rides (public, startTime)`. Console-created
+  or left over from retired queries. `firebase deploy --force` would delete
+  them — **do not run that blind**; confirm nothing queries them first, since
+  dropping a live index breaks its query instantly.
 
 Additionally, the Cloudinary sweep is inert until
 `CLOUDINARY_CLOUD_NAME`/`_API_KEY`/`_API_SECRET` are set in the functions
