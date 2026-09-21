@@ -129,6 +129,30 @@ void main() {
     });
   });
 
+  group('Bangla review list', () {
+    // lib/l10n/bn_pending_review.txt is the native-speaker reviewer's checklist:
+    // every machine-drafted Bangla key, grouped by batch. It must not name a key
+    // that no longer exists, or the checklist silently rots.
+    test('names only keys that exist, each once', () {
+      final file = File('lib/l10n/bn_pending_review.txt');
+      expect(file.existsSync(), isTrue);
+      final listed = file
+          .readAsLinesSync()
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty && !l.startsWith('#'))
+          .toList();
+      final keys = messageKeys(bn);
+      expect(listed.where((k) => !keys.contains(k)).toList(), isEmpty,
+          reason: 'Listed for review but not in app_bn.arb');
+      final dupes = <String>{};
+      final seen = <String>{};
+      for (final k in listed) {
+        if (!seen.add(k)) dupes.add(k);
+      }
+      expect(dupes, isEmpty, reason: 'Listed more than once');
+    });
+  });
+
   group('ARB template hygiene', () {
     test('every English message carries an @-description', () {
       // The description is the only context a translator gets. Missing ones are

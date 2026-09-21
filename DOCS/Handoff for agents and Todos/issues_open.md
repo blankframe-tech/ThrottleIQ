@@ -36,50 +36,15 @@ sub-sections — one per pass — rather than overwriting this placeholder._
 
 ---
 
-## 32. UI/UX critique of the current screen set — surfaced, not fixed (2026-08-17)
+## 32. UI/UX critique of the current screen set — FIXED (2026-09-21)
 
-**Status: TRIAGED 2026-09-21.** Decision: fix the **concrete defects only**
-— the paused-ride scrim dimming the stat card, the Places FAB overlapping the
-last row, `★ —` on zero-review places, the duplicated riding-score card, and
-the maintenance pill that never escalates before 0 km. The taste calls
-(slide-to-start friction, the "In jam" label, chart axis styling, theme-picker
-previews, the low-contrast pass) are **deliberately not being done** — do not
-re-raise them as bugs.
+> Full writeup in `issues_fixed.md` §32. The taste calls (slide-to-start
+> friction, "In jam", chart axes, theme-picker previews, low-contrast pass) are
+> **deliberately not being done** — do not re-raise them as bugs.
 
-Design/polish findings, not root-caused bugs — no code changed yet. Full writeup with screenshot references in
-`docs/uiux_critique.md`; summarized here per this file's convention of one
-`##` per tracked problem.
-
-Reviewed the 40-screen `screenshots/carbon_mono/` walkthrough end to end.
-Most findings are subjective design critique (see the doc), but a few are
-concrete defects worth tracking as real issues:
-
-- **Paused-ride screen dims the stat card, not just the map**
-  (`06_ride_paused.png`) — speed/distance/brake-accel numbers fade to
-  near-illegible grey-on-black under the pause scrim, on the one screen
-  meant to be glanced at mid-ride.
-- **Places list FAB overlaps the last list row** (`23_places_nearby.png`) —
-  "+ Add place" has no reserved bottom padding and sits on top of content.
-- **Zero-review places render as `★ —`** (`23_places_nearby.png`) instead of
-  "No ratings yet" — reads as a rendering bug, not an empty state.
-- **Ride summary shows the riding score twice** (`08_ride_summary.png`) — a
-  `100 / SMOOTH OP.` card and an adjacent `RIDING SCORE / Smooth op. / out of
-  100` card duplicate the same value.
-- **Maintenance status pill doesn't escalate before 0 km left**
-  (`21_maintenance_service_checks.png`) — a part at ~13% of its interval
-  remaining shows the same green "OK" as one at 99% remaining, which defeats
-  the point of an early-warning indicator.
-- **Emergency Contacts is exposed in Settings while explicitly non-functional**
-  (`38_settings.png`) — copy states alerts "aren't live yet"; a safety
-  feature presented as available but inert risks a false sense of security.
-
-The rest (dead space on Home/`03_home_record.png`, busy live-ride map
-styling, unlabeled chart axes, theme-picker list without live previews,
-low-contrast secondary text, slide-to-start friction on the primary CTA) are
-polish/opinion calls — see `docs/uiux_critique.md` for the full list and
-reasoning. None of this has been triaged into actual work items yet.
-
----
+The one item from that list still open is **Emergency Contacts is exposed in
+Settings while explicitly non-functional** — the copy says alerts "aren't live
+yet". Not part of the 2026-09-21 decision; still a false-sense-of-security risk.
 
 ---
 
@@ -437,12 +402,11 @@ What remains open:
     SafeQR share, moving/stopped) need a native-speaker review. **2026-09-21:
     a reviewer is available** — keep translating and hand off each batch
     marked pending. The §83 cockpit alerts are also awaiting this review.
-  - **78.29** The new "Sync issues" screen isn't localized. The
-    immediate outbox attempt (`_attemptOne`) isn't scoped to the signed-in
-    rider.
-  - **78.30** Crash rides now show in history lists, but without a
-    "crash" badge. **APPROVED 2026-09-21** — it is the only surface where
-    crash data is visible at all, given the detector stays off.
+  - **78.29** (part) The "Sync issues" screen is now localized (2026-09-21). The
+    immediate outbox attempt (`_attemptOne`) still isn't scoped to the
+    signed-in rider.
+  - ~~**78.30** crash badge in ride history~~ **DONE 2026-09-21** — see
+    `issues_fixed.md` §78.30.
 
 ## 79. Places screen: "Browse routes →" button clashes visually with its neighbors — FIXED (2026-09-20)
 
@@ -573,21 +537,35 @@ reflowing. The fixed-height cockpit rows, chips and stat tiles need to be made
 scale-tolerant so the clamp can be raised or dropped. For an app read outdoors
 in sunlight through gloves this is legibility work, not a minority feature.
 
-### 83.23 (part) — localization is ~a quarter done, and the Bangla needs review
+### 83.23 (part) — localization: what is left after the 2026-09-21 pass
 
-Fixed: the four cockpit safety alerts and the live-share sheet. Still
-English-only: **the entire onboarding flow** (7 slides, 21 callouts — the
-highest-stakes surface, where a Bangla-first rider decides if this app is for
-them), the rest of the cockpit, ride summary, stats, garage, maintenance,
-forums, chat and places. 20 of 259 files use `AppLocalizations`.
-**The Bangla added on 2026-09-21 was written without a native speaker and
-needs review**, same as §78.28 — a reviewer is now available, so each batch
-should be handed off marked pending.
+The main pass is done on branch `i18n` (see `issues_fixed.md` §83.23 (rest)):
+every screen, dialog, sheet, error mapper, notification, badge, rank, turn
+instruction and greeting is localized — 88 of 265 files use `AppLocalizations`,
+the rest are data/domain/plumbing with nothing to translate. What remains:
 
-**DECIDED 2026-09-21: localize everything** — all 259 files, not just the core
-ride flow. Second in the work order, after `appcolors`, which touches the same
-widget files (doing i18n first would mean one pass rewriting the other's
-edits).
+- **Bangla review (the real gate).** **1,064 keys** of machine-drafted Bangla are
+  listed in `app/lib/l10n/bn_pending_review.txt`, grouped by batch. A reviewer is
+  available; hand each batch over. Nothing here has been read by a native
+  speaker. A test (`arb_parity_test.dart`) keeps the list from naming dead keys.
+- **Bangla has never been seen on a device.** Bangla runs longer than English in
+  places (badge requirements, onboarding callouts, long dialogs) and this app
+  has known overflow above ~1.3× text scale (§83.22). Nobody has looked.
+- **Messages from logic layers still reach the UI in English**, because those
+  files have no `BuildContext` and need a code-vs-text refactor, not a string swap:
+  `group_ride_repository.dart` (3: bad code / ended / full),
+  `group_ride_selection.dart` (2: min/max friends), `profile_repository.dart`
+  (2: username taken / invalid), `place_entity.dart`'s `reviewsSummarySubtitle`
+  ("N Google · M ThrottleIQ", "No reviews yet"). The pattern to copy is
+  `recordingErrorText()` in `record_screen.dart` (English stays in state, the UI
+  localizes from a stable code/kind).
+- **Deliberately English, do not "fix":** units (`km`, `km/h`, `mi`, `°C`, `g`),
+  brand/model names and hint examples, the onboarding mockups' sample data,
+  forum topic/brand lookup lists, and every string that is *data* other people
+  read — report reasons, `Unknown Bike`, audience values, challenge titles, the
+  SafeQR payload, SQL.
+- **Foreground-service and notification text is a snapshot** taken at ride start /
+  send time (`resolveL10n` / `savedL10n`), not reactive to a mid-ride language change.
 
 ### 83.25 — information architecture (decided: leave as-is for now)
 

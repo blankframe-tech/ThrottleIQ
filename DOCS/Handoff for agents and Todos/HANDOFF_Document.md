@@ -37,7 +37,7 @@ Recorded so the next agent doesn't re-litigate them.
 | **Map tiles** | Founder will sign up for a free provider; see the recommendation below. |
 | **Live `throttleiqfb` data** | **Direct execution authorized** for cleanup/migration scripts. |
 | **`AppColors` migration** | ✅ **DONE on branch `appcolors` (2026-09-21), awaiting merge** — see issues_fixed.md §83.9 (rest). Was: do it all at once on a branch named `appcolors`. Scope is **three** static facades (AppColors/AppDimensions/AppTypography, ~1,942 sites), not just AppColors — see §83.9. |
-| **Localization** | **Everything** — all 259 files, not just the core flow. |
+| **Localization** | ✅ Done on branch `i18n` (2026-09-21); Bangla review + device check pending — see §83.23. |
 | **Bangla review** | Reviewer available; keep translating and mark each batch pending review. |
 | **Keystore (§78.18)** | ✅ **Backed up safely.** That half of §78.18 is closed. |
 | **CI/branch protection, Play Console, device checks** | Founder, **next week**. Keep tracked, stop surfacing. |
@@ -45,7 +45,7 @@ Recorded so the next agent doesn't re-litigate them.
 | **Design calls** | **All four approved:** route nav records the ride (§78.21), Retro/Light palette fix (§74), crash badge in history (§78.30), SafeQR print sticker (§78.24). |
 | **App Check** | **Enable** (§83.19). |
 | **Analytics** | **Add**, privacy-respecting — screen views/funnel only, no ad SDK (§83.27). Privacy policy + Data Safety form must be updated to match. |
-| **Work order** | `appcolors` → full i18n → §32 defects + design calls → small §78 items. |
+| **Work order** | `appcolors` ✅ → full i18n ✅ (review pending) → §32 ✅ / §78.30 ✅ / §78.21 ❌ / §78.24 ❌ → JOB 4 (App Check, analytics, data cleanup, small §78 items) ❌. |
 
 ### ⚠️ The Blaze decision has a dated consequence
 
@@ -166,7 +166,23 @@ token facades are gone and `key: ValueKey(appearance)` is deleted, so changing
 appearance re-themes the app in place instead of unmounting it (issues_fixed.md
 §83.9 rest). §74 (Retro/Light near-black cards) is fixed too — it was an
 `AppCard` paint-order bug, not a palette token. `flutter analyze` zero,
-`flutter test` **1206/1206**. **Verified in the real app (2026-09-21):** UI tour (`app/scripts/ui_tour/run_tour.sh`),
+`flutter test` **1206/1206**. **Branch stack (2026-09-21) — all local, NONE pushed or merged; merge in this order:**
+`main` ← `appcolors` (theme tokens, §74, post-photo border) ← `i18n` (JOB 2) ←
+`job3-ux` (§32 + crash badge). Each branch builds on the previous, so merge
+`job3-ux` last (it contains the other two) or one at a time in order.
+`flutter analyze` zero, `flutter test` **1225/1225**, `functions/` build clean; the
+rules suite was not re-run (no rules changes).
+
+**JOB 2 (localization) is done except for two gates:** 88 of 265 files localized, 1,229
+keys, **1,064 Bangla keys await native review** (`app/lib/l10n/bn_pending_review.txt`),
+and **Bangla has never been looked at on a device** (overflow risk). English-only
+logic-layer messages that remain are listed in `issues_open.md` §83.23.
+
+**JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only
+`★ —` was real and is fixed. §78.30 crash badge done. §78.21 (nav records the ride) and
+§78.24 (SafeQR print sticker) are **not** done. See `issues_fixed.md`.
+
+**Verified in the real app (2026-09-21):** UI tour (`app/scripts/ui_tour/run_tour.sh`),
 `main` vs `appcolors`, `carbonMono_curvy_dark` + `retro_boxy_light`, iPhone 17 Pro
 simulator, 181 screenshot pairs diffed. **148 are pixel-identical** below the
 status bar. The only material differences are the §74 screens (Retro Places /

@@ -5678,3 +5678,67 @@ colours would not have let the remount go.
 **Not done here:** `const` is not re-enabled at the migrated sites (the reads
 are `context` lookups, so they cannot be const anyway); goldens are now
 *possible* but there are still 0.
+
+## 32. UI/UX critique — the concrete defects (2026-09-21, branch `job3-ux`)
+
+The founder scoped this to five concrete defects. **Four were already fixed by
+earlier work**; the list (written 2026-08-17) was stale on them. Verified against
+the code and against current-build screenshots, not assumed:
+
+| Item | Status |
+|---|---|
+| Paused-ride scrim dims the stat card | Already fixed — §78.20 (dim sits directly above the map only) |
+| Places FAB overlaps the last row | Already fixed — the list has `paddingXl + 56` (88 px) bottom padding vs the FAB's 56 + 16 px |
+| Ride summary shows the score twice | Already fixed — the §77 restyle left a single `RidingScoreBadge` (checked in a tour screenshot) |
+| Maintenance pill never escalates | Already fixed — "due soon" fires at 80% of the interval used (last 150 km for ≤1000 km intervals), so 13% remaining is amber. **Now pinned by `reminder_escalation_test.dart`**, which did not exist. |
+| `★ —` on zero-review places | **Really broken — fixed.** Official points (police, cameras) show no rating row; unrated places say "No ratings yet". |
+
+Also localized the two literal pill labels found on the way (`'Overdue'`, `'OK'`).
+The one item on the original list still open is Emergency Contacts being exposed
+in Settings while inert (see `issues_open.md` §32).
+
+## 78.30 Crash badge in ride history (2026-09-21, branch `job3-ux`)
+
+`AllRidesRow` now leads with a **"Suspected crash"** pill and a danger-coloured
+border when `ride.status == RideStatus.crash` (the value the recorder writes and
+the history queries already include). History is the only surface where crash data
+is visible at all while `SensorConstants.impactDetectorLiveEnabled` is off.
+`test/features/stats/all_rides_row_crash_badge_test.dart`. **Caveat:** the *live*
+recorder writes `crash`, but the auto-tracking reconciler only `debugPrint`s
+`crashSuspected` and saves the ride as `completed` — so an auto-detected ride with a
+replayed crash signal is still *not* flagged in history. Not changed here (it would
+mean deciding what a replayed, hours-old crash signal should do to a ride record).
+
+## 83.23 (rest). Localization — done on branch `i18n` (2026-09-21)
+
+Was: 21 of 260 files localized. Now: **88 of 265** use `AppLocalizations` (the rest
+are data/domain/plumbing), **1,229 ARB keys** (was 165), EN + BN.
+
+How it was done (so the next agent can extend it): a string extractor that tokenizes
+Dart (comments, `${}` interpolation, adjacent-literal concatenation, call/arg
+context), per-batch decisions with the Bangla drafted alongside, and an applier that
+edits the source, strips every enclosing `const`, adds the import, and validates that
+each Bangla string carries the same placeholders. The tooling lived in the session
+scratchpad and is not committed; the *result* is what matters.
+
+- `context.l10n.key` (`core/i18n/l10n_context.dart`) for widgets; `resolveL10n()` /
+  `savedL10n()` (`l10n_lookup.dart`) for code with no context (foreground-service
+  notification, `NotificationService`).
+- **Data is never localized.** Strings stored in Firestore or read by other people —
+  report reasons, `Unknown Bike`, audience values, the SafeQR payload — stay stable
+  English; only their *displayed* labels go through l10n.
+- Domain enums keep their English `label`/`description` (persisted by name); the
+  presentation layer localizes by stable id or kind: maintenance catalogue
+  (`service_type_l10n.dart`), badges (`badge_l10n.dart`, 10 families / 37 rungs),
+  place categories, ride sort chips, turn banners (`turn_instruction_l10n.dart`),
+  greetings and taglines (`greetings_l10n.dart`, picked in `initState` and resolved
+  in `build`, so a live language switch re-words without re-rolling).
+- Error mappers (`mapFirestoreError` etc.) now take `AppLocalizations`.
+- Plurals are proper ICU (`{count, plural, …}`), not `{s}` hacks.
+- Bangla uses Western digits (a test enforces it; `numeric_locale.dart`).
+- Onboarding manifest became `onboardingSlides(l10n)` + `kOnboardingSlideCount`
+  (`initState` cannot read localizations).
+- 12 widget-test files needed localization delegates on their `MaterialApp`.
+- **1,064 Bangla keys await native review** — `app/lib/l10n/bn_pending_review.txt`.
+- What is deliberately not translated, and the English-only logic-layer messages that
+  remain, are listed in `issues_open.md` §83.23.

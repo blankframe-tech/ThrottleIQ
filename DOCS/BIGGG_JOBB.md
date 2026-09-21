@@ -17,7 +17,7 @@ picks this up next. Baseline: `main` @ `4b4e0da`, version
 
 Read §1 (state), §2 (gates) and **§3 (traps) before touching anything**. §3 is
 the highest-value section here — most of it is failures I actually hit, not
-hypotheticals. Then work §5 in order (JOB 1 is done; start at JOB 2).
+hypotheticals. Then work §5 in order (JOBs 1 and 2 are done; JOB 3 is partly done; start at the unchecked items).
 
 The founder's decisions in §4 are **settled**. Do not re-litigate them; if you
 think one is wrong, say so once, in a sentence, and then do it.
@@ -28,9 +28,9 @@ think one is wrong, say so once, in a sentence, and then do it.
 
 | | |
 |---|---|
-| Branch | `main` @ `4b4e0da` clean and in sync; **JOB 1 lives on local branch `appcolors`, not merged, not pushed** |
+| Branch | `main` @ `4b4e0da` clean and in sync; **work is on local branches `appcolors` → `i18n` → `job3-ux` (stacked), none merged or pushed** |
 | Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
-| Tests | **1206** passing (on `appcolors`; `main` has 1195) |
+| Tests | **1225** passing (on `job3-ux`, which contains `appcolors` + `i18n`; `main` has 1195) |
 | Analyzer | clean (zero issues) |
 | Rules suite | **113** passing |
 | Functions | build clean, **NOT deployed** (Spark plan) |
@@ -65,7 +65,7 @@ Run **all four** before declaring anything done. CI runs the first three.
 
 ```bash
 cd app       && flutter analyze          # must be ZERO issues
-cd app       && flutter test             # 1206 passing (1195 on main)
+cd app       && flutter test             # 1225 passing (1195 on main)
 cd functions && npm run build            # tsc, must be silent
 cd scripts   && npm run test:rules       # 113 passing (needs JDK 21+)
 ```
@@ -263,42 +263,33 @@ says "probably X", look at the screenshot before believing it.
 
 ---
 
-### JOB 2 — localize everything
+### JOB 2 — localize everything — ✅ DONE (Bangla review pending)
 
-**21 of 260 files** use `AppLocalizations` today. The founder chose *all* of
-them.
+**Done 2026-09-21 on branch `i18n`** (stacked on `appcolors`). Details:
+`issues_fixed.md` §83.23 (rest); what's left: `issues_open.md` §83.23.
 
-#### Workflow
+Rules a new agent extending this must follow:
+- `context.l10n.key` in widgets, **never** in `initState`/field initialisers. In a
+  dialog/sheet `builder:`, use the builder's own context (same trap as `context.palette`).
+- No context? `resolveL10n(locale)` / `savedL10n()` — a *snapshot*, fine for a
+  notification, wrong for anything that should re-word live.
+- **Never localize data.** If a string is stored in Firestore, sent to another rider,
+  or compared against, it stays stable English; localize only what is displayed.
+  Two of these were nearly shipped wrong (`Unknown Bike`, report reasons).
+- Domain enums keep English + persisted ids; localize by id/kind in `presentation/`.
+- Bangla uses **Western digits** (enforced by a test). Every new Bangla key goes in
+  `lib/l10n/bn_pending_review.txt`.
+- Positional string args to custom widgets (`EditorialLabel('Riders')`) are easy to
+  miss; grep for them after any batch.
 
-```
-app/lib/l10n/app_en.arb   ← template (edit this, plus @description metadata)
-app/lib/l10n/app_bn.arb   ← Bangla
-flutter gen-l10n          ← regenerates; output IS checked in, so commit it
-```
-
-`l10n.yaml` sets `nullable-getter: false` and English as fallback, so a
-missing Bangla key degrades to English rather than crashing. There is an **ARB
-parity test in `test/core/i18n/`** that stops a missing translation shipping —
-it will fail you if the two files drift.
-
-#### Priority within the job
-
-Do onboarding first even though the founder said "everything": it is 7 slides
-and 21 callouts and it is where a Bangla-first rider decides whether this app
-is for them. Then the ride flow, then the rest.
-
-#### Bangla quality
-
-A reviewer is available. Mark each batch as pending review in the docs so
-there is a clear list — §78.28 and the §83 cockpit alerts are both already
-waiting. **Do not let unreviewed machine Bangla ship silently to Bangla-first
-riders**; that is a real quality risk in the app's primary market.
+**The gates still standing:** 1,064 Bangla keys need a native reviewer, and nobody has
+looked at Bangla on a device (overflow).
 
 ---
 
 ### JOB 3 — §32 defects and the four approved design calls
 
-#### §32 — fix these five, and only these five
+#### §32 — ✅ DONE 2026-09-21 (four of the five were already fixed; see `issues_fixed.md` §32)
 
 1. **Paused-ride scrim dims the stat card**, not just the map — the one screen
    meant to be glanced at mid-ride fades its own numbers. Dim the map only.
@@ -318,7 +309,7 @@ live previews, the low-contrast secondary-text pass.
   recording are separate flows that don't compose: follow a saved route and
   you end up with no ride logged. Merge nav into the active-ride cockpit.
 - **§74 — Retro/Light near-black cards.** ✅ Fixed — it was an `AppCard` paint-order bug, not a palette token. _(Done inside JOB 1 — see `issues_fixed.md` §74.)_
-- **§78.30 — crash badge in ride history.** A suspected-crash ride looks
+- **§78.30 — crash badge in ride history.** ✅ DONE. A suspected-crash ride looks
   identical to a commute. It is the only surface where crash data is visible
   at all, given the detector stays off.
 - **§78.24 — SafeQR "Print sticker."** Needs the `printing` package; new
