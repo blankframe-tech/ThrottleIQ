@@ -537,7 +537,7 @@ not run yet. See `HANDOFF_Document.md` for the verification detail.
 
 What is still open:
 
-### 81.9 (part) — `AppColors` is a mutable static facade
+### 83.9 (part) — `AppColors` is a mutable static facade
 
 The user-visible half is fixed: the app now follows the OS light/dark setting
 (`AppBrightnessMode.system`). The underlying problem is not:
@@ -556,7 +556,11 @@ The user-visible half is fixed: the app now follows the OS light/dark setting
 but large, and it grows with every new call site. This is the single biggest
 piece of debt left in the app.
 
-### 81.12 — the active-ride screen rebuilds in full, once per second
+**APPROVED 2026-09-21: do it, all at once, on a branch named `appcolors`.**
+First item in the work order. §74's Retro/Light palette bug is queued behind
+it deliberately, since this pass touches every token anyway.
+
+### 83.12 — the active-ride screen rebuilds in full, once per second
 
 `.select(` appears **3** times in the whole app; 4 sites watch the entire
 21-field `RideRecordingState`. The 877-line `active_ride_screen` is one of
@@ -566,7 +570,7 @@ That is battery and thermal cost in exactly the state where battery matters
 most. The `polylineVersion` counter shows the author knew about selector
 granularity; it just never reached the rest of the object.
 
-### 81.13 — DI is inconsistent with the "clean architecture" claim
+### 83.13 — DI is inconsistent with the "clean architecture" claim
 
 `RideRecordingNotifier` news up its DAOs, calculators and all four
 coordinators as `final` fields; `maintenance_provider.dart:16` is a file-level
@@ -577,14 +581,14 @@ that owns it calls the no-arg constructor anyway. **This is the same root
 cause as 81.28:** nothing that touches I/O is injectable, so nothing that
 touches I/O is tested.
 
-### 81.14 — 53 bare `catch (_)` blocks
+### 83.14 — 53 bare `catch (_)` blocks
 
 11 with empty bodies. Many carry a justifying comment and several are
 legitimate, but in a Crashlytics-instrumented app this is 53 failure modes
 that will never reach the dashboard and will be reported as "it just didn't
 work."
 
-### 81.16 (part) — the Cloudinary preset is still an open upload endpoint
+### 83.16 (part) — the Cloudinary preset is still an open upload endpoint
 
 Deletion is fixed (§83.15). The upload path is not: cloud name + unsigned
 preset are in the APK, so anyone can POST arbitrary image/video/audio to the
@@ -592,20 +596,22 @@ account with no auth, rate limit, size cap or moderation. Needs a signed
 server-side upload proxy, which needs the Blaze plan. Group-ride push-to-talk
 voice notes therefore still live at permanent public URLs.
 
-### 81.18 — blocking is a client-side filter
+### 83.18 — blocking is a client-side filter
 
 `visibleFeedProvider` removes blocked riders *after* downloading them, so a
 blocked user's content still reaches the victim's device on every refresh, and
 nothing stops a blocked user reading the blocker's public content. Wants a
 server-side edge, not a `.where()`.
 
-### 81.19 (part) — App Check is not enabled
+### 83.19 (part) — App Check is not enabled
 
 Crash notifications are idempotent now, but rules cannot bound request volume;
 any signed-in client can still drive function invocations. App Check is the
 control, and it is not set up on this project.
 
-### 81.22 (part) — accessibility is a stopgap
+**APPROVED 2026-09-21: enable it.** Free, and works on Spark.
+
+### 83.22 (part) — accessibility is a stopgap
 
 27 icon-only buttons got tooltips and text scaling is clamped to 1.0-1.3×, but:
 **0** `semanticLabel`s outside those, 5 `Semantics(` widgets in 259 files, and
@@ -614,7 +620,7 @@ reflowing. The fixed-height cockpit rows, chips and stat tiles need to be made
 scale-tolerant so the clamp can be raised or dropped. For an app read outdoors
 in sunlight through gloves this is legibility work, not a minority feature.
 
-### 81.23 (part) — localization is ~a quarter done, and the Bangla needs review
+### 83.23 (part) — localization is ~a quarter done, and the Bangla needs review
 
 Fixed: the four cockpit safety alerts and the live-share sheet. Still
 English-only: **the entire onboarding flow** (7 slides, 21 callouts — the
@@ -622,9 +628,15 @@ highest-stakes surface, where a Bangla-first rider decides if this app is for
 them), the rest of the cockpit, ride summary, stats, garage, maintenance,
 forums, chat and places. 20 of 259 files use `AppLocalizations`.
 **The Bangla added on 2026-09-21 was written without a native speaker and
-needs review**, same as §78.28.
+needs review**, same as §78.28 — a reviewer is now available, so each batch
+should be handed off marked pending.
 
-### 81.25 — information architecture (decided: leave as-is for now)
+**DECIDED 2026-09-21: localize everything** — all 259 files, not just the core
+ride flow. Second in the work order, after `appcolors`, which touches the same
+widget files (doing i18n first would mean one pass rewriting the other's
+edits).
+
+### 83.25 — information architecture (decided: leave as-is for now)
 
 The garage is not in the bottom nav — it is a section of the Profile tab, with
 maintenance one level below that — while the POI directory gets a top-level
@@ -635,28 +647,37 @@ highlighting the wrong tab. 30 of 42 routes are full-screen with no shell, and
 existing beta testers. Recorded here because the IA cost is real, not because
 work is pending.
 
-### 81.26 — `onboarding_ui_mockups.dart` is a 1,162-line hand-drawn copy of real screens
+### 83.26 — `onboarding_ui_mockups.dart` is a 1,162-line hand-drawn copy of real screens
 
 The fabricated readouts are fixed (§83.1), but the structural problem stands:
 the third-largest file in the app is an illustration of screens it cannot stay
 in sync with, shipping in the production binary. `integration_test/ui_tour_test.dart`
 already exists and could supply real screenshots.
 
-### 81.27 — no analytics of any kind
+### 83.27 — no analytics of any kind
 
 Zero `logEvent`. Defensible as a privacy stance (and stated as one in the
 README), but it means nothing would ever have surfaced the empty "Following"
 feed or the buried maintenance flow. A privacy-respecting app can still count
 screen views.
 
-### 81.28 — 43 screens, 1 screen test, 0 goldens
+**APPROVED 2026-09-21: add privacy-respecting analytics** — screen views and
+funnel events only, no ad SDK, no behavioural profiling.
+
+**This is not a code-only change.** `public/privacy.html`,
+`store_listing/data_safety_and_permissions.md` and the Play Console Data
+Safety form all state no behavioural analytics today; §69.O1 is the last time
+that exact mismatch bit. They move in the same pass, or the app ships
+contradicting its own privacy policy.
+
+### 83.28 — 43 screens, 1 screen test, 0 goldens
 
 18 files `pumpWidget` at all. The 1,195 passing tests cover the pure
 calculators exhaustively and the presentation layer essentially not at all —
 which is where every UX defect in this section lived. Same root cause as
 81.13.
 
-### 81.31 — triage, not more critique
+### 83.31 — triage, not more critique
 
 §32's safety finding was written 2026-08-17 and sat open for a month while
 smaller items shipped. This file is append-only and unprioritised, so "the FAB
