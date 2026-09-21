@@ -5132,5 +5132,17 @@
   "quote15Payoff": "before it reads you.",
   "@quote15Payoff": {
     "description": "Record-screen tagline, line 16, payoff half (joined with a space)."
+  },
+  "noRatingsYet": "No ratings yet",
+  "@noRatingsYet": {
+    "description": "Shown on a place row that has neither Google nor ThrottleIQ ratings."
+  },
+  "statusOverdue": "Overdue",
+  "@statusOverdue": {
+    "description": "Status pill on a maintenance check that is past its interval."
+  },
+  "statusOk": "OK",
+  "@statusOk": {
+    "description": "Status pill on a maintenance check that is comfortably within its interval."
   }
 }

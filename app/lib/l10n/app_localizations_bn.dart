@@ -3772,4 +3772,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get quote15Payoff => 'সে আপনাকে পড়ার আগেই।';
+
+  @override
+  String get noRatingsYet => 'এখনো কোনো রেটিং নেই';
+
+  @override
+  String get statusOverdue => 'ওভারডিউ';
+
+  @override
+  String get statusOk => 'ঠিক আছে';
 }

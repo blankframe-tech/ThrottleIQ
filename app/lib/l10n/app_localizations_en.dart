@@ -3763,4 +3763,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quote15Payoff => 'before it reads you.';
+
+  @override
+  String get noRatingsYet => 'No ratings yet';
+
+  @override
+  String get statusOverdue => 'Overdue';
+
+  @override
+  String get statusOk => 'OK';
 }

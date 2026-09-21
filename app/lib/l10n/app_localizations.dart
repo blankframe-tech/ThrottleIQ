@@ -6689,6 +6689,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'before it reads you.'**
   String get quote15Payoff;
+
+  /// Shown on a place row that has neither Google nor ThrottleIQ ratings.
+  ///
+  /// In en, this message translates to:
+  /// **'No ratings yet'**
+  String get noRatingsYet;
+
+  /// Status pill on a maintenance check that is past its interval.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get statusOverdue;
+
+  /// Status pill on a maintenance check that is comfortably within its interval.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get statusOk;
 }
 
 class _AppLocalizationsDelegate

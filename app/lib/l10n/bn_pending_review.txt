@@ -947,3 +947,8 @@ quote14Setup
 quote14Payoff
 quote15Setup
 quote15Payoff
+# batch: job3 (manual)
+noRatingsYet
+# batch: job3 (manual)
+statusOverdue
+statusOk

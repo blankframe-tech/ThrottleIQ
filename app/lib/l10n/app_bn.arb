@@ -1097,5 +1097,8 @@
   "quote14Setup": "গতিই",
   "quote14Payoff": "এক ধরনের স্বাধীনতা।",
   "quote15Setup": "রাস্তাকে পড়ুন,",
-  "quote15Payoff": "সে আপনাকে পড়ার আগেই।"
+  "quote15Payoff": "সে আপনাকে পড়ার আগেই।",
+  "noRatingsYet": "এখনো কোনো রেটিং নেই",
+  "statusOverdue": "ওভারডিউ",
+  "statusOk": "ঠিক আছে"
 }

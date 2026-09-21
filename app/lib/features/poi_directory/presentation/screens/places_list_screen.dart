@@ -383,20 +383,31 @@ class _PlaceCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, size: 14, color: context.palette.warning),
-                  const SizedBox(width: 2),
+              // Official points (checkposts, cameras) are not rated at all, so
+              // they show no rating row; a place nobody has rated says so in
+              // words instead of a lone "★ —" that reads as a rendering bug.
+              if (place.category != PlaceCategory.police &&
+                  place.category != PlaceCategory.aiCamera)
+                if (place.hasGoogleRating || place.hasThrottleIqRating)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, size: 14, color: context.palette.warning),
+                      const SizedBox(width: 2),
+                      Text(
+                        place.dualRatingDisplay,
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textPrimary),
+                      ),
+                    ],
+                  )
+                else
                   Text(
-                    (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
-                        ? '—'
-                        : place.dualRatingDisplay,
-                    style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+                    context.l10n.noRatingsYet,
+                    style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
                   ),
-                ],
-              ),
               const SizedBox(height: 2),
               Text(
                 (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)

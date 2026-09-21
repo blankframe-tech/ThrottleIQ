@@ -1110,9 +1110,9 @@ class _CheckRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final (tone, barColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, 'Overdue'),
+      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, context.l10n.statusOverdue),
       ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, context.l10n.dueSoon),
-      ReminderStatus.ok => (PillTone.ok, context.palette.success, 'OK'),
+      ReminderStatus.ok => (PillTone.ok, context.palette.success, context.l10n.statusOk),
     };
     final isOverdue = reminder.status == ReminderStatus.overdue;
     final progress = reminder.kmLimit > 0

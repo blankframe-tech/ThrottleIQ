@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -181,6 +182,13 @@ final maintenanceRemindersProvider =
   if (bike == null) return [];
   return _computeReminders(bike.currentOdometerKm, logs, configs);
 });
+
+/// Pure reminder computation, exposed so the escalation thresholds can be
+/// pinned by a test without a database or providers.
+@visibleForTesting
+List<MaintenanceReminder> computeMaintenanceReminders(double currentKm,
+        List<MaintenanceEntity> logs, List<MaintenanceConfigEntity> configs) =>
+    _computeReminders(currentKm, logs, configs);
 
 List<MaintenanceReminder> _computeReminders(
     double currentKm,
