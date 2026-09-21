@@ -5721,6 +5721,84 @@ abstract class AppLocalizations {
   /// **'End'**
   String get end;
 
+  /// ETA when the route's end is under a minute away.
+  ///
+  /// In en, this message translates to:
+  /// **'<1 min'**
+  String get etaUnderAMinute;
+
+  /// ETA in whole minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String etaMinutes(Object minutes);
+
+  /// ETA an hour or more away.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String etaHoursMinutes(Object hours, Object minutes);
+
+  /// Distance to the next manoeuvre, under the turn banner.
+  ///
+  /// In en, this message translates to:
+  /// **'in {distance}'**
+  String navInDistance(Object distance);
+
+  /// Turn banner once the rider reaches the end of a followed route.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve arrived — still recording'**
+  String get navArrivedStillRecording;
+
+  /// SnackBar after the rider closes the turn banner mid-ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Guidance off. Your ride is still recording.'**
+  String get navGuidanceStoppedStillRecording;
+
+  /// Tooltip on the turn banner's close button.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop guidance'**
+  String get navStopGuidance;
+
+  /// Route length and manoeuvre count on the pre-ride screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} · {turns} turns'**
+  String navRoutePreflightSummary(Object distance, Object turns);
+
+  /// Tells the rider that navigating logs a ride, before they start.
+  ///
+  /// In en, this message translates to:
+  /// **'Following this route records a ride, exactly like the Record button does.'**
+  String get navRecordsRideExplainer;
+
+  /// Shown instead when a ride is already in progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Guidance will be added to the ride you\'re already recording.'**
+  String get navAttachExplainer;
+
+  /// Primary button on the route pre-ride screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Start ride & guide me'**
+  String get navStartRideAndGuide;
+
+  /// Primary button when a ride is already being recorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Guide me on this ride'**
+  String get navGuideOnThisRide;
+
+  /// History pill naming the saved route a ride was recorded against.
+  ///
+  /// In en, this message translates to:
+  /// **'Followed {name}'**
+  String followedRoutePill(Object name);
+
   /// Text in routes_list_screen.
   ///
   /// In en, this message translates to:

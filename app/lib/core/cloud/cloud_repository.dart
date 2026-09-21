@@ -152,9 +152,31 @@ class CloudRepository {
   /// older app versions don't have, and [downloadRides] inserts cloud fields
   /// verbatim, so shipping it would make every new ride fail to download on
   /// a device that hasn't updated yet.
+  /// `route_id`/`route_name` are only sent when the ride actually followed a
+  /// saved route (schema v17, issues §78.21). An ordinary ride's document
+  /// therefore looks exactly as it did before those columns existed, so a
+  /// device still on an older build keeps downloading it — the same rule
+  /// [bikePayload] applies to `archived`, and for the same reason.
   @visibleForTesting
-  static Map<String, dynamic> ridePayload(Map<String, dynamic> ride) =>
-      Map<String, dynamic>.from(ride)..remove('track_synced');
+  static Map<String, dynamic> ridePayload(Map<String, dynamic> ride) {
+    final out = Map<String, dynamic>.from(ride)..remove('track_synced');
+    if (out['route_id'] == null) {
+      out.remove('route_id');
+      out.remove('route_name');
+    }
+    return out;
+  }
+
+  /// Drops keys with no matching column, so a document written by a newer
+  /// build still lands (minus the fields this one can't store) rather than
+  /// being skipped whole. See [downloadRides].
+  @visibleForTesting
+  static Map<String, dynamic> knownRideColumnsOnly(
+          Map<String, dynamic> data, Set<String> columns) =>
+      {
+        for (final entry in data.entries)
+          if (columns.contains(entry.key)) entry.key: entry.value,
+      };
 
   /// A local bike row as it should be written to Firestore.
   ///
@@ -406,6 +428,15 @@ class CloudRepository {
     final db = await DatabaseHelper.instance.database;
     final localIds =
         (await db.query('rides', columns: ['id'])).map((r) => r['id'] as String).toSet();
+    // Cloud documents are inserted verbatim, so a field written by a NEWER
+    // app version than this one is an `INSERT` into a column that doesn't
+    // exist here — which used to throw and silently skip the ride. Every
+    // column added to `rides` since has needed its own bespoke guard on the
+    // upload side; filtering to the columns this build actually has closes
+    // the class instead of the instance.
+    final rideColumns = (await db.rawQuery('PRAGMA table_info(rides)'))
+        .map((row) => row['name'] as String)
+        .toSet();
     final snap = await _firestore.collection('users').doc(uid).collection('rides').get();
 
     var pulledAny = false;
@@ -419,7 +450,8 @@ class CloudRepository {
       // means nothing is written) but a wasted read per downloaded ride.
       data['track_synced'] = 1;
       try {
-        await db.insert('rides', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('rides', knownRideColumnsOnly(data, rideColumns),
+            conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
       } catch (e) {
         // Per-doc, deliberately. `rides.bike_id` is a FOREIGN KEY and

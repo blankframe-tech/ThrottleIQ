@@ -51,7 +51,7 @@ enum RecordingBlockKind { none, locationServicesOff, permissionDenied }
 
 /// [RideRecordingState.error] for "no bike to attribute the ride to". A
 /// constant so the UI can recognise it and show a localized message instead
-/// (see `recordingErrorText` in record_screen.dart); the English text here is
+/// (see `recordingErrorText` in widgets/recording_gate.dart); the English text here is
 /// what diagnostics and tests see.
 const kNoBikeRecordingError = 'Please add a bike before recording a ride.';
 
@@ -328,10 +328,20 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     return null;
   }
 
+  /// Starts recording.
+  ///
+  /// [routeId]/[routeName] stamp the ride with the saved route being followed
+  /// (issues §78.21). They're carried on the ride record rather than held in
+  /// the navigation session because the session is transient — a rider who
+  /// abandons guidance halfway still rode that route, and history should say
+  /// so. The recorder itself does no navigation: see
+  /// `navigation_session_provider.dart`.
   Future<void> startRide({
     bool userInitiated = true,
     String? bikeId,
     BikeAttributionConfidence bikeConfidence = BikeAttributionConfidence.high,
+    String? routeId,
+    String? routeName,
   }) async {
     if (state.status != RecordingStatus.idle) return;
     state = state.copyWith(status: RecordingStatus.starting);
@@ -364,6 +374,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       startTime: DateTime.now(),
       isAuto: !userInitiated,
       bikeConfidence: bikeConfidence,
+      routeId: routeId,
+      routeName: routeName,
     );
 
     await _rideDao.insert(RideModel.toMap(ride));

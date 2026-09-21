@@ -45,7 +45,7 @@ Recorded so the next agent doesn't re-litigate them.
 | **Design calls** | **All four approved:** route nav records the ride (§78.21), Retro/Light palette fix (§74), crash badge in history (§78.30), SafeQR print sticker (§78.24). |
 | **App Check** | **Enable** (§83.19). |
 | **Analytics** | **Add**, privacy-respecting — screen views/funnel only, no ad SDK (§83.27). Privacy policy + Data Safety form must be updated to match. |
-| **Work order** | `appcolors` ✅ → full i18n ✅ (review pending) → §32 ✅ / §78.30 ✅ / §78.21 ❌ / §78.24 ❌ → JOB 4 (App Check, analytics, data cleanup, small §78 items) ❌. |
+| **Work order** | `appcolors` ✅ → full i18n ✅ (review pending) → §32 ✅ / §78.30 ✅ / §78.21 ✅ (device-untested) / §78.24 ✅ → JOB 4 (App Check ✅, analytics ✅, data cleanup ✅ applied, small §78 items — §78.16 still needs the tile key). |
 
 ### ⚠️ The Blaze decision has a dated consequence
 
@@ -180,9 +180,16 @@ logic-layer messages that remain are listed in `issues_open.md` §83.23.
 
 **JOB 4 (branch `job4-infra`, on top of `job3-ux`):** App Check and analytics are coded and
 documented (see `issues_fixed.md` §83.19/§83.27); §78.26 and §78.29 fixed. **The live-data
-cleanup (§79/§80) is written and dry-run against production but NOT applied** — the agent
-was blocked from the write; command is in `issues_open.md` §79. §78.24 (SafeQR print sticker) is done — needs a real-paper scan test. **Not done:** §78.21 (route navigation records the ride), §78.16 (needs the tile key from
-the founder), §84 (undeclared indexes — needs a decision, do not `--force`).
+cleanup (§79/§80) was APPLIED to `throttleiqfb` on 2026-09-21** — 3 QA-seed comments removed
+from the real ride `5a905c0a-…` (tally 3 → 0) and 47 `qashare_*` rides cleared of the dead
+`likes` field; a verifying dry run reports nothing left (`issues_fixed.md` §79/§80). The
+earlier session's blocker was mechanical: the script's typed-confirmation prompt has no TTY
+in an agent shell, and `--non-interactive` is the flag it already had for that.
+§78.24 (SafeQR print sticker) is done — needs a real-paper scan test.
+**§78.21 (route navigation records the ride) is done** (`issues_fixed.md` §78.21) but is
+**device-untested** — it needs a phone on a bike; caveats in `issues_open.md` §78.21.
+**Not done:** §78.16 (needs the tile key from the founder), §84 (undeclared indexes — needs
+a decision, do not `--force`), §85 (`timesRidden` is a dead counter, found during §78.21).
 
 **Bangla layout check (2026-09-21, UI tour on the iPhone 17 Pro simulator, Calming/Curvy/Light):**
 `TOUR_LOCALE=bn app/scripts/ui_tour/run_tour.sh <udid> <out> <combo>` walks the app in Bangla and logs
@@ -200,7 +207,7 @@ so it needs a deliberate decision; and units (`km`, `min`, `km/h`) by design.
 
 **JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only
 `★ —` was real and is fixed. §78.30 crash badge done. §78.21 (nav records the ride) and
-§78.24 (SafeQR print sticker) are **not** done. See `issues_fixed.md`.
+§78.24 (SafeQR print sticker) were later done on `job4-infra` — see `issues_fixed.md`.
 
 **Verified in the real app (2026-09-21):** UI tour (`app/scripts/ui_tour/run_tour.sh`),
 `main` vs `appcolors`, `carbonMono_curvy_dark` + `retro_boxy_light`, iPhone 17 Pro
@@ -859,6 +866,16 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   eventually deployed: delete a throwaway account and confirm `users/{uid}`
   and its `rides`/`bikes` subcollections are gone in the console. Update
   the Play Data Safety form for Audio (`DOCS/General/store_listing/`).
+- [ ] 🔴 **Route navigation now records the ride** (`issues_fixed.md` §78.21, 2026-09-21).
+  The progress maths has 31 unit tests and the cockpit builds, but **nobody has
+  ridden it**, and it touches the core recording loop. Needs a phone on a bike
+  (or a GPX-replaying simulator): open a saved route → "Start ride & guide me"
+  → confirm one GPS stream and not two (battery/thermal behaviour should match
+  an ordinary ride), the turn banner advances at real corners including ones
+  taken wide, the off-route warning fires and clears sensibly, ending the ride
+  saves it with the route named in history, and closing the banner mid-ride
+  leaves the recording running. Also check the Bangla banner at a glance —
+  those 13 strings are machine-drafted (batch `route-navigation`).
 - [ ] **Chat/messaging, end to end after the 2026-09-11 rules deploy**
   (`issues_fixed.md` §64) — a user reported `permission-denied` on the chat list
   and on starting a new chat, root-caused to a stale/undeployed

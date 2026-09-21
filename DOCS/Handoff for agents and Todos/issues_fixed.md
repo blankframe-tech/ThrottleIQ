@@ -5795,3 +5795,91 @@ Android debug builds re-run clean afterwards.
 - **Not verified:** that it *scans* off real paper, or how the dialog looks on a device.
   The QR content is unchanged (`safe_qr_payload.dart`); this only prints it.
 
+
+---
+
+## 78.21 Route navigation records the ride (2026-09-21, branch `job4-infra`)
+
+The app's two core loops now compose. Following a saved route starts (or attaches to)
+a real recording, so a rider can no longer spend two hours on a route and end up with
+nothing in their history.
+
+**What was wrong.** `RouteNavigationScreen` owned its *own*
+`Geolocator.getPositionStream`, its own permission/services checks, its own wakelock
+and its own progress maths — none of it known to `RideRecordingNotifier`, which owns
+GPS, sensors, the foreground service, persistence, live-share and crash coordination.
+Two GPS subscriptions, and no ride.
+
+**The shape now** (the plan in `issues_open.md` §78.21, built as approved):
+
+- `features/routes/domain/navigation_progress.dart` — the progress/off-route/ETA/
+  turn-advance maths, extracted out of the screen and made pure. 20 tests
+  (`test/features/routes/navigation_progress_test.dart`); it had none before.
+- `features/routes/presentation/providers/navigation_session_provider.dart` —
+  `NavigationSessionState` (route + manoeuvres + progress). It owns **no** GPS: it
+  `ref.listen`s to `rideRecordingProvider`, selected down to
+  `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence rather
+  than at accelerometer cadence. Dependency direction is one-way — routes knows about
+  the recorder, the recorder knows nothing about routes, which keeps navigation out of
+  the core loop. 11 tests.
+- `RideRecordingNotifier.startRide(routeId:, routeName:)`, plus `route_id`/`route_name`
+  on `RideEntity` and **schema v17**. The name is denormalized beside the id because a
+  discovered route lives under another rider's uid, a route can be renamed or deleted
+  afterwards, and history reads this in list views. 5 migration/round-trip tests.
+- `NavigationBanner`, drawn over the cockpit: turn + distance-to-turn, remaining + ETA,
+  the off-route warning, and a close button that drops guidance while the ride keeps
+  recording. The three top banners (guidance, alert, "we kept your ride") became one
+  column instead of three widgets all claiming `top + 72`.
+- The followed route is drawn under the ride's own trail on the cockpit map, dimmer —
+  the route is the plan, the trail is what happened, and when they diverge the rider
+  needs to see which is which.
+- `RouteNavigationScreen` is now a pre-flight: route, length, manoeuvre count, first
+  instruction, and one button — "Start ride & guide me", or "Guide me on this ride"
+  when a ride is already running.
+- Ride history shows a **Followed &lt;route&gt;** pill.
+
+**Two bugs found while extracting the maths**, both pre-existing:
+
+1. **The turn pointer could jam.** Advancing required passing within 30 m of each
+   turn's point, so a corner taken in the far lane — or a fix 40 m wide of a trail
+   recorded by a phone in a pocket — meant the banner pointed at that turn for the rest
+   of the ride. A manoeuvre whose point lies *behind* the rider along the line is now
+   treated as done however widely it was passed.
+2. **`'in 320 m'` was hardcoded English** in the old banner. Localized, with 13 new
+   keys (Bangla machine-drafted, batch `route-navigation` in `bn_pending_review.txt`).
+
+**Sync.** `route_id`/`route_name` are only sent to Firestore when a ride actually
+followed a route, so an ordinary ride's document is byte-identical to before — the rule
+`bikePayload` already applies to `archived`. `downloadRides` now filters cloud fields to
+the columns the local schema actually has, which closes that hazard class rather than
+the instance: every column added to `rides` since has needed its own bespoke guard.
+
+**Not verified:** anything that needs a phone on a bike. The maths is unit-tested and
+the cockpit builds, but nobody has ridden a route with this. 1277 tests, analyzer, and
+an Android debug build are clean. See `issues_open.md` §78.21 for what's left.
+
+---
+
+## 79 / 80. QA-seed engagement cleared from production (2026-09-21)
+
+`scripts/cleanup_qa_engagement.js` was **applied to `throttleiqfb`** — the step §79 had
+been waiting on since 2026-09-20, when the agent session that wrote the script was
+blocked by its environment from running the live write.
+
+    FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_engagement.js \
+        --yes-i-really-mean-it --non-interactive
+
+`--non-interactive` is what the earlier session was missing: the typed-confirmation
+prompt has no TTY to read from in an agent shell, so the run died at the gate rather
+than at the write.
+
+| | before | after |
+|---|---|---|
+| shared rides scanned | 98 | 98 |
+| QA-seed comments | 3 (all on the real ride `5a905c0a-…`) | 0 |
+| QA-seed likes | 0 | 0 |
+| `qashare_*` rides carrying the dead `likes` field | 47 | 0 |
+
+The comments tally on `5a905c0a-…` went 3 → 0. A second dry run reports nothing left to
+do, which is the documented verification. No fabricated engagement remains on a real
+rider's post.

@@ -163,6 +163,7 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 - Maintained by [`DatabaseHelper`](app/lib/core/database/database_helper.dart).
 - Migrations use `_addColumnIfMissing` to avoid `ALTER TABLE` lockouts and database recreation.
 - `ride_points` table stores full high-fidelity trajectories (`lat`, `lng`, `speed`, `accel`, `heading`, `confidence`, `imu_quality`, `is_cornering`).
+- **Adding a column to a synced table is a cross-version concern.** `CloudRepository.downloadRides` inserts cloud documents verbatim, so a field written by a newer build is an `INSERT` into a column an older one doesn't have — which throws and silently drops that ride. Two guards: the upload side omits a field when it is null (`ridePayload`, `bikePayload`), and since v17 the download side filters to the columns the local schema actually has (`knownRideColumnsOnly`).
 
 ### Outbox Pattern ([`OutboxService`](app/lib/core/cloud/outbox_service.dart))
 - Network writes are queued into the SQLite `outbox` table before the UI callback completes.
@@ -226,9 +227,15 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
   - **Full-Screen Workspaces**: High-focus screens exist outside the shell navigation bar:
     - `/ride/active`: Minimal, high-contrast, gloved-hand friendly UI during riding.
     - `/group-ride/:id`: Live peer map location sharing with push-to-talk audio notes.
-    - `/routes/:id/navigate`: Turn-by-turn guidance.
+    - `/routes/:id/navigate`: the pre-flight for following a saved route — it starts the recording and hands over to `/ride/active`, rather than being a navigation screen of its own.
 - **Offline Geometric Turn-by-Turn**:
   - Operates without commercial routing APIs (Mapbox, GraphHopper). Computes turn maneuvers purely from polyline vector bearings and signed angular differences (classified into slight, normal, sharp, U-turn), grouping micro-bends to eliminate instruction noise.
+- **Following a route *is* recording a ride** (2026-09-21, issues §78.21). The two core loops compose rather than running side by side:
+  - [`navigation_progress.dart`](app/lib/features/routes/domain/navigation_progress.dart) — pure progress/off-route/ETA/turn-advance maths, no Flutter and no I/O. A manoeuvre counts as done when the rider reaches it **or** has ridden past it along the line; proximity alone jams the banner on any corner taken wide.
+  - [`navigation_session_provider.dart`](app/lib/features/routes/presentation/providers/navigation_session_provider.dart) — holds route + manoeuvres + progress and owns **no GPS**. It `ref.listen`s to `rideRecordingProvider`, selected down to `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence, not at accelerometer cadence.
+  - **The dependency runs one way**: `routes` knows about the recorder; `RideRecordingNotifier` knows nothing about routes. Navigation stays out of the core loop, which is the part with no end-to-end test.
+  - The ride record carries `route_id`/`route_name` (schema **v17**). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
+  - Guidance is drawn over the cockpit by `NavigationBanner`; there is no separate navigation screen to get out of sync with the recorder.
 
 ---
 

@@ -23,6 +23,11 @@ class RideModel {
         isAuto: (m['is_auto'] as int?) == 1,
         bikeConfidence:
             BikeAttributionConfidence.fromName(m['bike_confidence'] as String?),
+        // Null on every ride recorded before schema v17, and on every ride
+        // that wasn't following a saved route — which is the honest reading
+        // of "this column didn't exist yet" either way.
+        routeId: m['route_id'] as String?,
+        routeName: m['route_name'] as String?,
       );
 
   static Map<String, dynamic> toMap(RideEntity e) => {
@@ -43,6 +48,8 @@ class RideModel {
         'map_snapshot_path': e.mapSnapshotPath,
         'is_auto': e.isAuto ? 1 : 0,
         'bike_confidence': e.bikeConfidence.name,
+        'route_id': e.routeId,
+        'route_name': e.routeName,
         'synced': 0,
         'created_at': e.startTime.toIso8601String(),
       };

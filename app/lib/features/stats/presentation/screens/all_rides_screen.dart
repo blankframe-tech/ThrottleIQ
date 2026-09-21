@@ -290,6 +290,15 @@ class AllRidesRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
+              // A ride recorded while following a saved route says so, and
+              // says which — the route may since have been renamed or
+              // deleted, which is exactly why the name is stored on the ride
+              // (see RideEntity.routeId) rather than looked up here.
+              if (ride.routeName != null) ...[
+                EditorialPill(context.l10n.followedRoutePill(ride.routeName!),
+                    tone: PillTone.neutral, filled: false),
+                const SizedBox(width: 8),
+              ],
               EditorialPill(context.l10n.scoreValue(score),
                   tone: score >= 90
                       ? PillTone.ok

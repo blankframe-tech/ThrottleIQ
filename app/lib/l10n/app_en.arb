@@ -4308,6 +4308,89 @@
   "@end": {
     "description": "Text in route_navigation_screen."
   },
+  "etaUnderAMinute": "<1 min",
+  "@etaUnderAMinute": {
+    "description": "ETA when the route's end is under a minute away."
+  },
+  "etaMinutes": "{minutes} min",
+  "@etaMinutes": {
+    "description": "ETA in whole minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "Object"
+      }
+    }
+  },
+  "etaHoursMinutes": "{hours}h {minutes}m",
+  "@etaHoursMinutes": {
+    "description": "ETA an hour or more away.",
+    "placeholders": {
+      "hours": {
+        "type": "Object"
+      },
+      "minutes": {
+        "type": "Object"
+      }
+    }
+  },
+  "navInDistance": "in {distance}",
+  "@navInDistance": {
+    "description": "Distance to the next manoeuvre, under the turn banner.",
+    "placeholders": {
+      "distance": {
+        "type": "Object"
+      }
+    }
+  },
+  "navArrivedStillRecording": "You've arrived — still recording",
+  "@navArrivedStillRecording": {
+    "description": "Turn banner once the rider reaches the end of a followed route."
+  },
+  "navGuidanceStoppedStillRecording": "Guidance off. Your ride is still recording.",
+  "@navGuidanceStoppedStillRecording": {
+    "description": "SnackBar after the rider closes the turn banner mid-ride."
+  },
+  "navStopGuidance": "Stop guidance",
+  "@navStopGuidance": {
+    "description": "Tooltip on the turn banner's close button."
+  },
+  "navRoutePreflightSummary": "{distance} · {turns} turns",
+  "@navRoutePreflightSummary": {
+    "description": "Route length and manoeuvre count on the pre-ride screen.",
+    "placeholders": {
+      "distance": {
+        "type": "Object"
+      },
+      "turns": {
+        "type": "Object"
+      }
+    }
+  },
+  "navRecordsRideExplainer": "Following this route records a ride, exactly like the Record button does.",
+  "@navRecordsRideExplainer": {
+    "description": "Tells the rider that navigating logs a ride, before they start."
+  },
+  "navAttachExplainer": "Guidance will be added to the ride you're already recording.",
+  "@navAttachExplainer": {
+    "description": "Shown instead when a ride is already in progress."
+  },
+  "navStartRideAndGuide": "Start ride & guide me",
+  "@navStartRideAndGuide": {
+    "description": "Primary button on the route pre-ride screen."
+  },
+  "navGuideOnThisRide": "Guide me on this ride",
+  "@navGuideOnThisRide": {
+    "description": "Primary button when a ride is already being recorded."
+  },
+  "followedRoutePill": "Followed {name}",
+  "@followedRoutePill": {
+    "description": "History pill naming the saved route a ride was recorded against.",
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
   "routes": "Routes",
   "@routes": {
     "description": "Text in routes_list_screen."

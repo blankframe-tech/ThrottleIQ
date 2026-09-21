@@ -1096,3 +1096,17 @@ safeQrStickerCaption
 safeQrPrintFailed
 # batch: bnfixes (manual)
 feedSortHot
+# batch: route-navigation (§78.21)
+etaUnderAMinute
+etaMinutes
+etaHoursMinutes
+navInDistance
+navArrivedStillRecording
+navGuidanceStoppedStillRecording
+navStopGuidance
+navRoutePreflightSummary
+navRecordsRideExplainer
+navAttachExplainer
+navStartRideAndGuide
+navGuideOnThisRide
+followedRoutePill

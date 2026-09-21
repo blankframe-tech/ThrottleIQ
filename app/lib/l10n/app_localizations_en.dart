@@ -3197,6 +3197,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get end => 'End';
 
   @override
+  String get etaUnderAMinute => '<1 min';
+
+  @override
+  String etaMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String etaHoursMinutes(Object hours, Object minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String navInDistance(Object distance) {
+    return 'in $distance';
+  }
+
+  @override
+  String get navArrivedStillRecording => 'You\'ve arrived — still recording';
+
+  @override
+  String get navGuidanceStoppedStillRecording =>
+      'Guidance off. Your ride is still recording.';
+
+  @override
+  String get navStopGuidance => 'Stop guidance';
+
+  @override
+  String navRoutePreflightSummary(Object distance, Object turns) {
+    return '$distance · $turns turns';
+  }
+
+  @override
+  String get navRecordsRideExplainer =>
+      'Following this route records a ride, exactly like the Record button does.';
+
+  @override
+  String get navAttachExplainer =>
+      'Guidance will be added to the ride you\'re already recording.';
+
+  @override
+  String get navStartRideAndGuide => 'Start ride & guide me';
+
+  @override
+  String get navGuideOnThisRide => 'Guide me on this ride';
+
+  @override
+  String followedRoutePill(Object name) {
+    return 'Followed $name';
+  }
+
+  @override
   String get routes => 'Routes';
 
   @override

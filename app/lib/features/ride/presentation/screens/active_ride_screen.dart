@@ -15,6 +15,8 @@ import '../../../ride/domain/calculators/event_detector.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../routes/presentation/providers/navigation_session_provider.dart';
+import '../../../routes/presentation/widgets/navigation_banner.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -52,6 +54,14 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         rideRecordingProvider.select((s) => s.currentPosition));
     final polyline = ref.read(rideRecordingProvider).polyline;
     final places = ref.watch(liveRidePlacesProvider);
+    // The saved route being followed, when there is one (issues §78.21).
+    // Keyed on the route's id rather than watching the whole session: the
+    // session's progress changes on every fix, and the line it draws does not.
+    final navRouteId =
+        ref.watch(navigationSessionProvider.select((s) => s.route?.id));
+    final navPolyline = navRouteId == null
+        ? const <LatLng>[]
+        : ref.read(navigationSessionProvider).polyline;
 
     if (position != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -73,6 +83,20 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
       ),
       children: [
         const AppTileLayer(),
+        // Underneath the ride's own trail, and dimmer: the route is the plan,
+        // the trail is what actually happened, and when they diverge the
+        // rider needs to see which line is which.
+        if (navPolyline.length > 1)
+          PolylineLayer(
+            key: ValueKey('nav-$navRouteId'),
+            polylines: [
+              Polyline(
+                points: navPolyline,
+                color: context.palette.secondary.withValues(alpha: 0.7),
+                strokeWidth: 6,
+              ),
+            ],
+          ),
         if (polyline.length > 1)
           PolylineLayer(
             key: ValueKey(version),
@@ -401,27 +425,31 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
             ),
           ),
 
-          // ── Alert banner ─────────────────────────────────────────────────
-          if (rideState.activeAlert != RideAlert.none)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 72,
-              left: 16,
-              right: 16,
-              child: _AlertBanner(alert: rideState.activeAlert),
-            ),
-
-          // ── "We kept your ride" banner ───────────────────────────────────
+          // ── Top banner stack ──────────────────────────────────────────────
           //
-          // Only after a restore, and only until the rider resumes. Without
-          // it, coming back to a paused ride you never paused reads as a bug.
-          if (rideState.restoredFromPreviousSession &&
-              rideState.activeAlert == RideAlert.none)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 72,
-              left: 16,
-              right: 16,
-              child: const _RecoveredBanner(),
+          // One column rather than three separately-positioned banners all
+          // claiming `top + 72`: turn guidance has a variable height (the
+          // off-route row comes and goes), so any fixed offset for what sits
+          // below it would overlap sooner or later. Guidance leads because
+          // it's the only one that changes what the rider does *next*.
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 72,
+            left: 16,
+            right: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const NavigationBanner(),
+                if (rideState.activeAlert != RideAlert.none)
+                  _AlertBanner(alert: rideState.activeAlert)
+                // Only after a restore, and only until the rider resumes.
+                // Without it, coming back to a paused ride you never paused
+                // reads as a bug.
+                else if (rideState.restoredFromPreviousSession)
+                  const _RecoveredBanner(),
+              ],
             ),
+          ),
 
           // ── Top bar ───────────────────────────────────────────────────────
           Positioned(

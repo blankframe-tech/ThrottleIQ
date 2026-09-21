@@ -382,29 +382,34 @@ What remains open:
   **Still open:** CI exists but has never run on GitHub, and `main` has no
   branch protection — so the analyze/test/rules gates are enforced on the
   founder's laptop and nowhere else. Founder action, scheduled next week.
-- **78.21 Route navigation doesn't record the ride.** **APPROVED
-  2026-09-21:** merge navigation into the active-ride cockpit so following a
-  saved route records it like any other ride. Today the two core loops don't
-  compose — you can follow a route and end up with no ride logged.
-  **NOT DONE (2026-09-21) — deliberately, with a plan.** It is not a one-line hook:
-  `RouteNavigationScreen` (402 lines) owns its **own** `Geolocator.getPositionStream`,
-  its own permission/services checks and its own progress/off-route/ETA logic, entirely
-  independent of `RideRecordingNotifier` (which owns GPS, sensors, the foreground
-  service, persistence, live-share and crash coordination). Doing it properly means:
-  1. A `NavigationSession` provider (route + `buildTurnInstructions` result + current
-     step/progress) that is **fed by the recorder's fixes**, so there is one GPS stream,
-     not two. Extract the progress/off-route/ETA maths out of the screen first; it has no
-     tests today.
-  2. `RideRecordingNotifier.startRide(routeId: …)` (or a session started alongside it) and
-     an optional route id on the ride record, so history can say "followed route X".
-  3. A navigation overlay in `active_ride_screen` (turn banner, remaining/ETA, off-route
-     state); `RouteNavigationScreen` becomes "start recording + open the cockpit".
-  4. Decide what happens when the rider ends the ride mid-route, or pauses.
-  Risks: it touches the app's core loop, which no automated test drives end to end (§83.28),
-  and it needs a phone on a bike (or a GPX-replaying simulator) to verify. The
-  approved-but-unbuilt design is the reason this is left open rather than half-done.
-  The Places "Record this ride in ThrottleIQ?" prompt shows the pattern for recording
-  alongside an external maps app.
+- ~~**78.21 Route navigation doesn't record the ride.**~~ **DONE 2026-09-21** —
+  see `issues_fixed.md` §78.21. Following a saved route now starts (or attaches
+  to) a real recording; the navigation session is fed by the recorder's fixes,
+  so there is one GPS stream instead of two, and the ride lands in history with
+  the route stamped on it (schema v17).
+  **What is still open on it:**
+  - **Nobody has ridden it.** The progress maths has 31 new unit tests and the
+    Android debug build is clean, but the whole feature is device-untested —
+    it needs a phone on a bike, or a GPX-replaying simulator. This is the same
+    caveat §78.12 carries, and it is the one that matters here: the change
+    touches the core loop, which still has no end-to-end automated test
+    (§83.28).
+  - **A restored ride doesn't restore its guidance.** `restoreInterruptedRide`
+    brings back a ride picked up off disk at launch, and that ride keeps its
+    `route_id`, but the navigation session is in-memory and starts empty. The
+    rider has to re-open the route to get the banner back. Deliberate — the
+    alternative is re-fetching a route document during launch recovery.
+  - **Navigating without recording is no longer possible.** That was the
+    approved call (the two loops should compose), but it is a real behaviour
+    change: a rider who only wants the line on screen now gets a ride they have
+    to discard. Worth watching in beta feedback.
+  - **A ride that followed a route won't download onto a pre-v17 install.**
+    `downloadRides` inserts cloud fields verbatim, and the guard that filters
+    unknown columns only exists from this build on. Ordinary rides are
+    unaffected (the fields are omitted when null). Bounded by beta scale;
+    it disappears once this release is what everyone is running.
+  - **`timesRidden` is still a dead counter** — see §85.
+
 - ~~**78.24 SafeQR has no "Print sticker"**~~ **DONE 2026-09-21** — see `issues_fixed.md` §78.24.
 - **78.25 The pitch** (`iDEA_PITCH_SUBMISSION.md` Slide 9, lines
   36/76/107) still claims working crash detection and a team the repo
@@ -451,7 +456,12 @@ working on top of it.
   Either extend the cleanup script (a `collectionGroup` sweep for
   `qaSeed == true` on `likes`/`comments`, decrementing each parent's
   tally) or write a one-off remover.
-- **STATUS 2026-09-21: script written, dry-run captured, NOT YET APPLIED.**
+- **STATUS 2026-09-21: APPLIED to production. This item is closed** — see
+  `issues_fixed.md` §79/§80 for the before/after counts and the verification run.
+  The blocker was mechanical: the script's typed-confirmation prompt has no TTY in
+  an agent shell, so `--non-interactive` (which it already supported) is what the
+  earlier session needed. History below, kept because the dry-run numbers are the
+  record of what was on the live project.
   `scripts/cleanup_qa_engagement.js` (dry-run by default; typed confirmation) finds
   seeded comments/likes per shared ride with single-field queries (no collection-group
   index needed) and lowers each parent's `comments` tally. **Production dry run:**
@@ -474,7 +484,9 @@ working on top of it.
 
 **Code and the real data: DONE** — see `issues_fixed.md` §80.
 
-**Same script as §79 clears it** (`cleanup_qa_engagement.js`; not yet applied — see §79). Live count on 2026-09-21: **47** rides, not 97.
+**CLEARED 2026-09-21** by the same script as §79 (`cleanup_qa_engagement.js`) — the live
+count was **47** rides, not 97, and is now **0**. The only thing still outstanding here is
+the rules tidy-up noted at the bottom of this section.
 
 **What's left:** a sweep of the feed found **no like documents anywhere**,
 but 97 shared rides still carry a `likes` integer on the ride doc. All 97
@@ -722,3 +734,25 @@ them deliberately.
 
 **Do not run `firebase deploy --force` to clear the warning.** That is the
 failure mode this section exists to prevent.
+
+---
+
+## 85. `RouteEntity.timesRidden` is a dead counter (found 2026-09-21)
+
+`RouteRepository.saveRoute` writes `timesRidden: 1` when a route is created and
+nothing ever increments it, so `routeRiddenSummary` ("… · ridden 1×") shows the
+same number on every route forever. It reads as data and isn't.
+
+Following a route now records a ride (§78.21), which is exactly the event that
+should bump it, and the ride carries `route_id` — so the hook is there. It was
+deliberately **not** folded into §78.21 to keep that change to one thing:
+
+- the bump belongs on ride *completion*, not on start, or it counts routes a
+  rider opened and abandoned;
+- a *discovered* route belongs to another rider, and `users/{owner}/routes/{id}`
+  is owner-only write in `firestore.rules`, so the increment can only ever apply
+  to the rider's own routes — or the rule needs a narrow exception for a
+  `timesRidden`-only update, which is a rules change and a rules test.
+
+Either implement it with those two constraints, or drop the counter from the UI.
+Showing a number that never moves is worse than showing nothing.

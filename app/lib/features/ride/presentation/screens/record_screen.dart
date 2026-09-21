@@ -17,10 +17,10 @@ import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_mode_selector.dart';
 import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
+import '../widgets/recording_gate.dart';
 import '../widgets/hold_to_start_button.dart';
 import '../widgets/rider_stat_strip.dart';
 import '../../../../core/i18n/l10n_context.dart';
-import '../../../../l10n/app_localizations.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
 /// cached for the container's lifetime, so this stays fixed across rebuilds
@@ -301,66 +301,6 @@ class _NoBikeCard extends StatelessWidget {
   }
 }
 
-/// Shown once, right before the OS location prompts, whenever the rider
-/// hasn't already granted "Allow all the time" — this is the in-app
-/// disclosure Play's background-location policy requires be distinct from
-/// the system dialog. Returns false (and shows nothing further) if the rider
-/// backs out here rather than proceeding to the OS prompts.
-Future<bool> _ensureLocationDisclosure(BuildContext context) async {
-  if (await Geolocator.checkPermission() == LocationPermission.always) {
-    return true;
-  }
-  if (!context.mounted) return false;
-  final proceed = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      title: Text(context.l10n.backgroundLocation),
-      content: Text(
-        context.l10n.backgroundLocationRationale,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(context.l10n.notNow),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(context.l10n.continueLabel),
-        ),
-      ],
-    ),
-  );
-  return proceed ?? false;
-}
-
-/// Puts the blocked-recording reason (GPS off / no permission) in front of
-/// the rider immediately, as a SnackBar with a one-tap fix — the persistent
-/// card above the start control says the same thing, but it can sit below
-/// the fold behind the hero/stat-strip/friends cards, so a rider who just
-/// slid the bar and got nothing back would otherwise have to scroll up to
-/// find out why.
-void _showBlockedSnackBar(BuildContext context, RideRecordingState state) {
-  if (state.error == null) return;
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(SnackBar(
-    content: Text(recordingErrorText(context.l10n, state)),
-    duration: const Duration(seconds: 6),
-    action: switch (state.blockKind) {
-      RecordingBlockKind.locationServicesOff => SnackBarAction(
-          label: context.l10n.turnOnCaps,
-          onPressed: () => Geolocator.openLocationSettings(),
-        ),
-      RecordingBlockKind.permissionDenied => SnackBarAction(
-          label: context.l10n.settingsCaps,
-          onPressed: () => Geolocator.openAppSettings(),
-        ),
-      RecordingBlockKind.none => null,
-    },
-  ));
-}
-
 /// Riverpod wrapper around [HoldToStartButton] — the rounded skins' start
 /// control. Owns exactly the same start/navigate/recover-from-failure flow as
 /// [_SlideToStartButtonState._triggerStart], so the two controls behave
@@ -377,7 +317,7 @@ class _HoldToStartControl extends ConsumerWidget {
       enabled: enabled,
       busy: status == RecordingStatus.starting,
       onStart: () async {
-        if (!await _ensureLocationDisclosure(context)) return;
+        if (!await ensureLocationDisclosure(context)) return;
         if (!context.mounted) return;
         await ref.read(rideRecordingProvider.notifier).startRide();
         if (!context.mounted) return;
@@ -390,7 +330,7 @@ class _HoldToStartControl extends ConsumerWidget {
         if (result.status == RecordingStatus.active) {
           context.go('/ride/active');
         } else {
-          _showBlockedSnackBar(context, result);
+          showRecordingBlockedSnackBar(context, result);
         }
       },
     );
@@ -451,7 +391,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   void _onPanCancel() => _ctrl.animateTo(0.0, curve: Curves.easeOut);
 
   void _triggerStart() async {
-    if (!await _ensureLocationDisclosure(context)) {
+    if (!await ensureLocationDisclosure(context)) {
       _ctrl.animateTo(0.0, curve: Curves.easeOut);
       return;
     }
@@ -467,7 +407,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
       // try again. rideState.error (rendered below this widget) explains why,
       // echoed as a SnackBar since that card can be scrolled out of view.
       _ctrl.animateTo(0.0, curve: Curves.easeOut);
-      _showBlockedSnackBar(context, result);
+      showRecordingBlockedSnackBar(context, result);
     }
   }
 
@@ -570,17 +510,4 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   }
 }
 
-/// The rider-facing text for [RideRecordingState.error].
-///
-/// The notifier keeps `error` in English (it doubles as a diagnostic), so the
-/// screen localizes it from what it already knows: [RideRecordingState.blockKind]
-/// for the two location problems, and [kNoBikeRecordingError] for the missing
-/// bike. Anything else is shown as written.
-String recordingErrorText(AppLocalizations l10n, RideRecordingState state) =>
-    switch (state.blockKind) {
-      RecordingBlockKind.locationServicesOff => l10n.recordingLocationOff,
-      RecordingBlockKind.permissionDenied => l10n.recordingPermissionDenied,
-      RecordingBlockKind.none => state.error == kNoBikeRecordingError
-          ? l10n.addBikeBeforeRecording
-          : state.error!,
-    };
+

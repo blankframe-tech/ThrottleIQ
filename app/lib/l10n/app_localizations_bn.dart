@@ -3211,6 +3211,58 @@ class AppLocalizationsBn extends AppLocalizations {
   String get end => 'শেষ';
 
   @override
+  String get etaUnderAMinute => '<1 মিনিট';
+
+  @override
+  String etaMinutes(Object minutes) {
+    return '$minutes মিনিট';
+  }
+
+  @override
+  String etaHoursMinutes(Object hours, Object minutes) {
+    return '$hoursঘ $minutesমি';
+  }
+
+  @override
+  String navInDistance(Object distance) {
+    return '$distance পরে';
+  }
+
+  @override
+  String get navArrivedStillRecording => 'পৌঁছে গেছেন — রেকর্ডিং চলছে';
+
+  @override
+  String get navGuidanceStoppedStillRecording =>
+      'গাইডেন্স বন্ধ। আপনার রাইড এখনও রেকর্ড হচ্ছে।';
+
+  @override
+  String get navStopGuidance => 'গাইডেন্স বন্ধ করুন';
+
+  @override
+  String navRoutePreflightSummary(Object distance, Object turns) {
+    return '$distance · $turnsটি টার্ন';
+  }
+
+  @override
+  String get navRecordsRideExplainer =>
+      'এই রুট অনুসরণ করলে রেকর্ড বোতামের মতোই একটি রাইড রেকর্ড হবে।';
+
+  @override
+  String get navAttachExplainer =>
+      'আপনি যে রাইডটি রেকর্ড করছেন তাতেই গাইডেন্স যোগ হবে।';
+
+  @override
+  String get navStartRideAndGuide => 'রাইড শুরু করে গাইড করুন';
+
+  @override
+  String get navGuideOnThisRide => 'এই রাইডে গাইড করুন';
+
+  @override
+  String followedRoutePill(Object name) {
+    return '$name অনুসরণ করা হয়েছে';
+  }
+
+  @override
   String get routes => 'রুট';
 
   @override

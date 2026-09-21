@@ -28,9 +28,9 @@ think one is wrong, say so once, in a sentence, and then do it.
 
 | | |
 |---|---|
-| Branch | `main` @ `4b4e0da` clean and in sync; **work is on local branches `appcolors` → `i18n` → `job3-ux` (stacked), none merged or pushed** |
+| Branch | work is on local branches `appcolors` → `i18n` → `job3-ux` → `job4-infra` (a clean stack: each contains the one before, nothing on `main` that isn't in them) |
 | Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
-| Tests | **1242** passing (on `job4-infra`, which contains `appcolors` + `i18n` + `job3-ux`; `main` has 1195) |
+| Tests | **1277** passing on `job4-infra` (which contains `appcolors` + `i18n` + `job3-ux`); `main` has 1195 |
 | Analyzer | clean (zero issues) |
 | Rules suite | **113** passing |
 | Functions | build clean, **NOT deployed** (Spark plan) |
@@ -305,9 +305,11 @@ live previews, the low-contrast secondary-text pass.
 
 #### The four approved design calls
 
-- **§78.21 — route navigation should record the ride.** ❌ **NOT DONE** — a real merge of two GPS/state
-  systems on the core loop; the step-by-step plan is in `issues_open.md` §78.21. Today nav and
-  recording are separate flows: follow a saved route and you end up with no ride logged.
+- **§78.21 — route navigation should record the ride.** ✅ **DONE** (2026-09-21, `job4-infra`) —
+  see `issues_fixed.md` §78.21. One GPS stream instead of two: a `NavigationSession` fed by the
+  recorder's fixes, `startRide(routeId:)` plus schema v17, and guidance drawn over the cockpit.
+  **Device-untested** — it needs a phone on a bike; that and four smaller caveats are listed in
+  `issues_open.md` §78.21.
 - **§74 — Retro/Light near-black cards.** ✅ Fixed — it was an `AppCard` paint-order bug, not a palette token. _(Done inside JOB 1 — see `issues_fixed.md` §74.)_
 - **§78.30 — crash badge in ride history.** ✅ DONE. A suspected-crash ride looks
   identical to a commute. It is the only surface where crash data is visible
@@ -340,14 +342,13 @@ no microphone while push-to-talk recorded audio). Do not repeat it.
 
 #### Live data cleanup — execution authorized
 
-- **§79** — ⏳ script written, dry-run captured, **not applied** (see `issues_open.md` §79). 14 likes and 3 comments were hand-seeded onto a real rider's
-  public post from `qaSeed` accounts. `cleanup_qa_test_riders.js` does **not**
-  remove likes/comments left on someone else's post, so they survive cleanup
-  and their counter bumps stay on a real post. Extend the script with a
-  `collectionGroup` sweep for `qaSeed == true`, decrementing each parent tally.
-- **§80** — ⏳ same script; live count is 47. 97 `qashare_*` rides still carry a dead `likes` integer. Nothing
-  reads it. Clear with `FieldValue.delete()`, and drop the now-dead `likes`
-  clauses from `firestore.rules` on the next rules pass.
+- **§79** — ✅ **APPLIED to `throttleiqfb` 2026-09-21.** The 3 QA-seed comments on the real
+  ride `5a905c0a-…` are gone and its tally went 3 → 0; a verifying dry run reports nothing
+  left. No fabricated engagement remains on a real rider's post. Details and the exact
+  command in `issues_fixed.md` §79/§80.
+- **§80** — ✅ **APPLIED**, same run: all 47 `qashare_*` rides carrying the dead `likes`
+  integer are clear (the live count was 47, not the 97 originally recorded). Still to do,
+  separately: drop the now-dead `likes` clauses from `firestore.rules` on the next rules pass.
 - **§84** — ✅ declared in `firestore.indexes.json` (retirement is a separate decision). The 4 undeclared indexes. Confirm nothing uses them (check
   `scripts/`, hand-run console queries, and the undeployed `functions/` — the
   code grep already came back clean), then **either** delete them **or** add

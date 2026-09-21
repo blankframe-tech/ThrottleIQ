@@ -41,6 +41,17 @@ class RideEntity extends Equatable {
   /// How much to trust [bikeId] — see [BikeAttributionConfidence].
   final BikeAttributionConfidence bikeConfidence;
 
+  /// The saved route the rider was following when this ride was recorded, or
+  /// null for an ordinary ride (issues §78.21).
+  ///
+  /// [routeName] is stored alongside the id rather than looked up, for three
+  /// reasons: a *discovered* route lives under another rider's uid, so the id
+  /// alone can't find it; the route may be renamed or deleted afterwards, and
+  /// history should still say what was ridden that day; and a ride row is read
+  /// in list views where a per-row Firestore fetch would be absurd.
+  final String? routeId;
+  final String? routeName;
+
   const RideEntity({
     required this.id,
     required this.userId,
@@ -59,7 +70,12 @@ class RideEntity extends Equatable {
     this.mapSnapshotPath,
     this.isAuto = false,
     this.bikeConfidence = BikeAttributionConfidence.high,
+    this.routeId,
+    this.routeName,
   });
+
+  /// True when this ride was recorded while following a saved route.
+  bool get followedRoute => routeId != null;
 
   double get distanceKm => distanceM / 1000;
   double get avgSpeedKmh => (avgSpeedMs ?? 0) * 3.6;
@@ -94,6 +110,8 @@ class RideEntity extends Equatable {
     bool? isAuto,
     BikeAttributionConfidence? bikeConfidence,
     String? bikeId,
+    String? routeId,
+    String? routeName,
   }) {
     return RideEntity(
       id: id,
@@ -113,10 +131,12 @@ class RideEntity extends Equatable {
       mapSnapshotPath: mapSnapshotPath ?? this.mapSnapshotPath,
       isAuto: isAuto ?? this.isAuto,
       bikeConfidence: bikeConfidence ?? this.bikeConfidence,
+      routeId: routeId ?? this.routeId,
+      routeName: routeName ?? this.routeName,
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, userId, bikeId, startTime, status, isAuto, bikeConfidence];
+      [id, userId, bikeId, startTime, status, isAuto, bikeConfidence, routeId];
 }

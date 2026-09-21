@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 16;
+  static const int schemaVersion = 17;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -270,6 +270,16 @@ class DatabaseHelper {
       await _addColumnIfMissing(db, 'outbox', 'permanent_failures',
           'permanent_failures INTEGER NOT NULL DEFAULT 0');
     }
+    if (oldVersion < 17 && newVersion >= 17) {
+      // The saved route a ride was recorded against (issues §78.21). Both
+      // stay NULL on existing rows, which is correct rather than a
+      // placeholder: before this, following a route recorded no ride at all.
+      //
+      // The name is denormalized next to the id on purpose — see
+      // RideEntity.routeId for why history can't just look it up.
+      await _addColumnIfMissing(db, 'rides', 'route_id', 'route_id TEXT');
+      await _addColumnIfMissing(db, 'rides', 'route_name', 'route_name TEXT');
+    }
   }
 
   static const String _createBikeMaintenanceConfigsSql = '''
@@ -470,6 +480,8 @@ class DatabaseHelper {
         map_snapshot_path TEXT,
         is_auto INTEGER NOT NULL DEFAULT 0,
         bike_confidence TEXT NOT NULL DEFAULT 'high',
+        route_id TEXT,
+        route_name TEXT,
         synced INTEGER NOT NULL DEFAULT 0,
         track_synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL

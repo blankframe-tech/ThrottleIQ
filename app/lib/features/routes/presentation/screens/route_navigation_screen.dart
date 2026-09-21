@@ -1,45 +1,45 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
-import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/utils/firebase_error_mapper.dart';
-import '../../../../core/utils/geo_math.dart';
-import '../../domain/turn_instruction.dart';
-import '../providers/route_providers.dart';
-import 'route_detail_screen.dart' show turnIcon;
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/theme/app_theme_context.dart';
+import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../ride/presentation/widgets/recording_gate.dart';
+import '../../../social/domain/entities/route_entity.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../shared/widgets/error_view.dart';
-import '../../../../core/i18n/l10n_context.dart';
+import '../../domain/turn_instruction.dart';
+import '../nav_format.dart';
+import '../providers/navigation_session_provider.dart';
+import '../providers/route_providers.dart';
+import 'route_detail_screen.dart' show turnIcon;
 import '../turn_instruction_l10n.dart';
 
-/// How close the rider must get to a turn's point before it's considered done
-/// and the banner advances to the next one.
-const double _turnReachedM = 30;
-
-/// Distance from the nearest point on the route past which the rider is told
-/// they're off route.
-const double _offRouteM = 100;
-
-/// Live turn-by-turn guidance along a saved route.
+/// The hand-off from "I want to follow this route" to the ride cockpit.
 ///
-/// This follows a breadcrumb trail — it does not reroute. There's no routing
-/// engine behind it (see turn_instruction.dart for why), so if the rider
-/// leaves the route the screen says so rather than silently inventing a new
-/// path. Street names aren't available either; guidance is geometric.
+/// Until issues §78.21 this screen *was* navigation: it ran its own
+/// `Geolocator.getPositionStream`, its own permission and services checks and
+/// its own progress maths, none of which the recorder knew about. The result
+/// was the app's two core loops failing to compose — a rider could follow a
+/// saved route for two hours and end up with no ride in their history, and the
+/// phone had spent that time holding two GPS subscriptions open.
+///
+/// Now this is a pre-flight: it confirms what's about to happen, starts (or
+/// attaches to) a recording, hands the route to [navigationSessionProvider]
+/// and sends the rider to `/ride/active`, where guidance is drawn over the
+/// cockpit by `NavigationBanner`. Everything live — GPS, sensors, the
+/// foreground service, persistence, live-share, crash coordination — belongs
+/// to `RideRecordingNotifier`, which is where it always should have been.
 class RouteNavigationScreen extends ConsumerStatefulWidget {
   final String routeId;
 
   /// The rider the route belongs to, carried through from `?owner=<uid>` so a
   /// *discovered* route can be followed too. Null means "the signed-in
-  /// rider". Nothing here writes, so a non-owner needs no extra permission.
+  /// rider". Nothing here writes to the route, so a non-owner needs no extra
+  /// permission — the ride that gets recorded is the viewer's own.
   final String? ownerUid;
 
   const RouteNavigationScreen({
@@ -54,112 +54,64 @@ class RouteNavigationScreen extends ConsumerStatefulWidget {
 }
 
 class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
-  final _mapController = MapController();
+  /// Guards against a second tap while `startRide()` is still in flight — it
+  /// awaits permission prompts and a database insert, which is long enough for
+  /// an impatient thumb to land twice.
+  bool _starting = false;
 
   RouteLookup get _lookup =>
       (routeId: widget.routeId, ownerUid: widget.ownerUid);
 
-  StreamSubscription<Position>? _positionSub;
-  LatLng? _position;
-  double? _speedMs;
-  String? _locationError;
-
-  /// Index into the instruction list of the manoeuvre the rider is heading to.
-  int _currentTurn = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WakelockPlus.enable();
-    _startLocation();
-  }
-
-  @override
-  void dispose() {
-    _positionSub?.cancel();
-    // Release the screen lock even if navigation is abandoned by a back
-    // gesture rather than the End button.
-    WakelockPlus.disable();
-    _mapController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _startLocation() async {
+  Future<void> _go(RouteEntity route) async {
+    if (_starting) return;
+    setState(() => _starting = true);
     try {
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+      final recorder = ref.read(rideRecordingProvider.notifier);
+      final status = ref.read(rideRecordingProvider).status;
+      final alreadyRiding = status == RecordingStatus.active ||
+          status == RecordingStatus.paused;
+
+      if (!alreadyRiding) {
+        // Same Play background-location disclosure the Record button shows,
+        // from the same helper — see recording_gate.dart.
+        if (!await ensureLocationDisclosure(context)) return;
         if (!mounted) return;
-        setState(() => _locationError =
-            context.l10n.locationPermissionOffSo);
-        return;
+        await recorder.startRide(routeId: route.id, routeName: route.name);
+        if (!mounted) return;
+        final result = ref.read(rideRecordingProvider);
+        if (result.status != RecordingStatus.active) {
+          // Permission denied, GPS off, no bike. Stay here and say why —
+          // navigating to a cockpit with no ride in it would be a dead end.
+          showRecordingBlockedSnackBar(context, result);
+          return;
+        }
       }
 
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        if (!mounted) return;
-        setState(() =>
-            _locationError = context.l10n.locationServicesOffTurn);
-        return;
-      }
-
-      _positionSub = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.bestForNavigation,
-          distanceFilter: 5,
-        ),
-      ).listen(_onPosition, onError: (Object e) {
-        if (!mounted) return;
-        setState(() => _locationError = mapLocationError(e, context.l10n));
-      });
-    } catch (e) {
+      ref.read(navigationSessionProvider.notifier).start(route);
       if (!mounted) return;
-      setState(() => _locationError = mapLocationError(e, context.l10n));
+      context.go('/ride/active');
+    } finally {
+      if (mounted) setState(() => _starting = false);
     }
-  }
-
-  void _onPosition(Position p) {
-    if (!mounted) return;
-    final here = LatLng(p.latitude, p.longitude);
-    setState(() {
-      _position = here;
-      _speedMs = p.speed;
-    });
-    _mapController.move(here, _mapController.camera.zoom);
-    _advanceTurnIfReached(here);
-  }
-
-  /// Advances past every manoeuvre the rider is already within [_turnReachedM]
-  /// of — a loop, not a single step, so a burst of movement (or a coarse fix
-  /// after a tunnel) can't leave the banner stuck behind the rider.
-  void _advanceTurnIfReached(LatLng here) {
-    final route = ref.read(routeByIdProvider(_lookup)).valueOrNull;
-    if (route == null) return;
-    final turns = buildTurnInstructions(route.polyline);
-    if (turns.isEmpty) return;
-
-    var next = _currentTurn;
-    while (next < turns.length - 1) {
-      final target = route.polyline[turns[next].pointIndex];
-      if (haversineMetersLatLng(here, target) > _turnReachedM) break;
-      next++;
-    }
-    if (next != _currentTurn) setState(() => _currentTurn = next);
   }
 
   @override
   Widget build(BuildContext context) {
     final routeAsync = ref.watch(routeByIdProvider(_lookup));
+    final status = ref.watch(rideRecordingProvider.select((s) => s.status));
+    final alreadyRiding =
+        status == RecordingStatus.active || status == RecordingStatus.paused;
 
     return Scaffold(
       backgroundColor: context.palette.background,
+      appBar: AppBar(
+        backgroundColor: context.palette.background,
+        title: Text(context.l10n.startNavigation),
+      ),
       body: routeAsync.when(
-        loading: () =>
-            Center(child: CircularProgressIndicator(color: context.palette.primary)),
-        error: (e, _) =>
-            ErrorView(
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(routeByIdProvider(_lookup)),
         ),
@@ -172,164 +124,114 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
           }
 
           final turns = buildTurnInstructions(route.polyline);
-          final turnIndex = _currentTurn.clamp(0, turns.length - 1);
-          final turn = turns.isEmpty ? null : turns[turnIndex];
+          // Start and arrive bookend every instruction list; neither is a
+          // manoeuvre, and counting them would tell the rider a straight road
+          // has two turns on it.
+          final manoeuvres = turns
+              .where((t) => t.kind != TurnKind.start && t.kind != TurnKind.arrive)
+              .length;
 
-          final nearest = _position == null
-              ? null
-              : nearestPointOnPolyline(route.polyline, _position!);
-          final offRoute = nearest != null && nearest.distanceM > _offRouteM;
-
-          final metresToTurn = (_position != null && turn != null)
-              ? haversineMetersLatLng(
-                  _position!, route.polyline[turn.pointIndex])
-              : null;
-
-          final metresLeft = nearest == null
-              ? route.distanceKm * 1000
-              : remainingDistanceM(route.polyline, nearest.index);
-
-          return Stack(
+          return Column(
             children: [
-              FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: _position ?? route.polyline.first,
-                  initialZoom: 16,
+              Expanded(
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: route.polyline.first,
+                    initialZoom: 13,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.pinchZoom |
+                          InteractiveFlag.doubleTapZoom |
+                          InteractiveFlag.drag,
+                    ),
+                  ),
+                  children: [
+                    const AppTileLayer(),
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: route.polyline,
+                          strokeWidth: 5,
+                          color: context.palette.primary,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                children: [
-                  const AppTileLayer(),
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: route.polyline,
-                        strokeWidth: 5,
-                        color: context.palette.primary,
-                      ),
-                    ],
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      if (turn != null)
-                        Marker(
-                          point: route.polyline[turn.pointIndex],
-                          width: 22,
-                          height: 22,
-                          child: Icon(Icons.circle,
-                              size: 14, color: context.palette.secondary),
-                        ),
-                      if (_position != null)
-                        Marker(
-                          point: _position!,
-                          width: 26,
-                          height: 26,
-                          child: Icon(Icons.navigation,
-                              size: 24, color: context.palette.primary),
-                        ),
-                    ],
-                  ),
-                ],
               ),
-
-              // Instruction banner
               SafeArea(
+                top: false,
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_locationError != null)
-                        _Banner(
-                          child: Text(
-                            _locationError!,
-                            style: TextStyle(
-                                fontSize: 13, color: context.palette.textPrimary),
-                          ),
-                        )
-                      else if (turn != null)
-                        _Banner(
-                          child: Row(
-                            children: [
-                              Icon(turnIcon(turn.kind),
-                                  size: 34, color: context.palette.primary),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      turn.localizedText(context.l10n),
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.palette.textPrimary),
-                                    ),
-                                    if (metresToTurn != null)
-                                      Text(
-                                        'in ${_distanceLabel(metresToTurn)}',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            color: context.palette.textSecondary),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                      Text(
+                        route.name,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: context.palette.textPrimary,
                         ),
-                      if (offRoute) ...[
-                        const SizedBox(height: 8),
-                        _Banner(
-                          background: context.palette.danger.withValues(alpha: 0.15),
-                          child: Row(
-                            children: [
-                              Icon(Icons.warning_amber_rounded,
-                                  size: 18, color: context.palette.danger),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  context.l10n.offRouteFromLine(_distanceLabel(nearest.distanceM)),
-                                  style: TextStyle(
-                                      fontSize: 13, color: context.palette.textPrimary),
-                                ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        context.l10n.navRoutePreflightSummary(
+                          routeDistanceLabel(route.distanceKm * 1000),
+                          manoeuvres,
+                        ),
+                        style: TextStyle(
+                            fontSize: 13, color: context.palette.textSecondary),
+                      ),
+                      if (turns.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(turnIcon(turns.first.kind),
+                                size: 20, color: context.palette.primary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                turns.first.localizedText(context.l10n),
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: context.palette.textPrimary),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
-                    ],
-                  ),
-                ),
-              ),
-
-              // Bottom bar
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                    child: _Banner(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _Metric(
-                              label: context.l10n.remaining,
-                              value: _distanceLabel(metresLeft),
-                            ),
-                          ),
-                          Expanded(
-                            child: _Metric(
-                              label: context.l10n.eta,
-                              value: _etaLabel(metresLeft, _speedMs),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => context.pop(),
-                            child: Text(context.l10n.end,
-                                style: TextStyle(color: context.palette.danger)),
-                          ),
-                        ],
+                      const SizedBox(height: 16),
+                      // The one thing a rider should know before tapping, and
+                      // the whole point of §78.21: this is a ride, not just a
+                      // map. Saying so beats discovering it afterwards either
+                      // way round.
+                      Text(
+                        alreadyRiding
+                            ? context.l10n.navAttachExplainer
+                            : context.l10n.navRecordsRideExplainer,
+                        style: TextStyle(
+                            fontSize: 12, color: context.palette.textTertiary),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _starting ? null : () => _go(route),
+                          icon: _starting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.navigation_outlined, size: 18),
+                          label: Text(alreadyRiding
+                              ? context.l10n.navGuideOnThisRide
+                              : context.l10n.navStartRideAndGuide),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -337,66 +239,6 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
           );
         },
       ),
-    );
-  }
-}
-
-String _distanceLabel(double metres) {
-  if (metres < 1000) return '${metres.round()} m';
-  return '${(metres / 1000).toStringAsFixed(1)} km';
-}
-
-/// ETA from the rider's current speed. Returns '—' while stopped or before
-/// the first fix — extrapolating an arrival time from 0 m/s would divide by
-/// zero, and from a crawl would show an absurd number.
-String _etaLabel(double metres, double? speedMs) {
-  if (speedMs == null || speedMs < 1.0) return '—';
-  final seconds = metres / speedMs;
-  if (seconds < 60) return '<1 min';
-  final minutes = (seconds / 60).round();
-  if (minutes < 60) return '$minutes min';
-  final hours = minutes ~/ 60;
-  return '${hours}h ${minutes % 60}m';
-}
-
-class _Banner extends StatelessWidget {
-  final Widget child;
-  final Color? background;
-  const _Banner({required this.child, this.background});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: background ?? context.palette.surface,
-        borderRadius: BorderRadius.circular(context.shape.radiusMd),
-        border: Border.all(color: context.palette.border),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  final String label;
-  final String value;
-  const _Metric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(value,
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.palette.textPrimary)),
-        Text(label,
-            style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
-      ],
     );
   }
 }
