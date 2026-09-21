@@ -505,6 +505,12 @@ sub-items fixed on 2026-09-21 (safety claims, EventDetector, feed pagination,
 account deletion, privacy salt, error states, comment rot). Full original
 writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`.
 
+**Where the fixed work lives:** branch `fix/critique-83`, pushed, **not
+merged into `main`** (10 commits, `da3aab5..c6c7213`). Nothing is deployed —
+the new `rides (userId, audience, createdAt)` index, the two new rules
+subcollections and the functions all still need pushing; see
+`HANDOFF_Document.md` for the exact commands and what breaks until then.
+
 What is still open:
 
 ### 81.9 (part) — `AppColors` is a mutable static facade

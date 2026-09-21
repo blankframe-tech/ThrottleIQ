@@ -26,7 +26,35 @@ install on this device, go straight to USB.
 (issues_fixed.md §83; remainder in issues_open.md §83).** Writeup:
 `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`. Verification: `flutter analyze`
 clean, `flutter test` **1195/1195** (+21 new), rules emulator **113/113**,
-`functions/` build clean. **Nothing is deployed.**
+`functions/` build clean.
+
+**WHERE THIS LIVES: branch `fix/critique-83`, pushed to origin, NOT merged.**
+Ten commits, `da3aab5..c6c7213`. `main` is untouched. Land it with
+`git checkout main && git merge --ff-only fix/critique-83 && git push`, the
+same pattern `fix/grill-78` used.
+
+**NOTHING IS DEPLOYED, and three deploys are needed before parts of this
+work stop being inert:**
+1. `firebase deploy --only firestore:indexes` — the new composite index
+   `rides (userId, audience, createdAt)` backs the "Following" chip's query.
+   **Until it is live that chip throws `failed-precondition`**, which is the
+   same trap as §82 and §178: index written to the JSON file, never pushed.
+2. `firebase deploy --only firestore:rules` — two new owner-only
+   subcollections (`private`, `cloudinaryAssets`) and the crash-notification
+   id constraint. The app writes to `cloudinaryAssets` on every upload, so
+   until the rules ship those writes are denied (harmlessly — the ledger
+   write is best-effort and never fails an upload, but nothing is recorded).
+3. `firebase deploy --only functions` — still blocked on the Blaze plan. Note
+   the account-deletion trigger has **never** been deployed, so the Cloudinary
+   sweep and the anonymization added here do not run at all yet.
+
+Additionally, the Cloudinary sweep is inert until
+`CLOUDINARY_CLOUD_NAME`/`_API_KEY`/`_API_SECRET` are set in the functions
+environment. With none set it logs a warning naming the asset count it did
+NOT delete and leaves the ledger intact, so it can be re-run retroactively.
+
+The Bangla strings added in this pass were written without a native speaker
+and need review before release, same as §78.28.
 
 Fixed, highest-consequence first:
 - **The disabled crash detector is no longer advertised** anywhere — README,
