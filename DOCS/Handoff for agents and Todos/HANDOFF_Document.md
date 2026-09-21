@@ -187,8 +187,12 @@ the founder), §84 (undeclared indexes — needs a decision, do not `--force`).
 **Bangla layout check:** the UI tour can now walk the app in Bangla and log layout overflows
 (`TOUR_LOCALE=bn app/scripts/ui_tour/run_tour.sh <udid> <out> <combo>`; overflow lines are
 `[tour] OVERFLOW …` in the tour log). A run was started at the end of the 2026-09-21 session
-(Calming/Curvy/Light) and **its result is not recorded here** — run it, and treat any overflow
-it reports as a real Bangla layout bug.
+(Calming/Curvy/Light). **The first run proved nothing:** it reported 0 overflows but only ever
+reached the login screen (the tour tapped "Sign In" by its English text, so every later
+screenshot was the login page again) — fixed by using the Bangla string. A corrected run was
+started and **its result is not recorded here**; run it and look at the screenshots yourself.
+What *was* seen in Bangla (welcome, sign-in, onboarding slides 2 and 5): correct glyphs, no overflow.
+Treat any `[tour] OVERFLOW` line as a real Bangla layout bug.
 
 **JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only
 `★ —` was real and is fixed. §78.30 crash badge done. §78.21 (nav records the ride) and

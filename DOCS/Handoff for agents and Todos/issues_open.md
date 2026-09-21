@@ -591,6 +591,10 @@ the rest are data/domain/plumbing with nothing to translate. What remains:
   ("N Google · M ThrottleIQ", "No reviews yet"). The pattern to copy is
   `recordingErrorText()` in `record_screen.dart` (English stays in state, the UI
   localizes from a stable code/kind).
+- **Onboarding mockup chrome is still English** (seen in a Bangla tour screenshot): the mock
+  map's filter chips ("All / Fuel / Workshops / Cafes") and a few labels inside
+  `onboarding_ui_mockups.dart` — chrome strings my extractor's heuristics missed, not the
+  sample data. Small; localize them with the rest of that file's labels.
 - **Deliberately English, do not "fix":** units (`km`, `km/h`, `mi`, `°C`, `g`),
   brand/model names and hint examples, the onboarding mockups' sample data,
   forum topic/brand lookup lists, and every string that is *data* other people

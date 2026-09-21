@@ -40,6 +40,7 @@ import 'package:throttleiq/features/ride/presentation/providers/ride_recording_p
 import 'package:throttleiq/features/routes/presentation/providers/route_providers.dart';
 import 'package:throttleiq/features/social/presentation/providers/ride_feed_provider.dart';
 import 'package:throttleiq/firebase_options.dart';
+import 'package:throttleiq/l10n/app_localizations_bn.dart';
 
 const _email = 'rider@example.com';
 const _password = 'Test@123';
@@ -446,7 +447,9 @@ Future<void> tourAuth() async {
     await t.enterText(login.at(1), _password);
     FocusManager.instance.primaryFocus?.unfocus();
     await snap('Sign in - filled');
-    await tapText('Sign In', after: 300);
+    // Language-independent: in Bangla mode the button text is not "Sign In", and
+    // failing to sign in leaves every later screenshot on the login screen.
+    await tapText(_tourLocale == 'bn' ? AppLocalizationsBn().signIn : 'Sign In', after: 300);
     final deadline = DateTime.now().add(const Duration(seconds: 30));
     while (!location.startsWith('/home') && DateTime.now().isBefore(deadline)) {
       await wait(300);
