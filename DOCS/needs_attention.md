@@ -8,12 +8,14 @@ What is left needs the founder: an account, a real device, a decision, or the Bl
 
 `main` holds a lot that no tester has: App Check, analytics, route navigation that records the
 ride, the i18n pass, the SafeQR print sticker, the crash badge, the cockpit perf fix. `pubspec` is
-still `1.0.0-beta.3.0.2+19` = `beta-v3.0.2`. The release **APK and AAB both build** (verified this
-evening, 84.7 MB / 82.8 MB, not published).
+now `1.0.0-beta.3.1.0+20`; the live release is still `beta-v3.0.2`. The release **APK and AAB both
+build** (84.7 MB / 82.8 MB) and are not published.
 
-- [ ] **Decide the release** — version bump, notes, and whether it goes out before the device test
-      list (below). It carries two things nobody has checked on hardware (route navigation,
-      Bangla) and 1,064 machine-drafted Bangla keys.
+- [ ] **Publish the release.** You decided to ship it (2026-09-21): `1.0.0-beta.3.1.0+20` is
+      committed and pushed (`6fb12ae`), and the APK and AAB are built in `app/build/app/outputs/`.
+      The GitHub release itself was **not created** — the auto-mode classifier declined that step,
+      so it needs your approval or a permission rule. It carries two things nobody has checked on
+      hardware (route navigation, Bangla) and 1,064 machine-drafted Bangla keys.
 - [ ] After it ships: **deploy hosting** (`firebase deploy --only hosting`) so `privacy.html`
       describes the analytics the app now does — *not before*, the live policy would then describe
       behaviour the installed app doesn't have.

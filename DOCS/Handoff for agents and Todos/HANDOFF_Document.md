@@ -16,7 +16,7 @@ to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PL
 | Firestore **indexes** | ✅ Live and verified |
 | **Hosting** (`privacy.html`) | Live copy is the **old** one — the analytics-aware policy is written but must ship *with* the release |
 | **Functions** | ❌ Not deployable — Spark plan, no `artifactregistry` (Node 20 dies late Oct 2026) |
-| **App build** | `pubspec` is still `1.0.0-beta.3.0.2+19` = the `beta-v3.0.2` release. Everything since (App Check, analytics, route navigation, i18n, print sticker, cockpit perf) is **on `main` but in no tester's hands** |
+| **App build** | `pubspec` is now `1.0.0-beta.3.1.0+20`, committed and pushed (`main` @ `6fb12ae`); APK and AAB are built from it. **The GitHub release `beta-v3.1.0` was not created** — the session's auto-mode classifier declined the publish step, so the live release is still `beta-v3.0.2`. Everything since 3.0.2 (App Check, analytics, route navigation, i18n, print sticker, cockpit perf) is **on `main` but in no tester's hands** |
 | **App Check enforcement** | Console action, only after a release containing the code is what riders run |
 
 The order that matters: **release → hosting (`privacy.html`) → App Check enforcement**.
