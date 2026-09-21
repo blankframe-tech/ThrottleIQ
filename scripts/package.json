@@ -8,6 +8,8 @@
     "node": ">=18"
   },
   "scripts": {
+    "cleanup:qa-engagement:dry-run": "node cleanup_qa_engagement.js",
+    "cleanup:qa-engagement:execute": "node cleanup_qa_engagement.js --yes-i-really-mean-it",
     "reset:dry-run": "node reset_beta_data.js --dry-run",
     "reset:execute": "node reset_beta_data.js --yes-i-really-mean-it",
     "seed:dhaka:fetch": "node seed_dhaka_places.js --out=dhaka_places.json",
@@ -29,7 +31,7 @@
     "test": "node --test \"test/*.test.js\"",
     "test:rules": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" firebase emulators:exec --project=throttleiq-rules-test --only firestore \"'$npm_node_execpath' --test test/rules/*.test.js\"",
     "test:rules:ci": "firebase emulators:exec --project=throttleiq-rules-test --only firestore \"'$npm_node_execpath' --test test/rules/*.test.js\"",
-    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js && node --check seed_qa_test_riders.js && node --check cleanup_qa_test_riders.js && node --check qa_seed_catalog.js && node --check seed_ai_cameras.js && node --check seed_police_checkposts.js && node --check seed_police_checkposts_v2.js && node --check seed_police_checkposts_v3.js && node --check update_places_google_ratings.js"
+    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js && node --check seed_qa_test_riders.js && node --check cleanup_qa_test_riders.js && node --check cleanup_qa_engagement.js && node --check qa_seed_catalog.js && node --check seed_ai_cameras.js && node --check seed_police_checkposts.js && node --check seed_police_checkposts_v2.js && node --check seed_police_checkposts_v3.js && node --check update_places_google_ratings.js"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0"

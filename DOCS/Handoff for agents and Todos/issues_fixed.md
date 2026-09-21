@@ -5742,3 +5742,40 @@ scratchpad and is not committed; the *result* is what matters.
 - **1,064 Bangla keys await native review** — `app/lib/l10n/bn_pending_review.txt`.
 - What is deliberately not translated, and the English-only logic-layer messages that
   remain, are listed in `issues_open.md` §83.23.
+
+## 78.26 / 78.29 (parts). Hold-to-start same-frame release; immediate outbox attempt scoped to the rider (2026-09-21, branch `job3-ux`)
+
+- **78.26:** `HoldToStartButton._release` only reversed the ring when `value > 0`, so a
+  press and release in the *same frame* (value still 0, controller already running
+  forward) let the hold complete and start a ride. Now unconditional, as
+  `HoldToEndButton` already was. Regression test added and confirmed failing first.
+- **78.29 (part):** `OutboxService._attemptOne` skipped the owner check `drain()` has
+  (§69.O4): on a shared phone, account A's queued write could be attempted immediately
+  under B's credentials. It now returns `deferred` and leaves the row queued. Tests
+  added (failing first). The "Sync issues" screen half of 78.29 was localized in the
+  i18n pass.
+
+## 83.19 / 83.27. App Check and privacy-respecting analytics (2026-09-21, branch `job4-infra`)
+
+**App Check (§83.19) — code done, enforcement is a console action.**
+`firebase_app_check` is activated at startup (Play Integrity / App Attest with
+DeviceCheck fallback; debug provider in debug), non-fatally. It is **inert until you
+switch enforcement on in the Firebase console** — and that must wait until a release
+containing this code is what riders run, or every older build is locked out (same rule
+as §78.27). Debug builds print a debug token that has to be registered in the console.
+iOS App Attest also needs its entitlement added to the Runner in Xcode (not done here;
+without it iOS falls back to DeviceCheck). iOS-simulator and Android debug builds
+verified; behaviour on a real device is unverified.
+
+**Analytics (§83.27) — code and documents done, two founder actions remain.**
+`core/analytics/analytics_service.dart`: screen views (route *patterns*, never ids) plus
+a **closed list** of seven funnel events with at most one coarse parameter; off in debug;
+rider opt-out in Settings → Privacy & Safety (persisted); ad ID, ad personalisation, ad
+storage and ad user data disabled in the manifest/Info.plist and via consent calls.
+No user id, name, email, location or ride figure can be sent — there is no code path
+for it, and 8 tests pin that. Same commit updated `public/privacy.html` (the "no
+behavioural analytics" bullet is gone; Firebase Analytics and App Check rows added;
+effective date 21 Sep 2026) and `DOCS/General/store_listing/data_safety_and_permissions.md`.
+**Founder actions:** (1) update the Play Console Data Safety form ("App interactions:
+collected, optional, not shared"); (2) **deploy hosting only with the release** that
+ships this — the policy now describes analytics the currently-live app does not do.

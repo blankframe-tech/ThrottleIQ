@@ -432,6 +432,17 @@ working on top of it.
   Either extend the cleanup script (a `collectionGroup` sweep for
   `qaSeed == true` on `likes`/`comments`, decrementing each parent's
   tally) or write a one-off remover.
+- **STATUS 2026-09-21: script written, dry-run captured, NOT YET APPLIED.**
+  `scripts/cleanup_qa_engagement.js` (dry-run by default; typed confirmation) finds
+  seeded comments/likes per shared ride with single-field queries (no collection-group
+  index needed) and lowers each parent's `comments` tally. **Production dry run:**
+  98 shared rides scanned; exactly the documented **3 comments on `5a905c0a-…`**
+  (tally 3 → 0); 0 likes (already gone); 47 `qashare_*` rides carry the dead `likes`
+  field (§80). The agent session that wrote it was **blocked by the environment from
+  running the live write**, so someone with the go-ahead has to run it:
+  `cd scripts && FIREBASE_PROJECT_ID=throttleiqfb npm run cleanup:qa-engagement:execute`
+  (then the dry-run command again should report nothing). Uses application-default
+  credentials that must resolve to `throttleiqfb`.
 - This is on `throttleiqfb`, the same project real beta testers use, so
   the comments are visible to them.
 - Fabricated engagement on a founder post shouldn't be used as evidence of
@@ -443,6 +454,8 @@ working on top of it.
 ## 80. Retired `likes`: 97 QA-seed rides still carry a dead `likes` number (2026-09-20)
 
 **Code and the real data: DONE** — see `issues_fixed.md` §80.
+
+**Same script as §79 clears it** (`cleanup_qa_engagement.js`; not yet applied — see §79). Live count on 2026-09-21: **47** rides, not 97.
 
 **What's left:** a sweep of the feed found **no like documents anywhere**,
 but 97 shared rides still carry a `likes` integer on the ride doc. All 97
@@ -585,7 +598,7 @@ the third-largest file in the app is an illustration of screens it cannot stay
 in sync with, shipping in the production binary. `integration_test/ui_tour_test.dart`
 already exists and could supply real screenshots.
 
-### 83.27 — no analytics of any kind
+### 83.27 — no analytics of any kind — CODE DONE 2026-09-21 (branch `job4-infra`); release + Data Safety pending
 
 Zero `logEvent`. Defensible as a privacy stance (and stated as one in the
 README), but it means nothing would ever have surfaced the empty "Following"

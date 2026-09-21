@@ -168,8 +168,8 @@ appearance re-themes the app in place instead of unmounting it (issues_fixed.md
 `AppCard` paint-order bug, not a palette token. `flutter analyze` zero,
 `flutter test` **1206/1206**. **Branch stack (2026-09-21) — all local, NONE pushed or merged; merge in this order:**
 `main` ← `appcolors` (theme tokens, §74, post-photo border) ← `i18n` (JOB 2) ←
-`job3-ux` (§32 + crash badge). Each branch builds on the previous, so merge
-`job3-ux` last (it contains the other two) or one at a time in order.
+`job3-ux` (§32 + crash badge + §78.26/§78.29) ← `job4-infra` (App Check, analytics, cleanup script). Each branch builds on the previous, so merge
+`job4-infra` last (it contains all the others) or one at a time in order.
 `flutter analyze` zero, `flutter test` **1225/1225**, `functions/` build clean; the
 rules suite was not re-run (no rules changes).
 
@@ -177,6 +177,13 @@ rules suite was not re-run (no rules changes).
 keys, **1,064 Bangla keys await native review** (`app/lib/l10n/bn_pending_review.txt`),
 and **Bangla has never been looked at on a device** (overflow risk). English-only
 logic-layer messages that remain are listed in `issues_open.md` §83.23.
+
+**JOB 4 (branch `job4-infra`, on top of `job3-ux`):** App Check and analytics are coded and
+documented (see `issues_fixed.md` §83.19/§83.27); §78.26 and §78.29 fixed. **The live-data
+cleanup (§79/§80) is written and dry-run against production but NOT applied** — the agent
+was blocked from the write; command is in `issues_open.md` §79. **Not done:** §78.24 (SafeQR
+print sticker), §78.21 (route navigation records the ride), §78.16 (needs the tile key from
+the founder), §84 (undeclared indexes — needs a decision, do not `--force`).
 
 **JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only
 `★ —` was real and is fixed. §78.30 crash badge done. §78.21 (nav records the ride) and
