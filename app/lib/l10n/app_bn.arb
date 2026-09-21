@@ -1212,5 +1212,21 @@
   "compassSouthWest": "দক্ষিণ-পশ্চিম",
   "compassWest": "পশ্চিম",
   "compassNorthWest": "উত্তর-পশ্চিম",
-  "turnHead": "{direction} দিকে যান"
+  "turnHead": "{direction} দিকে যান",
+  "notifChannelCrash": "দুর্ঘটনার সতর্কতা",
+  "notifChannelCrashDesc": "ThrottleIQ মনে করলে আপনি দুর্ঘটনায় পড়েছেন, তখন দেখানো হয়। এটি বন্ধ করবেন না।",
+  "notifChannelRides": "রাইড নিশ্চিতকরণ",
+  "notifChannelRidesDesc": "অটো-শনাক্ত রাইডটি কোন বাইকে ছিল তা জিজ্ঞেস করে।",
+  "notifChannelDigest": "সাপ্তাহিক ডাইজেস্ট",
+  "notifChannelDigestDesc": "আপনার সাপ্তাহিক রাইডিংয়ের সারসংক্ষেপ।",
+  "notifCrashTitle": "দুর্ঘটনা শনাক্ত হয়েছে",
+  "notifCrashBody": "আপনি \"আমি ঠিক আছি\"-তে ট্যাপ না করলে {seconds} সেকেন্ডের মধ্যে আপনার জরুরি কন্টাক্টদের জানানো হবে।",
+  "notifImOk": "আমি ঠিক আছি",
+  "notifRideDetectedTitle": "রাইড শনাক্ত হয়েছে — {km} কিমি",
+  "notifRideDetectedBody": "{bike}-এ এটি লগ করা হয়েছে। নিশ্চিত করতে বা বদলাতে ট্যাপ করুন।",
+  "notifConfirm": "নিশ্চিত করুন",
+  "notifDigestTitle": "আজ রাস্তায়",
+  "notifDigestTap": "আপনার দিনটি দেখতে ট্যাপ করুন।",
+  "notifDigestSummary": "{rides, plural, =1{1টি রাইড} other{{rides}টি রাইড}}, {km} কিমি",
+  "notifDigestUnconfirmed": " · {count, plural, =1{1টিতে বাইক নিশ্চিত করা দরকার} other{{count}টিতে বাইক নিশ্চিত করা দরকার}}"
 }

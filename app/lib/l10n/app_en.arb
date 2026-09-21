@@ -5647,5 +5647,97 @@
         "type": "String"
       }
     }
+  },
+  "notifChannelCrash": "Crash alerts",
+  "@notifChannelCrash": {
+    "description": "Android notification channel name (crash alerts)."
+  },
+  "notifChannelCrashDesc": "Shown when ThrottleIQ thinks you may have crashed. Do not disable.",
+  "@notifChannelCrashDesc": {
+    "description": "Android channel description (crash alerts)."
+  },
+  "notifChannelRides": "Ride confirmations",
+  "@notifChannelRides": {
+    "description": "Android notification channel name (ride confirmations)."
+  },
+  "notifChannelRidesDesc": "Asks which bike an automatically-detected ride was on.",
+  "@notifChannelRidesDesc": {
+    "description": "Android channel description (ride confirmations)."
+  },
+  "notifChannelDigest": "Weekly digest",
+  "@notifChannelDigest": {
+    "description": "Android notification channel name (digest)."
+  },
+  "notifChannelDigestDesc": "Your weekly riding summary.",
+  "@notifChannelDigestDesc": {
+    "description": "Android channel description (digest)."
+  },
+  "notifCrashTitle": "Crash detected",
+  "@notifCrashTitle": {
+    "description": "Crash-alert notification title."
+  },
+  "notifCrashBody": "Contacting your emergency contacts in {seconds}s unless you tap \"I'm OK\".",
+  "@notifCrashBody": {
+    "description": "Crash-alert notification body; {seconds} is the countdown.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "notifImOk": "I'm OK",
+  "@notifImOk": {
+    "description": "Action button on the crash alert."
+  },
+  "notifRideDetectedTitle": "Ride detected — {km} km",
+  "@notifRideDetectedTitle": {
+    "description": "Notification title after an auto-detected ride ends.",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "notifRideDetectedBody": "We logged this to {bike}. Tap to confirm or change.",
+  "@notifRideDetectedBody": {
+    "description": "Notification body asking to confirm which bike.",
+    "placeholders": {
+      "bike": {
+        "type": "String"
+      }
+    }
+  },
+  "notifConfirm": "Confirm",
+  "@notifConfirm": {
+    "description": "Action button on the ride-detected notification."
+  },
+  "notifDigestTitle": "Today on the road",
+  "@notifDigestTitle": {
+    "description": "Day-end summary notification title."
+  },
+  "notifDigestTap": "Tap to see your day.",
+  "@notifDigestTap": {
+    "description": "Body of the scheduled day-end trigger notification."
+  },
+  "notifDigestSummary": "{rides, plural, =1{1 ride} other{{rides} rides}}, {km} km",
+  "@notifDigestSummary": {
+    "description": "Day-end summary: number of rides and distance.",
+    "placeholders": {
+      "rides": {
+        "type": "int"
+      },
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "notifDigestUnconfirmed": " · {count, plural, =1{1 needs a bike confirmed} other{{count} need a bike confirmed}}",
+  "@notifDigestUnconfirmed": {
+    "description": "Appended to the day-end summary when detected rides lack a confirmed bike.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

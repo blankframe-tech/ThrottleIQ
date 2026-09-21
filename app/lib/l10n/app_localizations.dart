@@ -7379,6 +7379,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Head {direction}'**
   String turnHead(String direction);
+
+  /// Android notification channel name (crash alerts).
+  ///
+  /// In en, this message translates to:
+  /// **'Crash alerts'**
+  String get notifChannelCrash;
+
+  /// Android channel description (crash alerts).
+  ///
+  /// In en, this message translates to:
+  /// **'Shown when ThrottleIQ thinks you may have crashed. Do not disable.'**
+  String get notifChannelCrashDesc;
+
+  /// Android notification channel name (ride confirmations).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride confirmations'**
+  String get notifChannelRides;
+
+  /// Android channel description (ride confirmations).
+  ///
+  /// In en, this message translates to:
+  /// **'Asks which bike an automatically-detected ride was on.'**
+  String get notifChannelRidesDesc;
+
+  /// Android notification channel name (digest).
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly digest'**
+  String get notifChannelDigest;
+
+  /// Android channel description (digest).
+  ///
+  /// In en, this message translates to:
+  /// **'Your weekly riding summary.'**
+  String get notifChannelDigestDesc;
+
+  /// Crash-alert notification title.
+  ///
+  /// In en, this message translates to:
+  /// **'Crash detected'**
+  String get notifCrashTitle;
+
+  /// Crash-alert notification body; {seconds} is the countdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacting your emergency contacts in {seconds}s unless you tap \"I\'m OK\".'**
+  String notifCrashBody(int seconds);
+
+  /// Action button on the crash alert.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m OK'**
+  String get notifImOk;
+
+  /// Notification title after an auto-detected ride ends.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride detected — {km} km'**
+  String notifRideDetectedTitle(String km);
+
+  /// Notification body asking to confirm which bike.
+  ///
+  /// In en, this message translates to:
+  /// **'We logged this to {bike}. Tap to confirm or change.'**
+  String notifRideDetectedBody(String bike);
+
+  /// Action button on the ride-detected notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get notifConfirm;
+
+  /// Day-end summary notification title.
+  ///
+  /// In en, this message translates to:
+  /// **'Today on the road'**
+  String get notifDigestTitle;
+
+  /// Body of the scheduled day-end trigger notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to see your day.'**
+  String get notifDigestTap;
+
+  /// Day-end summary: number of rides and distance.
+  ///
+  /// In en, this message translates to:
+  /// **'{rides, plural, =1{1 ride} other{{rides} rides}}, {km} km'**
+  String notifDigestSummary(int rides, String km);
+
+  /// Appended to the day-end summary when detected rides lack a confirmed bike.
+  ///
+  /// In en, this message translates to:
+  /// **' · {count, plural, =1{1 needs a bike confirmed} other{{count} need a bike confirmed}}'**
+  String notifDigestUnconfirmed(int count);
 }
 
 class _AppLocalizationsDelegate

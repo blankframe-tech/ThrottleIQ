@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+import '../i18n/l10n_lookup.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Local notifications: crash escalation, ride-confirmation prompts, and the
 /// weekly digest.
@@ -83,35 +85,34 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onResponse,
     );
 
-    await _createAndroidChannels();
+    await _createAndroidChannels(await savedL10n());
   }
 
-  Future<void> _createAndroidChannels() async {
+  Future<void> _createAndroidChannels(AppLocalizations l10n) async {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android == null) return;
 
-    await android.createNotificationChannel(const AndroidNotificationChannel(
+    await android.createNotificationChannel(AndroidNotificationChannel(
       crashChannelId,
-      'Crash alerts',
-      description:
-          'Shown when ThrottleIQ thinks you may have crashed. Do not disable.',
+      l10n.notifChannelCrash,
+      description: l10n.notifChannelCrashDesc,
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
     ));
 
-    await android.createNotificationChannel(const AndroidNotificationChannel(
+    await android.createNotificationChannel(AndroidNotificationChannel(
       ridesChannelId,
-      'Ride confirmations',
-      description: 'Asks which bike an automatically-detected ride was on.',
+      l10n.notifChannelRides,
+      description: l10n.notifChannelRidesDesc,
       importance: Importance.defaultImportance,
     ));
 
-    await android.createNotificationChannel(const AndroidNotificationChannel(
+    await android.createNotificationChannel(AndroidNotificationChannel(
       digestChannelId,
-      'Weekly digest',
-      description: 'Your weekly riding summary.',
+      l10n.notifChannelDigest,
+      description: l10n.notifChannelDigestDesc,
       importance: Importance.low,
       playSound: false,
     ));
@@ -158,15 +159,15 @@ class NotificationService {
   /// silently let it run — the rider has to answer it.
   Future<void> showCrashAlert({required int secondsRemaining}) async {
     await init();
+    final l10n = await savedL10n();
     await _plugin.show(
       crashNotificationId,
-      'Crash detected',
-      'Contacting your emergency contacts in ${secondsRemaining}s unless you '
-          'tap "I\'m OK".',
-      const NotificationDetails(
+      l10n.notifCrashTitle,
+      l10n.notifCrashBody(secondsRemaining),
+      NotificationDetails(
         android: AndroidNotificationDetails(
           crashChannelId,
-          'Crash alerts',
+          l10n.notifChannelCrash,
           importance: Importance.max,
           priority: Priority.max,
           category: AndroidNotificationCategory.alarm,
@@ -178,13 +179,13 @@ class NotificationService {
           actions: [
             AndroidNotificationAction(
               actionImOk,
-              "I'm OK",
+              l10n.notifImOk,
               showsUserInterface: true,
               cancelNotification: true,
             ),
           ],
         ),
-        iOS: DarwinNotificationDetails(
+        iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentSound: true,
           interruptionLevel: InterruptionLevel.critical,
@@ -211,26 +212,27 @@ class NotificationService {
     required double distanceKm,
   }) async {
     await init();
+    final l10n = await savedL10n();
     await _plugin.show(
       confirmPromptId,
-      'Ride detected — ${distanceKm.toStringAsFixed(1)} km',
-      'We logged this to $bikeLabel. Tap to confirm or change.',
-      const NotificationDetails(
+      l10n.notifRideDetectedTitle(distanceKm.toStringAsFixed(1)),
+      l10n.notifRideDetectedBody(bikeLabel),
+      NotificationDetails(
         android: AndroidNotificationDetails(
           ridesChannelId,
-          'Ride confirmations',
+          l10n.notifChannelRides,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
           actions: [
             AndroidNotificationAction(
               actionConfirmRide,
-              'Confirm',
+              l10n.notifConfirm,
               showsUserInterface: true,
               cancelNotification: true,
             ),
           ],
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       payload: rideId,
     );
@@ -250,27 +252,26 @@ class NotificationService {
     if (rideCount == 0) return;
     await init();
 
-    final body = StringBuffer()
-      ..write('$rideCount ride${rideCount == 1 ? '' : 's'}, ')
-      ..write('${distanceKm.toStringAsFixed(1)} km');
+    final l10n = await savedL10n();
+    final body = StringBuffer(
+        l10n.notifDigestSummary(rideCount, distanceKm.toStringAsFixed(1)));
     if (unconfirmedCount > 0) {
-      body.write(' · $unconfirmedCount need'
-          '${unconfirmedCount == 1 ? 's' : ''} a bike confirmed');
+      body.write(l10n.notifDigestUnconfirmed(unconfirmedCount));
     }
 
     await _plugin.show(
       weeklyDigestId,
-      'Today on the road',
+      l10n.notifDigestTitle,
       body.toString(),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           digestChannelId,
-          'Weekly digest',
+          l10n.notifChannelDigest,
           importance: Importance.low,
           priority: Priority.low,
           playSound: false,
         ),
-        iOS: DarwinNotificationDetails(presentSound: false),
+        iOS: const DarwinNotificationDetails(presentSound: false),
       ),
     );
   }
@@ -286,20 +287,21 @@ class NotificationService {
   /// silent if there's nothing to say.
   Future<void> scheduleDailySummary({int hour = 21, int minute = 0}) async {
     await init();
+    final l10n = await savedL10n();
     await _plugin.zonedSchedule(
       weeklyDigestId,
-      'Today on the road',
-      'Tap to see your day.',
+      l10n.notifDigestTitle,
+      l10n.notifDigestTap,
       _nextInstanceOf(hour, minute),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           digestChannelId,
-          'Weekly digest',
+          l10n.notifChannelDigest,
           importance: Importance.low,
           priority: Priority.low,
           playSound: false,
         ),
-        iOS: DarwinNotificationDetails(presentSound: false),
+        iOS: const DarwinNotificationDetails(presentSound: false),
       ),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,

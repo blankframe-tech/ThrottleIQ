@@ -4148,4 +4148,76 @@ class AppLocalizationsBn extends AppLocalizations {
   String turnHead(String direction) {
     return '$direction দিকে যান';
   }
+
+  @override
+  String get notifChannelCrash => 'দুর্ঘটনার সতর্কতা';
+
+  @override
+  String get notifChannelCrashDesc =>
+      'ThrottleIQ মনে করলে আপনি দুর্ঘটনায় পড়েছেন, তখন দেখানো হয়। এটি বন্ধ করবেন না।';
+
+  @override
+  String get notifChannelRides => 'রাইড নিশ্চিতকরণ';
+
+  @override
+  String get notifChannelRidesDesc =>
+      'অটো-শনাক্ত রাইডটি কোন বাইকে ছিল তা জিজ্ঞেস করে।';
+
+  @override
+  String get notifChannelDigest => 'সাপ্তাহিক ডাইজেস্ট';
+
+  @override
+  String get notifChannelDigestDesc => 'আপনার সাপ্তাহিক রাইডিংয়ের সারসংক্ষেপ।';
+
+  @override
+  String get notifCrashTitle => 'দুর্ঘটনা শনাক্ত হয়েছে';
+
+  @override
+  String notifCrashBody(int seconds) {
+    return 'আপনি \"আমি ঠিক আছি\"-তে ট্যাপ না করলে $seconds সেকেন্ডের মধ্যে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+  }
+
+  @override
+  String get notifImOk => 'আমি ঠিক আছি';
+
+  @override
+  String notifRideDetectedTitle(String km) {
+    return 'রাইড শনাক্ত হয়েছে — $km কিমি';
+  }
+
+  @override
+  String notifRideDetectedBody(String bike) {
+    return '$bike-এ এটি লগ করা হয়েছে। নিশ্চিত করতে বা বদলাতে ট্যাপ করুন।';
+  }
+
+  @override
+  String get notifConfirm => 'নিশ্চিত করুন';
+
+  @override
+  String get notifDigestTitle => 'আজ রাস্তায়';
+
+  @override
+  String get notifDigestTap => 'আপনার দিনটি দেখতে ট্যাপ করুন।';
+
+  @override
+  String notifDigestSummary(int rides, String km) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rides,
+      locale: localeName,
+      other: '$ridesটি রাইড',
+      one: '1টি রাইড',
+    );
+    return '$_temp0, $km কিমি';
+  }
+
+  @override
+  String notifDigestUnconfirmed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটিতে বাইক নিশ্চিত করা দরকার',
+      one: '1টিতে বাইক নিশ্চিত করা দরকার',
+    );
+    return ' · $_temp0';
+  }
 }

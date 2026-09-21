@@ -4139,4 +4139,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String turnHead(String direction) {
     return 'Head $direction';
   }
+
+  @override
+  String get notifChannelCrash => 'Crash alerts';
+
+  @override
+  String get notifChannelCrashDesc =>
+      'Shown when ThrottleIQ thinks you may have crashed. Do not disable.';
+
+  @override
+  String get notifChannelRides => 'Ride confirmations';
+
+  @override
+  String get notifChannelRidesDesc =>
+      'Asks which bike an automatically-detected ride was on.';
+
+  @override
+  String get notifChannelDigest => 'Weekly digest';
+
+  @override
+  String get notifChannelDigestDesc => 'Your weekly riding summary.';
+
+  @override
+  String get notifCrashTitle => 'Crash detected';
+
+  @override
+  String notifCrashBody(int seconds) {
+    return 'Contacting your emergency contacts in ${seconds}s unless you tap \"I\'m OK\".';
+  }
+
+  @override
+  String get notifImOk => 'I\'m OK';
+
+  @override
+  String notifRideDetectedTitle(String km) {
+    return 'Ride detected — $km km';
+  }
+
+  @override
+  String notifRideDetectedBody(String bike) {
+    return 'We logged this to $bike. Tap to confirm or change.';
+  }
+
+  @override
+  String get notifConfirm => 'Confirm';
+
+  @override
+  String get notifDigestTitle => 'Today on the road';
+
+  @override
+  String get notifDigestTap => 'Tap to see your day.';
+
+  @override
+  String notifDigestSummary(int rides, String km) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rides,
+      locale: localeName,
+      other: '$rides rides',
+      one: '1 ride',
+    );
+    return '$_temp0, $km km';
+  }
+
+  @override
+  String notifDigestUnconfirmed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count need a bike confirmed',
+      one: '1 needs a bike confirmed',
+    );
+    return ' · $_temp0';
+  }
 }

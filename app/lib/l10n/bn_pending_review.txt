@@ -1069,3 +1069,20 @@ compassSouthWest
 compassWest
 compassNorthWest
 turnHead
+# batch: notifications (manual)
+notifChannelCrash
+notifChannelCrashDesc
+notifChannelRides
+notifChannelRidesDesc
+notifChannelDigest
+notifChannelDigestDesc
+notifCrashTitle
+notifCrashBody
+notifImOk
+notifRideDetectedTitle
+notifRideDetectedBody
+notifConfirm
+notifDigestTitle
+notifDigestTap
+notifDigestSummary
+notifDigestUnconfirmed
