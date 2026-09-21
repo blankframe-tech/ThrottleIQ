@@ -639,7 +639,12 @@ trustworthy.
 
 ## 84. Four Firestore indexes exist in the project but not in `firestore.indexes.json` (2026-09-21)
 
-**Status:** Surfaced, not acted on. Found during the §83 rules/indexes deploy,
+**Status 2026-09-21: the four are now DECLARED in `firestore.indexes.json`** (12 → 16, matching the
+project exactly, definitions read from `firebase firestore:indexes`), so the file is honest and a
+`--force` deploy can no longer silently drop them. They are still **orphan candidates** — retiring
+them is a separate, deliberate step (delete from the file *and* the console, after re-checking
+`scripts/`, hand-run console queries and the undeployed `functions/`). Not deployed; a deploy would
+be a no-op for these four. Original finding follows. Found during the §83 rules/indexes deploy,
 which printed:
 
 > `firestore: there are 4 indexes defined in your project that are not present
