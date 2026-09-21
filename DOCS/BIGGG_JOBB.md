@@ -308,7 +308,8 @@ live previews, the low-contrast secondary-text pass.
 - **§78.21 — route navigation should record the ride.** ✅ **DONE** (2026-09-21, `job4-infra`) —
   see `issues_fixed.md` §78.21. One GPS stream instead of two: a `NavigationSession` fed by the
   recorder's fixes, `startRide(routeId:)` plus schema v17, and guidance drawn over the cockpit.
-  35 new tests (1242 → 1277).
+  35 new tests (1242 → 1277), plus a GPX replay harness afterwards that rides a whole
+  trail through the session (1298 now). Still device-untested below the session layer.
   **Device-untested** — it needs a phone on a bike; that and four smaller caveats are listed in
   `issues_open.md` §78.21.
 - **§74 — Retro/Light near-black cards.** ✅ Fixed — it was an `AppCard` paint-order bug, not a palette token. _(Done inside JOB 1 — see `issues_fixed.md` §74.)_
@@ -348,8 +349,10 @@ no microphone while push-to-talk recorded audio). Do not repeat it.
   left. No fabricated engagement remains on a real rider's post. Details and the exact
   command in `issues_fixed.md` §79/§80.
 - **§80** — ✅ **APPLIED**, same run: all 47 `qashare_*` rides carrying the dead `likes`
-  integer are clear (the live count was 47, not the 97 originally recorded). Still to do,
-  separately: drop the now-dead `likes` clauses from `firestore.rules` on the next rules pass.
+  integer are clear (the live count was 47, not the 97 originally recorded). The dead
+  `likes` clauses are now out of `firestore.rules` too (2026-09-21) — **written and tested,
+  not deployed**; see `issues_fixed.md` §80 (rest) for what deliberately stayed and the
+  sequencing note on deploying it.
 - **§84** — ✅ declared in `firestore.indexes.json` (retirement is a separate decision). The 4 undeclared indexes. Confirm nothing uses them (check
   `scripts/`, hand-run console queries, and the undeployed `functions/` — the
   code grep already came back clean), then **either** delete them **or** add

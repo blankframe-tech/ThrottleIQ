@@ -189,7 +189,15 @@ in an agent shell, and `--non-interactive` is the flag it already had for that.
 **§78.21 (route navigation records the ride) is done** (`issues_fixed.md` §78.21) but is
 **device-untested** — it needs a phone on a bike; caveats in `issues_open.md` §78.21.
 **Not done:** §78.16 (needs the tile key from the founder), §84 (undeclared indexes — needs
-a decision, do not `--force`), §85 (`timesRidden` is a dead counter, found during §78.21).
+a decision, do not `--force`).
+
+**Also landed 2026-09-21, after the merge:** a GPX replay harness for §78.21; the four
+§83.23 localization leftovers that needed no reviewer (month names still need your
+decision); §85 (`timesRidden` now counts, on ride completion); §80's dead `likes` clauses
+out of `firestore.rules` — **written and tested, NOT deployed**, and the deploy has a
+sequencing note (old beta builds that can still like a ride will start failing); §83.12
+(the cockpit no longer rebuilds in full on every sensor tick); and the first widget tests
+on the navigation banner (§83.28). 1298 app tests, 114 rules tests, 38 script tests.
 
 **Bangla layout check (2026-09-21, UI tour on the iPhone 17 Pro simulator, Calming/Curvy/Light):**
 `TOUR_LOCALE=bn app/scripts/ui_tour/run_tour.sh <udid> <out> <combo>` walks the app in Bangla and logs
@@ -867,8 +875,11 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   and its `rides`/`bikes` subcollections are gone in the console. Update
   the Play Data Safety form for Audio (`DOCS/General/store_listing/`).
 - [ ] 🔴 **Route navigation now records the ride** (`issues_fixed.md` §78.21, 2026-09-21).
-  The progress maths and session have 25 unit tests between them and the cockpit
-  builds, but **nobody has ridden it**, and it touches the core recording loop. Needs a phone on a bike
+  A GPX replay harness now drives a whole trail through the same session the
+  cockpit uses (`issues_fixed.md` §78.21 part 2) — turns, off-route, wide
+  corners, dropped fixes, pause and end. What it can't reach is everything
+  below that: `Geolocator`, permissions, the foreground service, the wakelock,
+  persistence, and battery/thermal behaviour. So **nobody has ridden it**, and it touches the core recording loop. Needs a phone on a bike
   (or a GPX-replaying simulator): open a saved route → "Start ride & guide me"
   → confirm one GPS stream and not two (battery/thermal behaviour should match
   an ordinary ride), the turn banner advances at real corners including ones

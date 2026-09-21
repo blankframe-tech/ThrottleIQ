@@ -388,13 +388,19 @@ What remains open:
   so there is one GPS stream instead of two, and the ride lands in history with
   the route stamped on it (schema v17).
   **What is still open on it:**
-  - **Nobody has ridden it.** The progress maths and the session have 25 new
-    unit tests between them (35 in all with the migration and sync ones), and the
-    Android debug build is clean, but the whole feature is device-untested —
-    it needs a phone on a bike, or a GPX-replaying simulator. This is the same
-    caveat §78.12 carries, and it is the one that matters here: the change
-    touches the core loop, which still has no end-to-end automated test
-    (§83.28).
+  - **Nobody has ridden it.** Narrower than it was: a **GPX replay harness**
+    now exists (`test/features/routes/gpx_replay.dart` +
+    `navigation_replay_test.dart`, 15 tests) and drives a whole trail through
+    the same session the cockpit uses — turns firing in order, off-route
+    raised and cleared, corners taken wide, a 20× gap in fixes, pause, and
+    ending mid-route. Drop a real exported ride into
+    `test/features/routes/fixtures/` and it reads that the same way; the
+    checked-in fixture is synthetic and says so.
+    **What replay still cannot reach** is everything below the session:
+    `Geolocator`, the permission prompts, the foreground service, the wakelock
+    and persistence are all constructed inline by `RideRecordingNotifier` and
+    can't be substituted (§83.13). A real ride is still the only check on
+    those, and on battery/thermal behaviour.
   - **A restored ride doesn't restore its guidance.** `restoreInterruptedRide`
     brings back a ride picked up off disk at launch, and that ride keeps its
     `route_id`, but the navigation session is in-memory and starts empty. The
@@ -496,8 +502,20 @@ are `qashare_*` QA seed rides whose counts were fabricated by
 reads it, so this is cosmetic — clear it on the next reseed, or with a
 `FieldValue.delete()` sweep.
 
-`firestore.rules` still has its `likes` clauses (the create rule defaults
-the field to 0, so it keeps passing). Drop them on the next rules pass.
+~~`firestore.rules` still has its `likes` clauses.~~ **DONE 2026-09-21, not yet
+deployed.** The create/owner-update tally clauses, the ±1 bump branch and the
+now-unused `likeBumpValid` helper are gone; three rules tests pin the new
+contract (114 passing, was 113). **The `match /likes/{userId}` block stays on
+purpose** — `deleteSharedRide` still *lists* that subcollection to sweep up
+legacy documents, and a list against a path with no matching rule is denied
+even when it would return nothing, so removing it would turn every share-delete
+into permission-denied. It can go one release after the app stops sweeping, in
+that order (§78.27: ship the app before the rules).
+
+**Deploying this is a founder action and has a sequencing note:** any build
+still in a tester's hands that can *like* a ride will start failing once these
+rules are live. Nothing shipped since §81 has a like button, so the exposure is
+old beta installs only.
 
 ---
 
@@ -738,22 +756,18 @@ failure mode this section exists to prevent.
 
 ---
 
-## 85. `RouteEntity.timesRidden` is a dead counter (found 2026-09-21)
+## 85. `RouteEntity.timesRidden` was a dead counter — FIXED (2026-09-21)
 
-`RouteRepository.saveRoute` writes `timesRidden: 1` when a route is created and
-nothing ever increments it, so `routeRiddenSummary` ("… · ridden 1×") shows the
-same number on every route forever. It reads as data and isn't.
+> Full writeup in `issues_fixed.md` §85.
 
-Following a route now records a ride (§78.21), which is exactly the event that
-should bump it, and the ride carries `route_id` — so the hook is there. It was
-deliberately **not** folded into §78.21 to keep that change to one thing:
+Correction to how this was first written up: `RouteRepository` **already had**
+an `incrementTimesRidden` — it had simply never been called from anywhere, so
+`timesRidden` sat at the 1 `saveRoute` writes and "ridden 1×" was the same on
+every route forever. (The original note said no such method existed; that came
+from a truncated grep.) It is now called from `ActiveRideScreen._stopRide`, on
+completion rather than on start, and never from `_cancelRide`.
 
-- the bump belongs on ride *completion*, not on start, or it counts routes a
-  rider opened and abandoned;
-- a *discovered* route belongs to another rider, and `users/{owner}/routes/{id}`
-  is owner-only write in `firestore.rules`, so the increment can only ever apply
-  to the rider's own routes — or the rule needs a narrow exception for a
-  `timesRidden`-only update, which is a rules change and a rules test.
-
-Either implement it with those two constraints, or drop the counter from the UI.
-Showing a number that never moves is worse than showing nothing.
+**Still open, deliberately:** the bump is best-effort and not outboxed, so one
+made offline is lost. That is the right trade for a cosmetic counter — see the
+method's doc comment for the line that has to move if it ever becomes
+load-bearing (ranking Discover by it, say).

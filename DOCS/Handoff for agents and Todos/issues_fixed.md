@@ -5884,3 +5884,152 @@ than at the write.
 The comments tally on `5a905c0a-…` went 3 → 0. A second dry run reports nothing left to
 do, which is the documented verification. No fabricated engagement remains on a real
 rider's post.
+
+---
+
+## 78.21 (part 2). GPX replay harness — riding a route without a bike (2026-09-21)
+
+`issues_open.md` §78.21 named "a phone on a bike, **or** a GPX-replaying
+simulator" as the two ways to check route guidance. The second one now exists.
+
+- `test/features/routes/gpx_replay.dart` reads `<trkpt>` out of any GPX and
+  replays it through `NavigationSessionNotifier` — the same code the cockpit
+  drives. Helpers for a detour, for decimated fixes, and for riding a constant
+  offset off the line. Regex rather than an XML library on purpose: `xml` is
+  only a transitive dependency here.
+- `navigation_replay_test.dart` (15 tests) covers a full ride: turns fire in
+  order and never step back, every manoeuvre gets displayed, remaining
+  distance falls monotonically, the ETA is withdrawn on arrival, no off-route
+  warning from jitter alone, a detour raises and clears it, corners taken 45 m
+  wide still advance, one fix in twenty still catches up, pausing freezes
+  guidance, and ending mid-route can't be revived by a late fix.
+- The fixture (`fixtures/dhaka_zigzag.gpx`, 208 points) is **synthetic and
+  says so in its own metadata** — deterministic, four legs at ~30 km/h with
+  3 m of jitter. A real exported ride dropped in beside it reads the same way.
+
+**What replay still cannot reach:** `Geolocator`, permissions, the foreground
+service, the wakelock and persistence are constructed inline by
+`RideRecordingNotifier` and can't be substituted (§83.13). A real ride remains
+the only check on those, and on battery and thermal behaviour.
+
+Two assertions written for this failed honestly and were worth the trip: the
+`start` instruction is consumed by the very first fix (it belongs to the
+pre-flight screen, which is where it is shown), and a detour pushed off the
+*second* leg silently re-crossed the *first* — off-route is a distance to the
+whole line, not to one segment.
+
+---
+
+## 83.23 (part). The localization leftovers that needed no reviewer (2026-09-21)
+
+Four of the five §83.23 remainders. The fifth — English month names in dates —
+still needs a founder decision and is untouched.
+
+- **Onboarding mockup chrome.** The mock map's chips were `'All'`,
+  `'⛽ Fuel'`, `'🔧 Workshops'`, `'☕ Cafes'` — English in every language, and
+  naming two categories the app doesn't have. Now the real, already-localized
+  `PlaceCategory` labels with that enum's own emoji, so the illustration drifts
+  less from the screen it illustrates (§83.26). `'RIDES'` in the stat row was
+  the last literal in the file; it now matches its `KM RIDDEN` / `SAFETY SCORE`
+  neighbours.
+- **Group-ride join failures.** `GroupRideJoinException` carries a
+  `GroupRideJoinFailure` kind; the join sheet switches on it. The English text
+  stays as a diagnostic on the exception, exactly like `recordingErrorText`.
+- **Friend-picker bounds.** `validateGroupSelection` returned an English
+  sentence for the UI to show verbatim; it now returns
+  `({GroupSelectionProblem problem, int shortBy})` and the picker does the
+  wording. Two "too few" strings rather than one pluralized placeholder — the
+  minimum is 1, and "Pick at least 1 riders" is what one string would produce.
+  Its unit tests asserted on that English wording, which is precisely why it
+  could never be translated; they now assert on the problem and the shortfall.
+- **Username errors.** `edit_profile_screen` and `onboarding_screen` showed
+  `UsernameTakenException.toString()` / `InvalidUsernameException.toString()`.
+  Both now localize; `thatUsernameTakenTry` already existed, `usernameRuleError`
+  is new.
+- **`PlaceEntity.reviewsSummarySubtitle`.** Its counts branch is two numbers
+  and two brand names and needs no translation; only the "No reviews yet"
+  branch did. New `hasAnyReviews` getter, and both screens fall back to the
+  existing `noReviewsYet` key.
+
+8 new keys, Bangla machine-drafted, batch `logic-layer messages` in
+`bn_pending_review.txt`.
+
+---
+
+## 85. `timesRidden` now counts (2026-09-21)
+
+`RouteRepository.incrementTimesRidden` existed from the start and was never
+called from anywhere, so every route read "ridden 1×" forever — the 1 that
+`saveRoute` writes. `ActiveRideScreen._stopRide` now calls it, and
+`_cancelRide` deliberately does not: a discarded ride is one that did not
+happen, and counting abandoned attempts would be the same dead number in a new
+disguise. On completion rather than on start, for the same reason.
+
+No rules change needed — `users/{uid}/routes/{id}` is already owner-only write,
+so following a *discovered* route fails and is swallowed. The data model is the
+ownership check; there is no branch for it in the code.
+
+Best-effort and not outboxed, which is a deliberate trade recorded in the
+method's doc comment.
+
+---
+
+## 80 (rest). The dead `likes` clauses are out of `firestore.rules` (2026-09-21)
+
+Written and tested; **deploying is still a founder action.**
+
+Removed: the `likes` tally guards on shared-ride create and owner-update, the
+±1 bump branch, and the now-unused `likeBumpValid` helper. Three tests replace
+the two that asserted a like bump *succeeds* — the tally can no longer move by
+any path.
+
+**`match /likes/{userId}` stays**, with the reason written into the rules file:
+`RideShareRepository.deleteSharedRide` still *lists* that subcollection to
+sweep up legacy documents, and a list against a path with no matching rule is
+denied even when it would return nothing. Removing it would turn every
+share-delete into permission-denied. It can go one release after the app stops
+sweeping, in that order — §78.27's lesson.
+
+**Sequencing note for the deploy:** any build still in a tester's hands that
+can *like* a ride starts failing once these rules are live. Nothing shipped
+since §81 has a like button, so that's old beta installs only.
+
+114 rules tests passing, was 113.
+
+---
+
+## 83.12 (part). The cockpit stopped rebuilding in full (2026-09-21)
+
+`ActiveRideScreen.build` watched the whole 21-field `RideRecordingState`, so
+all ~880 lines of it rebuilt on every accelerometer sample, every GPS fix and
+every clock tick — with the map, the foreground service and a 20-50 Hz IMU
+already running. Battery and thermal cost in exactly the state where battery
+matters most.
+
+The outer build now selects three fields — `status`, `activeAlert`,
+`restoredFromPreviousSession` — which are the only ones that change the screen's
+*shape*, plus a one-line watch on whether live sharing is on (it flips at most
+twice a ride). Everything that genuinely moves fast was pulled into its own
+widget selecting only its own fields:
+
+- `_SpeedPanel` — speed, distance, moving time, elapsed, confidence and the
+  G-force bar. An accelerometer sample now repaints a panel, not a cockpit.
+- `_RideClock` — one field, one `Text`, once a second.
+- `_CrashOverlayGate` — the countdown ticks once a second while it's up, and
+  nothing else should repaint for that.
+
+`.select(` app-wide goes from 3 to 11. Behaviour is unchanged — the alert
+flash, the idle redirect and the end/discard flows all still route through the
+same code. **Not measured on a device**; the argument here is structural, and
+the profiling that would prove it needs the hardware.
+
+---
+
+## 83.28 (part). The navigation banner has widget tests (2026-09-21)
+
+6 `testWidgets` on `NavigationBanner` — the new surface, so it starts with
+coverage rather than joining the 43-screens-1-test pile. It renders to exactly
+`Size.zero` when nothing is being followed (the cockpit hosts it
+unconditionally), shows the manoeuvre and remaining/ETA, raises and drops the
+off-route warning, says the ride is *still recording* on arrival, and closes
+guidance without ending the ride.
