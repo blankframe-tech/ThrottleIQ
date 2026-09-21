@@ -76,7 +76,29 @@ these are never publicly readable. Added 2026-09-05 alongside the matching
 `DOCS/Handoff for agents and Todos/issues_fixed.md` §59); this is the second of the two places that
 page's own consistency rule (above) requires updating together.
 
-Note: **do not** declare "App interactions" for analytics. `app/pubspec.yaml` still has no `firebase_analytics` and no third-party behavioural-analytics SDK — nothing in the app tracks usage/interactions, and claiming otherwise on the form contradicts `public/privacy.html`. `firebase_crashlytics` **was** added (see issues_fixed.md §38) — that's diagnostics, declared separately below, not "App activity."
+### App activity → App interactions (added 2026-09-21, issues §83.27)
+| Type | Collected? | Shared? | Optional? | Purpose |
+|---|---|---|---|---|
+| App interactions | **Yes** | No | **Yes — the rider can switch it off** (Settings → Privacy & Safety) | Analytics |
+
+Source: `app/lib/core/analytics/analytics_service.dart` (Firebase Analytics). Screen
+views (route *patterns*, never resolved ids) and a **closed list** of funnel events
+(`sign_up`, `login`, `ride_started`, `ride_ended`, `ride_shared`, `bike_added`,
+`route_saved`) with at most one coarse parameter (`method`/`source`). No user id, name,
+email, location or ride figures are ever sent, and there is no code path that could
+send them. Off in debug builds. Advertising ID is not collected (`AD_ID` permission is
+removed; `google_analytics_adid_collection_enabled` and the ad-personalisation /
+ad-storage / ad-user-data defaults are set to `false` in the manifest and Info.plist).
+**This replaces the previous instruction to NOT declare App interactions** — that was
+true until `firebase_analytics` was added. `public/privacy.html` was changed in the same
+pass (its "No behavioural analytics" bullet no longer exists); keep the two consistent.
+
+**Founder action:** the Play Console Data Safety form has to be updated to match this
+table before the next release that ships this code. The form is Console-only.
+
+**Firebase App Check** (issues §83.19) is not user data: it sends a Play Integrity /
+App Attest attestation. It is disclosed in `public/privacy.html`; nothing to declare on
+the form beyond what is already there.
 
 ### App info and performance (Diagnostics)
 | Type | Collected? | Shared? | Purpose |

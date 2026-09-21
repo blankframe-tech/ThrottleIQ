@@ -7475,6 +7475,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **' · {count, plural, =1{1 needs a bike confirmed} other{{count} need a bike confirmed}}'**
   String notifDigestUnconfirmed(int count);
+
+  /// Settings switch: turns Firebase Analytics on or off.
+  ///
+  /// In en, this message translates to:
+  /// **'Share anonymous usage statistics'**
+  String get shareUsageStats;
+
+  /// Explains exactly what the usage-statistics switch shares.
+  ///
+  /// In en, this message translates to:
+  /// **'Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.'**
+  String get shareUsageStatsDesc;
 }
 
 class _AppLocalizationsDelegate

@@ -4211,4 +4211,11 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return ' · $_temp0';
   }
+
+  @override
+  String get shareUsageStats => 'Share anonymous usage statistics';
+
+  @override
+  String get shareUsageStatsDesc =>
+      'Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.';
 }

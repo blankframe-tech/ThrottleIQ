@@ -18,6 +18,7 @@ import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
 import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -506,6 +507,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          const _AnalyticsToggleTile(),
           const SizedBox(height: 10),
           Material(
             color: context.palette.surface,
@@ -1000,6 +1003,60 @@ class _OverspeedLimitTile extends ConsumerWidget {
                 ref.read(overspeedLimitProvider.notifier).setLimit(val);
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Settings → Privacy & Safety: the opt-out for anonymous usage statistics
+/// (issues §83.27). Applies immediately and persists.
+class _AnalyticsToggleTile extends StatefulWidget {
+  const _AnalyticsToggleTile();
+
+  @override
+  State<_AnalyticsToggleTile> createState() => _AnalyticsToggleTileState();
+}
+
+class _AnalyticsToggleTileState extends State<_AnalyticsToggleTile> {
+  bool _enabled = AnalyticsService.instance.enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.insights_outlined, color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.l10n.shareUsageStats,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.shareUsageStatsDesc,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          Switch(
+            value: _enabled,
+            onChanged: (v) {
+              setState(() => _enabled = v);
+              AnalyticsService.instance.setEnabled(v);
+            },
           ),
         ],
       ),

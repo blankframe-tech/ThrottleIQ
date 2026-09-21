@@ -146,6 +146,7 @@ dependencies:
   # flags.
   flutter_cache_manager: ^3.4.2
   firebase_app_check: ^0.3.2+10
+  firebase_analytics: ^11.6.0
 
 dev_dependencies:
   flutter_test:

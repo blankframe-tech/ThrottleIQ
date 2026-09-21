@@ -1228,5 +1228,7 @@
   "notifDigestTitle": "আজ রাস্তায়",
   "notifDigestTap": "আপনার দিনটি দেখতে ট্যাপ করুন।",
   "notifDigestSummary": "{rides, plural, =1{1টি রাইড} other{{rides}টি রাইড}}, {km} কিমি",
-  "notifDigestUnconfirmed": " · {count, plural, =1{1টিতে বাইক নিশ্চিত করা দরকার} other{{count}টিতে বাইক নিশ্চিত করা দরকার}}"
+  "notifDigestUnconfirmed": " · {count, plural, =1{1টিতে বাইক নিশ্চিত করা দরকার} other{{count}টিতে বাইক নিশ্চিত করা দরকার}}",
+  "shareUsageStats": "অজ্ঞাতনামা ব্যবহারের পরিসংখ্যান শেয়ার করুন",
+  "shareUsageStatsDesc": "কোন স্ক্রিন ব্যবহার হয় এবং রাইড শুরুর মতো কয়েকটি ধাপ। আপনার লোকেশন, রাইড, মেসেজ বা নাম কখনোই নয় — কোনো বিজ্ঞাপনও নয়।"
 }

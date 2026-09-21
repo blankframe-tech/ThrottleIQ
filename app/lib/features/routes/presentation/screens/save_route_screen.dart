@@ -12,6 +12,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../social/data/repositories/route_repository.dart';
 import '../providers/route_providers.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 /// "Save this ride as a route" — reached from the end-of-ride share step.
 ///
@@ -101,6 +102,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
       if (_isPublic) {
         await repo.setPublic(uid, routeId, true);
       }
+      AnalyticsService.instance.log(AnalyticsEvent.routeSaved);
       if (!mounted) return;
       ref.invalidate(myRoutesProvider);
       if (_isPublic) ref.invalidate(publicRoutesProvider);

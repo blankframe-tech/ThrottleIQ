@@ -75,6 +75,13 @@
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         tools:replace="android:label">
+        <!-- Analytics is usage counting only (issues §83.27): no advertising ID,
+             no ad personalization, no ad storage — whatever the runtime toggle says. -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_storage" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_user_data" android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

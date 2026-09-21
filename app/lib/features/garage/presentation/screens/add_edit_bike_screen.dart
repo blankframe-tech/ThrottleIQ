@@ -18,6 +18,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 class AddEditBikeScreen extends ConsumerStatefulWidget {
   final String? bikeId;
@@ -177,6 +178,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             odometerKm: double.tryParse(_odometerCtrl.text),
             colorValue: _colorValue,
           );
+      if (newBikeId != null) AnalyticsService.instance.log(AnalyticsEvent.bikeAdded);
       if (mounted) {
         // Back to the garage with an offer, rather than straight into the
         // maintenance setup (which then redirected a second time on save —

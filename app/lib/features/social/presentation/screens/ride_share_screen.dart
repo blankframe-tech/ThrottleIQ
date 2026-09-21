@@ -16,6 +16,7 @@ import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 const _captionMaxLength = 280;
 
@@ -149,6 +150,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         highJerkCount: ride.highJerkCount,
       );
 
+      // Counted at the rider's intent (queued), not delivery: a share made offline is still a share.
+      AnalyticsService.instance.log(AnalyticsEvent.rideShared);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'firebase_options.dart';
 import 'app.dart';
+import 'core/analytics/analytics_service.dart';
 import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
@@ -75,6 +76,7 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
       await _activateAppCheck();
+      await AnalyticsService.instance.init();
 
       // Debug builds report to a "debug" Crashlytics project bucket that
       // nobody watches and just adds noise while iterating locally — only

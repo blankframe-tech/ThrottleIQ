@@ -5739,5 +5739,13 @@
         "type": "int"
       }
     }
+  },
+  "shareUsageStats": "Share anonymous usage statistics",
+  "@shareUsageStats": {
+    "description": "Settings switch: turns Firebase Analytics on or off."
+  },
+  "shareUsageStatsDesc": "Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.",
+  "@shareUsageStatsDesc": {
+    "description": "Explains exactly what the usage-statistics switch shares."
   }
 }

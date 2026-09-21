@@ -38,6 +38,7 @@ import 'helpers/ride_persistence_coordinator.dart';
 import 'helpers/sensor_fusion_coordinator.dart';
 import '../../../../core/i18n/l10n_lookup.dart';
 import '../../../../core/i18n/locale_provider.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 const _uuid = Uuid();
 
@@ -391,6 +392,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _fixCount = 0;
     _skipNextDistanceDelta = false;
 
+    unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideStarted, param: AnalyticsParam.source, value: userInitiated ? 'manual' : 'auto'));
     state = state.copyWith(
       status: RecordingStatus.active,
       ride: ride,
@@ -936,6 +938,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final ride = state.ride!;
     await _rideDao.finalizeRide(ride.id, _buildFinalStats());
+    unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideEnded, param: AnalyticsParam.source, value: ride.isAuto ? 'auto' : 'manual'));
 
     final bikeDao = BikeDao();
     await bikeDao.incrementStats(ride.bikeId, _totalDistance);

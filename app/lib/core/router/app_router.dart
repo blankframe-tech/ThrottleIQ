@@ -45,6 +45,7 @@ import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
 import '../../features/social/presentation/screens/shared_ride_detail_screen.dart';
 import '../../features/social/domain/entities/shared_ride_entity.dart';
+import '../analytics/analytics_service.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
 /// emits, without rebuilding [routerProvider] itself — rebuilding would
@@ -76,7 +77,7 @@ String? computeAuthRedirect({
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: _AuthRefreshNotifier(ref),
     redirect: (context, state) {
@@ -286,4 +287,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Screen views for usage counting (issues §83.27). `fullPath` is the route
+  // *pattern* (`/ride/summary/:rideId`), so no ride, bike or user id ever
+  // reaches analytics. A no-op in debug and for riders who opted out.
+  void logScreen() {
+    final path = router.routerDelegate.currentConfiguration.fullPath;
+    if (path.isNotEmpty) AnalyticsService.instance.logScreen(path);
+  }
+
+  router.routerDelegate.addListener(logScreen);
+  ref.onDispose(() => router.routerDelegate.removeListener(logScreen));
+  return router;
 });

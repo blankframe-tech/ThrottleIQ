@@ -163,7 +163,7 @@
   <div class="container">
     <div class="header">
       <h1>🏍️ ThrottleIQ Privacy Policy</h1>
-      <p>Effective date: 19 September 2026</p>
+      <p>Effective date: 21 September 2026</p>
     </div>
 
     <div class="content">
@@ -257,7 +257,7 @@
       <h3>What the app does not collect</h3>
       <ul>
         <li><strong>No advertising, and no data sold or shared with advertisers or data brokers. Ever.</strong></li>
-        <li><strong>No behavioural analytics.</strong> The app does not bundle Google Analytics, Firebase Analytics, or any third-party tracker, so there is no usage-tracking profile of you. It does use Firebase Crashlytics to catch app crashes — see the crash-diagnostics row in the table above — but that only fires when the app itself breaks, not to track what you do in it.</li>
+        <li><strong>No advertising-style tracking.</strong> ThrottleIQ uses Firebase Analytics only to count which screens are opened and a short, fixed list of steps — signing up, signing in, starting or ending a ride, sharing a ride, adding a bike, saving a route — so the app can be improved. It never sends your name, email, account ID, location, ride details, messages or anything you type. It does not use the advertising ID (the permission is removed from the app), does not personalise ads, and does not build an advertising profile. Events are tied to an anonymous installation identifier, not to your account. <strong>You can turn this off any time in Settings → Privacy &amp; Safety</strong>, and it is off in developer builds. Separately, Firebase Crashlytics catches app crashes — see the crash-diagnostics row in the table above — and only fires when the app itself breaks.</li>
         <li><strong>No push notifications.</strong> Notifications you see are generated on your own phone or read from your own account records. Google's messaging library is bundled with the app and, like every Firebase app, the Firebase SDKs give your installation an anonymous identifier — but ThrottleIQ never reads, stores, or sends anything to a push token, and nobody can push a message to your phone through it.</li>
         <li><strong>No contact list, no SMS, no camera roll scanning.</strong> Photos are chosen one at a time through your phone's own picker. The microphone is used only for the group-ride voice clips described above, and only while you hold the talk button.</li>
       </ul>
@@ -353,6 +353,14 @@
           <tr>
             <td><strong>Cloud Firestore</strong> (Google)</td>
             <td>Your profile, ride summaries and ride GPS trails, bikes, maintenance logs, saved routes, emergency contacts, earned badges, in-app notifications, forum posts, shared rides, direct messages, places, reviews, follows, and live-session records. This is the app's database.</td>
+          </tr>
+          <tr>
+            <td><strong>Firebase Analytics</strong> (Google)</td>
+            <td>Anonymous usage counts: screen names (never with an ID in them) and a fixed list of steps such as <em>ride started</em> or <em>bike added</em>, plus a coarse label like <em>email</em> or <em>google</em> for how you signed in. Tied to an anonymous installation identifier, not your account. No advertising ID, no ad personalisation. You can switch it off in Settings → Privacy &amp; Safety.</td>
+          </tr>
+          <tr>
+            <td><strong>Firebase App Check</strong> (Google)</td>
+            <td>An attestation from your phone's own integrity service (Google Play Integrity on Android, Apple App Attest on iPhone) that proves a request comes from the genuine ThrottleIQ app rather than a script. It contains no personal data and is not linked to your account.</td>
           </tr>
           <tr>
             <td><strong>Cloudinary</strong> — cloud name <code>vjvcigkt</code></td>
@@ -534,7 +542,7 @@
       </p>
 
       <div class="meta">
-        <p>ThrottleIQ — Privacy Policy · Effective 19 September 2026</p>
+        <p>ThrottleIQ — Privacy Policy · Effective 21 September 2026</p>
         <p>Published at https://throttleiqfb.web.app/privacy.html</p>
       </div>
 

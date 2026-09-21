@@ -4220,4 +4220,11 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return ' · $_temp0';
   }
+
+  @override
+  String get shareUsageStats => 'অজ্ঞাতনামা ব্যবহারের পরিসংখ্যান শেয়ার করুন';
+
+  @override
+  String get shareUsageStatsDesc =>
+      'কোন স্ক্রিন ব্যবহার হয় এবং রাইড শুরুর মতো কয়েকটি ধাপ। আপনার লোকেশন, রাইড, মেসেজ বা নাম কখনোই নয় — কোনো বিজ্ঞাপনও নয়।';
 }

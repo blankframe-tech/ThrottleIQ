@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/database/database_helper.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
@@ -61,6 +63,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       await _seedProfile();
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.logIn, param: AnalyticsParam.method, value: 'email'));
     });
   }
 
@@ -69,6 +72,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
       await _seedProfile();
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.signUp, param: AnalyticsParam.method, value: 'email'));
     });
   }
 
@@ -83,8 +87,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      await _auth.signInWithCredential(credential);
+      final cred = await _auth.signInWithCredential(credential);
       await _seedProfile();
+      unawaited(AnalyticsService.instance.log(
+          cred.additionalUserInfo?.isNewUser == true
+              ? AnalyticsEvent.signUp
+              : AnalyticsEvent.logIn,
+          param: AnalyticsParam.method,
+          value: 'google'));
     });
   }
 
