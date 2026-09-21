@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_colors.dart';
-import '../../../../core/constants/motorcycle_quotes.dart';
+import '../../../../core/i18n/greetings_l10n.dart';
 import '../../../../core/theme/app_shape_profile.dart';
-import '../../../../core/utils/greetings.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
@@ -29,9 +27,7 @@ import '../../../../l10n/app_localizations.dart';
 /// within one app open — e.g. RecordScreen re-rendering while a ride's
 /// speed/distance update — but is different again next cold start) rather
 /// than "Your ride, smarter." always being the same line.
-final dashboardQuoteProvider = Provider<(String, String)>((ref) {
-  return motorcycleQuotes[Random().nextInt(motorcycleQuotes.length)];
-});
+final dashboardQuoteIndexProvider = Provider<int>((ref) => pickQuoteIndex());
 
 class RecordScreen extends ConsumerStatefulWidget {
   const RecordScreen({super.key});
@@ -49,13 +45,13 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
   /// screen rebuilds on every provider tick (unread count, ride status,
   /// active bike) and a greeting that reshuffles on each of those would be
   /// visually noisy.
-  late final Greeting _greeting;
+  late final GreetingPick _greetingPick;
 
   @override
   void initState() {
     super.initState();
     _name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
-    _greeting = greetingDetailFor(DateTime.now(), name: _name);
+    _greetingPick = pickGreeting(DateTime.now());
     // One-shot: this screen can be *built* while a ride is already running
     // (cold start onto Record, or a restored interrupted ride), and a
     // `ref.listen` only fires on a change, never on the current value.
@@ -93,7 +89,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
 
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
-    final quote = ref.watch(dashboardQuoteProvider);
+    final quote = resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
+    final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
     final accent = activeBike != null && bikeHasPhoto(activeBike)
         ? bikeAccentColor(activeBike)
         : null;
@@ -160,9 +157,9 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                         BikePickerCard(
                           activeBike: activeBike,
                           overlineText:
-                              _greeting.usesName ? null : _greeting.line,
-                          titleText: _greeting.usesName
-                              ? _greeting.line
+                              greeting.usesName ? null : greeting.line,
+                          titleText: greeting.usesName
+                              ? greeting.line
                               : (_name ?? 'Rider'),
                           accentColor: accent,
                         )

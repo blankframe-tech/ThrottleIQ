@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../providers/places_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../place_category_l10n.dart';
 
 /// Places the signed-in rider added themselves — reached from the garage
 /// header's user menu (`garage_screen.dart`'s `_UserMenuButton`). Derived
@@ -84,8 +85,8 @@ class MyPlacesListScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               place.verified
-                                  ? context.l10n.verified(place.category.displayName)
-                                  : place.category.displayName,
+                                  ? context.l10n.verified(place.category.localizedName(context.l10n))
+                                  : place.category.localizedName(context.l10n),
                               style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                             ),
                           ],

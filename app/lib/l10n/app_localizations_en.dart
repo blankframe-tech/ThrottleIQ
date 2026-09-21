@@ -3536,4 +3536,231 @@ class AppLocalizationsEn extends AppLocalizations {
   String authGeneric(String error) {
     return 'Authentication error: $error';
   }
+
+  @override
+  String get placeCatFuel => 'Fuel';
+
+  @override
+  String get placeCatGarage => 'Garage';
+
+  @override
+  String get placeCatParts => 'Parts';
+
+  @override
+  String get placeCatAiCamera => 'AI Camera';
+
+  @override
+  String get placeCatPolice => 'Police / Cop';
+
+  @override
+  String get placeCatRecreation => 'Recreation';
+
+  @override
+  String get greetLateNight1 => 'Late night runs, huh?';
+
+  @override
+  String get greetLateNight2 => 'The roads are yours at this hour.';
+
+  @override
+  String get greetLateNight3 => 'Can\'t sleep? Ride it off.';
+
+  @override
+  String greetLateNight4(String name) {
+    return 'Empty streets, $name.';
+  }
+
+  @override
+  String get greetLateNight5 => 'Nobody out there but you.';
+
+  @override
+  String get greetEarlyMorning1 => 'Beat the traffic.';
+
+  @override
+  String get greetEarlyMorning2 => 'Cold start, clear roads.';
+
+  @override
+  String get greetEarlyMorning3 => 'Sunrise miles hit different.';
+
+  @override
+  String greetEarlyMorning4(String name) {
+    return 'Up early, $name?';
+  }
+
+  @override
+  String get greetEarlyMorning5 => 'First one out.';
+
+  @override
+  String greetMorning1(String name) {
+    return 'Morning, $name.';
+  }
+
+  @override
+  String get greetMorning2 => 'Ready when you are.';
+
+  @override
+  String get greetMorning3 => 'Coffee first, then corners.';
+
+  @override
+  String get greetMorning4 => 'Fresh tank, fresh day.';
+
+  @override
+  String greetMorning5(String name) {
+    return 'Where to, $name?';
+  }
+
+  @override
+  String greetAfternoon1(String name) {
+    return 'Afternoon, $name.';
+  }
+
+  @override
+  String get greetAfternoon2 => 'Good day for it.';
+
+  @override
+  String get greetAfternoon3 => 'Sun\'s out. So are the roads.';
+
+  @override
+  String greetAfternoon4(String name) {
+    return 'Long way home, $name?';
+  }
+
+  @override
+  String get greetAfternoon5 => 'Perfect time to slip away.';
+
+  @override
+  String greetEvening1(String name) {
+    return 'Evening, $name.';
+  }
+
+  @override
+  String get greetEvening2 => 'Golden hour. Go.';
+
+  @override
+  String greetEvening3(String name) {
+    return 'Sunset run, $name?';
+  }
+
+  @override
+  String get greetEvening4 => 'Clock out. Gear up.';
+
+  @override
+  String get greetEvening5 => 'Best light of the day.';
+
+  @override
+  String get greetNight1 => 'Night rider.';
+
+  @override
+  String get greetNight2 => 'One more before bed?';
+
+  @override
+  String greetNight3(String name) {
+    return 'Quiet roads, $name.';
+  }
+
+  @override
+  String get greetNight4 => 'Cool air, empty lanes.';
+
+  @override
+  String greetNight5(String name) {
+    return 'Headlights on, $name.';
+  }
+
+  @override
+  String get greetingNameFallback => 'rider';
+
+  @override
+  String get quote0Setup => 'Your ride,';
+
+  @override
+  String get quote0Payoff => 'smarter.';
+
+  @override
+  String get quote1Setup => 'Two wheels,';
+
+  @override
+  String get quote1Payoff => 'one heartbeat.';
+
+  @override
+  String get quote2Setup => 'Every ride,';
+
+  @override
+  String get quote2Payoff => 'a story worth logging.';
+
+  @override
+  String get quote3Setup => 'Trust the throttle,';
+
+  @override
+  String get quote3Payoff => 'respect the road.';
+
+  @override
+  String get quote4Setup => 'The road ahead';
+
+  @override
+  String get quote4Payoff => 'is the only plan you need.';
+
+  @override
+  String get quote5Setup => 'Ride the wind,';
+
+  @override
+  String get quote5Payoff => 'own the road.';
+
+  @override
+  String get quote6Setup => 'Smooth is fast.';
+
+  @override
+  String get quote6Payoff => 'Fast is smooth.';
+
+  @override
+  String get quote7Setup => 'Some roads';
+
+  @override
+  String get quote7Payoff => 'you don\'t forget.';
+
+  @override
+  String get quote8Setup => 'Chase the horizon,';
+
+  @override
+  String get quote8Payoff => 'not the redline.';
+
+  @override
+  String get quote9Setup => 'Miles make';
+
+  @override
+  String get quote9Payoff => 'the machine yours.';
+
+  @override
+  String get quote10Setup => 'Every gear change';
+
+  @override
+  String get quote10Payoff => 'is a decision.';
+
+  @override
+  String get quote11Setup => 'Ride far.';
+
+  @override
+  String get quote11Payoff => 'Ride smart.';
+
+  @override
+  String get quote12Setup => 'The best rides';
+
+  @override
+  String get quote12Payoff => 'start with no plan.';
+
+  @override
+  String get quote13Setup => 'Two wheels,';
+
+  @override
+  String get quote13Payoff => 'infinite roads.';
+
+  @override
+  String get quote14Setup => 'Momentum is';
+
+  @override
+  String get quote14Payoff => 'a kind of freedom.';
+
+  @override
+  String get quote15Setup => 'Read the road';
+
+  @override
+  String get quote15Payoff => 'before it reads you.';
 }

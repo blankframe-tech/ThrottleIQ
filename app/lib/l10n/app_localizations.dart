@@ -6275,6 +6275,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Authentication error: {error}'**
   String authGeneric(String error);
+
+  /// Place category: fuel stations.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get placeCatFuel;
+
+  /// Place category: repair garages.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get placeCatGarage;
+
+  /// Place category: spare-parts shops.
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get placeCatParts;
+
+  /// Place category: AI traffic cameras.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Camera'**
+  String get placeCatAiCamera;
+
+  /// Place category: police checkposts.
+  ///
+  /// In en, this message translates to:
+  /// **'Police / Cop'**
+  String get placeCatPolice;
+
+  /// Place category: cafes and scenic stops.
+  ///
+  /// In en, this message translates to:
+  /// **'Recreation'**
+  String get placeCatRecreation;
+
+  /// Record-screen greeting (lateNight, variant 1).
+  ///
+  /// In en, this message translates to:
+  /// **'Late night runs, huh?'**
+  String get greetLateNight1;
+
+  /// Record-screen greeting (lateNight, variant 2).
+  ///
+  /// In en, this message translates to:
+  /// **'The roads are yours at this hour.'**
+  String get greetLateNight2;
+
+  /// Record-screen greeting (lateNight, variant 3).
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t sleep? Ride it off.'**
+  String get greetLateNight3;
+
+  /// Record-screen greeting (lateNight, variant 4). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty streets, {name}.'**
+  String greetLateNight4(String name);
+
+  /// Record-screen greeting (lateNight, variant 5).
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody out there but you.'**
+  String get greetLateNight5;
+
+  /// Record-screen greeting (earlyMorning, variant 1).
+  ///
+  /// In en, this message translates to:
+  /// **'Beat the traffic.'**
+  String get greetEarlyMorning1;
+
+  /// Record-screen greeting (earlyMorning, variant 2).
+  ///
+  /// In en, this message translates to:
+  /// **'Cold start, clear roads.'**
+  String get greetEarlyMorning2;
+
+  /// Record-screen greeting (earlyMorning, variant 3).
+  ///
+  /// In en, this message translates to:
+  /// **'Sunrise miles hit different.'**
+  String get greetEarlyMorning3;
+
+  /// Record-screen greeting (earlyMorning, variant 4). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Up early, {name}?'**
+  String greetEarlyMorning4(String name);
+
+  /// Record-screen greeting (earlyMorning, variant 5).
+  ///
+  /// In en, this message translates to:
+  /// **'First one out.'**
+  String get greetEarlyMorning5;
+
+  /// Record-screen greeting (morning, variant 1). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning, {name}.'**
+  String greetMorning1(String name);
+
+  /// Record-screen greeting (morning, variant 2).
+  ///
+  /// In en, this message translates to:
+  /// **'Ready when you are.'**
+  String get greetMorning2;
+
+  /// Record-screen greeting (morning, variant 3).
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee first, then corners.'**
+  String get greetMorning3;
+
+  /// Record-screen greeting (morning, variant 4).
+  ///
+  /// In en, this message translates to:
+  /// **'Fresh tank, fresh day.'**
+  String get greetMorning4;
+
+  /// Record-screen greeting (morning, variant 5). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Where to, {name}?'**
+  String greetMorning5(String name);
+
+  /// Record-screen greeting (afternoon, variant 1). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon, {name}.'**
+  String greetAfternoon1(String name);
+
+  /// Record-screen greeting (afternoon, variant 2).
+  ///
+  /// In en, this message translates to:
+  /// **'Good day for it.'**
+  String get greetAfternoon2;
+
+  /// Record-screen greeting (afternoon, variant 3).
+  ///
+  /// In en, this message translates to:
+  /// **'Sun\'s out. So are the roads.'**
+  String get greetAfternoon3;
+
+  /// Record-screen greeting (afternoon, variant 4). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Long way home, {name}?'**
+  String greetAfternoon4(String name);
+
+  /// Record-screen greeting (afternoon, variant 5).
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect time to slip away.'**
+  String get greetAfternoon5;
+
+  /// Record-screen greeting (evening, variant 1). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening, {name}.'**
+  String greetEvening1(String name);
+
+  /// Record-screen greeting (evening, variant 2).
+  ///
+  /// In en, this message translates to:
+  /// **'Golden hour. Go.'**
+  String get greetEvening2;
+
+  /// Record-screen greeting (evening, variant 3). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunset run, {name}?'**
+  String greetEvening3(String name);
+
+  /// Record-screen greeting (evening, variant 4).
+  ///
+  /// In en, this message translates to:
+  /// **'Clock out. Gear up.'**
+  String get greetEvening4;
+
+  /// Record-screen greeting (evening, variant 5).
+  ///
+  /// In en, this message translates to:
+  /// **'Best light of the day.'**
+  String get greetEvening5;
+
+  /// Record-screen greeting (night, variant 1).
+  ///
+  /// In en, this message translates to:
+  /// **'Night rider.'**
+  String get greetNight1;
+
+  /// Record-screen greeting (night, variant 2).
+  ///
+  /// In en, this message translates to:
+  /// **'One more before bed?'**
+  String get greetNight2;
+
+  /// Record-screen greeting (night, variant 3). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet roads, {name}.'**
+  String greetNight3(String name);
+
+  /// Record-screen greeting (night, variant 4).
+  ///
+  /// In en, this message translates to:
+  /// **'Cool air, empty lanes.'**
+  String get greetNight4;
+
+  /// Record-screen greeting (night, variant 5). {name} is the rider's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Headlights on, {name}.'**
+  String greetNight5(String name);
+
+  /// Stand-in for the rider's name in a greeting when they have none set. Lower-case; used mid-sentence.
+  ///
+  /// In en, this message translates to:
+  /// **'rider'**
+  String get greetingNameFallback;
+
+  /// Record-screen tagline, line 1, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Your ride,'**
+  String get quote0Setup;
+
+  /// Record-screen tagline, line 1, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'smarter.'**
+  String get quote0Payoff;
+
+  /// Record-screen tagline, line 2, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Two wheels,'**
+  String get quote1Setup;
+
+  /// Record-screen tagline, line 2, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'one heartbeat.'**
+  String get quote1Payoff;
+
+  /// Record-screen tagline, line 3, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Every ride,'**
+  String get quote2Setup;
+
+  /// Record-screen tagline, line 3, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'a story worth logging.'**
+  String get quote2Payoff;
+
+  /// Record-screen tagline, line 4, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Trust the throttle,'**
+  String get quote3Setup;
+
+  /// Record-screen tagline, line 4, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'respect the road.'**
+  String get quote3Payoff;
+
+  /// Record-screen tagline, line 5, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'The road ahead'**
+  String get quote4Setup;
+
+  /// Record-screen tagline, line 5, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'is the only plan you need.'**
+  String get quote4Payoff;
+
+  /// Record-screen tagline, line 6, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride the wind,'**
+  String get quote5Setup;
+
+  /// Record-screen tagline, line 6, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'own the road.'**
+  String get quote5Payoff;
+
+  /// Record-screen tagline, line 7, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth is fast.'**
+  String get quote6Setup;
+
+  /// Record-screen tagline, line 7, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Fast is smooth.'**
+  String get quote6Payoff;
+
+  /// Record-screen tagline, line 8, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Some roads'**
+  String get quote7Setup;
+
+  /// Record-screen tagline, line 8, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'you don\'t forget.'**
+  String get quote7Payoff;
+
+  /// Record-screen tagline, line 9, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Chase the horizon,'**
+  String get quote8Setup;
+
+  /// Record-screen tagline, line 9, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'not the redline.'**
+  String get quote8Payoff;
+
+  /// Record-screen tagline, line 10, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Miles make'**
+  String get quote9Setup;
+
+  /// Record-screen tagline, line 10, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'the machine yours.'**
+  String get quote9Payoff;
+
+  /// Record-screen tagline, line 11, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Every gear change'**
+  String get quote10Setup;
+
+  /// Record-screen tagline, line 11, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'is a decision.'**
+  String get quote10Payoff;
+
+  /// Record-screen tagline, line 12, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride far.'**
+  String get quote11Setup;
+
+  /// Record-screen tagline, line 12, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride smart.'**
+  String get quote11Payoff;
+
+  /// Record-screen tagline, line 13, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'The best rides'**
+  String get quote12Setup;
+
+  /// Record-screen tagline, line 13, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'start with no plan.'**
+  String get quote12Payoff;
+
+  /// Record-screen tagline, line 14, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Two wheels,'**
+  String get quote13Setup;
+
+  /// Record-screen tagline, line 14, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'infinite roads.'**
+  String get quote13Payoff;
+
+  /// Record-screen tagline, line 15, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Momentum is'**
+  String get quote14Setup;
+
+  /// Record-screen tagline, line 15, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'a kind of freedom.'**
+  String get quote14Payoff;
+
+  /// Record-screen tagline, line 16, setup half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'Read the road'**
+  String get quote15Setup;
+
+  /// Record-screen tagline, line 16, payoff half (joined with a space).
+  ///
+  /// In en, this message translates to:
+  /// **'before it reads you.'**
+  String get quote15Payoff;
 }
 
 class _AppLocalizationsDelegate

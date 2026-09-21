@@ -13,6 +13,7 @@ import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../place_category_l10n.dart';
 
 /// Places bottom-nav tab: nearby garages/fuel pumps/parts shops/biker cafes
 /// and other recreation stops, filterable by category, with an "Add place"
@@ -111,7 +112,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                   ),
                   for (final category in PlaceCategory.values)
                     _CategoryChip(
-                      label: category.displayName,
+                      label: category.localizedName(context.l10n),
                       icon: category.icon,
                       selected: _selectedCategory == category,
                       onTap: () => setState(() => _selectedCategory = category),
@@ -371,8 +372,8 @@ class _PlaceCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   distanceKm == null
-                      ? place.category.displayName
-                      : '${place.category.displayName} · ${SpeedFormatter.distanceKm(distanceKm * 1000)}',
+                      ? place.category.localizedName(context.l10n)
+                      : '${place.category.localizedName(context.l10n)} · ${SpeedFormatter.distanceKm(distanceKm * 1000)}',
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],

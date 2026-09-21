@@ -18,6 +18,7 @@ import '../../data/utils/image_compression_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../place_category_l10n.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
 /// real fix is available yet. Only ever the map's *initial camera* — never a
@@ -394,7 +395,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                           Text(category.icon, style: const TextStyle(fontSize: 13)),
                           const SizedBox(width: 6),
                           Text(
-                            category.displayName,
+                            category.localizedName(context.l10n),
                             style: TextStyle(
                               fontSize: 13,
                               color: selected ? context.palette.primary : context.palette.textSecondary,

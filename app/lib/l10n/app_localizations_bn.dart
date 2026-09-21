@@ -3545,4 +3545,231 @@ class AppLocalizationsBn extends AppLocalizations {
   String authGeneric(String error) {
     return 'সাইন ইন ত্রুটি: $error';
   }
+
+  @override
+  String get placeCatFuel => 'জ্বালানি';
+
+  @override
+  String get placeCatGarage => 'গ্যারেজ';
+
+  @override
+  String get placeCatParts => 'যন্ত্রাংশ';
+
+  @override
+  String get placeCatAiCamera => 'AI ক্যামেরা';
+
+  @override
+  String get placeCatPolice => 'পুলিশ / চেকপোস্ট';
+
+  @override
+  String get placeCatRecreation => 'বিনোদন';
+
+  @override
+  String get greetLateNight1 => 'গভীর রাতের রাইড, তাই না?';
+
+  @override
+  String get greetLateNight2 => 'এই সময়ে রাস্তা শুধু আপনার।';
+
+  @override
+  String get greetLateNight3 => 'ঘুম আসছে না? রাইডে বেরিয়ে পড়ুন।';
+
+  @override
+  String greetLateNight4(String name) {
+    return 'ফাঁকা রাস্তা, $name।';
+  }
+
+  @override
+  String get greetLateNight5 => 'বাইরে আপনি ছাড়া কেউ নেই।';
+
+  @override
+  String get greetEarlyMorning1 => 'জ্যামের আগেই বেরিয়ে পড়ুন।';
+
+  @override
+  String get greetEarlyMorning2 => 'ঠান্ডা ইঞ্জিন, পরিষ্কার রাস্তা।';
+
+  @override
+  String get greetEarlyMorning3 => 'ভোরের রাইডের মজাই আলাদা।';
+
+  @override
+  String greetEarlyMorning4(String name) {
+    return 'এত ভোরে উঠেছেন, $name?';
+  }
+
+  @override
+  String get greetEarlyMorning5 => 'সবার আগে বেরোলেন।';
+
+  @override
+  String greetMorning1(String name) {
+    return 'সুপ্রভাত, $name।';
+  }
+
+  @override
+  String get greetMorning2 => 'আপনি তৈরি হলেই আমরা তৈরি।';
+
+  @override
+  String get greetMorning3 => 'আগে কফি, তারপর বাঁক।';
+
+  @override
+  String get greetMorning4 => 'নতুন ট্যাংক, নতুন দিন।';
+
+  @override
+  String greetMorning5(String name) {
+    return 'কোথায় যাচ্ছেন, $name?';
+  }
+
+  @override
+  String greetAfternoon1(String name) {
+    return 'শুভ অপরাহ্ন, $name।';
+  }
+
+  @override
+  String get greetAfternoon2 => 'রাইডের জন্য দারুণ দিন।';
+
+  @override
+  String get greetAfternoon3 => 'রোদ উঠেছে, রাস্তাও খোলা।';
+
+  @override
+  String greetAfternoon4(String name) {
+    return 'ঘরে ফিরতে লম্বা পথে, $name?';
+  }
+
+  @override
+  String get greetAfternoon5 => 'একটু সরে পড়ার ঠিক সময়।';
+
+  @override
+  String greetEvening1(String name) {
+    return 'শুভ সন্ধ্যা, $name।';
+  }
+
+  @override
+  String get greetEvening2 => 'সোনালি আলো। চলুন।';
+
+  @override
+  String greetEvening3(String name) {
+    return 'সূর্যাস্তের রাইড, $name?';
+  }
+
+  @override
+  String get greetEvening4 => 'অফিস শেষ। গিয়ার পরে নিন।';
+
+  @override
+  String get greetEvening5 => 'দিনের সেরা আলো।';
+
+  @override
+  String get greetNight1 => 'নাইট রাইডার।';
+
+  @override
+  String get greetNight2 => 'ঘুমের আগে আরেকটা?';
+
+  @override
+  String greetNight3(String name) {
+    return 'শান্ত রাস্তা, $name।';
+  }
+
+  @override
+  String get greetNight4 => 'ঠান্ডা বাতাস, ফাঁকা লেন।';
+
+  @override
+  String greetNight5(String name) {
+    return 'হেডলাইট জ্বালুন, $name।';
+  }
+
+  @override
+  String get greetingNameFallback => 'রাইডার';
+
+  @override
+  String get quote0Setup => 'আপনার রাইড,';
+
+  @override
+  String get quote0Payoff => 'আরও স্মার্ট।';
+
+  @override
+  String get quote1Setup => 'দুই চাকা,';
+
+  @override
+  String get quote1Payoff => 'এক হৃদস্পন্দন।';
+
+  @override
+  String get quote2Setup => 'প্রতিটি রাইড,';
+
+  @override
+  String get quote2Payoff => 'লিখে রাখার মতো একটি গল্প।';
+
+  @override
+  String get quote3Setup => 'থ্রটলে ভরসা রাখুন,';
+
+  @override
+  String get quote3Payoff => 'রাস্তাকে সম্মান করুন।';
+
+  @override
+  String get quote4Setup => 'সামনের রাস্তাই';
+
+  @override
+  String get quote4Payoff => 'আপনার একমাত্র পরিকল্পনা।';
+
+  @override
+  String get quote5Setup => 'বাতাসে ভেসে চলুন,';
+
+  @override
+  String get quote5Payoff => 'রাস্তা আপনার।';
+
+  @override
+  String get quote6Setup => 'মসৃণই দ্রুত।';
+
+  @override
+  String get quote6Payoff => 'দ্রুতই মসৃণ।';
+
+  @override
+  String get quote7Setup => 'কিছু রাস্তা';
+
+  @override
+  String get quote7Payoff => 'ভোলা যায় না।';
+
+  @override
+  String get quote8Setup => 'দিগন্তের পেছনে ছুটুন,';
+
+  @override
+  String get quote8Payoff => 'রেডলাইনের নয়।';
+
+  @override
+  String get quote9Setup => 'মাইল পেরোলেই';
+
+  @override
+  String get quote9Payoff => 'মেশিন আপনার হয়।';
+
+  @override
+  String get quote10Setup => 'প্রতিটি গিয়ার বদল';
+
+  @override
+  String get quote10Payoff => 'একটি সিদ্ধান্ত।';
+
+  @override
+  String get quote11Setup => 'দূরে চলুন।';
+
+  @override
+  String get quote11Payoff => 'স্মার্টভাবে চলুন।';
+
+  @override
+  String get quote12Setup => 'সেরা রাইডগুলো';
+
+  @override
+  String get quote12Payoff => 'শুরু হয় কোনো পরিকল্পনা ছাড়াই।';
+
+  @override
+  String get quote13Setup => 'দুই চাকা,';
+
+  @override
+  String get quote13Payoff => 'অসীম রাস্তা।';
+
+  @override
+  String get quote14Setup => 'গতিই';
+
+  @override
+  String get quote14Payoff => 'এক ধরনের স্বাধীনতা।';
+
+  @override
+  String get quote15Setup => 'রাস্তাকে পড়ুন,';
+
+  @override
+  String get quote15Payoff => 'সে আপনাকে পড়ার আগেই।';
 }

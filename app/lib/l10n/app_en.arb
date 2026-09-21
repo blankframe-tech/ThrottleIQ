@@ -4806,5 +4806,331 @@
         "type": "String"
       }
     }
+  },
+  "placeCatFuel": "Fuel",
+  "@placeCatFuel": {
+    "description": "Place category: fuel stations."
+  },
+  "placeCatGarage": "Garage",
+  "@placeCatGarage": {
+    "description": "Place category: repair garages."
+  },
+  "placeCatParts": "Parts",
+  "@placeCatParts": {
+    "description": "Place category: spare-parts shops."
+  },
+  "placeCatAiCamera": "AI Camera",
+  "@placeCatAiCamera": {
+    "description": "Place category: AI traffic cameras."
+  },
+  "placeCatPolice": "Police / Cop",
+  "@placeCatPolice": {
+    "description": "Place category: police checkposts."
+  },
+  "placeCatRecreation": "Recreation",
+  "@placeCatRecreation": {
+    "description": "Place category: cafes and scenic stops."
+  },
+  "greetLateNight1": "Late night runs, huh?",
+  "@greetLateNight1": {
+    "description": "Record-screen greeting (lateNight, variant 1)."
+  },
+  "greetLateNight2": "The roads are yours at this hour.",
+  "@greetLateNight2": {
+    "description": "Record-screen greeting (lateNight, variant 2)."
+  },
+  "greetLateNight3": "Can't sleep? Ride it off.",
+  "@greetLateNight3": {
+    "description": "Record-screen greeting (lateNight, variant 3)."
+  },
+  "greetLateNight4": "Empty streets, {name}.",
+  "@greetLateNight4": {
+    "description": "Record-screen greeting (lateNight, variant 4). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetLateNight5": "Nobody out there but you.",
+  "@greetLateNight5": {
+    "description": "Record-screen greeting (lateNight, variant 5)."
+  },
+  "greetEarlyMorning1": "Beat the traffic.",
+  "@greetEarlyMorning1": {
+    "description": "Record-screen greeting (earlyMorning, variant 1)."
+  },
+  "greetEarlyMorning2": "Cold start, clear roads.",
+  "@greetEarlyMorning2": {
+    "description": "Record-screen greeting (earlyMorning, variant 2)."
+  },
+  "greetEarlyMorning3": "Sunrise miles hit different.",
+  "@greetEarlyMorning3": {
+    "description": "Record-screen greeting (earlyMorning, variant 3)."
+  },
+  "greetEarlyMorning4": "Up early, {name}?",
+  "@greetEarlyMorning4": {
+    "description": "Record-screen greeting (earlyMorning, variant 4). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetEarlyMorning5": "First one out.",
+  "@greetEarlyMorning5": {
+    "description": "Record-screen greeting (earlyMorning, variant 5)."
+  },
+  "greetMorning1": "Morning, {name}.",
+  "@greetMorning1": {
+    "description": "Record-screen greeting (morning, variant 1). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetMorning2": "Ready when you are.",
+  "@greetMorning2": {
+    "description": "Record-screen greeting (morning, variant 2)."
+  },
+  "greetMorning3": "Coffee first, then corners.",
+  "@greetMorning3": {
+    "description": "Record-screen greeting (morning, variant 3)."
+  },
+  "greetMorning4": "Fresh tank, fresh day.",
+  "@greetMorning4": {
+    "description": "Record-screen greeting (morning, variant 4)."
+  },
+  "greetMorning5": "Where to, {name}?",
+  "@greetMorning5": {
+    "description": "Record-screen greeting (morning, variant 5). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetAfternoon1": "Afternoon, {name}.",
+  "@greetAfternoon1": {
+    "description": "Record-screen greeting (afternoon, variant 1). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetAfternoon2": "Good day for it.",
+  "@greetAfternoon2": {
+    "description": "Record-screen greeting (afternoon, variant 2)."
+  },
+  "greetAfternoon3": "Sun's out. So are the roads.",
+  "@greetAfternoon3": {
+    "description": "Record-screen greeting (afternoon, variant 3)."
+  },
+  "greetAfternoon4": "Long way home, {name}?",
+  "@greetAfternoon4": {
+    "description": "Record-screen greeting (afternoon, variant 4). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetAfternoon5": "Perfect time to slip away.",
+  "@greetAfternoon5": {
+    "description": "Record-screen greeting (afternoon, variant 5)."
+  },
+  "greetEvening1": "Evening, {name}.",
+  "@greetEvening1": {
+    "description": "Record-screen greeting (evening, variant 1). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetEvening2": "Golden hour. Go.",
+  "@greetEvening2": {
+    "description": "Record-screen greeting (evening, variant 2)."
+  },
+  "greetEvening3": "Sunset run, {name}?",
+  "@greetEvening3": {
+    "description": "Record-screen greeting (evening, variant 3). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetEvening4": "Clock out. Gear up.",
+  "@greetEvening4": {
+    "description": "Record-screen greeting (evening, variant 4)."
+  },
+  "greetEvening5": "Best light of the day.",
+  "@greetEvening5": {
+    "description": "Record-screen greeting (evening, variant 5)."
+  },
+  "greetNight1": "Night rider.",
+  "@greetNight1": {
+    "description": "Record-screen greeting (night, variant 1)."
+  },
+  "greetNight2": "One more before bed?",
+  "@greetNight2": {
+    "description": "Record-screen greeting (night, variant 2)."
+  },
+  "greetNight3": "Quiet roads, {name}.",
+  "@greetNight3": {
+    "description": "Record-screen greeting (night, variant 3). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetNight4": "Cool air, empty lanes.",
+  "@greetNight4": {
+    "description": "Record-screen greeting (night, variant 4)."
+  },
+  "greetNight5": "Headlights on, {name}.",
+  "@greetNight5": {
+    "description": "Record-screen greeting (night, variant 5). {name} is the rider's first name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetingNameFallback": "rider",
+  "@greetingNameFallback": {
+    "description": "Stand-in for the rider's name in a greeting when they have none set. Lower-case; used mid-sentence."
+  },
+  "quote0Setup": "Your ride,",
+  "@quote0Setup": {
+    "description": "Record-screen tagline, line 1, setup half (joined with a space)."
+  },
+  "quote0Payoff": "smarter.",
+  "@quote0Payoff": {
+    "description": "Record-screen tagline, line 1, payoff half (joined with a space)."
+  },
+  "quote1Setup": "Two wheels,",
+  "@quote1Setup": {
+    "description": "Record-screen tagline, line 2, setup half (joined with a space)."
+  },
+  "quote1Payoff": "one heartbeat.",
+  "@quote1Payoff": {
+    "description": "Record-screen tagline, line 2, payoff half (joined with a space)."
+  },
+  "quote2Setup": "Every ride,",
+  "@quote2Setup": {
+    "description": "Record-screen tagline, line 3, setup half (joined with a space)."
+  },
+  "quote2Payoff": "a story worth logging.",
+  "@quote2Payoff": {
+    "description": "Record-screen tagline, line 3, payoff half (joined with a space)."
+  },
+  "quote3Setup": "Trust the throttle,",
+  "@quote3Setup": {
+    "description": "Record-screen tagline, line 4, setup half (joined with a space)."
+  },
+  "quote3Payoff": "respect the road.",
+  "@quote3Payoff": {
+    "description": "Record-screen tagline, line 4, payoff half (joined with a space)."
+  },
+  "quote4Setup": "The road ahead",
+  "@quote4Setup": {
+    "description": "Record-screen tagline, line 5, setup half (joined with a space)."
+  },
+  "quote4Payoff": "is the only plan you need.",
+  "@quote4Payoff": {
+    "description": "Record-screen tagline, line 5, payoff half (joined with a space)."
+  },
+  "quote5Setup": "Ride the wind,",
+  "@quote5Setup": {
+    "description": "Record-screen tagline, line 6, setup half (joined with a space)."
+  },
+  "quote5Payoff": "own the road.",
+  "@quote5Payoff": {
+    "description": "Record-screen tagline, line 6, payoff half (joined with a space)."
+  },
+  "quote6Setup": "Smooth is fast.",
+  "@quote6Setup": {
+    "description": "Record-screen tagline, line 7, setup half (joined with a space)."
+  },
+  "quote6Payoff": "Fast is smooth.",
+  "@quote6Payoff": {
+    "description": "Record-screen tagline, line 7, payoff half (joined with a space)."
+  },
+  "quote7Setup": "Some roads",
+  "@quote7Setup": {
+    "description": "Record-screen tagline, line 8, setup half (joined with a space)."
+  },
+  "quote7Payoff": "you don't forget.",
+  "@quote7Payoff": {
+    "description": "Record-screen tagline, line 8, payoff half (joined with a space)."
+  },
+  "quote8Setup": "Chase the horizon,",
+  "@quote8Setup": {
+    "description": "Record-screen tagline, line 9, setup half (joined with a space)."
+  },
+  "quote8Payoff": "not the redline.",
+  "@quote8Payoff": {
+    "description": "Record-screen tagline, line 9, payoff half (joined with a space)."
+  },
+  "quote9Setup": "Miles make",
+  "@quote9Setup": {
+    "description": "Record-screen tagline, line 10, setup half (joined with a space)."
+  },
+  "quote9Payoff": "the machine yours.",
+  "@quote9Payoff": {
+    "description": "Record-screen tagline, line 10, payoff half (joined with a space)."
+  },
+  "quote10Setup": "Every gear change",
+  "@quote10Setup": {
+    "description": "Record-screen tagline, line 11, setup half (joined with a space)."
+  },
+  "quote10Payoff": "is a decision.",
+  "@quote10Payoff": {
+    "description": "Record-screen tagline, line 11, payoff half (joined with a space)."
+  },
+  "quote11Setup": "Ride far.",
+  "@quote11Setup": {
+    "description": "Record-screen tagline, line 12, setup half (joined with a space)."
+  },
+  "quote11Payoff": "Ride smart.",
+  "@quote11Payoff": {
+    "description": "Record-screen tagline, line 12, payoff half (joined with a space)."
+  },
+  "quote12Setup": "The best rides",
+  "@quote12Setup": {
+    "description": "Record-screen tagline, line 13, setup half (joined with a space)."
+  },
+  "quote12Payoff": "start with no plan.",
+  "@quote12Payoff": {
+    "description": "Record-screen tagline, line 13, payoff half (joined with a space)."
+  },
+  "quote13Setup": "Two wheels,",
+  "@quote13Setup": {
+    "description": "Record-screen tagline, line 14, setup half (joined with a space)."
+  },
+  "quote13Payoff": "infinite roads.",
+  "@quote13Payoff": {
+    "description": "Record-screen tagline, line 14, payoff half (joined with a space)."
+  },
+  "quote14Setup": "Momentum is",
+  "@quote14Setup": {
+    "description": "Record-screen tagline, line 15, setup half (joined with a space)."
+  },
+  "quote14Payoff": "a kind of freedom.",
+  "@quote14Payoff": {
+    "description": "Record-screen tagline, line 15, payoff half (joined with a space)."
+  },
+  "quote15Setup": "Read the road",
+  "@quote15Setup": {
+    "description": "Record-screen tagline, line 16, setup half (joined with a space)."
+  },
+  "quote15Payoff": "before it reads you.",
+  "@quote15Payoff": {
+    "description": "Record-screen tagline, line 16, payoff half (joined with a space)."
   }
 }

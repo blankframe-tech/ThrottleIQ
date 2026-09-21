@@ -18,6 +18,7 @@ import '../../domain/place_directions.dart';
 import '../providers/places_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../place_category_l10n.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
 ///
@@ -272,7 +273,7 @@ class _PlaceHeader extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 17, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
                     ),
-                    Text(place.category.displayName,
+                    Text(place.category.localizedName(context.l10n),
                         style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                   ],
                 ),
