@@ -38,8 +38,15 @@ sub-sections — one per pass — rather than overwriting this placeholder._
 
 ## 32. UI/UX critique of the current screen set — surfaced, not fixed (2026-08-17)
 
-**Status:** Not started. Design/polish findings, not root-caused bugs — no
-code changed. Full writeup with screenshot references in
+**Status: TRIAGED 2026-09-21.** Decision: fix the **concrete defects only**
+— the paused-ride scrim dimming the stat card, the Places FAB overlapping the
+last row, `★ —` on zero-review places, the duplicated riding-score card, and
+the maintenance pill that never escalates before 0 km. The taste calls
+(slide-to-start friction, the "In jam" label, chart axis styling, theme-picker
+previews, the low-contrast pass) are **deliberately not being done** — do not
+re-raise them as bugs.
+
+Design/polish findings, not root-caused bugs — no code changed yet. Full writeup with screenshot references in
 `docs/uiux_critique.md`; summarized here per this file's convention of one
 `##` per tracked problem.
 
@@ -397,8 +404,12 @@ light cream background, with low-contrast text inside:
 
 Other color modes in Light don't do this. It is probably a Retro-light palette token (a
 `surfaceVariant`/`ink`-style color used as a card fill) rather than a
-per-screen bug. It needs a design decision: intentional "ink block" styling,
-or a token to lighten. Not changed.
+per-screen bug.
+
+**DECIDED 2026-09-21: lighten the token.** This is a bug, not intentional
+"ink block" styling — no other Light mode does it, and the text inside fails
+contrast. Queued behind the `appcolors` migration, since that pass touches
+every palette token anyway and fixing it first would mean doing it twice.
 
 ## 78. Antigravity grill verification: still open (surfaced 2026-09-20)
 
@@ -429,9 +440,12 @@ What remains open:
   **Still open:** CI exists but has never run on GitHub, and `main` has no
   branch protection — so the analyze/test/rules gates are enforced on the
   founder's laptop and nowhere else. Founder action, scheduled next week.
-- **78.21 Route navigation doesn't record the ride.** Not attempted; it
-  needs a design call on merging nav into the active-ride cockpit.
+- **78.21 Route navigation doesn't record the ride.** **APPROVED
+  2026-09-21:** merge navigation into the active-ride cockpit so following a
+  saved route records it like any other ride. Today the two core loops don't
+  compose — you can follow a route and end up with no ride logged.
 - **78.24 SafeQR has no "Print sticker"** (needs the `printing` package).
+  **APPROVED 2026-09-21**, new dependency accepted.
 - **78.25 The pitch** (`iDEA_PITCH_SUBMISSION.md` Slide 9, lines
   36/76/107) still claims working crash detection and a team the repo
   history doesn't show. It waits on founder decision c. The in-app
@@ -444,12 +458,15 @@ What remains open:
     from before the fix can't start new chats once the rules are deployed.
     Ship the app before the rules.
   - **78.28** New Bangla strings (emergency banner and acknowledgement,
-    SafeQR share, moving/stopped) need a native-speaker review.
+    SafeQR share, moving/stopped) need a native-speaker review. **2026-09-21:
+    a reviewer is available** — keep translating and hand off each batch
+    marked pending. The §83 cockpit alerts are also awaiting this review.
   - **78.29** The new "Sync issues" screen isn't localized. The
     immediate outbox attempt (`_attemptOne`) isn't scoped to the signed-in
     rider.
   - **78.30** Crash rides now show in history lists, but without a
-    "crash" badge.
+    "crash" badge. **APPROVED 2026-09-21** — it is the only surface where
+    crash data is visible at all, given the detector stays off.
 
 ## 79. Places screen: "Browse routes →" button clashes visually with its neighbors — FIXED (2026-09-20)
 
