@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 ///     the guardian's diff.
 ///
 /// Current manifest version: 2
-const int kOnboardingManifestVersion = 2;
+const int kOnboardingManifestVersion = 3;
 
 /// A callout pointer on a visual UI mockup to "point and show, not just tell".
 class SlidePointer {
@@ -129,7 +129,7 @@ const List<OnboardingSlide> kOnboardingSlides = [
       'Hold-to-start on the Record tab to begin',
       'GPS + sensor fusion captures every moment',
       'Continues recording in the background',
-      'Instant crash detection with 60s cancel window',
+      'A paused ride survives the app being closed',
       'Share your live location with family in real time',
     ],
     accentColor: Color(0xFFFF5722),
@@ -138,7 +138,7 @@ const List<OnboardingSlide> kOnboardingSlides = [
       SlidePointer(
         number: 1,
         title: 'Cockpit Telemetry',
-        description: 'Live Doppler speed, lean angle arc, and GPS telemetry.',
+        description: 'Live GPS speed, distance, and ride telemetry as you go.',
         icon: Icons.speed,
       ),
       SlidePointer(
@@ -149,9 +149,9 @@ const List<OnboardingSlide> kOnboardingSlides = [
       ),
       SlidePointer(
         number: 3,
-        title: 'Crash Shield',
-        description: 'Impact & tumble detection with 60s emergency cancellation.',
-        icon: Icons.security,
+        title: 'Live Share',
+        description: 'Send a revocable link so family can follow your ride.',
+        icon: Icons.share_location,
       ),
     ],
   ),
@@ -210,19 +210,22 @@ const List<OnboardingSlide> kOnboardingSlides = [
       SlidePointer(
         number: 1,
         title: '13+ Service Items',
-        description: 'Track engine oil, chain lube, brake fluid, coolant, and more.',
+        description:
+            'Track engine oil, chain lube, brake fluid, coolant, and more.',
         icon: Icons.build_circle,
       ),
       SlidePointer(
         number: 2,
         title: 'Due Badges',
-        description: 'Color-coded progress bars alert you before intervals expire.',
+        description:
+            'Color-coded progress bars alert you before intervals expire.',
         icon: Icons.warning_amber_rounded,
       ),
       SlidePointer(
         number: 3,
         title: 'Log & Reset',
-        description: 'Record maintenance notes and reset the interval odometer.',
+        description:
+            'Record maintenance notes and reset the interval odometer.',
         icon: Icons.check_circle_outline,
       ),
     ],
@@ -237,7 +240,7 @@ const List<OnboardingSlide> kOnboardingSlides = [
     bullets: [
       '395+ rider POIs pre-seeded across Dhaka metro',
       'Fuel stations, repair shops, spare parts & cafes',
-      'Tap Directions → opens Maps and starts recording',
+      'Tap Directions → opens Maps, and offers to record',
       'Add and rate places to help the community',
     ],
     accentColor: Color(0xFF9C27B0),
@@ -246,19 +249,22 @@ const List<OnboardingSlide> kOnboardingSlides = [
       SlidePointer(
         number: 1,
         title: '395+ Rider POIs',
-        description: 'Verified fuel stations, workshops, parts, and rider cafes.',
+        description:
+            'Verified fuel stations, workshops, parts, and rider cafes.',
         icon: Icons.local_gas_station,
       ),
       SlidePointer(
         number: 2,
         title: 'Navigate & Record',
-        description: 'Opens Google Maps directions and begins ride telemetry.',
+        description:
+            'Opens your maps app, and can record the trip alongside it.',
         icon: Icons.navigation,
       ),
       SlidePointer(
         number: 3,
         title: 'Rider Reviews',
-        description: 'Rate octane purity, mechanic honesty, and parking security.',
+        description:
+            'Rate octane purity, mechanic honesty, and parking security.',
         icon: Icons.rate_review,
       ),
     ],
@@ -283,7 +289,8 @@ const List<OnboardingSlide> kOnboardingSlides = [
       SlidePointer(
         number: 1,
         title: 'Privacy Zones',
-        description: '200m buffer automatically clipped at home & work endpoints.',
+        description:
+            'Each ride\'s start and end are clipped before it is shared.',
         icon: Icons.lock_outline,
       ),
       SlidePointer(
@@ -295,7 +302,8 @@ const List<OnboardingSlide> kOnboardingSlides = [
       SlidePointer(
         number: 3,
         title: 'Bike Model Forums',
-        description: 'Discuss mods, issues, and meets with owners of your bike.',
+        description:
+            'Discuss mods, issues, and meets with owners of your bike.',
         icon: Icons.forum,
       ),
     ],
@@ -325,13 +333,14 @@ const List<OnboardingSlide> kOnboardingSlides = [
       SlidePointer(
         number: 2,
         title: 'SafeQR Card',
-        description: 'Offline medical card for emergency responders on the road.',
+        description:
+            'Offline medical card for emergency responders on the road.',
         icon: Icons.qr_code,
       ),
       SlidePointer(
         number: 3,
-        title: 'SOS Contacts',
-        description: 'Automated SMS / alert notification to trusted contacts on crash.',
+        title: 'Emergency Contacts',
+        description: 'Keep up to 5 contacts on file for a responder to reach.',
         icon: Icons.contact_phone,
       ),
     ],

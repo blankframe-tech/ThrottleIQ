@@ -2,7 +2,13 @@
 
 *Last updated: September 2026*
 
-ThrottleIQ is an **offline-first motorcycle telemetry intelligence platform and vehicle state estimation engine**. Rather than merely logging raw GPS coordinates, ThrottleIQ treats a motorcycle ride as an evolving continuous state vector—fusing inertial measurement unit (IMU) telemetry with GPS fixes to classify dynamics, detect critical incidents (e.g., high-g crashes), manage vehicle fleets, and provide offline geometric navigation.
+ThrottleIQ is an **offline-first motorcycle telemetry intelligence platform and vehicle state estimation engine**. Rather than merely logging raw GPS coordinates, ThrottleIQ treats a motorcycle ride as an evolving continuous state vector—fusing inertial measurement unit (IMU) telemetry with GPS fixes to classify dynamics, flag suspected high-g impacts, manage vehicle fleets, and provide offline geometric navigation.
+
+> ⚠️ **Crash detection is built but switched off in every build**
+> (`SensorConstants.impactDetectorLiveEnabled = false`), and emergency-contact
+> alerting is an unwired Cloud Function skeleton. Nothing in this document
+> should be read as a claim that a rider is protected in a crash. See
+> `DOCS/Handoff for agents and Todos/issues_open.md` §78.1 and §81.
 
 ---
 

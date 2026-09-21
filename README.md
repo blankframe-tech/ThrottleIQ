@@ -31,11 +31,25 @@
 - **GPS accuracy gating**: Filters poor-accuracy points (accuracy > 25m)
 - **Timestamp precision**: Uses device time, not wall-clock, for accurate motion derivatives
 
-### 🔐 Safety & Emergency (P6 🚀)
-- **Crash detection**: Accelerometer spike + speed drop within 2 sec → 60-second countdown
-- **Emergency contacts**: Share live location & ride stats with up to 5 emergency contacts
-- **Live share link**: Generate unguessable token-based link; contacts see rider's location, speed, battery in real-time
-- **No automatic 911**: v1 contacts-only (respects privacy); escalation via Cloud Function if contact doesn't ACK in 15 min
+### 🔐 Safety & Emergency (P6 — partly shipped)
+
+> ⚠️ **Crash detection and emergency alerting are NOT live.** Do not rely on
+> ThrottleIQ to detect a crash or to contact anyone on your behalf. The
+> detection pipeline is built but switched off
+> (`SensorConstants.impactDetectorLiveEnabled = false`) pending field
+> calibration, and the Cloud Function that would notify contacts has no SMS or
+> email provider wired up — nothing is sent. See `DOCS/Handoff for agents and
+> Todos/issues_open.md` §78.1 and §81.
+
+**Shipped:**
+- **Live share link**: Generate an unguessable token-based link; whoever you send it to sees your location, speed and battery in real time, and the link is revocable and expires after 24 h
+- **Emergency contacts**: Store up to 5 contacts, and a SafeQR medical-info card a responder can read with any phone camera
+- **Crash logging**: A suspected impact is recorded against the ride for later review
+
+**Built but switched off (no release date):**
+- **Crash detection**: Accelerometer spike + jerk spike + speed drop within 2 s → 60-second countdown. Thresholds are uncalibrated; the live detector is disabled
+- **Contact alerting**: SMS/email dispatch and 15-minute escalation exist as a Cloud Function skeleton with no provider integration
+- **No automatic 911**: when alerting does ship it will be contacts-only, by design
 
 ### 🏪 Rider Utilities (P7 🚀)
 - **POI Directory**: Fuel pumps, garages, spare-parts shops (verified by admin, user-contributed)
@@ -166,6 +180,12 @@ semantics (`issues_fixed.md` §7). Firestore rules have their own emulator
 suite (98 tests): `npm run test:rules` from `scripts/`.
 
 **Example: Crash Detection**
+
+> Note: this suite is green, but it guards a code path that does **not** run on
+> a rider's phone — `SensorConstants.impactDetectorLiveEnabled` is `const
+> false` and the live recorder passes `detectCrash: false`. Treat it as a
+> specification for the disabled detector, not as evidence the feature works.
+
 ```dart
 test('DOES fire on crash: accel spike + jerk spike + speed→0 in 2s', () {
   detector.detect(accel: 0, jerk: 0, speedMs: 15.0); // baseline
@@ -246,9 +266,12 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 - **Cause**: No internet or Firestore rules blocking write
 - **Fix**: Check WiFi/cellular, then verify Firebase project & Firestore rules deployed
 
-### Crash detection too sensitive
-- **Cause**: Sensor thresholds set low for testing
-- **Fix**: See `app/lib/core/constants/sensor_constants.dart` to tune
+### Crash detection never fires
+- **Cause**: It is switched off in every build —
+  `SensorConstants.impactDetectorLiveEnabled = false`, and the live recorder
+  passes `detectCrash: false`. This is deliberate: the thresholds are
+  uncalibrated and there is no alert delivery. Not a bug to work around
+- **Fix**: none available to a rider. See `issues_open.md` §78.1 / §81.1
 
 ### iOS build fails
 - **Cause**: `GoogleService-Info.plist` missing or not in Xcode
@@ -301,9 +324,10 @@ In short: You can **view and audit** the source code, but cannot copy, fork, or 
 
 - **Now**: Play Store + App Store submission (see `HANDOFF_Document.md`'s
   "Play Store & App Store" section for the concrete step-by-step).
-- **Soon**: Crash-alert SMS/email escalation (the Cloud Function exists but
-  delivery is still a mock; real sending needs Twilio/SendGrid and the Firebase
-  Blaze billing plan. See `DOCS/For Devs and Contributors/architecture/backend_options.md`), turn-by-turn
+- **Soon**: Crash detection going live at all — it needs field/drop calibration
+  of the thresholds before the flag can be flipped — and then crash-alert
+  SMS/email escalation (the Cloud Function exists but delivery is still a mock;
+  real sending needs Twilio/SendGrid and the Firebase Blaze billing plan. See `DOCS/For Devs and Contributors/architecture/backend_options.md`), turn-by-turn
   route navigation tuning, full Bangla localization.
 - **Backlog**: lean-angle tracking, weekly riding reports, clubs & events,
   a curvy-route planner with real routing. See `HANDOFF_Document.md`

@@ -513,7 +513,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                   ),
                   const SizedBox(width: 5),
                   const Text(
-                    '10Hz GPS LOCKED',
+                    'GPS LOCKED',
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -529,7 +529,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  'SHIELD: ARMED',
+                  '00:42:18',
                   style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white70),
                 ),
               ),
@@ -537,7 +537,12 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
           ),
           const Spacer(),
 
-          // Speedometer Dial & Lean Arc
+          // Speed readout and distance. NOTE: everything drawn in this file
+          // is a hand-made illustration of a real screen — if the real cockpit
+          // gains or loses a readout this drifts silently and nothing catches
+          // it (issues §83.26). Draw only what the app actually has: there is
+          // no lean-angle gauge and no "crash shield", and GPS is sampled at
+          // ~1 Hz behind a 5 m distance filter, not 10 Hz.
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -577,7 +582,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 ],
               ),
               const SizedBox(width: 24),
-              // Lean Angle Arc Gauge
+              // Distance tile
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -587,10 +592,10 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                 ),
                 child: Column(
                   children: [
-                    const Text('LEAN ANGLE', style: TextStyle(fontSize: 8, color: Colors.white54)),
+                    const Text('DISTANCE', style: TextStyle(fontSize: 8, color: Colors.white54)),
                     const SizedBox(height: 2),
                     Text(
-                      '24° L',
+                      '36.4 km',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -598,7 +603,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text('MAX 38°', style: TextStyle(fontSize: 8, color: Colors.white38)),
+                    const Text('MOVING 31m', style: TextStyle(fontSize: 8, color: Colors.white38)),
                   ],
                 ),
               ),
