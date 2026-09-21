@@ -36,7 +36,7 @@ Stats   → stats/journey (rank, badges, chart, recent rides)
 Record  → active ride (live) → crash overlay (conditional) → ride summary
                              → ride share → save as route
 Record  → ride with friends → friend picker → group ride live map
-Routes  → route detail → turn-by-turn navigation
+Routes  → route detail → navigate (starts a ride; guidance rides on /ride/active)
 Profile → (header) settings, notifications, profile menu (profile,
            my places, my shared rides) → bike detail → edit bike | add bike
            → maintenance → add service log
@@ -126,6 +126,7 @@ Save Route, Group Ride map
   - Ties break by recency (repeated commutes and 0.0 km test rides tie constantly; without it the list reshuffles between rebuilds). Missing values sort **last** — a ride with no recorded duration is a data gap, not the longest ride.
   - The sort is **not persisted**: it's a momentary question, not a preference.
 - **"All rides" button** (added 2026-08-04) — the compact list only ever shows 10; this opens `/rides/all` on top of the current screen. Same sort chips, lazy infinite scroll over the full history (not paged navigation — the data's already in memory, only rendering needs bounding), full per-ride detail (distance/duration/avg/top/score/events), and the ride's **route thumbnail** where one was recorded.
+  - **A "Followed \<route\>" pill** (added 2026-09-21) on any ride recorded while following a saved route — see §6a.
 - Empty state for zero-ride accounts.
 
 ## 4. Garage (`features/garage`) — bottom nav tab "Profile" (route `/home/profile`)
@@ -193,8 +194,14 @@ Added 2026-08-01. Built on the route data layer that had existed with no UI.
 - **Routes list** (`/routes`) — "My routes" and "Discover" (public routes from any rider) tabs; cards show a map thumbnail, distance, times-ridden and a private/public badge.
 - **Save as route** (`/routes/save/:rideId`) — reached from the end-of-ride share screen. Name + description, private/public switch; the track is re-derived from `RidePointDao`.
 - **Route detail** (`/routes/:routeId`) — full map, stats, public/private toggle, delete, the derived turn list, and "Start navigation".
-- **Turn-by-turn navigation** (`/routes/:routeId/navigate`) — live follow-the-line guidance: instruction banner with distance to the next turn, off-route warning past 100 m, distance remaining, speed-based ETA, wakelock held while navigating.
+- ✅ **Following a route records the ride** (changed 2026-09-21, `issues_fixed.md` §78.21) — `/routes/:routeId/navigate` is now a **pre-flight**, not a navigation screen: route name, length, manoeuvre count, the first instruction, and one button ("Start ride & guide me", or "Guide me on this ride" when a ride is already running). It starts — or attaches to — a real recording and hands over to the cockpit at `/ride/active`.
+  - **Why it changed.** The old screen ran its *own* `Geolocator.getPositionStream`, permission checks, wakelock and progress maths, none of it known to `RideRecordingNotifier`. So the app's two core loops didn't compose: a rider could follow a saved route for two hours, hold two GPS subscriptions open the whole time, and end up with **no ride in their history**. Same reasoning as the Places "Directions also starts a ride" behaviour in §6 — a rider going somewhere on the bike should get that journey logged.
+  - **Guidance is drawn over the cockpit** by `NavigationBanner`: the next manoeuvre with distance to it, distance remaining, speed-based ETA, an off-route warning past 100 m, and a close button that drops guidance while the ride **keeps recording**. The followed route is drawn under the ride's own trail, dimmer — the route is the plan, the trail is what happened, and when they diverge the rider needs to see which line is which. The recorder's wakelock covers the screen; there is no second one.
+  - **One GPS stream.** `navigationSessionProvider` owns no location subscription — it listens to the recorder's state, selected down to position/speed/status so it recomputes at GPS-fix cadence rather than accelerometer cadence. The dependency runs one way: routes knows about the recorder, the recorder knows nothing about routes.
+  - **The ride remembers the route** — `route_id`/`route_name` on the ride record (schema v17), so history shows a **Followed \<route\>** pill (§3). The name is stored beside the id rather than looked up, because a discovered route lives under another rider's uid and a route can be renamed or deleted after the ride.
+  - **Trade-off worth knowing:** navigating *without* recording is no longer possible. That was the approved call, but a rider who only wants the line on screen now gets a ride they have to discard.
   - **Offline and geometric.** Turns are derived from the route's own recorded polyline (`turn_instruction.dart`) — no routing engine, no API key, no recurring cost. The trade-off: no street names, no lane guidance, and it does **not** reroute — it tells the rider they're off route rather than inventing a new path. Street names would need map matching (Phase 3 in `HANDOFF_Document.md`).
+  - **Not verified on a device.** The progress maths (`navigation_progress.dart`) is pure and unit-tested — 25 tests across it and the session, where the screen had none — and an Android debug build is clean, but nobody has ridden a route with this. See `issues_open.md` §78.21.
 
 ## 7. Social (`features/social`, `features/forums`) — bottom nav tab "Social"
 
