@@ -6791,6 +6791,480 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Veteran'**
   String get rankVeteran;
+
+  /// Badge family name (first).
+  ///
+  /// In en, this message translates to:
+  /// **'First ride'**
+  String get badgeFamFirstName;
+
+  /// What the first badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'Where every rider starts — your first recorded ride.'**
+  String get badgeFamFirstAbout;
+
+  /// How to earn a first badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Record your first ride.'**
+  String get badgeFamFirstReq;
+
+  /// Badge rung name (first_ride).
+  ///
+  /// In en, this message translates to:
+  /// **'First ride'**
+  String get badgeRungFirstRide;
+
+  /// Badge family name (rides).
+  ///
+  /// In en, this message translates to:
+  /// **'Rides'**
+  String get badgeFamRidesName;
+
+  /// What the rides badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'How many rides you have recorded, all time.'**
+  String get badgeFamRidesAbout;
+
+  /// How to earn a rides badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Record {n} rides.'**
+  String badgeFamRidesReq(String n);
+
+  /// Badge rung name (rides_10).
+  ///
+  /// In en, this message translates to:
+  /// **'10 rides'**
+  String get badgeRungRides10;
+
+  /// Badge rung name (rides_25).
+  ///
+  /// In en, this message translates to:
+  /// **'25 rides'**
+  String get badgeRungRides25;
+
+  /// Badge rung name (rides_50).
+  ///
+  /// In en, this message translates to:
+  /// **'50 rides'**
+  String get badgeRungRides50;
+
+  /// Badge rung name (rides_100).
+  ///
+  /// In en, this message translates to:
+  /// **'100 rides'**
+  String get badgeRungRides100;
+
+  /// Badge rung name (rides_250).
+  ///
+  /// In en, this message translates to:
+  /// **'250 rides'**
+  String get badgeRungRides250;
+
+  /// Badge family name (distance).
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get badgeFamDistanceName;
+
+  /// What the distance badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'Total distance covered across every ride you have recorded.'**
+  String get badgeFamDistanceAbout;
+
+  /// How to earn a distance badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride {n} km in total.'**
+  String badgeFamDistanceReq(String n);
+
+  /// Badge rung name (km_100).
+  ///
+  /// In en, this message translates to:
+  /// **'100 km'**
+  String get badgeRungKm100;
+
+  /// Badge rung name (km_500).
+  ///
+  /// In en, this message translates to:
+  /// **'500 km'**
+  String get badgeRungKm500;
+
+  /// Badge rung name (km_1000).
+  ///
+  /// In en, this message translates to:
+  /// **'1,000 km'**
+  String get badgeRungKm1000;
+
+  /// Badge rung name (km_2500).
+  ///
+  /// In en, this message translates to:
+  /// **'2,500 km'**
+  String get badgeRungKm2500;
+
+  /// Badge rung name (km_5000).
+  ///
+  /// In en, this message translates to:
+  /// **'5,000 km'**
+  String get badgeRungKm5000;
+
+  /// Badge family name (long_ride).
+  ///
+  /// In en, this message translates to:
+  /// **'Longest ride'**
+  String get badgeFamLongRideName;
+
+  /// What the long_ride badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'The distance of your single longest recorded ride.'**
+  String get badgeFamLongRideAbout;
+
+  /// How to earn a long_ride badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover {n} km in one ride.'**
+  String badgeFamLongRideReq(String n);
+
+  /// Badge rung name (long_ride_50).
+  ///
+  /// In en, this message translates to:
+  /// **'Day tripper'**
+  String get badgeRungLongRide50;
+
+  /// Badge rung name (long_ride_100).
+  ///
+  /// In en, this message translates to:
+  /// **'Century'**
+  String get badgeRungLongRide100;
+
+  /// Badge rung name (long_ride_200).
+  ///
+  /// In en, this message translates to:
+  /// **'Long hauler'**
+  String get badgeRungLongRide200;
+
+  /// Badge rung name (long_ride_400).
+  ///
+  /// In en, this message translates to:
+  /// **'Tourer'**
+  String get badgeRungLongRide400;
+
+  /// Badge rung name (long_ride_800).
+  ///
+  /// In en, this message translates to:
+  /// **'Iron rider'**
+  String get badgeRungLongRide800;
+
+  /// Badge family name (saddle_time).
+  ///
+  /// In en, this message translates to:
+  /// **'Saddle time'**
+  String get badgeFamSaddleTimeName;
+
+  /// What the saddle_time badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'The duration of your single longest recorded ride.'**
+  String get badgeFamSaddleTimeAbout;
+
+  /// How to earn a saddle_time badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride for {n} hours without ending the recording.'**
+  String badgeFamSaddleTimeReq(String n);
+
+  /// Badge rung name (saddle_1h).
+  ///
+  /// In en, this message translates to:
+  /// **'One hour'**
+  String get badgeRungSaddle1h;
+
+  /// Badge rung name (saddle_2h).
+  ///
+  /// In en, this message translates to:
+  /// **'Two hours'**
+  String get badgeRungSaddle2h;
+
+  /// Badge rung name (saddle_4h).
+  ///
+  /// In en, this message translates to:
+  /// **'Four hours'**
+  String get badgeRungSaddle4h;
+
+  /// Badge rung name (saddle_8h).
+  ///
+  /// In en, this message translates to:
+  /// **'Eight hours'**
+  String get badgeRungSaddle8h;
+
+  /// Badge family name (speed).
+  ///
+  /// In en, this message translates to:
+  /// **'Top speed'**
+  String get badgeFamSpeedName;
+
+  /// What the speed badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'The highest speed recorded on any of your rides.'**
+  String get badgeFamSpeedAbout;
+
+  /// How to earn a speed badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a top speed of {n} km/h.'**
+  String badgeFamSpeedReq(String n);
+
+  /// Badge rung name (ton_up).
+  ///
+  /// In en, this message translates to:
+  /// **'Ton-up'**
+  String get badgeRungTonUp;
+
+  /// Badge rung name (speed_140).
+  ///
+  /// In en, this message translates to:
+  /// **'Quick'**
+  String get badgeRungSpeed140;
+
+  /// Badge rung name (speed_demon).
+  ///
+  /// In en, this message translates to:
+  /// **'Speed demon'**
+  String get badgeRungSpeedDemon;
+
+  /// Badge family name (night).
+  ///
+  /// In en, this message translates to:
+  /// **'Night rider'**
+  String get badgeFamNightName;
+
+  /// What the night badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides that set off after 9 pm or before 4 am.'**
+  String get badgeFamNightAbout;
+
+  /// How to earn a night badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {n} rides between 9 pm and 4 am.'**
+  String badgeFamNightReq(String n);
+
+  /// Badge rung name (night_1).
+  ///
+  /// In en, this message translates to:
+  /// **'After dark'**
+  String get badgeRungNight1;
+
+  /// Badge rung name (night_5).
+  ///
+  /// In en, this message translates to:
+  /// **'Night owl'**
+  String get badgeRungNight5;
+
+  /// Badge rung name (night_25).
+  ///
+  /// In en, this message translates to:
+  /// **'Moonlighter'**
+  String get badgeRungNight25;
+
+  /// Badge rung name (night_50).
+  ///
+  /// In en, this message translates to:
+  /// **'Nocturnal'**
+  String get badgeRungNight50;
+
+  /// Badge family name (early).
+  ///
+  /// In en, this message translates to:
+  /// **'Early bird'**
+  String get badgeFamEarlyName;
+
+  /// What the early badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides that set off between 4 am and 7 am.'**
+  String get badgeFamEarlyAbout;
+
+  /// How to earn a early badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {n} rides between 4 am and 7 am.'**
+  String badgeFamEarlyReq(String n);
+
+  /// Badge rung name (early_1).
+  ///
+  /// In en, this message translates to:
+  /// **'Sunrise run'**
+  String get badgeRungEarly1;
+
+  /// Badge rung name (early_5).
+  ///
+  /// In en, this message translates to:
+  /// **'Early bird'**
+  String get badgeRungEarly5;
+
+  /// Badge rung name (early_25).
+  ///
+  /// In en, this message translates to:
+  /// **'Dawn patrol'**
+  String get badgeRungEarly25;
+
+  /// Badge family name (streak).
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get badgeFamStreakName;
+
+  /// What the streak badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'Your longest run of consecutive days with a recorded ride.'**
+  String get badgeFamStreakAbout;
+
+  /// How to earn a streak badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride on {n} days in a row.'**
+  String badgeFamStreakReq(String n);
+
+  /// Badge rung name (streak_3).
+  ///
+  /// In en, this message translates to:
+  /// **'3-day streak'**
+  String get badgeRungStreak3;
+
+  /// Badge rung name (streak_7).
+  ///
+  /// In en, this message translates to:
+  /// **'7-day streak'**
+  String get badgeRungStreak7;
+
+  /// Badge rung name (streak_14).
+  ///
+  /// In en, this message translates to:
+  /// **'14-day streak'**
+  String get badgeRungStreak14;
+
+  /// Badge rung name (streak_30).
+  ///
+  /// In en, this message translates to:
+  /// **'30-day streak'**
+  String get badgeRungStreak30;
+
+  /// Badge family name (smooth).
+  ///
+  /// In en, this message translates to:
+  /// **'Smoothness'**
+  String get badgeFamSmoothName;
+
+  /// What the smooth badge family measures.
+  ///
+  /// In en, this message translates to:
+  /// **'Your average riding score — fewer hard brakes, rapid accelerations and jerky inputs score higher.'**
+  String get badgeFamSmoothAbout;
+
+  /// How to earn a smooth badge rung; {n} is the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Average {n} points across at least 5 rides.'**
+  String badgeFamSmoothReq(String n);
+
+  /// Badge rung name (smooth_80).
+  ///
+  /// In en, this message translates to:
+  /// **'Steady hands'**
+  String get badgeRungSmooth80;
+
+  /// Badge rung name (smooth_operator).
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth operator'**
+  String get badgeRungSmoothOperator;
+
+  /// Badge rung name (smooth_95).
+  ///
+  /// In en, this message translates to:
+  /// **'Silk'**
+  String get badgeRungSmooth95;
+
+  /// Badge rung name (smooth_98).
+  ///
+  /// In en, this message translates to:
+  /// **'Effortless'**
+  String get badgeRungSmooth98;
+
+  /// Unit word after a badge figure (rides).
+  ///
+  /// In en, this message translates to:
+  /// **'rides'**
+  String get badgeUnitRides;
+
+  /// Unit word after a badge figure (km).
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get badgeUnitKm;
+
+  /// Unit word after a badge figure (h).
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get badgeUnitHours;
+
+  /// Unit word after a badge figure (km/h).
+  ///
+  /// In en, this message translates to:
+  /// **'km/h'**
+  String get badgeUnitKmh;
+
+  /// Unit word after a badge figure (days).
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get badgeUnitDays;
+
+  /// Unit word after a badge figure (pts).
+  ///
+  /// In en, this message translates to:
+  /// **'pts'**
+  String get badgeUnitPts;
+
+  /// Badge tier name (bronze).
+  ///
+  /// In en, this message translates to:
+  /// **'Bronze'**
+  String get badgeTierBronze;
+
+  /// Badge tier name (silver).
+  ///
+  /// In en, this message translates to:
+  /// **'Silver'**
+  String get badgeTierSilver;
+
+  /// Badge tier name (gold).
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get badgeTierGold;
+
+  /// Badge tier name (platinum).
+  ///
+  /// In en, this message translates to:
+  /// **'Platinum'**
+  String get badgeTierPlatinum;
+
+  /// Badge tier name (diamond).
+  ///
+  /// In en, this message translates to:
+  /// **'Diamond'**
+  String get badgeTierDiamond;
 }
 
 class _AppLocalizationsDelegate

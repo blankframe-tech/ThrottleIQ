@@ -5205,5 +5205,366 @@
   "rankVeteran": "Veteran",
   "@rankVeteran": {
     "description": "Rider rank name (level 6 of 7)."
+  },
+  "badgeFamFirstName": "First ride",
+  "@badgeFamFirstName": {
+    "description": "Badge family name (first)."
+  },
+  "badgeFamFirstAbout": "Where every rider starts — your first recorded ride.",
+  "@badgeFamFirstAbout": {
+    "description": "What the first badge family measures."
+  },
+  "badgeFamFirstReq": "Record your first ride.",
+  "@badgeFamFirstReq": {
+    "description": "How to earn a first badge rung; {n} is the threshold."
+  },
+  "badgeRungFirstRide": "First ride",
+  "@badgeRungFirstRide": {
+    "description": "Badge rung name (first_ride)."
+  },
+  "badgeFamRidesName": "Rides",
+  "@badgeFamRidesName": {
+    "description": "Badge family name (rides)."
+  },
+  "badgeFamRidesAbout": "How many rides you have recorded, all time.",
+  "@badgeFamRidesAbout": {
+    "description": "What the rides badge family measures."
+  },
+  "badgeFamRidesReq": "Record {n} rides.",
+  "@badgeFamRidesReq": {
+    "description": "How to earn a rides badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungRides10": "10 rides",
+  "@badgeRungRides10": {
+    "description": "Badge rung name (rides_10)."
+  },
+  "badgeRungRides25": "25 rides",
+  "@badgeRungRides25": {
+    "description": "Badge rung name (rides_25)."
+  },
+  "badgeRungRides50": "50 rides",
+  "@badgeRungRides50": {
+    "description": "Badge rung name (rides_50)."
+  },
+  "badgeRungRides100": "100 rides",
+  "@badgeRungRides100": {
+    "description": "Badge rung name (rides_100)."
+  },
+  "badgeRungRides250": "250 rides",
+  "@badgeRungRides250": {
+    "description": "Badge rung name (rides_250)."
+  },
+  "badgeFamDistanceName": "Distance",
+  "@badgeFamDistanceName": {
+    "description": "Badge family name (distance)."
+  },
+  "badgeFamDistanceAbout": "Total distance covered across every ride you have recorded.",
+  "@badgeFamDistanceAbout": {
+    "description": "What the distance badge family measures."
+  },
+  "badgeFamDistanceReq": "Ride {n} km in total.",
+  "@badgeFamDistanceReq": {
+    "description": "How to earn a distance badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungKm100": "100 km",
+  "@badgeRungKm100": {
+    "description": "Badge rung name (km_100)."
+  },
+  "badgeRungKm500": "500 km",
+  "@badgeRungKm500": {
+    "description": "Badge rung name (km_500)."
+  },
+  "badgeRungKm1000": "1,000 km",
+  "@badgeRungKm1000": {
+    "description": "Badge rung name (km_1000)."
+  },
+  "badgeRungKm2500": "2,500 km",
+  "@badgeRungKm2500": {
+    "description": "Badge rung name (km_2500)."
+  },
+  "badgeRungKm5000": "5,000 km",
+  "@badgeRungKm5000": {
+    "description": "Badge rung name (km_5000)."
+  },
+  "badgeFamLongRideName": "Longest ride",
+  "@badgeFamLongRideName": {
+    "description": "Badge family name (long_ride)."
+  },
+  "badgeFamLongRideAbout": "The distance of your single longest recorded ride.",
+  "@badgeFamLongRideAbout": {
+    "description": "What the long_ride badge family measures."
+  },
+  "badgeFamLongRideReq": "Cover {n} km in one ride.",
+  "@badgeFamLongRideReq": {
+    "description": "How to earn a long_ride badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungLongRide50": "Day tripper",
+  "@badgeRungLongRide50": {
+    "description": "Badge rung name (long_ride_50)."
+  },
+  "badgeRungLongRide100": "Century",
+  "@badgeRungLongRide100": {
+    "description": "Badge rung name (long_ride_100)."
+  },
+  "badgeRungLongRide200": "Long hauler",
+  "@badgeRungLongRide200": {
+    "description": "Badge rung name (long_ride_200)."
+  },
+  "badgeRungLongRide400": "Tourer",
+  "@badgeRungLongRide400": {
+    "description": "Badge rung name (long_ride_400)."
+  },
+  "badgeRungLongRide800": "Iron rider",
+  "@badgeRungLongRide800": {
+    "description": "Badge rung name (long_ride_800)."
+  },
+  "badgeFamSaddleTimeName": "Saddle time",
+  "@badgeFamSaddleTimeName": {
+    "description": "Badge family name (saddle_time)."
+  },
+  "badgeFamSaddleTimeAbout": "The duration of your single longest recorded ride.",
+  "@badgeFamSaddleTimeAbout": {
+    "description": "What the saddle_time badge family measures."
+  },
+  "badgeFamSaddleTimeReq": "Ride for {n} hours without ending the recording.",
+  "@badgeFamSaddleTimeReq": {
+    "description": "How to earn a saddle_time badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungSaddle1h": "One hour",
+  "@badgeRungSaddle1h": {
+    "description": "Badge rung name (saddle_1h)."
+  },
+  "badgeRungSaddle2h": "Two hours",
+  "@badgeRungSaddle2h": {
+    "description": "Badge rung name (saddle_2h)."
+  },
+  "badgeRungSaddle4h": "Four hours",
+  "@badgeRungSaddle4h": {
+    "description": "Badge rung name (saddle_4h)."
+  },
+  "badgeRungSaddle8h": "Eight hours",
+  "@badgeRungSaddle8h": {
+    "description": "Badge rung name (saddle_8h)."
+  },
+  "badgeFamSpeedName": "Top speed",
+  "@badgeFamSpeedName": {
+    "description": "Badge family name (speed)."
+  },
+  "badgeFamSpeedAbout": "The highest speed recorded on any of your rides.",
+  "@badgeFamSpeedAbout": {
+    "description": "What the speed badge family measures."
+  },
+  "badgeFamSpeedReq": "Record a top speed of {n} km/h.",
+  "@badgeFamSpeedReq": {
+    "description": "How to earn a speed badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungTonUp": "Ton-up",
+  "@badgeRungTonUp": {
+    "description": "Badge rung name (ton_up)."
+  },
+  "badgeRungSpeed140": "Quick",
+  "@badgeRungSpeed140": {
+    "description": "Badge rung name (speed_140)."
+  },
+  "badgeRungSpeedDemon": "Speed demon",
+  "@badgeRungSpeedDemon": {
+    "description": "Badge rung name (speed_demon)."
+  },
+  "badgeFamNightName": "Night rider",
+  "@badgeFamNightName": {
+    "description": "Badge family name (night)."
+  },
+  "badgeFamNightAbout": "Rides that set off after 9 pm or before 4 am.",
+  "@badgeFamNightAbout": {
+    "description": "What the night badge family measures."
+  },
+  "badgeFamNightReq": "Start {n} rides between 9 pm and 4 am.",
+  "@badgeFamNightReq": {
+    "description": "How to earn a night badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungNight1": "After dark",
+  "@badgeRungNight1": {
+    "description": "Badge rung name (night_1)."
+  },
+  "badgeRungNight5": "Night owl",
+  "@badgeRungNight5": {
+    "description": "Badge rung name (night_5)."
+  },
+  "badgeRungNight25": "Moonlighter",
+  "@badgeRungNight25": {
+    "description": "Badge rung name (night_25)."
+  },
+  "badgeRungNight50": "Nocturnal",
+  "@badgeRungNight50": {
+    "description": "Badge rung name (night_50)."
+  },
+  "badgeFamEarlyName": "Early bird",
+  "@badgeFamEarlyName": {
+    "description": "Badge family name (early)."
+  },
+  "badgeFamEarlyAbout": "Rides that set off between 4 am and 7 am.",
+  "@badgeFamEarlyAbout": {
+    "description": "What the early badge family measures."
+  },
+  "badgeFamEarlyReq": "Start {n} rides between 4 am and 7 am.",
+  "@badgeFamEarlyReq": {
+    "description": "How to earn a early badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungEarly1": "Sunrise run",
+  "@badgeRungEarly1": {
+    "description": "Badge rung name (early_1)."
+  },
+  "badgeRungEarly5": "Early bird",
+  "@badgeRungEarly5": {
+    "description": "Badge rung name (early_5)."
+  },
+  "badgeRungEarly25": "Dawn patrol",
+  "@badgeRungEarly25": {
+    "description": "Badge rung name (early_25)."
+  },
+  "badgeFamStreakName": "Streak",
+  "@badgeFamStreakName": {
+    "description": "Badge family name (streak)."
+  },
+  "badgeFamStreakAbout": "Your longest run of consecutive days with a recorded ride.",
+  "@badgeFamStreakAbout": {
+    "description": "What the streak badge family measures."
+  },
+  "badgeFamStreakReq": "Ride on {n} days in a row.",
+  "@badgeFamStreakReq": {
+    "description": "How to earn a streak badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungStreak3": "3-day streak",
+  "@badgeRungStreak3": {
+    "description": "Badge rung name (streak_3)."
+  },
+  "badgeRungStreak7": "7-day streak",
+  "@badgeRungStreak7": {
+    "description": "Badge rung name (streak_7)."
+  },
+  "badgeRungStreak14": "14-day streak",
+  "@badgeRungStreak14": {
+    "description": "Badge rung name (streak_14)."
+  },
+  "badgeRungStreak30": "30-day streak",
+  "@badgeRungStreak30": {
+    "description": "Badge rung name (streak_30)."
+  },
+  "badgeFamSmoothName": "Smoothness",
+  "@badgeFamSmoothName": {
+    "description": "Badge family name (smooth)."
+  },
+  "badgeFamSmoothAbout": "Your average riding score — fewer hard brakes, rapid accelerations and jerky inputs score higher.",
+  "@badgeFamSmoothAbout": {
+    "description": "What the smooth badge family measures."
+  },
+  "badgeFamSmoothReq": "Average {n} points across at least 5 rides.",
+  "@badgeFamSmoothReq": {
+    "description": "How to earn a smooth badge rung; {n} is the threshold.",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeRungSmooth80": "Steady hands",
+  "@badgeRungSmooth80": {
+    "description": "Badge rung name (smooth_80)."
+  },
+  "badgeRungSmoothOperator": "Smooth operator",
+  "@badgeRungSmoothOperator": {
+    "description": "Badge rung name (smooth_operator)."
+  },
+  "badgeRungSmooth95": "Silk",
+  "@badgeRungSmooth95": {
+    "description": "Badge rung name (smooth_95)."
+  },
+  "badgeRungSmooth98": "Effortless",
+  "@badgeRungSmooth98": {
+    "description": "Badge rung name (smooth_98)."
+  },
+  "badgeUnitRides": "rides",
+  "@badgeUnitRides": {
+    "description": "Unit word after a badge figure (rides)."
+  },
+  "badgeUnitKm": "km",
+  "@badgeUnitKm": {
+    "description": "Unit word after a badge figure (km)."
+  },
+  "badgeUnitHours": "h",
+  "@badgeUnitHours": {
+    "description": "Unit word after a badge figure (h)."
+  },
+  "badgeUnitKmh": "km/h",
+  "@badgeUnitKmh": {
+    "description": "Unit word after a badge figure (km/h)."
+  },
+  "badgeUnitDays": "days",
+  "@badgeUnitDays": {
+    "description": "Unit word after a badge figure (days)."
+  },
+  "badgeUnitPts": "pts",
+  "@badgeUnitPts": {
+    "description": "Unit word after a badge figure (pts)."
+  },
+  "badgeTierBronze": "Bronze",
+  "@badgeTierBronze": {
+    "description": "Badge tier name (bronze)."
+  },
+  "badgeTierSilver": "Silver",
+  "@badgeTierSilver": {
+    "description": "Badge tier name (silver)."
+  },
+  "badgeTierGold": "Gold",
+  "@badgeTierGold": {
+    "description": "Badge tier name (gold)."
+  },
+  "badgeTierPlatinum": "Platinum",
+  "@badgeTierPlatinum": {
+    "description": "Badge tier name (platinum)."
+  },
+  "badgeTierDiamond": "Diamond",
+  "@badgeTierDiamond": {
+    "description": "Badge tier name (diamond)."
   }
 }

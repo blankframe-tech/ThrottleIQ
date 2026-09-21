@@ -5,6 +5,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../badge_l10n.dart';
 
 /// The Rides tab's badge shelf.
 ///
@@ -68,7 +69,7 @@ class _BadgeFamilyTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: context.l10n.badgeFamilyEarned(progress.family.name, progress.earnedCount, progress.badges.length),
+      label: context.l10n.badgeFamilyEarned(progress.family.localizedName(context.l10n), progress.earnedCount, progress.badges.length),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(context.shape.radiusLg),
@@ -94,7 +95,7 @@ class _BadgeFamilyTile extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                progress.family.name,
+                progress.family.localizedName(context.l10n),
                 maxLines: 2,
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
@@ -115,7 +116,7 @@ class _BadgeFamilyTile extends StatelessWidget {
                     ? (earned ? 'Earned' : 'Locked')
                     : (tier == null
                         ? '0/${progress.badges.length}'
-                        : '${tier.label} · ${progress.earnedCount}/${progress.badges.length}'),
+                        : '${tier.localizedLabel(context.l10n)} · ${progress.earnedCount}/${progress.badges.length}'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -173,7 +174,7 @@ class _BadgeLadderSheet extends StatelessWidget {
                           : context.palette.textTertiary),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(family.name,
+                    child: Text(family.localizedName(context.l10n),
                         style: display(context, 20, letterSpacing: 0)),
                   ),
                   Text('${progress.earnedCount}/${progress.badges.length}',
@@ -182,14 +183,14 @@ class _BadgeLadderSheet extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(family.about,
+              Text(family.localizedAbout(context.l10n),
                   style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
                       color: context.palette.textSecondary)),
               const SizedBox(height: 14),
               Text(
-                context.l10n.youProgress(formatBadgeValue(progress.value), family.unit),
+                context.l10n.youProgress(formatBadgeValue(progress.value), family.localizedUnit(context.l10n)),
                 style: display(context, 15, letterSpacing: 0),
               ),
               if (next != null) ...[
@@ -201,7 +202,7 @@ class _BadgeLadderSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  context.l10n.nextGo(next.def.name, formatBadgeValue(next.def.threshold - progress.value), family.unit),
+                  context.l10n.nextGo(next.def.localizedName(context.l10n), formatBadgeValue(next.def.threshold - progress.value), family.localizedUnit(context.l10n)),
                   style:
                       TextStyle(fontSize: 12, color: context.palette.textTertiary),
                 ),
@@ -252,12 +253,12 @@ class _LadderRow extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(badge.def.name,
+                      child: Text(badge.def.localizedName(context.l10n),
                           style: display(context, 14, letterSpacing: 0)),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      badge.def.tier.label.toUpperCase(),
+                      badge.def.tier.localizedLabel(context.l10n).toUpperCase(),
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
@@ -273,8 +274,8 @@ class _LadderRow extends StatelessWidget {
                   // explain what to do about it, with the gap spelled out so
                   // "how far off am I" never needs mental arithmetic.
                   earned
-                      ? context.l10n.earnedThreshold(family.requirementFor(badge.def.threshold))
-                      : context.l10n.youreAt(family.requirementFor(badge.def.threshold), formatBadgeValue(progress.value), formatBadgeValue(badge.def.threshold), family.unit),
+                      ? context.l10n.earnedThreshold(family.localizedRequirementFor(context.l10n, badge.def.threshold))
+                      : context.l10n.youreAt(family.localizedRequirementFor(context.l10n, badge.def.threshold), formatBadgeValue(progress.value), formatBadgeValue(badge.def.threshold), family.localizedUnit(context.l10n)),
                   style: TextStyle(
                       fontSize: 12,
                       height: 1.35,

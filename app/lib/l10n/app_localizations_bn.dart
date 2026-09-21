@@ -3825,4 +3825,268 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get rankVeteran => 'ভেটেরান';
+
+  @override
+  String get badgeFamFirstName => 'প্রথম রাইড';
+
+  @override
+  String get badgeFamFirstAbout =>
+      'প্রতিটি রাইডারের শুরু — আপনার প্রথম রেকর্ড করা রাইড।';
+
+  @override
+  String get badgeFamFirstReq => 'আপনার প্রথম রাইডটি রেকর্ড করুন।';
+
+  @override
+  String get badgeRungFirstRide => 'প্রথম রাইড';
+
+  @override
+  String get badgeFamRidesName => 'রাইড';
+
+  @override
+  String get badgeFamRidesAbout =>
+      'এ পর্যন্ত আপনি মোট কতগুলো রাইড রেকর্ড করেছেন।';
+
+  @override
+  String badgeFamRidesReq(String n) {
+    return '$nটি রাইড রেকর্ড করুন।';
+  }
+
+  @override
+  String get badgeRungRides10 => '10টি রাইড';
+
+  @override
+  String get badgeRungRides25 => '25টি রাইড';
+
+  @override
+  String get badgeRungRides50 => '50টি রাইড';
+
+  @override
+  String get badgeRungRides100 => '100টি রাইড';
+
+  @override
+  String get badgeRungRides250 => '250টি রাইড';
+
+  @override
+  String get badgeFamDistanceName => 'দূরত্ব';
+
+  @override
+  String get badgeFamDistanceAbout =>
+      'আপনার রেকর্ড করা সব রাইড মিলিয়ে মোট অতিক্রান্ত দূরত্ব।';
+
+  @override
+  String badgeFamDistanceReq(String n) {
+    return 'মোট $n কিমি রাইড করুন।';
+  }
+
+  @override
+  String get badgeRungKm100 => '100 কিমি';
+
+  @override
+  String get badgeRungKm500 => '500 কিমি';
+
+  @override
+  String get badgeRungKm1000 => '1,000 কিমি';
+
+  @override
+  String get badgeRungKm2500 => '2,500 কিমি';
+
+  @override
+  String get badgeRungKm5000 => '5,000 কিমি';
+
+  @override
+  String get badgeFamLongRideName => 'সবচেয়ে লম্বা রাইড';
+
+  @override
+  String get badgeFamLongRideAbout =>
+      'আপনার রেকর্ড করা একক সবচেয়ে লম্বা রাইডের দূরত্ব।';
+
+  @override
+  String badgeFamLongRideReq(String n) {
+    return 'এক রাইডে $n কিমি পাড়ি দিন।';
+  }
+
+  @override
+  String get badgeRungLongRide50 => 'ডে ট্রিপার';
+
+  @override
+  String get badgeRungLongRide100 => 'সেঞ্চুরি';
+
+  @override
+  String get badgeRungLongRide200 => 'লং হলার';
+
+  @override
+  String get badgeRungLongRide400 => 'ট্যুরার';
+
+  @override
+  String get badgeRungLongRide800 => 'আয়রন রাইডার';
+
+  @override
+  String get badgeFamSaddleTimeName => 'স্যাডল টাইম';
+
+  @override
+  String get badgeFamSaddleTimeAbout =>
+      'আপনার রেকর্ড করা একক সবচেয়ে দীর্ঘ রাইডের সময়কাল।';
+
+  @override
+  String badgeFamSaddleTimeReq(String n) {
+    return 'রেকর্ডিং বন্ধ না করে $n ঘণ্টা রাইড করুন।';
+  }
+
+  @override
+  String get badgeRungSaddle1h => 'এক ঘণ্টা';
+
+  @override
+  String get badgeRungSaddle2h => 'দুই ঘণ্টা';
+
+  @override
+  String get badgeRungSaddle4h => 'চার ঘণ্টা';
+
+  @override
+  String get badgeRungSaddle8h => 'আট ঘণ্টা';
+
+  @override
+  String get badgeFamSpeedName => 'সর্বোচ্চ গতি';
+
+  @override
+  String get badgeFamSpeedAbout => 'আপনার সব রাইডে রেকর্ড করা সর্বোচ্চ গতি।';
+
+  @override
+  String badgeFamSpeedReq(String n) {
+    return '$n কিমি/ঘণ্টা সর্বোচ্চ গতি রেকর্ড করুন।';
+  }
+
+  @override
+  String get badgeRungTonUp => 'টন-আপ';
+
+  @override
+  String get badgeRungSpeed140 => 'কুইক';
+
+  @override
+  String get badgeRungSpeedDemon => 'স্পিড ডেমন';
+
+  @override
+  String get badgeFamNightName => 'নাইট রাইডার';
+
+  @override
+  String get badgeFamNightAbout =>
+      'রাত 9টার পর বা ভোর 4টার আগে শুরু হওয়া রাইড।';
+
+  @override
+  String badgeFamNightReq(String n) {
+    return 'রাত 9টা থেকে ভোর 4টার মধ্যে $nটি রাইড শুরু করুন।';
+  }
+
+  @override
+  String get badgeRungNight1 => 'রাতের আঁধারে';
+
+  @override
+  String get badgeRungNight5 => 'নাইট আউল';
+
+  @override
+  String get badgeRungNight25 => 'মুনলাইটার';
+
+  @override
+  String get badgeRungNight50 => 'নিশাচর';
+
+  @override
+  String get badgeFamEarlyName => 'ভোরের পাখি';
+
+  @override
+  String get badgeFamEarlyAbout =>
+      'ভোর 4টা থেকে সকাল 7টার মধ্যে শুরু হওয়া রাইড।';
+
+  @override
+  String badgeFamEarlyReq(String n) {
+    return 'ভোর 4টা থেকে সকাল 7টার মধ্যে $nটি রাইড শুরু করুন।';
+  }
+
+  @override
+  String get badgeRungEarly1 => 'সূর্যোদয়ের রাইড';
+
+  @override
+  String get badgeRungEarly5 => 'ভোরের পাখি';
+
+  @override
+  String get badgeRungEarly25 => 'ডন প্যাট্রোল';
+
+  @override
+  String get badgeFamStreakName => 'ধারাবাহিকতা';
+
+  @override
+  String get badgeFamStreakAbout =>
+      'আপনার রেকর্ড করা রাইডসহ টানা কয়েক দিনের দীর্ঘতম ধারা।';
+
+  @override
+  String badgeFamStreakReq(String n) {
+    return 'টানা $n দিন রাইড করুন।';
+  }
+
+  @override
+  String get badgeRungStreak3 => '3 দিনের ধারা';
+
+  @override
+  String get badgeRungStreak7 => '7 দিনের ধারা';
+
+  @override
+  String get badgeRungStreak14 => '14 দিনের ধারা';
+
+  @override
+  String get badgeRungStreak30 => '30 দিনের ধারা';
+
+  @override
+  String get badgeFamSmoothName => 'মসৃণতা';
+
+  @override
+  String get badgeFamSmoothAbout =>
+      'আপনার গড় রাইডিং স্কোর — কম হার্ড ব্রেক, র‍্যাপিড এক্সেলারেশন ও ঝাঁকুনিতে স্কোর বেশি হয়।';
+
+  @override
+  String badgeFamSmoothReq(String n) {
+    return 'কমপক্ষে 5টি রাইডে গড়ে $n পয়েন্ট পান।';
+  }
+
+  @override
+  String get badgeRungSmooth80 => 'স্থির হাত';
+
+  @override
+  String get badgeRungSmoothOperator => 'স্মুথ অপারেটর';
+
+  @override
+  String get badgeRungSmooth95 => 'সিল্ক';
+
+  @override
+  String get badgeRungSmooth98 => 'অনায়াস';
+
+  @override
+  String get badgeUnitRides => 'রাইড';
+
+  @override
+  String get badgeUnitKm => 'কিমি';
+
+  @override
+  String get badgeUnitHours => 'ঘণ্টা';
+
+  @override
+  String get badgeUnitKmh => 'কিমি/ঘণ্টা';
+
+  @override
+  String get badgeUnitDays => 'দিন';
+
+  @override
+  String get badgeUnitPts => 'পয়েন্ট';
+
+  @override
+  String get badgeTierBronze => 'ব্রোঞ্জ';
+
+  @override
+  String get badgeTierSilver => 'সিলভার';
+
+  @override
+  String get badgeTierGold => 'গোল্ড';
+
+  @override
+  String get badgeTierPlatinum => 'প্ল্যাটিনাম';
+
+  @override
+  String get badgeTierDiamond => 'ডায়মন্ড';
 }

@@ -3816,4 +3816,268 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rankVeteran => 'Veteran';
+
+  @override
+  String get badgeFamFirstName => 'First ride';
+
+  @override
+  String get badgeFamFirstAbout =>
+      'Where every rider starts — your first recorded ride.';
+
+  @override
+  String get badgeFamFirstReq => 'Record your first ride.';
+
+  @override
+  String get badgeRungFirstRide => 'First ride';
+
+  @override
+  String get badgeFamRidesName => 'Rides';
+
+  @override
+  String get badgeFamRidesAbout =>
+      'How many rides you have recorded, all time.';
+
+  @override
+  String badgeFamRidesReq(String n) {
+    return 'Record $n rides.';
+  }
+
+  @override
+  String get badgeRungRides10 => '10 rides';
+
+  @override
+  String get badgeRungRides25 => '25 rides';
+
+  @override
+  String get badgeRungRides50 => '50 rides';
+
+  @override
+  String get badgeRungRides100 => '100 rides';
+
+  @override
+  String get badgeRungRides250 => '250 rides';
+
+  @override
+  String get badgeFamDistanceName => 'Distance';
+
+  @override
+  String get badgeFamDistanceAbout =>
+      'Total distance covered across every ride you have recorded.';
+
+  @override
+  String badgeFamDistanceReq(String n) {
+    return 'Ride $n km in total.';
+  }
+
+  @override
+  String get badgeRungKm100 => '100 km';
+
+  @override
+  String get badgeRungKm500 => '500 km';
+
+  @override
+  String get badgeRungKm1000 => '1,000 km';
+
+  @override
+  String get badgeRungKm2500 => '2,500 km';
+
+  @override
+  String get badgeRungKm5000 => '5,000 km';
+
+  @override
+  String get badgeFamLongRideName => 'Longest ride';
+
+  @override
+  String get badgeFamLongRideAbout =>
+      'The distance of your single longest recorded ride.';
+
+  @override
+  String badgeFamLongRideReq(String n) {
+    return 'Cover $n km in one ride.';
+  }
+
+  @override
+  String get badgeRungLongRide50 => 'Day tripper';
+
+  @override
+  String get badgeRungLongRide100 => 'Century';
+
+  @override
+  String get badgeRungLongRide200 => 'Long hauler';
+
+  @override
+  String get badgeRungLongRide400 => 'Tourer';
+
+  @override
+  String get badgeRungLongRide800 => 'Iron rider';
+
+  @override
+  String get badgeFamSaddleTimeName => 'Saddle time';
+
+  @override
+  String get badgeFamSaddleTimeAbout =>
+      'The duration of your single longest recorded ride.';
+
+  @override
+  String badgeFamSaddleTimeReq(String n) {
+    return 'Ride for $n hours without ending the recording.';
+  }
+
+  @override
+  String get badgeRungSaddle1h => 'One hour';
+
+  @override
+  String get badgeRungSaddle2h => 'Two hours';
+
+  @override
+  String get badgeRungSaddle4h => 'Four hours';
+
+  @override
+  String get badgeRungSaddle8h => 'Eight hours';
+
+  @override
+  String get badgeFamSpeedName => 'Top speed';
+
+  @override
+  String get badgeFamSpeedAbout =>
+      'The highest speed recorded on any of your rides.';
+
+  @override
+  String badgeFamSpeedReq(String n) {
+    return 'Record a top speed of $n km/h.';
+  }
+
+  @override
+  String get badgeRungTonUp => 'Ton-up';
+
+  @override
+  String get badgeRungSpeed140 => 'Quick';
+
+  @override
+  String get badgeRungSpeedDemon => 'Speed demon';
+
+  @override
+  String get badgeFamNightName => 'Night rider';
+
+  @override
+  String get badgeFamNightAbout =>
+      'Rides that set off after 9 pm or before 4 am.';
+
+  @override
+  String badgeFamNightReq(String n) {
+    return 'Start $n rides between 9 pm and 4 am.';
+  }
+
+  @override
+  String get badgeRungNight1 => 'After dark';
+
+  @override
+  String get badgeRungNight5 => 'Night owl';
+
+  @override
+  String get badgeRungNight25 => 'Moonlighter';
+
+  @override
+  String get badgeRungNight50 => 'Nocturnal';
+
+  @override
+  String get badgeFamEarlyName => 'Early bird';
+
+  @override
+  String get badgeFamEarlyAbout => 'Rides that set off between 4 am and 7 am.';
+
+  @override
+  String badgeFamEarlyReq(String n) {
+    return 'Start $n rides between 4 am and 7 am.';
+  }
+
+  @override
+  String get badgeRungEarly1 => 'Sunrise run';
+
+  @override
+  String get badgeRungEarly5 => 'Early bird';
+
+  @override
+  String get badgeRungEarly25 => 'Dawn patrol';
+
+  @override
+  String get badgeFamStreakName => 'Streak';
+
+  @override
+  String get badgeFamStreakAbout =>
+      'Your longest run of consecutive days with a recorded ride.';
+
+  @override
+  String badgeFamStreakReq(String n) {
+    return 'Ride on $n days in a row.';
+  }
+
+  @override
+  String get badgeRungStreak3 => '3-day streak';
+
+  @override
+  String get badgeRungStreak7 => '7-day streak';
+
+  @override
+  String get badgeRungStreak14 => '14-day streak';
+
+  @override
+  String get badgeRungStreak30 => '30-day streak';
+
+  @override
+  String get badgeFamSmoothName => 'Smoothness';
+
+  @override
+  String get badgeFamSmoothAbout =>
+      'Your average riding score — fewer hard brakes, rapid accelerations and jerky inputs score higher.';
+
+  @override
+  String badgeFamSmoothReq(String n) {
+    return 'Average $n points across at least 5 rides.';
+  }
+
+  @override
+  String get badgeRungSmooth80 => 'Steady hands';
+
+  @override
+  String get badgeRungSmoothOperator => 'Smooth operator';
+
+  @override
+  String get badgeRungSmooth95 => 'Silk';
+
+  @override
+  String get badgeRungSmooth98 => 'Effortless';
+
+  @override
+  String get badgeUnitRides => 'rides';
+
+  @override
+  String get badgeUnitKm => 'km';
+
+  @override
+  String get badgeUnitHours => 'h';
+
+  @override
+  String get badgeUnitKmh => 'km/h';
+
+  @override
+  String get badgeUnitDays => 'days';
+
+  @override
+  String get badgeUnitPts => 'pts';
+
+  @override
+  String get badgeTierBronze => 'Bronze';
+
+  @override
+  String get badgeTierSilver => 'Silver';
+
+  @override
+  String get badgeTierGold => 'Gold';
+
+  @override
+  String get badgeTierPlatinum => 'Platinum';
+
+  @override
+  String get badgeTierDiamond => 'Diamond';
 }
