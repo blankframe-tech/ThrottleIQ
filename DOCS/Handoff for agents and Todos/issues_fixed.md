@@ -5813,7 +5813,7 @@ Two GPS subscriptions, and no ride.
 **The shape now** (the plan in `issues_open.md` §78.21, built as approved):
 
 - `features/routes/domain/navigation_progress.dart` — the progress/off-route/ETA/
-  turn-advance maths, extracted out of the screen and made pure. 20 tests
+  turn-advance maths, extracted out of the screen and made pure. 15 tests
   (`test/features/routes/navigation_progress_test.dart`); it had none before.
 - `features/routes/presentation/providers/navigation_session_provider.dart` —
   `NavigationSessionState` (route + manoeuvres + progress). It owns **no** GPS: it
@@ -5821,11 +5821,12 @@ Two GPS subscriptions, and no ride.
   `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence rather
   than at accelerometer cadence. Dependency direction is one-way — routes knows about
   the recorder, the recorder knows nothing about routes, which keeps navigation out of
-  the core loop. 11 tests.
+  the core loop. 10 tests.
 - `RideRecordingNotifier.startRide(routeId:, routeName:)`, plus `route_id`/`route_name`
   on `RideEntity` and **schema v17**. The name is denormalized beside the id because a
   discovered route lives under another rider's uid, a route can be renamed or deleted
-  afterwards, and history reads this in list views. 5 migration/round-trip tests.
+  afterwards, and history reads this in list views. 5 migration/round-trip tests,
+  plus 5 on the sync payload. 35 new tests in all; the suite goes 1242 → 1277.
 - `NavigationBanner`, drawn over the cockpit: turn + distance-to-turn, remaining + ETA,
   the off-route warning, and a close button that drops guidance while the ride keeps
   recording. The three top banners (guidance, alert, "we kept your ride") became one
@@ -5855,8 +5856,8 @@ the columns the local schema actually has, which closes that hazard class rather
 the instance: every column added to `rides` since has needed its own bespoke guard.
 
 **Not verified:** anything that needs a phone on a bike. The maths is unit-tested and
-the cockpit builds, but nobody has ridden a route with this. 1277 tests, analyzer, and
-an Android debug build are clean. See `issues_open.md` §78.21 for what's left.
+the cockpit builds, but nobody has ridden a route with this. The full suite, the
+analyzer and an Android debug build are clean. See `issues_open.md` §78.21 for what's left.
 
 ---
 

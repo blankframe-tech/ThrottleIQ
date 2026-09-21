@@ -308,6 +308,7 @@ live previews, the low-contrast secondary-text pass.
 - **§78.21 — route navigation should record the ride.** ✅ **DONE** (2026-09-21, `job4-infra`) —
   see `issues_fixed.md` §78.21. One GPS stream instead of two: a `NavigationSession` fed by the
   recorder's fixes, `startRide(routeId:)` plus schema v17, and guidance drawn over the cockpit.
+  35 new tests (1242 → 1277).
   **Device-untested** — it needs a phone on a bike; that and four smaller caveats are listed in
   `issues_open.md` §78.21.
 - **§74 — Retro/Light near-black cards.** ✅ Fixed — it was an `AppCard` paint-order bug, not a palette token. _(Done inside JOB 1 — see `issues_fixed.md` §74.)_

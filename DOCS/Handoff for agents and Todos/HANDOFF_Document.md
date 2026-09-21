@@ -867,8 +867,8 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   and its `rides`/`bikes` subcollections are gone in the console. Update
   the Play Data Safety form for Audio (`DOCS/General/store_listing/`).
 - [ ] 🔴 **Route navigation now records the ride** (`issues_fixed.md` §78.21, 2026-09-21).
-  The progress maths has 31 unit tests and the cockpit builds, but **nobody has
-  ridden it**, and it touches the core recording loop. Needs a phone on a bike
+  The progress maths and session have 25 unit tests between them and the cockpit
+  builds, but **nobody has ridden it**, and it touches the core recording loop. Needs a phone on a bike
   (or a GPX-replaying simulator): open a saved route → "Start ride & guide me"
   → confirm one GPS stream and not two (battery/thermal behaviour should match
   an ordinary ride), the turn banner advances at real corners including ones

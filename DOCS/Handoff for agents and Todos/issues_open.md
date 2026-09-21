@@ -388,7 +388,8 @@ What remains open:
   so there is one GPS stream instead of two, and the ride lands in history with
   the route stamped on it (schema v17).
   **What is still open on it:**
-  - **Nobody has ridden it.** The progress maths has 31 new unit tests and the
+  - **Nobody has ridden it.** The progress maths and the session have 25 new
+    unit tests between them (35 in all with the migration and sync ones), and the
     Android debug build is clean, but the whole feature is device-untested —
     it needs a phone on a bike, or a GPX-replaying simulator. This is the same
     caveat §78.12 carries, and it is the one that matters here: the change
