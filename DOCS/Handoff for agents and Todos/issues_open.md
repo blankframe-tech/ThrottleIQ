@@ -578,7 +578,7 @@ coordinators as `final` fields; `maintenance_provider.dart:16` is a file-level
 directly in 20 places and `FirebaseAuth.instance` in 9. `CrashCoordinator`
 accepts an injected Firestore — so the pattern was known — and the notifier
 that owns it calls the no-arg constructor anyway. **This is the same root
-cause as 81.28:** nothing that touches I/O is injectable, so nothing that
+cause as 83.28:** nothing that touches I/O is injectable, so nothing that
 touches I/O is tested.
 
 ### 83.14 — 53 bare `catch (_)` blocks
@@ -675,7 +675,7 @@ contradicting its own privacy policy.
 18 files `pumpWidget` at all. The 1,195 passing tests cover the pure
 calculators exhaustively and the presentation layer essentially not at all —
 which is where every UX defect in this section lived. Same root cause as
-81.13.
+83.13.
 
 ### 83.31 — triage, not more critique
 
