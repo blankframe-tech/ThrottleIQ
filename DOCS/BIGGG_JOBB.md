@@ -28,7 +28,7 @@ think one is wrong, say so once, in a sentence, and then do it.
 
 | | |
 |---|---|
-| Branch | work is on local branches `appcolors` → `i18n` → `job3-ux` → `job4-infra` (a clean stack: each contains the one before, nothing on `main` that isn't in them) |
+| Branch | **`main` @ `5ac4ebd` — all four branches merged 2026-09-21** (`appcolors` → `i18n` → `job3-ux` → `job4-infra`, in that order; the stack was linear so each merge was a fast-forward, no conflicts). Analyzer, 1277 app tests and 38 script tests re-run clean on the merged `main`. |
 | Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
 | Tests | **1277** passing on `job4-infra` (which contains `appcolors` + `i18n` + `job3-ux`); `main` has 1195 |
 | Analyzer | clean (zero issues) |
@@ -197,7 +197,7 @@ before promising anything server-side.
 | **Crash detection** | **Leave as-is.** Flag stays off. No further work. Stop raising it. |
 | **Map tiles** | Founder signing up for a free provider. Recommendation: **Thunderforest** (raster-native, drops into `TILE_URL_TEMPLATE`/`{apiKey}` with no code change; free key, no card; Atlas style is built for navigation legibility). Verify the quota on their live pricing page — the 150k/month figure traces to 2019 docs. |
 | **Live `throttleiqfb` data** | **Direct execution authorized** for cleanup/migration scripts. |
-| **`AppColors` migration** | ✅ Done on branch **`appcolors`**, awaiting merge. |
+| **`AppColors` migration** | ✅ Done on branch **`appcolors`**, merged to `main` 2026-09-21. |
 | **Localization** | **Everything** — all 260 files. |
 | **Bangla review** | Reviewer available. Keep translating; hand off each batch marked pending. |
 | **Keystore (§78.18)** | ✅ Backed up. That half closed. |
@@ -222,7 +222,7 @@ revisited, it should be before then.
 
 ### JOB 1 — `appcolors`: kill the static token facades — ✅ DONE
 
-**Done 2026-09-21 on branch `appcolors`, awaiting the founder's merge.**
+**Done 2026-09-21 on branch `appcolors`; merged to `main` the same day.**
 Details and verification numbers: `issues_fixed.md` §83.9 (rest) and §74.
 
 What exists now: `AppColorPalette` / `AppShapeProfile` are `ThemeExtension`s,

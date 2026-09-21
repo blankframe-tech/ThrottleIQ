@@ -36,7 +36,7 @@ Recorded so the next agent doesn't re-litigate them.
 | **Crash detection** | **Leave as-is.** Flag stays off, no further work, stop raising it. |
 | **Map tiles** | Founder will sign up for a free provider; see the recommendation below. |
 | **Live `throttleiqfb` data** | **Direct execution authorized** for cleanup/migration scripts. |
-| **`AppColors` migration** | ✅ **DONE on branch `appcolors` (2026-09-21), awaiting merge** — see issues_fixed.md §83.9 (rest). Was: do it all at once on a branch named `appcolors`. Scope is **three** static facades (AppColors/AppDimensions/AppTypography, ~1,942 sites), not just AppColors — see §83.9. |
+| **`AppColors` migration** | ✅ **DONE on branch `appcolors` (2026-09-21), merged to `main` same day** — see issues_fixed.md §83.9 (rest). Was: do it all at once on a branch named `appcolors`. Scope is **three** static facades (AppColors/AppDimensions/AppTypography, ~1,942 sites), not just AppColors — see §83.9. |
 | **Localization** | ✅ Done on branch `i18n` (2026-09-21); Bangla review + device check pending — see §83.23. |
 | **Bangla review** | Reviewer available; keep translating and mark each batch pending review. |
 | **Keystore (§78.18)** | ✅ **Backed up safely.** That half of §78.18 is closed. |
