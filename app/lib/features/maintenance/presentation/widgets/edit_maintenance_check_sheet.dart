@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../domain/entities/maintenance_entity.dart';
@@ -195,12 +195,12 @@ class _EditMaintenanceCheckSheetState
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl),
+          top: Radius.circular(context.shape.radiusXl),
         ),
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 1),
+          top: BorderSide(color: context.palette.border, width: 1),
         ),
       ),
       padding: EdgeInsets.fromLTRB(
@@ -222,7 +222,7 @@ class _EditMaintenanceCheckSheetState
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.textTertiary.withValues(alpha: 0.3),
+                    color: context.palette.textTertiary.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -235,23 +235,23 @@ class _EditMaintenanceCheckSheetState
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: context.palette.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, color: AppColors.primary, size: 22),
+                    child: Icon(icon, color: context.palette.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(type.label, style: display(18)),
+                        Text(type.label, style: display(context, 18)),
                         const SizedBox(height: 2),
                         Text(
                           type.description,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
+                            color: context.palette.textSecondary,
                             height: 1.2,
                           ),
                         ),
@@ -267,9 +267,9 @@ class _EditMaintenanceCheckSheetState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -282,14 +282,14 @@ class _EditMaintenanceCheckSheetState
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: context.palette.textPrimary,
                           ),
                         ),
                         Text(
                           'Calculate wear and monitor interval',
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.textTertiary,
+                            color: context.palette.textTertiary,
                           ),
                         ),
                       ],
@@ -297,7 +297,7 @@ class _EditMaintenanceCheckSheetState
                     Switch.adaptive(
                       value: _isEnabled,
                       onChanged: (v) => setState(() => _isEnabled = v),
-                      activeTrackColor: AppColors.primary,
+                      activeTrackColor: context.palette.primary,
                     ),
                   ],
                 ),
@@ -310,13 +310,13 @@ class _EditMaintenanceCheckSheetState
               TextFormField(
                 controller: _intervalCtrl,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Interval Distance (km)',
                   suffixText: 'km',
                   prefixIcon: const Icon(Icons.speed, size: 20),
                   filled: true,
-                  fillColor: AppColors.surfaceVariant,
+                  fillColor: context.palette.surfaceVariant,
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Required';
@@ -342,8 +342,8 @@ class _EditMaintenanceCheckSheetState
                         fontWeight:
                             matches ? FontWeight.w700 : FontWeight.normal,
                         color: matches
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
+                            ? context.palette.primary
+                            : context.palette.textSecondary,
                       ),
                     ),
                     onPressed: () {
@@ -352,10 +352,10 @@ class _EditMaintenanceCheckSheetState
                       });
                     },
                     backgroundColor: matches
-                        ? AppColors.primary.withValues(alpha: 0.15)
-                        : AppColors.surfaceVariant,
+                        ? context.palette.primary.withValues(alpha: 0.15)
+                        : context.palette.surfaceVariant,
                     side: BorderSide(
-                      color: matches ? AppColors.primary : AppColors.border,
+                      color: matches ? context.palette.primary : context.palette.border,
                     ),
                   );
                 }).toList(),
@@ -371,7 +371,7 @@ class _EditMaintenanceCheckSheetState
                     'Optional text',
                     style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.textTertiary,
+                      color: context.palette.textTertiary,
                     ),
                   ),
                 ],
@@ -381,13 +381,13 @@ class _EditMaintenanceCheckSheetState
                 controller: _notesCtrl,
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   labelText: 'Specs (oil grade, tyre sizes & dates...)',
                   hintText: hint,
                   alignLabelWithHint: true,
                   filled: true,
-                  fillColor: AppColors.surfaceVariant,
+                  fillColor: context.palette.surfaceVariant,
                   prefixIcon: const Padding(
                     padding: EdgeInsets.only(bottom: 24),
                     child: Icon(Icons.edit_note, size: 22),
@@ -399,7 +399,7 @@ class _EditMaintenanceCheckSheetState
                 'Visible on your maintenance card for quick reference.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textTertiary,
+                  color: context.palette.textTertiary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -412,16 +412,16 @@ class _EditMaintenanceCheckSheetState
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: AppColors.border),
+                        side: BorderSide(color: context.palette.border),
                         shape: RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusMd),
+                              BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                       child: Text(
                         'Cancel',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: context.palette.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -435,7 +435,7 @@ class _EditMaintenanceCheckSheetState
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusMd),
+                              BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                       child: _saving

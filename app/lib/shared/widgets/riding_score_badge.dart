@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimensions.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/utils/riding_score.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -22,16 +21,16 @@ class RidingScoreBadge extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final tier = ridingScoreTier(score);
     final (color, label, icon) = switch (tier) {
-      RidingScoreTier.smooth => (AppColors.success, l10n.scoreSmoothLabel, Icons.emoji_events),
-      RidingScoreTier.steady => (AppColors.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
-      RidingScoreTier.aggressive => (AppColors.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
+      RidingScoreTier.smooth => (context.palette.success, l10n.scoreSmoothLabel, Icons.emoji_events),
+      RidingScoreTier.steady => (context.palette.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
+      RidingScoreTier.aggressive => (context.palette.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
@@ -51,11 +50,11 @@ class RidingScoreBadge extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l10n.ridingScoreLabel,
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
                 const SizedBox(height: 2),
                 Text(label,
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
               ],
             ),
           ),

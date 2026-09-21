@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -79,7 +78,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
             polylines: [
               Polyline(
                 points: polyline,
-                color: AppColors.primary,
+                color: context.palette.primary,
                 strokeWidth: 4,
               ),
             ],
@@ -93,9 +92,9 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                 height: 32,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: context.palette.surface,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.palette.border),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -112,11 +111,11 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                     border: Border.all(color: Colors.white, width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.5),
+                        color: context.palette.primary.withValues(alpha: 0.5),
                         blurRadius: 8,
                       )
                     ],
@@ -176,16 +175,16 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     Color flashColor;
     switch (alert) {
       case RideAlert.hardBraking:
-        flashColor = AppColors.danger.withValues(alpha: 0.4);
+        flashColor = context.palette.danger.withValues(alpha: 0.4);
         break;
       case RideAlert.rapidAccel:
-        flashColor = AppColors.secondary.withValues(alpha: 0.3);
+        flashColor = context.palette.secondary.withValues(alpha: 0.3);
         break;
       case RideAlert.overspeed:
-        flashColor = AppColors.warning.withValues(alpha: 0.3);
+        flashColor = context.palette.warning.withValues(alpha: 0.3);
         break;
       case RideAlert.fatigue:
-        flashColor = AppColors.primary.withValues(alpha: 0.3);
+        flashColor = context.palette.primary.withValues(alpha: 0.3);
         break;
       default:
         return;
@@ -234,24 +233,24 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     }
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.share, color: AppColors.textPrimary),
+              leading: Icon(Icons.share, color: sheetContext.palette.textPrimary),
               title: Text(AppLocalizations.of(sheetContext).liveShareAgainAction,
-                  style: TextStyle(color: AppColors.textPrimary)),
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.pop(sheetContext, 'share'),
             ),
             ListTile(
-              leading: Icon(Icons.location_off, color: AppColors.danger),
+              leading: Icon(Icons.location_off, color: sheetContext.palette.danger),
               title: Text(AppLocalizations.of(sheetContext).liveShareStopAction,
-                  style: TextStyle(color: AppColors.danger)),
+                  style: TextStyle(color: sheetContext.palette.danger)),
               subtitle: Text(
                 AppLocalizations.of(sheetContext).liveShareStopDescription,
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: sheetContext.palette.textSecondary),
               ),
               onTap: () => Navigator.pop(sheetContext, 'stop'),
             ),
@@ -300,14 +299,14 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
         title: Text('Discard this ride?',
-            style: TextStyle(color: AppColors.textPrimary)),
+            style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
           '$distance over $duration will be deleted. This ride will not be '
           'saved to your history and cannot be recovered.',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
@@ -316,7 +315,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Discard', style: TextStyle(color: AppColors.danger)),
+            child: Text('Discard', style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -440,7 +439,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [AppColors.background, AppColors.background.withValues(alpha: 0)],
+                  colors: [context.palette.background, context.palette.background.withValues(alpha: 0)],
                 ),
               ),
               child: Row(
@@ -448,7 +447,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   const Spacer(),
                   Text(
                     SpeedFormatter.durationFromDuration(rideState.elapsed),
-                    style: AppTypography.cockpitValue(),
+                    style: AppTypography.cockpitValue(context),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
@@ -463,14 +462,14 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.textPrimary,
+                              color: context.palette.textPrimary,
                             ),
                           )
                         : Icon(
                             rideState.liveSessionToken != null
                                 ? Icons.share_location
                                 : Icons.location_disabled,
-                            color: AppColors.textPrimary,
+                            color: context.palette.textPrimary,
                           ),
                     tooltip: rideState.liveSessionToken != null
                         ? 'Live sharing on'
@@ -490,9 +489,9 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.94),
+                  color: context.palette.surface.withValues(alpha: 0.94),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -512,10 +511,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                       curve: Curves.easeOut,
                       builder: (context, value, child) => Text(
                         value.toStringAsFixed(0),
-                        style: display(64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
+                        style: display(context, 64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
                       ),
                     ),
-                    Text('km/h', style: AppTypography.cockpitLabel()),
+                    Text('km/h', style: AppTypography.cockpitLabel(context)),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -560,7 +559,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [AppColors.background, AppColors.background.withValues(alpha: 0)],
+                  colors: [context.palette.background, context.palette.background.withValues(alpha: 0)],
                 ),
               ),
               child: Column(
@@ -575,7 +574,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(alpha: 0.65),
+                                      color: context.palette.primary.withValues(alpha: 0.65),
                                       blurRadius: 26,
                                       spreadRadius: 1,
                                     ),
@@ -590,9 +589,9 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             label: Text(isPaused ? 'Resume' : 'Pause'),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(0, 52),
-                              backgroundColor: isPaused ? AppColors.surface : null,
-                              foregroundColor: AppColors.primary,
-                              side: BorderSide(color: AppColors.primary),
+                              backgroundColor: isPaused ? context.palette.surface : null,
+                              foregroundColor: context.palette.primary,
+                              side: BorderSide(color: context.palette.primary),
                             ),
                           ),
                         ),
@@ -605,7 +604,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                           label: const Text('End Ride'),
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(0, 52),
-                            backgroundColor: AppColors.danger,
+                            backgroundColor: context.palette.danger,
                           ),
                         ),
                       ),
@@ -618,10 +617,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   // it that keeps everything.
                   TextButton.icon(
                     onPressed: _cancelRide,
-                    icon: Icon(Icons.delete_outline, size: 18, color: AppColors.textSecondary),
+                    icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textSecondary),
                     label: Text(
                       'Discard ride',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
                     ),
                   ),
                 ],
@@ -652,24 +651,24 @@ class _RecoveredBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.primary),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
+        border: Border.all(color: context.palette.primary),
       ),
       child: Row(
         children: [
-          Icon(Icons.restore, size: 20, color: AppColors.primary),
+          Icon(Icons.restore, size: 20, color: context.palette.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Ride kept from last time', style: display(14, letterSpacing: 0)),
+                Text('Ride kept from last time', style: display(context, 14, letterSpacing: 0)),
                 const SizedBox(height: 2),
                 Text(
                   'Resume to carry on, or discard it to start fresh.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -772,22 +771,22 @@ class _GForceBar extends StatelessWidget {
     final clamped = gForce.clamp(-1.5, 1.5);
     final fraction = (clamped + 1.5) / 3.0; // 0.0 to 1.0
     final color = accelMs2 < -4
-        ? AppColors.danger
+        ? context.palette.danger
         : accelMs2 > 4
-            ? AppColors.secondary
-            : AppColors.success;
+            ? context.palette.secondary
+            : context.palette.success;
 
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('BRAKE', style: AppTypography.cockpitLabel(letterSpacing: 0.5)),
+            Text('BRAKE', style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
             Text(
               '${gForce.abs().toStringAsFixed(2)}g',
-              style: AppTypography.cockpitValue(color: color, weight: FontWeight.w600),
+              style: AppTypography.cockpitValue(context, color: color, weight: FontWeight.w600),
             ),
-            Text('ACCEL', style: AppTypography.cockpitLabel(letterSpacing: 0.5)),
+            Text('ACCEL', style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
           ],
         ),
         const SizedBox(height: 4),
@@ -795,13 +794,13 @@ class _GForceBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: Stack(
             children: [
-              Container(height: 6, color: AppColors.border),
+              Container(height: 6, color: context.palette.border),
               // Center marker
               Positioned(
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Container(width: 2, height: 6, color: AppColors.textTertiary),
+                  child: Container(width: 2, height: 6, color: context.palette.textTertiary),
                 ),
               ),
               // Fill from center
@@ -831,8 +830,8 @@ class _RideStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: AppTypography.cockpitValue()),
-        Text(label, style: AppTypography.cockpitLabel()),
+        Text(value, style: AppTypography.cockpitValue(context)),
+        Text(label, style: AppTypography.cockpitLabel(context)),
       ],
     );
   }
@@ -849,20 +848,20 @@ class _AlertBanner extends StatelessWidget {
     // the wrong thing to leave untranslated (issues §83.23).
     final l10n = AppLocalizations.of(context);
     final (message, color) = switch (alert) {
-      RideAlert.hardBraking => (l10n.rideAlertHardBraking, AppColors.danger),
-      RideAlert.rapidAccel => (l10n.rideAlertRapidAccel, AppColors.attention),
-      RideAlert.overspeed => (l10n.rideAlertOverspeed, AppColors.attention),
-      RideAlert.fatigue => (l10n.rideAlertFatigue, AppColors.primary),
-      _ => ('', AppColors.primary),
+      RideAlert.hardBraking => (l10n.rideAlertHardBraking, context.palette.danger),
+      RideAlert.rapidAccel => (l10n.rideAlertRapidAccel, context.palette.attention),
+      RideAlert.overspeed => (l10n.rideAlertOverspeed, context.palette.attention),
+      RideAlert.fatigue => (l10n.rideAlertFatigue, context.palette.primary),
+      _ => ('', context.palette.primary),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
         boxShadow: [
-          BoxShadow(color: AppColors.ink.withValues(alpha: 0.06), blurRadius: 12),
+          BoxShadow(color: context.palette.ink.withValues(alpha: 0.06), blurRadius: 12),
         ],
       ),
       child: Row(
@@ -873,7 +872,7 @@ class _AlertBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Flexible(
             child: Text(message,
-                style: display(14, letterSpacing: 0)),
+                style: display(context, 14, letterSpacing: 0)),
           ),
         ],
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../features/auth/presentation/widgets/tour_floating_banner.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -76,8 +76,8 @@ class AppShell extends StatelessWidget {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          color: context.palette.surface,
+          border: Border(top: BorderSide(color: context.palette.border, width: 1)),
         ),
         child: BottomNavigationBar(
           currentIndex: idx,
@@ -85,8 +85,8 @@ class AppShell extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textTertiary,
+          selectedItemColor: context.palette.primary,
+          unselectedItemColor: context.palette.textTertiary,
           selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -120,9 +120,9 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         title: const Text('Save as route'),
       ),
       body: SingleChildScrollView(
@@ -136,7 +136,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                 SizedBox(
                   height: 180,
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                    child: CircularProgressIndicator(color: context.palette.primary),
                   ),
                 )
               else
@@ -146,7 +146,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                 _loadingTrail
                     ? 'Loading track…'
                     : '${_distanceKm.toStringAsFixed(1)} km · ${_polyline.length} points',
-                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 24),
               const EditorialLabel('Route name'),
@@ -154,7 +154,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               TextFormField(
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                   hintText: 'e.g. Dhaka – Mawa morning run',
                 ),
@@ -167,7 +167,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               TextFormField(
                 controller: _descCtrl,
                 maxLines: 3,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                   hintText: 'Road surface, best time to ride, where to stop…',
                   alignLabelWithHint: true,
@@ -177,24 +177,24 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _isPublic,
-                  activeThumbColor: AppColors.primary,
+                  activeThumbColor: context.palette.primary,
                   onChanged: (v) => setState(() => _isPublic = v),
                   title: Text(
                     _isPublic ? 'Public' : 'Private',
-                    style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
                   ),
                   subtitle: Text(
                     _isPublic
                         ? 'Any rider can find and ride this route'
                         : 'Only you can see this route',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                   ),
                 ),
               ),

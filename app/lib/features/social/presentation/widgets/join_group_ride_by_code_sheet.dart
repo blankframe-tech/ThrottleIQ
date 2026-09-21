@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -24,7 +24,7 @@ class JoinGroupRideByCodeSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       builder: (_) => const JoinGroupRideByCodeSheet(),
     );
   }
@@ -108,13 +108,13 @@ class _JoinGroupRideByCodeSheetState
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: context.palette.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             l10n.joinRideByCodeSubtitle,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -123,7 +123,7 @@ class _JoinGroupRideByCodeSheetState
             textCapitalization: TextCapitalization.characters,
             maxLength: kJoinCodeLength + 2, // tolerate a stray space or two
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.palette.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               letterSpacing: 4,
@@ -148,7 +148,7 @@ class _JoinGroupRideByCodeSheetState
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.surface),
+                          strokeWidth: 2, color: context.palette.surface),
                     )
                   : Text(l10n.joinRideAction),
             ),

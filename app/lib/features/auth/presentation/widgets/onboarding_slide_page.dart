@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../screens/onboarding_manifest.dart';
 import 'onboarding_ui_mockups.dart';
 
@@ -58,7 +58,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
     final accent = slide.accentColor;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -96,7 +96,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                     onPressed: widget.onSkip,
                     child: Text(
                       'Skip tour',
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+                      style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
                     ),
                   ),
                 ],
@@ -116,7 +116,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                          color: context.palette.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -125,7 +125,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                         slide.subtitle,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: context.palette.textSecondary,
                           height: 1.3,
                         ),
                       ),
@@ -195,14 +195,14 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w700,
-                                                  color: AppColors.textPrimary,
+                                                  color: context.palette.textPrimary,
                                                 ),
                                               ),
                                               TextSpan(
                                                 text: p.description,
                                                 style: TextStyle(
                                                   fontSize: 12,
-                                                  color: AppColors.textSecondary,
+                                                  color: context.palette.textSecondary,
                                                   height: 1.3,
                                                 ),
                                               ),
@@ -227,7 +227,7 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
                                         decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
                                       ),
                                       Expanded(
-                                        child: Text(b, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                        child: Text(b, style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
                                       ),
                                     ],
                                   ),
@@ -313,7 +313,7 @@ class _PageDots extends StatelessWidget {
           width: isActive ? 20 : 7,
           height: 7,
           decoration: BoxDecoration(
-            color: isActive ? activeColor : AppColors.border,
+            color: isActive ? activeColor : context.palette.border,
             borderRadius: BorderRadius.circular(4),
           ),
         );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -30,7 +30,7 @@ class GroupRideFriendPickerSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet<List<UserProfileEntity>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       builder: (_) => const GroupRideFriendPickerSheet(),
     );
   }
@@ -141,7 +141,7 @@ class _GroupRideFriendPickerSheetState
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                 ),
@@ -150,10 +150,10 @@ class _GroupRideFriendPickerSheetState
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: _selected.isEmpty
-                        ? AppColors.surfaceVariant
-                        : AppColors.primary.withValues(alpha: 0.12),
+                        ? context.palette.surfaceVariant
+                        : context.palette.primary.withValues(alpha: 0.12),
                     borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusFull),
+                        BorderRadius.circular(context.shape.radiusFull),
                   ),
                   child: Text(
                     '${_selected.length}/$kMaxGroupRideFriends selected',
@@ -161,8 +161,8 @@ class _GroupRideFriendPickerSheetState
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: _selected.isEmpty
-                          ? AppColors.textSecondary
-                          : AppColors.primary,
+                          ? context.palette.textSecondary
+                          : context.palette.primary,
                     ),
                   ),
                 ),
@@ -173,13 +173,13 @@ class _GroupRideFriendPickerSheetState
               'Pick $kMinGroupRideFriends–$kMaxGroupRideFriends riders. '
               'Your ride starts recording right away; they join from their '
               'notifications.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
               autofocus: true,
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: context.palette.textPrimary),
               decoration: const InputDecoration(
                 hintText: '@username or email',
                 prefixIcon: Icon(Icons.search),
@@ -213,7 +213,7 @@ class _GroupRideFriendPickerSheetState
                 child: Text(
                   problem,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ),
             SizedBox(
@@ -237,7 +237,7 @@ class _GroupRideFriendPickerSheetState
 
   Widget _buildResults() {
     if (_loading) {
-      return Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(child: CircularProgressIndicator(color: context.palette.primary));
     }
     if (_results.isEmpty) {
       return Center(
@@ -245,7 +245,7 @@ class _GroupRideFriendPickerSheetState
           _controller.text.trim().isEmpty
               ? 'Search by @username or email'
               : 'No riders found',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.palette.textSecondary),
         ),
       );
     }
@@ -280,18 +280,18 @@ class _RiderPickTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? AppColors.primary.withValues(alpha: 0.08)
-          : AppColors.surface,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          ? context.palette.primary.withValues(alpha: 0.08)
+          : context.palette.surface,
+      borderRadius: BorderRadius.circular(context.shape.radiusMd),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(context.shape.radiusMd),
             border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
+              color: selected ? context.palette.primary : context.palette.border,
             ),
           ),
           child: Row(
@@ -308,21 +308,21 @@ class _RiderPickTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     if (rider.username != null)
                       Text(
                         '@${rider.username}',
                         style: TextStyle(
-                            fontSize: 12, color: AppColors.textSecondary),
+                            fontSize: 12, color: context.palette.textSecondary),
                       ),
                   ],
                 ),
               ),
               Icon(
                 selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: selected ? AppColors.primary : AppColors.textTertiary,
+                color: selected ? context.palette.primary : context.palette.textTertiary,
                 size: 22,
               ),
             ],

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/utils/badges.dart';
@@ -55,11 +55,11 @@ class UserProfileScreen extends ConsumerWidget {
 
     if (targetUid == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         appBar: AppBar(title: const Text('Profile')),
         body: Center(
           child: Text('Sign in to view your profile',
-              style: TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(color: context.palette.textSecondary)),
         ),
       );
     }
@@ -67,19 +67,19 @@ class UserProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileProvider(targetUid));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
           if (isMe)
             TextButton.icon(
               onPressed: () => context.push('/profile/edit'),
-              icon: Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
-              label: Text('Edit', style: TextStyle(color: AppColors.primary)),
+              icon: Icon(Icons.edit_outlined, size: 18, color: context.palette.primary),
+              label: Text('Edit', style: TextStyle(color: context.palette.primary)),
             )
           else
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppColors.textPrimary),
+              icon: Icon(Icons.more_vert, color: context.palette.textPrimary),
               onSelected: (value) async {
                 if (value == 'block' && myUid != null) {
                   await ref.read(profileRepositoryProvider).blockUser(myUid, targetUid);
@@ -113,7 +113,7 @@ class UserProfileScreen extends ConsumerWidget {
         ],
       ),
       body: profileAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ProfileLoadErrorView(
           failure: classifyProfileError(e),
           onRetry: () => ref.invalidate(profileProvider(targetUid)),
@@ -125,7 +125,7 @@ class UserProfileScreen extends ConsumerWidget {
                   isMe
                       ? 'Tap Edit to finish setting up your profile'
                       : 'Rider not found',
-                  style: TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: context.palette.textSecondary)),
             );
           }
           return _ProfileBody(profile: profile, isMe: isMe, myUid: myUid);
@@ -160,26 +160,26 @@ class _ProfileBody extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(profile.bestName,
                     style: TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        fontSize: 20, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
                 if (profile.username != null)
                   Text('@${profile.username}',
-                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
                 // bestName above already prefers the nickname, so only show
                 // the real name separately when it isn't what's on top.
                 if (profile.displayName.trim().isNotEmpty &&
                     profile.displayName.trim() != profile.bestName)
                   Text(profile.displayName.trim(),
-                      style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
+                      style: TextStyle(fontSize: 13, color: context.palette.textTertiary)),
                 if (profile.bio != null && profile.bio!.trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(profile.bio!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                 ],
                 if (profile.createdAt != null) ...[
                   const SizedBox(height: 8),
                   Text('Riding with us since ${DateFormat.yMMMM(kNumericLocale).format(profile.createdAt!)}',
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                 ],
               ],
             ),
@@ -219,8 +219,8 @@ class _ProfileBody extends ConsumerWidget {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isFollowing ? AppColors.surfaceVariant : AppColors.primary,
-                        foregroundColor: isFollowing ? AppColors.textPrimary : Colors.white,
+                        backgroundColor: isFollowing ? context.palette.surfaceVariant : context.palette.primary,
+                        foregroundColor: isFollowing ? context.palette.textPrimary : Colors.white,
                       ),
                       child: Text(isFollowing ? 'Following' : 'Follow'),
                     ),
@@ -250,8 +250,8 @@ class _ProfileBody extends ConsumerWidget {
                       }
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary),
+                      foregroundColor: context.palette.primary,
+                      side: BorderSide(color: context.palette.primary),
                     ),
                     child: const Text('Message'),
                   ),
@@ -277,21 +277,21 @@ class _ProfileBody extends ConsumerWidget {
           const SizedBox(height: 24),
           Text('Badges',
               style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           earnedBadges.isEmpty
               ? Text('No badges earned yet',
-                  style: TextStyle(fontSize: 13, color: AppColors.textTertiary))
+                  style: TextStyle(fontSize: 13, color: context.palette.textTertiary))
               : Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     for (final b in earnedBadges)
                       Chip(
-                        avatar: Icon(Icons.military_tech, size: 16, color: AppColors.primary),
+                        avatar: Icon(Icons.military_tech, size: 16, color: context.palette.primary),
                         label: Text(b.name),
-                        backgroundColor: AppColors.surface,
-                        side: BorderSide(color: AppColors.border),
+                        backgroundColor: context.palette.surface,
+                        side: BorderSide(color: context.palette.border),
                       ),
                   ],
                 ),
@@ -343,15 +343,15 @@ class _GarageSection extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
             ),
             if (isMe)
               Row(
                 children: [
-                  Icon(Icons.visibility_outlined, size: 14, color: AppColors.textTertiary),
+                  Icon(Icons.visibility_outlined, size: 14, color: context.palette.textTertiary),
                   const SizedBox(width: 4),
                   Text(bikesVisibilityLabel(profile.bikesVisibility),
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                 ],
               ),
           ],
@@ -359,12 +359,12 @@ class _GarageSection extends ConsumerWidget {
         if (isMe) ...[
           const SizedBox(height: 2),
           Text('Who can see my bikes — change this under Edit',
-              style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+              style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
         ],
         const SizedBox(height: 12),
         if (bikes.isEmpty)
           Text('No bikes yet',
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary))
+              style: TextStyle(fontSize: 13, color: context.palette.textTertiary))
         else
           for (final bike in bikes)
             Padding(
@@ -372,13 +372,13 @@ class _GarageSection extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(AppDimensions.paddingMd),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
+                    Icon(Icons.two_wheeler, size: 20, color: context.palette.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -388,13 +388,13 @@ class _GarageSection extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           Text(
                             [
                               if (bike.cc != null) '${bike.cc}cc',
                               SpeedFormatter.distanceKm(bike.totalDistanceM),
                             ].join(' · '),
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                           ),
                         ],
                       ),
@@ -419,8 +419,8 @@ class _CountStat extends ConsumerWidget {
       children: [
         Text(value.valueOrNull?.toString() ?? '—',
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
+        Text(label, style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
       ],
     );
   }
@@ -436,17 +436,17 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         children: [
           Text(value,
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
         ],
       ),
     );

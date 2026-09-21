@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
@@ -41,11 +41,11 @@ class StatsScreen extends ConsumerWidget {
     ref.watch(badgeSyncProvider); // fire-and-forget; UI never awaits this
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: SafeArea(
         child: statsAsync.when(
           loading: () => Center(
-              child: CircularProgressIndicator(color: AppColors.primary)),
+              child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => Center(
               child: ErrorView(
                 error: e,
@@ -63,7 +63,7 @@ class StatsScreen extends ConsumerWidget {
             final header = Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-              child: Text('Your Journey', style: display(28)),
+              child: Text('Your Journey', style: display(context, 28)),
             );
 
             if (stats.totalRides == 0) {
@@ -79,16 +79,16 @@ class StatsScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.insights_outlined,
-                                size: 56, color: AppColors.textTertiary),
+                                size: 56, color: context.palette.textTertiary),
                             const SizedBox(height: 16),
                             Text('No rides yet',
                                 style: TextStyle(
-                                    color: AppColors.textSecondary, fontSize: 16)),
+                                    color: context.palette.textSecondary, fontSize: 16)),
                             const SizedBox(height: 8),
                             Text('Go for a ride to start your journey.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                    color: AppColors.textTertiary, fontSize: 14)),
+                                    color: context.palette.textTertiary, fontSize: 14)),
                           ],
                         ),
                       ),
@@ -165,13 +165,13 @@ class StatsScreen extends ConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: Text('Level $level · $rank',
-                                        style: display(18, letterSpacing: 0)),
+                                        style: display(context, 18, letterSpacing: 0)),
                                   ),
                                   Text(
                                       '${kmIntoLevel.toStringAsFixed(0)}/${_kmPerLevel.toStringAsFixed(0)} km',
                                       style: TextStyle(
                                           fontSize: 12,
-                                          color: AppColors.textSecondary)),
+                                          color: context.palette.textSecondary)),
                                 ],
                               ),
                               const SizedBox(height: 10),
@@ -203,7 +203,7 @@ class StatsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(AppDimensions.paddingMd),
                           child: RideLineChart(
                             values: speedSeries,
-                            color: AppColors.secondary,
+                            color: context.palette.secondary,
                             dates: chartDates,
                             unit: 'km/h',
                           ),
@@ -217,7 +217,7 @@ class StatsScreen extends ConsumerWidget {
                             Text('$earnedCount of ${badges.length} earned',
                                 style: TextStyle(
                                     fontSize: 11,
-                                    color: AppColors.textTertiary)),
+                                    color: context.palette.textTertiary)),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -275,7 +275,7 @@ class StatsScreen extends ConsumerWidget {
                         if (visibleRides.isEmpty)
                           Text('No rides yet.',
                               style: TextStyle(
-                                  fontSize: 13, color: AppColors.textSecondary))
+                                  fontSize: 13, color: context.palette.textSecondary))
                         else
                           ListView.separated(
                             shrinkWrap: true,
@@ -329,10 +329,10 @@ class _StatChip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(value,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: display(20)),
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: display(context, 20)),
           const SizedBox(height: 2),
           Text(label,
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
         ],
       ),
     );
@@ -351,16 +351,16 @@ class _AllRidesButton extends StatelessWidget {
       onTap: () => context.push('/rides/all'),
       child: Row(
         children: [
-          Icon(Icons.list_alt_outlined, size: 18, color: AppColors.primary),
+          Icon(Icons.list_alt_outlined, size: 18, color: context.palette.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text('All rides',
-                style: display(14, letterSpacing: 0, color: AppColors.primary)),
+                style: display(context, 14, letterSpacing: 0, color: context.palette.primary)),
           ),
           Text('$showing of $total shown',
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
           const SizedBox(width: 6),
-          Icon(Icons.chevron_right, size: 18, color: AppColors.textTertiary),
+          Icon(Icons.chevron_right, size: 18, color: context.palette.textTertiary),
         ],
       ),
     );
@@ -403,11 +403,11 @@ class _RecentRideRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_formatDate(ride.startTime), style: display(14, letterSpacing: 0)),
+                Text(_formatDate(ride.startTime), style: display(context, 14, letterSpacing: 0)),
                 const SizedBox(height: 4),
                 Text(
                   '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -417,7 +417,7 @@ class _RecentRideRow extends StatelessWidget {
           Text(
             sort.trailingValue(ride) ??
                 '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-            style: display(14, letterSpacing: 0, color: AppColors.primary),
+            style: display(context, 14, letterSpacing: 0, color: context.palette.primary),
           ),
         ],
       ),

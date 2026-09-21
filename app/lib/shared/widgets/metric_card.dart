@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 
 /// An icon + accent-colored stat tile: small icon-and-title row on top, a
@@ -32,9 +32,9 @@ class MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +48,7 @@ class MetricCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
                 ),
               ),
             ],
@@ -63,14 +63,14 @@ class MetricCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: context.palette.textPrimary,
                 ),
               ),
               if (unit.isNotEmpty) ...[
                 const SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
                 ),
               ],
             ],

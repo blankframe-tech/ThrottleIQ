@@ -14,7 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -256,7 +256,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('Leave', style: TextStyle(color: AppColors.danger)),
+            child: Text('Leave', style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -613,19 +613,19 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: const Text('Group ride'),
         actions: [
           TextButton(
             onPressed: _leaving ? null : _leave,
-            child: Text('Leave', style: TextStyle(color: AppColors.danger)),
+            child: Text('Leave', style: TextStyle(color: context.palette.danger)),
           ),
         ],
       ),
       body: rideAsync.when(
         loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => _ErrorState(message: mapFirestoreError(e)),
         data: (ride) {
           if (ride == null) {
@@ -678,9 +678,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                       child: FloatingActionButton.small(
                         heroTag: 'group-ride-fit',
                         onPressed: () => _fitToMembers(members),
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: context.palette.surface,
                         child: Icon(Icons.center_focus_strong,
-                            color: AppColors.textPrimary),
+                            color: context.palette.textPrimary),
                       ),
                     ),
                   ],
@@ -707,13 +707,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             : _isPlayingVoiceNote
                 ? 'Playing ${_playingVoiceNoteSender ?? 'voice note'}…'
                 : 'Hold to talk';
-    final accent = _isRecordingVoiceNote ? AppColors.danger : AppColors.primary;
+    final accent = _isRecordingVoiceNote ? context.palette.danger : context.palette.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: context.palette.surface,
+        border: Border(top: BorderSide(color: context.palette.border)),
       ),
       child: SafeArea(
         top: false,
@@ -730,7 +730,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                    borderRadius: BorderRadius.circular(context.shape.radiusLg),
                     border: Border.all(color: accent),
                   ),
                   child: Row(
@@ -768,8 +768,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
               icon: Icon(
                 _voiceNotesMuted ? Icons.volume_off : Icons.volume_up,
                 color: _voiceNotesMuted
-                    ? AppColors.textTertiary
-                    : AppColors.textPrimary,
+                    ? context.palette.textTertiary
+                    : context.palette.textPrimary,
               ),
             ),
           ],
@@ -941,7 +941,7 @@ class _MemberList extends StatelessWidget {
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Text(
             'Nobody is on this ride yet.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.palette.textSecondary),
           ),
         ),
       );
@@ -952,8 +952,8 @@ class _MemberList extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: context.palette.surface,
+        border: Border(top: BorderSide(color: context.palette.border)),
       ),
       child: ListView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -963,7 +963,7 @@ class _MemberList extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
@@ -976,7 +976,7 @@ class _MemberList extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
                 letterSpacing: 0.5,
               ),
             ),
@@ -1032,7 +1032,7 @@ class _MemberRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.palette.textPrimary,
               ),
             ),
           ),
@@ -1041,8 +1041,8 @@ class _MemberRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: (!view.isPending && !view.isDeclined && view.isStale)
-                  ? AppColors.attention
-                  : AppColors.textTertiary,
+                  ? context.palette.attention
+                  : context.palette.textTertiary,
             ),
           ),
         ],
@@ -1060,15 +1060,15 @@ class _Banner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: AppColors.attention.withValues(alpha: 0.14),
+      color: context.palette.attention.withValues(alpha: 0.14),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: 18, color: AppColors.attention),
+          Icon(Icons.info_outline, size: 18, color: context.palette.attention),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 12, color: context.palette.textPrimary),
             ),
           ),
         ],
@@ -1087,13 +1087,13 @@ class _NoPositionsHint extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 24),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          border: Border.all(color: AppColors.border),
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusMd),
+          border: Border.all(color: context.palette.border),
         ),
         child: Text(
           'Waiting for the first position…',
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
         ),
       ),
     );
@@ -1112,12 +1112,12 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            Icon(Icons.error_outline, size: 48, color: context.palette.danger),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.palette.textSecondary),
             ),
           ],
         ),

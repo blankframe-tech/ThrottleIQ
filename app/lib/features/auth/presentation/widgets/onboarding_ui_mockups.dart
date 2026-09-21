@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../screens/onboarding_manifest.dart';
 
 /// Renders a real, high-fidelity UI mockup with callout pointer pins for each feature.
@@ -45,7 +45,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
       width: double.infinity,
       constraints: const BoxConstraints(maxHeight: 290),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: widget.accentColor.withValues(alpha: 0.35),
@@ -103,15 +103,15 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
               letterSpacing: -0.2,
             ),
           ),
           Row(
             children: [
-              Icon(Icons.wifi, size: 11, color: AppColors.textSecondary),
+              Icon(Icons.wifi, size: 11, color: context.palette.textSecondary),
               const SizedBox(width: 4),
-              Icon(Icons.battery_full, size: 12, color: AppColors.textSecondary),
+              Icon(Icons.battery_full, size: 12, color: context.palette.textSecondary),
             ],
           ),
         ],
@@ -204,7 +204,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Colors.white : context.palette.textPrimary,
                           ),
                         ),
                       ),

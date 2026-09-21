@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimensions.dart';
+import '../../core/theme/app_theme_context.dart';
 import 'app_tile_layer.dart';
 
 /// A "drop a pin" location picker: the map pans freely underneath a fixed
@@ -31,7 +30,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(context.shape.radiusXl),
       child: SizedBox(
         height: widget.height,
         child: Stack(
@@ -53,7 +52,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             // picked point, matching how a real map pin reads.
             Padding(
               padding: const EdgeInsets.only(bottom: 32),
-              child: Icon(Icons.location_pin, size: 40, color: AppColors.primary),
+              child: Icon(Icons.location_pin, size: 40, color: context.palette.primary),
             ),
             IgnorePointer(
               child: Container(
@@ -64,7 +63,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                    borderRadius: BorderRadius.circular(context.shape.radiusFull),
                   ),
                   child: const Text('Drag map to move pin',
                       style: TextStyle(color: Colors.white, fontSize: 11)),

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -20,9 +20,9 @@ class ChatListScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
       ),
       builder: (ctx) => const _NewChatSheet(),
     );
@@ -34,7 +34,7 @@ class ChatListScreen extends ConsumerWidget {
     final myUid = ref.watch(currentUserProvider)?.uid;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: const Text('Messages'),
         actions: [
@@ -49,10 +49,10 @@ class ChatListScreen extends ConsumerWidget {
         onPressed: () => _showNewChatModal(context, ref),
         icon: const Icon(Icons.edit, color: Colors.white, size: 20),
         label: const Text('New Message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-        backgroundColor: AppColors.primary,
+        backgroundColor: context.palette.primary,
       ),
       body: chatsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           showBugReport: true,
@@ -71,19 +71,19 @@ class ChatListScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textTertiary),
+                    Icon(Icons.chat_bubble_outline, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text('No messages yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    Text('No messages yet', style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => _showNewChatModal(context, ref),
                       icon: const Icon(Icons.send, size: 18),
                       label: const Text('Start a Conversation'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: context.palette.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusFull)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(context.shape.radiusFull)),
                       ),
                     ),
                   ],
@@ -95,7 +95,7 @@ class ChatListScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             itemCount: chats.length,
-            separatorBuilder: (_, __) => Divider(color: AppColors.border),
+            separatorBuilder: (_, __) => Divider(color: context.palette.border),
             itemBuilder: (context, index) {
               final chat = chats[index];
               final otherUserId = chat.participants.firstWhere((id) => id != myUid, orElse: () => '');
@@ -119,16 +119,16 @@ class ChatListScreen extends ConsumerWidget {
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 24),
-                    title: Text(profile.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    title: Text(profile.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
                     subtitle: Text(
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.palette.textSecondary),
                     ),
                     trailing: Text(
                       DateFormat.MMMd().format(chat.updatedAt),
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                      style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
                     ),
                     onTap: () => context.push('/chats/${chat.id}', extra: profile),
                   );
@@ -239,7 +239,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.palette.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -247,7 +247,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                   tooltip: 'Close',
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                 ),
               ],
             ),
@@ -255,16 +255,16 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             TextField(
               controller: _searchController,
               autofocus: true,
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: context.palette.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search rider by @username or email...',
-                hintStyle: TextStyle(color: AppColors.textTertiary),
-                prefixIcon: Icon(Icons.search, color: AppColors.textTertiary),
+                hintStyle: TextStyle(color: context.palette.textTertiary),
+                prefixIcon: Icon(Icons.search, color: context.palette.textTertiary),
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: context.palette.background,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  borderSide: BorderSide(color: context.palette.border),
                 ),
               ),
               onChanged: (val) => _performSearch(val),
@@ -281,7 +281,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                     Text(
                       _error!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.danger, fontSize: 13),
+                      style: TextStyle(color: context.palette.danger, fontSize: 13),
                     ),
                   ],
                 ),
@@ -291,24 +291,24 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text('No riders found for "${_searchController.text}"',
-                      style: TextStyle(color: AppColors.textSecondary)),
+                      style: TextStyle(color: context.palette.textSecondary)),
                 ),
               )
             else
               Expanded(
                 child: ListView.separated(
                   itemCount: _results.length,
-                  separatorBuilder: (_, __) => Divider(color: AppColors.border, height: 1),
+                  separatorBuilder: (_, __) => Divider(color: context.palette.border, height: 1),
                   itemBuilder: (context, index) {
                     final rider = _results[index];
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
-                      title: Text(rider.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      title: Text(rider.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
                       subtitle: rider.username != null
-                          ? Text('@${rider.username}', style: TextStyle(color: AppColors.textSecondary, fontSize: 13))
+                          ? Text('@${rider.username}', style: TextStyle(color: context.palette.textSecondary, fontSize: 13))
                           : null,
-                      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textTertiary),
+                      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: context.palette.textTertiary),
                       onTap: () => _startChat(rider),
                     );
                   },

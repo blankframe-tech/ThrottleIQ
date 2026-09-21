@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_colors.dart';
 import '../../../../core/constants/motorcycle_quotes.dart';
@@ -65,7 +65,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
   /// This used to live in `build()` behind an `addPostFrameCallback`, which
   /// re-queued a navigation on every rebuild — and this screen rebuilds for
   /// reasons that have nothing to do with recording (unread count, active
-  /// bike, appearance remount). §83.11.
+  /// bike, appearance change). §83.11.
   void _redirectIfRiding() {
     if (!mounted) return;
     final status = ref.read(rideRecordingProvider).status;
@@ -108,7 +108,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     // never scrolled off, and never in a different spot depending on whether
     // an error card happens to be showing above it.
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: DecoratedBox(
         // A faint wash of the active bike's own color, so the screen you
         // start a ride from reads as *that bike's* dashboard rather than a
@@ -122,7 +122,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                   radius: 1.3,
                   colors: [
                     accent.withValues(alpha: 0.18),
-                    AppColors.background,
+                    context.palette.background,
                   ],
                   stops: const [0, 0.65],
                 )
@@ -181,13 +181,13 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                         const SizedBox(height: 16),
                         EditorialCard(
                           padding: const EdgeInsets.all(12),
-                          borderColor: AppColors.danger,
+                          borderColor: context.palette.danger,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(rideState.error!,
                                   style: TextStyle(
-                                      color: AppColors.danger, fontSize: 13),
+                                      color: context.palette.danger, fontSize: 13),
                                   textAlign: TextAlign.center),
                               if (rideState.blockKind !=
                                   RecordingBlockKind.none) ...[
@@ -213,7 +213,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                                     size: 14),
                                 label: const Text('Report a Problem'),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: AppColors.textTertiary,
+                                  foregroundColor: context.palette.textTertiary,
                                   textStyle: const TextStyle(fontSize: 12),
                                   visualDensity: VisualDensity.compact,
                                 ),
@@ -239,7 +239,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                     // ring on the rounded ones. See StartControlStyle for why
                     // this is the one place a skin swaps a widget rather than
                     // just restyling it.
-                    if (AppDimensions.shape.startControl ==
+                    if (context.shape.startControl ==
                         StartControlStyle.holdRing)
                       _HoldToStartControl(enabled: activeBike != null)
                     else
@@ -256,7 +256,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       style: TextStyle(
                           fontSize: 12,
                           height: 1.35,
-                          color: AppColors.textTertiary),
+                          color: context.palette.textTertiary),
                     ),
                   ],
                 ),
@@ -278,18 +278,18 @@ class _NoBikeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return EditorialCard(
       padding: const EdgeInsets.all(AppDimensions.paddingLg),
-      borderColor: AppColors.attention,
+      borderColor: context.palette.attention,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.two_wheeler, size: 40, color: AppColors.attention),
+          Icon(Icons.two_wheeler, size: 40, color: context.palette.attention),
           const SizedBox(height: 12),
-          Text('No bike yet', style: display(22)),
+          Text('No bike yet', style: display(context, 22)),
           const SizedBox(height: 4),
           Text(
             'Add the bike you ride and ThrottleIQ can start tracking it.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -489,7 +489,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
         ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
     final enabled = widget.enabled && !isStarting;
 
-    // The track was hard-coded to `AppColors.ink` (near-black in both
+    // The track was hard-coded to `context.palette.ink` (near-black in both
     // palettes). On Carbon Mono that's right — a black slab with a lime fill
     // reads as instrument panel against the dark background. On Editorial it
     // was the one black control on a cream page where every other action
@@ -501,13 +501,13 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     // ThemeData, Carbon Mono a dark one (see AppTheme.build).
     final isLightPalette = Theme.of(context).brightness == Brightness.light;
     final trackColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
-        : AppColors.textTertiary;
+        ? (isLightPalette ? context.palette.primary : context.palette.ink)
+        : context.palette.textTertiary;
     final fillColor =
-        isLightPalette ? AppColors.primaryDark : AppColors.primary;
+        isLightPalette ? context.palette.primaryDark : context.palette.primary;
     final thumbIconColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
-        : AppColors.textTertiary;
+        ? (isLightPalette ? context.palette.primary : context.palette.ink)
+        : context.palette.textTertiary;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -519,7 +519,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
           onPanEnd: enabled ? _onPanEnd : null,
           onPanCancel: enabled ? _onPanCancel : null,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            borderRadius: BorderRadius.circular(context.shape.radiusLg),
             child: SizedBox(
               height: _trackHeight,
               width: double.infinity,
@@ -545,8 +545,8 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                             : Opacity(
                                 opacity: (1 - fraction * 2).clamp(0.0, 1.0),
                                 child: Text('Slide to start ride',
-                                    style: display(16,
-                                        color: AppColors.onInk,
+                                    style: display(context, 16,
+                                        color: context.palette.onInk,
                                         letterSpacing: 0.2)),
                               ),
                       ),
@@ -557,7 +557,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                           width: _thumbSize,
                           height: _thumbSize,
                           decoration: BoxDecoration(
-                            color: AppColors.onInk,
+                            color: context.palette.onInk,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(Icons.arrow_forward,

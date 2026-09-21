@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
 import 'auto_detection_history_sheet.dart';
@@ -27,9 +27,9 @@ class AutoTrackingTile extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -44,7 +44,7 @@ class AutoTrackingTile extends ConsumerWidget {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(l10n.autoTrackingTileSubtitle),
-            secondary: Icon(Icons.motorcycle, color: AppColors.primary),
+            secondary: Icon(Icons.motorcycle, color: context.palette.primary),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           ),
           if (isIos && isEnabled)
@@ -53,21 +53,21 @@ class AutoTrackingTile extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.attention.withValues(alpha: 0.12),
+                  color: context.palette.attention.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.attention.withValues(alpha: 0.3)),
+                  border: Border.all(color: context.palette.attention.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, size: 16, color: AppColors.attention),
+                    Icon(Icons.info_outline, size: 16, color: context.palette.attention),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         l10n.iosAutoTrackingAdvisory,
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textPrimary,
+                          color: context.palette.textPrimary,
                           height: 1.3,
                         ),
                       ),
@@ -84,18 +84,18 @@ class AutoTrackingTile extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  Icon(Icons.history, size: 18, color: AppColors.textSecondary),
+                  Icon(Icons.history, size: 18, color: context.palette.textSecondary),
                   const SizedBox(width: 8),
                   Text(
                     l10n.recentDetectionsTitle,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.chevron_right, size: 18, color: AppColors.textTertiary),
+                  Icon(Icons.chevron_right, size: 18, color: context.palette.textTertiary),
                 ],
               ),
             ),
@@ -166,9 +166,9 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         children: [
@@ -183,7 +183,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
                     '${_formatMinutes(schedule.startMinutes)} and '
                     '${_formatMinutes(schedule.endMinutes)}.'
                 : 'Watching for rides all day.'),
-            secondary: Icon(Icons.schedule, color: AppColors.primary),
+            secondary: Icon(Icons.schedule, color: context.palette.primary),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           ),
@@ -265,7 +265,7 @@ class _TimeField extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(label,
-              style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+              style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
           Text(AutoTrackingScheduleTile._formatMinutes(minutes)),
         ],
       ),

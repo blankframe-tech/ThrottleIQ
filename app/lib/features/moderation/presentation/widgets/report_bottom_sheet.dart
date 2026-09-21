@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/report_repository.dart';
@@ -26,9 +26,9 @@ class ReportBottomSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusLg)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
       ),
       builder: (context) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -93,7 +93,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit report: $e'), backgroundColor: AppColors.danger),
+          SnackBar(content: Text('Failed to submit report: $e'), backgroundColor: context.palette.danger),
         );
       }
     }
@@ -115,12 +115,12 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: context.palette.textPrimary,
                 ),
               ),
               IconButton(
                 tooltip: 'Close',
-                icon: Icon(Icons.close, color: AppColors.textSecondary),
+                icon: Icon(Icons.close, color: context.palette.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -131,7 +131,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.palette.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -142,9 +142,9 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
               children: [
                 for (final reason in _reasons)
                   RadioListTile<String>(
-                    title: Text(reason, style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+                    title: Text(reason, style: TextStyle(color: context.palette.textPrimary, fontSize: 14)),
                     value: reason,
-                    fillColor: WidgetStatePropertyAll(AppColors.primary),
+                    fillColor: WidgetStatePropertyAll(context.palette.primary),
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                   ),
@@ -154,18 +154,18 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
           const SizedBox(height: 16),
           TextField(
             controller: _detailsController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             maxLines: 3,
             decoration: InputDecoration(
               labelText: 'Additional details (optional)',
-              labelStyle: TextStyle(color: AppColors.textTertiary),
+              labelStyle: TextStyle(color: context.palette.textTertiary),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: AppColors.border),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                borderSide: BorderSide(color: context.palette.border),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: AppColors.primary),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                borderSide: BorderSide(color: context.palette.primary),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
               ),
             ),
           ),
@@ -173,11 +173,11 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
           ElevatedButton(
             onPressed: _selectedReason == null || _isSubmitting ? null : _submitReport,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
+              backgroundColor: context.palette.danger,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
               ),
             ),
             child: _isSubmitting

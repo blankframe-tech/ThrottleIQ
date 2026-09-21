@@ -5,7 +5,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_catalog.dart';
 import '../../../../core/constants/bike_colors.dart';
@@ -215,7 +215,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final isEdit = widget.bikeId != null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: Text(isEdit ? 'Edit Bike' : 'Add Bike'),
       ),
@@ -234,10 +234,10 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusLg),
-                      border: Border.all(color: AppColors.border),
+                          BorderRadius.circular(context.shape.radiusLg),
+                      border: Border.all(color: context.palette.border),
                       image: _imagePath != null
                           ? DecorationImage(
                               image: BikeImageResolver.isRemoteUrl(_imagePath)
@@ -254,12 +254,12 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo_outlined,
-                                  color: AppColors.textSecondary, size: 28),
+                                  color: context.palette.textSecondary, size: 28),
                               const SizedBox(height: 6),
                               Text('Add Photo',
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textSecondary)),
+                                      color: context.palette.textSecondary)),
                             ],
                           )
                         : null,
@@ -309,7 +309,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: TextFormField(
                       controller: _yearCtrl,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: context.palette.textPrimary),
                       decoration: const InputDecoration(
                           labelText: 'Year', hintText: '2023'),
                     ),
@@ -319,7 +319,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: TextFormField(
                       controller: _ccCtrl,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: context.palette.textPrimary),
                       decoration: const InputDecoration(
                           labelText: 'Engine CC', hintText: '155'),
                     ),
@@ -331,14 +331,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                 controller: _odometerCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Odometer reading (km)', hintText: '12000'),
               ),
               const SizedBox(height: 20),
               Text('Bike color',
                   style:
-                      TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               _ColorSwatchPicker(
                 selected: _colorValue,
@@ -411,7 +411,7 @@ class _SwatchTile extends StatelessWidget {
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? AppColors.textPrimary : Colors.transparent,
+            color: isSelected ? context.palette.textPrimary : Colors.transparent,
             width: 2.5,
           ),
         ),
@@ -437,15 +437,15 @@ class _AutoTile extends StatelessWidget {
         width: _ColorSwatchPicker._size,
         height: _ColorSwatchPicker._size,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.palette.surface,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? AppColors.textPrimary : AppColors.border,
+            color: isSelected ? context.palette.textPrimary : context.palette.border,
             width: isSelected ? 2.5 : 1,
           ),
         ),
         child:
-            Icon(Icons.auto_awesome, size: 16, color: AppColors.textSecondary),
+            Icon(Icons.auto_awesome, size: 16, color: context.palette.textSecondary),
       ),
     );
   }

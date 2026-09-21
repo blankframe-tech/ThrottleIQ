@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 
 /// What the rider chose in [showEndRideSheet]. A `null` result from the sheet
@@ -23,14 +22,14 @@ class EndRideChoice {
 Future<EndRideChoice?> showEndRideSheet(BuildContext context) {
   return showModalBottomSheet<EndRideChoice>(
     context: context,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.palette.surface,
     // Dragging the sheet would compete with the hold gesture's pointer; the
     // scrim tap and "Keep riding" are the ways out.
     enableDrag: false,
     showDragHandle: false,
     isScrollControlled: true,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
     ),
     builder: (_) => const EndRideSheet(),
   );
@@ -56,18 +55,18 @@ class _EndRideSheetState extends State<EndRideSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('End ride?', style: display(22, letterSpacing: 0)),
+            Text('End ride?', style: display(context, 22, letterSpacing: 0)),
             const SizedBox(height: 4),
             Text('Your ride will be saved.',
-                style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+                style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
             const SizedBox(height: 16),
             // Whole row is the target, not just the switch.
             Material(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              color: context.palette.surfaceVariant,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
               child: InkWell(
                 key: const Key('endRideShareToggle'),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
                 onTap: () => setState(() => _share = !_share),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 56),
@@ -75,12 +74,12 @@ class _EndRideSheetState extends State<EndRideSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        Icon(Icons.ios_share, color: AppColors.textPrimary),
+                        Icon(Icons.ios_share, color: context.palette.textPrimary),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text('Share ride after saving',
                               style: TextStyle(
-                                  fontSize: 16, color: AppColors.textPrimary)),
+                                  fontSize: 16, color: context.palette.textPrimary)),
                         ),
                         // Excluded so the row's InkWell is the only target —
                         // the switch just mirrors state.
@@ -88,7 +87,7 @@ class _EndRideSheetState extends State<EndRideSheet> {
                           child: IgnorePointer(
                             child: Switch(
                               value: _share,
-                              activeTrackColor: AppColors.primary,
+                              activeTrackColor: context.palette.primary,
                               onChanged: (_) {},
                             ),
                           ),
@@ -207,7 +206,7 @@ class _HoldToEndButtonState extends State<HoldToEndButton>
             ?.foregroundColor
             ?.resolve(const <WidgetState>{}) ??
         (Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surface
+            ? context.palette.surface
             : Colors.white);
     return Semantics(
       button: true,
@@ -232,8 +231,8 @@ class _HoldToEndButtonState extends State<HoldToEndButton>
             return Container(
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.danger,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                color: context.palette.danger,
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(

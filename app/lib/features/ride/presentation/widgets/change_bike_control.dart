@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -55,18 +55,18 @@ class ChangeBikeControl extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         onTap: () => _pickBike(context, ref, bikes, currentBike!),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusMd),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             children: [
-              Icon(Icons.two_wheeler, size: 18, color: AppColors.textSecondary),
+              Icon(Icons.two_wheeler, size: 18, color: context.palette.textSecondary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -74,7 +74,7 @@ class ChangeBikeControl extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                 ),
               ),
               const SizedBox(width: 8),
@@ -84,9 +84,9 @@ class ChangeBikeControl extends ConsumerWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
-                    color: AppColors.primary),
+                    color: context.palette.primary),
               ),
-              Icon(Icons.expand_more, size: 18, color: AppColors.primary),
+              Icon(Icons.expand_more, size: 18, color: context.palette.primary),
             ],
           ),
         ),
@@ -103,10 +103,10 @@ class ChangeBikeControl extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final picked = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
         borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
+            BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -120,7 +120,7 @@ class ChangeBikeControl extends ConsumerWidget {
                 children: [
                   Expanded(
                       child: Text(l10n.changeBikeSheetTitle,
-                          style: display(16, letterSpacing: 0))),
+                          style: display(sheetContext, 16, letterSpacing: 0))),
                 ],
               ),
             ),
@@ -131,7 +131,7 @@ class ChangeBikeControl extends ConsumerWidget {
                   bike: bike,
                   subtitle: l10n.rideCountLabel(bike.rideCount),
                   trailing: bike.id == currentBike.id
-                      ? Icon(Icons.check, size: 18, color: AppColors.primary)
+                      ? Icon(Icons.check, size: 18, color: sheetContext.palette.primary)
                       : null,
                 ),
               ),

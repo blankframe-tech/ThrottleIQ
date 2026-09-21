@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../providers/auth_provider.dart';
@@ -57,7 +57,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final loading = ref.watch(authNotifierProvider).isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: const Text('Create Account'),
         leading: IconButton(
@@ -78,18 +78,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Text(
                   'Join ThrottleIQ',
                   style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      fontSize: 24, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Track every ride, remember every mile',
-                  style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: const InputDecoration(labelText: 'Email', hintText: 'rider@example.com'),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Email required';
@@ -101,14 +101,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _passCtrl,
                   obscureText: _obscure,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '6+ characters',
                     suffixIcon: IconButton(
                       tooltip: 'Show password',
                       icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                          color: AppColors.textSecondary, size: 20),
+                          color: context.palette.textSecondary, size: 20),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
@@ -121,7 +121,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _confirmCtrl,
                   obscureText: true,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: const InputDecoration(labelText: 'Confirm Password'),
                   validator: (v) {
                     if (v != _passCtrl.text) return 'Passwords do not match';
@@ -140,13 +140,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: AppColors.textSecondary)),
+                    Expanded(child: Divider(color: context.palette.textSecondary)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text('or',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                          style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
                     ),
-                    Expanded(child: Divider(color: AppColors.textSecondary)),
+                    Expanded(child: Divider(color: context.palette.textSecondary)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -155,8 +155,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   icon: const Icon(Icons.g_mobiledata, size: 28),
                   label: const Text('Sign up with Google'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: BorderSide(color: AppColors.textPrimary, width: 1.5),
+                    foregroundColor: context.palette.textPrimary,
+                    side: BorderSide(color: context.palette.textPrimary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -165,7 +165,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('Already have an account? ',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/login'),
                       child: const Text('Sign In'),

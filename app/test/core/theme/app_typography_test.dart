@@ -10,56 +10,85 @@ import 'package:throttleiq/core/theme/app_typography.dart';
 /// outside the ThemeData/textTheme tree app_theme_style_test.dart already
 /// covers, so it needs its own guard against the same missing-Bengali-glyph
 /// regression. See AppTypography.bengaliFallback for why this matters.
+///
+/// The styles read the theme (which face, which default color), so each is
+/// resolved through a real [BuildContext] under a theme carrying just the
+/// palette — the same lookup the app does, without building a full ThemeData.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  /// [AppTypography.display] with google_fonts' unloadable-font complaint
-  /// swallowed — same reasoning as `themeFor` in app_theme_style_test.dart.
-  TextStyle displayFor(AppColorMode colorMode) {
-    AppTypography.applyStyle(colorMode);
-    late TextStyle result;
-    runZonedGuarded(
-      () => result = AppTypography.display(20),
-      (error, stack) {
-        if (!error.toString().contains('google_fonts') &&
-            !error.toString().contains('was not found in the application assets')) {
-          throw error;
-        }
-      },
-    );
+  /// Runs [read] against a context whose theme carries [palette], with
+  /// google_fonts' unloadable-font complaint swallowed — same reasoning as
+  /// `themeFor` in app_theme_style_test.dart.
+  Future<T> resolve<T>(
+    WidgetTester tester,
+    AppColorPalette palette,
+    T Function(BuildContext) read,
+  ) async {
+    late T result;
+    // A bare `Theme`, not `MaterialApp`: MaterialApp animates theme changes,
+    // so a second pumpWidget would still resolve the previous palette.
+    await tester.pumpWidget(Theme(
+      data: ThemeData(extensions: [palette]),
+      child: Builder(builder: (context) {
+        runZonedGuarded(
+          () => result = read(context),
+          (error, stack) {
+            if (!error.toString().contains('google_fonts') &&
+                !error
+                    .toString()
+                    .contains('was not found in the application assets')) {
+              throw error;
+            }
+          },
+        );
+        return const SizedBox();
+      }),
+    ));
     return result;
   }
 
-  tearDown(() => AppTypography.applyStyle(AppColorMode.carbonMono));
-
   group('AppTypography.display', () {
-    test('carries the Bengali fallback on every color mode, mono or proportional', () {
+    testWidgets('carries the Bengali fallback on every color mode, mono or proportional',
+        (tester) async {
       for (final mode in AppColorMode.values) {
-        expect(displayFor(mode).fontFamilyFallback,
+        final style = await resolve(tester,
+            AppColorPalette.forMode(mode, Brightness.dark),
+            (c) => AppTypography.display(c, 20));
+        expect(style.fontFamilyFallback,
             contains(AppTypography.bengaliFallback.single),
             reason: '$mode');
       }
     });
 
-    test('isMono only flips for Retro', () {
+    testWidgets('sets Retro in a monospace face and every other mode in Space Grotesk',
+        (tester) async {
       for (final mode in AppColorMode.values) {
-        AppTypography.applyStyle(mode);
-        expect(AppTypography.isMono, mode == AppColorMode.retro, reason: '$mode');
+        final style = await resolve(tester,
+            AppColorPalette.forMode(mode, Brightness.light),
+            (c) => AppTypography.display(c, 20));
+        final isMono = style.fontFamily!.contains('IBMPlexMono');
+        expect(isMono, mode == AppColorMode.retro, reason: '$mode');
       }
+    });
+
+    testWidgets('defaults its color to the palette\'s primary text', (tester) async {
+      const palette = AppColorPalette.carbonMonoDark;
+      final style = await resolve(
+          tester, palette, (c) => AppTypography.display(c, 20));
+      expect(style.color, palette.textPrimary);
     });
   });
 
   group('cockpit tokens', () {
-    test('hold the live-ride legibility floor (labels 14, values 20)', () {
-      expect(AppTypography.cockpitLabel().fontSize, greaterThanOrEqualTo(14));
-      late TextStyle value;
-      runZonedGuarded(() => value = AppTypography.cockpitValue(), (e, _) {
-        if (!e.toString().contains('google_fonts') &&
-            !e.toString().contains('was not found in the application assets')) {
-          throw e;
-        }
-      });
+    testWidgets('hold the live-ride legibility floor (labels 14, values 20)',
+        (tester) async {
+      final label = await resolve(tester, AppColorPalette.carbonMonoDark,
+          (c) => AppTypography.cockpitLabel(c));
+      final value = await resolve(tester, AppColorPalette.carbonMonoDark,
+          (c) => AppTypography.cockpitValue(c));
+      expect(label.fontSize, greaterThanOrEqualTo(14));
       expect(value.fontSize, greaterThanOrEqualTo(20));
     });
   });

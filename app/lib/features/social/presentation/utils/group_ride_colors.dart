@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Per-rider marker colours for the shared group-ride map.
 ///
-/// These are deliberately NOT `AppColors.*`: those are theme-dependent getters
-/// that shift with light/dark mode, and a rider's dot changing hue when the
+/// These are deliberately NOT `context.palette.*`: those are theme-dependent
+/// tokens that shift with light/dark mode, and a rider's dot changing hue when the
 /// theme flips would break the one thing this palette exists to guarantee —
 /// "the orange dot is always Sam". Fixed, const, high-contrast against the
 /// OpenStreetMap raster tiles, and ordered so adjacent entries never sit next

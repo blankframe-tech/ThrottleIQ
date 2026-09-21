@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -108,7 +108,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         (ref.watch(chatBlockedProvider(profileLookupUid)).valueOrNull ?? false);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -140,7 +140,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               ),
               data: (messages) {
                 if (messages.isEmpty) {
-                  return Center(child: Text('Say hi!', style: TextStyle(color: AppColors.textSecondary)));
+                  return Center(child: Text('Say hi!', style: TextStyle(color: context.palette.textSecondary)));
                 }
                 
                 return ListView.builder(
@@ -166,12 +166,12 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: isMe ? AppColors.primary : AppColors.surface,
+                            color: isMe ? context.palette.primary : context.palette.surface,
                             borderRadius: BorderRadius.circular(16).copyWith(
                               bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(16),
                               bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(0),
                             ),
-                            border: isMe ? null : Border.all(color: AppColors.border),
+                            border: isMe ? null : Border.all(color: context.palette.border),
                           ),
                           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
                           child: Column(
@@ -180,7 +180,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                               Text(
                                 msg.text,
                                 style: TextStyle(
-                                  color: isMe ? Colors.white : AppColors.textPrimary,
+                                  color: isMe ? Colors.white : context.palette.textPrimary,
                                   fontSize: 14,
                                 ),
                               ),
@@ -188,7 +188,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                               Text(
                                 DateFormat.jm().format(msg.createdAt),
                                 style: TextStyle(
-                                  color: isMe ? Colors.white70 : AppColors.textTertiary,
+                                  color: isMe ? Colors.white70 : context.palette.textTertiary,
                                   fontSize: 10,
                                 ),
                               ),
@@ -213,17 +213,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 14,
               ),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border(top: BorderSide(color: AppColors.border)),
+                color: context.palette.surface,
+                border: Border(top: BorderSide(color: context.palette.border)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.block, size: 18, color: AppColors.textSecondary),
+                  Icon(Icons.block, size: 18, color: context.palette.textSecondary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       "You can't message this rider",
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                      style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
                     ),
                   ),
                 ],
@@ -238,26 +238,26 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 12,
             ),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.border)),
+              color: context.palette.surface,
+              border: Border(top: BorderSide(color: context.palette.border)),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _textController,
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: context.palette.textPrimary),
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: null,
                     decoration: InputDecoration(
                       hintText: 'Message...',
-                      hintStyle: TextStyle(color: AppColors.textTertiary),
+                      hintStyle: TextStyle(color: context.palette.textTertiary),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: context.palette.background,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
                     onSubmitted: (_) => _sendMessage(),
@@ -266,7 +266,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimensions.dart';
+import '../../core/theme/app_theme_context.dart';
 import 'app_tile_layer.dart';
 
 /// A small, non-interactive map that draws a ride's recorded route — the
@@ -32,25 +31,25 @@ class RideRouteMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = this.radius ?? AppDimensions.radiusLg;
+    final radius = this.radius ?? context.shape.radiusLg;
     if (polyline.isEmpty) {
       return Container(
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: context.palette.background,
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.palette.border),
         ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.map_outlined, size: 22, color: AppColors.textTertiary),
+              Icon(Icons.map_outlined, size: 22, color: context.palette.textTertiary),
               const SizedBox(height: 6),
               Text(
                 'No route recorded',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
             ],
           ),
@@ -82,7 +81,7 @@ class RideRouteMap extends StatelessWidget {
                 polylines: [
                   Polyline(
                       points: polyline,
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                       strokeWidth: 4),
                 ],
               ),
@@ -92,14 +91,14 @@ class RideRouteMap extends StatelessWidget {
                   point: polyline.first,
                   width: 14,
                   height: 14,
-                  child: _endpointDot(AppColors.success),
+                  child: _endpointDot(context.palette.success),
                 ),
                 if (polyline.length > 1)
                   Marker(
                     point: polyline.last,
                     width: 14,
                     height: 14,
-                    child: _endpointDot(AppColors.danger),
+                    child: _endpointDot(context.palette.danger),
                   ),
               ],
             ),

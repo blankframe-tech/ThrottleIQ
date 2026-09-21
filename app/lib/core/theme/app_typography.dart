@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../constants/app_colors.dart';
-import 'app_theme_style.dart';
+import 'app_theme_context.dart';
 
-/// Runtime-swappable display typeface, applied the same way [AppColors] swaps
-/// palettes — see `theme_style_provider.dart`.
+/// The app's display typeface and the live-ride cockpit type styles.
 ///
 /// Every skin but one shares Space Grotesk for headings and big numbers, on
 /// the same reasoning that keeps the shape system shared: a skin is a palette,
@@ -15,21 +13,11 @@ import 'app_theme_style.dart';
 /// than a stylistic choice — so it gets IBM Plex Mono, which the app already
 /// ships for the body/heading pairing.
 ///
-/// Kept as a static facade rather than a `Theme.of(context)` extension for the
-/// same reason [AppColors] is: `display()` is called from several hundred
-/// places, many of them outside a build method, and threading a context
-/// through all of them buys nothing here.
+/// Which face applies is read off the theme (`AppColorPalette.monoDisplay`),
+/// which is why these take a [BuildContext]: the style is rebuilt with the
+/// widget when the rider changes appearance.
 class AppTypography {
   AppTypography._();
-
-  static AppColorMode _colorMode = AppColorMode.carbonMono;
-
-  static void applyStyle(AppColorMode colorMode) => _colorMode = colorMode;
-
-  /// Whether the current color mode sets display type in a monospace face.
-  /// Independent of shape/brightness — Retro is monospace whether it's Boxy
-  /// or Curvy, dark or light.
-  static bool get isMono => _colorMode == AppColorMode.retro;
 
   /// Bundled Bengali fallback (see pubspec.yaml) for every text style this
   /// app hands out. Neither Space Grotesk, IBM Plex Sans, nor IBM Plex Mono
@@ -43,16 +31,19 @@ class AppTypography {
   /// Display text — headings, big numbers, anything that should read as the
   /// skin's voice rather than as body copy.
   static TextStyle display(
+    BuildContext context,
     double size, {
     FontWeight weight = FontWeight.w700,
     Color? color,
     double letterSpacing = -0.5,
     double? height,
   }) {
+    final palette = context.palette;
+    final isMono = palette.monoDisplay;
     final resolved = TextStyle(
       fontSize: size,
       fontWeight: weight,
-      color: color ?? AppColors.textPrimary,
+      color: color ?? palette.textPrimary,
       // Negative tracking tightens a proportional face; on a monospace one it
       // fights the fixed advance width and reads as cramped. Mono holds at
       // its natural spacing unless a caller asked for extra.
@@ -73,7 +64,8 @@ class AppTypography {
   static const double cockpitValueSize = 20;
 
   /// Small caption under/next to a live value ("Distance", "BRAKE").
-  static TextStyle cockpitLabel({
+  static TextStyle cockpitLabel(
+    BuildContext context, {
     Color? color,
     FontWeight weight = FontWeight.w500,
     double letterSpacing = 0,
@@ -81,13 +73,18 @@ class AppTypography {
       TextStyle(
         fontSize: cockpitLabelSize,
         fontWeight: weight,
-        color: color ?? AppColors.textSecondary,
+        color: color ?? context.palette.textSecondary,
         letterSpacing: letterSpacing,
         fontFamilyFallback: bengaliFallback,
       );
 
   /// A live secondary value (distance, average speed, g-force). The primary
   /// speed readout is far larger and keeps its own `display(64)`.
-  static TextStyle cockpitValue({Color? color, FontWeight weight = FontWeight.w700}) =>
-      display(cockpitValueSize, weight: weight, color: color, letterSpacing: 0);
+  static TextStyle cockpitValue(
+    BuildContext context, {
+    Color? color,
+    FontWeight weight = FontWeight.w700,
+  }) =>
+      display(context, cockpitValueSize,
+          weight: weight, color: color, letterSpacing: 0);
 }

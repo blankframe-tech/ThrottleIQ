@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/services/bug_report_service.dart';
 
@@ -21,7 +21,7 @@ class BugReportSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -88,7 +88,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.palette.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -96,21 +96,21 @@ class _BugReportSheetState extends State<BugReportSheet> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.bug_report_outlined, color: AppColors.primary, size: 22),
+              Icon(Icons.bug_report_outlined, color: context.palette.primary, size: 22),
               const SizedBox(width: 10),
               Text(
                 'Send Bug Report',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: context.palette.textPrimary,
                 ),
               ),
               const Spacer(),
               IconButton(
                 tooltip: 'Close',
                 icon: const Icon(Icons.close),
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -118,30 +118,30 @@ class _BugReportSheetState extends State<BugReportSheet> {
           const SizedBox(height: 4),
           Text(
             'Describe what happened. Your UID and app version are included automatically.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 14),
           TextField(
             controller: _controller,
             autofocus: true,
             maxLines: 5,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
               hintText: 'e.g. "Messages wouldn\'t send — I got an error about permissions."',
-              hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+              hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 13),
               filled: true,
-              fillColor: AppColors.background,
+              fillColor: context.palette.background,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                borderSide: BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                borderSide: BorderSide(color: context.palette.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                borderSide: BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                borderSide: BorderSide(color: context.palette.border),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                borderSide: BorderSide(color: AppColors.primary),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                borderSide: BorderSide(color: context.palette.primary),
               ),
             ),
           ),
@@ -149,7 +149,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
             const SizedBox(height: 8),
             Text(
               _feedback!,
-              style: TextStyle(fontSize: 12, color: AppColors.danger),
+              style: TextStyle(fontSize: 12, color: context.palette.danger),
             ),
           ],
           const SizedBox(height: 14),
@@ -164,7 +164,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
                 : const Icon(Icons.send_outlined, size: 18),
             label: Text(_sending ? 'Sending…' : 'Send Report'),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: context.palette.primary,
               minimumSize: const Size(0, 48),
             ),
           ),

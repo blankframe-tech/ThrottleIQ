@@ -163,19 +163,18 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       final appearance = ref.watch(appearanceProvider);
       // null = follow the device language, resolved against supportedLocales.
       final locale = ref.watch(appLocaleProvider);
-      // AppColors is a mutable static facade (see app_colors.dart) so that
-      // the ~565 existing `AppColors.x` call sites across the app don't need
-      // to become context-aware. Keying on appearance forces this whole
-      // subtree to unmount/remount on toggle, which is what makes those
-      // static reads pick up the freshly-applied palette everywhere at once.
       return MaterialApp.router(
-        key: ValueKey(appearance),
         title: 'ThrottleIQ',
         theme: AppTheme.build(appearance),
+        // MaterialApp would otherwise tween the old theme into the new one
+        // over 200ms, rebuilding every widget that reads a token on every
+        // frame of it — the whole navigator stack, on a phone that may already
+        // be struggling. One rebuild, instantly, is what riders had before.
+        themeAnimationDuration: Duration.zero,
         debugShowCheckedModeBanner: false,
-        // Unlike the appearance switch above, a language change needs no
-        // remount: Localizations rebuilds its dependents on a locale change,
-        // so the key stays keyed on appearance alone.
+        // Neither an appearance nor a language change remounts anything:
+        // tokens are read through the theme (`context.palette`) and strings
+        // through Localizations, and each rebuilds only its own dependents.
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: const [Locale('en'), Locale('bn')],

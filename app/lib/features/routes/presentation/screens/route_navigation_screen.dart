@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/geo_math.dart';
@@ -152,10 +152,10 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
     final routeAsync = ref.watch(routeByIdProvider(_lookup));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: routeAsync.when(
         loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) =>
             ErrorView(
           error: e,
@@ -165,7 +165,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
           if (route == null || route.polyline.length < 2) {
             return Center(
               child: Text('This route has no track to follow.',
-                  style: TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: context.palette.textSecondary)),
             );
           }
 
@@ -202,7 +202,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                       Polyline(
                         points: route.polyline,
                         strokeWidth: 5,
-                        color: AppColors.primary,
+                        color: context.palette.primary,
                       ),
                     ],
                   ),
@@ -214,7 +214,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                           width: 22,
                           height: 22,
                           child: Icon(Icons.circle,
-                              size: 14, color: AppColors.secondary),
+                              size: 14, color: context.palette.secondary),
                         ),
                       if (_position != null)
                         Marker(
@@ -222,7 +222,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                           width: 26,
                           height: 26,
                           child: Icon(Icons.navigation,
-                              size: 24, color: AppColors.primary),
+                              size: 24, color: context.palette.primary),
                         ),
                     ],
                   ),
@@ -240,7 +240,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                           child: Text(
                             _locationError!,
                             style: TextStyle(
-                                fontSize: 13, color: AppColors.textPrimary),
+                                fontSize: 13, color: context.palette.textPrimary),
                           ),
                         )
                       else if (turn != null)
@@ -248,7 +248,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                           child: Row(
                             children: [
                               Icon(turnIcon(turn.kind),
-                                  size: 34, color: AppColors.primary),
+                                  size: 34, color: context.palette.primary),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
@@ -259,14 +259,14 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                                       style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary),
+                                          color: context.palette.textPrimary),
                                     ),
                                     if (metresToTurn != null)
                                       Text(
                                         'in ${_distanceLabel(metresToTurn)}',
                                         style: TextStyle(
                                             fontSize: 13,
-                                            color: AppColors.textSecondary),
+                                            color: context.palette.textSecondary),
                                       ),
                                   ],
                                 ),
@@ -277,17 +277,17 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                       if (offRoute) ...[
                         const SizedBox(height: 8),
                         _Banner(
-                          background: AppColors.danger.withValues(alpha: 0.15),
+                          background: context.palette.danger.withValues(alpha: 0.15),
                           child: Row(
                             children: [
                               Icon(Icons.warning_amber_rounded,
-                                  size: 18, color: AppColors.danger),
+                                  size: 18, color: context.palette.danger),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   'Off route — ${_distanceLabel(nearest.distanceM)} from the line',
                                   style: TextStyle(
-                                      fontSize: 13, color: AppColors.textPrimary),
+                                      fontSize: 13, color: context.palette.textPrimary),
                                 ),
                               ),
                             ],
@@ -323,7 +323,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                           TextButton(
                             onPressed: () => context.pop(),
                             child: Text('End',
-                                style: TextStyle(color: AppColors.danger)),
+                                style: TextStyle(color: context.palette.danger)),
                           ),
                         ],
                       ),
@@ -368,9 +368,9 @@ class _Banner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: background ?? AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: background ?? context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: child,
     );
@@ -391,9 +391,9 @@ class _Metric extends StatelessWidget {
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
+                color: context.palette.textPrimary)),
         Text(label,
-            style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+            style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
       ],
     );
   }

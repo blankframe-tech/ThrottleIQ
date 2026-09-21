@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
@@ -92,17 +92,17 @@ class _ResetMaintenanceLogSheetState
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.surfaceVariant,
+        backgroundColor: context.palette.surfaceVariant,
         content: Row(
           children: [
-            Icon(Icons.check_circle, color: AppColors.success, size: 18),
+            Icon(Icons.check_circle, color: context.palette.success, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 count == 1
                     ? '1 item reset to serviced today.'
                     : '$count items reset to serviced today.',
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
               ),
             ),
           ],
@@ -127,9 +127,9 @@ class _ResetMaintenanceLogSheetState
         16 + bottomInset,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -140,7 +140,7 @@ class _ResetMaintenanceLogSheetState
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.palette.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -151,20 +151,20 @@ class _ResetMaintenanceLogSheetState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: context.palette.primary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.restart_alt, color: AppColors.primary, size: 20),
+                child: Icon(Icons.restart_alt, color: context.palette.primary, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Reset Service Log', style: display(18)),
+                    Text('Reset Service Log', style: display(context, 18)),
                     Text(
                       'Tick what you just serviced on ${widget.bike.displayName}',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -175,7 +175,7 @@ class _ResetMaintenanceLogSheetState
           Text(
             'Selected items are logged as serviced today at the current '
             'odometer, resetting their due date. Nothing is deleted.',
-            style: TextStyle(fontSize: 12, color: AppColors.textTertiary, height: 1.4),
+            style: TextStyle(fontSize: 12, color: context.palette.textTertiary, height: 1.4),
           ),
           const SizedBox(height: 12),
           if (reminders.isEmpty) ...[
@@ -185,7 +185,7 @@ class _ResetMaintenanceLogSheetState
                 child: Text(
                   'No tracked checks yet. Set some up under "Customize" first.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
                 ),
               ),
             ),
@@ -200,11 +200,11 @@ class _ResetMaintenanceLogSheetState
                 TextButton(
                   onPressed: _selected.isEmpty ? null : () => setState(_selected.clear),
                   child: Text('Clear',
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                 ),
                 const Spacer(),
                 Text('${_selected.length} of ${reminders.length} selected',
-                    style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                    style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
               ],
             ),
             const SizedBox(height: 4),
@@ -269,22 +269,22 @@ class _ResetItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (tone, statusColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (PillTone.overdue, AppColors.danger, 'Overdue'),
-      ReminderStatus.dueSoon => (PillTone.dueSoon, AppColors.attention, 'Due soon'),
-      ReminderStatus.ok => (PillTone.ok, AppColors.success, 'OK'),
+      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, 'Overdue'),
+      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, 'Due soon'),
+      ReminderStatus.ok => (PillTone.ok, context.palette.success, 'OK'),
     };
 
     return Container(
       decoration: BoxDecoration(
-        color: selected ? AppColors.surfaceVariant : AppColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        color: selected ? context.palette.surfaceVariant : context.palette.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         border: Border.all(
-          color: selected ? AppColors.primary.withValues(alpha: 0.4) : AppColors.border,
+          color: selected ? context.palette.primary.withValues(alpha: 0.4) : context.palette.border,
         ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -292,14 +292,14 @@ class _ResetItemTile extends StatelessWidget {
               Checkbox(
                 value: selected,
                 onChanged: (_) => onTap(),
-                activeColor: AppColors.primary,
+                activeColor: context.palette.primary,
                 visualDensity: VisualDensity.compact,
               ),
               const SizedBox(width: 4),
               Icon(
                 iconForServiceType(reminder.serviceType),
                 size: 20,
-                color: selected ? AppColors.primary : statusColor,
+                color: selected ? context.palette.primary : statusColor,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -311,7 +311,7 @@ class _ResetItemTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                        color: AppColors.textPrimary,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -319,7 +319,7 @@ class _ResetItemTile extends StatelessWidget {
                       reminder.lastServiceDate != null
                           ? 'Last done ${reminder.kmSinceService.toStringAsFixed(0)} km ago'
                           : 'No previous service recorded',
-                      style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                      style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
                     ),
                   ],
                 ),

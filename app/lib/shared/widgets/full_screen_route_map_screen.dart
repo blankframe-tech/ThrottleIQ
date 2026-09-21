@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/formatters/speed_formatter.dart';
 import 'app_tile_layer.dart';
@@ -125,7 +125,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
     final finish = polyline.length > 1 ? polyline.last : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: Stack(
         children: [
           // 1. Full-screen FlutterMap
@@ -151,7 +151,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   polylines: [
                     Polyline(
                       points: polyline,
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                       strokeWidth: 5.0,
                     ),
                   ],
@@ -169,7 +169,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.success,
+                              color: context.palette.success,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -177,7 +177,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                               style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          Icon(Icons.location_on, color: AppColors.success, size: 24),
+                          Icon(Icons.location_on, color: context.palette.success, size: 24),
                         ],
                       ),
                     ),
@@ -192,7 +192,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.danger,
+                              color: context.palette.danger,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -200,7 +200,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                               style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          Icon(Icons.flag, color: AppColors.danger, size: 24),
+                          Icon(Icons.flag, color: context.palette.danger, size: 24),
                         ],
                       ),
                     ),
@@ -209,7 +209,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                       point: _selectedPoint!,
                       width: 36,
                       height: 36,
-                      child: Icon(Icons.navigation, color: AppColors.warning, size: 28),
+                      child: Icon(Icons.navigation, color: context.palette.warning, size: 28),
                     ),
                 ],
               ),
@@ -223,10 +223,10 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     child: IconButton(
                       tooltip: 'Back',
-                      icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                      icon: Icon(Icons.arrow_back, color: context.palette.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -235,9 +235,9 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.surface.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                        border: Border.all(color: AppColors.border),
+                        color: context.palette.surface.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                        border: Border.all(color: context.palette.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,14 +250,14 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: context.palette.textPrimary,
                             ),
                           ),
                           Text(
                             widget.subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                           ),
                         ],
                       ),
@@ -265,10 +265,10 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   ),
                   const SizedBox(width: 12),
                   CircleAvatar(
-                    backgroundColor: AppColors.surface.withValues(alpha: 0.9),
+                    backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     child: IconButton(
                       tooltip: 'Close',
-                      icon: Icon(Icons.close, color: AppColors.textPrimary),
+                      icon: Icon(Icons.close, color: context.palette.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -287,8 +287,8 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                 FloatingActionButton.small(
                   heroTag: 'fullscreen_zoom_in',
                   key: const Key('fullscreen_zoom_in_button'),
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                  foregroundColor: AppColors.textPrimary,
+                  backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                  foregroundColor: context.palette.textPrimary,
                   tooltip: 'Zoom In',
                   onPressed: _zoomIn,
                   child: const Icon(Icons.add, size: 20),
@@ -297,8 +297,8 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                 FloatingActionButton.small(
                   heroTag: 'fullscreen_zoom_out',
                   key: const Key('fullscreen_zoom_out_button'),
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                  foregroundColor: AppColors.textPrimary,
+                  backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                  foregroundColor: context.palette.textPrimary,
                   tooltip: 'Zoom Out',
                   onPressed: _zoomOut,
                   child: const Icon(Icons.remove, size: 20),
@@ -307,8 +307,8 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                 FloatingActionButton.small(
                   heroTag: 'fullscreen_recenter',
                   key: const Key('fullscreen_recenter_button'),
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                  foregroundColor: AppColors.textPrimary,
+                  backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                  foregroundColor: context.palette.textPrimary,
                   tooltip: 'Recenter Route',
                   onPressed: _recenter,
                   child: const Icon(Icons.my_location, size: 18),
@@ -326,16 +326,16 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.warning, width: 1.5),
+                  color: context.palette.surface.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.warning, width: 1.5),
                   boxShadow: [
                     BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
                   ],
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.place, color: AppColors.warning, size: 20),
+                    Icon(Icons.place, color: context.palette.warning, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -347,12 +347,12 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: context.palette.textPrimary,
                             ),
                           ),
                           Text(
                             'Lat: ${_selectedPoint!.latitude.toStringAsFixed(5)}, Lng: ${_selectedPoint!.longitude.toStringAsFixed(5)}',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                           ),
                         ],
                       ),
@@ -380,9 +380,9 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
             child: Container(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
               decoration: BoxDecoration(
-                color: AppColors.surface.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                border: Border.all(color: AppColors.border),
+                color: context.palette.surface.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(context.shape.radiusLg),
+                border: Border.all(color: context.palette.border),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.2),
@@ -405,18 +405,18 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Container(height: 1, color: AppColors.border),
+                  Container(height: 1, color: context.palette.border),
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(Icons.info_outline, size: 14, color: AppColors.textTertiary),
+                      Icon(Icons.info_outline, size: 14, color: context.palette.textTertiary),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           '${polyline.length} GPS points • Tap route to inspect waypoints',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                          style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
                         ),
                       ),
                       if (widget.onSaveRoute != null)
@@ -451,9 +451,9 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
   Widget _telemetryMini(String label, String value) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.palette.textPrimary)),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 10, color: context.palette.textSecondary)),
       ],
     );
   }

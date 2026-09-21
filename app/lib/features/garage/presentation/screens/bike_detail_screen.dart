@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/stat_card.dart';
@@ -31,12 +31,12 @@ class BikeDetailScreen extends ConsumerWidget {
 
     if (bike == null) {
       return Scaffold(
-        body: Center(child: Text('Bike not found', style: TextStyle(color: AppColors.textSecondary))),
+        body: Center(child: Text('Bike not found', style: TextStyle(color: context.palette.textSecondary))),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: Text(bike.isArchived
             ? '${bike.displayName} (archived)'
@@ -59,7 +59,7 @@ class BikeDetailScreen extends ConsumerWidget {
             )
           else
             IconButton(
-              icon: Icon(Icons.delete_outline, color: AppColors.danger),
+              icon: Icon(Icons.delete_outline, color: context.palette.danger),
               tooltip: 'Archive or delete bike',
               onPressed: () => _confirmRemove(context, ref, bike),
             ),
@@ -79,9 +79,9 @@ class BikeDetailScreen extends ConsumerWidget {
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                border: Border.all(color: AppColors.border),
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(context.shape.radiusLg),
+                border: Border.all(color: context.palette.border),
               ),
               child: BikePhoto(
                 imagePath: bike.imagePath,
@@ -89,7 +89,7 @@ class BikeDetailScreen extends ConsumerWidget {
                 height: 180,
                 iconSize: 72,
                 backgroundColor: Colors.transparent,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                borderRadius: BorderRadius.circular(context.shape.radiusLg),
               ),
             ),
             const SizedBox(height: 16),
@@ -114,7 +114,7 @@ class BikeDetailScreen extends ConsumerWidget {
                   label: 'Total Rides',
                   value: '${bike.rideCount}',
                   icon: Icons.flag_outlined,
-                  valueColor: AppColors.primaryHighlight,
+                  valueColor: context.palette.primaryHighlight,
                   isPrimary: true,
                 ),
                 if (bike.odometerKm != null)
@@ -136,8 +136,8 @@ class BikeDetailScreen extends ConsumerWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _openForum(context, bike),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary),
+                  foregroundColor: context.palette.primary,
+                  side: BorderSide(color: context.palette.primary),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 icon: const Icon(Icons.forum_outlined),
@@ -150,10 +150,10 @@ class BikeDetailScreen extends ConsumerWidget {
 
             // Ride history
             Text('Ride History',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
             const SizedBox(height: 12),
             ridesAsync.when(
-              loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
               error: (e, _) => ErrorView(
                 error: e,
                 onRetry: () => ref.invalidate(rideHistoryProvider(bikeId)),
@@ -164,7 +164,7 @@ class BikeDetailScreen extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text('No rides yet for this bike',
-                          style: TextStyle(color: AppColors.textTertiary)),
+                          style: TextStyle(color: context.palette.textTertiary)),
                     ),
                   );
                 }
@@ -178,9 +178,9 @@ class BikeDetailScreen extends ConsumerWidget {
                     return Container(
                       padding: const EdgeInsets.all(AppDimensions.paddingMd),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                        border: Border.all(color: AppColors.border),
+                        color: context.palette.surface,
+                        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                        border: Border.all(color: context.palette.border),
                       ),
                       child: InkWell(
                         onTap: () => context.push('/ride/summary/${ride.id}'),
@@ -195,13 +195,13 @@ class BikeDetailScreen extends ConsumerWidget {
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary),
+                                        color: context.palette.textPrimary),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
                                     style: TextStyle(
-                                        fontSize: 13, color: AppColors.textSecondary),
+                                        fontSize: 13, color: context.palette.textSecondary),
                                   ),
                                 ],
                               ),
@@ -210,7 +210,7 @@ class BikeDetailScreen extends ConsumerWidget {
                               '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
                               style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.primaryHighlight,
+                                  color: context.palette.primaryHighlight,
                                   fontWeight: FontWeight.w600),
                             ),
                           ],
@@ -260,14 +260,14 @@ class BikeDetailScreen extends ConsumerWidget {
     final choice = await showDialog<_RemoveChoice>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: dialogContext.palette.surface,
         title: Text('Remove ${bike.displayName}?',
-            style: TextStyle(color: AppColors.textPrimary)),
+            style: TextStyle(color: dialogContext.palette.textPrimary)),
         content: Text(
             'Archiving hides this bike from your garage and bike pickers. '
             'Its rides stay in your history and stats, and you can unarchive '
             'it any time.',
-            style: TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: dialogContext.palette.textSecondary)),
         actionsOverflowDirection: VerticalDirection.up,
         actions: [
           TextButton(
@@ -278,7 +278,7 @@ class BikeDetailScreen extends ConsumerWidget {
             onPressed: () =>
                 Navigator.pop(dialogContext, _RemoveChoice.deleteWithRides),
             child: Text('Delete bike and all its rides',
-                style: TextStyle(color: AppColors.danger)),
+                style: TextStyle(color: dialogContext.palette.danger)),
           ),
           FilledButton(
             key: const Key('bike-archive'),
@@ -383,9 +383,9 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
     final expected = TypeToDeleteBikeDialog.confirmationText(widget.bike);
     final rides = widget.bike.rideCount;
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       title: Text('Delete bike and all its rides?',
-          style: TextStyle(color: AppColors.textPrimary)),
+          style: TextStyle(color: context.palette.textPrimary)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +394,7 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
               'This permanently deletes $rides ride${rides == 1 ? '' : 's'}, '
               "their routes and this bike's maintenance log, on this phone "
               'and in the cloud. Type "$expected" to confirm.',
-              style: TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(color: context.palette.textSecondary)),
           const SizedBox(height: 12),
           TextField(
             key: const Key('bike-delete-confirm-field'),
@@ -414,7 +414,7 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
           onPressed: _matches ? () => Navigator.pop(context, true) : null,
           child: Text('Delete',
               style: TextStyle(
-                  color: _matches ? AppColors.danger : AppColors.textTertiary)),
+                  color: _matches ? context.palette.danger : context.palette.textTertiary)),
         ),
       ],
     );
@@ -436,40 +436,40 @@ class _ServiceCard extends ConsumerWidget {
     final next = reminders.firstOrNull;
 
     final (String summary, Color tone) = switch (next) {
-      null => ('Using default service intervals', AppColors.textSecondary),
+      null => ('Using default service intervals', context.palette.textSecondary),
       MaintenanceReminder(status: ReminderStatus.overdue) => (
           '${next.serviceType.label} · overdue by '
               '${(next.kmSinceService - next.kmLimit).toStringAsFixed(0)} km',
-          AppColors.danger,
+          context.palette.danger,
         ),
       _ => (
           '${next.serviceType.label} · due in '
               '${(next.kmLimit - next.kmSinceService).clamp(0, double.infinity).toStringAsFixed(0)} km',
           next.status == ReminderStatus.dueSoon
-              ? AppColors.warning
-              : AppColors.textSecondary,
+              ? context.palette.warning
+              : context.palette.textSecondary,
         ),
     };
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.build_outlined, size: 20, color: AppColors.primary),
+              Icon(Icons.build_outlined, size: 20, color: context.palette.primary),
               const SizedBox(width: 8),
               Text('Service & maintenance',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 6),

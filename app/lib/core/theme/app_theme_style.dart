@@ -22,10 +22,14 @@ enum AppColorMode {
   analystBlue,
 }
 
-/// One immutable set of color tokens, matching the field names historically
-/// exposed by `AppColors` so any palette can be swapped in behind it without
-/// touching any of the ~565 call sites across the app.
-class AppColorPalette {
+/// One immutable set of color tokens.
+///
+/// Registered on [ThemeData.extensions] by `AppTheme.build` and read with
+/// `context.palette` (see `app_theme_context.dart`). Because it travels
+/// through the widget tree like any other theme value, a widget that reads it
+/// in `build` is rebuilt when the rider changes appearance — nothing has to
+/// be remounted, and no widget keeps stale colors.
+class AppColorPalette extends ThemeExtension<AppColorPalette> {
   final Color background;
   final Color surface;
   final Color border;
@@ -71,6 +75,14 @@ class AppColorPalette {
   /// the two shared surfaces that read this.
   final bool hasHardShadow;
 
+  /// Whether display type (headings, big numbers) is set in a monospace face
+  /// instead of the shared proportional one. Only Retro opts in: its whole
+  /// identity is a terminal, and a proportional face on square corners and
+  /// hard rules reads as an unfinished theme. Independent of shape and
+  /// brightness — Retro is monospace whether it's Boxy or Curvy, dark or
+  /// light. See `AppTypography.display`.
+  final bool monoDisplay;
+
   const AppColorPalette({
     required this.background,
     required this.surface,
@@ -96,7 +108,100 @@ class AppColorPalette {
     required this.shimmerHighlight,
     required this.isDark,
     this.hasHardShadow = false,
+    this.monoDisplay = false,
   });
+
+  @override
+  AppColorPalette copyWith({
+    Color? background,
+    Color? surface,
+    Color? border,
+    Color? surfaceVariant,
+    Color? ink,
+    Color? onInk,
+    Color? onInkMuted,
+    Color? primary,
+    Color? primaryHighlight,
+    Color? primaryDark,
+    Color? secondary,
+    Color? secondaryLight,
+    Color? attention,
+    Color? success,
+    Color? warning,
+    Color? danger,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textTertiary,
+    Color? overlayDark,
+    Color? shimmerBase,
+    Color? shimmerHighlight,
+    bool? isDark,
+    bool? hasHardShadow,
+    bool? monoDisplay,
+  }) =>
+      AppColorPalette(
+        background: background ?? this.background,
+        surface: surface ?? this.surface,
+        border: border ?? this.border,
+        surfaceVariant: surfaceVariant ?? this.surfaceVariant,
+        ink: ink ?? this.ink,
+        onInk: onInk ?? this.onInk,
+        onInkMuted: onInkMuted ?? this.onInkMuted,
+        primary: primary ?? this.primary,
+        primaryHighlight: primaryHighlight ?? this.primaryHighlight,
+        primaryDark: primaryDark ?? this.primaryDark,
+        secondary: secondary ?? this.secondary,
+        secondaryLight: secondaryLight ?? this.secondaryLight,
+        attention: attention ?? this.attention,
+        success: success ?? this.success,
+        warning: warning ?? this.warning,
+        danger: danger ?? this.danger,
+        textPrimary: textPrimary ?? this.textPrimary,
+        textSecondary: textSecondary ?? this.textSecondary,
+        textTertiary: textTertiary ?? this.textTertiary,
+        overlayDark: overlayDark ?? this.overlayDark,
+        shimmerBase: shimmerBase ?? this.shimmerBase,
+        shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
+        isDark: isDark ?? this.isDark,
+        hasHardShadow: hasHardShadow ?? this.hasHardShadow,
+        monoDisplay: monoDisplay ?? this.monoDisplay,
+      );
+
+  /// Colors cross-fade while `MaterialApp` animates a theme change; the three
+  /// flags are not interpolable, so they flip at the halfway point.
+  @override
+  AppColorPalette lerp(ThemeExtension<AppColorPalette>? other, double t) {
+    if (other is! AppColorPalette) return this;
+    Color c(Color a, Color b) => Color.lerp(a, b, t)!;
+    final flags = t < 0.5 ? this : other;
+    return AppColorPalette(
+      background: c(background, other.background),
+      surface: c(surface, other.surface),
+      border: c(border, other.border),
+      surfaceVariant: c(surfaceVariant, other.surfaceVariant),
+      ink: c(ink, other.ink),
+      onInk: c(onInk, other.onInk),
+      onInkMuted: c(onInkMuted, other.onInkMuted),
+      primary: c(primary, other.primary),
+      primaryHighlight: c(primaryHighlight, other.primaryHighlight),
+      primaryDark: c(primaryDark, other.primaryDark),
+      secondary: c(secondary, other.secondary),
+      secondaryLight: c(secondaryLight, other.secondaryLight),
+      attention: c(attention, other.attention),
+      success: c(success, other.success),
+      warning: c(warning, other.warning),
+      danger: c(danger, other.danger),
+      textPrimary: c(textPrimary, other.textPrimary),
+      textSecondary: c(textSecondary, other.textSecondary),
+      textTertiary: c(textTertiary, other.textTertiary),
+      overlayDark: c(overlayDark, other.overlayDark),
+      shimmerBase: c(shimmerBase, other.shimmerBase),
+      shimmerHighlight: c(shimmerHighlight, other.shimmerHighlight),
+      isDark: flags.isDark,
+      hasHardShadow: flags.hasHardShadow,
+      monoDisplay: flags.monoDisplay,
+    );
+  }
 
   // ── Carbon Mono ─────────────────────────────────────────────────────────
   // Dark instrument-panel base, lime primary, magenta secondary. The app's
@@ -426,6 +531,7 @@ class AppColorPalette {
     shimmerHighlight: Color(0xFFF3E5D6),
     isDark: false,
     hasHardShadow: true,
+    monoDisplay: true,
   );
 
   static const AppColorPalette retroDark = AppColorPalette(
@@ -453,6 +559,7 @@ class AppColorPalette {
     shimmerHighlight: Color(0xFF322618),
     isDark: true,
     hasHardShadow: true,
+    monoDisplay: true,
   );
 
   // ── Analyst Blue ────────────────────────────────────────────────────────

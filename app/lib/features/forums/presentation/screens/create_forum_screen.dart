@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/forum_repository.dart';
@@ -72,48 +72,48 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Create a forum')),
       body: ListView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         children: [
           Text(
             'Name',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _nameController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: 'e.g. Sunday Breakfast Rides',
-              hintStyle: TextStyle(color: AppColors.textTertiary),
+              hintStyle: TextStyle(color: context.palette.textTertiary),
             ),
           ),
           const SizedBox(height: 20),
           Text(
             'Description (optional)',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _descriptionController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             maxLines: 4,
             decoration: InputDecoration(
               hintText: "What's this forum about?",
-              hintStyle: TextStyle(color: AppColors.textTertiary),
+              hintStyle: TextStyle(color: context.palette.textTertiary),
             ),
           ),
           const SizedBox(height: 12),
           Text(
             "You'll be able to moderate posts here and add other riders as maintainers.",
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: context.palette.primary),
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(

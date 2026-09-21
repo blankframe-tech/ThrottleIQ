@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../providers/maintenance_provider.dart';
 import '../../domain/entities/maintenance_entity.dart';
@@ -64,7 +64,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: ColorScheme.dark(primary: AppColors.primary),
+          colorScheme: ColorScheme.dark(primary: ctx.palette.primary),
         ),
         child: child!,
       ),
@@ -91,7 +91,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Log Service')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -101,7 +101,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text('Service Type',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -114,18 +114,18 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.primary.withValues(alpha: 0.15)
-                            : AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                            ? context.palette.primary.withValues(alpha: 0.15)
+                            : context.palette.surface,
+                        borderRadius: BorderRadius.circular(context.shape.radiusFull),
                         border: Border.all(
-                          color: selected ? AppColors.primary : AppColors.border,
+                          color: selected ? context.palette.primary : context.palette.border,
                         ),
                       ),
                       child: Text(
                         type.label,
                         style: TextStyle(
                             fontSize: 13,
-                            color: selected ? AppColors.primary : AppColors.textSecondary,
+                            color: selected ? context.palette.primary : context.palette.textSecondary,
                             fontWeight:
                                 selected ? FontWeight.w600 : FontWeight.normal),
                       ),
@@ -140,7 +140,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                 TextFormField(
                   controller: _customLabelCtrl,
                   textCapitalization: TextCapitalization.sentences,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: const InputDecoration(
                     labelText: 'What did you service? *',
                     hintText: 'e.g. Radiator flush',
@@ -162,22 +162,22 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    border: Border.all(color: AppColors.border),
+                    color: context.palette.surface,
+                    borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                    border: Border.all(color: context.palette.border),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.calendar_today_outlined,
-                          color: AppColors.textSecondary, size: 18),
+                          color: context.palette.textSecondary, size: 18),
                       const SizedBox(width: 12),
                       Text(
                         '${_date.day}/${_date.month}/${_date.year}',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: context.palette.textPrimary),
                       ),
                       const Spacer(),
                       Icon(Icons.chevron_right,
-                          color: AppColors.textTertiary, size: 18),
+                          color: context.palette.textTertiary, size: 18),
                     ],
                   ),
                 ),
@@ -187,7 +187,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
               TextFormField(
                 controller: _odometerCtrl,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Odometer (km) *',
                   suffixText: 'km',
@@ -202,7 +202,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
               TextFormField(
                 controller: _costCtrl,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Cost (optional)',
                   prefixText: '৳ ',
@@ -226,7 +226,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                       TextFormField(
                         controller: _notesCtrl,
                         maxLines: 3,
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: context.palette.textPrimary),
                         decoration: InputDecoration(
                           labelText: 'Notes (optional)',
                           hintText: (specNote != null && specNote.isNotEmpty)
@@ -252,24 +252,24 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceVariant,
+                              color: context.palette.surfaceVariant,
                               borderRadius: BorderRadius.circular(
-                                  AppDimensions.radiusSm),
+                                  context.shape.radiusSm),
                               border: Border.all(
-                                  color: AppColors.primary
+                                  color: context.palette.primary
                                       .withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.add_circle_outline,
-                                    size: 12, color: AppColors.primary),
+                                    size: 12, color: context.palette.primary),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Insert spec: $specNote',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppColors.primary,
+                                    color: context.palette.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),

@@ -8,8 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/medical_info_entity.dart';
@@ -148,14 +147,14 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(l10n.safeQrTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
             l10n.safeQrIntro,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 20),
           Center(
@@ -165,8 +164,8 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(context.shape.radiusLg),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: hasContent
                     ? QrImageView(
@@ -210,11 +209,11 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           TextField(
             controller: _bloodGroupCtrl,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
               labelText: l10n.safeQrBloodGroupField,
               hintText: l10n.safeQrBloodGroupHint,
@@ -225,7 +224,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           TextField(
             controller: _allergiesCtrl,
             maxLines: 2,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.safeQrAllergiesField),
             onChanged: (_) => setState(() {}),
           ),
@@ -233,7 +232,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           TextField(
             controller: _conditionsCtrl,
             maxLines: 2,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.safeQrConditionsField),
             onChanged: (_) => setState(() {}),
           ),
@@ -241,7 +240,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           TextField(
             controller: _medicationsCtrl,
             maxLines: 2,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.safeQrMedicationsField),
             onChanged: (_) => setState(() {}),
           ),
@@ -250,7 +249,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
             firstContact != null
                 ? l10n.safeQrContactIncludedNote(firstContact.name)
                 : l10n.safeQrNoContactNote,
-            style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -264,7 +263,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           Text(
             l10n.safeQrLocalOnlyDisclaimer,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
           ),
         ],
       ),

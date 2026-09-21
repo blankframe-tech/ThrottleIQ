@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -43,11 +43,11 @@ Future<void> showBadgeLadderSheet(
 ) {
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.palette.surface,
     isScrollControlled: true,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl)),
+          top: Radius.circular(context.shape.radiusXl)),
     ),
     builder: (_) => _BadgeLadderSheet(progress: progress),
   );
@@ -62,7 +62,7 @@ class _BadgeFamilyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final earned = progress.earnedCount > 0;
-    final color = earned ? AppColors.primary : AppColors.textTertiary;
+    final color = earned ? context.palette.primary : context.palette.textTertiary;
     final tier = progress.highestTier;
 
     return Semantics(
@@ -71,7 +71,7 @@ class _BadgeFamilyTile extends StatelessWidget {
           '${progress.earnedCount} of ${progress.badges.length} earned',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
         child: SizedBox(
           width: 78,
           child: Column(
@@ -81,12 +81,12 @@ class _BadgeFamilyTile extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: earned
-                      ? AppColors.primary.withValues(alpha: 0.12)
+                      ? context.palette.primary.withValues(alpha: 0.12)
                       : Colors.transparent,
                   borderRadius:
-                      BorderRadius.circular(AppDimensions.radiusLg),
+                      BorderRadius.circular(context.shape.radiusLg),
                   border: Border.all(
-                    color: earned ? AppColors.primary : AppColors.border,
+                    color: earned ? context.palette.primary : context.palette.border,
                     width: 1.2,
                   ),
                 ),
@@ -103,8 +103,8 @@ class _BadgeFamilyTile extends StatelessWidget {
                   height: 1.2,
                   fontWeight: FontWeight.w600,
                   color: earned
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? context.palette.textPrimary
+                      : context.palette.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
@@ -121,7 +121,7 @@ class _BadgeFamilyTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 9,
                   letterSpacing: 0.2,
-                  color: earned ? AppColors.primary : AppColors.textTertiary,
+                  color: earned ? context.palette.primary : context.palette.textTertiary,
                 ),
               ),
             ],
@@ -157,9 +157,9 @@ class _BadgeLadderSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.palette.border,
                     borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusFull),
+                        BorderRadius.circular(context.shape.radiusFull),
                   ),
                 ),
               ),
@@ -169,16 +169,16 @@ class _BadgeLadderSheet extends StatelessWidget {
                   Icon(family.icon,
                       size: 26,
                       color: progress.earnedCount > 0
-                          ? AppColors.primary
-                          : AppColors.textTertiary),
+                          ? context.palette.primary
+                          : context.palette.textTertiary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(family.name,
-                        style: display(20, letterSpacing: 0)),
+                        style: display(context, 20, letterSpacing: 0)),
                   ),
                   Text('${progress.earnedCount}/${progress.badges.length}',
                       style: TextStyle(
-                          fontSize: 13, color: AppColors.textSecondary)),
+                          fontSize: 13, color: context.palette.textSecondary)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -186,11 +186,11 @@ class _BadgeLadderSheet extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
-                      color: AppColors.textSecondary)),
+                      color: context.palette.textSecondary)),
               const SizedBox(height: 14),
               Text(
                 'You: ${formatBadgeValue(progress.value)} ${family.unit}',
-                style: display(15, letterSpacing: 0),
+                style: display(context, 15, letterSpacing: 0),
               ),
               if (next != null) ...[
                 const SizedBox(height: 8),
@@ -205,12 +205,12 @@ class _BadgeLadderSheet extends StatelessWidget {
                   '${formatBadgeValue(next.def.threshold - progress.value)} '
                   '${family.unit} to go',
                   style:
-                      TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                      TextStyle(fontSize: 12, color: context.palette.textTertiary),
                 ),
               ] else ...[
                 const SizedBox(height: 8),
                 Text('Every tier earned. Nothing left to chase here.',
-                    style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                    style: TextStyle(fontSize: 12, color: context.palette.primary)),
               ],
               const SizedBox(height: 18),
               const EditorialLabel('Tiers'),
@@ -237,11 +237,11 @@ class _LadderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final family = progress.family;
     final earned = badge.earned;
-    final color = earned ? AppColors.primary : AppColors.textTertiary;
+    final color = earned ? context.palette.primary : context.palette.textTertiary;
 
     return EditorialCard(
       padding: const EdgeInsets.all(12),
-      borderColor: earned ? AppColors.primary : AppColors.border,
+      borderColor: earned ? context.palette.primary : context.palette.border,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -255,7 +255,7 @@ class _LadderRow extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(badge.def.name,
-                          style: display(14, letterSpacing: 0)),
+                          style: display(context, 14, letterSpacing: 0)),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -283,7 +283,7 @@ class _LadderRow extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 12,
                       height: 1.35,
-                      color: AppColors.textSecondary),
+                      color: context.palette.textSecondary),
                 ),
               ],
             ),

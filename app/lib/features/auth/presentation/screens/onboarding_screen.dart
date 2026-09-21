@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_catalog.dart';
 import '../../../../shared/widgets/brand_model_field.dart';
@@ -243,7 +243,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     // Functional phase: name or bike form.
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
@@ -263,7 +263,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Icon(
                   _step == 0 ? Icons.person_outline : Icons.two_wheeler,
                   size: 64,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
                 const SizedBox(height: 20),
 
@@ -274,7 +274,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: context.palette.textPrimary,
                     letterSpacing: -0.4,
                   ),
                 ),
@@ -284,7 +284,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ? 'Your name and @handle so the community can find you.'
                       : 'ThrottleIQ tracks rides and maintenance per bike.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 32),
 
@@ -311,7 +311,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   TextButton(
                     onPressed: _loading ? null : _previous,
                     child: Text('← Back',
-                        style: TextStyle(color: AppColors.textTertiary)),
+                        style: TextStyle(color: context.palette.textTertiary)),
                   ),
 
                 // Skip links
@@ -324,7 +324,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       context.go('/home/record');
                     },
                     child: Text('Skip for now',
-                        style: TextStyle(color: AppColors.textTertiary)),
+                        style: TextStyle(color: context.palette.textTertiary)),
                   ),
               ],
             ),
@@ -339,7 +339,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   List<Widget> _nameFields() => [
         TextFormField(
           controller: _nameCtrl,
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.palette.textPrimary),
           textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
             labelText: 'Full Name *',
@@ -350,7 +350,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: 12),
         TextFormField(
           controller: _usernameCtrl,
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.palette.textPrimary),
           decoration: InputDecoration(
             labelText: 'Username *',
             prefixText: '@',
@@ -390,7 +390,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: TextFormField(
                 controller: _yearCtrl,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(labelText: 'Year', hintText: '2023'),
               ),
             ),
@@ -399,7 +399,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: TextFormField(
                 controller: _ccCtrl,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(labelText: 'Engine CC', hintText: '150'),
               ),
             ),
@@ -480,8 +480,8 @@ class _SetupProgressBar extends StatelessWidget {
                   child: Container(
                     height: 2,
                     color: isDone || isActive
-                        ? AppColors.primary
-                        : AppColors.border,
+                        ? context.palette.primary
+                        : context.palette.border,
                   ),
                 ),
               // Dot
@@ -491,14 +491,14 @@ class _SetupProgressBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isDone
-                      ? AppColors.primary
+                      ? context.palette.primary
                       : isActive
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : AppColors.surface,
+                          ? context.palette.primary.withValues(alpha: 0.15)
+                          : context.palette.surface,
                   border: Border.all(
                     color: isActive || isDone
-                        ? AppColors.primary
-                        : AppColors.border,
+                        ? context.palette.primary
+                        : context.palette.border,
                     width: 2,
                   ),
                 ),
@@ -511,8 +511,8 @@ class _SetupProgressBar extends StatelessWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: isActive
-                                ? AppColors.primary
-                                : AppColors.textTertiary,
+                                ? context.palette.primary
+                                : context.palette.textTertiary,
                           ),
                         ),
                       ),
@@ -522,7 +522,7 @@ class _SetupProgressBar extends StatelessWidget {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: i < currentStep ? AppColors.primary : AppColors.border,
+                    color: i < currentStep ? context.palette.primary : context.palette.border,
                   ),
                 ),
             ],

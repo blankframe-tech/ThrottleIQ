@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/theme_style_provider.dart';
@@ -61,10 +60,10 @@ class ColorModeDropdown extends ConsumerWidget {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
-      dropdownColor: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-      icon: Icon(Icons.expand_more, color: AppColors.textSecondary),
-      style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+      dropdownColor: context.palette.surface,
+      borderRadius: BorderRadius.circular(context.shape.radiusMd),
+      icon: Icon(Icons.expand_more, color: context.palette.textSecondary),
+      style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
       // The closed field gets one compact line; the two-line rows below
       // would overflow it.
       selectedItemBuilder: (context) => [
@@ -87,7 +86,7 @@ class ColorModeDropdown extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                 ),
@@ -118,21 +117,21 @@ class ColorModeDropdown extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: context.palette.textPrimary,
                         ),
                       ),
                       Text(
                         colorModeDescription(l10n, mode),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 11, color: AppColors.textTertiary),
+                            fontSize: 11, color: context.palette.textTertiary),
                       ),
                     ],
                   ),
                 ),
                 if (mode == appearance.colorMode) ...[
                   const SizedBox(width: 8),
-                  Icon(Icons.check, size: 18, color: AppColors.primary),
+                  Icon(Icons.check, size: 18, color: context.palette.primary),
                 ],
               ],
             ),
@@ -177,7 +176,7 @@ class ColorModeSwatch extends StatelessWidget {
         // background (Retro's rule is ink-strength, Editorial's a warm
         // hairline), and the job here is to keep the swatch legible on the
         // surface it is drawn on.
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -105,10 +105,10 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
     final placeAsync = ref.watch(placeDetailProvider(widget.placeId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? 'Place')),
       body: placeAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(placeDetailProvider(widget.placeId)),
@@ -116,7 +116,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
         data: (place) {
           if (place == null) {
             return Center(
-              child: Text('Place not found', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Place not found', style: TextStyle(color: context.palette.textSecondary)),
             );
           }
           return _PlaceDetailBody(
@@ -162,7 +162,7 @@ class _PlaceDetailBody extends ConsumerWidget {
         const SizedBox(height: 24),
         Text(
           'Add your review',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 8),
         Row(
@@ -175,7 +175,7 @@ class _PlaceDetailBody extends ConsumerWidget {
                 onPressed: () => onStarsChanged(i),
                 icon: Icon(
                   i <= selectedStars ? Icons.star : Icons.star_border,
-                  color: AppColors.warning,
+                  color: context.palette.warning,
                 ),
               ),
           ],
@@ -184,7 +184,7 @@ class _PlaceDetailBody extends ConsumerWidget {
         TextField(
           controller: reviewController,
           maxLines: 3,
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.palette.textPrimary),
           decoration: const InputDecoration(hintText: 'Share your experience...'),
         ),
         const SizedBox(height: 12),
@@ -208,11 +208,11 @@ class _PlaceDetailBody extends ConsumerWidget {
         const SizedBox(height: 24),
         Text(
           'Reviews',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
         reviewsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => ErrorView(
             error: e,
             onRetry: () => ref.invalidate(reviewsForPlaceProvider(place.id)),
@@ -221,7 +221,7 @@ class _PlaceDetailBody extends ConsumerWidget {
             if (reviews.isEmpty) {
               return Text(
                 'No reviews yet — be the first!',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
             return Column(
@@ -256,7 +256,7 @@ class _PlaceHeader extends StatelessWidget {
                 height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: context.palette.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),
@@ -269,10 +269,10 @@ class _PlaceHeader extends StatelessWidget {
                     Text(
                       place.name,
                       style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          fontSize: 17, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
                     ),
                     Text(place.category.displayName,
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                        style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                   ],
                 ),
               ),
@@ -282,14 +282,14 @@ class _PlaceHeader extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star, size: 16, color: AppColors.warning),
+                      Icon(Icons.star, size: 16, color: context.palette.warning),
                       const SizedBox(width: 2),
                       Text(
                         (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
                             ? '—'
                             : place.dualRatingDisplay,
                         style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                            fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
                       ),
                     ],
                   ),
@@ -297,14 +297,14 @@ class _PlaceHeader extends StatelessWidget {
                     (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
                         ? 'Official point'
                         : place.reviewsSummarySubtitle,
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                   ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Container(height: 1, color: AppColors.border),
+          Container(height: 1, color: context.palette.border),
           const SizedBox(height: 12),
           // Address is optional on submission (and absent on Overpass imports
           // with no addr:* tags), so an empty one is normal — skip the row
@@ -313,11 +313,11 @@ class _PlaceHeader extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.location_on_outlined, size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(place.address,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                 ),
               ],
             ),
@@ -325,9 +325,9 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.phone_outlined, size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.phone!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text(place.phone!, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ],
@@ -335,9 +335,9 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.access_time, size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.hours!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text(place.hours!, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ],
@@ -346,9 +346,9 @@ class _PlaceHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.palette.surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.palette.border),
               ),
               child: Row(
                 children: [
@@ -358,13 +358,13 @@ class _PlaceHeader extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.map_outlined, size: 13, color: AppColors.textSecondary),
+                            Icon(Icons.map_outlined, size: 13, color: context.palette.textSecondary),
                             const SizedBox(width: 4),
                             Text('Google Maps',
                                 style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary)),
+                                    color: context.palette.textSecondary)),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -375,7 +375,7 @@ class _PlaceHeader extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary),
+                              color: context.palette.textPrimary),
                         ),
                       ],
                     ),
@@ -383,7 +383,7 @@ class _PlaceHeader extends StatelessWidget {
                   Container(
                     width: 1,
                     height: 28,
-                    color: AppColors.border,
+                    color: context.palette.border,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -392,13 +392,13 @@ class _PlaceHeader extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.two_wheeler, size: 13, color: AppColors.primary),
+                            Icon(Icons.two_wheeler, size: 13, color: context.palette.primary),
                             const SizedBox(width: 4),
                             Text('ThrottleIQ',
                                 style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary)),
+                                    color: context.palette.textSecondary)),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -409,7 +409,7 @@ class _PlaceHeader extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary),
+                              color: context.palette.textPrimary),
                         ),
                       ],
                     ),
@@ -468,7 +468,7 @@ class _PlaceActions extends ConsumerWidget {
 
     final answer = await showModalBottomSheet<(bool, bool)>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       builder: (_) => const _RecordChoiceSheet(),
     );
     if (answer == null) return null;
@@ -563,7 +563,7 @@ class _PlaceActions extends ConsumerWidget {
             // which inside a Row with no Expanded fails layout and blanks
             // the whole screen for any place that has a phone number.
             style: OutlinedButton.styleFrom(
-              minimumSize: Size(0, AppDimensions.controlHeight),
+              minimumSize: Size(0, context.shape.controlHeight),
             ),
             icon: const Icon(Icons.phone, size: 18),
             label: const Text('Call'),
@@ -593,25 +593,25 @@ class _ReviewTile extends StatelessWidget {
                   (i) => Icon(
                     i < review.stars ? Icons.star : Icons.star_border,
                     size: 14,
-                    color: AppColors.warning,
+                    color: context.palette.warning,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 isOwn ? 'You' : 'Rider',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
               ),
               const Spacer(),
               Text(
                 '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
-                style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
               ),
             ],
           ),
           if (review.text.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(review.text, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            Text(review.text, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
           ],
         ],
       ),
@@ -645,12 +645,12 @@ class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary)),
+                    color: context.palette.textPrimary)),
             const SizedBox(height: 6),
             Text(
               'Your maps app gives the directions. ThrottleIQ can log the '
               'trip in the background at the same time.',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -669,10 +669,10 @@ class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
               value: _dontAskAgain,
               onChanged: (v) => setState(() => _dontAskAgain = v ?? false),
               title: Text("Don't ask again",
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              activeColor: AppColors.primary,
+              activeColor: context.palette.primary,
             ),
           ],
         ),

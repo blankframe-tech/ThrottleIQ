@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -89,13 +89,13 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Post')),
       body: _loading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: context.palette.primary))
           : _post == null
               ? Center(
-                  child: Text('Post not found', style: TextStyle(color: AppColors.textSecondary)))
+                  child: Text('Post not found', style: TextStyle(color: context.palette.textSecondary)))
               : Column(
                   children: [
                     Expanded(
@@ -104,19 +104,19 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                         children: [
                           _buildPostHeader(_post!),
                           const SizedBox(height: 20),
-                          Container(height: 1, color: AppColors.border),
+                          Container(height: 1, color: context.palette.border),
                           const SizedBox(height: 16),
                           Text(
                             '${_replies.length} ${_replies.length == 1 ? 'reply' : 'replies'}',
                             style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                                fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                           ),
                           const SizedBox(height: 12),
                           if (_replies.isEmpty)
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Text('No replies yet — be the first to help out.',
-                                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                             )
                           else
                             for (final reply in _replies) ...[
@@ -126,7 +126,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                         ],
                       ),
                     ),
-                    Container(height: 1, color: AppColors.border),
+                    Container(height: 1, color: context.palette.border),
                     _buildComposer(),
                   ],
                 ),
@@ -139,7 +139,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       children: [
         Text(
           post.title,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 8),
         GestureDetector(
@@ -152,7 +152,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
               const SizedBox(width: 8),
               Text(
                 post.userName,
-                style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 13, color: context.palette.textTertiary),
               ),
             ],
           ),
@@ -160,7 +160,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
         const SizedBox(height: 12),
         Text(
           post.body,
-          style: TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.4),
+          style: TextStyle(fontSize: 14, color: context.palette.textPrimary, height: 1.4),
         ),
       ],
     );
@@ -170,9 +170,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,13 +187,13 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                 const SizedBox(width: 8),
                 Text(
                   reply.userName,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 6),
-          Text(reply.body, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text(reply.body, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
         ],
       ),
     );
@@ -207,18 +207,18 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           Expanded(
             child: TextField(
               controller: _replyController,
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+              style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
               decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Write a reply...',
-                hintStyle: TextStyle(color: AppColors.textTertiary),
+                hintStyle: TextStyle(color: context.palette.textTertiary),
               ),
               onSubmitted: (_) => _submitReply(),
             ),
           ),
           IconButton(
             tooltip: 'Send',
-            icon: Icon(Icons.send, color: AppColors.primary),
+            icon: Icon(Icons.send, color: context.palette.primary),
             onPressed: _submitReply,
           ),
         ],

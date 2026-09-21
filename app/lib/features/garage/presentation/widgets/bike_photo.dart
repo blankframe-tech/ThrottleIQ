@@ -2,8 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/bike_image_resolver.dart';
 
 /// The rider's own photo of a bike, with a guaranteed fallback.
@@ -17,7 +16,7 @@ class BikePhoto extends StatelessWidget {
   final double? width;
   final double? height;
 
-  /// Corner rounding. Defaults to [AppDimensions.radiusMd]; pass a
+  /// Corner rounding. Defaults to [context.shape.radiusMd]; pass a
   /// `BorderRadius.vertical(...)` for a card's top photo strip.
   final BorderRadius? borderRadius;
 
@@ -52,19 +51,19 @@ class BikePhoto extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = imagePath;
     final radius =
-        borderRadius ?? BorderRadius.circular(AppDimensions.radiusMd);
+        borderRadius ?? BorderRadius.circular(context.shape.radiusMd);
 
     Widget content;
     if (path == null || path.isEmpty) {
-      content = _fallback();
+      content = _fallback(context);
     } else if (BikeImageResolver.isRemoteUrl(path)) {
       content = CachedNetworkImage(
         imageUrl: path,
         width: width,
         height: height,
         fit: fit,
-        placeholder: (_, __) => _fallback(),
-        errorWidget: (_, __, ___) => _fallback(),
+        placeholder: (_, __) => _fallback(context),
+        errorWidget: (_, __, ___) => _fallback(context),
       );
     } else {
       final resolved = BikeImageResolver.resolvePathSync(
@@ -72,7 +71,7 @@ class BikePhoto extends StatelessWidget {
         documentsDirectory: documentsDirectory,
       );
       if (resolved == null) {
-        content = _fallback();
+        content = _fallback(context);
       } else {
         content = Image.file(
           File(resolved),
@@ -80,7 +79,7 @@ class BikePhoto extends StatelessWidget {
           height: height,
           fit: fit,
           // File deleted / unreadable / not an image any more.
-          errorBuilder: (_, __, ___) => _fallback(),
+          errorBuilder: (_, __, ___) => _fallback(context),
         );
       }
     }
@@ -95,15 +94,15 @@ class BikePhoto extends StatelessWidget {
     );
   }
 
-  Widget _fallback() => Container(
+  Widget _fallback(BuildContext context) => Container(
         width: width,
         height: height,
-        color: backgroundColor ?? AppColors.surfaceVariant,
+        color: backgroundColor ?? context.palette.surfaceVariant,
         alignment: Alignment.center,
         child: Icon(
           Icons.two_wheeler,
           size: iconSize,
-          color: iconColor ?? AppColors.textTertiary,
+          color: iconColor ?? context.palette.textTertiary,
         ),
       );
 }

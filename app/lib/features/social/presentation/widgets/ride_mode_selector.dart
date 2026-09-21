@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/group_ride_repository.dart';
@@ -134,9 +133,9 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusMd),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             children: [
@@ -172,7 +171,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.primary),
+                              strokeWidth: 2, color: context.palette.primary),
                         )
                       : const Icon(Icons.person_add_outlined, size: 18),
                   label: Text(l10n.rideModeInviteFriendsAction,
@@ -219,19 +218,19 @@ class _ModeSegment extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      borderRadius: BorderRadius.circular(context.shape.radiusSm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
                 size: 18,
-                color: selected ? AppColors.surface : AppColors.textPrimary),
+                color: selected ? context.palette.surface : context.palette.textPrimary),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -240,7 +239,7 @@ class _ModeSegment extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: selected ? AppColors.surface : AppColors.textPrimary,
+                  color: selected ? context.palette.surface : context.palette.textPrimary,
                 ),
               ),
             ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -74,23 +74,23 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           tooltip: 'Back',
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: context.palette.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: Text('All rides', style: display(20, letterSpacing: 0)),
+        title: Text('All rides', style: display(context, 20, letterSpacing: 0)),
       ),
       body: SafeArea(
         top: false,
         child: statsAsync.when(
           loading: () => Center(
-              child: CircularProgressIndicator(color: AppColors.primary)),
+              child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => Center(
               child: ErrorView(
                 error: e,
@@ -109,7 +109,7 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
               return Center(
                 child: Text('No rides yet.',
                     style: TextStyle(
-                        fontSize: 14, color: AppColors.textSecondary)),
+                        fontSize: 14, color: context.palette.textSecondary)),
               );
             }
 
@@ -131,7 +131,7 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                   child: Text(
                     'Showing ${shown.length} of ${sorted.length}',
                     style:
-                        TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                        TextStyle(fontSize: 12, color: context.palette.textTertiary),
                   ),
                 ),
                 Expanded(
@@ -153,7 +153,7 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: AppColors.primary),
+                                  strokeWidth: 2, color: context.palette.primary),
                             ),
                           ),
                         );
@@ -228,11 +228,11 @@ class AllRidesRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(formatRideDate(ride.startTime),
-                        style: display(15, letterSpacing: 0)),
+                        style: display(context, 15, letterSpacing: 0)),
                     const SizedBox(height: 2),
                     Text(formatRideTime(ride.startTime),
                         style: TextStyle(
-                            fontSize: 12, color: AppColors.textTertiary)),
+                            fontSize: 12, color: context.palette.textTertiary)),
                   ],
                 ),
               ),
@@ -241,7 +241,7 @@ class AllRidesRow extends StatelessWidget {
               Text(
                 sort.trailingValue(ride) ??
                     SpeedFormatter.distanceKm(ride.distanceM),
-                style: display(16, letterSpacing: 0, color: AppColors.primary),
+                style: display(context, 16, letterSpacing: 0, color: context.palette.primary),
               ),
             ],
           ),
@@ -292,7 +292,7 @@ class AllRidesRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 11, color: AppColors.textTertiary),
+                        fontSize: 11, color: context.palette.textTertiary),
                   ),
                 ),
             ],
@@ -317,10 +317,10 @@ class _Figure extends StatelessWidget {
         Text(value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: display(13, letterSpacing: 0)),
+            style: display(context, 13, letterSpacing: 0)),
         const SizedBox(height: 2),
         Text(label,
-            style: TextStyle(fontSize: 10, color: AppColors.textTertiary)),
+            style: TextStyle(fontSize: 10, color: context.palette.textTertiary)),
       ],
     );
   }

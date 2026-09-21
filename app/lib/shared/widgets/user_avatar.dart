@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/utils/initials.dart';
 
 /// A rider's avatar: their photo when set, otherwise a GitHub-style circle
@@ -19,7 +19,7 @@ class UserAvatar extends StatelessWidget {
     final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+      backgroundColor: context.palette.primary.withValues(alpha: 0.15),
       backgroundImage: hasPhoto ? CachedNetworkImageProvider(photoUrl!) : null,
       child: hasPhoto
           ? null
@@ -27,7 +27,7 @@ class UserAvatar extends StatelessWidget {
               initialsFrom(name),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: context.palette.primary,
                 fontSize: radius * 0.7,
               ),
             ),

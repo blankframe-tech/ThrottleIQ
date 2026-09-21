@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/crop_geometry.dart';
 import '../../core/utils/image_crop_io.dart';
@@ -183,7 +183,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -199,7 +199,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.primary),
+                        strokeWidth: 2, color: context.palette.primary),
                   )
                 : const Text('Done'),
           ),
@@ -212,7 +212,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
               child: Text(_error!,
-                  style: TextStyle(color: AppColors.danger, fontSize: 13),
+                  style: TextStyle(color: context.palette.danger, fontSize: 13),
                   textAlign: TextAlign.center),
             ),
           _buildControls(),
@@ -225,8 +225,8 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     if (_preview == null) {
       return Center(
         child: _error != null
-            ? Icon(Icons.broken_image_outlined, size: 48, color: AppColors.textTertiary)
-            : CircularProgressIndicator(color: AppColors.primary),
+            ? Icon(Icons.broken_image_outlined, size: 48, color: context.palette.textTertiary)
+            : CircularProgressIndicator(color: context.palette.primary),
       );
     }
 
@@ -264,9 +264,9 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
               quarterTurns: _quarterTurns,
               display: display,
               crop: crop,
-              scrim: AppColors.overlayDark,
-              frame: AppColors.primary,
-              grid: AppColors.onInk.withValues(alpha: 0.35),
+              scrim: context.palette.overlayDark,
+              frame: context.palette.primary,
+              grid: context.palette.onInk.withValues(alpha: 0.35),
             ),
           ),
         );
@@ -324,23 +324,22 @@ class _RatioChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusMd),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.border,
             width: 1.5,
           ),
         ),
         child: Text(
           label,
-          style: display(
-            13,
+          style: display(context, 13,
             letterSpacing: 0,
             color: selected
                 ? (Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.surface
+                    ? context.palette.surface
                     : Colors.white)
-                : AppColors.textPrimary,
+                : context.palette.textPrimary,
           ),
         ),
       ),

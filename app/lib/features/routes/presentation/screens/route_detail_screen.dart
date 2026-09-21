@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -58,20 +58,20 @@ class RouteDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Delete route?', style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: ctx.palette.surface,
+        title: Text('Delete route?', style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
           'This removes the saved route. The ride it came from is untouched.',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: TextStyle(color: ctx.palette.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text('Delete', style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -105,9 +105,9 @@ class RouteDetailScreen extends ConsumerWidget {
     final canEdit = canEditRoute(viewerUid: viewerUid, ownerUid: owner);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         title: Text(routeAsync.valueOrNull?.name ?? 'Route'),
         // Same no-back-stack guard as RoutesListScreen — a deep link straight
         // to a route would otherwise render no back button at all.
@@ -122,7 +122,7 @@ class RouteDetailScreen extends ConsumerWidget {
           // discovered route doesn't get a button that can only fail.
           if (routeAsync.valueOrNull != null && canEdit)
             IconButton(
-              icon: Icon(Icons.delete_outline, color: AppColors.textSecondary),
+              icon: Icon(Icons.delete_outline, color: context.palette.textSecondary),
               tooltip: 'Delete route',
               onPressed: () => _delete(context, ref),
             ),
@@ -130,7 +130,7 @@ class RouteDetailScreen extends ConsumerWidget {
       ),
       body: routeAsync.when(
         loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) =>
             ErrorView(
           error: e,
@@ -140,7 +140,7 @@ class RouteDetailScreen extends ConsumerWidget {
           if (route == null) {
             return Center(
               child: Text('Route not found',
-                  style: TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: context.palette.textSecondary)),
             );
           }
 
@@ -169,7 +169,7 @@ class RouteDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Text(
                   route.description!,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                 ),
               ],
               const SizedBox(height: 20),
@@ -182,26 +182,26 @@ class RouteDetailScreen extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    border: Border.all(color: AppColors.border),
+                    color: context.palette.surface,
+                    borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                    border: Border.all(color: context.palette.border),
                   ),
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     value: route.isPublic,
-                    activeThumbColor: AppColors.primary,
+                    activeThumbColor: context.palette.primary,
                     onChanged: (v) => _setPublic(context, ref, v),
                     title: Text(
                       route.isPublic ? 'Public' : 'Private',
                       style:
-                          TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                          TextStyle(fontSize: 14, color: context.palette.textPrimary),
                     ),
                     subtitle: Text(
                       route.isPublic
                           ? 'Any rider can find and ride this route'
                           : 'Only you can see this route',
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary),
+                          fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ),
                 )
@@ -226,12 +226,12 @@ class RouteDetailScreen extends ConsumerWidget {
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary),
+                    color: context.palette.textPrimary),
               ),
               const SizedBox(height: 4),
               Text(
                 'Derived from the recorded track — distances are along the route.',
-                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 12),
               for (final turn in turns)
@@ -239,19 +239,19 @@ class RouteDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
                     children: [
-                      Icon(turnIcon(turn.kind), size: 20, color: AppColors.primary),
+                      Icon(turnIcon(turn.kind), size: 20, color: context.palette.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           turn.text,
                           style: TextStyle(
-                              fontSize: 14, color: AppColors.textPrimary),
+                              fontSize: 14, color: context.palette.textPrimary),
                         ),
                       ),
                       Text(
                         _distanceLabel(turn.distanceFromStartM),
                         style: TextStyle(
-                            fontSize: 12, color: AppColors.textTertiary),
+                            fontSize: 12, color: context.palette.textTertiary),
                       ),
                     ],
                   ),
@@ -313,13 +313,13 @@ class _SharedByBanner extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Row(
         children: [
-          Icon(Icons.public, size: 18, color: AppColors.textSecondary),
+          Icon(Icons.public, size: 18, color: context.palette.textSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -330,13 +330,13 @@ class _SharedByBanner extends ConsumerWidget {
                       ? 'Shared by another rider'
                       : 'Shared by $name',
                   style:
-                      TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                      TextStyle(fontSize: 14, color: context.palette.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'You can ride it, but only its owner can change or delete it.',
                   style:
-                      TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -362,10 +362,10 @@ class _Stat extends StatelessWidget {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 2),
           Text(label,
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
         ],
       ),
     );

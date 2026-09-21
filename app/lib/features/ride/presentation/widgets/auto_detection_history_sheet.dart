@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/database/daos/auto_detection_dao.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -38,7 +38,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       constraints: BoxConstraints(
@@ -52,7 +52,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: context.palette.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -73,7 +73,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                       const SizedBox(height: 2),
                       Text(
                         l10n.recentDetectionsSubtitle,
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                     ],
                   ),
@@ -108,11 +108,11 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.history, size: 40, color: AppColors.textTertiary),
+                          Icon(Icons.history, size: 40, color: context.palette.textTertiary),
                           const SizedBox(height: 12),
                           Text(
                             l10n.recentDetectionsEmpty,
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -142,12 +142,12 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                       leading: CircleAvatar(
                         radius: 18,
                         backgroundColor: isReconciled
-                            ? AppColors.primary.withValues(alpha: 0.15)
-                            : AppColors.attention.withValues(alpha: 0.15),
+                            ? context.palette.primary.withValues(alpha: 0.15)
+                            : context.palette.attention.withValues(alpha: 0.15),
                         child: Icon(
                           isReconciled ? Icons.check : Icons.info_outline,
                           size: 18,
-                          color: isReconciled ? AppColors.primary : AppColors.attention,
+                          color: isReconciled ? context.palette.primary : context.palette.attention,
                         ),
                       ),
                       title: Text(
@@ -156,14 +156,14 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                       ),
                       subtitle: Text(
                         startedAt != null ? dateFormat.format(startedAt) : 'Unknown date',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: isReconciled
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : AppColors.border.withValues(alpha: 0.4),
+                              ? context.palette.primary.withValues(alpha: 0.1)
+                              : context.palette.border.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -171,7 +171,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: isReconciled ? AppColors.primary : AppColors.textSecondary,
+                            color: isReconciled ? context.palette.primary : context.palette.textSecondary,
                           ),
                         ),
                       ),

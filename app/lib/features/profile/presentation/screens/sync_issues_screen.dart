@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cloud/outbox_service.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/database/daos/outbox_dao.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -44,7 +44,7 @@ class SyncIssuesScreen extends ConsumerWidget {
     final issuesAsync = ref.watch(syncIssuesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Sync issues')),
       body: issuesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -57,7 +57,7 @@ class SyncIssuesScreen extends ConsumerWidget {
             return Center(
               child: Text(
                 'Everything is synced',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.palette.textSecondary),
               ),
             );
           }
@@ -102,11 +102,11 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: dialogContext.palette.surface,
         title: Text('Discard this update?',
-            style: TextStyle(color: AppColors.textPrimary)),
+            style: TextStyle(color: dialogContext.palette.textPrimary)),
         content: Text("It won't be sent. This can't be undone.",
-            style: TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: dialogContext.palette.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -114,7 +114,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text('Discard', style: TextStyle(color: AppColors.danger)),
+            child: Text('Discard', style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -134,27 +134,27 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.sync_problem, color: AppColors.warning, size: 22),
+              Icon(Icons.sync_problem, color: context.palette.warning, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(syncIssueLabel(entry.kind),
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
+                        color: context.palette.textPrimary)),
               ),
               Text(queuedLabel,
                   style: TextStyle(
-                      fontSize: 12, color: AppColors.textTertiary)),
+                      fontSize: 12, color: context.palette.textTertiary)),
             ],
           ),
           if (entry.lastError != null) ...[
@@ -162,7 +162,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
             Text(entry.lastError!,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
           ],
           const SizedBox(height: 8),
           Row(
@@ -170,7 +170,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
             children: [
               TextButton(
                 onPressed: _busy ? null : _discard,
-                child: Text('Discard', style: TextStyle(color: AppColors.danger)),
+                child: Text('Discard', style: TextStyle(color: context.palette.danger)),
               ),
               const SizedBox(width: 8),
               TextButton(
@@ -181,7 +181,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text('Retry', style: TextStyle(color: AppColors.primary)),
+                    : Text('Retry', style: TextStyle(color: context.palette.primary)),
               ),
             ],
           ),

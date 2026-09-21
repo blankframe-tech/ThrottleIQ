@@ -1,6 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 
 /// Minimal single-series sparkline for the Rides tab.
 ///
@@ -48,14 +48,14 @@ class RideLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppColors.primary;
+    final effectiveColor = color ?? context.palette.primary;
     if (values.length < 2) {
       return SizedBox(
         height: 120,
         child: Center(
           child: Text(
             'Not enough rides yet',
-            style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+            style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
           ),
         ),
       );
@@ -146,7 +146,7 @@ class RideLineChart extends StatelessWidget {
                     child: Text(
                       labels[i == 0 ? 0 : 1],
                       style:
-                          TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                          TextStyle(fontSize: 10, color: context.palette.textTertiary),
                     ),
                   );
                 },
@@ -169,7 +169,7 @@ class RideLineChart extends StatelessWidget {
                   radius: 3.5,
                   color: effectiveColor,
                   strokeWidth: 2,
-                  strokeColor: AppColors.surface,
+                  strokeColor: context.palette.surface,
                 ),
               ),
               belowBarData: BarAreaData(

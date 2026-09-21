@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
@@ -95,14 +95,14 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.surfaceVariant,
+        backgroundColor: context.palette.surfaceVariant,
         content: Row(
           children: [
-            Icon(Icons.check_circle, color: AppColors.success, size: 18),
+            Icon(Icons.check_circle, color: context.palette.success, size: 18),
             const SizedBox(width: 8),
             Text(
               'Odometer synced to ${newKm.toStringAsFixed(0)} km!',
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: context.palette.textPrimary),
             ),
           ],
         ),
@@ -125,9 +125,9 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
         16 + bottomInset,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -142,7 +142,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.palette.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -155,21 +155,21 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: context.palette.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.speed, color: AppColors.primary, size: 20),
+                    child: Icon(Icons.speed, color: context.palette.primary, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sync Odometer', style: display(18)),
+                        Text('Sync Odometer', style: display(context, 18)),
                         Text(
                           'Align ThrottleIQ with ${widget.bike.displayName}',
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.textSecondary),
+                              fontSize: 12, color: context.palette.textSecondary),
                         ),
                       ],
                     ),
@@ -181,7 +181,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
               Text(
                 'Rode offline or without phone tracking? Take a photo of your bike\'s dashboard/speedometer cluster or enter the current reading below.',
                 style: TextStyle(
-                    fontSize: 12, color: AppColors.textTertiary, height: 1.4),
+                    fontSize: 12, color: context.palette.textTertiary, height: 1.4),
               ),
               const SizedBox(height: 16),
 
@@ -194,8 +194,8 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusMd),
-                        border: Border.all(color: AppColors.border),
+                            BorderRadius.circular(context.shape.radiusMd),
+                        border: Border.all(color: context.palette.border),
                         image: DecorationImage(
                           image: FileImage(File(_capturedImagePath!)),
                           fit: BoxFit.cover,
@@ -209,18 +209,18 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.6),
                           borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusMd),
+                              BorderRadius.circular(context.shape.radiusMd),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             CircularProgressIndicator(
-                                color: AppColors.primary, strokeWidth: 2),
+                                color: context.palette.primary, strokeWidth: 2),
                             const SizedBox(height: 8),
                             Text(
                               'Scanning instrument cluster...',
                               style: TextStyle(
-                                  color: AppColors.textPrimary, fontSize: 12),
+                                  color: context.palette.textPrimary, fontSize: 12),
                             ),
                           ],
                         ),
@@ -257,7 +257,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                             style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: BorderSide(color: AppColors.border),
+                          side: BorderSide(color: context.palette.border),
                         ),
                       ),
                     ),
@@ -272,7 +272,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                             style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: BorderSide(color: AppColors.border),
+                          side: BorderSide(color: context.palette.border),
                         ),
                       ),
                     ),
@@ -285,9 +285,9 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surfaceVariant,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Column(
                   children: [
@@ -296,16 +296,16 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       children: [
                         Text('Current App Odometer:',
                             style: TextStyle(
-                                fontSize: 12, color: AppColors.textSecondary)),
+                                fontSize: 12, color: context.palette.textSecondary)),
                         Text('${currentOdo.toStringAsFixed(0)} km',
-                            style: display(13, letterSpacing: 0)),
+                            style: display(context, 13, letterSpacing: 0)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _odometerCtrl,
                       keyboardType: TextInputType.number,
-                      style: display(18, letterSpacing: 1),
+                      style: display(context, 18, letterSpacing: 1),
                       decoration: InputDecoration(
                         labelText: 'Physical Instrument Cluster Reading *',
                         suffixText: 'km',
@@ -313,7 +313,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                             horizontal: 14, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusMd),
+                              BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                       onChanged: (_) => setState(() {}),
@@ -332,7 +332,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                         Icon(
                           delta >= 0 ? Icons.add_circle_outline : Icons.info_outline,
                           size: 14,
-                          color: delta >= 0 ? AppColors.success : AppColors.attention,
+                          color: delta >= 0 ? context.palette.success : context.palette.attention,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -343,8 +343,8 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: delta >= 0
-                                ? AppColors.success
-                                : AppColors.attention,
+                                ? context.palette.success
+                                : context.palette.attention,
                           ),
                         ),
                       ],

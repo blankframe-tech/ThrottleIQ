@@ -226,27 +226,59 @@ void main() {
     });
   });
 
-  group('AppDimensions, the shape facade', () {
-    tearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
-
-    test('apply() swaps every radius at once', () {
-      AppDimensions.apply(AppShapeProfile.curvy);
-      expect(AppDimensions.radiusSm, AppShapeProfile.curvy.radiusSm);
-      expect(AppDimensions.radiusMd, AppShapeProfile.curvy.radiusMd);
-      expect(AppDimensions.radiusLg, AppShapeProfile.curvy.radiusLg);
-      expect(AppDimensions.radiusXl, AppShapeProfile.curvy.radiusXl);
-      expect(AppDimensions.radiusFull, AppShapeProfile.curvy.radiusFull);
-      expect(AppDimensions.shape, same(AppShapeProfile.curvy));
+  group('appearance tokens travel on the theme', () {
+    test('AppTheme.build registers the palette and shape for that appearance', () {
+      // This is what `context.palette` / `context.shape` resolve through, so
+      // it is the contract every widget depends on: the theme carries exactly
+      // the tokens for the appearance it was built from — nothing left over
+      // from whatever was built before it.
+      for (final (mode, brightness) in allCombos) {
+        for (final vibe in AppShapeVibe.values) {
+          final theme = themeFor(AppAppearance(
+              colorMode: mode, shapeVibe: vibe, brightness: brightness));
+          expect(theme.extension<AppColorPalette>(),
+              same(AppColorPalette.forMode(mode, brightness)),
+              reason: '$mode/$brightness');
+          expect(theme.extension<AppShapeProfile>(),
+              same(AppShapeProfile.forVibe(vibe)),
+              reason: '$vibe');
+        }
+      }
     });
 
-    test('apply() swaps rule weights and control metrics too', () {
-      AppDimensions.apply(AppShapeProfile.curvy);
-      expect(AppDimensions.outlineWidth, 1);
-      expect(AppDimensions.controlHeight, AppShapeProfile.curvy.controlHeight);
-      expect(AppDimensions.fieldPaddingH, AppShapeProfile.curvy.fieldPaddingH);
-      expect(AppDimensions.fieldPaddingV, AppShapeProfile.curvy.fieldPaddingV);
-      AppDimensions.apply(AppShapeProfile.boxy);
-      expect(AppDimensions.controlHeight, AppShapeProfile.boxy.controlHeight);
+    test('the palette cross-fades colors and flips its flags at the halfway point', () {
+      const a = AppColorPalette.carbonMonoDark;
+      const b = AppColorPalette.retroLight;
+      expect(a.lerp(b, 0).primary, a.primary);
+      expect(a.lerp(b, 0).background, a.background);
+      expect(a.lerp(b, 1).primary, b.primary);
+      expect(a.lerp(b, 0.5).primary, Color.lerp(a.primary, b.primary, 0.5));
+      // Retro sets hard shadows and monospace type; Carbon Mono neither.
+      expect(a.lerp(b, 0.49).hasHardShadow, isFalse);
+      expect(a.lerp(b, 0.49).monoDisplay, isFalse);
+      expect(a.lerp(b, 0.5).hasHardShadow, isTrue);
+      expect(a.lerp(b, 0.5).monoDisplay, isTrue);
+      expect(a.lerp(b, 0.5).isDark, isFalse);
+    });
+
+    test('the shape profile does not tween — radiusFull is 999 on Curvy', () {
+      // Interpolating boxy -> curvy would sweep every pill through absurd
+      // radii mid-animation, so the whole profile flips at the halfway point.
+      const boxy = AppShapeProfile.boxy;
+      const curvy = AppShapeProfile.curvy;
+      expect(boxy.lerp(curvy, 0.49), same(boxy));
+      expect(boxy.lerp(curvy, 0.5), same(curvy));
+      expect(boxy.lerp(null, 1), same(boxy));
+    });
+
+    test('copyWith overrides only what it is given', () {
+      final p = AppColorPalette.calmingLight.copyWith(primary: const Color(0xFF123456));
+      expect(p.primary, const Color(0xFF123456));
+      expect(p.background, AppColorPalette.calmingLight.background);
+      expect(p.monoDisplay, AppColorPalette.calmingLight.monoDisplay);
+      final s = AppShapeProfile.boxy.copyWith(radiusMd: 9);
+      expect(s.radiusMd, 9);
+      expect(s.radiusSm, AppShapeProfile.boxy.radiusSm);
     });
   });
 
@@ -260,15 +292,8 @@ void main() {
       }
     });
 
-    test('the card radius is the applied vibe\'s, not a shared constant', () {
-      // AppTheme.build reads AppDimensions, which is a facade over whichever
-      // AppShapeProfile was last applied — so the theme's shape follows the
-      // *applied* profile, not an argument to build(). Applying it first is
-      // what a real appearance switch does (see
-      // AppearanceNotifier._applyTokens); getting that wrong is how a rider
-      // ends up with the previous vibe's corners.
+    test('the card radius is the requested vibe\'s, not a shared constant', () {
       double cardRadius(AppShapeVibe vibe) {
-        AppDimensions.apply(AppShapeProfile.forVibe(vibe));
         final appearance = AppAppearance(
             colorMode: AppColorMode.carbonMono, shapeVibe: vibe, brightness: Brightness.dark);
         final shape = themeFor(appearance).cardTheme.shape;
@@ -280,16 +305,14 @@ void main() {
       for (final vibe in AppShapeVibe.values) {
         expect(cardRadius(vibe), AppShapeProfile.forVibe(vibe).radiusXl, reason: '$vibe');
       }
-      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
-    test('Retro respects the applied vibe like every other color mode', () {
+    test('Retro respects the requested vibe like every other color mode', () {
       // Retro's identity is now entirely in its palette (monochrome, an
       // ink-strength border, monospace type) — NOT in a fixed shape. Boxy
       // Retro and Curvy Retro must differ in corner radius exactly the way
       // any other color mode's two vibes would.
       for (final vibe in AppShapeVibe.values) {
-        AppDimensions.apply(AppShapeProfile.forVibe(vibe));
         final appearance = AppAppearance(
             colorMode: AppColorMode.retro, shapeVibe: vibe, brightness: Brightness.light);
         final card = themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
@@ -297,19 +320,20 @@ void main() {
             AppShapeProfile.forVibe(vibe).radiusXl,
             reason: '$vibe');
       }
-      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
-    test('Retro is monospace regardless of vibe or brightness', () {
-      for (final vibe in AppShapeVibe.values) {
-        for (final brightness in Brightness.values) {
-          final appearance =
-              AppAppearance(colorMode: AppColorMode.retro, shapeVibe: vibe, brightness: brightness);
-          AppTypography.applyStyle(appearance.colorMode);
-          expect(AppTypography.isMono, isTrue, reason: '$vibe/$brightness');
+    test('only Retro is monospace, regardless of vibe or brightness', () {
+      for (final mode in AppColorMode.values) {
+        for (final vibe in AppShapeVibe.values) {
+          for (final brightness in Brightness.values) {
+            final palette = themeFor(AppAppearance(
+                    colorMode: mode, shapeVibe: vibe, brightness: brightness))
+                .extension<AppColorPalette>()!;
+            expect(palette.monoDisplay, mode == AppColorMode.retro,
+                reason: '$mode/$vibe/$brightness');
+          }
         }
       }
-      addTearDown(() => AppTypography.applyStyle(AppColorMode.carbonMono));
     });
 
     test('every named text style carries the Bengali fallback', () {

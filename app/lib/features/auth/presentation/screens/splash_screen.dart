@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
@@ -34,7 +34,7 @@ class SplashScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -46,7 +46,7 @@ class SplashScreen extends ConsumerWidget {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary,
+                color: context.palette.primary,
               ),
             ),
           ],
@@ -70,14 +70,14 @@ class _ThrottleIQLogo extends StatelessWidget {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: context.palette.textPrimary,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'Ride smarter. Track deeper.',
-          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
         ),
       ],
     );

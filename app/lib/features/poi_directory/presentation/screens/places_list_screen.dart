@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
@@ -70,7 +70,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
     final positionAsync = ref.watch(currentPositionProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: const Text('Places'),
         actions: [
@@ -80,7 +80,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                 ? SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: context.palette.primary),
                   )
                 : const Icon(Icons.travel_explore_outlined),
             onPressed: _importing ? null : _importNearby,
@@ -135,7 +135,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
             Expanded(
               child: placesAsync.when(
                 loading: () =>
-                    Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    Center(child: CircularProgressIndicator(color: context.palette.primary)),
                 error: (e, _) {
                   final isServiceOff = isLocationServicesError(e);
                   final isPermissionDenied = isLocationPermissionError(e);
@@ -155,14 +155,14 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                                 ? Icons.location_off_outlined
                                 : Icons.error_outline_rounded,
                             size: 48,
-                            color: AppColors.textTertiary,
+                            color: context.palette.textTertiary,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             message,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: context.palette.textSecondary,
                               fontSize: 14,
                             ),
                           ),
@@ -173,7 +173,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                               icon: const Icon(Icons.location_on_outlined, size: 18),
                               label: const Text('Turn on Location'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: context.palette.primary,
                                 foregroundColor: Colors.white,
                               ),
                             )
@@ -183,7 +183,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                               icon: const Icon(Icons.settings_outlined, size: 18),
                               label: const Text('Open Settings'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: context.palette.primary,
                                 foregroundColor: Colors.white,
                               ),
                             )
@@ -201,7 +201,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                             icon: const Icon(Icons.bug_report_outlined, size: 16),
                             label: const Text('Report a Problem'),
                             style: TextButton.styleFrom(
-                              foregroundColor: AppColors.textTertiary,
+                              foregroundColor: context.palette.textTertiary,
                               textStyle: const TextStyle(fontSize: 13),
                             ),
                           ),
@@ -218,15 +218,15 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.place_outlined, size: 64, color: AppColors.textTertiary),
+                            Icon(Icons.place_outlined, size: 64, color: context.palette.textTertiary),
                             const SizedBox(height: 16),
                             Text('No places nearby yet',
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                                style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                             const SizedBox(height: 8),
                             Text(
                               'Add a garage, fuel pump, parts shop, or biker cafe to help other riders.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                              style: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                             ),
                           ],
                         ),
@@ -240,7 +240,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                       ref.invalidate(currentPositionProvider);
                       return ref.refresh(nearbyPlacesProvider(_selectedCategory).future);
                     },
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(
                         AppDimensions.paddingMd,
@@ -277,7 +277,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
           child: FloatingActionButton.extended(
             heroTag: 'add_place_fab',
             onPressed: () => _addPlace(context),
-            backgroundColor: AppColors.primary,
+            backgroundColor: context.palette.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Add place', style: TextStyle(color: Colors.white)),
           ),
@@ -308,9 +308,9 @@ class _CategoryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-          border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+          color: selected ? context.palette.primary.withValues(alpha: 0.15) : context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusFull),
+          border: Border.all(color: selected ? context.palette.primary : context.palette.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -321,7 +321,7 @@ class _CategoryChip extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                color: selected ? AppColors.primary : AppColors.textSecondary,
+                color: selected ? context.palette.primary : context.palette.textSecondary,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -350,7 +350,7 @@ class _PlaceCard extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: context.palette.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),
@@ -365,14 +365,14 @@ class _PlaceCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   distanceKm == null
                       ? place.category.displayName
                       : '${place.category.displayName} · ${SpeedFormatter.distanceKm(distanceKm * 1000)}',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -384,14 +384,14 @@ class _PlaceCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.star, size: 14, color: AppColors.warning),
+                  Icon(Icons.star, size: 14, color: context.palette.warning),
                   const SizedBox(width: 2),
                   Text(
                     (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
                         ? '—'
                         : place.dualRatingDisplay,
                     style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                   ),
                 ],
               ),
@@ -400,7 +400,7 @@ class _PlaceCard extends StatelessWidget {
                 (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
                     ? 'Official point'
                     : place.reviewsSummarySubtitle,
-                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 10, color: context.palette.textSecondary),
               ),
             ],
           ),

@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/cloud/export_service.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/downsample.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
@@ -150,20 +150,20 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: AppColors.onInk.withValues(alpha: 0.12),
+          color: context.palette.onInk.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wb_sunny_outlined, size: 13, color: AppColors.onInk),
+            Icon(Icons.wb_sunny_outlined, size: 13, color: context.palette.onInk),
             const SizedBox(width: 4),
             Text(
               '${_weather!.tempC.round()}°C',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.onInk,
+                color: context.palette.onInk,
               ),
             ),
           ],
@@ -175,21 +175,21 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: AppColors.onInk.withValues(alpha: 0.08),
+          color: context.palette.onInk.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.onInkMuted.withValues(alpha: 0.3)),
+          border: Border.all(color: context.palette.onInkMuted.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 13, color: AppColors.onInkMuted),
+            Icon(Icons.cloud_off, size: 13, color: context.palette.onInkMuted),
             const SizedBox(width: 4),
             Text(
               '—',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.onInkMuted,
+                color: context.palette.onInkMuted,
               ),
             ),
           ],
@@ -209,9 +209,9 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         leading: IconButton(
           tooltip: 'Close',
           icon: const Icon(Icons.close),
@@ -220,7 +220,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       ),
       body: rideAsync.when(
         loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(rideDetailProvider(widget.rideId)),
@@ -229,7 +229,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           if (ride == null) {
             return Center(
                 child: Text(l10n.rideNotFoundMessage,
-                    style: TextStyle(color: AppColors.textSecondary)));
+                    style: TextStyle(color: context.palette.textSecondary)));
           }
 
           final startCenter = _polyline.isNotEmpty
@@ -267,14 +267,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           name != null
                               ? l10n.niceRideGreetingNamed(name)
                               : l10n.niceRideGreeting,
-                          style: display(24, color: AppColors.onInk)),
+                          style: display(context, 24, color: context.palette.onInk)),
                       const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(_formatDate(ride.startTime),
                               style: TextStyle(
-                                  fontSize: 13, color: AppColors.onInkMuted)),
+                                  fontSize: 13, color: context.palette.onInkMuted)),
                           _buildWeatherChip(context),
                         ],
                       ),
@@ -293,7 +293,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         value: ride.maxSpeedKmh.toStringAsFixed(0),
                         unit: 'km/h',
                         icon: Icons.speed,
-                        accentColor: AppColors.primary,
+                        accentColor: context.palette.primary,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -303,7 +303,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         value: ride.avgSpeedKmh.toStringAsFixed(0),
                         unit: 'km/h',
                         icon: Icons.trending_up,
-                        accentColor: AppColors.warning,
+                        accentColor: context.palette.warning,
                       ),
                     ),
                   ],
@@ -317,7 +317,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         value: ride.distanceKm.toStringAsFixed(1),
                         unit: 'km',
                         icon: Icons.straighten,
-                        accentColor: AppColors.secondary,
+                        accentColor: context.palette.secondary,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -328,7 +328,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                             ride.durationSeconds ?? 0),
                         unit: '',
                         icon: Icons.timer_outlined,
-                        accentColor: AppColors.success,
+                        accentColor: context.palette.success,
                       ),
                     ),
                   ],
@@ -351,7 +351,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                               ride.movingSeconds ?? 0),
                           unit: '',
                           icon: Icons.directions,
-                          accentColor: AppColors.success,
+                          accentColor: context.palette.success,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -363,8 +363,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           unit: '',
                           icon: Icons.traffic,
                           accentColor: ride.jamSeconds! > 0
-                              ? AppColors.attention
-                              : AppColors.textTertiary,
+                              ? context.palette.attention
+                              : context.palette.textTertiary,
                         ),
                       ),
                     ],
@@ -387,8 +387,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         unit: '',
                         icon: Icons.warning_amber_rounded,
                         accentColor: ride.hardBrakeCount > 0
-                            ? AppColors.danger
-                            : AppColors.textTertiary,
+                            ? context.palette.danger
+                            : context.palette.textTertiary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -399,8 +399,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         unit: '',
                         icon: Icons.bolt,
                         accentColor: ride.rapidAccelCount > 0
-                            ? AppColors.attention
-                            : AppColors.textTertiary,
+                            ? context.palette.attention
+                            : context.palette.textTertiary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -411,8 +411,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         unit: '',
                         icon: Icons.vibration,
                         accentColor: ride.highJerkCount > 0
-                            ? AppColors.attention
-                            : AppColors.textTertiary,
+                            ? context.palette.attention
+                            : context.palette.textTertiary,
                       ),
                     ),
                   ],
@@ -532,23 +532,23 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
+              Icon(Icons.two_wheeler, size: 20, color: context.palette.primary),
               const SizedBox(width: 12),
               Text(l10n.ridingPaceLabel,
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
               const Spacer(),
               Text('$avgKmh km/h',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: context.palette.textPrimary,
                       fontSize: 14)),
             ],
           ),
@@ -558,12 +558,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               children: [
                 const SizedBox(width: 32),
                 Text(l10n.movingStoppedLabel,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
                 const Spacer(),
                 Text(
                     '${SpeedFormatter.durationFromSeconds(moving)} / '
                     '${SpeedFormatter.durationFromSeconds(stopped)}',
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+                    style: TextStyle(color: context.palette.textPrimary, fontSize: 14)),
               ],
             ),
           ],
@@ -624,7 +624,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   Widget _buildMap(RideEntity ride, LatLng startCenter, AppLocalizations l10n) {
     if (ride.mapSnapshotPath != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        borderRadius: BorderRadius.circular(context.shape.radiusXl),
         child: Image.file(File(ride.mapSnapshotPath!),
             height: 200, width: double.infinity, fit: BoxFit.cover),
       );
@@ -633,17 +633,17 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       return Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          border: Border.all(color: AppColors.border),
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusXl),
+          border: Border.all(color: context.palette.border),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: AppColors.primary),
+            CircularProgressIndicator(color: context.palette.primary),
             const SizedBox(height: 12),
             Text('Fetching route…',
-                style: TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: context.palette.textSecondary)),
           ],
         ),
       );
@@ -655,13 +655,13 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       return Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          border: Border.all(color: AppColors.border),
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusXl),
+          border: Border.all(color: context.palette.border),
         ),
         child: Center(
           child: Text('Route not available',
-              style: TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(color: context.palette.textSecondary)),
         ),
       );
     }
@@ -671,7 +671,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     final speedSegments = buildSpeedSegments(_polyline, _speedsMs);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(context.shape.radiusXl),
       child: SizedBox(
         height: 280,
         child: Stack(
@@ -708,7 +708,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         : [
                             Polyline(
                                 points: _polyline,
-                                color: AppColors.primary,
+                                color: context.palette.primary,
                                 strokeWidth: 4),
                           ],
                   ),
@@ -722,7 +722,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.success,
+                            color: context.palette.success,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
                         ),
@@ -735,7 +735,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.danger,
+                              color: context.palette.danger,
                               border: Border.all(color: Colors.white, width: 2),
                             ),
                           ),
@@ -754,21 +754,21 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.surface.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                      border: Border.all(color: AppColors.border),
+                      color: context.palette.surface.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                      border: Border.all(color: context.palette.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.open_in_full, size: 14, color: AppColors.primary),
+                        Icon(Icons.open_in_full, size: 14, color: context.palette.primary),
                         const SizedBox(width: 6),
                         Text(
                           l10n.mapExpandHintLabel,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: context.palette.textPrimary,
                           ),
                         ),
                       ],
@@ -786,8 +786,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   children: [
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_zoom_in',
-                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      foregroundColor: context.palette.textPrimary,
                       tooltip: 'Zoom In',
                       onPressed: _zoomIn,
                       child: const Icon(Icons.add, size: 20),
@@ -795,8 +795,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_zoom_out',
-                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      foregroundColor: context.palette.textPrimary,
                       tooltip: 'Zoom Out',
                       onPressed: _zoomOut,
                       child: const Icon(Icons.remove, size: 20),
@@ -804,8 +804,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_recenter',
-                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      foregroundColor: context.palette.textPrimary,
                       tooltip: 'Recenter Route',
                       onPressed: _recenterMap,
                       child: const Icon(Icons.my_location, size: 18),
@@ -813,8 +813,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_fullscreen',
-                      backgroundColor: AppColors.surface.withValues(alpha: 0.9),
-                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      foregroundColor: context.palette.textPrimary,
                       tooltip: 'Fullscreen Map',
                       onPressed: () => _openFullScreenMap(ride),
                       child: const Icon(Icons.fullscreen, size: 20),
@@ -822,7 +822,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_save_route',
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: context.palette.primary,
                       foregroundColor: Colors.white,
                       tooltip: l10n.saveAsRouteAction,
                       onPressed: () => context.push('/routes/save/${ride.id}'),
@@ -840,13 +840,13 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   Color _speedBandColor(SpeedBand band) {
     switch (band) {
       case SpeedBand.idle:
-        return AppColors.textTertiary;
+        return context.palette.textTertiary;
       case SpeedBand.normal:
-        return AppColors.success;
+        return context.palette.success;
       case SpeedBand.brisk:
-        return AppColors.warning;
+        return context.palette.warning;
       case SpeedBand.hard:
-        return AppColors.danger;
+        return context.palette.danger;
     }
   }
 
@@ -886,7 +886,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 const SizedBox(width: 4),
                 Text(_speedBandLabel(l10n, band),
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                        fontSize: 12, color: context.palette.textSecondary)),
               ],
             ),
         ],
@@ -901,14 +901,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+        color: context.palette.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.speed, color: AppColors.warning, size: 20),
+          Icon(Icons.speed, color: context.palette.warning, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -917,12 +917,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 Text(l10n.speedOutlierTitle,
                     style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
+                        color: context.palette.textPrimary)),
                 const SizedBox(height: 2),
                 Text(
                   l10n.speedOutlierBody(
                       outlier.riderKmh.round(), outlier.baselineKmh.round()),
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -940,29 +940,29 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.route, size: 20, color: AppColors.primary),
+              Icon(Icons.route, size: 20, color: context.palette.primary),
               const SizedBox(width: 8),
               Text(
                 l10n.routeGpsDetailsLabel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: context.palette.textPrimary,
                 ),
               ),
               const Spacer(),
               Text(
                 l10n.trackPointsCountLabel(_polyline.length),
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -972,14 +972,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.success),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: context.palette.success),
               ),
               const SizedBox(width: 8),
               Text('${l10n.startPointLabel}: ',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textPrimary)),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
               Text(
                 '${start.latitude.toStringAsFixed(4)}°, ${start.longitude.toStringAsFixed(4)}°',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -990,14 +990,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.danger),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: context.palette.danger),
                 ),
                 const SizedBox(width: 8),
                 Text('${l10n.finishPointLabel}: ',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textPrimary)),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
                 Text(
                   '${end.latitude.toStringAsFixed(4)}°, ${end.longitude.toStringAsFixed(4)}°',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -1042,7 +1042,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           const SizedBox(height: 8),
           RideLineChart(
             values: chartValues,
-            color: AppColors.primary,
+            color: context.palette.primary,
             unit: 'km/h',
             xLabels: [l10n.startPointLabel, l10n.finishPointLabel],
           ),
@@ -1076,7 +1076,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   value: elevation.gainM.toStringAsFixed(0),
                   unit: 'm',
                   icon: Icons.trending_up,
-                  accentColor: AppColors.success,
+                  accentColor: context.palette.success,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1086,7 +1086,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   value: elevation.lossM.toStringAsFixed(0),
                   unit: 'm',
                   icon: Icons.trending_down,
-                  accentColor: AppColors.danger,
+                  accentColor: context.palette.danger,
                 ),
               ),
             ],
@@ -1097,7 +1097,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             const SizedBox(height: 8),
             RideLineChart(
               values: chartValues,
-              color: AppColors.secondary,
+              color: context.palette.secondary,
               unit: 'm',
               xLabels: [l10n.startPointLabel, l10n.finishPointLabel],
             ),

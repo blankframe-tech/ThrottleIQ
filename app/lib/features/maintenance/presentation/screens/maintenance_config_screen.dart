@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -183,19 +183,19 @@ class _MaintenanceConfigScreenState
     final enabledCount = items?.where((i) => i.isEnabled).length ?? 0;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: Text(widget.isFirstTime ? 'Setup Maintenance' : 'Edit Tracked Checks'),
         actions: [
           if (widget.isFirstTime)
             TextButton(
               onPressed: _saving ? null : _saveAndContinue,
-              child: Text('Skip', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Skip', style: TextStyle(color: context.palette.textSecondary)),
             ),
         ],
       ),
       body: items == null
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: context.palette.primary))
           : Column(
               children: [
                 Expanded(
@@ -206,9 +206,9 @@ class _MaintenanceConfigScreenState
                       children: [
                         // Header prompt card
                         EditorialCard(
-                          radius: AppDimensions.radiusLg,
+                          radius: context.shape.radiusLg,
                           padding: const EdgeInsets.all(16),
-                          borderColor: AppColors.primary.withValues(alpha: 0.3),
+                          borderColor: context.palette.primary.withValues(alpha: 0.3),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -217,17 +217,17 @@ class _MaintenanceConfigScreenState
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.15),
+                                      color: context.palette.primary.withValues(alpha: 0.15),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(Icons.two_wheeler,
-                                        color: AppColors.primary, size: 20),
+                                        color: context.palette.primary, size: 20),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       'What would you like to track for $bikeName?',
-                                      style: display(15),
+                                      style: display(context, 15),
                                     ),
                                   ),
                                 ],
@@ -237,7 +237,7 @@ class _MaintenanceConfigScreenState
                                 'Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due.',
                                 style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.textSecondary,
                                     height: 1.4),
                               ),
                             ],
@@ -265,7 +265,7 @@ class _MaintenanceConfigScreenState
                               child: Text('Clear',
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textTertiary)),
+                                      color: context.palette.textTertiary)),
                             ),
                           ],
                         ),
@@ -285,8 +285,8 @@ class _MaintenanceConfigScreenState
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.border)),
+                    color: context.palette.surface,
+                    border: Border(top: BorderSide(color: context.palette.border)),
                   ),
                   child: SafeArea(
                     child: SizedBox(
@@ -332,7 +332,7 @@ class _MaintenanceConfigScreenState
             EditorialLabel(category.label),
             Text(
               '$activeInCategory of ${categoryItems.length} active',
-              style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
             ),
           ],
         ),
@@ -351,18 +351,18 @@ class _MaintenanceConfigScreenState
     return Container(
       decoration: BoxDecoration(
         color: isEnabled
-            ? AppColors.surfaceVariant
-            : AppColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ? context.palette.surfaceVariant
+            : context.palette.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         border: Border.all(
           color: isEnabled
-              ? AppColors.primary.withValues(alpha: 0.4)
-              : AppColors.border,
+              ? context.palette.primary.withValues(alpha: 0.4)
+              : context.palette.border,
         ),
       ),
       child: InkWell(
         onTap: () => _toggleItem(item.serviceType),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -370,14 +370,14 @@ class _MaintenanceConfigScreenState
               Checkbox(
                 value: isEnabled,
                 onChanged: (_) => _toggleItem(item.serviceType),
-                activeColor: AppColors.primary,
+                activeColor: context.palette.primary,
                 visualDensity: VisualDensity.compact,
               ),
               const SizedBox(width: 4),
               Icon(
                 _iconForService(item.serviceType),
                 size: 20,
-                color: isEnabled ? AppColors.primary : AppColors.textTertiary,
+                color: isEnabled ? context.palette.primary : context.palette.textTertiary,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -390,8 +390,8 @@ class _MaintenanceConfigScreenState
                         fontSize: 14,
                         fontWeight: isEnabled ? FontWeight.w600 : FontWeight.w500,
                         color: isEnabled
-                            ? AppColors.textPrimary
-                            : AppColors.textTertiary,
+                            ? context.palette.textPrimary
+                            : context.palette.textTertiary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -399,7 +399,7 @@ class _MaintenanceConfigScreenState
                       item.serviceType.description,
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textTertiary,
+                        color: context.palette.textTertiary,
                         height: 1.2,
                       ),
                     ),
@@ -409,7 +409,7 @@ class _MaintenanceConfigScreenState
                       Row(
                         children: [
                           Icon(Icons.notes,
-                              size: 11, color: AppColors.primary),
+                              size: 11, color: context.palette.primary),
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
@@ -417,7 +417,7 @@ class _MaintenanceConfigScreenState
                               style: TextStyle(
                                 fontSize: 11,
                                 fontStyle: FontStyle.italic,
-                                color: AppColors.textSecondary,
+                                color: context.palette.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -436,10 +436,10 @@ class _MaintenanceConfigScreenState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: context.palette.surface,
                     borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusFull),
-                    border: Border.all(color: AppColors.border),
+                        BorderRadius.circular(context.shape.radiusFull),
+                    border: Border.all(color: context.palette.border),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -450,13 +450,13 @@ class _MaintenanceConfigScreenState
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: isEnabled
-                              ? AppColors.textSecondary
-                              : AppColors.textTertiary,
+                              ? context.palette.textSecondary
+                              : context.palette.textTertiary,
                         ),
                       ),
                       const SizedBox(width: 3),
                       Icon(Icons.edit_outlined,
-                          size: 11, color: AppColors.textTertiary),
+                          size: 11, color: context.palette.textTertiary),
                     ],
                   ),
                 ),

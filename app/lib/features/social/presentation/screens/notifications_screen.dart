@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -40,10 +40,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final notificationsAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Notifications')),
       body: notificationsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(notificationsProvider),
@@ -58,10 +58,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.notifications_none, size: 64, color: AppColors.textTertiary),
+                    Icon(Icons.notifications_none, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
                     Text('No notifications yet',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
               ),
@@ -153,16 +153,16 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: notification.read ? AppColors.surface : AppColors.primary.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      color: notification.read ? context.palette.surface : context.palette.primary.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(context.shape.radiusMd),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         onTap: _accepting ? null : _onTap,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(context.shape.radiusMd),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             children: [
@@ -174,13 +174,13 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                   children: [
                     Text(_label(),
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                            fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
                     const SizedBox(height: 2),
                     Text(
                         notification.isActionableGroupRideInvite
                             ? '${_relativeTime()} · tap to join'
                             : _relativeTime(),
-                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                   ],
                 ),
               ),
@@ -189,15 +189,15 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primary),
+                      strokeWidth: 2, color: context.palette.primary),
                 )
               else if (notification.isActionableGroupRideInvite)
-                Icon(Icons.groups_outlined, size: 20, color: AppColors.primary),
+                Icon(Icons.groups_outlined, size: 20, color: context.palette.primary),
               if (!notification.read)
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: context.palette.primary, shape: BoxShape.circle),
                 ),
             ],
           ),

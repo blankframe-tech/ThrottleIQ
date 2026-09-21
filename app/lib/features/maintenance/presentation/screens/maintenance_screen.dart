@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
@@ -46,7 +46,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
   /// way back otherwise short of the system gesture (grill §3.2.3).
   /// Untitled because the body's own header already says "Maintenance".
   PreferredSizeWidget? _backBar(BuildContext context) => context.canPop()
-      ? AppBar(backgroundColor: AppColors.background, toolbarHeight: 48)
+      ? AppBar(backgroundColor: context.palette.background, toolbarHeight: 48)
       : null;
 
   @override
@@ -60,19 +60,19 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
     if (activeBike == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         appBar: _backBar(context),
         body: SafeArea(
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.two_wheeler, size: 56, color: AppColors.textTertiary),
+                Icon(Icons.two_wheeler, size: 56, color: context.palette.textTertiary),
                 const SizedBox(height: 16),
-                Text('No active bike', style: display(20)),
+                Text('No active bike', style: display(context, 20)),
                 const SizedBox(height: 8),
                 Text('Add a motorcycle to your garage to track maintenance.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
           ),
@@ -103,7 +103,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: _backBar(context),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -122,7 +122,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       children: [
                         Row(
                           children: [
-                            Text('Maintenance', style: display(26)),
+                            Text('Maintenance', style: display(context, 26)),
                             if (bikes.length > 1) ...[
                               const SizedBox(width: 8),
                               _buildBikeDropdown(bikes, activeBike),
@@ -148,12 +148,12 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary),
+                                  color: context.palette.textPrimary),
                             ),
                             Text(
                               ' · ${_distLabel(activeBike.currentOdometerKm, _imperial)}',
                               style: TextStyle(
-                                  fontSize: 14, color: AppColors.textSecondary),
+                                  fontSize: 14, color: context.palette.textSecondary),
                             ),
                           ],
                         ),
@@ -179,9 +179,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: AppColors.border),
+                        side: BorderSide(color: context.palette.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                          borderRadius: BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                     ),
@@ -196,9 +196,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: AppColors.border),
+                        side: BorderSide(color: context.palette.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                          borderRadius: BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                     ),
@@ -214,7 +214,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                          borderRadius: BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                     ),
@@ -228,9 +228,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.all(10),
                         minimumSize: const Size(40, 40),
-                        side: BorderSide(color: AppColors.border),
+                        side: BorderSide(color: context.palette.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                          borderRadius: BorderRadius.circular(context.shape.radiusMd),
                         ),
                       ),
                       child: const Icon(Icons.restart_alt, size: 18),
@@ -259,7 +259,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                     const EditorialLabel('Tracked checks'),
                     Text(
                       '${reminders.length} monitored',
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
                     ),
                   ],
                 ),
@@ -305,7 +305,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                         reminders.isEmpty
                             ? 'No checks tracked yet. Tap "Customize" above to select checks.'
                             : 'No checks matching this filter.',
-                        style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+                        style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
                       ),
                     ),
                   ),
@@ -337,7 +337,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary),
+                              color: context.palette.textSecondary),
                         );
                       }
                       return const SizedBox.shrink();
@@ -350,7 +350,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
               logsAsync.when(
                 loading: () => Center(
-                    child: CircularProgressIndicator(color: AppColors.primary)),
+                    child: CircularProgressIndicator(color: context.palette.primary)),
                 error: (e, _) => ErrorView(
                   error: e,
                   onRetry: () =>
@@ -364,17 +364,17 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                         child: Column(
                           children: [
                             Icon(Icons.history,
-                                color: AppColors.textTertiary, size: 36),
+                                color: context.palette.textTertiary, size: 36),
                             const SizedBox(height: 8),
                             Text('No service records logged yet.',
                                 style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.textSecondary,
                                     fontSize: 13)),
                             const SizedBox(height: 4),
                             Text(
                               'When you service your bike, log it here to reset intervals.',
                               style: TextStyle(
-                                  color: AppColors.textTertiary, fontSize: 11),
+                                  color: context.palette.textTertiary, fontSize: 11),
                             ),
                           ],
                         ),
@@ -403,19 +403,19 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
   Widget _buildBikeDropdown(List<BikeEntity> bikes, BikeEntity activeBike) {
     return PopupMenuButton<String>(
       tooltip: 'Switch bike',
-      color: AppColors.surfaceVariant,
+      color: context.palette.surfaceVariant,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
+          border: Border.all(color: context.palette.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Switch',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-            Icon(Icons.arrow_drop_down, size: 16, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
+            Icon(Icons.arrow_drop_down, size: 16, color: context.palette.textSecondary),
           ],
         ),
       ),
@@ -459,24 +459,24 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     final IconData statusIcon;
 
     if (overdue > 0) {
-      statusColor = AppColors.danger;
+      statusColor = context.palette.danger;
       statusTitle = '$overdue ${overdue == 1 ? 'Service Overdue' : 'Services Overdue'}';
       statusSubtitle = 'Immediate maintenance attention recommended';
       statusIcon = Icons.warning_amber_rounded;
     } else if (dueSoon > 0) {
-      statusColor = AppColors.attention;
+      statusColor = context.palette.attention;
       statusTitle = '$dueSoon ${dueSoon == 1 ? 'Service Due Soon' : 'Services Due Soon'}';
       statusSubtitle = 'Upcoming scheduled maintenance';
       statusIcon = Icons.schedule;
     } else {
-      statusColor = AppColors.success;
+      statusColor = context.palette.success;
       statusTitle = 'All Systems Nominal';
       statusSubtitle = 'All $total tracked components in good health';
       statusIcon = Icons.verified_outlined;
     }
 
     return EditorialCard(
-      radius: AppDimensions.radiusLg,
+      radius: context.shape.radiusLg,
       padding: const EdgeInsets.all(14),
       borderColor: statusColor.withValues(alpha: 0.3),
       child: Column(
@@ -498,11 +498,11 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(statusTitle,
-                        style: display(15, letterSpacing: 0)),
+                        style: display(context, 15, letterSpacing: 0)),
                     const SizedBox(height: 2),
                     Text(statusSubtitle,
                         style: TextStyle(
-                            fontSize: 11, color: AppColors.textSecondary)),
+                            fontSize: 11, color: context.palette.textSecondary)),
                   ],
                 ),
               ),
@@ -517,17 +517,17 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                 if (overdue > 0)
                   Expanded(
                     flex: overdue,
-                    child: Container(height: 6, color: AppColors.danger),
+                    child: Container(height: 6, color: context.palette.danger),
                   ),
                 if (dueSoon > 0)
                   Expanded(
                     flex: dueSoon,
-                    child: Container(height: 6, color: AppColors.attention),
+                    child: Container(height: 6, color: context.palette.attention),
                   ),
                 if (ok > 0)
                   Expanded(
                     flex: ok,
-                    child: Container(height: 6, color: AppColors.success),
+                    child: Container(height: 6, color: context.palette.success),
                   ),
               ],
             ),
@@ -536,9 +536,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _metricPill('Overdue', overdue, AppColors.danger),
-              _metricPill('Due Soon', dueSoon, AppColors.attention),
-              _metricPill('Good', ok, AppColors.success),
+              _metricPill('Overdue', overdue, context.palette.danger),
+              _metricPill('Due Soon', dueSoon, context.palette.attention),
+              _metricPill('Good', ok, context.palette.success),
             ],
           ),
         ],
@@ -561,7 +561,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: count > 0 ? AppColors.textSecondary : AppColors.textTertiary,
+            color: count > 0 ? context.palette.textSecondary : context.palette.textTertiary,
           ),
         ),
       ],
@@ -586,19 +586,19 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final bgColor = active
         ? (tone == PillTone.overdue
-            ? AppColors.danger.withValues(alpha: 0.2)
+            ? context.palette.danger.withValues(alpha: 0.2)
             : (tone == PillTone.ok
-                ? AppColors.success.withValues(alpha: 0.2)
-                : AppColors.ink))
+                ? context.palette.success.withValues(alpha: 0.2)
+                : context.palette.ink))
         : Colors.transparent;
 
     final textColor = active
         ? (tone == PillTone.overdue
-            ? AppColors.danger
+            ? context.palette.danger
             : (tone == PillTone.ok
-                ? AppColors.success
-                : AppColors.onInk))
-        : AppColors.textTertiary;
+                ? context.palette.success
+                : context.palette.onInk))
+        : context.palette.textTertiary;
 
     return GestureDetector(
       onTap: onTap,
@@ -606,9 +606,9 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+          borderRadius: BorderRadius.circular(context.shape.radiusFull),
           border: Border.all(
-            color: active ? Colors.transparent : AppColors.border,
+            color: active ? Colors.transparent : context.palette.border,
           ),
         ),
         child: Text(
@@ -634,8 +634,8 @@ class _UnitToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(context.shape.radiusFull),
+        border: Border.all(color: context.palette.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -661,15 +661,15 @@ class _UnitSegment extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
-          color: active ? AppColors.ink : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+          color: active ? context.palette.ink : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusFull),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-            color: active ? AppColors.onInk : AppColors.textTertiary,
+            color: active ? context.palette.onInk : context.palette.textTertiary,
           ),
         ),
       ),
@@ -801,9 +801,9 @@ class _FirstTimeMaintenanceCardsState
       children: [
         // Welcome card
         EditorialCard(
-          radius: AppDimensions.radiusLg,
+          radius: context.shape.radiusLg,
           padding: const EdgeInsets.all(16),
-          borderColor: AppColors.primary.withValues(alpha: 0.35),
+          borderColor: context.palette.primary.withValues(alpha: 0.35),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -812,17 +812,17 @@ class _FirstTimeMaintenanceCardsState
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: context.palette.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.two_wheeler,
-                        color: AppColors.primary, size: 20),
+                        color: context.palette.primary, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'What would you like to maintain?',
-                      style: display(16),
+                      style: display(context, 16),
                     ),
                   ),
                 ],
@@ -832,7 +832,7 @@ class _FirstTimeMaintenanceCardsState
                 'Not everyone wants to track everything. Pick the items you care about for ${widget.bike.displayName}, or tap to edit intervals and add specs (oil brand, tyre dates/sizes):',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                   height: 1.35,
                 ),
               ),
@@ -843,30 +843,30 @@ class _FirstTimeMaintenanceCardsState
                 children: [
                   ActionChip(
                     avatar: Icon(Icons.star_outline,
-                        size: 14, color: AppColors.primary),
+                        size: 14, color: context.palette.primary),
                     label: const Text('Essentials (4)',
                         style: TextStyle(fontSize: 11)),
                     onPressed: _selectEssentials,
-                    backgroundColor: AppColors.surfaceVariant,
-                    side: BorderSide(color: AppColors.border),
+                    backgroundColor: context.palette.surfaceVariant,
+                    side: BorderSide(color: context.palette.border),
                   ),
                   ActionChip(
                     avatar: Icon(Icons.done_all,
-                        size: 14, color: AppColors.textSecondary),
+                        size: 14, color: context.palette.textSecondary),
                     label: const Text('All 8 items',
                         style: TextStyle(fontSize: 11)),
                     onPressed: _selectAll,
-                    backgroundColor: AppColors.surfaceVariant,
-                    side: BorderSide(color: AppColors.border),
+                    backgroundColor: context.palette.surfaceVariant,
+                    side: BorderSide(color: context.palette.border),
                   ),
                   ActionChip(
                     avatar: Icon(Icons.clear,
-                        size: 14, color: AppColors.textTertiary),
+                        size: 14, color: context.palette.textTertiary),
                     label: const Text('Clear',
                         style: TextStyle(fontSize: 11)),
                     onPressed: _clearAll,
-                    backgroundColor: AppColors.surfaceVariant,
-                    side: BorderSide(color: AppColors.border),
+                    backgroundColor: context.palette.surfaceVariant,
+                    side: BorderSide(color: context.palette.border),
                   ),
                 ],
               ),
@@ -906,7 +906,7 @@ class _FirstTimeMaintenanceCardsState
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                borderRadius: BorderRadius.circular(context.shape.radiusMd),
               ),
             ),
           ),
@@ -932,17 +932,17 @@ class _FirstTimeMaintenanceCardsState
     final icon = iconForServiceType(item.serviceType);
 
     return EditorialCard(
-      radius: AppDimensions.radiusLg,
+      radius: context.shape.radiusLg,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       borderColor: isSelected
-          ? AppColors.primary.withValues(alpha: 0.5)
-          : AppColors.border,
+          ? context.palette.primary.withValues(alpha: 0.5)
+          : context.palette.border,
       color: isSelected
-          ? AppColors.surfaceVariant.withValues(alpha: 0.7)
-          : AppColors.surface.withValues(alpha: 0.4),
+          ? context.palette.surfaceVariant.withValues(alpha: 0.7)
+          : context.palette.surface.withValues(alpha: 0.4),
       child: InkWell(
         onTap: () => _toggle(item.serviceType),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -951,14 +951,14 @@ class _FirstTimeMaintenanceCardsState
                 Checkbox(
                   value: isSelected,
                   onChanged: (_) => _toggle(item.serviceType),
-                  activeColor: AppColors.primary,
+                  activeColor: context.palette.primary,
                   visualDensity: VisualDensity.compact,
                 ),
                 const SizedBox(width: 4),
                 Icon(
                   icon,
                   size: 20,
-                  color: isSelected ? AppColors.primary : AppColors.textTertiary,
+                  color: isSelected ? context.palette.primary : context.palette.textTertiary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -972,15 +972,15 @@ class _FirstTimeMaintenanceCardsState
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w500,
                           color: isSelected
-                              ? AppColors.textPrimary
-                              : AppColors.textTertiary,
+                              ? context.palette.textPrimary
+                              : context.palette.textTertiary,
                         ),
                       ),
                       Text(
                         item.serviceType.description,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: context.palette.textTertiary,
                           height: 1.2,
                         ),
                       ),
@@ -994,10 +994,10 @@ class _FirstTimeMaintenanceCardsState
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusFull),
-                      border: Border.all(color: AppColors.border),
+                          BorderRadius.circular(context.shape.radiusFull),
+                      border: Border.all(color: context.palette.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1008,16 +1008,16 @@ class _FirstTimeMaintenanceCardsState
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: isSelected
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? context.palette.primary
+                                : context.palette.textSecondary,
                           ),
                         ),
                         const SizedBox(width: 3),
                         Icon(Icons.edit_outlined,
                             size: 11,
                             color: isSelected
-                                ? AppColors.primary
-                                : AppColors.textTertiary),
+                                ? context.palette.primary
+                                : context.palette.textTertiary),
                       ],
                     ),
                   ),
@@ -1030,7 +1030,7 @@ class _FirstTimeMaintenanceCardsState
                 padding: const EdgeInsets.only(left: 36),
                 child: Row(
                   children: [
-                    Icon(Icons.notes, size: 12, color: AppColors.primary),
+                    Icon(Icons.notes, size: 12, color: context.palette.primary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -1038,7 +1038,7 @@ class _FirstTimeMaintenanceCardsState
                         style: TextStyle(
                           fontSize: 11,
                           fontStyle: FontStyle.italic,
-                          color: AppColors.textSecondary,
+                          color: context.palette.textSecondary,
                         ),
                       ),
                     ),
@@ -1108,9 +1108,9 @@ class _CheckRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final (tone, barColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (PillTone.overdue, AppColors.danger, 'Overdue'),
-      ReminderStatus.dueSoon => (PillTone.dueSoon, AppColors.attention, 'Due soon'),
-      ReminderStatus.ok => (PillTone.ok, AppColors.success, 'OK'),
+      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, 'Overdue'),
+      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, 'Due soon'),
+      ReminderStatus.ok => (PillTone.ok, context.palette.success, 'OK'),
     };
     final isOverdue = reminder.status == ReminderStatus.overdue;
     final progress = reminder.kmLimit > 0
@@ -1122,9 +1122,9 @@ class _CheckRow extends ConsumerWidget {
         : '${_distLabel(-kmLeft, imperial)} over';
 
     return EditorialCard(
-      radius: AppDimensions.radiusLg,
+      radius: context.shape.radiusLg,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-      borderColor: isOverdue ? AppColors.danger : AppColors.border,
+      borderColor: isOverdue ? context.palette.danger : context.palette.border,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1138,7 +1138,7 @@ class _CheckRow extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(reminder.serviceType.label,
-                    style: display(15, letterSpacing: 0)),
+                    style: display(context, 15, letterSpacing: 0)),
               ),
               EditorialPill(label, tone: tone, filled: isOverdue),
             ],
@@ -1148,12 +1148,12 @@ class _CheckRow extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Every ${_distLabel(reminder.kmLimit, imperial)}',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
               Text(rightText,
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: isOverdue ? FontWeight.w700 : FontWeight.normal,
-                      color: isOverdue ? AppColors.danger : AppColors.textSecondary)),
+                      color: isOverdue ? context.palette.danger : context.palette.textSecondary)),
             ],
           ),
           if (reminder.notes != null && reminder.notes!.trim().isNotEmpty) ...[
@@ -1161,15 +1161,15 @@ class _CheckRow extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                color: context.palette.surfaceVariant.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(context.shape.radiusSm),
                 border:
-                    Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+                    Border.all(color: context.palette.border.withValues(alpha: 0.6)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.notes, size: 12, color: AppColors.primary),
+                  Icon(Icons.notes, size: 12, color: context.palette.primary),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
@@ -1179,7 +1179,7 @@ class _CheckRow extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
+                        color: context.palette.textSecondary,
                       ),
                     ),
                   ),
@@ -1197,7 +1197,7 @@ class _CheckRow extends ConsumerWidget {
                 reminder.lastServiceDate != null
                     ? 'Last done: ${_formatDate(reminder.lastServiceDate!)}'
                     : 'No previous service recorded',
-                style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
               ),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1225,22 +1225,22 @@ class _CheckRow extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
+                        color: context.palette.surfaceVariant,
                         borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusSm),
-                        border: Border.all(color: AppColors.border),
+                            BorderRadius.circular(context.shape.radiusSm),
+                        border: Border.all(color: context.palette.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.edit_outlined,
-                              size: 12, color: AppColors.textSecondary),
+                              size: 12, color: context.palette.textSecondary),
                           const SizedBox(width: 2),
                           Text('Edit',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
@@ -1253,21 +1253,21 @@ class _CheckRow extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
+                        color: context.palette.surfaceVariant,
                         borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusSm),
-                        border: Border.all(color: AppColors.border),
+                            BorderRadius.circular(context.shape.radiusSm),
+                        border: Border.all(color: context.palette.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.add, size: 12, color: AppColors.primary),
+                          Icon(Icons.add, size: 12, color: context.palette.primary),
                           const SizedBox(width: 2),
                           Text('Log',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primary)),
+                                  color: context.palette.primary)),
                         ],
                       ),
                     ),
@@ -1298,7 +1298,7 @@ class _LogTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return EditorialCard(
-      radius: AppDimensions.radiusLg,
+      radius: context.shape.radiusLg,
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       child: Row(
         children: [
@@ -1306,44 +1306,44 @@ class _LogTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(log.displayLabel, style: display(14, letterSpacing: 0)),
+                Text(log.displayLabel, style: display(context, 14, letterSpacing: 0)),
                 const SizedBox(height: 4),
                 Text(
                   '${_formatDate(log.date)} · ${_distLabel(log.odometerKm, imperial)}'
                   '${log.cost != null ? ' · ৳${log.cost!.toStringAsFixed(0)}' : ''}',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
                 if (log.notes != null && log.notes!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(log.notes!,
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                 ],
               ],
             ),
           ),
           IconButton(
             tooltip: 'Delete',
-            icon: Icon(Icons.delete_outline, color: AppColors.textTertiary, size: 18),
+            icon: Icon(Icons.delete_outline, color: context.palette.textTertiary, size: 18),
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  backgroundColor: AppColors.surface,
-                  title: Text('Delete Log', style: display(16)),
+                  backgroundColor: ctx.palette.surface,
+                  title: Text('Delete Log', style: display(ctx, 16)),
                   content: Text(
                     'Are you sure you want to delete this ${log.displayLabel} record?',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 13, color: ctx.palette.textSecondary),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
                       child: Text('Cancel',
-                          style: TextStyle(color: AppColors.textTertiary)),
+                          style: TextStyle(color: ctx.palette.textTertiary)),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.of(ctx).pop(true),
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.danger),
+                          backgroundColor: ctx.palette.danger),
                       child: const Text('Delete'),
                     ),
                   ],

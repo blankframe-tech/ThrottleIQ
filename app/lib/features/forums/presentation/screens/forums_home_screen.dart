@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -107,18 +107,18 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
       children: [
         Text(
           'Your bikes',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
         garageForumsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) =>
               ErrorView(error: e, onRetry: () => ref.invalidate(forumsForGarageProvider)),
           data: (forums) {
             if (forums.isEmpty) {
               return Text(
                 'Add a bike to your garage to see its forum here.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
             return Column(
@@ -138,7 +138,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
               child: Text(
                 'Rider forums',
                 style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
               ),
             ),
             TextButton.icon(
@@ -148,21 +148,21 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
                 // way back without needing a pull-to-refresh.
                 if (context.mounted) ref.invalidate(customForumsProvider);
               },
-              icon: Icon(Icons.add, size: 18, color: AppColors.primary),
-              label: Text('Create', style: TextStyle(color: AppColors.primary)),
+              icon: Icon(Icons.add, size: 18, color: context.palette.primary),
+              label: Text('Create', style: TextStyle(color: context.palette.primary)),
             ),
           ],
         ),
         const SizedBox(height: 4),
         customForumsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) =>
               ErrorView(error: e, onRetry: () => ref.invalidate(customForumsProvider)),
           data: (forums) {
             if (forums.isEmpty) {
               return Text(
                 'No rider-made forums yet. Create the first one.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
             return Column(
@@ -178,7 +178,7 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
         const SizedBox(height: 24),
         Text(
           'Find a forum',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
         Row(
@@ -186,10 +186,10 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Search a brand, e.g. Yamaha',
-                  hintStyle: TextStyle(color: AppColors.textTertiary),
+                  hintStyle: TextStyle(color: context.palette.textTertiary),
                 ),
                 onSubmitted: _openBrandForum,
               ),
@@ -203,9 +203,9 @@ class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          color: AppColors.primary, strokeWidth: 2),
+                          color: context.palette.primary, strokeWidth: 2),
                     )
-                  : Icon(Icons.search, color: AppColors.primary),
+                  : Icon(Icons.search, color: context.palette.primary),
               onPressed: _resolvingEntry != null
                   ? null
                   : () => _openBrandForum(_searchController.text),
@@ -267,20 +267,20 @@ class _DiscoverGroup extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.2,
-            color: AppColors.textTertiary,
+            color: context.palette.textTertiary,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusLg),
+            border: Border.all(color: context.palette.border),
           ),
           child: Column(
             children: [
               for (var i = 0; i < entries.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: AppColors.border),
+                if (i > 0) Divider(height: 1, color: context.palette.border),
                 _DiscoverRow(
                   icon: icon,
                   label: entries[i],
@@ -318,15 +318,15 @@ class _DiscoverRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: enabled ? onTap : null,
-      leading: Icon(icon, color: AppColors.primary, size: 22),
-      title: Text(label, style: TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+      leading: Icon(icon, color: context.palette.primary, size: 22),
+      title: Text(label, style: TextStyle(fontSize: 14, color: context.palette.textPrimary)),
       trailing: resolving
           ? SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+              child: CircularProgressIndicator(color: context.palette.primary, strokeWidth: 2),
             )
-          : Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+          : Icon(Icons.chevron_right, color: context.palette.textTertiary, size: 20),
     );
   }
 }
@@ -348,10 +348,10 @@ class _ForumCard extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: context.palette.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.forum_outlined, color: AppColors.primary, size: 22),
+            child: Icon(Icons.forum_outlined, color: context.palette.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -360,11 +360,11 @@ class _ForumCard extends ConsumerWidget {
               children: [
                 Text(
                   forum.displayName,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                 ),
                 Text(
                   '${forum.postCount} posts · ${forum.followerCount} followers',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -373,7 +373,7 @@ class _ForumCard extends ConsumerWidget {
             tooltip: 'Notification settings',
             icon: Icon(
               isFollowing ? Icons.notifications_active : Icons.notifications_none,
-              color: isFollowing ? AppColors.primary : AppColors.textSecondary,
+              color: isFollowing ? context.palette.primary : context.palette.textSecondary,
             ),
             onPressed: () async {
               final uid = ref.read(currentUserProvider)?.uid;

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/riding_score.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -114,7 +114,7 @@ class _SocialScreenState extends State<SocialScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         appBar: AppBar(
           titleSpacing: AppDimensions.paddingMd,
           title: SizedBox(
@@ -123,36 +123,36 @@ class _SocialScreenState extends State<SocialScreen> {
               controller: _controller,
               onChanged: _onChanged,
               textInputAction: TextInputAction.search,
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              style: TextStyle(color: context.palette.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 isDense: true,
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: context.palette.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 hintText: 'Search riders and forums',
                 hintStyle:
-                    TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                    TextStyle(color: context.palette.textTertiary, fontSize: 14),
                 prefixIcon: Icon(Icons.search,
-                    color: AppColors.textSecondary, size: 20),
+                    color: context.palette.textSecondary, size: 20),
                 suffixIcon: _controller.text.isEmpty
                     ? null
                     : IconButton(
                         tooltip: 'Close',
                         icon: Icon(Icons.close,
-                            color: AppColors.textSecondary, size: 18),
+                            color: context.palette.textSecondary, size: 18),
                         onPressed: _clear,
                       ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                  borderSide: BorderSide(color: context.palette.border),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                  borderSide: BorderSide(color: context.palette.border),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                  borderSide: BorderSide(color: AppColors.primary),
+                  borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                  borderSide: BorderSide(color: context.palette.primary),
                 ),
               ),
             ),
@@ -160,7 +160,7 @@ class _SocialScreenState extends State<SocialScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.chat_bubble_outline),
-              color: AppColors.primary,
+              color: context.palette.primary,
               tooltip: 'Messages',
               onPressed: () => context.push('/chats'),
             ),
@@ -172,9 +172,9 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
           ],
           bottom: TabBar(
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
+            labelColor: context.palette.primary,
+            unselectedLabelColor: context.palette.textSecondary,
+            indicatorColor: context.palette.primary,
             tabs: const [
               Tab(text: 'Feed'),
               Tab(text: 'Forums'),
@@ -194,7 +194,7 @@ class _SocialScreenState extends State<SocialScreen> {
             if (searching)
               Positioned.fill(
                 child: Container(
-                  color: AppColors.background,
+                  color: context.palette.background,
                   child: _SearchResults(query: _query),
                 ),
               ),
@@ -232,7 +232,7 @@ class _SearchResults extends ConsumerWidget {
           child: Text(
             'Nothing found for "$query".\nTry a @username, an email, or a forum name.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
           ),
         ),
       );
@@ -280,7 +280,7 @@ class _SectionSpinner extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child:
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
       );
 }
 
@@ -291,7 +291,7 @@ class _SectionMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
       );
 }
 
@@ -303,13 +303,13 @@ class _ForumResultTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/forums/${forum.id}'),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      borderRadius: BorderRadius.circular(context.shape.radiusMd),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          border: Border.all(color: AppColors.border),
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusMd),
+          border: Border.all(color: context.palette.border),
         ),
         child: Row(
           children: [
@@ -317,11 +317,11 @@ class _ForumResultTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: context.palette.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(Icons.forum_outlined,
-                  color: AppColors.primary, size: 20),
+                  color: context.palette.primary, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -334,15 +334,15 @@ class _ForumResultTile extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary)),
+                          color: context.palette.textPrimary)),
                   Text(
                       '${forum.followerCount} followers · ${forum.postCount} posts',
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary)),
+                          fontSize: 12, color: context.palette.textSecondary)),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+            Icon(Icons.chevron_right, color: context.palette.textTertiary, size: 20),
           ],
         ),
       ),
@@ -424,7 +424,7 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
             builder: (context) {
               if (feed.isLoading) {
                 return Center(
-                    child: CircularProgressIndicator(color: AppColors.primary));
+                    child: CircularProgressIndicator(color: context.palette.primary));
               }
               // An error with nothing already on screen is a dead end and gets
               // the full retry view. An error while paging is not — the rider
@@ -445,7 +445,7 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
               if (sort == FeedSort.following &&
                   ref.watch(followingUidsProvider).isLoading) {
                 return Center(
-                    child: CircularProgressIndicator(color: AppColors.primary));
+                    child: CircularProgressIndicator(color: context.palette.primary));
               }
               final rides = ref.watch(visibleFeedProvider);
               if (rides.isEmpty) {
@@ -463,14 +463,14 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                                 ? Icons.people_outline
                                 : Icons.dynamic_feed_outlined,
                             size: 64,
-                            color: AppColors.textTertiary),
+                            color: context.palette.textTertiary),
                         const SizedBox(height: 16),
                         Text(
                             following
                                 ? 'Nothing from your riders yet'
                                 : 'No rides yet',
                             style: TextStyle(
-                                color: AppColors.textSecondary, fontSize: 16)),
+                                color: context.palette.textSecondary, fontSize: 16)),
                         const SizedBox(height: 8),
                         Text(
                             following
@@ -478,7 +478,7 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                                 : 'Share a ride from its summary screen to get things started.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                color: AppColors.textTertiary, fontSize: 14)),
+                                color: context.palette.textTertiary, fontSize: 14)),
                       ],
                     ),
                   ),
@@ -492,7 +492,7 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
               return RefreshIndicator(
                 onRefresh: () =>
                     ref.read(rideFeedNotifierProvider.notifier).refresh(),
-                color: AppColors.primary,
+                color: context.palette.primary,
                 child: ListView.separated(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -542,7 +542,7 @@ class _FeedFooter extends StatelessWidget {
           width: 22,
           height: 22,
           child: CircularProgressIndicator(
-              strokeWidth: 2, color: AppColors.primary),
+              strokeWidth: 2, color: context.palette.primary),
         )),
       );
     }
@@ -553,7 +553,7 @@ class _FeedFooter extends StatelessWidget {
           children: [
             Text(mapFirestoreError(error!),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
             const SizedBox(height: 8),
             OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
           ],
@@ -564,7 +564,7 @@ class _FeedFooter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: Text("You're all caught up",
-            style: TextStyle(color: AppColors.textTertiary, fontSize: 13)),
+            style: TextStyle(color: context.palette.textTertiary, fontSize: 13)),
       ),
     );
   }
@@ -645,9 +645,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
     final ride = widget.ride;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
+        border: Border.all(color: context.palette.border),
       ),
       child: Material(
         color: Colors.transparent,
@@ -656,7 +656,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
             InkWell(
               onTap: () =>
                   context.push('/rides/shared/${ride.id}', extra: ride),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              borderRadius: BorderRadius.circular(context.shape.radiusLg),
               child: Padding(
                 padding: const EdgeInsets.all(AppDimensions.paddingMd),
                 child: Column(
@@ -668,11 +668,11 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color: context.palette.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.two_wheeler,
-                              color: AppColors.primary, size: 22),
+                              color: context.palette.primary, size: 22),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -684,12 +684,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
                                 style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary),
+                                    color: context.palette.textPrimary),
                               ),
                               Text(ride.bikeType,
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textSecondary)),
+                                      color: context.palette.textSecondary)),
                             ],
                           ),
                         ),
@@ -699,13 +699,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
                             ride.userName,
                             style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: context.palette.textSecondary,
                                 fontWeight: FontWeight.w500),
                           ),
                         ),
                         PopupMenuButton<String>(
                           icon: Icon(Icons.more_vert,
-                              color: AppColors.textTertiary, size: 18),
+                              color: context.palette.textTertiary, size: 18),
                           padding: EdgeInsets.zero,
                           onSelected: (value) {
                             if (value == 'report') {
@@ -737,7 +737,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 14, color: AppColors.textPrimary),
+                            fontSize: 14, color: context.palette.textPrimary),
                       ),
                     ],
                     const SizedBox(height: 12),
@@ -756,7 +756,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Container(height: 1, color: AppColors.border),
+                    Container(height: 1, color: context.palette.border),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -771,8 +771,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           icon: Icon(
                             Icons.arrow_upward,
                             color: ride.myVote == 1
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? context.palette.primary
+                                : context.palette.textSecondary,
                             size: 20,
                           ),
                         ),
@@ -780,7 +780,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary)),
+                                color: context.palette.textPrimary)),
                         IconButton(
                           tooltip: 'Downvote',
                           padding: EdgeInsets.zero,
@@ -792,8 +792,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           icon: Icon(
                             Icons.arrow_downward,
                             color: ride.myVote == -1
-                                ? AppColors.danger
-                                : AppColors.textSecondary,
+                                ? context.palette.danger
+                                : context.palette.textSecondary,
                             size: 20,
                           ),
                         ),
@@ -801,7 +801,7 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         InkWell(
                           onTap: _toggleExpanded,
                           borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusSm),
+                              BorderRadius.circular(context.shape.radiusSm),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 4),
@@ -809,18 +809,18 @@ class _RideCardState extends ConsumerState<_RideCard> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.chat_bubble_outline,
-                                    color: AppColors.textSecondary, size: 18),
+                                    color: context.palette.textSecondary, size: 18),
                                 const SizedBox(width: 6),
                                 Text('${ride.comments}',
                                     style: TextStyle(
                                         fontSize: 13,
-                                        color: AppColors.textSecondary)),
+                                        color: context.palette.textSecondary)),
                                 const SizedBox(width: 4),
                                 Icon(
                                     _expanded
                                         ? Icons.expand_less
                                         : Icons.expand_more,
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.textSecondary,
                                     size: 16),
                               ],
                             ),
@@ -833,11 +833,11 @@ class _RideCardState extends ConsumerState<_RideCard> {
                             Text('Details',
                                 style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.primary,
+                                    color: context.palette.primary,
                                     fontWeight: FontWeight.w600)),
                             const SizedBox(width: 2),
                             Icon(Icons.chevron_right,
-                                size: 16, color: AppColors.primary),
+                                size: 16, color: context.palette.primary),
                           ],
                         ),
                       ],
@@ -875,12 +875,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
     Widget buildMap(double h) => RideRouteMap(
           polyline: ride.polyline,
           height: h,
-          radius: AppDimensions.radiusLg,
+          radius: context.shape.radiusLg,
         );
 
     final map = InkWell(
       onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      borderRadius: BorderRadius.circular(context.shape.radiusLg),
       child: buildMap(mediaHeight),
     );
 
@@ -904,19 +904,19 @@ class _RideCardState extends ConsumerState<_RideCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(height: 1, color: AppColors.border),
+        Container(height: 1, color: context.palette.border),
         const SizedBox(height: 8),
         if (_loadingComments)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Center(
-                child: CircularProgressIndicator(color: AppColors.primary)),
+                child: CircularProgressIndicator(color: context.palette.primary)),
           )
         else if ((_comments ?? const []).isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text('No comments yet',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
           )
         else
           ..._comments!.map((c) => Padding(
@@ -929,12 +929,12 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary),
+                            color: context.palette.textPrimary),
                       ),
                       TextSpan(
                         text: c.text,
                         style: TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary),
+                            fontSize: 13, color: context.palette.textSecondary),
                       ),
                     ],
                   ),
@@ -946,18 +946,18 @@ class _RideCardState extends ConsumerState<_RideCard> {
             Expanded(
               child: TextField(
                 controller: _commentController,
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   isDense: true,
                   hintText: 'Add a comment...',
-                  hintStyle: TextStyle(color: AppColors.textTertiary),
+                  hintStyle: TextStyle(color: context.palette.textTertiary),
                 ),
                 onSubmitted: (_) => _submitComment(),
               ),
             ),
             IconButton(
               tooltip: 'Send',
-              icon: Icon(Icons.send, color: AppColors.primary, size: 20),
+              icon: Icon(Icons.send, color: context.palette.primary, size: 20),
               onPressed: _submitComment,
             ),
           ],
@@ -973,15 +973,15 @@ class _RideCardState extends ConsumerState<_RideCard> {
             style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary)),
+                color: context.palette.textPrimary)),
         const SizedBox(height: 2),
         Text(label,
-            style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
       ],
     );
   }
 
-  Widget _divider() => Container(width: 1, height: 28, color: AppColors.border);
+  Widget _divider() => Container(width: 1, height: 28, color: context.palette.border);
 }
 
 /// Small tier-colored riding-score pill for a feed card — the "gamified"
@@ -999,17 +999,17 @@ class _RidingScoreChip extends StatelessWidget {
     final tier = ridingScoreTier(score);
     final (color, label, icon) = switch (tier) {
       RidingScoreTier.smooth => (
-          AppColors.success,
+          context.palette.success,
           l10n.scoreSmoothLabel,
           Icons.emoji_events
         ),
       RidingScoreTier.steady => (
-          AppColors.attention,
+          context.palette.attention,
           l10n.scoreSteadyLabel,
           Icons.thumb_up_alt_rounded
         ),
       RidingScoreTier.aggressive => (
-          AppColors.danger,
+          context.palette.danger,
           l10n.scoreAggressiveLabel,
           Icons.warning_amber_rounded
         ),
@@ -1019,7 +1019,7 @@ class _RidingScoreChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        borderRadius: BorderRadius.circular(context.shape.radiusSm),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
@@ -1070,9 +1070,9 @@ class PhotoCollage extends StatelessWidget {
         child: CachedNetworkImage(
           imageUrl: urls[index],
           fit: BoxFit.cover,
-          placeholder: (_, __) => Container(color: AppColors.background),
+          placeholder: (_, __) => Container(color: context.palette.background),
           errorWidget: (_, __, ___) => Container(
-            color: AppColors.background,
+            color: context.palette.background,
             child:
                 const Icon(Icons.broken_image, color: Colors.white24, size: 24),
           ),
@@ -1166,7 +1166,7 @@ class PhotoCollage extends StatelessWidget {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      borderRadius: BorderRadius.circular(context.shape.radiusLg),
       child: SizedBox(
         height: height,
         child: content,
@@ -1267,7 +1267,7 @@ class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusFull),
+                          BorderRadius.circular(context.shape.radiusFull),
                     ),
                     child: Text(
                       '${_page + 1}/${urls.length}',
@@ -1301,16 +1301,16 @@ class _RiderResultTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Row(
         children: [
           Expanded(
             child: InkWell(
               onTap: () => context.push('/profile/${rider.uid}'),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
               child: Row(
                 children: [
                   UserAvatar(
@@ -1326,12 +1326,12 @@ class _RiderResultTile extends ConsumerWidget {
                             style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary)),
+                                color: context.palette.textPrimary)),
                         if (rider.username != null)
                           Text('@${rider.username}',
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                       ],
                     ),
                   ),

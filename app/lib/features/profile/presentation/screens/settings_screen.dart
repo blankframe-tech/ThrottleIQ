@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/i18n/locale_provider.dart';
 import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/theme/theme_style_provider.dart';
@@ -38,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
     final appLocale = ref.watch(localeProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: Stack(
         children: [
@@ -49,15 +48,15 @@ class SettingsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.palette.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.palette.border),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                  backgroundColor: context.palette.primary.withValues(alpha: 0.15),
                   child: Text(
                     (user?.displayName?.isNotEmpty == true
                             ? user!.displayName![0]
@@ -66,7 +65,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary),
+                        color: context.palette.primary),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -78,11 +77,11 @@ class SettingsScreen extends ConsumerWidget {
                           style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary)),
+                              color: context.palette.textPrimary)),
                       const SizedBox(height: 2),
                       Text(user?.email ?? '',
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary)),
+                              fontSize: 13, color: context.palette.textSecondary)),
                     ],
                   ),
                 ),
@@ -102,20 +101,20 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           Text(l10n.vibeFieldLabel,
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary)),
+                  color: context.palette.textSecondary)),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
             ),
             child: Row(
               children: [
@@ -148,14 +147,14 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary)),
+                  color: context.palette.textSecondary)),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
             ),
             // Three options, matching the Language row below: "System" is
             // not the same as "Light" — it tracks the OS and flips with it
@@ -216,14 +215,14 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
             ),
             child: Row(
               children: [
@@ -280,7 +279,7 @@ class SettingsScreen extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _showContactDialog(context, ref),
@@ -296,14 +295,14 @@ class SettingsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.warning),
+              color: context.palette.warning.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.warning),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 22),
+                Icon(Icons.warning_amber_rounded, color: context.palette.warning, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -311,7 +310,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary),
+                        color: context.palette.textPrimary),
                   ),
                 ),
               ],
@@ -320,7 +319,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             l10n.emergencyContactsDescription,
-            style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
           ),
           const SizedBox(height: 12),
 
@@ -328,22 +327,22 @@ class SettingsScreen extends ConsumerWidget {
             loading: () => Padding(
               padding: const EdgeInsets.all(24),
               child: Center(
-                  child: CircularProgressIndicator(color: AppColors.primary)),
+                  child: CircularProgressIndicator(color: context.palette.primary)),
             ),
             error: (e, _) => Text(l10n.emergencyContactsLoadError('$e'),
-                style: TextStyle(color: AppColors.danger, fontSize: 13)),
+                style: TextStyle(color: context.palette.danger, fontSize: 13)),
             data: (list) => list.isEmpty
                 ? Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: context.palette.border),
                     ),
                     child: Center(
                       child: Text(l10n.emergencyContactsEmpty,
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary)),
+                              fontSize: 13, color: context.palette.textSecondary)),
                     ),
                   )
                 : Column(
@@ -354,14 +353,14 @@ class SettingsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: context.palette.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: context.palette.border),
                           ),
                           child: Row(
                             children: [
                               Icon(Icons.contact_emergency_outlined,
-                                  color: AppColors.primary, size: 20),
+                                  color: context.palette.primary, size: 20),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -371,14 +370,14 @@ class SettingsScreen extends ConsumerWidget {
                                         style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.textPrimary)),
+                                            color: context.palette.textPrimary)),
                                     Text(
                                         c.email == null
                                             ? c.phone
                                             : '${c.phone} · ${c.email}',
                                         style: TextStyle(
                                             fontSize: 12,
-                                            color: AppColors.textSecondary)),
+                                            color: context.palette.textSecondary)),
                                   ],
                                 ),
                               ),
@@ -389,7 +388,7 @@ class SettingsScreen extends ConsumerWidget {
                                         .notifier)
                                     .deleteContact(c.id),
                                 icon: Icon(Icons.delete_outline,
-                                    color: AppColors.textTertiary, size: 20),
+                                    color: context.palette.textTertiary, size: 20),
                               ),
                             ],
                           ),
@@ -405,7 +404,7 @@ class SettingsScreen extends ConsumerWidget {
           // fields plus a live QR preview, which doesn't fit this screen's
           // "one row per setting" shape. This tile is just the doorway.
           Material(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () => context.push('/safe-qr'),
@@ -415,12 +414,12 @@ class SettingsScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.qr_code_2_outlined,
-                        color: AppColors.primary, size: 22),
+                        color: context.palette.primary, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -430,17 +429,17 @@ class SettingsScreen extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
                           Text(l10n.safeQrSettingsSubtitle,
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
+                        color: context.palette.textTertiary, size: 20),
                   ],
                 ),
               ),
@@ -461,12 +460,12 @@ class SettingsScreen extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),
           Material(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () => context.push('/blocked-users'),
@@ -476,11 +475,11 @@ class SettingsScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.block, color: AppColors.primary, size: 22),
+                    Icon(Icons.block, color: context.palette.primary, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -490,17 +489,17 @@ class SettingsScreen extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
                           Text('Manage accounts you have blocked',
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
+                        color: context.palette.textTertiary, size: 20),
                   ],
                 ),
               ),
@@ -508,7 +507,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Material(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () async {
@@ -523,11 +522,11 @@ class SettingsScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.play_circle_outline, color: AppColors.primary, size: 22),
+                    Icon(Icons.play_circle_outline, color: context.palette.primary, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -537,17 +536,17 @@ class SettingsScreen extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
                           Text('Replay interactive feature guides and safety walkthrough',
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
+                        color: context.palette.textTertiary, size: 20),
                   ],
                 ),
               ),
@@ -557,7 +556,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           // ── Bug Report ─────────────────────────────────────────────────
           Material(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () => BugReportSheet.show(context),
@@ -566,12 +565,12 @@ class SettingsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.bug_report_outlined,
-                        color: AppColors.primary, size: 22),
+                        color: context.palette.primary, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -581,17 +580,17 @@ class SettingsScreen extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
                           Text('Something broken? Let the team know',
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
+                        color: context.palette.textTertiary, size: 20),
                   ],
                 ),
               ),
@@ -610,8 +609,8 @@ class SettingsScreen extends ConsumerWidget {
             label: Text(l10n.signOutAction),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 48),
-              foregroundColor: AppColors.textSecondary,
-              side: BorderSide(color: AppColors.border),
+              foregroundColor: context.palette.textSecondary,
+              side: BorderSide(color: context.palette.border),
             ),
           ),
           const SizedBox(height: 12),
@@ -623,7 +622,7 @@ class SettingsScreen extends ConsumerWidget {
             label: const Text('Delete Account'),
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 48),
-              foregroundColor: AppColors.danger,
+              foregroundColor: context.palette.danger,
             ),
           ),
         ],
@@ -643,15 +642,15 @@ class SettingsScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: dialogCtx.palette.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.border),
+          side: BorderSide(color: dialogCtx.palette.border),
         ),
         title: Text(
           'Delete Account?',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: dialogCtx.palette.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -659,7 +658,7 @@ class SettingsScreen extends ConsumerWidget {
         content: Text(
           'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.',
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: dialogCtx.palette.textSecondary,
             fontSize: 14,
             height: 1.4,
           ),
@@ -672,7 +671,7 @@ class SettingsScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () => Navigator.of(dialogCtx).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.danger,
+              backgroundColor: dialogCtx.palette.danger,
             ),
             child: const Text('Delete Permanently'),
           ),
@@ -694,7 +693,7 @@ class SettingsScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error deleting account: $e'),
-              backgroundColor: AppColors.danger,
+              backgroundColor: context.palette.danger,
             ),
           );
         }
@@ -725,12 +724,12 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        icon: Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 32),
+        backgroundColor: dialogContext.palette.surface,
+        icon: Icon(Icons.warning_amber_rounded, color: dialogContext.palette.warning, size: 32),
         title: Text(l10n.emergencyContactsAckTitle,
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
+            style: TextStyle(color: dialogContext.palette.textPrimary, fontSize: 18)),
         content: Text(l10n.emergencyContactsAckBody,
-            style: TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: dialogContext.palette.textSecondary)),
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -789,27 +788,27 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       title: Text(l10n.addEmergencyContactTitle,
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
+          style: TextStyle(color: context.palette.textPrimary, fontSize: 18)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _nameCtrl,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.contactNameField),
           ),
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.contactPhoneField),
           ),
           TextField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration:
                 InputDecoration(labelText: l10n.contactEmailFieldOptional),
           ),
@@ -844,7 +843,7 @@ class _SyncIssuesTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Material(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () => context.push('/sync-issues'),
@@ -853,11 +852,11 @@ class _SyncIssuesTile extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.warning),
+              border: Border.all(color: context.palette.warning),
             ),
             child: Row(
               children: [
-                Icon(Icons.sync_problem, color: AppColors.warning, size: 22),
+                Icon(Icons.sync_problem, color: context.palette.warning, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -867,19 +866,19 @@ class _SyncIssuesTile extends ConsumerWidget {
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary)),
+                              color: context.palette.textPrimary)),
                       const SizedBox(height: 2),
                       Text(
                           count == 1
                               ? "1 update couldn't be sent"
                               : "$count updates couldn't be sent",
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.textSecondary)),
+                              fontSize: 12, color: context.palette.textSecondary)),
                     ],
                   ),
                 ),
                 Icon(Icons.chevron_right,
-                    color: AppColors.textTertiary, size: 20),
+                    color: context.palette.textTertiary, size: 20),
               ],
             ),
           ),
@@ -906,12 +905,12 @@ class _SegmentedOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      borderRadius: BorderRadius.circular(context.shape.radiusSm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -920,14 +919,14 @@ class _SegmentedOption extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: selected ? AppColors.surface : AppColors.textPrimary)),
+                    color: selected ? context.palette.surface : context.palette.textPrimary)),
             const SizedBox(height: 2),
             Text(description,
                 style: TextStyle(
                     fontSize: 11,
                     color: selected
-                        ? AppColors.surface.withValues(alpha: 0.8)
-                        : AppColors.textTertiary)),
+                        ? context.palette.surface.withValues(alpha: 0.8)
+                        : context.palette.textTertiary)),
           ],
         ),
       ),
@@ -946,16 +945,16 @@ class _OverspeedLimitTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.speed, color: AppColors.primary, size: 22),
+              Icon(Icons.speed, color: context.palette.primary, size: 22),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -968,7 +967,7 @@ class _OverspeedLimitTile extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       l10n.overspeedSettingSubtitle,
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -978,7 +977,7 @@ class _OverspeedLimitTile extends ConsumerWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
               ),
             ],
@@ -986,9 +985,9 @@ class _OverspeedLimitTile extends ConsumerWidget {
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.primary,
-              inactiveTrackColor: AppColors.primary.withValues(alpha: 0.2),
-              thumbColor: AppColors.primary,
+              activeTrackColor: context.palette.primary,
+              inactiveTrackColor: context.palette.primary.withValues(alpha: 0.2),
+              thumbColor: context.palette.primary,
             ),
             child: Slider(
               value: limit,

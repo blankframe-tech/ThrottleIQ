@@ -7,7 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/cloud/ride_track_loader.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -176,18 +176,18 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         child: Container(
           height: 180,
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusXl),
+            border: Border.all(color: context.palette.border),
           ),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.add_a_photo_outlined, color: AppColors.textTertiary, size: 32),
+                Icon(Icons.add_a_photo_outlined, color: context.palette.textTertiary, size: 32),
                 const SizedBox(height: 8),
                 Text('Add up to $kMaxRidePhotos ride or bike photos',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
           ),
@@ -212,7 +212,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                    borderRadius: BorderRadius.circular(context.shape.radiusXl),
                     child: Image.file(File(_imagePaths[i]), fit: BoxFit.cover),
                   ),
                   Align(
@@ -241,12 +241,12 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                 width: tile,
                 height: tile,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusXl),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Icon(Icons.add_photo_alternate_outlined,
-                    color: AppColors.textTertiary, size: 26),
+                    color: context.palette.textTertiary, size: 26),
               ),
             ),
         ],
@@ -257,9 +257,9 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         title: const Text('Share ride'),
         leading: IconButton(
           tooltip: 'Close',
@@ -284,11 +284,11 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
               maxLines: 3,
               maxLength: _captionMaxLength,
               textCapitalization: TextCapitalization.sentences,
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              style: TextStyle(color: context.palette.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Say something about this ride',
-                hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
-                counterStyle: TextStyle(color: AppColors.textTertiary, fontSize: 11),
+                hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 14),
+                counterStyle: TextStyle(color: context.palette.textTertiary, fontSize: 11),
               ),
             ),
             const SizedBox(height: 16),
@@ -297,7 +297,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                 const EditorialLabel('Photos (optional)'),
                 const Spacer(),
                 Text('${_imagePaths.length}/$kMaxRidePhotos',
-                    style: TextStyle(color: AppColors.textTertiary, fontSize: 12)),
+                    style: TextStyle(color: context.palette.textTertiary, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 10),
@@ -323,7 +323,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             const SizedBox(height: 8),
             Text(
               _audienceOptions.firstWhere((o) => o.$1 == _audience).$3,
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
             ),
             const SizedBox(height: 24),
             // "Add to routes" belongs here because saving a route is something

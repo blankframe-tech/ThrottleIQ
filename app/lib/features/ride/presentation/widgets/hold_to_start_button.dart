@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 
 /// Circular press-and-hold start control — the rounded skins' counterpart to
@@ -133,9 +133,9 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
     // primary (the color every other action already uses), on a dark one it's
     // the near-black instrument-panel ink with a lime arc.
     final faceColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
-        : AppColors.textTertiary;
-    final arcColor = isLightPalette ? AppColors.primaryDark : AppColors.primary;
+        ? (isLightPalette ? context.palette.primary : context.palette.ink)
+        : context.palette.textTertiary;
+    final arcColor = isLightPalette ? context.palette.primaryDark : context.palette.primary;
 
     return Semantics(
       button: true,
@@ -168,7 +168,7 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
                   progress: t,
                   faceColor: faceColor,
                   arcColor: arcColor,
-                  trackColor: AppColors.textTertiary.withValues(alpha: 0.25),
+                  trackColor: context.palette.textTertiary.withValues(alpha: 0.25),
                 ),
                 child: Center(
                   child: widget.busy
@@ -177,7 +177,7 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
                           width: 26,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: AppColors.onInk,
+                            color: context.palette.onInk,
                           ),
                         )
                       : _Label(progress: t, enabled: enabled),
@@ -212,13 +212,13 @@ class _Label extends StatelessWidget {
           Icon(
             committed ? Icons.play_arrow_rounded : Icons.two_wheeler,
             size: committed ? 34 : 28,
-            color: AppColors.onInk,
+            color: context.palette.onInk,
           ),
           const SizedBox(height: 4),
           Text(
             committed ? 'GO' : 'HOLD',
-            style: display(committed ? 20 : 16,
-                color: AppColors.onInk, letterSpacing: 1.5),
+            style: display(context, committed ? 20 : 16,
+                color: context.palette.onInk, letterSpacing: 1.5),
           ),
         ],
       ),

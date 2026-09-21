@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -137,7 +137,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     profileAsync.whenData(_seedFrom);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Edit profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -167,7 +167,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
+                            color: context.palette.primary,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.edit, size: 14, color: Colors.white),
@@ -180,21 +180,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _displayNameCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(labelText: 'Display name'),
                 validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nicknameCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Nickname', hintText: 'Shown on cards & feed'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _usernameCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Username',
                   hintText: 'yourhandle',
@@ -214,14 +214,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _bioCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 maxLines: 3,
                 decoration: const InputDecoration(labelText: 'Bio'),
               ),
               const SizedBox(height: 20),
               Text('Who can see my profile',
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               const SizedBox(height: 8),
               SegmentedButton<String>(
                 segments: const [
@@ -236,10 +236,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 20),
               Text('Who can see my bikes',
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               const SizedBox(height: 4),
               Text('Your garage on your profile. Separate from who can see the profile itself.',
-                  style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                  style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
               const SizedBox(height: 8),
               // 'followers' here, not 'mutual' as above: hiding bikes is about
               // who follows YOU, so a one-way follower qualifies.
@@ -326,7 +326,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + bottomInset),
@@ -340,7 +340,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.palette.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -368,13 +368,13 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'A good bio gets you more followers.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -390,17 +390,17 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
             autofocus: true,
             maxLines: 3,
             maxLength: 160,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
               hintText: 'e.g. "FZ-S rider from Dhaka. Weekend tourer. Coffee & corners."',
-              hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+              hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 13),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: context.palette.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: context.palette.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -417,7 +417,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Skip', style: TextStyle(color: AppColors.textTertiary)),
+                  child: Text('Skip', style: TextStyle(color: context.palette.textTertiary)),
                 ),
               ),
               const SizedBox(width: 12),

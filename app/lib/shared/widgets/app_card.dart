@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 
 class AppCard extends StatelessWidget {
@@ -18,10 +18,10 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hardShadow = AppColors.hasHardShadow;
-    final radius = BorderRadius.circular(AppDimensions.radiusXl);
+    final hardShadow = context.palette.hasHardShadow;
+    final radius = BorderRadius.circular(context.shape.radiusXl);
     return Material(
-      color: color ?? AppColors.surface,
+      color: color ?? context.palette.surface,
       borderRadius: radius,
       child: InkWell(
         onTap: onTap,
@@ -31,11 +31,11 @@ class AppCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: radius,
             border: Border.all(
-              color: AppColors.border,
+              color: context.palette.border,
               width: hardShadow ? 2 : 1,
             ),
             boxShadow: hardShadow
-                ? [BoxShadow(color: AppColors.border, offset: const Offset(4, 4))]
+                ? [BoxShadow(color: context.palette.border, offset: const Offset(4, 4))]
                 : null,
           ),
           child: child,

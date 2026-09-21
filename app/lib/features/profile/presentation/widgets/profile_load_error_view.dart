@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 
 /// Why another rider's profile failed to load.
@@ -52,10 +52,10 @@ class ProfileLoadErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: AppColors.textTertiary),
+            Icon(icon, size: 48, color: context.palette.textTertiary),
             const SizedBox(height: 12),
             Text(message,
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                style: TextStyle(fontSize: 16, color: context.palette.textSecondary)),
             if (failure != ProfileLoadFailure.private) ...[
               const SizedBox(height: 16),
               OutlinedButton.icon(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -36,10 +36,10 @@ class ForumThreadScreen extends ConsumerWidget {
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.radiusLg)),
+            top: Radius.circular(context.shape.radiusLg)),
       ),
       builder: (_) => _NewPostSheet(forumId: forumId),
     ).then((posted) {
@@ -64,7 +64,7 @@ class ForumThreadScreen extends ConsumerWidget {
         canManageMaintainers(forum: forum, uid: user?.uid, email: user?.email);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         title: Text(forumAsync.valueOrNull?.displayName ?? 'Forum'),
         actions: [
@@ -80,10 +80,10 @@ class ForumThreadScreen extends ConsumerWidget {
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
-                backgroundColor: AppColors.surface,
+                backgroundColor: context.palette.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(AppDimensions.radiusLg)),
+                      top: Radius.circular(context.shape.radiusLg)),
                 ),
                 builder: (_) => _MaintainersSheet(forumId: forumId),
               ),
@@ -92,12 +92,12 @@ class ForumThreadScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNewPostSheet(context, ref),
-        backgroundColor: AppColors.primary,
+        backgroundColor: context.palette.primary,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('New post', style: TextStyle(color: Colors.white)),
       ),
       body: postsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) =>
             ErrorView(error: e, onRetry: () => ref.invalidate(forumPostsProvider(forumId))),
         data: (_) {
@@ -109,13 +109,13 @@ class ForumThreadScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.forum_outlined, size: 64, color: AppColors.textTertiary),
+                    Icon(Icons.forum_outlined, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text('No posts yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    Text('No posts yet', style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                     const SizedBox(height: 8),
                     Text('Be the first to ask a question or share something.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+                        style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
                   ],
                 ),
               ),
@@ -123,7 +123,7 @@ class ForumThreadScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () => ref.refresh(forumPostsProvider(forumId).future),
-            color: AppColors.primary,
+            color: context.palette.primary,
             child: ListView.separated(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
               itemCount: posts.length,
@@ -238,12 +238,12 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         children: [
           Text(
             'New post',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _titleController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             onChanged: (_) {
               if (_titleError) setState(() => _titleError = false);
             },
@@ -255,7 +255,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
           const SizedBox(height: 8),
           TextField(
             controller: _bodyController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             maxLines: 4,
             onChanged: (_) {
               if (_bodyError) setState(() => _bodyError = false);
@@ -267,7 +267,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: context.palette.primary),
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(
@@ -302,20 +302,20 @@ class _PostCard extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Delete post?', style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: ctx.palette.surface,
+        title: Text('Delete post?', style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
           'This removes the post and its replies from the forum. It cannot be undone.',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: TextStyle(color: ctx.palette.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text('Delete', style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -378,7 +378,7 @@ class _PostCard extends ConsumerWidget {
                     UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
                     const SizedBox(width: 8),
                     Text(post.userName,
-                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                   ],
                 ),
               ),
@@ -389,11 +389,11 @@ class _PostCard extends ConsumerWidget {
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   tooltip: 'Delete post',
                   onPressed: () => _confirmDelete(context, ref),
-                  icon: Icon(Icons.delete_outline, size: 18, color: AppColors.textTertiary),
+                  icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textTertiary),
                 )
               else
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
+                  icon: Icon(Icons.more_vert, color: context.palette.textTertiary, size: 18),
                   padding: EdgeInsets.zero,
                   onSelected: (value) {
                     if (value == 'report') {
@@ -419,14 +419,14 @@ class _PostCard extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.subdirectory_arrow_right, size: 14, color: AppColors.textTertiary),
+                Icon(Icons.subdirectory_arrow_right, size: 14, color: context.palette.textTertiary),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     'from ${mergedFrom.displayName}',
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 11, color: AppColors.textTertiary, fontStyle: FontStyle.italic),
+                        fontSize: 11, color: context.palette.textTertiary, fontStyle: FontStyle.italic),
                   ),
                 ),
               ],
@@ -435,14 +435,14 @@ class _PostCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             post.title,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
             post.body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 10),
           Row(
@@ -453,23 +453,23 @@ class _PostCard extends ConsumerWidget {
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, 1),
                 icon: Icon(Icons.arrow_upward,
-                    color: post.myVote == 1 ? AppColors.primary : AppColors.textSecondary, size: 18),
+                    color: post.myVote == 1 ? context.palette.primary : context.palette.textSecondary, size: 18),
               ),
               Text('${post.netScore}',
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               IconButton(
                 tooltip: 'Downvote',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, -1),
                 icon: Icon(Icons.arrow_downward,
-                    color: post.myVote == -1 ? AppColors.danger : AppColors.textSecondary, size: 18),
+                    color: post.myVote == -1 ? context.palette.danger : context.palette.textSecondary, size: 18),
               ),
               const Spacer(),
-              Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.chat_bubble_outline, size: 16, color: context.palette.textSecondary),
               const SizedBox(width: 4),
-              Text('${post.replyCount}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('${post.replyCount}', style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
             ],
           ),
         ],
@@ -546,18 +546,18 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
           Text(
             'Maintainers',
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
             'Maintainers can delete posts and replies in this forum.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           if (maintainers.isEmpty)
             Text(
               'No maintainers yet.',
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 13, color: context.palette.textTertiary),
             )
           else
             for (final uid in maintainers)
@@ -565,13 +565,13 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline, size: 18, color: AppColors.textSecondary),
+                    Icon(Icons.person_outline, size: 18, color: context.palette.textSecondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         uid,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 13, color: context.palette.textPrimary),
                       ),
                     ),
                     IconButton(
@@ -582,7 +582,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
                           ? null
                           : () => _run(() =>
                               ForumRepository().removeMaintainer(widget.forumId, uid)),
-                      icon: Icon(Icons.close, size: 18, color: AppColors.danger),
+                      icon: Icon(Icons.close, size: 18, color: context.palette.danger),
                     ),
                   ],
                 ),
@@ -593,10 +593,10 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
               Expanded(
                 child: TextField(
                   controller: _uidCtrl,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Add by rider UID',
-                    hintStyle: TextStyle(color: AppColors.textTertiary),
+                    hintStyle: TextStyle(color: context.palette.textTertiary),
                   ),
                   onSubmitted: (_) => _add(),
                 ),
@@ -605,7 +605,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
               IconButton(
                 tooltip: 'New post',
                 onPressed: _busy ? null : _add,
-                icon: Icon(Icons.add, color: AppColors.primary),
+                icon: Icon(Icons.add, color: context.palette.primary),
               ),
             ],
           ),

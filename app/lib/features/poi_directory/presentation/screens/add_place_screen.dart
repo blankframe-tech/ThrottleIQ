@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/map_location_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -86,21 +86,21 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   Future<void> _pickPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.photo_camera_outlined, color: AppColors.primary),
+              leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
               title: Text('Take a photo',
-                  style: TextStyle(color: AppColors.textPrimary)),
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: Icon(Icons.photo_library_outlined, color: AppColors.primary),
+              leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
               title: Text('Choose from gallery',
-                  style: TextStyle(color: AppColors.textPrimary)),
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
           ],
@@ -244,27 +244,27 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     if (_photoPath == null) {
       return InkWell(
         onTap: _submitting ? null : _pickPhoto,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        borderRadius: BorderRadius.circular(context.shape.radiusXl),
         child: Container(
           height: 96,
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusXl),
+            border: Border.all(color: context.palette.border),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_a_photo_outlined, size: 22, color: AppColors.textSecondary),
+              Icon(Icons.add_a_photo_outlined, size: 22, color: context.palette.textSecondary),
               const SizedBox(height: 6),
               Text(
                 'Add a photo (optional)',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
               ),
               const SizedBox(height: 2),
               Text(
                 'A shopfront picture makes this place easy to spot',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -273,7 +273,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(context.shape.radiusXl),
       child: Stack(
         children: [
           Image.file(
@@ -286,10 +286,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
             // an exception box into the middle of the form.
             errorBuilder: (_, __, ___) => Container(
               height: 160,
-              color: AppColors.surface,
+              color: context.palette.surface,
               alignment: Alignment.center,
               child: Text("Couldn't load that photo",
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
             ),
           ),
           Positioned(
@@ -346,7 +346,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         : _fallbackCenter;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Add Place')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -355,7 +355,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Location', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Location', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               MapLocationPicker(
                 // Keyed by center so the map remounts (and re-centers) once
@@ -371,7 +371,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              Text('Category', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Category', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -383,9 +383,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                        border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                        color: selected ? context.palette.primary.withValues(alpha: 0.15) : context.palette.surface,
+                        borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                        border: Border.all(color: selected ? context.palette.primary : context.palette.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -396,7 +396,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                             category.displayName,
                             style: TextStyle(
                               fontSize: 13,
-                              color: selected ? AppColors.primary : AppColors.textSecondary,
+                              color: selected ? context.palette.primary : context.palette.textSecondary,
                               fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                             ),
                           ),
@@ -409,14 +409,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(labelText: 'Name *', hintText: 'e.g. Rahman Motors'),
                 validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 maxLines: 2,
                 minLines: 1,
                 // No validator: the pin already says exactly where this is.
@@ -429,7 +429,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   helperText: 'Write it the way you\'d tell a friend — landmarks, '
                       'not a formal street address. "Beside Omuk School" or '
                       '"just after the Mirpur 10 circle" helps far more here.',
-                  helperStyle: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  helperStyle: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                 ),
               ),
               Align(
@@ -455,13 +455,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(labelText: 'Phone (optional)', hintText: '+880...'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _hoursCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Hours (optional)',
                   hintText: 'e.g. 9am - 9pm, or 24/7',

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 
 class StatCard extends StatelessWidget {
@@ -22,26 +22,26 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hardShadow = AppColors.hasHardShadow;
-    final borderColor = isPrimary ? AppColors.primary : AppColors.border;
+    final hardShadow = context.palette.hasHardShadow;
+    final borderColor = isPrimary ? context.palette.primary : context.palette.border;
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
         border: Border.all(
           color: borderColor,
           width: isPrimary || hardShadow ? 1.5 : 1,
         ),
         boxShadow: hardShadow
-            ? [BoxShadow(color: AppColors.border, offset: const Offset(3, 3))]
+            ? [BoxShadow(color: context.palette.border, offset: const Offset(3, 3))]
             : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null)
-            Icon(icon, size: 18, color: isPrimary ? AppColors.primary : AppColors.textSecondary),
+            Icon(icon, size: 18, color: isPrimary ? context.palette.primary : context.palette.textSecondary),
           const SizedBox(height: 4),
           RichText(
             text: TextSpan(
@@ -51,7 +51,7 @@ class StatCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: valueColor ?? (isPrimary ? AppColors.primary : AppColors.textPrimary),
+                    color: valueColor ?? (isPrimary ? context.palette.primary : context.palette.textPrimary),
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -61,14 +61,14 @@ class StatCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isPrimary ? AppColors.primary.withValues(alpha: 0.8) : AppColors.textSecondary,
+                      color: isPrimary ? context.palette.primary.withValues(alpha: 0.8) : context.palette.textSecondary,
                     ),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 12, color: isPrimary ? AppColors.primary.withValues(alpha: 0.7) : AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 12, color: isPrimary ? context.palette.primary.withValues(alpha: 0.7) : context.palette.textSecondary)),
         ],
       ),
     );

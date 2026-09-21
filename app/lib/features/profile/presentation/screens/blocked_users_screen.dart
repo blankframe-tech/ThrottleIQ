@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/profile_providers.dart';
@@ -15,7 +15,7 @@ class BlockedUsersScreen extends ConsumerWidget {
     final myUid = ref.watch(currentUserProvider)?.uid;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: const Text('Blocked Users')),
       body: blockedUidsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -28,7 +28,7 @@ class BlockedUsersScreen extends ConsumerWidget {
             return Center(
               child: Text(
                 'No blocked users',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.palette.textSecondary),
               ),
             );
           }
@@ -49,8 +49,8 @@ class BlockedUsersScreen extends ConsumerWidget {
 
                   return ListTile(
                     leading: UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 20),
-                    title: Text(profile.bestName, style: TextStyle(color: AppColors.textPrimary)),
-                    subtitle: profile.username != null ? Text('@${profile.username}', style: TextStyle(color: AppColors.textSecondary)) : null,
+                    title: Text(profile.bestName, style: TextStyle(color: context.palette.textPrimary)),
+                    subtitle: profile.username != null ? Text('@${profile.username}', style: TextStyle(color: context.palette.textSecondary)) : null,
                     trailing: TextButton(
                       onPressed: () async {
                         if (myUid == null) return;
@@ -58,7 +58,7 @@ class BlockedUsersScreen extends ConsumerWidget {
                         ref.invalidate(blockedUsersProvider);
                         ref.invalidate(profileProvider(uid));
                       },
-                      child: Text('Unblock', style: TextStyle(color: AppColors.primary)),
+                      child: Text('Unblock', style: TextStyle(color: context.palette.primary)),
                     ),
                   );
                 },

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_dimensions.dart';
 import 'app_shape_profile.dart';
 import 'app_theme_style.dart';
-import 'app_typography.dart';
 
 const _colorModeKey = 'color_mode';
 const _shapeVibeKey = 'shape_vibe';
@@ -209,7 +206,6 @@ Brightness _resolveBrightness(AppBrightnessMode mode) => switch (mode) {
 class AppearanceNotifier extends StateNotifier<AppAppearance>
     with WidgetsBindingObserver {
   AppearanceNotifier() : super(AppAppearance.defaultAppearance) {
-    _applyTokens(AppAppearance.defaultAppearance);
     WidgetsBinding.instance.addObserver(this);
     _loadPersisted();
   }
@@ -222,7 +218,6 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
     final resolved = _platformBrightness();
     if (resolved == state.brightness) return;
     final next = state.copyWith(brightness: resolved);
-    _applyTokens(next);
     state = next;
   }
 
@@ -230,20 +225,6 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  /// Pushes [appearance] into every static token facade at once.
-  ///
-  /// [AppColors] is not the only one: an appearance also carries a shape
-  /// profile (see [AppShapeProfile]) and, for Retro, a different display
-  /// typeface (see [AppTypography]). Applying all three together in one
-  /// place is what stops an appearance from ending up half-applied — the
-  /// failure mode being mono type or another mode's corner radius left
-  /// behind on the next combination the rider picks.
-  void _applyTokens(AppAppearance appearance) {
-    AppColors.apply(AppColorPalette.forMode(appearance.colorMode, appearance.brightness));
-    AppDimensions.apply(AppShapeProfile.forVibe(appearance.shapeVibe));
-    AppTypography.applyStyle(appearance.colorMode);
   }
 
   Future<void> _loadPersisted() async {
@@ -280,14 +261,12 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
     }
 
     if (resolved == state) return;
-    _applyTokens(resolved);
     state = resolved;
   }
 
   Future<void> setColorMode(AppColorMode colorMode) async {
     if (colorMode == state.colorMode) return;
     final next = state.copyWith(colorMode: colorMode);
-    _applyTokens(next);
     state = next;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_colorModeKey, colorMode.name);
@@ -296,7 +275,6 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
   Future<void> setShapeVibe(AppShapeVibe shapeVibe) async {
     if (shapeVibe == state.shapeVibe) return;
     final next = state.copyWith(shapeVibe: shapeVibe);
-    _applyTokens(next);
     state = next;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_shapeVibeKey, shapeVibe.name);
@@ -311,7 +289,6 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
       brightnessMode: mode,
       brightness: _resolveBrightness(mode),
     );
-    _applyTokens(next);
     state = next;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_brightnessKey, mode.name);

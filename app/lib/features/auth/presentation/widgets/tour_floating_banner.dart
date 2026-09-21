@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../screens/onboarding_manifest.dart';
 import '../screens/onboarding_tour_provider.dart';
 
@@ -29,7 +29,7 @@ class TourFloatingBanner extends ConsumerWidget {
         decoration: BoxDecoration(
           // Theme ink rather than a hardcoded near-black, so the banner
           // follows the rider's palette (grill §3.4.4).
-          color: AppColors.ink,
+          color: context.palette.ink,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: accent.withValues(alpha: 0.6), width: 1.5),
           boxShadow: [
@@ -77,7 +77,7 @@ class TourFloatingBanner extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onInk,
+                      color: context.palette.onInk,
                     ),
                   ),
                 ],
@@ -120,8 +120,8 @@ class TourFloatingBanner extends ConsumerWidget {
                   }
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColors.onInkMuted),
-                  foregroundColor: AppColors.onInk,
+                  side: BorderSide(color: context.palette.onInkMuted),
+                  foregroundColor: context.palette.onInk,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -132,7 +132,7 @@ class TourFloatingBanner extends ConsumerWidget {
             // 48 dp target; the old InkWell was ~24 dp (grill §3.4.5).
             IconButton(
               tooltip: 'Close guide',
-              icon: Icon(Icons.close, size: 20, color: AppColors.onInkMuted),
+              icon: Icon(Icons.close, size: 20, color: context.palette.onInkMuted),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints.tightFor(width: 48, height: 48),
               onPressed: () {

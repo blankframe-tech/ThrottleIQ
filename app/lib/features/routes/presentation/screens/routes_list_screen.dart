@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
@@ -22,9 +22,9 @@ class RoutesListScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         appBar: AppBar(
-          backgroundColor: AppColors.background,
+          backgroundColor: context.palette.background,
           title: const Text('Routes'),
           // Explicit, rather than relying on AppBar's automatic back button.
           // This screen is also reachable without a back stack (a deep link,
@@ -44,9 +44,9 @@ class RoutesListScreen extends StatelessWidget {
             },
           ),
           bottom: TabBar(
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
+            labelColor: context.palette.primary,
+            unselectedLabelColor: context.palette.textSecondary,
+            indicatorColor: context.palette.primary,
             tabs: const [
               Tab(text: 'My routes'),
               Tab(text: 'Discover'),
@@ -75,7 +75,7 @@ class _RoutesTab extends ConsumerWidget {
 
     return routesAsync.when(
       loading: () =>
-          Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          Center(child: CircularProgressIndicator(color: context.palette.primary)),
       error: (e, _) => ErrorView(
         error: e,
         onRetry: () => ref.invalidate(provider),
@@ -88,11 +88,11 @@ class _RoutesTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.route_outlined, size: 64, color: AppColors.textTertiary),
+                  Icon(Icons.route_outlined, size: 64, color: context.palette.textTertiary),
                   const SizedBox(height: 16),
                   Text(
                     mine ? 'No saved routes yet' : 'No public routes yet',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                    style: TextStyle(color: context.palette.textSecondary, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -100,7 +100,7 @@ class _RoutesTab extends ConsumerWidget {
                         ? 'Finish a ride, then tap "Save as route" on the share screen.'
                         : 'Public routes other riders save will show up here.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                    style: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                   ),
                 ],
               ),
@@ -110,7 +110,7 @@ class _RoutesTab extends ConsumerWidget {
 
         return RefreshIndicator(
           onRefresh: () => ref.refresh(provider.future),
-          color: AppColors.primary,
+          color: context.palette.primary,
           child: ListView.separated(
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             itemCount: routes.length,
@@ -157,20 +157,20 @@ class _RouteCard extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary),
+                      color: context.palette.textPrimary),
                 ),
               ),
               Icon(
                 route.isPublic ? Icons.public : Icons.lock_outline,
                 size: 16,
-                color: AppColors.textTertiary,
+                color: context.palette.textTertiary,
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             '${route.distanceKm.toStringAsFixed(1)} km · ridden ${route.timesRidden}×',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           if (route.description != null && route.description!.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -178,7 +178,7 @@ class _RouteCard extends StatelessWidget {
               route.description!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
             ),
           ],
         ],

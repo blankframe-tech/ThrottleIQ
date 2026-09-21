@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../providers/ride_polyline_provider.dart';
 
@@ -28,7 +27,7 @@ class RideRouteThumbnail extends ConsumerWidget {
     final polyline = ref.watch(ridePolylineProvider(rideId));
 
     return polyline.when(
-      loading: () => _placeholder(),
+      loading: () => _placeholder(context),
       // A failed point read is not worth shouting about in a list row — the
       // ride's own numbers are still right there.
       error: (_, __) => const SizedBox.shrink(),
@@ -42,14 +41,14 @@ class RideRouteThumbnail extends ConsumerWidget {
     );
   }
 
-  Widget _placeholder() => Padding(
+  Widget _placeholder(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 12),
         child: Container(
           height: height,
           decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.background,
+            borderRadius: BorderRadius.circular(context.shape.radiusLg),
+            border: Border.all(color: context.palette.border),
           ),
         ),
       );

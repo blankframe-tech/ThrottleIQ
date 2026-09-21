@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/utils/firebase_error_mapper.dart';
 import 'bug_report_sheet.dart';
 
@@ -38,12 +38,12 @@ class ErrorView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(offline ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
-                size: 36, color: AppColors.textTertiary),
+                size: 36, color: context.palette.textTertiary),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
@@ -56,7 +56,7 @@ class ErrorView extends StatelessWidget {
                 icon: const Icon(Icons.bug_report_outlined, size: 16),
                 label: const Text('Report a Problem'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textTertiary,
+                  foregroundColor: context.palette.textTertiary,
                   textStyle: const TextStyle(fontSize: 13),
                 ),
               ),
