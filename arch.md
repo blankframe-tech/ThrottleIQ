@@ -243,3 +243,12 @@ ThrottleIQ enforces strict verification rules governed by `.agents/rules/qa-gate
    - All domain calculators (`MotionCalculator`, `VehicleStateEstimator`, `EventDetector`, `AutoRideReconciler`) maintain fixture-backed unit tests verifying mathematical edge cases.
 4. **Security Rules Unit Tests**:
    - Firestore security rules are validated via the Firebase local emulator (`npm run test:rules` in `scripts/`).
+
+## 9. Cross-cutting UI infrastructure (added 2026-09-21)
+
+Read these before adding a screen; each replaced something that used to be a global.
+
+- **Design tokens ride on the theme, not on statics.** `AppColorPalette` and `AppShapeProfile` are `ThemeExtension`s registered by `AppTheme.build`; widgets read `context.palette` / `context.shape` (`core/theme/app_theme_context.dart`) **in `build`** (never `initState`, never cached in a field). `AppColors` and the `apply()` facades no longer exist, and `MaterialApp` is not keyed on the appearance — changing theme re-themes screens in place and keeps their state. In a dialog/sheet `builder:` use the builder's own context.
+- **Localization.** `context.l10n.key` (`core/i18n/l10n_context.dart`); ARBs in `app/lib/l10n/` (EN template + BN, Western digits, checked-in generated code, parity test). Code with no `BuildContext` uses `resolveL10n(locale)` / `savedL10n()` (`core/i18n/l10n_lookup.dart`) — a snapshot, not reactive. **Never localize data** (anything stored, sent to another rider, or compared against); domain enums keep English + persisted ids and are localized by id/kind in `presentation/` (`badge_l10n.dart`, `service_type_l10n.dart`, `turn_instruction_l10n.dart`, …). New Bangla keys go in `bn_pending_review.txt`.
+- **Analytics** (`core/analytics/analytics_service.dart`): screen views (route patterns) + a closed list of seven funnel events, one coarse parameter each, off in debug, rider opt-out in Settings. No code path can send an id, name, location or ride figure. `public/privacy.html` and the Data Safety notes must change with it.
+- **App Check** is activated at startup (`main.dart`), inert until enforced in the Firebase console; enforce only after a release containing it is what riders run.

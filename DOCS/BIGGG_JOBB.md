@@ -305,27 +305,26 @@ live previews, the low-contrast secondary-text pass.
 
 #### The four approved design calls
 
-- **§78.21 — route navigation should record the ride.** Today nav and
-  recording are separate flows that don't compose: follow a saved route and
-  you end up with no ride logged. Merge nav into the active-ride cockpit.
+- **§78.21 — route navigation should record the ride.** ❌ **NOT DONE** — a real merge of two GPS/state
+  systems on the core loop; the step-by-step plan is in `issues_open.md` §78.21. Today nav and
+  recording are separate flows: follow a saved route and you end up with no ride logged.
 - **§74 — Retro/Light near-black cards.** ✅ Fixed — it was an `AppCard` paint-order bug, not a palette token. _(Done inside JOB 1 — see `issues_fixed.md` §74.)_
 - **§78.30 — crash badge in ride history.** ✅ DONE. A suspected-crash ride looks
   identical to a commute. It is the only surface where crash data is visible
   at all, given the detector stays off.
-- **§78.24 — SafeQR "Print sticker."** Needs the `printing` package; new
-  dependency approved.
+- **§78.24 — SafeQR "Print sticker."** ✅ DONE (`printing` + `pdf` added). Needs a real-paper scan test.
 
 ---
 
 ### JOB 4 — infrastructure, instrumentation, data
 
-#### App Check (§83.19)
+#### App Check (§83.19) — ✅ code done; enforcement is a console action AFTER the release ships
 
 Enable it. Free, works on Spark. It is the actual control for request-volume
 abuse — Firestore rules **cannot** bound volume, which is why the
 crash-notification "fix" is idempotency only and says so.
 
-#### Analytics (§83.27) — NOT a code-only change
+#### Analytics (§83.27) — ✅ code + policy docs done; Data Safety form and hosting deploy are founder actions
 
 Screen views and funnel events only. No ad SDK, no behavioural profiling.
 
@@ -341,27 +340,27 @@ no microphone while push-to-talk recorded audio). Do not repeat it.
 
 #### Live data cleanup — execution authorized
 
-- **§79** — 14 likes and 3 comments were hand-seeded onto a real rider's
+- **§79** — ⏳ script written, dry-run captured, **not applied** (see `issues_open.md` §79). 14 likes and 3 comments were hand-seeded onto a real rider's
   public post from `qaSeed` accounts. `cleanup_qa_test_riders.js` does **not**
   remove likes/comments left on someone else's post, so they survive cleanup
   and their counter bumps stay on a real post. Extend the script with a
   `collectionGroup` sweep for `qaSeed == true`, decrementing each parent tally.
-- **§80** — 97 `qashare_*` rides still carry a dead `likes` integer. Nothing
+- **§80** — ⏳ same script; live count is 47. 97 `qashare_*` rides still carry a dead `likes` integer. Nothing
   reads it. Clear with `FieldValue.delete()`, and drop the now-dead `likes`
   clauses from `firestore.rules` on the next rules pass.
-- **§84** — the 4 undeclared indexes. Confirm nothing uses them (check
+- **§84** — ✅ declared in `firestore.indexes.json` (retirement is a separate decision). The 4 undeclared indexes. Confirm nothing uses them (check
   `scripts/`, hand-run console queries, and the undeployed `functions/` — the
   code grep already came back clean), then **either** delete them **or** add
   them to `firestore.indexes.json` with a note. Do not use `--force`.
 
 #### Small §78 items
 
-- **§78.26** `HoldToStartButton` completes a hold if press and release land in
+- **§78.26** ✅ FIXED. `HoldToStartButton` completes a hold if press and release land in
   the same frame. `HoldToEndButton` already guards against this — copy it.
-- **§78.29** the "Sync issues" screen isn't localized (folds into JOB 2), and
+- **§78.29** ✅ FIXED (screen localized; `_attemptOne` scoped). The "Sync issues" screen wasn't localized (folds into JOB 2), and
   the immediate outbox attempt `_attemptOne` isn't scoped to the signed-in
   rider.
-- **§78.16** wire the tile provider once the founder supplies a key: three
+- **§78.16** ⏳ build wiring done (`deploy.sh`); still needs the founder's key. Wire the tile provider once the founder supplies a key: three
   `--dart-define`s (`TILE_URL_TEMPLATE`, `TILE_API_KEY`, `TILE_ATTRIBUTION`)
   into the release build scripts. `AppTileLayer` already reads them.
 
