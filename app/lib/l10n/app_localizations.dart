@@ -7595,6 +7595,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hot'**
   String get feedSortHot;
+
+  /// Stat-column label in the onboarding mockup, matched in case to KM RIDDEN / SAFETY SCORE beside it.
+  ///
+  /// In en, this message translates to:
+  /// **'RIDES'**
+  String get ridesCapsLabel;
+
+  /// Join-by-code failure: no ride has this code.
+  ///
+  /// In en, this message translates to:
+  /// **'That code doesn\'t match a ride.'**
+  String get joinRideBadCode;
+
+  /// Join-by-code failure: the group ride is over.
+  ///
+  /// In en, this message translates to:
+  /// **'This ride has already ended.'**
+  String get joinRideAlreadyEnded;
+
+  /// Join-by-code failure: the group ride has no space left.
+  ///
+  /// In en, this message translates to:
+  /// **'This ride is full.'**
+  String get joinRideFull;
+
+  /// Friend picker refusing one rider too many.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only ride with {max} friends at once.'**
+  String groupRideTooManyFriends(Object max);
+
+  /// Friend picker: nothing selected yet, and the minimum is one.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least 1 rider to ride with.'**
+  String get groupRidePickAtLeastOne;
+
+  /// Friend picker: used only if the minimum is ever raised above one.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least {min} riders — {short} more to go.'**
+  String groupRidePickAtLeastMany(Object min, Object short);
+
+  /// Shown when a chosen @username breaks the format rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Usernames must be 3-20 characters: letters, numbers or underscore.'**
+  String get usernameRuleError;
 }
 
 class _AppLocalizationsDelegate

@@ -19,23 +19,28 @@ const int kMinGroupRideFriends = 1;
 /// invitees plus the rider who created it.
 const int kMaxGroupRideFriends = 10;
 
+/// What is wrong with a friend-picker selection.
+enum GroupSelectionProblem { tooFew, tooMany }
+
 /// Validates a friend-picker selection of [count] riders.
 ///
-/// Returns `null` when the selection is startable, otherwise a message fit to
-/// show the rider verbatim. Deliberately total: it answers for every integer
-/// including negatives (treated the same as zero — nothing picked yet).
-String? validateGroupSelection(int count) {
+/// Returns `null` when the selection is startable, otherwise the problem and —
+/// for [GroupSelectionProblem.tooFew] — how many more riders are needed. The
+/// wording lives in the picker, not here: this file has no `BuildContext` and
+/// so cannot produce Bangla, and it used to hand the UI an English sentence to
+/// show verbatim. Same split as `recordingErrorText`.
+///
+/// Deliberately total: it answers for every integer including negatives
+/// (treated the same as zero — nothing picked yet).
+({GroupSelectionProblem problem, int shortBy})? validateGroupSelection(int count) {
   if (count > kMaxGroupRideFriends) {
-    return 'You can only ride with $kMaxGroupRideFriends friends at once.';
+    return (problem: GroupSelectionProblem.tooMany, shortBy: 0);
   }
   if (count < kMinGroupRideFriends) {
-    final short = kMinGroupRideFriends - (count < 0 ? 0 : count);
-    // Pluralized off the bound rather than hard-coded, so the message stays
-    // grammatical if the minimum ever moves again ("at least 1 rider" vs
-    // "at least 2 riders").
-    const noun = kMinGroupRideFriends == 1 ? 'rider' : 'riders';
-    return 'Pick at least $kMinGroupRideFriends $noun — '
-        '$short more to go.';
+    return (
+      problem: GroupSelectionProblem.tooFew,
+      shortBy: kMinGroupRideFriends - (count < 0 ? 0 : count),
+    );
   }
   return null;
 }

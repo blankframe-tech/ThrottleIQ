@@ -9,9 +9,21 @@ import '../models/group_ride_model.dart';
 /// Thrown by [GroupRideRepository.joinByCode] with a message fit to show the
 /// rider verbatim — "wrong/expired code" and "ride is full" are both real,
 /// distinct outcomes a rider should be told apart from a generic failure.
+/// Why a join attempt was refused.
+///
+/// The UI localizes from this rather than from [GroupRideJoinException.message]
+/// — a repository has no `BuildContext` and can't produce Bangla. Same shape
+/// as `recordingErrorText` in `ride/presentation/widgets/recording_gate.dart`:
+/// the English text stays as a diagnostic, the enum is what the screen reads.
+enum GroupRideJoinFailure { badCode, alreadyEnded, full }
+
 class GroupRideJoinException implements Exception {
+  final GroupRideJoinFailure kind;
+
+  /// English, for logs and `toString()`. Never shown to a rider — see [kind].
   final String message;
-  const GroupRideJoinException(this.message);
+
+  const GroupRideJoinException(this.kind, this.message);
 
   @override
   String toString() => message;
@@ -235,16 +247,19 @@ class GroupRideRepository {
   }) async {
     final ride = await findRideByJoinCode(code);
     if (ride == null) {
-      throw const GroupRideJoinException('That code doesn\'t match a ride.');
+      throw const GroupRideJoinException(
+          GroupRideJoinFailure.badCode, "That code doesn't match a ride.");
     }
     if (ride.status != GroupRideStatus.active) {
-      throw const GroupRideJoinException('This ride has already ended.');
+      throw const GroupRideJoinException(
+          GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
     }
     if (ride.memberIds.contains(userId)) {
       return ride.id;
     }
     if (ride.memberIds.length >= ride.maxParticipants) {
-      throw const GroupRideJoinException('This ride is full.');
+      throw const GroupRideJoinException(
+          GroupRideJoinFailure.full, 'This ride is full.');
     }
 
     final rideRef = _rideRef(ride.id);
@@ -254,13 +269,15 @@ class GroupRideRepository {
       final rideSnap = await txn.get(rideRef);
       final data = rideSnap.data();
       if (!rideSnap.exists || data == null || data['status'] != 'active') {
-        throw const GroupRideJoinException('This ride has already ended.');
+        throw const GroupRideJoinException(
+          GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
       }
       final memberIds = (data['memberIds'] as List<dynamic>?) ?? const [];
       if (memberIds.contains(userId)) return;
       final cap = (data['maxParticipants'] as num?)?.toInt() ?? 20;
       if (memberIds.length >= cap) {
-        throw const GroupRideJoinException('This ride is full.');
+        throw const GroupRideJoinException(
+          GroupRideJoinFailure.full, 'This ride is full.');
       }
 
       txn.update(rideRef, {

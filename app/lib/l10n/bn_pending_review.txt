@@ -1110,3 +1110,12 @@ navAttachExplainer
 navStartRideAndGuide
 navGuideOnThisRide
 followedRoutePill
+# batch: logic-layer messages (§83.23)
+ridesCapsLabel
+joinRideBadCode
+joinRideAlreadyEnded
+joinRideFull
+groupRideTooManyFriends
+groupRidePickAtLeastOne
+groupRidePickAtLeastMany
+usernameRuleError

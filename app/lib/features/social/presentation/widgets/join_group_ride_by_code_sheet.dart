@@ -78,7 +78,11 @@ class _JoinGroupRideByCodeSheetState
       if (!mounted) return;
       setState(() {
         _joining = false;
-        _error = e.message;
+        _error = switch (e.kind) {
+          GroupRideJoinFailure.badCode => l10n.joinRideBadCode,
+          GroupRideJoinFailure.alreadyEnded => l10n.joinRideAlreadyEnded,
+          GroupRideJoinFailure.full => l10n.joinRideFull,
+        };
       });
     } catch (e) {
       if (!mounted) return;

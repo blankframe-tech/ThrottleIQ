@@ -113,10 +113,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             _usernameError = context.l10n.thatUsernameTakenTry;
           });
           return;
-        } on InvalidUsernameException catch (e) {
+        } on InvalidUsernameException {
           setState(() {
             _loading = false;
-            _usernameError = e.toString();
+            _usernameError = context.l10n.usernameRuleError;
           });
           return;
         }

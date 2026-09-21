@@ -865,10 +865,17 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
             right: 14,
             child: Row(
               children: [
-                _poiChip('All', isSelected: true),
-                _poiChip('⛽ Fuel'),
-                _poiChip('🔧 Workshops'),
-                _poiChip('☕ Cafes'),
+                // The real Places chips, localized, rather than a
+                // hand-written English approximation of them: the categories
+                // are Fuel / Garage / Parts / Recreation / All (see
+                // PlaceCategory), and the emoji are that enum's own icons.
+                // Was 'All' / '⛽ Fuel' / '🔧 Workshops' / '☕ Cafes' — English
+                // in every language, and naming two categories the app
+                // doesn't have.
+                _poiChip(context.l10n.allFilter, isSelected: true),
+                _poiChip('⛽ ${context.l10n.placeCatFuel}'),
+                _poiChip('🔧 ${context.l10n.placeCatGarage}'),
+                _poiChip('☕ ${context.l10n.placeCatRecreation}'),
               ],
             ),
           ),
@@ -1078,7 +1085,7 @@ class _OnboardingUiMockupState extends State<OnboardingUiMockup>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _statCol('18,420', context.l10n.kmRidden),
-                _statCol('142', 'RIDES'),
+                _statCol('142', context.l10n.ridesCapsLabel),
                 _statCol('98/100', context.l10n.safetyScore),
               ],
             ),

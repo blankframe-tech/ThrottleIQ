@@ -4295,4 +4295,34 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get feedSortHot => 'জনপ্রিয়';
+
+  @override
+  String get ridesCapsLabel => 'রাইড';
+
+  @override
+  String get joinRideBadCode => 'এই কোডের সাথে কোনো রাইড মেলেনি।';
+
+  @override
+  String get joinRideAlreadyEnded => 'এই রাইডটি ইতিমধ্যে শেষ হয়ে গেছে।';
+
+  @override
+  String get joinRideFull => 'এই রাইডে আর জায়গা নেই।';
+
+  @override
+  String groupRideTooManyFriends(Object max) {
+    return 'আপনি একসাথে সর্বোচ্চ $max জন বন্ধুর সাথে রাইড করতে পারবেন।';
+  }
+
+  @override
+  String get groupRidePickAtLeastOne =>
+      'রাইড করার জন্য অন্তত 1 জন রাইডার বেছে নিন।';
+
+  @override
+  String groupRidePickAtLeastMany(Object min, Object short) {
+    return 'অন্তত $min জন রাইডার বেছে নিন — আরও $short জন বাকি।';
+  }
+
+  @override
+  String get usernameRuleError =>
+      'ইউজারনেম 3-20 অক্ষরের হতে হবে: অক্ষর, সংখ্যা বা আন্ডারস্কোর।';
 }

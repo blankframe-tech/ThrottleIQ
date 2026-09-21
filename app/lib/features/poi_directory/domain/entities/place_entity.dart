@@ -119,7 +119,19 @@ class PlaceEntity extends Equatable {
     return '$x + $y';
   }
 
+  /// Whether this place has any review at all, from either source.
+  ///
+  /// The screens ask this instead of comparing
+  /// [reviewsSummarySubtitle] against its English "No reviews yet" — that
+  /// branch is the one piece of prose in here, and an entity has no
+  /// `AppLocalizations` to translate it with. The counts branch needs none:
+  /// it is two numbers and two brand names.
+  bool get hasAnyReviews => googleRatingCount > 0 || ratingCount > 0;
+
   /// Detailed subtitle showing counts for both sources.
+  ///
+  /// The empty case still returns English; it is a diagnostic and a fixture in
+  /// `place_entity_test.dart`. The UI never shows it — see [hasAnyReviews].
   String get reviewsSummarySubtitle {
     if (googleRatingCount > 0 && ratingCount > 0) {
       return '$googleRatingCount Google · $ratingCount ThrottleIQ';

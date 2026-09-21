@@ -118,10 +118,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (!mounted) return;
       context.pop();
-    } on UsernameTakenException catch (e) {
-      setState(() => _usernameError = e.toString());
-    } on InvalidUsernameException catch (e) {
-      setState(() => _usernameError = e.toString());
+    } on UsernameTakenException {
+      setState(() => _usernameError = context.l10n.thatUsernameTakenTry);
+    } on InvalidUsernameException {
+      setState(() => _usernameError = context.l10n.usernameRuleError);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

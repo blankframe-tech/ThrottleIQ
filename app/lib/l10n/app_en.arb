@@ -5850,5 +5850,50 @@
   "feedSortHot": "Hot",
   "@feedSortHot": {
     "description": "Feed sort chip: most upvoted first."
+  },
+  "ridesCapsLabel": "RIDES",
+  "@ridesCapsLabel": {
+    "description": "Stat-column label in the onboarding mockup, matched in case to KM RIDDEN / SAFETY SCORE beside it."
+  },
+  "joinRideBadCode": "That code doesn't match a ride.",
+  "@joinRideBadCode": {
+    "description": "Join-by-code failure: no ride has this code."
+  },
+  "joinRideAlreadyEnded": "This ride has already ended.",
+  "@joinRideAlreadyEnded": {
+    "description": "Join-by-code failure: the group ride is over."
+  },
+  "joinRideFull": "This ride is full.",
+  "@joinRideFull": {
+    "description": "Join-by-code failure: the group ride has no space left."
+  },
+  "groupRideTooManyFriends": "You can only ride with {max} friends at once.",
+  "@groupRideTooManyFriends": {
+    "description": "Friend picker refusing one rider too many.",
+    "placeholders": {
+      "max": {
+        "type": "Object"
+      }
+    }
+  },
+  "groupRidePickAtLeastOne": "Pick at least 1 rider to ride with.",
+  "@groupRidePickAtLeastOne": {
+    "description": "Friend picker: nothing selected yet, and the minimum is one."
+  },
+  "groupRidePickAtLeastMany": "Pick at least {min} riders — {short} more to go.",
+  "@groupRidePickAtLeastMany": {
+    "description": "Friend picker: used only if the minimum is ever raised above one.",
+    "placeholders": {
+      "min": {
+        "type": "Object"
+      },
+      "short": {
+        "type": "Object"
+      }
+    }
+  },
+  "usernameRuleError": "Usernames must be 3-20 characters: letters, numbers or underscore.",
+  "@usernameRuleError": {
+    "description": "Shown when a chosen @username breaks the format rule."
   }
 }

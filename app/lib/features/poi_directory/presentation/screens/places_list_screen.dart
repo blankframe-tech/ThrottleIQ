@@ -412,7 +412,9 @@ class _PlaceCard extends StatelessWidget {
               Text(
                 (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
                     ? context.l10n.officialPoint
-                    : place.reviewsSummarySubtitle,
+                    : (place.hasAnyReviews
+                        ? place.reviewsSummarySubtitle
+                        : context.l10n.noReviewsYet),
                 style: TextStyle(fontSize: 10, color: context.palette.textSecondary),
               ),
             ],

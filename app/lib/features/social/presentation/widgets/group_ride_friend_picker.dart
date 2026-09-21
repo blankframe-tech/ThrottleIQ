@@ -111,11 +111,31 @@ class _GroupRideFriendPickerSheetState
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
-          content: Text(validateGroupSelection(kMaxGroupRideFriends + 1)!),
+          content: Text(_problemText(
+              context, validateGroupSelection(kMaxGroupRideFriends + 1)!)),
         ));
       return;
     }
     setState(() => _selected[rider.uid] = rider);
+  }
+
+  /// Wording for a selection problem. Lives here rather than in
+  /// `group_ride_selection.dart` because only a widget has an
+  /// `AppLocalizations`; the bound itself still lives in exactly one place.
+  ///
+  /// Two "too few" strings rather than one with a plural placeholder: the
+  /// minimum is 1 today, and "Pick at least 1 riders" is what a single
+  /// pluralized string would produce the moment anyone reads it.
+  String _problemText(
+      BuildContext context, ({GroupSelectionProblem problem, int shortBy}) p) {
+    final l10n = context.l10n;
+    return switch (p.problem) {
+      GroupSelectionProblem.tooMany =>
+        l10n.groupRideTooManyFriends(kMaxGroupRideFriends),
+      GroupSelectionProblem.tooFew => kMinGroupRideFriends == 1
+          ? l10n.groupRidePickAtLeastOne
+          : l10n.groupRidePickAtLeastMany(kMinGroupRideFriends, p.shortBy),
+    };
   }
 
   @override
@@ -210,7 +230,7 @@ class _GroupRideFriendPickerSheetState
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  problem,
+                  _problemText(context, problem),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),

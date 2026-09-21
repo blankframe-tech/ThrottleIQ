@@ -4286,4 +4286,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedSortHot => 'Hot';
+
+  @override
+  String get ridesCapsLabel => 'RIDES';
+
+  @override
+  String get joinRideBadCode => 'That code doesn\'t match a ride.';
+
+  @override
+  String get joinRideAlreadyEnded => 'This ride has already ended.';
+
+  @override
+  String get joinRideFull => 'This ride is full.';
+
+  @override
+  String groupRideTooManyFriends(Object max) {
+    return 'You can only ride with $max friends at once.';
+  }
+
+  @override
+  String get groupRidePickAtLeastOne => 'Pick at least 1 rider to ride with.';
+
+  @override
+  String groupRidePickAtLeastMany(Object min, Object short) {
+    return 'Pick at least $min riders — $short more to go.';
+  }
+
+  @override
+  String get usernameRuleError =>
+      'Usernames must be 3-20 characters: letters, numbers or underscore.';
 }

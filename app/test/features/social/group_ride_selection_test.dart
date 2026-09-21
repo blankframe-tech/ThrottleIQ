@@ -4,8 +4,7 @@ import 'package:throttleiq/features/social/domain/utilities/group_ride_selection
 void main() {
   group('validateGroupSelection bounds', () {
     test('0 selected is rejected', () {
-      expect(validateGroupSelection(0), isNotNull);
-      expect(validateGroupSelection(0), contains('$kMinGroupRideFriends'));
+      expect(validateGroupSelection(0)?.problem, GroupSelectionProblem.tooFew);
     });
 
     test('1 selected is accepted — riding with a single friend is valid', () {
@@ -13,12 +12,13 @@ void main() {
     });
 
     test('0 is the only non-negative count below the minimum', () {
-      final message = validateGroupSelection(0);
-      expect(message, isNotNull);
-      expect(message, contains('1 more'));
-      // Singular noun, since the bound is one.
-      expect(message, contains('rider'));
-      expect(message, isNot(contains('riders')));
+      final result = validateGroupSelection(0);
+      expect(result?.problem, GroupSelectionProblem.tooFew);
+      // How many more are needed — the picker turns this into a sentence, and
+      // picks a singular or plural one off kMinGroupRideFriends. This file
+      // used to assert on that English wording, which is exactly why the
+      // string could never be translated (§83.23).
+      expect(result?.shortBy, kMinGroupRideFriends);
     });
 
     test('$kMinGroupRideFriends selected is the first valid count', () {
@@ -30,9 +30,8 @@ void main() {
     });
 
     test('${kMaxGroupRideFriends + 1} selected is rejected', () {
-      final message = validateGroupSelection(kMaxGroupRideFriends + 1);
-      expect(message, isNotNull);
-      expect(message, contains('$kMaxGroupRideFriends'));
+      expect(validateGroupSelection(kMaxGroupRideFriends + 1)?.problem,
+          GroupSelectionProblem.tooMany);
     });
 
     test('every count strictly inside the bounds is valid', () {
@@ -42,8 +41,9 @@ void main() {
     });
 
     test('negative counts behave like zero rather than throwing', () {
-      expect(validateGroupSelection(-5), isNotNull);
-      expect(validateGroupSelection(-5), contains('$kMinGroupRideFriends more'));
+      expect(validateGroupSelection(-5)?.problem, GroupSelectionProblem.tooFew);
+      expect(validateGroupSelection(-5)?.shortBy,
+          validateGroupSelection(0)?.shortBy);
     });
 
     test('the bounds are the ones the owner asked for', () {
