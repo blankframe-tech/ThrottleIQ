@@ -1139,4 +1139,230 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get closeGuide => 'Close guide';
+
+  @override
+  String get throttleiqLiveRide => 'ThrottleIQ live ride';
+
+  @override
+  String get liveSharingStopped => 'Live sharing stopped';
+
+  @override
+  String get discardThisRide => 'Discard this ride?';
+
+  @override
+  String overWillBeDeleted(Object distance, Object duration) {
+    return '$distance over $duration will be deleted. This ride will not be saved to your history and cannot be recovered.';
+  }
+
+  @override
+  String get keepRecording => 'Keep recording';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get liveSharing => 'Live sharing on';
+
+  @override
+  String get turnShareLiveLocation => 'Turn on & share live location';
+
+  @override
+  String get distanceLabel => 'Distance';
+
+  @override
+  String get avgSpeed => 'Avg Speed';
+
+  @override
+  String get confidence => 'Confidence';
+
+  @override
+  String get resume => 'Resume';
+
+  @override
+  String get pause => 'Pause';
+
+  @override
+  String get endRide => 'End Ride';
+
+  @override
+  String get discardRide => 'Discard ride';
+
+  @override
+  String get rideKeptFromLast => 'Ride kept from last time';
+
+  @override
+  String get resumeCarryDiscardIt =>
+      'Resume to carry on, or discard it to start fresh.';
+
+  @override
+  String get crashDetected => 'CRASH DETECTED';
+
+  @override
+  String get okEmergencyContactsWill =>
+      'Are you OK? Your emergency contacts will be notified when the timer ends.';
+
+  @override
+  String get seconds => 'seconds';
+
+  @override
+  String get imOk => 'I\'M OK';
+
+  @override
+  String get brakeCaps => 'BRAKE';
+
+  @override
+  String get accelCaps => 'ACCEL';
+
+  @override
+  String get turnOnLocation => 'Turn on Location';
+
+  @override
+  String get openAppSettings => 'Open App Settings';
+
+  @override
+  String get reportProblem => 'Report a Problem';
+
+  @override
+  String get noBikeYet => 'No bike yet';
+
+  @override
+  String get addBikeRideThrottleiq =>
+      'Add the bike you ride and ThrottleIQ can start tracking it.';
+
+  @override
+  String get addABike => 'Add a bike';
+
+  @override
+  String get backgroundLocation => 'Background location';
+
+  @override
+  String get backgroundLocationRationale =>
+      'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get turnOnCaps => 'TURN ON';
+
+  @override
+  String get settingsCaps => 'SETTINGS';
+
+  @override
+  String get slideStartRide => 'Slide to start ride';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get fetchingRoute => 'Fetching route…';
+
+  @override
+  String get routeNotAvailable => 'Route not available';
+
+  @override
+  String get zoomIn => 'Zoom In';
+
+  @override
+  String get zoomOut => 'Zoom Out';
+
+  @override
+  String get recenterRoute => 'Recenter Route';
+
+  @override
+  String get fullscreenMap => 'Fullscreen Map';
+
+  @override
+  String get rideRecorded => 'Ride Recorded';
+
+  @override
+  String get unknownDate => 'Unknown date';
+
+  @override
+  String get savedCaps => 'SAVED';
+
+  @override
+  String get discardedCaps => 'DISCARDED';
+
+  @override
+  String get briefTripNotClassified => 'Brief trip not classified as ride';
+
+  @override
+  String get activeHours => 'Active hours';
+
+  @override
+  String onlyWatchingRidesBetween(Object startMinutes, Object endMinutes) {
+    return 'Only watching for rides between $startMinutes and $endMinutes.';
+  }
+
+  @override
+  String get watchingRidesAllDay => 'Watching for rides all day.';
+
+  @override
+  String get fromLabel => 'From';
+
+  @override
+  String get untilLabel => 'Until';
+
+  @override
+  String get startTimeMustBe => 'The start time must be before the end time.';
+
+  @override
+  String get endRideQuestion => 'End ride?';
+
+  @override
+  String get rideWillBeSaved => 'Your ride will be saved.';
+
+  @override
+  String get shareRideAfterSaving => 'Share ride after saving';
+
+  @override
+  String get keepRiding => 'Keep riding';
+
+  @override
+  String get endRidePressHold => 'End ride. Press and hold.';
+
+  @override
+  String get keepHolding => 'Keep holding…';
+
+  @override
+  String get holdEndRide => 'Hold to end ride';
+
+  @override
+  String get startRidePressHold => 'Start ride. Press and hold.';
+
+  @override
+  String get goCaps => 'GO';
+
+  @override
+  String get holdCaps => 'HOLD';
+
+  @override
+  String get recordingNotificationTextUser =>
+      'ThrottleIQ is recording your ride in the background';
+
+  @override
+  String get recordingNotificationTextAuto =>
+      'ThrottleIQ detected a ride and is recording it';
+
+  @override
+  String get rideRecordingActive => 'Ride Recording Active';
+
+  @override
+  String get rideDetected => 'Ride Detected';
+
+  @override
+  String get recordingLocationOff =>
+      'Location is turned off. Turn on Location Services to start a ride.';
+
+  @override
+  String get recordingPermissionDenied =>
+      'ThrottleIQ needs location permission to track your ride. Grant it in Settings.';
+
+  @override
+  String get addBikeBeforeRecording =>
+      'Please add a bike before recording a ride.';
 }

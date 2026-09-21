@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Circular press-and-hold start control — the rounded skins' counterpart to
 /// the Record screen's slide-to-start track (see [StartControlStyle]).
@@ -142,7 +143,7 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
       enabled: enabled,
       // Spelled out for screen readers: a hold gesture is invisible to
       // TalkBack/VoiceOver, and "start ride" alone would suggest a tap.
-      label: 'Start ride. Press and hold.',
+      label: context.l10n.startRidePressHold,
       onTap: enabled ? widget.onStart : null,
       // Listener, not GestureDetector: a tap recognizer doesn't report the
       // press until it wins the gesture arena, which for a lone tap means
@@ -216,7 +217,7 @@ class _Label extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            committed ? 'GO' : 'HOLD',
+            committed ? context.l10n.goCaps : context.l10n.holdCaps,
             style: display(context, committed ? 20 : 16,
                 color: context.palette.onInk, letterSpacing: 1.5),
           ),

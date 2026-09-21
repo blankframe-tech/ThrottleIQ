@@ -667,11 +667,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'চলার সাথে সাথে লাইভ GPS গতি, দূরত্ব ও রাইডের তথ্য।';
 
   @override
-  String get hold1sRecord => 'রেকর্ড করতে ১ সেকেন্ড ধরে রাখুন';
+  String get hold1sRecord => 'রেকর্ড করতে 1 সেকেন্ড ধরে রাখুন';
 
   @override
   String get hold1sStartStop =>
-      'শুরু বা শেষ করতে ১ সেকেন্ড ধরে রাখুন; ভুলে ছোঁয়া থেকে রক্ষা করে।';
+      'শুরু বা শেষ করতে 1 সেকেন্ড ধরে রাখুন; ভুলে ছোঁয়া থেকে রক্ষা করে।';
 
   @override
   String get liveShare => 'লাইভ শেয়ার';
@@ -742,7 +742,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'যেকোনো যন্ত্রাংশের জন্য নিজের মতো ইন্টারভাল যোগ করুন';
 
   @override
-  String get n13ServiceItems => '১৩+ সার্ভিস আইটেম';
+  String get n13ServiceItems => '13+ সার্ভিস আইটেম';
 
   @override
   String get trackEngineOilChain =>
@@ -782,7 +782,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'কমিউনিটির সুবিধায় জায়গা যোগ করুন ও রেটিং দিন';
 
   @override
-  String get n395RiderPois => '৩৯৫+ রাইডার POI';
+  String get n395RiderPois => '395+ রাইডার POI';
 
   @override
   String get verifiedFuelStationsWorkshops =>
@@ -815,7 +815,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get startGroupRideWith =>
-      '৬ অক্ষরের জয়েন কোড দিয়ে গ্রুপ রাইড শুরু করুন';
+      '6 অক্ষরের জয়েন কোড দিয়ে গ্রুপ রাইড শুরু করুন';
 
   @override
   String get pushTalkIntercomBluetooth =>
@@ -889,7 +889,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get keepUp5Contacts =>
-      'যোগাযোগের জন্য একজন সহায়তাকারীর কাছে সর্বোচ্চ ৫টি কন্টাক্ট রাখুন।';
+      'যোগাযোগের জন্য একজন সহায়তাকারীর কাছে সর্বোচ্চ 5টি কন্টাক্ট রাখুন।';
 
   @override
   String get thatUsernameTakenTry =>
@@ -940,10 +940,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get lettersNumbersUnderscore3 =>
-      'অক্ষর, সংখ্যা, আন্ডারস্কোর · ৩–২০ অক্ষর';
+      'অক্ষর, সংখ্যা, আন্ডারস্কোর · 3–20 অক্ষর';
 
   @override
-  String get n320CharactersLetters => '৩–২০ অক্ষর: অক্ষর, সংখ্যা, আন্ডারস্কোর';
+  String get n320CharactersLetters => '3–20 অক্ষর: অক্ষর, সংখ্যা, আন্ডারস্কোর';
 
   @override
   String get brand => 'ব্র্যান্ড *';
@@ -983,10 +983,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'প্রতিটি রাইড ট্র্যাক করুন, প্রতিটি মাইল মনে রাখুন';
 
   @override
-  String get n6Characters => '৬+ অক্ষর';
+  String get n6Characters => '6+ অক্ষর';
 
   @override
-  String get min6Characters => 'ন্যূনতম ৬ অক্ষর';
+  String get min6Characters => 'ন্যূনতম 6 অক্ষর';
 
   @override
   String get confirmPassword => 'পাসওয়ার্ড নিশ্চিত করুন';
@@ -1030,10 +1030,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get active => 'সক্রিয়';
 
   @override
-  String get n4280KmLogged => '৪,২৮০ কিমি লগ করা হয়েছে';
+  String get n4280KmLogged => '4,280 কিমি লগ করা হয়েছে';
 
   @override
-  String get oilFilterDue720 => 'তেল ও ফিল্টার বদলাতে বাকি ৭২০ কিমি';
+  String get oilFilterDue720 => 'তেল ও ফিল্টার বদলাতে বাকি 720 কিমি';
 
   @override
   String get themeTint => 'থিম টিন্ট:';
@@ -1042,19 +1042,19 @@ class AppLocalizationsBn extends AppLocalizations {
   String get gpsLocked => 'GPS লক হয়েছে';
 
   @override
-  String get avg52 => 'গড় ৫২ · ';
+  String get avg52 => 'গড় 52 · ';
 
   @override
-  String get top124 => 'সর্বোচ্চ ১২৪';
+  String get top124 => 'সর্বোচ্চ 124';
 
   @override
   String get distance => 'দূরত্ব';
 
   @override
-  String get moving31m => 'চলমান ৩১ মি';
+  String get moving31m => 'চলমান 31 মি';
 
   @override
-  String get hold1sStart => 'শুরু করতে ১ সেকেন্ড ধরে রাখুন';
+  String get hold1sStart => 'শুরু করতে 1 সেকেন্ড ধরে রাখুন';
 
   @override
   String get autoTrackingSettings => 'অটো-ট্র্যাকিং সেটিংস';
@@ -1082,22 +1082,22 @@ class AppLocalizationsBn extends AppLocalizations {
   String get engineOilFilter => 'ইঞ্জিন অয়েল ও ফিল্টার';
 
   @override
-  String get due320Km => '৩২০ কিমি পরে বাকি';
+  String get due320Km => '320 কিমি পরে বাকি';
 
   @override
   String get chainCleanLube => 'চেইন পরিষ্কার ও লুব';
 
   @override
-  String get good850Km => 'আরও ৮৫০ কিমি ভালো';
+  String get good850Km => 'আরও 850 কিমি ভালো';
 
   @override
   String get brakeFluidFlush => 'ব্রেক ফ্লুইড ফ্লাশ';
 
   @override
-  String get good2100Km => 'আরও ২,১০০ কিমি ভালো';
+  String get good2100Km => 'আরও 2,100 কিমি ভালো';
 
   @override
-  String get n49VerifiedPure => '★ ৪.৯ · যাচাইকৃত খাঁটি জ্বালানি · ২৪/৭ খোলা';
+  String get n49VerifiedPure => '★ 4.9 · যাচাইকৃত খাঁটি জ্বালানি · 24/7 খোলা';
 
   @override
   String get directions => 'ডিরেকশনস';
@@ -1106,15 +1106,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get riderFeed => 'রাইডার ফিড';
 
   @override
-  String get n2hAgo => '২ ঘণ্টা আগে';
+  String get n2hAgo => '2 ঘণ্টা আগে';
 
   @override
   String get morningTwistiesThrough300 =>
-      '৩০০ ফুট হাইওয়ে ধরে সকালের আঁকাবাঁকা পথে রাইড!';
+      '300 ফুট হাইওয়ে ধরে সকালের আঁকাবাঁকা পথে রাইড!';
 
   @override
   String get privacyZone200mEndpoints =>
-      'প্রাইভেসি জোন: ২০০ মিটার শেষ প্রান্ত কাটা হয়েছে';
+      'প্রাইভেসি জোন: 200 মিটার শেষ প্রান্ত কাটা হয়েছে';
 
   @override
   String get roadCaptainDhakaMetro => 'রোড ক্যাপ্টেন · ঢাকা মেট্রো';
@@ -1144,4 +1144,230 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get closeGuide => 'গাইড বন্ধ করুন';
+
+  @override
+  String get throttleiqLiveRide => 'ThrottleIQ লাইভ রাইড';
+
+  @override
+  String get liveSharingStopped => 'লাইভ শেয়ারিং বন্ধ হয়েছে';
+
+  @override
+  String get discardThisRide => 'এই রাইড বাদ দেবেন?';
+
+  @override
+  String overWillBeDeleted(Object distance, Object duration) {
+    return '$duration সময়ে চালানো $distance মুছে ফেলা হবে। এই রাইড আপনার ইতিহাসে সেভ হবে না এবং আর ফিরিয়ে আনা যাবে না।';
+  }
+
+  @override
+  String get keepRecording => 'রেকর্ড চালু রাখুন';
+
+  @override
+  String get discard => 'বাদ দিন';
+
+  @override
+  String get liveSharing => 'লাইভ শেয়ারিং চালু';
+
+  @override
+  String get turnShareLiveLocation => 'চালু করে লাইভ লোকেশন শেয়ার করুন';
+
+  @override
+  String get distanceLabel => 'দূরত্ব';
+
+  @override
+  String get avgSpeed => 'গড় গতি';
+
+  @override
+  String get confidence => 'নিশ্চয়তা';
+
+  @override
+  String get resume => 'আবার শুরু';
+
+  @override
+  String get pause => 'বিরতি';
+
+  @override
+  String get endRide => 'রাইড শেষ করুন';
+
+  @override
+  String get discardRide => 'রাইড বাদ দিন';
+
+  @override
+  String get rideKeptFromLast => 'আগের রাইডটি রাখা হয়েছে';
+
+  @override
+  String get resumeCarryDiscardIt =>
+      'চালিয়ে যেতে আবার শুরু করুন, অথবা নতুন করে শুরু করতে এটি বাদ দিন।';
+
+  @override
+  String get crashDetected => 'দুর্ঘটনা শনাক্ত হয়েছে';
+
+  @override
+  String get okEmergencyContactsWill =>
+      'আপনি কি ঠিক আছেন? টাইমার শেষ হলে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+
+  @override
+  String get seconds => 'সেকেন্ড';
+
+  @override
+  String get imOk => 'আমি ঠিক আছি';
+
+  @override
+  String get brakeCaps => 'ব্রেক';
+
+  @override
+  String get accelCaps => 'এক্সেল';
+
+  @override
+  String get turnOnLocation => 'লোকেশন চালু করুন';
+
+  @override
+  String get openAppSettings => 'অ্যাপ সেটিংস খুলুন';
+
+  @override
+  String get reportProblem => 'সমস্যা জানান';
+
+  @override
+  String get noBikeYet => 'এখনো কোনো বাইক নেই';
+
+  @override
+  String get addBikeRideThrottleiq =>
+      'আপনার চালানো বাইকটি যোগ করুন, তাহলে ThrottleIQ ট্র্যাকিং শুরু করতে পারবে।';
+
+  @override
+  String get addABike => 'বাইক যোগ করুন';
+
+  @override
+  String get backgroundLocation => 'ব্যাকগ্রাউন্ড লোকেশন';
+
+  @override
+  String get backgroundLocationRationale =>
+      'ThrottleIQ রাইড চলাকালীন আপনার লোকেশন ব্যবহার করে রুট, গতি ও দূরত্ব রেকর্ড করে — ফোন লক থাকলে বা পকেটে থাকলেও, যাতে রাইড মাঝপথে কেটে না যায়। পরের স্ক্রিনে \"সব সময় অনুমতি দিন\" লোকেশন অ্যাক্সেস চাওয়া হবে। লোকেশন শুধু আপনার রাইড রেকর্ড করতে ব্যবহার হয় এবং রাইড শেষ করার সাথে সাথেই ট্র্যাকিং বন্ধ হয়ে যায়।';
+
+  @override
+  String get notNow => 'এখন নয়';
+
+  @override
+  String get continueLabel => 'চালিয়ে যান';
+
+  @override
+  String get turnOnCaps => 'চালু করুন';
+
+  @override
+  String get settingsCaps => 'সেটিংস';
+
+  @override
+  String get slideStartRide => 'রাইড শুরু করতে স্লাইড করুন';
+
+  @override
+  String get close => 'বন্ধ করুন';
+
+  @override
+  String get fetchingRoute => 'রুট আনা হচ্ছে…';
+
+  @override
+  String get routeNotAvailable => 'রুট পাওয়া যায়নি';
+
+  @override
+  String get zoomIn => 'জুম ইন';
+
+  @override
+  String get zoomOut => 'জুম আউট';
+
+  @override
+  String get recenterRoute => 'রুট মাঝখানে আনুন';
+
+  @override
+  String get fullscreenMap => 'ফুলস্ক্রিন ম্যাপ';
+
+  @override
+  String get rideRecorded => 'রাইড রেকর্ড হয়েছে';
+
+  @override
+  String get unknownDate => 'তারিখ অজানা';
+
+  @override
+  String get savedCaps => 'সেভ হয়েছে';
+
+  @override
+  String get discardedCaps => 'বাদ দেওয়া হয়েছে';
+
+  @override
+  String get briefTripNotClassified => 'ছোট ট্রিপ, রাইড হিসেবে গণ্য হয়নি';
+
+  @override
+  String get activeHours => 'সক্রিয় সময়';
+
+  @override
+  String onlyWatchingRidesBetween(Object startMinutes, Object endMinutes) {
+    return 'শুধু $startMinutes থেকে $endMinutes পর্যন্ত রাইড খোঁজা হচ্ছে।';
+  }
+
+  @override
+  String get watchingRidesAllDay => 'সারা দিন রাইড খোঁজা হচ্ছে।';
+
+  @override
+  String get fromLabel => 'শুরু';
+
+  @override
+  String get untilLabel => 'শেষ';
+
+  @override
+  String get startTimeMustBe => 'শুরুর সময় শেষের সময়ের আগে হতে হবে।';
+
+  @override
+  String get endRideQuestion => 'রাইড শেষ করবেন?';
+
+  @override
+  String get rideWillBeSaved => 'আপনার রাইড সেভ হবে।';
+
+  @override
+  String get shareRideAfterSaving => 'সেভ করার পর রাইড শেয়ার করুন';
+
+  @override
+  String get keepRiding => 'রাইড চালিয়ে যান';
+
+  @override
+  String get endRidePressHold => 'রাইড শেষ করুন। চেপে ধরে রাখুন।';
+
+  @override
+  String get keepHolding => 'ধরে রাখুন…';
+
+  @override
+  String get holdEndRide => 'রাইড শেষ করতে ধরে রাখুন';
+
+  @override
+  String get startRidePressHold => 'রাইড শুরু করুন। চেপে ধরে রাখুন।';
+
+  @override
+  String get goCaps => 'শুরু';
+
+  @override
+  String get holdCaps => 'ধরুন';
+
+  @override
+  String get recordingNotificationTextUser =>
+      'ThrottleIQ ব্যাকগ্রাউন্ডে আপনার রাইড রেকর্ড করছে';
+
+  @override
+  String get recordingNotificationTextAuto =>
+      'ThrottleIQ একটি রাইড শনাক্ত করেছে এবং রেকর্ড করছে';
+
+  @override
+  String get rideRecordingActive => 'রাইড রেকর্ড চলছে';
+
+  @override
+  String get rideDetected => 'রাইড শনাক্ত হয়েছে';
+
+  @override
+  String get recordingLocationOff =>
+      'লোকেশন বন্ধ আছে। রাইড শুরু করতে লোকেশন সার্ভিস চালু করুন।';
+
+  @override
+  String get recordingPermissionDenied =>
+      'রাইড ট্র্যাক করতে ThrottleIQ-র লোকেশন অনুমতি দরকার। সেটিংসে গিয়ে অনুমতি দিন।';
+
+  @override
+  String get addBikeBeforeRecording =>
+      'রাইড রেকর্ড করার আগে একটি বাইক যোগ করুন।';
 }

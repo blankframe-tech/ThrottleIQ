@@ -14,6 +14,7 @@ import '../widgets/end_ride_sheet.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -216,7 +217,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       }
       Share.share(
         'Follow my ride live: $_liveShareBaseUrl/$token',
-        subject: 'ThrottleIQ live ride',
+        subject: context.l10n.throttleiqLiveRide,
         sharePositionOrigin: origin,
       );
     } finally {
@@ -265,7 +266,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       await ref.read(rideRecordingProvider.notifier).stopLiveSharing();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Live sharing stopped')),
+        SnackBar(content: Text(context.l10n.liveSharingStopped)),
       );
     }
   }
@@ -301,21 +302,20 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.palette.surface,
-        title: Text('Discard this ride?',
+        title: Text(ctx.l10n.discardThisRide,
             style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
-          '$distance over $duration will be deleted. This ride will not be '
-          'saved to your history and cannot be recovered.',
+          ctx.l10n.overWillBeDeleted(distance, duration),
           style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep recording'),
+            child: Text(ctx.l10n.keepRecording),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Discard', style: TextStyle(color: ctx.palette.danger)),
+            child: Text(ctx.l10n.discard, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -472,8 +472,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             color: context.palette.textPrimary,
                           ),
                     tooltip: rideState.liveSessionToken != null
-                        ? 'Live sharing on'
-                        : 'Turn on & share live location',
+                        ? context.l10n.liveSharing
+                        : context.l10n.turnShareLiveLocation,
                   ),
                 ],
               ),
@@ -520,16 +520,16 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _RideStat(
-                            label: 'Distance',
+                            label: context.l10n.distanceLabel,
                             value: SpeedFormatter.distanceKm(rideState.distanceM)),
                         const SizedBox(width: 24),
                         _RideStat(
-                            label: 'Avg Speed',
+                            label: context.l10n.avgSpeed,
                             value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
                         if (rideState.confidence > 0) ...[
                           const SizedBox(width: 24),
                           _RideStat(
-                              label: 'Confidence',
+                              label: context.l10n.confidence,
                               value: '${rideState.confidence}%'),
                         ],
                       ],
@@ -586,7 +586,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                                 ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
                                 : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
                             icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                            label: Text(isPaused ? 'Resume' : 'Pause'),
+                            label: Text(isPaused ? context.l10n.resume : context.l10n.pause),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(0, 52),
                               backgroundColor: isPaused ? context.palette.surface : null,
@@ -601,7 +601,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         child: ElevatedButton.icon(
                           onPressed: _stopRide,
                           icon: const Icon(Icons.stop_circle_outlined),
-                          label: const Text('End Ride'),
+                          label: Text(context.l10n.endRide),
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(0, 52),
                             backgroundColor: context.palette.danger,
@@ -619,7 +619,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                     onPressed: _cancelRide,
                     icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textSecondary),
                     label: Text(
-                      'Discard ride',
+                      context.l10n.discardRide,
                       style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
                     ),
                   ),
@@ -664,10 +664,10 @@ class _RecoveredBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Ride kept from last time', style: display(context, 14, letterSpacing: 0)),
+                Text(context.l10n.rideKeptFromLast, style: display(context, 14, letterSpacing: 0)),
                 const SizedBox(height: 2),
                 Text(
-                  'Resume to carry on, or discard it to start fresh.',
+                  context.l10n.resumeCarryDiscardIt,
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
@@ -700,21 +700,21 @@ class _CrashOverlay extends StatelessWidget {
               const Icon(Icons.warning_amber_rounded,
                   color: Colors.white, size: 72),
               const SizedBox(height: 16),
-              const Text(
-                'CRASH DETECTED',
-                style: TextStyle(
+              Text(
+                context.l10n.crashDetected,
+                style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: 1.5),
               ),
               const SizedBox(height: 8),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Text(
-                  'Are you OK? Your emergency contacts will be notified when the timer ends.',
+                  context.l10n.okEmergencyContactsWill,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                  style: const TextStyle(fontSize: 16, color: Colors.white70),
                 ),
               ),
               const SizedBox(height: 32),
@@ -726,8 +726,8 @@ class _CrashOverlay extends StatelessWidget {
                     color: Colors.white,
                     height: 1),
               ),
-              const Text('seconds',
-                  style: TextStyle(fontSize: 14, color: Colors.white70)),
+              Text(context.l10n.seconds,
+                  style: const TextStyle(fontSize: 14, color: Colors.white70)),
               const SizedBox(height: 48),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -742,9 +742,9 @@ class _CrashOverlay extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: const Text(
-                      "I'M OK",
-                      style: TextStyle(
+                    child: Text(
+                      context.l10n.imOk,
+                      style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1),
@@ -781,12 +781,12 @@ class _GForceBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('BRAKE', style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
+            Text(context.l10n.brakeCaps, style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
             Text(
               '${gForce.abs().toStringAsFixed(2)}g',
               style: AppTypography.cockpitValue(context, color: color, weight: FontWeight.w600),
             ),
-            Text('ACCEL', style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
+            Text(context.l10n.accelCaps, style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
           ],
         ),
         const SizedBox(height: 4),

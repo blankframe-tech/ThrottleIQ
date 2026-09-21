@@ -36,6 +36,8 @@ import 'helpers/crash_coordinator.dart';
 import 'helpers/live_session_coordinator.dart';
 import 'helpers/ride_persistence_coordinator.dart';
 import 'helpers/sensor_fusion_coordinator.dart';
+import '../../../../core/i18n/l10n_lookup.dart';
+import '../../../../core/i18n/locale_provider.dart';
 
 const _uuid = Uuid();
 
@@ -45,6 +47,12 @@ enum RecordingStatus { idle, starting, active, paused, completed }
 /// message — lets the UI offer the right fix (open Location Settings vs.
 /// open the app's permission page) instead of just showing text.
 enum RecordingBlockKind { none, locationServicesOff, permissionDenied }
+
+/// [RideRecordingState.error] for "no bike to attribute the ride to". A
+/// constant so the UI can recognise it and show a localized message instead
+/// (see `recordingErrorText` in record_screen.dart); the English text here is
+/// what diagnostics and tests see.
+const kNoBikeRecordingError = 'Please add a bike before recording a ride.';
 
 class RideRecordingState {
   final RecordingStatus status;
@@ -343,7 +351,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     if (uid == null || resolvedBikeId == null) {
       state = state.copyWith(
         status: RecordingStatus.idle,
-        error: 'Please add a bike before recording a ride.',
+        error: kNoBikeRecordingError,
       );
       return;
     }
@@ -425,6 +433,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   }
 
   void _startLocationStream() {
+    // Notification text is fixed when the stream starts, so a snapshot of the
+    // rider's language is right here — there is no widget to rebuild.
+    final l10n = resolveL10n(_ref.read(appLocaleProvider));
     final accuracy = _userInitiated
         ? LocationAccuracy.bestForNavigation
         : LocationAccuracy.high;
@@ -447,10 +458,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
                 Duration(milliseconds: _userInitiated ? 500 : 2000),
             foregroundNotificationConfig: ForegroundNotificationConfig(
               notificationText: _userInitiated
-                  ? 'ThrottleIQ is recording your ride in the background'
-                  : 'ThrottleIQ detected a ride and is recording it',
+                  ? l10n.recordingNotificationTextUser
+                  : l10n.recordingNotificationTextAuto,
               notificationTitle:
-                  _userInitiated ? 'Ride Recording Active' : 'Ride Detected',
+                  _userInitiated ? l10n.rideRecordingActive : l10n.rideDetected,
               enableWakeLock: true,
             ),
           );

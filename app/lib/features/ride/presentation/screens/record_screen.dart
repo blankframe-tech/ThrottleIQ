@@ -21,6 +21,8 @@ import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
 import '../widgets/hold_to_start_button.dart';
 import '../widgets/rider_stat_strip.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
 /// cached for the container's lifetime, so this stays fixed across rebuilds
@@ -185,7 +187,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(rideState.error!,
+                              Text(recordingErrorText(context.l10n, rideState),
                                   style: TextStyle(
                                       color: context.palette.danger, fontSize: 13),
                                   textAlign: TextAlign.center),
@@ -201,8 +203,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                                     rideState.blockKind ==
                                             RecordingBlockKind
                                                 .locationServicesOff
-                                        ? 'Turn on Location'
-                                        : 'Open App Settings',
+                                        ? context.l10n.turnOnLocation
+                                        : context.l10n.openAppSettings,
                                   ),
                                 ),
                               ],
@@ -211,7 +213,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                                 onPressed: () => BugReportSheet.show(context),
                                 icon: const Icon(Icons.bug_report_outlined,
                                     size: 14),
-                                label: const Text('Report a Problem'),
+                                label: Text(context.l10n.reportProblem),
                                 style: TextButton.styleFrom(
                                   foregroundColor: context.palette.textTertiary,
                                   textStyle: const TextStyle(fontSize: 12),
@@ -285,16 +287,16 @@ class _NoBikeCard extends StatelessWidget {
         children: [
           Icon(Icons.two_wheeler, size: 40, color: context.palette.attention),
           const SizedBox(height: 12),
-          Text('No bike yet', style: display(context, 22)),
+          Text(context.l10n.noBikeYet, style: display(context, 22)),
           const SizedBox(height: 4),
           Text(
-            'Add the bike you ride and ThrottleIQ can start tracking it.',
+            context.l10n.addBikeRideThrottleiq,
             style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => context.go('/home/profile/add'),
-            child: const Text('Add a bike'),
+            child: Text(context.l10n.addABike),
           ),
         ],
       ),
@@ -316,23 +318,18 @@ Future<bool> _ensureLocationDisclosure(BuildContext context) async {
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
-      title: const Text('Background location'),
-      content: const Text(
-        'ThrottleIQ records your route, speed, and distance using your '
-        'location while a ride is active — including while your phone is '
-        "locked or in a pocket, so the ride isn't cut short. The next "
-        'screen will ask for "Allow all the time" location access. '
-        'Location is only used to record your ride, and tracking stops the '
-        'moment you end it.',
+      title: Text(context.l10n.backgroundLocation),
+      content: Text(
+        context.l10n.backgroundLocationRationale,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Not now'),
+          child: Text(context.l10n.notNow),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('Continue'),
+          child: Text(context.l10n.continueLabel),
         ),
       ],
     ),
@@ -351,15 +348,15 @@ void _showBlockedSnackBar(BuildContext context, RideRecordingState state) {
   final messenger = ScaffoldMessenger.of(context);
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(SnackBar(
-    content: Text(state.error!),
+    content: Text(recordingErrorText(context.l10n, state)),
     duration: const Duration(seconds: 6),
     action: switch (state.blockKind) {
       RecordingBlockKind.locationServicesOff => SnackBarAction(
-          label: 'TURN ON',
+          label: context.l10n.turnOnCaps,
           onPressed: () => Geolocator.openLocationSettings(),
         ),
       RecordingBlockKind.permissionDenied => SnackBarAction(
-          label: 'SETTINGS',
+          label: context.l10n.settingsCaps,
           onPressed: () => Geolocator.openAppSettings(),
         ),
       RecordingBlockKind.none => null,
@@ -544,7 +541,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                                     color: Colors.white, strokeWidth: 2.5))
                             : Opacity(
                                 opacity: (1 - fraction * 2).clamp(0.0, 1.0),
-                                child: Text('Slide to start ride',
+                                child: Text(context.l10n.slideStartRide,
                                     style: display(context, 16,
                                         color: context.palette.onInk,
                                         letterSpacing: 0.2)),
@@ -575,3 +572,18 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     );
   }
 }
+
+/// The rider-facing text for [RideRecordingState.error].
+///
+/// The notifier keeps `error` in English (it doubles as a diagnostic), so the
+/// screen localizes it from what it already knows: [RideRecordingState.blockKind]
+/// for the two location problems, and [kNoBikeRecordingError] for the missing
+/// bike. Anything else is shown as written.
+String recordingErrorText(AppLocalizations l10n, RideRecordingState state) =>
+    switch (state.blockKind) {
+      RecordingBlockKind.locationServicesOff => l10n.recordingLocationOff,
+      RecordingBlockKind.permissionDenied => l10n.recordingPermissionDenied,
+      RecordingBlockKind.none => state.error == kNoBikeRecordingError
+          ? l10n.addBikeBeforeRecording
+          : state.error!,
+    };

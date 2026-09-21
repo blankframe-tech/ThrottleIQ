@@ -2143,6 +2143,432 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close guide'**
   String get closeGuide;
+
+  /// Subject in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ live ride'**
+  String get throttleiqLiveRide;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Live sharing stopped'**
+  String get liveSharingStopped;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this ride?'**
+  String get discardThisRide;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} over {duration} will be deleted. This ride will not be saved to your history and cannot be recovered.'**
+  String overWillBeDeleted(Object distance, Object duration);
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep recording'**
+  String get keepRecording;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// Tooltip in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Live sharing on'**
+  String get liveSharing;
+
+  /// Tooltip in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on & share live location'**
+  String get turnShareLiveLocation;
+
+  /// Label in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get distanceLabel;
+
+  /// Label in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg Speed'**
+  String get avgSpeed;
+
+  /// Label in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence'**
+  String get confidence;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get resume;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get pause;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'End Ride'**
+  String get endRide;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard ride'**
+  String get discardRide;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride kept from last time'**
+  String get rideKeptFromLast;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume to carry on, or discard it to start fresh.'**
+  String get resumeCarryDiscardIt;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'CRASH DETECTED'**
+  String get crashDetected;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you OK? Your emergency contacts will be notified when the timer ends.'**
+  String get okEmergencyContactsWill;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'seconds'**
+  String get seconds;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'M OK'**
+  String get imOk;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'BRAKE'**
+  String get brakeCaps;
+
+  /// Text in active_ride_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ACCEL'**
+  String get accelCaps;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Location'**
+  String get turnOnLocation;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open App Settings'**
+  String get openAppSettings;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a Problem'**
+  String get reportProblem;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No bike yet'**
+  String get noBikeYet;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the bike you ride and ThrottleIQ can start tracking it.'**
+  String get addBikeRideThrottleiq;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a bike'**
+  String get addABike;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Background location'**
+  String get backgroundLocation;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.'**
+  String get backgroundLocationRationale;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// Label in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'TURN ON'**
+  String get turnOnCaps;
+
+  /// Label in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'SETTINGS'**
+  String get settingsCaps;
+
+  /// Text in record_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide to start ride'**
+  String get slideStartRide;
+
+  /// Tooltip in ride_summary_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// Text in ride_summary_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching route…'**
+  String get fetchingRoute;
+
+  /// Text in ride_summary_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route not available'**
+  String get routeNotAvailable;
+
+  /// Tooltip in ride_summary_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom In'**
+  String get zoomIn;
+
+  /// Tooltip in ride_summary_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Out'**
+  String get zoomOut;
+
+  /// Tooltip in ride_summary_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recenter Route'**
+  String get recenterRoute;
+
+  /// Tooltip in ride_summary_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fullscreen Map'**
+  String get fullscreenMap;
+
+  /// Text in auto_detection_history_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Recorded'**
+  String get rideRecorded;
+
+  /// Text in auto_detection_history_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown date'**
+  String get unknownDate;
+
+  /// Text in auto_detection_history_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVED'**
+  String get savedCaps;
+
+  /// Text in auto_detection_history_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'DISCARDED'**
+  String get discardedCaps;
+
+  /// Text in auto_detection_history_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Brief trip not classified as ride'**
+  String get briefTripNotClassified;
+
+  /// Text in auto_tracking_tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Active hours'**
+  String get activeHours;
+
+  /// Text in auto_tracking_tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Only watching for rides between {startMinutes} and {endMinutes}.'**
+  String onlyWatchingRidesBetween(Object startMinutes, Object endMinutes);
+
+  /// Text in auto_tracking_tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Watching for rides all day.'**
+  String get watchingRidesAllDay;
+
+  /// Label in auto_tracking_tile.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get fromLabel;
+
+  /// Label in auto_tracking_tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Until'**
+  String get untilLabel;
+
+  /// Text in auto_tracking_tile.
+  ///
+  /// In en, this message translates to:
+  /// **'The start time must be before the end time.'**
+  String get startTimeMustBe;
+
+  /// Text in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'End ride?'**
+  String get endRideQuestion;
+
+  /// Text in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ride will be saved.'**
+  String get rideWillBeSaved;
+
+  /// Text in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share ride after saving'**
+  String get shareRideAfterSaving;
+
+  /// Text in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep riding'**
+  String get keepRiding;
+
+  /// Label in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'End ride. Press and hold.'**
+  String get endRidePressHold;
+
+  /// Text in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep holding…'**
+  String get keepHolding;
+
+  /// Text in end_ride_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to end ride'**
+  String get holdEndRide;
+
+  /// Label in hold_to_start_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Start ride. Press and hold.'**
+  String get startRidePressHold;
+
+  /// Text in hold_to_start_button.
+  ///
+  /// In en, this message translates to:
+  /// **'GO'**
+  String get goCaps;
+
+  /// Text in hold_to_start_button.
+  ///
+  /// In en, this message translates to:
+  /// **'HOLD'**
+  String get holdCaps;
+
+  /// Android foreground-service notification body while a rider-started ride records.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ is recording your ride in the background'**
+  String get recordingNotificationTextUser;
+
+  /// Android foreground-service notification body while an auto-detected ride records.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ detected a ride and is recording it'**
+  String get recordingNotificationTextAuto;
+
+  /// Foreground-service notification title for a rider-started ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Recording Active'**
+  String get rideRecordingActive;
+
+  /// Foreground-service notification title for an auto-detected ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Detected'**
+  String get rideDetected;
+
+  /// Error shown on the Record screen when device location services are off.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is turned off. Turn on Location Services to start a ride.'**
+  String get recordingLocationOff;
+
+  /// Error shown on the Record screen when location permission was denied.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ needs location permission to track your ride. Grant it in Settings.'**
+  String get recordingPermissionDenied;
+
+  /// Error shown when the rider tries to record with no bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a bike before recording a ride.'**
+  String get addBikeBeforeRecording;
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// What the rider chose in [showEndRideSheet]. A `null` result from the sheet
 /// means "keep riding" (button, scrim tap, or back gesture).
@@ -55,9 +56,9 @@ class _EndRideSheetState extends State<EndRideSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('End ride?', style: display(context, 22, letterSpacing: 0)),
+            Text(context.l10n.endRideQuestion, style: display(context, 22, letterSpacing: 0)),
             const SizedBox(height: 4),
-            Text('Your ride will be saved.',
+            Text(context.l10n.rideWillBeSaved,
                 style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
             const SizedBox(height: 16),
             // Whole row is the target, not just the switch.
@@ -77,7 +78,7 @@ class _EndRideSheetState extends State<EndRideSheet> {
                         Icon(Icons.ios_share, color: context.palette.textPrimary),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text('Share ride after saving',
+                          child: Text(context.l10n.shareRideAfterSaving,
                               style: TextStyle(
                                   fontSize: 16, color: context.palette.textPrimary)),
                         ),
@@ -109,7 +110,7 @@ class _EndRideSheetState extends State<EndRideSheet> {
               child: OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-                child: const Text('Keep riding'),
+                child: Text(context.l10n.keepRiding),
               ),
             ),
           ],
@@ -210,7 +211,7 @@ class _HoldToEndButtonState extends State<HoldToEndButton>
             : Colors.white);
     return Semantics(
       button: true,
-      label: 'End ride. Press and hold.',
+      label: context.l10n.endRidePressHold,
       // A hold is invisible to TalkBack/VoiceOver; their double-tap confirms.
       onTap: _fired
           ? null
@@ -258,7 +259,7 @@ class _HoldToEndButtonState extends State<HoldToEndButton>
                   Flexible(
                     child: ExcludeSemantics(
                       child: Text(
-                        t > 0 ? 'Keep holding…' : 'Hold to end ride',
+                        t > 0 ? context.l10n.keepHolding : context.l10n.holdEndRide,
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,

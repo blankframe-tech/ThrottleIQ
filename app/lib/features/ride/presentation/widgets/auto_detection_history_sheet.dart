@@ -5,6 +5,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/database/daos/auto_detection_dao.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/calculators/auto_ride_reconciler.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class AutoDetectionHistorySheet extends StatefulWidget {
   const AutoDetectionHistorySheet({super.key});
@@ -79,7 +80,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: context.l10n.close,
                   icon: const Icon(Icons.close, size: 20),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -151,11 +152,11 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                         ),
                       ),
                       title: Text(
-                        isReconciled ? 'Ride Recorded' : _humanizeReason(l10n, reason),
+                        isReconciled ? context.l10n.rideRecorded : _humanizeReason(l10n, reason),
                         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       subtitle: Text(
-                        startedAt != null ? dateFormat.format(startedAt) : 'Unknown date',
+                        startedAt != null ? dateFormat.format(startedAt) : context.l10n.unknownDate,
                         style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                       trailing: Container(
@@ -167,7 +168,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          isReconciled ? 'SAVED' : 'DISCARDED',
+                          isReconciled ? context.l10n.savedCaps : context.l10n.discardedCaps,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -198,7 +199,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
       case ReconcileRejection.noMovement:
         return l10n.rejectionNoMovement;
       default:
-        return 'Brief trip not classified as ride';
+        return context.l10n.briefTripNotClassified;
     }
   }
 }

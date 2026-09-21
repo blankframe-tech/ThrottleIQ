@@ -32,6 +32,7 @@ import '../../../../core/cloud/cloud_repository.dart';
 import '../../../../core/services/weather_service.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 enum _ExportFormat { json, gpx, csv }
 
@@ -213,7 +214,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       appBar: AppBar(
         backgroundColor: context.palette.background,
         leading: IconButton(
-          tooltip: 'Close',
+          tooltip: context.l10n.close,
           icon: const Icon(Icons.close),
           onPressed: () => _dismiss(context),
         ),
@@ -642,7 +643,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           children: [
             CircularProgressIndicator(color: context.palette.primary),
             const SizedBox(height: 12),
-            Text('Fetching route…',
+            Text(context.l10n.fetchingRoute,
                 style: TextStyle(color: context.palette.textSecondary)),
           ],
         ),
@@ -660,7 +661,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           border: Border.all(color: context.palette.border),
         ),
         child: Center(
-          child: Text('Route not available',
+          child: Text(context.l10n.routeNotAvailable,
               style: TextStyle(color: context.palette.textSecondary)),
         ),
       );
@@ -788,7 +789,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       heroTag: 'ride_summary_zoom_in',
                       backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
-                      tooltip: 'Zoom In',
+                      tooltip: context.l10n.zoomIn,
                       onPressed: _zoomIn,
                       child: const Icon(Icons.add, size: 20),
                     ),
@@ -797,7 +798,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       heroTag: 'ride_summary_zoom_out',
                       backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
-                      tooltip: 'Zoom Out',
+                      tooltip: context.l10n.zoomOut,
                       onPressed: _zoomOut,
                       child: const Icon(Icons.remove, size: 20),
                     ),
@@ -806,7 +807,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       heroTag: 'ride_summary_recenter',
                       backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
-                      tooltip: 'Recenter Route',
+                      tooltip: context.l10n.recenterRoute,
                       onPressed: _recenterMap,
                       child: const Icon(Icons.my_location, size: 18),
                     ),
@@ -815,7 +816,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       heroTag: 'ride_summary_fullscreen',
                       backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
-                      tooltip: 'Fullscreen Map',
+                      tooltip: context.l10n.fullscreenMap,
                       onPressed: () => _openFullScreenMap(ride),
                       child: const Icon(Icons.fullscreen, size: 20),
                     ),

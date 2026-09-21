@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/hold_to_start_button.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// The rounded skins' start control (docs/features.md — Record screen).
 ///
@@ -18,7 +19,9 @@ import 'package:throttleiq/features/ride/presentation/widgets/hold_to_start_butt
 ///   indeterminate, permanently-running animation, so settling never happens
 ///   and the test times out rather than failing usefully.
 Widget _host(Widget child) =>
-    MaterialApp(home: Scaffold(body: Center(child: child)));
+    MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,home: Scaffold(body: Center(child: child)));
 
 const _hold = Duration(milliseconds: 500);
 

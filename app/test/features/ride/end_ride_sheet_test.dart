@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/end_ride_sheet.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 /// The end-ride sheet (claude_sol.md §3.1.1). What matters is that a ride
 /// can't be ended by a tap, and that the share toggle's state reaches the
@@ -14,6 +15,8 @@ void main() {
     closed = false;
     result = null;
     await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(

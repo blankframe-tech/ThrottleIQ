@@ -1429,5 +1429,305 @@
   "closeGuide": "Close guide",
   "@closeGuide": {
     "description": "Tooltip in tour_floating_banner."
+  },
+  "throttleiqLiveRide": "ThrottleIQ live ride",
+  "@throttleiqLiveRide": {
+    "description": "Subject in active_ride_screen."
+  },
+  "liveSharingStopped": "Live sharing stopped",
+  "@liveSharingStopped": {
+    "description": "Text in active_ride_screen."
+  },
+  "discardThisRide": "Discard this ride?",
+  "@discardThisRide": {
+    "description": "Text in active_ride_screen."
+  },
+  "overWillBeDeleted": "{distance} over {duration} will be deleted. This ride will not be saved to your history and cannot be recovered.",
+  "@overWillBeDeleted": {
+    "description": "Text in active_ride_screen.",
+    "placeholders": {
+      "distance": {
+        "type": "Object"
+      },
+      "duration": {
+        "type": "Object"
+      }
+    }
+  },
+  "keepRecording": "Keep recording",
+  "@keepRecording": {
+    "description": "Text in active_ride_screen."
+  },
+  "discard": "Discard",
+  "@discard": {
+    "description": "Text in active_ride_screen."
+  },
+  "liveSharing": "Live sharing on",
+  "@liveSharing": {
+    "description": "Tooltip in active_ride_screen."
+  },
+  "turnShareLiveLocation": "Turn on & share live location",
+  "@turnShareLiveLocation": {
+    "description": "Tooltip in active_ride_screen."
+  },
+  "distanceLabel": "Distance",
+  "@distanceLabel": {
+    "description": "Label in active_ride_screen."
+  },
+  "avgSpeed": "Avg Speed",
+  "@avgSpeed": {
+    "description": "Label in active_ride_screen."
+  },
+  "confidence": "Confidence",
+  "@confidence": {
+    "description": "Label in active_ride_screen."
+  },
+  "resume": "Resume",
+  "@resume": {
+    "description": "Text in active_ride_screen."
+  },
+  "pause": "Pause",
+  "@pause": {
+    "description": "Text in active_ride_screen."
+  },
+  "endRide": "End Ride",
+  "@endRide": {
+    "description": "Text in active_ride_screen."
+  },
+  "discardRide": "Discard ride",
+  "@discardRide": {
+    "description": "Text in active_ride_screen."
+  },
+  "rideKeptFromLast": "Ride kept from last time",
+  "@rideKeptFromLast": {
+    "description": "Text in active_ride_screen."
+  },
+  "resumeCarryDiscardIt": "Resume to carry on, or discard it to start fresh.",
+  "@resumeCarryDiscardIt": {
+    "description": "Text in active_ride_screen."
+  },
+  "crashDetected": "CRASH DETECTED",
+  "@crashDetected": {
+    "description": "Text in active_ride_screen."
+  },
+  "okEmergencyContactsWill": "Are you OK? Your emergency contacts will be notified when the timer ends.",
+  "@okEmergencyContactsWill": {
+    "description": "Text in active_ride_screen."
+  },
+  "seconds": "seconds",
+  "@seconds": {
+    "description": "Text in active_ride_screen."
+  },
+  "imOk": "I'M OK",
+  "@imOk": {
+    "description": "Text in active_ride_screen."
+  },
+  "brakeCaps": "BRAKE",
+  "@brakeCaps": {
+    "description": "Text in active_ride_screen."
+  },
+  "accelCaps": "ACCEL",
+  "@accelCaps": {
+    "description": "Text in active_ride_screen."
+  },
+  "turnOnLocation": "Turn on Location",
+  "@turnOnLocation": {
+    "description": "Text in record_screen."
+  },
+  "openAppSettings": "Open App Settings",
+  "@openAppSettings": {
+    "description": "Text in record_screen."
+  },
+  "reportProblem": "Report a Problem",
+  "@reportProblem": {
+    "description": "Text in record_screen."
+  },
+  "noBikeYet": "No bike yet",
+  "@noBikeYet": {
+    "description": "Text in record_screen."
+  },
+  "addBikeRideThrottleiq": "Add the bike you ride and ThrottleIQ can start tracking it.",
+  "@addBikeRideThrottleiq": {
+    "description": "Text in record_screen."
+  },
+  "addABike": "Add a bike",
+  "@addABike": {
+    "description": "Text in record_screen."
+  },
+  "backgroundLocation": "Background location",
+  "@backgroundLocation": {
+    "description": "Text in record_screen."
+  },
+  "backgroundLocationRationale": "ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn't cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.",
+  "@backgroundLocationRationale": {
+    "description": "Text in record_screen."
+  },
+  "notNow": "Not now",
+  "@notNow": {
+    "description": "Text in record_screen."
+  },
+  "continueLabel": "Continue",
+  "@continueLabel": {
+    "description": "Text in record_screen."
+  },
+  "turnOnCaps": "TURN ON",
+  "@turnOnCaps": {
+    "description": "Label in record_screen."
+  },
+  "settingsCaps": "SETTINGS",
+  "@settingsCaps": {
+    "description": "Label in record_screen."
+  },
+  "slideStartRide": "Slide to start ride",
+  "@slideStartRide": {
+    "description": "Text in record_screen."
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Tooltip in ride_summary_screen (+1 more)."
+  },
+  "fetchingRoute": "Fetching route…",
+  "@fetchingRoute": {
+    "description": "Text in ride_summary_screen."
+  },
+  "routeNotAvailable": "Route not available",
+  "@routeNotAvailable": {
+    "description": "Text in ride_summary_screen."
+  },
+  "zoomIn": "Zoom In",
+  "@zoomIn": {
+    "description": "Tooltip in ride_summary_screen."
+  },
+  "zoomOut": "Zoom Out",
+  "@zoomOut": {
+    "description": "Tooltip in ride_summary_screen."
+  },
+  "recenterRoute": "Recenter Route",
+  "@recenterRoute": {
+    "description": "Tooltip in ride_summary_screen."
+  },
+  "fullscreenMap": "Fullscreen Map",
+  "@fullscreenMap": {
+    "description": "Tooltip in ride_summary_screen."
+  },
+  "rideRecorded": "Ride Recorded",
+  "@rideRecorded": {
+    "description": "Text in auto_detection_history_sheet."
+  },
+  "unknownDate": "Unknown date",
+  "@unknownDate": {
+    "description": "Text in auto_detection_history_sheet."
+  },
+  "savedCaps": "SAVED",
+  "@savedCaps": {
+    "description": "Text in auto_detection_history_sheet."
+  },
+  "discardedCaps": "DISCARDED",
+  "@discardedCaps": {
+    "description": "Text in auto_detection_history_sheet."
+  },
+  "briefTripNotClassified": "Brief trip not classified as ride",
+  "@briefTripNotClassified": {
+    "description": "Text in auto_detection_history_sheet."
+  },
+  "activeHours": "Active hours",
+  "@activeHours": {
+    "description": "Text in auto_tracking_tile."
+  },
+  "onlyWatchingRidesBetween": "Only watching for rides between {startMinutes} and {endMinutes}.",
+  "@onlyWatchingRidesBetween": {
+    "description": "Text in auto_tracking_tile.",
+    "placeholders": {
+      "startMinutes": {
+        "type": "Object"
+      },
+      "endMinutes": {
+        "type": "Object"
+      }
+    }
+  },
+  "watchingRidesAllDay": "Watching for rides all day.",
+  "@watchingRidesAllDay": {
+    "description": "Text in auto_tracking_tile."
+  },
+  "fromLabel": "From",
+  "@fromLabel": {
+    "description": "Label in auto_tracking_tile."
+  },
+  "untilLabel": "Until",
+  "@untilLabel": {
+    "description": "Label in auto_tracking_tile."
+  },
+  "startTimeMustBe": "The start time must be before the end time.",
+  "@startTimeMustBe": {
+    "description": "Text in auto_tracking_tile."
+  },
+  "endRideQuestion": "End ride?",
+  "@endRideQuestion": {
+    "description": "Text in end_ride_sheet."
+  },
+  "rideWillBeSaved": "Your ride will be saved.",
+  "@rideWillBeSaved": {
+    "description": "Text in end_ride_sheet."
+  },
+  "shareRideAfterSaving": "Share ride after saving",
+  "@shareRideAfterSaving": {
+    "description": "Text in end_ride_sheet."
+  },
+  "keepRiding": "Keep riding",
+  "@keepRiding": {
+    "description": "Text in end_ride_sheet."
+  },
+  "endRidePressHold": "End ride. Press and hold.",
+  "@endRidePressHold": {
+    "description": "Label in end_ride_sheet."
+  },
+  "keepHolding": "Keep holding…",
+  "@keepHolding": {
+    "description": "Text in end_ride_sheet."
+  },
+  "holdEndRide": "Hold to end ride",
+  "@holdEndRide": {
+    "description": "Text in end_ride_sheet."
+  },
+  "startRidePressHold": "Start ride. Press and hold.",
+  "@startRidePressHold": {
+    "description": "Label in hold_to_start_button."
+  },
+  "goCaps": "GO",
+  "@goCaps": {
+    "description": "Text in hold_to_start_button."
+  },
+  "holdCaps": "HOLD",
+  "@holdCaps": {
+    "description": "Text in hold_to_start_button."
+  },
+  "recordingNotificationTextUser": "ThrottleIQ is recording your ride in the background",
+  "@recordingNotificationTextUser": {
+    "description": "Android foreground-service notification body while a rider-started ride records."
+  },
+  "recordingNotificationTextAuto": "ThrottleIQ detected a ride and is recording it",
+  "@recordingNotificationTextAuto": {
+    "description": "Android foreground-service notification body while an auto-detected ride records."
+  },
+  "rideRecordingActive": "Ride Recording Active",
+  "@rideRecordingActive": {
+    "description": "Foreground-service notification title for a rider-started ride."
+  },
+  "rideDetected": "Ride Detected",
+  "@rideDetected": {
+    "description": "Foreground-service notification title for an auto-detected ride."
+  },
+  "recordingLocationOff": "Location is turned off. Turn on Location Services to start a ride.",
+  "@recordingLocationOff": {
+    "description": "Error shown on the Record screen when device location services are off."
+  },
+  "recordingPermissionDenied": "ThrottleIQ needs location permission to track your ride. Grant it in Settings.",
+  "@recordingPermissionDenied": {
+    "description": "Error shown on the Record screen when location permission was denied."
+  },
+  "addBikeBeforeRecording": "Please add a bike before recording a ride.",
+  "@addBikeBeforeRecording": {
+    "description": "Error shown when the rider tries to record with no bike."
   }
 }

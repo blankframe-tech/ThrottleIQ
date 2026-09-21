@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
 import 'auto_detection_history_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Settings control for automatic ride detection.
 ///
@@ -176,13 +177,11 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
             value: schedule.enabled,
             onChanged: (value) =>
                 ref.read(autoTrackingScheduleProvider.notifier).setEnabled(value),
-            title: const Text('Active hours',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            title: Text(context.l10n.activeHours,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(schedule.enabled
-                ? 'Only watching for rides between '
-                    '${_formatMinutes(schedule.startMinutes)} and '
-                    '${_formatMinutes(schedule.endMinutes)}.'
-                : 'Watching for rides all day.'),
+                ? context.l10n.onlyWatchingRidesBetween(_formatMinutes(schedule.startMinutes), _formatMinutes(schedule.endMinutes))
+                : context.l10n.watchingRidesAllDay),
             secondary: Icon(Icons.schedule, color: context.palette.primary),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -195,7 +194,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _TimeField(
-                      label: 'From',
+                      label: context.l10n.fromLabel,
                       minutes: schedule.startMinutes,
                       onPicked: (picked) => _updateWindow(
                           context, ref, start: picked, end: schedule.endMinutes),
@@ -204,7 +203,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _TimeField(
-                      label: 'Until',
+                      label: context.l10n.untilLabel,
                       minutes: schedule.endMinutes,
                       onPicked: (picked) => _updateWindow(
                           context, ref,
@@ -227,8 +226,8 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
     required int end,
   }) async {
     if (start >= end) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('The start time must be before the end time.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.startTimeMustBe),
       ));
       return;
     }
