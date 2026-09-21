@@ -184,6 +184,12 @@ cleanup (§79/§80) is written and dry-run against production but NOT applied** 
 was blocked from the write; command is in `issues_open.md` §79. §78.24 (SafeQR print sticker) is done — needs a real-paper scan test. **Not done:** §78.21 (route navigation records the ride), §78.16 (needs the tile key from
 the founder), §84 (undeclared indexes — needs a decision, do not `--force`).
 
+**Bangla layout check:** the UI tour can now walk the app in Bangla and log layout overflows
+(`TOUR_LOCALE=bn app/scripts/ui_tour/run_tour.sh <udid> <out> <combo>`; overflow lines are
+`[tour] OVERFLOW …` in the tour log). A run was started at the end of the 2026-09-21 session
+(Calming/Curvy/Light) and **its result is not recorded here** — run it, and treat any overflow
+it reports as a real Bangla layout bug.
+
 **JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only
 `★ —` was real and is fixed. §78.30 crash badge done. §78.21 (nav records the ride) and
 §78.24 (SafeQR print sticker) are **not** done. See `issues_fixed.md`.

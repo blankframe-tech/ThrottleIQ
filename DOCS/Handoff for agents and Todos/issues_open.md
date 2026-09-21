@@ -377,6 +377,7 @@ What remains open:
 - **78.16 Tile provider not chosen.** The shared cached tile layer is in
   place. Release builds still hit `tile.openstreetmap.org` until `TILE_*`
   defines point at a provider.
+    **2026-09-21: the build wiring is done** — `scripts/deploy.sh` passes `TILE_URL_TEMPLATE` / `TILE_API_KEY` / `TILE_ATTRIBUTION` from the environment as `--dart-define` and warns when unset (WIRING DONE). Still needs the founder's provider key; nothing to change in code.
 - **78.18 Keystore: ✅ BACKED UP (founder, 2026-09-21).** That half is closed.
   **Still open:** CI exists but has never run on GitHub, and `main` has no
   branch protection — so the analyze/test/rules gates are enforced on the
