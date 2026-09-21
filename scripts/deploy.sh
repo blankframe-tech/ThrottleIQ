@@ -134,6 +134,19 @@ echo "Pushing ${CURRENT_BRANCH} to origin..."
 git push origin "${CURRENT_BRANCH}"
 echo "✅ Git push complete!"
 
+# Map tile provider (issues §78.16). The public OpenStreetMap tile server is not
+# for a released app (its usage policy asks apps not to bulk-fetch). Export
+# TILE_URL_TEMPLATE / TILE_API_KEY / TILE_ATTRIBUTION before running this script
+# and they are passed to every release build below as --dart-define; AppTileLayer
+# reads them. Whatever is unset is simply not defined. See app_tile_layer.dart.
+TILE_DEFINES=()
+[ -n "${TILE_URL_TEMPLATE:-}" ] && TILE_DEFINES+=("--dart-define=TILE_URL_TEMPLATE=${TILE_URL_TEMPLATE}")
+[ -n "${TILE_API_KEY:-}" ] && TILE_DEFINES+=("--dart-define=TILE_API_KEY=${TILE_API_KEY}")
+[ -n "${TILE_ATTRIBUTION:-}" ] && TILE_DEFINES+=("--dart-define=TILE_ATTRIBUTION=${TILE_ATTRIBUTION}")
+if [ -z "${TILE_URL_TEMPLATE:-}" ]; then
+  echo "NOTE: TILE_URL_TEMPLATE is not set — release builds will use the public OpenStreetMap tile server. Fine for testing, not for a launch (issues §78.16)."
+fi
+
 # 4. iOS Release run
 if [ "$SKIP_IOS" = false ]; then
   echo ""
@@ -150,7 +163,7 @@ if [ "$SKIP_IOS" = false ]; then
     fi
   fi
   echo "Targeting iOS Device: ${IOS_DEVICE_ID}"
-  flutter run --release -d "${IOS_DEVICE_ID}"
+  flutter run --release -d "${IOS_DEVICE_ID}" ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   cd "${REPO_ROOT}"
   echo "✅ iOS Release run complete!"
 else
@@ -164,7 +177,7 @@ if [ "$SKIP_ANDROID" = false ]; then
   echo "==> [4/5] Building Android Release Binaries (APK & AAB)..."
   cd "${APP_DIR}"
   echo "--- Building release APK ---"
-  flutter build apk --release
+  flutter build apk --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   APK_PATH="${APP_DIR}/build/app/outputs/flutter-apk/app-release.apk"
   if [ ! -f "$APK_PATH" ]; then
     echo "❌ APK build failed — file not found: $APK_PATH" >&2
@@ -173,7 +186,7 @@ if [ "$SKIP_ANDROID" = false ]; then
   echo "APK ready: $APK_PATH ($(du -h "$APK_PATH" | cut -f1))"
 
   echo "--- Building release AAB ---"
-  flutter build appbundle --release
+  flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   AAB_PATH="${APP_DIR}/build/app/outputs/bundle/release/app-release.aab"
   if [ ! -f "$AAB_PATH" ]; then
     echo "❌ AAB build failed — file not found: $AAB_PATH" >&2
