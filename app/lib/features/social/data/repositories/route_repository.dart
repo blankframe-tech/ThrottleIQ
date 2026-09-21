@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/route_entity.dart';
@@ -177,16 +178,41 @@ class RouteRepository {
     });
   }
 
-  /// Updates the times ridden counter.
+  /// Records that [userId] has just finished riding their own route
+  /// [routeId] (issues §85).
+  ///
+  /// This existed from the start and was never called from anywhere, so
+  /// `timesRidden` sat at the 1 [saveRoute] writes and "ridden 1×" was the
+  /// same on every route forever. The caller is `ActiveRideScreen._stopRide`,
+  /// on *completion* — not on start, which would count routes a rider opened
+  /// and abandoned.
+  ///
+  /// `FieldValue.increment` rather than read-modify-write, so two phones
+  /// finishing the same route at once both count. Ownership needs no branch:
+  /// `users/{uid}/routes/{id}` is owner-only write in `firestore.rules` and
+  /// the document does not exist under anyone else's uid, so following a
+  /// *discovered* route fails and is swallowed. The data model is the check.
+  ///
+  /// Best-effort, and deliberately **not** put through the outbox. Each
+  /// outboxed operation costs a new op type in the dispatcher and the DAO, and
+  /// this is a cosmetic counter on a route list — losing a bump because the
+  /// rider ended a ride in a basement is not worth that. If it ever becomes
+  /// load-bearing (ranking Discover by it, say), this is the line that moves.
   Future<void> incrementTimesRidden(String userId, String routeId) async {
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('routes')
-        .doc(routeId)
-        .update({
-      'timesRidden': FieldValue.increment(1),
-    });
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('routes')
+          .doc(routeId)
+          .update({
+        'timesRidden': FieldValue.increment(1),
+      });
+    } catch (e) {
+      // Not-found (a discovered route), permission-denied, or plain offline.
+      // None of these should surface to a rider who just finished a ride.
+      debugPrint('[RouteRepository] timesRidden bump skipped for $routeId: $e');
+    }
   }
 
   /// Deletes a route.
