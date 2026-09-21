@@ -170,7 +170,7 @@ appearance re-themes the app in place instead of unmounting it (issues_fixed.md
 `main` ← `appcolors` (theme tokens, §74, post-photo border) ← `i18n` (JOB 2) ←
 `job3-ux` (§32 + crash badge + §78.26/§78.29) ← `job4-infra` (App Check, analytics, cleanup script). Each branch builds on the previous, so merge
 `job4-infra` last (it contains all the others) or one at a time in order.
-`flutter analyze` zero, `flutter test` **1225/1225**, `functions/` build clean; the
+`flutter analyze` zero, `flutter test` **1242/1242**, `functions/` build clean; the
 rules suite was not re-run (no rules changes).
 
 **JOB 2 (localization) is done except for two gates:** 88 of 265 files localized, 1,229
