@@ -15,16 +15,18 @@ import '../widgets/ride_line_chart.dart';
 import 'all_rides_screen.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../l10n/app_localizations.dart';
 
-const _ranks = [
-  'New Rider',
-  'Weekend Rider',
-  'Steady Cruiser',
-  'Road Regular',
-  'Seasoned Rider',
-  'Veteran',
-  'Road Master',
-];
+/// Rank names by level (index = level - 1, clamped), in the rider's language.
+List<String> _ranks(AppLocalizations l10n) => [
+      l10n.rankNewRider,
+      l10n.rankWeekendRider,
+      l10n.rankSteadyCruiser,
+      l10n.rankRoadRegular,
+      l10n.rankSeasonedRider,
+      l10n.rankVeteran,
+      l10n.rankRoadMaster,
+    ];
 const _kmPerLevel = 500.0;
 
 /// How many rides the list shows. Ranking always considers the full history;
@@ -102,7 +104,8 @@ class StatsScreen extends ConsumerWidget {
             final totalKm = stats.totalDistanceKm;
             final level = (totalKm / _kmPerLevel).floor() + 1;
             final kmIntoLevel = totalKm % _kmPerLevel;
-            final rank = _ranks[(level - 1).clamp(0, _ranks.length - 1)];
+            final ranks = _ranks(context.l10n);
+            final rank = ranks[(level - 1).clamp(0, ranks.length - 1)];
             final badges = computeBadges(stats);
             final earnedCount = badges.where((b) => b.earned).length;
             final badgeFamiliesProgress = computeBadgeProgress(stats);
@@ -214,7 +217,7 @@ class StatsScreen extends ConsumerWidget {
                         // Badges
                         Row(
                           children: [
-                            const Expanded(child: EditorialLabel('Badges')),
+                            Expanded(child: EditorialLabel(context.l10n.badges)),
                             Text(context.l10n.badgesEarnedCount(earnedCount, badges.length),
                                 style: TextStyle(
                                     fontSize: 11,

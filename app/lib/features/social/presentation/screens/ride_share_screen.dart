@@ -282,7 +282,7 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const EditorialLabel('Caption'),
+            EditorialLabel(context.l10n.captionLabel),
             const SizedBox(height: 10),
             TextField(
               controller: _captionController,

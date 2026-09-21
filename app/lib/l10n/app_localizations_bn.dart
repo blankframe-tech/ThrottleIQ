@@ -3789,4 +3789,40 @@ class AppLocalizationsBn extends AppLocalizations {
   String scoreValue(int score) {
     return 'স্কোর $score';
   }
+
+  @override
+  String get activePill => 'সক্রিয়';
+
+  @override
+  String get captionLabel => 'ক্যাপশন';
+
+  @override
+  String get commentsLabel => 'কমেন্ট';
+
+  @override
+  String get ridersLabel => 'রাইডার';
+
+  @override
+  String get rankNewRider => 'নতুন রাইডার';
+
+  @override
+  String get rankWeekendRider => 'সাপ্তাহিক রাইডার';
+
+  @override
+  String get rankSteadyCruiser => 'স্থির ক্রুজার';
+
+  @override
+  String get rankRoadRegular => 'নিয়মিত রাইডার';
+
+  @override
+  String get rankSeasonedRider => 'অভিজ্ঞ রাইডার';
+
+  @override
+  String get rankRoadMaster => 'রোড মাস্টার';
+
+  @override
+  String get tiersLabel => 'স্তর';
+
+  @override
+  String get rankVeteran => 'ভেটেরান';
 }

@@ -5157,5 +5157,53 @@
         "type": "int"
       }
     }
+  },
+  "activePill": "Active",
+  "@activePill": {
+    "description": "EditorialPill in garage_screen."
+  },
+  "captionLabel": "Caption",
+  "@captionLabel": {
+    "description": "EditorialLabel in ride_share_screen."
+  },
+  "commentsLabel": "Comments",
+  "@commentsLabel": {
+    "description": "EditorialLabel in shared_ride_detail_screen."
+  },
+  "ridersLabel": "Riders",
+  "@ridersLabel": {
+    "description": "EditorialLabel in social_screen."
+  },
+  "rankNewRider": "New Rider",
+  "@rankNewRider": {
+    "description": "Text in stats_screen."
+  },
+  "rankWeekendRider": "Weekend Rider",
+  "@rankWeekendRider": {
+    "description": "Text in stats_screen."
+  },
+  "rankSteadyCruiser": "Steady Cruiser",
+  "@rankSteadyCruiser": {
+    "description": "Text in stats_screen."
+  },
+  "rankRoadRegular": "Road Regular",
+  "@rankRoadRegular": {
+    "description": "Text in stats_screen."
+  },
+  "rankSeasonedRider": "Seasoned Rider",
+  "@rankSeasonedRider": {
+    "description": "Text in stats_screen."
+  },
+  "rankRoadMaster": "Road Master",
+  "@rankRoadMaster": {
+    "description": "Text in stats_screen."
+  },
+  "tiersLabel": "Tiers",
+  "@tiersLabel": {
+    "description": "EditorialLabel in badge_grid."
+  },
+  "rankVeteran": "Veteran",
+  "@rankVeteran": {
+    "description": "Rider rank name (level 6 of 7)."
   }
 }

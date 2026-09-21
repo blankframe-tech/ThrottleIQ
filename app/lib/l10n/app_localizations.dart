@@ -6719,6 +6719,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Score {score}'**
   String scoreValue(int score);
+
+  /// EditorialPill in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get activePill;
+
+  /// EditorialLabel in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Caption'**
+  String get captionLabel;
+
+  /// EditorialLabel in shared_ride_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get commentsLabel;
+
+  /// EditorialLabel in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riders'**
+  String get ridersLabel;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'New Rider'**
+  String get rankNewRider;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekend Rider'**
+  String get rankWeekendRider;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Steady Cruiser'**
+  String get rankSteadyCruiser;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Road Regular'**
+  String get rankRoadRegular;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Seasoned Rider'**
+  String get rankSeasonedRider;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Road Master'**
+  String get rankRoadMaster;
+
+  /// EditorialLabel in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Tiers'**
+  String get tiersLabel;
+
+  /// Rider rank name (level 6 of 7).
+  ///
+  /// In en, this message translates to:
+  /// **'Veteran'**
+  String get rankVeteran;
 }
 
 class _AppLocalizationsDelegate

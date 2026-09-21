@@ -897,7 +897,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const EditorialLabel('Comments'),
+        EditorialLabel(context.l10n.commentsLabel),
         const SizedBox(height: 10),
 
         if (_loadingComments)

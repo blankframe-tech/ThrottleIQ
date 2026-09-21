@@ -1102,5 +1102,17 @@
   "statusOverdue": "ওভারডিউ",
   "statusOk": "ঠিক আছে",
   "crashSuspectedBadge": "সম্ভাব্য দুর্ঘটনা",
-  "scoreValue": "স্কোর {score}"
+  "scoreValue": "স্কোর {score}",
+  "activePill": "সক্রিয়",
+  "captionLabel": "ক্যাপশন",
+  "commentsLabel": "কমেন্ট",
+  "ridersLabel": "রাইডার",
+  "rankNewRider": "নতুন রাইডার",
+  "rankWeekendRider": "সাপ্তাহিক রাইডার",
+  "rankSteadyCruiser": "স্থির ক্রুজার",
+  "rankRoadRegular": "নিয়মিত রাইডার",
+  "rankSeasonedRider": "অভিজ্ঞ রাইডার",
+  "rankRoadMaster": "রোড মাস্টার",
+  "tiersLabel": "স্তর",
+  "rankVeteran": "ভেটেরান"
 }

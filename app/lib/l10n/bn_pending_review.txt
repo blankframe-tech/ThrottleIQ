@@ -955,3 +955,17 @@ statusOk
 # batch: job3 (manual)
 crashSuspectedBadge
 scoreValue
+# batch: sweep2
+activePill
+captionLabel
+commentsLabel
+ridersLabel
+rankNewRider
+rankWeekendRider
+rankSteadyCruiser
+rankRoadRegular
+rankSeasonedRider
+rankRoadMaster
+tiersLabel
+# batch: job3 (manual)
+rankVeteran

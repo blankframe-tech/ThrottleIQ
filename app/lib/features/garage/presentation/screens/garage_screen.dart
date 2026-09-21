@@ -237,10 +237,10 @@ class _BikeCard extends ConsumerWidget {
                     top: Radius.circular(context.shape.radiusXl)),
               ),
               if (bike.isActive)
-                const Positioned(
+                Positioned(
                   top: 12,
                   right: 12,
-                  child: EditorialPill('Active', tone: PillTone.accent),
+                  child: EditorialPill(context.l10n.activePill, tone: PillTone.accent),
                 ),
             ],
           ),

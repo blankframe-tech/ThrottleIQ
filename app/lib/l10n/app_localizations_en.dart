@@ -3780,4 +3780,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String scoreValue(int score) {
     return 'Score $score';
   }
+
+  @override
+  String get activePill => 'Active';
+
+  @override
+  String get captionLabel => 'Caption';
+
+  @override
+  String get commentsLabel => 'Comments';
+
+  @override
+  String get ridersLabel => 'Riders';
+
+  @override
+  String get rankNewRider => 'New Rider';
+
+  @override
+  String get rankWeekendRider => 'Weekend Rider';
+
+  @override
+  String get rankSteadyCruiser => 'Steady Cruiser';
+
+  @override
+  String get rankRoadRegular => 'Road Regular';
+
+  @override
+  String get rankSeasonedRider => 'Seasoned Rider';
+
+  @override
+  String get rankRoadMaster => 'Road Master';
+
+  @override
+  String get tiersLabel => 'Tiers';
+
+  @override
+  String get rankVeteran => 'Veteran';
 }

@@ -211,7 +211,7 @@ class _BadgeLadderSheet extends StatelessWidget {
                     style: TextStyle(fontSize: 12, color: context.palette.primary)),
               ],
               const SizedBox(height: 18),
-              const EditorialLabel('Tiers'),
+              EditorialLabel(context.l10n.tiersLabel),
               const SizedBox(height: 10),
               for (final badge in progress.badges) ...[
                 _LadderRow(progress: progress, badge: badge),

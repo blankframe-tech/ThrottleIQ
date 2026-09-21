@@ -242,7 +242,7 @@ class _SearchResults extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       children: [
-        const EditorialLabel('Riders'),
+        EditorialLabel(context.l10n.ridersLabel),
         const SizedBox(height: 10),
         if (ridersAsync.isLoading)
           const _SectionSpinner()
@@ -256,7 +256,7 @@ class _SearchResults extends ConsumerWidget {
             const SizedBox(height: 8),
           ],
         const SizedBox(height: 16),
-        const EditorialLabel('Forums'),
+        EditorialLabel(context.l10n.forums),
         const SizedBox(height: 10),
         if (forumsAsync.isLoading)
           const _SectionSpinner()
