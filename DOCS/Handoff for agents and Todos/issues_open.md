@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§81**. (§78 sub-items run to 78.30.)
+New issues go at the end of this file with the next free number: **§84**. (§78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -495,3 +495,148 @@ the field to 0, so it keeps passing). Drop them on the next rules pass.
 ## 82. User report: Places category chips (Fuel/Garage/etc.) fail with "Something went wrong, try again" — "All" works — FIXED (2026-09-20)
 
 > Full writeup in `issues_fixed.md` §82.
+
+---
+
+## 83. Full-app critique pass (UI/UX, codebase, architecture, flow) — open parts (surfaced 2026-09-20, mostly fixed 2026-09-21)
+
+**Most of this section is resolved — see `issues_fixed.md` §83** for the 20+
+sub-items fixed on 2026-09-21 (safety claims, EventDetector, feed pagination,
+account deletion, privacy salt, error states, comment rot). Full original
+writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`.
+
+What is still open:
+
+### 81.9 (part) — `AppColors` is a mutable static facade
+
+The user-visible half is fixed: the app now follows the OS light/dark setting
+(`AppBrightnessMode.system`). The underlying problem is not:
+
+- **1,532** `AppColors.*` reads vs **10** `Theme.of(context)`, so ~99% of the
+  app's colour decisions happen outside Flutter's element dependency graph.
+- Nothing subscribes, so `app.dart` carries `key: ValueKey(appearance)` on
+  `MaterialApp.router` — **changing the theme unmounts and remounts the whole
+  app**, destroying every `State`: scroll offsets, map camera, half-typed
+  forms, open sheets, `AnimationController`s.
+- `const` is unusable at all 1,532 sites; static palette state leaks between
+  widget tests; goldens are impractical across the 28 appearance combinations
+  (7 colours × 2 brightnesses × 2 shapes), and there are 0 in the repo.
+
+**Fix:** `ThemeExtension<AppPalette>` read via `Theme.of(context)`. Mechanical
+but large, and it grows with every new call site. This is the single biggest
+piece of debt left in the app.
+
+### 81.12 — the active-ride screen rebuilds in full, once per second
+
+`.select(` appears **3** times in the whole app; 4 sites watch the entire
+21-field `RideRecordingState`. The 877-line `active_ride_screen` is one of
+them, so it rebuilds completely on every elapsed tick and every GPS fix — with
+the map, GPS at 1 Hz, IMU at 20-50 Hz and a foreground service all running.
+That is battery and thermal cost in exactly the state where battery matters
+most. The `polylineVersion` counter shows the author knew about selector
+granularity; it just never reached the rest of the object.
+
+### 81.13 — DI is inconsistent with the "clean architecture" claim
+
+`RideRecordingNotifier` news up its DAOs, calculators and all four
+coordinators as `final` fields; `maintenance_provider.dart:16` is a file-level
+`final _dao = MaintenanceDao()`; `FirebaseFirestore.instance` is referenced
+directly in 20 places and `FirebaseAuth.instance` in 9. `CrashCoordinator`
+accepts an injected Firestore — so the pattern was known — and the notifier
+that owns it calls the no-arg constructor anyway. **This is the same root
+cause as 81.28:** nothing that touches I/O is injectable, so nothing that
+touches I/O is tested.
+
+### 81.14 — 53 bare `catch (_)` blocks
+
+11 with empty bodies. Many carry a justifying comment and several are
+legitimate, but in a Crashlytics-instrumented app this is 53 failure modes
+that will never reach the dashboard and will be reported as "it just didn't
+work."
+
+### 81.16 (part) — the Cloudinary preset is still an open upload endpoint
+
+Deletion is fixed (§83.15). The upload path is not: cloud name + unsigned
+preset are in the APK, so anyone can POST arbitrary image/video/audio to the
+account with no auth, rate limit, size cap or moderation. Needs a signed
+server-side upload proxy, which needs the Blaze plan. Group-ride push-to-talk
+voice notes therefore still live at permanent public URLs.
+
+### 81.18 — blocking is a client-side filter
+
+`visibleFeedProvider` removes blocked riders *after* downloading them, so a
+blocked user's content still reaches the victim's device on every refresh, and
+nothing stops a blocked user reading the blocker's public content. Wants a
+server-side edge, not a `.where()`.
+
+### 81.19 (part) — App Check is not enabled
+
+Crash notifications are idempotent now, but rules cannot bound request volume;
+any signed-in client can still drive function invocations. App Check is the
+control, and it is not set up on this project.
+
+### 81.22 (part) — accessibility is a stopgap
+
+27 icon-only buttons got tooltips and text scaling is clamped to 1.0-1.3×, but:
+**0** `semanticLabel`s outside those, 5 `Semantics(` widgets in 259 files, and
+the clamp exists *because* the layouts overflow above ~1.3× rather than
+reflowing. The fixed-height cockpit rows, chips and stat tiles need to be made
+scale-tolerant so the clamp can be raised or dropped. For an app read outdoors
+in sunlight through gloves this is legibility work, not a minority feature.
+
+### 81.23 (part) — localization is ~a quarter done, and the Bangla needs review
+
+Fixed: the four cockpit safety alerts and the live-share sheet. Still
+English-only: **the entire onboarding flow** (7 slides, 21 callouts — the
+highest-stakes surface, where a Bangla-first rider decides if this app is for
+them), the rest of the cockpit, ride summary, stats, garage, maintenance,
+forums, chat and places. 20 of 259 files use `AppLocalizations`.
+**The Bangla added on 2026-09-21 was written without a native speaker and
+needs review**, same as §78.28.
+
+### 81.25 — information architecture (decided: leave as-is for now)
+
+The garage is not in the bottom nav — it is a section of the Profile tab, with
+maintenance one level below that — while the POI directory gets a top-level
+tab. `_nonTabShellRoutes` exists solely to stop `/home/maintenance`
+highlighting the wrong tab. 30 of 42 routes are full-screen with no shell, and
+"My places"/"My shared rides" hang off the garage header's user menu.
+**Product decision 2026-09-20: leave the nav alone** — no relearning for
+existing beta testers. Recorded here because the IA cost is real, not because
+work is pending.
+
+### 81.26 — `onboarding_ui_mockups.dart` is a 1,162-line hand-drawn copy of real screens
+
+The fabricated readouts are fixed (§83.1), but the structural problem stands:
+the third-largest file in the app is an illustration of screens it cannot stay
+in sync with, shipping in the production binary. `integration_test/ui_tour_test.dart`
+already exists and could supply real screenshots.
+
+### 81.27 — no analytics of any kind
+
+Zero `logEvent`. Defensible as a privacy stance (and stated as one in the
+README), but it means nothing would ever have surfaced the empty "Following"
+feed or the buried maintenance flow. A privacy-respecting app can still count
+screen views.
+
+### 81.28 — 43 screens, 1 screen test, 0 goldens
+
+18 files `pumpWidget` at all. The 1,195 passing tests cover the pure
+calculators exhaustively and the presentation layer essentially not at all —
+which is where every UX defect in this section lived. Same root cause as
+81.13.
+
+### 81.31 — triage, not more critique
+
+§32's safety finding was written 2026-08-17 and sat open for a month while
+smaller items shipped. This file is append-only and unprioritised, so "the FAB
+overlaps a list row" and "the crash detector is off while onboarding promises
+it works" sit at equal weight. **Suggest ordering §32/§78/§81's remainder by
+what happens to a rider if it's wrong, before commissioning further review
+passes.**
+
+**Doc-integrity note:** two sections in this file are both numbered **§79**
+(the Places button, and the QA-seed likes/comments), and §82 was used while
+§81 was free. Section numbers are meant to be unique and never change, so
+renumbering isn't proposed — flagging it so the header pointer stays
+trustworthy.

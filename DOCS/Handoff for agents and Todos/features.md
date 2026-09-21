@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-08-28 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-09-21 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
 
 What a signed-in user can actually do in the app today, organized by the
 five-tab bottom nav. This is a living document — regenerate/update it
@@ -27,15 +27,15 @@ Splash → (auth redirect) → Login / Register → Onboarding (first sign-in on
                                                     ▼
                         ┌───────────────────────────────────────────────┐
                         │              Bottom nav (AppShell)             │
-                        │  Social · Rides · ●Record· Places · Profile    │
+                        │  Social · Places · ●Record· Stats · Profile   │
                         └───────────────────────────────────────────────┘
 Social  → Feed tab | Forums tab → forum thread → post detail
                                 → create forum
-Rides   → stats/journey (rank, badges, chart, recent rides)
+Places  → place detail | add place | (header) my places, routes
+Stats   → stats/journey (rank, badges, chart, recent rides)
 Record  → active ride (live) → crash overlay (conditional) → ride summary
                              → ride share → save as route
 Record  → ride with friends → friend picker → group ride live map
-Places  → place detail | add place | (header) my places, routes
 Routes  → route detail → turn-by-turn navigation
 Profile → (header) settings, notifications, profile menu (profile,
            my places, my shared rides) → bike detail → edit bike | add bike
@@ -332,10 +332,71 @@ These come from the grill fix pass (`issues_fixed.md` §78). None of them has be
 
 ---
 
+## Changes from the critique fix pass (2026-09-21, issues_fixed.md §83)
+
+User-facing changes only; the full list is in `issues_fixed.md` §81.
+
+**Onboarding**
+- The feature tour no longer claims the app detects crashes ("Crash Shield"),
+  shows a lean-angle gauge, or samples GPS at 10 Hz — **none of those exist**.
+  Replaced with features that do. `kOnboardingManifestVersion` 2 → 3, so
+  riders who already completed the tour are shown the corrected one.
+
+**Settings → Appearance**
+- **New "System" brightness option**, alongside Dark and Light. It follows the
+  phone's light/dark setting and flips live when the OS does. The app could
+  not do this at all before.
+
+**Social feed**
+- **Infinite scroll.** The feed was hard-capped at roughly 60 posts with no
+  way to load more; it now pages as you scroll, with a footer showing a
+  spinner, a retry on failure, or "You're all caught up" at the end.
+- **The "Following" chip actually works.** It used to filter the 20 most
+  recent *public* rides client-side, so a rider following 30 active people
+  could see an empty Following feed. It now queries rides by the people you
+  follow as its own source.
+- A paging failure no longer replaces the feed you're already reading.
+
+**Errors, across 15 screens**
+- Stats, All rides, Maintenance, Place detail, Reviews, Routes (list/detail/
+  navigation), Notifications, My shared rides, My places, Bike detail, Ride
+  summary, Blocked users, Sync issues and Garage used to show the raw
+  exception text in red — e.g. `[cloud_firestore/unavailable] Failed to get
+  document because the client is offline.` as the entire Stats tab. They now
+  show a plain-language message with a **Try again** button.
+
+**Active ride**
+- The four cockpit alerts ("Ease on the brakes", "Smooth on the throttle",
+  "Watch your speed", "Time for a break") and the live-share sheet are now
+  **translated into Bangla** (needs native-speaker review, like §78.28).
+- **Overspeed no longer strobes.** It fired on every GPS fix above the limit,
+  so the amber full-screen flash could repeat over the map at speed. One alert
+  per excursion now.
+- **"Time for a break" is no longer permanent.** After 90 minutes it used to
+  re-fire every 10 seconds forever with no way to dismiss it; it now repeats
+  every 15 minutes.
+
+**Accessibility**
+- 27 icon-only buttons (bell, share, vote arrows, send, close, back, delete…)
+  now have screen-reader labels.
+- Text size follows the OS setting up to 1.3×, instead of being unbounded and
+  overflowing the cockpit.
+
+**Privacy**
+- Deleting your account now also deletes your uploaded photos and voice notes
+  from Cloudinary (once credentials are configured — see issues_fixed.md
+  §83.15), and strips your name from forum posts, replies, comments and
+  reviews instead of leaving them identified.
+- The hidden radius around your ride's start and end is now seeded from a
+  private per-rider value rather than from your user id, which anyone reading
+  the feed could see.
+
+---
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
 - Fuel log, documents wallet and curated "best roads nearby" from the competitor feature map in `HANDOFF_Document.md` Part 2 are not built. (Turn-by-turn navigation now IS — see §6a — though geometrically, not via a routing engine.)
 - ~~Discovered (public) routes can't be opened~~ **FIXED 2026-08-02** — the detail and navigate routes take an optional `?owner=<uid>`, so a public route from another rider opens read-only (Delete and the public/private toggle are hidden; navigation works, since following a track writes nothing). Omitting `owner` still means "mine", so existing links are unchanged.
 - iOS Simulator screenshots for every screen above are still outstanding — see the note at the top of this file.
-- **None of the 2026-08-01 feature work below has been exercised on a device** — it is verified by `flutter analyze`, 363 passing tests, and a release build only. See "Done, but NOT yet verified" in `HANDOFF_Document.md`.
+- **None of the 2026-08-01 feature work below has been exercised on a device** — it is verified by `flutter analyze`, the test suite (1,195 passing as of 2026-09-21), and a release build only. See "Done, but NOT yet verified" in `HANDOFF_Document.md`.

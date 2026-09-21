@@ -22,38 +22,53 @@ the same command succeeded on the first attempt (Xcode build 65.1s,
 install+launch 7.6s). Lesson for next time: skip wireless for a release
 install on this device, go straight to USB.
 
-**Full-app critique pass (2026-09-20, issues_open.md §81):** A read-only
-review of UI/UX, codebase, architecture and flow. **No code changed.**
-Writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`; 31 sub-items summarized in
-`issues_open.md` §81. Items already tracked in §32/§78 were not repeated.
-Top findings not previously written down:
-- Onboarding's first-run tour advertises the disabled crash detector
-  ("Crash Shield", `onboarding_manifest.dart:152`), as do README.md:35 and
-  arch.md:5 — §32 only covered the Settings surface (§81.1).
-- `crash-notifications.ts:67` marks a notification `status: 'contacted'`
-  although nothing was sent (§81.2).
-- Account deletion leaves every Cloudinary asset, plus comments, forum
-  posts, chats, places and reviews (§81.15).
-- The Cloudinary unsigned preset is an open, unauthenticated upload
-  endpoint (§81.16).
-- `AppColors` being a mutable static forces a whole-app remount on every
-  theme change (`app.dart:172`) and rules out OS dark-mode support (§81.9).
-- The social feed has no pagination (~60 posts, ever) and the "Following"
-  chip filters client-side over a 20-item slice, so it can show empty to a
-  rider with real follows (§81.20).
-- 15 screens render failures as a raw `'$e'` exception dump (§81.21);
-  accessibility is unimplemented — 0 `semanticLabel`, 0 text-scale handling
-  (§81.22).
-- 43 screens, 1 screen test file, 0 goldens (§81.28).
+**Full-app critique pass — surfaced 2026-09-20, largely FIXED 2026-09-21
+(issues_fixed.md §83; remainder in issues_open.md §83).** Writeup:
+`ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`. Verification: `flutter analyze`
+clean, `flutter test` **1195/1195** (+21 new), rules emulator **113/113**,
+`functions/` build clean. **Nothing is deployed.**
 
-§81.31 is the meta-point: §32's safety finding was written 2026-08-17 and
-is still open. Suggest triaging §32/§78/§81 into one list ordered by
-consequence-to-the-rider before commissioning further review passes.
+Fixed, highest-consequence first:
+- **The disabled crash detector is no longer advertised** anywhere — README,
+  arch.md, and the onboarding tour. Also removed three *other* fabricated
+  claims found in the tour: a lean-angle gauge (a backlog item), a "SHIELD:
+  ARMED" badge, and "10Hz GPS" (it's ~1 Hz). Manifest version 2 → 3.
+- **The crash Cloud Function no longer records `status: 'contacted'`** when
+  nothing was sent, and a **latent crash on its first real invocation** was
+  fixed (contacts were read without their doc id, so an `undefined` field
+  threw and took the handler down).
+- **Account deletion now actually deletes**: Cloudinary assets via a new
+  per-upload ledger and a signed server-side destroy (gated on credentials
+  being configured — it warns loudly rather than failing silently), and
+  authored community content is **anonymized** (product decision) rather than
+  left identified.
+- **The privacy-zone jitter is secret again** — it was derived from the uid,
+  which is plaintext on every shared ride in a source-available repo.
+- **The feed paginates** (it ended at ~60 posts, ever) and the **"Following"
+  chip works** (it filtered client-side over a 20-ride sample, so it could
+  show empty to a rider following 30 active people).
+- **15 screens** stopped dumping raw exceptions and now use the `ErrorView`
+  that already existed.
+- **The app follows the OS light/dark setting** for the first time.
+- EventDetector: overspeed no longer strobes the cockpit, fatigue is no longer
+  a permanent alert state, and the speed buffer is no longer wiped by an
+  unrelated event.
+- **109 dead/ambiguous ticket references** removed from source and rules; the
+  convention is now `issues §N` / `grill §N`, defined once in `DOCS/README.md`.
+- Tests no longer hit OpenStreetMap's tile servers.
 
-**Note on the path above:** `ANTIGRAVRITY_GRILL/` (the misspelled directory
-referenced in the next paragraph, and by ~30 `claude_sol` comments in
-`app/lib`) **no longer exists in the repo.** The new writeup is in
-`ANTIGRAVITY_GRILL/` (correct spelling). See §81.29.
+**Still open (issues_open.md §83), biggest first:** the `AppColors` static
+facade (1,532 reads vs 10 `Theme.of`) and the whole-app remount it forces;
+the active-ride screen rebuilding in full every second; DI/testability, and
+with it 43 screens having 1 screen test; accessibility beyond tooltips and a
+text-scale clamp; onboarding still English-only; App Check; the unsigned
+Cloudinary upload endpoint; client-side-only blocking.
+
+**Note on the path below:** `ANTIGRAVRITY_GRILL/` (misspelled, referenced in
+the next paragraph) **no longer exists** — `claude_sol.md` was deleted in
+`fc11e99`; recover it with
+`git show fc11e99^:"ANTIGRAVRITY_GRILL/claude_sol.md"`. The new writeup is in
+`ANTIGRAVITY_GRILL/` (correct spelling).
 
 **Grill verification (2026-09-20, issues_open.md §78):** The four external
 critiques in `ANTIGRAVRITY_GRILL/` were checked against the code. The
@@ -597,6 +612,19 @@ Full technical detail and root causes for anything marked with a `§` live in
   first API call until someone sets them.
 
 ### Known Limitations (Documented, Not Bugs)
+- **Crash detection does not run, and emergency contacts are never alerted.**
+  `SensorConstants.impactDetectorLiveEnabled` is `const false` and the live
+  recorder passes `detectCrash: false`, so nothing can detect a crash while a
+  rider is riding; the only path that returns `RideAlert.crash` is the
+  post-hoc replay of an auto-detected ride. Separately, the crash Cloud
+  Function has no SMS/email provider wired up — it builds the message and
+  sends nothing, settling the notification at `mock_not_sent`. Two independent
+  things must land before any safety claim is true: field/drop calibration of
+  the thresholds (they are labelled UNCALIBRATED in `sensor_constants.dart`),
+  and a real Twilio/SendGrid integration behind `DELIVERY_IMPLEMENTED` (which
+  needs the Blaze plan). **Every user-facing claim to the contrary was removed
+  on 2026-09-21 — see issues_fixed.md §83.1.** Keep it that way until both
+  land. See issues_open.md §78.1.
 - **Navigation is geometric, not routed** — turn-by-turn follows a saved
   route's own polyline: no street names, no lane guidance, no rerouting (it
   reports "off route" instead). Deliberate: no routing engine or API key

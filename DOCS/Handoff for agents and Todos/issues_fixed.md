@@ -5431,3 +5431,187 @@ as "not deployed" in §78.17 below.
 
 Verified: `flutter test test/core/utils/firebase_error_mapper_test.dart`
 — 11/11 passed.
+
+---
+
+## 83. Full-app critique pass — fixed parts (2026-09-21)
+
+Surfaced 2026-09-20 (writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`), fixed
+the next day. **Still-open sub-items keep their numbers in `issues_open.md` §83.**
+
+Verification for the whole pass: `flutter analyze` clean, `flutter test`
+**1195/1195** (was 1174 — 21 new tests), rules emulator **113/113** (was 112),
+`npm run build` in `functions/` clean.
+
+### Safety claims (81.1-81.4)
+
+- **81.1 — the disabled crash detector is no longer advertised.** Removed or
+  corrected every claim that the app detects crashes: `README.md`'s Safety
+  section now opens with an explicit "**NOT live**" warning and splits
+  shipped-vs-switched-off; `arch.md`'s opening paragraph carries the same
+  warning; the onboarding tour's "Crash Shield" pointer and "Instant crash
+  detection" bullet are gone (`onboarding_manifest.dart`), replaced with
+  features that exist, and `kOnboardingManifestVersion` bumped 2 → 3 so
+  existing riders are re-shown the corrected tour.
+  - **Also found and removed while there:** the tour advertised a **lean-angle
+    gauge** and a **"SHIELD: ARMED"** badge and **"10Hz GPS"**, none of which
+    exist — lean angle is a HANDOFF Part 2 *backlog* item, the app has no
+    shield, and GPS runs at ~1 Hz behind a 5 m filter. All three were drawn in
+    `onboarding_ui_mockups.dart`, a hand-made illustration of a real screen
+    with nothing to catch the drift. Corrected to what the cockpit actually
+    shows, with a comment saying so.
+- **81.2 — the crash function no longer claims contacts were reached.** A
+  `DELIVERY_IMPLEMENTED` constant now gates the status: while delivery is a
+  mock the notification settles at `mock_not_sent`, not `contacted`, and
+  `escalateCrashAlert` deliberately does not sweep it (re-running a mock
+  reaches nobody).
+  - **Latent bug found and fixed in the same file:** contacts were read with
+    `doc.data()`, but the client never writes an `id` *field* — the id is the
+    document id. So `contact.id` was `undefined`, the Admin SDK rejects an
+    undefined field value, and the `notificationLog` write threw and took the
+    whole handler down. **The crash-notification function would have failed on
+    its first real invocation.** Never hit because crash detection is off and
+    the function has never been deployed.
+- **81.3 — dead escalation stub removed.** `scheduleEscalation()` was called
+  but its body was a `console.log` and a `// TODO`; the real sweep is the
+  separate `onSchedule`. Deleted. The sweep's silent `.limit(10)` is now
+  `ESCALATION_BATCH = 100`, ordered oldest-first, and logs a warning when it
+  saturates instead of truncating an emergency path in silence.
+- **81.4 — the alert addresses the rider by name.** It interpolated the raw
+  Firebase uid ("your emergency contact 8f2c…e41 may have crashed"). Added
+  `lookUpRiderName`, falling back to "a ThrottleIQ rider", never to the uid.
+
+### EventDetector (81.5-81.8)
+
+- **81.5 — the 2-second speed buffer is no longer crash state.**
+  `_resetCrashState()` cleared `_recentSpeeds`, so an *unrelated* accel-spike
+  window expiring threw away the speed history the speed-drop leg needs,
+  blinding the detector for up to 2 s right after any >8 g blip. It now clears
+  only the window; `reset()` still drops the buffer, since that's a new ride.
+- **81.6 — a slide now counts as a speed drop.** The check required
+  `newest.speedMs < 1.0` — a dead stop within the same 2 s window, measured by
+  lagging GPS speed — so a highside that kept sliding produced no crash. A
+  proportional collapse (≥50% of entry speed) now also qualifies. **Still
+  uncalibrated**, and labelled as such alongside `impactThreshold`.
+- **81.7 — overspeed is edge-triggered.** It was a bare `>` test firing on
+  every fix above the limit; one interleaved hard brake re-armed the UI's
+  dedupe and the cockpit strobed amber over the live map at speed. Now one
+  alert per excursion, with a 1.5 m/s (~5.4 km/h) re-arm band.
+- **81.8 — fatigue is a reminder, not a permanent state.** It re-fired on the
+  10-second alert TTL forever once past 90 minutes, with no dismiss and no
+  snooze. Now repeats on a 15-minute interval.
+- New coverage: `test/calculators/event_detector_alerts_test.dart` (8 tests).
+
+### Architecture (81.9-81.11)
+
+- **81.9 — the app can follow the OS light/dark setting.** There was no
+  `ThemeMode.system` anywhere. Added `AppBrightnessMode {light, dark, system}`;
+  `system` resolves against the platform and keeps tracking it via
+  `didChangePlatformBrightness`. Settings now shows three segments, matching
+  the Language row. `brightnessMode` is optional at construction — an explicit
+  `brightness` implies the matching mode, so no existing call site changed.
+  - **NOT fixed:** the underlying `AppColors` static-facade problem (1,532
+    static reads vs 10 `Theme.of`) and the full-app remount it forces. Still
+    open in `issues_open.md` §83.9.
+- **81.10 — `copyWith`'s error semantics are documented and safe.** `error`
+  and `blockKind` were the only two of twenty-one fields that cleared by
+  default, and the neighbouring comment asserted the opposite ("means 'keep',
+  like every field here"). Added an explicit `keepError` flag, corrected the
+  comment, and passed `keepError: true` from the 1-second elapsed timer, which
+  would otherwise have wiped any error set mid-ride within a second.
+  Covered by `test/features/ride/ride_recording_state_test.dart`.
+- **81.11 — navigation is no longer a build side-effect.** `RecordScreen.build`
+  scheduled `context.go()` in an `addPostFrameCallback`, re-queuing on every
+  unrelated rebuild. Replaced with `ref.listen` on a `.select`ed status plus a
+  one-shot mount check for the already-recording case.
+
+### Data, privacy, backend (81.15-81.19)
+
+- **81.15 — account deletion deletes.** Two halves:
+  - *Cloudinary:* uploads now write a ledger row at
+    `users/{uid}/cloudinaryAssets/{id}` (public_id + resource type), and the
+    deletion trigger destroys each asset with a signed `destroy` call (Node's
+    `crypto` + global `fetch`, no new dependency). **Gated on
+    `CLOUDINARY_CLOUD_NAME`/`_API_KEY`/`_API_SECRET` in the environment** —
+    with none configured it logs a warning naming the count that was *not*
+    deleted and leaves the ledger intact so the sweep can run retroactively.
+    Not silent success.
+  - *Authored content:* forum posts/replies, ride comments, place reviews and
+    contributed places are **anonymized, not deleted** (product decision,
+    2026-09-20) — identity fields cleared, byline becomes "Deleted rider",
+    body kept, so threads don't grow holes and POIs others depend on don't
+    vanish. Chunked at 400 writes per batch.
+- **81.17 — the privacy-zone jitter is actually secret.** The radius was
+  `FNV-1a(uid) % 150`, and `userId` is plaintext on every shared ride in a
+  source-available repo, so `radiusFor(seedForUid(ride.userId))` recovered it
+  exactly — which makes triangulating a rider's home *easier* than a fixed
+  radius. Replaced with `PrivacyZoneSalt`: a random value in an owner-only
+  `users/{uid}/private/privacy` document, created on first share, cached per
+  process, falling back to the base 200 m clip if Firestore is unreachable.
+  `seedForUid` is now `@visibleForTesting` with a "do not use this" doc.
+- **81.19 — crash notifications are idempotent.** The client used `.add()`
+  (auto-id), so every retry created another document and another function
+  invocation. Now keyed by `rideId`, with a rule requiring the document id to
+  equal the `rideId` field. **This is idempotency, not an abuse bound** — a
+  client can invent an id and match `rideId` to it; rules cannot limit request
+  volume. App Check is the real control and is still not enabled (open).
+  Requiring the ride to exist was considered and rejected: recording is
+  offline-first, so a crash can fire before the ride ever reaches Firestore.
+
+### Feed and UI (81.20-81.24)
+
+- **81.20 — the feed paginates, and "Following" works.** It was three
+  `limit: 20` queries merged client-side with no cursor anywhere: ~60 posts,
+  ever. And `FeedSort.following` filtered *client-side* over that truncated
+  public page, so a rider following 30 active people could see an **empty**
+  Following feed. Now:
+  - `getPublicRides`/`getSharedToMe`/`getMyRides` take a `before` cursor.
+  - New `getRidesByAuthors` queries rides *by* the followed uids (chunked at
+    `whereIn`'s 30-value cap) as its own feed source, with a new composite
+    index `rides (userId, audience, createdAt)`.
+  - `rideFeedProvider` (a `FutureProvider`) and the separate optimistic-state
+    notifier are replaced by one paginating `RideFeedNotifier`/`FeedState`,
+    with infinite scroll, a paging footer (spinner / retry / "You're all caught
+    up"), and pull-to-refresh. A paging error no longer replaces the feed the
+    rider is reading.
+  - `_hydrate`'s N+1 is cut: the four overlapping sources now fetch with
+    `hydrateVotes: false` and the merged, de-duplicated page is hydrated once.
+    (One read per ride remains; going below that needs a `uid` field on vote
+    docs plus a backfill — still open.)
+  - Covered by `test/features/social/ride_feed_pagination_test.dart`.
+- **81.21 — error states are human.** 15 screens rendered failures as a raw
+  `Text('$e')` in red with no retry — including the offline-first app showing
+  `[cloud_firestore/unavailable] …` as the whole Stats tab. All now use the
+  **already-existing** `ErrorView` (friendly mapping + retry), which forums,
+  chat and social had adopted and nobody else had. `group_ride_map_screen`'s
+  `_ErrorState` now takes `mapFirestoreError(e)` instead of `'$e'`.
+- **81.22 — partial.** Added `tooltip:` to 27 icon-only `IconButton`s (the
+  screen-reader label for a bare icon), and an app-wide text-scale clamp of
+  1.0–1.3× in `app.dart` so the OS text-size setting enlarges type without
+  overflowing the fixed-height cockpit rows. **A clamp is a stopgap, not
+  accessibility support** — the layouts still need to be made scale-tolerant.
+  Still open.
+- **81.23 — partial.** The four cockpit safety alerts ("Ease on the brakes",
+  "Smooth on the throttle", "Watch your speed", "Time for a break") and the
+  live-share sheet are now localized — an English-only *safety alert* in a
+  Bangladesh-first app was the wrong thing to leave last. **The new Bangla
+  strings need native-speaker review, like §78.28.** Onboarding and the rest
+  of the cockpit are still English-only; still open.
+
+### Tests and docs (81.29, 81.30)
+
+- **81.29 — ticket references normalised.** 81 dead or ambiguous references
+  removed from `app/lib` and `functions/src`, plus **28 more found in
+  `firestore.rules`** (which the first sweep missed): 42 comments literally
+  reading `"issues_open.md or issues_fixed.md §N"`, 30 pointing at
+  `claude_sol` (deleted in `fc11e99`), the rest at `docs/Issues.md` (renamed
+  2026-09-19). All now read `issues §N` or `grill §N`, defined once in a new
+  **"Ticket references in source comments"** table in `DOCS/README.md`, which
+  also says: do not write a file path into a new code comment.
+- **81.30 — `features.md`'s nav order corrected** to match `app_shell.dart`.
+- **Bonus (`new_gravity.md` §2): tests no longer hit OpenStreetMap.** A
+  `flutter test` run emitted a wall of `ClientException … tile.openstreetmap.org`
+  — the test branch used `NetworkTileProvider`, which really does fetch. Now a
+  `_BlankTileProvider` serving a 1×1 transparent PNG with zero network calls
+  (verified: 0 occurrences in a full run). It still carries the app's
+  User-Agent so the tile-policy header test stays meaningful.
