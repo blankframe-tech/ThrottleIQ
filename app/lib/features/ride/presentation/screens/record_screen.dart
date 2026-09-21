@@ -54,24 +54,47 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     super.initState();
     _name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
     _greeting = greetingDetailFor(DateTime.now(), name: _name);
+    // One-shot: this screen can be *built* while a ride is already running
+    // (cold start onto Record, or a restored interrupted ride), and a
+    // `ref.listen` only fires on a change, never on the current value.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _redirectIfRiding());
+  }
+
+  /// Sends the rider to the active-ride cockpit if a ride is under way.
+  ///
+  /// This used to live in `build()` behind an `addPostFrameCallback`, which
+  /// re-queued a navigation on every rebuild — and this screen rebuilds for
+  /// reasons that have nothing to do with recording (unread count, active
+  /// bike, appearance remount). §83.11.
+  void _redirectIfRiding() {
+    if (!mounted) return;
+    final status = ref.read(rideRecordingProvider).status;
+    if (status == RecordingStatus.active || status == RecordingStatus.paused) {
+      context.go('/ride/active');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Navigation is a reaction to a status *change*, not something computed
+    // during build. Registering it here is the Riverpod-idiomatic spot —
+    // `ref.listen` in build is deduped across rebuilds, so this subscribes
+    // once, not once per frame.
+    ref.listen<RecordingStatus>(
+      rideRecordingProvider.select((s) => s.status),
+      (_, next) {
+        if (next == RecordingStatus.active || next == RecordingStatus.paused) {
+          _redirectIfRiding();
+        }
+      },
+    );
+
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
     final quote = ref.watch(dashboardQuoteProvider);
     final accent = activeBike != null && bikeHasPhoto(activeBike)
         ? bikeAccentColor(activeBike)
         : null;
-
-    // If actively recording, push to active ride screen
-    if (rideState.status == RecordingStatus.active ||
-        rideState.status == RecordingStatus.paused) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.go('/ride/active');
-      });
-    }
 
     // The screen reads top-to-bottom as one instrument panel: what you're
     // riding, what you've done on it, who you're riding with, and the throttle
@@ -118,7 +141,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       // Settings lives on the Profile tab's header (see
                       // GarageScreen). The notification bell is back here as
                       // well, since an unread badge only on the Profile tab
-                      // went unseen (claude_sol.md §3.2.6). This screen has no
+                      // went unseen (grill §3.2.6). This screen has no
                       // title bar of its own, and the hero below is the header.
                       Align(
                         alignment: Alignment.centerRight,
@@ -186,7 +209,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                               const SizedBox(height: 4),
                               TextButton.icon(
                                 onPressed: () => BugReportSheet.show(context),
-                                icon: const Icon(Icons.bug_report_outlined, size: 14),
+                                icon: const Icon(Icons.bug_report_outlined,
+                                    size: 14),
                                 label: const Text('Report a Problem'),
                                 style: TextButton.styleFrom(
                                   foregroundColor: AppColors.textTertiary,

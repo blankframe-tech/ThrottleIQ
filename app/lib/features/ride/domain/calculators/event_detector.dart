@@ -47,16 +47,42 @@ class EventDetector {
   double _peakAccelSinceSpike = 0;
   double _peakJerkInWindow = 0;
   final List<_SpeedSample> _recentSpeeds = []; // Last 2s of speed samples
-  static const double _crashAccelThreshold = SensorConstants.crashAccelThreshold;
+  static const double _crashAccelThreshold =
+      SensorConstants.crashAccelThreshold;
   static const double _crashJerkThreshold = 10.0; // m/s³
   static const Duration _crashWindow = Duration(seconds: 2);
   static const double _speedDropThreshold = 2.0; // m/s
+
+  /// Fraction of its own speed the vehicle must shed inside the crash window
+  /// to count as a speed collapse while still moving. See [_checkSpeedDrop].
+  static const double _speedCollapseFraction = 0.5;
 
   // Edge-trigger state for the GPS-path brake/accel counters (§78.3): a
   // sustained brake across several fixes counts once, then re-arms only
   // after the GPS acceleration comes back past the re-arm level.
   bool _brakeArmed = true;
   bool _accelArmed = true;
+
+  /// Edge-trigger state for overspeed (§83.7). Without it, `speed > threshold`
+  /// returned `RideAlert.overspeed` on *every* fix above the line — the UI's
+  /// `_lastAlert` dedupe hid that until one interleaved hard brake re-armed
+  /// the full-screen amber flash, so sustained fast riding in traffic strobed
+  /// the map the rider is trying to read at speed.
+  bool _overspeedArmed = true;
+
+  /// Re-arm band, in m/s, below [overspeedThreshold]. ~5.4 km/h: wide enough
+  /// that GPS speed noise around the limit can't re-trigger, narrow enough
+  /// that genuinely dropping below the limit and speeding up again does.
+  static const double _overspeedRearmBand = 1.5;
+
+  /// When fatigue was last announced. Fatigue used to re-fire on the 10-second
+  /// alert TTL forever once `elapsedSeconds` passed the threshold, which made
+  /// it a permanent alert state after 90 minutes with no dismiss and no snooze
+  /// (§83.8). It is now a periodic reminder.
+  DateTime? _lastFatigueAt;
+
+  /// How long before the fatigue reminder repeats.
+  static const Duration fatigueRepeatInterval = Duration(minutes: 15);
 
   double overspeedThreshold;
 
@@ -109,10 +135,11 @@ class EventDetector {
 
     // Update recent speed history (keep last 2 seconds)
     _recentSpeeds.add(_SpeedSample(speedMs: speedMs, timestamp: now));
-    _recentSpeeds.removeWhere((s) => now.difference(s.timestamp) > _crashWindow);
+    _recentSpeeds
+        .removeWhere((s) => now.difference(s.timestamp) > _crashWindow);
 
     // Detect high-acceleration spike (>8g threshold). Runs BEFORE the jerk
-    // tracking below — DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §62 (found in a follow-up audit): a
+    // tracking below — issues §62 (found in a follow-up audit): a
     // real impact's jerk peak coincides with its accel peak (jerk is
     // acceleration's derivative), so the sample that first crosses the
     // accel threshold is exactly the sample whose jerk value matters most.
@@ -137,7 +164,7 @@ class EventDetector {
     // Track jerk. highJerkCount is a ride-wide tally (any high-jerk moment,
     // used for the ride summary), but _peakJerkInWindow feeds the crash
     // check below and must only reflect jerk that happened WHILE an
-    // accel-spike window is open — DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §33.8: this used to update
+    // accel-spike window is open — issues §33.8: this used to update
     // unconditionally, so a jerk spike seconds before an unrelated
     // high-accel event still counted as "in window" by the time the crash
     // check ran, inflating false-positive crash detections.
@@ -204,16 +231,22 @@ class EventDetector {
     }
 
     // Other alerts
-    if (speedMs > overspeedThreshold) {
+    // Overspeed, edge-triggered with hysteresis — one alert per excursion
+    // above the limit, not one per fix. Mirrors the brake/accel arming above.
+    if (speedMs <= overspeedThreshold - _overspeedRearmBand) {
+      _overspeedArmed = true;
+    }
+    if (_overspeedArmed && speedMs > overspeedThreshold) {
+      _overspeedArmed = false;
       _lastAlert = RideAlert.overspeed;
       _lastAlertTime = now;
       return RideAlert.overspeed;
     }
 
     if (elapsedSeconds >= SensorConstants.fatigueAlertSeconds &&
-        (_lastAlert != RideAlert.fatigue ||
-            _lastAlertTime == null ||
-            now.difference(_lastAlertTime!).inSeconds >= 10)) {
+        (_lastFatigueAt == null ||
+            now.difference(_lastFatigueAt!) >= fatigueRepeatInterval)) {
+      _lastFatigueAt = now;
       _lastAlert = RideAlert.fatigue;
       _lastAlertTime = now;
       return RideAlert.fatigue;
@@ -229,19 +262,52 @@ class EventDetector {
     return RideAlert.none;
   }
 
+  /// Whether the last 2 s of speed history look like an impact rather than a
+  /// deceleration.
+  ///
+  /// This only ever runs inside an open >8 g accel-spike window that has also
+  /// seen a >10 m/s³ jerk spike, so it is the third confirmation, not the
+  /// discriminator — which is why it can afford to be less strict than it was.
+  ///
+  /// It used to require `newest.speedMs < 1.0`: the rider had to be at a dead
+  /// stop within the same 2-second window as the impact, measured by GPS speed
+  /// that lags by seconds. A highside where the bike slides on, or a fix that
+  /// holds a stale speed for a beat, produced no crash (§83.6). A proportional
+  /// collapse now also counts.
+  ///
+  /// **Still uncalibrated** — like [SensorConstants.impactThreshold], these
+  /// numbers are reasoned, not measured. Re-tune from field data before any
+  /// safety claim.
   bool _checkSpeedDrop() {
     if (_recentSpeeds.length < 2) return false;
     final oldest = _recentSpeeds.first;
     final newest = _recentSpeeds.last;
     final speedDelta = oldest.speedMs - newest.speedMs;
-    return speedDelta >= _speedDropThreshold && newest.speedMs < 1.0;
+    if (speedDelta < _speedDropThreshold) return false;
+
+    // Came to rest — the original condition.
+    if (newest.speedMs < 1.0) return true;
+
+    // Or lost most of its speed while still moving: the slide/tumble case.
+    return oldest.speedMs > 0 &&
+        speedDelta >= oldest.speedMs * _speedCollapseFraction;
   }
 
+  /// Clears only the accel-spike window. **Does not touch [_recentSpeeds]** —
+  /// that is a rolling 2-second speed history, independent of whether a spike
+  /// window happens to be open, and it trims itself by timestamp on every
+  /// sample.
+  ///
+  /// It used to be cleared here (§83.5). Because this runs whenever an
+  /// unrelated spike window expires, the detector threw away the speed history
+  /// it needs and then could not evaluate a speed drop until two fresh samples
+  /// had arrived — i.e. it was blind for up to 2 s immediately after any >8 g
+  /// blip, which is exactly the window in which a real impact follows a
+  /// pothole strike.
   void _resetCrashState() {
     _highAccelStart = null;
     _peakAccelSinceSpike = 0;
     _peakJerkInWindow = 0;
-    _recentSpeeds.clear();
   }
 
   void reset() {
@@ -252,6 +318,11 @@ class EventDetector {
     _lastAlertTime = null;
     _brakeArmed = true;
     _accelArmed = true;
+    _overspeedArmed = true;
+    _lastFatigueAt = null;
+    // Unlike _resetCrashState, a full reset DOES drop the speed history —
+    // this is a new ride, so the previous ride's speeds are meaningless.
+    _recentSpeeds.clear();
     _resetCrashState();
     lastCrashSignal = null;
   }

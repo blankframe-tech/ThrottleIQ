@@ -130,13 +130,22 @@ class RideRecordingState {
     int? movingSeconds,
     RideAlert? activeAlert,
     String? error,
+    // `error`/`blockKind` are the one pair here that does NOT follow the
+    // "null means keep" rule the other fields use — passing neither CLEARS
+    // them. That is deliberate (an error is transient; it should not outlive
+    // the state change that resolved it) but it used to be undocumented and
+    // directly contradicted by the comment on `clearLiveSessionToken` below,
+    // which claimed every field means "keep" (§83.10). Pass `keepError: true`
+    // to carry an existing message through an unrelated update.
+    bool keepError = false,
     RecordingBlockKind? blockKind,
     double? sensorAccelMs2,
     bool? crashDetected,
     int? crashCountdown,
     String? liveSessionToken,
-    // `liveSessionToken: null` means "keep", like every field here — this is
-    // how "Stop sharing now" actually clears it.
+    // `liveSessionToken: null` means "keep", like every field here EXCEPT
+    // `error`/`blockKind` (see above) — this is how "Stop sharing now"
+    // actually clears it.
     bool clearLiveSessionToken = false,
     int? confidence,
     bool? restoredFromPreviousSession,
@@ -153,8 +162,9 @@ class RideRecordingState {
       elapsed: elapsed ?? this.elapsed,
       movingSeconds: movingSeconds ?? this.movingSeconds,
       activeAlert: activeAlert ?? this.activeAlert,
-      error: error,
-      blockKind: blockKind ?? RecordingBlockKind.none,
+      error: error ?? (keepError ? this.error : null),
+      blockKind:
+          blockKind ?? (keepError ? this.blockKind : RecordingBlockKind.none),
       sensorAccelMs2: sensorAccelMs2 ?? this.sensorAccelMs2,
       crashDetected: crashDetected ?? this.crashDetected,
       crashCountdown: crashCountdown ?? this.crashCountdown,
@@ -409,7 +419,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.hidden) {
       unawaited(_persistenceCoordinator.flushPointBuffer());
-      unawaited(_persistenceCoordinator.persistElapsed(this.state.elapsed, force: true));
+      unawaited(_persistenceCoordinator.persistElapsed(this.state.elapsed,
+          force: true));
     }
   }
 
@@ -438,9 +449,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
               notificationText: _userInitiated
                   ? 'ThrottleIQ is recording your ride in the background'
                   : 'ThrottleIQ detected a ride and is recording it',
-              notificationTitle: _userInitiated
-                  ? 'Ride Recording Active'
-                  : 'Ride Detected',
+              notificationTitle:
+                  _userInitiated ? 'Ride Recording Active' : 'Ride Detected',
               enableWakeLock: true,
             ),
           );
@@ -548,15 +558,17 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final hasValidDeltaT = deltaT >= 0.1;
     final candidateDerivedSpeed = hasValidDeltaT ? distDelta / deltaT : 0.0;
-    final isPlausibleDerived = candidateDerivedSpeed <= SensorConstants.maxPlausibleSpeedMs;
-    final hasRawSpeed = rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
-        rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
+    final isPlausibleDerived =
+        candidateDerivedSpeed <= SensorConstants.maxPlausibleSpeedMs;
+    final hasRawSpeed =
+        rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
+            rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
 
     double speedMs;
     if (hasRawSpeed) {
       if (_lastPoint != null && hasValidDeltaT) {
-        final maxAllowedSpeed =
-            _lastPoint!.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
+        final maxAllowedSpeed = _lastPoint!.speedMs +
+            (SensorConstants.maxPhysicalAccelMs2 * deltaT);
         speedMs = (rawSpeedMs > maxAllowedSpeed && _lastPoint!.speedMs > 0)
             ? maxAllowedSpeed
             : rawSpeedMs;
@@ -566,13 +578,15 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     } else if (hasValidDeltaT &&
         isPlausibleDerived &&
         distDelta > 10.0 &&
-        candidateDerivedSpeed >= SensorConstants.unreliableSpeedFallbackThresholdMs) {
+        candidateDerivedSpeed >=
+            SensorConstants.unreliableSpeedFallbackThresholdMs) {
       if (_lastPoint != null) {
-        final maxAllowedSpeed =
-            _lastPoint!.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-        speedMs = (candidateDerivedSpeed > maxAllowedSpeed && _lastPoint!.speedMs > 0)
-            ? maxAllowedSpeed
-            : candidateDerivedSpeed;
+        final maxAllowedSpeed = _lastPoint!.speedMs +
+            (SensorConstants.maxPhysicalAccelMs2 * deltaT);
+        speedMs =
+            (candidateDerivedSpeed > maxAllowedSpeed && _lastPoint!.speedMs > 0)
+                ? maxAllowedSpeed
+                : candidateDerivedSpeed;
       } else {
         speedMs = candidateDerivedSpeed;
       }
@@ -713,6 +727,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           elapsed:
               _accumulatedDuration + DateTime.now().difference(_activeStart!),
           activeAlert: _alertAfterTtl(DateTime.now()),
+          // A once-a-second tick is not the thing that resolved an error.
+          keepError: true,
         );
         unawaited(_persistenceCoordinator.persistElapsed(state.elapsed));
       }
@@ -745,7 +761,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// "Stop sharing now" — revokes the live link without ending the ride
   /// (§78.7). See [LiveSessionCoordinator.stopSharingNow].
   Future<void> stopLiveSharing() async {
-    if (state.liveSessionToken == null && !_liveCoordinator.isLiveShareEnabled) {
+    if (state.liveSessionToken == null &&
+        !_liveCoordinator.isLiveShareEnabled) {
       return;
     }
     state = state.copyWith(clearLiveSessionToken: true);
