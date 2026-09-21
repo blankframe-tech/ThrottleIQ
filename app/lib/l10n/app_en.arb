@@ -5763,5 +5763,9 @@
   "safeQrPrintFailed": "Couldn't open the print dialog.",
   "@safeQrPrintFailed": {
     "description": "Shown if printing the SafeQR sticker fails."
+  },
+  "feedSortHot": "Hot",
+  "@feedSortHot": {
+    "description": "Feed sort chip: most upvoted first."
   }
 }

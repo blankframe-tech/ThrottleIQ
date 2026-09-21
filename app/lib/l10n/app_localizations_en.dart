@@ -4231,4 +4231,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get safeQrPrintFailed => 'Couldn\'t open the print dialog.';
+
+  @override
+  String get feedSortHot => 'Hot';
 }

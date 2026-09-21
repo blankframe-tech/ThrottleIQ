@@ -399,8 +399,8 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _telemetryMini('Distance', '${widget.distanceKm.toStringAsFixed(1)} km'),
-                      _telemetryMini('Duration', SpeedFormatter.durationFromSeconds(widget.durationSeconds)),
+                      _telemetryMini(context.l10n.distanceLabel, '${widget.distanceKm.toStringAsFixed(1)} km'),
+                      _telemetryMini(context.l10n.duration, SpeedFormatter.durationFromSeconds(widget.durationSeconds)),
                       _telemetryMini(context.l10n.maxSpeed, '${widget.maxSpeedKmh.toStringAsFixed(0)} km/h'),
                       _telemetryMini(context.l10n.avgSpeed, '${widget.avgSpeedKmh.toStringAsFixed(0)} km/h'),
                     ],

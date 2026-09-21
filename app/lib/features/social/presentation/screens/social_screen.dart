@@ -31,6 +31,7 @@ import '../providers/ride_feed_provider.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../feed_sort_l10n.dart';
 
 /// How long the header search waits after the last keystroke before querying.
 /// Rider search runs a Firestore prefix query per keystroke otherwise.
@@ -411,7 +412,7 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                   onTap: () =>
                       ref.read(feedSortProvider.notifier).state = option,
                   child: EditorialPill(
-                    option.label,
+                    option.localizedLabel(context.l10n),
                     filled: option == sort,
                     tone: option == sort ? PillTone.accent : PillTone.neutral,
                   ),
@@ -748,9 +749,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _stat('${ride.distanceKm.toStringAsFixed(1)} km',
-                            'Distance'),
+                            context.l10n.distanceLabel),
                         _divider(),
-                        _stat('${ride.durationMinutes} min', 'Duration'),
+                        _stat('${ride.durationMinutes} min', context.l10n.duration),
                         _divider(),
                         _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
                             context.l10n.maxSpeed),

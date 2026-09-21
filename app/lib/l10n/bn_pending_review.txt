@@ -1094,3 +1094,5 @@ safeQrPrintAction
 safeQrStickerTitle
 safeQrStickerCaption
 safeQrPrintFailed
+# batch: bnfixes (manual)
+feedSortHot

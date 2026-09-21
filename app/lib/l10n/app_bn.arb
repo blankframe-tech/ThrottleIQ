@@ -1234,5 +1234,6 @@
   "safeQrPrintAction": "স্টিকার প্রিন্ট করুন",
   "safeQrStickerTitle": "জরুরি মেডিকেল তথ্য",
   "safeQrStickerCaption": "যেকোনো ফোনের ক্যামেরা দিয়ে স্ক্যান করুন। অফলাইনেও কাজ করে।",
-  "safeQrPrintFailed": "প্রিন্ট ডায়ালগ খোলা যায়নি।"
+  "safeQrPrintFailed": "প্রিন্ট ডায়ালগ খোলা যায়নি।",
+  "feedSortHot": "জনপ্রিয়"
 }

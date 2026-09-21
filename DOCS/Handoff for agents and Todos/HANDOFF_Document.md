@@ -184,15 +184,19 @@ cleanup (§79/§80) is written and dry-run against production but NOT applied** 
 was blocked from the write; command is in `issues_open.md` §79. §78.24 (SafeQR print sticker) is done — needs a real-paper scan test. **Not done:** §78.21 (route navigation records the ride), §78.16 (needs the tile key from
 the founder), §84 (undeclared indexes — needs a decision, do not `--force`).
 
-**Bangla layout check:** the UI tour can now walk the app in Bangla and log layout overflows
-(`TOUR_LOCALE=bn app/scripts/ui_tour/run_tour.sh <udid> <out> <combo>`; overflow lines are
-`[tour] OVERFLOW …` in the tour log). A run was started at the end of the 2026-09-21 session
-(Calming/Curvy/Light). **The first run proved nothing:** it reported 0 overflows but only ever
-reached the login screen (the tour tapped "Sign In" by its English text, so every later
-screenshot was the login page again) — fixed by using the Bangla string. A corrected run was
-started and **its result is not recorded here**; run it and look at the screenshots yourself.
-What *was* seen in Bangla (welcome, sign-in, onboarding slides 2 and 5): correct glyphs, no overflow.
-Treat any `[tour] OVERFLOW` line as a real Bangla layout bug.
+**Bangla layout check (2026-09-21, UI tour on the iPhone 17 Pro simulator, Calming/Curvy/Light):**
+`TOUR_LOCALE=bn app/scripts/ui_tour/run_tour.sh <udid> <out> <combo>` walks the app in Bangla and logs
+`[tour] OVERFLOW …` lines. The **first run was worthless** (it never got past the login screen because the
+tour tapped "Sign In" by its English text; fixed). The **corrected run covered 82 distinct screens across
+the whole app: 0 overflow lines, and no overflow stripes in the screenshots** (scanned, and I looked at
+Settings, Stats, Maintenance, Edit bike, Forums, Feed, Profile, ride summary). Glyphs render correctly and
+long Bangla strings fit. **Caveats:** one appearance combo only; ~21 sections skipped some sheets/dialogs
+because the tour finds many controls by English text; text scale 1.0 only; a real device is still unchecked.
+Looking at the screenshots found gaps the string extraction had missed — fixed the same day: rider-profile
+badge chips, the feed's HOT/RECENT/FOLLOWING chips, and the feed/map "Distance"/"Duration" captions.
+**Still English in Bangla:** month names in dates ("17 Aug", "August 2026") — `DateFormat` isn't given the
+locale, and switching it would also switch to Bengali digits, which the project's Western-digits rule forbids,
+so it needs a deliberate decision; and units (`km`, `min`, `km/h`) by design.
 
 **JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only
 `★ —` was real and is fixed. §78.30 crash badge done. §78.21 (nav records the ride) and

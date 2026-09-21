@@ -591,6 +591,10 @@ the rest are data/domain/plumbing with nothing to translate. What remains:
   ("N Google · M ThrottleIQ", "No reviews yet"). The pattern to copy is
   `recordingErrorText()` in `record_screen.dart` (English stays in state, the UI
   localizes from a stable code/kind).
+- **Dates show English month names in Bangla** ("17 Aug", "August 2026", "Riding with us since August 2026")
+  — `formatRideDate` and friends don't pass a locale to `DateFormat`. Not a one-line fix: `intl`'s Bangla
+  locale also emits Bengali digits, which `numeric_locale.dart` deliberately forbids, so this needs a
+  decision (localized month names with Western digits) before anyone touches it. Found in a Bangla tour.
 - **Onboarding mockup chrome is still English** (seen in a Bangla tour screenshot): the mock
   map's filter chips ("All / Fuel / Workshops / Cafes") and a few labels inside
   `onboarding_ui_mockups.dart` — chrome strings my extractor's heuristics missed, not the

@@ -7511,6 +7511,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t open the print dialog.'**
   String get safeQrPrintFailed;
+
+  /// Feed sort chip: most upvoted first.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot'**
+  String get feedSortHot;
 }
 
 class _AppLocalizationsDelegate

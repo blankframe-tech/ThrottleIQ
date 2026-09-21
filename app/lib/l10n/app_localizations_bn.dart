@@ -4240,4 +4240,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get safeQrPrintFailed => 'প্রিন্ট ডায়ালগ খোলা যায়নি।';
+
+  @override
+  String get feedSortHot => 'জনপ্রিয়';
 }

@@ -42,6 +42,7 @@ import '../../../chat/presentation/providers/chat_providers.dart';
 /// [canSeeBikes] / [UserProfileEntity.bikesVisibility].
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../stats/presentation/badge_l10n.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   /// The rider to show. Null → the signed-in rider's own profile.
@@ -290,7 +291,7 @@ class _ProfileBody extends ConsumerWidget {
                     for (final b in earnedBadges)
                       Chip(
                         avatar: Icon(Icons.military_tech, size: 16, color: context.palette.primary),
-                        label: Text(b.name),
+                        label: Text(b.localizedName(context.l10n)),
                         backgroundColor: context.palette.surface,
                         side: BorderSide(color: context.palette.border),
                       ),
