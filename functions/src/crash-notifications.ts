@@ -2,10 +2,23 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import * as logger from 'firebase-functions/logger';
 
 initializeApp();
 
 const db = getFirestore();
+
+/**
+ * Whether crash-alert delivery is actually wired to a provider.
+ *
+ * FALSE means `sendContactNotification` builds the message and sends nothing.
+ * It gates the status this function writes: while it is false a notification
+ * settles at `mock_not_sent`, NOT at `contacted`, because `contacted` is read
+ * by `escalateCrashAlert` (and by any future dashboard) as "a human was
+ * reached" — and nobody was. Flip this to true in the same change that adds
+ * the Twilio/SendGrid call, never before. See issues_open.md §81.2.
+ */
+const DELIVERY_IMPLEMENTED = false;
 
 interface CrashNotification {
   uid: string;
@@ -13,7 +26,19 @@ interface CrashNotification {
   timestamp: string;
   lastLat?: number;
   lastLng?: number;
-  status: 'pending' | 'contacted' | 'acknowledged' | 'escalated';
+  /**
+   * `mock_not_sent` is a terminal state: the alert was processed, contacts
+   * were resolved, and no message left the building. It is deliberately NOT
+   * `contacted`, and `escalateCrashAlert` deliberately does not pick it up —
+   * escalating something that was never sent in the first place would just
+   * not-send it a second time.
+   */
+  status:
+    | 'pending'
+    | 'contacted'
+    | 'mock_not_sent'
+    | 'acknowledged'
+    | 'escalated';
 }
 
 interface EmergencyContact {
@@ -49,30 +74,38 @@ export const onCrashNotification = onDocumentCreated(
         return;
       }
 
+      // `id` is the document id, NOT a field in the document — the client
+      // writes only {name, phone, email, createdAt} (see
+      // emergency_contacts_provider.dart). Spreading doc.data() alone left
+      // `contact.id` undefined, and the Admin SDK rejects an undefined field
+      // value, so the notificationLog write below threw and took the whole
+      // handler down with it on the first real crash. issues_open.md §81.2.
       const contacts = contactsSnapshot.docs.map(
-        (doc) => doc.data() as EmergencyContact
+        (doc) => ({ id: doc.id, ...doc.data() }) as EmergencyContact
       );
 
-      // Send notification to each contact (SMS/Email)
-      // MOCK: In production, integrate with Twilio for SMS or SendGrid for email
+      // Resolved once, not per contact: the message addresses the rider by
+      // name. Previously it interpolated the raw Firebase uid, which would
+      // have texted a contact something like "your emergency contact
+      // 8f2c...e41 may have crashed".
+      const riderName = await lookUpRiderName(uid);
+
       for (const contact of contacts) {
         await sendContactNotification(
           contact,
           uid,
+          riderName,
           rideId,
           lastLat,
           lastLng
         );
       }
 
-      // Update notification status
       await snap.ref.update({
-        status: 'contacted',
+        status: DELIVERY_IMPLEMENTED ? 'contacted' : 'mock_not_sent',
         contactedAt: new Date().toISOString(),
+        contactsResolved: contacts.length,
       });
-
-      // Schedule escalation check in 15 minutes
-      scheduleEscalation(uid, rideId, event.id);
     } catch (error) {
       console.error(`Error processing crash notification: ${error}`);
       throw error;
@@ -85,7 +118,7 @@ export const onCrashNotification = onDocumentCreated(
  * MOCK: Replace with actual Twilio/SendGrid integration.
  *
  * Neither the message content built below nor any contact PII is logged or
- * persisted (docs/Issues.md §24.8). This function was previously logging
+ * persisted (issues §24.8). This function was previously logging
  * `contact.phone`/`contact.email` directly via console.log, and the SMS body
  * it logged also carried the crash's GPS coordinates — third-party PII the
  * contact never consented to ThrottleIQ having, landing in Cloud Logging
@@ -98,6 +131,7 @@ export const onCrashNotification = onDocumentCreated(
 async function sendContactNotification(
   contact: EmergencyContact,
   uid: string,
+  riderName: string,
   rideId: string,
   lastLat?: number,
   lastLng?: number
@@ -110,8 +144,8 @@ async function sendContactNotification(
 
   // MOCK SMS message — built for a future Twilio call, deliberately never
   // logged (see doc comment above).
-  const smsMessage = `ALERT: ${contact.name}, your emergency contact ${uid} may have crashed. ` +
-    `Ride: ${rideId}. Location: ${location}. Reply CONFIRM if they are OK.`;
+  const smsMessage = `ALERT: ${contact.name}, your emergency contact ${riderName} may have crashed. ` +
+    `Location: ${location}. Reply CONFIRM if they are OK.`;
 
   // MOCK email subject/body — same "built for later, never logged" rule.
   const emailSubject = `ThrottleIQ Emergency Alert - Potential Crash`;
@@ -120,8 +154,7 @@ Dear ${contact.name},
 
 You are listed as an emergency contact on ThrottleIQ. We detected a potential motorcycle crash.
 
-Rider UID: ${uid}
-Ride ID: ${rideId}
+Rider: ${riderName}
 Location: ${location}
 Time: ${new Date().toISOString()}
 
@@ -140,14 +173,18 @@ ThrottleIQ Safety Team
 
   // No PII, no message content, no GPS — just enough to know an attempt was
   // made and for which contact record, without saying who that contact is.
-  console.log(
-    `[MOCK] Would notify emergencyContacts/${contact.id} for uid ${uid} (ride ${rideId}); ` +
-      'no message was actually sent (crash-alert delivery is not yet implemented).'
-  );
+  if (!DELIVERY_IMPLEMENTED) {
+    // No PII, no message content, no GPS — just enough to know an attempt was
+    // made and for which contact record, without saying who that contact is.
+    console.log(
+      `[MOCK] Would notify emergencyContacts/${contact.id} for uid ${uid} (ride ${rideId}); ` +
+        'no message was actually sent (crash-alert delivery is not yet implemented).'
+    );
+  }
 
   // For now, log the attempt — contactId only, so a real integration's
   // delivery log doesn't duplicate the contact's phone/email at rest
-  // (docs/Issues.md §24.8). Look up the contact by id if that's ever needed.
+  // (issues §24.8). Look up the contact by id if that's ever needed.
   await db
     .collection('users')
     .doc(uid)
@@ -159,30 +196,33 @@ ThrottleIQ Safety Team
       method: contact.phone ? 'sms' : 'email',
       // Not 'sent': delivery is still a MOCK, and a log that says 'sent'
       // would be read as proof a contact was reached when nobody was.
-      status: 'mock_not_sent',
+      status: DELIVERY_IMPLEMENTED ? 'sent' : 'mock_not_sent',
     });
 }
 
 /**
- * Schedule escalation check for 15 minutes
- * MOCK: Use Pub/Sub scheduled functions in production
+ * The rider's display name, for the message body. Falls back to a neutral
+ * phrase rather than to the uid — a contact reading "your emergency contact
+ * 8f2c...e41" learns nothing and is likelier to treat it as spam.
  */
-function scheduleEscalation(
-  uid: string,
-  rideId: string,
-  notificationId: string
-): void {
-  // In production, schedule a Cloud Task or use Pub/Sub
-  // For MVP, we log intent
-  console.log(`Scheduled 15-min escalation check for ${uid} ride ${rideId}`);
-
-  // TODO: Implement via Cloud Tasks or Pub/Sub delayed task
+async function lookUpRiderName(uid: string): Promise<string> {
+  try {
+    const profile = await db.collection('users').doc(uid).get();
+    const name = profile.data()?.displayName;
+    if (typeof name === 'string' && name.trim().length > 0) return name.trim();
+  } catch (e) {
+    logger.error(`lookUpRiderName failed for ${uid}`, e);
+  }
+  return 'a ThrottleIQ rider';
 }
 
 /**
  * Escalation check: sends follow-up if no ACK after 15 min
  * Triggered by Pub/Sub scheduler
  */
+/** Max notifications escalated per 15-minute tick. */
+const ESCALATION_BATCH = 100;
+
 export const escalateCrashAlert = onSchedule(
   'every 15 minutes',
   async () => {
@@ -190,12 +230,29 @@ export const escalateCrashAlert = onSchedule(
       // Find crash notifications that are still 'contacted' after 15+ minutes
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
+      // Only genuinely-delivered alerts escalate. A `mock_not_sent` alert is
+      // terminal — re-running a mock does not reach anyone, and sweeping it
+      // here would churn the log and hide the fact that nothing was sent.
+      //
+      // Ordered oldest-first and capped: if more than ESCALATION_BATCH are due
+      // in one 15-minute window the oldest go first and the rest wait for the
+      // next tick, rather than an arbitrary subset being picked. The cap is
+      // logged when hit — silently truncating an emergency path is exactly the
+      // sort of thing that should page someone.
       const pendingSnapshot = await db
         .collectionGroup('crashNotifications')
         .where('status', '==', 'contacted')
         .where('contactedAt', '<=', fifteenMinutesAgo.toISOString())
-        .limit(10)
+        .orderBy('contactedAt', 'asc')
+        .limit(ESCALATION_BATCH)
         .get();
+
+      if (pendingSnapshot.size === ESCALATION_BATCH) {
+        logger.warn(
+          `escalateCrashAlert: hit the ${ESCALATION_BATCH}-doc batch cap; ` +
+            'more alerts are due and will wait for the next 15-minute tick.'
+        );
+      }
 
       for (const doc of pendingSnapshot.docs) {
         const notification = doc.data() as CrashNotification & {
@@ -222,10 +279,16 @@ export const escalateCrashAlert = onSchedule(
  * Send follow-up escalation alert
  */
 async function sendFollowUpAlert(uid: string, rideId: string): Promise<void> {
-  console.log(`[MOCK] Sending follow-up escalation alert for ${uid} ride ${rideId}`);
+  if (!DELIVERY_IMPLEMENTED) {
+    console.log(
+      `[MOCK] Would send follow-up escalation for ${uid} ride ${rideId}; ` +
+        'nothing was sent.'
+    );
+  }
 
-  // TODO: Send via SMS or email
-  // In production, could also trigger emergency services (911) if configured
+  // TODO: Send via SMS or email once DELIVERY_IMPLEMENTED flips.
+  // Deliberately NOT wired to emergency services — see README's Safety
+  // section: alerting is contacts-only by design.
 
   await db
     .collection('users')
@@ -235,6 +298,7 @@ async function sendFollowUpAlert(uid: string, rideId: string): Promise<void> {
       rideId,
       timestamp: new Date().toISOString(),
       type: 'escalation',
-      status: 'mock_not_sent', // see sendContactNotification
+      // see sendContactNotification
+      status: DELIVERY_IMPLEMENTED ? 'sent' : 'mock_not_sent',
     });
 }
