@@ -1100,5 +1100,7 @@
   "quote15Payoff": "সে আপনাকে পড়ার আগেই।",
   "noRatingsYet": "এখনো কোনো রেটিং নেই",
   "statusOverdue": "ওভারডিউ",
-  "statusOk": "ঠিক আছে"
+  "statusOk": "ঠিক আছে",
+  "crashSuspectedBadge": "সম্ভাব্য দুর্ঘটনা",
+  "scoreValue": "স্কোর {score}"
 }

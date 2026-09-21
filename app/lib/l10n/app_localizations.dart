@@ -6707,6 +6707,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OK'**
   String get statusOk;
+
+  /// Badge on a ride in history that recorded a possible crash.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspected crash'**
+  String get crashSuspectedBadge;
+
+  /// Riding-score pill on a ride row; {score} is 0-100.
+  ///
+  /// In en, this message translates to:
+  /// **'Score {score}'**
+  String scoreValue(int score);
 }
 
 class _AppLocalizationsDelegate

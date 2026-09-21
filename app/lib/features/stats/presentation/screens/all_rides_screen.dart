@@ -219,6 +219,8 @@ class AllRidesRow extends StatelessWidget {
 
     return EditorialCard(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      borderColor:
+          ride.status == RideStatus.crash ? context.palette.danger : null,
       onTap: () => context.push('/ride/summary/${ride.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +278,19 @@ class AllRidesRow extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              EditorialPill('Score $score',
+              // A recorded crash signal is the one thing on this row that
+              // matters more than the score, and history is the only place a
+              // rider can see it (the live detector is switched off — see
+              // SensorConstants.impactDetectorLiveEnabled), so it leads.
+              if (ride.status == RideStatus.crash) ...[
+                Semantics(
+                  label: context.l10n.crashSuspectedBadge,
+                  child: EditorialPill(context.l10n.crashSuspectedBadge,
+                      tone: PillTone.overdue),
+                ),
+                const SizedBox(width: 8),
+              ],
+              EditorialPill(context.l10n.scoreValue(score),
                   tone: score >= 90
                       ? PillTone.ok
                       : (score >= 70 ? PillTone.neutral : PillTone.attention),

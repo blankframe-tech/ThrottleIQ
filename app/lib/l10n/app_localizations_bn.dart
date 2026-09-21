@@ -3781,4 +3781,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get statusOk => 'ঠিক আছে';
+
+  @override
+  String get crashSuspectedBadge => 'সম্ভাব্য দুর্ঘটনা';
+
+  @override
+  String scoreValue(int score) {
+    return 'স্কোর $score';
+  }
 }

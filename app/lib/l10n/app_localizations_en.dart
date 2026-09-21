@@ -3772,4 +3772,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusOk => 'OK';
+
+  @override
+  String get crashSuspectedBadge => 'Suspected crash';
+
+  @override
+  String scoreValue(int score) {
+    return 'Score $score';
+  }
 }

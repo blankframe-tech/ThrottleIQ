@@ -5144,5 +5144,18 @@
   "statusOk": "OK",
   "@statusOk": {
     "description": "Status pill on a maintenance check that is comfortably within its interval."
+  },
+  "crashSuspectedBadge": "Suspected crash",
+  "@crashSuspectedBadge": {
+    "description": "Badge on a ride in history that recorded a possible crash."
+  },
+  "scoreValue": "Score {score}",
+  "@scoreValue": {
+    "description": "Riding-score pill on a ride row; {score} is 0-100.",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
   }
 }
