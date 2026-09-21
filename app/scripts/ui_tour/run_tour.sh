@@ -6,7 +6,8 @@
 #
 # Screenshots land in <out-dir>/<NN_color_vibe_brightness>/NNN__section__name.png.
 # Combo ids look like `calming_curvy_light`; omit to run all 28.
-# Env: TOUR_FROM=<n> skips the first n tour parts; TOUR_DUMP=1 logs on-screen text.
+# Env: TOUR_FROM=<n> skips the first n tour parts; TOUR_DUMP=1 logs on-screen text;
+#      TOUR_LOCALE=bn walks the app in Bangla and logs layout overflows to the tour log.
 #
 # Why not `flutter test -d`? Every `flutter test` run reinstalls the app, and
 # a reinstall of a new build resets simulator permissions, so the location
@@ -32,6 +33,7 @@ APP_COPY="$LOGS/Runner-$UDID.app"
 build_and_install() {  # $1 = comma-separated combos
   local defines=(--dart-define=TOUR_COMBOS="$1" --dart-define=TOUR_FROM="${TOUR_FROM:-0}")
   [ "${TOUR_DUMP:-0}" = 1 ] && defines+=(--dart-define=TOUR_DUMP_TEXTS=true)
+  [ -n "${TOUR_LOCALE:-}" ] && defines+=(--dart-define=TOUR_LOCALE="${TOUR_LOCALE}")
   # Serialize builds: two runners share one build/ directory.
   while ! mkdir "$PWD/build/.ui_tour_build.lock" 2>/dev/null; do sleep 5; done
   flutter build ios --simulator --debug -t integration_test/ui_tour_test.dart "${defines[@]}" \

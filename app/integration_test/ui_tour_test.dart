@@ -28,6 +28,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:throttleiq/app.dart';
 import 'package:throttleiq/core/router/app_router.dart';
+import 'package:throttleiq/core/i18n/locale_provider.dart';
 import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
@@ -43,6 +44,11 @@ import 'package:throttleiq/firebase_options.dart';
 const _email = 'rider@example.com';
 const _password = 'Test@123';
 const _onlyCombos = String.fromEnvironment('TOUR_COMBOS');
+
+/// `--dart-define=TOUR_LOCALE=bn` walks the whole app in Bangla and logs every
+/// layout overflow it meets (`[tour] OVERFLOW ...`) instead of aborting on the
+/// first one — Bangla runs longer than English, so this is how overflow is found.
+const _tourLocale = String.fromEnvironment('TOUR_LOCALE');
 const _dumpTexts = bool.fromEnvironment('TOUR_DUMP_TEXTS');
 
 /// Development aid: skip the first N tour parts (0 = auth ... 6 = profile).
@@ -312,6 +318,18 @@ Future<void> applyCombo(Combo combo) async {
   await n.setBrightnessMode(combo.brightness == Brightness.dark
       ? AppBrightnessMode.dark
       : AppBrightnessMode.light);
+  if (_tourLocale == 'bn') {
+    await c.read(localeProvider.notifier).setLocale(AppLocale.bangla);
+    final previous = FlutterError.onError;
+    FlutterError.onError = (details) {
+      final message = details.exceptionAsString();
+      if (message.contains('overflowed')) {
+        debugPrint('[tour] OVERFLOW ${message.split('\n').first} @ $section/$shot');
+        return;
+      }
+      previous?.call(details);
+    };
+  }
   await wait(800);
 }
 
