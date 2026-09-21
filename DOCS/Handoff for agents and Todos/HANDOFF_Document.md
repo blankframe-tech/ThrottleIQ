@@ -22,6 +22,68 @@ the same command succeeded on the first attempt (Xcode build 65.1s,
 install+launch 7.6s). Lesson for next time: skip wireless for a release
 install on this device, go straight to USB.
 
+## Decisions taken 2026-09-21 (founder)
+
+Recorded so the next agent doesn't re-litigate them.
+
+| Area | Decision |
+|---|---|
+| **Blaze plan** | **Not upgrading yet.** Stay on Spark. |
+| **Crash detection** | **Leave as-is.** Flag stays off, no further work, stop raising it. |
+| **Map tiles** | Founder will sign up for a free provider; see the recommendation below. |
+| **Live `throttleiqfb` data** | **Direct execution authorized** for cleanup/migration scripts. |
+| **`AppColors` migration** | **Do it, all at once**, on a branch named `appcolors`. |
+| **Localization** | **Everything** — all 259 files, not just the core flow. |
+| **Bangla review** | Reviewer available; keep translating and mark each batch pending review. |
+| **Keystore (§78.18)** | ✅ **Backed up safely.** That half of §78.18 is closed. |
+| **CI/branch protection, Play Console, device checks** | Founder, **next week**. Keep tracked, stop surfacing. |
+| **§32 UI/UX** | **Concrete defects only** — scrim over stat card, FAB overlap, "★ —", duplicate score card, maintenance pill escalation. Taste calls (slide-to-start, "In jam", chart axes) left alone. |
+| **Design calls** | **All four approved:** route nav records the ride (§78.21), Retro/Light palette fix (§74), crash badge in history (§78.30), SafeQR print sticker (§78.24). |
+| **App Check** | **Enable** (§83.19). |
+| **Analytics** | **Add**, privacy-respecting — screen views/funnel only, no ad SDK (§83.27). Privacy policy + Data Safety form must be updated to match. |
+| **Work order** | `appcolors` → full i18n → §32 defects + design calls → small §78 items. |
+
+### ⚠️ The Blaze decision has a dated consequence
+
+Staying on Spark is fine for cost, but **§69.O6 is a deadline, not a
+preference**: Cloud Functions Node 20 is decommissioned **late Oct 2026**.
+After that, `firebase deploy --only functions` fails outright regardless of
+plan. The runtime bump to Node 22 is already written and sitting undeployed.
+
+What stays broken meanwhile, and should not be described as working:
+- **Account deletion is incomplete.** The trigger has *never* been deployed,
+  so deleting an account today leaves Cloudinary media and authored content
+  in place. This is the Play data-deletion requirement.
+- The Cloudinary sweep and the §83.15 anonymization do not run.
+- Crash-alert delivery stays a mock (consistent with the crash decision).
+
+### Tile provider recommendation (§78.16)
+
+**Thunderforest**, free tier. Best fit here because:
+- It is **raster-native** (`{z}/{x}/{y}.png?apikey=…`), which drops straight
+  into `AppTileLayer`'s existing `TILE_URL_TEMPLATE` / `{apiKey}` with no
+  code change — just build-time defines.
+- Free API key, **no card required**.
+- Its **Atlas** style is built for navigation legibility, which is the exact
+  complaint in `uiux_critique.md` §4 (the default OSM styling is too busy to
+  glance at mid-ride).
+- The app already caches tiles on disk for 30 days, so a commuter re-riding
+  the same roads costs almost nothing after the first trip — a free quota
+  goes much further here than the raw number suggests.
+
+Checked and rejected:
+- **MapTiler** — 100k API requests/month, but only **5,000 map sessions**, and
+  session metering is ambiguous for a mobile app. Logo forced on free tier.
+- **Stadia Maps** — good product and no card, but its free plan is oriented to
+  non-commercial/dev use and wants property-based auth, which is fiddlier for
+  a shipped mobile app than a plain key.
+
+**Verify the current quota on their pricing page before relying on it** — the
+150k tiles/month figure that circulates is from 2019 docs, and this was not
+confirmed against a live 2026 page.
+
+---
+
 **Full-app critique pass — surfaced 2026-09-20, largely FIXED 2026-09-21
 (issues_fixed.md §83; remainder in issues_open.md §83).** Writeup:
 `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`. Verification: `flutter analyze`

@@ -410,8 +410,13 @@ lists what still needs a device check.
 What remains open:
 
 - **78.1 Crash detection is built but switched off.**
-  `SensorConstants.impactDetectorLiveEnabled = false`. Turning it on needs
-  two things:
+  **DECISION 2026-09-21: leave as-is, no further work.** The flag stays
+  `false` and every user-facing claim has been removed (issues_fixed.md
+  §83.1). Recorded here so it isn't re-raised. One thing still outstanding
+  that the founder owns: the pitch deck (§78.25) still claims working crash
+  detection.
+  `SensorConstants.impactDetectorLiveEnabled = false`. Turning it on would
+  need two things:
   - the founder's choice of alert delivery (`DOCS/needs_attention.md` b);
   - field rides plus a padded drop test to calibrate the thresholds
     (claude_sol §1.1.1 step 6).
@@ -420,8 +425,10 @@ What remains open:
 - **78.16 Tile provider not chosen.** The shared cached tile layer is in
   place. Release builds still hit `tile.openstreetmap.org` until `TILE_*`
   defines point at a provider.
-- **78.18 The keystore has no backup** (founder action). CI now exists but
-  hasn't run on GitHub, and there's no branch protection yet.
+- **78.18 Keystore: ✅ BACKED UP (founder, 2026-09-21).** That half is closed.
+  **Still open:** CI exists but has never run on GitHub, and `main` has no
+  branch protection — so the analyze/test/rules gates are enforced on the
+  founder's laptop and nowhere else. Founder action, scheduled next week.
 - **78.21 Route navigation doesn't record the ride.** Not attempted; it
   needs a design call on merging nav into the active-ride cockpit.
 - **78.24 SafeQR has no "Print sticker"** (needs the `printing` package).
