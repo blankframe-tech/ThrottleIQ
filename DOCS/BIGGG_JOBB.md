@@ -30,7 +30,7 @@ think one is wrong, say so once, in a sentence, and then do it.
 |---|---|
 | Branch | `main` @ `4b4e0da` clean and in sync; **work is on local branches `appcolors` → `i18n` → `job3-ux` (stacked), none merged or pushed** |
 | Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
-| Tests | **1242** passing (on `job3-ux`, which contains `appcolors` + `i18n`; `main` has 1195) |
+| Tests | **1242** passing (on `job4-infra`, which contains `appcolors` + `i18n` + `job3-ux`; `main` has 1195) |
 | Analyzer | clean (zero issues) |
 | Rules suite | **113** passing |
 | Functions | build clean, **NOT deployed** (Spark plan) |
