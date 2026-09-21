@@ -366,11 +366,17 @@ test('a rider can delete their own post', async () => {
 // Regression cover: the 2026-08-12 like/vote clauses must still behave.
 // ---------------------------------------------------------------------------
 
-test('like bump still succeeds alongside its own likes/{uid} doc', async () => {
+// `likes` was retired as an engagement model (issues §80/§81) and its rules
+// clauses were dropped 2026-09-21. These three pin what that means, because
+// "we deleted some rules" is exactly the change that quietly opens a door.
+
+test('the likes tally can no longer be bumped, even with its own doc', async () => {
   const db = dbFor(MALLORY);
   const rideRef = doc(db, 'rides', RIDE_ID);
 
-  await assertSucceeds(
+  // This used to be the supported shape. There is no longer any branch that
+  // permits `rides.likes` to move, so the whole transaction fails.
+  await assertFails(
     runTransaction(db, async (tx) => {
       tx.set(doc(rideRef, 'likes', MALLORY), { likedAt: 1 });
       tx.update(rideRef, { likes: increment(1) });
@@ -378,9 +384,22 @@ test('like bump still succeeds alongside its own likes/{uid} doc', async () => {
   );
 });
 
-test('like bump without the likes/{uid} doc is still denied', async () => {
+test('a bare likes bump is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(updateDoc(doc(db, 'rides', RIDE_ID), { likes: increment(1) }));
+});
+
+test('the likes subcollection is still reachable, so share deletes work', async () => {
+  // Deliberately kept: RideShareRepository.deleteSharedRide LISTS this
+  // subcollection to sweep up legacy documents before deleting a share, and
+  // a list against a path with no matching rule is denied even when it would
+  // return nothing. Dropping the match block would turn every share-delete
+  // into permission-denied.
+  const db = dbFor(MALLORY);
+  const rideRef = doc(db, 'rides', RIDE_ID);
+  await assertSucceeds(getDocs(collection(rideRef, 'likes')));
+  await assertSucceeds(setDoc(doc(rideRef, 'likes', MALLORY), { likedAt: 1 }));
+  await assertSucceeds(deleteDoc(doc(rideRef, 'likes', MALLORY)));
 });
 
 test('vote bump still succeeds alongside its own votes/{uid} doc', async () => {

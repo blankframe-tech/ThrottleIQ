@@ -93,12 +93,12 @@ service cloud.firestore {
 
     // Ties an engagement-counter bump to the SAME transaction
     // creating/deleting the per-user doc it's supposed to represent —
-    // issues §24.7. Before this, a tally like `likes` or
-    // `upvotes`/`downvotes` could move by exactly ±1 per REQUEST, but
+    // issues §24.7. Before this, a tally like `upvotes`/`downvotes`
+    // could move by exactly ±1 per REQUEST, but
     // nothing capped the number of requests: a client could loop the same
     // update and drive any tally to an arbitrary value, since the rule never
-    // looked at the votes/likes subcollection at all. Every real caller
-    // (RideShareRepository.toggleLike/.vote, ForumRepository.votePost)
+    // looked at the votes subcollection at all. Every real caller
+    // (RideShareRepository.vote, ForumRepository.votePost)
     // already writes the counter bump and the per-user doc in the SAME
     // Firestore transaction, so `existsAfter()`/`getAfter()` — which see the
     // state once the WHOLE transaction commits, unlike `exists()`/`get()`,
@@ -110,8 +110,7 @@ service cloud.firestore {
     // after the first successful call the "before" state has already
     // changed.
     //
-    // `likeBumpValid` covers the simple create/delete-only shape (rides'
-    // `likes`, a boolean-ish per-user doc). `voteBumpValid` covers the
+    // `voteBumpValid` covers the
     // three-state shape (`votes/{uid}` → {value: 1 | -1} or absent) shared by
     // rides' upvotes/downvotes and forum posts' upvotes/downvotes: it reads
     // the vote doc's value before and after (0 standing for "no vote"), and
@@ -119,12 +118,6 @@ service cloud.firestore {
     // before→after transition implies — covering a fresh vote, a toggle-off,
     // and a flip (down→up or up→down) as the same one formula rather than
     // three separate cases.
-    function likeBumpValid(likeDocPath, delta) {
-      return delta == 1
-        ? (!exists(likeDocPath) && existsAfter(likeDocPath))
-        : (delta == -1 && exists(likeDocPath) && !existsAfter(likeDocPath));
-    }
-
     // Whether `docPath` is being created by `uid` in THIS commit — the shape
     // behind the comment/reply counter bumps. Unlike likes/votes, whose doc id
     // is the caller's uid and so can be reconstructed inside the rule, a
@@ -600,7 +593,6 @@ service cloud.firestore {
         request.resource.data.audience in ['public', 'followers', 'mutual'] &&
         (request.resource.data.audience != 'public' ||
          request.resource.data.get('allowedUserIds', []) == []) &&
-        request.resource.data.get('likes', 0) == 0 &&
         request.resource.data.get('comments', 0) == 0 &&
         request.resource.data.get('upvotes', 0) == 0 &&
         request.resource.data.get('downvotes', 0) == 0 &&
@@ -621,17 +613,14 @@ service cloud.firestore {
         request.resource.data.audience in ['public', 'followers', 'mutual'] &&
         (request.resource.data.audience != 'public' ||
          request.resource.data.get('allowedUserIds', []) == []) &&
-        request.resource.data.get('likes', 0) == resource.data.get('likes', 0) &&
         request.resource.data.get('comments', 0) == resource.data.get('comments', 0) &&
         request.resource.data.get('upvotes', 0) == resource.data.get('upvotes', 0) &&
         request.resource.data.get('downvotes', 0) == resource.data.get('downvotes', 0) &&
         rideStatsPlausible(request.resource.data);
       // Any authenticated user who can see the ride may bump the engagement
       // counters, but cannot touch any other field or set an arbitrary value.
-      // Three disjoint shapes:
-      //   - likes: ±1 (legacy heart; kept for back-compat), tied to the
-      //     caller's own likes/{uid} doc being created/deleted in the same
-      //     transaction (issues §24.7 — see likeBumpValid above).
+      // Two disjoint shapes (three until 2026-09-21 — `likes` was the third;
+      // see the note on the likes subcollection below for what remains):
       //   - comments: +1, now tied to the comment doc named by the bump's own
       //     `lastCommentId` being created by the caller in the same
       //     transaction (issues §24.7 — see newDocBy above).
@@ -646,11 +635,7 @@ service cloud.firestore {
       //     deliberately not stored, so there is no orderable score field to
       //     spoof.
       allow update: if request.auth != null && rideVisibleTo(resource.data) &&
-        ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) &&
-          likeBumpValid(
-            /databases/$(database)/documents/rides/$(rideId)/likes/$(request.auth.uid),
-            request.resource.data.likes - resource.data.likes)) ||
-         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'lastCommentId']) &&
+        ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'lastCommentId']) &&
           request.resource.data.comments == resource.data.comments + 1 &&
           request.resource.data.get('lastCommentId', '') is string &&
           request.resource.data.get('lastCommentId', '') != '' &&
@@ -664,6 +649,18 @@ service cloud.firestore {
             resource.data.downvotes, request.resource.data.downvotes)));
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
+      // Legacy hearts. The tally clauses that used to guard `rides.likes`
+      // were dropped 2026-09-21 (issues §80): votes are the only engagement
+      // model, no shipped build writes a like, and production holds zero like
+      // documents after the §79 cleanup.
+      //
+      // This subcollection rule deliberately stays. `deleteSharedRide` still
+      // LISTS `rides/{id}/likes` to sweep up stragglers before deleting a
+      // share, and a list against a path with no matching rule is denied even
+      // when it would return nothing — removing this would turn every
+      // share-delete into permission-denied. It can go one release after the
+      // app stops sweeping, in that order (issues §78.27: ship the app before
+      // the rules).
       match /likes/{userId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
         allow write: if request.auth != null && request.auth.uid == userId;
