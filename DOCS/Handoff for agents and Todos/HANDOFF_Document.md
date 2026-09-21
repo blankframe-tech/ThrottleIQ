@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-20 · Branch: `main`_
+_Last updated: 2026-09-21 · Branch: `main`_
 
 **Version bumped to `1.0.0-beta.3.0.2+19`, shipped as GitHub release
 `beta-v3.0.2`** (signed APK + AAB attached, built from `5600ecb`). Fixes
@@ -12,13 +12,15 @@ missing/building index shows a clear message instead of a generic one).
 Also carries the likes→votes retirement, the Places "Browse routes"
 button fix, and the active-ride status-pill removal already on `main`.
 
-**Not installed on the physical iPhone this round.** `flutter run
---release -d <device>` over wireless debugging failed 4/4 times, all at
-the same Xcode step (`Preparing`/`Connecting to Abraar's iPhone... Xcode
-will continue when the operation completes`, then "Timed out waiting for
-all destinations... to become available") — the Xcode build itself
-succeeded each time; only the wireless device connection timed out. A
-wired (USB) connection should be more reliable next time this is tried.
+**Installed and launched on the physical iPhone (2026-09-21), over USB.**
+`flutter run --release -d 00008120-001E5D190A85A01E` failed 4/4 times over
+wireless debugging, always at the same Xcode step ("Timed out waiting for
+all destinations... to become available" while connecting/preparing the
+device) — the Xcode build itself succeeded every time; only the wireless
+device connection timed out. Once the iPhone was connected by USB cable,
+the same command succeeded on the first attempt (Xcode build 65.1s,
+install+launch 7.6s). Lesson for next time: skip wireless for a release
+install on this device, go straight to USB.
 
 **Full-app critique pass (2026-09-20, issues_open.md §81):** A read-only
 review of UI/UX, codebase, architecture and flow. **No code changed.**
