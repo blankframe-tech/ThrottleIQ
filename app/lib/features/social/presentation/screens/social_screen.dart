@@ -1165,12 +1165,20 @@ class PhotoCollage extends StatelessWidget {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(context.shape.radiusLg),
-      child: SizedBox(
-        height: height,
-        child: content,
+    final radius = BorderRadius.circular(context.shape.radiusLg);
+    return Container(
+      height: height,
+      // Foreground, so the outline is painted over the photos rather than
+      // hidden behind them; without it a pale photo has no visible edge on a
+      // pale card.
+      foregroundDecoration: BoxDecoration(
+        borderRadius: radius,
+        border: Border.all(
+          color: context.palette.border,
+          width: context.shape.outlineWidth,
+        ),
       ),
+      child: ClipRRect(borderRadius: radius, child: content),
     );
   }
 }

@@ -817,18 +817,29 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                     ),
                   );
                 },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
-                  child: Image.network(
-                    url,
-                    width: 130,
-                    height: 130,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                child: Container(
+                  // Painted over the photo, matching the feed collage.
+                  foregroundDecoration: BoxDecoration(
+                    borderRadius:
+                        BorderRadius.circular(context.shape.radiusMd),
+                    border: Border.all(
+                      color: context.palette.border,
+                      width: context.shape.outlineWidth,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                    child: Image.network(
+                      url,
                       width: 130,
                       height: 130,
-                      color: context.palette.surface,
-                      child: Icon(Icons.broken_image, color: context.palette.textTertiary),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 130,
+                        height: 130,
+                        color: context.palette.surface,
+                        child: Icon(Icons.broken_image, color: context.palette.textTertiary),
+                      ),
                     ),
                   ),
                 ),
