@@ -4089,4 +4089,63 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get badgeTierDiamond => 'ডায়মন্ড';
+
+  @override
+  String get turnStart => 'শুরু';
+
+  @override
+  String get turnSlightLeft => 'হালকা বাঁয়ে';
+
+  @override
+  String get turnLeft => 'বাঁয়ে ঘুরুন';
+
+  @override
+  String get turnSharpLeft => 'তীক্ষ্ণ বাঁয়ে';
+
+  @override
+  String get turnSlightRight => 'হালকা ডানে';
+
+  @override
+  String get turnRight => 'ডানে ঘুরুন';
+
+  @override
+  String get turnSharpRight => 'তীক্ষ্ণ ডানে';
+
+  @override
+  String get turnUTurn => 'ইউ-টার্ন নিন';
+
+  @override
+  String get turnStraight => 'সোজা চলুন';
+
+  @override
+  String get turnArrive => 'আপনি পৌঁছে গেছেন';
+
+  @override
+  String get compassNorth => 'উত্তর';
+
+  @override
+  String get compassNorthEast => 'উত্তর-পূর্ব';
+
+  @override
+  String get compassEast => 'পূর্ব';
+
+  @override
+  String get compassSouthEast => 'দক্ষিণ-পূর্ব';
+
+  @override
+  String get compassSouth => 'দক্ষিণ';
+
+  @override
+  String get compassSouthWest => 'দক্ষিণ-পশ্চিম';
+
+  @override
+  String get compassWest => 'পশ্চিম';
+
+  @override
+  String get compassNorthWest => 'উত্তর-পশ্চিম';
+
+  @override
+  String turnHead(String direction) {
+    return '$direction দিকে যান';
+  }
 }

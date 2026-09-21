@@ -7265,6 +7265,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Diamond'**
   String get badgeTierDiamond;
+
+  /// Navigation banner: start of the route.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get turnStart;
+
+  /// Navigation banner: slight left turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight left'**
+  String get turnSlightLeft;
+
+  /// Navigation banner: left turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn left'**
+  String get turnLeft;
+
+  /// Navigation banner: sharp left turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharp left'**
+  String get turnSharpLeft;
+
+  /// Navigation banner: slight right turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight right'**
+  String get turnSlightRight;
+
+  /// Navigation banner: right turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn right'**
+  String get turnRight;
+
+  /// Navigation banner: sharp right turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharp right'**
+  String get turnSharpRight;
+
+  /// Navigation banner: U-turn.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a U-turn'**
+  String get turnUTurn;
+
+  /// Navigation banner: keep going straight.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue straight'**
+  String get turnStraight;
+
+  /// Navigation banner: destination reached.
+  ///
+  /// In en, this message translates to:
+  /// **'You have arrived'**
+  String get turnArrive;
+
+  /// Compass direction, lower-case for use mid-sentence.
+  ///
+  /// In en, this message translates to:
+  /// **'north'**
+  String get compassNorth;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'north-east'**
+  String get compassNorthEast;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'east'**
+  String get compassEast;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'south-east'**
+  String get compassSouthEast;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'south'**
+  String get compassSouth;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'south-west'**
+  String get compassSouthWest;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'west'**
+  String get compassWest;
+
+  /// Compass direction.
+  ///
+  /// In en, this message translates to:
+  /// **'north-west'**
+  String get compassNorthWest;
+
+  /// Navigation banner at the start: {direction} is a compass word.
+  ///
+  /// In en, this message translates to:
+  /// **'Head {direction}'**
+  String turnHead(String direction);
 }
 
 class _AppLocalizationsDelegate

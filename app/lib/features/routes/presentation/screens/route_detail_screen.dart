@@ -13,6 +13,7 @@ import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../turn_instruction_l10n.dart';
 
 /// One saved route: the line on a map, its stats, its turn list, and the
 /// entry point into navigation.
@@ -244,7 +245,7 @@ class RouteDetailScreen extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          turn.text,
+                          turn.localizedText(context.l10n),
                           style: TextStyle(
                               fontSize: 14, color: context.palette.textPrimary),
                         ),

@@ -18,6 +18,7 @@ import 'route_detail_screen.dart' show turnIcon;
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../turn_instruction_l10n.dart';
 
 /// How close the rider must get to a turn's point before it's considered done
 /// and the banner advances to the next one.
@@ -256,7 +257,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      turn.text,
+                                      turn.localizedText(context.l10n),
                                       style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,

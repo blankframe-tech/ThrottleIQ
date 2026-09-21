@@ -5566,5 +5566,86 @@
   "badgeTierDiamond": "Diamond",
   "@badgeTierDiamond": {
     "description": "Badge tier name (diamond)."
+  },
+  "turnStart": "Start",
+  "@turnStart": {
+    "description": "Navigation banner: start of the route."
+  },
+  "turnSlightLeft": "Slight left",
+  "@turnSlightLeft": {
+    "description": "Navigation banner: slight left turn."
+  },
+  "turnLeft": "Turn left",
+  "@turnLeft": {
+    "description": "Navigation banner: left turn."
+  },
+  "turnSharpLeft": "Sharp left",
+  "@turnSharpLeft": {
+    "description": "Navigation banner: sharp left turn."
+  },
+  "turnSlightRight": "Slight right",
+  "@turnSlightRight": {
+    "description": "Navigation banner: slight right turn."
+  },
+  "turnRight": "Turn right",
+  "@turnRight": {
+    "description": "Navigation banner: right turn."
+  },
+  "turnSharpRight": "Sharp right",
+  "@turnSharpRight": {
+    "description": "Navigation banner: sharp right turn."
+  },
+  "turnUTurn": "Make a U-turn",
+  "@turnUTurn": {
+    "description": "Navigation banner: U-turn."
+  },
+  "turnStraight": "Continue straight",
+  "@turnStraight": {
+    "description": "Navigation banner: keep going straight."
+  },
+  "turnArrive": "You have arrived",
+  "@turnArrive": {
+    "description": "Navigation banner: destination reached."
+  },
+  "compassNorth": "north",
+  "@compassNorth": {
+    "description": "Compass direction, lower-case for use mid-sentence."
+  },
+  "compassNorthEast": "north-east",
+  "@compassNorthEast": {
+    "description": "Compass direction."
+  },
+  "compassEast": "east",
+  "@compassEast": {
+    "description": "Compass direction."
+  },
+  "compassSouthEast": "south-east",
+  "@compassSouthEast": {
+    "description": "Compass direction."
+  },
+  "compassSouth": "south",
+  "@compassSouth": {
+    "description": "Compass direction."
+  },
+  "compassSouthWest": "south-west",
+  "@compassSouthWest": {
+    "description": "Compass direction."
+  },
+  "compassWest": "west",
+  "@compassWest": {
+    "description": "Compass direction."
+  },
+  "compassNorthWest": "north-west",
+  "@compassNorthWest": {
+    "description": "Compass direction."
+  },
+  "turnHead": "Head {direction}",
+  "@turnHead": {
+    "description": "Navigation banner at the start: {direction} is a compass word.",
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      }
+    }
   }
 }

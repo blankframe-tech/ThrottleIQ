@@ -1049,3 +1049,23 @@ badgeTierSilver
 badgeTierGold
 badgeTierPlatinum
 badgeTierDiamond
+# batch: navigation (manual)
+turnStart
+turnSlightLeft
+turnLeft
+turnSharpLeft
+turnSlightRight
+turnRight
+turnSharpRight
+turnUTurn
+turnStraight
+turnArrive
+compassNorth
+compassNorthEast
+compassEast
+compassSouthEast
+compassSouth
+compassSouthWest
+compassWest
+compassNorthWest
+turnHead

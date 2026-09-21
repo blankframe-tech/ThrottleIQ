@@ -4080,4 +4080,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get badgeTierDiamond => 'Diamond';
+
+  @override
+  String get turnStart => 'Start';
+
+  @override
+  String get turnSlightLeft => 'Slight left';
+
+  @override
+  String get turnLeft => 'Turn left';
+
+  @override
+  String get turnSharpLeft => 'Sharp left';
+
+  @override
+  String get turnSlightRight => 'Slight right';
+
+  @override
+  String get turnRight => 'Turn right';
+
+  @override
+  String get turnSharpRight => 'Sharp right';
+
+  @override
+  String get turnUTurn => 'Make a U-turn';
+
+  @override
+  String get turnStraight => 'Continue straight';
+
+  @override
+  String get turnArrive => 'You have arrived';
+
+  @override
+  String get compassNorth => 'north';
+
+  @override
+  String get compassNorthEast => 'north-east';
+
+  @override
+  String get compassEast => 'east';
+
+  @override
+  String get compassSouthEast => 'south-east';
+
+  @override
+  String get compassSouth => 'south';
+
+  @override
+  String get compassSouthWest => 'south-west';
+
+  @override
+  String get compassWest => 'west';
+
+  @override
+  String get compassNorthWest => 'north-west';
+
+  @override
+  String turnHead(String direction) {
+    return 'Head $direction';
+  }
 }
