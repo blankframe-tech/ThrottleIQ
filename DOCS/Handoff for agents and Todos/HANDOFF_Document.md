@@ -166,7 +166,11 @@ token facades are gone and `key: ValueKey(appearance)` is deleted, so changing
 appearance re-themes the app in place instead of unmounting it (issues_fixed.md
 §83.9 rest). §74 (Retro/Light near-black cards) is fixed too — it was an
 `AppCard` paint-order bug, not a palette token. `flutter analyze` zero,
-`flutter test` **1206/1206**. Anything written against `AppColors.x` /
+`flutter test` **1206/1206**. **Not yet verified in the real app:** a UI-tour
+before/after screenshot diff (`app/scripts/ui_tour/run_tour.sh`, `main` vs
+`appcolors`, same combos) was started but not completed at the time of writing —
+so the automated tests prove the mechanism, not that all ~1,940 rewritten sites
+render the same. Run it before merging. Anything written against `AppColors.x` /
 `AppDimensions.radius*` / `display(18)` on another branch must move to
 `context.palette.x` / `context.shape.radius*` / `display(context, 18)`.
 
