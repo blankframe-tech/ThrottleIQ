@@ -36,7 +36,7 @@ Recorded so the next agent doesn't re-litigate them.
 | **Crash detection** | **Leave as-is.** Flag stays off, no further work, stop raising it. |
 | **Map tiles** | Founder will sign up for a free provider; see the recommendation below. |
 | **Live `throttleiqfb` data** | **Direct execution authorized** for cleanup/migration scripts. |
-| **`AppColors` migration** | **Do it, all at once**, on a branch named `appcolors`. Scope is **three** static facades (AppColors/AppDimensions/AppTypography, ~1,942 sites), not just AppColors — see §83.9. |
+| **`AppColors` migration** | ✅ **DONE on branch `appcolors` (2026-09-21), awaiting merge** — see issues_fixed.md §83.9 (rest). Was: do it all at once on a branch named `appcolors`. Scope is **three** static facades (AppColors/AppDimensions/AppTypography, ~1,942 sites), not just AppColors — see §83.9. |
 | **Localization** | **Everything** — all 259 files, not just the core flow. |
 | **Bangla review** | Reviewer available; keep translating and mark each batch pending review. |
 | **Keystore (§78.18)** | ✅ **Backed up safely.** That half of §78.18 is closed. |
@@ -161,9 +161,17 @@ Fixed, highest-consequence first:
   convention is now `issues §N` / `grill §N`, defined once in `DOCS/README.md`.
 - Tests no longer hit OpenStreetMap's tile servers.
 
-**Still open (issues_open.md §83), biggest first:** the `AppColors` static
-facade (1,532 reads vs 10 `Theme.of`) and the whole-app remount it forces;
-the active-ride screen rebuilding in full every second; DI/testability, and
+**`appcolors` branch (2026-09-21, NOT yet merged to `main`):** the three static
+token facades are gone and `key: ValueKey(appearance)` is deleted, so changing
+appearance re-themes the app in place instead of unmounting it (issues_fixed.md
+§83.9 rest). §74 (Retro/Light near-black cards) is fixed too — it was an
+`AppCard` paint-order bug, not a palette token. `flutter analyze` zero,
+`flutter test` **1206/1206**. Anything written against `AppColors.x` /
+`AppDimensions.radius*` / `display(18)` on another branch must move to
+`context.palette.x` / `context.shape.radius*` / `display(context, 18)`.
+
+**Still open (issues_open.md §83), biggest first:** the active-ride screen
+rebuilding in full every second; DI/testability, and
 with it 43 screens having 1 screen test; accessibility beyond tooltips and a
 text-scale clamp; onboarding still English-only; App Check; the unsigned
 Cloudinary upload endpoint; client-side-only blocking.

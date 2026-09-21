@@ -5615,3 +5615,66 @@ Verification for the whole pass: `flutter analyze` clean, `flutter test`
   `_BlankTileProvider` serving a 1×1 transparent PNG with zero network calls
   (verified: 0 occurrences in a full run). It still carries the app's
   User-Agent so the tile-policy header test stays meaningful.
+
+## 74. Retro / Light: cards render near-black with unreadable text — FIXED (2026-09-21)
+
+Surfaced 2026-09-19 in the UI screenshot set: "Your bikes" forum cards, Places
+rows, My Places rows and the forum post card were solid near-black blocks on
+Retro's cream page, their titles invisible.
+
+**The 2026-09-21 diagnosis ("a palette token used as a card fill") was wrong.**
+It was a paint-order bug in `AppCard`. Retro is the only palette with
+`hasHardShadow`, and a blur-less `BoxShadow` paints a *solid offset copy of the
+whole card*. `AppCard` supplied its fill from a `Material` **behind** the
+`Container` that carried the shadow, so the shadow copy was painted over the
+white fill and under the text — a block of the border colour (`#1A1A1A` on
+Retro Light, cream on Retro Dark). Title text is `textPrimary`, also `#1A1A1A`,
+hence invisible. No other mode sets a hard shadow, which is why no other mode
+did it. `StatCard` already had the fill in the same decoration, so it was fine.
+
+Fix: the fill now lives in the same `BoxDecoration` as the shadow (paint order
+is shadow, fill, border), with a transparent `Material` on top so `InkWell`
+still splashes. `test/shared/widgets/app_card_test.dart` pins it. No palette
+token was changed.
+
+## 83.9 (rest). Static token facades removed — the app no longer remounts on a theme change (2026-09-21, branch `appcolors`)
+
+Fixes the half of §83.9 that was left open when `AppBrightnessMode.system`
+landed. **Scope was three facades, not one** — `AppColors`, `AppDimensions`
+(shape) and `AppTypography` (~1,940 call sites in 86 files); migrating only
+colours would not have let the remount go.
+
+- `AppColorPalette` and `AppShapeProfile` are now `ThemeExtension`s themselves
+  (with `copyWith` and `lerp`) — no wrapper classes to keep in sync.
+  `AppTheme.build(appearance)` resolves both and registers them on
+  `ThemeData.extensions`.
+- Read with `context.palette.x` / `context.shape.x`
+  (`core/theme/app_theme_context.dart`). A tree with no extensions registered —
+  a bare `MaterialApp` in a widget test — falls back to the default appearance
+  rather than throwing.
+- `AppColors` is **deleted**. `AppDimensions` keeps only the skin-independent
+  spacing constants. `AppTypography` lost its static mode; `display()`,
+  `cockpitLabel()` and `cockpitValue()` now take a `BuildContext`, and Retro's
+  monospace face is a `monoDisplay` flag on the palette. The top-level
+  `display(context, size)` helper follows.
+- `AppearanceNotifier._applyTokens()` and every `apply()` are gone, and
+  **`key: ValueKey(appearance)` is deleted from `app.dart`** — the acceptance
+  test. `test/core/theme/app_theme_context_test.dart` asserts a live widget is
+  re-themed with the **same `State` object and `initState` run once**, for a
+  colour, a shape and a brightness change.
+- Dialog / bottom-sheet / date-picker `builder:` closures (17 of them) now read
+  their **own** builder context, not the caller's. A route outlives its caller,
+  and looking a token up through a deactivated element asserts. The old
+  statics never had this failure mode, so a blind search-and-replace would have
+  introduced it.
+- `MaterialApp.themeAnimationDuration` is `Duration.zero`. Tokens on the theme
+  mean a 200 ms theme tween would rebuild every dependent widget on every frame
+  of it, across the whole navigator stack. The palette `lerp` exists (it is
+  part of the `ThemeExtension` contract and is tested) if that is ever wanted.
+- Verification: `flutter analyze` zero, `flutter test` **1206** passing (was
+  1195; +11 — the acceptance test, extension `copyWith`/`lerp`/registration
+  tests, and the four `AppCard` tests from §74), rules 113 unchanged, `functions/` untouched.
+
+**Not done here:** `const` is not re-enabled at the migrated sites (the reads
+are `context` lookups, so they cannot be const anyway); goldens are now
+*possible* but there are still 0.

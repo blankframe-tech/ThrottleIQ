@@ -17,7 +17,7 @@ picks this up next. Baseline: `main` @ `4b4e0da`, version
 
 Read §1 (state), §2 (gates) and **§3 (traps) before touching anything**. §3 is
 the highest-value section here — most of it is failures I actually hit, not
-hypotheticals. Then work §5 in order.
+hypotheticals. Then work §5 in order (JOB 1 is done; start at JOB 2).
 
 The founder's decisions in §4 are **settled**. Do not re-litigate them; if you
 think one is wrong, say so once, in a sentence, and then do it.
@@ -28,9 +28,9 @@ think one is wrong, say so once, in a sentence, and then do it.
 
 | | |
 |---|---|
-| Branch | `main` @ `4b4e0da`, clean, in sync with origin |
+| Branch | `main` @ `4b4e0da` clean and in sync; **JOB 1 lives on local branch `appcolors`, not merged, not pushed** |
 | Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
-| Tests | **1195** passing |
+| Tests | **1206** passing (on `appcolors`; `main` has 1195) |
 | Analyzer | clean (zero issues) |
 | Rules suite | **113** passing |
 | Functions | build clean, **NOT deployed** (Spark plan) |
@@ -65,7 +65,7 @@ Run **all four** before declaring anything done. CI runs the first three.
 
 ```bash
 cd app       && flutter analyze          # must be ZERO issues
-cd app       && flutter test             # 1195 passing
+cd app       && flutter test             # 1206 passing (1195 on main)
 cd functions && npm run build            # tsc, must be silent
 cd scripts   && npm run test:rules       # 113 passing (needs JDK 21+)
 ```
@@ -197,7 +197,7 @@ before promising anything server-side.
 | **Crash detection** | **Leave as-is.** Flag stays off. No further work. Stop raising it. |
 | **Map tiles** | Founder signing up for a free provider. Recommendation: **Thunderforest** (raster-native, drops into `TILE_URL_TEMPLATE`/`{apiKey}` with no code change; free key, no card; Atlas style is built for navigation legibility). Verify the quota on their live pricing page — the 150k/month figure traces to 2019 docs. |
 | **Live `throttleiqfb` data** | **Direct execution authorized** for cleanup/migration scripts. |
-| **`AppColors` migration** | **Do it, all at once**, on a branch named **`appcolors`**. |
+| **`AppColors` migration** | ✅ Done on branch **`appcolors`**, awaiting merge. |
 | **Localization** | **Everything** — all 260 files. |
 | **Bangla review** | Reviewer available. Keep translating; hand off each batch marked pending. |
 | **Keystore (§78.18)** | ✅ Backed up. That half closed. |
@@ -220,76 +220,46 @@ revisited, it should be before then.
 
 ## 5. The work queue
 
-### JOB 1 — `appcolors`: kill the static token facades
+### JOB 1 — `appcolors`: kill the static token facades — ✅ DONE
 
-**Branch name: `appcolors`** (founder specified).
+**Done 2026-09-21 on branch `appcolors`, awaiting the founder's merge.**
+Details and verification numbers: `issues_fixed.md` §83.9 (rest) and §74.
 
-#### Scope is bigger than "AppColors" — verify this first
+What exists now: `AppColorPalette` / `AppShapeProfile` are `ThemeExtension`s,
+registered by `AppTheme.build`, read with `context.palette` / `context.shape`
+(`core/theme/app_theme_context.dart`). `AppColors`, every `apply()` and
+`key: ValueKey(appearance)` are deleted; `AppTypography.display/cockpit*` and
+the top-level `display()` take a `BuildContext`. The acceptance test is
+automated: `test/core/theme/app_theme_context_test.dart`.
 
-There are **three** mutable static token facades, not one, and
-`AppearanceNotifier._applyTokens()` applies all three together:
+**Follow-ups a new agent should know, all learned the hard way:**
 
-| Facade | Reads | Mechanism |
-|---|---|---|
-| `AppColors` | **1,579** | `static void apply(AppColorPalette)` |
-| `AppDimensions` | **346** | `static void apply(AppShapeProfile)` |
-| `AppTypography` | **17** | `static void applyStyle(AppColorMode)` |
-| `Theme.of(context)` | 10 | (the correct pattern, barely used) |
+- **Do not read tokens in `initState`, or cache them in a field.** It throws or
+  freezes at the first value — the old bug again. Read in `build`/a builder.
+- **Dialog/sheet/picker `builder:` closures must use their *own* context**, not
+  the caller's. A route outlives its caller; a deactivated outer context
+  asserts. 17 such closures were retargeted. An `itemBuilder`/`errorBuilder`
+  running inside the widget's own subtree is fine.
+- **`MaterialApp` animates theme changes by default.** It is switched off
+  (`themeAnimationDuration: Duration.zero`) because each frame of a 200 ms tween
+  would rebuild every token-reading widget in the whole stack. It also bites
+  *tests*: after a second `pumpWidget` with a new theme, `Theme.of` still
+  returns the old palette — set `themeAnimationDuration: Duration.zero`, or use
+  a bare `Theme` widget.
+- **`AppTheme.build` in a test reaches google_fonts, which tries to download.**
+  Use `themeFor` (app_theme_style_test.dart), which contains it, or resolve
+  tokens with `AppColorPalette.forMode` / `AppShapeProfile.forVibe`.
+- **Bulk-rewriting is safe only with `&&` and a re-run of the analyzer.** Two of
+  my regexes stacked and produced `cockpitValue(context, context)`; macOS
+  `sed -i` needs `-i ''`. The `&&` chain (§3.8) is what stopped the run.
+- **Goldens are now possible and there are still none.** That is the obvious
+  next use of this work: the 28 appearance combinations are what
+  `app/scripts/ui_tour/run_tour.sh` already walks.
 
-**≈1,942 call sites total.** Migrating only `AppColors` will *not* let you
-delete the remount — shape radii and typography would still be stale after a
-theme change. Do all three or the job isn't done.
-
-#### The acceptance test
-
-Delete this, from `app/lib/app.dart`:
-
-```dart
-return MaterialApp.router(
-  key: ValueKey(appearance),   // ← this line is the whole point
-```
-
-That key forces the **entire app to unmount and remount** on every theme
-change, destroying every `State`: scroll offsets, map camera, half-typed
-forms, open sheets, `AnimationController`s. It exists only because static
-reads sit outside Flutter's element dependency graph and nothing else can
-propagate the change. **If you can delete that line and theme switching still
-works everywhere, you're done.** If you can't, you aren't.
-
-#### What it also buys
-
-- `const` becomes usable again at ~1,942 sites (they were all de-`const`ed
-  when the fields became getters).
-- Static palette state stops leaking between widget tests.
-- Golden tests become possible (there are **0** today, across 28 appearance
-  combinations: 7 colours × 2 brightnesses × 2 shapes).
-
-#### Suggested approach
-
-1. Define `ThemeExtension`s: `AppPalette` (from `AppColorPalette`),
-   `AppShape` (from `AppShapeProfile`), and fold typography into
-   `ThemeData.textTheme` where it fits.
-2. Register them in `AppTheme.build(appearance)` — that function already
-   receives the resolved appearance, so it is the natural seam.
-3. Add terse accessors so call sites stay readable, e.g.
-   `context.palette.primary` / `context.shape.radiusMd` via a `BuildContext`
-   extension. A 1,942-site migration wants the shortest possible replacement.
-4. Migrate feature directory by feature directory, running `flutter analyze`
-   after each. Expect to thread `BuildContext` into helper methods that
-   currently take none — that is the genuinely manual part.
-5. Delete the `ValueKey`, delete the `apply()` methods, run all four gates.
-6. **Then** fix §74 (Retro/Light near-black cards) — it is a palette-token
-   bug and this pass touches every token anyway. Doing it first means doing
-   it twice.
-
-#### Watch out for
-
-- Places that read tokens with no `BuildContext` in scope (`initState`,
-  static helpers, `Paint` builders in `CustomPainter`). These need the context
-  passed in or the value resolved at build time.
-- Tests that assert on `AppColors.x` directly — `test/core/theme/` has several.
-- `AppColors.hasHardShadow` (Retro's offset-shadow flag) is read by `AppCard`
-  and `StatCard` and is easy to miss.
+**§74 turned out not to be a palette token.** The 2026-09-21 guess was wrong;
+it was an `AppCard` paint-order bug (hard shadow painted over the fill). Fixed
+and pinned by `test/shared/widgets/app_card_test.dart`. Lesson: when an issue
+says "probably X", look at the screenshot before believing it.
 
 ---
 
@@ -347,10 +317,7 @@ live previews, the low-contrast secondary-text pass.
 - **§78.21 — route navigation should record the ride.** Today nav and
   recording are separate flows that don't compose: follow a saved route and
   you end up with no ride logged. Merge nav into the active-ride cockpit.
-- **§74 — Retro/Light near-black cards.** Forum cards, Places rows and My
-  Places rows render as near-black blocks on Retro's cream background with
-  low-contrast text; no other Light mode does this. It's one palette token
-  used as a card fill. **Do this inside JOB 1.**
+- **§74 — Retro/Light near-black cards.** ✅ Fixed — it was an `AppCard` paint-order bug, not a palette token. _(Done inside JOB 1 — see `issues_fixed.md` §74.)_
 - **§78.30 — crash badge in ride history.** A suspected-crash ride looks
   identical to a commute. It is the only surface where crash data is visible
   at all, given the detector stays off.

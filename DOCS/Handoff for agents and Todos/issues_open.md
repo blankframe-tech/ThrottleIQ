@@ -198,11 +198,6 @@ feeds at effectively unlimited rate.
   (`exportToJSON`/`exportToGPX`/`_generateGPX`, `:448-515`) that duplicates
   `export_service.dart:24-121` with different target directories and no
   `<bounds>` computation — a fix to one will drift from the other.
-- Theming (`theme_style_provider.dart:179-183`) pushes appearance into
-  mutable static facades (`AppColors`/`AppDimensions`/`AppTypography`,
-  ~565 call sites per the codebase's own comment) and force-remounts the
-  entire app subtree on every appearance change, destroying transient
-  navigation/scroll state each time.
 - `isAdmin` is hardcoded to one email client-side
   (`forum_permissions.dart:5,10-11`) and manually mirrored in
   `firestore.rules:87-91` — not currently spoofable, but the two can drift
@@ -392,25 +387,6 @@ no fix needed.**
   **DEPLOYED 2026-09-19** — confirmed live at
   `https://throttleiqfb.web.app/privacy.html`.
 
-## 74. Retro / Light: some cards render near-black on the light page (surfaced 2026-09-19)
-
-Seen in the UI screenshot set (`DOCS/General/screenshots_ui/21_retro_curvy_light`
-and `23_retro_boxy_light`). A few surfaces are near-black blocks on Retro's
-light cream background, with low-contrast text inside:
-- the "Your bikes" forum cards on Social → Forums
-- the Places list rows
-- My Places rows
-- the forum post card
-
-Other color modes in Light don't do this. It is probably a Retro-light palette token (a
-`surfaceVariant`/`ink`-style color used as a card fill) rather than a
-per-screen bug.
-
-**DECIDED 2026-09-21: lighten the token.** This is a bug, not intentional
-"ink block" styling — no other Light mode does it, and the text inside fails
-contrast. Queued behind the `appcolors` migration, since that pass touches
-every palette token anyway and fixing it first would mean doing it twice.
-
 ## 78. Antigravity grill verification: still open (surfaced 2026-09-20)
 
 The full verdicts and fix instructions are in
@@ -536,57 +512,6 @@ Cloudinary deletion sweep and the account-deletion anonymization in §83.15 do
 not run yet. See `HANDOFF_Document.md` for the verification detail.
 
 What is still open:
-
-### 83.9 (part) — three mutable static token facades, not one
-
-The user-visible half is fixed: the app now follows the OS light/dark setting
-(`AppBrightnessMode.system`). The underlying problem is not.
-
-**SCOPE CORRECTED 2026-09-21.** This was originally written as "1,532
-`AppColors` reads". That understates the job, and planning from it would
-produce a migration that doesn't actually work. There are **three** facades,
-and `AppearanceNotifier._applyTokens()` applies all three together:
-
-| Facade | Reads | Mechanism |
-|---|---|---|
-| `AppColors` | **1,579** | `static void apply(AppColorPalette)` |
-| `AppDimensions` | **346** | `static void apply(AppShapeProfile)` |
-| `AppTypography` | **17** | `static void applyStyle(AppColorMode)` |
-| `Theme.of(context)` | 10 | the correct pattern, barely used |
-
-**≈1,942 call sites.** Migrating only `AppColors` leaves shape radii and
-typography stale after a theme change, so the remount would still be
-required — i.e. the migration would not deliver the thing it exists to
-deliver.
-
-Why it matters:
-
-- ~99% of the app's colour/shape decisions happen outside Flutter's element
-  dependency graph, so nothing subscribes to them.
-- Which is why `app.dart` carries `key: ValueKey(appearance)` on
-  `MaterialApp.router` — **changing the theme unmounts and remounts the whole
-  app**, destroying every `State`: scroll offsets, map camera, half-typed
-  forms, open sheets, `AnimationController`s.
-- `const` is unusable at all ~1,942 sites; static palette state leaks between
-  widget tests; goldens are impractical across the 28 appearance combinations
-  (7 colours × 2 brightnesses × 2 shapes), and there are 0 in the repo.
-
-**Fix:** `ThemeExtension`s (`AppPalette`, `AppShape`, typography into
-`ThemeData.textTheme`) registered in `AppTheme.build(appearance)`, read via a
-`BuildContext` extension so call sites stay terse.
-
-**Acceptance test: delete `key: ValueKey(appearance)` from `app.dart` and
-have theme switching still work everywhere.** If it can't be deleted, the job
-isn't finished. Mechanical but large, and it grows with every new call site.
-This is the single biggest piece of debt left in the app.
-
-Full migration guidance, including the call sites with no `BuildContext` in
-scope and the tests that assert on `AppColors.x` directly, is in
-`DOCS/BIGGG_JOBB.md` JOB 1.
-
-**APPROVED 2026-09-21: do it, all at once, on a branch named `appcolors`.**
-First item in the work order. §74's Retro/Light palette bug is queued behind
-it deliberately, since this pass touches every token anyway.
 
 ### 83.12 — the active-ride screen rebuilds in full, once per second
 
