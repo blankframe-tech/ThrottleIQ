@@ -22,6 +22,10 @@ the same command succeeded on the first attempt (Xcode build 65.1s,
 install+launch 7.6s). Lesson for next time: skip wireless for a release
 install on this device, go straight to USB.
 
+> **Picking up the work?** Read [`DOCS/BIGGG_JOBB.md`](../BIGGG_JOBB.md)
+> first — it carries the ordered work queue, the verification gates and a
+> traps section. This document is the status record; that one is the plan.
+
 ## Decisions taken 2026-09-21 (founder)
 
 Recorded so the next agent doesn't re-litigate them.

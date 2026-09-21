@@ -38,6 +38,15 @@ renamed `DOCS/` and `Issues.md` was split on 2026-09-19), `claude_sol.md §N`
 or issues_fixed.md §N` that appeared in 28 files and could not decide which of
 the two files it meant.
 
+## Start here if you are picking up the active work
+
+[`BIGGG_JOBB.md`](BIGGG_JOBB.md) — the 2026-09-21 handoff: current state, the
+four verification gates, the founder's settled decisions, the ordered work
+queue, and a **traps** section of failures actually hit (do not run
+`dart format` across `lib/`; section numbers collide; `--force` would drop
+live indexes). Read it before `HANDOFF_Document.md` if you are here to write
+code rather than to check status.
+
 ## Living docs, kept up to date every session
 
 | File | What it's for |
