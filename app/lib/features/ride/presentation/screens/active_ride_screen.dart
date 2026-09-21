@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +18,9 @@ import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../routes/presentation/providers/navigation_session_provider.dart';
+import '../../../routes/presentation/providers/route_providers.dart';
+import '../../../social/data/repositories/route_repository.dart';
+import '../../domain/entities/ride_entity.dart';
 import '../../../routes/presentation/widgets/navigation_banner.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
@@ -301,8 +306,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final choice = await showEndRideSheet(context);
     if (!mounted || choice == null) return;
     final shareAfterEnd = choice.share;
+    // Read before stopping: stopRide() resets the provider to idle, taking the
+    // ride entity with it.
+    final finishedRide = ref.read(rideRecordingProvider).ride;
     _endingRide = true;
     final rideId = await ref.read(rideRecordingProvider.notifier).stopRide();
+    _recordRouteRidden(finishedRide);
     if (!mounted) return;
     if (rideId == null) {
       context.go('/home/record');
@@ -311,6 +320,29 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     } else {
       context.go('/ride/summary/$rideId');
     }
+  }
+
+  /// Counts a finished ride against the saved route it followed (issues §85).
+  ///
+  /// Called from [_stopRide] only, never from [_cancelRide]: a discarded ride
+  /// is one that did not happen as far as the rider is concerned, and a
+  /// "ridden 4×" that counts abandoned attempts is the same dead number §85
+  /// was raised about. Bumping on *completion* rather than on start is the
+  /// same reasoning.
+  ///
+  /// Lives here rather than in `RideRecordingNotifier` on purpose — the
+  /// recorder knows nothing about routes, and that one-way dependency is what
+  /// keeps navigation out of the core loop (§78.21).
+  void _recordRouteRidden(RideEntity? ride) {
+    final routeId = ride?.routeId;
+    if (ride == null || routeId == null) return;
+    unawaited(RouteRepository()
+        .incrementTimesRidden(ride.userId, routeId)
+        .then((_) {
+      // The list and the detail screen both render the counter.
+      ref.invalidate(myRoutesProvider);
+      ref.invalidate(routeByIdProvider);
+    }));
   }
 
   /// Throws the ride away without saving it. Worded as bluntly as the action
@@ -357,7 +389,18 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
 
   @override
   Widget build(BuildContext context) {
-    final rideState = ref.watch(rideRecordingProvider);
+    // Only the three fields that change the SHAPE of this screen (issues
+    // §83.12). Watching the whole 21-field state rebuilt all ~880 lines of it
+    // on every accelerometer sample, every GPS fix and every clock tick —
+    // with the map, the foreground service and 20-50 Hz IMU already running.
+    // The readouts that genuinely do change that fast now sit in their own
+    // widgets below, each selecting only its own fields, so a speed update
+    // repaints a number instead of the cockpit.
+    final rideState = ref.watch(rideRecordingProvider.select((s) => (
+          status: s.status,
+          activeAlert: s.activeAlert,
+          restoredFromPreviousSession: s.restoredFromPreviousSession,
+        )));
 
     if (rideState.status == RecordingStatus.idle ||
         rideState.status == RecordingStatus.completed) {
@@ -376,13 +419,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     });
 
     final isPaused = rideState.status == RecordingStatus.paused;
-    final speedKmh = rideState.currentSpeedMs * 3.6;
-    final accel = rideState.sensorAccelMs2;
-    final avgSpeedKmh = rideState.movingSeconds > 0
-        ? (rideState.distanceM / rideState.movingSeconds) * 3.6
-        : (rideState.elapsed.inSeconds > 0
-            ? (rideState.distanceM / rideState.elapsed.inSeconds) * 3.6
-            : 0.0);
+    // A second narrow watch rather than a field on the record above: this
+    // flips at most twice a ride, so rebuilding the frame for it is free.
+    final sharingLive = ref.watch(
+        rideRecordingProvider.select((s) => s.liveSessionToken != null));
 
     return Scaffold(
       body: Stack(
@@ -473,10 +513,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               child: Row(
                 children: [
                   const Spacer(),
-                  Text(
-                    SpeedFormatter.durationFromDuration(rideState.elapsed),
-                    style: AppTypography.cockpitValue(context),
-                  ),
+                  const _RideClock(),
                   const SizedBox(width: 8),
                   IconButton(
                     key: _shareButtonKey,
@@ -494,12 +531,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             ),
                           )
                         : Icon(
-                            rideState.liveSessionToken != null
+                            sharingLive
                                 ? Icons.share_location
                                 : Icons.location_disabled,
                             color: context.palette.textPrimary,
                           ),
-                    tooltip: rideState.liveSessionToken != null
+                    tooltip: sharingLive
                         ? context.l10n.liveSharing
                         : context.l10n.turnShareLiveLocation,
                   ),
@@ -509,67 +546,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
 
           // ── Speed + sensor display ────────────────────────────────────────
-          Positioned(
-            bottom: 160,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: context.palette.surface.withValues(alpha: 0.94),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: context.palette.border),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Real GPS fixes arrive in discrete steps (every few
-                    // hundred ms to a couple seconds, depending on speed and
-                    // signal — see _startLocationStream's tuning notes) so a
-                    // plain Text here visibly jumps between values. Tweening
-                    // toward each new reading instead of snapping to it
-                    // makes the number feel continuous even though the
-                    // underlying fixes aren't — reported as "speed updates
-                    // feel slow," and tightening the GPS settings alone
-                    // still leaves discrete jumps between real fixes.
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: speedKmh, end: speedKmh),
-                      duration: const Duration(milliseconds: 450),
-                      curve: Curves.easeOut,
-                      builder: (context, value, child) => Text(
-                        value.toStringAsFixed(0),
-                        style: display(context, 64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
-                      ),
-                    ),
-                    Text('km/h', style: AppTypography.cockpitLabel(context)),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _RideStat(
-                            label: context.l10n.distanceLabel,
-                            value: SpeedFormatter.distanceKm(rideState.distanceM)),
-                        const SizedBox(width: 24),
-                        _RideStat(
-                            label: context.l10n.avgSpeed,
-                            value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
-                        if (rideState.confidence > 0) ...[
-                          const SizedBox(width: 24),
-                          _RideStat(
-                              label: context.l10n.confidence,
-                              value: '${rideState.confidence}%'),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Sensor G-force indicator
-                    _GForceBar(accelMs2: accel),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          const _SpeedPanel(),
 
           // ── Bottom controls ───────────────────────────────────────────────
           Positioned(
@@ -657,14 +634,138 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
 
           // ── Crash countdown overlay (topmost) ────────────────────────────
-          if (rideState.crashDetected)
-            _CrashOverlay(
-              countdown: rideState.crashCountdown,
-              onImOk: () =>
-                  ref.read(rideRecordingProvider.notifier).dismissCrashAlert(),
-            ),
+          // Its own widget because the countdown ticks once a second while
+          // it's up, and nothing else on this screen should repaint for that.
+          const _CrashOverlayGate(),
         ],
       ),
+    );
+  }
+}
+
+/// The cockpit's big speed readout, its three stats and the G-force bar.
+///
+/// Split out of [ActiveRideScreen.build] for issues §83.12: these are the
+/// values that genuinely change many times a second, so they are the ones
+/// that should own the rebuild. Selecting the six fields it actually draws
+/// means an accelerometer sample repaints this panel and nothing else — the
+/// map, the banners, the top bar and the controls all stay put.
+class _SpeedPanel extends ConsumerWidget {
+  const _SpeedPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(rideRecordingProvider.select((s) => (
+          currentSpeedMs: s.currentSpeedMs,
+          distanceM: s.distanceM,
+          movingSeconds: s.movingSeconds,
+          elapsed: s.elapsed,
+          confidence: s.confidence,
+          sensorAccelMs2: s.sensorAccelMs2,
+        )));
+
+    final speedKmh = s.currentSpeedMs * 3.6;
+    final accel = s.sensorAccelMs2;
+    final avgSpeedKmh = s.movingSeconds > 0
+        ? (s.distanceM / s.movingSeconds) * 3.6
+        : (s.elapsed.inSeconds > 0
+            ? (s.distanceM / s.elapsed.inSeconds) * 3.6
+            : 0.0);
+
+    return Positioned(
+    bottom: 160,
+    left: 0,
+    right: 0,
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: context.palette.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.palette.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Real GPS fixes arrive in discrete steps (every few
+            // hundred ms to a couple seconds, depending on speed and
+            // signal — see _startLocationStream's tuning notes) so a
+            // plain Text here visibly jumps between values. Tweening
+            // toward each new reading instead of snapping to it
+            // makes the number feel continuous even though the
+            // underlying fixes aren't — reported as "speed updates
+            // feel slow," and tightening the GPS settings alone
+            // still leaves discrete jumps between real fixes.
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: speedKmh, end: speedKmh),
+              duration: const Duration(milliseconds: 450),
+              curve: Curves.easeOut,
+              builder: (context, value, child) => Text(
+                value.toStringAsFixed(0),
+                style: display(context, 64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
+              ),
+            ),
+            Text('km/h', style: AppTypography.cockpitLabel(context)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _RideStat(
+                    label: context.l10n.distanceLabel,
+                    value: SpeedFormatter.distanceKm(s.distanceM)),
+                const SizedBox(width: 24),
+                _RideStat(
+                    label: context.l10n.avgSpeed,
+                    value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                if (s.confidence > 0) ...[
+                  const SizedBox(width: 24),
+                  _RideStat(
+                      label: context.l10n.confidence,
+                      value: '${s.confidence}%'),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Sensor G-force indicator
+            _GForceBar(accelMs2: accel),
+          ],
+        ),
+      ),
+    ),
+  );
+  }
+}
+
+/// The ride clock in the top bar. One field, one `Text`, once a second —
+/// rather than the whole cockpit once a second (issues §83.12).
+class _RideClock extends ConsumerWidget {
+  const _RideClock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final elapsed =
+        ref.watch(rideRecordingProvider.select((s) => s.elapsed));
+    return Text(
+      SpeedFormatter.durationFromDuration(elapsed),
+      style: AppTypography.cockpitValue(context),
+    );
+  }
+}
+
+/// Shows [_CrashOverlay] while a crash countdown is running, and nothing
+/// otherwise. Separate so the once-a-second countdown doesn't drag the rest
+/// of the cockpit through a rebuild with it.
+class _CrashOverlayGate extends ConsumerWidget {
+  const _CrashOverlayGate();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final crash = ref.watch(rideRecordingProvider.select(
+        (s) => (detected: s.crashDetected, countdown: s.crashCountdown)));
+    if (!crash.detected) return const SizedBox.shrink();
+    return _CrashOverlay(
+      countdown: crash.countdown,
+      onImOk: () => ref.read(rideRecordingProvider.notifier).dismissCrashAlert(),
     );
   }
 }
