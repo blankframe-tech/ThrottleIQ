@@ -43,7 +43,9 @@ void main() {
       );
 
       for (final brightness in Brightness.values) {
-        await container.read(appearanceProvider.notifier).setBrightness(brightness);
+        await container.read(appearanceProvider.notifier).setBrightnessMode(brightness == Brightness.dark
+                ? AppBrightnessMode.dark
+                : AppBrightnessMode.light);
         for (final mode in AppColorMode.values) {
           await container.read(appearanceProvider.notifier).setColorMode(mode);
           await tester.pump();

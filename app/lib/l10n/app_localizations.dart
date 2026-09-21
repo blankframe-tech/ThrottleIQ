@@ -176,6 +176,18 @@ abstract class AppLocalizations {
   /// **'Light base'**
   String get brightnessLightDescription;
 
+  /// Appearance option that follows the OS light/dark setting.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get brightnessSystemLabel;
+
+  /// Sub-label under the System brightness option.
+  ///
+  /// In en, this message translates to:
+  /// **'Match your phone'**
+  String get brightnessSystemDescription;
+
   /// Label above the dropdown that picks the app's color mode.
   ///
   /// In en, this message translates to:
@@ -314,13 +326,13 @@ abstract class AppLocalizations {
   /// **'Emergency Contacts'**
   String get emergencyContactsSection;
 
-  /// Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — docs/Issues.md §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart.
+  /// Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — issues §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart.
   ///
   /// In en, this message translates to:
   /// **'Logged if a crash is detected and you don\'t respond within 60 seconds. Automatic SMS/email alerts aren\'t live yet.'**
   String get emergencyContactsDescription;
 
-  /// Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (claude_sol.md §3.6.3) — adding a contact must not read as being protected.
+  /// Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (grill §3.6.3) — adding a contact must not read as being protected.
   ///
   /// In en, this message translates to:
   /// **'ThrottleIQ does not yet alert these contacts automatically.'**
@@ -1033,6 +1045,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No vehicle movement detected'**
   String get rejectionNoMovement;
+
+  /// Cockpit alert shown when the rider brakes hard.
+  ///
+  /// In en, this message translates to:
+  /// **'Ease on the brakes'**
+  String get rideAlertHardBraking;
+
+  /// Cockpit alert shown on rapid acceleration.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth on the throttle'**
+  String get rideAlertRapidAccel;
+
+  /// Cockpit alert shown when the rider exceeds their speed limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch your speed'**
+  String get rideAlertOverspeed;
+
+  /// Cockpit alert shown after 90 minutes of riding.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for a break'**
+  String get rideAlertFatigue;
+
+  /// Action in the live-location sheet that re-sends the share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Share link again'**
+  String get liveShareAgainAction;
+
+  /// Action in the live-location sheet that revokes the share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing now'**
+  String get liveShareStopAction;
+
+  /// Sub-label under 'Stop sharing now'.
+  ///
+  /// In en, this message translates to:
+  /// **'The link stops working. Your ride keeps recording.'**
+  String get liveShareStopDescription;
 }
 
 class _AppLocalizationsDelegate

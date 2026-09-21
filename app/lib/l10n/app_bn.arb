@@ -1,23 +1,20 @@
 {
   "@@locale": "bn",
-
   "settingsTitle": "সেটিংস",
   "riderFallbackName": "রাইডার",
-
   "appearanceSection": "অ্যাপের চেহারা",
-
   "vibeFieldLabel": "ভাইব",
   "vibeBoxyLabel": "বক্সি",
   "vibeBoxyDescription": "ধারালো কোণ",
   "vibeCurvyLabel": "কার্ভি",
   "vibeCurvyDescription": "গোল কোণ",
-
   "brightnessFieldLabel": "উজ্জ্বলতা",
   "brightnessDarkLabel": "গাঢ়",
   "brightnessDarkDescription": "গাঢ় বেস",
   "brightnessLightLabel": "হালকা",
   "brightnessLightDescription": "হালকা বেস",
-
+  "brightnessSystemLabel": "সিস্টেম",
+  "brightnessSystemDescription": "ফোনের সেটিং অনুসরণ করুন",
   "colorFieldLabel": "রং",
   "themeCarbonLabel": "কার্বন মোনো",
   "themeCarbonDescription": "লাইম আর ম্যাজেন্টা",
@@ -33,7 +30,6 @@
   "themeRetroDescription": "70-দশকের পোস্টার, সরিষা ও মরিচা রং",
   "themeAnalystBlueLabel": "অ্যানালিস্ট ব্লু",
   "themeAnalystBlueDescription": "নেভি কনসোল, সায়ান মিটার",
-
   "languageSection": "ভাষা",
   "languageSystemLabel": "ফোনের ভাষা",
   "languageSystemDescription": "ফোনে যা সেট করা আছে",
@@ -41,7 +37,6 @@
   "languageEnglishDescription": "সবসময় ইংরেজি",
   "languageBanglaLabel": "বাংলা",
   "languageBanglaDescription": "সবসময় বাংলা",
-
   "emergencyContactsSection": "জরুরি যোগাযোগ",
   "emergencyContactsDescription": "দুর্ঘটনা ধরা পড়লে ও আপনি 60 সেকেন্ডের মধ্যে সাড়া না দিলে তা লগ করা হবে — স্বয়ংক্রিয় SMS/ইমেইল সতর্কতা এখনো চালু হয়নি।",
   "emergencyContactsNotAlertedBanner": "ThrottleIQ এখনো এই যোগাযোগগুলোকে স্বয়ংক্রিয়ভাবে সতর্ক করে না।",
@@ -50,41 +45,33 @@
   "emergencyContactsAckAction": "বুঝেছি",
   "emergencyContactsEmpty": "এখনো কাউকে যোগ করা হয়নি — বিশ্বাস করেন এমন কাউকে রাখুন।",
   "emergencyContactsLoadError": "কন্টাক্ট লোড করা গেল না: {error}",
-
   "addAction": "যোগ করুন",
   "cancelAction": "বাতিল",
   "addEmergencyContactTitle": "জরুরি যোগাযোগ যোগ করুন",
   "contactNameField": "নাম",
   "contactPhoneField": "ফোন নম্বর",
   "contactEmailFieldOptional": "ইমেইল (না দিলেও চলবে)",
-
   "signOutAction": "সাইন আউট",
-
   "navSocialLabel": "সোশ্যাল",
   "navRidesLabel": "রাইড",
   "navRecordLabel": "রেকর্ড",
   "navPlacesLabel": "স্থান",
   "navProfileLabel": "প্রোফাইল",
-
   "bikePickerSheetTitle": "আজ চালাচ্ছেন",
   "rideCountLabel": "{count, plural, =1{{count}টি রাইড} other{{count}টি রাইড}}",
   "changeAction": "পাল্টান",
-
   "ridesStatLabel": "রাইড",
   "kilometresStatLabel": "কিলোমিটার",
   "dayStreakStatLabel": "দিনের ধারা",
-
   "rideNotFoundMessage": "রাইড খুঁজে পাওয়া যায়নি",
   "niceRideGreeting": "চমৎকার রাইড হলো!",
   "niceRideGreetingNamed": "চমৎকার রাইড হলো, {name}!",
-
   "distanceStatLabel": "কিমি",
   "durationStatLabel": "সময়",
   "avgSpeedStatLabel": "গড়",
   "maxSpeedStatLabel": "সর্বোচ্চ",
   "movingStatLabel": "চলমান",
   "jamStatLabel": "জ্যামে",
-
   "scoreSmoothLabel": "মসৃণ",
   "scoreSteadyLabel": "স্থির",
   "scoreAggressiveLabel": "বেপরোয়া",
@@ -96,11 +83,9 @@
   "speedOutlierBody": "এই রাইডের একটি অংশে আপনি {riderKmh} কিমি/ঘ গতিতে ছিলেন — এখানে রাইডাররা সাধারণত প্রায় {baselineKmh} কিমি/ঘ গতিতে চলে।",
   "ridingScoreLabel": "রাইডিং স্কোর",
   "outOf100Label": "100 এর মধ্যে",
-
   "hardBrakesStatLabel": "হার্ড ব্রেক",
   "rapidAccelStatLabel": "হঠাৎ গতি",
   "highJerkStatLabel": "তীব্র ঝাঁকুনি",
-
   "routeSectionLabel": "রুট",
   "saveAndDoneAction": "সেভ করে শেষ",
   "shareAction": "শেয়ার করুন",
@@ -123,7 +108,6 @@
   "elevationLossLabel": "উচ্চতা হ্রাস",
   "elevationProfileLabel": "উচ্চতার প্রোফাইল",
   "speedProfileLabel": "গতির প্রোফাইল",
-
   "autoTrackingTileTitle": "স্বয়ংক্রিয়ভাবে রাইড শনাক্ত করুন",
   "autoTrackingTileSubtitle": "আপনি স্টার্ট না চাপলেও রাইড লগ করে রাখে। রাইড না করলে দিনে প্রায় 3–5% ব্যাটারি খরচ হয়।",
   "autoTrackingLocationServicesOffMessage": "রাইড শনাক্ত করতে ThrottleIQ-কে লোকেশন সার্ভিস চালু করুন।",
@@ -135,19 +119,16 @@
   "bikeConfirmationUpdatedMessage": "রাইড আপডেট হয়েছে।",
   "loggedToBikeLabel": "{bikeName}-এ লগ করা হয়েছে",
   "changeBikeSheetTitle": "বাইক পরিবর্তন করুন",
-
   "rideModeSoloLabel": "একা",
   "rideModeGroupLabel": "গ্রুপ",
   "rideModeInviteFriendsAction": "বন্ধুদের আমন্ত্রণ জানান",
   "rideModeJoinByCodeAction": "কোড দিয়ে যোগ দিন",
-
   "joinRideByCodeTitle": "রাইডে যোগ দিন",
   "joinRideByCodeSubtitle": "রাইড তৈরিকারী আপনাকে যে 6-অক্ষরের কোড দিয়েছেন তা লিখুন।",
   "joinRideCodeHint": "ABC123",
   "joinRideAction": "যোগ দিন",
   "joinRideCodeInvalidFormat": "এটি সঠিক কোড বলে মনে হচ্ছে না।",
   "joinRideGenericError": "এই রাইডে যোগ দেওয়া যায়নি। কোডটি পরীক্ষা করে আবার চেষ্টা করুন।",
-
   "safeQrTitle": "SafeQR",
   "safeQrSettingsSubtitle": "জরুরি সেবাদানকারীদের জন্য স্ক্যান করার মতো মেডিকেল তথ্য কার্ড",
   "safeQrIntro": "যে কেউ ফোনের ক্যামেরা দিয়ে এটি স্ক্যান করতে পারবে — তাদের কোনো অ্যাপ বা অ্যাকাউন্টের দরকার নেই। জরুরি সেবাদানকারী বা ট্রাফিক পুলিশ জানলে ভালো হয় এমন তথ্য পূরণ করুন।",
@@ -176,5 +157,12 @@
   "rejectionTooShort": "ট্রিপের দূরত্ব খুব কম ছিল",
   "rejectionTooSlow": "গতি খুব কম ছিল বিধায় রাইড গণ্য হয়নি",
   "rejectionTooFewFixes": "পর্যাপ্ত জিপিএস তথ্য পাওয়া যায়নি",
-  "rejectionNoMovement": "যানবাহনের চলাচল শনাক্ত হয়নি"
+  "rejectionNoMovement": "যানবাহনের চলাচল শনাক্ত হয়নি",
+  "rideAlertHardBraking": "ব্রেক আস্তে চাপুন",
+  "rideAlertRapidAccel": "থ্রটল আস্তে ঘোরান",
+  "rideAlertOverspeed": "গতি খেয়াল রাখুন",
+  "rideAlertFatigue": "বিরতি নেওয়ার সময়",
+  "liveShareAgainAction": "লিংক আবার শেয়ার করুন",
+  "liveShareStopAction": "শেয়ার করা বন্ধ করুন",
+  "liveShareStopDescription": "লিংকটি আর কাজ করবে না। আপনার রাইড রেকর্ড হতে থাকবে।"
 }

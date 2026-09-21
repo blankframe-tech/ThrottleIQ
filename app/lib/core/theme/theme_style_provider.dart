@@ -16,6 +16,15 @@ const _brightnessKey = 'brightness';
 /// pick the first time this build loads — see [_legacyTriple].
 const _legacyThemeStyleKey = 'theme_style';
 
+/// How the app decides between the light and dark palette.
+///
+/// [system] follows the OS setting and re-resolves whenever the platform
+/// flips — the option every other app on the phone has and this one didn't
+/// (issues §83.9). It is separate from the resolved [Brightness] because
+/// "the rider chose dark" and "the rider chose system, and the system is
+/// currently dark" have to be told apart when the OS changes underneath us.
+enum AppBrightnessMode { light, dark, system }
+
 /// One fully-resolved appearance: a color family, a shape vibe, and a
 /// brightness, chosen independently. This is the whole point of the
 /// Vibe/Brightness/Color split — any of the seven [AppColorMode]s can pair
@@ -24,13 +33,33 @@ const _legacyThemeStyleKey = 'theme_style';
 class AppAppearance {
   final AppColorMode colorMode;
   final AppShapeVibe shapeVibe;
+
+  /// The brightness actually in force — already resolved, so every consumer
+  /// (palette lookup, `ThemeData`, status-bar icons) reads one value and
+  /// never has to know whether the rider picked it or the OS did.
   final Brightness brightness;
+
+  /// What the rider chose. [AppBrightnessMode.system] means [brightness] was
+  /// resolved from the platform and will change with it.
+  ///
+  /// Optional at construction: omitting it means the caller picked a concrete
+  /// [brightness], so the mode is that same concrete choice. Only
+  /// [AppBrightnessMode.system] has to be stated, because it's the one case
+  /// the resolved brightness can't imply.
+  AppBrightnessMode get brightnessMode =>
+      _brightnessMode ??
+      (brightness == Brightness.dark
+          ? AppBrightnessMode.dark
+          : AppBrightnessMode.light);
+
+  final AppBrightnessMode? _brightnessMode;
 
   const AppAppearance({
     required this.colorMode,
     required this.shapeVibe,
     required this.brightness,
-  });
+    AppBrightnessMode? brightnessMode,
+  }) : _brightnessMode = brightnessMode;
 
   /// Calming, Curvy, Light — the default for every new install and every
   /// newly-created account (changed 2026-08-27, from the original Carbon
@@ -47,11 +76,13 @@ class AppAppearance {
     AppColorMode? colorMode,
     AppShapeVibe? shapeVibe,
     Brightness? brightness,
+    AppBrightnessMode? brightnessMode,
   }) =>
       AppAppearance(
         colorMode: colorMode ?? this.colorMode,
         shapeVibe: shapeVibe ?? this.shapeVibe,
         brightness: brightness ?? this.brightness,
+        brightnessMode: brightnessMode ?? this.brightnessMode,
       );
 
   @override
@@ -59,10 +90,12 @@ class AppAppearance {
       other is AppAppearance &&
       other.colorMode == colorMode &&
       other.shapeVibe == shapeVibe &&
-      other.brightness == brightness;
+      other.brightness == brightness &&
+      other.brightnessMode == brightnessMode;
 
   @override
-  int get hashCode => Object.hash(colorMode, shapeVibe, brightness);
+  int get hashCode =>
+      Object.hash(colorMode, shapeVibe, brightness, brightnessMode);
 }
 
 /// The full (colorMode, shapeVibe, brightness) triple a pre-migration rider's
@@ -148,11 +181,22 @@ AppShapeVibe? _decodeShapeVibe(String? saved) {
   return null;
 }
 
-Brightness? _decodeBrightness(String? saved) {
-  if (saved == 'dark') return Brightness.dark;
-  if (saved == 'light') return Brightness.light;
+AppBrightnessMode? _decodeBrightnessMode(String? saved) {
+  if (saved == 'dark') return AppBrightnessMode.dark;
+  if (saved == 'light') return AppBrightnessMode.light;
+  if (saved == 'system') return AppBrightnessMode.system;
   return null;
 }
+
+/// The OS setting, read fresh. Only consulted for [AppBrightnessMode.system].
+Brightness _platformBrightness() =>
+    WidgetsBinding.instance.platformDispatcher.platformBrightness;
+
+Brightness _resolveBrightness(AppBrightnessMode mode) => switch (mode) {
+      AppBrightnessMode.light => Brightness.light,
+      AppBrightnessMode.dark => Brightness.dark,
+      AppBrightnessMode.system => _platformBrightness(),
+    };
 
 /// Persisted appearance preference: three independent choices — color
 /// family, shape vibe, brightness — rather than one flat skin name.
@@ -162,10 +206,30 @@ Brightness? _decodeBrightness(String? saved) {
 /// [SharedPreferences]. A rider who already had a skin picked under the old
 /// single-key scheme has it decoded via [_legacyTriple] on first load under
 /// this build, then persisted forward under the three new keys.
-class AppearanceNotifier extends StateNotifier<AppAppearance> {
+class AppearanceNotifier extends StateNotifier<AppAppearance>
+    with WidgetsBindingObserver {
   AppearanceNotifier() : super(AppAppearance.defaultAppearance) {
     _applyTokens(AppAppearance.defaultAppearance);
+    WidgetsBinding.instance.addObserver(this);
     _loadPersisted();
+  }
+
+  /// The OS flipped between light and dark. Only acted on while the rider has
+  /// chosen [AppBrightnessMode.system].
+  @override
+  void didChangePlatformBrightness() {
+    if (state.brightnessMode != AppBrightnessMode.system) return;
+    final resolved = _platformBrightness();
+    if (resolved == state.brightness) return;
+    final next = state.copyWith(brightness: resolved);
+    _applyTokens(next);
+    state = next;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   /// Pushes [appearance] into every static token facade at once.
@@ -205,11 +269,13 @@ class AppearanceNotifier extends StateNotifier<AppAppearance> {
       // is independently settable, so this is the common case, not an edge
       // case: a rider who only ever changed Brightness has no `color_mode`
       // key on disk at all.
+      final mode = _decodeBrightnessMode(rawBrightness) ??
+          AppAppearance.defaultAppearance.brightnessMode;
       resolved = AppAppearance(
         colorMode: _decodeColorMode(rawColorMode) ?? AppAppearance.defaultAppearance.colorMode,
         shapeVibe: _decodeShapeVibe(rawShapeVibe) ?? AppAppearance.defaultAppearance.shapeVibe,
-        brightness:
-            _decodeBrightness(rawBrightness) ?? AppAppearance.defaultAppearance.brightness,
+        brightnessMode: mode,
+        brightness: _resolveBrightness(mode),
       );
     }
 
@@ -236,13 +302,19 @@ class AppearanceNotifier extends StateNotifier<AppAppearance> {
     await prefs.setString(_shapeVibeKey, shapeVibe.name);
   }
 
-  Future<void> setBrightness(Brightness brightness) async {
-    if (brightness == state.brightness) return;
-    final next = state.copyWith(brightness: brightness);
+  /// Sets how brightness is chosen. [AppBrightnessMode.system] resolves
+  /// against the OS now and keeps tracking it via
+  /// [didChangePlatformBrightness].
+  Future<void> setBrightnessMode(AppBrightnessMode mode) async {
+    if (mode == state.brightnessMode) return;
+    final next = state.copyWith(
+      brightnessMode: mode,
+      brightness: _resolveBrightness(mode),
+    );
     _applyTokens(next);
     state = next;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_brightnessKey, brightness == Brightness.dark ? 'dark' : 'light');
+    await prefs.setString(_brightnessKey, mode.name);
   }
 }
 

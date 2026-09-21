@@ -1,216 +1,181 @@
 {
   "@@locale": "en",
-
   "settingsTitle": "Settings",
   "@settingsTitle": {
     "description": "AppBar title of the settings screen."
   },
-
   "riderFallbackName": "Rider",
   "@riderFallbackName": {
     "description": "Shown in place of a display name when the account has none set."
   },
-
   "appearanceSection": "Appearance",
   "@appearanceSection": {
     "description": "Section header for the theme/appearance controls."
   },
-
   "vibeFieldLabel": "Vibe",
   "@vibeFieldLabel": {
     "description": "Label above the Boxy/Curvy shape selector."
   },
-
   "vibeBoxyLabel": "Boxy",
   "@vibeBoxyLabel": {
     "description": "Name of the sharp-cornered shape vibe."
   },
-
   "vibeBoxyDescription": "Sharp corners",
   "@vibeBoxyDescription": {
     "description": "One-line description under the Boxy vibe option."
   },
-
   "vibeCurvyLabel": "Curvy",
   "@vibeCurvyLabel": {
     "description": "Name of the rounded-corner shape vibe."
   },
-
   "vibeCurvyDescription": "Rounded corners",
   "@vibeCurvyDescription": {
     "description": "One-line description under the Curvy vibe option."
   },
-
   "brightnessFieldLabel": "Brightness",
   "@brightnessFieldLabel": {
     "description": "Label above the Dark/Light brightness selector."
   },
-
   "brightnessDarkLabel": "Dark",
   "@brightnessDarkLabel": {
     "description": "Name of the dark brightness option."
   },
-
   "brightnessDarkDescription": "Dark base",
   "@brightnessDarkDescription": {
     "description": "One-line description under the Dark brightness option."
   },
-
   "brightnessLightLabel": "Light",
   "@brightnessLightLabel": {
     "description": "Name of the light brightness option."
   },
-
   "brightnessLightDescription": "Light base",
+  "brightnessSystemLabel": "System",
+  "@brightnessSystemLabel": {
+    "description": "Appearance option that follows the OS light/dark setting."
+  },
+  "brightnessSystemDescription": "Match your phone",
+  "@brightnessSystemDescription": {
+    "description": "Sub-label under the System brightness option."
+  },
   "@brightnessLightDescription": {
     "description": "One-line description under the Light brightness option."
   },
-
   "colorFieldLabel": "Color",
   "@colorFieldLabel": {
     "description": "Label above the dropdown that picks the app's color mode."
   },
-
   "themeCarbonLabel": "Carbon Mono",
   "@themeCarbonLabel": {
     "description": "Name of the Carbon Mono color mode. Product name — kept recognisable across languages."
   },
-
   "themeCarbonDescription": "Lime and magenta",
   "@themeCarbonDescription": {
     "description": "One-line description under the Carbon Mono color option."
   },
-
   "themeEditorialLabel": "Editorial",
   "@themeEditorialLabel": {
     "description": "Name of the Editorial color mode. Product name — kept recognisable across languages."
   },
-
   "themeEditorialDescription": "Blue and orange, paper warmth",
   "@themeEditorialDescription": {
     "description": "One-line description under the Editorial color option."
   },
-
   "themeNocturneLabel": "Nocturne",
   "@themeNocturneLabel": {
     "description": "Name of the Nocturne color mode. Product name — kept recognisable across languages."
   },
-
   "themeNocturneDescription": "Indigo and lavender glow",
   "@themeNocturneDescription": {
     "description": "One-line description under the Nocturne color option."
   },
-
   "themeTrailSocialLabel": "Trail Social",
   "@themeTrailSocialLabel": {
     "description": "Name of the Trail Social color mode. Product name — kept recognisable across languages."
   },
-
   "themeTrailSocialDescription": "Punchy kudos orange",
   "@themeTrailSocialDescription": {
     "description": "One-line description under the Trail Social color option."
   },
-
   "themeCalmingLabel": "Calming",
   "@themeCalmingLabel": {
     "description": "Name of the Calming color mode. Product name — kept recognisable across languages."
   },
-
   "themeCalmingDescription": "Warm sage and tan",
   "@themeCalmingDescription": {
     "description": "One-line description under the Calming color option."
   },
-
   "themeRetroLabel": "Retro",
   "@themeRetroLabel": {
     "description": "Name of the Retro color mode. Product name — kept recognisable across languages."
   },
-
   "themeRetroDescription": "Blocky 70s poster, mustard & rust",
   "@themeRetroDescription": {
     "description": "One-line description under the Retro color option."
   },
-
   "themeAnalystBlueLabel": "Analyst Blue",
   "@themeAnalystBlueLabel": {
     "description": "Name of the Analyst Blue color mode. Product name — kept recognisable across languages."
   },
-
   "themeAnalystBlueDescription": "Navy console, cyan telemetry",
   "@themeAnalystBlueDescription": {
     "description": "One-line description under the Analyst Blue color option."
   },
-
   "languageSection": "Language",
   "@languageSection": {
     "description": "Section header for the app language control."
   },
-
   "languageSystemLabel": "System default",
   "@languageSystemLabel": {
     "description": "Language option that follows the phone's own language setting."
   },
-
   "languageSystemDescription": "Follow your phone",
   "@languageSystemDescription": {
     "description": "One-line description under the system-default language option."
   },
-
   "languageEnglishLabel": "English",
   "@languageEnglishLabel": {
     "description": "The English language option. Language names are always written in their own language, so this is NOT translated."
   },
-
   "languageEnglishDescription": "Always English",
   "@languageEnglishDescription": {
     "description": "One-line description under the English language option."
   },
-
   "languageBanglaLabel": "বাংলা",
   "@languageBanglaLabel": {
     "description": "The Bangla language option. Language names are always written in their own language, so this stays in Bangla even in the English ARB."
   },
-
   "languageBanglaDescription": "Always Bangla",
   "@languageBanglaDescription": {
     "description": "One-line description under the Bangla language option."
   },
-
   "emergencyContactsSection": "Emergency Contacts",
   "@emergencyContactsSection": {
     "description": "Section header for the emergency contact list."
   },
-
   "emergencyContactsDescription": "Logged if a crash is detected and you don't respond within 60 seconds. Automatic SMS/email alerts aren't live yet.",
   "@emergencyContactsDescription": {
-    "description": "Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — docs/Issues.md §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
+    "description": "Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — issues §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
   },
-
   "emergencyContactsNotAlertedBanner": "ThrottleIQ does not yet alert these contacts automatically.",
   "@emergencyContactsNotAlertedBanner": {
-    "description": "Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (claude_sol.md §3.6.3) — adding a contact must not read as being protected."
+    "description": "Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (grill §3.6.3) — adding a contact must not read as being protected."
   },
-
   "emergencyContactsAckTitle": "Contacts aren't alerted yet",
   "@emergencyContactsAckTitle": {
     "description": "Title of the one-time acknowledgement dialog shown after the rider adds their first emergency contact."
   },
-
   "emergencyContactsAckBody": "ThrottleIQ saved this contact, but it can't send them an SMS or email after a crash yet. Until it can, tell someone your route before you ride.",
   "@emergencyContactsAckBody": {
     "description": "Body of the one-time emergency-contact acknowledgement dialog."
   },
-
   "emergencyContactsAckAction": "I understand",
   "@emergencyContactsAckAction": {
     "description": "Dismisses the one-time emergency-contact acknowledgement dialog."
   },
-
   "emergencyContactsEmpty": "No contacts yet — add someone you trust.",
   "@emergencyContactsEmpty": {
     "description": "Empty state for the emergency contact list."
   },
-
   "emergencyContactsLoadError": "Could not load contacts: {error}",
   "@emergencyContactsLoadError": {
     "description": "Shown when the emergency contact list fails to load.",
@@ -221,72 +186,58 @@
       }
     }
   },
-
   "addAction": "Add",
   "@addAction": {
     "description": "Button that opens the add-emergency-contact dialog, and the confirm button inside it."
   },
-
   "cancelAction": "Cancel",
   "@cancelAction": {
     "description": "Dismisses the add-emergency-contact dialog without saving."
   },
-
   "addEmergencyContactTitle": "Add Emergency Contact",
   "@addEmergencyContactTitle": {
     "description": "Title of the add-emergency-contact dialog."
   },
-
   "contactNameField": "Name",
   "@contactNameField": {
     "description": "Label for the contact name text field."
   },
-
   "contactPhoneField": "Phone",
   "@contactPhoneField": {
     "description": "Label for the contact phone text field."
   },
-
   "contactEmailFieldOptional": "Email (optional)",
   "@contactEmailFieldOptional": {
     "description": "Label for the optional contact email text field."
   },
-
   "signOutAction": "Sign Out",
   "@signOutAction": {
     "description": "Button that signs the rider out and returns to the login screen."
   },
-
   "navSocialLabel": "Social",
   "@navSocialLabel": {
     "description": "Bottom-nav tab label for the social/feed tab."
   },
-
   "navRidesLabel": "Rides",
   "@navRidesLabel": {
     "description": "Bottom-nav tab label for the rides/stats tab."
   },
-
   "navRecordLabel": "Record",
   "@navRecordLabel": {
     "description": "Bottom-nav tab label for the record-a-ride tab."
   },
-
   "navPlacesLabel": "Places",
   "@navPlacesLabel": {
     "description": "Bottom-nav tab label for the places/POI-directory tab."
   },
-
   "navProfileLabel": "Profile",
   "@navProfileLabel": {
     "description": "Bottom-nav tab label for the profile tab (profile, settings, notifications, bikes/garage)."
   },
-
   "bikePickerSheetTitle": "Riding today",
   "@bikePickerSheetTitle": {
     "description": "Title of the bottom sheet that lets the rider switch which bike is active, on the Record screen."
   },
-
   "rideCountLabel": "{count, plural, =1{1 ride} other{{count} rides}}",
   "@rideCountLabel": {
     "description": "How many times a bike has been ridden, shown as the subtitle under its name in the bike-switcher sheet.",
@@ -297,37 +248,30 @@
       }
     }
   },
-
   "changeAction": "Change",
   "@changeAction": {
     "description": "Affordance on the Record-screen hero that opens the bike switcher. Rendered upper-case in the UI."
   },
-
   "ridesStatLabel": "Rides",
   "@ridesStatLabel": {
     "description": "Label under the rider's total ride count, in the Record screen's stat strip."
   },
-
   "kilometresStatLabel": "Kilometres",
   "@kilometresStatLabel": {
     "description": "Label under the rider's total distance, in the Record screen's stat strip."
   },
-
   "dayStreakStatLabel": "Day streak",
   "@dayStreakStatLabel": {
     "description": "Label under the rider's current consecutive-day riding streak, in the Record screen's stat strip."
   },
-
   "rideNotFoundMessage": "Ride not found",
   "@rideNotFoundMessage": {
     "description": "Shown on the ride summary screen when the ride id it was given doesn't resolve to a ride."
   },
-
   "niceRideGreeting": "Nice ride!",
   "@niceRideGreeting": {
     "description": "Header on the ride summary screen when the rider's display name isn't available."
   },
-
   "niceRideGreetingNamed": "Nice ride, {name}!",
   "@niceRideGreetingNamed": {
     "description": "Header on the ride summary screen, with the rider's first name.",
@@ -338,269 +282,225 @@
       }
     }
   },
-
   "distanceStatLabel": "km",
   "@distanceStatLabel": {
     "description": "Unit label under the distance figure on the ride summary screen's stat row."
   },
-
   "durationStatLabel": "duration",
   "@durationStatLabel": {
     "description": "Label under the ride's total duration on the ride summary screen's stat row."
   },
-
   "avgSpeedStatLabel": "avg",
   "@avgSpeedStatLabel": {
     "description": "Label under the average-speed figure on the ride summary screen's stat row."
   },
-
   "maxSpeedStatLabel": "max",
   "@maxSpeedStatLabel": {
     "description": "Label under the top-speed figure on the ride summary screen's stat row."
   },
-
   "movingStatLabel": "moving",
   "@movingStatLabel": {
     "description": "Label under the moving-time figure on the ride summary screen's jam-time card."
   },
-
   "jamStatLabel": "in jam",
   "@jamStatLabel": {
     "description": "Label under the stopped-in-traffic time figure on the ride summary screen's jam-time card."
   },
-
   "scoreSmoothLabel": "Smooth op.",
   "@scoreSmoothLabel": {
     "description": "Riding-score rating for a high score (80+) on the ride summary screen."
   },
-
   "scoreSteadyLabel": "Steady",
   "@scoreSteadyLabel": {
     "description": "Riding-score rating for a mid score (60-79) on the ride summary screen."
   },
-
   "scoreAggressiveLabel": "Aggressive",
   "@scoreAggressiveLabel": {
     "description": "Riding-score rating for a low score (below 60) on the ride summary screen."
   },
-
   "speedBandIdleLabel": "Idle",
   "@speedBandIdleLabel": {
     "description": "Legend label for the slowest speed band on the ride summary map's speed-colored route (under 5 km/h)."
   },
-
   "speedBandNormalLabel": "Normal",
   "@speedBandNormalLabel": {
     "description": "Legend label for the normal speed band on the ride summary map's speed-colored route (5-50 km/h)."
   },
-
   "speedBandBriskLabel": "Brisk",
   "@speedBandBriskLabel": {
     "description": "Legend label for the brisk speed band on the ride summary map's speed-colored route (50-90 km/h)."
   },
-
   "speedBandHardLabel": "Hard",
   "@speedBandHardLabel": {
     "description": "Legend label for the fastest speed band on the ride summary map's speed-colored route (90 km/h and up)."
   },
-
   "speedOutlierTitle": "Faster than usual here",
   "@speedOutlierTitle": {
     "description": "Title of the private post-ride card shown when part of this ride was a statistical outlier against the anonymous road-speed baseline for that stretch. Never shown to anyone but the rider themselves."
   },
-
   "speedOutlierBody": "You hit {riderKmh} km/h on part of this ride — riders here are usually around {baselineKmh} km/h.",
   "@speedOutlierBody": {
     "description": "Body of the speed-outlier card. {riderKmh} and {baselineKmh} are both whole-number km/h, always Western digits regardless of language — see core/i18n/numeric_locale.dart.",
     "placeholders": {
-      "riderKmh": { "type": "int", "example": "82" },
-      "baselineKmh": { "type": "int", "example": "38" }
+      "riderKmh": {
+        "type": "int",
+        "example": "82"
+      },
+      "baselineKmh": {
+        "type": "int",
+        "example": "38"
+      }
     }
   },
-
   "ridingScoreLabel": "Riding score",
   "@ridingScoreLabel": {
     "description": "Label on the riding-score card on the ride summary screen."
   },
-
   "outOf100Label": "out of 100",
   "@outOf100Label": {
     "description": "Sits under the riding-score rating word, clarifying the score's scale. The 100 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
   },
-
   "hardBrakesStatLabel": "hard brakes",
   "@hardBrakesStatLabel": {
     "description": "Label under the hard-brake event count on the ride summary screen."
   },
-
   "rapidAccelStatLabel": "rapid accel",
   "@rapidAccelStatLabel": {
     "description": "Label under the rapid-acceleration event count on the ride summary screen."
   },
-
   "highJerkStatLabel": "high jerk",
   "@highJerkStatLabel": {
     "description": "Label under the high-jerk (sudden jolt) event count on the ride summary screen."
   },
-
   "routeSectionLabel": "Route",
   "@routeSectionLabel": {
     "description": "Section header above the route map on the ride summary screen."
   },
-
   "saveAndDoneAction": "Save & done",
   "@saveAndDoneAction": {
     "description": "Primary button on the ride summary screen — dismisses the screen, keeping the ride."
   },
-
   "shareAction": "Share",
   "@shareAction": {
     "description": "Button that opens the ride-share flow from the ride summary screen."
   },
-
   "exportJsonAction": "Export JSON",
   "@exportJsonAction": {
     "description": "Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated."
   },
-
   "exportGpxAction": "Export GPX",
   "@exportGpxAction": {
     "description": "Button that exports the ride as a GPX file. GPX is a file-format name and stays untranslated."
   },
-
   "exportCsvAction": "Export CSV",
   "@exportCsvAction": {
     "description": "Button that exports the ride's full per-point telemetry as a CSV file. CSV is a file-format name and stays untranslated."
   },
-
   "exportFailedMessage": "Export failed",
   "@exportFailedMessage": {
     "description": "Snackbar shown when a JSON/GPX/CSV ride export fails."
   },
-
   "telemetrySectionLabel": "Telemetry",
   "@telemetrySectionLabel": {
     "description": "Section header above the JSON/GPX/CSV export buttons on the ride summary screen."
   },
-
   "ridingPaceLabel": "Avg moving speed",
   "@ridingPaceLabel": {
     "description": "Label on the ride summary screen's speed card, showing average speed over moving time in km/h. Key kept from when this card showed a runner's min/km pace."
   },
-
   "movingStoppedLabel": "Moving / stopped",
   "@movingStoppedLabel": {
     "description": "Label for the moving-time vs stopped-time line on the ride summary's speed card, e.g. '42m / 8m'."
   },
-
   "routeGpsDetailsLabel": "Route GPS Details",
   "@routeGpsDetailsLabel": {
     "description": "Header of the card showing GPS track-point count and start/end coordinates on the ride summary screen."
   },
-
   "trackPointsCountLabel": "{count, plural, =1{1 track point} other{{count} track points}}",
   "@trackPointsCountLabel": {
     "description": "Count of raw GPS track points recorded for a ride, shown on the Route GPS Details card.",
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
-
   "startPointLabel": "Start",
   "@startPointLabel": {
     "description": "Label before the ride's starting coordinates on the Route GPS Details card."
   },
-
   "finishPointLabel": "Finish",
   "@finishPointLabel": {
     "description": "Label before the ride's ending coordinates on the Route GPS Details card."
   },
-
   "exploreFullRouteAction": "Explore Full Route on Map",
   "@exploreFullRouteAction": {
     "description": "Button that opens the full-screen interactive route map from the ride summary screen."
   },
-
   "saveAsRouteAction": "Save as Route",
   "@saveAsRouteAction": {
     "description": "Map action button/tooltip that opens the save-route screen for this ride."
   },
-
   "mapExpandHintLabel": "Tap map to expand",
   "@mapExpandHintLabel": {
     "description": "Hint pill overlaid on the ride summary screen's route map, inviting a tap to open the full-screen map."
   },
-
   "elevationGainLabel": "Elevation Gain",
   "@elevationGainLabel": {
     "description": "Label for the ride's estimated total climb, on the ride summary screen."
   },
-
   "elevationLossLabel": "Elevation Loss",
   "@elevationLossLabel": {
     "description": "Label for the ride's estimated total descent, on the ride summary screen."
   },
-
   "elevationProfileLabel": "Elevation Profile",
   "@elevationProfileLabel": {
     "description": "Header above the ride's altitude-over-route mini chart on the ride summary screen."
   },
-
   "speedProfileLabel": "Speed Profile",
   "@speedProfileLabel": {
     "description": "Header above the ride's speed-over-route mini chart on the ride summary screen."
   },
-
   "rideExportShareSubject": "ThrottleIQ ride export",
   "@rideExportShareSubject": {
     "description": "Subject line of the share-sheet action used to send an exported ride file. ThrottleIQ is the product name and stays untranslated."
   },
-
   "autoTrackingTileTitle": "Detect rides automatically",
   "@autoTrackingTileTitle": {
     "description": "Title of the settings switch that turns on background ride detection."
   },
-
   "autoTrackingTileSubtitle": "Logs a ride without you tapping start. Uses about 3–5% battery a day when you are not riding.",
   "@autoTrackingTileSubtitle": {
     "description": "Subtitle under the auto-tracking switch, naming the battery cost so the ask reads as honest rather than evasive."
   },
-
   "autoTrackingLocationServicesOffMessage": "Turn on location services to let ThrottleIQ detect rides.",
   "@autoTrackingLocationServicesOffMessage": {
     "description": "Snackbar shown when the rider enables auto-tracking but the device's location services are off."
   },
-
   "autoTrackingPermissionDeniedMessage": "Location permission is required to detect rides.",
   "@autoTrackingPermissionDeniedMessage": {
     "description": "Snackbar shown when the rider denies the location permission auto-tracking needs."
   },
-
   "autoTrackingAlwaysPermissionRequiredMessage": "ThrottleIQ needs \"Always\" location access to detect rides while the app is closed. You can change this in Settings.",
   "@autoTrackingAlwaysPermissionRequiredMessage": {
     "description": "Snackbar shown when the rider grants only \"while in use\" location access instead of \"Always\"."
   },
-
   "autoTrackingStartFailedMessage": "Could not start background tracking on this device.",
   "@autoTrackingStartFailedMessage": {
     "description": "Snackbar shown when the background tracking plugin fails to start despite permissions being granted."
   },
-
   "bikeConfirmationTitle": "Which bike was this?",
   "@bikeConfirmationTitle": {
     "description": "Heading on the card asking the rider to confirm which bike an auto-detected ride was on."
   },
-
   "bikeConfirmationBody": "We detected this ride automatically and logged it to your active bike. Confirm so your service reminders stay accurate.",
   "@bikeConfirmationBody": {
     "description": "Explanatory body text under the bike-confirmation card heading."
   },
-
   "bikeConfirmationUpdatedMessage": "Ride updated.",
   "@bikeConfirmationUpdatedMessage": {
     "description": "Snackbar shown after the rider confirms or corrects which bike an auto-detected ride was on."
   },
-
   "loggedToBikeLabel": "Logged to {bikeName}",
   "@loggedToBikeLabel": {
     "description": "Row on the ride summary screen (most recent ride only) showing which bike the ride was logged to, next to a Change action.",
@@ -611,12 +511,10 @@
       }
     }
   },
-
   "changeBikeSheetTitle": "Change bike",
   "@changeBikeSheetTitle": {
     "description": "Title of the bottom sheet that picks a different bike for the most recent completed ride."
   },
-
   "rideModeSoloLabel": "Solo",
   "@rideModeSoloLabel": {
     "description": "Segment label for riding alone, in the Solo/Group choice on the Record screen."
@@ -633,7 +531,6 @@
   "@rideModeJoinByCodeAction": {
     "description": "Button that opens the join-by-code sheet for a group ride someone else started."
   },
-
   "joinRideByCodeTitle": "Join a ride",
   "@joinRideByCodeTitle": {
     "description": "Title of the sheet where a rider types in a group ride's join code."
@@ -658,7 +555,6 @@
   "@joinRideGenericError": {
     "description": "Fallback error shown when joining by code fails for an unrecognized reason."
   },
-
   "safeQrTitle": "SafeQR",
   "@safeQrTitle": {
     "description": "Title of the SafeQR screen and its entry point in Settings."
@@ -780,5 +676,33 @@
   "rejectionNoMovement": "No vehicle movement detected",
   "@rejectionNoMovement": {
     "description": "Humanized rejection reason for lack of movement."
+  },
+  "rideAlertHardBraking": "Ease on the brakes",
+  "@rideAlertHardBraking": {
+    "description": "Cockpit alert shown when the rider brakes hard."
+  },
+  "rideAlertRapidAccel": "Smooth on the throttle",
+  "@rideAlertRapidAccel": {
+    "description": "Cockpit alert shown on rapid acceleration."
+  },
+  "rideAlertOverspeed": "Watch your speed",
+  "@rideAlertOverspeed": {
+    "description": "Cockpit alert shown when the rider exceeds their speed limit."
+  },
+  "rideAlertFatigue": "Time for a break",
+  "@rideAlertFatigue": {
+    "description": "Cockpit alert shown after 90 minutes of riding."
+  },
+  "liveShareAgainAction": "Share link again",
+  "@liveShareAgainAction": {
+    "description": "Action in the live-location sheet that re-sends the share link."
+  },
+  "liveShareStopAction": "Stop sharing now",
+  "@liveShareStopAction": {
+    "description": "Action in the live-location sheet that revokes the share link."
+  },
+  "liveShareStopDescription": "The link stops working. Your ride keeps recording.",
+  "@liveShareStopDescription": {
+    "description": "Sub-label under 'Stop sharing now'."
   }
 }

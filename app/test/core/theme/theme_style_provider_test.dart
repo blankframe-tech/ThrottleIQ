@@ -10,6 +10,12 @@ import 'package:throttleiq/core/theme/app_typography.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
 
 void main() {
+  // AppearanceNotifier registers a WidgetsBindingObserver so it can follow the
+  // OS light/dark setting (issues §83.9), so these need a binding.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  _systemBrightnessTests();
+
   group('AppearanceNotifier', () {
     test('defaults to Calming/Curvy/Light and applies it to AppColors immediately', () async {
       SharedPreferences.setMockInitialValues({});
@@ -41,14 +47,17 @@ void main() {
       expect(prefs.getString('color_mode'), 'editorial');
     });
 
-    test('setBrightness(dark) flips brightness only, and persists it', () async {
+    test('setBrightnessMode(dark) flips brightness only, and persists it',
+        () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
       // Light is the default now, so dark is the one that's a real transition.
-      await container.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
+      await container
+          .read(appearanceProvider.notifier)
+          .setBrightnessMode(AppBrightnessMode.dark);
 
       expect(container.read(appearanceProvider).colorMode, AppColorMode.calming);
       expect(container.read(appearanceProvider).brightness, Brightness.dark);
@@ -85,7 +94,9 @@ void main() {
       // an un-set key that happens to match the default anyway.
       await writer.read(appearanceProvider.notifier).setColorMode(AppColorMode.analystBlue);
       await writer.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
-      await writer.read(appearanceProvider.notifier).setBrightness(Brightness.dark);
+      await writer
+          .read(appearanceProvider.notifier)
+          .setBrightnessMode(AppBrightnessMode.dark);
       writer.dispose();
 
       final reader = ProviderContainer();
@@ -258,6 +269,80 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       // Never persisted anything, since setColorMode returned early.
       expect(prefs.getString('color_mode'), isNull);
+    });
+  });
+}
+
+/// System brightness — the OS-following option added in issues §83.9.
+void _systemBrightnessTests() {
+  group('AppBrightnessMode.system', () {
+    tearDown(() {
+      TestWidgetsFlutterBinding.instance.platformDispatcher
+          .clearPlatformBrightnessTestValue();
+    });
+
+    test('resolves against the OS when selected', () async {
+      SharedPreferences.setMockInitialValues({});
+      TestWidgetsFlutterBinding.instance.platformDispatcher
+          .platformBrightnessTestValue = Brightness.dark;
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await container
+          .read(appearanceProvider.notifier)
+          .setBrightnessMode(AppBrightnessMode.system);
+
+      final appearance = container.read(appearanceProvider);
+      expect(appearance.brightnessMode, AppBrightnessMode.system);
+      expect(appearance.brightness, Brightness.dark);
+    });
+
+    test('persists as "system", not as the brightness it resolved to',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      TestWidgetsFlutterBinding.instance.platformDispatcher
+          .platformBrightnessTestValue = Brightness.dark;
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await container
+          .read(appearanceProvider.notifier)
+          .setBrightnessMode(AppBrightnessMode.system);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('brightness'), 'system');
+    });
+
+    test('a restored "system" choice re-resolves against the OS', () async {
+      SharedPreferences.setMockInitialValues({'brightness': 'system'});
+      TestWidgetsFlutterBinding.instance.platformDispatcher
+          .platformBrightnessTestValue = Brightness.dark;
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      // Let the async _loadPersisted settle.
+      container.read(appearanceProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      final appearance = container.read(appearanceProvider);
+      expect(appearance.brightnessMode, AppBrightnessMode.system);
+      expect(appearance.brightness, Brightness.dark);
+    });
+
+    test('an explicit brightness implies the matching mode', () {
+      const dark = AppAppearance(
+        colorMode: AppColorMode.carbonMono,
+        shapeVibe: AppShapeVibe.boxy,
+        brightness: Brightness.dark,
+      );
+      expect(dark.brightnessMode, AppBrightnessMode.dark);
+
+      const light = AppAppearance(
+        colorMode: AppColorMode.calming,
+        shapeVibe: AppShapeVibe.curvy,
+        brightness: Brightness.light,
+      );
+      expect(light.brightnessMode, AppBrightnessMode.light);
     });
   });
 }

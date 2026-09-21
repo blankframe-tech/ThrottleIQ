@@ -48,6 +48,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brightnessLightDescription => 'Light base';
 
   @override
+  String get brightnessSystemLabel => 'System';
+
+  @override
+  String get brightnessSystemDescription => 'Match your phone';
+
+  @override
   String get colorFieldLabel => 'Color';
 
   @override
@@ -523,4 +529,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rejectionNoMovement => 'No vehicle movement detected';
+
+  @override
+  String get rideAlertHardBraking => 'Ease on the brakes';
+
+  @override
+  String get rideAlertRapidAccel => 'Smooth on the throttle';
+
+  @override
+  String get rideAlertOverspeed => 'Watch your speed';
+
+  @override
+  String get rideAlertFatigue => 'Time for a break';
+
+  @override
+  String get liveShareAgainAction => 'Share link again';
+
+  @override
+  String get liveShareStopAction => 'Stop sharing now';
+
+  @override
+  String get liveShareStopDescription =>
+      'The link stops working. Your ride keeps recording.';
 }

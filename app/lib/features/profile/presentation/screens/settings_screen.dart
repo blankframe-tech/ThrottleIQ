@@ -157,16 +157,34 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               border: Border.all(color: AppColors.border),
             ),
+            // Three options, matching the Language row below: "System" is
+            // not the same as "Light" — it tracks the OS and flips with it
+            // (issues §83.9). Selection compares brightnessMode, not the
+            // resolved brightness, so System stays highlighted whichever way
+            // the OS currently leans.
             child: Row(
               children: [
                 Expanded(
                   child: _SegmentedOption(
-                    label: l10n.brightnessDarkLabel,
-                    description: l10n.brightnessDarkDescription,
-                    selected: appearance.brightness == Brightness.dark,
+                    label: l10n.brightnessSystemLabel,
+                    description: l10n.brightnessSystemDescription,
+                    selected:
+                        appearance.brightnessMode == AppBrightnessMode.system,
                     onTap: () => ref
                         .read(appearanceProvider.notifier)
-                        .setBrightness(Brightness.dark),
+                        .setBrightnessMode(AppBrightnessMode.system),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.brightnessDarkLabel,
+                    description: l10n.brightnessDarkDescription,
+                    selected:
+                        appearance.brightnessMode == AppBrightnessMode.dark,
+                    onTap: () => ref
+                        .read(appearanceProvider.notifier)
+                        .setBrightnessMode(AppBrightnessMode.dark),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -174,10 +192,11 @@ class SettingsScreen extends ConsumerWidget {
                   child: _SegmentedOption(
                     label: l10n.brightnessLightLabel,
                     description: l10n.brightnessLightDescription,
-                    selected: appearance.brightness == Brightness.light,
+                    selected:
+                        appearance.brightnessMode == AppBrightnessMode.light,
                     onTap: () => ref
                         .read(appearanceProvider.notifier)
-                        .setBrightness(Brightness.light),
+                        .setBrightnessMode(AppBrightnessMode.light),
                   ),
                 ),
               ],
@@ -273,7 +292,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 4),
           // A warning-colored banner, not fine print: until crash alerts
           // actually send, having contacts here must not read as being
-          // protected (claude_sol.md §3.6.3).
+          // protected (grill §3.6.3).
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -364,6 +383,7 @@ class SettingsScreen extends ConsumerWidget {
                                 ),
                               ),
                               IconButton(
+                                tooltip: 'Delete',
                                 onPressed: () => ref
                                     .read(emergencyContactsNotifierProvider
                                         .notifier)

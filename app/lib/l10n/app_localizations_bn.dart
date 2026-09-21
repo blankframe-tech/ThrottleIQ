@@ -48,6 +48,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get brightnessLightDescription => 'হালকা বেস';
 
   @override
+  String get brightnessSystemLabel => 'সিস্টেম';
+
+  @override
+  String get brightnessSystemDescription => 'ফোনের সেটিং অনুসরণ করুন';
+
+  @override
   String get colorFieldLabel => 'রং';
 
   @override
@@ -523,4 +529,26 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get rejectionNoMovement => 'যানবাহনের চলাচল শনাক্ত হয়নি';
+
+  @override
+  String get rideAlertHardBraking => 'ব্রেক আস্তে চাপুন';
+
+  @override
+  String get rideAlertRapidAccel => 'থ্রটল আস্তে ঘোরান';
+
+  @override
+  String get rideAlertOverspeed => 'গতি খেয়াল রাখুন';
+
+  @override
+  String get rideAlertFatigue => 'বিরতি নেওয়ার সময়';
+
+  @override
+  String get liveShareAgainAction => 'লিংক আবার শেয়ার করুন';
+
+  @override
+  String get liveShareStopAction => 'শেয়ার করা বন্ধ করুন';
+
+  @override
+  String get liveShareStopDescription =>
+      'লিংকটি আর কাজ করবে না। আপনার রাইড রেকর্ড হতে থাকবে।';
 }

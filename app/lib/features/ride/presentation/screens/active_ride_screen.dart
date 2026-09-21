@@ -14,6 +14,7 @@ import '../providers/live_ride_places_provider.dart';
 import '../widgets/end_ride_sheet.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -194,7 +195,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     _alertCtrl.forward(from: 0);
   }
 
-  /// Tapping this button IS the opt-in (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §24.1). Publishing
+  /// Tapping this button IS the opt-in (issues §24.1). Publishing
   /// used to start the instant a ride began, whether or not the rider ever
   /// meant to share it; now nothing is published until this runs.
   /// `enableLiveSharing()` is a no-op if sharing is already on, so re-tapping
@@ -240,16 +241,16 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           children: [
             ListTile(
               leading: Icon(Icons.share, color: AppColors.textPrimary),
-              title: Text('Share link again',
+              title: Text(AppLocalizations.of(sheetContext).liveShareAgainAction,
                   style: TextStyle(color: AppColors.textPrimary)),
               onTap: () => Navigator.pop(sheetContext, 'share'),
             ),
             ListTile(
               leading: Icon(Icons.location_off, color: AppColors.danger),
-              title: Text('Stop sharing now',
+              title: Text(AppLocalizations.of(sheetContext).liveShareStopAction,
                   style: TextStyle(color: AppColors.danger)),
               subtitle: Text(
-                'The link stops working. Your ride keeps recording.',
+                AppLocalizations.of(sheetContext).liveShareStopDescription,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
               onTap: () => Navigator.pop(sheetContext, 'stop'),
@@ -843,11 +844,15 @@ class _AlertBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Localized, unlike most of this screen: these four are the app's safety
+    // alerts, and an English-only safety alert in a Bangladesh-first app is
+    // the wrong thing to leave untranslated (issues §83.23).
+    final l10n = AppLocalizations.of(context);
     final (message, color) = switch (alert) {
-      RideAlert.hardBraking => ('Ease on the brakes', AppColors.danger),
-      RideAlert.rapidAccel => ('Smooth on the throttle', AppColors.attention),
-      RideAlert.overspeed => ('Watch your speed', AppColors.attention),
-      RideAlert.fatigue => ('Time for a break', AppColors.primary),
+      RideAlert.hardBraking => (l10n.rideAlertHardBraking, AppColors.danger),
+      RideAlert.rapidAccel => (l10n.rideAlertRapidAccel, AppColors.attention),
+      RideAlert.overspeed => (l10n.rideAlertOverspeed, AppColors.attention),
+      RideAlert.fatigue => (l10n.rideAlertFatigue, AppColors.primary),
       _ => ('', AppColors.primary),
     };
     return Container(

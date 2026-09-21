@@ -144,7 +144,7 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // attach them to. Both no-op unless the rider has opted in.
           //
           // The owner is saved before the service starts so its very first
-          // detection is stamped with this rider (claude_sol §1.4.2).
+          // detection is stamped with this rider (grill §1.4.2).
           final uid = next.valueOrNull!.uid;
           unawaited(AutoTrackingService.setOwner(uid)
               .then((_) => AutoTrackingService.instance.start()));
@@ -180,8 +180,10 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: const [Locale('en'), Locale('bn')],
         routerConfig: router,
-        builder: (context, child) => KeyboardDismissWrapper(
-          child: child ?? const SizedBox.shrink(),
+        builder: (context, child) => _ClampedTextScale(
+          child: KeyboardDismissWrapper(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       );
     } catch (e) {
@@ -197,5 +199,42 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
         ),
       );
     }
+  }
+}
+
+/// Caps how far the OS text-size setting can enlarge the app's type.
+///
+/// Flutter already scales a hardcoded `fontSize` by `MediaQuery.textScaler`,
+/// so text *does* grow — but this app has ~535 hardcoded sizes and a lot of
+/// fixed-height rows, chips and cockpit tiles, and at the 2.0x+ the platform
+/// allows those overflow rather than reflow (issues §83.22).
+///
+/// 1.3x is the compromise: it is a real, usable enlargement for the rider who
+/// needs it, and it is inside what the existing layouts absorb. The floor is
+/// there because a scale below 1.0 makes safety-critical cockpit numbers
+/// smaller than they were designed to be read at, at speed.
+///
+/// This is a stopgap, not accessibility support. The layouts should be made
+/// scale-tolerant so the clamp can be raised or dropped.
+class _ClampedTextScale extends StatelessWidget {
+  const _ClampedTextScale({required this.child});
+
+  final Widget child;
+
+  static const _minScale = 1.0;
+  static const _maxScale = 1.3;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(
+        textScaler: media.textScaler.clamp(
+          minScaleFactor: _minScale,
+          maxScaleFactor: _maxScale,
+        ),
+      ),
+      child: child,
+    );
   }
 }
