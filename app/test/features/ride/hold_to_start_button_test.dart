@@ -27,6 +27,27 @@ const _hold = Duration(milliseconds: 500);
 
 void main() {
   group('HoldToStartButton', () {
+    testWidgets(
+        'a press and release in the same frame never starts a ride (§78.26)',
+        (tester) async {
+      var starts = 0;
+      await tester.pumpWidget(_host(HoldToStartButton(
+        onStart: () => starts++,
+        holdDuration: _hold,
+      )));
+
+      // Down and up with no frame between them: the controller has been told
+      // to run forward but is still at value 0. Releasing must still cancel it.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(HoldToStartButton)),
+      );
+      await gesture.up();
+      await tester.pump(); // first frame after the gesture
+      await tester.pump(const Duration(milliseconds: 700)); // well past _hold
+
+      expect(starts, 0, reason: 'a same-frame tap must not complete the hold');
+    });
+
     testWidgets('fires once the hold completes', (tester) async {
       var starts = 0;
       await tester.pumpWidget(_host(HoldToStartButton(

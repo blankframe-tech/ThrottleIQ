@@ -314,6 +314,13 @@ class OutboxService {
       final entries = await _dao.all();
       final entry = entries.where((e) => e.id == id).firstOrNull;
       if (entry == null) return OutboxDeliveryResult.delivered;
+      // Same rule as [drain] (§69.O4), which this immediate path used to skip:
+      // never deliver another account's write under the signed-in rider's
+      // credentials. It stays queued, uncounted, until its owner signs back in.
+      final owner = outboxEntryOwner(entry);
+      if (owner != null && owner != _currentUid()) {
+        return OutboxDeliveryResult.deferred;
+      }
       return _deliver(entry);
     });
   }

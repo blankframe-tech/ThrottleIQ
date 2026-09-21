@@ -109,7 +109,11 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
   /// that is about to replace it.
   void _release() {
     if (_ctrl.status == AnimationStatus.completed) return;
-    if (_ctrl.value > 0) _ctrl.reverse();
+    // Unconditional: a release in the same frame as the press leaves the value
+    // at 0 with the controller still running forward, and a `value > 0` guard
+    // would let that quick tap carry on to completion and start a ride (issues
+    // §78.26). `HoldToEndButton` has the same guard for the same reason.
+    _ctrl.reverse();
   }
 
   void _reset() {
