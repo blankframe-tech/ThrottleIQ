@@ -18,6 +18,7 @@ import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/widgets/keyboard_dismiss_wrapper.dart';
+import 'core/i18n/l10n_context.dart';
 
 class ThrottleIQApp extends ConsumerStatefulWidget {
   const ThrottleIQApp({super.key});
@@ -193,7 +194,7 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
         ),
         home: Scaffold(
           body: Center(
-            child: Text('Error: $e'),
+            child: Text(context.l10n.errorWithDetail(e)),
           ),
         ),
       );

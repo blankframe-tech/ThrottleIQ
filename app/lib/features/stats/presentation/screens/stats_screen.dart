@@ -14,6 +14,7 @@ import '../widgets/badge_grid.dart';
 import '../widgets/ride_line_chart.dart';
 import 'all_rides_screen.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 const _ranks = [
   'New Rider',
@@ -63,7 +64,7 @@ class StatsScreen extends ConsumerWidget {
             final header = Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-              child: Text('Your Journey', style: display(context, 28)),
+              child: Text(context.l10n.journey, style: display(context, 28)),
             );
 
             if (stats.totalRides == 0) {
@@ -81,11 +82,11 @@ class StatsScreen extends ConsumerWidget {
                             Icon(Icons.insights_outlined,
                                 size: 56, color: context.palette.textTertiary),
                             const SizedBox(height: 16),
-                            Text('No rides yet',
+                            Text(context.l10n.noRidesYet,
                                 style: TextStyle(
                                     color: context.palette.textSecondary, fontSize: 16)),
                             const SizedBox(height: 8),
-                            Text('Go for a ride to start your journey.',
+                            Text(context.l10n.goRideStartJourney,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                     color: context.palette.textTertiary, fontSize: 14)),
@@ -134,21 +135,21 @@ class StatsScreen extends ConsumerWidget {
                               child: _StatChip(
                                 value: SpeedFormatter.distanceKm(
                                     stats.totalDistanceKm * 1000),
-                                label: 'total km',
+                                label: context.l10n.totalKm,
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: _StatChip(
                                 value: '${stats.totalRides}',
-                                label: 'rides',
+                                label: context.l10n.ridesLower,
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: _StatChip(
                                 value: _daysSinceLastRide(stats.recentRides),
-                                label: 'last ride',
+                                label: context.l10n.lastRide,
                               ),
                             ),
                           ],
@@ -164,7 +165,7 @@ class StatsScreen extends ConsumerWidget {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Text('Level $level · $rank',
+                                    child: Text(context.l10n.level(level, rank),
                                         style: display(context, 18, letterSpacing: 0)),
                                   ),
                                   Text(
@@ -186,7 +187,7 @@ class StatsScreen extends ConsumerWidget {
                         // changes every ride, whereas badges move rarely, and
                         // burying the trend under a wall of icons made the
                         // rarely-changing thing the loudest.
-                        const EditorialLabel('Distance over time'),
+                        EditorialLabel(context.l10n.distanceOverTime),
                         const SizedBox(height: 10),
                         EditorialCard(
                           padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -197,7 +198,7 @@ class StatsScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const EditorialLabel('Avg speed over time'),
+                        EditorialLabel(context.l10n.avgSpeedOverTime),
                         const SizedBox(height: 10),
                         EditorialCard(
                           padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -214,7 +215,7 @@ class StatsScreen extends ConsumerWidget {
                         Row(
                           children: [
                             const Expanded(child: EditorialLabel('Badges')),
-                            Text('$earnedCount of ${badges.length} earned',
+                            Text(context.l10n.badgesEarnedCount(earnedCount, badges.length),
                                 style: TextStyle(
                                     fontSize: 11,
                                     color: context.palette.textTertiary)),
@@ -234,7 +235,7 @@ class StatsScreen extends ConsumerWidget {
                               child: _BigStat(
                                 value: stats.allTimeAvgSpeedKmh.toStringAsFixed(0),
                                 unit: 'km/h',
-                                label: 'avg speed',
+                                label: context.l10n.avgSpeedLower,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -242,14 +243,14 @@ class StatsScreen extends ConsumerWidget {
                               child: _BigStat(
                                 value: stats.allTimeTopSpeedKmh.toStringAsFixed(0),
                                 unit: 'km/h',
-                                label: 'top speed',
+                                label: context.l10n.topSpeedLower,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _BigStat(
                                 value: stats.avgRidingScore.toStringAsFixed(0),
-                                label: 'score',
+                                label: context.l10n.score,
                               ),
                             ),
                           ],
@@ -257,7 +258,7 @@ class StatsScreen extends ConsumerWidget {
                         const SizedBox(height: 24),
 
                         EditorialLabel(
-                          sort == RideSort.recent ? 'Recent rides' : 'Your rides',
+                          sort == RideSort.recent ? context.l10n.recentRides : context.l10n.rides,
                         ),
                         const SizedBox(height: 10),
                         // Sort chips. Ranking reads from stats.allRides (the
@@ -273,7 +274,7 @@ class StatsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         if (visibleRides.isEmpty)
-                          Text('No rides yet.',
+                          Text(context.l10n.noRidesYetDot,
                               style: TextStyle(
                                   fontSize: 13, color: context.palette.textSecondary))
                         else
@@ -354,10 +355,10 @@ class _AllRidesButton extends StatelessWidget {
           Icon(Icons.list_alt_outlined, size: 18, color: context.palette.primary),
           const SizedBox(width: 10),
           Expanded(
-            child: Text('All rides',
+            child: Text(context.l10n.allRides,
                 style: display(context, 14, letterSpacing: 0, color: context.palette.primary)),
           ),
-          Text('$showing of $total shown',
+          Text(context.l10n.shown(showing, total),
               style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
           const SizedBox(width: 6),
           Icon(Icons.chevron_right, size: 18, color: context.palette.textTertiary),

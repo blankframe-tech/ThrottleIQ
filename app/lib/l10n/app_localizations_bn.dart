@@ -2934,4 +2934,523 @@ class AppLocalizationsBn extends AppLocalizations {
   String serviceDueIn(String item, String km) {
     return '$item · আরও $km কিমি পরে বাকি';
   }
+
+  @override
+  String get noReviewsYet => 'এখনো কোনো রিভিউ নেই';
+
+  @override
+  String get pickLocationMapFirst => 'আগে ম্যাপে লোকেশন বেছে নিন।';
+
+  @override
+  String get takeAPhoto => 'ছবি তুলুন';
+
+  @override
+  String get chooseFromGallery => 'গ্যালারি থেকে বেছে নিন';
+
+  @override
+  String couldNotOpenCamera(Object e) {
+    return 'ক্যামেরা বা গ্যালারি খোলা যায়নি: $e';
+  }
+
+  @override
+  String get couldntLookThatSpot =>
+      'জায়গাটি খুঁজে পাওয়া যায়নি — নিজেই বর্ণনা লিখে দিন।';
+
+  @override
+  String get photoDidntUploadSaving =>
+      'ছবি আপলোড হয়নি — ছবি ছাড়াই জায়গাটি সেভ করা হচ্ছে।';
+
+  @override
+  String couldNotAddPlace(Object e) {
+    return 'জায়গা যোগ করা যায়নি: $e';
+  }
+
+  @override
+  String get addPhotoOptional => 'ছবি যোগ করুন (ঐচ্ছিক)';
+
+  @override
+  String get shopfrontPictureMakesThis =>
+      'দোকানের সামনের ছবি থাকলে জায়গাটি চিনতে সুবিধা হয়';
+
+  @override
+  String get couldntLoadThatPhoto => 'ছবিটি লোড করা যায়নি';
+
+  @override
+  String get replacePhoto => 'ছবি বদলান';
+
+  @override
+  String get removePhoto => 'ছবি সরান';
+
+  @override
+  String get addPlace => 'জায়গা যোগ করুন';
+
+  @override
+  String get location => 'লোকেশন';
+
+  @override
+  String get category => 'ক্যাটাগরি';
+
+  @override
+  String get nameStar => 'নাম *';
+
+  @override
+  String get eGRahmanMotors => 'যেমন: রহমান মোটরস';
+
+  @override
+  String get addressOptional => 'ঠিকানা (ঐচ্ছিক)';
+
+  @override
+  String get eGBesideOmuk => 'যেমন: মিরপুর 10-এ অমুক স্কুলের পাশে';
+
+  @override
+  String get writeItWayYoud =>
+      'বন্ধুকে যেভাবে বলতেন সেভাবে লিখুন — আনুষ্ঠানিক ঠিকানা নয়, চেনা জায়গার কথা। \"অমুক স্কুলের পাশে\" বা \"মিরপুর 10 চত্বরের ঠিক পরে\" লিখলে অনেক বেশি কাজে লাগে।';
+
+  @override
+  String get lookingUp => 'খোঁজা হচ্ছে…';
+
+  @override
+  String get usePinsArea => 'পিনের এলাকা ব্যবহার করুন';
+
+  @override
+  String get phoneOptional => 'ফোন (ঐচ্ছিক)';
+
+  @override
+  String get hoursOptional => 'সময় (ঐচ্ছিক)';
+
+  @override
+  String get eG9am9pm => 'যেমন: সকাল 9টা – রাত 9টা, অথবা 24/7';
+
+  @override
+  String get haventAddedAnyPlaces => 'আপনি এখনো কোনো জায়গা যোগ করেননি';
+
+  @override
+  String verified(Object displayName) {
+    return '$displayName · যাচাইকৃত';
+  }
+
+  @override
+  String get youveAlreadyReviewedThis => 'আপনি এই জায়গার রিভিউ আগেই দিয়েছেন।';
+
+  @override
+  String couldNotSubmitReview(Object e) {
+    return 'রিভিউ জমা দেওয়া যায়নি: $e';
+  }
+
+  @override
+  String get place => 'জায়গা';
+
+  @override
+  String get placeNotFound => 'জায়গা পাওয়া যায়নি';
+
+  @override
+  String get addReview => 'আপনার রিভিউ যোগ করুন';
+
+  @override
+  String get rateThisPlace => 'এই জায়গার রেটিং দিন';
+
+  @override
+  String get shareExperience => 'আপনার অভিজ্ঞতা জানান...';
+
+  @override
+  String get submitReview => 'রিভিউ জমা দিন';
+
+  @override
+  String get reviews => 'রিভিউ';
+
+  @override
+  String get noReviewsYetBe => 'এখনো কোনো রিভিউ নেই — প্রথমজন আপনিই হোন!';
+
+  @override
+  String get officialPoint => 'অফিসিয়াল পয়েন্ট';
+
+  @override
+  String get n0NotGoogle => '★ 0 (Google-এ নেই)';
+
+  @override
+  String get n00Reviews => '★ 0 (0টি রিভিউ)';
+
+  @override
+  String get couldntOpenMapsApp => 'দিকনির্দেশের জন্য ম্যাপ অ্যাপ খোলা যায়নি';
+
+  @override
+  String get couldntOpenDialler => 'ডায়ালার খোলা যায়নি';
+
+  @override
+  String get call => 'কল করুন';
+
+  @override
+  String get youLabel => 'আপনি';
+
+  @override
+  String get recordThisRideThrottleiq =>
+      'এই রাইড কি ThrottleIQ-তে রেকর্ড করবেন?';
+
+  @override
+  String get mapsAppGivesDirections =>
+      'দিকনির্দেশ দেবে আপনার ম্যাপ অ্যাপ। একই সময়ে ThrottleIQ ব্যাকগ্রাউন্ডে ট্রিপটি লগ করতে পারে।';
+
+  @override
+  String get recordGo => 'রেকর্ড করে রওনা দিন';
+
+  @override
+  String get justDirections => 'শুধু দিকনির্দেশ';
+
+  @override
+  String get dontAskAgain => 'আর জিজ্ঞেস করবেন না';
+
+  @override
+  String get noNewPlacesFound => 'কাছাকাছি নতুন কোনো জায়গা পাওয়া যায়নি';
+
+  @override
+  String couldNotImportNearby(Object e) {
+    return 'কাছের জায়গা ইম্পোর্ট করা যায়নি: $e';
+  }
+
+  @override
+  String get importNearbyPlacesFrom =>
+      'OpenStreetMap থেকে কাছের জায়গা ইম্পোর্ট করুন';
+
+  @override
+  String get allFilter => 'সব';
+
+  @override
+  String get browseRoutes => 'রুট দেখুন →';
+
+  @override
+  String get openSettings => 'সেটিংস খুলুন';
+
+  @override
+  String get noPlacesNearbyYet => 'কাছে এখনো কোনো জায়গা নেই';
+
+  @override
+  String get addGarageFuelPump =>
+      'অন্য রাইডারদের সাহায্য করতে গ্যারেজ, ফুয়েল পাম্প, যন্ত্রাংশের দোকান বা বাইকার ক্যাফে যোগ করুন।';
+
+  @override
+  String get addPlaceLower => 'জায়গা যোগ করুন';
+
+  @override
+  String couldNotUpdateVisibility(Object e) {
+    return 'দৃশ্যমানতা বদলানো যায়নি: $e';
+  }
+
+  @override
+  String get deleteRouteQuestion => 'রুট মুছবেন?';
+
+  @override
+  String get thisRemovesSavedRoute =>
+      'এতে সেভ করা রুটটি মুছে যাবে। যে রাইড থেকে এটি এসেছে সেটি অপরিবর্তিত থাকবে।';
+
+  @override
+  String get deleteRouteTitle => 'রুট মুছুন';
+
+  @override
+  String get routeNotFound => 'রুট পাওয়া যায়নি';
+
+  @override
+  String get turns => 'বাঁক';
+
+  @override
+  String get ridden => 'চালানো হয়েছে';
+
+  @override
+  String get privateLabel => 'ব্যক্তিগত';
+
+  @override
+  String get anyRiderCanFind => 'যেকোনো রাইডার এই রুট খুঁজে নিয়ে চালাতে পারবে';
+
+  @override
+  String get onlyCanSeeThis => 'শুধু আপনি এই রুটটি দেখতে পারবেন';
+
+  @override
+  String get startNavigation => 'নেভিগেশন শুরু করুন';
+
+  @override
+  String get turnByTurn => 'বাঁকে বাঁকে নির্দেশনা';
+
+  @override
+  String get derivedFromRecordedTrack =>
+      'রেকর্ড করা ট্র্যাক থেকে তৈরি — দূরত্ব রুট ধরে মাপা।';
+
+  @override
+  String get sharedByAnotherRider => 'অন্য রাইডারের শেয়ার করা';
+
+  @override
+  String sharedBy(Object value) {
+    return '$value-এর শেয়ার করা';
+  }
+
+  @override
+  String get canRideItBut =>
+      'আপনি এটি চালাতে পারবেন, কিন্তু শুধু মালিকই এটি বদলাতে বা মুছতে পারবেন।';
+
+  @override
+  String get locationPermissionOffSo =>
+      'লোকেশন অনুমতি বন্ধ, তাই বাঁক ট্র্যাক করা যাচ্ছে না। নেভিগেট করতে সেটিংসে গিয়ে চালু করুন।';
+
+  @override
+  String get locationServicesOffTurn =>
+      'লোকেশন সার্ভিস বন্ধ আছে। নেভিগেট করতে চালু করুন।';
+
+  @override
+  String get thisRouteHasNo => 'এই রুটে অনুসরণ করার মতো কোনো ট্র্যাক নেই।';
+
+  @override
+  String offRouteFromLine(Object distanceM) {
+    return 'রুটের বাইরে — লাইন থেকে $distanceM দূরে';
+  }
+
+  @override
+  String get remaining => 'বাকি';
+
+  @override
+  String get eta => 'পৌঁছাবে (ETA)';
+
+  @override
+  String get end => 'শেষ';
+
+  @override
+  String get routes => 'রুট';
+
+  @override
+  String get myRoutes => 'আমার রুট';
+
+  @override
+  String get discover => 'আবিষ্কার করুন';
+
+  @override
+  String get noSavedRoutesYet => 'এখনো কোনো সেভ করা রুট নেই';
+
+  @override
+  String get noPublicRoutesYet => 'এখনো কোনো পাবলিক রুট নেই';
+
+  @override
+  String get finishRideThenTap =>
+      'একটি রাইড শেষ করুন, তারপর শেয়ার স্ক্রিনে \"রুট হিসেবে সেভ করুন\" ট্যাপ করুন।';
+
+  @override
+  String get publicRoutesOtherRiders =>
+      'অন্য রাইডারদের সেভ করা পাবলিক রুট এখানে দেখা যাবে।';
+
+  @override
+  String routeRiddenSummary(Object distanceKm, Object timesRidden) {
+    return '$distanceKm কিমি · $timesRidden বার চালানো';
+  }
+
+  @override
+  String get thisRideHasNo =>
+      'এই রাইডে রুট হিসেবে সেভ করার মতো কোনো ট্র্যাক নেই।';
+
+  @override
+  String get routeSaved => 'রুট সেভ হয়েছে';
+
+  @override
+  String get loadingTrack => 'ট্র্যাক লোড হচ্ছে…';
+
+  @override
+  String kmPoints(Object distanceKm, Object polylineCount) {
+    return '$distanceKm কিমি · $polylineCountটি পয়েন্ট';
+  }
+
+  @override
+  String get routeName => 'রুটের নাম';
+
+  @override
+  String get eGDhakaMawa => 'যেমন: ঢাকা – মাওয়া সকালের রাইড';
+
+  @override
+  String get giveRouteName => 'রুটটির একটি নাম দিন';
+
+  @override
+  String get roadSurfaceBestTime =>
+      'রাস্তার অবস্থা, রাইডের সেরা সময়, কোথায় থামবেন…';
+
+  @override
+  String get saveRoute => 'রুট সেভ করুন';
+
+  @override
+  String get topSpeed => 'সর্বোচ্চ গতি';
+
+  @override
+  String get bestScore => 'সেরা স্কোর';
+
+  @override
+  String get allRides => 'সব রাইড';
+
+  @override
+  String get noRidesYetDot => 'এখনো কোনো রাইড নেই।';
+
+  @override
+  String showing(Object shownCount, Object sortedCount) {
+    return '$sortedCountটির মধ্যে $shownCountটি দেখানো হচ্ছে';
+  }
+
+  @override
+  String get distanceLower => 'দূরত্ব';
+
+  @override
+  String get topLower => 'সর্বোচ্চ';
+
+  @override
+  String hardBrakesRapidAccel(
+      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
+    return '$hardBrakeCountটি হার্ড ব্রেক · $rapidAccelCountটি র‍্যাপিড এক্সেল · $highJerkCountটি ঝাঁকুনি';
+  }
+
+  @override
+  String get journey => 'আপনার যাত্রা';
+
+  @override
+  String get goRideStartJourney => 'যাত্রা শুরু করতে একটি রাইডে বের হোন।';
+
+  @override
+  String get totalKm => 'মোট কিমি';
+
+  @override
+  String level(Object level, Object rank) {
+    return 'লেভেল $level · $rank';
+  }
+
+  @override
+  String get distanceOverTime => 'সময়ের সাথে দূরত্ব';
+
+  @override
+  String get avgSpeedOverTime => 'সময়ের সাথে গড় গতি';
+
+  @override
+  String badgesEarnedCount(Object earnedCount, Object badgesCount) {
+    return '$badgesCountটির মধ্যে $earnedCountটি অর্জিত';
+  }
+
+  @override
+  String get avgSpeedLower => 'গড় গতি';
+
+  @override
+  String get topSpeedLower => 'সর্বোচ্চ গতি';
+
+  @override
+  String get score => 'স্কোর';
+
+  @override
+  String get recentRides => 'সাম্প্রতিক রাইড';
+
+  @override
+  String get rides => 'আপনার রাইড';
+
+  @override
+  String shown(Object showing, Object total) {
+    return '$totalটির মধ্যে $showingটি দেখানো হয়েছে';
+  }
+
+  @override
+  String badgeFamilyEarned(
+      Object family, Object earnedCount, Object badgesCount) {
+    return '$family, $badgesCountটির মধ্যে $earnedCountটি অর্জিত';
+  }
+
+  @override
+  String youProgress(Object progress, Object unit) {
+    return 'আপনি: $progress $unit';
+  }
+
+  @override
+  String nextGo(Object def, Object progress, Object unit) {
+    return 'পরবর্তী: $def — আরও $progress $unit বাকি';
+  }
+
+  @override
+  String get everyTierEarnedNothing =>
+      'সব স্তর অর্জিত। এখানে আর কিছু বাকি নেই।';
+
+  @override
+  String earnedThreshold(Object threshold) {
+    return 'অর্জিত। $threshold';
+  }
+
+  @override
+  String youreAt(
+      Object threshold, Object progress, Object threshold2, Object unit) {
+    return '$threshold আপনি $threshold2 $unit-এর মধ্যে $progress-এ আছেন।';
+  }
+
+  @override
+  String get notEnoughRidesYet => 'এখনো যথেষ্ট রাইড নেই';
+
+  @override
+  String get cropPhoto => 'ছবি ক্রপ করুন';
+
+  @override
+  String get free => 'ফ্রি';
+
+  @override
+  String get couldNotOpenThat => 'ছবিটি খোলা যায়নি।';
+
+  @override
+  String get couldNotSaveCropped => 'ক্রপ করা ছবি সেভ করা যায়নি।';
+
+  @override
+  String get done => 'সম্পন্ন';
+
+  @override
+  String get rotate => 'ঘোরান';
+
+  @override
+  String get pleaseDescribeProblemBefore => 'পাঠানোর আগে সমস্যাটি বর্ণনা করুন।';
+
+  @override
+  String get couldNotSendReport => 'রিপোর্ট পাঠানো যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get describeWhatHappenedUid =>
+      'কী হয়েছে বর্ণনা করুন। আপনার UID ও অ্যাপ ভার্সন নিজে থেকেই যুক্ত হবে।';
+
+  @override
+  String get eGMessagesWouldnt =>
+      'যেমন: \"মেসেজ যাচ্ছিল না — পারমিশন নিয়ে একটি এরর পেয়েছি।\"';
+
+  @override
+  String get sending => 'পাঠানো হচ্ছে…';
+
+  @override
+  String get sendReport => 'রিপোর্ট পাঠান';
+
+  @override
+  String get startCaps => 'শুরু';
+
+  @override
+  String get finishCaps => 'শেষ';
+
+  @override
+  String waypoint(Object selectedPointIndex, Object polylineCount) {
+    return '$polylineCountটির মধ্যে ওয়েপয়েন্ট #$selectedPointIndex';
+  }
+
+  @override
+  String gpsPointsTapRoute(Object polylineCount) {
+    return '$polylineCountটি GPS পয়েন্ট • ওয়েপয়েন্ট দেখতে রুটে ট্যাপ করুন';
+  }
+
+  @override
+  String get saveRouteTitle => 'রুট সেভ করুন';
+
+  @override
+  String get dragMapMovePin => 'পিন সরাতে ম্যাপ টেনে আনুন';
+
+  @override
+  String get noRouteRecorded => 'কোনো রুট রেকর্ড হয়নি';
+
+  @override
+  String get sortRecent => 'সাম্প্রতিক';
+
+  @override
+  String importedPlaces(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি জায়গা',
+      one: '1টি জায়গা',
+    );
+    return 'OpenStreetMap থেকে $_temp0 ইম্পোর্ট হয়েছে';
+  }
 }

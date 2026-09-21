@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme_context.dart';
 import '../../core/utils/firebase_error_mapper.dart';
 import 'bug_report_sheet.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// Customer-facing stand-in for a raw exception in a `.when(error: ...)`
 /// branch — maps [error] through [mapFirestoreError] rather than
@@ -47,14 +48,14 @@ class ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+              OutlinedButton(onPressed: onRetry, child: Text(context.l10n.tryAgain)),
             ],
             if (showBugReport) ...[
               const SizedBox(height: 8),
               TextButton.icon(
                 onPressed: () => BugReportSheet.show(context),
                 icon: const Icon(Icons.bug_report_outlined, size: 16),
-                label: const Text('Report a Problem'),
+                label: Text(context.l10n.reportProblem),
                 style: TextButton.styleFrom(
                   foregroundColor: context.palette.textTertiary,
                   textStyle: const TextStyle(fontSize: 13),

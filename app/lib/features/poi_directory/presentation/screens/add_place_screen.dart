@@ -17,6 +17,7 @@ import '../../data/utils/geohash_utils.dart';
 import '../../data/utils/image_compression_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
 /// real fix is available yet. Only ever the map's *initial camera* — never a
@@ -67,7 +68,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   void _showPickLocationHint() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pick the location on the map first.')),
+      SnackBar(content: Text(context.l10n.pickLocationMapFirst)),
     );
   }
 
@@ -93,13 +94,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           children: [
             ListTile(
               leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
-              title: Text('Take a photo',
+              title: Text(sheetContext.l10n.takeAPhoto,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
               leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
-              title: Text('Choose from gallery',
+              title: Text(sheetContext.l10n.chooseFromGallery,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
@@ -117,7 +118,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open the camera or gallery: $e')),
+        SnackBar(content: Text(context.l10n.couldNotOpenCamera(e))),
       );
     }
   }
@@ -140,9 +141,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       if (!mounted) return;
       if (suggestion == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                "Couldn't look that spot up — just describe it yourself."),
+                context.l10n.couldntLookThatSpot),
           ),
         );
         return;
@@ -181,8 +182,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Photo didn't upload — saving the place without it."),
+              SnackBar(
+                content: Text(context.l10n.photoDidntUploadSaving),
               ),
             );
           }
@@ -231,7 +232,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not add place: $e')),
+        SnackBar(content: Text(context.l10n.couldNotAddPlace(e))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -258,12 +259,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               Icon(Icons.add_a_photo_outlined, size: 22, color: context.palette.textSecondary),
               const SizedBox(height: 6),
               Text(
-                'Add a photo (optional)',
+                context.l10n.addPhotoOptional,
                 style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
               ),
               const SizedBox(height: 2),
               Text(
-                'A shopfront picture makes this place easy to spot',
+                context.l10n.shopfrontPictureMakesThis,
                 style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
               ),
             ],
@@ -288,7 +289,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               height: 160,
               color: context.palette.surface,
               alignment: Alignment.center,
-              child: Text("Couldn't load that photo",
+              child: Text(context.l10n.couldntLoadThatPhoto,
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
             ),
           ),
@@ -299,13 +300,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               children: [
                 _photoAction(
                   icon: Icons.edit,
-                  tooltip: 'Replace photo',
+                  tooltip: context.l10n.replacePhoto,
                   onTap: _submitting ? null : _pickPhoto,
                 ),
                 const SizedBox(width: 8),
                 _photoAction(
                   icon: Icons.close,
-                  tooltip: 'Remove photo',
+                  tooltip: context.l10n.removePhoto,
                   onTap: _submitting ? null : () => setState(() => _photoPath = null),
                 ),
               ],
@@ -347,7 +348,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Add Place')),
+      appBar: AppBar(title: Text(context.l10n.addPlace)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Form(
@@ -355,7 +356,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Location', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+              Text(context.l10n.location, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               MapLocationPicker(
                 // Keyed by center so the map remounts (and re-centers) once
@@ -371,7 +372,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              Text('Category', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+              Text(context.l10n.category, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -410,8 +411,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               TextFormField(
                 controller: _nameCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(labelText: 'Name *', hintText: 'e.g. Rahman Motors'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                decoration: InputDecoration(labelText: context.l10n.nameStar, hintText: context.l10n.eGRahmanMotors),
+                validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredField : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -423,12 +424,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 // An address here is a convenience for the next rider, not a
                 // requirement — demanding one just made people type junk.
                 decoration: InputDecoration(
-                  labelText: 'Address (optional)',
-                  hintText: 'e.g. Beside Omuk School, Mirpur 10',
+                  labelText: context.l10n.addressOptional,
+                  hintText: context.l10n.eGBesideOmuk,
                   helperMaxLines: 3,
-                  helperText: 'Write it the way you\'d tell a friend — landmarks, '
-                      'not a formal street address. "Beside Omuk School" or '
-                      '"just after the Mirpur 10 circle" helps far more here.',
+                  helperText: context.l10n.writeItWayYoud,
                   helperStyle: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                 ),
               ),
@@ -444,7 +443,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                         )
                       : const Icon(Icons.my_location, size: 16),
                   label: Text(
-                    _lookingUpAddress ? 'Looking up…' : "Use the pin's area",
+                    _lookingUpAddress ? context.l10n.lookingUp : context.l10n.usePinsArea,
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -456,15 +455,15 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(labelText: 'Phone (optional)', hintText: '+880...'),
+                decoration: InputDecoration(labelText: context.l10n.phoneOptional, hintText: '+880...'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _hoursCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Hours (optional)',
-                  hintText: 'e.g. 9am - 9pm, or 24/7',
+                decoration: InputDecoration(
+                  labelText: context.l10n.hoursOptional,
+                  hintText: context.l10n.eG9am9pm,
                 ),
               ),
               const SizedBox(height: 24),
@@ -476,7 +475,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Add Place'),
+                    : Text(context.l10n.addPlace),
               ),
             ],
           ),

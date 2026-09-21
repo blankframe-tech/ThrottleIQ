@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// The Rides tab's badge shelf.
 ///
@@ -67,8 +68,7 @@ class _BadgeFamilyTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '${progress.family.name}, '
-          '${progress.earnedCount} of ${progress.badges.length} earned',
+      label: context.l10n.badgeFamilyEarned(progress.family.name, progress.earnedCount, progress.badges.length),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(context.shape.radiusLg),
@@ -189,7 +189,7 @@ class _BadgeLadderSheet extends StatelessWidget {
                       color: context.palette.textSecondary)),
               const SizedBox(height: 14),
               Text(
-                'You: ${formatBadgeValue(progress.value)} ${family.unit}',
+                context.l10n.youProgress(formatBadgeValue(progress.value), family.unit),
                 style: display(context, 15, letterSpacing: 0),
               ),
               if (next != null) ...[
@@ -201,15 +201,13 @@ class _BadgeLadderSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Next: ${next.def.name} — '
-                  '${formatBadgeValue(next.def.threshold - progress.value)} '
-                  '${family.unit} to go',
+                  context.l10n.nextGo(next.def.name, formatBadgeValue(next.def.threshold - progress.value), family.unit),
                   style:
                       TextStyle(fontSize: 12, color: context.palette.textTertiary),
                 ),
               ] else ...[
                 const SizedBox(height: 8),
-                Text('Every tier earned. Nothing left to chase here.',
+                Text(context.l10n.everyTierEarnedNothing,
                     style: TextStyle(fontSize: 12, color: context.palette.primary)),
               ],
               const SizedBox(height: 18),
@@ -275,11 +273,8 @@ class _LadderRow extends StatelessWidget {
                   // explain what to do about it, with the gap spelled out so
                   // "how far off am I" never needs mental arithmetic.
                   earned
-                      ? 'Earned. ${family.requirementFor(badge.def.threshold)}'
-                      : '${family.requirementFor(badge.def.threshold)} '
-                          "You're at ${formatBadgeValue(progress.value)} "
-                          'of ${formatBadgeValue(badge.def.threshold)} '
-                          '${family.unit}.',
+                      ? context.l10n.earnedThreshold(family.requirementFor(badge.def.threshold))
+                      : context.l10n.youreAt(family.requirementFor(badge.def.threshold), formatBadgeValue(progress.value), formatBadgeValue(badge.def.threshold), family.unit),
                   style: TextStyle(
                       fontSize: 12,
                       height: 1.35,

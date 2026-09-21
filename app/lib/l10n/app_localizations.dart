@@ -5228,6 +5228,897 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{item} · due in {km} km'**
   String serviceDueIn(String item, String km);
+
+  /// Text in place_entity.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet'**
+  String get noReviewsYet;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the location on the map first.'**
+  String get pickLocationMapFirst;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get takeAPhoto;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get chooseFromGallery;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the camera or gallery: {e}'**
+  String couldNotOpenCamera(Object e);
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t look that spot up — just describe it yourself.'**
+  String get couldntLookThatSpot;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo didn\'t upload — saving the place without it.'**
+  String get photoDidntUploadSaving;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add place: {e}'**
+  String couldNotAddPlace(Object e);
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo (optional)'**
+  String get addPhotoOptional;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'A shopfront picture makes this place easy to spot'**
+  String get shopfrontPictureMakesThis;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load that photo'**
+  String get couldntLoadThatPhoto;
+
+  /// Tooltip in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace photo'**
+  String get replacePhoto;
+
+  /// Tooltip in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get removePhoto;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Place'**
+  String get addPlace;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// LabelText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Name *'**
+  String get nameStar;
+
+  /// HintText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Rahman Motors'**
+  String get eGRahmanMotors;
+
+  /// LabelText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Address (optional)'**
+  String get addressOptional;
+
+  /// HintText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Beside Omuk School, Mirpur 10'**
+  String get eGBesideOmuk;
+
+  /// HelperText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Write it the way you\'d tell a friend — landmarks, not a formal street address. \"Beside Omuk School\" or \"just after the Mirpur 10 circle\" helps far more here.'**
+  String get writeItWayYoud;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking up…'**
+  String get lookingUp;
+
+  /// Text in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the pin\'s area'**
+  String get usePinsArea;
+
+  /// LabelText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get phoneOptional;
+
+  /// LabelText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours (optional)'**
+  String get hoursOptional;
+
+  /// HintText in add_place_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 9am - 9pm, or 24/7'**
+  String get eG9am9pm;
+
+  /// Text in my_places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t added any places yet'**
+  String get haventAddedAnyPlaces;
+
+  /// Text in my_places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} · Verified'**
+  String verified(Object displayName);
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve already reviewed this place.'**
+  String get youveAlreadyReviewedThis;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit review: {e}'**
+  String couldNotSubmitReview(Object e);
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get place;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Place not found'**
+  String get placeNotFound;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your review'**
+  String get addReview;
+
+  /// Tooltip in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this place'**
+  String get rateThisPlace;
+
+  /// HintText in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your experience...'**
+  String get shareExperience;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit review'**
+  String get submitReview;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get reviews;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet — be the first!'**
+  String get noReviewsYetBe;
+
+  /// Text in place_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Official point'**
+  String get officialPoint;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'★ 0 (Not on Google)'**
+  String get n0NotGoogle;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'★ 0 (0 reviews)'**
+  String get n00Reviews;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open a maps app for directions'**
+  String get couldntOpenMapsApp;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the dialler'**
+  String get couldntOpenDialler;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get youLabel;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Record this ride in ThrottleIQ?'**
+  String get recordThisRideThrottleiq;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your maps app gives the directions. ThrottleIQ can log the trip in the background at the same time.'**
+  String get mapsAppGivesDirections;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Record & go'**
+  String get recordGo;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Just directions'**
+  String get justDirections;
+
+  /// Text in place_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t ask again'**
+  String get dontAskAgain;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No new places found nearby'**
+  String get noNewPlacesFound;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not import nearby places: {e}'**
+  String couldNotImportNearby(Object e);
+
+  /// Tooltip in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Import nearby places from OpenStreetMap'**
+  String get importNearbyPlacesFrom;
+
+  /// Label in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allFilter;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse routes →'**
+  String get browseRoutes;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No places nearby yet'**
+  String get noPlacesNearbyYet;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a garage, fuel pump, parts shop, or biker cafe to help other riders.'**
+  String get addGarageFuelPump;
+
+  /// Text in places_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add place'**
+  String get addPlaceLower;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update visibility: {e}'**
+  String couldNotUpdateVisibility(Object e);
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete route?'**
+  String get deleteRouteQuestion;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the saved route. The ride it came from is untouched.'**
+  String get thisRemovesSavedRoute;
+
+  /// Tooltip in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete route'**
+  String get deleteRouteTitle;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route not found'**
+  String get routeNotFound;
+
+  /// Label in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Turns'**
+  String get turns;
+
+  /// Label in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ridden'**
+  String get ridden;
+
+  /// Text in route_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Private'**
+  String get privateLabel;
+
+  /// Text in route_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Any rider can find and ride this route'**
+  String get anyRiderCanFind;
+
+  /// Text in route_detail_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Only you can see this route'**
+  String get onlyCanSeeThis;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Start navigation'**
+  String get startNavigation;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn by turn'**
+  String get turnByTurn;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Derived from the recorded track — distances are along the route.'**
+  String get derivedFromRecordedTrack;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared by another rider'**
+  String get sharedByAnotherRider;
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared by {value}'**
+  String sharedBy(Object value);
+
+  /// Text in route_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'You can ride it, but only its owner can change or delete it.'**
+  String get canRideItBut;
+
+  /// SetState in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is off, so turns can\'t be tracked. Enable it in Settings to navigate.'**
+  String get locationPermissionOffSo;
+
+  /// SetState in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off. Turn them on to navigate.'**
+  String get locationServicesOffTurn;
+
+  /// Text in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This route has no track to follow.'**
+  String get thisRouteHasNo;
+
+  /// Text in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Off route — {distanceM} from the line'**
+  String offRouteFromLine(Object distanceM);
+
+  /// Label in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get remaining;
+
+  /// Label in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA'**
+  String get eta;
+
+  /// Text in route_navigation_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get end;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Routes'**
+  String get routes;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'My routes'**
+  String get myRoutes;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover'**
+  String get discover;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved routes yet'**
+  String get noSavedRoutesYet;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No public routes yet'**
+  String get noPublicRoutesYet;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish a ride, then tap \"Save as route\" on the share screen.'**
+  String get finishRideThenTap;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Public routes other riders save will show up here.'**
+  String get publicRoutesOtherRiders;
+
+  /// Text in routes_list_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{distanceKm} km · ridden {timesRidden}×'**
+  String routeRiddenSummary(Object distanceKm, Object timesRidden);
+
+  /// Text in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This ride has no track to save as a route.'**
+  String get thisRideHasNo;
+
+  /// Text in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route saved'**
+  String get routeSaved;
+
+  /// Text in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading track…'**
+  String get loadingTrack;
+
+  /// Text in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{distanceKm} km · {polylineCount} points'**
+  String kmPoints(Object distanceKm, Object polylineCount);
+
+  /// EditorialLabel in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Route name'**
+  String get routeName;
+
+  /// HintText in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Dhaka – Mawa morning run'**
+  String get eGDhakaMawa;
+
+  /// Validator in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the route a name'**
+  String get giveRouteName;
+
+  /// HintText in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Road surface, best time to ride, where to stop…'**
+  String get roadSurfaceBestTime;
+
+  /// Text in save_route_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Save route'**
+  String get saveRoute;
+
+  /// Text in badges (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Top speed'**
+  String get topSpeed;
+
+  /// Text in ride_sort.
+  ///
+  /// In en, this message translates to:
+  /// **'Best score'**
+  String get bestScore;
+
+  /// Text in all_rides_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'All rides'**
+  String get allRides;
+
+  /// Text in all_rides_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'No rides yet.'**
+  String get noRidesYetDot;
+
+  /// Text in all_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {shownCount} of {sortedCount}'**
+  String showing(Object shownCount, Object sortedCount);
+
+  /// Label in all_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'distance'**
+  String get distanceLower;
+
+  /// Label in all_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'top'**
+  String get topLower;
+
+  /// Text in all_rides_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{hardBrakeCount} hard brakes · {rapidAccelCount} rapid accel · {highJerkCount} jerks'**
+  String hardBrakesRapidAccel(
+      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount);
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Journey'**
+  String get journey;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Go for a ride to start your journey.'**
+  String get goRideStartJourney;
+
+  /// Label in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'total km'**
+  String get totalKm;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level} · {rank}'**
+  String level(Object level, Object rank);
+
+  /// EditorialLabel in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance over time'**
+  String get distanceOverTime;
+
+  /// EditorialLabel in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg speed over time'**
+  String get avgSpeedOverTime;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{earnedCount} of {badgesCount} earned'**
+  String badgesEarnedCount(Object earnedCount, Object badgesCount);
+
+  /// Label in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'avg speed'**
+  String get avgSpeedLower;
+
+  /// Label in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'top speed'**
+  String get topSpeedLower;
+
+  /// Label in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'score'**
+  String get score;
+
+  /// EditorialLabel in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent rides'**
+  String get recentRides;
+
+  /// EditorialLabel in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rides'**
+  String get rides;
+
+  /// Text in stats_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{showing} of {total} shown'**
+  String shown(Object showing, Object total);
+
+  /// Label in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'{family}, {earnedCount} of {badgesCount} earned'**
+  String badgeFamilyEarned(
+      Object family, Object earnedCount, Object badgesCount);
+
+  /// Text in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'You: {progress} {unit}'**
+  String youProgress(Object progress, Object unit);
+
+  /// Text in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {def} — {progress} {unit} to go'**
+  String nextGo(Object def, Object progress, Object unit);
+
+  /// Text in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Every tier earned. Nothing left to chase here.'**
+  String get everyTierEarnedNothing;
+
+  /// Text in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned. {threshold}'**
+  String earnedThreshold(Object threshold);
+
+  /// Text in badge_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'{threshold} You\'re at {progress} of {threshold2} {unit}.'**
+  String youreAt(
+      Object threshold, Object progress, Object threshold2, Object unit);
+
+  /// Text in ride_line_chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough rides yet'**
+  String get notEnoughRidesYet;
+
+  /// Text in image_crop_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop photo'**
+  String get cropPhoto;
+
+  /// Label in image_crop_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get free;
+
+  /// SetState in image_crop_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open that photo.'**
+  String get couldNotOpenThat;
+
+  /// Text in image_crop_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the cropped photo.'**
+  String get couldNotSaveCropped;
+
+  /// Text in image_crop_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// Text in image_crop_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate'**
+  String get rotate;
+
+  /// SetState in bug_report_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe the problem before sending.'**
+  String get pleaseDescribeProblemBefore;
+
+  /// Text in bug_report_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send the report. Please try again.'**
+  String get couldNotSendReport;
+
+  /// Text in bug_report_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe what happened. Your UID and app version are included automatically.'**
+  String get describeWhatHappenedUid;
+
+  /// HintText in bug_report_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. \"Messages wouldn\'t send — I got an error about permissions.\"'**
+  String get eGMessagesWouldnt;
+
+  /// Text in bug_report_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get sending;
+
+  /// Text in bug_report_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Report'**
+  String get sendReport;
+
+  /// Text in full_screen_route_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'START'**
+  String get startCaps;
+
+  /// Text in full_screen_route_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'FINISH'**
+  String get finishCaps;
+
+  /// Text in full_screen_route_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Waypoint #{selectedPointIndex} of {polylineCount}'**
+  String waypoint(Object selectedPointIndex, Object polylineCount);
+
+  /// Text in full_screen_route_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{polylineCount} GPS points • Tap route to inspect waypoints'**
+  String gpsPointsTapRoute(Object polylineCount);
+
+  /// Text in full_screen_route_map_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Route'**
+  String get saveRouteTitle;
+
+  /// Text in map_location_picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag map to move pin'**
+  String get dragMapMovePin;
+
+  /// Text in ride_route_map.
+  ///
+  /// In en, this message translates to:
+  /// **'No route recorded'**
+  String get noRouteRecorded;
+
+  /// Sort chip on the All rides screen: newest first.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get sortRecent;
+
+  /// Snackbar after importing nearby places from OpenStreetMap.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Imported 1 place from OpenStreetMap} other{Imported {count} places from OpenStreetMap}}'**
+  String importedPlaces(int count);
 }
 
 class _AppLocalizationsDelegate

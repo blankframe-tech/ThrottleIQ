@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/services/bug_report_service.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A bottom sheet that lets the rider describe a problem and send a bug report.
 ///
@@ -47,7 +48,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty) {
-      setState(() => _feedback = 'Please describe the problem before sending.');
+      setState(() => _feedback = context.l10n.pleaseDescribeProblemBefore);
       return;
     }
     setState(() {
@@ -61,7 +62,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
       if (mounted) {
         setState(() {
           _sending = false;
-          _feedback = 'Could not send the report. Please try again.';
+          _feedback = context.l10n.couldNotSendReport;
         });
       }
     }
@@ -99,7 +100,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
               Icon(Icons.bug_report_outlined, color: context.palette.primary, size: 22),
               const SizedBox(width: 10),
               Text(
-                'Send Bug Report',
+                context.l10n.sendBugReport,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -108,7 +109,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
               ),
               const Spacer(),
               IconButton(
-                tooltip: 'Close',
+                tooltip: context.l10n.close,
                 icon: const Icon(Icons.close),
                 color: context.palette.textSecondary,
                 onPressed: () => Navigator.of(context).pop(),
@@ -117,7 +118,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Describe what happened. Your UID and app version are included automatically.',
+            context.l10n.describeWhatHappenedUid,
             style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 14),
@@ -127,7 +128,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
             maxLines: 5,
             style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
-              hintText: 'e.g. "Messages wouldn\'t send — I got an error about permissions."',
+              hintText: context.l10n.eGMessagesWouldnt,
               hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 13),
               filled: true,
               fillColor: context.palette.background,
@@ -162,7 +163,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.send_outlined, size: 18),
-            label: Text(_sending ? 'Sending…' : 'Send Report'),
+            label: Text(_sending ? context.l10n.sending : context.l10n.sendReport),
             style: FilledButton.styleFrom(
               backgroundColor: context.palette.primary,
               minimumSize: const Size(0, 48),

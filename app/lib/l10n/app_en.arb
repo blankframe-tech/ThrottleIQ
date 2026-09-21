@@ -3939,5 +3939,763 @@
         "type": "String"
       }
     }
+  },
+  "noReviewsYet": "No reviews yet",
+  "@noReviewsYet": {
+    "description": "Text in place_entity."
+  },
+  "pickLocationMapFirst": "Pick the location on the map first.",
+  "@pickLocationMapFirst": {
+    "description": "Text in add_place_screen."
+  },
+  "takeAPhoto": "Take a photo",
+  "@takeAPhoto": {
+    "description": "Text in add_place_screen."
+  },
+  "chooseFromGallery": "Choose from gallery",
+  "@chooseFromGallery": {
+    "description": "Text in add_place_screen."
+  },
+  "couldNotOpenCamera": "Could not open the camera or gallery: {e}",
+  "@couldNotOpenCamera": {
+    "description": "Text in add_place_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldntLookThatSpot": "Couldn't look that spot up — just describe it yourself.",
+  "@couldntLookThatSpot": {
+    "description": "Text in add_place_screen."
+  },
+  "photoDidntUploadSaving": "Photo didn't upload — saving the place without it.",
+  "@photoDidntUploadSaving": {
+    "description": "Text in add_place_screen."
+  },
+  "couldNotAddPlace": "Could not add place: {e}",
+  "@couldNotAddPlace": {
+    "description": "Text in add_place_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "addPhotoOptional": "Add a photo (optional)",
+  "@addPhotoOptional": {
+    "description": "Text in add_place_screen."
+  },
+  "shopfrontPictureMakesThis": "A shopfront picture makes this place easy to spot",
+  "@shopfrontPictureMakesThis": {
+    "description": "Text in add_place_screen."
+  },
+  "couldntLoadThatPhoto": "Couldn't load that photo",
+  "@couldntLoadThatPhoto": {
+    "description": "Text in add_place_screen."
+  },
+  "replacePhoto": "Replace photo",
+  "@replacePhoto": {
+    "description": "Tooltip in add_place_screen."
+  },
+  "removePhoto": "Remove photo",
+  "@removePhoto": {
+    "description": "Tooltip in add_place_screen."
+  },
+  "addPlace": "Add Place",
+  "@addPlace": {
+    "description": "Text in add_place_screen."
+  },
+  "location": "Location",
+  "@location": {
+    "description": "Text in add_place_screen."
+  },
+  "category": "Category",
+  "@category": {
+    "description": "Text in add_place_screen."
+  },
+  "nameStar": "Name *",
+  "@nameStar": {
+    "description": "LabelText in add_place_screen."
+  },
+  "eGRahmanMotors": "e.g. Rahman Motors",
+  "@eGRahmanMotors": {
+    "description": "HintText in add_place_screen."
+  },
+  "addressOptional": "Address (optional)",
+  "@addressOptional": {
+    "description": "LabelText in add_place_screen."
+  },
+  "eGBesideOmuk": "e.g. Beside Omuk School, Mirpur 10",
+  "@eGBesideOmuk": {
+    "description": "HintText in add_place_screen."
+  },
+  "writeItWayYoud": "Write it the way you'd tell a friend — landmarks, not a formal street address. \"Beside Omuk School\" or \"just after the Mirpur 10 circle\" helps far more here.",
+  "@writeItWayYoud": {
+    "description": "HelperText in add_place_screen."
+  },
+  "lookingUp": "Looking up…",
+  "@lookingUp": {
+    "description": "Text in add_place_screen."
+  },
+  "usePinsArea": "Use the pin's area",
+  "@usePinsArea": {
+    "description": "Text in add_place_screen."
+  },
+  "phoneOptional": "Phone (optional)",
+  "@phoneOptional": {
+    "description": "LabelText in add_place_screen."
+  },
+  "hoursOptional": "Hours (optional)",
+  "@hoursOptional": {
+    "description": "LabelText in add_place_screen."
+  },
+  "eG9am9pm": "e.g. 9am - 9pm, or 24/7",
+  "@eG9am9pm": {
+    "description": "HintText in add_place_screen."
+  },
+  "haventAddedAnyPlaces": "You haven't added any places yet",
+  "@haventAddedAnyPlaces": {
+    "description": "Text in my_places_list_screen."
+  },
+  "verified": "{displayName} · Verified",
+  "@verified": {
+    "description": "Text in my_places_list_screen.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "youveAlreadyReviewedThis": "You've already reviewed this place.",
+  "@youveAlreadyReviewedThis": {
+    "description": "Text in place_detail_screen."
+  },
+  "couldNotSubmitReview": "Could not submit review: {e}",
+  "@couldNotSubmitReview": {
+    "description": "Text in place_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "place": "Place",
+  "@place": {
+    "description": "Text in place_detail_screen."
+  },
+  "placeNotFound": "Place not found",
+  "@placeNotFound": {
+    "description": "Text in place_detail_screen."
+  },
+  "addReview": "Add your review",
+  "@addReview": {
+    "description": "Text in place_detail_screen."
+  },
+  "rateThisPlace": "Rate this place",
+  "@rateThisPlace": {
+    "description": "Tooltip in place_detail_screen."
+  },
+  "shareExperience": "Share your experience...",
+  "@shareExperience": {
+    "description": "HintText in place_detail_screen."
+  },
+  "submitReview": "Submit review",
+  "@submitReview": {
+    "description": "Text in place_detail_screen."
+  },
+  "reviews": "Reviews",
+  "@reviews": {
+    "description": "Text in place_detail_screen."
+  },
+  "noReviewsYetBe": "No reviews yet — be the first!",
+  "@noReviewsYetBe": {
+    "description": "Text in place_detail_screen."
+  },
+  "officialPoint": "Official point",
+  "@officialPoint": {
+    "description": "Text in place_detail_screen (+1 more)."
+  },
+  "n0NotGoogle": "★ 0 (Not on Google)",
+  "@n0NotGoogle": {
+    "description": "Text in place_detail_screen."
+  },
+  "n00Reviews": "★ 0 (0 reviews)",
+  "@n00Reviews": {
+    "description": "Text in place_detail_screen."
+  },
+  "couldntOpenMapsApp": "Couldn't open a maps app for directions",
+  "@couldntOpenMapsApp": {
+    "description": "Text in place_detail_screen."
+  },
+  "couldntOpenDialler": "Couldn't open the dialler",
+  "@couldntOpenDialler": {
+    "description": "Text in place_detail_screen."
+  },
+  "call": "Call",
+  "@call": {
+    "description": "Text in place_detail_screen."
+  },
+  "youLabel": "You",
+  "@youLabel": {
+    "description": "Text in place_detail_screen."
+  },
+  "recordThisRideThrottleiq": "Record this ride in ThrottleIQ?",
+  "@recordThisRideThrottleiq": {
+    "description": "Text in place_detail_screen."
+  },
+  "mapsAppGivesDirections": "Your maps app gives the directions. ThrottleIQ can log the trip in the background at the same time.",
+  "@mapsAppGivesDirections": {
+    "description": "Text in place_detail_screen."
+  },
+  "recordGo": "Record & go",
+  "@recordGo": {
+    "description": "Text in place_detail_screen."
+  },
+  "justDirections": "Just directions",
+  "@justDirections": {
+    "description": "Text in place_detail_screen."
+  },
+  "dontAskAgain": "Don't ask again",
+  "@dontAskAgain": {
+    "description": "Text in place_detail_screen."
+  },
+  "noNewPlacesFound": "No new places found nearby",
+  "@noNewPlacesFound": {
+    "description": "Text in places_list_screen."
+  },
+  "couldNotImportNearby": "Could not import nearby places: {e}",
+  "@couldNotImportNearby": {
+    "description": "Text in places_list_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "importNearbyPlacesFrom": "Import nearby places from OpenStreetMap",
+  "@importNearbyPlacesFrom": {
+    "description": "Tooltip in places_list_screen."
+  },
+  "allFilter": "All",
+  "@allFilter": {
+    "description": "Label in places_list_screen."
+  },
+  "browseRoutes": "Browse routes →",
+  "@browseRoutes": {
+    "description": "Text in places_list_screen."
+  },
+  "openSettings": "Open Settings",
+  "@openSettings": {
+    "description": "Text in places_list_screen."
+  },
+  "noPlacesNearbyYet": "No places nearby yet",
+  "@noPlacesNearbyYet": {
+    "description": "Text in places_list_screen."
+  },
+  "addGarageFuelPump": "Add a garage, fuel pump, parts shop, or biker cafe to help other riders.",
+  "@addGarageFuelPump": {
+    "description": "Text in places_list_screen."
+  },
+  "addPlaceLower": "Add place",
+  "@addPlaceLower": {
+    "description": "Text in places_list_screen."
+  },
+  "couldNotUpdateVisibility": "Could not update visibility: {e}",
+  "@couldNotUpdateVisibility": {
+    "description": "Text in route_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "deleteRouteQuestion": "Delete route?",
+  "@deleteRouteQuestion": {
+    "description": "Text in route_detail_screen."
+  },
+  "thisRemovesSavedRoute": "This removes the saved route. The ride it came from is untouched.",
+  "@thisRemovesSavedRoute": {
+    "description": "Text in route_detail_screen."
+  },
+  "deleteRouteTitle": "Delete route",
+  "@deleteRouteTitle": {
+    "description": "Tooltip in route_detail_screen."
+  },
+  "routeNotFound": "Route not found",
+  "@routeNotFound": {
+    "description": "Text in route_detail_screen."
+  },
+  "turns": "Turns",
+  "@turns": {
+    "description": "Label in route_detail_screen."
+  },
+  "ridden": "Ridden",
+  "@ridden": {
+    "description": "Label in route_detail_screen."
+  },
+  "privateLabel": "Private",
+  "@privateLabel": {
+    "description": "Text in route_detail_screen (+1 more)."
+  },
+  "anyRiderCanFind": "Any rider can find and ride this route",
+  "@anyRiderCanFind": {
+    "description": "Text in route_detail_screen (+1 more)."
+  },
+  "onlyCanSeeThis": "Only you can see this route",
+  "@onlyCanSeeThis": {
+    "description": "Text in route_detail_screen (+1 more)."
+  },
+  "startNavigation": "Start navigation",
+  "@startNavigation": {
+    "description": "Text in route_detail_screen."
+  },
+  "turnByTurn": "Turn by turn",
+  "@turnByTurn": {
+    "description": "Text in route_detail_screen."
+  },
+  "derivedFromRecordedTrack": "Derived from the recorded track — distances are along the route.",
+  "@derivedFromRecordedTrack": {
+    "description": "Text in route_detail_screen."
+  },
+  "sharedByAnotherRider": "Shared by another rider",
+  "@sharedByAnotherRider": {
+    "description": "Text in route_detail_screen."
+  },
+  "sharedBy": "Shared by {value}",
+  "@sharedBy": {
+    "description": "Text in route_detail_screen.",
+    "placeholders": {
+      "value": {
+        "type": "Object"
+      }
+    }
+  },
+  "canRideItBut": "You can ride it, but only its owner can change or delete it.",
+  "@canRideItBut": {
+    "description": "Text in route_detail_screen."
+  },
+  "locationPermissionOffSo": "Location permission is off, so turns can't be tracked. Enable it in Settings to navigate.",
+  "@locationPermissionOffSo": {
+    "description": "SetState in route_navigation_screen."
+  },
+  "locationServicesOffTurn": "Location services are off. Turn them on to navigate.",
+  "@locationServicesOffTurn": {
+    "description": "SetState in route_navigation_screen."
+  },
+  "thisRouteHasNo": "This route has no track to follow.",
+  "@thisRouteHasNo": {
+    "description": "Text in route_navigation_screen."
+  },
+  "offRouteFromLine": "Off route — {distanceM} from the line",
+  "@offRouteFromLine": {
+    "description": "Text in route_navigation_screen.",
+    "placeholders": {
+      "distanceM": {
+        "type": "Object"
+      }
+    }
+  },
+  "remaining": "Remaining",
+  "@remaining": {
+    "description": "Label in route_navigation_screen."
+  },
+  "eta": "ETA",
+  "@eta": {
+    "description": "Label in route_navigation_screen."
+  },
+  "end": "End",
+  "@end": {
+    "description": "Text in route_navigation_screen."
+  },
+  "routes": "Routes",
+  "@routes": {
+    "description": "Text in routes_list_screen."
+  },
+  "myRoutes": "My routes",
+  "@myRoutes": {
+    "description": "Text in routes_list_screen."
+  },
+  "discover": "Discover",
+  "@discover": {
+    "description": "Text in routes_list_screen."
+  },
+  "noSavedRoutesYet": "No saved routes yet",
+  "@noSavedRoutesYet": {
+    "description": "Text in routes_list_screen."
+  },
+  "noPublicRoutesYet": "No public routes yet",
+  "@noPublicRoutesYet": {
+    "description": "Text in routes_list_screen."
+  },
+  "finishRideThenTap": "Finish a ride, then tap \"Save as route\" on the share screen.",
+  "@finishRideThenTap": {
+    "description": "Text in routes_list_screen."
+  },
+  "publicRoutesOtherRiders": "Public routes other riders save will show up here.",
+  "@publicRoutesOtherRiders": {
+    "description": "Text in routes_list_screen."
+  },
+  "routeRiddenSummary": "{distanceKm} km · ridden {timesRidden}×",
+  "@routeRiddenSummary": {
+    "description": "Text in routes_list_screen.",
+    "placeholders": {
+      "distanceKm": {
+        "type": "Object"
+      },
+      "timesRidden": {
+        "type": "Object"
+      }
+    }
+  },
+  "thisRideHasNo": "This ride has no track to save as a route.",
+  "@thisRideHasNo": {
+    "description": "Text in save_route_screen."
+  },
+  "routeSaved": "Route saved",
+  "@routeSaved": {
+    "description": "Text in save_route_screen."
+  },
+  "loadingTrack": "Loading track…",
+  "@loadingTrack": {
+    "description": "Text in save_route_screen."
+  },
+  "kmPoints": "{distanceKm} km · {polylineCount} points",
+  "@kmPoints": {
+    "description": "Text in save_route_screen.",
+    "placeholders": {
+      "distanceKm": {
+        "type": "Object"
+      },
+      "polylineCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "routeName": "Route name",
+  "@routeName": {
+    "description": "EditorialLabel in save_route_screen."
+  },
+  "eGDhakaMawa": "e.g. Dhaka – Mawa morning run",
+  "@eGDhakaMawa": {
+    "description": "HintText in save_route_screen."
+  },
+  "giveRouteName": "Give the route a name",
+  "@giveRouteName": {
+    "description": "Validator in save_route_screen."
+  },
+  "roadSurfaceBestTime": "Road surface, best time to ride, where to stop…",
+  "@roadSurfaceBestTime": {
+    "description": "HintText in save_route_screen."
+  },
+  "saveRoute": "Save route",
+  "@saveRoute": {
+    "description": "Text in save_route_screen."
+  },
+  "topSpeed": "Top speed",
+  "@topSpeed": {
+    "description": "Text in badges (+1 more)."
+  },
+  "bestScore": "Best score",
+  "@bestScore": {
+    "description": "Text in ride_sort."
+  },
+  "allRides": "All rides",
+  "@allRides": {
+    "description": "Text in all_rides_screen (+1 more)."
+  },
+  "noRidesYetDot": "No rides yet.",
+  "@noRidesYetDot": {
+    "description": "Text in all_rides_screen (+1 more)."
+  },
+  "showing": "Showing {shownCount} of {sortedCount}",
+  "@showing": {
+    "description": "Text in all_rides_screen.",
+    "placeholders": {
+      "shownCount": {
+        "type": "Object"
+      },
+      "sortedCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "distanceLower": "distance",
+  "@distanceLower": {
+    "description": "Label in all_rides_screen."
+  },
+  "topLower": "top",
+  "@topLower": {
+    "description": "Label in all_rides_screen."
+  },
+  "hardBrakesRapidAccel": "{hardBrakeCount} hard brakes · {rapidAccelCount} rapid accel · {highJerkCount} jerks",
+  "@hardBrakesRapidAccel": {
+    "description": "Text in all_rides_screen.",
+    "placeholders": {
+      "hardBrakeCount": {
+        "type": "Object"
+      },
+      "rapidAccelCount": {
+        "type": "Object"
+      },
+      "highJerkCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "journey": "Your Journey",
+  "@journey": {
+    "description": "Text in stats_screen."
+  },
+  "goRideStartJourney": "Go for a ride to start your journey.",
+  "@goRideStartJourney": {
+    "description": "Text in stats_screen."
+  },
+  "totalKm": "total km",
+  "@totalKm": {
+    "description": "Label in stats_screen."
+  },
+  "level": "Level {level} · {rank}",
+  "@level": {
+    "description": "Text in stats_screen.",
+    "placeholders": {
+      "level": {
+        "type": "Object"
+      },
+      "rank": {
+        "type": "Object"
+      }
+    }
+  },
+  "distanceOverTime": "Distance over time",
+  "@distanceOverTime": {
+    "description": "EditorialLabel in stats_screen."
+  },
+  "avgSpeedOverTime": "Avg speed over time",
+  "@avgSpeedOverTime": {
+    "description": "EditorialLabel in stats_screen."
+  },
+  "badgesEarnedCount": "{earnedCount} of {badgesCount} earned",
+  "@badgesEarnedCount": {
+    "description": "Text in stats_screen.",
+    "placeholders": {
+      "earnedCount": {
+        "type": "Object"
+      },
+      "badgesCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "avgSpeedLower": "avg speed",
+  "@avgSpeedLower": {
+    "description": "Label in stats_screen."
+  },
+  "topSpeedLower": "top speed",
+  "@topSpeedLower": {
+    "description": "Label in stats_screen."
+  },
+  "score": "score",
+  "@score": {
+    "description": "Label in stats_screen."
+  },
+  "recentRides": "Recent rides",
+  "@recentRides": {
+    "description": "EditorialLabel in stats_screen."
+  },
+  "rides": "Your rides",
+  "@rides": {
+    "description": "EditorialLabel in stats_screen."
+  },
+  "shown": "{showing} of {total} shown",
+  "@shown": {
+    "description": "Text in stats_screen.",
+    "placeholders": {
+      "showing": {
+        "type": "Object"
+      },
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "badgeFamilyEarned": "{family}, {earnedCount} of {badgesCount} earned",
+  "@badgeFamilyEarned": {
+    "description": "Label in badge_grid.",
+    "placeholders": {
+      "family": {
+        "type": "Object"
+      },
+      "earnedCount": {
+        "type": "Object"
+      },
+      "badgesCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "youProgress": "You: {progress} {unit}",
+  "@youProgress": {
+    "description": "Text in badge_grid.",
+    "placeholders": {
+      "progress": {
+        "type": "Object"
+      },
+      "unit": {
+        "type": "Object"
+      }
+    }
+  },
+  "nextGo": "Next: {def} — {progress} {unit} to go",
+  "@nextGo": {
+    "description": "Text in badge_grid.",
+    "placeholders": {
+      "def": {
+        "type": "Object"
+      },
+      "progress": {
+        "type": "Object"
+      },
+      "unit": {
+        "type": "Object"
+      }
+    }
+  },
+  "everyTierEarnedNothing": "Every tier earned. Nothing left to chase here.",
+  "@everyTierEarnedNothing": {
+    "description": "Text in badge_grid."
+  },
+  "earnedThreshold": "Earned. {threshold}",
+  "@earnedThreshold": {
+    "description": "Text in badge_grid.",
+    "placeholders": {
+      "threshold": {
+        "type": "Object"
+      }
+    }
+  },
+  "youreAt": "{threshold} You're at {progress} of {threshold2} {unit}.",
+  "@youreAt": {
+    "description": "Text in badge_grid.",
+    "placeholders": {
+      "threshold": {
+        "type": "Object"
+      },
+      "progress": {
+        "type": "Object"
+      },
+      "threshold2": {
+        "type": "Object"
+      },
+      "unit": {
+        "type": "Object"
+      }
+    }
+  },
+  "notEnoughRidesYet": "Not enough rides yet",
+  "@notEnoughRidesYet": {
+    "description": "Text in ride_line_chart."
+  },
+  "cropPhoto": "Crop photo",
+  "@cropPhoto": {
+    "description": "Text in image_crop_screen."
+  },
+  "free": "Free",
+  "@free": {
+    "description": "Label in image_crop_screen."
+  },
+  "couldNotOpenThat": "Could not open that photo.",
+  "@couldNotOpenThat": {
+    "description": "SetState in image_crop_screen."
+  },
+  "couldNotSaveCropped": "Could not save the cropped photo.",
+  "@couldNotSaveCropped": {
+    "description": "Text in image_crop_screen."
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Text in image_crop_screen."
+  },
+  "rotate": "Rotate",
+  "@rotate": {
+    "description": "Text in image_crop_screen."
+  },
+  "pleaseDescribeProblemBefore": "Please describe the problem before sending.",
+  "@pleaseDescribeProblemBefore": {
+    "description": "SetState in bug_report_sheet."
+  },
+  "couldNotSendReport": "Could not send the report. Please try again.",
+  "@couldNotSendReport": {
+    "description": "Text in bug_report_sheet."
+  },
+  "describeWhatHappenedUid": "Describe what happened. Your UID and app version are included automatically.",
+  "@describeWhatHappenedUid": {
+    "description": "Text in bug_report_sheet."
+  },
+  "eGMessagesWouldnt": "e.g. \"Messages wouldn't send — I got an error about permissions.\"",
+  "@eGMessagesWouldnt": {
+    "description": "HintText in bug_report_sheet."
+  },
+  "sending": "Sending…",
+  "@sending": {
+    "description": "Text in bug_report_sheet."
+  },
+  "sendReport": "Send Report",
+  "@sendReport": {
+    "description": "Text in bug_report_sheet."
+  },
+  "startCaps": "START",
+  "@startCaps": {
+    "description": "Text in full_screen_route_map_screen."
+  },
+  "finishCaps": "FINISH",
+  "@finishCaps": {
+    "description": "Text in full_screen_route_map_screen."
+  },
+  "waypoint": "Waypoint #{selectedPointIndex} of {polylineCount}",
+  "@waypoint": {
+    "description": "Text in full_screen_route_map_screen.",
+    "placeholders": {
+      "selectedPointIndex": {
+        "type": "Object"
+      },
+      "polylineCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "gpsPointsTapRoute": "{polylineCount} GPS points • Tap route to inspect waypoints",
+  "@gpsPointsTapRoute": {
+    "description": "Text in full_screen_route_map_screen.",
+    "placeholders": {
+      "polylineCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "saveRouteTitle": "Save Route",
+  "@saveRouteTitle": {
+    "description": "Text in full_screen_route_map_screen."
+  },
+  "dragMapMovePin": "Drag map to move pin",
+  "@dragMapMovePin": {
+    "description": "Text in map_location_picker."
+  },
+  "noRouteRecorded": "No route recorded",
+  "@noRouteRecorded": {
+    "description": "Text in ride_route_map."
+  },
+  "sortRecent": "Recent",
+  "@sortRecent": {
+    "description": "Sort chip on the All rides screen: newest first."
+  },
+  "importedPlaces": "{count, plural, =1{Imported 1 place from OpenStreetMap} other{Imported {count} places from OpenStreetMap}}",
+  "@importedPlaces": {
+    "description": "Snackbar after importing nearby places from OpenStreetMap.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

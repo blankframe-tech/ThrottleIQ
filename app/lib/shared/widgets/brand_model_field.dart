@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme_context.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A free-text field that also offers a dropdown of suggestions as the rider
 /// types — used for the Brand and Model fields on Add/Edit Bike and
@@ -66,7 +67,7 @@ class _BrandModelAutocompleteFieldState
           style: TextStyle(color: context.palette.textPrimary),
           decoration: InputDecoration(
               labelText: widget.labelText, hintText: widget.hintText),
-          validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+          validator: (v) => v == null || v.isEmpty ? context.l10n.requiredField : null,
         );
       },
     );

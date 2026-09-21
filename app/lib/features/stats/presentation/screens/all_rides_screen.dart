@@ -11,6 +11,8 @@ import '../../domain/ride_sort.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/ride_route_thumbnail.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../ride_sort_l10n.dart';
 
 /// How many rides are revealed at a time.
 const int allRidesPageSize = 20;
@@ -80,11 +82,11 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          tooltip: 'Back',
+          tooltip: context.l10n.back,
           icon: Icon(Icons.arrow_back, color: context.palette.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: Text('All rides', style: display(context, 20, letterSpacing: 0)),
+        title: Text(context.l10n.allRides, style: display(context, 20, letterSpacing: 0)),
       ),
       body: SafeArea(
         top: false,
@@ -107,7 +109,7 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
 
             if (sorted.isEmpty) {
               return Center(
-                child: Text('No rides yet.',
+                child: Text(context.l10n.noRidesYetDot,
                     style: TextStyle(
                         fontSize: 14, color: context.palette.textSecondary)),
               );
@@ -129,7 +131,7 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                   padding: const EdgeInsets.fromLTRB(
                       AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 8),
                   child: Text(
-                    'Showing ${shown.length} of ${sorted.length}',
+                    context.l10n.showing(shown.length, sorted.length),
                     style:
                         TextStyle(fontSize: 12, color: context.palette.textTertiary),
                   ),
@@ -192,7 +194,7 @@ class RideSortChips extends StatelessWidget {
           return GestureDetector(
             onTap: () => onChanged(option),
             child: EditorialPill(
-              option.label,
+              option.localizedLabel(context.l10n),
               filled: option == sort,
               tone: option == sort ? PillTone.accent : PillTone.neutral,
             ),
@@ -250,23 +252,23 @@ class AllRidesRow extends StatelessWidget {
             children: [
               Expanded(
                 child: _Figure(
-                    label: 'distance',
+                    label: context.l10n.distanceLower,
                     value: SpeedFormatter.distanceKm(ride.distanceM)),
               ),
               Expanded(
                 child: _Figure(
-                    label: 'duration',
+                    label: context.l10n.durationStatLabel,
                     value: SpeedFormatter.durationFromSeconds(
                         ride.durationSeconds ?? 0)),
               ),
               Expanded(
                 child: _Figure(
-                    label: 'avg',
+                    label: context.l10n.avgSpeedStatLabel,
                     value: '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
               ),
               Expanded(
                 child: _Figure(
-                    label: 'top',
+                    label: context.l10n.topLower,
                     value: '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
               ),
             ],
@@ -286,9 +288,7 @@ class AllRidesRow extends StatelessWidget {
                   0)
                 Expanded(
                   child: Text(
-                    '${ride.hardBrakeCount} hard brakes · '
-                    '${ride.rapidAccelCount} rapid accel · '
-                    '${ride.highJerkCount} jerks',
+                    context.l10n.hardBrakesRapidAccel(ride.hardBrakeCount, ride.rapidAccelCount, ride.highJerkCount),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

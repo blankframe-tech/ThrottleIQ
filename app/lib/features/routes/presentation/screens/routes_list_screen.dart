@@ -9,6 +9,7 @@ import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../social/domain/entities/route_entity.dart';
 import '../providers/route_providers.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Saved routes: the rider's own, plus public ones from everyone else.
 ///
@@ -25,7 +26,7 @@ class RoutesListScreen extends StatelessWidget {
         backgroundColor: context.palette.background,
         appBar: AppBar(
           backgroundColor: context.palette.background,
-          title: const Text('Routes'),
+          title: Text(context.l10n.routes),
           // Explicit, rather than relying on AppBar's automatic back button.
           // This screen is also reachable without a back stack (a deep link,
           // or a cold launch straight to /routes), and in that case the
@@ -34,7 +35,7 @@ class RoutesListScreen extends StatelessWidget {
           // something to pop, otherwise fall back to the tab it belongs to.
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            tooltip: 'Back',
+            tooltip: context.l10n.back,
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -47,9 +48,9 @@ class RoutesListScreen extends StatelessWidget {
             labelColor: context.palette.primary,
             unselectedLabelColor: context.palette.textSecondary,
             indicatorColor: context.palette.primary,
-            tabs: const [
-              Tab(text: 'My routes'),
-              Tab(text: 'Discover'),
+            tabs: [
+              Tab(text: context.l10n.myRoutes),
+              Tab(text: context.l10n.discover),
             ],
           ),
         ),
@@ -91,14 +92,14 @@ class _RoutesTab extends ConsumerWidget {
                   Icon(Icons.route_outlined, size: 64, color: context.palette.textTertiary),
                   const SizedBox(height: 16),
                   Text(
-                    mine ? 'No saved routes yet' : 'No public routes yet',
+                    mine ? context.l10n.noSavedRoutesYet : context.l10n.noPublicRoutesYet,
                     style: TextStyle(color: context.palette.textSecondary, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     mine
-                        ? 'Finish a ride, then tap "Save as route" on the share screen.'
-                        : 'Public routes other riders save will show up here.',
+                        ? context.l10n.finishRideThenTap
+                        : context.l10n.publicRoutesOtherRiders,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                   ),
@@ -169,7 +170,7 @@ class _RouteCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${route.distanceKm.toStringAsFixed(1)} km · ridden ${route.timesRidden}×',
+            context.l10n.routeRiddenSummary(route.distanceKm.toStringAsFixed(1), route.timesRidden),
             style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           if (route.description != null && route.description!.isNotEmpty) ...[

@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_theme_context.dart';
 import 'app_tile_layer.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A small, non-interactive map that draws a ride's recorded route — the
 /// Strava-style trace shown on social feed cards.
@@ -47,7 +48,7 @@ class RideRouteMap extends StatelessWidget {
               Icon(Icons.map_outlined, size: 22, color: context.palette.textTertiary),
               const SizedBox(height: 6),
               Text(
-                'No route recorded',
+                context.l10n.noRouteRecorded,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),

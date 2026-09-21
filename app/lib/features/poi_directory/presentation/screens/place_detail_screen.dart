@@ -17,6 +17,7 @@ import '../../domain/entities/review_entity.dart';
 import '../../domain/place_directions.dart';
 import '../providers/places_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
 ///
@@ -66,7 +67,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
       if (existingReviewId != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("You've already reviewed this place.")),
+            SnackBar(content: Text(context.l10n.youveAlreadyReviewedThis)),
           );
         }
         return;
@@ -93,7 +94,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not submit review: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSubmitReview(e))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -106,7 +107,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? 'Place')),
+      appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? context.l10n.place)),
       body: placeAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
@@ -116,7 +117,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
         data: (place) {
           if (place == null) {
             return Center(
-              child: Text('Place not found', style: TextStyle(color: context.palette.textSecondary)),
+              child: Text(context.l10n.placeNotFound, style: TextStyle(color: context.palette.textSecondary)),
             );
           }
           return _PlaceDetailBody(
@@ -161,7 +162,7 @@ class _PlaceDetailBody extends ConsumerWidget {
         _PlaceHeader(place: place),
         const SizedBox(height: 24),
         Text(
-          'Add your review',
+          context.l10n.addReview,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 8),
@@ -169,7 +170,7 @@ class _PlaceDetailBody extends ConsumerWidget {
           children: [
             for (int i = 1; i <= 5; i++)
               IconButton(
-                tooltip: 'Rate this place',
+                tooltip: context.l10n.rateThisPlace,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: () => onStarsChanged(i),
@@ -185,7 +186,7 @@ class _PlaceDetailBody extends ConsumerWidget {
           controller: reviewController,
           maxLines: 3,
           style: TextStyle(color: context.palette.textPrimary),
-          decoration: const InputDecoration(hintText: 'Share your experience...'),
+          decoration: InputDecoration(hintText: context.l10n.shareExperience),
         ),
         const SizedBox(height: 12),
         ValueListenableBuilder<TextEditingValue>(
@@ -201,13 +202,13 @@ class _PlaceDetailBody extends ConsumerWidget {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Submit review'),
+                  : Text(context.l10n.submitReview),
             );
           },
         ),
         const SizedBox(height: 24),
         Text(
-          'Reviews',
+          context.l10n.reviews,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
@@ -220,7 +221,7 @@ class _PlaceDetailBody extends ConsumerWidget {
           data: (reviews) {
             if (reviews.isEmpty) {
               return Text(
-                'No reviews yet — be the first!',
+                context.l10n.noReviewsYetBe,
                 style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
@@ -295,7 +296,7 @@ class _PlaceHeader extends StatelessWidget {
                   ),
                   Text(
                     (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
-                        ? 'Official point'
+                        ? context.l10n.officialPoint
                         : place.reviewsSummarySubtitle,
                     style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                   ),
@@ -371,7 +372,7 @@ class _PlaceHeader extends StatelessWidget {
                         Text(
                           place.hasGoogleRating
                               ? '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})'
-                              : '★ 0 (Not on Google)',
+                              : context.l10n.n0NotGoogle,
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -405,7 +406,7 @@ class _PlaceHeader extends StatelessWidget {
                         Text(
                           place.hasThrottleIqRating
                               ? '★ ${place.averageRating.toStringAsFixed(1)} (${place.ratingCount})'
-                              : '★ 0 (0 reviews)',
+                              : context.l10n.n00Reviews,
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -521,7 +522,7 @@ class _PlaceActions extends ConsumerWidget {
 
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't open a maps app for directions")),
+        SnackBar(content: Text(context.l10n.couldntOpenMapsApp)),
       );
     }
   }
@@ -535,7 +536,7 @@ class _PlaceActions extends ConsumerWidget {
     }
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't open the dialler")),
+        SnackBar(content: Text(context.l10n.couldntOpenDialler)),
       );
     }
   }
@@ -552,7 +553,7 @@ class _PlaceActions extends ConsumerWidget {
           child: ElevatedButton.icon(
             onPressed: () => _openDirections(context, ref),
             icon: const Icon(Icons.directions, size: 18),
-            label: const Text('Directions'),
+            label: Text(context.l10n.directions),
           ),
         ),
         if (tel != null) ...[
@@ -566,7 +567,7 @@ class _PlaceActions extends ConsumerWidget {
               minimumSize: Size(0, context.shape.controlHeight),
             ),
             icon: const Icon(Icons.phone, size: 18),
-            label: const Text('Call'),
+            label: Text(context.l10n.call),
           ),
         ],
       ],
@@ -599,7 +600,7 @@ class _ReviewTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                isOwn ? 'You' : 'Rider',
+                isOwn ? context.l10n.youLabel : context.l10n.riderFallbackName,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
               ),
               const Spacer(),
@@ -641,34 +642,33 @@ class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Record this ride in ThrottleIQ?',
+            Text(context.l10n.recordThisRideThrottleiq,
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: context.palette.textPrimary)),
             const SizedBox(height: 6),
             Text(
-              'Your maps app gives the directions. ThrottleIQ can log the '
-              'trip in the background at the same time.',
+              context.l10n.mapsAppGivesDirections,
               style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => Navigator.pop(context, (true, _dontAskAgain)),
               icon: const Icon(Icons.fiber_manual_record, size: 18),
-              label: const Text('Record & go'),
+              label: Text(context.l10n.recordGo),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => Navigator.pop(context, (false, _dontAskAgain)),
               icon: const Icon(Icons.directions, size: 18),
-              label: const Text('Just directions'),
+              label: Text(context.l10n.justDirections),
             ),
             const SizedBox(height: 4),
             CheckboxListTile(
               value: _dontAskAgain,
               onChanged: (v) => setState(() => _dontAskAgain = v ?? false),
-              title: Text("Don't ask again",
+              title: Text(context.l10n.dontAskAgain,
                   style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,

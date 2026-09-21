@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme_context.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A bell icon button that opens `/notifications`, with a red unread-count
 /// badge.
@@ -19,7 +20,7 @@ class NotificationBellButton extends StatelessWidget {
         IconButton(
           onPressed: () => context.push('/notifications'),
           icon: const Icon(Icons.notifications_outlined),
-          tooltip: 'Notifications',
+          tooltip: context.l10n.notifications,
         ),
         if (unreadCount > 0)
           Positioned(

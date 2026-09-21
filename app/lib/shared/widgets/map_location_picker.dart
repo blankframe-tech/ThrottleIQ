@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_theme_context.dart';
 import 'app_tile_layer.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A "drop a pin" location picker: the map pans freely underneath a fixed
 /// center pin (the same interaction pattern Google/Uber use for pin-drop) —
@@ -65,8 +66,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(context.shape.radiusFull),
                   ),
-                  child: const Text('Drag map to move pin',
-                      style: TextStyle(color: Colors.white, fontSize: 11)),
+                  child: Text(context.l10n.dragMapMovePin,
+                      style: const TextStyle(color: Colors.white, fontSize: 11)),
                 ),
               ),
             ),

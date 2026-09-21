@@ -6,6 +6,7 @@ import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/formatters/speed_formatter.dart';
 import 'app_tile_layer.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// Dedicated full-screen interactive route map explorer.
 ///
@@ -111,7 +112,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save route: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSaveRoute(e))),
       );
     } finally {
       if (mounted) setState(() => _savingRoute = false);
@@ -172,9 +173,9 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                               color: context.palette.success,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'START',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            child: Text(
+                              context.l10n.startCaps,
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ),
                           Icon(Icons.location_on, color: context.palette.success, size: 24),
@@ -195,9 +196,9 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                               color: context.palette.danger,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'FINISH',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            child: Text(
+                              context.l10n.finishCaps,
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ),
                           Icon(Icons.flag, color: context.palette.danger, size: 24),
@@ -225,7 +226,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   CircleAvatar(
                     backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     child: IconButton(
-                      tooltip: 'Back',
+                      tooltip: context.l10n.back,
                       icon: Icon(Icons.arrow_back, color: context.palette.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -267,7 +268,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   CircleAvatar(
                     backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                     child: IconButton(
-                      tooltip: 'Close',
+                      tooltip: context.l10n.close,
                       icon: Icon(Icons.close, color: context.palette.textPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -289,7 +290,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   key: const Key('fullscreen_zoom_in_button'),
                   backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                   foregroundColor: context.palette.textPrimary,
-                  tooltip: 'Zoom In',
+                  tooltip: context.l10n.zoomIn,
                   onPressed: _zoomIn,
                   child: const Icon(Icons.add, size: 20),
                 ),
@@ -299,7 +300,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   key: const Key('fullscreen_zoom_out_button'),
                   backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                   foregroundColor: context.palette.textPrimary,
-                  tooltip: 'Zoom Out',
+                  tooltip: context.l10n.zoomOut,
                   onPressed: _zoomOut,
                   child: const Icon(Icons.remove, size: 20),
                 ),
@@ -309,7 +310,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                   key: const Key('fullscreen_recenter_button'),
                   backgroundColor: context.palette.surface.withValues(alpha: 0.9),
                   foregroundColor: context.palette.textPrimary,
-                  tooltip: 'Recenter Route',
+                  tooltip: context.l10n.recenterRoute,
                   onPressed: _recenter,
                   child: const Icon(Icons.my_location, size: 18),
                 ),
@@ -343,7 +344,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Waypoint #${_selectedPointIndex! + 1} of ${polyline.length}',
+                            context.l10n.waypoint(_selectedPointIndex! + 1, polyline.length),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -358,7 +359,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Close',
+                      tooltip: context.l10n.close,
                       icon: const Icon(Icons.close, size: 16),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
@@ -400,8 +401,8 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                     children: [
                       _telemetryMini('Distance', '${widget.distanceKm.toStringAsFixed(1)} km'),
                       _telemetryMini('Duration', SpeedFormatter.durationFromSeconds(widget.durationSeconds)),
-                      _telemetryMini('Max Speed', '${widget.maxSpeedKmh.toStringAsFixed(0)} km/h'),
-                      _telemetryMini('Avg Speed', '${widget.avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                      _telemetryMini(context.l10n.maxSpeed, '${widget.maxSpeedKmh.toStringAsFixed(0)} km/h'),
+                      _telemetryMini(context.l10n.avgSpeed, '${widget.avgSpeedKmh.toStringAsFixed(0)} km/h'),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -413,7 +414,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          '${polyline.length} GPS points • Tap route to inspect waypoints',
+                          context.l10n.gpsPointsTapRoute(polyline.length),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
@@ -435,7 +436,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
                                   child: CircularProgressIndicator(strokeWidth: 1.5),
                                 )
                               : const Icon(Icons.bookmark_add_outlined, size: 16),
-                          label: const Text('Save Route', style: TextStyle(fontSize: 12)),
+                          label: Text(context.l10n.saveRouteTitle, style: const TextStyle(fontSize: 12)),
                         ),
                     ],
                   ),

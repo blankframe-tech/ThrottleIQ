@@ -7,6 +7,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../providers/places_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Places the signed-in rider added themselves — reached from the garage
 /// header's user menu (`garage_screen.dart`'s `_UserMenuButton`). Derived
@@ -21,7 +22,7 @@ class MyPlacesListScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('My Places')),
+      appBar: AppBar(title: Text(context.l10n.myPlaces)),
       body: placesAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
@@ -38,7 +39,7 @@ class MyPlacesListScreen extends ConsumerWidget {
                   children: [
                     Icon(Icons.place_outlined, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text("You haven't added any places yet",
+                    Text(context.l10n.haventAddedAnyPlaces,
                         style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
@@ -83,7 +84,7 @@ class MyPlacesListScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               place.verified
-                                  ? '${place.category.displayName} · Verified'
+                                  ? context.l10n.verified(place.category.displayName)
                                   : place.category.displayName,
                               style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                             ),

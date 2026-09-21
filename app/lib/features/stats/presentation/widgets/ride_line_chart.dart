@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Minimal single-series sparkline for the Rides tab.
 ///
@@ -54,7 +55,7 @@ class RideLineChart extends StatelessWidget {
         height: 120,
         child: Center(
           child: Text(
-            'Not enough rides yet',
+            context.l10n.notEnoughRidesYet,
             style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
           ),
         ),

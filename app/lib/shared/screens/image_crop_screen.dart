@@ -8,6 +8,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/crop_geometry.dart';
 import '../../core/utils/image_crop_io.dart';
 import '../widgets/editorial.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A themed, in-app photo cropper.
 ///
@@ -32,12 +33,13 @@ class ImageCropScreen extends StatefulWidget {
   const ImageCropScreen({
     super.key,
     required this.sourcePath,
-    this.title = 'Crop photo',
+    this.title,
     this.filePrefix = 'photo',
   });
 
   final String sourcePath;
-  final String title;
+  /// Null means the default, "Crop photo", in the rider's language.
+  final String? title;
 
   /// Filename stem for the written crop — just makes the app's documents
   /// directory readable when someone goes looking (`bike_photo_…jpg`).
@@ -48,7 +50,7 @@ class ImageCropScreen extends StatefulWidget {
   static Future<String?> open(
     BuildContext context, {
     required String sourcePath,
-    String title = 'Crop photo',
+    String? title,
     String filePrefix = 'photo',
   }) {
     return Navigator.of(context).push<String>(
@@ -68,8 +70,10 @@ class ImageCropScreen extends StatefulWidget {
 }
 
 /// The aspect presets. `null` means unconstrained.
-const _presets = <({String label, double? ratio})>[
-  (label: 'Free', ratio: null),
+const _presets = <({String? label, double? ratio})>[
+  // A null label is the unconstrained preset, shown as "Free" (localized where
+  // it is built, since this list is const and has no context).
+  (label: null, ratio: null),
   (label: '1:1', ratio: 1),
   (label: '4:3', ratio: 4 / 3),
   (label: '16:9', ratio: 16 / 9),
@@ -107,7 +111,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       setState(() => _preview = decoded);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Could not open that photo.');
+      setState(() => _error = context.l10n.couldNotOpenThat);
     }
   }
 
@@ -175,7 +179,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = 'Could not save the cropped photo.';
+        _error = context.l10n.couldNotSaveCropped;
       });
     }
   }
@@ -187,10 +191,10 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: 'Cancel',
+          tooltip: context.l10n.cancelAction,
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
         ),
-        title: Text(widget.title),
+        title: Text(widget.title ?? context.l10n.cropPhoto),
         actions: [
           TextButton(
             onPressed: (_preview == null || _saving) ? null : _save,
@@ -201,7 +205,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: context.palette.primary),
                   )
-                : const Text('Done'),
+                : Text(context.l10n.done),
           ),
         ],
       ),
@@ -292,7 +296,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
             children: [
               for (final preset in _presets)
                 _RatioChip(
-                  label: preset.label,
+                  label: preset.label ?? context.l10n.free,
                   selected: _ratio == preset.ratio,
                   onTap: _preview == null ? null : () => _setRatio(preset.ratio),
                 ),
@@ -302,7 +306,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
           TextButton.icon(
             onPressed: _preview == null || _saving ? null : _rotate,
             icon: const Icon(Icons.rotate_90_degrees_ccw_outlined, size: 18),
-            label: const Text('Rotate'),
+            label: Text(context.l10n.rotate),
           ),
         ],
       ),

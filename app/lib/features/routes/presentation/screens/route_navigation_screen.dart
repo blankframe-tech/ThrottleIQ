@@ -17,6 +17,7 @@ import '../providers/route_providers.dart';
 import 'route_detail_screen.dart' show turnIcon;
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// How close the rider must get to a turn's point before it's considered done
 /// and the banner advances to the next one.
@@ -92,14 +93,14 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
           permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         setState(() => _locationError =
-            'Location permission is off, so turns can\'t be tracked. Enable it in Settings to navigate.');
+            context.l10n.locationPermissionOffSo);
         return;
       }
 
       if (!await Geolocator.isLocationServiceEnabled()) {
         if (!mounted) return;
         setState(() =>
-            _locationError = 'Location services are off. Turn them on to navigate.');
+            _locationError = context.l10n.locationServicesOffTurn);
         return;
       }
 
@@ -164,7 +165,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
         data: (route) {
           if (route == null || route.polyline.length < 2) {
             return Center(
-              child: Text('This route has no track to follow.',
+              child: Text(context.l10n.thisRouteHasNo,
                   style: TextStyle(color: context.palette.textSecondary)),
             );
           }
@@ -285,7 +286,7 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Off route — ${_distanceLabel(nearest.distanceM)} from the line',
+                                  context.l10n.offRouteFromLine(_distanceLabel(nearest.distanceM)),
                                   style: TextStyle(
                                       fontSize: 13, color: context.palette.textPrimary),
                                 ),
@@ -310,19 +311,19 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
                         children: [
                           Expanded(
                             child: _Metric(
-                              label: 'Remaining',
+                              label: context.l10n.remaining,
                               value: _distanceLabel(metresLeft),
                             ),
                           ),
                           Expanded(
                             child: _Metric(
-                              label: 'ETA',
+                              label: context.l10n.eta,
                               value: _etaLabel(metresLeft, _speedMs),
                             ),
                           ),
                           TextButton(
                             onPressed: () => context.pop(),
-                            child: Text('End',
+                            child: Text(context.l10n.end,
                                 style: TextStyle(color: context.palette.danger)),
                           ),
                         ],

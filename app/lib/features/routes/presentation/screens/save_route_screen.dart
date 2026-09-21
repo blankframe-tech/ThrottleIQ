@@ -11,6 +11,7 @@ import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../social/data/repositories/route_repository.dart';
 import '../providers/route_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// "Save this ride as a route" — reached from the end-of-ride share step.
 ///
@@ -79,7 +80,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
 
     if (_polyline.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This ride has no track to save as a route.')),
+        SnackBar(content: Text(context.l10n.thisRideHasNo)),
       );
       return;
     }
@@ -104,13 +105,13 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
       ref.invalidate(myRoutesProvider);
       if (_isPublic) ref.invalidate(publicRoutesProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Route saved')),
+        SnackBar(content: Text(context.l10n.routeSaved)),
       );
       context.pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save route: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSaveRoute(e))),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -123,7 +124,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
       backgroundColor: context.palette.background,
       appBar: AppBar(
         backgroundColor: context.palette.background,
-        title: const Text('Save as route'),
+        title: Text(context.l10n.saveAsRoute),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -144,32 +145,32 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               const SizedBox(height: 8),
               Text(
                 _loadingTrail
-                    ? 'Loading track…'
-                    : '${_distanceKm.toStringAsFixed(1)} km · ${_polyline.length} points',
+                    ? context.l10n.loadingTrack
+                    : context.l10n.kmPoints(_distanceKm.toStringAsFixed(1), _polyline.length),
                 style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 24),
-              const EditorialLabel('Route name'),
+              EditorialLabel(context.l10n.routeName),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Dhaka – Mawa morning run',
+                decoration: InputDecoration(
+                  hintText: context.l10n.eGDhakaMawa,
                 ),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Give the route a name' : null,
+                    (v == null || v.trim().isEmpty) ? context.l10n.giveRouteName : null,
               ),
               const SizedBox(height: 20),
-              const EditorialLabel('Description (optional)'),
+              EditorialLabel(context.l10n.descriptionOptional),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _descCtrl,
                 maxLines: 3,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'Road surface, best time to ride, where to stop…',
+                decoration: InputDecoration(
+                  hintText: context.l10n.roadSurfaceBestTime,
                   alignLabelWithHint: true,
                 ),
               ),
@@ -187,13 +188,13 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                   activeThumbColor: context.palette.primary,
                   onChanged: (v) => setState(() => _isPublic = v),
                   title: Text(
-                    _isPublic ? 'Public' : 'Private',
+                    _isPublic ? context.l10n.audiencePublic : context.l10n.privateLabel,
                     style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
                   ),
                   subtitle: Text(
                     _isPublic
-                        ? 'Any rider can find and ride this route'
-                        : 'Only you can see this route',
+                        ? context.l10n.anyRiderCanFind
+                        : context.l10n.onlyCanSeeThis,
                     style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                   ),
                 ),
@@ -208,7 +209,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Save route'),
+                    : Text(context.l10n.saveRoute),
               ),
             ],
           ),

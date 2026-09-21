@@ -12,6 +12,7 @@ import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Places bottom-nav tab: nearby garages/fuel pumps/parts shops/biker cafes
 /// and other recreation stops, filterable by category, with an "Add place"
@@ -37,14 +38,14 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(count == 0
-              ? 'No new places found nearby'
-              : 'Imported $count place${count == 1 ? '' : 's'} from OpenStreetMap'),
+              ? context.l10n.noNewPlacesFound
+              : context.l10n.importedPlaces(count)),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not import nearby places: $e')),
+        SnackBar(content: Text(context.l10n.couldNotImportNearby(e))),
       );
     } finally {
       if (mounted) setState(() => _importing = false);
@@ -72,10 +73,10 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Places'),
+        title: Text(context.l10n.navPlacesLabel),
         actions: [
           IconButton(
-            tooltip: 'Import nearby places from OpenStreetMap',
+            tooltip: context.l10n.importNearbyPlacesFrom,
             icon: _importing
                 ? SizedBox(
                     width: 18,
@@ -103,7 +104,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                 runSpacing: 8,
                 children: [
                   _CategoryChip(
-                    label: 'All',
+                    label: context.l10n.allFilter,
                     icon: '📍',
                     selected: _selectedCategory == null,
                     onTap: () => setState(() => _selectedCategory = null),
@@ -129,7 +130,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => context.push('/routes'),
                 icon: const Icon(Icons.route, size: 18),
-                label: const Text('Browse routes →'),
+                label: Text(context.l10n.browseRoutes),
               ),
             ),
             Expanded(
@@ -171,7 +172,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                             ElevatedButton.icon(
                               onPressed: () => Geolocator.openLocationSettings(),
                               icon: const Icon(Icons.location_on_outlined, size: 18),
-                              label: const Text('Turn on Location'),
+                              label: Text(context.l10n.turnOnLocation),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: context.palette.primary,
                                 foregroundColor: Colors.white,
@@ -181,7 +182,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                             ElevatedButton.icon(
                               onPressed: () => Geolocator.openAppSettings(),
                               icon: const Icon(Icons.settings_outlined, size: 18),
-                              label: const Text('Open Settings'),
+                              label: Text(context.l10n.openSettings),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: context.palette.primary,
                                 foregroundColor: Colors.white,
@@ -193,13 +194,13 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                                 ref.invalidate(currentPositionProvider);
                                 ref.invalidate(nearbyPlacesProvider(_selectedCategory));
                               },
-                              child: const Text('Try again'),
+                              child: Text(context.l10n.tryAgain),
                             ),
                           const SizedBox(height: 8),
                           TextButton.icon(
                             onPressed: () => BugReportSheet.show(context),
                             icon: const Icon(Icons.bug_report_outlined, size: 16),
-                            label: const Text('Report a Problem'),
+                            label: Text(context.l10n.reportProblem),
                             style: TextButton.styleFrom(
                               foregroundColor: context.palette.textTertiary,
                               textStyle: const TextStyle(fontSize: 13),
@@ -220,11 +221,11 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                           children: [
                             Icon(Icons.place_outlined, size: 64, color: context.palette.textTertiary),
                             const SizedBox(height: 16),
-                            Text('No places nearby yet',
+                            Text(context.l10n.noPlacesNearbyYet,
                                 style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                             const SizedBox(height: 8),
                             Text(
-                              'Add a garage, fuel pump, parts shop, or biker cafe to help other riders.',
+                              context.l10n.addGarageFuelPump,
                               textAlign: TextAlign.center,
                               style: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                             ),
@@ -279,7 +280,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
             onPressed: () => _addPlace(context),
             backgroundColor: context.palette.primary,
             icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add place', style: TextStyle(color: Colors.white)),
+            label: Text(context.l10n.addPlaceLower, style: const TextStyle(color: Colors.white)),
           ),
         ),
       ],
@@ -398,7 +399,7 @@ class _PlaceCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
-                    ? 'Official point'
+                    ? context.l10n.officialPoint
                     : place.reviewsSummarySubtitle,
                 style: TextStyle(fontSize: 10, color: context.palette.textSecondary),
               ),

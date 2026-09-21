@@ -2921,4 +2921,523 @@ class AppLocalizationsEn extends AppLocalizations {
   String serviceDueIn(String item, String km) {
     return '$item · due in $km km';
   }
+
+  @override
+  String get noReviewsYet => 'No reviews yet';
+
+  @override
+  String get pickLocationMapFirst => 'Pick the location on the map first.';
+
+  @override
+  String get takeAPhoto => 'Take a photo';
+
+  @override
+  String get chooseFromGallery => 'Choose from gallery';
+
+  @override
+  String couldNotOpenCamera(Object e) {
+    return 'Could not open the camera or gallery: $e';
+  }
+
+  @override
+  String get couldntLookThatSpot =>
+      'Couldn\'t look that spot up — just describe it yourself.';
+
+  @override
+  String get photoDidntUploadSaving =>
+      'Photo didn\'t upload — saving the place without it.';
+
+  @override
+  String couldNotAddPlace(Object e) {
+    return 'Could not add place: $e';
+  }
+
+  @override
+  String get addPhotoOptional => 'Add a photo (optional)';
+
+  @override
+  String get shopfrontPictureMakesThis =>
+      'A shopfront picture makes this place easy to spot';
+
+  @override
+  String get couldntLoadThatPhoto => 'Couldn\'t load that photo';
+
+  @override
+  String get replacePhoto => 'Replace photo';
+
+  @override
+  String get removePhoto => 'Remove photo';
+
+  @override
+  String get addPlace => 'Add Place';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get nameStar => 'Name *';
+
+  @override
+  String get eGRahmanMotors => 'e.g. Rahman Motors';
+
+  @override
+  String get addressOptional => 'Address (optional)';
+
+  @override
+  String get eGBesideOmuk => 'e.g. Beside Omuk School, Mirpur 10';
+
+  @override
+  String get writeItWayYoud =>
+      'Write it the way you\'d tell a friend — landmarks, not a formal street address. \"Beside Omuk School\" or \"just after the Mirpur 10 circle\" helps far more here.';
+
+  @override
+  String get lookingUp => 'Looking up…';
+
+  @override
+  String get usePinsArea => 'Use the pin\'s area';
+
+  @override
+  String get phoneOptional => 'Phone (optional)';
+
+  @override
+  String get hoursOptional => 'Hours (optional)';
+
+  @override
+  String get eG9am9pm => 'e.g. 9am - 9pm, or 24/7';
+
+  @override
+  String get haventAddedAnyPlaces => 'You haven\'t added any places yet';
+
+  @override
+  String verified(Object displayName) {
+    return '$displayName · Verified';
+  }
+
+  @override
+  String get youveAlreadyReviewedThis => 'You\'ve already reviewed this place.';
+
+  @override
+  String couldNotSubmitReview(Object e) {
+    return 'Could not submit review: $e';
+  }
+
+  @override
+  String get place => 'Place';
+
+  @override
+  String get placeNotFound => 'Place not found';
+
+  @override
+  String get addReview => 'Add your review';
+
+  @override
+  String get rateThisPlace => 'Rate this place';
+
+  @override
+  String get shareExperience => 'Share your experience...';
+
+  @override
+  String get submitReview => 'Submit review';
+
+  @override
+  String get reviews => 'Reviews';
+
+  @override
+  String get noReviewsYetBe => 'No reviews yet — be the first!';
+
+  @override
+  String get officialPoint => 'Official point';
+
+  @override
+  String get n0NotGoogle => '★ 0 (Not on Google)';
+
+  @override
+  String get n00Reviews => '★ 0 (0 reviews)';
+
+  @override
+  String get couldntOpenMapsApp => 'Couldn\'t open a maps app for directions';
+
+  @override
+  String get couldntOpenDialler => 'Couldn\'t open the dialler';
+
+  @override
+  String get call => 'Call';
+
+  @override
+  String get youLabel => 'You';
+
+  @override
+  String get recordThisRideThrottleiq => 'Record this ride in ThrottleIQ?';
+
+  @override
+  String get mapsAppGivesDirections =>
+      'Your maps app gives the directions. ThrottleIQ can log the trip in the background at the same time.';
+
+  @override
+  String get recordGo => 'Record & go';
+
+  @override
+  String get justDirections => 'Just directions';
+
+  @override
+  String get dontAskAgain => 'Don\'t ask again';
+
+  @override
+  String get noNewPlacesFound => 'No new places found nearby';
+
+  @override
+  String couldNotImportNearby(Object e) {
+    return 'Could not import nearby places: $e';
+  }
+
+  @override
+  String get importNearbyPlacesFrom =>
+      'Import nearby places from OpenStreetMap';
+
+  @override
+  String get allFilter => 'All';
+
+  @override
+  String get browseRoutes => 'Browse routes →';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get noPlacesNearbyYet => 'No places nearby yet';
+
+  @override
+  String get addGarageFuelPump =>
+      'Add a garage, fuel pump, parts shop, or biker cafe to help other riders.';
+
+  @override
+  String get addPlaceLower => 'Add place';
+
+  @override
+  String couldNotUpdateVisibility(Object e) {
+    return 'Could not update visibility: $e';
+  }
+
+  @override
+  String get deleteRouteQuestion => 'Delete route?';
+
+  @override
+  String get thisRemovesSavedRoute =>
+      'This removes the saved route. The ride it came from is untouched.';
+
+  @override
+  String get deleteRouteTitle => 'Delete route';
+
+  @override
+  String get routeNotFound => 'Route not found';
+
+  @override
+  String get turns => 'Turns';
+
+  @override
+  String get ridden => 'Ridden';
+
+  @override
+  String get privateLabel => 'Private';
+
+  @override
+  String get anyRiderCanFind => 'Any rider can find and ride this route';
+
+  @override
+  String get onlyCanSeeThis => 'Only you can see this route';
+
+  @override
+  String get startNavigation => 'Start navigation';
+
+  @override
+  String get turnByTurn => 'Turn by turn';
+
+  @override
+  String get derivedFromRecordedTrack =>
+      'Derived from the recorded track — distances are along the route.';
+
+  @override
+  String get sharedByAnotherRider => 'Shared by another rider';
+
+  @override
+  String sharedBy(Object value) {
+    return 'Shared by $value';
+  }
+
+  @override
+  String get canRideItBut =>
+      'You can ride it, but only its owner can change or delete it.';
+
+  @override
+  String get locationPermissionOffSo =>
+      'Location permission is off, so turns can\'t be tracked. Enable it in Settings to navigate.';
+
+  @override
+  String get locationServicesOffTurn =>
+      'Location services are off. Turn them on to navigate.';
+
+  @override
+  String get thisRouteHasNo => 'This route has no track to follow.';
+
+  @override
+  String offRouteFromLine(Object distanceM) {
+    return 'Off route — $distanceM from the line';
+  }
+
+  @override
+  String get remaining => 'Remaining';
+
+  @override
+  String get eta => 'ETA';
+
+  @override
+  String get end => 'End';
+
+  @override
+  String get routes => 'Routes';
+
+  @override
+  String get myRoutes => 'My routes';
+
+  @override
+  String get discover => 'Discover';
+
+  @override
+  String get noSavedRoutesYet => 'No saved routes yet';
+
+  @override
+  String get noPublicRoutesYet => 'No public routes yet';
+
+  @override
+  String get finishRideThenTap =>
+      'Finish a ride, then tap \"Save as route\" on the share screen.';
+
+  @override
+  String get publicRoutesOtherRiders =>
+      'Public routes other riders save will show up here.';
+
+  @override
+  String routeRiddenSummary(Object distanceKm, Object timesRidden) {
+    return '$distanceKm km · ridden $timesRidden×';
+  }
+
+  @override
+  String get thisRideHasNo => 'This ride has no track to save as a route.';
+
+  @override
+  String get routeSaved => 'Route saved';
+
+  @override
+  String get loadingTrack => 'Loading track…';
+
+  @override
+  String kmPoints(Object distanceKm, Object polylineCount) {
+    return '$distanceKm km · $polylineCount points';
+  }
+
+  @override
+  String get routeName => 'Route name';
+
+  @override
+  String get eGDhakaMawa => 'e.g. Dhaka – Mawa morning run';
+
+  @override
+  String get giveRouteName => 'Give the route a name';
+
+  @override
+  String get roadSurfaceBestTime =>
+      'Road surface, best time to ride, where to stop…';
+
+  @override
+  String get saveRoute => 'Save route';
+
+  @override
+  String get topSpeed => 'Top speed';
+
+  @override
+  String get bestScore => 'Best score';
+
+  @override
+  String get allRides => 'All rides';
+
+  @override
+  String get noRidesYetDot => 'No rides yet.';
+
+  @override
+  String showing(Object shownCount, Object sortedCount) {
+    return 'Showing $shownCount of $sortedCount';
+  }
+
+  @override
+  String get distanceLower => 'distance';
+
+  @override
+  String get topLower => 'top';
+
+  @override
+  String hardBrakesRapidAccel(
+      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
+    return '$hardBrakeCount hard brakes · $rapidAccelCount rapid accel · $highJerkCount jerks';
+  }
+
+  @override
+  String get journey => 'Your Journey';
+
+  @override
+  String get goRideStartJourney => 'Go for a ride to start your journey.';
+
+  @override
+  String get totalKm => 'total km';
+
+  @override
+  String level(Object level, Object rank) {
+    return 'Level $level · $rank';
+  }
+
+  @override
+  String get distanceOverTime => 'Distance over time';
+
+  @override
+  String get avgSpeedOverTime => 'Avg speed over time';
+
+  @override
+  String badgesEarnedCount(Object earnedCount, Object badgesCount) {
+    return '$earnedCount of $badgesCount earned';
+  }
+
+  @override
+  String get avgSpeedLower => 'avg speed';
+
+  @override
+  String get topSpeedLower => 'top speed';
+
+  @override
+  String get score => 'score';
+
+  @override
+  String get recentRides => 'Recent rides';
+
+  @override
+  String get rides => 'Your rides';
+
+  @override
+  String shown(Object showing, Object total) {
+    return '$showing of $total shown';
+  }
+
+  @override
+  String badgeFamilyEarned(
+      Object family, Object earnedCount, Object badgesCount) {
+    return '$family, $earnedCount of $badgesCount earned';
+  }
+
+  @override
+  String youProgress(Object progress, Object unit) {
+    return 'You: $progress $unit';
+  }
+
+  @override
+  String nextGo(Object def, Object progress, Object unit) {
+    return 'Next: $def — $progress $unit to go';
+  }
+
+  @override
+  String get everyTierEarnedNothing =>
+      'Every tier earned. Nothing left to chase here.';
+
+  @override
+  String earnedThreshold(Object threshold) {
+    return 'Earned. $threshold';
+  }
+
+  @override
+  String youreAt(
+      Object threshold, Object progress, Object threshold2, Object unit) {
+    return '$threshold You\'re at $progress of $threshold2 $unit.';
+  }
+
+  @override
+  String get notEnoughRidesYet => 'Not enough rides yet';
+
+  @override
+  String get cropPhoto => 'Crop photo';
+
+  @override
+  String get free => 'Free';
+
+  @override
+  String get couldNotOpenThat => 'Could not open that photo.';
+
+  @override
+  String get couldNotSaveCropped => 'Could not save the cropped photo.';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get rotate => 'Rotate';
+
+  @override
+  String get pleaseDescribeProblemBefore =>
+      'Please describe the problem before sending.';
+
+  @override
+  String get couldNotSendReport =>
+      'Could not send the report. Please try again.';
+
+  @override
+  String get describeWhatHappenedUid =>
+      'Describe what happened. Your UID and app version are included automatically.';
+
+  @override
+  String get eGMessagesWouldnt =>
+      'e.g. \"Messages wouldn\'t send — I got an error about permissions.\"';
+
+  @override
+  String get sending => 'Sending…';
+
+  @override
+  String get sendReport => 'Send Report';
+
+  @override
+  String get startCaps => 'START';
+
+  @override
+  String get finishCaps => 'FINISH';
+
+  @override
+  String waypoint(Object selectedPointIndex, Object polylineCount) {
+    return 'Waypoint #$selectedPointIndex of $polylineCount';
+  }
+
+  @override
+  String gpsPointsTapRoute(Object polylineCount) {
+    return '$polylineCount GPS points • Tap route to inspect waypoints';
+  }
+
+  @override
+  String get saveRouteTitle => 'Save Route';
+
+  @override
+  String get dragMapMovePin => 'Drag map to move pin';
+
+  @override
+  String get noRouteRecorded => 'No route recorded';
+
+  @override
+  String get sortRecent => 'Recent';
+
+  @override
+  String importedPlaces(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Imported $count places from OpenStreetMap',
+      one: 'Imported 1 place from OpenStreetMap',
+    );
+    return '$_temp0';
+  }
 }
