@@ -6119,6 +6119,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Imported 1 place from OpenStreetMap} other{Imported {count} places from OpenStreetMap}}'**
   String importedPlaces(int count);
+
+  /// Error: device has no connection.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Check your internet connection and try again.'**
+  String get errOffline;
+
+  /// Error: a request timed out.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s taking too long. Check your connection and try again.'**
+  String get errTimeout;
+
+  /// Error: permission denied when reading data.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to view this.'**
+  String get errNoPermission;
+
+  /// Error: the requested item does not exist.
+  ///
+  /// In en, this message translates to:
+  /// **'That could not be found — it may have been removed.'**
+  String get errNotFound;
+
+  /// Error: rate limit / quota exhausted.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests right now. Please try again in a moment.'**
+  String get errTooManyRequests;
+
+  /// Error: a required database index is missing or still building.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t ready yet. Please try again in a few minutes.'**
+  String get errNotReady;
+
+  /// Generic error when loading data fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong loading this. Please try again.'**
+  String get errLoadGeneric;
+
+  /// Generic error when there is no error object at all.
+  ///
+  /// In en, this message translates to:
+  /// **'An unknown error occurred'**
+  String get errUnknown;
+
+  /// Sign-in error: no such user.
+  ///
+  /// In en, this message translates to:
+  /// **'No account found with this email. Please sign up first.'**
+  String get authUserNotFound;
+
+  /// Sign-in error: wrong password.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect password. Please try again.'**
+  String get authWrongPassword;
+
+  /// Sign-in error: malformed email.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email address.'**
+  String get authInvalidEmail;
+
+  /// Sign-in error: account disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has been disabled.'**
+  String get authUserDisabled;
+
+  /// Sign-in error: email sign-in is turned off.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with email is not enabled.'**
+  String get authOperationNotAllowed;
+
+  /// Sign-in error: throttled.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many login attempts. Please try again later.'**
+  String get authTooManyRequests;
+
+  /// Sign-in error: bad credentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email or password.'**
+  String get authInvalidCredential;
+
+  /// Sign-up error: email already registered.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists.'**
+  String get authEmailInUse;
+
+  /// Sign-up error: weak password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is too weak. Use at least 6 characters.'**
+  String get authWeakPassword;
+
+  /// Sign-in error: no network.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Check your internet connection.'**
+  String get authNetworkFailed;
+
+  /// Sign-in error: account uses another provider.
+  ///
+  /// In en, this message translates to:
+  /// **'An account exists with this email but different sign-in method.'**
+  String get authAccountExistsDifferent;
+
+  /// Generic error containing 'network'.
+  ///
+  /// In en, this message translates to:
+  /// **'Network connection failed. Please check your internet.'**
+  String get errNetworkFailed;
+
+  /// Generic error containing 'permission'.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied. Please check your account settings.'**
+  String get errPermissionDenied;
+
+  /// Last-resort generic error (never shows raw exception text).
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errGeneric;
+
+  /// Location error: services off.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is turned off. Enable GPS in your device settings to use this feature.'**
+  String get errLocationOff;
+
+  /// Location error: permission missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.'**
+  String get errLocationPermission;
+
+  /// Location error: fallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not get your location. Check that GPS is on and try again.'**
+  String get errLocationGeneric;
+
+  /// Sign-in error with the provider message appended.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication error: {error}'**
+  String authGeneric(String error);
 }
 
 class _AppLocalizationsDelegate

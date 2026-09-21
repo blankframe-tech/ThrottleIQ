@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// Turns a Firestore read/stream error into something a rider can act on.
 ///
 /// Without this, `FirebaseException(code: unavailable, message: "The
@@ -8,24 +10,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// SDK's own retry-policy explanation, meant for a developer reading logs —
 /// was landing verbatim in the Social feed and Forums screens any time the
 /// device was offline. See the issues log for the report this fixed.
-String mapFirestoreError(Object error) {
+String mapFirestoreError(Object error, AppLocalizations l10n) {
   if (error is FirebaseException) {
     return switch (error.code) {
       'unavailable' =>
-        "You're offline. Check your internet connection and try again.",
+        l10n.errOffline,
       'deadline-exceeded' =>
-        "That's taking too long. Check your connection and try again.",
-      'permission-denied' => "You don't have permission to view this.",
-      'not-found' => 'That could not be found — it may have been removed.',
+        l10n.errTimeout,
+      'permission-denied' => l10n.errNoPermission,
+      'not-found' => l10n.errNotFound,
       'resource-exhausted' =>
-        'Too many requests right now. Please try again in a moment.',
+        l10n.errTooManyRequests,
       // A required Firestore composite index is missing or still building —
       // see DOCS/Handoff for agents and Todos/issues_open.md §81. Distinct
       // from the generic message so this failure mode is recognizable in
       // logs/screenshots instead of looking identical to every other error.
       'failed-precondition' =>
-        "This isn't ready yet. Please try again in a few minutes.",
-      _ => 'Something went wrong loading this. Please try again.',
+        l10n.errNotReady,
+      _ => l10n.errLoadGeneric,
     };
   }
 
@@ -33,43 +35,43 @@ String mapFirestoreError(Object error) {
   if (message.contains('socketexception') ||
       message.contains('network') ||
       message.contains('failed host lookup')) {
-    return "You're offline. Check your internet connection and try again.";
+    return l10n.errOffline;
   }
 
-  return 'Something went wrong loading this. Please try again.';
+  return l10n.errLoadGeneric;
 }
 
-String mapFirebaseAuthError(dynamic error) {
-  if (error == null) return 'An unknown error occurred';
+String mapFirebaseAuthError(dynamic error, AppLocalizations l10n) {
+  if (error == null) return l10n.errUnknown;
 
   final message = error.toString().toLowerCase();
 
   if (error is FirebaseAuthException) {
     return switch (error.code) {
       'user-not-found' =>
-        'No account found with this email. Please sign up first.',
-      'wrong-password' => 'Incorrect password. Please try again.',
-      'invalid-email' => 'Invalid email address.',
-      'user-disabled' => 'This account has been disabled.',
-      'operation-not-allowed' => 'Sign in with email is not enabled.',
-      'too-many-requests' => 'Too many login attempts. Please try again later.',
-      'invalid-credential' => 'Invalid email or password.',
-      'email-already-in-use' => 'An account with this email already exists.',
-      'weak-password' => 'Password is too weak. Use at least 6 characters.',
+        l10n.authUserNotFound,
+      'wrong-password' => l10n.authWrongPassword,
+      'invalid-email' => l10n.authInvalidEmail,
+      'user-disabled' => l10n.authUserDisabled,
+      'operation-not-allowed' => l10n.authOperationNotAllowed,
+      'too-many-requests' => l10n.authTooManyRequests,
+      'invalid-credential' => l10n.authInvalidCredential,
+      'email-already-in-use' => l10n.authEmailInUse,
+      'weak-password' => l10n.authWeakPassword,
       'network-request-failed' =>
-        'Network error. Check your internet connection.',
+        l10n.authNetworkFailed,
       'account-exists-with-different-credential' =>
-        'An account exists with this email but different sign-in method.',
-      _ => 'Authentication error: ${error.message ?? "Unknown error"}',
+        l10n.authAccountExistsDifferent,
+      _ => l10n.authGeneric(error.message ?? 'Unknown error'),
     };
   }
 
   if (message.contains('network')) {
-    return 'Network connection failed. Please check your internet.';
+    return l10n.errNetworkFailed;
   }
 
   if (message.contains('permission')) {
-    return 'Permission denied. Please check your account settings.';
+    return l10n.errPermissionDenied;
   }
 
   // issues §33.17: this used to be `return error.toString();` — any
@@ -78,7 +80,7 @@ String mapFirebaseAuthError(dynamic error) {
   // include internal type/stack details, put directly into a user-facing
   // SnackBar. A generic message is exactly as actionable to the rider and
   // leaks nothing internal.
-  return 'Something went wrong. Please try again.';
+  return l10n.errGeneric;
 }
 
 /// Turns a location/GPS error into something a rider can act on.
@@ -86,19 +88,19 @@ String mapFirebaseAuthError(dynamic error) {
 /// Covers permission-denied, service-disabled, and generic exceptions thrown
 /// by [Geolocator] or the Places provider when the device GPS stack isn't
 /// ready.
-String mapLocationError(Object error) {
+String mapLocationError(Object error, AppLocalizations l10n) {
   final raw = error.toString().toLowerCase();
   if (raw.contains('service') && raw.contains('disabled') ||
       raw.contains('services are disabled') ||
       raw.contains('location services are off')) {
-    return 'Location is turned off. Enable GPS in your device settings to use this feature.';
+    return l10n.errLocationOff;
   }
   if (raw.contains('permission') ||
       raw.contains('denied') ||
       raw.contains('required to find')) {
-    return 'Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.';
+    return l10n.errLocationPermission;
   }
-  return 'Could not get your location. Check that GPS is on and try again.';
+  return l10n.errLocationGeneric;
 }
 
 /// Returns true when [error] is a "location services off" error, so the UI

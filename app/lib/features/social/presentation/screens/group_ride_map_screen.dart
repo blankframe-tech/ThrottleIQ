@@ -625,7 +625,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       body: rideAsync.when(
         loading: () =>
             Center(child: CircularProgressIndicator(color: context.palette.primary)),
-        error: (e, _) => _ErrorState(message: mapFirestoreError(e)),
+        error: (e, _) => _ErrorState(message: mapFirestoreError(e, context.l10n)),
         data: (ride) {
           if (ride == null) {
             return _ErrorState(

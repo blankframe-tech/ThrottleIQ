@@ -111,11 +111,11 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
         ),
       ).listen(_onPosition, onError: (Object e) {
         if (!mounted) return;
-        setState(() => _locationError = mapLocationError(e));
+        setState(() => _locationError = mapLocationError(e, context.l10n));
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _locationError = mapLocationError(e));
+      setState(() => _locationError = mapLocationError(e, context.l10n));
     }
   }
 

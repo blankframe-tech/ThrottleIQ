@@ -191,7 +191,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = mapFirestoreError(e);
+          _error = mapFirestoreError(e, context.l10n);
           _searching = false;
         });
       }
@@ -211,7 +211,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mapFirestoreError(e))),
+          SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
         );
       }
     }

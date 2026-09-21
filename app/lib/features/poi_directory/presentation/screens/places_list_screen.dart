@@ -142,8 +142,8 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                   final isPermissionDenied = isLocationPermissionError(e);
                   final isLocationIssue = isServiceOff || isPermissionDenied;
                   final message = isLocationIssue
-                      ? mapLocationError(e)
-                      : mapFirestoreError(e);
+                      ? mapLocationError(e, context.l10n)
+                      : mapFirestoreError(e, context.l10n);
 
                   return Center(
                     child: Padding(

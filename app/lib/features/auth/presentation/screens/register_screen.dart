@@ -48,7 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final err = ref.read(authNotifierProvider).error;
     if (err != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapFirebaseAuthError(err))),
+        SnackBar(content: Text(mapFirebaseAuthError(err, context.l10n))),
       );
     }
   }

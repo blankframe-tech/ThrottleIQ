@@ -29,7 +29,7 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = mapFirestoreError(error);
+    final message = mapFirestoreError(error, context.l10n);
     final offline = message.startsWith("You're offline");
 
     return Center(

@@ -552,7 +552,7 @@ class _FeedFooter extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           children: [
-            Text(mapFirestoreError(error!),
+            Text(mapFirestoreError(error!, context.l10n),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
             const SizedBox(height: 8),

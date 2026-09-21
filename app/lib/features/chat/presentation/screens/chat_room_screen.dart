@@ -79,7 +79,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(mapFirestoreError(e)),
+          content: Text(mapFirestoreError(e, context.l10n)),
           action: SnackBarAction(
             label: context.l10n.retry,
             onPressed: _sendMessage,

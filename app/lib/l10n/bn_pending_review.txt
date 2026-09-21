@@ -849,3 +849,30 @@ noRouteRecorded
 # batch: sort (manual)
 sortRecent
 importedPlaces
+# batch: errors (manual)
+errOffline
+errTimeout
+errNoPermission
+errNotFound
+errTooManyRequests
+errNotReady
+errLoadGeneric
+errUnknown
+authUserNotFound
+authWrongPassword
+authInvalidEmail
+authUserDisabled
+authOperationNotAllowed
+authTooManyRequests
+authInvalidCredential
+authEmailInUse
+authWeakPassword
+authNetworkFailed
+authAccountExistsDifferent
+errNetworkFailed
+errPermissionDenied
+errGeneric
+errLocationOff
+errLocationPermission
+errLocationGeneric
+authGeneric

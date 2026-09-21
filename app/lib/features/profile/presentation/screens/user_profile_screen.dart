@@ -240,7 +240,7 @@ class _ProfileBody extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(mapFirestoreError(e)),
+                              content: Text(mapFirestoreError(e, context.l10n)),
                               action: SnackBarAction(
                                 label: context.l10n.report,
                                 onPressed: () => BugReportSheet.show(context),

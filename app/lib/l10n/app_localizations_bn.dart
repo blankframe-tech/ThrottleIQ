@@ -3453,4 +3453,96 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return 'OpenStreetMap থেকে $_temp0 ইম্পোর্ট হয়েছে';
   }
+
+  @override
+  String get errOffline =>
+      'আপনি অফলাইনে আছেন। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get errTimeout => 'এতে অনেক সময় লাগছে। সংযোগ দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get errNoPermission => 'এটি দেখার অনুমতি আপনার নেই।';
+
+  @override
+  String get errNotFound => 'এটি পাওয়া যায়নি — হয়তো সরিয়ে ফেলা হয়েছে।';
+
+  @override
+  String get errTooManyRequests =>
+      'এই মুহূর্তে অনেক বেশি অনুরোধ। একটু পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get errNotReady =>
+      'এটি এখনো প্রস্তুত নয়। কয়েক মিনিট পর আবার চেষ্টা করুন।';
+
+  @override
+  String get errLoadGeneric => 'এটি লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get errUnknown => 'একটি অজানা ত্রুটি ঘটেছে';
+
+  @override
+  String get authUserNotFound =>
+      'এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি। আগে সাইন আপ করুন।';
+
+  @override
+  String get authWrongPassword => 'পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।';
+
+  @override
+  String get authInvalidEmail => 'ইমেইল ঠিকানাটি সঠিক নয়।';
+
+  @override
+  String get authUserDisabled => 'এই অ্যাকাউন্টটি বন্ধ করে দেওয়া হয়েছে।';
+
+  @override
+  String get authOperationNotAllowed => 'ইমেইল দিয়ে সাইন ইন চালু নেই।';
+
+  @override
+  String get authTooManyRequests =>
+      'অনেকবার লগইনের চেষ্টা হয়েছে। পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get authInvalidCredential => 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।';
+
+  @override
+  String get authEmailInUse => 'এই ইমেইলে আগে থেকেই একটি অ্যাকাউন্ট আছে।';
+
+  @override
+  String get authWeakPassword =>
+      'পাসওয়ার্ড খুব দুর্বল। কমপক্ষে 6 অক্ষর ব্যবহার করুন।';
+
+  @override
+  String get authNetworkFailed => 'নেটওয়ার্ক সমস্যা। ইন্টারনেট সংযোগ দেখুন।';
+
+  @override
+  String get authAccountExistsDifferent =>
+      'এই ইমেইলে অ্যাকাউন্ট আছে, কিন্তু সাইন ইনের পদ্ধতি আলাদা।';
+
+  @override
+  String get errNetworkFailed =>
+      'নেটওয়ার্ক সংযোগ ব্যর্থ হয়েছে। ইন্টারনেট দেখুন।';
+
+  @override
+  String get errPermissionDenied =>
+      'অনুমতি দেওয়া হয়নি। আপনার অ্যাকাউন্ট সেটিংস দেখুন।';
+
+  @override
+  String get errGeneric => 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get errLocationOff =>
+      'লোকেশন বন্ধ আছে। এই ফিচার ব্যবহার করতে ডিভাইস সেটিংসে GPS চালু করুন।';
+
+  @override
+  String get errLocationPermission =>
+      'এই ফিচারের জন্য লোকেশন অনুমতি দরকার। সেটিংস → ThrottleIQ-তে গিয়ে অনুমতি দিন।';
+
+  @override
+  String get errLocationGeneric =>
+      'আপনার লোকেশন পাওয়া যায়নি। GPS চালু আছে কিনা দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String authGeneric(String error) {
+    return 'সাইন ইন ত্রুটি: $error';
+  }
 }

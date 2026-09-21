@@ -3440,4 +3440,100 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get errOffline =>
+      'You\'re offline. Check your internet connection and try again.';
+
+  @override
+  String get errTimeout =>
+      'That\'s taking too long. Check your connection and try again.';
+
+  @override
+  String get errNoPermission => 'You don\'t have permission to view this.';
+
+  @override
+  String get errNotFound =>
+      'That could not be found — it may have been removed.';
+
+  @override
+  String get errTooManyRequests =>
+      'Too many requests right now. Please try again in a moment.';
+
+  @override
+  String get errNotReady =>
+      'This isn\'t ready yet. Please try again in a few minutes.';
+
+  @override
+  String get errLoadGeneric =>
+      'Something went wrong loading this. Please try again.';
+
+  @override
+  String get errUnknown => 'An unknown error occurred';
+
+  @override
+  String get authUserNotFound =>
+      'No account found with this email. Please sign up first.';
+
+  @override
+  String get authWrongPassword => 'Incorrect password. Please try again.';
+
+  @override
+  String get authInvalidEmail => 'Invalid email address.';
+
+  @override
+  String get authUserDisabled => 'This account has been disabled.';
+
+  @override
+  String get authOperationNotAllowed => 'Sign in with email is not enabled.';
+
+  @override
+  String get authTooManyRequests =>
+      'Too many login attempts. Please try again later.';
+
+  @override
+  String get authInvalidCredential => 'Invalid email or password.';
+
+  @override
+  String get authEmailInUse => 'An account with this email already exists.';
+
+  @override
+  String get authWeakPassword =>
+      'Password is too weak. Use at least 6 characters.';
+
+  @override
+  String get authNetworkFailed =>
+      'Network error. Check your internet connection.';
+
+  @override
+  String get authAccountExistsDifferent =>
+      'An account exists with this email but different sign-in method.';
+
+  @override
+  String get errNetworkFailed =>
+      'Network connection failed. Please check your internet.';
+
+  @override
+  String get errPermissionDenied =>
+      'Permission denied. Please check your account settings.';
+
+  @override
+  String get errGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get errLocationOff =>
+      'Location is turned off. Enable GPS in your device settings to use this feature.';
+
+  @override
+  String get errLocationPermission =>
+      'Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.';
+
+  @override
+  String get errLocationGeneric =>
+      'Could not get your location. Check that GPS is on and try again.';
+
+  @override
+  String authGeneric(String error) {
+    return 'Authentication error: $error';
+  }
 }

@@ -4697,5 +4697,114 @@
         "type": "int"
       }
     }
+  },
+  "errOffline": "You're offline. Check your internet connection and try again.",
+  "@errOffline": {
+    "description": "Error: device has no connection."
+  },
+  "errTimeout": "That's taking too long. Check your connection and try again.",
+  "@errTimeout": {
+    "description": "Error: a request timed out."
+  },
+  "errNoPermission": "You don't have permission to view this.",
+  "@errNoPermission": {
+    "description": "Error: permission denied when reading data."
+  },
+  "errNotFound": "That could not be found — it may have been removed.",
+  "@errNotFound": {
+    "description": "Error: the requested item does not exist."
+  },
+  "errTooManyRequests": "Too many requests right now. Please try again in a moment.",
+  "@errTooManyRequests": {
+    "description": "Error: rate limit / quota exhausted."
+  },
+  "errNotReady": "This isn't ready yet. Please try again in a few minutes.",
+  "@errNotReady": {
+    "description": "Error: a required database index is missing or still building."
+  },
+  "errLoadGeneric": "Something went wrong loading this. Please try again.",
+  "@errLoadGeneric": {
+    "description": "Generic error when loading data fails."
+  },
+  "errUnknown": "An unknown error occurred",
+  "@errUnknown": {
+    "description": "Generic error when there is no error object at all."
+  },
+  "authUserNotFound": "No account found with this email. Please sign up first.",
+  "@authUserNotFound": {
+    "description": "Sign-in error: no such user."
+  },
+  "authWrongPassword": "Incorrect password. Please try again.",
+  "@authWrongPassword": {
+    "description": "Sign-in error: wrong password."
+  },
+  "authInvalidEmail": "Invalid email address.",
+  "@authInvalidEmail": {
+    "description": "Sign-in error: malformed email."
+  },
+  "authUserDisabled": "This account has been disabled.",
+  "@authUserDisabled": {
+    "description": "Sign-in error: account disabled."
+  },
+  "authOperationNotAllowed": "Sign in with email is not enabled.",
+  "@authOperationNotAllowed": {
+    "description": "Sign-in error: email sign-in is turned off."
+  },
+  "authTooManyRequests": "Too many login attempts. Please try again later.",
+  "@authTooManyRequests": {
+    "description": "Sign-in error: throttled."
+  },
+  "authInvalidCredential": "Invalid email or password.",
+  "@authInvalidCredential": {
+    "description": "Sign-in error: bad credentials."
+  },
+  "authEmailInUse": "An account with this email already exists.",
+  "@authEmailInUse": {
+    "description": "Sign-up error: email already registered."
+  },
+  "authWeakPassword": "Password is too weak. Use at least 6 characters.",
+  "@authWeakPassword": {
+    "description": "Sign-up error: weak password."
+  },
+  "authNetworkFailed": "Network error. Check your internet connection.",
+  "@authNetworkFailed": {
+    "description": "Sign-in error: no network."
+  },
+  "authAccountExistsDifferent": "An account exists with this email but different sign-in method.",
+  "@authAccountExistsDifferent": {
+    "description": "Sign-in error: account uses another provider."
+  },
+  "errNetworkFailed": "Network connection failed. Please check your internet.",
+  "@errNetworkFailed": {
+    "description": "Generic error containing 'network'."
+  },
+  "errPermissionDenied": "Permission denied. Please check your account settings.",
+  "@errPermissionDenied": {
+    "description": "Generic error containing 'permission'."
+  },
+  "errGeneric": "Something went wrong. Please try again.",
+  "@errGeneric": {
+    "description": "Last-resort generic error (never shows raw exception text)."
+  },
+  "errLocationOff": "Location is turned off. Enable GPS in your device settings to use this feature.",
+  "@errLocationOff": {
+    "description": "Location error: services off."
+  },
+  "errLocationPermission": "Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.",
+  "@errLocationPermission": {
+    "description": "Location error: permission missing."
+  },
+  "errLocationGeneric": "Could not get your location. Check that GPS is on and try again.",
+  "@errLocationGeneric": {
+    "description": "Location error: fallback."
+  },
+  "authGeneric": "Authentication error: {error}",
+  "@authGeneric": {
+    "description": "Sign-in error with the provider message appended.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
