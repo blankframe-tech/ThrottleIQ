@@ -5747,5 +5747,21 @@
   "shareUsageStatsDesc": "Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.",
   "@shareUsageStatsDesc": {
     "description": "Explains exactly what the usage-statistics switch shares."
+  },
+  "safeQrPrintAction": "Print sticker",
+  "@safeQrPrintAction": {
+    "description": "Button on the SafeQR screen: opens the system print dialog with a sticker-sized QR."
+  },
+  "safeQrStickerTitle": "EMERGENCY MEDICAL INFO",
+  "@safeQrStickerTitle": {
+    "description": "Heading printed on the SafeQR sticker."
+  },
+  "safeQrStickerCaption": "Scan with any phone camera. Works offline.",
+  "@safeQrStickerCaption": {
+    "description": "Caption printed on the SafeQR sticker."
+  },
+  "safeQrPrintFailed": "Couldn't open the print dialog.",
+  "@safeQrPrintFailed": {
+    "description": "Shown if printing the SafeQR sticker fails."
   }
 }

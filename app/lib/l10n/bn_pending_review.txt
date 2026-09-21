@@ -1089,3 +1089,8 @@ notifDigestUnconfirmed
 # batch: analytics (manual)
 shareUsageStats
 shareUsageStatsDesc
+# batch: sticker (manual)
+safeQrPrintAction
+safeQrStickerTitle
+safeQrStickerCaption
+safeQrPrintFailed

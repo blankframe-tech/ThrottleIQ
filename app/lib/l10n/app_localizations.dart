@@ -7487,6 +7487,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.'**
   String get shareUsageStatsDesc;
+
+  /// Button on the SafeQR screen: opens the system print dialog with a sticker-sized QR.
+  ///
+  /// In en, this message translates to:
+  /// **'Print sticker'**
+  String get safeQrPrintAction;
+
+  /// Heading printed on the SafeQR sticker.
+  ///
+  /// In en, this message translates to:
+  /// **'EMERGENCY MEDICAL INFO'**
+  String get safeQrStickerTitle;
+
+  /// Caption printed on the SafeQR sticker.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan with any phone camera. Works offline.'**
+  String get safeQrStickerCaption;
+
+  /// Shown if printing the SafeQR sticker fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the print dialog.'**
+  String get safeQrPrintFailed;
 }
 
 class _AppLocalizationsDelegate

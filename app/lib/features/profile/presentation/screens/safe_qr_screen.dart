@@ -15,6 +15,10 @@ import '../../domain/entities/medical_info_entity.dart';
 import '../../domain/safe_qr_payload.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../providers/medical_info_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import '../utils/safe_qr_sticker.dart';
 
 /// SafeQR — a scannable medical-info card for first responders, built and
 /// read entirely on-device (`safe_qr_payload.dart`, `medical_info_provider
@@ -117,6 +121,39 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
     }
   }
 
+  /// Opens the system print dialog with a sticker sheet: the same QR at a fixed
+  /// physical size, repeated, for a helmet or bike where no phone is needed.
+  Future<void> _printSticker(String payload) async {
+    if (_exporting) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _exporting = true);
+    try {
+      // The PDF built-in faces have no Bengali glyphs (Helvetica warns and would
+      // print blanks), so the bundled Noto Sans Bengali is the base face for
+      // everything — it carries Latin too, so English prints correctly as well.
+      final bengali = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/NotoSansBengali-Variable.ttf'));
+      final bytes = await buildSafeQrStickerPdf(
+        payload: payload,
+        title: l10n.safeQrStickerTitle,
+        caption: l10n.safeQrStickerCaption,
+        baseFont: bengali,
+      );
+      await Printing.layoutPdf(
+        name: 'throttleiq_safeqr',
+        onLayout: (_) async => bytes,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.safeQrPrintFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -202,6 +239,16 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.ios_share, size: 18),
               label: Text(l10n.safeQrShareImageAction),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: OutlinedButton.icon(
+              onPressed:
+                  hasContent && !_exporting ? () => _printSticker(payload) : null,
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+              icon: const Icon(Icons.print_outlined, size: 18),
+              label: Text(l10n.safeQrPrintAction),
             ),
           ),
           const SizedBox(height: 24),

@@ -5779,3 +5779,19 @@ effective date 21 Sep 2026) and `DOCS/General/store_listing/data_safety_and_perm
 **Founder actions:** (1) update the Play Console Data Safety form ("App interactions:
 collected, optional, not shared"); (2) **deploy hosting only with the release** that
 ships this — the policy now describes analytics the currently-live app does not do.
+
+## 78.24 SafeQR "Print sticker" (2026-09-21, branch `job4-infra`)
+
+Settings → SafeQR now has **Print sticker** (next to Share image): it opens the system
+print dialog with an A4 sheet of six stickers, each the QR at a fixed **50 mm** with an
+"EMERGENCY MEDICAL INFO" heading and a scan hint, to cut out for a helmet or bike — a
+sticker works with no phone and no unlock. `printing` (approved) plus a direct `pdf`
+dependency; adding them bumped three transitive packages within their majors
+(`image` 4.8→4.10, `xml` 6→7, `dbus` 0.7.14→0.7.15). Full suite, analyzer, and iOS +
+Android debug builds re-run clean afterwards.
+- **Bangla:** the PDF built-in faces have no Bengali glyphs (Helvetica warns and would
+  print blanks), so the bundled Noto Sans Bengali is the base face for everything.
+  `test/features/profile/safe_qr_sticker_test.dart` builds the real PDF in both languages.
+- **Not verified:** that it *scans* off real paper, or how the dialog looks on a device.
+  The QR content is unchanged (`safe_qr_payload.dart`); this only prints it.
+

@@ -385,8 +385,7 @@ What remains open:
   2026-09-21:** merge navigation into the active-ride cockpit so following a
   saved route records it like any other ride. Today the two core loops don't
   compose — you can follow a route and end up with no ride logged.
-- **78.24 SafeQR has no "Print sticker"** (needs the `printing` package).
-  **APPROVED 2026-09-21**, new dependency accepted.
+- ~~**78.24 SafeQR has no "Print sticker"**~~ **DONE 2026-09-21** — see `issues_fixed.md` §78.24.
 - **78.25 The pitch** (`iDEA_PITCH_SUBMISSION.md` Slide 9, lines
   36/76/107) still claims working crash detection and a team the repo
   history doesn't show. It waits on founder decision c. The in-app

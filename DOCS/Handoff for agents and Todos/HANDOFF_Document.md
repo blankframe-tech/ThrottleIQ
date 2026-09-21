@@ -181,8 +181,7 @@ logic-layer messages that remain are listed in `issues_open.md` §83.23.
 **JOB 4 (branch `job4-infra`, on top of `job3-ux`):** App Check and analytics are coded and
 documented (see `issues_fixed.md` §83.19/§83.27); §78.26 and §78.29 fixed. **The live-data
 cleanup (§79/§80) is written and dry-run against production but NOT applied** — the agent
-was blocked from the write; command is in `issues_open.md` §79. **Not done:** §78.24 (SafeQR
-print sticker), §78.21 (route navigation records the ride), §78.16 (needs the tile key from
+was blocked from the write; command is in `issues_open.md` §79. §78.24 (SafeQR print sticker) is done — needs a real-paper scan test. **Not done:** §78.21 (route navigation records the ride), §78.16 (needs the tile key from
 the founder), §84 (undeclared indexes — needs a decision, do not `--force`).
 
 **JOB 3:** four of the five §32 "defects" were already fixed (the list was stale); only

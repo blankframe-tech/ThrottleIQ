@@ -4218,4 +4218,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareUsageStatsDesc =>
       'Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.';
+
+  @override
+  String get safeQrPrintAction => 'Print sticker';
+
+  @override
+  String get safeQrStickerTitle => 'EMERGENCY MEDICAL INFO';
+
+  @override
+  String get safeQrStickerCaption =>
+      'Scan with any phone camera. Works offline.';
+
+  @override
+  String get safeQrPrintFailed => 'Couldn\'t open the print dialog.';
 }

@@ -4227,4 +4227,17 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get shareUsageStatsDesc =>
       'কোন স্ক্রিন ব্যবহার হয় এবং রাইড শুরুর মতো কয়েকটি ধাপ। আপনার লোকেশন, রাইড, মেসেজ বা নাম কখনোই নয় — কোনো বিজ্ঞাপনও নয়।';
+
+  @override
+  String get safeQrPrintAction => 'স্টিকার প্রিন্ট করুন';
+
+  @override
+  String get safeQrStickerTitle => 'জরুরি মেডিকেল তথ্য';
+
+  @override
+  String get safeQrStickerCaption =>
+      'যেকোনো ফোনের ক্যামেরা দিয়ে স্ক্যান করুন। অফলাইনেও কাজ করে।';
+
+  @override
+  String get safeQrPrintFailed => 'প্রিন্ট ডায়ালগ খোলা যায়নি।';
 }
