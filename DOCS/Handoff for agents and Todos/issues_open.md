@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§85**. (§78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§86**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -423,9 +423,8 @@ What remains open:
   history doesn't show. It waits on founder decision c. The in-app
   emergency-contacts copy is fixed.
 - **New from the fix pass:**
-  - **78.26** `HoldToStartButton` completes a hold if the press and
-    release land in the same frame. The new `HoldToEndButton` guards
-    against this.
+  - ~~**78.26** `HoldToStartButton` same-frame release~~ **FIXED 2026-09-21** — see
+    `issues_fixed.md` §78.26 / §78.29.
   - **78.27** The chat-create rule now requires the fixed DM id. Builds
     from before the fix can't start new chats once the rules are deployed.
     Ship the app before the rules.
@@ -433,9 +432,8 @@ What remains open:
     SafeQR share, moving/stopped) need a native-speaker review. **2026-09-21:
     a reviewer is available** — keep translating and hand off each batch
     marked pending. The §83 cockpit alerts are also awaiting this review.
-  - **78.29** (part) The "Sync issues" screen is now localized (2026-09-21). The
-    immediate outbox attempt (`_attemptOne`) still isn't scoped to the
-    signed-in rider.
+  - ~~**78.29** "Sync issues" screen not localized; `_attemptOne` not scoped to the rider~~
+    **FIXED 2026-09-21** — both halves; see `issues_fixed.md` §78.26 / §78.29.
   - ~~**78.30** crash badge in ride history~~ **DONE 2026-09-21** — see
     `issues_fixed.md` §78.30.
 
@@ -502,8 +500,9 @@ are `qashare_*` QA seed rides whose counts were fabricated by
 reads it, so this is cosmetic — clear it on the next reseed, or with a
 `FieldValue.delete()` sweep.
 
-~~`firestore.rules` still has its `likes` clauses.~~ **DONE 2026-09-21, not yet
-deployed.** The create/owner-update tally clauses, the ±1 bump branch and the
+~~`firestore.rules` still has its `likes` clauses.~~ **DONE and DEPLOYED 2026-09-21
+(evening)** to `throttleiqfb` (`firebase deploy --only firestore:rules`; 114 rules tests
+passing first). The create/owner-update tally clauses, the ±1 bump branch and the
 now-unused `likeBumpValid` helper are gone; three rules tests pin the new
 contract (114 passing, was 113). **The `match /likes/{userId}` block stays on
 purpose** — `deleteSharedRide` still *lists* that subcollection to sweep up
@@ -512,10 +511,11 @@ even when it would return nothing, so removing it would turn every share-delete
 into permission-denied. It can go one release after the app stops sweeping, in
 that order (§78.27: ship the app before the rules).
 
-**Deploying this is a founder action and has a sequencing note:** any build
-still in a tester's hands that can *like* a ride will start failing once these
-rules are live. Nothing shipped since §81 has a like button, so the exposure is
-old beta installs only.
+**Deployed. Consequence to know about:** a build that can still *like* a ride now fails
+at that write. `beta-v3.0.2` (released after the like button was retired, d7a915b) has
+no like button, so the exposure is installs older than that only. The `match
+/likes/{userId}` block is still there and is the only §80 item left — it goes one
+release after the app stops sweeping that subcollection.
 
 ---
 
@@ -540,15 +540,15 @@ not run yet. See `HANDOFF_Document.md` for the verification detail.
 
 What is still open:
 
-### 83.12 — the active-ride screen rebuilds in full, once per second
+### 83.12 — the active-ride screen rebuilt in full, once per second — MOSTLY FIXED 2026-09-21
 
-`.select(` appears **3** times in the whole app; 4 sites watch the entire
-21-field `RideRecordingState`. The 877-line `active_ride_screen` is one of
-them, so it rebuilds completely on every elapsed tick and every GPS fix — with
-the map, GPS at 1 Hz, IMU at 20-50 Hz and a foreground service all running.
-That is battery and thermal cost in exactly the state where battery matters
-most. The `polylineVersion` counter shows the author knew about selector
-granularity; it just never reached the rest of the object.
+> Writeup in `issues_fixed.md` §83.12 (part). The outer build now selects three
+> fields and the fast-moving panels select their own; `.select(` went 3 → 11.
+
+**Still open:** the argument is structural and **has not been measured on a device**
+(profile a real ride for battery/thermal and frame times). `record_screen.dart`
+(lines ~91, 314, 423) still watches the whole `RideRecordingState` in three places —
+the pre-ride screen, so far lower stakes than the cockpit, but the same pattern.
 
 ### 83.13 — DI is inconsistent with the "clean architecture" claim
 
@@ -611,9 +611,11 @@ the rest are data/domain/plumbing with nothing to translate. What remains:
   listed in `app/lib/l10n/bn_pending_review.txt`, grouped by batch. A reviewer is
   available; hand each batch over. Nothing here has been read by a native
   speaker. A test (`arb_parity_test.dart`) keeps the list from naming dead keys.
-- **Bangla has never been seen on a device.** Bangla runs longer than English in
-  places (badge requirements, onboarding callouts, long dialogs) and this app
-  has known overflow above ~1.3× text scale (§83.22). Nobody has looked.
+- **Bangla has been seen on a simulator, not a device.** The 2026-09-21 UI tour walked 82
+  screens in Bangla on the iPhone 17 Pro simulator (one appearance combo, text scale 1.0):
+  0 overflow lines, no stripes. Not covered: a real device, text scale above 1.0 (this app
+  has known overflow above ~1.3×, §83.22), ~21 sections whose controls the tour finds by
+  English text.
 - **Messages from logic layers still reach the UI in English**, because those
   files have no `BuildContext` and need a code-vs-text refactor, not a string swap:
   `group_ride_repository.dart` (3: bad code / ended / full),

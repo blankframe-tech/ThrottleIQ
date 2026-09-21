@@ -5976,7 +5976,10 @@ method's doc comment.
 
 ## 80 (rest). The dead `likes` clauses are out of `firestore.rules` (2026-09-21)
 
-Written and tested; **deploying is still a founder action.**
+Written and tested, and **DEPLOYED to `throttleiqfb` on 2026-09-21 (evening)** with
+`firebase deploy --only firestore:rules` after the four gates were re-run (114 rules tests).
+The only rules diff since the previous deploy was this change. The compiler's `[W] 306:46`
+null-type warning that printed is the benign one from §62 (see HANDOFF), not new.
 
 Removed: the `likes` tally guards on shared-ride create and owner-update, the
 ±1 bump branch, and the now-unused `likeBumpValid` helper. Three tests replace
@@ -5990,9 +5993,9 @@ denied even when it would return nothing. Removing it would turn every
 share-delete into permission-denied. It can go one release after the app stops
 sweeping, in that order — §78.27's lesson.
 
-**Sequencing note for the deploy:** any build still in a tester's hands that
-can *like* a ride starts failing once these rules are live. Nothing shipped
-since §81 has a like button, so that's old beta installs only.
+**Consequence, now live:** a build that can still *like* a ride fails at that write.
+`beta-v3.0.2` was released after the like button was retired (d7a915b), so this is
+installs older than that only.
 
 114 rules tests passing, was 113.
 

@@ -47,6 +47,11 @@ queue, and a **traps** section of failures actually hit (do not run
 live indexes). Read it before `HANDOFF_Document.md` if you are here to write
 code rather than to check status.
 
+[`DEBT_FIX_PLAN.md`](DEBT_FIX_PLAN.md) — the ordered plan for the known debt (silent
+catches, injectable I/O, screen tests, accessibility, onboarding mockups, blocking,
+Cloudinary), and [`needs_attention.md`](needs_attention.md) — what only the founder
+can close (release, accounts, devices, decisions).
+
 ## Living docs, kept up to date every session
 
 | File | What it's for |

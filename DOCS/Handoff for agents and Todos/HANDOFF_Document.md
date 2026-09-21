@@ -1,6 +1,26 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-21 · Branch: `main`_
+_Last updated: 2026-09-21 (evening) · Branch: `main`_
+
+## Current state — verified 2026-09-21 evening
+
+Re-run on `main` (in sync with `origin/main`, nothing on any unmerged branch that matters):
+`flutter analyze` **zero issues**, `flutter test` **1298/1298**, `functions/` `npm run build`
+silent, rules emulator **114/114**. The release **APK builds** (84.7 MB) with App Check and
+analytics in it; the release **AAB** builds too (82.8 MB). Neither is published. One warning
+to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PLAN.md` §8).
+
+| Thing | State |
+|---|---|
+| Firestore **rules** | ✅ **Live**, including the §80 `likes` removal (deployed this evening) |
+| Firestore **indexes** | ✅ Live and verified |
+| **Hosting** (`privacy.html`) | Live copy is the **old** one — the analytics-aware policy is written but must ship *with* the release |
+| **Functions** | ❌ Not deployable — Spark plan, no `artifactregistry` (Node 20 dies late Oct 2026) |
+| **App build** | `pubspec` is still `1.0.0-beta.3.0.2+19` = the `beta-v3.0.2` release. Everything since (App Check, analytics, route navigation, i18n, print sticker, cockpit perf) is **on `main` but in no tester's hands** |
+| **App Check enforcement** | Console action, only after a release containing the code is what riders run |
+
+The order that matters: **release → hosting (`privacy.html`) → App Check enforcement**.
+Rules are already ahead of the app, which is the safe direction here.
 
 **Version bumped to `1.0.0-beta.3.0.2+19`, shipped as GitHub release
 `beta-v3.0.2`** (signed APK + AAB attached, built from `5600ecb`). Fixes
@@ -113,7 +133,7 @@ commits, fast-forwarded from `fix/critique-83`. 112 files, +4123/-832.
    Cloudinary sweep nor the anonymization added in this pass runs yet.
 
 Two things the deploy surfaced, neither introduced by this pass:
-- **A rules compiler warning at `firestore.rules:313`:** "Invalid type.
+- **A rules compiler warning at `firestore.rules:306`:** "Invalid type.
   Received one of [null]. Expected one of [map]." It is the
   `publicStatsValid(resource == null ? null : resource.data, …)` call added
   by §62. **Benign** — the function's first line is
@@ -161,17 +181,12 @@ Fixed, highest-consequence first:
   convention is now `issues §N` / `grill §N`, defined once in `DOCS/README.md`.
 - Tests no longer hit OpenStreetMap's tile servers.
 
-**`appcolors` branch (2026-09-21, NOT yet merged to `main`):** the three static
+**`appcolors` (2026-09-21, merged to `main`):** the three static
 token facades are gone and `key: ValueKey(appearance)` is deleted, so changing
 appearance re-themes the app in place instead of unmounting it (issues_fixed.md
 §83.9 rest). §74 (Retro/Light near-black cards) is fixed too — it was an
-`AppCard` paint-order bug, not a palette token. `flutter analyze` zero,
-`flutter test` **1206/1206**. **Branch stack (2026-09-21) — all local, NONE pushed or merged; merge in this order:**
-`main` ← `appcolors` (theme tokens, §74, post-photo border) ← `i18n` (JOB 2) ←
-`job3-ux` (§32 + crash badge + §78.26/§78.29) ← `job4-infra` (App Check, analytics, cleanup script). Each branch builds on the previous, so merge
-`job4-infra` last (it contains all the others) or one at a time in order.
-`flutter analyze` zero, `flutter test` **1242/1242**, `functions/` build clean; the
-rules suite was not re-run (no rules changes).
+`AppCard` paint-order bug, not a palette token. All four branches (`appcolors` → `i18n` → `job3-ux` → `job4-infra`) were merged to `main` as
+fast-forwards and pushed; there is no branch stack left to merge.
 
 **JOB 2 (localization) is done except for two gates:** 88 of 265 files localized, 1,229
 keys, **1,064 Bangla keys await native review** (`app/lib/l10n/bn_pending_review.txt`),
@@ -194,8 +209,8 @@ a decision, do not `--force`).
 **Also landed 2026-09-21, after the merge:** a GPX replay harness for §78.21; the four
 §83.23 localization leftovers that needed no reviewer (month names still need your
 decision); §85 (`timesRidden` now counts, on ride completion); §80's dead `likes` clauses
-out of `firestore.rules` — **written and tested, NOT deployed**, and the deploy has a
-sequencing note (old beta builds that can still like a ride will start failing); §83.12
+out of `firestore.rules` — **deployed to `throttleiqfb` the same evening** (installs older than
+`beta-v3.0.2` can no longer like a ride; the current build has no like button); §83.12
 (the cockpit no longer rebuilds in full on every sensor tick); and the first widget tests
 on the navigation banner (§83.28). 1298 app tests, 114 rules tests, 38 script tests.
 

@@ -1,8 +1,8 @@
 # BIGGG JOBB — handoff for the next agent
 
 _Written 2026-09-21 by Claude Opus 5, at the founder's request, for whoever
-picks this up next. Baseline: `main` @ `4b4e0da`, version
-`1.0.0-beta.3.0.2+19`._
+picks this up next. Status block refreshed 2026-09-21 evening (`main` @ `0222f03`, version
+`1.0.0-beta.3.0.2+19`). The debt in §6 now has a plan: `DOCS/DEBT_FIX_PLAN.md`._
 
 > **Path note.** The founder asked for `docs/BIGGG_JOBB.md`. This disk is
 > case-insensitive and `core.ignorecase=true`, and `DOCS/` already exists — so
@@ -28,13 +28,13 @@ think one is wrong, say so once, in a sentence, and then do it.
 
 | | |
 |---|---|
-| Branch | **`main` @ `5ac4ebd` — all four branches merged 2026-09-21** (`appcolors` → `i18n` → `job3-ux` → `job4-infra`, in that order; the stack was linear so each merge was a fast-forward, no conflicts). Analyzer, 1277 app tests and 38 script tests re-run clean on the merged `main`. |
+| Branch | **`main` @ `0222f03`**, in sync with `origin/main`. All four branches (`appcolors` → `i18n` → `job3-ux` → `job4-infra`) merged 2026-09-21; nothing is left to merge. |
 | Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
-| Tests | **1277** passing on `job4-infra` (which contains `appcolors` + `i18n` + `job3-ux`); `main` has 1195 |
+| Tests | **1298** passing on `main` (re-run 2026-09-21 evening) |
 | Analyzer | clean (zero issues) |
-| Rules suite | **113** passing |
+| Rules suite | **114** passing |
 | Functions | build clean, **NOT deployed** (Spark plan) |
-| Firestore rules + indexes | **deployed and verified** 2026-09-21 |
+| Firestore rules + indexes | **deployed and verified** 2026-09-21 — rules redeployed that evening with the §80 `likes` removal |
 
 Recent history worth knowing: a full critique pass ran 2026-09-20/21 and is
 recorded as **§83** (fixed parts in `issues_fixed.md`, remainder in
@@ -48,7 +48,7 @@ pagination, and 15 screens that dumped raw exceptions at users.
 
 This distinction matters more than usual here:
 
-- **Deployed:** Firestore rules, Firestore indexes, hosting.
+- **Deployed:** Firestore rules, Firestore indexes, hosting (the *old* `privacy.html`).
 - **Written, merged, NOT running:** every Cloud Function. The
   account-deletion trigger **has never been deployed in the project's
   history**. So today, deleting an account leaves Cloudinary media and all
@@ -65,9 +65,9 @@ Run **all four** before declaring anything done. CI runs the first three.
 
 ```bash
 cd app       && flutter analyze          # must be ZERO issues
-cd app       && flutter test             # 1242 passing (1195 on main)
+cd app       && flutter test             # 1298 passing
 cd functions && npm run build            # tsc, must be silent
-cd scripts   && npm run test:rules       # 113 passing (needs JDK 21+)
+cd scripts   && npm run test:rules       # 114 passing (needs JDK 21+)
 ```
 
 **`flutter analyze` must be literally zero**, not "no errors". CI is
@@ -93,7 +93,7 @@ it. Format individual files you have already edited, or nothing at all.
 
 ### 3.2 Section numbering is a minefield — check BOTH files
 
-- Next free number is **§85**. It is stated in `issues_open.md`'s header.
+- Next free number is **§86** (§85 is taken, in both files). It is stated in `issues_open.md`'s header.
 - **§79 and §81 are each used twice.** §82 was taken before §83.
 - A number can live in `issues_open.md`, `issues_fixed.md`, or **both**
   (open parts vs fixed parts of the same section). The header's "next free
@@ -350,8 +350,7 @@ no microphone while push-to-talk recorded audio). Do not repeat it.
   command in `issues_fixed.md` §79/§80.
 - **§80** — ✅ **APPLIED**, same run: all 47 `qashare_*` rides carrying the dead `likes`
   integer are clear (the live count was 47, not the 97 originally recorded). The dead
-  `likes` clauses are now out of `firestore.rules` too (2026-09-21) — **written and tested,
-  not deployed**; see `issues_fixed.md` §80 (rest) for what deliberately stayed and the
+  `likes` clauses are out of `firestore.rules` too, and **deployed** that evening; see `issues_fixed.md` §80 (rest) for what deliberately stayed and the
   sequencing note on deploying it.
 - **§84** — ✅ declared in `firestore.indexes.json` (retirement is a separate decision). The 4 undeclared indexes. Confirm nothing uses them (check
   `scripts/`, hand-run console queries, and the undeployed `functions/` — the
@@ -376,10 +375,9 @@ no microphone while push-to-talk recorded audio). Do not repeat it.
 Recorded so you don't rediscover it and think it's new. All are in
 `issues_open.md` §83.
 
-- **§83.12** — the 877-line active-ride screen rebuilds **in full, once per
-  second**, plus every GPS fix. Only **4** `.select(` uses exist app-wide
-  against a 21-field state object. Battery/thermal cost in exactly the state
-  where battery matters most.
+- **§83.12** — ✅ mostly fixed (`5400402`: the cockpit selects three fields and the
+  fast panels select their own; `.select(` 3 → 11). **Not measured on a device**, and
+  `record_screen.dart` still watches the whole state in three places.
 - **§83.13** — DI: DAOs, calculators and coordinators are constructed inline;
   `FirebaseFirestore.instance` appears directly in 20 places. **This is the
   same root cause as §83.28** — nothing touching I/O is injectable, so nothing
@@ -432,7 +430,7 @@ in-app and in-repo claim has been corrected; that file has not.
 | File | What |
 |---|---|
 | `DOCS/Handoff for agents and Todos/HANDOFF_Document.md` | Status, decisions table, deploy state, Known Limitations |
-| `DOCS/Handoff for agents and Todos/issues_open.md` | Every unresolved issue. **Next free number: §85** |
+| `DOCS/Handoff for agents and Todos/issues_open.md` | Every unresolved issue. **Next free number: §86** |
 | `DOCS/Handoff for agents and Todos/issues_fixed.md` | Resolved, same numbers |
 | `DOCS/Handoff for agents and Todos/features.md` | What a user can actually do, by tab |
 | `DOCS/README.md` | Doc map + the `issues §N` / `grill §N` legend |
