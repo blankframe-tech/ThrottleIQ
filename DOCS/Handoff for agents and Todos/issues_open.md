@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§84**. (§78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§85**. (§78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -646,3 +646,58 @@ passes.**
 §81 was free. Section numbers are meant to be unique and never change, so
 renumbering isn't proposed — flagging it so the header pointer stays
 trustworthy.
+
+---
+
+## 84. Four Firestore indexes exist in the project but not in `firestore.indexes.json` (2026-09-21)
+
+**Status:** Surfaced, not acted on. Found during the §83 rules/indexes deploy,
+which printed:
+
+> `firestore: there are 4 indexes defined in your project that are not present
+> in your firestore indexes file. To delete them, run this command with the
+> --force flag.`
+
+The four, from `firebase firestore:indexes --project throttleiqfb`:
+
+| Collection | Fields |
+|---|---|
+| `liveSessions` | `userId`, `expiresAt` |
+| `rides` | `allowedUserIds`, `createdAt` |
+| `rides` | `isPrivate`, `createdAt` |
+| `rides` | `public`, `startTime` |
+
+**Why it matters.** `firestore.indexes.json` is supposed to be the source of
+truth, and it currently isn't — so anyone reading the file gets an incomplete
+picture of what the project actually has, and anyone running
+`firebase deploy --force` deletes four indexes without being told which. A
+dropped index breaks its query **immediately and in production**, surfacing as
+`failed-precondition` — the same class of failure as §82 and §178, but in the
+opposite direction.
+
+**Evidence they're orphaned (not proof).** Grepping every `where(`/`orderBy(`
+against `rides` and `liveSessions` in `app/lib` and `functions/src`:
+
+- `isPrivate` — **no query anywhere.** The visibility model is `audience`
+  (`public`/`followers`/`mutual`); `isPrivate` looks like the pre-`audience`
+  field.
+- `public` as a *field* — **no query anywhere.** `'public'` appears only as a
+  *value* of `audience`. Likewise `startTime` is never queried on `rides`
+  (only on `groupRides`), so `rides (public, startTime)` looks doubly stale.
+- `rides (allowedUserIds, createdAt)` — superseded. The live query is
+  `allowedUserIds arrayContains + audience whereIn + orderBy createdAt`, which
+  needs the 3-field `(allowedUserIds, audience, createdAt)` that IS in the
+  file. This 2-field form is the version from before the `audience` co-filter
+  was added (see `getSharedToMe`'s doc comment for why that filter exists).
+- `liveSessions (userId, expiresAt)` — no matching query in the app or the
+  functions. Possibly console-created for the TTL work in §4.
+
+**Before removing any of them,** check the places this grep can't see: the
+`scripts/` node utilities, anything run by hand from the Firebase console, and
+the undeployed `functions/` code. Then either delete them with `--force` or —
+better, since it keeps the file honest either way — add them to
+`firestore.indexes.json` with a comment saying what they served, and retire
+them deliberately.
+
+**Do not run `firebase deploy --force` to clear the warning.** That is the
+failure mode this section exists to prevent.

@@ -54,12 +54,9 @@ Two things the deploy surfaced, neither introduced by this pass:
   `existingProfile != null ? … : {}`, so the null is handled; the compiler
   is just conservative about a deliberately-nullable parameter. Left alone
   rather than papered over.
-- **4 indexes exist in the project but not in `firestore.indexes.json`:**
-  `liveSessions (userId, expiresAt)`, `rides (allowedUserIds, createdAt)`,
-  `rides (isPrivate, createdAt)`, `rides (public, startTime)`. Console-created
-  or left over from retired queries. `firebase deploy --force` would delete
-  them — **do not run that blind**; confirm nothing queries them first, since
-  dropping a live index breaks its query instantly.
+- **4 indexes exist in the project but not in `firestore.indexes.json`** —
+  now tracked as **§84**, with the evidence that each is orphaned and the
+  warning not to clear it with `deploy --force`.
 
 Additionally, the Cloudinary sweep is inert until
 `CLOUDINARY_CLOUD_NAME`/`_API_KEY`/`_API_SECRET` are set in the functions
