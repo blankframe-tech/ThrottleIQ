@@ -8,6 +8,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
 import '../widgets/edit_maintenance_check_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../service_type_l10n.dart';
 
 class MaintenanceConfigScreen extends ConsumerStatefulWidget {
   final String bikeId;
@@ -177,7 +179,7 @@ class _MaintenanceConfigScreenState
   Widget build(BuildContext context) {
     final bikes = ref.watch(garageProvider).valueOrNull ?? [];
     final bike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
-    final bikeName = bike?.displayName ?? 'Your Motorcycle';
+    final bikeName = bike?.displayName ?? context.l10n.yourMotorcycle;
 
     final items = _items;
     final enabledCount = items?.where((i) => i.isEnabled).length ?? 0;
@@ -185,12 +187,12 @@ class _MaintenanceConfigScreenState
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(widget.isFirstTime ? 'Setup Maintenance' : 'Edit Tracked Checks'),
+        title: Text(widget.isFirstTime ? context.l10n.setupMaintenance : context.l10n.editTrackedChecks),
         actions: [
           if (widget.isFirstTime)
             TextButton(
               onPressed: _saving ? null : _saveAndContinue,
-              child: Text('Skip', style: TextStyle(color: context.palette.textSecondary)),
+              child: Text(context.l10n.skip, style: TextStyle(color: context.palette.textSecondary)),
             ),
         ],
       ),
@@ -226,7 +228,7 @@ class _MaintenanceConfigScreenState
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'What would you like to track for $bikeName?',
+                                      context.l10n.whatWouldLikeTrack(bikeName),
                                       style: display(context, 15),
                                     ),
                                   ),
@@ -234,7 +236,7 @@ class _MaintenanceConfigScreenState
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due.',
+                                context.l10n.selectComponentsWantThrottleiq,
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: context.palette.textSecondary,
@@ -251,18 +253,18 @@ class _MaintenanceConfigScreenState
                             TextButton.icon(
                               onPressed: _selectRecommended,
                               icon: const Icon(Icons.recommend, size: 16),
-                              label: const Text('Recommended',
-                                  style: TextStyle(fontSize: 12)),
+                              label: Text(context.l10n.recommended,
+                                  style: const TextStyle(fontSize: 12)),
                             ),
                             const Spacer(),
                             TextButton(
                               onPressed: _selectAll,
-                              child: const Text('Select All',
-                                  style: TextStyle(fontSize: 12)),
+                              child: Text(context.l10n.selectAll,
+                                  style: const TextStyle(fontSize: 12)),
                             ),
                             TextButton(
                               onPressed: _clearAll,
-                              child: Text('Clear',
+                              child: Text(context.l10n.clear,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: context.palette.textTertiary)),
@@ -302,8 +304,8 @@ class _MaintenanceConfigScreenState
                               )
                             : Text(
                                 enabledCount > 0
-                                    ? 'Track $enabledCount Checks'
-                                    : 'Save Preferences',
+                                    ? context.l10n.trackChecks(enabledCount)
+                                    : context.l10n.savePreferences,
                                 style: const TextStyle(fontWeight: FontWeight.w700),
                               ),
                       ),
@@ -329,9 +331,9 @@ class _MaintenanceConfigScreenState
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            EditorialLabel(category.label),
+            EditorialLabel(category.localizedLabel(context.l10n)),
             Text(
-              '$activeInCategory of ${categoryItems.length} active',
+              context.l10n.activeInCategory(activeInCategory, categoryItems.length),
               style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
             ),
           ],
@@ -385,7 +387,7 @@ class _MaintenanceConfigScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.serviceType.label,
+                      item.serviceType.localizedLabel(context.l10n),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: isEnabled ? FontWeight.w600 : FontWeight.w500,
@@ -396,7 +398,7 @@ class _MaintenanceConfigScreenState
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      item.serviceType.description,
+                      item.serviceType.localizedDescription(context.l10n),
                       style: TextStyle(
                         fontSize: 11,
                         color: context.palette.textTertiary,

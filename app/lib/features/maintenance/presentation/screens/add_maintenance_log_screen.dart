@@ -6,6 +6,8 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../providers/maintenance_provider.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../service_type_l10n.dart';
 
 class AddMaintenanceLogScreen extends ConsumerStatefulWidget {
   final String bikeId;
@@ -92,7 +94,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Log Service')),
+      appBar: AppBar(title: Text(context.l10n.logServiceTitle)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Form(
@@ -100,7 +102,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Service Type',
+              Text(context.l10n.serviceType,
                   style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
@@ -122,7 +124,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                         ),
                       ),
                       child: Text(
-                        type.label,
+                        type.localizedLabel(context.l10n),
                         style: TextStyle(
                             fontSize: 13,
                             color: selected ? context.palette.primary : context.palette.textSecondary,
@@ -141,14 +143,14 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                   controller: _customLabelCtrl,
                   textCapitalization: TextCapitalization.sentences,
                   style: TextStyle(color: context.palette.textPrimary),
-                  decoration: const InputDecoration(
-                    labelText: 'What did you service? *',
-                    hintText: 'e.g. Radiator flush',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.whatDidService,
+                    hintText: context.l10n.eGRadiatorFlush,
                   ),
                   validator: (v) {
                     if (_selectedType != ServiceType.custom) return null;
                     if (v == null || v.trim().isEmpty) {
-                      return 'Name the service';
+                      return context.l10n.nameService;
                     }
                     return null;
                   },
@@ -188,13 +190,13 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                 controller: _odometerCtrl,
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Odometer (km) *',
-                  suffixText: 'km',
+                decoration: InputDecoration(
+                  labelText: context.l10n.odometerKm,
+                  suffixText: context.l10n.distanceStatLabel,
                 ),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  if (double.tryParse(v) == null) return 'Invalid number';
+                  if (v == null || v.isEmpty) return context.l10n.requiredField;
+                  if (double.tryParse(v) == null) return context.l10n.invalidNumber;
                   return null;
                 },
               ),
@@ -203,8 +205,8 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                 controller: _costCtrl,
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Cost (optional)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.costOptional,
                   prefixText: '৳ ',
                 ),
               ),
@@ -228,12 +230,12 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                         maxLines: 3,
                         style: TextStyle(color: context.palette.textPrimary),
                         decoration: InputDecoration(
-                          labelText: 'Notes (optional)',
+                          labelText: context.l10n.notesOptional,
                           hintText: (specNote != null && specNote.isNotEmpty)
-                              ? 'Configured spec: $specNote'
+                              ? context.l10n.configuredSpec(specNote)
                               : (_selectedType == ServiceType.fuel
-                                  ? 'e.g. Octane 95, 12L fill-up, Jamuna oil...'
-                                  : 'e.g. Used Motul 10W40...'),
+                                  ? context.l10n.eGOctane95
+                                  : context.l10n.eGUsedMotul),
                           alignLabelWithHint: true,
                         ),
                       ),
@@ -266,7 +268,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                                     size: 12, color: context.palette.primary),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Insert spec: $specNote',
+                                  context.l10n.insertSpec(specNote),
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: context.palette.primary,
@@ -289,7 +291,7 @@ class _AddMaintenanceLogScreenState extends ConsumerState<AddMaintenanceLogScree
                     ? const SizedBox(
                         height: 20, width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save Service Log'),
+                    : Text(context.l10n.saveServiceLog),
               ),
             ],
           ),

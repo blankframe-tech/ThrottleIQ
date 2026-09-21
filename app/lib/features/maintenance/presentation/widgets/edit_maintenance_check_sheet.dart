@@ -5,6 +5,8 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../service_type_l10n.dart';
 
 IconData iconForServiceType(ServiceType type) {
   switch (type) {
@@ -245,10 +247,10 @@ class _EditMaintenanceCheckSheetState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(type.label, style: display(context, 18)),
+                        Text(type.localizedLabel(context.l10n), style: display(context, 18)),
                         const SizedBox(height: 2),
                         Text(
-                          type.description,
+                          type.localizedDescription(context.l10n),
                           style: TextStyle(
                             fontSize: 12,
                             color: context.palette.textSecondary,
@@ -278,7 +280,7 @@ class _EditMaintenanceCheckSheetState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Track on Dashboard',
+                          context.l10n.trackDashboard,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -286,7 +288,7 @@ class _EditMaintenanceCheckSheetState
                           ),
                         ),
                         Text(
-                          'Calculate wear and monitor interval',
+                          context.l10n.calculateWearMonitorInterval,
                           style: TextStyle(
                             fontSize: 11,
                             color: context.palette.textTertiary,
@@ -305,23 +307,23 @@ class _EditMaintenanceCheckSheetState
               const SizedBox(height: 16),
 
               // Service Interval
-              const EditorialLabel('Service Interval'),
+              EditorialLabel(context.l10n.serviceInterval),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _intervalCtrl,
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Interval Distance (km)',
-                  suffixText: 'km',
+                  labelText: context.l10n.intervalDistanceKm,
+                  suffixText: context.l10n.distanceStatLabel,
                   prefixIcon: const Icon(Icons.speed, size: 20),
                   filled: true,
                   fillColor: context.palette.surfaceVariant,
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Required';
+                  if (v == null || v.trim().isEmpty) return context.l10n.requiredField;
                   final n = double.tryParse(v.trim());
-                  if (n == null || n <= 0) return 'Enter a positive number';
+                  if (n == null || n <= 0) return context.l10n.enterPositiveNumber;
                   return null;
                 },
               ),
@@ -366,9 +368,9 @@ class _EditMaintenanceCheckSheetState
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const EditorialLabel('Specifications & Extra Info'),
+                  EditorialLabel(context.l10n.specificationsExtraInfo),
                   Text(
-                    'Optional text',
+                    context.l10n.optionalText,
                     style: TextStyle(
                       fontSize: 11,
                       color: context.palette.textTertiary,
@@ -383,7 +385,7 @@ class _EditMaintenanceCheckSheetState
                 textCapitalization: TextCapitalization.sentences,
                 style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
-                  labelText: 'Specs (oil grade, tyre sizes & dates...)',
+                  labelText: context.l10n.specsOilGradeTyre,
                   hintText: hint,
                   alignLabelWithHint: true,
                   filled: true,
@@ -396,7 +398,7 @@ class _EditMaintenanceCheckSheetState
               ),
               const SizedBox(height: 6),
               Text(
-                'Visible on your maintenance card for quick reference.',
+                context.l10n.visibleMaintenanceCardQuick,
                 style: TextStyle(
                   fontSize: 11,
                   color: context.palette.textTertiary,
@@ -419,7 +421,7 @@ class _EditMaintenanceCheckSheetState
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        context.l10n.cancelAction,
                         style: TextStyle(
                           color: context.palette.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -447,9 +449,9 @@ class _EditMaintenanceCheckSheetState
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Save',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                          : Text(
+                              context.l10n.safeQrSaveAction,
+                              style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
                     ),
                   ),

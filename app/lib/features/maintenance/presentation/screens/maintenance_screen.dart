@@ -12,6 +12,8 @@ import '../widgets/edit_maintenance_check_sheet.dart';
 import '../widgets/odometer_sync_sheet.dart';
 import '../widgets/reset_maintenance_log_sheet.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../service_type_l10n.dart';
 
 const double _kmToMi = 0.621371;
 
@@ -69,9 +71,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               children: [
                 Icon(Icons.two_wheeler, size: 56, color: context.palette.textTertiary),
                 const SizedBox(height: 16),
-                Text('No active bike', style: display(context, 20)),
+                Text(context.l10n.noActiveBike, style: display(context, 20)),
                 const SizedBox(height: 8),
-                Text('Add a motorcycle to your garage to track maintenance.',
+                Text(context.l10n.addMotorcycleGarageTrack,
                     style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
@@ -122,7 +124,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       children: [
                         Row(
                           children: [
-                            Text('Maintenance', style: display(context, 26)),
+                            Text(context.l10n.maintenance, style: display(context, 26)),
                             if (bikes.length > 1) ...[
                               const SizedBox(width: 8),
                               _buildBikeDropdown(bikes, activeBike),
@@ -175,8 +177,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => OdometerSyncSheet.show(context, activeBike),
                       icon: const Icon(Icons.speed, size: 16),
-                      label: const Text('Sync Odo',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      label: Text(context.l10n.syncOdo,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         side: BorderSide(color: context.palette.border),
@@ -192,8 +194,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       onPressed: () => context.push(
                           '/home/maintenance/configure?bikeId=${activeBike.id}'),
                       icon: const Icon(Icons.tune, size: 16),
-                      label: const Text('Customize',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      label: Text(context.l10n.customize,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         side: BorderSide(color: context.palette.border),
@@ -209,8 +211,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       onPressed: () => context.go(
                           '/home/maintenance/add?bikeId=${activeBike.id}'),
                       icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Log',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      label: Text(context.l10n.log,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
@@ -221,7 +223,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                   ),
                   const SizedBox(width: 8),
                   Tooltip(
-                    message: 'Reset service log',
+                    message: context.l10n.resetServiceLog,
                     child: OutlinedButton(
                       onPressed: () =>
                           ResetMaintenanceLogSheet.show(context, activeBike),
@@ -256,9 +258,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const EditorialLabel('Tracked checks'),
+                    EditorialLabel(context.l10n.trackedChecks),
                     Text(
-                      '${reminders.length} monitored',
+                      context.l10n.monitored(reminders.length),
                       style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
                     ),
                   ],
@@ -270,14 +272,14 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                   Row(
                     children: [
                       _FilterChip(
-                        label: 'All (${reminders.length})',
+                        label: context.l10n.filterAll(reminders.length),
                         active: _currentFilter == _FilterTab.all,
                         onTap: () => setState(() => _currentFilter = _FilterTab.all),
                       ),
                       const SizedBox(width: 6),
                       if (attentionCount > 0) ...[
                         _FilterChip(
-                          label: 'Attention ($attentionCount)',
+                          label: context.l10n.filterAttention(attentionCount),
                           active: _currentFilter == _FilterTab.attention,
                           tone: PillTone.overdue,
                           onTap: () => setState(
@@ -286,7 +288,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                         const SizedBox(width: 6),
                       ],
                       _FilterChip(
-                        label: 'OK ($okCount)',
+                        label: context.l10n.filterOk(okCount),
                         active: _currentFilter == _FilterTab.ok,
                         tone: PillTone.ok,
                         onTap: () => setState(() => _currentFilter = _FilterTab.ok),
@@ -303,8 +305,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                     child: Center(
                       child: Text(
                         reminders.isEmpty
-                            ? 'No checks tracked yet. Tap "Customize" above to select checks.'
-                            : 'No checks matching this filter.',
+                            ? context.l10n.noChecksTrackedYet
+                            : context.l10n.noChecksMatchingThis,
                         style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
                       ),
                     ),
@@ -326,14 +328,14 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const EditorialLabel('Service history'),
+                  EditorialLabel(context.l10n.serviceHistory),
                   logsAsync.maybeWhen(
                     data: (logs) {
                       final totalCost = logs.fold<double>(
                           0.0, (sum, item) => sum + (item.cost ?? 0.0));
                       if (totalCost > 0) {
                         return Text(
-                          'Total: ৳${totalCost.toStringAsFixed(0)}',
+                          context.l10n.total(totalCost.toStringAsFixed(0)),
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -366,13 +368,13 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                             Icon(Icons.history,
                                 color: context.palette.textTertiary, size: 36),
                             const SizedBox(height: 8),
-                            Text('No service records logged yet.',
+                            Text(context.l10n.noServiceRecordsLogged,
                                 style: TextStyle(
                                     color: context.palette.textSecondary,
                                     fontSize: 13)),
                             const SizedBox(height: 4),
                             Text(
-                              'When you service your bike, log it here to reset intervals.',
+                              context.l10n.whenServiceBikeLog,
                               style: TextStyle(
                                   color: context.palette.textTertiary, fontSize: 11),
                             ),
@@ -402,7 +404,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
   Widget _buildBikeDropdown(List<BikeEntity> bikes, BikeEntity activeBike) {
     return PopupMenuButton<String>(
-      tooltip: 'Switch bike',
+      tooltip: context.l10n.switchBike,
       color: context.palette.surfaceVariant,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -413,7 +415,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Switch',
+            Text(context.l10n.switchAction,
                 style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
             Icon(Icons.arrow_drop_down, size: 16, color: context.palette.textSecondary),
           ],
@@ -461,17 +463,17 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     if (overdue > 0) {
       statusColor = context.palette.danger;
       statusTitle = '$overdue ${overdue == 1 ? 'Service Overdue' : 'Services Overdue'}';
-      statusSubtitle = 'Immediate maintenance attention recommended';
+      statusSubtitle = context.l10n.immediateMaintenanceAttentionRecommended;
       statusIcon = Icons.warning_amber_rounded;
     } else if (dueSoon > 0) {
       statusColor = context.palette.attention;
       statusTitle = '$dueSoon ${dueSoon == 1 ? 'Service Due Soon' : 'Services Due Soon'}';
-      statusSubtitle = 'Upcoming scheduled maintenance';
+      statusSubtitle = context.l10n.upcomingScheduledMaintenance;
       statusIcon = Icons.schedule;
     } else {
       statusColor = context.palette.success;
-      statusTitle = 'All Systems Nominal';
-      statusSubtitle = 'All $total tracked components in good health';
+      statusTitle = context.l10n.allSystemsNominal;
+      statusSubtitle = context.l10n.allTrackedComponentsGood(total);
       statusIcon = Icons.verified_outlined;
     }
 
@@ -537,7 +539,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _metricPill('Overdue', overdue, context.palette.danger),
-              _metricPill('Due Soon', dueSoon, context.palette.attention),
+              _metricPill(context.l10n.dueSoonTitle, dueSoon, context.palette.attention),
               _metricPill('Good', ok, context.palette.success),
             ],
           ),
@@ -640,7 +642,7 @@ class _UnitToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _UnitSegment(label: 'km', active: !imperial, onTap: () => onChanged(false)),
+          _UnitSegment(label: context.l10n.distanceStatLabel, active: !imperial, onTap: () => onChanged(false)),
           _UnitSegment(label: 'mi', active: imperial, onTap: () => onChanged(true)),
         ],
       ),
@@ -821,7 +823,7 @@ class _FirstTimeMaintenanceCardsState
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'What would you like to maintain?',
+                      context.l10n.whatWouldLikeMaintain,
                       style: display(context, 16),
                     ),
                   ),
@@ -829,7 +831,7 @@ class _FirstTimeMaintenanceCardsState
               ),
               const SizedBox(height: 8),
               Text(
-                'Not everyone wants to track everything. Pick the items you care about for ${widget.bike.displayName}, or tap to edit intervals and add specs (oil brand, tyre dates/sizes):',
+                context.l10n.notEveryoneWantsTrack(widget.bike.displayName),
                 style: TextStyle(
                   fontSize: 12,
                   color: context.palette.textSecondary,
@@ -844,8 +846,8 @@ class _FirstTimeMaintenanceCardsState
                   ActionChip(
                     avatar: Icon(Icons.star_outline,
                         size: 14, color: context.palette.primary),
-                    label: const Text('Essentials (4)',
-                        style: TextStyle(fontSize: 11)),
+                    label: Text(context.l10n.essentials4,
+                        style: const TextStyle(fontSize: 11)),
                     onPressed: _selectEssentials,
                     backgroundColor: context.palette.surfaceVariant,
                     side: BorderSide(color: context.palette.border),
@@ -853,8 +855,8 @@ class _FirstTimeMaintenanceCardsState
                   ActionChip(
                     avatar: Icon(Icons.done_all,
                         size: 14, color: context.palette.textSecondary),
-                    label: const Text('All 8 items',
-                        style: TextStyle(fontSize: 11)),
+                    label: Text(context.l10n.all8Items,
+                        style: const TextStyle(fontSize: 11)),
                     onPressed: _selectAll,
                     backgroundColor: context.palette.surfaceVariant,
                     side: BorderSide(color: context.palette.border),
@@ -862,8 +864,8 @@ class _FirstTimeMaintenanceCardsState
                   ActionChip(
                     avatar: Icon(Icons.clear,
                         size: 14, color: context.palette.textTertiary),
-                    label: const Text('Clear',
-                        style: TextStyle(fontSize: 11)),
+                    label: Text(context.l10n.clear,
+                        style: const TextStyle(fontSize: 11)),
                     onPressed: _clearAll,
                     backgroundColor: context.palette.surfaceVariant,
                     side: BorderSide(color: context.palette.border),
@@ -897,10 +899,10 @@ class _FirstTimeMaintenanceCardsState
                 : const Icon(Icons.check_circle_outline, size: 18),
             label: Text(
               _saving
-                  ? 'Saving Preferences...'
+                  ? context.l10n.savingPreferences
                   : (enabledCount > 0
-                      ? 'Start Tracking ($enabledCount Items)'
-                      : 'Save Preferences'),
+                      ? context.l10n.startTrackingItems(enabledCount)
+                      : context.l10n.savePreferences),
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             style: ElevatedButton.styleFrom(
@@ -917,9 +919,9 @@ class _FirstTimeMaintenanceCardsState
             onPressed: () => context.push(
                 '/home/maintenance/configure?bikeId=${widget.bike.id}'),
             icon: const Icon(Icons.tune, size: 14),
-            label: const Text(
-              'See all 20+ checks & advanced setup',
-              style: TextStyle(fontSize: 12),
+            label: Text(
+              context.l10n.seeAll20Checks,
+              style: const TextStyle(fontSize: 12),
             ),
           ),
         ),
@@ -966,7 +968,7 @@ class _FirstTimeMaintenanceCardsState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.serviceType.label,
+                        item.serviceType.localizedLabel(context.l10n),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight:
@@ -977,7 +979,7 @@ class _FirstTimeMaintenanceCardsState
                         ),
                       ),
                       Text(
-                        item.serviceType.description,
+                        item.serviceType.localizedDescription(context.l10n),
                         style: TextStyle(
                           fontSize: 11,
                           color: context.palette.textTertiary,
@@ -1109,7 +1111,7 @@ class _CheckRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final (tone, barColor, label) = switch (reminder.status) {
       ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, 'Overdue'),
-      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, 'Due soon'),
+      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, context.l10n.dueSoon),
       ReminderStatus.ok => (PillTone.ok, context.palette.success, 'OK'),
     };
     final isOverdue = reminder.status == ReminderStatus.overdue;
@@ -1137,7 +1139,7 @@ class _CheckRow extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(reminder.serviceType.label,
+                child: Text(reminder.serviceType.localizedLabel(context.l10n),
                     style: display(context, 15, letterSpacing: 0)),
               ),
               EditorialPill(label, tone: tone, filled: isOverdue),
@@ -1147,7 +1149,7 @@ class _CheckRow extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Every ${_distLabel(reminder.kmLimit, imperial)}',
+              Text(context.l10n.intervalEvery(_distLabel(reminder.kmLimit, imperial)),
                   style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
               Text(rightText,
                   style: TextStyle(
@@ -1195,8 +1197,8 @@ class _CheckRow extends ConsumerWidget {
             children: [
               Text(
                 reminder.lastServiceDate != null
-                    ? 'Last done: ${_formatDate(reminder.lastServiceDate!)}'
-                    : 'No previous service recorded',
+                    ? context.l10n.lastDone(_formatDate(reminder.lastServiceDate!))
+                    : context.l10n.noPreviousServiceRecorded,
                 style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
               ),
               Row(
@@ -1236,7 +1238,7 @@ class _CheckRow extends ConsumerWidget {
                           Icon(Icons.edit_outlined,
                               size: 12, color: context.palette.textSecondary),
                           const SizedBox(width: 2),
-                          Text('Edit',
+                          Text(context.l10n.edit,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -1263,7 +1265,7 @@ class _CheckRow extends ConsumerWidget {
                         children: [
                           Icon(Icons.add, size: 12, color: context.palette.primary),
                           const SizedBox(width: 2),
-                          Text('Log',
+                          Text(context.l10n.log,
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -1306,7 +1308,7 @@ class _LogTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(log.displayLabel, style: display(context, 14, letterSpacing: 0)),
+                Text(log.localizedDisplayLabel(context.l10n), style: display(context, 14, letterSpacing: 0)),
                 const SizedBox(height: 4),
                 Text(
                   '${_formatDate(log.date)} · ${_distLabel(log.odometerKm, imperial)}'
@@ -1322,29 +1324,29 @@ class _LogTile extends ConsumerWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Delete',
+            tooltip: context.l10n.delete,
             icon: Icon(Icons.delete_outline, color: context.palette.textTertiary, size: 18),
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: ctx.palette.surface,
-                  title: Text('Delete Log', style: display(ctx, 16)),
+                  title: Text(ctx.l10n.deleteLog, style: display(ctx, 16)),
                   content: Text(
-                    'Are you sure you want to delete this ${log.displayLabel} record?',
+                    ctx.l10n.sureWantDeleteThis(log.localizedDisplayLabel(ctx.l10n)),
                     style: TextStyle(fontSize: 13, color: ctx.palette.textSecondary),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text('Cancel',
+                      child: Text(ctx.l10n.cancelAction,
                           style: TextStyle(color: ctx.palette.textTertiary)),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.of(ctx).pop(true),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: ctx.palette.danger),
-                      child: const Text('Delete'),
+                      child: Text(ctx.l10n.delete),
                     ),
                   ],
                 ),

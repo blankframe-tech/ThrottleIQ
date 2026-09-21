@@ -9,6 +9,8 @@
 /// me" is about who follows *me*, not who I follow back.
 library;
 
+import '../../../l10n/app_localizations.dart';
+
 /// Any signed-in rider may see the garage. The default, and what a document
 /// written before `bikesVisibility` existed decodes to — so adding this field
 /// never changes an existing account's behavior.
@@ -29,14 +31,14 @@ const List<String> kBikesVisibilityLevels = [
 
 /// Human label for a `bikesVisibility` value, for read-only display. Unknown
 /// values render as the default tier, matching [canSeeBikes]'s behavior.
-String bikesVisibilityLabel(String visibility) {
+String bikesVisibilityLabel(String visibility, AppLocalizations l10n) {
   switch (visibility) {
     case kBikesVisibilityFollowers:
-      return 'My followers';
+      return l10n.myFollowers;
     case kBikesVisibilityPrivate:
-      return 'Only me';
+      return l10n.onlyMe;
     default:
-      return 'Everyone';
+      return l10n.everyone;
   }
 }
 

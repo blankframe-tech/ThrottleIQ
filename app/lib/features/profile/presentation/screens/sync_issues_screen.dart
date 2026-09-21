@@ -5,6 +5,8 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/database/daos/outbox_dao.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// The signed-in rider's outbox entries that the queue gave up on — §69.O4.
 ///
@@ -26,11 +28,11 @@ final syncIssuesProvider =
 });
 
 /// What a queued write was, in the rider's words.
-String syncIssueLabel(String kind) => switch (kind) {
-      OutboxKind.shareRide => 'Ride share',
-      OutboxKind.liveSessionTeardown => 'Ending a live share',
-      OutboxKind.maintenanceLog => 'Maintenance log',
-      _ => 'Cloud update',
+String syncIssueLabel(String kind, AppLocalizations l10n) => switch (kind) {
+      OutboxKind.shareRide => l10n.rideShare,
+      OutboxKind.liveSessionTeardown => l10n.endingLiveShare,
+      OutboxKind.maintenanceLog => l10n.maintenanceLog,
+      _ => l10n.cloudUpdate,
     };
 
 /// Settings → Sync issues: writes that couldn't be delivered after repeated
@@ -45,7 +47,7 @@ class SyncIssuesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Sync issues')),
+      appBar: AppBar(title: Text(context.l10n.syncIssues)),
       body: issuesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorView(
@@ -56,7 +58,7 @@ class SyncIssuesScreen extends ConsumerWidget {
           if (issues.isEmpty) {
             return Center(
               child: Text(
-                'Everything is synced',
+                context.l10n.everythingSynced,
                 style: TextStyle(color: context.palette.textSecondary),
               ),
             );
@@ -93,8 +95,8 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
     setState(() => _busy = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(delivered
-          ? 'Synced'
-          : "Couldn't sync yet. We'll keep trying in the background."),
+          ? context.l10n.synced
+          : context.l10n.couldntSyncYetWell),
     ));
   }
 
@@ -103,18 +105,18 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: dialogContext.palette.surface,
-        title: Text('Discard this update?',
+        title: Text(dialogContext.l10n.discardThisUpdate,
             style: TextStyle(color: dialogContext.palette.textPrimary)),
-        content: Text("It won't be sent. This can't be undone.",
+        content: Text(dialogContext.l10n.itWontBeSent,
             style: TextStyle(color: dialogContext.palette.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(dialogContext.l10n.cancelAction),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text('Discard', style: TextStyle(color: dialogContext.palette.danger)),
+            child: Text(dialogContext.l10n.discard, style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -146,7 +148,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
               Icon(Icons.sync_problem, color: context.palette.warning, size: 22),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(syncIssueLabel(entry.kind),
+                child: Text(syncIssueLabel(entry.kind, context.l10n),
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -170,7 +172,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
             children: [
               TextButton(
                 onPressed: _busy ? null : _discard,
-                child: Text('Discard', style: TextStyle(color: context.palette.danger)),
+                child: Text(context.l10n.discard, style: TextStyle(color: context.palette.danger)),
               ),
               const SizedBox(width: 8),
               TextButton(
@@ -181,7 +183,7 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text('Retry', style: TextStyle(color: context.palette.primary)),
+                    : Text(context.l10n.retry, style: TextStyle(color: context.palette.primary)),
               ),
             ],
           ),

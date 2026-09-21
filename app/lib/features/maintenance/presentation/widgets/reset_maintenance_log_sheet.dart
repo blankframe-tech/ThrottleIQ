@@ -8,6 +8,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
 import 'edit_maintenance_check_sheet.dart' show iconForServiceType;
+import '../../../../core/i18n/l10n_context.dart';
+import '../service_type_l10n.dart';
 
 /// Bottom sheet for the "master service log" reset: lets the rider tick
 /// which tracked checks were just serviced (all or a subset) and logs each
@@ -51,24 +53,20 @@ class _ResetMaintenanceLogSheetState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset selected items?'),
+        title: Text(ctx.l10n.resetSelectedItems),
         content: Text(
           _selected.length == 1
-              ? 'This logs "${_selected.first.label}" as serviced today at the '
-                  "bike's current odometer, resetting its due date. Past "
-                  'history is kept.'
-              : 'This logs ${_selected.length} items as serviced today at the '
-                  "bike's current odometer, resetting their due dates. Past "
-                  'history is kept.',
+              ? ctx.l10n.thisLogsAsServiced(_selected.first.label)
+              : ctx.l10n.thisLogsItemsAs(_selected.length),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(ctx.l10n.cancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Reset'),
+            child: Text(ctx.l10n.reset),
           ),
         ],
       ),
@@ -100,8 +98,8 @@ class _ResetMaintenanceLogSheetState
             Expanded(
               child: Text(
                 count == 1
-                    ? '1 item reset to serviced today.'
-                    : '$count items reset to serviced today.',
+                    ? context.l10n.n1ItemResetServiced
+                    : context.l10n.itemsResetServicedToday(count),
                 style: TextStyle(color: context.palette.textPrimary),
               ),
             ),
@@ -161,9 +159,9 @@ class _ResetMaintenanceLogSheetState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Reset Service Log', style: display(context, 18)),
+                    Text(context.l10n.resetServiceLogTitle, style: display(context, 18)),
                     Text(
-                      'Tick what you just serviced on ${widget.bike.displayName}',
+                      context.l10n.tickWhatJustServiced(widget.bike.displayName),
                       style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
@@ -173,8 +171,7 @@ class _ResetMaintenanceLogSheetState
           ),
           const SizedBox(height: 8),
           Text(
-            'Selected items are logged as serviced today at the current '
-            'odometer, resetting their due date. Nothing is deleted.',
+            context.l10n.selectedItemsLoggedAs,
             style: TextStyle(fontSize: 12, color: context.palette.textTertiary, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -183,7 +180,7 @@ class _ResetMaintenanceLogSheetState
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(
-                  'No tracked checks yet. Set some up under "Customize" first.',
+                  context.l10n.noTrackedChecksYet,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
                 ),
@@ -195,15 +192,15 @@ class _ResetMaintenanceLogSheetState
                 TextButton(
                   onPressed: () =>
                       setState(() => _selected.addAll(reminders.map((r) => r.serviceType))),
-                  child: const Text('Select All', style: TextStyle(fontSize: 12)),
+                  child: Text(context.l10n.selectAll, style: const TextStyle(fontSize: 12)),
                 ),
                 TextButton(
                   onPressed: _selected.isEmpty ? null : () => setState(_selected.clear),
-                  child: Text('Clear',
+                  child: Text(context.l10n.clear,
                       style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                 ),
                 const Spacer(),
-                Text('${_selected.length} of ${reminders.length} selected',
+                Text(context.l10n.selectedOfTotal(_selected.length, reminders.length),
                     style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
               ],
             ),
@@ -242,8 +239,8 @@ class _ResetMaintenanceLogSheetState
                       )
                     : Text(
                         _selected.isEmpty
-                            ? 'Select items to reset'
-                            : 'Reset ${_selected.length} Item${_selected.length == 1 ? '' : 's'}',
+                            ? context.l10n.selectItemsReset
+                            : context.l10n.resetItemsButton(_selected.length),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
               ),
@@ -270,7 +267,7 @@ class _ResetItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final (tone, statusColor, label) = switch (reminder.status) {
       ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, 'Overdue'),
-      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, 'Due soon'),
+      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, context.l10n.dueSoon),
       ReminderStatus.ok => (PillTone.ok, context.palette.success, 'OK'),
     };
 
@@ -307,7 +304,7 @@ class _ResetItemTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      reminder.serviceType.label,
+                      reminder.serviceType.localizedLabel(context.l10n),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
@@ -317,8 +314,8 @@ class _ResetItemTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       reminder.lastServiceDate != null
-                          ? 'Last done ${reminder.kmSinceService.toStringAsFixed(0)} km ago'
-                          : 'No previous service recorded',
+                          ? context.l10n.lastDoneKmAgo(reminder.kmSinceService.toStringAsFixed(0))
+                          : context.l10n.noPreviousServiceRecorded,
                       style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
                     ),
                   ],

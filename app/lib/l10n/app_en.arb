@@ -2643,5 +2643,1301 @@
         "type": "String"
       }
     }
+  },
+  "logServiceTitle": "Log Service",
+  "@logServiceTitle": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "serviceType": "Service Type",
+  "@serviceType": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "whatDidService": "What did you service? *",
+  "@whatDidService": {
+    "description": "LabelText in add_maintenance_log_screen."
+  },
+  "eGRadiatorFlush": "e.g. Radiator flush",
+  "@eGRadiatorFlush": {
+    "description": "HintText in add_maintenance_log_screen."
+  },
+  "nameService": "Name the service",
+  "@nameService": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "odometerKm": "Odometer (km) *",
+  "@odometerKm": {
+    "description": "LabelText in add_maintenance_log_screen."
+  },
+  "requiredField": "Required",
+  "@requiredField": {
+    "description": "Text in add_maintenance_log_screen (+3 more)."
+  },
+  "invalidNumber": "Invalid number",
+  "@invalidNumber": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "costOptional": "Cost (optional)",
+  "@costOptional": {
+    "description": "LabelText in add_maintenance_log_screen."
+  },
+  "notesOptional": "Notes (optional)",
+  "@notesOptional": {
+    "description": "LabelText in add_maintenance_log_screen."
+  },
+  "configuredSpec": "Configured spec: {specNote}",
+  "@configuredSpec": {
+    "description": "HintText in add_maintenance_log_screen.",
+    "placeholders": {
+      "specNote": {
+        "type": "Object"
+      }
+    }
+  },
+  "eGOctane95": "e.g. Octane 95, 12L fill-up, Jamuna oil...",
+  "@eGOctane95": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "eGUsedMotul": "e.g. Used Motul 10W40...",
+  "@eGUsedMotul": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "insertSpec": "Insert spec: {specNote}",
+  "@insertSpec": {
+    "description": "Text in add_maintenance_log_screen.",
+    "placeholders": {
+      "specNote": {
+        "type": "Object"
+      }
+    }
+  },
+  "saveServiceLog": "Save Service Log",
+  "@saveServiceLog": {
+    "description": "Text in add_maintenance_log_screen."
+  },
+  "yourMotorcycle": "Your Motorcycle",
+  "@yourMotorcycle": {
+    "description": "Text in maintenance_config_screen."
+  },
+  "setupMaintenance": "Setup Maintenance",
+  "@setupMaintenance": {
+    "description": "Text in maintenance_config_screen."
+  },
+  "editTrackedChecks": "Edit Tracked Checks",
+  "@editTrackedChecks": {
+    "description": "Text in maintenance_config_screen."
+  },
+  "skip": "Skip",
+  "@skip": {
+    "description": "Text in maintenance_config_screen (+1 more)."
+  },
+  "whatWouldLikeTrack": "What would you like to track for {bikeName}?",
+  "@whatWouldLikeTrack": {
+    "description": "Text in maintenance_config_screen.",
+    "placeholders": {
+      "bikeName": {
+        "type": "Object"
+      }
+    }
+  },
+  "selectComponentsWantThrottleiq": "Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due.",
+  "@selectComponentsWantThrottleiq": {
+    "description": "Text in maintenance_config_screen."
+  },
+  "recommended": "Recommended",
+  "@recommended": {
+    "description": "Text in maintenance_config_screen."
+  },
+  "selectAll": "Select All",
+  "@selectAll": {
+    "description": "Text in maintenance_config_screen (+1 more)."
+  },
+  "clear": "Clear",
+  "@clear": {
+    "description": "Text in maintenance_config_screen (+2 more)."
+  },
+  "trackChecks": "Track {enabledCount} Checks",
+  "@trackChecks": {
+    "description": "Text in maintenance_config_screen.",
+    "placeholders": {
+      "enabledCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "savePreferences": "Save Preferences",
+  "@savePreferences": {
+    "description": "Text in maintenance_config_screen (+1 more)."
+  },
+  "activeInCategory": "{activeInCategory} of {categoryItemsCount} active",
+  "@activeInCategory": {
+    "description": "Text in maintenance_config_screen.",
+    "placeholders": {
+      "activeInCategory": {
+        "type": "Object"
+      },
+      "categoryItemsCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "noActiveBike": "No active bike",
+  "@noActiveBike": {
+    "description": "Text in maintenance_screen."
+  },
+  "addMotorcycleGarageTrack": "Add a motorcycle to your garage to track maintenance.",
+  "@addMotorcycleGarageTrack": {
+    "description": "Text in maintenance_screen."
+  },
+  "syncOdo": "Sync Odo",
+  "@syncOdo": {
+    "description": "Text in maintenance_screen."
+  },
+  "customize": "Customize",
+  "@customize": {
+    "description": "Text in maintenance_screen."
+  },
+  "log": "Log",
+  "@log": {
+    "description": "Text in maintenance_screen."
+  },
+  "resetServiceLog": "Reset service log",
+  "@resetServiceLog": {
+    "description": "Message in maintenance_screen."
+  },
+  "trackedChecks": "Tracked checks",
+  "@trackedChecks": {
+    "description": "EditorialLabel in maintenance_screen."
+  },
+  "monitored": "{remindersCount} monitored",
+  "@monitored": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "remindersCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "filterAll": "All ({remindersCount})",
+  "@filterAll": {
+    "description": "Label in maintenance_screen.",
+    "placeholders": {
+      "remindersCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "filterAttention": "Attention ({attentionCount})",
+  "@filterAttention": {
+    "description": "Label in maintenance_screen.",
+    "placeholders": {
+      "attentionCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "filterOk": "OK ({okCount})",
+  "@filterOk": {
+    "description": "Label in maintenance_screen.",
+    "placeholders": {
+      "okCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "noChecksTrackedYet": "No checks tracked yet. Tap \"Customize\" above to select checks.",
+  "@noChecksTrackedYet": {
+    "description": "Text in maintenance_screen."
+  },
+  "noChecksMatchingThis": "No checks matching this filter.",
+  "@noChecksMatchingThis": {
+    "description": "Text in maintenance_screen."
+  },
+  "serviceHistory": "Service history",
+  "@serviceHistory": {
+    "description": "EditorialLabel in maintenance_screen."
+  },
+  "total": "Total: ৳{totalCost}",
+  "@total": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "totalCost": {
+        "type": "Object"
+      }
+    }
+  },
+  "noServiceRecordsLogged": "No service records logged yet.",
+  "@noServiceRecordsLogged": {
+    "description": "Text in maintenance_screen."
+  },
+  "whenServiceBikeLog": "When you service your bike, log it here to reset intervals.",
+  "@whenServiceBikeLog": {
+    "description": "Text in maintenance_screen."
+  },
+  "switchBike": "Switch bike",
+  "@switchBike": {
+    "description": "Tooltip in maintenance_screen."
+  },
+  "switchAction": "Switch",
+  "@switchAction": {
+    "description": "Text in maintenance_screen."
+  },
+  "immediateMaintenanceAttentionRecommended": "Immediate maintenance attention recommended",
+  "@immediateMaintenanceAttentionRecommended": {
+    "description": "Text in maintenance_screen."
+  },
+  "upcomingScheduledMaintenance": "Upcoming scheduled maintenance",
+  "@upcomingScheduledMaintenance": {
+    "description": "Text in maintenance_screen."
+  },
+  "allSystemsNominal": "All Systems Nominal",
+  "@allSystemsNominal": {
+    "description": "Text in maintenance_screen."
+  },
+  "allTrackedComponentsGood": "All {total} tracked components in good health",
+  "@allTrackedComponentsGood": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "dueSoonTitle": "Due Soon",
+  "@dueSoonTitle": {
+    "description": "_metricPill in maintenance_screen."
+  },
+  "whatWouldLikeMaintain": "What would you like to maintain?",
+  "@whatWouldLikeMaintain": {
+    "description": "Text in maintenance_screen."
+  },
+  "notEveryoneWantsTrack": "Not everyone wants to track everything. Pick the items you care about for {displayName}, or tap to edit intervals and add specs (oil brand, tyre dates/sizes):",
+  "@notEveryoneWantsTrack": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "essentials4": "Essentials (4)",
+  "@essentials4": {
+    "description": "Text in maintenance_screen."
+  },
+  "all8Items": "All 8 items",
+  "@all8Items": {
+    "description": "Text in maintenance_screen."
+  },
+  "savingPreferences": "Saving Preferences...",
+  "@savingPreferences": {
+    "description": "Text in maintenance_screen."
+  },
+  "startTrackingItems": "Start Tracking ({enabledCount} Items)",
+  "@startTrackingItems": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "enabledCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "seeAll20Checks": "See all 20+ checks & advanced setup",
+  "@seeAll20Checks": {
+    "description": "Text in maintenance_screen."
+  },
+  "dueSoon": "Due soon",
+  "@dueSoon": {
+    "description": "Text in maintenance_screen (+1 more)."
+  },
+  "intervalEvery": "Every {imperial}",
+  "@intervalEvery": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "imperial": {
+        "type": "Object"
+      }
+    }
+  },
+  "lastDone": "Last done: {lastServiceDate}",
+  "@lastDone": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "lastServiceDate": {
+        "type": "Object"
+      }
+    }
+  },
+  "noPreviousServiceRecorded": "No previous service recorded",
+  "@noPreviousServiceRecorded": {
+    "description": "Text in maintenance_screen (+1 more)."
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Text in maintenance_screen (+1 more)."
+  },
+  "deleteLog": "Delete Log",
+  "@deleteLog": {
+    "description": "Text in maintenance_screen."
+  },
+  "sureWantDeleteThis": "Are you sure you want to delete this {displayLabel} record?",
+  "@sureWantDeleteThis": {
+    "description": "Text in maintenance_screen.",
+    "placeholders": {
+      "displayLabel": {
+        "type": "Object"
+      }
+    }
+  },
+  "trackDashboard": "Track on Dashboard",
+  "@trackDashboard": {
+    "description": "Text in edit_maintenance_check_sheet."
+  },
+  "calculateWearMonitorInterval": "Calculate wear and monitor interval",
+  "@calculateWearMonitorInterval": {
+    "description": "Text in edit_maintenance_check_sheet."
+  },
+  "serviceInterval": "Service Interval",
+  "@serviceInterval": {
+    "description": "EditorialLabel in edit_maintenance_check_sheet."
+  },
+  "intervalDistanceKm": "Interval Distance (km)",
+  "@intervalDistanceKm": {
+    "description": "LabelText in edit_maintenance_check_sheet."
+  },
+  "enterPositiveNumber": "Enter a positive number",
+  "@enterPositiveNumber": {
+    "description": "Text in edit_maintenance_check_sheet."
+  },
+  "specificationsExtraInfo": "Specifications & Extra Info",
+  "@specificationsExtraInfo": {
+    "description": "EditorialLabel in edit_maintenance_check_sheet."
+  },
+  "optionalText": "Optional text",
+  "@optionalText": {
+    "description": "Text in edit_maintenance_check_sheet."
+  },
+  "specsOilGradeTyre": "Specs (oil grade, tyre sizes & dates...)",
+  "@specsOilGradeTyre": {
+    "description": "LabelText in edit_maintenance_check_sheet."
+  },
+  "visibleMaintenanceCardQuick": "Visible on your maintenance card for quick reference.",
+  "@visibleMaintenanceCardQuick": {
+    "description": "Text in edit_maintenance_check_sheet."
+  },
+  "odometerSyncedKm": "Odometer synced to {newKm} km!",
+  "@odometerSyncedKm": {
+    "description": "Text in odometer_sync_sheet.",
+    "placeholders": {
+      "newKm": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncOdometer": "Sync Odometer",
+  "@syncOdometer": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "alignThrottleiqWith": "Align ThrottleIQ with {displayName}",
+  "@alignThrottleiqWith": {
+    "description": "Text in odometer_sync_sheet.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "rodeOfflineWithoutPhone": "Rode offline or without phone tracking? Take a photo of your bike's dashboard/speedometer cluster or enter the current reading below.",
+  "@rodeOfflineWithoutPhone": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "scanningInstrumentCluster": "Scanning instrument cluster...",
+  "@scanningInstrumentCluster": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "takePhoto": "Take Photo",
+  "@takePhoto": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "fromPhotos": "From Photos",
+  "@fromPhotos": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "currentAppOdometer": "Current App Odometer:",
+  "@currentAppOdometer": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "physicalInstrumentClusterReading": "Physical Instrument Cluster Reading *",
+  "@physicalInstrumentClusterReading": {
+    "description": "LabelText in odometer_sync_sheet."
+  },
+  "enterValidPositiveNumber": "Enter valid positive number",
+  "@enterValidPositiveNumber": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "kmAddedOfflineRiding": "+{delta} km added (offline riding accounted for)",
+  "@kmAddedOfflineRiding": {
+    "description": "Text in odometer_sync_sheet.",
+    "placeholders": {
+      "delta": {
+        "type": "Object"
+      }
+    }
+  },
+  "kmReductionCalibratingBaseline": "{delta} km reduction (calibrating baseline)",
+  "@kmReductionCalibratingBaseline": {
+    "description": "Text in odometer_sync_sheet.",
+    "placeholders": {
+      "delta": {
+        "type": "Object"
+      }
+    }
+  },
+  "confirmSyncOdometer": "Confirm & Sync Odometer",
+  "@confirmSyncOdometer": {
+    "description": "Text in odometer_sync_sheet."
+  },
+  "resetSelectedItems": "Reset selected items?",
+  "@resetSelectedItems": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "thisLogsAsServiced": "This logs \"{label}\" as serviced today at the bike's current odometer, resetting its due date. Past history is kept.",
+  "@thisLogsAsServiced": {
+    "description": "Text in reset_maintenance_log_sheet.",
+    "placeholders": {
+      "label": {
+        "type": "Object"
+      }
+    }
+  },
+  "thisLogsItemsAs": "This logs {selectedCount} items as serviced today at the bike's current odometer, resetting their due dates. Past history is kept.",
+  "@thisLogsItemsAs": {
+    "description": "Text in reset_maintenance_log_sheet.",
+    "placeholders": {
+      "selectedCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "reset": "Reset",
+  "@reset": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "n1ItemResetServiced": "1 item reset to serviced today.",
+  "@n1ItemResetServiced": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "itemsResetServicedToday": "{count} items reset to serviced today.",
+  "@itemsResetServicedToday": {
+    "description": "Text in reset_maintenance_log_sheet.",
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "resetServiceLogTitle": "Reset Service Log",
+  "@resetServiceLogTitle": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "tickWhatJustServiced": "Tick what you just serviced on {displayName}",
+  "@tickWhatJustServiced": {
+    "description": "Text in reset_maintenance_log_sheet.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "selectedItemsLoggedAs": "Selected items are logged as serviced today at the current odometer, resetting their due date. Nothing is deleted.",
+  "@selectedItemsLoggedAs": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "noTrackedChecksYet": "No tracked checks yet. Set some up under \"Customize\" first.",
+  "@noTrackedChecksYet": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "selectedOfTotal": "{selectedCount} of {remindersCount} selected",
+  "@selectedOfTotal": {
+    "description": "Text in reset_maintenance_log_sheet.",
+    "placeholders": {
+      "selectedCount": {
+        "type": "Object"
+      },
+      "remindersCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "selectItemsReset": "Select items to reset",
+  "@selectItemsReset": {
+    "description": "Text in reset_maintenance_log_sheet."
+  },
+  "lastDoneKmAgo": "Last done {kmSinceService} km ago",
+  "@lastDoneKmAgo": {
+    "description": "Text in reset_maintenance_log_sheet.",
+    "placeholders": {
+      "kmSinceService": {
+        "type": "Object"
+      }
+    }
+  },
+  "cropBikePhoto": "Crop bike photo",
+  "@cropBikePhoto": {
+    "description": "Title in add_edit_bike_screen."
+  },
+  "bikeAdded": "Bike added.",
+  "@bikeAdded": {
+    "description": "Text in add_edit_bike_screen."
+  },
+  "setServiceIntervals": "Set service intervals",
+  "@setServiceIntervals": {
+    "description": "Label in add_edit_bike_screen."
+  },
+  "editBike": "Edit Bike",
+  "@editBike": {
+    "description": "Text in add_edit_bike_screen."
+  },
+  "addPhoto": "Add Photo",
+  "@addPhoto": {
+    "description": "Text in add_edit_bike_screen."
+  },
+  "crop": "Crop",
+  "@crop": {
+    "description": "Text in add_edit_bike_screen."
+  },
+  "replace": "Replace",
+  "@replace": {
+    "description": "Text in add_edit_bike_screen."
+  },
+  "odometerReadingKm": "Odometer reading (km)",
+  "@odometerReadingKm": {
+    "description": "LabelText in add_edit_bike_screen."
+  },
+  "bikeColor": "Bike color",
+  "@bikeColor": {
+    "description": "Text in add_edit_bike_screen."
+  },
+  "saveChanges": "Save Changes",
+  "@saveChanges": {
+    "description": "Text in add_edit_bike_screen (+1 more)."
+  },
+  "bikeNotFound": "Bike not found",
+  "@bikeNotFound": {
+    "description": "Text in bike_detail_screen."
+  },
+  "archived": "{displayName} (archived)",
+  "@archived": {
+    "description": "Text in bike_detail_screen.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "discussThisBike": "Discuss this bike",
+  "@discussThisBike": {
+    "description": "Tooltip in bike_detail_screen."
+  },
+  "unarchiveBike": "Unarchive bike",
+  "@unarchiveBike": {
+    "description": "Tooltip in bike_detail_screen."
+  },
+  "archiveDeleteBike": "Archive or delete bike",
+  "@archiveDeleteBike": {
+    "description": "Tooltip in bike_detail_screen."
+  },
+  "totalDistance": "Total Distance",
+  "@totalDistance": {
+    "description": "Label in bike_detail_screen."
+  },
+  "totalRides": "Total Rides",
+  "@totalRides": {
+    "description": "Label in bike_detail_screen."
+  },
+  "odometer": "Odometer",
+  "@odometer": {
+    "description": "Label in bike_detail_screen."
+  },
+  "engine": "Engine",
+  "@engine": {
+    "description": "Label in bike_detail_screen."
+  },
+  "rideHistory": "Ride History",
+  "@rideHistory": {
+    "description": "Text in bike_detail_screen."
+  },
+  "noRidesYetThis": "No rides yet for this bike",
+  "@noRidesYetThis": {
+    "description": "Text in bike_detail_screen."
+  },
+  "removeBikeQuestion": "Remove {displayName}?",
+  "@removeBikeQuestion": {
+    "description": "Text in bike_detail_screen.",
+    "placeholders": {
+      "displayName": {
+        "type": "Object"
+      }
+    }
+  },
+  "archivingHidesThisBike": "Archiving hides this bike from your garage and bike pickers. Its rides stay in your history and stats, and you can unarchive it any time.",
+  "@archivingHidesThisBike": {
+    "description": "Text in bike_detail_screen."
+  },
+  "deleteBikeAllIts": "Delete bike and all its rides",
+  "@deleteBikeAllIts": {
+    "description": "Text in bike_detail_screen."
+  },
+  "archiveBikeKeepRides": "Archive bike (keep rides)",
+  "@archiveBikeKeepRides": {
+    "description": "Text in bike_detail_screen."
+  },
+  "couldNotArchiveThis": "Could not archive this bike: {e}",
+  "@couldNotArchiveThis": {
+    "description": "Text in bike_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotDeleteThis": "Could not delete this bike: {e}",
+  "@couldNotDeleteThis": {
+    "description": "Text in bike_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "bikeBackGarage": "Bike is back in your garage",
+  "@bikeBackGarage": {
+    "description": "Text in bike_detail_screen."
+  },
+  "couldNotUnarchiveThis": "Could not unarchive this bike: {e}",
+  "@couldNotUnarchiveThis": {
+    "description": "Text in bike_detail_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "deleteBikeQuestion": "Delete bike and all its rides?",
+  "@deleteBikeQuestion": {
+    "description": "Text in bike_detail_screen."
+  },
+  "usingDefaultServiceIntervals": "Using default service intervals",
+  "@usingDefaultServiceIntervals": {
+    "description": "Text in bike_detail_screen."
+  },
+  "serviceMaintenance": "Service & maintenance",
+  "@serviceMaintenance": {
+    "description": "Text in bike_detail_screen."
+  },
+  "nextSummary": "Next: {summary}",
+  "@nextSummary": {
+    "description": "Text in bike_detail_screen.",
+    "placeholders": {
+      "summary": {
+        "type": "Object"
+      }
+    }
+  },
+  "intervals": "Intervals",
+  "@intervals": {
+    "description": "Text in bike_detail_screen."
+  },
+  "viewAll": "View all",
+  "@viewAll": {
+    "description": "Text in bike_detail_screen."
+  },
+  "yourBikesTitle": "Your Bikes",
+  "@yourBikesTitle": {
+    "description": "Text in garage_screen."
+  },
+  "viewProfile": "View profile",
+  "@viewProfile": {
+    "description": "Text in garage_screen."
+  },
+  "myPlaces": "My Places",
+  "@myPlaces": {
+    "description": "Text in garage_screen."
+  },
+  "noBikesYet": "No bikes yet",
+  "@noBikesYet": {
+    "description": "Text in garage_screen (+1 more)."
+  },
+  "addFirstBikeGet": "Add your first bike to get started",
+  "@addFirstBikeGet": {
+    "description": "Text in garage_screen."
+  },
+  "setActive": "Set active",
+  "@setActive": {
+    "description": "Text in garage_screen."
+  },
+  "totalLower": "total",
+  "@totalLower": {
+    "description": "Label in garage_screen."
+  },
+  "ridesLower": "rides",
+  "@ridesLower": {
+    "description": "Label in garage_screen."
+  },
+  "lastRide": "last ride",
+  "@lastRide": {
+    "description": "Label in garage_screen."
+  },
+  "archivedBikes": "Archived bikes ({bikesCount})",
+  "@archivedBikes": {
+    "description": "Text in garage_screen.",
+    "placeholders": {
+      "bikesCount": {
+        "type": "Object"
+      }
+    }
+  },
+  "ridesAndDistance": "{rideCount} rides · {totalDistanceM}",
+  "@ridesAndDistance": {
+    "description": "Text in garage_screen.",
+    "placeholders": {
+      "rideCount": {
+        "type": "Object"
+      },
+      "totalDistanceM": {
+        "type": "Object"
+      }
+    }
+  },
+  "unarchive": "Unarchive",
+  "@unarchive": {
+    "description": "Text in garage_screen."
+  },
+  "myFollowers": "My followers",
+  "@myFollowers": {
+    "description": "Text in bike_visibility."
+  },
+  "onlyMe": "Only me",
+  "@onlyMe": {
+    "description": "Text in bike_visibility (+1 more)."
+  },
+  "blockedUsers": "Blocked Users",
+  "@blockedUsers": {
+    "description": "Text in blocked_users_screen (+1 more)."
+  },
+  "noBlockedUsers": "No blocked users",
+  "@noBlockedUsers": {
+    "description": "Text in blocked_users_screen."
+  },
+  "errorLoadingUser": "Error loading user",
+  "@errorLoadingUser": {
+    "description": "Text in blocked_users_screen."
+  },
+  "unknownUser": "Unknown user",
+  "@unknownUser": {
+    "description": "Text in blocked_users_screen."
+  },
+  "unblock": "Unblock",
+  "@unblock": {
+    "description": "Text in blocked_users_screen."
+  },
+  "couldNotSaveProfile": "Could not save profile: {e}",
+  "@couldNotSaveProfile": {
+    "description": "Text in edit_profile_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "editProfile": "Edit profile",
+  "@editProfile": {
+    "description": "Text in edit_profile_screen."
+  },
+  "displayName": "Display name",
+  "@displayName": {
+    "description": "LabelText in edit_profile_screen."
+  },
+  "nickname": "Nickname",
+  "@nickname": {
+    "description": "LabelText in edit_profile_screen."
+  },
+  "shownCardsFeed": "Shown on cards & feed",
+  "@shownCardsFeed": {
+    "description": "HintText in edit_profile_screen."
+  },
+  "usernameField": "Username",
+  "@usernameField": {
+    "description": "LabelText in edit_profile_screen."
+  },
+  "n320LettersNumbers": "3-20 letters, numbers or underscore",
+  "@n320LettersNumbers": {
+    "description": "Text in edit_profile_screen."
+  },
+  "bio": "Bio",
+  "@bio": {
+    "description": "LabelText in edit_profile_screen."
+  },
+  "whoCanSeeProfile": "Who can see my profile",
+  "@whoCanSeeProfile": {
+    "description": "Text in edit_profile_screen."
+  },
+  "everyone": "Everyone",
+  "@everyone": {
+    "description": "Text in edit_profile_screen."
+  },
+  "mutuals": "Mutuals",
+  "@mutuals": {
+    "description": "Text in edit_profile_screen."
+  },
+  "whoCanSeeBikes": "Who can see my bikes",
+  "@whoCanSeeBikes": {
+    "description": "Text in edit_profile_screen."
+  },
+  "garageProfileSeparateFrom": "Your garage on your profile. Separate from who can see the profile itself.",
+  "@garageProfileSeparateFrom": {
+    "description": "Text in edit_profile_screen."
+  },
+  "tellRidersAboutYourself": "Tell riders about yourself",
+  "@tellRidersAboutYourself": {
+    "description": "Text in edit_profile_screen."
+  },
+  "goodBioGetsMore": "A good bio gets you more followers.",
+  "@goodBioGetsMore": {
+    "description": "Text in edit_profile_screen."
+  },
+  "eGFzS": "e.g. \"FZ-S rider from Dhaka. Weekend tourer. Coffee & corners.\"",
+  "@eGFzS": {
+    "description": "HintText in edit_profile_screen."
+  },
+  "saveBio": "Save bio",
+  "@saveBio": {
+    "description": "Text in edit_profile_screen."
+  },
+  "privacySafety": "Privacy & Safety",
+  "@privacySafety": {
+    "description": "Text in settings_screen."
+  },
+  "manageAccountsHaveBlocked": "Manage accounts you have blocked",
+  "@manageAccountsHaveBlocked": {
+    "description": "Text in settings_screen."
+  },
+  "seeDemoFeatureTour": "See Demo & Feature Tour",
+  "@seeDemoFeatureTour": {
+    "description": "Text in settings_screen."
+  },
+  "replayInteractiveFeatureGuides": "Replay interactive feature guides and safety walkthrough",
+  "@replayInteractiveFeatureGuides": {
+    "description": "Text in settings_screen."
+  },
+  "sendBugReport": "Send Bug Report",
+  "@sendBugReport": {
+    "description": "Text in settings_screen."
+  },
+  "somethingBrokenLetTeam": "Something broken? Let the team know",
+  "@somethingBrokenLetTeam": {
+    "description": "Text in settings_screen."
+  },
+  "deleteAccount": "Delete Account",
+  "@deleteAccount": {
+    "description": "Text in settings_screen."
+  },
+  "deleteAccountQuestion": "Delete Account?",
+  "@deleteAccountQuestion": {
+    "description": "Text in settings_screen."
+  },
+  "thisActionIrreversibleAll": "This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.",
+  "@thisActionIrreversibleAll": {
+    "description": "Text in settings_screen."
+  },
+  "deletePermanently": "Delete Permanently",
+  "@deletePermanently": {
+    "description": "Text in settings_screen."
+  },
+  "deletingAccount": "Deleting account...",
+  "@deletingAccount": {
+    "description": "Text in settings_screen."
+  },
+  "errorDeletingAccount": "Error deleting account: {e}",
+  "@errorDeletingAccount": {
+    "description": "Text in settings_screen.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncIssues": "Sync issues",
+  "@syncIssues": {
+    "description": "Text in settings_screen (+1 more)."
+  },
+  "n1UpdateCouldntBe": "1 update couldn't be sent",
+  "@n1UpdateCouldntBe": {
+    "description": "Text in settings_screen."
+  },
+  "updatesCouldntBeSent": "{count} updates couldn't be sent",
+  "@updatesCouldntBeSent": {
+    "description": "Text in settings_screen.",
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "rideShare": "Ride share",
+  "@rideShare": {
+    "description": "Text in sync_issues_screen."
+  },
+  "endingLiveShare": "Ending a live share",
+  "@endingLiveShare": {
+    "description": "Text in sync_issues_screen."
+  },
+  "maintenanceLog": "Maintenance log",
+  "@maintenanceLog": {
+    "description": "Text in sync_issues_screen."
+  },
+  "cloudUpdate": "Cloud update",
+  "@cloudUpdate": {
+    "description": "Text in sync_issues_screen."
+  },
+  "everythingSynced": "Everything is synced",
+  "@everythingSynced": {
+    "description": "Text in sync_issues_screen."
+  },
+  "synced": "Synced",
+  "@synced": {
+    "description": "Text in sync_issues_screen."
+  },
+  "couldntSyncYetWell": "Couldn't sync yet. We'll keep trying in the background.",
+  "@couldntSyncYetWell": {
+    "description": "Text in sync_issues_screen."
+  },
+  "discardThisUpdate": "Discard this update?",
+  "@discardThisUpdate": {
+    "description": "Text in sync_issues_screen."
+  },
+  "itWontBeSent": "It won't be sent. This can't be undone.",
+  "@itWontBeSent": {
+    "description": "Text in sync_issues_screen."
+  },
+  "signViewProfile": "Sign in to view your profile",
+  "@signViewProfile": {
+    "description": "Text in user_profile_screen."
+  },
+  "userBlocked": "User blocked",
+  "@userBlocked": {
+    "description": "Text in user_profile_screen."
+  },
+  "reportUser": "Report User",
+  "@reportUser": {
+    "description": "Text in user_profile_screen."
+  },
+  "blockUser": "Block User",
+  "@blockUser": {
+    "description": "Text in user_profile_screen."
+  },
+  "tapEditFinishSetting": "Tap Edit to finish setting up your profile",
+  "@tapEditFinishSetting": {
+    "description": "Text in user_profile_screen."
+  },
+  "riderNotFound": "Rider not found",
+  "@riderNotFound": {
+    "description": "Text in user_profile_screen."
+  },
+  "ridingWithUsSince": "Riding with us since {createdAt}",
+  "@ridingWithUsSince": {
+    "description": "Text in user_profile_screen.",
+    "placeholders": {
+      "createdAt": {
+        "type": "Object"
+      }
+    }
+  },
+  "followersLabel": "followers",
+  "@followersLabel": {
+    "description": "Label in user_profile_screen."
+  },
+  "followingLabel": "following",
+  "@followingLabel": {
+    "description": "Label in user_profile_screen."
+  },
+  "message": "Message",
+  "@message": {
+    "description": "Text in user_profile_screen."
+  },
+  "totalDistanceLower": "total distance",
+  "@totalDistanceLower": {
+    "description": "Label in user_profile_screen."
+  },
+  "ridesLogged": "rides logged",
+  "@ridesLogged": {
+    "description": "Label in user_profile_screen."
+  },
+  "badges": "Badges",
+  "@badges": {
+    "description": "Text in user_profile_screen."
+  },
+  "noBadgesEarnedYet": "No badges earned yet",
+  "@noBadgesEarnedYet": {
+    "description": "Text in user_profile_screen."
+  },
+  "myGarageLower": "My garage",
+  "@myGarageLower": {
+    "description": "Text in user_profile_screen."
+  },
+  "garage": "Garage",
+  "@garage": {
+    "description": "Text in user_profile_screen."
+  },
+  "whoCanSeeBikesChangeUnderEdit": "Who can see my bikes — change this under Edit",
+  "@whoCanSeeBikesChangeUnderEdit": {
+    "description": "Text in user_profile_screen."
+  },
+  "thisProfilePrivate": "This profile is private",
+  "@thisProfilePrivate": {
+    "description": "Text in profile_load_error_view."
+  },
+  "youreOffline": "You're offline",
+  "@youreOffline": {
+    "description": "Text in profile_load_error_view."
+  },
+  "couldntLoadProfile": "Couldn't load profile",
+  "@couldntLoadProfile": {
+    "description": "Text in profile_load_error_view."
+  },
+  "resetItemsButton": "{count, plural, =1{Reset 1 Item} other{Reset {count} Items}}",
+  "@resetItemsButton": {
+    "description": "Confirm button in the reset-service-log sheet, with the number of ticked items.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteBikeConfirmBody": "This permanently deletes {rides, plural, =1{1 ride} other{{rides} rides}}, their routes and this bike's maintenance log, on this phone and in the cloud. Type \"{expected}\" to confirm.",
+  "@deleteBikeConfirmBody": {
+    "description": "Body of the delete-bike confirmation; the rider must type the bike's name to confirm.",
+    "placeholders": {
+      "rides": {
+        "type": "int"
+      },
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "svcTypeOilChange": "Oil Change",
+  "@svcTypeOilChange": {
+    "description": "Maintenance item name (oilChange); the stored id stays the enum name."
+  },
+  "svcTypeAirFilter": "Air Filter",
+  "@svcTypeAirFilter": {
+    "description": "Maintenance item name (airFilter); the stored id stays the enum name."
+  },
+  "svcTypeChain": "Chain Lube",
+  "@svcTypeChain": {
+    "description": "Maintenance item name (chain); the stored id stays the enum name."
+  },
+  "svcTypeTire": "Tire Check",
+  "@svcTypeTire": {
+    "description": "Maintenance item name (tire); the stored id stays the enum name."
+  },
+  "svcTypeRadiatorCoolant": "Radiator / Coolant",
+  "@svcTypeRadiatorCoolant": {
+    "description": "Maintenance item name (radiatorCoolant); the stored id stays the enum name."
+  },
+  "svcTypeFrontDiscPads": "Front Disc Pads",
+  "@svcTypeFrontDiscPads": {
+    "description": "Maintenance item name (frontDiscPads); the stored id stays the enum name."
+  },
+  "svcTypeRearDrumPads": "Rear Drum Pads",
+  "@svcTypeRearDrumPads": {
+    "description": "Maintenance item name (rearDrumPads); the stored id stays the enum name."
+  },
+  "svcTypeBrakeFluid": "Brake Fluid",
+  "@svcTypeBrakeFluid": {
+    "description": "Maintenance item name (brakeFluid); the stored id stays the enum name."
+  },
+  "svcTypeSparkPlug": "Spark Plug",
+  "@svcTypeSparkPlug": {
+    "description": "Maintenance item name (sparkPlug); the stored id stays the enum name."
+  },
+  "svcTypeBattery": "Battery",
+  "@svcTypeBattery": {
+    "description": "Maintenance item name (battery); the stored id stays the enum name."
+  },
+  "svcTypeValveClearance": "Valve Clearance",
+  "@svcTypeValveClearance": {
+    "description": "Maintenance item name (valveClearance); the stored id stays the enum name."
+  },
+  "svcTypeClutchCable": "Clutch Cable",
+  "@svcTypeClutchCable": {
+    "description": "Maintenance item name (clutchCable); the stored id stays the enum name."
+  },
+  "svcTypeSuspension": "Suspension",
+  "@svcTypeSuspension": {
+    "description": "Maintenance item name (suspension); the stored id stays the enum name."
+  },
+  "svcTypeOilFilter": "Oil Filter",
+  "@svcTypeOilFilter": {
+    "description": "Maintenance item name (oilFilter); the stored id stays the enum name."
+  },
+  "svcTypeChainTension": "Chain Slack & Tension",
+  "@svcTypeChainTension": {
+    "description": "Maintenance item name (chainTension); the stored id stays the enum name."
+  },
+  "svcTypeBrakeRotors": "Brake Rotors / Discs",
+  "@svcTypeBrakeRotors": {
+    "description": "Maintenance item name (brakeRotors); the stored id stays the enum name."
+  },
+  "svcTypeForkSeals": "Fork Oil & Seals",
+  "@svcTypeForkSeals": {
+    "description": "Maintenance item name (forkSeals); the stored id stays the enum name."
+  },
+  "svcTypeWheelBearings": "Wheel Bearings",
+  "@svcTypeWheelBearings": {
+    "description": "Maintenance item name (wheelBearings); the stored id stays the enum name."
+  },
+  "svcTypeDriveBelt": "Drive Belt",
+  "@svcTypeDriveBelt": {
+    "description": "Maintenance item name (driveBelt); the stored id stays the enum name."
+  },
+  "svcTypeThrottleCables": "Throttle & Cables",
+  "@svcTypeThrottleCables": {
+    "description": "Maintenance item name (throttleCables); the stored id stays the enum name."
+  },
+  "svcTypeFuel": "Fuel",
+  "@svcTypeFuel": {
+    "description": "Maintenance item name (fuel); the stored id stays the enum name."
+  },
+  "svcTypeCustom": "Custom",
+  "@svcTypeCustom": {
+    "description": "Maintenance item name (custom); the stored id stays the enum name."
+  },
+  "svcDescOilChange": "Drain engine oil & replace with fresh lubricant.",
+  "@svcDescOilChange": {
+    "description": "One-line description of the oilChange maintenance item."
+  },
+  "svcDescOilFilter": "Replace oil filter element to prevent contaminant buildup.",
+  "@svcDescOilFilter": {
+    "description": "One-line description of the oilFilter maintenance item."
+  },
+  "svcDescAirFilter": "Clean or replace intake filter for optimal airflow.",
+  "@svcDescAirFilter": {
+    "description": "One-line description of the airFilter maintenance item."
+  },
+  "svcDescChain": "Clean road grime & apply chain lube to drive chain.",
+  "@svcDescChain": {
+    "description": "One-line description of the chain maintenance item."
+  },
+  "svcDescChainTension": "Check drive chain slack & align rear axle.",
+  "@svcDescChainTension": {
+    "description": "One-line description of the chainTension maintenance item."
+  },
+  "svcDescTire": "Inspect tire pressures, tread wear & dry rot.",
+  "@svcDescTire": {
+    "description": "One-line description of the tire maintenance item."
+  },
+  "svcDescRadiatorCoolant": "Flush and refill radiator coolant fluid.",
+  "@svcDescRadiatorCoolant": {
+    "description": "One-line description of the radiatorCoolant maintenance item."
+  },
+  "svcDescFrontDiscPads": "Check front brake pad friction material thickness.",
+  "@svcDescFrontDiscPads": {
+    "description": "One-line description of the frontDiscPads maintenance item."
+  },
+  "svcDescRearDrumPads": "Inspect rear brake pads or drum brake shoes.",
+  "@svcDescRearDrumPads": {
+    "description": "One-line description of the rearDrumPads maintenance item."
+  },
+  "svcDescBrakeFluid": "Bleed & replenish hydraulic DOT brake fluid.",
+  "@svcDescBrakeFluid": {
+    "description": "One-line description of the brakeFluid maintenance item."
+  },
+  "svcDescSparkPlug": "Inspect electrode gap or replace spark plugs.",
+  "@svcDescSparkPlug": {
+    "description": "One-line description of the sparkPlug maintenance item."
+  },
+  "svcDescBattery": "Test terminal voltage, connections & charge state.",
+  "@svcDescBattery": {
+    "description": "One-line description of the battery maintenance item."
+  },
+  "svcDescValveClearance": "Measure & adjust intake / exhaust valve clearances.",
+  "@svcDescValveClearance": {
+    "description": "One-line description of the valveClearance maintenance item."
+  },
+  "svcDescClutchCable": "Check lever free-play & lube clutch cable.",
+  "@svcDescClutchCable": {
+    "description": "One-line description of the clutchCable maintenance item."
+  },
+  "svcDescThrottleCables": "Inspect throttle play, snap-back & lube cables.",
+  "@svcDescThrottleCables": {
+    "description": "One-line description of the throttleCables maintenance item."
+  },
+  "svcDescSuspension": "Inspect rear shock damping & linkage pivot bushings.",
+  "@svcDescSuspension": {
+    "description": "One-line description of the suspension maintenance item."
+  },
+  "svcDescForkSeals": "Inspect front fork seals for oil weeping & change fork oil.",
+  "@svcDescForkSeals": {
+    "description": "One-line description of the forkSeals maintenance item."
+  },
+  "svcDescBrakeRotors": "Measure brake disc thickness & check for warping.",
+  "@svcDescBrakeRotors": {
+    "description": "One-line description of the brakeRotors maintenance item."
+  },
+  "svcDescWheelBearings": "Inspect front & rear wheel bearings for play/roughness.",
+  "@svcDescWheelBearings": {
+    "description": "One-line description of the wheelBearings maintenance item."
+  },
+  "svcDescDriveBelt": "Check belt deflection, teeth condition & tension.",
+  "@svcDescDriveBelt": {
+    "description": "One-line description of the driveBelt maintenance item."
+  },
+  "svcDescFuel": "Track fuel refills, tank range, and fuel type.",
+  "@svcDescFuel": {
+    "description": "One-line description of the fuel maintenance item."
+  },
+  "svcDescCustom": "Rider-defined maintenance check.",
+  "@svcDescCustom": {
+    "description": "One-line description of the custom maintenance item."
+  },
+  "maintCatEngine": "Engine & Fluids",
+  "@maintCatEngine": {
+    "description": "Maintenance category heading (engine)."
+  },
+  "maintCatDrivetrain": "Drive & Controls",
+  "@maintCatDrivetrain": {
+    "description": "Maintenance category heading (drivetrain)."
+  },
+  "maintCatBraking": "Braking System",
+  "@maintCatBraking": {
+    "description": "Maintenance category heading (braking)."
+  },
+  "maintCatChassisElectrical": "Chassis & Electrical",
+  "@maintCatChassisElectrical": {
+    "description": "Maintenance category heading (chassisElectrical)."
+  },
+  "serviceOverdueBy": "{item} · overdue by {km} km",
+  "@serviceOverdueBy": {
+    "description": "Garage summary line for the most urgent overdue check.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      },
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceDueIn": "{item} · due in {km} km",
+  "@serviceDueIn": {
+    "description": "Garage summary line for the next check that is coming due.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      },
+      "km": {
+        "type": "String"
+      }
+    }
   }
 }

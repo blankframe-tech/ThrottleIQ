@@ -13,6 +13,8 @@ import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../maintenance/domain/entities/maintenance_entity.dart';
 import '../../../maintenance/presentation/providers/maintenance_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../maintenance/presentation/service_type_l10n.dart';
 
 class BikeDetailScreen extends ConsumerWidget {
   final String bikeId;
@@ -31,7 +33,7 @@ class BikeDetailScreen extends ConsumerWidget {
 
     if (bike == null) {
       return Scaffold(
-        body: Center(child: Text('Bike not found', style: TextStyle(color: context.palette.textSecondary))),
+        body: Center(child: Text(context.l10n.bikeNotFound, style: TextStyle(color: context.palette.textSecondary))),
       );
     }
 
@@ -39,12 +41,12 @@ class BikeDetailScreen extends ConsumerWidget {
       backgroundColor: context.palette.background,
       appBar: AppBar(
         title: Text(bike.isArchived
-            ? '${bike.displayName} (archived)'
+            ? context.l10n.archived(bike.displayName)
             : bike.displayName),
         actions: [
           IconButton(
             icon: const Icon(Icons.forum_outlined),
-            tooltip: 'Discuss this bike',
+            tooltip: context.l10n.discussThisBike,
             onPressed: () => _openForum(context, bike),
           ),
           IconButton(
@@ -54,13 +56,13 @@ class BikeDetailScreen extends ConsumerWidget {
           if (bike.isArchived)
             IconButton(
               icon: const Icon(Icons.unarchive_outlined),
-              tooltip: 'Unarchive bike',
+              tooltip: context.l10n.unarchiveBike,
               onPressed: () => _unarchive(context, ref),
             )
           else
             IconButton(
               icon: Icon(Icons.delete_outline, color: context.palette.danger),
-              tooltip: 'Archive or delete bike',
+              tooltip: context.l10n.archiveDeleteBike,
               onPressed: () => _confirmRemove(context, ref, bike),
             ),
         ],
@@ -104,14 +106,14 @@ class BikeDetailScreen extends ConsumerWidget {
               childAspectRatio: 1.6,
               children: [
                 StatCard(
-                  label: 'Total Distance',
+                  label: context.l10n.totalDistance,
                   value: bike.totalDistanceKm.toStringAsFixed(1),
                   unit: 'km',
                   icon: Icons.route,
                   isPrimary: true,
                 ),
                 StatCard(
-                  label: 'Total Rides',
+                  label: context.l10n.totalRides,
                   value: '${bike.rideCount}',
                   icon: Icons.flag_outlined,
                   valueColor: context.palette.primaryHighlight,
@@ -119,15 +121,15 @@ class BikeDetailScreen extends ConsumerWidget {
                 ),
                 if (bike.odometerKm != null)
                   StatCard(
-                    label: 'Odometer',
+                    label: context.l10n.odometer,
                     value: bike.currentOdometerKm.toStringAsFixed(0),
                     unit: 'km',
                     icon: Icons.speed_outlined,
                   ),
                 if (bike.cc != null)
-                  StatCard(label: 'Engine', value: '${bike.cc}', unit: 'cc', icon: Icons.settings),
+                  StatCard(label: context.l10n.engine, value: '${bike.cc}', unit: 'cc', icon: Icons.settings),
                 if (bike.year != null)
-                  StatCard(label: 'Year', value: '${bike.year}', icon: Icons.calendar_today_outlined),
+                  StatCard(label: context.l10n.year, value: '${bike.year}', icon: Icons.calendar_today_outlined),
               ],
             ),
             const SizedBox(height: 16),
@@ -141,7 +143,7 @@ class BikeDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 icon: const Icon(Icons.forum_outlined),
-                label: const Text('Discuss this bike'),
+                label: Text(context.l10n.discussThisBike),
               ),
             ),
             const SizedBox(height: 16),
@@ -149,7 +151,7 @@ class BikeDetailScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Ride history
-            Text('Ride History',
+            Text(context.l10n.rideHistory,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
             const SizedBox(height: 12),
             ridesAsync.when(
@@ -163,7 +165,7 @@ class BikeDetailScreen extends ConsumerWidget {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32),
-                      child: Text('No rides yet for this bike',
+                      child: Text(context.l10n.noRidesYetThis,
                           style: TextStyle(color: context.palette.textTertiary)),
                     ),
                   );
@@ -235,7 +237,7 @@ class BikeDetailScreen extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open forum: $e')),
+        SnackBar(content: Text(context.l10n.couldNotOpenForum(e))),
       );
     }
   }
@@ -261,30 +263,28 @@ class BikeDetailScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: dialogContext.palette.surface,
-        title: Text('Remove ${bike.displayName}?',
+        title: Text(dialogContext.l10n.removeBikeQuestion(bike.displayName),
             style: TextStyle(color: dialogContext.palette.textPrimary)),
         content: Text(
-            'Archiving hides this bike from your garage and bike pickers. '
-            'Its rides stay in your history and stats, and you can unarchive '
-            'it any time.',
+            dialogContext.l10n.archivingHidesThisBike,
             style: TextStyle(color: dialogContext.palette.textSecondary)),
         actionsOverflowDirection: VerticalDirection.up,
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel')),
+              child: Text(dialogContext.l10n.cancelAction)),
           TextButton(
             key: const Key('bike-delete-with-rides'),
             onPressed: () =>
                 Navigator.pop(dialogContext, _RemoveChoice.deleteWithRides),
-            child: Text('Delete bike and all its rides',
+            child: Text(dialogContext.l10n.deleteBikeAllIts,
                 style: TextStyle(color: dialogContext.palette.danger)),
           ),
           FilledButton(
             key: const Key('bike-archive'),
             onPressed: () =>
                 Navigator.pop(dialogContext, _RemoveChoice.archive),
-            child: const Text('Archive bike (keep rides)'),
+            child: Text(dialogContext.l10n.archiveBikeKeepRides),
           ),
         ],
       ),
@@ -298,7 +298,7 @@ class BikeDetailScreen extends ConsumerWidget {
       } catch (e) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not archive this bike: $e')),
+          SnackBar(content: Text(context.l10n.couldNotArchiveThis(e))),
         );
       }
       return;
@@ -320,7 +320,7 @@ class BikeDetailScreen extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete this bike: $e')),
+        SnackBar(content: Text(context.l10n.couldNotDeleteThis(e))),
       );
     }
   }
@@ -330,12 +330,12 @@ class BikeDetailScreen extends ConsumerWidget {
       await ref.read(garageProvider.notifier).unarchiveBike(bikeId);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bike is back in your garage')),
+        SnackBar(content: Text(context.l10n.bikeBackGarage)),
       );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not unarchive this bike: $e')),
+        SnackBar(content: Text(context.l10n.couldNotUnarchiveThis(e))),
       );
     }
   }
@@ -384,16 +384,14 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
     final rides = widget.bike.rideCount;
     return AlertDialog(
       backgroundColor: context.palette.surface,
-      title: Text('Delete bike and all its rides?',
+      title: Text(context.l10n.deleteBikeQuestion,
           style: TextStyle(color: context.palette.textPrimary)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-              'This permanently deletes $rides ride${rides == 1 ? '' : 's'}, '
-              "their routes and this bike's maintenance log, on this phone "
-              'and in the cloud. Type "$expected" to confirm.',
+              context.l10n.deleteBikeConfirmBody(rides, expected),
               style: TextStyle(color: context.palette.textSecondary)),
           const SizedBox(height: 12),
           TextField(
@@ -408,11 +406,11 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
+            child: Text(context.l10n.cancelAction)),
         TextButton(
           key: const Key('bike-delete-confirm'),
           onPressed: _matches ? () => Navigator.pop(context, true) : null,
-          child: Text('Delete',
+          child: Text(context.l10n.delete,
               style: TextStyle(
                   color: _matches ? context.palette.danger : context.palette.textTertiary)),
         ),
@@ -436,15 +434,15 @@ class _ServiceCard extends ConsumerWidget {
     final next = reminders.firstOrNull;
 
     final (String summary, Color tone) = switch (next) {
-      null => ('Using default service intervals', context.palette.textSecondary),
+      null => (context.l10n.usingDefaultServiceIntervals, context.palette.textSecondary),
       MaintenanceReminder(status: ReminderStatus.overdue) => (
-          '${next.serviceType.label} · overdue by '
-              '${(next.kmSinceService - next.kmLimit).toStringAsFixed(0)} km',
+          context.l10n.serviceOverdueBy(next.serviceType.localizedLabel(context.l10n),
+              (next.kmSinceService - next.kmLimit).toStringAsFixed(0)),
           context.palette.danger,
         ),
       _ => (
-          '${next.serviceType.label} · due in '
-              '${(next.kmLimit - next.kmSinceService).clamp(0, double.infinity).toStringAsFixed(0)} km',
+          context.l10n.serviceDueIn(next.serviceType.localizedLabel(context.l10n),
+              (next.kmLimit - next.kmSinceService).clamp(0, double.infinity).toStringAsFixed(0)),
           next.status == ReminderStatus.dueSoon
               ? context.palette.warning
               : context.palette.textSecondary,
@@ -465,7 +463,7 @@ class _ServiceCard extends ConsumerWidget {
             children: [
               Icon(Icons.build_outlined, size: 20, color: context.palette.primary),
               const SizedBox(width: 8),
-              Text('Service & maintenance',
+              Text(context.l10n.serviceMaintenance,
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -473,7 +471,7 @@ class _ServiceCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text('Next: $summary', style: TextStyle(fontSize: 14, color: tone)),
+          Text(context.l10n.nextSummary(summary), style: TextStyle(fontSize: 14, color: tone)),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -481,14 +479,14 @@ class _ServiceCard extends ConsumerWidget {
                 style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
                 onPressed: () =>
                     context.push('/home/maintenance/configure?bikeId=$bikeId'),
-                child: const Text('Intervals'),
+                child: Text(context.l10n.intervals),
               ),
               TextButton.icon(
                 style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
                 onPressed: () =>
                     context.push('/home/maintenance?bikeId=$bikeId'),
                 icon: const Icon(Icons.arrow_forward, size: 18),
-                label: const Text('View all'),
+                label: Text(context.l10n.viewAll),
               ),
             ],
           ),

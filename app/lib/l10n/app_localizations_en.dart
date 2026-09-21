@@ -1987,4 +1987,938 @@ class AppLocalizationsEn extends AppLocalizations {
   String followMyRideLive(String url) {
     return 'Follow my ride live: $url';
   }
+
+  @override
+  String get logServiceTitle => 'Log Service';
+
+  @override
+  String get serviceType => 'Service Type';
+
+  @override
+  String get whatDidService => 'What did you service? *';
+
+  @override
+  String get eGRadiatorFlush => 'e.g. Radiator flush';
+
+  @override
+  String get nameService => 'Name the service';
+
+  @override
+  String get odometerKm => 'Odometer (km) *';
+
+  @override
+  String get requiredField => 'Required';
+
+  @override
+  String get invalidNumber => 'Invalid number';
+
+  @override
+  String get costOptional => 'Cost (optional)';
+
+  @override
+  String get notesOptional => 'Notes (optional)';
+
+  @override
+  String configuredSpec(Object specNote) {
+    return 'Configured spec: $specNote';
+  }
+
+  @override
+  String get eGOctane95 => 'e.g. Octane 95, 12L fill-up, Jamuna oil...';
+
+  @override
+  String get eGUsedMotul => 'e.g. Used Motul 10W40...';
+
+  @override
+  String insertSpec(Object specNote) {
+    return 'Insert spec: $specNote';
+  }
+
+  @override
+  String get saveServiceLog => 'Save Service Log';
+
+  @override
+  String get yourMotorcycle => 'Your Motorcycle';
+
+  @override
+  String get setupMaintenance => 'Setup Maintenance';
+
+  @override
+  String get editTrackedChecks => 'Edit Tracked Checks';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String whatWouldLikeTrack(Object bikeName) {
+    return 'What would you like to track for $bikeName?';
+  }
+
+  @override
+  String get selectComponentsWantThrottleiq =>
+      'Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due.';
+
+  @override
+  String get recommended => 'Recommended';
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String trackChecks(Object enabledCount) {
+    return 'Track $enabledCount Checks';
+  }
+
+  @override
+  String get savePreferences => 'Save Preferences';
+
+  @override
+  String activeInCategory(Object activeInCategory, Object categoryItemsCount) {
+    return '$activeInCategory of $categoryItemsCount active';
+  }
+
+  @override
+  String get noActiveBike => 'No active bike';
+
+  @override
+  String get addMotorcycleGarageTrack =>
+      'Add a motorcycle to your garage to track maintenance.';
+
+  @override
+  String get syncOdo => 'Sync Odo';
+
+  @override
+  String get customize => 'Customize';
+
+  @override
+  String get log => 'Log';
+
+  @override
+  String get resetServiceLog => 'Reset service log';
+
+  @override
+  String get trackedChecks => 'Tracked checks';
+
+  @override
+  String monitored(Object remindersCount) {
+    return '$remindersCount monitored';
+  }
+
+  @override
+  String filterAll(Object remindersCount) {
+    return 'All ($remindersCount)';
+  }
+
+  @override
+  String filterAttention(Object attentionCount) {
+    return 'Attention ($attentionCount)';
+  }
+
+  @override
+  String filterOk(Object okCount) {
+    return 'OK ($okCount)';
+  }
+
+  @override
+  String get noChecksTrackedYet =>
+      'No checks tracked yet. Tap \"Customize\" above to select checks.';
+
+  @override
+  String get noChecksMatchingThis => 'No checks matching this filter.';
+
+  @override
+  String get serviceHistory => 'Service history';
+
+  @override
+  String total(Object totalCost) {
+    return 'Total: ৳$totalCost';
+  }
+
+  @override
+  String get noServiceRecordsLogged => 'No service records logged yet.';
+
+  @override
+  String get whenServiceBikeLog =>
+      'When you service your bike, log it here to reset intervals.';
+
+  @override
+  String get switchBike => 'Switch bike';
+
+  @override
+  String get switchAction => 'Switch';
+
+  @override
+  String get immediateMaintenanceAttentionRecommended =>
+      'Immediate maintenance attention recommended';
+
+  @override
+  String get upcomingScheduledMaintenance => 'Upcoming scheduled maintenance';
+
+  @override
+  String get allSystemsNominal => 'All Systems Nominal';
+
+  @override
+  String allTrackedComponentsGood(Object total) {
+    return 'All $total tracked components in good health';
+  }
+
+  @override
+  String get dueSoonTitle => 'Due Soon';
+
+  @override
+  String get whatWouldLikeMaintain => 'What would you like to maintain?';
+
+  @override
+  String notEveryoneWantsTrack(Object displayName) {
+    return 'Not everyone wants to track everything. Pick the items you care about for $displayName, or tap to edit intervals and add specs (oil brand, tyre dates/sizes):';
+  }
+
+  @override
+  String get essentials4 => 'Essentials (4)';
+
+  @override
+  String get all8Items => 'All 8 items';
+
+  @override
+  String get savingPreferences => 'Saving Preferences...';
+
+  @override
+  String startTrackingItems(Object enabledCount) {
+    return 'Start Tracking ($enabledCount Items)';
+  }
+
+  @override
+  String get seeAll20Checks => 'See all 20+ checks & advanced setup';
+
+  @override
+  String get dueSoon => 'Due soon';
+
+  @override
+  String intervalEvery(Object imperial) {
+    return 'Every $imperial';
+  }
+
+  @override
+  String lastDone(Object lastServiceDate) {
+    return 'Last done: $lastServiceDate';
+  }
+
+  @override
+  String get noPreviousServiceRecorded => 'No previous service recorded';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get deleteLog => 'Delete Log';
+
+  @override
+  String sureWantDeleteThis(Object displayLabel) {
+    return 'Are you sure you want to delete this $displayLabel record?';
+  }
+
+  @override
+  String get trackDashboard => 'Track on Dashboard';
+
+  @override
+  String get calculateWearMonitorInterval =>
+      'Calculate wear and monitor interval';
+
+  @override
+  String get serviceInterval => 'Service Interval';
+
+  @override
+  String get intervalDistanceKm => 'Interval Distance (km)';
+
+  @override
+  String get enterPositiveNumber => 'Enter a positive number';
+
+  @override
+  String get specificationsExtraInfo => 'Specifications & Extra Info';
+
+  @override
+  String get optionalText => 'Optional text';
+
+  @override
+  String get specsOilGradeTyre => 'Specs (oil grade, tyre sizes & dates...)';
+
+  @override
+  String get visibleMaintenanceCardQuick =>
+      'Visible on your maintenance card for quick reference.';
+
+  @override
+  String odometerSyncedKm(Object newKm) {
+    return 'Odometer synced to $newKm km!';
+  }
+
+  @override
+  String get syncOdometer => 'Sync Odometer';
+
+  @override
+  String alignThrottleiqWith(Object displayName) {
+    return 'Align ThrottleIQ with $displayName';
+  }
+
+  @override
+  String get rodeOfflineWithoutPhone =>
+      'Rode offline or without phone tracking? Take a photo of your bike\'s dashboard/speedometer cluster or enter the current reading below.';
+
+  @override
+  String get scanningInstrumentCluster => 'Scanning instrument cluster...';
+
+  @override
+  String get takePhoto => 'Take Photo';
+
+  @override
+  String get fromPhotos => 'From Photos';
+
+  @override
+  String get currentAppOdometer => 'Current App Odometer:';
+
+  @override
+  String get physicalInstrumentClusterReading =>
+      'Physical Instrument Cluster Reading *';
+
+  @override
+  String get enterValidPositiveNumber => 'Enter valid positive number';
+
+  @override
+  String kmAddedOfflineRiding(Object delta) {
+    return '+$delta km added (offline riding accounted for)';
+  }
+
+  @override
+  String kmReductionCalibratingBaseline(Object delta) {
+    return '$delta km reduction (calibrating baseline)';
+  }
+
+  @override
+  String get confirmSyncOdometer => 'Confirm & Sync Odometer';
+
+  @override
+  String get resetSelectedItems => 'Reset selected items?';
+
+  @override
+  String thisLogsAsServiced(Object label) {
+    return 'This logs \"$label\" as serviced today at the bike\'s current odometer, resetting its due date. Past history is kept.';
+  }
+
+  @override
+  String thisLogsItemsAs(Object selectedCount) {
+    return 'This logs $selectedCount items as serviced today at the bike\'s current odometer, resetting their due dates. Past history is kept.';
+  }
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get n1ItemResetServiced => '1 item reset to serviced today.';
+
+  @override
+  String itemsResetServicedToday(Object count) {
+    return '$count items reset to serviced today.';
+  }
+
+  @override
+  String get resetServiceLogTitle => 'Reset Service Log';
+
+  @override
+  String tickWhatJustServiced(Object displayName) {
+    return 'Tick what you just serviced on $displayName';
+  }
+
+  @override
+  String get selectedItemsLoggedAs =>
+      'Selected items are logged as serviced today at the current odometer, resetting their due date. Nothing is deleted.';
+
+  @override
+  String get noTrackedChecksYet =>
+      'No tracked checks yet. Set some up under \"Customize\" first.';
+
+  @override
+  String selectedOfTotal(Object selectedCount, Object remindersCount) {
+    return '$selectedCount of $remindersCount selected';
+  }
+
+  @override
+  String get selectItemsReset => 'Select items to reset';
+
+  @override
+  String lastDoneKmAgo(Object kmSinceService) {
+    return 'Last done $kmSinceService km ago';
+  }
+
+  @override
+  String get cropBikePhoto => 'Crop bike photo';
+
+  @override
+  String get bikeAdded => 'Bike added.';
+
+  @override
+  String get setServiceIntervals => 'Set service intervals';
+
+  @override
+  String get editBike => 'Edit Bike';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get crop => 'Crop';
+
+  @override
+  String get replace => 'Replace';
+
+  @override
+  String get odometerReadingKm => 'Odometer reading (km)';
+
+  @override
+  String get bikeColor => 'Bike color';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get bikeNotFound => 'Bike not found';
+
+  @override
+  String archived(Object displayName) {
+    return '$displayName (archived)';
+  }
+
+  @override
+  String get discussThisBike => 'Discuss this bike';
+
+  @override
+  String get unarchiveBike => 'Unarchive bike';
+
+  @override
+  String get archiveDeleteBike => 'Archive or delete bike';
+
+  @override
+  String get totalDistance => 'Total Distance';
+
+  @override
+  String get totalRides => 'Total Rides';
+
+  @override
+  String get odometer => 'Odometer';
+
+  @override
+  String get engine => 'Engine';
+
+  @override
+  String get rideHistory => 'Ride History';
+
+  @override
+  String get noRidesYetThis => 'No rides yet for this bike';
+
+  @override
+  String removeBikeQuestion(Object displayName) {
+    return 'Remove $displayName?';
+  }
+
+  @override
+  String get archivingHidesThisBike =>
+      'Archiving hides this bike from your garage and bike pickers. Its rides stay in your history and stats, and you can unarchive it any time.';
+
+  @override
+  String get deleteBikeAllIts => 'Delete bike and all its rides';
+
+  @override
+  String get archiveBikeKeepRides => 'Archive bike (keep rides)';
+
+  @override
+  String couldNotArchiveThis(Object e) {
+    return 'Could not archive this bike: $e';
+  }
+
+  @override
+  String couldNotDeleteThis(Object e) {
+    return 'Could not delete this bike: $e';
+  }
+
+  @override
+  String get bikeBackGarage => 'Bike is back in your garage';
+
+  @override
+  String couldNotUnarchiveThis(Object e) {
+    return 'Could not unarchive this bike: $e';
+  }
+
+  @override
+  String get deleteBikeQuestion => 'Delete bike and all its rides?';
+
+  @override
+  String get usingDefaultServiceIntervals => 'Using default service intervals';
+
+  @override
+  String get serviceMaintenance => 'Service & maintenance';
+
+  @override
+  String nextSummary(Object summary) {
+    return 'Next: $summary';
+  }
+
+  @override
+  String get intervals => 'Intervals';
+
+  @override
+  String get viewAll => 'View all';
+
+  @override
+  String get yourBikesTitle => 'Your Bikes';
+
+  @override
+  String get viewProfile => 'View profile';
+
+  @override
+  String get myPlaces => 'My Places';
+
+  @override
+  String get noBikesYet => 'No bikes yet';
+
+  @override
+  String get addFirstBikeGet => 'Add your first bike to get started';
+
+  @override
+  String get setActive => 'Set active';
+
+  @override
+  String get totalLower => 'total';
+
+  @override
+  String get ridesLower => 'rides';
+
+  @override
+  String get lastRide => 'last ride';
+
+  @override
+  String archivedBikes(Object bikesCount) {
+    return 'Archived bikes ($bikesCount)';
+  }
+
+  @override
+  String ridesAndDistance(Object rideCount, Object totalDistanceM) {
+    return '$rideCount rides · $totalDistanceM';
+  }
+
+  @override
+  String get unarchive => 'Unarchive';
+
+  @override
+  String get myFollowers => 'My followers';
+
+  @override
+  String get onlyMe => 'Only me';
+
+  @override
+  String get blockedUsers => 'Blocked Users';
+
+  @override
+  String get noBlockedUsers => 'No blocked users';
+
+  @override
+  String get errorLoadingUser => 'Error loading user';
+
+  @override
+  String get unknownUser => 'Unknown user';
+
+  @override
+  String get unblock => 'Unblock';
+
+  @override
+  String couldNotSaveProfile(Object e) {
+    return 'Could not save profile: $e';
+  }
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get displayName => 'Display name';
+
+  @override
+  String get nickname => 'Nickname';
+
+  @override
+  String get shownCardsFeed => 'Shown on cards & feed';
+
+  @override
+  String get usernameField => 'Username';
+
+  @override
+  String get n320LettersNumbers => '3-20 letters, numbers or underscore';
+
+  @override
+  String get bio => 'Bio';
+
+  @override
+  String get whoCanSeeProfile => 'Who can see my profile';
+
+  @override
+  String get everyone => 'Everyone';
+
+  @override
+  String get mutuals => 'Mutuals';
+
+  @override
+  String get whoCanSeeBikes => 'Who can see my bikes';
+
+  @override
+  String get garageProfileSeparateFrom =>
+      'Your garage on your profile. Separate from who can see the profile itself.';
+
+  @override
+  String get tellRidersAboutYourself => 'Tell riders about yourself';
+
+  @override
+  String get goodBioGetsMore => 'A good bio gets you more followers.';
+
+  @override
+  String get eGFzS =>
+      'e.g. \"FZ-S rider from Dhaka. Weekend tourer. Coffee & corners.\"';
+
+  @override
+  String get saveBio => 'Save bio';
+
+  @override
+  String get privacySafety => 'Privacy & Safety';
+
+  @override
+  String get manageAccountsHaveBlocked => 'Manage accounts you have blocked';
+
+  @override
+  String get seeDemoFeatureTour => 'See Demo & Feature Tour';
+
+  @override
+  String get replayInteractiveFeatureGuides =>
+      'Replay interactive feature guides and safety walkthrough';
+
+  @override
+  String get sendBugReport => 'Send Bug Report';
+
+  @override
+  String get somethingBrokenLetTeam => 'Something broken? Let the team know';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountQuestion => 'Delete Account?';
+
+  @override
+  String get thisActionIrreversibleAll =>
+      'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.';
+
+  @override
+  String get deletePermanently => 'Delete Permanently';
+
+  @override
+  String get deletingAccount => 'Deleting account...';
+
+  @override
+  String errorDeletingAccount(Object e) {
+    return 'Error deleting account: $e';
+  }
+
+  @override
+  String get syncIssues => 'Sync issues';
+
+  @override
+  String get n1UpdateCouldntBe => '1 update couldn\'t be sent';
+
+  @override
+  String updatesCouldntBeSent(Object count) {
+    return '$count updates couldn\'t be sent';
+  }
+
+  @override
+  String get rideShare => 'Ride share';
+
+  @override
+  String get endingLiveShare => 'Ending a live share';
+
+  @override
+  String get maintenanceLog => 'Maintenance log';
+
+  @override
+  String get cloudUpdate => 'Cloud update';
+
+  @override
+  String get everythingSynced => 'Everything is synced';
+
+  @override
+  String get synced => 'Synced';
+
+  @override
+  String get couldntSyncYetWell =>
+      'Couldn\'t sync yet. We\'ll keep trying in the background.';
+
+  @override
+  String get discardThisUpdate => 'Discard this update?';
+
+  @override
+  String get itWontBeSent => 'It won\'t be sent. This can\'t be undone.';
+
+  @override
+  String get signViewProfile => 'Sign in to view your profile';
+
+  @override
+  String get userBlocked => 'User blocked';
+
+  @override
+  String get reportUser => 'Report User';
+
+  @override
+  String get blockUser => 'Block User';
+
+  @override
+  String get tapEditFinishSetting =>
+      'Tap Edit to finish setting up your profile';
+
+  @override
+  String get riderNotFound => 'Rider not found';
+
+  @override
+  String ridingWithUsSince(Object createdAt) {
+    return 'Riding with us since $createdAt';
+  }
+
+  @override
+  String get followersLabel => 'followers';
+
+  @override
+  String get followingLabel => 'following';
+
+  @override
+  String get message => 'Message';
+
+  @override
+  String get totalDistanceLower => 'total distance';
+
+  @override
+  String get ridesLogged => 'rides logged';
+
+  @override
+  String get badges => 'Badges';
+
+  @override
+  String get noBadgesEarnedYet => 'No badges earned yet';
+
+  @override
+  String get myGarageLower => 'My garage';
+
+  @override
+  String get garage => 'Garage';
+
+  @override
+  String get whoCanSeeBikesChangeUnderEdit =>
+      'Who can see my bikes — change this under Edit';
+
+  @override
+  String get thisProfilePrivate => 'This profile is private';
+
+  @override
+  String get youreOffline => 'You\'re offline';
+
+  @override
+  String get couldntLoadProfile => 'Couldn\'t load profile';
+
+  @override
+  String resetItemsButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Reset $count Items',
+      one: 'Reset 1 Item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deleteBikeConfirmBody(int rides, String expected) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rides,
+      locale: localeName,
+      other: '$rides rides',
+      one: '1 ride',
+    );
+    return 'This permanently deletes $_temp0, their routes and this bike\'s maintenance log, on this phone and in the cloud. Type \"$expected\" to confirm.';
+  }
+
+  @override
+  String get svcTypeOilChange => 'Oil Change';
+
+  @override
+  String get svcTypeAirFilter => 'Air Filter';
+
+  @override
+  String get svcTypeChain => 'Chain Lube';
+
+  @override
+  String get svcTypeTire => 'Tire Check';
+
+  @override
+  String get svcTypeRadiatorCoolant => 'Radiator / Coolant';
+
+  @override
+  String get svcTypeFrontDiscPads => 'Front Disc Pads';
+
+  @override
+  String get svcTypeRearDrumPads => 'Rear Drum Pads';
+
+  @override
+  String get svcTypeBrakeFluid => 'Brake Fluid';
+
+  @override
+  String get svcTypeSparkPlug => 'Spark Plug';
+
+  @override
+  String get svcTypeBattery => 'Battery';
+
+  @override
+  String get svcTypeValveClearance => 'Valve Clearance';
+
+  @override
+  String get svcTypeClutchCable => 'Clutch Cable';
+
+  @override
+  String get svcTypeSuspension => 'Suspension';
+
+  @override
+  String get svcTypeOilFilter => 'Oil Filter';
+
+  @override
+  String get svcTypeChainTension => 'Chain Slack & Tension';
+
+  @override
+  String get svcTypeBrakeRotors => 'Brake Rotors / Discs';
+
+  @override
+  String get svcTypeForkSeals => 'Fork Oil & Seals';
+
+  @override
+  String get svcTypeWheelBearings => 'Wheel Bearings';
+
+  @override
+  String get svcTypeDriveBelt => 'Drive Belt';
+
+  @override
+  String get svcTypeThrottleCables => 'Throttle & Cables';
+
+  @override
+  String get svcTypeFuel => 'Fuel';
+
+  @override
+  String get svcTypeCustom => 'Custom';
+
+  @override
+  String get svcDescOilChange =>
+      'Drain engine oil & replace with fresh lubricant.';
+
+  @override
+  String get svcDescOilFilter =>
+      'Replace oil filter element to prevent contaminant buildup.';
+
+  @override
+  String get svcDescAirFilter =>
+      'Clean or replace intake filter for optimal airflow.';
+
+  @override
+  String get svcDescChain =>
+      'Clean road grime & apply chain lube to drive chain.';
+
+  @override
+  String get svcDescChainTension =>
+      'Check drive chain slack & align rear axle.';
+
+  @override
+  String get svcDescTire => 'Inspect tire pressures, tread wear & dry rot.';
+
+  @override
+  String get svcDescRadiatorCoolant =>
+      'Flush and refill radiator coolant fluid.';
+
+  @override
+  String get svcDescFrontDiscPads =>
+      'Check front brake pad friction material thickness.';
+
+  @override
+  String get svcDescRearDrumPads =>
+      'Inspect rear brake pads or drum brake shoes.';
+
+  @override
+  String get svcDescBrakeFluid =>
+      'Bleed & replenish hydraulic DOT brake fluid.';
+
+  @override
+  String get svcDescSparkPlug =>
+      'Inspect electrode gap or replace spark plugs.';
+
+  @override
+  String get svcDescBattery =>
+      'Test terminal voltage, connections & charge state.';
+
+  @override
+  String get svcDescValveClearance =>
+      'Measure & adjust intake / exhaust valve clearances.';
+
+  @override
+  String get svcDescClutchCable => 'Check lever free-play & lube clutch cable.';
+
+  @override
+  String get svcDescThrottleCables =>
+      'Inspect throttle play, snap-back & lube cables.';
+
+  @override
+  String get svcDescSuspension =>
+      'Inspect rear shock damping & linkage pivot bushings.';
+
+  @override
+  String get svcDescForkSeals =>
+      'Inspect front fork seals for oil weeping & change fork oil.';
+
+  @override
+  String get svcDescBrakeRotors =>
+      'Measure brake disc thickness & check for warping.';
+
+  @override
+  String get svcDescWheelBearings =>
+      'Inspect front & rear wheel bearings for play/roughness.';
+
+  @override
+  String get svcDescDriveBelt =>
+      'Check belt deflection, teeth condition & tension.';
+
+  @override
+  String get svcDescFuel => 'Track fuel refills, tank range, and fuel type.';
+
+  @override
+  String get svcDescCustom => 'Rider-defined maintenance check.';
+
+  @override
+  String get maintCatEngine => 'Engine & Fluids';
+
+  @override
+  String get maintCatDrivetrain => 'Drive & Controls';
+
+  @override
+  String get maintCatBraking => 'Braking System';
+
+  @override
+  String get maintCatChassisElectrical => 'Chassis & Electrical';
+
+  @override
+  String serviceOverdueBy(String item, String km) {
+    return '$item · overdue by $km km';
+  }
+
+  @override
+  String serviceDueIn(String item, String km) {
+    return '$item · due in $km km';
+  }
 }

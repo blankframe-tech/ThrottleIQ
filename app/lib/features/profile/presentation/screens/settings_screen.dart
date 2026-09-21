@@ -17,6 +17,7 @@ import 'sync_issues_screen.dart';
 import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
 import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -382,7 +383,7 @@ class SettingsScreen extends ConsumerWidget {
                                 ),
                               ),
                               IconButton(
-                                tooltip: 'Delete',
+                                tooltip: context.l10n.delete,
                                 onPressed: () => ref
                                     .read(emergencyContactsNotifierProvider
                                         .notifier)
@@ -456,7 +457,7 @@ class SettingsScreen extends ConsumerWidget {
           // ── Privacy & Safety ───────────────────────────────────────────
           Row(
             children: [
-              Text('Privacy & Safety',
+              Text(context.l10n.privacySafety,
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -485,13 +486,13 @@ class SettingsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Blocked Users',
+                          Text(context.l10n.blockedUsers,
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
-                          Text('Manage accounts you have blocked',
+                          Text(context.l10n.manageAccountsHaveBlocked,
                               style: TextStyle(
                                   fontSize: 12,
                                   color: context.palette.textSecondary)),
@@ -532,13 +533,13 @@ class SettingsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('See Demo & Feature Tour',
+                          Text(context.l10n.seeDemoFeatureTour,
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
-                          Text('Replay interactive feature guides and safety walkthrough',
+                          Text(context.l10n.replayInteractiveFeatureGuides,
                               style: TextStyle(
                                   fontSize: 12,
                                   color: context.palette.textSecondary)),
@@ -576,13 +577,13 @@ class SettingsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Send Bug Report',
+                          Text(context.l10n.sendBugReport,
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
-                          Text('Something broken? Let the team know',
+                          Text(context.l10n.somethingBrokenLetTeam,
                               style: TextStyle(
                                   fontSize: 12,
                                   color: context.palette.textSecondary)),
@@ -619,7 +620,7 @@ class SettingsScreen extends ConsumerWidget {
           TextButton.icon(
             onPressed: () => _confirmDeleteAccount(context, ref),
             icon: const Icon(Icons.delete_forever, size: 18),
-            label: const Text('Delete Account'),
+            label: Text(context.l10n.deleteAccount),
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 48),
               foregroundColor: context.palette.danger,
@@ -648,7 +649,7 @@ class SettingsScreen extends ConsumerWidget {
           side: BorderSide(color: dialogCtx.palette.border),
         ),
         title: Text(
-          'Delete Account?',
+          dialogCtx.l10n.deleteAccountQuestion,
           style: TextStyle(
             color: dialogCtx.palette.textPrimary,
             fontSize: 18,
@@ -656,7 +657,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         content: Text(
-          'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.',
+          dialogCtx.l10n.thisActionIrreversibleAll,
           style: TextStyle(
             color: dialogCtx.palette.textSecondary,
             fontSize: 14,
@@ -666,14 +667,14 @@ class SettingsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(dialogCtx.l10n.cancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogCtx).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: dialogCtx.palette.danger,
             ),
-            child: const Text('Delete Permanently'),
+            child: Text(dialogCtx.l10n.deletePermanently),
           ),
         ],
       ),
@@ -681,7 +682,7 @@ class SettingsScreen extends ConsumerWidget {
 
     if (confirmed == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Deleting account...')),
+        SnackBar(content: Text(context.l10n.deletingAccount)),
       );
       try {
         await ref.read(authNotifierProvider.notifier).deleteAccount();
@@ -692,7 +693,7 @@ class SettingsScreen extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error deleting account: $e'),
+              content: Text(context.l10n.errorDeletingAccount(e)),
               backgroundColor: context.palette.danger,
             ),
           );
@@ -862,7 +863,7 @@ class _SyncIssuesTile extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Sync issues',
+                      Text(context.l10n.syncIssues,
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -870,8 +871,8 @@ class _SyncIssuesTile extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                           count == 1
-                              ? "1 update couldn't be sent"
-                              : "$count updates couldn't be sent",
+                              ? context.l10n.n1UpdateCouldntBe
+                              : context.l10n.updatesCouldntBeSent(count),
                           style: TextStyle(
                               fontSize: 12, color: context.palette.textSecondary)),
                     ],

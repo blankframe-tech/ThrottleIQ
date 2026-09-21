@@ -5,6 +5,7 @@ import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/profile_providers.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class BlockedUsersScreen extends ConsumerWidget {
   const BlockedUsersScreen({super.key});
@@ -16,7 +17,7 @@ class BlockedUsersScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Blocked Users')),
+      appBar: AppBar(title: Text(context.l10n.blockedUsers)),
       body: blockedUidsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorView(
@@ -27,7 +28,7 @@ class BlockedUsersScreen extends ConsumerWidget {
           if (blockedUids.isEmpty) {
             return Center(
               child: Text(
-                'No blocked users',
+                context.l10n.noBlockedUsers,
                 style: TextStyle(color: context.palette.textSecondary),
               ),
             );
@@ -40,11 +41,11 @@ class BlockedUsersScreen extends ConsumerWidget {
               final profileAsync = ref.watch(profileProvider(uid));
 
               return profileAsync.when(
-                loading: () => const ListTile(title: Text('Loading...')),
-                error: (e, _) => const ListTile(title: Text('Error loading user')),
+                loading: () => ListTile(title: Text(context.l10n.loading)),
+                error: (e, _) => ListTile(title: Text(context.l10n.errorLoadingUser)),
                 data: (profile) {
                   if (profile == null) {
-                    return const ListTile(title: Text('Unknown user'));
+                    return ListTile(title: Text(context.l10n.unknownUser));
                   }
 
                   return ListTile(
@@ -58,7 +59,7 @@ class BlockedUsersScreen extends ConsumerWidget {
                         ref.invalidate(blockedUsersProvider);
                         ref.invalidate(profileProvider(uid));
                       },
-                      child: Text('Unblock', style: TextStyle(color: context.palette.primary)),
+                      child: Text(context.l10n.unblock, style: TextStyle(color: context.palette.primary)),
                     ),
                   );
                 },

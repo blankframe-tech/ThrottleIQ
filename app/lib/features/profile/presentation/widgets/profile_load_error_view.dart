@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Why another rider's profile failed to load.
 enum ProfileLoadFailure { private, offline, other }
@@ -42,9 +43,9 @@ class ProfileLoadErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, message) = switch (failure) {
-      ProfileLoadFailure.private => (Icons.lock_outline, 'This profile is private'),
-      ProfileLoadFailure.offline => (Icons.wifi_off, "You're offline"),
-      ProfileLoadFailure.other => (Icons.error_outline, "Couldn't load profile"),
+      ProfileLoadFailure.private => (Icons.lock_outline, context.l10n.thisProfilePrivate),
+      ProfileLoadFailure.offline => (Icons.wifi_off, context.l10n.youreOffline),
+      ProfileLoadFailure.other => (Icons.error_outline, context.l10n.couldntLoadProfile),
     };
     return Center(
       child: Padding(
@@ -61,7 +62,7 @@ class ProfileLoadErrorView extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Retry'),
+                label: Text(context.l10n.retry),
               ),
             ],
           ],

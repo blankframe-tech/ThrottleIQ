@@ -3626,6 +3626,1608 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Follow my ride live: {url}'**
   String followMyRideLive(String url);
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Service'**
+  String get logServiceTitle;
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Type'**
+  String get serviceType;
+
+  /// LabelText in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What did you service? *'**
+  String get whatDidService;
+
+  /// HintText in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Radiator flush'**
+  String get eGRadiatorFlush;
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Name the service'**
+  String get nameService;
+
+  /// LabelText in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer (km) *'**
+  String get odometerKm;
+
+  /// Text in add_maintenance_log_screen (+3 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get requiredField;
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number'**
+  String get invalidNumber;
+
+  /// LabelText in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost (optional)'**
+  String get costOptional;
+
+  /// LabelText in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get notesOptional;
+
+  /// HintText in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured spec: {specNote}'**
+  String configuredSpec(Object specNote);
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Octane 95, 12L fill-up, Jamuna oil...'**
+  String get eGOctane95;
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Used Motul 10W40...'**
+  String get eGUsedMotul;
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert spec: {specNote}'**
+  String insertSpec(Object specNote);
+
+  /// Text in add_maintenance_log_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Service Log'**
+  String get saveServiceLog;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Motorcycle'**
+  String get yourMotorcycle;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup Maintenance'**
+  String get setupMaintenance;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Tracked Checks'**
+  String get editTrackedChecks;
+
+  /// Text in maintenance_config_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to track for {bikeName}?'**
+  String whatWouldLikeTrack(Object bikeName);
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due.'**
+  String get selectComponentsWantThrottleiq;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get recommended;
+
+  /// Text in maintenance_config_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// Text in maintenance_config_screen (+2 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Track {enabledCount} Checks'**
+  String trackChecks(Object enabledCount);
+
+  /// Text in maintenance_config_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Save Preferences'**
+  String get savePreferences;
+
+  /// Text in maintenance_config_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{activeInCategory} of {categoryItemsCount} active'**
+  String activeInCategory(Object activeInCategory, Object categoryItemsCount);
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No active bike'**
+  String get noActiveBike;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a motorcycle to your garage to track maintenance.'**
+  String get addMotorcycleGarageTrack;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Odo'**
+  String get syncOdo;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize'**
+  String get customize;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Log'**
+  String get log;
+
+  /// Message in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset service log'**
+  String get resetServiceLog;
+
+  /// EditorialLabel in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked checks'**
+  String get trackedChecks;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{remindersCount} monitored'**
+  String monitored(Object remindersCount);
+
+  /// Label in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'All ({remindersCount})'**
+  String filterAll(Object remindersCount);
+
+  /// Label in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention ({attentionCount})'**
+  String filterAttention(Object attentionCount);
+
+  /// Label in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'OK ({okCount})'**
+  String filterOk(Object okCount);
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No checks tracked yet. Tap \"Customize\" above to select checks.'**
+  String get noChecksTrackedYet;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No checks matching this filter.'**
+  String get noChecksMatchingThis;
+
+  /// EditorialLabel in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Service history'**
+  String get serviceHistory;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: ৳{totalCost}'**
+  String total(Object totalCost);
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No service records logged yet.'**
+  String get noServiceRecordsLogged;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'When you service your bike, log it here to reset intervals.'**
+  String get whenServiceBikeLog;
+
+  /// Tooltip in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch bike'**
+  String get switchBike;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get switchAction;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Immediate maintenance attention recommended'**
+  String get immediateMaintenanceAttentionRecommended;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming scheduled maintenance'**
+  String get upcomingScheduledMaintenance;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'All Systems Nominal'**
+  String get allSystemsNominal;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'All {total} tracked components in good health'**
+  String allTrackedComponentsGood(Object total);
+
+  /// _metricPill in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Soon'**
+  String get dueSoonTitle;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to maintain?'**
+  String get whatWouldLikeMaintain;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Not everyone wants to track everything. Pick the items you care about for {displayName}, or tap to edit intervals and add specs (oil brand, tyre dates/sizes):'**
+  String notEveryoneWantsTrack(Object displayName);
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Essentials (4)'**
+  String get essentials4;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'All 8 items'**
+  String get all8Items;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving Preferences...'**
+  String get savingPreferences;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Tracking ({enabledCount} Items)'**
+  String startTrackingItems(Object enabledCount);
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'See all 20+ checks & advanced setup'**
+  String get seeAll20Checks;
+
+  /// Text in maintenance_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Due soon'**
+  String get dueSoon;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {imperial}'**
+  String intervalEvery(Object imperial);
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last done: {lastServiceDate}'**
+  String lastDone(Object lastServiceDate);
+
+  /// Text in maintenance_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'No previous service recorded'**
+  String get noPreviousServiceRecorded;
+
+  /// Text in maintenance_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Log'**
+  String get deleteLog;
+
+  /// Text in maintenance_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this {displayLabel} record?'**
+  String sureWantDeleteThis(Object displayLabel);
+
+  /// Text in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Track on Dashboard'**
+  String get trackDashboard;
+
+  /// Text in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate wear and monitor interval'**
+  String get calculateWearMonitorInterval;
+
+  /// EditorialLabel in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Interval'**
+  String get serviceInterval;
+
+  /// LabelText in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval Distance (km)'**
+  String get intervalDistanceKm;
+
+  /// Text in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive number'**
+  String get enterPositiveNumber;
+
+  /// EditorialLabel in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Specifications & Extra Info'**
+  String get specificationsExtraInfo;
+
+  /// Text in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional text'**
+  String get optionalText;
+
+  /// LabelText in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Specs (oil grade, tyre sizes & dates...)'**
+  String get specsOilGradeTyre;
+
+  /// Text in edit_maintenance_check_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible on your maintenance card for quick reference.'**
+  String get visibleMaintenanceCardQuick;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer synced to {newKm} km!'**
+  String odometerSyncedKm(Object newKm);
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Odometer'**
+  String get syncOdometer;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Align ThrottleIQ with {displayName}'**
+  String alignThrottleiqWith(Object displayName);
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Rode offline or without phone tracking? Take a photo of your bike\'s dashboard/speedometer cluster or enter the current reading below.'**
+  String get rodeOfflineWithoutPhone;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning instrument cluster...'**
+  String get scanningInstrumentCluster;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get takePhoto;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'From Photos'**
+  String get fromPhotos;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Current App Odometer:'**
+  String get currentAppOdometer;
+
+  /// LabelText in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Physical Instrument Cluster Reading *'**
+  String get physicalInstrumentClusterReading;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter valid positive number'**
+  String get enterValidPositiveNumber;
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'+{delta} km added (offline riding accounted for)'**
+  String kmAddedOfflineRiding(Object delta);
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{delta} km reduction (calibrating baseline)'**
+  String kmReductionCalibratingBaseline(Object delta);
+
+  /// Text in odometer_sync_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Sync Odometer'**
+  String get confirmSyncOdometer;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset selected items?'**
+  String get resetSelectedItems;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'This logs \"{label}\" as serviced today at the bike\'s current odometer, resetting its due date. Past history is kept.'**
+  String thisLogsAsServiced(Object label);
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'This logs {selectedCount} items as serviced today at the bike\'s current odometer, resetting their due dates. Past history is kept.'**
+  String thisLogsItemsAs(Object selectedCount);
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'1 item reset to serviced today.'**
+  String get n1ItemResetServiced;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items reset to serviced today.'**
+  String itemsResetServicedToday(Object count);
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Service Log'**
+  String get resetServiceLogTitle;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick what you just serviced on {displayName}'**
+  String tickWhatJustServiced(Object displayName);
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected items are logged as serviced today at the current odometer, resetting their due date. Nothing is deleted.'**
+  String get selectedItemsLoggedAs;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'No tracked checks yet. Set some up under \"Customize\" first.'**
+  String get noTrackedChecksYet;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedCount} of {remindersCount} selected'**
+  String selectedOfTotal(Object selectedCount, Object remindersCount);
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Select items to reset'**
+  String get selectItemsReset;
+
+  /// Text in reset_maintenance_log_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Last done {kmSinceService} km ago'**
+  String lastDoneKmAgo(Object kmSinceService);
+
+  /// Title in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop bike photo'**
+  String get cropBikePhoto;
+
+  /// Text in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike added.'**
+  String get bikeAdded;
+
+  /// Label in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Set service intervals'**
+  String get setServiceIntervals;
+
+  /// Text in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Bike'**
+  String get editBike;
+
+  /// Text in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// Text in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop'**
+  String get crop;
+
+  /// Text in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get replace;
+
+  /// LabelText in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer reading (km)'**
+  String get odometerReadingKm;
+
+  /// Text in add_edit_bike_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike color'**
+  String get bikeColor;
+
+  /// Text in add_edit_bike_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike not found'**
+  String get bikeNotFound;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} (archived)'**
+  String archived(Object displayName);
+
+  /// Tooltip in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Discuss this bike'**
+  String get discussThisBike;
+
+  /// Tooltip in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive bike'**
+  String get unarchiveBike;
+
+  /// Tooltip in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive or delete bike'**
+  String get archiveDeleteBike;
+
+  /// Label in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Distance'**
+  String get totalDistance;
+
+  /// Label in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Rides'**
+  String get totalRides;
+
+  /// Label in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer'**
+  String get odometer;
+
+  /// Label in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get engine;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride History'**
+  String get rideHistory;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No rides yet for this bike'**
+  String get noRidesYetThis;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {displayName}?'**
+  String removeBikeQuestion(Object displayName);
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Archiving hides this bike from your garage and bike pickers. Its rides stay in your history and stats, and you can unarchive it any time.'**
+  String get archivingHidesThisBike;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete bike and all its rides'**
+  String get deleteBikeAllIts;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive bike (keep rides)'**
+  String get archiveBikeKeepRides;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not archive this bike: {e}'**
+  String couldNotArchiveThis(Object e);
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete this bike: {e}'**
+  String couldNotDeleteThis(Object e);
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike is back in your garage'**
+  String get bikeBackGarage;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not unarchive this bike: {e}'**
+  String couldNotUnarchiveThis(Object e);
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete bike and all its rides?'**
+  String get deleteBikeQuestion;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Using default service intervals'**
+  String get usingDefaultServiceIntervals;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Service & maintenance'**
+  String get serviceMaintenance;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {summary}'**
+  String nextSummary(Object summary);
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Intervals'**
+  String get intervals;
+
+  /// Text in bike_detail_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get viewAll;
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Bikes'**
+  String get yourBikesTitle;
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View profile'**
+  String get viewProfile;
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'My Places'**
+  String get myPlaces;
+
+  /// Text in garage_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'No bikes yet'**
+  String get noBikesYet;
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first bike to get started'**
+  String get addFirstBikeGet;
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Set active'**
+  String get setActive;
+
+  /// Label in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'total'**
+  String get totalLower;
+
+  /// Label in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'rides'**
+  String get ridesLower;
+
+  /// Label in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'last ride'**
+  String get lastRide;
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived bikes ({bikesCount})'**
+  String archivedBikes(Object bikesCount);
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{rideCount} rides · {totalDistanceM}'**
+  String ridesAndDistance(Object rideCount, Object totalDistanceM);
+
+  /// Text in garage_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get unarchive;
+
+  /// Text in bike_visibility.
+  ///
+  /// In en, this message translates to:
+  /// **'My followers'**
+  String get myFollowers;
+
+  /// Text in bike_visibility (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Only me'**
+  String get onlyMe;
+
+  /// Text in blocked_users_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked Users'**
+  String get blockedUsers;
+
+  /// Text in blocked_users_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No blocked users'**
+  String get noBlockedUsers;
+
+  /// Text in blocked_users_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading user'**
+  String get errorLoadingUser;
+
+  /// Text in blocked_users_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown user'**
+  String get unknownUser;
+
+  /// Text in blocked_users_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock'**
+  String get unblock;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save profile: {e}'**
+  String couldNotSaveProfile(Object e);
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// LabelText in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get displayName;
+
+  /// LabelText in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get nickname;
+
+  /// HintText in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown on cards & feed'**
+  String get shownCardsFeed;
+
+  /// LabelText in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get usernameField;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'3-20 letters, numbers or underscore'**
+  String get n320LettersNumbers;
+
+  /// LabelText in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio'**
+  String get bio;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see my profile'**
+  String get whoCanSeeProfile;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get everyone;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Mutuals'**
+  String get mutuals;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see my bikes'**
+  String get whoCanSeeBikes;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your garage on your profile. Separate from who can see the profile itself.'**
+  String get garageProfileSeparateFrom;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell riders about yourself'**
+  String get tellRidersAboutYourself;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'A good bio gets you more followers.'**
+  String get goodBioGetsMore;
+
+  /// HintText in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. \"FZ-S rider from Dhaka. Weekend tourer. Coffee & corners.\"'**
+  String get eGFzS;
+
+  /// Text in edit_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Save bio'**
+  String get saveBio;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & Safety'**
+  String get privacySafety;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage accounts you have blocked'**
+  String get manageAccountsHaveBlocked;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'See Demo & Feature Tour'**
+  String get seeDemoFeatureTour;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay interactive feature guides and safety walkthrough'**
+  String get replayInteractiveFeatureGuides;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Bug Report'**
+  String get sendBugReport;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Something broken? Let the team know'**
+  String get somethingBrokenLetTeam;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account?'**
+  String get deleteAccountQuestion;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.'**
+  String get thisActionIrreversibleAll;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Permanently'**
+  String get deletePermanently;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting account...'**
+  String get deletingAccount;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting account: {e}'**
+  String errorDeletingAccount(Object e);
+
+  /// Text in settings_screen (+1 more).
+  ///
+  /// In en, this message translates to:
+  /// **'Sync issues'**
+  String get syncIssues;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'1 update couldn\'t be sent'**
+  String get n1UpdateCouldntBe;
+
+  /// Text in settings_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} updates couldn\'t be sent'**
+  String updatesCouldntBeSent(Object count);
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride share'**
+  String get rideShare;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ending a live share'**
+  String get endingLiveShare;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance log'**
+  String get maintenanceLog;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud update'**
+  String get cloudUpdate;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is synced'**
+  String get everythingSynced;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get synced;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sync yet. We\'ll keep trying in the background.'**
+  String get couldntSyncYetWell;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this update?'**
+  String get discardThisUpdate;
+
+  /// Text in sync_issues_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'It won\'t be sent. This can\'t be undone.'**
+  String get itWontBeSent;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view your profile'**
+  String get signViewProfile;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'User blocked'**
+  String get userBlocked;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Report User'**
+  String get reportUser;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Block User'**
+  String get blockUser;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Edit to finish setting up your profile'**
+  String get tapEditFinishSetting;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider not found'**
+  String get riderNotFound;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding with us since {createdAt}'**
+  String ridingWithUsSince(Object createdAt);
+
+  /// Label in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'followers'**
+  String get followersLabel;
+
+  /// Label in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'following'**
+  String get followingLabel;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get message;
+
+  /// Label in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'total distance'**
+  String get totalDistanceLower;
+
+  /// Label in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'rides logged'**
+  String get ridesLogged;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Badges'**
+  String get badges;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No badges earned yet'**
+  String get noBadgesEarnedYet;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'My garage'**
+  String get myGarageLower;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get garage;
+
+  /// Text in user_profile_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see my bikes — change this under Edit'**
+  String get whoCanSeeBikesChangeUnderEdit;
+
+  /// Text in profile_load_error_view.
+  ///
+  /// In en, this message translates to:
+  /// **'This profile is private'**
+  String get thisProfilePrivate;
+
+  /// Text in profile_load_error_view.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline'**
+  String get youreOffline;
+
+  /// Text in profile_load_error_view.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load profile'**
+  String get couldntLoadProfile;
+
+  /// Confirm button in the reset-service-log sheet, with the number of ticked items.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Reset 1 Item} other{Reset {count} Items}}'**
+  String resetItemsButton(int count);
+
+  /// Body of the delete-bike confirmation; the rider must type the bike's name to confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes {rides, plural, =1{1 ride} other{{rides} rides}}, their routes and this bike\'s maintenance log, on this phone and in the cloud. Type \"{expected}\" to confirm.'**
+  String deleteBikeConfirmBody(int rides, String expected);
+
+  /// Maintenance item name (oilChange); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Oil Change'**
+  String get svcTypeOilChange;
+
+  /// Maintenance item name (airFilter); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Air Filter'**
+  String get svcTypeAirFilter;
+
+  /// Maintenance item name (chain); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain Lube'**
+  String get svcTypeChain;
+
+  /// Maintenance item name (tire); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Tire Check'**
+  String get svcTypeTire;
+
+  /// Maintenance item name (radiatorCoolant); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Radiator / Coolant'**
+  String get svcTypeRadiatorCoolant;
+
+  /// Maintenance item name (frontDiscPads); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Front Disc Pads'**
+  String get svcTypeFrontDiscPads;
+
+  /// Maintenance item name (rearDrumPads); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Rear Drum Pads'**
+  String get svcTypeRearDrumPads;
+
+  /// Maintenance item name (brakeFluid); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Brake Fluid'**
+  String get svcTypeBrakeFluid;
+
+  /// Maintenance item name (sparkPlug); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Spark Plug'**
+  String get svcTypeSparkPlug;
+
+  /// Maintenance item name (battery); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery'**
+  String get svcTypeBattery;
+
+  /// Maintenance item name (valveClearance); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Valve Clearance'**
+  String get svcTypeValveClearance;
+
+  /// Maintenance item name (clutchCable); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Clutch Cable'**
+  String get svcTypeClutchCable;
+
+  /// Maintenance item name (suspension); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspension'**
+  String get svcTypeSuspension;
+
+  /// Maintenance item name (oilFilter); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Oil Filter'**
+  String get svcTypeOilFilter;
+
+  /// Maintenance item name (chainTension); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain Slack & Tension'**
+  String get svcTypeChainTension;
+
+  /// Maintenance item name (brakeRotors); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Brake Rotors / Discs'**
+  String get svcTypeBrakeRotors;
+
+  /// Maintenance item name (forkSeals); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Fork Oil & Seals'**
+  String get svcTypeForkSeals;
+
+  /// Maintenance item name (wheelBearings); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel Bearings'**
+  String get svcTypeWheelBearings;
+
+  /// Maintenance item name (driveBelt); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive Belt'**
+  String get svcTypeDriveBelt;
+
+  /// Maintenance item name (throttleCables); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Throttle & Cables'**
+  String get svcTypeThrottleCables;
+
+  /// Maintenance item name (fuel); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get svcTypeFuel;
+
+  /// Maintenance item name (custom); the stored id stays the enum name.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get svcTypeCustom;
+
+  /// One-line description of the oilChange maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Drain engine oil & replace with fresh lubricant.'**
+  String get svcDescOilChange;
+
+  /// One-line description of the oilFilter maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace oil filter element to prevent contaminant buildup.'**
+  String get svcDescOilFilter;
+
+  /// One-line description of the airFilter maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean or replace intake filter for optimal airflow.'**
+  String get svcDescAirFilter;
+
+  /// One-line description of the chain maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean road grime & apply chain lube to drive chain.'**
+  String get svcDescChain;
+
+  /// One-line description of the chainTension maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Check drive chain slack & align rear axle.'**
+  String get svcDescChainTension;
+
+  /// One-line description of the tire maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect tire pressures, tread wear & dry rot.'**
+  String get svcDescTire;
+
+  /// One-line description of the radiatorCoolant maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Flush and refill radiator coolant fluid.'**
+  String get svcDescRadiatorCoolant;
+
+  /// One-line description of the frontDiscPads maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Check front brake pad friction material thickness.'**
+  String get svcDescFrontDiscPads;
+
+  /// One-line description of the rearDrumPads maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect rear brake pads or drum brake shoes.'**
+  String get svcDescRearDrumPads;
+
+  /// One-line description of the brakeFluid maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Bleed & replenish hydraulic DOT brake fluid.'**
+  String get svcDescBrakeFluid;
+
+  /// One-line description of the sparkPlug maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect electrode gap or replace spark plugs.'**
+  String get svcDescSparkPlug;
+
+  /// One-line description of the battery maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Test terminal voltage, connections & charge state.'**
+  String get svcDescBattery;
+
+  /// One-line description of the valveClearance maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure & adjust intake / exhaust valve clearances.'**
+  String get svcDescValveClearance;
+
+  /// One-line description of the clutchCable maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Check lever free-play & lube clutch cable.'**
+  String get svcDescClutchCable;
+
+  /// One-line description of the throttleCables maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect throttle play, snap-back & lube cables.'**
+  String get svcDescThrottleCables;
+
+  /// One-line description of the suspension maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect rear shock damping & linkage pivot bushings.'**
+  String get svcDescSuspension;
+
+  /// One-line description of the forkSeals maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect front fork seals for oil weeping & change fork oil.'**
+  String get svcDescForkSeals;
+
+  /// One-line description of the brakeRotors maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure brake disc thickness & check for warping.'**
+  String get svcDescBrakeRotors;
+
+  /// One-line description of the wheelBearings maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect front & rear wheel bearings for play/roughness.'**
+  String get svcDescWheelBearings;
+
+  /// One-line description of the driveBelt maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Check belt deflection, teeth condition & tension.'**
+  String get svcDescDriveBelt;
+
+  /// One-line description of the fuel maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Track fuel refills, tank range, and fuel type.'**
+  String get svcDescFuel;
+
+  /// One-line description of the custom maintenance item.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider-defined maintenance check.'**
+  String get svcDescCustom;
+
+  /// Maintenance category heading (engine).
+  ///
+  /// In en, this message translates to:
+  /// **'Engine & Fluids'**
+  String get maintCatEngine;
+
+  /// Maintenance category heading (drivetrain).
+  ///
+  /// In en, this message translates to:
+  /// **'Drive & Controls'**
+  String get maintCatDrivetrain;
+
+  /// Maintenance category heading (braking).
+  ///
+  /// In en, this message translates to:
+  /// **'Braking System'**
+  String get maintCatBraking;
+
+  /// Maintenance category heading (chassisElectrical).
+  ///
+  /// In en, this message translates to:
+  /// **'Chassis & Electrical'**
+  String get maintCatChassisElectrical;
+
+  /// Garage summary line for the most urgent overdue check.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} · overdue by {km} km'**
+  String serviceOverdueBy(String item, String km);
+
+  /// Garage summary line for the next check that is coming due.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} · due in {km} km'**
+  String serviceDueIn(String item, String km);
 }
 
 class _AppLocalizationsDelegate

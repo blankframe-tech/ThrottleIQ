@@ -1993,4 +1993,945 @@ class AppLocalizationsBn extends AppLocalizations {
   String followMyRideLive(String url) {
     return 'আমার রাইড লাইভ অনুসরণ করুন: $url';
   }
+
+  @override
+  String get logServiceTitle => 'সার্ভিস লগ করুন';
+
+  @override
+  String get serviceType => 'সার্ভিসের ধরন';
+
+  @override
+  String get whatDidService => 'কী সার্ভিস করালেন? *';
+
+  @override
+  String get eGRadiatorFlush => 'যেমন: রেডিয়েটর ফ্লাশ';
+
+  @override
+  String get nameService => 'সার্ভিসের নাম দিন';
+
+  @override
+  String get odometerKm => 'ওডোমিটার (কিমি) *';
+
+  @override
+  String get requiredField => 'আবশ্যক';
+
+  @override
+  String get invalidNumber => 'সংখ্যাটি সঠিক নয়';
+
+  @override
+  String get costOptional => 'খরচ (ঐচ্ছিক)';
+
+  @override
+  String get notesOptional => 'নোট (ঐচ্ছিক)';
+
+  @override
+  String configuredSpec(Object specNote) {
+    return 'নির্ধারিত স্পেক: $specNote';
+  }
+
+  @override
+  String get eGOctane95 => 'যেমন: অকটেন 95, 12 লিটার ফিল-আপ, যমুনা অয়েল...';
+
+  @override
+  String get eGUsedMotul => 'যেমন: Motul 10W40 ব্যবহার করেছি...';
+
+  @override
+  String insertSpec(Object specNote) {
+    return 'স্পেক যোগ করুন: $specNote';
+  }
+
+  @override
+  String get saveServiceLog => 'সার্ভিস লগ সেভ করুন';
+
+  @override
+  String get yourMotorcycle => 'আপনার মোটরসাইকেল';
+
+  @override
+  String get setupMaintenance => 'মেইনটেন্যান্স সেটআপ';
+
+  @override
+  String get editTrackedChecks => 'ট্র্যাক করা চেক সম্পাদনা';
+
+  @override
+  String get skip => 'এড়িয়ে যান';
+
+  @override
+  String whatWouldLikeTrack(Object bikeName) {
+    return '$bikeName-এর জন্য কী কী ট্র্যাক করতে চান?';
+  }
+
+  @override
+  String get selectComponentsWantThrottleiq =>
+      'যেসব যন্ত্রাংশ ThrottleIQ নজরে রাখবে সেগুলো বেছে নিন। আপনার ওডোমিটার দেখে আমরা ক্ষয় হিসাব করব এবং সার্ভিসের সময় হওয়ার আগে জানিয়ে দেব।';
+
+  @override
+  String get recommended => 'প্রস্তাবিত';
+
+  @override
+  String get selectAll => 'সব বেছে নিন';
+
+  @override
+  String get clear => 'পরিষ্কার করুন';
+
+  @override
+  String trackChecks(Object enabledCount) {
+    return '$enabledCountটি চেক ট্র্যাক করুন';
+  }
+
+  @override
+  String get savePreferences => 'পছন্দ সেভ করুন';
+
+  @override
+  String activeInCategory(Object activeInCategory, Object categoryItemsCount) {
+    return '$categoryItemsCountটির মধ্যে $activeInCategoryটি সক্রিয়';
+  }
+
+  @override
+  String get noActiveBike => 'কোনো সক্রিয় বাইক নেই';
+
+  @override
+  String get addMotorcycleGarageTrack =>
+      'মেইনটেন্যান্স ট্র্যাক করতে আপনার গ্যারেজে একটি মোটরসাইকেল যোগ করুন।';
+
+  @override
+  String get syncOdo => 'ওডো সিঙ্ক';
+
+  @override
+  String get customize => 'কাস্টমাইজ';
+
+  @override
+  String get log => 'লগ';
+
+  @override
+  String get resetServiceLog => 'সার্ভিস লগ রিসেট';
+
+  @override
+  String get trackedChecks => 'ট্র্যাক করা চেক';
+
+  @override
+  String monitored(Object remindersCount) {
+    return '$remindersCountটি নজরে আছে';
+  }
+
+  @override
+  String filterAll(Object remindersCount) {
+    return 'সব ($remindersCount)';
+  }
+
+  @override
+  String filterAttention(Object attentionCount) {
+    return 'মনোযোগ দরকার ($attentionCount)';
+  }
+
+  @override
+  String filterOk(Object okCount) {
+    return 'ঠিক আছে ($okCount)';
+  }
+
+  @override
+  String get noChecksTrackedYet =>
+      'এখনো কোনো চেক ট্র্যাক করা হচ্ছে না। চেক বেছে নিতে উপরের \"কাস্টমাইজ\" ট্যাপ করুন।';
+
+  @override
+  String get noChecksMatchingThis => 'এই ফিল্টারের সাথে মেলে এমন কোনো চেক নেই।';
+
+  @override
+  String get serviceHistory => 'সার্ভিসের ইতিহাস';
+
+  @override
+  String total(Object totalCost) {
+    return 'মোট: ৳$totalCost';
+  }
+
+  @override
+  String get noServiceRecordsLogged => 'এখনো কোনো সার্ভিস রেকর্ড নেই।';
+
+  @override
+  String get whenServiceBikeLog =>
+      'বাইক সার্ভিস করালে এখানে লগ করুন, ইন্টারভাল রিসেট হয়ে যাবে।';
+
+  @override
+  String get switchBike => 'বাইক বদলান';
+
+  @override
+  String get switchAction => 'বদলান';
+
+  @override
+  String get immediateMaintenanceAttentionRecommended =>
+      'এখনই মেইনটেন্যান্স দরকার';
+
+  @override
+  String get upcomingScheduledMaintenance => 'আসন্ন নির্ধারিত মেইনটেন্যান্স';
+
+  @override
+  String get allSystemsNominal => 'সবকিছু স্বাভাবিক';
+
+  @override
+  String allTrackedComponentsGood(Object total) {
+    return 'ট্র্যাক করা সব $totalটি যন্ত্রাংশ ভালো অবস্থায় আছে';
+  }
+
+  @override
+  String get dueSoonTitle => 'শীঘ্রই বাকি';
+
+  @override
+  String get whatWouldLikeMaintain => 'কী কী মেইনটেইন করতে চান?';
+
+  @override
+  String notEveryoneWantsTrack(Object displayName) {
+    return 'সবাই সবকিছু ট্র্যাক করতে চান না। $displayName-এর জন্য যেগুলো আপনার দরকার সেগুলো বেছে নিন, অথবা ট্যাপ করে ইন্টারভাল বদলান ও স্পেক (তেলের ব্র্যান্ড, টায়ারের তারিখ/সাইজ) যোগ করুন:';
+  }
+
+  @override
+  String get essentials4 => 'জরুরি (4)';
+
+  @override
+  String get all8Items => 'সব 8টি আইটেম';
+
+  @override
+  String get savingPreferences => 'পছন্দ সেভ হচ্ছে...';
+
+  @override
+  String startTrackingItems(Object enabledCount) {
+    return 'ট্র্যাকিং শুরু করুন ($enabledCountটি আইটেম)';
+  }
+
+  @override
+  String get seeAll20Checks => '20+ চেক ও অ্যাডভান্সড সেটআপ দেখুন';
+
+  @override
+  String get dueSoon => 'শীঘ্রই বাকি';
+
+  @override
+  String intervalEvery(Object imperial) {
+    return 'প্রতি $imperial';
+  }
+
+  @override
+  String lastDone(Object lastServiceDate) {
+    return 'সর্বশেষ করা হয়েছে: $lastServiceDate';
+  }
+
+  @override
+  String get noPreviousServiceRecorded => 'আগের কোনো সার্ভিস রেকর্ড নেই';
+
+  @override
+  String get edit => 'সম্পাদনা';
+
+  @override
+  String get deleteLog => 'লগ মুছুন';
+
+  @override
+  String sureWantDeleteThis(Object displayLabel) {
+    return 'আপনি কি নিশ্চিত যে এই $displayLabel রেকর্ডটি মুছে ফেলতে চান?';
+  }
+
+  @override
+  String get trackDashboard => 'ড্যাশবোর্ডে ট্র্যাক করুন';
+
+  @override
+  String get calculateWearMonitorInterval =>
+      'ক্ষয় হিসাব করুন ও ইন্টারভাল নজরে রাখুন';
+
+  @override
+  String get serviceInterval => 'সার্ভিস ইন্টারভাল';
+
+  @override
+  String get intervalDistanceKm => 'ইন্টারভালের দূরত্ব (কিমি)';
+
+  @override
+  String get enterPositiveNumber => 'ধনাত্মক সংখ্যা দিন';
+
+  @override
+  String get specificationsExtraInfo => 'স্পেসিফিকেশন ও অতিরিক্ত তথ্য';
+
+  @override
+  String get optionalText => 'ঐচ্ছিক লেখা';
+
+  @override
+  String get specsOilGradeTyre =>
+      'স্পেক (তেলের গ্রেড, টায়ারের সাইজ ও তারিখ...)';
+
+  @override
+  String get visibleMaintenanceCardQuick =>
+      'দ্রুত দেখার জন্য আপনার মেইনটেন্যান্স কার্ডে দেখানো হবে।';
+
+  @override
+  String odometerSyncedKm(Object newKm) {
+    return 'ওডোমিটার $newKm কিমিতে সিঙ্ক হয়েছে!';
+  }
+
+  @override
+  String get syncOdometer => 'ওডোমিটার সিঙ্ক';
+
+  @override
+  String alignThrottleiqWith(Object displayName) {
+    return 'ThrottleIQ-কে $displayName-এর সাথে মেলান';
+  }
+
+  @override
+  String get rodeOfflineWithoutPhone =>
+      'অফলাইনে বা ফোন ট্র্যাকিং ছাড়া চালিয়েছেন? আপনার বাইকের ড্যাশবোর্ড/স্পিডোমিটারের ছবি তুলুন বা নিচে বর্তমান রিডিং লিখুন।';
+
+  @override
+  String get scanningInstrumentCluster =>
+      'ইন্সট্রুমেন্ট ক্লাস্টার স্ক্যান হচ্ছে...';
+
+  @override
+  String get takePhoto => 'ছবি তুলুন';
+
+  @override
+  String get fromPhotos => 'ছবি থেকে নিন';
+
+  @override
+  String get currentAppOdometer => 'অ্যাপের বর্তমান ওডোমিটার:';
+
+  @override
+  String get physicalInstrumentClusterReading =>
+      'ইন্সট্রুমেন্ট ক্লাস্টারের আসল রিডিং *';
+
+  @override
+  String get enterValidPositiveNumber => 'সঠিক ধনাত্মক সংখ্যা দিন';
+
+  @override
+  String kmAddedOfflineRiding(Object delta) {
+    return '+$delta কিমি যোগ হয়েছে (অফলাইন রাইড ধরা হয়েছে)';
+  }
+
+  @override
+  String kmReductionCalibratingBaseline(Object delta) {
+    return '$delta কিমি কমেছে (বেসলাইন ঠিক করা হচ্ছে)';
+  }
+
+  @override
+  String get confirmSyncOdometer => 'নিশ্চিত করে ওডোমিটার সিঙ্ক করুন';
+
+  @override
+  String get resetSelectedItems => 'বেছে নেওয়া আইটেম রিসেট করবেন?';
+
+  @override
+  String thisLogsAsServiced(Object label) {
+    return 'এতে \"$label\" আজ বাইকের বর্তমান ওডোমিটারে সার্ভিস করা হিসেবে লগ হবে এবং বাকি হওয়ার তারিখ রিসেট হবে। আগের ইতিহাস থেকে যাবে।';
+  }
+
+  @override
+  String thisLogsItemsAs(Object selectedCount) {
+    return 'এতে $selectedCountটি আইটেম আজ বাইকের বর্তমান ওডোমিটারে সার্ভিস করা হিসেবে লগ হবে এবং তাদের বাকি হওয়ার তারিখ রিসেট হবে। আগের ইতিহাস থেকে যাবে।';
+  }
+
+  @override
+  String get reset => 'রিসেট';
+
+  @override
+  String get n1ItemResetServiced =>
+      '1টি আইটেম আজ সার্ভিস করা হিসেবে রিসেট হয়েছে।';
+
+  @override
+  String itemsResetServicedToday(Object count) {
+    return '$countটি আইটেম আজ সার্ভিস করা হিসেবে রিসেট হয়েছে।';
+  }
+
+  @override
+  String get resetServiceLogTitle => 'সার্ভিস লগ রিসেট';
+
+  @override
+  String tickWhatJustServiced(Object displayName) {
+    return '$displayName-এ যা এইমাত্র সার্ভিস করালেন তা টিক দিন';
+  }
+
+  @override
+  String get selectedItemsLoggedAs =>
+      'বেছে নেওয়া আইটেম আজ বর্তমান ওডোমিটারে সার্ভিস করা হিসেবে লগ হবে এবং বাকি হওয়ার তারিখ রিসেট হবে। কিছুই মুছবে না।';
+
+  @override
+  String get noTrackedChecksYet =>
+      'এখনো কোনো চেক ট্র্যাক করা হচ্ছে না। আগে \"কাস্টমাইজ\"-এ গিয়ে কিছু সেট করুন।';
+
+  @override
+  String selectedOfTotal(Object selectedCount, Object remindersCount) {
+    return '$remindersCountটির মধ্যে $selectedCountটি নির্বাচিত';
+  }
+
+  @override
+  String get selectItemsReset => 'রিসেট করতে আইটেম বেছে নিন';
+
+  @override
+  String lastDoneKmAgo(Object kmSinceService) {
+    return 'সর্বশেষ $kmSinceService কিমি আগে করা হয়েছে';
+  }
+
+  @override
+  String get cropBikePhoto => 'বাইকের ছবি ক্রপ করুন';
+
+  @override
+  String get bikeAdded => 'বাইক যোগ হয়েছে।';
+
+  @override
+  String get setServiceIntervals => 'সার্ভিস ইন্টারভাল ঠিক করুন';
+
+  @override
+  String get editBike => 'বাইক সম্পাদনা';
+
+  @override
+  String get addPhoto => 'ছবি যোগ করুন';
+
+  @override
+  String get crop => 'ক্রপ';
+
+  @override
+  String get replace => 'বদলান';
+
+  @override
+  String get odometerReadingKm => 'ওডোমিটার রিডিং (কিমি)';
+
+  @override
+  String get bikeColor => 'বাইকের রং';
+
+  @override
+  String get saveChanges => 'পরিবর্তন সেভ করুন';
+
+  @override
+  String get bikeNotFound => 'বাইক পাওয়া যায়নি';
+
+  @override
+  String archived(Object displayName) {
+    return '$displayName (আর্কাইভ করা)';
+  }
+
+  @override
+  String get discussThisBike => 'এই বাইক নিয়ে আলোচনা';
+
+  @override
+  String get unarchiveBike => 'বাইক আর্কাইভ থেকে ফিরিয়ে আনুন';
+
+  @override
+  String get archiveDeleteBike => 'বাইক আর্কাইভ বা মুছুন';
+
+  @override
+  String get totalDistance => 'মোট দূরত্ব';
+
+  @override
+  String get totalRides => 'মোট রাইড';
+
+  @override
+  String get odometer => 'ওডোমিটার';
+
+  @override
+  String get engine => 'ইঞ্জিন';
+
+  @override
+  String get rideHistory => 'রাইডের ইতিহাস';
+
+  @override
+  String get noRidesYetThis => 'এই বাইকের এখনো কোনো রাইড নেই';
+
+  @override
+  String removeBikeQuestion(Object displayName) {
+    return '$displayName সরাবেন?';
+  }
+
+  @override
+  String get archivingHidesThisBike =>
+      'আর্কাইভ করলে বাইকটি আপনার গ্যারেজ ও বাইক বাছাইয়ের তালিকা থেকে লুকিয়ে যাবে। এর রাইডগুলো আপনার ইতিহাস ও পরিসংখ্যানে থাকবে, আর যেকোনো সময় আর্কাইভ থেকে ফিরিয়ে আনতে পারবেন।';
+
+  @override
+  String get deleteBikeAllIts => 'বাইক ও এর সব রাইড মুছুন';
+
+  @override
+  String get archiveBikeKeepRides => 'বাইক আর্কাইভ করুন (রাইড থাকবে)';
+
+  @override
+  String couldNotArchiveThis(Object e) {
+    return 'বাইকটি আর্কাইভ করা যায়নি: $e';
+  }
+
+  @override
+  String couldNotDeleteThis(Object e) {
+    return 'বাইকটি মুছে ফেলা যায়নি: $e';
+  }
+
+  @override
+  String get bikeBackGarage => 'বাইকটি আপনার গ্যারেজে ফিরে এসেছে';
+
+  @override
+  String couldNotUnarchiveThis(Object e) {
+    return 'বাইকটি আর্কাইভ থেকে ফেরানো যায়নি: $e';
+  }
+
+  @override
+  String get deleteBikeQuestion => 'বাইক ও এর সব রাইড মুছবেন?';
+
+  @override
+  String get usingDefaultServiceIntervals =>
+      'ডিফল্ট সার্ভিস ইন্টারভাল ব্যবহার হচ্ছে';
+
+  @override
+  String get serviceMaintenance => 'সার্ভিস ও মেইনটেন্যান্স';
+
+  @override
+  String nextSummary(Object summary) {
+    return 'পরবর্তী: $summary';
+  }
+
+  @override
+  String get intervals => 'ইন্টারভাল';
+
+  @override
+  String get viewAll => 'সব দেখুন';
+
+  @override
+  String get yourBikesTitle => 'আপনার বাইকগুলো';
+
+  @override
+  String get viewProfile => 'প্রোফাইল দেখুন';
+
+  @override
+  String get myPlaces => 'আমার জায়গা';
+
+  @override
+  String get noBikesYet => 'এখনো কোনো বাইক নেই';
+
+  @override
+  String get addFirstBikeGet => 'শুরু করতে আপনার প্রথম বাইকটি যোগ করুন';
+
+  @override
+  String get setActive => 'সক্রিয় করুন';
+
+  @override
+  String get totalLower => 'মোট';
+
+  @override
+  String get ridesLower => 'রাইড';
+
+  @override
+  String get lastRide => 'সর্বশেষ রাইড';
+
+  @override
+  String archivedBikes(Object bikesCount) {
+    return 'আর্কাইভ করা বাইক ($bikesCount)';
+  }
+
+  @override
+  String ridesAndDistance(Object rideCount, Object totalDistanceM) {
+    return '$rideCountটি রাইড · $totalDistanceM';
+  }
+
+  @override
+  String get unarchive => 'আর্কাইভ থেকে ফেরান';
+
+  @override
+  String get myFollowers => 'আমার ফলোয়াররা';
+
+  @override
+  String get onlyMe => 'শুধু আমি';
+
+  @override
+  String get blockedUsers => 'ব্লক করা ইউজার';
+
+  @override
+  String get noBlockedUsers => 'কোনো ব্লক করা ইউজার নেই';
+
+  @override
+  String get errorLoadingUser => 'ইউজার লোড করতে ত্রুটি';
+
+  @override
+  String get unknownUser => 'অজানা ইউজার';
+
+  @override
+  String get unblock => 'আনব্লক';
+
+  @override
+  String couldNotSaveProfile(Object e) {
+    return 'প্রোফাইল সেভ করা যায়নি: $e';
+  }
+
+  @override
+  String get editProfile => 'প্রোফাইল সম্পাদনা';
+
+  @override
+  String get displayName => 'প্রদর্শিত নাম';
+
+  @override
+  String get nickname => 'ডাকনাম';
+
+  @override
+  String get shownCardsFeed => 'কার্ড ও ফিডে দেখানো হয়';
+
+  @override
+  String get usernameField => 'ইউজারনেম';
+
+  @override
+  String get n320LettersNumbers => '3-20টি অক্ষর, সংখ্যা বা আন্ডারস্কোর';
+
+  @override
+  String get bio => 'বায়ো';
+
+  @override
+  String get whoCanSeeProfile => 'কে আমার প্রোফাইল দেখতে পারবে';
+
+  @override
+  String get everyone => 'সবাই';
+
+  @override
+  String get mutuals => 'পারস্পরিক ফলোয়ার';
+
+  @override
+  String get whoCanSeeBikes => 'কে আমার বাইক দেখতে পারবে';
+
+  @override
+  String get garageProfileSeparateFrom =>
+      'আপনার প্রোফাইলে থাকা গ্যারেজ। প্রোফাইল কে দেখতে পাবে তার থেকে আলাদা।';
+
+  @override
+  String get tellRidersAboutYourself => 'রাইডারদের নিজের সম্পর্কে বলুন';
+
+  @override
+  String get goodBioGetsMore => 'ভালো বায়ো আপনার ফলোয়ার বাড়ায়।';
+
+  @override
+  String get eGFzS =>
+      'যেমন: \"ঢাকার FZ-S রাইডার। সাপ্তাহিক ট্যুরার। কফি আর বাঁক।\"';
+
+  @override
+  String get saveBio => 'বায়ো সেভ করুন';
+
+  @override
+  String get privacySafety => 'গোপনীয়তা ও নিরাপত্তা';
+
+  @override
+  String get manageAccountsHaveBlocked =>
+      'আপনার ব্লক করা অ্যাকাউন্টগুলো পরিচালনা করুন';
+
+  @override
+  String get seeDemoFeatureTour => 'ডেমো ও ফিচার ট্যুর দেখুন';
+
+  @override
+  String get replayInteractiveFeatureGuides =>
+      'ইন্টারঅ্যাক্টিভ ফিচার গাইড ও নিরাপত্তা ওয়াকথ্রু আবার দেখুন';
+
+  @override
+  String get sendBugReport => 'বাগ রিপোর্ট পাঠান';
+
+  @override
+  String get somethingBrokenLetTeam => 'কিছু কাজ করছে না? টিমকে জানান';
+
+  @override
+  String get deleteAccount => 'অ্যাকাউন্ট মুছুন';
+
+  @override
+  String get deleteAccountQuestion => 'অ্যাকাউন্ট মুছবেন?';
+
+  @override
+  String get thisActionIrreversibleAll =>
+      'এই কাজটি ফেরানো যাবে না। আপনার সব রেকর্ড করা রাইড, বাইক প্রোফাইল, পরিসংখ্যান ও ব্যক্তিগত তথ্য চিরতরে মুছে যাবে।';
+
+  @override
+  String get deletePermanently => 'চিরতরে মুছুন';
+
+  @override
+  String get deletingAccount => 'অ্যাকাউন্ট মুছে ফেলা হচ্ছে...';
+
+  @override
+  String errorDeletingAccount(Object e) {
+    return 'অ্যাকাউন্ট মুছতে ত্রুটি: $e';
+  }
+
+  @override
+  String get syncIssues => 'সিঙ্ক সমস্যা';
+
+  @override
+  String get n1UpdateCouldntBe => '1টি আপডেট পাঠানো যায়নি';
+
+  @override
+  String updatesCouldntBeSent(Object count) {
+    return '$countটি আপডেট পাঠানো যায়নি';
+  }
+
+  @override
+  String get rideShare => 'রাইড শেয়ার';
+
+  @override
+  String get endingLiveShare => 'লাইভ শেয়ার বন্ধ করা';
+
+  @override
+  String get maintenanceLog => 'মেইনটেন্যান্স লগ';
+
+  @override
+  String get cloudUpdate => 'ক্লাউড আপডেট';
+
+  @override
+  String get everythingSynced => 'সবকিছু সিঙ্ক হয়েছে';
+
+  @override
+  String get synced => 'সিঙ্ক হয়েছে';
+
+  @override
+  String get couldntSyncYetWell =>
+      'এখনো সিঙ্ক করা যায়নি। আমরা ব্যাকগ্রাউন্ডে চেষ্টা চালিয়ে যাব।';
+
+  @override
+  String get discardThisUpdate => 'এই আপডেট বাদ দেবেন?';
+
+  @override
+  String get itWontBeSent => 'এটি পাঠানো হবে না। এটি ফেরানো যাবে না।';
+
+  @override
+  String get signViewProfile => 'প্রোফাইল দেখতে সাইন ইন করুন';
+
+  @override
+  String get userBlocked => 'ইউজার ব্লক করা হয়েছে';
+
+  @override
+  String get reportUser => 'ইউজার রিপোর্ট করুন';
+
+  @override
+  String get blockUser => 'ইউজার ব্লক করুন';
+
+  @override
+  String get tapEditFinishSetting =>
+      'প্রোফাইল সেটআপ শেষ করতে সম্পাদনায় ট্যাপ করুন';
+
+  @override
+  String get riderNotFound => 'রাইডার পাওয়া যায়নি';
+
+  @override
+  String ridingWithUsSince(Object createdAt) {
+    return '$createdAt থেকে আমাদের সাথে রাইড করছেন';
+  }
+
+  @override
+  String get followersLabel => 'ফলোয়ার';
+
+  @override
+  String get followingLabel => 'ফলো করছেন';
+
+  @override
+  String get message => 'মেসেজ';
+
+  @override
+  String get totalDistanceLower => 'মোট দূরত্ব';
+
+  @override
+  String get ridesLogged => 'রাইড লগ হয়েছে';
+
+  @override
+  String get badges => 'ব্যাজ';
+
+  @override
+  String get noBadgesEarnedYet => 'এখনো কোনো ব্যাজ অর্জন করেননি';
+
+  @override
+  String get myGarageLower => 'আমার গ্যারেজ';
+
+  @override
+  String get garage => 'গ্যারেজ';
+
+  @override
+  String get whoCanSeeBikesChangeUnderEdit =>
+      'কে আমার বাইক দেখতে পারবে — এটি সম্পাদনা থেকে বদলান';
+
+  @override
+  String get thisProfilePrivate => 'এই প্রোফাইলটি ব্যক্তিগত';
+
+  @override
+  String get youreOffline => 'আপনি অফলাইনে আছেন';
+
+  @override
+  String get couldntLoadProfile => 'প্রোফাইল লোড করা যায়নি';
+
+  @override
+  String resetItemsButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি আইটেম রিসেট করুন',
+      one: '1টি আইটেম রিসেট করুন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deleteBikeConfirmBody(int rides, String expected) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rides,
+      locale: localeName,
+      other: '$ridesটি রাইড',
+      one: '1টি রাইড',
+    );
+    return 'এটি $_temp0, সেগুলোর রুট এবং এই বাইকের মেইনটেন্যান্স লগ এই ফোন ও ক্লাউড — দুই জায়গা থেকেই চিরতরে মুছে ফেলবে। নিশ্চিত করতে \"$expected\" টাইপ করুন।';
+  }
+
+  @override
+  String get svcTypeOilChange => 'অয়েল চেঞ্জ';
+
+  @override
+  String get svcTypeAirFilter => 'এয়ার ফিল্টার';
+
+  @override
+  String get svcTypeChain => 'চেইন লুব';
+
+  @override
+  String get svcTypeTire => 'টায়ার চেক';
+
+  @override
+  String get svcTypeRadiatorCoolant => 'রেডিয়েটর / কুল্যান্ট';
+
+  @override
+  String get svcTypeFrontDiscPads => 'সামনের ডিস্ক প্যাড';
+
+  @override
+  String get svcTypeRearDrumPads => 'পেছনের ড্রাম প্যাড';
+
+  @override
+  String get svcTypeBrakeFluid => 'ব্রেক ফ্লুইড';
+
+  @override
+  String get svcTypeSparkPlug => 'স্পার্ক প্লাগ';
+
+  @override
+  String get svcTypeBattery => 'ব্যাটারি';
+
+  @override
+  String get svcTypeValveClearance => 'ভালভ ক্লিয়ারেন্স';
+
+  @override
+  String get svcTypeClutchCable => 'ক্লাচ ক্যাবল';
+
+  @override
+  String get svcTypeSuspension => 'সাসপেনশন';
+
+  @override
+  String get svcTypeOilFilter => 'অয়েল ফিল্টার';
+
+  @override
+  String get svcTypeChainTension => 'চেইন স্ল্যাক ও টেনশন';
+
+  @override
+  String get svcTypeBrakeRotors => 'ব্রেক রোটর / ডিস্ক';
+
+  @override
+  String get svcTypeForkSeals => 'ফর্ক অয়েল ও সিল';
+
+  @override
+  String get svcTypeWheelBearings => 'হুইল বিয়ারিং';
+
+  @override
+  String get svcTypeDriveBelt => 'ড্রাইভ বেল্ট';
+
+  @override
+  String get svcTypeThrottleCables => 'থ্রটল ও ক্যাবল';
+
+  @override
+  String get svcTypeFuel => 'জ্বালানি';
+
+  @override
+  String get svcTypeCustom => 'কাস্টম';
+
+  @override
+  String get svcDescOilChange => 'ইঞ্জিন অয়েল ফেলে নতুন লুব্রিক্যান্ট ভরুন।';
+
+  @override
+  String get svcDescOilFilter =>
+      'ময়লা জমা ঠেকাতে অয়েল ফিল্টার এলিমেন্ট বদলান।';
+
+  @override
+  String get svcDescAirFilter =>
+      'ভালো বাতাস চলাচলের জন্য ইনটেক ফিল্টার পরিষ্কার করুন বা বদলান।';
+
+  @override
+  String get svcDescChain =>
+      'রাস্তার ময়লা পরিষ্কার করে ড্রাইভ চেইনে লুব লাগান।';
+
+  @override
+  String get svcDescChainTension =>
+      'ড্রাইভ চেইনের স্ল্যাক দেখুন ও রিয়ার এক্সেল ঠিকমতো বসান।';
+
+  @override
+  String get svcDescTire =>
+      'টায়ারের প্রেশার, ট্রেড ক্ষয় ও ফাটল পরীক্ষা করুন।';
+
+  @override
+  String get svcDescRadiatorCoolant =>
+      'রেডিয়েটরের কুল্যান্ট ফ্লাশ করে নতুন করে ভরুন।';
+
+  @override
+  String get svcDescFrontDiscPads =>
+      'সামনের ব্রেক প্যাডের ফ্রিকশন ম্যাটেরিয়ালের পুরুত্ব দেখুন।';
+
+  @override
+  String get svcDescRearDrumPads =>
+      'পেছনের ব্রেক প্যাড বা ড্রাম ব্রেক শু পরীক্ষা করুন।';
+
+  @override
+  String get svcDescBrakeFluid =>
+      'হাইড্রোলিক DOT ব্রেক ফ্লুইড ব্লিড করে নতুন ভরুন।';
+
+  @override
+  String get svcDescSparkPlug =>
+      'ইলেক্ট্রোডের গ্যাপ দেখুন বা স্পার্ক প্লাগ বদলান।';
+
+  @override
+  String get svcDescBattery =>
+      'টার্মিনালের ভোল্টেজ, সংযোগ ও চার্জের অবস্থা পরীক্ষা করুন।';
+
+  @override
+  String get svcDescValveClearance =>
+      'ইনটেক / এক্সহস্ট ভালভের ক্লিয়ারেন্স মেপে ঠিক করুন।';
+
+  @override
+  String get svcDescClutchCable =>
+      'লিভারের ফ্রি-প্লে দেখুন ও ক্লাচ ক্যাবলে লুব দিন।';
+
+  @override
+  String get svcDescThrottleCables =>
+      'থ্রটলের প্লে ও স্ন্যাপ-ব্যাক দেখুন এবং ক্যাবলে লুব দিন।';
+
+  @override
+  String get svcDescSuspension =>
+      'পেছনের শক ড্যাম্পিং ও লিঙ্কেজ পিভট বুশিং পরীক্ষা করুন।';
+
+  @override
+  String get svcDescForkSeals =>
+      'সামনের ফর্ক সিলে তেল চুঁইয়ে পড়ছে কিনা দেখুন ও ফর্ক অয়েল বদলান।';
+
+  @override
+  String get svcDescBrakeRotors =>
+      'ব্রেক ডিস্কের পুরুত্ব মাপুন ও বেঁকে গেছে কিনা দেখুন।';
+
+  @override
+  String get svcDescWheelBearings =>
+      'সামনের ও পেছনের হুইল বিয়ারিংয়ে প্লে বা খসখসে ভাব দেখুন।';
+
+  @override
+  String get svcDescDriveBelt =>
+      'বেল্টের ডিফ্লেকশন, দাঁতের অবস্থা ও টেনশন দেখুন।';
+
+  @override
+  String get svcDescFuel =>
+      'জ্বালানি ভরা, ট্যাংকের রেঞ্জ ও জ্বালানির ধরন ট্র্যাক করুন।';
+
+  @override
+  String get svcDescCustom => 'রাইডারের নিজের ঠিক করা মেইনটেন্যান্স চেক।';
+
+  @override
+  String get maintCatEngine => 'ইঞ্জিন ও ফ্লুইড';
+
+  @override
+  String get maintCatDrivetrain => 'ড্রাইভ ও কন্ট্রোল';
+
+  @override
+  String get maintCatBraking => 'ব্রেকিং সিস্টেম';
+
+  @override
+  String get maintCatChassisElectrical => 'চ্যাসিস ও ইলেকট্রিক্যাল';
+
+  @override
+  String serviceOverdueBy(String item, String km) {
+    return '$item · $km কিমি ওভারডিউ';
+  }
+
+  @override
+  String serviceDueIn(String item, String km) {
+    return '$item · আরও $km কিমি পরে বাকি';
+  }
 }

@@ -17,6 +17,7 @@ import '../../../../shared/widgets/brand_model_field.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class AddEditBikeScreen extends ConsumerStatefulWidget {
   final String? bikeId;
@@ -80,7 +81,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final cropped = await ImageCropScreen.open(
       context,
       sourcePath: xfile.path,
-      title: 'Crop bike photo',
+      title: context.l10n.cropBikePhoto,
     );
     if (!mounted) return;
     if (cropped != null) {
@@ -124,7 +125,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final cropped = await ImageCropScreen.open(
       context,
       sourcePath: localSource,
-      title: 'Crop bike photo',
+      title: context.l10n.cropBikePhoto,
     );
     if (cropped == null || !mounted) return;
     setState(() => _imagePath = cropped);
@@ -187,10 +188,10 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
         context.pop();
         if (newBikeId != null) {
           messenger.showSnackBar(SnackBar(
-            content: const Text('Bike added.'),
+            content: Text(context.l10n.bikeAdded),
             duration: const Duration(seconds: 6),
             action: SnackBarAction(
-              label: 'Set service intervals',
+              label: context.l10n.setServiceIntervals,
               onPressed: () => router.push(
                   '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true'),
             ),
@@ -217,7 +218,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Bike' : 'Add Bike'),
+        title: Text(isEdit ? context.l10n.editBike : context.l10n.addBike),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -256,7 +257,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                               Icon(Icons.add_a_photo_outlined,
                                   color: context.palette.textSecondary, size: 28),
                               const SizedBox(height: 6),
-                              Text('Add Photo',
+                              Text(context.l10n.addPhoto,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: context.palette.textSecondary)),
@@ -277,13 +278,13 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     TextButton.icon(
                       onPressed: _cropCurrent,
                       icon: const Icon(Icons.crop, size: 18),
-                      label: const Text('Crop'),
+                      label: Text(context.l10n.crop),
                     ),
                     const SizedBox(width: 8),
                     TextButton.icon(
                       onPressed: _pickImage,
                       icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: const Text('Replace'),
+                      label: Text(context.l10n.replace),
                     ),
                   ],
                 ),
@@ -291,14 +292,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               const SizedBox(height: 24),
               BrandModelAutocompleteField(
                 controller: _brandCtrl,
-                labelText: 'Brand *',
+                labelText: context.l10n.brand,
                 hintText: 'Yamaha',
                 optionsBuilder: (_) => bikeCatalogBrands,
               ),
               const SizedBox(height: 12),
               BrandModelAutocompleteField(
                 controller: _modelCtrl,
-                labelText: 'Model *',
+                labelText: context.l10n.model,
                 hintText: 'MT-15',
                 optionsBuilder: (_) => modelsForBrand(_brandCtrl.text),
               ),
@@ -310,8 +311,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       controller: _yearCtrl,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: context.palette.textPrimary),
-                      decoration: const InputDecoration(
-                          labelText: 'Year', hintText: '2023'),
+                      decoration: InputDecoration(
+                          labelText: context.l10n.year, hintText: '2023'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -320,8 +321,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       controller: _ccCtrl,
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: context.palette.textPrimary),
-                      decoration: const InputDecoration(
-                          labelText: 'Engine CC', hintText: '155'),
+                      decoration: InputDecoration(
+                          labelText: context.l10n.engineCc, hintText: '155'),
                     ),
                   ),
                 ],
@@ -332,11 +333,11 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                    labelText: 'Odometer reading (km)', hintText: '12000'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.odometerReadingKm, hintText: '12000'),
               ),
               const SizedBox(height: 20),
-              Text('Bike color',
+              Text(context.l10n.bikeColor,
                   style:
                       TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
@@ -353,7 +354,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : Text(isEdit ? 'Save Changes' : 'Add Bike'),
+                    : Text(isEdit ? context.l10n.saveChanges : context.l10n.addBike),
               ),
             ],
           ),

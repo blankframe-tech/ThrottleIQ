@@ -14,6 +14,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
 import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// The Profile tab's root screen (route `/home/profile`).
 ///
@@ -49,7 +50,7 @@ class GarageScreen extends ConsumerWidget {
                   IconButton(
                     onPressed: () => context.push('/settings'),
                     icon: const Icon(Icons.settings_outlined),
-                    tooltip: 'Settings',
+                    tooltip: context.l10n.settingsTitle,
                   ),
                 ],
               ),
@@ -57,7 +58,7 @@ class GarageScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-              child: Text('Your Bikes', style: display(context, 22)),
+              child: Text(context.l10n.yourBikesTitle, style: display(context, 22)),
             ),
             Expanded(
               child: bikesAsync.when(
@@ -81,7 +82,7 @@ class GarageScreen extends ConsumerWidget {
                         ? _BikeCard(bike: bikes[i])
                         : i == bikes.length
                             ? DashedAddButton(
-                                label: 'Add a bike',
+                                label: context.l10n.addABike,
                                 onTap: () => context.go('/home/profile/add'),
                               )
                             : _ArchivedBikesSection(bikes: archived),
@@ -127,7 +128,7 @@ class _ProfileSummary extends ConsumerWidget {
                 Text(name,
                     style: display(context, 18, letterSpacing: 0),
                     overflow: TextOverflow.ellipsis),
-                Text('View profile',
+                Text(context.l10n.viewProfile,
                     style:
                         TextStyle(fontSize: 12, color: context.palette.textSecondary)),
               ],
@@ -158,19 +159,19 @@ class _ProfileSummary extends ConsumerWidget {
           children: [
             ListTile(
               leading: Icon(Icons.person_outline, color: sheetContext.palette.primary),
-              title: const Text('Profile'),
+              title: Text(sheetContext.l10n.navProfileLabel),
               // The read-only profile view, not the edit form — editing is an
               // action inside it now.
               onTap: () => Navigator.pop(sheetContext, '/profile'),
             ),
             ListTile(
               leading: Icon(Icons.place_outlined, color: sheetContext.palette.primary),
-              title: const Text('My Places'),
+              title: Text(sheetContext.l10n.myPlaces),
               onTap: () => Navigator.pop(sheetContext, '/places/mine'),
             ),
             ListTile(
               leading: Icon(Icons.ios_share, color: sheetContext.palette.primary),
-              title: const Text('My Shared Rides'),
+              title: Text(sheetContext.l10n.mySharedRides),
               onTap: () => Navigator.pop(sheetContext, '/rides/mine'),
             ),
           ],
@@ -194,13 +195,13 @@ class _EmptyGarage extends StatelessWidget {
           children: [
             Icon(Icons.garage_outlined, size: 56, color: context.palette.textTertiary),
             const SizedBox(height: 16),
-            Text('No bikes yet', style: display(context, 20)),
+            Text(context.l10n.noBikesYet, style: display(context, 20)),
             const SizedBox(height: 6),
-            Text('Add your first bike to get started',
+            Text(context.l10n.addFirstBikeGet,
                 style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
             const SizedBox(height: 20),
             DashedAddButton(
-              label: 'Add a bike',
+              label: context.l10n.addABike,
               onTap: () => context.go('/home/profile/add'),
             ),
           ],
@@ -261,7 +262,7 @@ class _BikeCard extends ConsumerWidget {
                             foregroundColor: context.palette.textSecondary,
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(60, 32)),
-                        child: const Text('Set active', style: TextStyle(fontSize: 12)),
+                        child: Text(context.l10n.setActive, style: const TextStyle(fontSize: 12)),
                       ),
                   ],
                 ),
@@ -274,19 +275,19 @@ class _BikeCard extends ConsumerWidget {
                     Expanded(
                       child: StatCell(
                         value: SpeedFormatter.distanceKm(bike.totalDistanceM),
-                        label: 'total',
+                        label: context.l10n.totalLower,
                         valueSize: 18,
                       ),
                     ),
                     Expanded(
-                      child: StatCell(value: '${bike.rideCount}', label: 'rides', valueSize: 18),
+                      child: StatCell(value: '${bike.rideCount}', label: context.l10n.ridesLower, valueSize: 18),
                     ),
                     Expanded(
                       child: StatCell(
                         value: bike.lastRideAt != null
                             ? '${DateTime.now().difference(bike.lastRideAt!).inDays}d'
                             : '—',
-                        label: 'last ride',
+                        label: context.l10n.lastRide,
                         valueSize: 18,
                       ),
                     ),
@@ -310,7 +311,7 @@ class _BikeCard extends ConsumerWidget {
                     foregroundColor: context.palette.primary,
                   ),
                   icon: const Icon(Icons.build_outlined, size: 18),
-                  label: Text('Maintenance',
+                  label: Text(context.l10n.maintenance,
                       style: display(context, 14,
                           letterSpacing: 0, color: context.palette.primary)),
                 ),
@@ -341,21 +342,20 @@ class _ArchivedBikesSection extends ConsumerWidget {
         child: ExpansionTile(
           key: const Key('archived-bikes-section'),
           leading: Icon(Icons.inventory_2_outlined, color: context.palette.textSecondary),
-          title: Text('Archived bikes (${bikes.length})',
+          title: Text(context.l10n.archivedBikes(bikes.length),
               style: display(context, 16, letterSpacing: 0)),
           children: [
             for (final bike in bikes)
               ListTile(
                 title: Text(bike.displayName),
                 subtitle: Text(
-                    '${bike.rideCount} rides · '
-                    '${SpeedFormatter.distanceKm(bike.totalDistanceM)}',
+                    context.l10n.ridesAndDistance(bike.rideCount, SpeedFormatter.distanceKm(bike.totalDistanceM)),
                     style: TextStyle(color: context.palette.textSecondary)),
                 onTap: () => context.go('/home/profile/${bike.id}'),
                 trailing: TextButton(
                   onPressed: () =>
                       ref.read(garageProvider.notifier).unarchiveBike(bike.id),
-                  child: const Text('Unarchive'),
+                  child: Text(context.l10n.unarchive),
                 ),
               ),
           ],

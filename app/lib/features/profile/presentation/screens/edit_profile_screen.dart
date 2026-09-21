@@ -12,6 +12,7 @@ import '../../data/repositories/profile_repository.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Edit the signed-in rider's public profile: display name, nickname, bio,
 /// @username, and avatar. Reached from the garage header's user menu.
@@ -124,7 +125,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save profile: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSaveProfile(e))),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -138,7 +139,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: const Text('Edit profile')),
+      appBar: AppBar(title: Text(context.l10n.editProfile)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Form(
@@ -181,22 +182,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               TextFormField(
                 controller: _displayNameCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(labelText: 'Display name'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                decoration: InputDecoration(labelText: context.l10n.displayName),
+                validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredField : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nicknameCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: const InputDecoration(
-                    labelText: 'Nickname', hintText: 'Shown on cards & feed'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.nickname, hintText: context.l10n.shownCardsFeed),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _usernameCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Username',
+                  labelText: context.l10n.usernameField,
                   hintText: 'yourhandle',
                   prefixText: '@',
                   errorText: _usernameError,
@@ -206,7 +207,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   if (v == null || v.trim().isEmpty) return null;
                   final handle = v.trim();
                   if (!RegExp(r'^[a-zA-Z0-9_]{3,20}$').hasMatch(handle)) {
-                    return '3-20 letters, numbers or underscore';
+                    return context.l10n.n320LettersNumbers;
                   }
                   return null;
                 },
@@ -216,47 +217,47 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 controller: _bioCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Bio'),
+                decoration: InputDecoration(labelText: context.l10n.bio),
               ),
               const SizedBox(height: 20),
-              Text('Who can see my profile',
+              Text(context.l10n.whoCanSeeProfile,
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               const SizedBox(height: 8),
               SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'public', label: Text('Everyone'), icon: Icon(Icons.public, size: 16)),
+                segments: [
+                  ButtonSegment(value: 'public', label: Text(context.l10n.everyone), icon: const Icon(Icons.public, size: 16)),
                   ButtonSegment(
-                      value: 'mutual', label: Text('Mutuals'), icon: Icon(Icons.people, size: 16)),
-                  ButtonSegment(value: 'private', label: Text('Only me'), icon: Icon(Icons.lock, size: 16)),
+                      value: 'mutual', label: Text(context.l10n.mutuals), icon: const Icon(Icons.people, size: 16)),
+                  ButtonSegment(value: 'private', label: Text(context.l10n.onlyMe), icon: const Icon(Icons.lock, size: 16)),
                 ],
                 selected: {_visibility},
                 onSelectionChanged: (s) => setState(() => _visibility = s.first),
               ),
               const SizedBox(height: 20),
-              Text('Who can see my bikes',
+              Text(context.l10n.whoCanSeeBikes,
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               const SizedBox(height: 4),
-              Text('Your garage on your profile. Separate from who can see the profile itself.',
+              Text(context.l10n.garageProfileSeparateFrom,
                   style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
               const SizedBox(height: 8),
               // 'followers' here, not 'mutual' as above: hiding bikes is about
               // who follows YOU, so a one-way follower qualifies.
               SegmentedButton<String>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                       value: kBikesVisibilityPublic,
-                      label: Text('Everyone'),
-                      icon: Icon(Icons.public, size: 16)),
+                      label: Text(context.l10n.everyone),
+                      icon: const Icon(Icons.public, size: 16)),
                   ButtonSegment(
                       value: kBikesVisibilityFollowers,
-                      label: Text('Followers'),
-                      icon: Icon(Icons.group, size: 16)),
+                      label: Text(context.l10n.audienceFollowers),
+                      icon: const Icon(Icons.group, size: 16)),
                   ButtonSegment(
                       value: kBikesVisibilityPrivate,
-                      label: Text('Only me'),
-                      icon: Icon(Icons.lock, size: 16)),
+                      label: Text(context.l10n.onlyMe),
+                      icon: const Icon(Icons.lock, size: 16)),
                 ],
                 selected: {_bikesVisibility},
                 onSelectionChanged: (s) => setState(() => _bikesVisibility = s.first),
@@ -270,7 +271,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Save Changes'),
+                    : Text(context.l10n.saveChanges),
               ),
             ],
           ),
@@ -364,7 +365,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Tell riders about yourself',
+                      context.l10n.tellRidersAboutYourself,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -373,7 +374,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'A good bio gets you more followers.',
+                      context.l10n.goodBioGetsMore,
                       style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
@@ -392,7 +393,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
             maxLength: 160,
             style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
-              hintText: 'e.g. "FZ-S rider from Dhaka. Weekend tourer. Coffee & corners."',
+              hintText: context.l10n.eGFzS,
               hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 13),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -417,7 +418,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Skip', style: TextStyle(color: context.palette.textTertiary)),
+                  child: Text(context.l10n.skip, style: TextStyle(color: context.palette.textTertiary)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -434,7 +435,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                           width: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Save bio'),
+                      : Text(context.l10n.saveBio),
                 ),
               ),
             ],
