@@ -1189,19 +1189,23 @@ service cloud.firestore {
         function ride() {
           return get(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
         }
+        function writeRide() {
+          let doc = get(/databases/$(database)/documents/groupRides/$(groupRideId));
+          return doc != null ? doc.data : getAfter(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
+        }
         allow read: if request.auth != null && (
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
           request.auth.uid in ride().get('invitedIds', []));
         allow write: if request.auth != null && (
-          request.auth.uid == ride().creatorId ||
+          request.auth.uid == writeRide().creatorId ||
           // Anyone else writes ONLY their own entry, and only while on the
           // ride or holding an open invitation. An accepting invitee is still
           // in invitedIds at the instant they write: rules evaluate against
           // the committed document, not the pending transaction.
           (request.auth.uid == memberUid && (
-            request.auth.uid in ride().get('memberIds', []) ||
-            request.auth.uid in ride().get('invitedIds', []) ||
+            request.auth.uid in writeRide().get('memberIds', []) ||
+            request.auth.uid in writeRide().get('invitedIds', []) ||
             // Joining via code (joinByCode): the sibling write to memberIds
             // on the parent (clause 4 above) is validated independently and
             // hasn't committed yet when this rule evaluates `ride()`, so it
@@ -1212,7 +1216,7 @@ service cloud.firestore {
             // memberIds — cosmetic only, since every real privilege
             // (locations, voice notes) is gated on memberIds/invitedIds on
             // the parent, never on this subcollection's mere existence.
-            ride().status == 'active')));
+            writeRide().status == 'active')));
       }
 
       // Invitation markers, one per invited rider at `invitations/{uid}`.
