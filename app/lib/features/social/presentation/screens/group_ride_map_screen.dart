@@ -23,6 +23,7 @@ import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
+import '../widgets/share_group_ride_code_sheet.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -597,6 +598,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Widget build(BuildContext context) {
     final rideAsync = ref.watch(groupRideProvider(widget.groupRideId));
     final rosterAsync = ref.watch(groupRideMembersProvider(widget.groupRideId));
+    // Only for the AppBar's share action below — the body still switches on
+    // rideAsync directly so loading/error states render as before.
+    final rideForActions = rideAsync.valueOrNull;
     final myUid = ref.watch(currentUserProvider)?.uid;
 
     // Side effect only — the roster/map above never renders voice notes
@@ -616,6 +620,18 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       appBar: AppBar(
         title: Text(context.l10n.groupRide),
         actions: [
+          if (rideForActions != null &&
+              rideForActions.status == GroupRideStatus.active &&
+              rideForActions.joinCode.isNotEmpty)
+            IconButton(
+              tooltip: context.l10n.shareRideCodeButtonTooltip,
+              onPressed: () => ShareGroupRideCodeSheet.show(
+                context,
+                code: rideForActions.joinCode,
+                rideName: rideForActions.name,
+              ),
+              icon: const Icon(Icons.ios_share),
+            ),
           TextButton(
             onPressed: _leaving ? null : _leave,
             child: Text(context.l10n.leave, style: TextStyle(color: context.palette.danger)),

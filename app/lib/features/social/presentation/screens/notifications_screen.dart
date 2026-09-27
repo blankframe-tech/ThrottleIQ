@@ -100,6 +100,8 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
         return '${notification.fromName} started following you';
       case NotificationType.groupRideInvite:
         return '${notification.fromName} invited you to ride together';
+      case NotificationType.groupRideJoined:
+        return '${notification.fromName} joined your ride';
     }
   }
 
@@ -140,12 +142,35 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
     }
     if (!mounted) return;
     setState(() => _accepting = false);
+
+    // Best-effort: tells the inviter their friend actually showed up, same
+    // "written from the joining rider's device" model as joining by code
+    // (join_group_ride_by_code_sheet.dart). notifyGroupRideInvite's `fromUid`
+    // is always the ride's creator — inviteUsers is creator-only — so the
+    // invite notification we're accepting already tells us who to notify back.
+    try {
+      await ref.read(notificationRepositoryProvider).notifyGroupRideJoined(
+            toUid: notification.fromUid,
+            fromUid: user.uid,
+            fromName: (user.displayName ?? '').trim().isEmpty
+                ? 'Rider'
+                : user.displayName!.trim(),
+            groupRideId: groupRideId,
+            fromPhotoUrl: user.photoURL,
+          );
+    } catch (_) {/* creator just won't find out until they open the ride */}
+
+    if (!mounted) return;
     context.push('/group-ride/$groupRideId');
   }
 
   void _onTap() {
     if (notification.isActionableGroupRideInvite) {
       _acceptGroupRideInvite();
+      return;
+    }
+    if (notification.isViewableGroupRideJoined) {
+      context.push('/group-ride/${notification.groupRideId}');
       return;
     }
     context.push('/profile/${notification.fromUid}');
@@ -180,7 +205,9 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                     Text(
                         notification.isActionableGroupRideInvite
                             ? context.l10n.tapJoin(_relativeTime())
-                            : _relativeTime(),
+                            : notification.isViewableGroupRideJoined
+                                ? context.l10n.tapView(_relativeTime())
+                                : _relativeTime(),
                         style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                   ],
                 ),
@@ -192,7 +219,8 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: context.palette.primary),
                 )
-              else if (notification.isActionableGroupRideInvite)
+              else if (notification.isActionableGroupRideInvite ||
+                  notification.isViewableGroupRideJoined)
                 Icon(Icons.groups_outlined, size: 20, color: context.palette.primary),
               if (!notification.read)
                 Container(

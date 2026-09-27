@@ -1,10 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/group_ride_repository.dart';
 import '../../domain/entities/group_ride_entity.dart';
 
 final groupRideRepositoryProvider =
     Provider<GroupRideRepository>((ref) => GroupRideRepository());
+
+/// The signed-in rider's active group rides — the Social feed's "Riding Now"
+/// strip. Empty (never an error state worth showing) when signed out.
+///
+/// `autoDispose`: only the Social feed watches this, and it must not keep
+/// billing a live query for a screen nobody has open.
+final activeGroupRidesForUserProvider =
+    StreamProvider.autoDispose<List<GroupRideEntity>>((ref) {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return Stream.value(const []);
+  return ref
+      .watch(groupRideRepositoryProvider)
+      .watchActiveGroupRidesForUser(user.uid);
+});
 
 /// Live view of one group ride document — name, status, membership arrays.
 ///

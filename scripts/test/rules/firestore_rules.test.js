@@ -38,6 +38,8 @@ const {
   updateDoc,
   deleteDoc,
   collection,
+  query,
+  where,
   increment,
   runTransaction,
   writeBatch,
@@ -509,6 +511,33 @@ test('a valid groupRideInvite notification with a groupRideId is allowed', async
       fromName: 'Mallory',
       fromPhotoUrl: '',
       groupRideId: 'ride-123',
+      read: false,
+    })
+  );
+});
+
+test('a valid groupRideJoined notification with a groupRideId is allowed', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(notificationRef(db), {
+      type: 'groupRideJoined',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: '',
+      groupRideId: 'ride-123',
+      read: false,
+    })
+  );
+});
+
+test('a groupRideJoined notification with no groupRideId is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(notificationRef(db), {
+      type: 'groupRideJoined',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: '',
       read: false,
     })
   );
@@ -989,6 +1018,36 @@ test('a rider with no relationship to an ACTIVE ride can still get() it by id', 
   // a join code, before the rider has any membership relationship to it.
   const db = dbFor(STRANGER);
   await assertSucceeds(getDoc(doc(db, 'groupRides', GROUP_RIDE_ID)));
+});
+
+test('a member can list active group rides filtered to their own memberIds', async () => {
+  // The Social feed's "Riding Now" strip: watchActiveGroupRidesForUser.
+  const db = dbFor(ALICE);
+  const q = query(
+    collection(db, 'groupRides'),
+    where('memberIds', 'array-contains', ALICE),
+    where('status', '==', 'active')
+  );
+  const snap = await assertSucceeds(getDocs(q));
+  assert.equal(snap.size, 1);
+  assert.equal(snap.docs[0].id, GROUP_RIDE_ID);
+});
+
+test('a rider cannot list active group rides by someone else\'s memberIds', async () => {
+  // Mallory is merely invited, not a member — she can get() the ride directly
+  // (it's active) but may not query the collection filtered to Alice's uid.
+  const db = dbFor(MALLORY);
+  const q = query(
+    collection(db, 'groupRides'),
+    where('memberIds', 'array-contains', ALICE),
+    where('status', '==', 'active')
+  );
+  await assertFails(getDocs(q));
+});
+
+test('an unfiltered list of group rides is still denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(getDocs(collection(db, 'groupRides')));
 });
 
 test('a stranger cannot get() a ride that is not active', async () => {

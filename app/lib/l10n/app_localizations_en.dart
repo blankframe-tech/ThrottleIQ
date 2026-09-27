@@ -433,6 +433,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t join that ride. Check the code and try again.';
 
   @override
+  String get shareRideCodeButtonTooltip => 'Share ride code';
+
+  @override
+  String get shareRideCodeTitle => 'Share this ride\'s code';
+
+  @override
+  String get shareRideCodeSubtitle =>
+      'Anyone with this code can join while the ride is active.';
+
+  @override
+  String get shareRideCodeCopyAction => 'Copy code';
+
+  @override
+  String get shareRideCodeShareAction => 'Share';
+
+  @override
+  String get shareRideCodeCopied => 'Code copied to clipboard';
+
+  @override
+  String shareRideCodeMessage(Object rideName, Object code) {
+    return 'Join my ThrottleIQ ride \"$rideName\" — use code $code to hop in!';
+  }
+
+  @override
   String get safeQrTitle => 'SafeQR';
 
   @override
@@ -1495,6 +1519,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String tapView(Object relativeTime) {
+    return '$relativeTime · tap to view';
+  }
+
+  @override
   String get anyoneThrottleiq => 'Anyone on ThrottleIQ';
 
   @override
@@ -1632,6 +1661,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forums => 'Forums';
+
+  @override
+  String get peopleTabLabel => 'People';
+
+  @override
+  String get ridingNowSectionTitle => 'RIDING NOW';
+
+  @override
+  String get searchRidersHint => 'Search riders by name or @username';
+
+  @override
+  String get notFollowingAnyoneYet =>
+      'You\'re not following anyone yet. Search above to find riders.';
 
   @override
   String nothingFoundTryUsername(Object query) {

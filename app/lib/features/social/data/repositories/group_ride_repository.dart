@@ -29,6 +29,23 @@ class GroupRideJoinException implements Exception {
   String toString() => message;
 }
 
+/// What [GroupRideRepository.joinByCode] hands back on success.
+///
+/// Carries [creatorId] alongside the [groupRideId] the caller already needed
+/// to navigate, so the join sheet can fire
+/// `NotificationRepository.notifyGroupRideJoined` at the ride's creator
+/// without a second read — [joinByCode] already has the ride entity in hand
+/// at the point it succeeds.
+class GroupRideJoinResult {
+  final String groupRideId;
+  final String creatorId;
+
+  const GroupRideJoinResult({
+    required this.groupRideId,
+    required this.creatorId,
+  });
+}
+
 /// One rider picked in the "Ride with friends" friend picker, carried into
 /// [GroupRideRepository.createGroupRide] so their name/avatar are written to
 /// their member document as a *pending* entry straight away. Without this the
@@ -191,6 +208,26 @@ class GroupRideRepository {
     });
   }
 
+  /// Live view of every **active** group ride the signed-in rider currently
+  /// belongs to — what powers the Social feed's "Riding Now" strip.
+  ///
+  /// `memberIds` array-contains [uid] is the same field `firestore.rules`
+  /// already checks per-document for `get`/roster access; the `list` rule for
+  /// this collection was extended to allow exactly this shape (array-contains
+  /// on the caller's own uid, `status == 'active'`), never an unfiltered
+  /// query — see the rules comment on `groupRides`' `allow list`.
+  Stream<List<GroupRideEntity>> watchActiveGroupRidesForUser(String uid) {
+    return _firestore
+        .collection('groupRides')
+        .where('memberIds', arrayContains: uid)
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) =>
+                GroupRideModel.fromFirestore(doc.data(), doc.id).toEntity())
+            .toList());
+  }
+
   /// Gets a group ride by ID, roster included.
   Future<GroupRideEntity?> getGroupRide(String groupRideId) async {
     final doc = await _rideRef(groupRideId).get();
@@ -239,7 +276,7 @@ class GroupRideRepository {
   /// refusal (unknown code, ride not active, ride full, already joined)
   /// rather than a generic failure, since these are all real, distinguishable
   /// outcomes worth telling apart on the confirm screen.
-  Future<String> joinByCode({
+  Future<GroupRideJoinResult> joinByCode({
     required String code,
     required String userId,
     required String userName,
@@ -255,7 +292,7 @@ class GroupRideRepository {
           GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
     }
     if (ride.memberIds.contains(userId)) {
-      return ride.id;
+      return GroupRideJoinResult(groupRideId: ride.id, creatorId: ride.creatorId);
     }
     if (ride.memberIds.length >= ride.maxParticipants) {
       throw const GroupRideJoinException(
@@ -295,7 +332,7 @@ class GroupRideRepository {
       );
     });
 
-    return ride.id;
+    return GroupRideJoinResult(groupRideId: ride.id, creatorId: ride.creatorId);
   }
 
   /// Gets upcoming group rides.

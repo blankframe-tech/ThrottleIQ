@@ -1119,3 +1119,17 @@ groupRideTooManyFriends
 groupRidePickAtLeastOne
 groupRidePickAtLeastMany
 usernameRuleError
+# batch: group-ride-sharing
+shareRideCodeButtonTooltip
+shareRideCodeTitle
+shareRideCodeSubtitle
+shareRideCodeCopyAction
+shareRideCodeShareAction
+shareRideCodeCopied
+shareRideCodeMessage
+tapView
+# batch: social-redesign
+peopleTabLabel
+ridingNowSectionTitle
+searchRidersHint
+notFollowingAnyoneYet

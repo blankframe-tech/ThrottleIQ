@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/group_ride_repository.dart';
 import '../../domain/utilities/group_ride_join_code.dart';
 import '../providers/group_ride_providers.dart';
+import '../providers/notification_providers.dart';
 
 /// Modal sheet for the code half of "Ride with friends" — the door in for a
 /// rider nobody has invited yet, e.g. someone met at a fuel stop mid-ride.
@@ -62,18 +63,32 @@ class _JoinGroupRideByCodeSheetState
       _error = null;
     });
 
+    final userName = (user.displayName ?? '').trim().isEmpty
+        ? 'Rider'
+        : user.displayName!.trim();
+
     try {
-      final groupRideId =
-          await ref.read(groupRideRepositoryProvider).joinByCode(
-                code: code,
-                userId: user.uid,
-                userName: (user.displayName ?? '').trim().isEmpty
-                    ? 'Rider'
-                    : user.displayName!.trim(),
-                userPhotoUrl: user.photoURL ?? '',
-              );
+      final result = await ref.read(groupRideRepositoryProvider).joinByCode(
+            code: code,
+            userId: user.uid,
+            userName: userName,
+            userPhotoUrl: user.photoURL ?? '',
+          );
       if (!mounted) return;
-      Navigator.of(context).pop(groupRideId);
+      // Best-effort, same reasoning as ride_mode_selector.dart's invite
+      // notifications: a failed write here must not turn a successful join
+      // into a failure shown to the joining rider.
+      try {
+        await ref.read(notificationRepositoryProvider).notifyGroupRideJoined(
+              toUid: result.creatorId,
+              fromUid: user.uid,
+              fromName: userName,
+              groupRideId: result.groupRideId,
+              fromPhotoUrl: user.photoURL,
+            );
+      } catch (_) {/* creator just won't find out until they open the ride */}
+      if (!mounted) return;
+      Navigator.of(context).pop(result.groupRideId);
     } on GroupRideJoinException catch (e) {
       if (!mounted) return;
       setState(() {

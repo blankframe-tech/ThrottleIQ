@@ -872,6 +872,48 @@ abstract class AppLocalizations {
   /// **'Couldn\'t join that ride. Check the code and try again.'**
   String get joinRideGenericError;
 
+  /// Tooltip on the AppBar icon button that opens the share-ride-code sheet on the group ride map screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share ride code'**
+  String get shareRideCodeButtonTooltip;
+
+  /// Title of the sheet showing a group ride's join code back to a member.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this ride\'s code'**
+  String get shareRideCodeTitle;
+
+  /// Subtitle explaining what the join code does, in the share-ride-code sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with this code can join while the ride is active.'**
+  String get shareRideCodeSubtitle;
+
+  /// Button that copies the join code to the clipboard, in the share-ride-code sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get shareRideCodeCopyAction;
+
+  /// Button that opens the system share sheet with the join code, in the share-ride-code sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareRideCodeShareAction;
+
+  /// Snackbar shown after tapping Copy code in the share-ride-code sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied to clipboard'**
+  String get shareRideCodeCopied;
+
+  /// Text handed to the system share sheet when sharing a group ride's join code.
+  ///
+  /// In en, this message translates to:
+  /// **'Join my ThrottleIQ ride \"{rideName}\" — use code {code} to hop in!'**
+  String shareRideCodeMessage(Object rideName, Object code);
+
   /// Title of the SafeQR screen and its entry point in Settings.
   ///
   /// In en, this message translates to:
@@ -2774,6 +2816,12 @@ abstract class AppLocalizations {
   /// **'{relativeTime} · tap to join'**
   String tapJoin(Object relativeTime);
 
+  /// Subtitle on a 'so-and-so joined your ride' notification row in notifications_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{relativeTime} · tap to view'**
+  String tapView(Object relativeTime);
+
   /// Text in ride_share_screen.
   ///
   /// In en, this message translates to:
@@ -3013,6 +3061,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Forums'**
   String get forums;
+
+  /// Second tab label on the Social screen, alongside Rides and Forums.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get peopleTabLabel;
+
+  /// Header above the Social feed's live group-ride strip, shown only while the signed-in rider has at least one active group ride.
+  ///
+  /// In en, this message translates to:
+  /// **'RIDING NOW'**
+  String get ridingNowSectionTitle;
+
+  /// HintText on the People tab's rider-search field in social_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Search riders by name or @username'**
+  String get searchRidersHint;
+
+  /// Empty state on the People tab's Following list when the signed-in rider follows nobody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not following anyone yet. Search above to find riders.'**
+  String get notFollowingAnyoneYet;
 
   /// Text in social_screen.
   ///

@@ -432,6 +432,30 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই রাইডে যোগ দেওয়া যায়নি। কোডটি পরীক্ষা করে আবার চেষ্টা করুন।';
 
   @override
+  String get shareRideCodeButtonTooltip => 'রাইড কোড শেয়ার করুন';
+
+  @override
+  String get shareRideCodeTitle => 'এই রাইডের কোড শেয়ার করুন';
+
+  @override
+  String get shareRideCodeSubtitle =>
+      'রাইড সক্রিয় থাকা অবস্থায় এই কোড দিয়ে যে কেউ যোগ দিতে পারবে।';
+
+  @override
+  String get shareRideCodeCopyAction => 'কোড কপি করুন';
+
+  @override
+  String get shareRideCodeShareAction => 'শেয়ার করুন';
+
+  @override
+  String get shareRideCodeCopied => 'কোড ক্লিপবোর্ডে কপি হয়েছে';
+
+  @override
+  String shareRideCodeMessage(Object rideName, Object code) {
+    return 'আমার ThrottleIQ রাইড \"$rideName\"-এ যোগ দিন — যোগ দিতে কোড $code ব্যবহার করুন!';
+  }
+
+  @override
   String get safeQrTitle => 'SafeQR';
 
   @override
@@ -1500,6 +1524,11 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String tapView(Object relativeTime) {
+    return '$relativeTime · দেখতে ট্যাপ করুন';
+  }
+
+  @override
   String get anyoneThrottleiq => 'ThrottleIQ-র যে কেউ';
 
   @override
@@ -1637,6 +1666,19 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get forums => 'ফোরাম';
+
+  @override
+  String get peopleTabLabel => 'মানুষ';
+
+  @override
+  String get ridingNowSectionTitle => 'এখন রাইডে আছেন';
+
+  @override
+  String get searchRidersHint => 'নাম বা @ইউজারনেম দিয়ে রাইডার খুঁজুন';
+
+  @override
+  String get notFollowingAnyoneYet =>
+      'আপনি এখনো কাউকে ফলো করছেন না। রাইডার খুঁজতে উপরে সার্চ করুন।';
 
   @override
   String nothingFoundTryUsername(Object query) {

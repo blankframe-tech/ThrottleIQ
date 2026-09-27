@@ -6,7 +6,9 @@ _Last updated: 2026-09-21 (evening) · Branch: `main`_
 
 Re-run on `main` (in sync with `origin/main`, nothing on any unmerged branch that matters):
 `flutter analyze` **zero issues**, `flutter test` **1298/1298**, `functions/` `npm run build`
-silent, rules emulator **114/114**. The release **APK builds** (84.7 MB) with App Check and
+silent, rules emulator **119/119** (was 116/116 — 2026-09-27 added 3 tests for the `groupRides`
+`list` rule extension the Social redesign's "Riding Now" strip needed, see features.md §7).
+The release **APK builds** (84.7 MB) with App Check and
 analytics in it; the release **AAB** builds too (82.8 MB). Neither is published. One warning
 to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PLAN.md` §8).
 
@@ -881,6 +883,34 @@ These exist in code/config but have never been exercised against the real
 backend or a real device. **Treat each as unproven until tested.** This is
 the actual pre-launch QA punch list — ordered roughly by risk.
 
+- [ ] **Group ride code sharing + "joined" notification (2026-09-27)** —
+  new share sheet on the group ride map (`ShareGroupRideCodeSheet`) and a new
+  `groupRideJoined` in-app notification fired when a rider joins by code or
+  accepts an invite (see `features.md` §7b). `firestore.rules`' notification
+  allowlist was extended, passes 116/116 against the local emulator, and
+  ✅ **was deployed to production `throttleiqfb` 2026-09-27** (`firebase
+  deploy --only firestore:rules`, released cleanly). Still needs a real-device
+  check: share a ride's code from the AppBar icon, copy it, join from a
+  second account, confirm the creator gets a notification that opens the ride.
+- [ ] **Social screen redesign, done properly (2026-09-27)** — a same-day
+  earlier pass at `ANTIGRAVITY_GRILL/new_task`'s Rides/People/Forums mock was
+  left uncommitted with fake hardcoded data (see `features.md` §7 for exactly
+  what). Replaced with real wiring: AppBar search delegate, a real People tab
+  (rider search + Following list), and a real "Riding Now" strip backed by a
+  new `groupRides` query (`memberIds array-contains` self, `status ==
+  active`). `firestore.rules`' `groupRides` `list` rule was extended for this
+  query — passes 119/119 against the local emulator.
+  ⚠️ **This `groupRides` `list` rule change is NOT yet deployed to production
+  `throttleiqfb`** (separate from the `groupRideJoined` notification-type
+  change above, which the entry above says was) — the agent session that made
+  it had its own `firebase deploy --only firestore:rules` blocked by the
+  auto-mode classifier as a production-affecting action requiring a human's
+  own approval. Run it by hand before relying on "Riding Now" against prod:
+  until deployed, the strip's query is permission-denied against production
+  and the strip will silently show nothing. Once deployed, real-device check:
+  open Social, confirm the People tab's search and Following list work, and
+  confirm "Riding Now" shows a card while a group ride you're on is active
+  (and shows nothing when you have none).
 - [ ] 🔴 **§69 device checks, now that rules/hosting are live (2026-09-19).**
   Rules and hosting shipped — see "Deploys shipped same day" at the top.
   **Functions did not** (Blaze-blocked), so skip the account-deletion check

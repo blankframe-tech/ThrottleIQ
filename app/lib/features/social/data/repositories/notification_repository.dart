@@ -68,6 +68,34 @@ class NotificationRepository {
     });
   }
 
+  /// Writes a "so-and-so joined your ride" notification into [toUid]'s
+  /// (the ride creator's) subcollection. Fired after a rider successfully
+  /// joins — by shared code ([GroupRideRepository.joinByCode]) or by
+  /// accepting an invite ([GroupRideRepository.acceptInvitation]) — from the
+  /// *joining* rider's device, same model as [notifyGroupRideInvite].
+  ///
+  /// Until this existed, joining a ride wrote no notification at all — a
+  /// creator only found out a rider had joined by having the ride's live map
+  /// open at the time.
+  Future<void> notifyGroupRideJoined({
+    required String toUid,
+    required String fromUid,
+    required String fromName,
+    required String groupRideId,
+    String? fromPhotoUrl,
+  }) async {
+    if (toUid == fromUid) return;
+    await _notifs(toUid).add({
+      'type': NotificationType.groupRideJoined.name,
+      'fromUid': fromUid,
+      'fromName': fromName,
+      'fromPhotoUrl': fromPhotoUrl,
+      'groupRideId': groupRideId,
+      'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+    });
+  }
+
   Stream<List<AppNotificationEntity>> watchNotifications(String uid) {
     return _notifs(uid)
         .orderBy('createdAt', descending: true)

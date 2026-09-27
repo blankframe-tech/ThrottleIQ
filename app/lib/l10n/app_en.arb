@@ -555,6 +555,42 @@
   "@joinRideGenericError": {
     "description": "Fallback error shown when joining by code fails for an unrecognized reason."
   },
+  "shareRideCodeButtonTooltip": "Share ride code",
+  "@shareRideCodeButtonTooltip": {
+    "description": "Tooltip on the AppBar icon button that opens the share-ride-code sheet on the group ride map screen."
+  },
+  "shareRideCodeTitle": "Share this ride's code",
+  "@shareRideCodeTitle": {
+    "description": "Title of the sheet showing a group ride's join code back to a member."
+  },
+  "shareRideCodeSubtitle": "Anyone with this code can join while the ride is active.",
+  "@shareRideCodeSubtitle": {
+    "description": "Subtitle explaining what the join code does, in the share-ride-code sheet."
+  },
+  "shareRideCodeCopyAction": "Copy code",
+  "@shareRideCodeCopyAction": {
+    "description": "Button that copies the join code to the clipboard, in the share-ride-code sheet."
+  },
+  "shareRideCodeShareAction": "Share",
+  "@shareRideCodeShareAction": {
+    "description": "Button that opens the system share sheet with the join code, in the share-ride-code sheet."
+  },
+  "shareRideCodeCopied": "Code copied to clipboard",
+  "@shareRideCodeCopied": {
+    "description": "Snackbar shown after tapping Copy code in the share-ride-code sheet."
+  },
+  "shareRideCodeMessage": "Join my ThrottleIQ ride \"{rideName}\" — use code {code} to hop in!",
+  "@shareRideCodeMessage": {
+    "description": "Text handed to the system share sheet when sharing a group ride's join code.",
+    "placeholders": {
+      "rideName": {
+        "type": "Object"
+      },
+      "code": {
+        "type": "Object"
+      }
+    }
+  },
   "safeQrTitle": "SafeQR",
   "@safeQrTitle": {
     "description": "Title of the SafeQR screen and its entry point in Settings."
@@ -1921,6 +1957,15 @@
       }
     }
   },
+  "tapView": "{relativeTime} · tap to view",
+  "@tapView": {
+    "description": "Subtitle on a 'so-and-so joined your ride' notification row in notifications_screen.",
+    "placeholders": {
+      "relativeTime": {
+        "type": "Object"
+      }
+    }
+  },
   "anyoneThrottleiq": "Anyone on ThrottleIQ",
   "@anyoneThrottleiq": {
     "description": "Text in ride_share_screen."
@@ -2128,6 +2173,22 @@
   "forums": "Forums",
   "@forums": {
     "description": "Text in social_screen."
+  },
+  "peopleTabLabel": "People",
+  "@peopleTabLabel": {
+    "description": "Second tab label on the Social screen, alongside Rides and Forums."
+  },
+  "ridingNowSectionTitle": "RIDING NOW",
+  "@ridingNowSectionTitle": {
+    "description": "Header above the Social feed's live group-ride strip, shown only while the signed-in rider has at least one active group ride."
+  },
+  "searchRidersHint": "Search riders by name or @username",
+  "@searchRidersHint": {
+    "description": "HintText on the People tab's rider-search field in social_screen."
+  },
+  "notFollowingAnyoneYet": "You're not following anyone yet. Search above to find riders.",
+  "@notFollowingAnyoneYet": {
+    "description": "Empty state on the People tab's Following list when the signed-in rider follows nobody."
   },
   "nothingFoundTryUsername": "Nothing found for \"{query}\".\nTry a @username, an email, or a forum name.",
   "@nothingFoundTryUsername": {

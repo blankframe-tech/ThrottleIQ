@@ -419,7 +419,7 @@ service cloud.firestore {
       // an unauthenticated tracking beacon with no relationship to the
       // victim required at all.
       //
-      // `type` is now restricted to the two kinds the app actually writes
+      // `type` is now restricted to the kinds the app actually writes
       // (NotificationType in app_notification_entity.dart), and
       // `fromPhotoUrl` — the concrete tracking-pixel vector — must be null/
       // absent/empty or a URL on a domain this app actually serves avatars
@@ -438,7 +438,8 @@ service cloud.firestore {
         allow read, update, delete: if request.auth.uid == uid;
         allow create: if request.auth != null &&
           request.resource.data.fromUid == request.auth.uid &&
-          request.resource.data.get('type', '') in ['follow', 'groupRideInvite'] &&
+          request.resource.data.get('type', '') in
+            ['follow', 'groupRideInvite', 'groupRideJoined'] &&
           request.resource.data.get('fromName', '') is string &&
           request.resource.data.get('fromName', '').size() > 0 &&
           request.resource.data.get('fromName', '').size() <= 100 &&
@@ -448,7 +449,11 @@ service cloud.firestore {
            (request.resource.data.fromPhotoUrl is string &&
             request.resource.data.fromPhotoUrl.matches(
               '^https://(res\\.cloudinary\\.com/vjvcigkt/|lh3\\.googleusercontent\\.com/).*'))) &&
-          (request.resource.data.get('type', '') != 'groupRideInvite' ||
+          // Both group-ride kinds are deep links to a specific ride — the
+          // notifications screen taps straight through to it — so both need
+          // a real groupRideId, same as groupRideInvite already required.
+          (!(request.resource.data.get('type', '') in
+             ['groupRideInvite', 'groupRideJoined']) ||
            (request.resource.data.get('groupRideId', '') is string &&
             request.resource.data.get('groupRideId', '') != ''));
       }
@@ -1064,13 +1069,22 @@ service cloud.firestore {
       allow get: if inGroupRide() ||
         (request.auth != null && resource.data.status == 'active');
 
-      // `list` is granted ONLY in the shape getUserGroupRides queries — a
-      // list rule must be provable from the query's own filters.
-      // getUpcomingGroupRides (status + startTime) is deliberately NOT
-      // satisfiable: no screen calls it, and opening it would expose every
-      // rider's group rides.
+      // `list` is granted ONLY in the shapes getUserGroupRides and
+      // watchActiveGroupRidesForUser query — a list rule must be provable
+      // from the query's own filters. getUpcomingGroupRides (status +
+      // startTime) is deliberately NOT satisfiable: no screen calls it, and
+      // opening it would expose every rider's group rides.
+      //
+      // The second disjunct is the Social feed's "Riding Now" strip: it
+      // queries `memberIds array-contains request.auth.uid` (never an
+      // unfiltered scan), so this is provable the same way the creatorId
+      // clause already was, and reveals nothing beyond "rides I'm already a
+      // member of" — no new exposure versus the per-document `get` rule
+      // above, which already lets any member read their own rides one at a
+      // time.
       allow list: if request.auth != null &&
-        resource.data.creatorId == request.auth.uid;
+        (resource.data.creatorId == request.auth.uid ||
+         request.auth.uid in resource.data.get('memberIds', []));
 
       // A ride is always created by its creator with themselves as the only
       // joined member — nobody conjures a ride they aren't on, or seeds one
