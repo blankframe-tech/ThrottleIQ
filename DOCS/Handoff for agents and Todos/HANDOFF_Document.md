@@ -1,24 +1,25 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-21 (evening) · Branch: `main`_
+_Last updated: 2026-09-28 (night) · Branch: `main`_
 
-## Current state — verified 2026-09-21 evening
+## Current state — verified 2026-09-28 night
 
 Re-run on `main` (in sync with `origin/main`, nothing on any unmerged branch that matters):
 `flutter analyze` **zero issues**, `flutter test` **1298/1298**, `functions/` `npm run build`
 silent, rules emulator **119/119** (was 116/116 — 2026-09-27 added 3 tests for the `groupRides`
 `list` rule extension the Social redesign's "Riding Now" strip needed, see features.md §7).
 The release **APK builds** (84.7 MB) with App Check and
-analytics in it; the release **AAB** builds too (82.8 MB). Neither is published. One warning
+analytics in it; the release **AAB** builds too (83.0 MB). One warning
 to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PLAN.md` §8).
 
 | Thing | State |
 |---|---|
-| Firestore **rules** | ✅ **Live**, including the §80 `likes` removal (deployed this evening) |
+| Firestore **rules** | ⚠️ **Local file ahead of production** — the `groupRides` `list` rule extension (2026-09-27, this session) is committed but **not deployed**; `firebase deploy --only firestore:rules` was blocked by the auto-mode classifier as a production-affecting action and needs a human to run it. Everything before that change is live. |
 | Firestore **indexes** | ✅ Live and verified |
 | **Hosting** (`privacy.html`) | Live copy is the **old** one — the analytics-aware policy is written but must ship *with* the release |
 | **Functions** | ❌ Not deployable — Spark plan, no `artifactregistry` (Node 20 dies late Oct 2026) |
-| **App build** | `pubspec` is now `1.0.0-beta.3.1.0+20`, committed and pushed (`main` @ `6fb12ae`); APK and AAB are built from it. **The GitHub release `beta-v3.1.0` was not created** — the session's auto-mode classifier declined the publish step, so the live release is still `beta-v3.0.2`. Everything since 3.0.2 (App Check, analytics, route navigation, i18n, print sticker, cockpit perf) is **on `main` but in no tester's hands** |
+| **App build** | `pubspec` is now `1.0.0-beta.4.0.0+21`, committed and pushed (`main` @ `c12d152`). **✅ GitHub release `beta-v4` published 2026-09-28** with the APK and AAB attached (https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4). |
+| **iOS device run** | ❌ **Blocked, needs the account owner** — `flutter run --release` on "Abraar's iPhone" fails at codesigning: Xcode has no Apple ID under Accounts (`IDEProvisioningTeams` unset) and no cached provisioning profile for `com.bft.throttleiq` / `com.bft.throttleiq.ThrottleIQWidget`. The one valid codesigning identity in the keychain (`Apple Development: abraar.rar@icloud.com`, team `29BPVM86G5`) doesn't match the project's configured `DEVELOPMENT_TEAM` (`NJ4675FFUX`) — worth confirming which team should actually sign this app. Needs: open Xcode → Settings → Accounts → sign in, then confirm/select the right team on the Runner and ThrottleIQWidget targets. Not something this agent can do headlessly (interactive Apple ID + 2FA). Also saw stray, apparently-harmless empty stub dirs appear under `/Users/blackbird/Everything/dev/ThrottleIQ` (note: no `2_Ongoing`) during this build — likely a leftover from before the repo moved to its current path; didn't chase it further since the account issue is the real blocker. |
 | **App Check enforcement** | Console action, only after a release containing the code is what riders run |
 | **Founder's iPhone** | ✅ `1.0.0-beta.3.1.0+20` **release build installed and launched** 2026-09-21 (`flutter run --release -d 00008120-001E5D190A85A01E`; Xcode build 106 s, install+launch 7.3 s). First real-hardware run of everything since 3.0.2 — launch only so far; nothing on the device test list has been exercised yet |
 
