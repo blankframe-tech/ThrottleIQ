@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§86**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§87**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -773,3 +773,55 @@ completion rather than on start, and never from `_cancelRide`.
 made offline is lost. That is the right trade for a cosmetic counter — see the
 method's doc comment for the line that has to move if it ever becomes
 load-bearing (ranking Discover by it, say).
+
+---
+
+## 86. Social redesign (`ANTIGRAVITY_GRILL/new_task`) was left half-wired with fake data — FIXED (2026-09-27), two follow-ups still open
+
+An earlier same-day pass at the Rides/People/Forums mock was caught
+uncommitted before it landed: the AppBar search had been silently
+disconnected, the People tab was a bare `Center(child: Text('People'))`, and —
+the part that would have actually shipped to riders — the "Riding Now" strip
+and every feed card's location pill were the **mock's own literal sample
+text** hardcoded into the widget tree ("Rafi's Squad", "Nadia Rahman",
+"Chittagong Hill Tracts" on every card regardless of where the ride was).
+Scratch `clean_up*.py`/`fix_social.py`/`rewrite_social_screen.py` scripts and
+`tmp_*`/`.bak` files from the attempt were left in the repo root too.
+
+**Fixed:** search restored (now a `SearchDelegate` off the AppBar icon rather
+than the old always-on field); People tab rebuilt with real rider search + a
+real Following list; "Riding Now" rebuilt against a genuine
+`GroupRideRepository.watchActiveGroupRidesForUser()` query (hides itself when
+the rider has no active group ride, rather than showing anything invented);
+location pill removed outright rather than faked (see features.md §7 for why
+reverse-geocoding it live isn't safe to do per-card). `firestore.rules`'
+`groupRides` `list` rule extended for the new query shape; 119/119 emulator
+tests green. Scratch files deleted. Full detail in features.md §7.
+
+**Still open:**
+- The `groupRides` `list` rule extension is **not deployed to production** —
+  committed to `firestore.rules` but the deploy was blocked by the session's
+  auto-mode classifier as a production-affecting action. Run
+  `firebase deploy --only firestore:rules` by hand; until then "Riding Now"
+  silently shows nothing against prod rather than erroring.
+- Solo "riding now" cards for a followed rider who's live but not in a group
+  ride (the mock's other card style) were deliberately not built — there is no
+  backend signal today for "who I follow is live right now," and
+  `liveSessions`/`livePointers` are intentionally non-enumerable for privacy
+  (see `firestore.rules` comments on that collection). Needs its own design
+  pass on what's safe to expose to followers, not a rushed addition.
+- A real per-card location label needs a one-time reverse-geocode at ride-share
+  time with the result cached on the ride doc (`SharedRideEntity` has no
+  place-name field at all today) — not attempted here; see features.md §7.
+- `flutter run --release` on a connected iPhone failed at codesigning during
+  this session's verification pass: Xcode has no Apple ID under
+  Settings → Accounts, and the one valid codesigning identity in the keychain
+  (`Apple Development: abraar.rar@icloud.com`, team `29BPVM86G5`) doesn't match
+  the project's configured `DEVELOPMENT_TEAM` (`NJ4675FFUX`) on the Runner and
+  ThrottleIQWidget targets. Needs the account owner to sign into Xcode and
+  confirm which team should actually sign this app — not something fixable
+  headlessly. Unrelated-looking but seen at the same time: empty stub
+  directories appeared under `/Users/blackbird/Everything/dev/ThrottleIQ`
+  (missing the `2_Ongoing` segment of the real path) during the build; not
+  chased down since the account issue is the real blocker, but worth a look if
+  iOS builds keep failing after the account is fixed.
