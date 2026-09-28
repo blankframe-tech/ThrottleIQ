@@ -833,3 +833,15 @@ tests green. Scratch files deleted. Full detail in features.md §7.
     part is a machine/cache issue, not a code issue, and needed no source
     change. **The Apple ID/provisioning-profile blocker above is unaffected
     and still the reason the run can't complete.**
+  - **Apple ID signed into Xcode (2026-09-28) — build and codesigning now
+    succeed.** `flutter run --release` builds clean and `xcrun devicectl
+    device install app` installs `Runner.app` on "Abraar's iPhone"
+    successfully. What's left is a **separate, one-time on-device step**:
+    launch fails with `FBSOpenApplicationServiceErrorDomain error 1` /
+    "invalid code signature, inadequate entitlements or its profile has not
+    been explicitly trusted by the user" — standard iOS behavior the first
+    time an app signed by a new developer profile is installed. Needs, once,
+    directly on the phone: **Settings → General → VPN & Device Management →
+    [the developer's name under "Developer App"] → Trust**. Nothing left to
+    fix in the project or the toolchain; this is the last step before the
+    app actually launches on the device.
