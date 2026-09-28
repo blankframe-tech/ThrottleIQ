@@ -820,8 +820,16 @@ tests green. Scratch files deleted. Full detail in features.md §7.
   the project's configured `DEVELOPMENT_TEAM` (`NJ4675FFUX`) on the Runner and
   ThrottleIQWidget targets. Needs the account owner to sign into Xcode and
   confirm which team should actually sign this app — not something fixable
-  headlessly. Unrelated-looking but seen at the same time: empty stub
-  directories appeared under `/Users/blackbird/Everything/dev/ThrottleIQ`
-  (missing the `2_Ongoing` segment of the real path) during the build; not
-  chased down since the account issue is the real blocker, but worth a look if
-  iOS builds keep failing after the account is fixed.
+  headlessly.
+  - **Root-caused and fixed (2026-09-28), separate issue found alongside it:**
+    every build also failed earlier with "no XCFramework found" errors
+    pointing at `/Users/blackbird/Everything/dev/ThrottleIQ/...` — the repo's
+    path *before* it moved under `2_Ongoing/`. Cause: 10 stale
+    `~/Library/Developer/Xcode/DerivedData/Runner-*` caches (PIFCache) still
+    carried the old absolute path from before the move, and Xcode's package
+    artifact resolution was reading from one of them instead of the current
+    project. Fixed by deleting all `Runner-*` DerivedData directories and
+    `app/build/ios/SourcePackages` and letting Xcode re-resolve clean — this
+    part is a machine/cache issue, not a code issue, and needed no source
+    change. **The Apple ID/provisioning-profile blocker above is unaffected
+    and still the reason the run can't complete.**
