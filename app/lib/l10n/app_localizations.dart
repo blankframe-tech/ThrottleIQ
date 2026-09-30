@@ -2888,6 +2888,12 @@ abstract class AppLocalizations {
   /// **'Say something about this ride'**
   String get saySomethingAboutThis;
 
+  /// EditorialLabel above the feed-card preview (route map + photos collage) in ride_share_screen.
+  ///
+  /// In en, this message translates to:
+  /// **'How it will look'**
+  String get sharePreviewLabel;
+
   /// EditorialLabel in ride_share_screen.
   ///
   /// In en, this message translates to:
@@ -7715,6 +7721,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Usernames must be 3-20 characters: letters, numbers or underscore.'**
   String get usernameRuleError;
+
+  /// Pill on the ride cockpit's top bar, shown while the rider is on a live group ride; opens the group map with push-to-talk.
+  ///
+  /// In en, this message translates to:
+  /// **'Group talk'**
+  String get groupRideTalkButton;
+
+  /// Banner on the Record screen when the rider belongs to a live group ride.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on a live group ride'**
+  String get groupRideLiveBannerTitle;
+
+  /// Button on the live group ride banner that opens the group map with push-to-talk.
+  ///
+  /// In en, this message translates to:
+  /// **'Open push-to-talk'**
+  String get groupRideLiveBannerAction;
+
+  /// Group map action that returns to the ride cockpit (speed, distance) while recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride stats'**
+  String get groupRideRideStats;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance settings'**
+  String get maintSettingsTitle;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize checks'**
+  String get maintCustomizeChecks;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what to track and how often'**
+  String get maintCustomizeChecksSubtitle;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync odometer'**
+  String get maintSyncOdometer;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Match the app to your bike\'s real reading'**
+  String get maintSyncOdometerSubtitle;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark several items as serviced at once'**
+  String get maintResetLogSubtitle;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance units'**
+  String get maintDistanceUnits;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Running costs'**
+  String get maintRunningCosts;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Set fuel price, mileage and service costs to see what each ride costs'**
+  String get maintRunningCostsEmpty;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ ৳{cost} per {unit}'**
+  String maintCostPerUnit(String cost, String unit);
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Price per litre'**
+  String get maintFuelPricePerLitre;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Price per gallon'**
+  String get maintFuelPricePerGallon;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Average mileage'**
+  String get maintAverageMileage;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Service costs'**
+  String get maintServiceCosts;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an item to set its typical cost. Once you log services with a cost, their average is used instead.'**
+  String get maintServiceCostsHint;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Typical cost per service'**
+  String get maintTypicalCost;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Used to estimate ride cost until you log actual costs.'**
+  String get maintTypicalCostHelper;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'avg ৳{cost} logged'**
+  String maintCostFromHistory(String cost);
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'typical ৳{cost}'**
+  String maintCostFromTypical(String cost);
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost not set'**
+  String get maintCostNotSet;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride cost'**
+  String get rideCostTitle;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your fuel price, mileage and service costs to see what this ride cost you.'**
+  String get rideCostHint;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up'**
+  String get rideCostSetUp;
+
+  /// Maintenance settings / running cost (ride cost) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate · {distance} km at ৳{perKm}/km'**
+  String rideCostEstimateNote(String distance, String perKm);
 }
 
 class _AppLocalizationsDelegate

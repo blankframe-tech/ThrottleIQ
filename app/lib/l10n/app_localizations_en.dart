@@ -1566,6 +1566,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saySomethingAboutThis => 'Say something about this ride';
 
   @override
+  String get sharePreviewLabel => 'How it will look';
+
+  @override
   String get photosOptional => 'Photos (optional)';
 
   @override
@@ -4357,4 +4360,102 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get usernameRuleError =>
       'Usernames must be 3-20 characters: letters, numbers or underscore.';
+
+  @override
+  String get groupRideTalkButton => 'Group talk';
+
+  @override
+  String get groupRideLiveBannerTitle => 'You\'re on a live group ride';
+
+  @override
+  String get groupRideLiveBannerAction => 'Open push-to-talk';
+
+  @override
+  String get groupRideRideStats => 'Ride stats';
+
+  @override
+  String get maintSettingsTitle => 'Maintenance settings';
+
+  @override
+  String get maintCustomizeChecks => 'Customize checks';
+
+  @override
+  String get maintCustomizeChecksSubtitle =>
+      'Choose what to track and how often';
+
+  @override
+  String get maintSyncOdometer => 'Sync odometer';
+
+  @override
+  String get maintSyncOdometerSubtitle =>
+      'Match the app to your bike\'s real reading';
+
+  @override
+  String get maintResetLogSubtitle => 'Mark several items as serviced at once';
+
+  @override
+  String get maintDistanceUnits => 'Distance units';
+
+  @override
+  String get maintRunningCosts => 'Running costs';
+
+  @override
+  String get maintRunningCostsEmpty =>
+      'Set fuel price, mileage and service costs to see what each ride costs';
+
+  @override
+  String maintCostPerUnit(String cost, String unit) {
+    return '≈ ৳$cost per $unit';
+  }
+
+  @override
+  String get maintFuelPricePerLitre => 'Price per litre';
+
+  @override
+  String get maintFuelPricePerGallon => 'Price per gallon';
+
+  @override
+  String get maintAverageMileage => 'Average mileage';
+
+  @override
+  String get maintServiceCosts => 'Service costs';
+
+  @override
+  String get maintServiceCostsHint =>
+      'Tap an item to set its typical cost. Once you log services with a cost, their average is used instead.';
+
+  @override
+  String get maintTypicalCost => 'Typical cost per service';
+
+  @override
+  String get maintTypicalCostHelper =>
+      'Used to estimate ride cost until you log actual costs.';
+
+  @override
+  String maintCostFromHistory(String cost) {
+    return 'avg ৳$cost logged';
+  }
+
+  @override
+  String maintCostFromTypical(String cost) {
+    return 'typical ৳$cost';
+  }
+
+  @override
+  String get maintCostNotSet => 'Cost not set';
+
+  @override
+  String get rideCostTitle => 'Ride cost';
+
+  @override
+  String get rideCostHint =>
+      'Add your fuel price, mileage and service costs to see what this ride cost you.';
+
+  @override
+  String get rideCostSetUp => 'Set up';
+
+  @override
+  String rideCostEstimateNote(String distance, String perKm) {
+    return 'Estimate · $distance km at ৳$perKm/km';
+  }
 }

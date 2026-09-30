@@ -1570,6 +1570,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get saySomethingAboutThis => 'এই রাইড নিয়ে কিছু লিখুন';
 
   @override
+  String get sharePreviewLabel => 'যেমন দেখাবে';
+
+  @override
   String get photosOptional => 'ছবি (ঐচ্ছিক)';
 
   @override
@@ -4367,4 +4370,103 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get usernameRuleError =>
       'ইউজারনেম 3-20 অক্ষরের হতে হবে: অক্ষর, সংখ্যা বা আন্ডারস্কোর।';
+
+  @override
+  String get groupRideTalkButton => 'গ্রুপ টক';
+
+  @override
+  String get groupRideLiveBannerTitle => 'আপনি একটি লাইভ গ্রুপ রাইডে আছেন';
+
+  @override
+  String get groupRideLiveBannerAction => 'পুশ-টু-টক খুলুন';
+
+  @override
+  String get groupRideRideStats => 'রাইডের তথ্য';
+
+  @override
+  String get maintSettingsTitle => 'রক্ষণাবেক্ষণ সেটিংস';
+
+  @override
+  String get maintCustomizeChecks => 'চেক কাস্টমাইজ করুন';
+
+  @override
+  String get maintCustomizeChecksSubtitle =>
+      'কী ট্র্যাক করবেন এবং কত ঘন ঘন, বেছে নিন';
+
+  @override
+  String get maintSyncOdometer => 'ওডোমিটার সিঙ্ক';
+
+  @override
+  String get maintSyncOdometerSubtitle =>
+      'অ্যাপকে বাইকের আসল রিডিংয়ের সাথে মেলান';
+
+  @override
+  String get maintResetLogSubtitle =>
+      'একসাথে কয়েকটি আইটেম সার্ভিস করা হিসেবে চিহ্নিত করুন';
+
+  @override
+  String get maintDistanceUnits => 'দূরত্বের একক';
+
+  @override
+  String get maintRunningCosts => 'চলার খরচ';
+
+  @override
+  String get maintRunningCostsEmpty =>
+      'প্রতিটি রাইডের খরচ দেখতে জ্বালানির দাম, মাইলেজ ও সার্ভিস খরচ সেট করুন';
+
+  @override
+  String maintCostPerUnit(String cost, String unit) {
+    return '≈ প্রতি $unit ৳$cost';
+  }
+
+  @override
+  String get maintFuelPricePerLitre => 'প্রতি লিটারের দাম';
+
+  @override
+  String get maintFuelPricePerGallon => 'প্রতি গ্যালনের দাম';
+
+  @override
+  String get maintAverageMileage => 'গড় মাইলেজ';
+
+  @override
+  String get maintServiceCosts => 'সার্ভিস খরচ';
+
+  @override
+  String get maintServiceCostsHint =>
+      'আইটেমে ট্যাপ করে সাধারণ খরচ সেট করুন। খরচসহ সার্ভিস লগ করলে সেগুলোর গড় ব্যবহার হবে।';
+
+  @override
+  String get maintTypicalCost => 'প্রতি সার্ভিসে সাধারণ খরচ';
+
+  @override
+  String get maintTypicalCostHelper =>
+      'আসল খরচ লগ না করা পর্যন্ত রাইডের খরচ অনুমানে ব্যবহার হয়।';
+
+  @override
+  String maintCostFromHistory(String cost) {
+    return 'লগ করা গড় ৳$cost';
+  }
+
+  @override
+  String maintCostFromTypical(String cost) {
+    return 'সাধারণ ৳$cost';
+  }
+
+  @override
+  String get maintCostNotSet => 'খরচ সেট করা হয়নি';
+
+  @override
+  String get rideCostTitle => 'রাইডের খরচ';
+
+  @override
+  String get rideCostHint =>
+      'এই রাইডে কত খরচ হলো দেখতে জ্বালানির দাম, মাইলেজ ও সার্ভিস খরচ যোগ করুন।';
+
+  @override
+  String get rideCostSetUp => 'সেট করুন';
+
+  @override
+  String rideCostEstimateNote(String distance, String perKm) {
+    return 'অনুমান · $distance কিমি, ৳$perKm/কিমি';
+  }
 }

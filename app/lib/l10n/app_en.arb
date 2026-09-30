@@ -2033,6 +2033,10 @@
   "@saySomethingAboutThis": {
     "description": "HintText in ride_share_screen."
   },
+  "sharePreviewLabel": "How it will look",
+  "@sharePreviewLabel": {
+    "description": "EditorialLabel above the feed-card preview (route map + photos collage) in ride_share_screen."
+  },
   "photosOptional": "Photos (optional)",
   "@photosOptional": {
     "description": "EditorialLabel in ride_share_screen."
@@ -5956,5 +5960,69 @@
   "usernameRuleError": "Usernames must be 3-20 characters: letters, numbers or underscore.",
   "@usernameRuleError": {
     "description": "Shown when a chosen @username breaks the format rule."
-  }
+  },
+  "groupRideTalkButton": "Group talk",
+  "@groupRideTalkButton": {
+    "description": "Pill on the ride cockpit's top bar, shown while the rider is on a live group ride; opens the group map with push-to-talk."
+  },
+  "groupRideLiveBannerTitle": "You're on a live group ride",
+  "@groupRideLiveBannerTitle": {
+    "description": "Banner on the Record screen when the rider belongs to a live group ride."
+  },
+  "groupRideLiveBannerAction": "Open push-to-talk",
+  "@groupRideLiveBannerAction": {
+    "description": "Button on the live group ride banner that opens the group map with push-to-talk."
+  },
+  "groupRideRideStats": "Ride stats",
+  "@groupRideRideStats": {
+    "description": "Group map action that returns to the ride cockpit (speed, distance) while recording."
+  },
+  "maintSettingsTitle": "Maintenance settings",
+  "@maintSettingsTitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintCustomizeChecks": "Customize checks",
+  "@maintCustomizeChecks": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintCustomizeChecksSubtitle": "Choose what to track and how often",
+  "@maintCustomizeChecksSubtitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintSyncOdometer": "Sync odometer",
+  "@maintSyncOdometer": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintSyncOdometerSubtitle": "Match the app to your bike's real reading",
+  "@maintSyncOdometerSubtitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintResetLogSubtitle": "Mark several items as serviced at once",
+  "@maintResetLogSubtitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintDistanceUnits": "Distance units",
+  "@maintDistanceUnits": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintRunningCosts": "Running costs",
+  "@maintRunningCosts": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintRunningCostsEmpty": "Set fuel price, mileage and service costs to see what each ride costs",
+  "@maintRunningCostsEmpty": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintCostPerUnit": "≈ ৳{cost} per {unit}",
+  "@maintCostPerUnit": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"cost": {"type": "String"}, "unit": {"type": "String"}}},
+  "maintFuelPricePerLitre": "Price per litre",
+  "@maintFuelPricePerLitre": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintFuelPricePerGallon": "Price per gallon",
+  "@maintFuelPricePerGallon": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintAverageMileage": "Average mileage",
+  "@maintAverageMileage": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintServiceCosts": "Service costs",
+  "@maintServiceCosts": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintServiceCostsHint": "Tap an item to set its typical cost. Once you log services with a cost, their average is used instead.",
+  "@maintServiceCostsHint": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintTypicalCost": "Typical cost per service",
+  "@maintTypicalCost": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintTypicalCostHelper": "Used to estimate ride cost until you log actual costs.",
+  "@maintTypicalCostHelper": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "maintCostFromHistory": "avg ৳{cost} logged",
+  "@maintCostFromHistory": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"cost": {"type": "String"}}},
+  "maintCostFromTypical": "typical ৳{cost}",
+  "@maintCostFromTypical": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"cost": {"type": "String"}}},
+  "maintCostNotSet": "Cost not set",
+  "@maintCostNotSet": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "rideCostTitle": "Ride cost",
+  "@rideCostTitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "rideCostHint": "Add your fuel price, mileage and service costs to see what this ride cost you.",
+  "@rideCostHint": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "rideCostSetUp": "Set up",
+  "@rideCostSetUp": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "rideCostEstimateNote": "Estimate · {distance} km at ৳{perKm}/km",
+  "@rideCostEstimateNote": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"distance": {"type": "String"}, "perKm": {"type": "String"}}}
 }
