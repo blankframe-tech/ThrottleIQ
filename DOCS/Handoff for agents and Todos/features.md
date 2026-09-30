@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-09-21 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-10-01 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
 
 What a signed-in user can actually do in the app today, organized by the
 five-tab bottom nav. This is a living document — regenerate/update it
@@ -416,6 +416,22 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
   the feed could see.
 
 ---
+
+## Changes from the open55 pass (2026-10-01, uncommitted)
+
+- **Ride media collage:** the route map is now one tile in a single collage with the ride's photos (`social/presentation/widgets/ride_media_collage.dart`, which replaces `PhotoCollage`).
+  - **Layout:** the map is always the largest tile. 1 tile is full-bleed; 2 are side by side (map 60%); 3 is the map left with 2 photos stacked; 4 is the map on top with 3 photos in a row; 5+ fills a grid with a "+N" badge on the last tile. The photo cap is still 3 (`kMaxRidePhotos`).
+  - **Feed card:** the map and photos show as one collage. Tapping the map opens the ride detail and tapping a photo opens the swipeable gallery.
+  - **Share composer:** new "How it will look" preview.
+  - **Ride detail:** photos only, since the big interactive map already sits right above them.
+  - **Not verified on a device yet.**
+
+- **Group ride navigation:** the ride screen has a "Group talk" button that opens the live group map with push-to-talk. The group map has a "Ride stats" button back to the ride screen. The Record screen shows an "Open push-to-talk" banner while you're on a live group ride.
+- **Group ride lifecycle:** when you stop recording, rides you created end and you leave anyone else's ride. Riding Now hides rides with no activity for 4 hours (see `issues_fixed.md` §87).
+- **Feed:** following someone now updates the feed right away, with no restart.
+
+- **Maintenance settings section:** Units (km/mi, now remembered), Sync odometer, Customize checks, Reset service log and Running costs moved from the header to a card at the end of the maintenance page. The main action is one full-width "Log Service" button.
+- **Running costs and ride cost:** set a typical cost for each check (in its Edit sheet), plus fuel price and mileage for each bike. The ride summary shows a "Ride cost" card: distance × Σ(cost/km), broken down into Fuel, Engine oil, Chain and so on. Each check uses the average of its logged costs, or the typical cost when there are none. With no cost data the card shows a "Set up" hint instead. The settings are stored on the phone only.
 
 ## Known UI gaps (as of this pass)
 

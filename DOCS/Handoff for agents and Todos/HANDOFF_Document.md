@@ -1,6 +1,29 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-09-28 (night) · Branch: `main`_
+_Last updated: 2026-10-01 · Branch: `main`_
+
+## 2026-10-01: open55 pass (UNCOMMITTED in the working tree)
+
+Six founder asks, done by three parallel subagents. The plan and success criteria are in `/open55_handoff.md`. On the combined tree, `flutter analyze` finds zero issues and `flutter test` passes **1349/1349**. **Nothing has been checked on a device or simulator yet.**
+
+- **Social bugs, §87 in `issues_fixed.md`:**
+  - Stale "Riding Now" cards: ending a recording now ends or leaves the group ride, and a 4-hour liveness cutoff hides the rest.
+  - Followed riders' posts missing: the feed no longer loads before the follow list, the follow list is now a live stream, and next-page loading no longer skips posts.
+  - Push-to-talk: new "Group talk" / "Ride stats" buttons link the ride screen and the group map, plus a banner on the Record screen.
+  - Rules and indexes are unchanged.
+- **Maintenance page:** `maintenance_screen.dart` went from 1373 to 399 lines. Units, Sync odometer, Customize checks, Reset log and the new Running costs now sit in a "Maintenance settings" card at the end of the page. Every earlier action is still there, and km/mi is now remembered between launches.
+- **Ride cost:**
+  - **Inputs:** a typical cost per maintained check, plus fuel price and mileage for each bike.
+  - **Where it shows:** a "Ride cost" card with a breakdown on the ride summary.
+  - **Calculator:** pure, in `maintenance/domain/calculators/ride_cost_calculator.dart`. It uses the average logged cost when there is one and the typical cost otherwise, ÷ the service interval.
+  - **Database:** schema **17 → 18** (new `bike_running_costs` table, new `typical_cost` column).
+  - ⚠️ **Local only:** these settings are not synced to Firestore, same as the existing `bike_maintenance_configs`.
+- **Media collage:** the route map is now one tile in a single collage with the photos (`social/presentation/widgets/ride_media_collage.dart`, which replaces `PhotoCollage`). It covers the feed card and a new share preview; the ride detail screen shows photos only.
+- **Still to do:**
+  - Check on a device: the list in §87, the new maintenance layout and cost card, the collage visuals, and the v18 upgrade on a real install.
+  - Review the Bangla strings (added to `bn_pending_review.txt`).
+  - Commit.
+
 
 ## Current state — verified 2026-09-28 night
 

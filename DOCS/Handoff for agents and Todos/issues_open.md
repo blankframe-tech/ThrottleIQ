@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§87**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§89**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -845,3 +845,12 @@ tests green. Scratch files deleted. Full detail in features.md §7.
     [the developer's name under "Developer App"] → Trust**. Nothing left to
     fix in the project or the toolchain; this is the last step before the
     app actually launches on the device.
+
+---
+
+## 88. Follow-ups left by the open55 pass (2026-10-01)
+
+- **88.1:** a post shared to `followers` or `mutual` saves its allowed viewers when it's shared, so someone who follows the author later never sees it. This is by design; fixing it needs a rules/data-model redesign. See §87.2 in `issues_fixed.md`.
+- **88.2:** the running-cost settings (fuel price, mileage, typical cost per check) are stored on the phone only, like `bike_maintenance_configs`. They're lost on reinstall or a new device, and syncing them needs a new Firestore path plus a rules change.
+- **88.3:** the open55 changes haven't been checked on a device: the checklist in §87, the maintenance layout and ride-cost card, the collage visuals, and the SQLite v17→18 upgrade on a real install.
+- **88.4:** the Bangla strings added in open55 haven't been reviewed (listed in `bn_pending_review.txt`).

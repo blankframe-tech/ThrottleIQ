@@ -6036,3 +6036,27 @@ coverage rather than joining the 43-screens-1-test pile. It renders to exactly
 unconditionally), shows the manoeuvre and remaining/ETA, raises and drops the
 off-route warning, says the ride is *still recording* on arrival, and closes
 guidance without ending the ride.
+
+
+---
+
+## 87. Founder-reported social bugs — FIXED in code (2026-10-01), not yet verified on a device
+
+The fixes are uncommitted in the open55 pass. `flutter analyze` is clean and all 1347 tests pass.
+
+- **87.1: "Riding Now" showed finished group rides.**
+  - **Cause:** ending a ride from the ride screen never ended the group ride. `endGroupRide` had no callers, and the Riding Now query filtered only on `status == 'active'`, with no time limit.
+  - **Fix:** a new `groupRideLifecycleProvider`, watched in `app.dart`, ends or leaves your group rides when your recording stops. Rides you created also get a `lastActiveAt` heartbeat every 5 minutes, and `endedAt` is written when a ride ends.
+  - **Fallback:** a new `group_ride_liveness.dart` treats a ride as live only if its status is active and it has had activity in the last 4 hours (`kGroupRideInactiveCutoff`). Stale rides are hidden, and a stale ride you created is closed out when you see it.
+  - **Side fix:** `GroupRideEntity.copyWith` was silently dropping `joinCode`.
+- **87.2: followed riders' posts were missing.** There were three causes:
+  - The first page read the follow list with `.valueOrNull` before it had loaded, so it fetched no followed authors.
+  - `followingUidsProvider` was a one-shot future that never refreshed on follow/unfollow. It's now a live stream (`FollowRepository.watchFollowing`), and the feed reloads when the followed set changes.
+  - The next page started from the oldest ride across all sources, which skipped posts from the other sources. A new pure function (`domain/feed_page_merge.dart`) fixes the page boundary.
+  - **Still open, by design:** a post shared to `followers` or `mutual` stores its allowed viewers when it's shared, so someone who follows the author later never sees it. Fixing that needs a rules/data-model redesign.
+- **87.3: push-to-talk wasn't reachable from ride start.** The ride screen had no link to the group ride, and the creator's start flow used `go`, so there was no back stack.
+  - **Ride screen:** new "Group talk" button (`_GroupRideTalkPill`).
+  - **Group map:** new "Ride stats" button back to the ride screen, and auto-start now shows the location disclosure first.
+  - **Record screen:** new "Open push-to-talk" banner.
+- **Rules/indexes:** unchanged. Nothing to deploy.
+- **To check on a device:** ending a ride clears the card for all members; the existing zombie cards disappear; the talk ⇄ stats buttons work in both directions; a newly followed rider's posts appear without a restart.
