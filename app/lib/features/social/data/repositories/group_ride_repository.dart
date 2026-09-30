@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_join_code.dart';
+import '../../domain/utilities/group_ride_liveness.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
 
@@ -287,7 +288,9 @@ class GroupRideRepository {
       throw const GroupRideJoinException(
           GroupRideJoinFailure.badCode, "That code doesn't match a ride.");
     }
-    if (ride.status != GroupRideStatus.active) {
+    // Liveness, not just `status`: a ride nobody closed out (creator's app
+    // killed mid-ride) is still `active` on the server but long over.
+    if (!isGroupRideLive(ride, now: DateTime.now())) {
       throw const GroupRideJoinException(
           GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
     }
@@ -624,6 +627,65 @@ class GroupRideRepository {
             .toList());
   }
 
+  /// One-shot read of the rides [watchActiveGroupRidesForUser] streams —
+  /// same query shape, so the same `list` rule and index serve it.
+  Future<List<GroupRideEntity>> getActiveGroupRidesForUser(String uid) async {
+    final snapshot = await _firestore
+        .collection('groupRides')
+        .where('memberIds', arrayContains: uid)
+        .where('status', isEqualTo: 'active')
+        .get();
+    return snapshot.docs
+        .map((doc) =>
+            GroupRideModel.fromFirestore(doc.data(), doc.id).toEntity())
+        .toList();
+  }
+
+  /// Marks the ride as still under way (`lastActiveAt` → now).
+  ///
+  /// Creator-only: firestore.rules' update clause 1 lets the creator write
+  /// any field but `creatorId`; every other clause is pinned to the uid
+  /// arrays, so a member's heartbeat would be refused. The creator is the
+  /// right source anyway — the ride ends when they leave.
+  Future<void> heartbeat(String groupRideId) async {
+    await _rideRef(groupRideId)
+        .update({'lastActiveAt': FieldValue.serverTimestamp()});
+  }
+
+  /// Heartbeats every active ride [uid] created. Called periodically while
+  /// the creator is recording, so a ride stays "live" even while the creator
+  /// sits on the ride cockpit rather than the group map.
+  Future<void> heartbeatCreatedRides(String uid) async {
+    final rides = await getActiveGroupRidesForUser(uid);
+    await Future.wait([
+      for (final ride in rides)
+        if (ride.creatorId == uid) heartbeat(ride.id),
+    ]);
+  }
+
+  /// Closes out every active group ride [uid] is on, because [uid] just
+  /// finished (or discarded) their recording.
+  ///
+  /// Nothing used to do this. Ending a ride from the cockpit only stopped the
+  /// local recorder; the only code that ever set `status: completed` was the
+  /// group map's Leave button. So every normally-finished group ride stayed
+  /// `active` forever and kept matching the Social feed's "Riding Now" query.
+  ///
+  /// The creator's rides are ended outright (they're the ride's anchor —
+  /// same as [leaveGroupRide] does for them); on anyone else's ride [uid]
+  /// simply leaves, so the rest of the group keeps riding. Best-effort per
+  /// ride: one refused write must not stop the rest.
+  Future<void> finishGroupRidesForUser(String uid) async {
+    final rides = await getActiveGroupRidesForUser(uid);
+    await Future.wait([
+      for (final ride in rides)
+        (ride.creatorId == uid
+                ? endGroupRide(ride.id)
+                : leaveGroupRide(groupRideId: ride.id, userId: uid))
+            .catchError((Object _) {}),
+    ]);
+  }
+
   /// Starts a group ride (changes status to active).
   Future<void> startGroupRide(String groupRideId) async {
     await _firestore
@@ -637,8 +699,15 @@ class GroupRideRepository {
     await _firestore
         .collection('groupRides')
         .doc(groupRideId)
-        .update({'status': 'completed'});
+        .update(_endedFields());
   }
+
+  /// What ending a ride writes. `endedAt` is informational (nothing reads it
+  /// yet); `status` is what takes the ride out of every "active" query.
+  Map<String, dynamic> _endedFields() => {
+        'status': 'completed',
+        'endedAt': FieldValue.serverTimestamp(),
+      };
 
   /// A rider removing *themselves* from a ride they joined ("Leave").
   ///
@@ -662,7 +731,7 @@ class GroupRideRepository {
       final data = snap.data() ?? <String, dynamic>{};
 
       if (data['creatorId'] == userId) {
-        txn.update(rideRef, {'status': 'completed'});
+        txn.update(rideRef, _endedFields());
         return;
       }
 

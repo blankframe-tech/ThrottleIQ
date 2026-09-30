@@ -22,6 +22,7 @@ import '../../../routes/presentation/providers/route_providers.dart';
 import '../../../social/data/repositories/route_repository.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../../routes/presentation/widgets/navigation_banner.dart';
+import '../../../social/presentation/providers/group_ride_providers.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -512,6 +513,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
               child: Row(
                 children: [
+                  // The way back to the group map (push-to-talk) while on a
+                  // live group ride. Before this the cockpit had no link to
+                  // it at all — the Social "Riding Now" card was the only
+                  // door in.
+                  const _GroupRideTalkPill(),
                   const Spacer(),
                   const _RideClock(),
                   const SizedBox(width: 8),
@@ -1004,6 +1010,35 @@ class _AlertBanner extends StatelessWidget {
                 style: display(context, 14, letterSpacing: 0)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Top-bar pill on the cockpit linking to the live group ride's map and
+/// push-to-talk. Renders nothing unless the rider is on a live group ride
+/// (see [currentLiveGroupRideProvider]), so a solo ride's top bar is
+/// unchanged.
+///
+/// `push`, not `go`: the group map sits on top of the cockpit, so its back
+/// arrow (and its "Ride stats" action) lands the rider straight back here.
+class _GroupRideTalkPill extends ConsumerWidget {
+  const _GroupRideTalkPill();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ride = ref.watch(currentLiveGroupRideProvider);
+    if (ride == null) return const SizedBox.shrink();
+    return FilledButton.icon(
+      onPressed: () => context.push('/group-ride/${ride.id}'),
+      icon: const Icon(Icons.mic, size: 18),
+      label: Text(context.l10n.groupRideTalkButton),
+      style: FilledButton.styleFrom(
+        backgroundColor: context.palette.primary,
+        foregroundColor: context.palette.surface,
+        minimumSize: const Size(0, 40),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
       ),
     );
   }

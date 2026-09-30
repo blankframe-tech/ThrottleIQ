@@ -206,6 +206,9 @@ class GroupRideModel {
   /// existed — they simply have no code-join door, invite-only as before.
   final String joinCode;
 
+  /// See [GroupRideEntity.lastActiveAt].
+  final DateTime? lastActiveAt;
+
   GroupRideModel({
     required this.id,
     required this.creatorId,
@@ -222,6 +225,7 @@ class GroupRideModel {
     required this.createdAt,
     this.maxParticipants = 20,
     this.joinCode = '',
+    this.lastActiveAt,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -246,6 +250,7 @@ class GroupRideModel {
       'createdAt': createdAt,
       'maxParticipants': maxParticipants,
       'joinCode': joinCode,
+      'lastActiveAt': lastActiveAt ?? createdAt,
     };
   }
 
@@ -288,6 +293,7 @@ class GroupRideModel {
       createdAt: _toDate(data['createdAt']) ?? DateTime.now(),
       maxParticipants: (data['maxParticipants'] as num?)?.toInt() ?? 20,
       joinCode: data['joinCode'] as String? ?? '',
+      lastActiveAt: _toDate(data['lastActiveAt']),
     );
   }
 
@@ -312,6 +318,7 @@ class GroupRideModel {
       createdAt: createdAt,
       maxParticipants: maxParticipants,
       joinCode: joinCode,
+      lastActiveAt: lastActiveAt,
     );
   }
 }

@@ -16,6 +16,7 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/poi_directory/presentation/providers/places_provider.dart';
 import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
+import 'features/social/presentation/providers/group_ride_providers.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/widgets/keyboard_dismiss_wrapper.dart';
 import 'core/i18n/l10n_context.dart';
@@ -159,6 +160,12 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
               .then((_) => AutoTrackingService.setOwner(null)));
         }
       });
+
+      // Ends/leaves the rider's group rides when their recording ends, and
+      // heartbeats the ones they created while it runs — see
+      // groupRideLifecycleProvider. Watched here so it's alive on every
+      // screen, not only the group map.
+      ref.watch(groupRideLifecycleProvider);
 
       final router = ref.watch(routerProvider);
       final appearance = ref.watch(appearanceProvider);

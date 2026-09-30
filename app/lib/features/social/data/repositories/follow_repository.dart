@@ -52,6 +52,19 @@ class FollowRepository {
         .toList();
   }
 
+  /// Live view of [getFollowing]. The feed keys its "followed authors" source
+  /// and the Following chip off this, so following someone takes effect
+  /// immediately instead of after an app restart — the one-shot future used
+  /// to be cached for the whole session and never invalidated by
+  /// [follow]/[unfollow].
+  Stream<List<String>> watchFollowing(String uid) {
+    return _follows.where('followerUid', isEqualTo: uid).snapshots().map(
+        (snap) => snap.docs
+            .map((d) => d.data()['followeeUid'] as String?)
+            .whereType<String>()
+            .toList());
+  }
+
   /// Uids that follow [uid].
   Future<List<String>> getFollowers(String uid) async {
     final snap = await _follows.where('followeeUid', isEqualTo: uid).get();

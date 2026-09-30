@@ -274,7 +274,7 @@ void main() {
           rideFeedNotifierProvider
               .overrideWith((ref) => RideFeedNotifier.seeded(ref, [testRide])),
           visibleFeedProvider.overrideWithValue([testRide]),
-          followingUidsProvider.overrideWith((ref) => Future.value(const <String>{})),
+          followingUidsProvider.overrideWith((ref) => Stream.value(const <String>{})),
           blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
         ],
         child: MaterialApp.router(
@@ -327,7 +327,7 @@ void main() {
           rideFeedNotifierProvider
               .overrideWith((ref) => RideFeedNotifier.seeded(ref, [testRide])),
           visibleFeedProvider.overrideWithValue([testRide]),
-          followingUidsProvider.overrideWith((ref) => Future.value(const <String>{})),
+          followingUidsProvider.overrideWith((ref) => Stream.value(const <String>{})),
           blockedUsersProvider.overrideWith((ref) => Future.value(const <String>{})),
         ],
         child: MaterialApp.router(

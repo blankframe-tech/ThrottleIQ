@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/follow_repository.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../../domain/feed_page_merge.dart';
 import '../../domain/feed_sort.dart';
 
 /// How many rides each backing query fetches per page.
@@ -18,14 +19,18 @@ const int kFeedPageSize = 20;
 /// [FeedSort.recent] — opening the tab should show what riders just posted.
 final feedSortProvider = StateProvider<FeedSort>((ref) => FeedSort.recent);
 
-/// Uids the signed-in rider follows.
+/// Uids the signed-in rider follows — live.
 ///
-/// The follow graph is small (one doc per edge) and already fetched whole by
-/// `FollowRepository.getFollowing`.
-final followingUidsProvider = FutureProvider<Set<String>>((ref) async {
+/// The follow graph is small (one doc per edge). This used to be a one-shot
+/// `FutureProvider` that was never invalidated by follow/unfollow, so a rider
+/// followed mid-session never reached the feed's followed-authors source (or
+/// the Following chip) until the app was restarted.
+final followingUidsProvider = StreamProvider<Set<String>>((ref) {
   final uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) return const {};
-  return (await FollowRepository().getFollowing(uid)).toSet();
+  if (uid == null) return Stream.value(const <String>{});
+  return FollowRepository()
+      .watchFollowing(uid)
+      .map((ids) => ids.toSet());
 });
 
 /// Fetches a single shared ride by ID.
@@ -82,8 +87,20 @@ class FeedState {
 }
 
 final rideFeedNotifierProvider =
-    StateNotifierProvider<RideFeedNotifier, FeedState>(
-        (ref) => RideFeedNotifier(ref)..refresh());
+    StateNotifierProvider<RideFeedNotifier, FeedState>((ref) {
+  final notifier = RideFeedNotifier(ref)..refresh();
+  // Following (or unfollowing) someone changes which authors the feed
+  // fetches, so re-pull from the top. Only on a real change of the set, not
+  // the first emission — `refresh()` above already awaits that one.
+  ref.listen<AsyncValue<Set<String>>>(followingUidsProvider, (prev, next) {
+    final before = prev?.valueOrNull;
+    final after = next.valueOrNull;
+    if (before == null || after == null) return;
+    if (before.length == after.length && before.containsAll(after)) return;
+    notifier.refresh();
+  });
+  return notifier;
+});
 
 /// What the feed list actually renders: the held feed run through the
 /// selected [FeedSort], with blocked riders removed.
@@ -130,7 +147,7 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
       state = FeedState(
         rides: page,
         isLoading: false,
-        hasMore: page.length >= kFeedPageSize,
+        hasMore: _lastPageHasMore,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e);
@@ -150,7 +167,7 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
         isLoadingMore: false,
         // Judged on what the queries returned, not on what survived the merge:
         // a page that was entirely duplicates still means the sources had more.
-        hasMore: page.length >= kFeedPageSize,
+        hasMore: _lastPageHasMore,
         clearError: true,
       );
     } catch (e) {
@@ -169,8 +186,17 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     // the public-discovery query can't be relied on to contain — that was the
     // empty-Following bug. Fetched as its own source so the chip filters a
     // superset rather than a 20-ride sample.
-    final following =
-        _ref.read(followingUidsProvider).valueOrNull ?? const <String>{};
+    //
+    // Awaited, not `.valueOrNull`: the very first page is fetched the instant
+    // this notifier is built, before the follow list has loaded, and reading
+    // the not-yet-resolved value used to fetch that page with NO followed
+    // authors at all.
+    Set<String> following;
+    try {
+      following = await _ref.read(followingUidsProvider.future);
+    } catch (_) {
+      following = const <String>{};
+    }
 
     // hydrateVotes: false on every source — these four result sets overlap
     // heavily, and hydrating inside each query would fetch the same ride's
@@ -195,18 +221,19 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
         Future.value(<SharedRideEntity>[]),
     ]);
 
-    final byId = <String, SharedRideEntity>{};
-    for (final list in results) {
-      for (final ride in list) {
-        byId[ride.id] = ride;
-      }
-    }
-    final page = byId.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-    if (page.isNotEmpty) _cursor = page.last.createdAt;
-    return _repo.hydrateVotesFor(page);
+    // See mergeFeedSources: the cursor is the newest "horizon" among sources
+    // that returned a full page, not the oldest ride overall — the latter
+    // skipped every ride a dense source had between the two.
+    final merged = mergeFeedSources(results, pageSize: kFeedPageSize);
+    if (merged.cursor != null) _cursor = merged.cursor;
+    _lastPageHasMore = merged.hasMore;
+    return _repo.hydrateVotesFor(merged.rides);
   }
+
+  /// Whether the last fetched page left any source with more to give. Judged
+  /// per source (see [mergeFeedSources]) rather than on the merged page's
+  /// length, which the horizon cut can legitimately shorten.
+  bool _lastPageHasMore = true;
 
   /// Existing rides win over refetched copies, so an optimistic vote already
   /// applied locally isn't stomped by a server value that hasn't caught up.

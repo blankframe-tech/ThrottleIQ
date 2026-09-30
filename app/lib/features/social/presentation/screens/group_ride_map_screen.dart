@@ -19,6 +19,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../ride/presentation/widgets/recording_gate.dart';
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../providers/group_ride_providers.dart';
@@ -133,11 +134,24 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Future<void> _bootstrap() async {
     if (widget.autoStartRide) {
       final notifier = ref.read(rideRecordingProvider.notifier);
-      // startRide() no-ops unless status is idle, so an already-recording
-      // rider who opens a group ride keeps their ride instead of getting a
-      // second one.
-      await notifier.startRide();
+      // Same gate the Record screen's start controls pass through — this
+      // path used to skip it, and a start refused for want of location
+      // permission failed silently, leaving the rider on a group map with
+      // no ride recording and no idea why.
+      final proceed = await ensureLocationDisclosure(context);
       if (!mounted) return;
+      if (proceed) {
+        // startRide() no-ops unless status is idle, so an already-recording
+        // rider who opens a group ride keeps their ride instead of getting a
+        // second one.
+        await notifier.startRide();
+        if (!mounted) return;
+        final result = ref.read(rideRecordingProvider);
+        if (result.status != RecordingStatus.active &&
+            result.status != RecordingStatus.paused) {
+          showRecordingBlockedSnackBar(context, result);
+        }
+      }
     }
 
     await _ensureLocationPermission();
@@ -168,6 +182,39 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       if (!mounted) return;
       setState(() {});
     });
+
+    // The creator's open map keeps the ride "live" (lastActiveAt) even when
+    // they aren't recording — see isGroupRideLive. Only the creator may
+    // write the parent document, so nobody else tries.
+    unawaited(_heartbeatIfCreator());
+    _heartbeatTimer = Timer.periodic(
+      kGroupRideHeartbeatInterval,
+      (_) => _heartbeatIfCreator(),
+    );
+  }
+
+  Timer? _heartbeatTimer;
+
+  Future<void> _heartbeatIfCreator() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    final ride = ref.read(groupRideProvider(widget.groupRideId)).valueOrNull;
+    if (uid == null || ride == null) return;
+    if (ride.creatorId != uid || ride.status != GroupRideStatus.active) return;
+    try {
+      await ref.read(groupRideRepositoryProvider).heartbeat(widget.groupRideId);
+    } catch (_) {/* next beat is minutes away; cutoff is hours */}
+  }
+
+  /// Back to the ride cockpit (speed, distance, End). Pops when the map was
+  /// pushed from it; otherwise (the map was the start-flow's destination via
+  /// `go`) replaces the route — the group map stays reachable from the
+  /// cockpit's "Group talk" pill.
+  void _openRideStats() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/ride/active');
+    }
   }
 
   Future<void> _ensureLocationPermission() async {
@@ -512,6 +559,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   void dispose() {
     _broadcastTimer?.cancel();
     _staleTicker?.cancel();
+    _heartbeatTimer?.cancel();
     _locationsSub?.cancel();
     // Best-effort: if the rider navigates away mid-hold there is nobody left
     // to send the clip to anyway, so the recording is simply abandoned
@@ -602,6 +650,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     // rideAsync directly so loading/error states render as before.
     final rideForActions = rideAsync.valueOrNull;
     final myUid = ref.watch(currentUserProvider)?.uid;
+    final recording = ref.watch(rideRecordingProvider.select((s) =>
+        s.status == RecordingStatus.active ||
+        s.status == RecordingStatus.paused));
 
     // Side effect only — the roster/map above never renders voice notes
     // directly, this just feeds the playback queue. Riverpod dedupes
@@ -620,6 +671,12 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       appBar: AppBar(
         title: Text(context.l10n.groupRide),
         actions: [
+          if (recording)
+            IconButton(
+              tooltip: context.l10n.groupRideRideStats,
+              onPressed: _openRideStats,
+              icon: const Icon(Icons.speed),
+            ),
           if (rideForActions != null &&
               rideForActions.status == GroupRideStatus.active &&
               rideForActions.joinCode.isNotEmpty)

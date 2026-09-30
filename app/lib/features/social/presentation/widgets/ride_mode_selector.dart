@@ -128,9 +128,23 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final liveGroupRide = ref.watch(currentLiveGroupRideProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // A rider already on a live group ride (joined by code or invite, or
+        // back here after leaving the map) gets a direct way back to the
+        // group map and push-to-talk, rather than having to find the Social
+        // tab's Riding Now card.
+        if (liveGroupRide != null) ...[
+          _LiveGroupRideBanner(
+            title: l10n.groupRideLiveBannerTitle,
+            rideName: liveGroupRide.name,
+            actionLabel: l10n.groupRideLiveBannerAction,
+            onOpen: () => context.push('/group-ride/${liveGroupRide.id}'),
+          ),
+          const SizedBox(height: 10),
+        ],
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -246,6 +260,79 @@ class _ModeSegment extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+class _LiveGroupRideBanner extends StatelessWidget {
+  const _LiveGroupRideBanner({
+    required this.title,
+    required this.rideName,
+    required this.actionLabel,
+    required this.onOpen,
+  });
+
+  final String title;
+  final String rideName;
+  final String actionLabel;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.palette.primary;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: primary),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.groups, color: primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: context.palette.textPrimary,
+                  ),
+                ),
+                Text(
+                  rideName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.palette.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FilledButton.icon(
+              onPressed: onOpen,
+              icon: const Icon(Icons.mic, size: 18),
+              label: Text(actionLabel, overflow: TextOverflow.ellipsis),
+              style: FilledButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: context.palette.surface,
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
