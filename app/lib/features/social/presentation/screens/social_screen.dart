@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,6 +29,7 @@ import '../providers/group_ride_providers.dart';
 import '../providers/notification_providers.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
 import '../providers/ride_feed_provider.dart';
+import '../widgets/ride_media_collage.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -1218,43 +1218,19 @@ class _RideCardState extends ConsumerState<_RideCard> {
     );
   }
 
-  /// Media strip: the route map is always shown (Strava-style). Rider photos,
-  /// when present, sit beside it — photos and map each taking half the card
-  /// width — instead of replacing it. [RideRouteMap] renders its own
-  /// placeholder when the polyline is empty (privacy clipping can legitimately
-  /// empty a short ride).
+  /// Media: the route map is always shown (Strava-style) and, when the rider
+  /// attached photos, it becomes the lead tile of one collage with them
+  /// ([RideMediaCollage]) rather than a separate panel beside them.
+  /// [RideRouteMap] renders its own placeholder when the polyline is empty
+  /// (privacy clipping can legitimately empty a short ride).
   ///
-  /// Multiple photos (up to 3) render as a collage ([PhotoCollage]) beside the
-  /// map rather than a swipeable strip, showing all photos simultaneously at a
-  /// glance. Tapping any photo opens an interactive full-screen gallery lightbox.
-  /// Tapping the map opens the dedicated shared ride details screen.
+  /// Tapping a photo opens the swipeable full-screen gallery; tapping the map
+  /// opens the shared ride details screen.
   Widget _buildMedia(SharedRideEntity ride) {
-    final hasPhotos = ride.photoUrls.isNotEmpty;
-    final mediaHeight = hasPhotos ? 200.0 : 160.0;
-
-    final map = InkWell(
-      onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
-      borderRadius: BorderRadius.circular(context.shape.radiusLg),
-      child: RideRouteMap(
-        polyline: ride.polyline,
-        height: mediaHeight,
-        radius: context.shape.radiusLg,
-      ),
-    );
-
-    if (!hasPhotos) return map;
-
-    return SizedBox(
-      height: mediaHeight,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-              child: PhotoCollage(urls: ride.photoUrls, height: mediaHeight)),
-          const SizedBox(width: 8),
-          Expanded(child: map),
-        ],
-      ),
+    return RideMediaCollage.network(
+      urls: ride.photoUrls,
+      map: RideRouteMap(polyline: ride.polyline, radius: 0),
+      onMapTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
     );
   }
 
@@ -1399,263 +1375,6 @@ class _RidingScoreChip extends StatelessWidget {
                   fontSize: 13, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(width: 4),
           Text('· $label', style: TextStyle(fontSize: 12, color: color)),
-        ],
-      ),
-    );
-  }
-}
-
-/// Renders 1, 2, or 3 photos as a collage beside the route map on a feed card.
-///
-/// Unlike a swipeable strip, all photos are visible simultaneously:
-/// - 1 photo: full height
-/// - 2 photos: vertical split (top/bottom)
-/// - 3 photos: hero photo on top + 2 photos side-by-side on the bottom
-///
-/// Tapping any photo opens an interactive fullscreen gallery with pinch-to-zoom
-/// and swiping between photos.
-class PhotoCollage extends StatelessWidget {
-  final List<String> urls;
-  final double height;
-
-  const PhotoCollage({super.key, required this.urls, required this.height});
-
-  void _openGallery(BuildContext context, int initialIndex) {
-    showDialog(
-      context: context,
-      builder: (_) => FullScreenGalleryDialog(
-        urls: urls,
-        initialIndex: initialIndex,
-      ),
-    );
-  }
-
-  Widget _buildPhoto(BuildContext context, int index) {
-    return GestureDetector(
-      onTap: () => _openGallery(context, index),
-      child: SizedBox.expand(
-        child: CachedNetworkImage(
-          imageUrl: urls[index],
-          fit: BoxFit.cover,
-          placeholder: (_, __) => Container(color: context.palette.background),
-          errorWidget: (_, __, ___) => Container(
-            color: context.palette.background,
-            child:
-                const Icon(Icons.broken_image, color: Colors.white24, size: 24),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (urls.isEmpty) return const SizedBox.shrink();
-
-    Widget content;
-    if (urls.length == 1) {
-      content = _buildPhoto(context, 0);
-    } else if (urls.length == 2) {
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: _buildPhoto(context, 0)),
-          const SizedBox(height: 2),
-          Expanded(child: _buildPhoto(context, 1)),
-        ],
-      );
-    } else if (urls.length == 3) {
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: _buildPhoto(context, 0)),
-          const SizedBox(height: 2),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _buildPhoto(context, 1)),
-                const SizedBox(width: 2),
-                Expanded(child: _buildPhoto(context, 2)),
-              ],
-            ),
-          ),
-        ],
-      );
-    } else {
-      // 4 or more photos (defensive fallback): 2x2 grid
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _buildPhoto(context, 0)),
-                const SizedBox(width: 2),
-                Expanded(child: _buildPhoto(context, 1)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 2),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _buildPhoto(context, 2)),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _buildPhoto(context, 3),
-                      if (urls.length > 4)
-                        Container(
-                          color: Colors.black54,
-                          alignment: Alignment.center,
-                          child: Text(
-                            '+${urls.length - 3}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    final radius = BorderRadius.circular(context.shape.radiusLg);
-    return Container(
-      height: height,
-      // Foreground, so the outline is painted over the photos rather than
-      // hidden behind them; without it a pale photo has no visible edge on a
-      // pale card.
-      foregroundDecoration: BoxDecoration(
-        borderRadius: radius,
-        border: Border.all(
-          color: context.palette.border,
-          width: context.shape.outlineWidth,
-        ),
-      ),
-      child: ClipRRect(borderRadius: radius, child: content),
-    );
-  }
-}
-
-/// Fullscreen lightbox dialog allowing pinch-to-zoom and swiping between all photos.
-class FullScreenGalleryDialog extends StatefulWidget {
-  final List<String> urls;
-  final int initialIndex;
-
-  const FullScreenGalleryDialog({
-    super.key,
-    required this.urls,
-    required this.initialIndex,
-  });
-
-  @override
-  State<FullScreenGalleryDialog> createState() =>
-      _FullScreenGalleryDialogState();
-}
-
-class _FullScreenGalleryDialogState extends State<FullScreenGalleryDialog> {
-  late final PageController _controller;
-  late int _page;
-
-  @override
-  void initState() {
-    super.initState();
-    _page = widget.initialIndex;
-    _controller = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final urls = widget.urls;
-    final multiple = urls.length > 1;
-
-    return Dialog.fullscreen(
-      backgroundColor: Colors.black,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: PageView.builder(
-              controller: _controller,
-              itemCount: urls.length,
-              physics: multiple
-                  ? const PageScrollPhysics()
-                  : const NeverScrollableScrollPhysics(),
-              onPageChanged: (i) => setState(() => _page = i),
-              itemBuilder: (context, i) {
-                return InteractiveViewer(
-                  child: Center(
-                    child: CachedNetworkImage(
-                      imageUrl: urls[i],
-                      fit: BoxFit.contain,
-                      placeholder: (_, __) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                      errorWidget: (_, __, ___) => const Icon(
-                        Icons.broken_image,
-                        color: Colors.white54,
-                        size: 48,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                tooltip: context.l10n.close,
-                icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
-          if (multiple)
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius:
-                          BorderRadius.circular(context.shape.radiusFull),
-                    ),
-                    child: Text(
-                      '${_page + 1}/${urls.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

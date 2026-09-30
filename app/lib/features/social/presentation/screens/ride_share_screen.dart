@@ -10,10 +10,12 @@ import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../widgets/ride_media_collage.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/analytics/analytics_service.dart';
@@ -310,6 +312,17 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             ),
             const SizedBox(height: 10),
             _buildPhotoPicker(),
+            const SizedBox(height: 24),
+            // The post's media exactly as the feed card will lay it out: the
+            // route map as the lead tile, collaged with the picked photos.
+            EditorialLabel(context.l10n.sharePreviewLabel),
+            const SizedBox(height: 10),
+            RideMediaCollage(
+              map: RideRouteMap(polyline: _polyline, radius: 0),
+              photoCount: _imagePaths.length,
+              photoBuilder: (_, i) =>
+                  Image.file(File(_imagePaths[i]), fit: BoxFit.cover),
+            ),
             const SizedBox(height: 24),
             EditorialLabel(context.l10n.whoCanSeeThis),
             const SizedBox(height: 10),

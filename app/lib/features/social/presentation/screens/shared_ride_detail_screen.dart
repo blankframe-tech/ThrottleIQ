@@ -20,6 +20,7 @@ import '../../data/repositories/route_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../providers/ride_feed_provider.dart';
+import '../widgets/ride_media_collage.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
@@ -790,64 +791,16 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     );
   }
 
+  /// The rider's photos as the same collage the feed card uses. The route map
+  /// is left out here: the interactive map is already the hero of this
+  /// screen, directly above.
   Widget _buildPhotosGallery(List<String> photos) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         EditorialLabel(context.l10n.ridePhotos),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 130,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: photos.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final url = photos[index];
-              return GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => Dialog(
-                      backgroundColor: Colors.transparent,
-                      insetPadding: const EdgeInsets.all(12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(ctx.shape.radiusLg),
-                        child: Image.network(url, fit: BoxFit.contain),
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  // Painted over the photo, matching the feed collage.
-                  foregroundDecoration: BoxDecoration(
-                    borderRadius:
-                        BorderRadius.circular(context.shape.radiusMd),
-                    border: Border.all(
-                      color: context.palette.border,
-                      width: context.shape.outlineWidth,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(context.shape.radiusMd),
-                    child: Image.network(
-                      url,
-                      width: 130,
-                      height: 130,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        width: 130,
-                        height: 130,
-                        color: context.palette.surface,
-                        child: Icon(Icons.broken_image, color: context.palette.textTertiary),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        RideMediaCollage.network(urls: photos),
       ],
     );
   }
