@@ -159,6 +159,7 @@ class MaintenanceConfigNotifier
     final bikeId = arg;
     final maps = configs.map(MaintenanceConfigModel.toMap).toList();
     await _configDao.saveConfigsForBike(bikeId, maps);
+    _queueSettingsBackup(ref, bikeId);
     ref.invalidateSelf();
     ref.invalidate(isMaintenanceCustomizedProvider(bikeId));
     unawaited(HomeWidgetService.instance.refreshFromLocalData());
@@ -179,6 +180,17 @@ class MaintenanceConfigNotifier
     }
     await saveConfigs(updatedList);
   }
+}
+
+/// Backs a bike's maintenance settings up to the cloud after a local save
+/// (issues §88.2). Fire-and-forget: the outbox has it on disk before this
+/// returns, and delivery never blocks the settings UI.
+void _queueSettingsBackup(Ref ref, String bikeId) {
+  final user = ref.read(currentUserProvider);
+  if (user == null) return;
+  unawaited(ref
+      .read(outboxServiceProvider)
+      .enqueueMaintenanceSettings(uid: user.uid, bikeId: bikeId));
 }
 
 final maintenanceRemindersProvider =
@@ -276,6 +288,7 @@ class BikeRunningCostNotifier
       kmPerLitre: kmPerLitre,
     );
     await _runningCostDao.upsert(BikeRunningCostModel.toMap(entity));
+    _queueSettingsBackup(ref, arg);
     state = AsyncData(entity);
   }
 }

@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../database/daos/outbox_dao.dart';
 import '../database/database_helper.dart';
+import 'maintenance_settings_sync.dart';
 import '../../features/social/data/repositories/ride_share_repository.dart';
 
 /// The operations that can be queued for later delivery.
@@ -29,6 +30,11 @@ class OutboxKind {
 
   /// Syncing a maintenance log entry to the rider's Firestore subcollection.
   static const String maintenanceLog = 'maintenance_log';
+
+  /// Backing up one bike's maintenance settings (tracked checks + running
+  /// costs) to `users/{uid}/private` — issues §88.2. The payload carries
+  /// only ids; the delivery reads the current rows from SQLite.
+  static const String maintenanceSettings = 'maintenance_settings';
 }
 
 /// How long an attempt is given before we stop waiting on it.
@@ -309,6 +315,28 @@ class OutboxService {
     return entryId;
   }
 
+  /// Queues a backup of [bikeId]'s maintenance settings. Keyed by bike, so a
+  /// burst of edits while offline collapses into one pending write — and
+  /// since the delivery reads SQLite when it runs, that write carries the
+  /// latest state rather than whichever edit was queued first.
+  Future<String> enqueueMaintenanceSettings({
+    required String uid,
+    required String bikeId,
+    bool attemptNow = true,
+  }) async {
+    final entryId = 'maintenance-settings:$bikeId';
+    await _dao.enqueue(
+      id: entryId,
+      kind: OutboxKind.maintenanceSettings,
+      payload: {'uid': uid, 'bikeId': bikeId},
+    );
+    _changes.add(null);
+    if (attemptNow) {
+      unawaited(_attemptOne(entryId));
+    }
+    return entryId;
+  }
+
   Future<OutboxDeliveryResult> _attemptOne(String id) {
     return _serialized(() async {
       final entries = await _dao.all();
@@ -365,6 +393,8 @@ class OutboxService {
               OutboxKind.liveSessionTeardown =>
                 await _deliverLiveTeardown(entry),
               OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
+              OutboxKind.maintenanceSettings =>
+                await _deliverMaintenanceSettings(entry),
               // An unrecognised kind is not going to start working later.
               _ => OutboxDeliveryResult.discarded,
             };
@@ -567,6 +597,33 @@ class OutboxService {
         debugPrint('[Outbox] local maintenance sync status update skipped: $e');
       }
 
+      return OutboxDeliveryResult.delivered;
+    } on TimeoutException {
+      return OutboxDeliveryResult.deferred;
+    } on SocketException {
+      return OutboxDeliveryResult.deferred;
+    }
+  }
+
+  Future<OutboxDeliveryResult> _deliverMaintenanceSettings(
+      OutboxEntry entry) async {
+    final uid = entry.payload['uid'] as String?;
+    final bikeId = entry.payload['bikeId'] as String?;
+    if (uid == null || bikeId == null) return OutboxDeliveryResult.discarded;
+
+    final payload = await MaintenanceSettingsSync.buildPayload(bikeId);
+    // The bike (and with it its settings) is gone locally — deleting a bike
+    // removes the cloud doc too (CloudRepository.deleteBikeRemote), so there
+    // is nothing left to back up.
+    if (payload == null) return OutboxDeliveryResult.delivered;
+
+    try {
+      await MaintenanceSettingsSync.docRef(_firestore, uid, bikeId)
+          .set(
+            {...payload, 'updatedAt': FieldValue.serverTimestamp()},
+            SetOptions(merge: true),
+          )
+          .timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
       return OutboxDeliveryResult.deferred;

@@ -5,14 +5,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'
     show VoidCallback, debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
+import '../../features/maintenance/presentation/providers/maintenance_provider.dart';
 import '../../features/ride/presentation/providers/ride_recording_provider.dart';
 import '../../features/stats/presentation/providers/rider_stats_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
+import 'maintenance_settings_sync.dart';
 import 'outbox_service.dart';
 
 /// Represents the sync status of the app
@@ -184,6 +187,13 @@ class SyncManager {
       // edit. See CloudRepository.downloadBikes's doc comment.
       final pulledBikes = await _cloudRepository.downloadBikes(uid);
       await _cloudRepository.downloadMaintenance(uid);
+      // After downloadBikes: a settings row needs its bike to exist.
+      if (await _cloudRepository.downloadMaintenanceSettings(uid)) {
+        _ref?.invalidate(maintenanceConfigProvider);
+        _ref?.invalidate(isMaintenanceCustomizedProvider);
+        _ref?.invalidate(bikeRunningCostProvider);
+      }
+      await _backfillMaintenanceSettings(uid);
       final pulledRides = await _cloudRepository.downloadRides(uid);
       if (pulledBikes) _ref?.invalidate(garageProvider);
       // Rides that just landed in the local table are invisible until the
@@ -300,6 +310,30 @@ class SyncManager {
       _isSyncing = false;
       _notifyListeners();
       _scheduleNextAutoSync();
+    }
+  }
+
+  /// One-time upload of maintenance settings saved before they synced
+  /// (issues §88.2) — until then, only a fresh save queued an upload, so a
+  /// rider who set everything up once and never touched it again would
+  /// still lose it on reinstall. Runs after the settings download, so on a
+  /// new device it only ever re-uploads what was just restored. The flag is
+  /// set only once every bike is queued; a failure retries next cycle.
+  Future<void> _backfillMaintenanceSettings(String uid) async {
+    final key = 'maintenance_settings_backfilled_$uid';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(key) ?? false) return;
+      for (final bikeId in await MaintenanceSettingsSync.bikesWithSettings(uid)) {
+        await _outbox.enqueueMaintenanceSettings(
+          uid: uid,
+          bikeId: bikeId,
+          attemptNow: false,
+        );
+      }
+      await prefs.setBool(key, true);
+    } catch (e) {
+      debugPrint('[SyncManager] maintenance settings backfill skipped: $e');
     }
   }
 

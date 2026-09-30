@@ -12,6 +12,7 @@ import '../database/daos/ride_dao.dart';
 import '../database/daos/ride_point_dao.dart';
 import '../services/cloudinary_upload_service.dart';
 import '../utils/bike_image_resolver.dart';
+import 'maintenance_settings_sync.dart';
 import 'ride_track_codec.dart';
 
 class CloudRepository {
@@ -68,6 +69,8 @@ class CloudRepository {
       refs.addAll(track.docs.map((d) => d.reference));
     }
     refs.addAll(rides.docs.map((d) => d.reference));
+    // Its maintenance settings backup (issues §88.2) — otherwise orphaned.
+    refs.add(MaintenanceSettingsSync.docRef(_firestore, uid, bikeId));
     refs.add(userDoc.collection('bikes').doc(bikeId));
     await _deleteInChunks(refs);
   }
@@ -411,6 +414,42 @@ class CloudRepository {
         pulledAny = true;
       } catch (e) {
         debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
+      }
+    }
+    return pulledAny;
+  }
+
+  /// `uid/bikeId` pairs whose cloud settings doc was already checked this
+  /// session. A bike the rider never customised has no doc and would stay
+  /// "missing settings" forever, so without this every sync cycle would
+  /// spend a read on it.
+  final Set<String> _settingsChecked = {};
+
+  /// Restores maintenance settings (tracked checks + running costs) for
+  /// owned bikes that have none locally — the reinstall / new-device case
+  /// (issues §88.2). Only fills empty tables, never overwrites a local row;
+  /// see [MaintenanceSettingsSync]. Must run after [downloadBikes], since a
+  /// settings row can't exist without its bike.
+  ///
+  /// Returns true if anything was written locally.
+  Future<bool> downloadMaintenanceSettings(String uid) async {
+    var pulledAny = false;
+    for (final bikeId in await MaintenanceSettingsSync.bikesMissingSettings(uid)) {
+      final key = '$uid/$bikeId';
+      if (_settingsChecked.contains(key)) continue;
+      try {
+        final snap =
+            await MaintenanceSettingsSync.docRef(_firestore, uid, bikeId).get();
+        final data = snap.data();
+        if (data != null &&
+            await MaintenanceSettingsSync.applyDownloaded(bikeId, data)) {
+          pulledAny = true;
+        }
+        _settingsChecked.add(key);
+      } catch (e) {
+        // Left unmarked, so the next cycle tries again.
+        debugPrint(
+            '[CloudRepository] maintenance settings download skipped for $bikeId: $e');
       }
     }
     return pulledAny;
