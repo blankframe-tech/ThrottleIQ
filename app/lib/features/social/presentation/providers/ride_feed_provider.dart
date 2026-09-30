@@ -8,6 +8,7 @@ import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../../domain/feed_page_merge.dart';
 import '../../domain/feed_sort.dart';
+import 'follow_providers.dart';
 
 /// How many rides each backing query fetches per page.
 const int kFeedPageSize = 20;
@@ -192,8 +193,15 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     // the not-yet-resolved value used to fetch that page with NO followed
     // authors at all.
     Set<String> following;
+    Set<String> mutual = const <String>{};
     try {
       following = await _ref.read(followingUidsProvider.future);
+      if (uid != null && following.isNotEmpty) {
+        // Find which of these followed authors follow back, so we can request
+        // their 'mutual' posts. (issues §88.1)
+        final followRepo = _ref.read(followRepositoryProvider);
+        mutual = await followRepo.getFollowersAmong(uid, following);
+      }
     } catch (_) {
       following = const <String>{};
     }
@@ -216,6 +224,7 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
         Future.value(<SharedRideEntity>[]),
       if (following.isNotEmpty)
         _repo.getRidesByAuthors(following,
+            mutualUids: mutual,
             limit: kFeedPageSize, before: _cursor, hydrateVotes: false)
       else
         Future.value(<SharedRideEntity>[]),

@@ -80,6 +80,36 @@ class FollowRepository {
     return following.intersection(followers).toList();
   }
 
+  /// Which of [candidates] follow [uid] back — i.e. the mutuals among a
+  /// known set, without reading [uid]'s whole follower list.
+  ///
+  /// The feed uses this to decide which followed authors' `mutual` posts it
+  /// may ask for (firestore.rules denies a per-author query naming `mutual`
+  /// unless both edges exist — issues §88.1). `whereIn` caps at 30 values, so
+  /// [candidates] is chunked; each chunk costs one read per matching edge
+  /// (minimum one), not one per follower.
+  Future<Set<String>> getFollowersAmong(
+      String uid, Iterable<String> candidates) async {
+    final ids = candidates.where((c) => c != uid).toList();
+    if (ids.isEmpty) return const <String>{};
+    const chunkSize = 30;
+    final snaps = await Future.wait([
+      for (var i = 0; i < ids.length; i += chunkSize)
+        _follows
+            .where('followeeUid', isEqualTo: uid)
+            .where('followerUid',
+                whereIn: ids.sublist(
+                    i, i + chunkSize > ids.length ? ids.length : i + chunkSize))
+            .get(),
+    ]);
+    return {
+      for (final snap in snaps)
+        for (final d in snap.docs)
+          if (d.data()['followerUid'] is String)
+            d.data()['followerUid'] as String,
+    };
+  }
+
   Future<int> followerCount(String uid) async {
     final agg =
         await _follows.where('followeeUid', isEqualTo: uid).count().get();

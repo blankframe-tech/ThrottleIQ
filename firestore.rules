@@ -4,14 +4,29 @@ service cloud.firestore {
     // Whether the requester may see a shared-ride document, given its data.
     // Used by the ride read rule, the like/comment counter-bump rule, and the
     // likes/comments subcollection reads so the three stay in lockstep.
-    // Public → anyone authed; followers/mutual → only uids materialized into
-    // allowedUserIds at share time; always the author.
+    // Public → anyone authed; always the author; followers/mutual → judged
+    // against the LIVE follow graph (issues §88.1): 'followers' needs the
+    // requester → author edge, 'mutual' needs both edges. The exists() paths
+    // are built from ride.userId, so a list query can only satisfy them when
+    // it pins `userId ==` a single author (the rules engine substitutes the
+    // query's equality value for resource.data.userId) — the feed issues one
+    // such query per followed author. A whereIn on userId can't be proven.
+    //
+    // The legacy share-time snapshot (`allowedUserIds`, written by every
+    // client before §88.1 and still written for their sake) stays as an
+    // alternative grant, so old clients' `allowedUserIds array-contains me`
+    // feed query keeps working unchanged.
     function rideVisibleTo(ride) {
       return request.auth != null && (
         request.auth.uid == ride.userId ||
         ride.audience == 'public' ||
         (ride.audience in ['followers', 'mutual'] &&
-          request.auth.uid in ride.allowedUserIds));
+          request.auth.uid in ride.get('allowedUserIds', [])) ||
+        (ride.audience == 'followers' &&
+          exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + ride.userId))) ||
+        (ride.audience == 'mutual' &&
+          exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + ride.userId)) &&
+          exists(/databases/$(database)/documents/follows/$(ride.userId + '_' + request.auth.uid))));
     }
 
     // Whether the requester may read a users/{uid} profile doc, given its

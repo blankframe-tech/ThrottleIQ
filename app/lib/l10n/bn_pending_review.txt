@@ -1128,13 +1128,3 @@ shareRideCodeShareAction
 shareRideCodeCopied
 shareRideCodeMessage
 tapView
-# batch: social-redesign
-peopleTabLabel
-ridingNowSectionTitle
-searchRidersHint
-notFollowingAnyoneYet
-# batch: group-ride-live-access
-groupRideTalkButton
-groupRideLiveBannerTitle
-groupRideLiveBannerAction
-groupRideRideStats

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -202,6 +201,7 @@ class RideShareRepository {
   /// [getSharedToMe] for the same constraint spelled out.
   Future<List<SharedRideEntity>> getRidesByAuthors(
     Iterable<String> uids, {
+    Set<String> mutualUids = const <String>{},
     int limit = 20,
     DateTime? before,
     bool hydrateVotes = true,
@@ -209,14 +209,20 @@ class RideShareRepository {
     final ids = uids.toList();
     if (ids.isEmpty) return const [];
 
-    const chunkSize = 30;
+    // The live follow-graph query (issues §88.1). Rules allow a follower to see
+    // 'followers' posts and a mutual follower to see 'mutual' posts, but ONLY
+    // when the query pins a single author via `userId == author`. A `whereIn`
+    // across multiple authors cannot be proven against the rule's exists()
+    // clauses, so we fan out to one query per author.
     final futures = <Future<QuerySnapshot<Map<String, dynamic>>>>[];
-    for (var i = 0; i < ids.length; i += chunkSize) {
-      final chunk = ids.sublist(i, min(i + chunkSize, ids.length));
+    for (final author in ids) {
+      final audiences = mutualUids.contains(author)
+          ? ['public', 'followers', 'mutual']
+          : ['public', 'followers'];
       var q = _firestore
           .collection('rides')
-          .where('userId', whereIn: chunk)
-          .where('audience', isEqualTo: 'public')
+          .where('userId', isEqualTo: author)
+          .where('audience', whereIn: audiences)
           .orderBy('createdAt', descending: true);
       if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
       futures.add(q.limit(limit).get());
