@@ -850,7 +850,7 @@ tests green. Scratch files deleted. Full detail in features.md §7.
 
 ## 88. Follow-ups left by the open55 pass (2026-10-01)
 
-- **88.1:** a post shared to `followers` or `mutual` saves its allowed viewers when it's shared, so someone who follows the author later never sees it. This is by design; fixing it needs a rules/data-model redesign. See §87.2 in `issues_fixed.md`.
+- **88.1:** ~~a post shared to `followers` or `mutual` saves its allowed viewers when it's shared...~~ Fixed (code). Live follower visibility check implemented in Firestore rules.
 - **88.2:** ~~running-cost settings phone-only~~ Fixed (code, not yet device-checked): each bike's maintenance settings (tracked checks incl. typical cost, fuel price, mileage) back up via the outbox to the owner-only `users/{uid}/private/maintenanceSettings_{bikeId}` and restore on reinstall/new device (fills empty tables only, never overwrites). Existing rules already cover the path, so no rules deploy. See `core/cloud/maintenance_settings_sync.dart`.
 - **88.3:** the open55 changes haven't been checked on a device: the checklist in §87, the maintenance layout and ride-cost card, the collage visuals, and the SQLite v17→18 upgrade on a real install.
 - **88.4:** the Bangla strings added in open55 haven't been reviewed (listed in `bn_pending_review.txt`).

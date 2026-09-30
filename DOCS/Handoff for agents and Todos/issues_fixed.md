@@ -6060,3 +6060,11 @@ The fixes are uncommitted in the open55 pass. `flutter analyze` is clean and all
   - **Record screen:** new "Open push-to-talk" banner.
 - **Rules/indexes:** unchanged. Nothing to deploy.
 - **To check on a device:** ending a ride clears the card for all members; the existing zombie cards disappear; the talk ⇄ stats buttons work in both directions; a newly followed rider's posts appear without a restart.
+
+## 88. Follow-ups left by the open55 pass — FIXED in code (2026-10-01)
+
+- **88.1: "Followers/mutual rides hidden from new followers."**
+  - **Cause:** The query for followed authors' rides relied on `allowedUserIds array-contains me`, which was only populated when the ride was shared. New followers were excluded.
+  - **Fix:** Switched `RideShareRepository.getRidesByAuthors` to issue one query per author. Because the query pins `userId == author`, `firestore.rules` can statically prove the `exists()` checks against the live `follows` graph during validation. `RideFeedNotifier` now queries `getFollowersAmong` to know which authors follow the rider back, enabling it to safely query for `mutual` posts without hitting permission denials.
+  - **Rules:** `rideVisibleTo` updated to check the live `follows` graph (via `exists()`), while retaining the `allowedUserIds` fallback for old clients.
+
