@@ -112,6 +112,7 @@ class BikeDao {
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bike_maintenance_configs', where: 'bike_id = ?', whereArgs: [id]);
+      await txn.delete('bike_running_costs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
 
       // Tombstone, written in the SAME transaction as the delete so the two

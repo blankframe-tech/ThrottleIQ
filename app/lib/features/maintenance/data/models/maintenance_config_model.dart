@@ -8,6 +8,7 @@ class MaintenanceConfigModel {
         intervalKm: (m['interval_km'] as num).toDouble(),
         isEnabled: (m['is_enabled'] as int) == 1,
         notes: m['notes'] as String?,
+        typicalCost: (m['typical_cost'] as num?)?.toDouble(),
       );
 
   static Map<String, dynamic> toMap(MaintenanceConfigEntity e) => {
@@ -18,5 +19,11 @@ class MaintenanceConfigModel {
         'notes': (e.notes != null && e.notes!.trim().isNotEmpty)
             ? e.notes!.trim()
             : null,
+        // Omitted rather than written as NULL when unset: rows are always
+        // replaced wholesale (see MaintenanceConfigDao.saveConfigsForBike),
+        // so absent == NULL, and a pre-v18 table without the column stays
+        // writable.
+        if (e.typicalCost != null && e.typicalCost! > 0)
+          'typical_cost': e.typicalCost,
       };
 }

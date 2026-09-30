@@ -1,0 +1,211 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/theme/app_theme_context.dart';
+import '../../../../shared/widgets/editorial.dart';
+import '../../../garage/domain/entities/bike_entity.dart';
+import '../../domain/calculators/fuel_units.dart';
+import '../providers/maintenance_provider.dart';
+import 'maintenance_format.dart';
+import 'odometer_sync_sheet.dart';
+import 'reset_maintenance_log_sheet.dart';
+import 'running_costs_sheet.dart';
+
+/// Everything that configures the maintenance page rather than being part
+/// of its day-to-day content, gathered in one card at the end of the page:
+/// which checks to track, odometer sync, bulk reset, distance units, and
+/// running costs (fuel price, mileage, per-service costs).
+class MaintenanceSettingsSection extends ConsumerWidget {
+  final BikeEntity bike;
+  const MaintenanceSettingsSection({super.key, required this.bike});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final imperial = ref.watch(maintenanceImperialProvider);
+    final perKm = ref
+        .watch(rideCostProvider((bikeId: bike.id, distanceKm: 1)))
+        ?.costPerKm;
+    final String costSubtitle;
+    if (perKm == null || perKm <= 0) {
+      costSubtitle = l10n.maintRunningCostsEmpty;
+    } else {
+      final rate = imperial ? FuelUnits.costPerKmToPerMile(perKm) : perKm;
+      costSubtitle =
+          l10n.maintCostPerUnit(formatTakaRate(rate), imperial ? 'mi' : 'km');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        EditorialLabel(l10n.maintSettingsTitle),
+        const SizedBox(height: 10),
+        EditorialCard(
+          radius: context.shape.radiusLg,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              _SettingsTile(
+                icon: Icons.payments_outlined,
+                title: l10n.maintRunningCosts,
+                subtitle: costSubtitle,
+                onTap: () => RunningCostsSheet.show(context, bike.id),
+              ),
+              const _TileDivider(),
+              _SettingsTile(
+                icon: Icons.tune,
+                title: l10n.maintCustomizeChecks,
+                subtitle: l10n.maintCustomizeChecksSubtitle,
+                onTap: () => context
+                    .push('/home/maintenance/configure?bikeId=${bike.id}'),
+              ),
+              const _TileDivider(),
+              _SettingsTile(
+                icon: Icons.speed,
+                title: l10n.maintSyncOdometer,
+                subtitle: l10n.maintSyncOdometerSubtitle,
+                onTap: () => OdometerSyncSheet.show(context, bike),
+              ),
+              const _TileDivider(),
+              _SettingsTile(
+                icon: Icons.restart_alt,
+                title: l10n.resetServiceLog,
+                subtitle: l10n.maintResetLogSubtitle,
+                onTap: () => ResetMaintenanceLogSheet.show(context, bike),
+              ),
+              const _TileDivider(),
+              _SettingsTile(
+                icon: Icons.straighten,
+                title: l10n.maintDistanceUnits,
+                trailing: MaintenanceUnitToggle(
+                  imperial: imperial,
+                  onChanged: (v) =>
+                      ref.read(maintenanceImperialProvider.notifier).set(v),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TileDivider extends StatelessWidget {
+  const _TileDivider();
+  @override
+  Widget build(BuildContext context) => Divider(
+      height: 1, indent: 48, color: context.palette.border.withValues(alpha: 0.6));
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: context.palette.textSecondary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: context.palette.textPrimary)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: context.palette.textTertiary,
+                            height: 1.25)),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            trailing ??
+                Icon(Icons.chevron_right,
+                    size: 18, color: context.palette.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// km / mi segmented toggle.
+class MaintenanceUnitToggle extends StatelessWidget {
+  final bool imperial;
+  final ValueChanged<bool> onChanged;
+  const MaintenanceUnitToggle({super.key, required this.imperial, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(context.shape.radiusFull),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _UnitSegment(label: context.l10n.distanceStatLabel, active: !imperial, onTap: () => onChanged(false)),
+          _UnitSegment(label: 'mi', active: imperial, onTap: () => onChanged(true)),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnitSegment extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  const _UnitSegment({required this.label, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+        decoration: BoxDecoration(
+          color: active ? context.palette.ink : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusFull),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+            color: active ? context.palette.onInk : context.palette.textTertiary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

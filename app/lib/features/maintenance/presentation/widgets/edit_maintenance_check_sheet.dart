@@ -144,6 +144,7 @@ class _EditMaintenanceCheckSheetState
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _intervalCtrl;
   late final TextEditingController _notesCtrl;
+  late final TextEditingController _costCtrl;
   late bool _isEnabled;
   bool _saving = false;
 
@@ -154,6 +155,12 @@ class _EditMaintenanceCheckSheetState
       text: widget.config.intervalKm.toStringAsFixed(0),
     );
     _notesCtrl = TextEditingController(text: widget.config.notes ?? '');
+    final cost = widget.config.typicalCost;
+    _costCtrl = TextEditingController(
+      text: cost == null
+          ? ''
+          : cost.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), ''),
+    );
     _isEnabled = widget.config.isEnabled;
   }
 
@@ -161,6 +168,7 @@ class _EditMaintenanceCheckSheetState
   void dispose() {
     _intervalCtrl.dispose();
     _notesCtrl.dispose();
+    _costCtrl.dispose();
     super.dispose();
   }
 
@@ -170,10 +178,15 @@ class _EditMaintenanceCheckSheetState
     if (intervalVal == null || intervalVal <= 0) return;
 
     final trimmedNotes = _notesCtrl.text.trim();
-    final updated = widget.config.copyWith(
+    final costVal = double.tryParse(_costCtrl.text.trim());
+    final hasCost = costVal != null && costVal > 0;
+    final updated = MaintenanceConfigEntity(
+      bikeId: widget.config.bikeId,
+      serviceType: widget.config.serviceType,
       intervalKm: intervalVal,
       isEnabled: _isEnabled,
       notes: trimmedNotes.isNotEmpty ? trimmedNotes : null,
+      typicalCost: hasCost ? costVal : null,
     );
 
     if (widget.persistImmediately) {
@@ -404,6 +417,54 @@ class _EditMaintenanceCheckSheetState
                   color: context.palette.textTertiary,
                 ),
               ),
+
+              // Typical cost per service — feeds the ride-cost estimate.
+              // Not for fuel, which is priced by litre in Running costs.
+              if (type != ServiceType.fuel) ...[
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    EditorialLabel(context.l10n.maintTypicalCost),
+                    Text(
+                      context.l10n.optionalText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.palette.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  key: const Key('typicalCostField'),
+                  controller: _costCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(color: context.palette.textPrimary),
+                  decoration: InputDecoration(
+                    prefixText: '৳ ',
+                    filled: true,
+                    fillColor: context.palette.surfaceVariant,
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    final n = double.tryParse(v.trim());
+                    if (n == null || n < 0) {
+                      return context.l10n.enterPositiveNumber;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  context.l10n.maintTypicalCostHelper,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: context.palette.textTertiary,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
 
               // Action Buttons: Cancel and Save

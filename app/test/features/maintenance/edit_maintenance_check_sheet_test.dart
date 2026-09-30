@@ -144,4 +144,77 @@ void main() {
     expect(saved!.isEnabled, isFalse);
     expect(saved!.notes, 'Motul C2 Chain Lube');
   });
+
+  testWidgets('saves a typical cost; hidden for fuel', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const config = MaintenanceConfigEntity(
+      bikeId: 'bike-1',
+      serviceType: ServiceType.oilChange,
+      intervalKm: 1500,
+      isEnabled: true,
+      notes: 'Motul',
+    );
+
+    MaintenanceConfigEntity? saved;
+    await tester.pumpWidget(buildHarness(
+      config: config,
+      onSheetClosed: (result) => saved = result,
+    ));
+    await tester.tap(find.text('Open Sheet'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('typicalCostField')), '950');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved!.typicalCost, 950);
+    expect(saved!.notes, 'Motul');
+  });
+
+  testWidgets('clearing notes and cost saves them as null', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const config = MaintenanceConfigEntity(
+      bikeId: 'bike-1',
+      serviceType: ServiceType.chain,
+      intervalKm: 600,
+      notes: 'Old note',
+      typicalCost: 120,
+    );
+    MaintenanceConfigEntity? saved;
+    await tester.pumpWidget(buildHarness(
+      config: config,
+      onSheetClosed: (result) => saved = result,
+    ));
+    await tester.tap(find.text('Open Sheet'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).at(1), '');
+    await tester.enterText(find.byKey(const Key('typicalCostField')), '');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved!.notes, isNull);
+    expect(saved!.typicalCost, isNull);
+  });
+
+  testWidgets('fuel has no typical-cost field', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    const config = MaintenanceConfigEntity(
+      bikeId: 'bike-1',
+      serviceType: ServiceType.fuel,
+      intervalKm: 300,
+    );
+    await tester.pumpWidget(buildHarness(config: config, onSheetClosed: (_) {}));
+    await tester.tap(find.text('Open Sheet'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('typicalCostField')), findsNothing);
+  });
 }

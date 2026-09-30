@@ -33,6 +33,7 @@ import '../../../../core/services/weather_service.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../maintenance/presentation/widgets/ride_cost_card.dart';
 
 enum _ExportFormat { json, gpx, csv }
 
@@ -422,6 +423,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
 
                 // ── Riding pace ──────────────────────────────────────────
                 _buildPaceCard(l10n, ride),
+                const SizedBox(height: 16),
+
+                // ── Ride cost ────────────────────────────────────────────
+                // Distance × the ride's bike's running cost per km (fuel +
+                // each tracked check with cost data) — see RideCostCard.
+                RideCostCard(bikeId: ride.bikeId, distanceKm: ride.distanceKm),
                 const SizedBox(height: 16),
 
                 // ── Map ──────────────────────────────────────────────────

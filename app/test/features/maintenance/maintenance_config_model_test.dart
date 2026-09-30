@@ -73,5 +73,22 @@ void main() {
       );
       expect(MaintenanceConfigModel.toMap(blank)['notes'], isNull);
     });
+
+    test('round-trips typical cost; non-positive is stored as null', () {
+      const entity = MaintenanceConfigEntity(
+        bikeId: 'bike-abc',
+        serviceType: ServiceType.chain,
+        intervalKm: 600,
+        typicalCost: 150,
+      );
+      final map = MaintenanceConfigModel.toMap(entity);
+      expect(map['typical_cost'], 150.0);
+      expect(MaintenanceConfigModel.fromMap(map), equals(entity));
+
+      final zero = MaintenanceConfigModel.toMap(
+          entity.copyWith(typicalCost: 0));
+      expect(zero['typical_cost'], isNull);
+      expect(entity.copyWith(clearTypicalCost: true).typicalCost, isNull);
+    });
   });
 }

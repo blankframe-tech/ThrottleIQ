@@ -281,12 +281,19 @@ class MaintenanceConfigEntity extends Equatable {
   final bool isEnabled;
   final String? notes;
 
+  /// What the rider typically pays for one service of this item, in the
+  /// app's currency (৳). Feeds the per-ride running-cost estimate — see
+  /// `RideCostCalculator` — as the fallback when no logged service of this
+  /// type carries an actual cost yet. Null when never set.
+  final double? typicalCost;
+
   const MaintenanceConfigEntity({
     required this.bikeId,
     required this.serviceType,
     required this.intervalKm,
     this.isEnabled = true,
     this.notes,
+    this.typicalCost,
   });
 
   MaintenanceConfigEntity copyWith({
@@ -295,6 +302,8 @@ class MaintenanceConfigEntity extends Equatable {
     double? intervalKm,
     bool? isEnabled,
     String? notes,
+    double? typicalCost,
+    bool clearTypicalCost = false,
   }) {
     return MaintenanceConfigEntity(
       bikeId: bikeId ?? this.bikeId,
@@ -302,10 +311,38 @@ class MaintenanceConfigEntity extends Equatable {
       intervalKm: intervalKm ?? this.intervalKm,
       isEnabled: isEnabled ?? this.isEnabled,
       notes: notes ?? this.notes,
+      typicalCost:
+          clearTypicalCost ? null : (typicalCost ?? this.typicalCost),
     );
   }
 
   @override
-  List<Object?> get props => [bikeId, serviceType, intervalKm, isEnabled, notes];
+  List<Object?> get props =>
+      [bikeId, serviceType, intervalKm, isEnabled, notes, typicalCost];
+}
+
+/// Per-bike fuel economics used to price a ride's fuel. Stored canonically
+/// in metric (price per litre, km per litre) whatever unit the rider typed
+/// them in — conversion happens at the edges (see `fuel_units.dart`).
+class BikeRunningCostEntity extends Equatable {
+  final String bikeId;
+
+  /// Price of one litre of fuel, in ৳.
+  final double? fuelPricePerLitre;
+
+  /// The bike's average mileage, km per litre.
+  final double? kmPerLitre;
+
+  const BikeRunningCostEntity({
+    required this.bikeId,
+    this.fuelPricePerLitre,
+    this.kmPerLitre,
+  });
+
+  bool get hasFuelData =>
+      (fuelPricePerLitre ?? 0) > 0 && (kmPerLitre ?? 0) > 0;
+
+  @override
+  List<Object?> get props => [bikeId, fuelPricePerLitre, kmPerLitre];
 }
 

@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 17;
+  static const int schemaVersion = 18;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -280,6 +280,16 @@ class DatabaseHelper {
       await _addColumnIfMissing(db, 'rides', 'route_id', 'route_id TEXT');
       await _addColumnIfMissing(db, 'rides', 'route_name', 'route_name TEXT');
     }
+    if (oldVersion < 18 && newVersion >= 18) {
+      // Per-ride running cost (maintenance settings → Running costs). A
+      // rider-set typical price per service on each tracked check, plus the
+      // bike's fuel price & mileage. All NULL on existing rows: "not set",
+      // which the ride-cost calculator treats as "leave this item out".
+      await db.execute(_createBikeMaintenanceConfigsSql);
+      await _addColumnIfMissing(db, 'bike_maintenance_configs',
+          'typical_cost', 'typical_cost REAL');
+      await db.execute(_createBikeRunningCostsSql);
+    }
   }
 
   static const String _createBikeMaintenanceConfigsSql = '''
@@ -289,7 +299,19 @@ class DatabaseHelper {
       interval_km REAL NOT NULL,
       is_enabled INTEGER NOT NULL DEFAULT 1,
       notes TEXT,
+      typical_cost REAL,
       PRIMARY KEY (bike_id, service_type),
+      FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+    )
+  ''';
+
+  /// One row per bike: what its fuel costs and how far it goes on a litre.
+  /// Canonical metric regardless of the unit the rider entered it in.
+  static const String _createBikeRunningCostsSql = '''
+    CREATE TABLE IF NOT EXISTS bike_running_costs (
+      bike_id TEXT PRIMARY KEY,
+      fuel_price_per_litre REAL,
+      km_per_litre REAL,
       FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
     )
   ''';
@@ -560,6 +582,7 @@ class DatabaseHelper {
 
     await db.execute(_createBikeMaintenanceConfigsSql);
     await db.execute(_createBikeMaintenanceConfigsIndexSql);
+    await db.execute(_createBikeRunningCostsSql);
     await db.execute(_createDeletedBikesSql);
     await db.execute(_createOutboxSql);
     await db.execute(_createOutboxIndexSql);
@@ -623,6 +646,8 @@ class DatabaseHelper {
           where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
       for (final bike in bikes) {
         await txn.delete('bike_maintenance_configs',
+            where: 'bike_id = ?', whereArgs: [bike['id']]);
+        await txn.delete('bike_running_costs',
             where: 'bike_id = ?', whereArgs: [bike['id']]);
         await txn.delete('maintenance_logs',
             where: 'bike_id = ?', whereArgs: [bike['id']]);

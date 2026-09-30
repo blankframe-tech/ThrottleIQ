@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/database/daos/bike_running_cost_dao.dart';
 import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/database/daos/maintenance_dao.dart';
 import '../../../../core/database/daos/maintenance_config_dao.dart';
@@ -11,6 +13,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../data/models/maintenance_model.dart';
 import '../../data/models/maintenance_config_model.dart';
+import '../../data/models/bike_running_cost_model.dart';
+import '../../domain/calculators/ride_cost_calculator.dart';
 import '../../domain/entities/maintenance_entity.dart';
 
 const _uuid = Uuid();
@@ -161,7 +165,10 @@ class MaintenanceConfigNotifier
   }
 
   Future<void> updateSingleConfig(MaintenanceConfigEntity updated) async {
-    final current = state.valueOrNull ?? await build(arg);
+    // `future`, not `state.valueOrNull`: right after a save the notifier is
+    // reloading and valueOrNull is the *previous* list, so a second edit
+    // made before the reload finished silently reverted the first.
+    final current = await future;
     final index =
         current.indexWhere((c) => c.serviceType == updated.serviceType);
     final List<MaintenanceConfigEntity> updatedList;
@@ -240,3 +247,87 @@ List<MaintenanceReminder> _computeReminders(
   return reminders;
 }
 
+
+// ── Running costs (per-ride cost estimate) ───────────────────────────────
+
+final _runningCostDao = BikeRunningCostDao();
+
+/// The bike's fuel price & mileage. Always resolves (an empty entity when
+/// the rider never set them) so callers never special-case "no row".
+final bikeRunningCostProvider = AsyncNotifierProvider.family<
+    BikeRunningCostNotifier, BikeRunningCostEntity, String>(
+  BikeRunningCostNotifier.new,
+);
+
+class BikeRunningCostNotifier
+    extends FamilyAsyncNotifier<BikeRunningCostEntity, String> {
+  @override
+  Future<BikeRunningCostEntity> build(String bikeId) async {
+    final row = await _runningCostDao.getForBike(bikeId);
+    return row == null
+        ? BikeRunningCostEntity(bikeId: bikeId)
+        : BikeRunningCostModel.fromMap(row);
+  }
+
+  Future<void> save({double? fuelPricePerLitre, double? kmPerLitre}) async {
+    final entity = BikeRunningCostEntity(
+      bikeId: arg,
+      fuelPricePerLitre: fuelPricePerLitre,
+      kmPerLitre: kmPerLitre,
+    );
+    await _runningCostDao.upsert(BikeRunningCostModel.toMap(entity));
+    state = AsyncData(entity);
+  }
+}
+
+/// Running-cost breakdown for [distanceKm] on a bike, combining its tracked
+/// checks, logged service costs and fuel settings. Null until all three
+/// sources have loaded, so a card never flashes a partial total.
+final rideCostProvider = Provider.family<RideCostBreakdown?,
+    ({String bikeId, double distanceKm})>((ref, key) {
+  final configs = ref.watch(maintenanceConfigProvider(key.bikeId)).valueOrNull;
+  final logs = ref.watch(maintenanceProvider(key.bikeId)).valueOrNull;
+  final running = ref.watch(bikeRunningCostProvider(key.bikeId)).valueOrNull;
+  if (configs == null || logs == null || running == null) return null;
+  return RideCostCalculator.compute(
+    distanceKm: key.distanceKm,
+    configs: configs,
+    logs: logs,
+    runningCost: running,
+  );
+});
+
+// ── Distance unit on the maintenance page ────────────────────────────────
+
+const _imperialPrefKey = 'maintenance_imperial_units';
+
+/// km vs mi for the maintenance page, remembered across launches (it used
+/// to reset to km every time the screen was opened).
+final maintenanceImperialProvider =
+    StateNotifierProvider<MaintenanceImperialNotifier, bool>(
+  (ref) => MaintenanceImperialNotifier(),
+);
+
+class MaintenanceImperialNotifier extends StateNotifier<bool> {
+  MaintenanceImperialNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final v = prefs.getBool(_imperialPrefKey);
+      if (v != null && mounted) state = v;
+    } catch (_) {
+      // Preferences unavailable (tests, platform hiccup) — stay on km.
+    }
+  }
+
+  Future<void> set(bool imperial) async {
+    state = imperial;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_imperialPrefKey, imperial);
+    } catch (_) {}
+  }
+}
