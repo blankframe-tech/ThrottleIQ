@@ -1,5 +1,13 @@
 {
   "@@locale": "en",
+  "suggestedForYou": "Suggested for you",
+  "@suggestedForYou": {
+    "description": "Label for the suggested users section."
+  },
+  "showMore": "Show more",
+  "@showMore": {
+    "description": "Label for the button to show all users."
+  },
   "settingsTitle": "Settings",
   "@settingsTitle": {
     "description": "AppBar title of the settings screen."

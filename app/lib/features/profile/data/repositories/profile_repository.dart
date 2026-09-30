@@ -267,6 +267,17 @@ class ProfileRepository {
         .toList();
   }
 
+  /// Get recent users for suggestions
+  Future<List<UserProfileEntity>> getRecentUsers({int limit = 50}) async {
+    final snap = await _users
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
+        .toList();
+  }
+
   /// Exact-match search by email.
   Future<List<UserProfileEntity>> searchByEmail(String email,
       {int limit = 10}) async {

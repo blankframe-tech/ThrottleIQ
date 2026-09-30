@@ -9,6 +9,12 @@ class AppLocalizationsBn extends AppLocalizations {
   AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
+  String get suggestedForYou => 'আপনার জন্য প্রস্তাবিত';
+
+  @override
+  String get showMore => 'আরও দেখুন';
+
+  @override
   String get settingsTitle => 'সেটিংস';
 
   @override

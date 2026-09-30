@@ -98,6 +98,18 @@ abstract class AppLocalizations {
     Locale('en')
   ];
 
+  /// No description provided for @suggestedForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested for you'**
+  String get suggestedForYou;
+
+  /// No description provided for @showMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMore;
+
   /// AppBar title of the settings screen.
   ///
   /// In en, this message translates to:

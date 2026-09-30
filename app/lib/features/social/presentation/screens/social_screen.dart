@@ -233,7 +233,7 @@ class _SearchResults extends ConsumerWidget {
           _SectionMessage(context.l10n.noRidersMatchThat)
         else
           for (final rider in riders) ...[
-            _RiderResultTile(rider: rider),
+            RiderResultTile(rider: rider),
             const SizedBox(height: 8),
           ],
         const SizedBox(height: 16),
@@ -827,7 +827,7 @@ class _RiderSearchList extends ConsumerWidget {
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       itemCount: riders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, i) => _RiderResultTile(rider: riders[i]),
+      itemBuilder: (_, i) => RiderResultTile(rider: riders[i]),
     );
   }
 }
@@ -838,45 +838,199 @@ class _FollowingList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profilesAsync = ref.watch(_followingProfilesProvider);
+    final suggestionsAsync = ref.watch(suggestedProfilesProvider);
 
-    return profilesAsync.when(
-      loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
-      error: (e, _) => ErrorView(
-        error: e,
-        onRetry: () => ref.invalidate(_followingProfilesProvider),
-      ),
-      data: (profiles) {
-        if (profiles.isEmpty) {
-          return Center(
+    return CustomScrollView(
+      slivers: [
+        if (suggestionsAsync.valueOrNull?.isNotEmpty == true) ...[
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingLg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.people_outline, size: 64, color: context.palette.textTertiary),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.l10n.notFollowingAnyoneYet,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: context.palette.textSecondary, fontSize: 16),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
+              child: EditorialLabel(context.l10n.suggestedForYou),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 140,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+                itemCount: suggestionsAsync.value!.length > 10 ? 11 : suggestionsAsync.value!.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, i) {
+                  if (i == 10) {
+                    return _ShowMoreCard();
+                  }
+                  final profile = suggestionsAsync.value![i];
+                  return _SuggestedRiderCard(rider: profile);
+                },
               ),
             ),
-          );
-        }
-        return ListView(
-          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        ],
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
+            child: EditorialLabel(context.l10n.following),
+          ),
+        ),
+        profilesAsync.when(
+          loading: () => SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator(color: context.palette.primary)),
+            ),
+          ),
+          error: (e, _) => SliverToBoxAdapter(
+            child: ErrorView(
+              error: e,
+              onRetry: () => ref.invalidate(_followingProfilesProvider),
+            ),
+          ),
+          data: (profiles) {
+            if (profiles.isEmpty) {
+              return SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimensions.paddingLg),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.people_outline, size: 64, color: context.palette.textTertiary),
+                        const SizedBox(height: 16),
+                        Text(
+                          context.l10n.notFollowingAnyoneYet,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: context.palette.textSecondary, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            return SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: RiderResultTile(rider: profiles[i]),
+                    );
+                  },
+                  childCount: profiles.length,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _SuggestedRiderCard extends ConsumerWidget {
+  final UserProfileEntity rider;
+  const _SuggestedRiderCard({required this.rider});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myUid = ref.watch(currentUserProvider)?.uid;
+    return GestureDetector(
+      onTap: () => context.push('/profile/${rider.uid}'),
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusLg),
+          border: Border.all(color: context.palette.border),
+        ),
+        child: Column(
           children: [
-            EditorialLabel(context.l10n.following),
-            const SizedBox(height: 10),
-            for (final profile in profiles) ...[
-              _RiderResultTile(rider: profile),
-              const SizedBox(height: 8),
-            ],
+            UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 24),
+            const SizedBox(height: 8),
+            Text(
+              rider.bestName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: context.palette.textPrimary,
+              ),
+            ),
+            const Spacer(),
+            if (myUid != null)
+              OutlinedButton(
+                onPressed: () {
+                  ref.read(followRepositoryProvider).follow(myUid, rider.uid);
+                  final me = ref.read(myProfileProvider).valueOrNull;
+                  ref.read(notificationRepositoryProvider).notifyFollow(
+                        toUid: rider.uid,
+                        fromUid: myUid,
+                        fromName: me?.bestName ?? context.l10n.aRider,
+                        fromPhotoUrl: me?.photoUrl,
+                      );
+                  // Refresh suggestions and following list
+                  ref.invalidate(suggestedProfilesProvider);
+                  ref.invalidate(_followingProfilesProvider);
+                },
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 28),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Text(context.l10n.follow, style: const TextStyle(fontSize: 12)),
+              ),
           ],
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _ShowMoreCard extends StatelessWidget {
+  const _ShowMoreCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/people/all'),
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusLg),
+          border: Border.all(color: context.palette.border),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: context.palette.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.arrow_forward, color: context.palette.primary),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              context.l10n.showMore,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: context.palette.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1383,9 +1537,9 @@ class _RidingScoreChip extends StatelessWidget {
 
 /// One rider row in a search/following result: tap to open the profile,
 /// with a follow/unfollow toggle on the right.
-class _RiderResultTile extends ConsumerWidget {
+class RiderResultTile extends ConsumerWidget {
   final UserProfileEntity rider;
-  const _RiderResultTile({required this.rider});
+  const RiderResultTile({required this.rider});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

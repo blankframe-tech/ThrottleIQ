@@ -45,6 +45,7 @@ import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
 import '../../features/social/presentation/screens/shared_ride_detail_screen.dart';
 import '../../features/social/domain/entities/shared_ride_entity.dart';
+import '../../features/social/presentation/screens/all_people_screen.dart';
 import '../analytics/analytics_service.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
@@ -168,6 +169,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // /profile/edit rather than living under /home/places.
       GoRoute(path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
       GoRoute(path: '/rides/mine', builder: (_, __) => const MySharedRidesScreen()),
+      GoRoute(path: '/people/all', builder: (_, __) => const AllPeopleScreen()),
       // Opened from the Stats "All rides" button, on top of the current
       // screen — same full-screen no-shell treatment as /ride/summary.
       GoRoute(path: '/rides/all', builder: (_, __) => const AllRidesScreen()),

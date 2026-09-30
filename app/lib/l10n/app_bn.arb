@@ -1,5 +1,7 @@
 {
   "@@locale": "bn",
+  "suggestedForYou": "আপনার জন্য প্রস্তাবিত",
+  "showMore": "আরও দেখুন",
   "settingsTitle": "সেটিংস",
   "riderFallbackName": "রাইডার",
   "appearanceSection": "অ্যাপের চেহারা",
