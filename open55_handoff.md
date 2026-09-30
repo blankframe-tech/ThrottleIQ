@@ -1,4 +1,4 @@
-# open55 handoff — social bugs, maintenance costs, media collage (2026-10-01) — ALL SIX DONE in code (analyze clean, 1349/1349 tests); remaining: device check + commit
+# open55 handoff — social bugs, maintenance costs, media collage (2026-10-01) — ALL SIX DONE in code (analyze clean, 1349/1349 tests); committed ad9fa2c..e1c7c85 (not pushed); remaining: device check
 
 ## Goal
 Six user asks, done in parallel by three subagents in the same working tree (nothing committed yet):

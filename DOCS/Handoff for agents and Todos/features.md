@@ -417,7 +417,7 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
 
 ---
 
-## Changes from the open55 pass (2026-10-01, uncommitted)
+## Changes from the open55 pass (2026-10-01, committed on `main`, not pushed)
 
 - **Ride media collage:** the route map is now one tile in a single collage with the ride's photos (`social/presentation/widgets/ride_media_collage.dart`, which replaces `PhotoCollage`).
   - **Layout:** the map is always the largest tile. 1 tile is full-bleed; 2 are side by side (map 60%); 3 is the map left with 2 photos stacked; 4 is the map on top with 3 photos in a row; 5+ fills a grid with a "+N" badge on the last tile. The photo cap is still 3 (`kMaxRidePhotos`).

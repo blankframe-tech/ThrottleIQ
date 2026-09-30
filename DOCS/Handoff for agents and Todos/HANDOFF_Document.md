@@ -2,7 +2,7 @@
 
 _Last updated: 2026-10-01 · Branch: `main`_
 
-## 2026-10-01: open55 pass (UNCOMMITTED in the working tree)
+## 2026-10-01: open55 pass (committed ad9fa2c..e1c7c85 on `main`, not pushed)
 
 Six founder asks, done by three parallel subagents. The plan and success criteria are in `/open55_handoff.md`. On the combined tree, `flutter analyze` finds zero issues and `flutter test` passes **1349/1349**. **Nothing has been checked on a device or simulator yet.**
 
@@ -22,7 +22,7 @@ Six founder asks, done by three parallel subagents. The plan and success criteri
 - **Still to do:**
   - Check on a device: the list in §87, the new maintenance layout and cost card, the collage visuals, and the v18 upgrade on a real install.
   - Review the Bangla strings (added to `bn_pending_review.txt`).
-  - Commit.
+  - Push.
 
 
 ## Current state — verified 2026-09-28 night
