@@ -9,6 +9,7 @@ import '../providers/maintenance_provider.dart';
 import '../service_type_l10n.dart';
 import 'edit_maintenance_check_sheet.dart';
 import 'maintenance_format.dart';
+import 'order_part_sheet.dart';
 
 /// One tracked check: status, wear progress, and per-item Edit / Log.
 class MaintenanceCheckRow extends ConsumerWidget {
@@ -120,6 +121,37 @@ class MaintenanceCheckRow extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (reminder.status != ReminderStatus.ok &&
+                      isOrderable(reminder.serviceType)) ...[
+                    GestureDetector(
+                      onTap: () =>
+                          OrderPartSheet.show(context, reminder.serviceType),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: barColor.withValues(alpha: 0.15),
+                          borderRadius:
+                              BorderRadius.circular(context.shape.radiusSm),
+                          border: Border.all(color: barColor),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.shopping_bag_outlined,
+                                size: 12, color: barColor),
+                            const SizedBox(width: 2),
+                            Text(context.l10n.partOrderButton,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: barColor)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   GestureDetector(
                     onTap: () {
                       final configs = ref

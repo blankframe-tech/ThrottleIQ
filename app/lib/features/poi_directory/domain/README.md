@@ -8,3 +8,8 @@ This directory contains the following submodules:
 
 - **[entities](./entities)**: Contains core business logic entities. These represent the fundamental data structures without framework dependencies.
 
+## Files
+
+The following files are present in this directory:
+
+- `place_directions.dart`: Builds the map-app URLs behind a place's "Directions" button.

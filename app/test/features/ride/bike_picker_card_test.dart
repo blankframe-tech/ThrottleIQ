@@ -12,7 +12,7 @@ import 'package:throttleiq/l10n/app_localizations.dart';
 /// Tested here rather than through `RecordScreen`, which reads
 /// `FirebaseAuth.instance` in `initState` and can't be pumped without a live
 /// Firebase app — the same reason the skin picker is its own widget
-/// (`Issues.md` §15).
+/// (issues §15).
 ///
 /// The regression this file exists for: switching bikes used to navigate to
 /// `/home/profile` instead of switching the bike. The card has since become
@@ -54,7 +54,7 @@ void main() {
       overrides: [garageProvider.overrideWith(() => notifier)],
       child: MaterialApp(
         // M3's InkSparkle shader can't be decoded by the test engine, so any
-        // tap throws before it lands — see `Issues.md` §15.
+        // tap throws before it lands — see issues §15.
         theme: ThemeData(splashFactory: InkRipple.splashFactory),
         localizationsDelegates: const [
           AppLocalizations.delegate,

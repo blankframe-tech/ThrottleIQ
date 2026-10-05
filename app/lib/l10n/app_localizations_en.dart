@@ -4464,4 +4464,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String rideCostEstimateNote(String distance, String perKm) {
     return 'Estimate · $distance km at ৳$perKm/km';
   }
+
+  @override
+  String get partOrderButton => 'Order';
+
+  @override
+  String partOrderTitle(String part) {
+    return 'Order $part';
+  }
+
+  @override
+  String get partOrderTestingNotice =>
+      'This feature is being tested. No real order is placed and nothing is charged.';
+
+  @override
+  String get partOrderCod => 'Cash on delivery';
+
+  @override
+  String get partOrderName => 'Your name';
+
+  @override
+  String get partOrderPhone => 'Phone number';
+
+  @override
+  String get partOrderAddress => 'Delivery address';
+
+  @override
+  String get partOrderQuantity => 'Quantity';
+
+  @override
+  String get partOrderRequired => 'Required';
+
+  @override
+  String get partOrderPlace => 'Place demo order';
+
+  @override
+  String get partOrderPlacedTitle => 'Demo order recorded';
+
+  @override
+  String get partOrderPlacedBody =>
+      'This feature is being tested. No order was placed and nothing was charged.';
 }

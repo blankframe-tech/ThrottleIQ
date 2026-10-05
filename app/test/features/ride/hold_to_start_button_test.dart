@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/hold_to_start_button.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 
-/// The rounded skins' start control (docs/features.md — Record screen).
+/// The rounded skins' start control (features.md — Record screen).
 ///
 /// The property under test is the one the control exists for: a ride must not
 /// start by accident. Everything here is about *when* onStart fires, not what

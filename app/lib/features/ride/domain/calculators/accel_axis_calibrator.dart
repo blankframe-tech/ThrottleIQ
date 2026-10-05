@@ -56,7 +56,7 @@ double dominantAxisSignedMagnitude(double ax, double ay, double az) {
 /// matrix is only invertible once the accelerometer has seen a genuinely
 /// 3-dimensional spread of directions (straight-line riding alone under-
 /// determines the fit — braking/accelerating varies one axis, but cornering
-/// or a bump is what pins down the other two). [_minDeterminant] guards
+/// or a bump is what pins down the other two). [_minRelativeDeterminant] guards
 /// against solving a near-singular system, which would otherwise return an
 /// arbitrary, noise-dominated axis instead of declining to answer. **Its
 /// exact value is a starting point, not a tuned constant** — like the

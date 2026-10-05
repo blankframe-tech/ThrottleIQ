@@ -7,9 +7,11 @@ Contains unit, widget, and integration tests for the application.
 This directory contains the following submodules:
 
 - **[calculators](./calculators)**: Contains domain-specific calculators and algorithms (e.g., fuel efficiency, distance).
+- **[cloud](./cloud)**: Ride upload-payload tests (route columns).
 - **[core](./core)**: Contains core application infrastructure, services, theme definitions, and utilities shared across the app.
 - **[database](./database)**: Components and logic related to database.
 - **[features](./features)**: Contains all the feature-based modules of the application following clean architecture.
+- **[repositories](./repositories)**: Ride repository tests.
 
 ## Files
 
@@ -17,4 +19,3 @@ The following files are present in this directory:
 
 - `sync_manager_test.dart`: Unit/Widget test file.
 - `widget_test.dart`: Unit/Widget test file.
-

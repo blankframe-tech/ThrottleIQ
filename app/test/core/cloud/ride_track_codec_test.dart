@@ -63,7 +63,7 @@ void main() {
     // THE regression test. Firestore rejects nested arrays with a native
     // Objective-C exception that Dart cannot catch — it aborts the process.
     // Shipping a List<List<num>> here crashed the app on the first sync after
-    // a ride (Issues.md #11). Every chunk must be a FLAT array of numbers.
+    // a ride (issues §11). Every chunk must be a FLAT array of numbers.
     test('chunks are flat arrays of numbers — never nested', () {
       final chunks = chunkTrack([for (var i = 0; i < 3; i++) _row(i)]);
       for (final chunk in chunks) {

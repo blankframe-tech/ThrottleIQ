@@ -1,6 +1,43 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-01 · Branch: `main`_
+_Last updated: 2026-10-06 · Branch: `main`_
+
+## 2026-10-06: full-codebase audit, logged as `issues_open.md` §90 (no code changed)
+
+- ⚠️ **`main` CI has been red since `a51b3f8` (2026-09-30).** `flutter analyze` fails
+  with 3 lints in `social_screen.dart`. Locally, `flutter test` passes **1357/1357**.
+  Branch protection is off. See §90.B1.
+- ⚠️ **iOS:**
+  - The microphone permission can never be granted, because the Podfile has no
+    `PERMISSION_MICROPHONE=1` (§90.B2).
+  - Opening the camera crashes, because `NSCameraUsageDescription` /
+    `NSPhotoLibraryUsageDescription` are missing (§90.B3).
+- ⚠️ **Spark quota:**
+  - The feed fans out `limit(20)` per followed author (§90.A1).
+  - Group-ride positions are written every 5 s (§90.A2).
+  - One Social open costs an estimated ~500 reads.
+- ⚠️ **Ride data integrity (§90.C1–C3):**
+  - Pausing buffers GPS, and resume replays it as distance (the "van" bug is back).
+  - Foregrounding the app truncates a live auto-detected ride.
+  - Manual and auto recording run at the same time, giving a duplicate ride and
+    double odometer.
+- ⚠️ **Security (§90.D):**
+  - Any comment makes a shared ride undeletable (D1).
+  - The account-deletion sweep would destroy any `publicId` a user lists in
+    their own ledger. Fix it before any functions deploy (D2).
+  - A group-ride creator can add anyone to `memberIds` (D3).
+  - Profile email is client-chosen (D6).
+- **Sync** re-downloads every ride, bike and maintenance doc every 5 min (§90.C7),
+  which is a bigger quota risk than the feed.
+- The **docs sweep** fixed stale facts in README, arch.md, DOCS/*, SETUP,
+  functions/README, pubspec comments, 8 Dart doc-comments and 53 per-folder
+  READMEs (§90.E).
+- **Triage order and architecture verdict:** top of §90. `DEBT_FIX_PLAN.md` §2
+  gained a step for the 11 singleton repositories.
+- **Not done:**
+  - Emulator run (blocked by the permission classifier).
+  - Review of `functions/` logic beyond the sweep.
+  - No code fixes; this pass was audit plus docs only.
 
 ## 2026-10-01: open55 pass (committed ad9fa2c..e1c7c85 on `main`, not pushed)
 
@@ -35,6 +72,15 @@ The release **APK builds** (84.7 MB) with App Check and
 analytics in it; the release **AAB** builds too (83.0 MB). One warning
 to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PLAN.md` §8).
 
+**Update 2026-10-05:** the machine had **no JDK at all** (Android Studio gone, `JAVA_HOME`
+unset), so both Android release builds failed instantly at `assembleRelease` with "Unable to
+locate a Java Runtime". Fixed by installing `brew install openjdk@21` and exporting
+`JAVA_HOME`/`PATH` in `~/.zshrc` plus `flutter config --jdk-dir` — full recipe in
+`issues_open.md` §89. After that both builds succeed: **APK 85.2 MB**, **AAB 83.3 MB**, and
+`apksigner verify` confirms the release key (`CN=ThrottleIQ, OU=BlankFrame Technologies`,
+Signature Scheme v2). The Gradle 8.13 warning above is **still outstanding** and now reads
+"upgrade to at least 8.14.0".
+
 | Thing | State |
 |---|---|
 | Firestore **rules** | ⚠️ **Local file ahead of production** — the `groupRides` `list` rule extension (2026-09-27, this session) is committed but **not deployed**; `firebase deploy --only firestore:rules` was blocked by the auto-mode classifier as a production-affecting action and needs a human to run it. Everything before that change is live. |
@@ -42,7 +88,7 @@ to act on: Flutter says Gradle 8.13 support "will soon be dropped" (`DEBT_FIX_PL
 | **Hosting** (`privacy.html`) | Live copy is the **old** one — the analytics-aware policy is written but must ship *with* the release |
 | **Functions** | ❌ Not deployable — Spark plan, no `artifactregistry` (Node 20 dies late Oct 2026) |
 | **App build** | `pubspec` is now `1.0.0-beta.4.0.0+21`, committed and pushed (`main` @ `c12d152`). **✅ GitHub release `beta-v4` published 2026-09-28** with the APK and AAB attached (https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4). |
-| **iOS device run** | ❌ **Blocked, needs the account owner** — `flutter run --release` on "Abraar's iPhone" fails at codesigning: Xcode has no Apple ID under Accounts (`IDEProvisioningTeams` unset) and no cached provisioning profile for `com.bft.throttleiq` / `com.bft.throttleiq.ThrottleIQWidget`. The one valid codesigning identity in the keychain (`Apple Development: abraar.rar@icloud.com`, team `29BPVM86G5`) doesn't match the project's configured `DEVELOPMENT_TEAM` (`NJ4675FFUX`) — worth confirming which team should actually sign this app. Needs: open Xcode → Settings → Accounts → sign in, then confirm/select the right team on the Runner and ThrottleIQWidget targets. Not something this agent can do headlessly (interactive Apple ID + 2FA). Also saw stray, apparently-harmless empty stub dirs appear under `/Users/blackbird/Everything/dev/ThrottleIQ` (note: no `2_Ongoing`) during this build — likely a leftover from before the repo moved to its current path; didn't chase it further since the account issue is the real blocker. |
+| **iOS device run** | ✅ **Resolved 2026-10-05 — release build runs on "Abraar's iPhone".** The Apple ID is signed into Xcode and the developer certificate is now trusted on the device, so the app launches. Signed `Apple Development: abraar.rar@icloud.com`, team `NJ4675FFUX`. **Caveat:** `flutter run --release` still fails at *its own* install step ("Could not run build/ios/iphoneos/Runner.app") even though the Xcode build succeeds (93.8 s) — the working path is to let the build finish, then `xcrun devicectl device install app --device <udid> build/ios/iphoneos/Runner.app` and `xcrun devicectl device process launch --device <udid> com.bft.throttleiq`. **The profile is a free personal team and expires 2026-10-12**; after that it needs a re-sign. See `issues_open.md` §87. |
 | **App Check enforcement** | Console action, only after a release containing the code is what riders run |
 | **Founder's iPhone** | ✅ `1.0.0-beta.3.1.0+20` **release build installed and launched** 2026-09-21 (`flutter run --release -d 00008120-001E5D190A85A01E`; Xcode build 106 s, install+launch 7.3 s). First real-hardware run of everything since 3.0.2 — launch only so far; nothing on the device test list has been exercised yet |
 

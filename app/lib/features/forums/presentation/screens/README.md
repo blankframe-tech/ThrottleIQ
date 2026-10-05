@@ -6,7 +6,7 @@ Contains Flutter UI screen widgets for this feature. These are the main views pr
 
 The following files are present in this directory:
 
+- `create_forum_screen.dart`: Flutter screen widget.
 - `forum_post_detail_screen.dart`: Flutter screen widget.
 - `forum_thread_screen.dart`: Flutter screen widget.
 - `forums_home_screen.dart`: Flutter screen widget.
-

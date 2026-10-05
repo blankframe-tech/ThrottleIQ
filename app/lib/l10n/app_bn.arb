@@ -1299,5 +1299,17 @@
   "rideCostTitle": "রাইডের খরচ",
   "rideCostHint": "এই রাইডে কত খরচ হলো দেখতে জ্বালানির দাম, মাইলেজ ও সার্ভিস খরচ যোগ করুন।",
   "rideCostSetUp": "সেট করুন",
-  "rideCostEstimateNote": "অনুমান · {distance} কিমি, ৳{perKm}/কিমি"
+  "rideCostEstimateNote": "অনুমান · {distance} কিমি, ৳{perKm}/কিমি",
+  "partOrderButton": "অর্ডার",
+  "partOrderTitle": "{part} অর্ডার করুন",
+  "partOrderTestingNotice": "এই ফিচারটি পরীক্ষা করা হচ্ছে। কোনো আসল অর্ডার হবে না এবং কোনো টাকা কাটা হবে না।",
+  "partOrderCod": "ক্যাশ অন ডেলিভারি",
+  "partOrderName": "আপনার নাম",
+  "partOrderPhone": "ফোন নম্বর",
+  "partOrderAddress": "ডেলিভারির ঠিকানা",
+  "partOrderQuantity": "পরিমাণ",
+  "partOrderRequired": "আবশ্যক",
+  "partOrderPlace": "ডেমো অর্ডার দিন",
+  "partOrderPlacedTitle": "ডেমো অর্ডার নথিভুক্ত হয়েছে",
+  "partOrderPlacedBody": "এই ফিচারটি পরীক্ষা করা হচ্ছে। কোনো অর্ডার দেওয়া হয়নি এবং কোনো টাকা কাটা হয়নি।"
 }

@@ -6,16 +6,13 @@ What is left needs the founder: an account, a real device, a decision, or the Bl
 
 ## Release — the one thing everything else waits on
 
-`main` holds a lot that no tester has: App Check, analytics, route navigation that records the
-ride, the i18n pass, the SafeQR print sticker, the crash badge, the cockpit perf fix. `pubspec` is
-now `1.0.0-beta.3.1.0+20`; the live release is still `beta-v3.0.2`. The release **APK and AAB both
-build** (84.7 MB / 82.8 MB) and are not published.
+_Update 2026-10-06:_ the release item below is done — `beta-v4` (`1.0.0-beta.4.0.0+21`) was
+published on GitHub on 2026-09-27 and is the current `pubspec` version. The follow-ups after it
+still apply.
 
-- [ ] **Publish the release.** You decided to ship it (2026-09-21): `1.0.0-beta.3.1.0+20` is
-      committed and pushed (`6fb12ae`), and the APK and AAB are built in `app/build/app/outputs/`.
-      The GitHub release itself was **not created** — the auto-mode classifier declined that step,
-      so it needs your approval or a permission rule. It carries two things nobody has checked on
-      hardware (route navigation, Bangla) and 1,064 machine-drafted Bangla keys.
+- [x] **Publish the release.** Shipped as `beta-v4` (`1.0.0-beta.4.0.0+21`, 2026-09-27). It carries
+      two things nobody has checked on hardware (route navigation, Bangla) and the machine-drafted
+      Bangla keys.
 - [ ] After it ships: **deploy hosting** (`firebase deploy --only hosting`) so `privacy.html`
       describes the analytics the app now does — *not before*, the live policy would then describe
       behaviour the installed app doesn't have.
@@ -43,7 +40,7 @@ build** (84.7 MB / 82.8 MB) and are not published.
       recording (§78.21), the auto-tracking schedule (§37), the GPS-speed fallback (§49), the
       gyro heading sign/axis (§78.12), SafeQR print scanning off real paper, App Check on a device.
 - [ ] **Profile the cockpit** for battery/frame time (§83.12 — fixed structurally, unmeasured).
-- [ ] **Bangla review:** a native reviewer for the 1,064 keys in `app/lib/l10n/bn_pending_review.txt`,
+- [ ] **Bangla review:** a native reviewer for the ~1,100 keys in `app/lib/l10n/bn_pending_review.txt`,
       then Bangla on a real device (simulator tour: 82 screens, 0 overflow, scale 1.0 only).
 
 ## Decisions
@@ -60,8 +57,9 @@ build** (84.7 MB / 82.8 MB) and are not published.
 
 - Real SMS and escalation, signed Cloudinary uploads, full account deletion (the trigger has
   never been deployed), adding new followers to old posts.
-- **Dated:** Cloud Functions Node 20 is decommissioned late October 2026; after that
-  `firebase deploy --only functions` fails on any plan.
+- **Dated:** Cloud Functions Node 20 is decommissioned late October 2026. The `functions/` source
+  already targets Node 22 (`package.json` `engines`, `firebase.json` `runtime`; §69.O6), so this
+  only bites if a Node 20 build is what gets deployed. Deploying at all still needs Blaze.
 
 ## Done — kept here so it isn't re-asked
 

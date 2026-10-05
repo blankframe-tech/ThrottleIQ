@@ -859,7 +859,7 @@ class _FollowingList extends ConsumerWidget {
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, i) {
                   if (i == 10) {
-                    return _ShowMoreCard();
+                    return const _ShowMoreCard();
                   }
                   final profile = suggestionsAsync.value![i];
                   return _SuggestedRiderCard(rider: profile);
@@ -993,7 +993,7 @@ class _SuggestedRiderCard extends ConsumerWidget {
 }
 
 class _ShowMoreCard extends StatelessWidget {
-  const _ShowMoreCard({super.key});
+  const _ShowMoreCard();
 
   @override
   Widget build(BuildContext context) {
@@ -1539,7 +1539,7 @@ class _RidingScoreChip extends StatelessWidget {
 /// with a follow/unfollow toggle on the right.
 class RiderResultTile extends ConsumerWidget {
   final UserProfileEntity rider;
-  const RiderResultTile({required this.rider});
+  const RiderResultTile({super.key, required this.rider});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

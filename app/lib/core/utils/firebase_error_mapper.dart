@@ -22,7 +22,7 @@ String mapFirestoreError(Object error, AppLocalizations l10n) {
       'resource-exhausted' =>
         l10n.errTooManyRequests,
       // A required Firestore composite index is missing or still building —
-      // see DOCS/Handoff for agents and Todos/issues_open.md §81. Distinct
+      // see issues §82. Distinct
       // from the generic message so this failure mode is recognizable in
       // logs/screenshots instead of looking identical to every other error.
       'failed-precondition' =>

@@ -82,9 +82,9 @@ dependencies:
   # and geolocator (above) for fixes once vehicle motion is seen. Both free
   # (MIT). This is the free-tier stand-in for the paid
   # `flutter_background_geolocation` — see
-  # docs/archives/flutter_background_geolocation-2026-08-28/README.md for why,
-  # and docs/HANDOFF_Document.md's backlog for the paid plugin's pros/cons if
-  # this ever needs revisiting.
+  # DOCS/For Devs and Contributors/archives/flutter_background_geolocation-2026-08-28/README.md
+  # for why, and DOCS/Handoff for agents and Todos/HANDOFF_Document.md's
+  # backlog for the paid plugin's pros/cons if this ever needs revisiting.
   #
   # KNOWN GAP vs the paid plugin: on iOS, the task handler does not survive
   # the rider force-swiping ThrottleIQ from the app switcher (it does on
@@ -172,7 +172,7 @@ flutter_launcher_icons:
   # survives any of them undamaged, rather than needing a separate asset per
   # shape.
   #
-  # 2026-08-29: swapped to the speed-gauge mark (Issues.md §52).
+  # 2026-08-29: swapped to the speed-gauge mark (issues_fixed.md §52).
   # adaptive_icon_background is sampled from that artwork's own background
   # (not pure black) so the flat backing color is invisible where it peeks
   # out past the inset foreground.

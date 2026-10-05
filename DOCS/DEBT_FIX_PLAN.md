@@ -91,6 +91,14 @@ the notifier just calls the no-arg constructor.
    could check.**
 3. File-level singletons like `maintenance_provider.dart`'s `final _dao = MaintenanceDao()`
    become providers.
+4. **(added 2026-10-06, §90.B4)** The 11 repositories that use
+   `static final _instance` + `factory X() => _instance` are hidden singletons:
+   `XRepository()` looks like construction but can't be faked. There are 62 call
+   sites outside `data/` and only 2 repository providers. Turn each one into a
+   `Provider` with constructor-injected Firestore/Auth, and replace the 20 direct
+   `XDao()` constructions in presentation code. Write these with the step-2
+   **pure ride state machine** in mind (events in → state + effects out), because
+   that is what lets the §90.C1/C5/C8/C9 lifecycle bugs get regression tests.
 
 **Done when:** a test can construct `RideRecordingNotifier` with fakes and drive a ride
 start → fixes → pause → resume → stop with no platform channel; `FirebaseFirestore.instance`
@@ -202,13 +210,15 @@ media to the account, and group-ride voice notes live at permanent public URLs.
 
 ## 8. Housekeeping — S
 
+> 2026-10-06: also see `issues_open.md` §90.B11 (CI actions on deprecated Node 20, `ubuntu-latest` → 26 on 2026-10-19) and §90.B14 (repo clutter, ~170 MB of tracked PDFs).
+
 - **Gradle 8.13 → ≥ 8.14.** The release build prints "Flutter support for your project's
   Gradle version (8.13.0) will soon be dropped." Found this evening when building the
   release. Bump `app/android/gradle/wrapper/gradle-wrapper.properties`, rebuild APK + AAB.
   Do it before it becomes a hard failure.
 - **Functions on Node 22.** The clock in `BIGGG_JOBB.md` §4 — Node 20 is decommissioned in
-  late October 2026. Not fixable without Blaze; the decision should be *made*, not drift
-  past the date.
+  late October 2026. The source already targets Node 22 (§69.O6); *deploying* it is what
+  needs Blaze, so the decision should be *made*, not drift past the date.
 - **Profile the cockpit on a device** (§83.12): the fix is structural and unmeasured.
   `record_screen.dart` (lines ~91, 314, 423) still watches the whole state.
 - **§83.23 leftovers that need a decision:** localized month names with Western digits (the

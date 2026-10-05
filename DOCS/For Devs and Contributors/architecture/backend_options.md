@@ -12,7 +12,7 @@ plan...)" section for where this was already flagged as a known blocker.
 **Bottom line: enable Blaze.** It's pay-as-you-go with no base fee, the
 realistic bill at beta scale is single-digit-to-low-double-digit dollars a
 month (see the estimate below), and every alternative means giving up
-work that's already done and audited — most of all the 960-line
+work that's already done and audited — most of all the ~1,500-line
 `firestore.rules` file, which has had real, specific vulnerabilities found
 and closed across `issues_fixed.md` §3, §10, §24, and §33. Migrating backends
 means re-deriving all of that from scratch in a different rules language,
@@ -30,6 +30,12 @@ with no guarantee of catching the same bugs a second time.
   impersonation gap Firestore rules alone can't (a rider renaming themselves
   after sharing a ride would otherwise leave old feed cards showing the old
   name/photo forever).
+- `functions/src/account-deletion.ts` — `onUserAccountDeleted`, the
+  server-side cleanup after in-app account deletion (profile, shared rides,
+  Cloudinary uploads, anonymizing authored content). Has never been
+  deployed, so none of that cleanup runs today.
+- `functions/src/chat-moderation.ts` — `onMessageCreate`, keyword chat
+  moderation (a known-weak placeholder list).
 - `issues_open.md` §33.5 — Cloudinary's upload preset is unsigned (anyone who
   extracts the cloud name/preset from the APK can POST to it directly,
   unbounded). Closing it properly means a Cloud Function that mints a

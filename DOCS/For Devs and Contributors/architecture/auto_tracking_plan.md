@@ -363,7 +363,9 @@ SDK. Treat this as "written and self-reviewed", not "working".
    `flutter test` 804/804, `flutter build` clean on iOS and Android.
 2. **Licence key.** `AndroidManifest.xml` has
    `PASTE_LICENCE_KEY_BEFORE_RELEASE`. Release builds will not start the
-   plugin without a real key from transistorsoft. Still open.
+   plugin without a real key from transistorsoft. **Moot since 2026-08-28** —
+   the paid plugin was replaced (see below) and the placeholder is gone from
+   `AndroidManifest.xml`.
 3. **On-device crash-alert test.** Force a crash signal with the phone locked
    and confirm the full-screen notification appears and "I'm OK" cancels the
    countdown. This is the one path where a bug contacts someone's family.
@@ -423,7 +425,7 @@ decision to stay on the free tier for roughly the next three months. Full
 writeup in `issues_fixed.md` §50; pros/cons for revisiting the paid plugin later
 are in `HANDOFF_Document.md`'s Feature Backlog, under "Automatic ride
 tracking"; the old implementation is archived at
-`docs/archives/flutter_background_geolocation-2026-08-28/`.
+`DOCS/For Devs and Contributors/archives/flutter_background_geolocation-2026-08-28/`.
 
 This does not change anything else in this document — Parts 0–5 above
 describe the detection/reconciliation architecture, which the swap left

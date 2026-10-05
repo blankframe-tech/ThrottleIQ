@@ -20,11 +20,11 @@ import '../../../../core/i18n/l10n_context.dart';
 ///
 ///   Step 0  — Name + @username (functional: persisted to Firebase Auth)
 ///   Step 1  — Add first bike (functional: persisted to SQLite + Firestore)
-///   Steps 2+ — Feature-tour slides (informational, from [kOnboardingSlides])
+///   Steps 2+ — Feature-tour slides (informational, from [onboardingSlides])
 ///
 /// ## Auto-updating
 /// The tour slides are driven by [kOnboardingManifestVersion] and
-/// [kOnboardingSlides] in `onboarding_manifest.dart`. Bumping the version
+/// [onboardingSlides] in `onboarding_manifest.dart`. Bumping the version
 /// constant causes existing users who already completed the old tour to see
 /// the new slides automatically on next launch.
 ///
@@ -65,7 +65,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ─── Tour PageView ──────────────────────────────────────────────────────────
   late final PageController _pageCtrl;
 
-  /// Current tour slide index (0-based within [kOnboardingSlides]).
+  /// Current tour slide index (0-based within [onboardingSlides]).
   int _tourSlide = 0;
 
   @override

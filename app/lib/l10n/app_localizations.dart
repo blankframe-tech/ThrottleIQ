@@ -98,13 +98,13 @@ abstract class AppLocalizations {
     Locale('en')
   ];
 
-  /// No description provided for @suggestedForYou.
+  /// Label for the suggested users section.
   ///
   /// In en, this message translates to:
   /// **'Suggested for you'**
   String get suggestedForYou;
 
-  /// No description provided for @showMore.
+  /// Label for the button to show all users.
   ///
   /// In en, this message translates to:
   /// **'Show more'**
@@ -7901,6 +7901,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Estimate · {distance} km at ৳{perKm}/km'**
   String rideCostEstimateNote(String distance, String perKm);
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get partOrderButton;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Order {part}'**
+  String partOrderTitle(String part);
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is being tested. No real order is placed and nothing is charged.'**
+  String get partOrderTestingNotice;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Cash on delivery'**
+  String get partOrderCod;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get partOrderName;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get partOrderPhone;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery address'**
+  String get partOrderAddress;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get partOrderQuantity;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get partOrderRequired;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Place demo order'**
+  String get partOrderPlace;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'Demo order recorded'**
+  String get partOrderPlacedTitle;
+
+  /// Maintenance part ordering (demo, cash on delivery).
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is being tested. No order was placed and nothing was charged.'**
+  String get partOrderPlacedBody;
 }
 
 class _AppLocalizationsDelegate

@@ -29,7 +29,7 @@ move, section numbers don't.
 | In a comment | Means |
 |---|---|
 | `issues §N` | Section `## N.` of [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) if resolved, else [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md). Look in `issues_fixed.md` first; if it isn't there, or the section says part of it is still open, check `issues_open.md`. |
-| `grill §N` | The 2026-09-20 external-critique verification pass, originally written up in `ANTIGRAVRITY_GRILL/claude_sol.md`. **That file is no longer in the repo** — it was deleted in commit `fc11e99`; recover it with `git show fc11e99^:"ANTIGRAVRITY_GRILL/claude_sol.md"`. The surviving in-repo record is issues §78. |
+| `grill §N` | The 2026-09-20 external-critique verification pass, written up in [`ANTIGRAVRITY_GRILL/claude_sol.md`](Handoff%20for%20agents%20and%20Todos/ANTIGRAVRITY_GRILL/claude_sol.md) (it was deleted from the repo root in commit `fc11e99` and later restored under `Handoff for agents and Todos/`). The resolved parts are recorded in issues §78. |
 
 Do not write a file path into a new code comment — write `issues §N`. Three
 earlier conventions all rotted: `docs/Issues.md §N` (the `docs/` tree was
@@ -58,7 +58,7 @@ can close (release, accounts, devices, decisions).
 |---|---|
 | [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md) | The single source of truth for project status: what's shipped, what's verified, the pre-launch to-do list, the feature backlog, and the Vehicle State Engine architecture. Update it whenever status changes. |
 | [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) | Every unresolved issue, plus follow-ups left over from fixed ones. New issues go here with the next free number — see that file's own header, which tracks it. Once fixed, a section moves to `issues_fixed.md` and keeps its number. |
-| [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) | The dated, numbered record of every resolved issue (§1–§69): root causes, fixes, verification. Other docs cite it by section (`§N`), so the numbers are stable. The latest full-repo review is §69. |
+| [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) | The dated, numbered record of every resolved issue (§1–§88): root causes, fixes, verification. Other docs cite it by section (`§N`), so the numbers are stable. The latest full-repo reviews are §69 and §83. |
 | [`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) | What a signed-in user can actually do today, organized by the bottom-nav tabs. Update it whenever screens or flows change. |
 
 ## Working notes (dated snapshots, not kept current)
@@ -68,6 +68,8 @@ can close (release, accounts, devices, decisions).
 | [`optimizerplan.md`](Handoff%20for%20agents%20and%20Todos/optimizerplan.md) | 2026-09-03 prioritized performance/reliability plan (written at `1.0.0-beta.1+5`). Check each item against `issues_open.md` before acting on it. |
 | [`uiux_critique.md`](Handoff%20for%20agents%20and%20Todos/uiux_critique.md) | A screenshot-grounded UI/UX critique, ready to turn into an `issues_open.md` punch list. |
 | [`todo_now_antigravity.md`](Handoff%20for%20agents%20and%20Todos/todo_now_antigravity.md) | Trust & Safety / messaging task checklist from another agent's session. |
+| [`issues_solved.md`](Handoff%20for%20agents%20and%20Todos/issues_solved.md) | Per-claim resolutions of the Antigravity grill findings. Its code links are absolute `file:///` paths from the repo's old location and no longer open. |
+| `ANTIGRAVRITY_GRILL/` | The 2026-09-20 external critique (`codebase.md`, `other_gaps.md`, `UI_UX.md`, `bussness.md`) and its verification, `claude_sol.md`. Many of the critique's file paths are stale; `claude_sol.md` gives the corrected ones. |
 | `SKILLS/` | Third-party mobile-design skill files kept for reference (formerly `NEWORKS/`). Their internal links point at sibling files from their original package that were never copied here. |
 | `bugs/` | Local bug-report screenshots. Gitignored on purpose. |
 
@@ -76,11 +78,11 @@ can close (release, accounts, devices, decisions).
 | File | What it's for |
 |---|---|
 | [`../arch.md`](../arch.md) | High-level system architecture: layers, state estimation pipeline, offline-first sync, safety invariants. |
-| [`guides/SETUP.md`](For%20Devs%20and%20Contributers/guides/SETUP.md) | Local dev setup: Firebase, Cloudinary, Android signing, iOS certificates, build commands. |
-| [`architecture/assumptions.md`](For%20Devs%20and%20Contributers/architecture/assumptions.md) | Every non-obvious judgement call made without asking, and why. |
-| [`architecture/auto_tracking_plan.md`](For%20Devs%20and%20Contributers/architecture/auto_tracking_plan.md) | Background auto-tracking design decisions and implementation status. |
-| [`architecture/backend_options.md`](For%20Devs%20and%20Contributers/architecture/backend_options.md) | Blaze billing vs. a surgical workaround vs. leaving Firebase, with a cost estimate. |
-| [`archives/`](For%20Devs%20and%20Contributers/archives) | Abandoned approaches kept for reference (the `flutter_background_geolocation` experiment, early logo concepts). |
+| [`guides/SETUP.md`](For%20Devs%20and%20Contributors/guides/SETUP.md) | Local dev setup: Firebase, Cloudinary, Android signing, iOS certificates, build commands. |
+| [`architecture/assumptions.md`](For%20Devs%20and%20Contributors/architecture/assumptions.md) | Every non-obvious judgement call made without asking, and why. |
+| [`architecture/auto_tracking_plan.md`](For%20Devs%20and%20Contributors/architecture/auto_tracking_plan.md) | Background auto-tracking design decisions and implementation status. |
+| [`architecture/backend_options.md`](For%20Devs%20and%20Contributors/architecture/backend_options.md) | Blaze billing vs. a surgical workaround vs. leaving Firebase, with a cost estimate. |
+| [`archives/`](For%20Devs%20and%20Contributors/archives) | Abandoned approaches kept for reference (the `flutter_background_geolocation` experiment, early logo concepts). |
 
 Package-level READMEs live next to the code: `app/README.md`,
 `app/lib/**/README.md`, `app/test/**/README.md`, `functions/README.md`,

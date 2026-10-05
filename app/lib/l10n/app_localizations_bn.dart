@@ -4475,4 +4475,44 @@ class AppLocalizationsBn extends AppLocalizations {
   String rideCostEstimateNote(String distance, String perKm) {
     return 'অনুমান · $distance কিমি, ৳$perKm/কিমি';
   }
+
+  @override
+  String get partOrderButton => 'অর্ডার';
+
+  @override
+  String partOrderTitle(String part) {
+    return '$part অর্ডার করুন';
+  }
+
+  @override
+  String get partOrderTestingNotice =>
+      'এই ফিচারটি পরীক্ষা করা হচ্ছে। কোনো আসল অর্ডার হবে না এবং কোনো টাকা কাটা হবে না।';
+
+  @override
+  String get partOrderCod => 'ক্যাশ অন ডেলিভারি';
+
+  @override
+  String get partOrderName => 'আপনার নাম';
+
+  @override
+  String get partOrderPhone => 'ফোন নম্বর';
+
+  @override
+  String get partOrderAddress => 'ডেলিভারির ঠিকানা';
+
+  @override
+  String get partOrderQuantity => 'পরিমাণ';
+
+  @override
+  String get partOrderRequired => 'আবশ্যক';
+
+  @override
+  String get partOrderPlace => 'ডেমো অর্ডার দিন';
+
+  @override
+  String get partOrderPlacedTitle => 'ডেমো অর্ডার নথিভুক্ত হয়েছে';
+
+  @override
+  String get partOrderPlacedBody =>
+      'এই ফিচারটি পরীক্ষা করা হচ্ছে। কোনো অর্ডার দেওয়া হয়নি এবং কোনো টাকা কাটা হয়নি।';
 }

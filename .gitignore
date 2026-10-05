@@ -75,6 +75,8 @@ venv/
 env/
 __pycache__/
 *.py[cod]
+# one-off patch/scratch scripts dropped in the repo root
+/*.py
 website_demo/assets/posters/fonts/
 
 # Firebase

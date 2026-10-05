@@ -7,5 +7,6 @@ Contains Riverpod state management providers and notifiers for this feature. The
 The following files are present in this directory:
 
 - `emergency_contacts_provider.dart`: Riverpod provider definition.
+- `medical_info_provider.dart`: Riverpod provider definition.
 - `profile_providers.dart`: Riverpod provider definition.
-
+- `speed_alert_provider.dart`: Riverpod provider definition.

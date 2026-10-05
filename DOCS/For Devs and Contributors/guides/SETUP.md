@@ -29,16 +29,16 @@ flutter pub get
    - Authentication (Email/Password, Google Sign-In)
    - Firestore Database
    - Cloud Messaging (bundled but not currently sending anything — see
-     `docs/HANDOFF_Document.md`'s Key facts table)
+     `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`'s Key facts table)
 4. **Not enabled, and not needed today:** Firebase Storage and Cloud
    Functions both require the Blaze (pay-as-you-go) plan, which this project
    isn't on. Photo uploads go to Cloudinary instead — create a free
    Cloudinary account, an unsigned upload preset, and set the cloud
    name/preset in `app/lib/core/services/cloudinary_upload_service.dart`
    (production uses cloud name `vjvcigkt`; use your own for local dev so you
-   don't share a quota). Cloud Functions (crash-notification escalation)
+   don't share a quota). Cloud Functions (account cleanup, ride identity, chat moderation, crash-alert mock — see `functions/README.md`)
    exist as TypeScript source in `functions/src/` but can't deploy on Spark
-   — see `docs/backend_options.md` for the real cost estimate and
+   — see `DOCS/For Devs and Contributors/architecture/backend_options.md` for the real cost estimate and
    alternatives before turning on Blaze.
 
 ### 3. Download Google Services Files
@@ -148,7 +148,7 @@ escalation timer (pending → contacted → escalated) and a ride-identity
 reconciliation trigger. Both are real code, not stubs, but
 `firebase deploy --only functions` fails outright on this project's Spark
 billing plan (`artifactregistry.googleapis.com` can't be enabled without
-Blaze). See `docs/backend_options.md` for the actual cost estimate and two
+Blaze). See `DOCS/For Devs and Contributors/architecture/backend_options.md` for the actual cost estimate and two
 alternatives to upgrading before deploying anything here:
 
 ```bash
@@ -229,15 +229,18 @@ dart format .
 flutter build apk --release --analyze-size
 ```
 
-No CI/CD pipeline exists in this repo yet — `flutter analyze && flutter test`
-before every push is the manual equivalent today.
+A CI workflow (`.github/workflows/ci.yml`) runs on every push to `main`
+(flutter analyze + test, rules emulator tests, functions `tsc`), but `main` has
+no required checks, so a red run doesn't block anything. It has been red
+since `a51b3f8` (2026-09-30; `issues_open.md` §90.B1). Run
+`flutter analyze && flutter test` before every push.
 
 ---
 
 ## Support
 
 - **Issues**: tracked in `issues_open.md`, not GitHub Issues
-- **Full project status / to-do**: `docs/HANDOFF_Document.md`
+- **Full project status / to-do**: `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`
 - **Firebase Docs**: https://firebase.google.com/docs
 - **Flutter Docs**: https://flutter.dev/docs
 - **Firestore Security**: https://firebase.google.com/docs/firestore/security

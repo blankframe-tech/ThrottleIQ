@@ -14,7 +14,8 @@ import '../../../../core/i18n/l10n_context.dart';
 /// technical, sceptical audience and "uses some battery" reads as evasion;
 /// naming the number is what makes the ask credible. It is also honest — the
 /// idle cost really is a few percent a day, because detection runs on platform
-/// activity recognition and never polls GPS. See docs/AUTO_TRACKING_PLAN.md.
+/// activity recognition and never polls GPS. See auto_tracking_plan.md
+/// (`DOCS/For Devs and Contributors/architecture/`).
 class AutoTrackingTile extends ConsumerWidget {
   const AutoTrackingTile({super.key});
 

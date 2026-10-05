@@ -119,7 +119,7 @@ class BikeDao {
       // can never disagree. Deleting locally is not enough on its own:
       // CloudRepository.downloadBikes re-adds "anything missing locally", so
       // without this the bike reappeared on the next sync — still selectable
-      // on the record screen, still in the rider's forums. See Issues.md.
+      // on the record screen, still in the rider's forums. See issues §12.
       await txn.insert(
         'deleted_bikes',
         {

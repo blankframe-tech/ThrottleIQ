@@ -10,3 +10,9 @@ This directory contains the following submodules:
 - **[screens](./screens)**: Contains Flutter UI screen widgets for this feature. These are the main views presented to the user.
 - **[widgets](./widgets)**: Contains reusable Flutter UI components specifically for this feature.
 
+## Files
+
+The following files are present in this directory:
+
+- `badge_l10n.dart`: Localized badge text.
+- `ride_sort_l10n.dart`: Localized ride-sort labels.

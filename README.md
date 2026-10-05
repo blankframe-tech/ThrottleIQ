@@ -4,8 +4,8 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta, `1.0.0-beta.2.8+14`, tagged
-> [`beta-v2.8`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v2.8)
+> **Status:** pre-launch beta, `1.0.0-beta.4.0.0+21`, tagged
+> [`beta-v4`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4)
 > — a signed Android APK/AAB on the GitHub release, plus an earlier Play
 > Console internal-testing build; no
 > public Play Store/App Store listing yet. Core ride recording,
@@ -43,7 +43,7 @@
 
 **Shipped:**
 - **Live share link**: Generate an unguessable token-based link; whoever you send it to sees your location, speed and battery in real time, and the link is revocable and expires after 24 h
-- **Emergency contacts**: Store up to 5 contacts, and a SafeQR medical-info card a responder can read with any phone camera
+- **Emergency contacts**: Store your emergency contacts, and a SafeQR medical-info card a responder can read with any phone camera
 - **Crash logging**: A suspected impact is recorded against the ride for later review
 
 **Built but switched off (no release date):**
@@ -59,7 +59,7 @@
 
 ### 👥 Social & Community (P8 🚀)
 - **Ride feed**: Share rides with friends; see their ride cards (distance, duration, max speed, route thumbnail)
-- **Privacy zones**: Auto-strips first/last 200m of route (home location never exposed)
+- **Privacy zones**: Auto-strips the start/end of the route within a 200-349 m radius (fixed per rider, so the home location isn't exposed)
 - **Saved routes**: Save a past ride as a reusable route; re-ride anytime
 - **Group rides**: Create a ride session, invite friends; see all members' live positions on a shared map
 - **Challenges**: Monthly distance/streak challenges with local badges (e.g., "500km in July")
@@ -67,7 +67,7 @@
 ### 🌐 Cloud & Sync (P5 🚀)
 - **Offline-first SQLite**: All data stored locally; ride recording works 100% offline
 - **Automatic Firestore sync**: On app resume + every 5 min if online
-- **Data portability**: Export rides as JSON or GPX (import into other apps, mapping tools)
+- **Data portability**: Export rides as JSON, CSV or GPX (import into other apps, mapping tools)
 - **Profile sync**: Backup your bike fleet, maintenance logs, emergency contacts to cloud
 
 ---
@@ -87,7 +87,7 @@
    flutter pub get
    ```
 
-3. **Set up Firebase** (see [`SETUP.md`](DOCS/For%20Devs%20and%20Contributers/guides/SETUP.md) for details):
+3. **Set up Firebase** (see [`SETUP.md`](DOCS/For%20Devs%20and%20Contributors/guides/SETUP.md) for details):
    - Create Firebase project at console.firebase.google.com
    - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
    - Place in `app/android/app/` and `app/ios/Runner/` respectively
@@ -103,8 +103,8 @@
 
 1. Launch the app → **Record** tab
 2. Select your bike (or add one in **Garage**)
-3. Tap **Start Recording** → ride normally
-4. Tap **Stop** when done
+3. **Press and hold** (or slide, depending on the skin) to start the ride → ride normally
+4. **Hold to end ride** when done
 5. View summary → **Save**
 
 Done! Ride is saved to local database and will auto-sync to cloud on next reconnect.
@@ -129,8 +129,8 @@ Done! Ride is saved to local database and will auto-sync to cloud on next reconn
 │  │   Storage needs Blaze plan; see guides/SETUP.md)     │
 │  ├─ Auth: email/password + Google sign-in              │
 │  └─ Cloud Functions: written, can't deploy on Spark    │
-│      (crash-notification escalation — see               │
-│      architecture/backend_options.md)                   │
+│      (account cleanup, ride identity, chat moderation,  │
+│      crash-alert mock — see functions/README.md)        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -157,11 +157,8 @@ Done! Ride is saved to local database and will auto-sync to cloud on next reconn
 # All tests
 flutter test
 
-# Specific test file
-flutter test app/test/calculators/motion_calculator_test.dart
-
-# Watch mode (re-run on change)
-flutter test --watch
+# Specific test file (from app/)
+flutter test test/calculators/motion_calculator_test.dart
 
 # Coverage report
 flutter test --coverage
@@ -169,15 +166,16 @@ flutter test --coverage
 
 ### Test Suite
 
-**1032/1032 green**, with `flutter analyze` reporting no issues, as of
-2026-09-19 (see `HANDOFF_Document.md`'s Key facts table for how that grew). Pure-logic calculators (motion, crash
+**1357/1357 green** (149 test files) as of 2026-10-06. `flutter analyze`
+currently reports **3 lint issues** in `social_screen.dart`, which keeps CI red
+on `main` (`issues_open.md` §90.B1). See `HANDOFF_Document.md` for how the count grew. Pure-logic calculators (motion, crash
 detection, jerk/acceleration, privacy-zone clipping, rating aggregation) are
 fixture-tested against realistic data — real coordinates (Dhaka,
 Chattogram), sensor thresholds, known distances. DAOs run against real
 in-memory SQLite (`sqflite_common_ffi`), not mocks — a prior deadlock bug
 shipped specifically because map-based fakes couldn't see real transaction
 semantics (`issues_fixed.md` §7). Firestore rules have their own emulator
-suite (98 tests): `npm run test:rules` from `scripts/`.
+suite (`scripts/test/rules/`): `npm run test:rules` from `scripts/`.
 
 **Example: Crash Detection**
 
@@ -240,7 +238,7 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
   `public/privacy.html` and `DOCS/General/store_listing/data_safety_and_permissions.md`.
 
 ### Ride Sharing
-- **Privacy zones**: Auto-clips first/last 200m from shared rides (home location safe)
+- **Privacy zones**: Auto-clips the start/end of shared rides within a 200-349 m radius, stable per rider (home location safe)
 - **Manual control**: User decides which rides to share
 - **Revocable**: User can unshare anytime (delete from Firestore)
 
@@ -292,9 +290,9 @@ map. The essentials:
   [`issues_fixed.md`](DOCS/Handoff%20for%20agents%20and%20Todos/issues_fixed.md):
   unresolved issues, and the dated record of every resolved one, cited by
   section number (`§N`) from everywhere else.
-- [`SETUP.md`](DOCS/For%20Devs%20and%20Contributers/guides/SETUP.md): Firebase setup, Cloudinary, Android
+- [`SETUP.md`](DOCS/For%20Devs%20and%20Contributors/guides/SETUP.md): Firebase setup, Cloudinary, Android
   signing, iOS certificates.
-- [`assumptions.md`](DOCS/For%20Devs%20and%20Contributers/architecture/assumptions.md): non-obvious judgement calls
+- [`assumptions.md`](DOCS/For%20Devs%20and%20Contributors/architecture/assumptions.md): non-obvious judgement calls
   and why they were made.
 
 ---
@@ -345,4 +343,4 @@ In short: You can **view and audit** the source code, but cannot copy, fork, or 
 
 **Built with ❤️ for riders. Safe travels! 🏍️**
 
-*Last updated: 2026-08-28*
+*Last updated: 2026-10-06*

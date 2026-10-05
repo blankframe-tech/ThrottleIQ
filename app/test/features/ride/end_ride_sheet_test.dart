@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/end_ride_sheet.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 
-/// The end-ride sheet (claude_sol.md §3.1.1). What matters is that a ride
+/// The end-ride sheet (grill §3.1.1). What matters is that a ride
 /// can't be ended by a tap, and that the share toggle's state reaches the
 /// caller. Same ticker note as hold_to_start_button_test.dart: pump once
 /// after pointer-down before any timed pump.

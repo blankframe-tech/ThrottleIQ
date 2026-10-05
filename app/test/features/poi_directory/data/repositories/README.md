@@ -6,6 +6,6 @@ Contains data repository implementations for fetching, syncing, and persisting d
 
 The following files are present in this directory:
 
+- `place_nearby_query_test.dart`: Unit/Widget test file.
 - `place_repository_test.dart`: Unit/Widget test file.
 - `review_repository_test.dart`: Unit/Widget test file.
-

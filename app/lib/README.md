@@ -8,6 +8,7 @@ This directory contains the following submodules:
 
 - **[core](./core)**: Contains core application infrastructure, services, theme definitions, and utilities shared across the app.
 - **[features](./features)**: Contains all the feature-based modules of the application following clean architecture.
+- **[l10n](./l10n)**: EN/BN ARB files and the checked-in generated `AppLocalizations` code.
 - **[shared](./shared)**: Contains shared widgets and utilities used across multiple features.
 
 ## Files

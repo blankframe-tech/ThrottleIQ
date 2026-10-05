@@ -29,8 +29,8 @@ think one is wrong, say so once, in a sentence, and then do it.
 | | |
 |---|---|
 | Branch | **`main` @ `0222f03`**, in sync with `origin/main`. All four branches (`appcolors` → `i18n` → `job3-ux` → `job4-infra`) merged 2026-09-21; nothing is left to merge. |
-| Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`) |
-| Tests | **1298** passing on `main` (re-run 2026-09-21 evening) |
+| Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`). **Since superseded:** `1.0.0-beta.4.0.0+21`, GitHub release `beta-v4` (2026-09-27) |
+| Tests | **1298** passing on `main` (re-run 2026-09-21 evening); **1349** after the open55 pass (2026-10-01); **1357** on 2026-10-06, but `flutter analyze` fails (3 lints, §90.B1) |
 | Analyzer | clean (zero issues) |
 | Rules suite | **114** passing |
 | Functions | build clean, **NOT deployed** (Spark plan) |
@@ -65,7 +65,7 @@ Run **all four** before declaring anything done. CI runs the first three.
 
 ```bash
 cd app       && flutter analyze          # must be ZERO issues
-cd app       && flutter test             # 1298 passing
+cd app       && flutter test             # 1349 passing (as of 2026-10-01)
 cd functions && npm run build            # tsc, must be silent
 cd scripts   && npm run test:rules       # 114 passing (needs JDK 21+)
 ```
@@ -93,7 +93,7 @@ it. Format individual files you have already edited, or nothing at all.
 
 ### 3.2 Section numbering is a minefield — check BOTH files
 
-- Next free number is **§86** (§85 is taken, in both files). It is stated in `issues_open.md`'s header.
+- Next free number is **§89** as of 2026-10-01 (§85 is taken, in both files; §86-§88 are used). It is stated in `issues_open.md`'s header — trust that over this line.
 - **§79 and §81 are each used twice.** §82 was taken before §83.
 - A number can live in `issues_open.md`, `issues_fixed.md`, or **both**
   (open parts vs fixed parts of the same section). The header's "next free
@@ -430,7 +430,7 @@ in-app and in-repo claim has been corrected; that file has not.
 | File | What |
 |---|---|
 | `DOCS/Handoff for agents and Todos/HANDOFF_Document.md` | Status, decisions table, deploy state, Known Limitations |
-| `DOCS/Handoff for agents and Todos/issues_open.md` | Every unresolved issue. **Next free number: §86** |
+| `DOCS/Handoff for agents and Todos/issues_open.md` | Every unresolved issue. **Next free number: see its header** (§89 as of 2026-10-01) |
 | `DOCS/Handoff for agents and Todos/issues_fixed.md` | Resolved, same numbers |
 | `DOCS/Handoff for agents and Todos/features.md` | What a user can actually do, by tab |
 | `DOCS/README.md` | Doc map + the `issues §N` / `grill §N` legend |

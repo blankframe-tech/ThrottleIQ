@@ -845,6 +845,18 @@ tests green. Scratch files deleted. Full detail in features.md §7.
     [the developer's name under "Developer App"] → Trust**. Nothing left to
     fix in the project or the toolchain; this is the last step before the
     app actually launches on the device.
+  - **RESOLVED 2026-10-05 — the app now runs in release mode on the iPhone.**
+    The developer certificate was trusted on the device, and
+    `xcrun devicectl device process launch --device <udid> com.bft.throttleiq`
+    returned "Launched application with com.bft.throttleiq bundle identifier."
+    Two things to carry forward: (1) `flutter run --release` still fails at its
+    own install step ("Could not run build/ios/iphoneos/Runner.app") even though
+    the Xcode build succeeds — the working path is to let the build finish, then
+    `xcrun devicectl device install app --device <udid> build/ios/iphoneos/Runner.app`
+    and launch with devicectl; (2) the profile is a **free personal team**
+    (`Apple Development: abraar.rar@icloud.com`, team NJ4675FFUX) and
+    **expires 2026-10-12** — after that the app stops launching on the device
+    and needs a re-sign.
 
 ---
 
@@ -854,3 +866,480 @@ tests green. Scratch files deleted. Full detail in features.md §7.
 - **88.2:** ~~running-cost settings phone-only~~ Fixed (code, not yet device-checked): each bike's maintenance settings (tracked checks incl. typical cost, fuel price, mileage) back up via the outbox to the owner-only `users/{uid}/private/maintenanceSettings_{bikeId}` and restore on reinstall/new device (fills empty tables only, never overwrites). Existing rules already cover the path, so no rules deploy. See `core/cloud/maintenance_settings_sync.dart`.
 - **88.3:** the open55 changes haven't been checked on a device: the checklist in §87, the maintenance layout and ride-cost card, the collage visuals, and the SQLite v17→18 upgrade on a real install.
 - **88.4:** the Bangla strings added in open55 haven't been reviewed (listed in `bn_pending_review.txt`).
+
+---
+
+## 89. No JDK on the machine — Android release builds (APK/AAB) could not run — FIXED (2026-10-05)
+
+- **Symptom:** `flutter build apk --release` and `flutter build appbundle --release`
+  both fail immediately at `Running Gradle task 'assembleRelease'` with
+  `The operation couldn't be completed. Unable to locate a Java Runtime.`
+  (exit 1, ~30ms — Gradle never starts). `flutter doctor` reports
+  `[!] Android toolchain ... ✗ Could not determine java version`.
+- **Cause:** there is no JDK installed anywhere on this Mac. `JAVA_HOME` is
+  unset, `/usr/libexec/java_home` finds nothing, Android Studio is not
+  installed (so there's no bundled JBR to fall back on), and there is no
+  Homebrew/SDKMAN JDK. The Android *SDK* (37.0.0) is present — only the Java
+  runtime is missing. Note the release build was verified on the
+  Pixel_10_Pro emulator on 2026-08-28, so a JDK existed then and has since
+  gone away.
+- **Fix (APPLIED 2026-10-05):** installed JDK 21 via the Homebrew *formula*
+  `brew install openjdk@21` (→ `/opt/homebrew/Cellar/openjdk@21/21.0.12.1`).
+  Used the formula rather than the `temurin` cask because the cask installs
+  into `/Library/Java/JavaVirtualMachines` and needs an interactive `sudo`
+  password; the formula installs under `/opt/homebrew` with no sudo. It also
+  upgraded 7 existing brew deps (libpng, pcre2, glib, xorgproto, cairo,
+  harfbuzz, xz). `openjdk@21` is **keg-only**, so it is NOT auto-linked and
+  needs an explicit PATH entry — added to `~/.zshrc`:
+  `export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"`
+  and `export PATH="$JAVA_HOME/bin:$PATH"`. Flutter was also pointed at it
+  independently of the shell with
+  `flutter config --jdk-dir "$JAVA_HOME"` so GUI editors work too.
+  `flutter doctor` now reports `[✓] Android toolchain` (was
+  `✗ Could not determine java version`).
+  **Use JDK 21, not the current `temurin`/`openjdk` (27).** This project is Gradle
+  8.13 + AGP 8.11.1 compiling to Java 17 target
+  (`sourceCompatibility`/`jvmTarget` = 17); JDK 21 is the supported LTS for
+  that combination, and 27 is likely to break the Gradle/AGP toolchain.
+- **Unblocks:** nothing in the app code is wrong — signing is already set up
+  correctly (`android/key.properties` present and wired into
+  `signingConfigs`, keystore file resolves, `google-services.json` in place),
+  so both builds should go through as soon as a JDK exists.
+- **Verified 2026-10-05:** both release builds now succeed.
+  `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk`
+  (85.2 MB) and `flutter build appbundle --release` →
+  `build/app/outputs/bundle/release/app-release.aab` (83.3 MB), both exit 0.
+  `apksigner verify` confirms the APK is signed with the **release** key
+  (`CN=ThrottleIQ, OU=BlankFrame Technologies`), APK Signature Scheme v2,
+  1 signer — not a debug key.
+- **Two non-blocking warnings seen during the build, both left alone:**
+  (a) `Flutter support for your project's Gradle version (8.13.0) will soon be
+  dropped. Please upgrade ... to at least 8.14.0` — worth doing before it
+  becomes an error; (b) `SDK processing. This version only understands SDK XML
+  versions up to 3 but an SDK XML file of version 4 was encountered` — harmless
+  cmdline-tools/SDK version skew.
+
+---
+
+## 90. Full-codebase audit — 5 parallel reviews (2026-10-06) — OPEN
+
+Read-only audit across security/rules, ride pipeline + sync, social data layer,
+architecture/tests/tooling and docs accuracy. Each item was deduped against
+§§33–89 and checked by reading the code; nothing here has been fixed yet.
+Sections: A social data layer · B architecture/CI/platform · C ride pipeline
+and sync · D security/rules · E docs sweep.
+
+**Triage order (do these first):**
+1. **§90.B1** fix the 3 lints so `main` CI goes green, then require the checks. About 10 min.
+2. **§90.B2 + §90.B3** iOS mic define and camera/photo usage strings. Config only;
+   the camera one is a crash.
+3. **§90.D1** make comment delete possible, plus the create gate. Owners can't unshare today.
+4. **§90.C1, C2, C3** ride data integrity: van distance on resume, truncated
+   auto rides, duplicate rides and doubled odometer.
+5. **Spark quota: §90.C7, A1, A2, A7.** Full re-download every 5 min, feed
+   fan-out, 5 s group-ride writes, search per keystroke. Each one alone can
+   exhaust the free tier with a handful of active users.
+6. **§90.D2** sweep prefix check. Must land before any functions deploy.
+7. **§90.D3, D6, D8 + A4/D9** group-ride member injection, email
+   impersonation, the meaning of "Followers", the `users` list query. D8 is a
+   product decision.
+
+**Architecture verdict (2026-10-06):** the backbone fits the app. That backbone
+is offline-first SQLite as the source of truth, an outbox with dead-letter,
+pure tested calculators, and emulator-tested rules for a solo-built ride
+tracker on Firebase's free tier, and it is the best-tested part of the
+codebase. What's wrong is around it:
+- **Under-engineered:** no I/O seams (hidden singleton repos, direct
+  Firestore/DB calls), so the 1,168-line ride `StateNotifier` has zero tests.
+  Read costs are an afterthought in a Spark-plan app. CI exists but gates nothing.
+- **Over-engineered:** the entity/model/repository-interface ceremony. There are
+  24 entities and 17 models, and the only repository interface is dead code.
+  The docs process is also heavier than the code.
+
+Top structural moves are in `DEBT_FIX_PLAN.md` §2: providers for
+Firestore/Auth/DB/current uid, a pure ride state machine behind a thin
+platform adapter, and grep ratchets in CI. Also treat Firestore reads as a
+budget: incremental sync, bounded queries, one shared follow-set stream.
+
+### 90.A Social / chat / forums / POI data layer (incl. commit a51b3f8 "Suggested for you")
+
+Spark quota context: one cold Social open (rider following ~15 active riders)
+is estimated at **~480–510 reads**, each `loadMore` ~400 more — i.e. roughly
+80–100 Social opens/day exhausts the project-wide 50k-read quota. A.1, A.2, A.7
+are the quota killers.
+
+- **90.A1 — CRITICAL — feed fans out `limit(20)` per followed author, keeps 20.**
+  `social/data/repositories/ride_share_repository.dart:217-234` (the §88.1 fix).
+  30 follows → up to 600 reads per page, repeated on every `loadMore`,
+  refresh and follow/unfollow (`ride_feed_provider.dart:96`). *Fix:* public posts
+  back to chunked `whereIn` (30 authors/query); per-author queries only for
+  `followers`/`mutual` with limit 3–5, or skip authors without restricted posts
+  via a denormalized `hasRestrictedPosts` flag. **(verified 2026-10-06)**
+- **90.A2 — CRITICAL — group-ride map writes every member's position every 5 s.**
+  `group_ride_map_screen.dart:38` (`kGroupRideBroadcastInterval`), `:177-180`,
+  `:269-283`; listener `group_ride_repository.dart:579-588`. 5 riders × 2 h ≈ 7,200
+  writes (36 % of 20k/day) and ≈ 36,000 reads (72 % of 50k/day). Writes even when
+  stationary. *Fix:* 15–30 s interval + skip if moved < ~25 m; consider one map
+  field on the ride doc. **(verified 2026-10-06)**
+- **90.A3 — HIGH — People-tab "Following" list never updates after follow/unfollow.**
+  `social_screen.dart:69-77` awaits one-shot non-autoDispose `followingIdsProvider`
+  (`follow_providers.dart:13-17`); nothing invalidates it (same class as §87.2).
+  The suggestion card's `ref.invalidate(_followingProfilesProvider)`
+  (`social_screen.dart:978-979`) is a no-op. `mutualIdsProvider` same. *Fix:* watch
+  the live `followingUidsProvider` stream; delete or stream-ify the one-shots.
+- **90.A4 — HIGH (needs rules-emulator confirmation) — `getRecentUsers` either fails
+  silently or enumerates private profiles + emails.** `profile_repository.dart:270-279`
+  (`users.orderBy('createdAt').limit(50/100)`, no `visibility` filter), used by
+  suggestions and `all_people_screen.dart:18`; rule `firestore.rules:293-294`.
+  Either permission-denied (suggestions vanish via `valueOrNull`) or every user
+  doc incl. `email`/`emailLower` is listable. No rules test covers `users` list
+  queries. *Fix:* emulator test; `where('visibility', isEqualTo: 'public')` +
+  backfill; move email off the public profile doc.
+- **90.A5 — HIGH — suggestions are unbounded and re-run on every tab switch.**
+  `follow_providers.dart:42-71`: reads *all* follower + following edges, fetches
+  every non-followed-back follower profile serially (UI shows 10), then the
+  50-user query; `autoDispose` + `TabBarView` disposal re-runs it each visit.
+  Constructs `ProfileRepository()` directly; doesn't exclude blocked users.
+  *Fix:* cap to 10 candidates, bounded queries, `keepAlive` + TTL, block filter.
+- **90.A6 — HIGH — per-row follow listeners never close.** `isFollowingProvider`
+  (`follow_providers.dart:27-31`) is a non-autoDispose `StreamProvider.family`;
+  All People alone leaves 100 permanent listeners. **(verified 2026-10-06)**
+  *Fix:* derive from `followingUidsProvider.contains(uid)` — zero extra reads.
+- **90.A7 — HIGH — AppBar search costs ~220 reads per keystroke, no debounce.**
+  `social_screen.dart:186-188` runs in `buildSuggestions`; `searchForums` scans
+  200 forums (`forum_repository.dart:211-222`) + 20 riders. "royal enfield" ≈
+  2,800 reads. *Fix:* debounce in the delegate / search on submit; lower-cased
+  prefix field + range query; cache forum list.
+- **90.A8 — HIGH — unbounded lists.** `chat_repository.dart:26-35` (`watchMessages`),
+  `forum_repository.dart:401-432` (`getPosts` + all child-model forums + 1 vote
+  read/post), `ride_share_repository.dart:421-427` (`getComments`),
+  `group_ride_repository.dart:619-628` (`watchVoiceNotes`). `forumPostsProvider`
+  is non-autoDispose → stale all session. *Fix:* `limit(50)` + cursors
+  (`limitToLast` for chat), autoDispose + pull-to-refresh.
+- **90.A9 — MEDIUM — follow buttons fire-and-forget; notification spam.**
+  `social_screen.dart:969-979`, `:1595-1608`; `user_profile_screen.dart:208-220`.
+  Unawaited `follow()`, `notifyFollow` runs even if follow failed, each toggle
+  writes a new notification, double taps duplicate. *Fix:* await → notify;
+  deterministic id `follow_{fromUid}` with `set`; disable while in flight; show errors.
+- **90.A10 — MEDIUM — follower/following counts never refresh.**
+  `follow_providers.dart:33-39` non-autoDispose `FutureProvider.family`, never
+  invalidated. *Fix:* autoDispose + invalidate both uids after follow/unfollow.
+- **90.A11 — MEDIUM — blocking leaves follow edges, so a blocked follower still
+  reads `followers`/`mutual` posts server-side** (because §88.1 made
+  `rideVisibleTo` check the live graph). Blocker can't delete the other's edge;
+  block handler (`user_profile_screen.dart:86-94`) has no try/catch. Distinct from
+  §83.18. *Fix:* rule letting the followee delete `follows/{them}_{me}`, or
+  `!exists(users/{author}/blocks/{viewer})` in `rideVisibleTo`; try/catch.
+- **90.A12 — MEDIUM — account-switch and chat-list state bugs.**
+  (a) `rideFeedNotifierProvider` (`ride_feed_provider.dart:91-104`, `:143-156`)
+  doesn't watch `currentUserProvider`; A→B sign-in with both following nobody
+  shows B A's held feed (incl. A's non-public rides). *Fix:* watch uid.
+  (b) `chat_list_screen.dart:105-110` hides the whole conversation when the other
+  profile read is permission-denied (private/mutual visibility). *Fix:* placeholder name.
+  (c) `markMessagesAsRead` (`chat_repository.dart:138-157`) writes N updates per
+  room open for an `isRead` nothing displays. *Fix:* drop or single `lastReadAt`.
+- **90.A — LOW:** `placeDetailProvider`/`reviewsForPlaceProvider`
+  (`places_provider.dart:79-90`) non-autoDispose listeners; `ForumRepository.createPost`
+  bumps `postCount` in a separate non-transactional write (`forum_repository.dart:363-375`);
+  `_RideCardState._submitComment` uses Auth `displayName` not profile `bestName`;
+  `AllPeopleScreen` uses the wrong empty-state string, no pagination past 100,
+  doesn't mark already-followed riders.
+
+### 90.B Architecture, code quality, tests, build/CI, platform config
+
+Measured 2026-10-06: `flutter analyze` **3 issues (fails)**, `flutter test`
+**1357/1357 pass**, `flutter pub outdated` 146 blocked upgrades.
+
+- **90.B1 — CRITICAL — CI on `main` has been red since 2026-09-30 and nothing gates it.**
+  Run 36783259590 (commit `a51b3f8`) fails `flutter analyze`:
+  `social_screen.dart:862` `prefer_const_constructors`, `:996`
+  `unused_element_parameter`, `:1542` `use_key_in_widget_constructors`. Because
+  analyze fails first, tests and the `as double` guard never ran on HEAD in CI.
+  Direct push to `main` succeeded → branch protection is off. **(verified via
+  `gh run list` 2026-10-06)** *Fix:* fix the 3 lints; require `flutter`, `rules`,
+  `functions` checks on `main`.
+- **90.B2 — HIGH — iOS voice notes can never get microphone permission.**
+  `permission_handler_apple` compiles `PERMISSION_MICROPHONE 0` unless enabled via
+  `GCC_PREPROCESSOR_DEFINITIONS`; `ios/Podfile:44-47` only sets `PROTOBUF_NANO=1`
+  (and with `||=`, so it may not even apply if Flutter pre-populated the key).
+  `Permission.microphone.request()` (`group_ride_map_screen.dart:452-460`) never
+  returns granted on iOS. **(verified)** *Fix:* add `'PERMISSION_MICROPHONE=1'`
+  (use `+=`/explicit array, not `||=`), `pod install`, device-check.
+- **90.B3 — HIGH — iOS crashes when the camera is chosen.** `ios/Runner/Info.plist`
+  has no `NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription`; camera is
+  offered at `add_place_screen.dart:100` and `odometer_sync_sheet.dart:255`.
+  iOS terminates the app on access without the key. **(verified)** Related LOW:
+  `UIBackgroundModes` lacks `audio`, so push-to-talk can't record/play with the
+  phone locked in a handlebar mount — product decision. *Fix:* add both strings
+  (+ Bangla `InfoPlist.strings` if localized).
+- **90.B4 — MEDIUM — update to §83.13: repositories are hidden singletons.**
+  11 repos use `static final _instance` + `factory X() => _instance`
+  (e.g. `follow_repository.dart:11-12`) — looks like construction, can't be faked.
+  `XRepository()` called 62× outside `data/`; only 2 repository providers exist.
+  DAOs constructed directly 20× in presentation (`ride_recording_provider.dart:213-214,
+  955, 1149-1167`; `auto_tracking_provider.dart:208-257`); `DatabaseHelper.instance`
+  90×, `FirebaseFirestore.instance` 23×, `FirebaseAuth.instance` 10×. Add the
+  factory-singletons to `DEBT_FIX_PLAN.md` §2 step 3.
+- **90.B5 — MEDIUM — layering is partly nominal.** 40/117 presentation files import
+  `data/` (21 are screens/widgets); 7 import `cloud_firestore`/`firebase_auth`
+  directly (incl. `record_screen.dart`, `group_ride_map_screen.dart`). Domain
+  leaks: `live_session_entity.dart:1`, `privacy_zone_salt.dart:3` (cloud_firestore),
+  `bike_entity.dart:2` (material), `privacy_zone_clipper.dart:1` (foundation).
+  Inverted deps: 7 `core/` files import features (`sync_manager`, `outbox_service`,
+  `badges`, `rider_stats`, `home_widget_service`, `bike_colors`, `app_router`);
+  `ride`↔`social` presentation import each other; ~50 imports of
+  `auth/presentation` just for the current user → move `currentUid` to `core`.
+- **90.B6 — MEDIUM — update to §83.14: 62 bare `catch (_)` (was 53), 11 empty.**
+  180 catches, only 5 typed; **zero non-fatal Crashlytics reports** (4 call sites,
+  all fatal handlers in `main.dart:84-131`); ~42 catches only `debugPrint`, which
+  is invisible in release. `analysis_options.yaml` adds nothing over
+  `flutter_lints` 3.0.2 (6.0 current). *Fix:* `DEBT_FIX_PLAN.md` §1 + enable
+  `unawaited_futures`, `discarded_futures`, `avoid_catches_without_on_clauses`
+  with a count ratchet.
+- **90.B7 — MEDIUM — god files keep growing.** 9 files > 800 lines = 10,194 lines
+  (17 % of non-l10n code): `social_screen` 1,621 (21 classes, providers declared
+  in-screen at :47/:61/:74), `group_ride_map_screen` 1,199, `onboarding_ui_mockups`
+  1,175, `ride_summary_screen` 1,170, `ride_recording_provider` 1,168,
+  `settings_screen` 1,065, `active_ride_screen` 1,045, `shared_ride_detail_screen`
+  937, `group_ride_repository` 814. `cloud_repository.dart` 538 → 715 since §62.13.
+- **90.B8 — MEDIUM — dead code (update to §62.13).** The app's only repository
+  abstraction is unused (`domain/repositories/ride_repository.dart`,
+  `ride_repository_impl.dart`, `ride_repository_provider.dart` — provider never
+  imported). Unimported from `lib/`: `core/database/daos/user_profile_dao.dart`
+  (test-only), `core/constants/motorcycle_quotes.dart`,
+  `core/utils/extensions/datetime_extensions.dart`,
+  `features/auth/domain/entities/user_entity.dart`,
+  `social/presentation/feed_sort_l10n.dart` (test-only).
+  `cloud_repository.dart:626-715` (`exportToJSON`/`exportToGPX`/`_generateGPX`)
+  has no callers — live export is `ExportService`. Delete.
+- **90.B9 — MEDIUM — test shape (update to §83.28).** 149 files / 1,357 tests;
+  25 files `pumpWidget`; 1 screen test for 42 screens; 0 goldens.
+  **`RideRecordingNotifier` has no direct tests** (`gpx_replay.dart:10` says it
+  can't be constructed). `test/widget_test.dart` is `expect(true, isTrue)` —
+  delete. `integration_test/ui_tour_test.dart` (827 lines) not in CI.
+  `functions/` has zero tests though `account-deletion.ts` carries privacy duties.
+- **90.B10 — MEDIUM — dependency staleness.** Riskiest: `google_sign_in` 6.3 → 7.2
+  (Credential Manager rewrite; legacy path on Google's deprecation track);
+  FlutterFire set must move together (`core` 3→4, `auth` 5→6, `firestore` 5→6,
+  `crashlytics` 4→5, `analytics` 11→12, `app_check` 0.3→0.4); `flutter_riverpod`
+  2.6→3.4 (14 `StateNotifier`s). Also `go_router` 13→18,
+  `flutter_local_notifications` 17→22, `geolocator` 11→14, `permission_handler`
+  11→13, `sensors_plus` 4→7, `flutter_map` 7→8, `share_plus` 10→13,
+  `home_widget` 0.6→0.10. 57 resolvable within constraints today.
+  *Order:* FlutterFire + google_sign_in (one PR) → permissions/geolocator/
+  notifications → go_router/riverpod post-launch.
+- **90.B11 — LOW — CI toolchain.** `checkout@v4`/`setup-node@v4`/`setup-java@v4`
+  on deprecated Node 20 (setup-java@v4 itself deprecated); `ubuntu-latest` → Ubuntu
+  26 on **2026-10-19**. *Fix:* actions → v5, pin `ubuntu-24.04` until verified.
+  (Gradle 8.13 → 8.14 already tracked in `DEBT_FIX_PLAN.md` §8.)
+- **90.B12 — LOW — Play policy declarations.** `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+  requested at `auto_tracking_service.dart:363` and `ride_recording_provider.dart:301`
+  needs a Play acceptable-use justification; `ACCESS_BACKGROUND_LOCATION` needs the
+  declaration + video. (`USE_FULL_SCREEN_INTENT` = §69.O8.) All declared Android
+  permissions are used; none missing.
+- **90.B13 — LOW — router.** 43 `GoRoute`s, 90 string-literal navigations, no route
+  constants. Bottom nav uses plain `ShellRoute` (`app_router.dart:222`), so every
+  tab switch rebuilds the screen and loses scroll/local state →
+  `StatefulShellRoute.indexedStack`.
+- **90.B14 — LOW — repo hygiene.** Tracked root clutter: `sum_claude.md`,
+  `sum_gemini.md`, `new_gravity.md`, `open55_handoff.md`, `setup-android.*`,
+  `ANTIGRAVITY_GRILL/` (has PDF + HTML). Duplicate misspelled
+  `DOCS/Handoff for agents and Todos/ANTIGRAVRITY_GRILL/`. Three issue logs
+  (`issues_open`/`issues_fixed`/`issues_solved`; the last has dead
+  `file:///…/dev/ThrottleIQ/…` links). 28 tracked ~6 MB PDFs in
+  `DOCS/General/screenshots_ui/pdfs/` (~170 MB) → `.git` is 527 MB; consider LFS
+  or removing. `throttleiq-release.keystore` sits at repo root (gitignored, safe
+  from commit, easy to lose) → move under `secret/`. Generated
+  `lib/l10n/app_localizations*.dart` tracked → diff noise on every regen.
+
+### 90.C Ride pipeline, offline sync, persistence
+
+Checked sound: migrations v1→v18 converge (fresh vs upgrade), all 14 SQLite
+transactions use only `txn`, outbox serialization/dead-letter/backoff, point
+buffer flush/re-queue, live polyline capped at 2000, estimator/detector windows
+bounded, idempotent track uploads, `SyncManager` reentrancy guard.
+
+- **90.C1 — HIGH — pause buffers every GPS/IMU event; resume replays them as live riding.**
+  `ride_recording_provider.dart:820-823` calls `.pause()` on broadcast-stream
+  subscriptions (geolocator_android 4.6.2 / apple 2.3.14 / sensors_plus are
+  broadcast). A paused broadcast subscription buffers everything and native GPS
+  + sensors keep running. On resume (`:874-884`) the backlog is fed to
+  `_onPosition`/`_onSensor` after `status = active`; `_skipNextDistanceDelta`
+  only drops the first. Pause → van the bike 20 km → resume = the 20 km is
+  counted (defeats the §65/§78 van fix). ~144k IMU events buffered per paused
+  hour, replayed in one main-isolate burst. **(verified 2026-10-06)**
+  *Fix:* cancel + null the subscriptions on pause and recreate on resume (the
+  cold path already does this).
+- **90.C2 — HIGH — foregrounding the app truncates a live auto-detected ride.**
+  `app.dart:109-111` → `_reconcileDetectedRides` on every `resumed` →
+  `auto_ride_reconciler_service.dart:60` unconditionally
+  `closeStaleRecordingDetections()` (`auto_detection_dao.dart:134-150` flips all
+  `recording` → `pending`). Background `recordFix` then finds no current
+  recording and drops every later fix; `_moving` stays true so no new detection
+  for 5 min. Short remainder may be rejected outright. **(verified)**
+  *Fix:* only close `recording` rows when the foreground service isn't running or
+  the last fix is older than the stillness timeout.
+- **90.C3 — HIGH — manual ride + concurrent auto-detection → duplicate ride, double odometer.**
+  Nothing stops `AutoTrackingService` during a manual recording, and
+  `auto_ride_reconciler.dart` `_reject` has no overlap check against existing
+  `rides`. Result: second `is_auto` ride, `BikeDao.incrementStats` twice (wrong
+  maintenance due-dates), double upload. *Fix:* reject/trim detections
+  overlapping any ride's `start_time..end_time`; optionally skip
+  `beginDetection` while `active_ride_id` marker is set.
+- **90.C4 — MEDIUM — live-share teardown outbox key is per-user, not per-session.**
+  `outbox_service.dart:287` id `live-teardown:$uid` + `ConflictAlgorithm.replace`;
+  delivery (`:546-566`) nulls `livePointers/{uid}` unconditionally; teardown
+  queued with `attemptNow:false`. (a) offline ride 1 then ride 2 → T1's
+  revocation overwritten, `liveSessions/T1` stays publicly readable until its 24 h
+  expiry; (b) ride 2 shared within the drain window → stale teardown clears the
+  new pointer, `/r/{username}` dead for the rest of ride 2. **(key verified)**
+  *Fix:* key `live-teardown:$uid:$token`; clear pointer only if its token matches.
+- **90.C5 — MEDIUM — double-tap Resume on the cold path leaks subscriptions.**
+  `ride_recording_provider.dart:845-872`: `coldStart` and the `paused` guard
+  are evaluated before awaits; Resume button (`active_ride_screen.dart:597`) not
+  disabled. Two taps → two location/sensor subscription sets, duplicate
+  `ride_points`, and after Stop the leaked geolocator listener keeps GPS + the
+  foreground notification alive until process death. *Fix:* set an in-flight
+  flag synchronously; cancel existing subs in `_start*Stream`; disable button.
+- **90.C6 — MEDIUM — restored ride rebuilds distance across pause gaps and idle jitter.**
+  `ride_resume.dart:107-115` sums haversine over all persisted points — no
+  pause-gap skip, no below-threshold zeroing. Kill after a pause+van reintroduces
+  the van distance on the restore path. *Fix:* persist resume markers; mirror
+  `_onPosition`'s rules in the rebuild.
+- **90.C7 — MEDIUM — every sync cycle re-downloads all rides/bikes/maintenance.**
+  Unfiltered `.get()` at `cloud_repository.dart:338`, `:405`, `:478`; triggered
+  every 5 min (`sync_manager.dart:113-127`) and on every connectivity change
+  with no debounce (`:85-93`). 500 rides ≈ 500 reads/cycle ≈ 144k/day while the
+  process lives (the ride foreground service keeps it alive). **Biggest single
+  Spark-quota risk alongside §90.A1/A2.** *Fix:* full pull once per sign-in,
+  then `where('syncedAt', isGreaterThan: lastPull)`; 30 s debounce; skip
+  downloads while recording.
+- **90.C8 — LOW — `stopRide` clears the recovery marker before finalizing.**
+  `ride_recording_provider.dart:949` `clearRecordingState` precedes `:952`
+  `finalizeRide`; no try/finally. Kill/throw between → row stuck `active`,
+  invisible to history and sync forever. **(verified)** *Fix:* finalize first,
+  clear marker last, try/finally.
+- **90.C9 — LOW — `startRide` failure leaves status stuck at `starting`**
+  (`:346-381`, no try/catch) → Start blocked until restart.
+- **90.C10 — LOW (dormant, crash detection off) — dismissed+discarded crash ride
+  resurrects from cloud.** Crash path uploads (`:1095-1105`), `cancelRide`
+  (`:914`) deletes locally only, `downloadRides` (`cloud_repository.dart:483`)
+  re-inserts; rides have no tombstone. *Fix:* `deleted_rides` tombstone like
+  `deleted_bikes`.
+- **90.C11 — LOW — battery-optimization dialog on every start/cold resume**
+  while background location is `whileInUse` (`:292-306`). Ask once, remember decline.
+- **90.C12 — LOW — Doppler-speed fixes never sanity-check their distance.**
+  `:593-602` adds `distDelta` unchanged when raw speed is plausible; a ≤25 m
+  accuracy multipath jump is accepted in full. Distinct from §62.15. *Fix:* cap at
+  `max(rawSpeed, prevSpeed) * dt * 1.5 + accuracy`.
+
+### 90.D Security & backend (rules, functions, client ↔ rules)
+
+Limits: rules read line by line; **emulator not run** (the session's permission
+classifier denied starting it). The security reviewer couldn't read `functions/`;
+the main agent checked `account-deletion.ts` directly for D7. Sound: no secrets
+in git history (keystore/`secret/`/`secrets/` gitignored, never committed),
+live-session tokens (32 chars, `Random.secure()`, get-only, fail-closed expiry),
+`isAdmin()`, vote/comment counter binding, invite-accept clause (§24.6), chat
+participant immutability, owner-only private subcollections, no `list` on
+token/handle/pointer collections, live-viewer has no data-driven `innerHTML`,
+analytics/Crashlytics carry no PII.
+
+- **90.D1 — HIGH — any comment makes a shared ride undeletable; anyone can plant one.**
+  `firestore.rules:695-698` — `rides/{id}/comments` has `read` + `create` only,
+  so the delete hits deny-all. `deleteSharedRide`
+  (`ride_share_repository.dart:447-465`) deletes comments first via `Future.wait`
+  → throws → ride doc never deleted. Comment `create` checks only `userId`: no
+  `rideVisibleTo`, no key allow-list, no size cap — a stranger can plant a comment
+  on a followers/mutual ride they can't see and pin it on the feed forever.
+  **(verified 2026-10-06)** *Fix:* `allow delete` for comment author or ride owner;
+  gate create on `rideVisibleTo(get(parent))` + `hasOnly` + text length; rules test.
+- **90.D2 — HIGH (latent until functions deploy) — account-deletion sweep destroys
+  any `publicId` in the deleter's ledger.** `users/{uid}/cloudinaryAssets` create
+  (`firestore.rules:383-386`) has no shape check; `destroyCloudinaryAssets`
+  (`functions/src/account-deletion.ts:244-255`) destroys every ledger
+  `publicId` with no ownership/prefix check. Public IDs are visible in every
+  media URL → write rows naming a victim's avatar/voice notes, delete own account,
+  victim's media is destroyed. **(verified 2026-10-06)** *Fix:* rule
+  `publicId.matches('^[a-zA-Z_]+/' + uid + '/.*')` (folder convention in
+  `cloudinary_upload_service.dart:44-45`) **and** the same prefix check in the
+  sweep before `destroy`. Must land before the Blaze/functions deploy.
+- **90.D3 — MEDIUM-HIGH — group-ride creator can add any rider to `memberIds`.**
+  `firestore.rules:1127-1129` (clause 1) bounds only `creatorId`/`status`.
+  Victim's app then shows "on a live group ride" (`group_ride_providers.dart:78-85`);
+  opening it starts `_broadcastPosition` (`group_ride_map_screen.dart:176-179`)
+  with no consent step → creator reads their live location. **(verified)**
+  *Fix:* clause 1 requires `request.resource.data.memberIds.hasOnly(resource.data.memberIds)`
+  (remove-only); adds go through the self-join clauses.
+- **90.D4 — MEDIUM — kicked riders can rejoin an active ride without the code.**
+  Clause 4 (`firestore.rules:1188-1198`) needs only active + not-member + cap;
+  `removeMember` just `arrayRemove`s. Also: the comment equating join-code
+  entropy with live tokens is wrong (6 chars/31 symbols ≈ 2^30 vs 32/62), and
+  codes never expire. *Fix:* `bannedIds` written on kick + checked in clause 4.
+- **90.D5 — MEDIUM — riders can't delete their own forum posts.**
+  `forum_repository.dart:263-268` batches the delete with `postCount: increment(-1)`;
+  `firestore.rules:759-764` allows −1 only for admin/creator/maintainer → whole
+  batch fails. *Fix:* tie −1 to `docRemoved(.../posts/$(lastDeletedPostId))`.
+- **90.D6 — MEDIUM — profile `email`/`emailLower` is client-chosen → impersonation.**
+  `firestore.rules:315-321` validates only `usernameLower`/`publicStats`.
+  `searchByEmail` (`profile_repository.dart:281-290`) feeds the chat picker, the
+  group-ride friend picker and search → Mallory sets the victim's email + name +
+  photo, receives their friends' group-ride invites and locations. §24.5 closed
+  this for usernames only. *Fix:* pin to `request.auth.token.email.lower()`.
+- **90.D7 — MEDIUM — the public `/r/{handle}` live link is created silently.**
+  Every opt-in live share also writes `livePointers/{uid}.token`
+  (`live_session_coordinator.dart:150-176`); `livePointers`/`usernames` are
+  `get: if true` (`firestore.rules:1013-1014`, `1034-1035`). The app only ever
+  shows `/live/{token}`, so the rider never learns that anyone with their @handle
+  can follow them unauthenticated. *Fix:* write the pointer only behind an
+  explicit, visible "public link" setting.
+- **90.D8 — MEDIUM (product decision) — since §88.1, "Followers" = anyone who taps
+  Follow, retroactively.** `rideVisibleTo` (`firestore.rules:25-26`) checks the
+  live edge; edges are self-created with no approval (`:1051-1053`); profile
+  `visibility` isn't consulted (bikes `followers` tier at `:75` too). A stranger
+  following a `private` rider instantly sees every followers-only ride ever
+  shared. Combined with §90.A11 (block keeps the edge). *Fix:* follow requests
+  for non-public profiles, or `profileVisibleTo` inside `rideVisibleTo`; at
+  minimum relabel to "Anyone who follows you".
+- **90.D9 — MEDIUM — `users` list queries: privacy bypass or broken search.**
+  Same root as §90.A4 — also covers `searchByUsername`/`searchByEmail`, and
+  `follows` is listable unfiltered (`firestore.rules:1050`) → bulk uid/email
+  harvest. One emulator test settles which branch is live. Fix as §90.A4.
+- **90.D10 — LOW — spoofable identity/photo fields.** `userName`/`userPhotoUrl`
+  unvalidated on comments (`:697`), posts (`:774-776`), replies (`:839`);
+  `senderPhotoUrl` on voice notes; `users.photoUrl` unrestricted. Names like
+  "ThrottleIQ Team", and attacker-hosted photo URLs leak every viewer's IP (the
+  §33.4 beacon, closed only for notifications). *Fix:* the §33.4 URL allow-list +
+  name length cap everywhere.
+- **90.D11 — LOW — forum `followerCount`/`postCount` still forgeable**
+  (`firestore.rules:752-760`), not bound to a `forum_follows` doc or a new post;
+  the rule comment claims otherwise. `createPost` is two writes
+  (`forum_repository.dart:363-375`). *Fix:* `existsAfter` binding; single transaction.
+- **90.D12 — not reviewed:** `functions/` dependency/tooling risk, and the
+  moderation, crash and ride-identity function logic. Needs a follow-up pass, plus
+  the emulator run for D9.
+
+### 90.E Docs sweep (2026-10-06) — done in this pass, leftovers
+
+**Done:** corrected stale facts in `README.md` (version beta-v4, test count, analyze
+state, 200–349 m privacy radius, CSV export, hold-to-start), `arch.md` (directory
+tree, SensorValidator 70 m/s, heading blend, crash thresholds, cadence,
+`ride_points` columns, tabs, route params, test DB helpers, schema v18),
+`DOCS/README.md`, `needs_attention.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`,
+`SETUP.md` (CI does run, is red, not required), `auto_tracking_plan.md`,
+`backend_options.md`, `functions/README.md` (account-deletion does touch
+Cloudinary/authored content), `pubspec.yaml` dead doc paths, 8 Dart doc-comment
+fixes for renamed symbols/dead paths, and 53 per-folder `README.md` file lists
+under `app/lib` and `app/test`. Fixed 8 dead `Contributers` links.
+
+**Left open:**
+- `features.md:221` still says `PhotoCollage` (now `RideMediaCollage`). Left alone
+  because the file had someone else's uncommitted edits.
+- About 120 dead `file:///Users/blackbird/Everything/dev/ThrottleIQ/...` links in
+  `issues_solved.md` and `ANTIGRAVRITY_GRILL/*.md`. They point at the repo's old
+  path. Either bulk-rewrite them to relative paths or archive those files.
+- Rules-suite size: `BIGGG_JOBB.md` says 114, a grep counts ~138 `test(`/`it(`,
+  and HANDOFF says 119. Run the emulator suite and record the real number.
+- README claims "20+ data points per second" and "auth tokens in encrypted
+  SharedPreferences" are unverified. The "Flutter 3.3+" badge is actually the
+  Dart SDK constraint.
