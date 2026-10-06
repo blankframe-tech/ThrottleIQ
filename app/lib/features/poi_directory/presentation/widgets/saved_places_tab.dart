@@ -66,28 +66,36 @@ class SavedPlacesTab extends ConsumerWidget {
           for (final place in saved)
             toHit(place, originLat: position?.latitude, originLng: position?.longitude),
         ];
-        return ListView(
+        // §97.5: Moved SavedPlacesTab to ListView.builder for lazy loading of the list items,
+        // which improves scrolling performance compared to the default eager ListView.
+        return ListView.builder(
           padding: const EdgeInsets.fromLTRB(
             AppDimensions.paddingMd,
             AppDimensions.paddingMd,
             AppDimensions.paddingMd,
             AppDimensions.paddingXl + 56,
           ),
-          children: [
-            contributed,
-            const SizedBox(height: 12),
-            if (hits.isEmpty)
-              PlacesStatusPanel(
+          itemCount: hits.isEmpty ? 2 : hits.length + 1,
+          itemBuilder: (context, i) {
+            if (i == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: contributed,
+              );
+            }
+            if (hits.isEmpty) {
+              return PlacesStatusPanel(
                 icon: Icons.bookmark_border,
                 title: context.l10n.savedPlacesEmptyTitle,
                 body: context.l10n.savedPlacesEmptyBody,
-              )
-            else
-              for (final hit in hits) ...[
-                PlaceCard(key: ValueKey('saved-${hit.place.id}'), hit: hit),
-                const SizedBox(height: 12),
-              ],
-          ],
+              );
+            }
+            final hit = hits[i - 1];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: PlaceCard(key: ValueKey('saved-${hit.place.id}'), hit: hit),
+            );
+          },
         );
       },
     );

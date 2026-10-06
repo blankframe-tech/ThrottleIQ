@@ -391,5 +391,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('No saved places yet'), findsOneWidget);
     });
+
+    testWidgets('uses ListView.builder for lazy loading', (tester) async {
+      await pumpHub(tester);
+      await tester.tap(find.text('Saved'));
+      await tester.pumpAndSettle();
+      
+      final listView = tester.widget<ListView>(find.byType(ListView).last);
+      expect(listView.childrenDelegate, isA<SliverChildBuilderDelegate>());
+    });
   });
 }
