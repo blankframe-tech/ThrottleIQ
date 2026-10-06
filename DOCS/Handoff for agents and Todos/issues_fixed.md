@@ -6072,7 +6072,7 @@ The fixes are uncommitted in the open55 pass. `flutter analyze` is clean and all
 
 ---
 
-## 90. Full-codebase audit fixes — FIXED in code (2026-10-06), not committed, not verified on a device
+## 90. Full-codebase audit fixes — FIXED in code (2026-10-06, commit `6264d72`), not verified on a device
 
 Findings are in `issues_open.md` §90 (kept there for detail; the still-open
 items are listed at its top). Checks at the end of the pass: `flutter analyze`

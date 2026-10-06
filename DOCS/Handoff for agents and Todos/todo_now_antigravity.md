@@ -32,4 +32,7 @@
 - [x] **5. Data Encryption in Transit**
   - [x] Verified that all user data collected by the app is encrypted in transit (handled automatically by Firebase HTTPS/TLS for Firestore, Cloud Functions, and Firebase Auth).
 
+- [ ] **6. Documentation**
+  - [ ] **Write a PRD in ASD-STE100 format.** Cover the app (rides, forum, profiles, chat, trust & safety) and the Firebase backend: problem, users, goals and non-goals, functional and non-functional requirements, constraints and success metrics. Follow ASD-STE100 (Simplified Technical English): use only approved words and their approved meanings, keep procedural sentences to 20 words or fewer and descriptive sentences to 25 or fewer, write one instruction per sentence, use the active voice, and use the imperative for procedures. Save it as `DOCS/PRD.md`.
+
 - [ ] **Next Steps if Token Limit Reached**: Continue from the first unchecked item in this list.

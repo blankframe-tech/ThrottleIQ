@@ -2,11 +2,22 @@
 
 _Last updated: 2026-10-06 · Branch: `main`_
 
-## 2026-10-06 (later): §90 fix pass — FIXED in code, not committed, not on a device
+## 2026-10-06 (later): §90 fix pass — committed `6264d72`, pushed; release builds made
 
 Almost all of §90 is fixed in the working tree. Details per ID are in
 `issues_fixed.md` §90; what's still open is at the top of `issues_open.md` §90.
-**Nothing is committed, deployed or checked on a device.**
+Committed as `6264d72` and pushed to `main`. Nothing is deployed (rules,
+indexes and functions are still the old ones).
+
+**Release builds from `6264d72` (2026-10-06):**
+- APK: `app/build/app/outputs/flutter-apk/app-release.apk`, 85.4 MB.
+- AAB: `app/build/app/outputs/bundle/release/app-release.aab`, 83.5 MB.
+- Version: still `1.0.0-beta.4.0.0+21`, not bumped. Bump it before a Play upload
+  if +21 has already been uploaded.
+- iOS: release build installed on the owner's iPhone 15. The built Info.plist has the
+  camera string, and the Pods project has `PERMISSION_MICROPHONE=1`.
+- **Not checked on a device yet.** `flutter install` uninstalled the old app first,
+  so the phone's local data was wiped.
 
 - **Checks:** `flutter analyze` 0 issues · `flutter test` **1450/1450** (was 1357) ·
   rules emulator **177/177** (was 138) · `functions` `npm test` **5/5** (new).
