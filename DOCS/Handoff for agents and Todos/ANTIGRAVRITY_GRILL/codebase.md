@@ -34,7 +34,7 @@ Here are the hard technical truths about the ThrottleIQ codebase.
 ## 3. Data Integrity & Sync Architecture
 
 ### 3.4 Fatal `as double` Typecast Bombs
-* **Code References:** [`save_route_screen.dart:55`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/screens/save_route_screen.dart#L55), [`ride_share_screen.dart:67`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/social/presentation/screens/ride_share_screen.dart#L67), [`live_session_entity.dart:103-104`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/entities/live_session_entity.dart#L103-L104), [`ride_summary_screen.dart:61`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/screens/ride_summary_screen.dart#L61)
+* **Code References:** [`save_route_screen.dart:55`](../../../app/lib/features/routes/presentation/screens/save_route_screen.dart#L55), [`ride_share_screen.dart:67`](../../../app/lib/features/social/presentation/screens/ride_share_screen.dart#L67), [`live_session_entity.dart:103-104`](../../../app/lib/features/ride/domain/entities/live_session_entity.dart#L103-L104), [`ride_summary_screen.dart:61`](../../../app/lib/features/ride/presentation/screens/ride_summary_screen.dart#L61)
 * **The Flaw:** Raw casts like `p['lat'] as double` assume that numbers deserialized from SQLite or JSON are always Dart `double`. If SQLite or Firestore encodes an exact coordinate like `24` or `90` as an `int`, Dart throws:
   `_CastError (type 'int' is not a subtype of type 'double' in type cast)`
   This crashes the screen immediately instead of using `(p['lat'] as num?)?.toDouble()`.
@@ -48,7 +48,7 @@ Here are the hard technical truths about the ThrottleIQ codebase.
 ## 5. Architectural & UI/UX Anti-Patterns
 
 ### 5.1 Global Mutable Statics & The Remounting Disaster
-* **Code References:** [`app_colors.dart:16-23`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/constants/app_colors.dart#L16-L23) & [`app.dart:157-177`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/app.dart#L157-L177)
+* **Code References:** [`app_colors.dart:16-23`](../../../app/lib/core/constants/app_colors.dart#L16-L23) & [`app.dart:157-177`](../../../app/lib/app.dart#L157-L177)
 * **The Anti-Pattern:**
   - The codebase eschews `Theme.of(context)` and `ThemeExtension` in favor of static facades: `AppColors.background`, `AppDimensions.radiusMd`, `AppTypography.style`.
   - Because static getters cannot trigger reactive widget rebuilds, `app.dart` forces theme updates with:
@@ -61,11 +61,11 @@ Here are the hard technical truths about the ThrottleIQ codebase.
   - Toggling Dark/Light mode or selecting a color vibe **unmounts and remounts the entire application subtree**. This destroys active navigation stacks, uncommitted form inputs, text controllers, and scroll positions.
 
 ### 5.3 Uncontrolled Stream Subscriptions in Chat Lists
-* **Code Reference:** [`chat_list_screen.dart:95-104`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/chat/presentation/screens/chat_list_screen.dart#L95-L104)
+* **Code Reference:** [`chat_list_screen.dart:95-104`](../../../app/lib/features/chat/presentation/screens/chat_list_screen.dart#L95-L104)
 * **The Flaw:** Inside `ListView.separated`'s `itemBuilder`, the code invokes `ref.watch(profileProvider(otherUserId))`. For a list of 50 chats, this instantiates 50 concurrent real-time Firestore document streams, triggering rapid quota depletion and UI stutter during scrolling.
 
 ### 5.4 Chat Bypasses User Blocks
-* **Code Reference:** [`chat_list_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/chat/presentation/screens/chat_list_screen.dart) & [`chat_repository.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/chat/data/repositories/chat_repository.dart)
+* **Code Reference:** [`chat_list_screen.dart`](../../../app/lib/features/chat/presentation/screens/chat_list_screen.dart) & [`chat_repository.dart`](../../../app/lib/features/chat/data/repositories/chat_repository.dart)
 * **The Flaw:** While user profiles hide the "Message" button if a user is blocked, `ChatListScreen` and `ChatRoomScreen` contain zero checks against `blockedUsersProvider`. A blocked user can continue sending messages in pre-existing chat rooms, and their conversations remain visible in the inbox.
 
 ---
@@ -87,7 +87,7 @@ Here are the hard technical truths about the ThrottleIQ codebase.
 * **Impact:** On mid-range hardware, this stack draws 25%–35% battery per hour. When mounted on a motorcycle handlebar under direct sunlight, thermal throttling will frequently dim the screen or force OS-level process termination.
 
 ### 7.3 Unencrypted Local Database
-* **Code Reference:** [`database_helper.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/database/database_helper.dart)
+* **Code Reference:** [`database_helper.dart`](../../../app/lib/core/database/database_helper.dart)
 * **The Flaw:** SQLite database `throttleiq.db` is stored unencrypted without SQLCipher. Anyone with physical access to a rooted device or file extraction tools can recover the rider's complete historical GPS routes, timestamps, and home addresses.
 
 ---

@@ -27,7 +27,9 @@ const _captionMaxLength = 280;
 /// rider's language; only the label and description shown here do.
 List<(String, String, String)> _audienceOptions(AppLocalizations l10n) => [
       ('public', l10n.audiencePublic, l10n.anyoneThrottleiq),
-      ('followers', l10n.audienceFollowers, l10n.peopleWhoFollow),
+      // "Anyone who follows you", not "Followers": following needs no
+      // approval and counts retroactively (issues §90.D8).
+      ('followers', l10n.audienceAnyFollower, l10n.peopleWhoFollow),
       ('mutual', l10n.audienceMutual, l10n.ridersFollowEachOther),
     ];
 

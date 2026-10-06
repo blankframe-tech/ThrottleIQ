@@ -2,7 +2,7 @@
 
 **ThrottleIQ** is a source-available motorcycle ride tracking and intelligence platform that captures every detail of your rides: speed, acceleration, braking, routes, and machine maintenance. Built for riders who care about performance, safety, and keeping their bikes running flawlessly.
 
-![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
+![License](https://img.shields.io/badge/license-TSAL-blue) ![Dart](https://img.shields.io/badge/Dart-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
 > **Status:** pre-launch beta, `1.0.0-beta.4.0.0+21`, tagged
 > [`beta-v4`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4)
@@ -23,7 +23,7 @@
 - **Background tracking**: Records continuously even when app is backgrounded or screen is locked (using foreground services + wakelock)
 - **Live stats**: Current speed, acceleration, jerk, altitude, distance
 - **Smart alerts**: Overspeed, rapid acceleration, hard braking, extended riding (fatigue after 90 min)
-- **Exact metrics**: Captures 20+ data points per second via GPS + accelerometer
+- **Exact metrics**: Samples the accelerometer and gyroscope at 20 Hz alongside GPS fixes
 
 ### 📊 Ride Analysis (P0-P4 ✅)
 - **Summary cards**: Max speed, distance, duration, hard braking count, rapid accel count, jerk count
@@ -248,7 +248,7 @@ See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
 - **User control**: Can disable/revoke at any time
 
 ### Passwords & Secrets
-- **Never stored locally**: Only auth tokens in encrypted SharedPreferences
+- **Never stored locally**: passwords are never stored by the app; sign-in tokens are kept by the Firebase Auth SDK in its own platform storage
 - **google-services.json** & **key.properties**: Gitignored (never committed)
 - **Firestore keys**: Restricted to this app's domain via Firebase Console
 

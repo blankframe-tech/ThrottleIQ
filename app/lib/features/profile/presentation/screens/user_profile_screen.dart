@@ -15,7 +15,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/presentation/providers/follow_providers.dart';
-import '../../../social/presentation/providers/notification_providers.dart';
+import '../../../social/presentation/widgets/follow_button.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
@@ -84,7 +84,23 @@ class UserProfileScreen extends ConsumerWidget {
               icon: Icon(Icons.more_vert, color: context.palette.textPrimary),
               onSelected: (value) async {
                 if (value == 'block' && myUid != null) {
-                  await ref.read(profileRepositoryProvider).blockUser(myUid, targetUid);
+                  // blockUser also drops the follow edges both ways, so a
+                  // blocked rider stops seeing followers/mutual posts
+                  // (issues §90.A11). It used to be unguarded: a failed
+                  // write threw out of this callback with no feedback.
+                  try {
+                    await ref.read(profileRepositoryProvider).blockUser(myUid, targetUid);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(context.l10n.couldntBlockRider(
+                              mapFirestoreError(e, context.l10n))),
+                        ),
+                      );
+                    }
+                    return;
+                  }
                   ref.invalidate(blockedUsersProvider);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -201,31 +217,9 @@ class _ProfileBody extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: isFollowingAsync.when(
-                    loading: () => const SizedBox(height: 40),
-                    error: (_, __) => const SizedBox.shrink(),
-                    data: (isFollowing) => ElevatedButton(
-                      onPressed: () {
-                        final repo = ref.read(followRepositoryProvider);
-                        if (isFollowing) {
-                          repo.unfollow(myUid!, profile.uid);
-                        } else {
-                          repo.follow(myUid!, profile.uid);
-                          final me = ref.read(myProfileProvider).valueOrNull;
-                          ref.read(notificationRepositoryProvider).notifyFollow(
-                                toUid: profile.uid,
-                                fromUid: myUid!,
-                                fromName: me?.bestName ?? context.l10n.aRider,
-                                fromPhotoUrl: me?.photoUrl,
-                              );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isFollowing ? context.palette.surfaceVariant : context.palette.primary,
-                        foregroundColor: isFollowing ? context.palette.textPrimary : Colors.white,
-                      ),
-                      child: Text(isFollowing ? context.l10n.following : context.l10n.follow),
-                    ),
+                  child: FollowButton(
+                    targetUid: profile.uid,
+                    variant: FollowButtonVariant.prominent,
                   ),
                 ),
                 const SizedBox(width: 12),

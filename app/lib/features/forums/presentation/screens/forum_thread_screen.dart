@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -125,12 +126,42 @@ class ForumThreadScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () => ref.refresh(forumPostsProvider(forumId).future),
             color: context.palette.primary,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(AppDimensions.paddingMd),
-              itemCount: posts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => _PostCard(forumId: forumId, post: posts[i]),
-            ),
+            child: Builder(builder: (context) {
+              final notifier = ref.read(forumPostsNotifierProvider(forumId).notifier);
+              final showMore = notifier.hasMore;
+              return ListView.separated(
+                padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                itemCount: posts.length + (showMore ? 1 : 0),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, i) {
+                  if (i == posts.length) {
+                    // Older posts load on request (issues §90.A8) — the
+                    // thread used to read every post up front.
+                    return Center(
+                      child: notifier.isLoadingMore
+                          ? Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: CircularProgressIndicator(color: context.palette.primary),
+                            )
+                          : OutlinedButton(
+                              onPressed: () async {
+                                try {
+                                  await notifier.loadMore();
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+                                  );
+                                }
+                              },
+                              child: Text(context.l10n.loadMore),
+                            ),
+                    );
+                  }
+                  return _PostCard(forumId: forumId, post: posts[i]);
+                },
+              );
+            }),
           );
         },
       ),

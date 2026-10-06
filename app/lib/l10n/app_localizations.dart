@@ -2624,6 +2624,12 @@ abstract class AppLocalizations {
   /// **'Please add a bike before recording a ride.'**
   String get addBikeBeforeRecording;
 
+  /// Error shown when starting a ride failed unexpectedly (database or platform error).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start the ride. Please try again.'**
+  String get recordingStartFailed;
+
   /// FromName in notification_repository (+2 more).
   ///
   /// In en, this message translates to:
@@ -2843,7 +2849,7 @@ abstract class AppLocalizations {
   /// Text in ride_share_screen.
   ///
   /// In en, this message translates to:
-  /// **'People who follow you'**
+  /// **'Includes people who follow you later. Following doesn\'t need your approval.'**
   String get peopleWhoFollow;
 
   /// Text in ride_share_screen.
@@ -4910,6 +4916,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Block User'**
   String get blockUser;
+
+  /// Snackbar when blocking a rider fails (user_profile_screen).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t block this rider: {error}'**
+  String couldntBlockRider(String error);
+
+  /// Settings switch title. /r/@handle is a literal URL path; keep it unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Public link (/r/@handle)'**
+  String get publicLiveLinkTitle;
+
+  /// Settings switch subtitle explaining the permanent public live link.
+  ///
+  /// In en, this message translates to:
+  /// **'While you share a live ride, anyone who knows your @username can watch it at /r/@username — no app or sign-in needed. Off by default. Your private live link works either way.'**
+  String get publicLiveLinkDesc;
+
+  /// Ride share audience pill: anyone who follows the rider, with no approval step.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone who follows you'**
+  String get audienceAnyFollower;
 
   /// Text in user_profile_screen.
   ///
@@ -7710,6 +7740,12 @@ abstract class AppLocalizations {
   /// **'This ride is full.'**
   String get joinRideFull;
 
+  /// Join-by-code failure: the creator kicked this rider, so the code no longer lets them back in.
+  ///
+  /// In en, this message translates to:
+  /// **'The ride\'s creator removed you from this ride.'**
+  String get joinRideRemoved;
+
   /// Friend picker refusing one rider too many.
   ///
   /// In en, this message translates to:
@@ -7973,6 +8009,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This feature is being tested. No order was placed and nothing was charged.'**
   String get partOrderPlacedBody;
+
+  /// All People screen empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'No other riders to show yet.'**
+  String get noOtherRidersYet;
+
+  /// Button that fetches the next page of a list.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get loadMore;
+
+  /// Chat room: fetch earlier messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Load older messages'**
+  String get loadOlderMessages;
 }
 
 class _AppLocalizationsDelegate

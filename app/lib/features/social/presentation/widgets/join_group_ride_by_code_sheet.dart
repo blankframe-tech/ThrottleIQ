@@ -97,6 +97,7 @@ class _JoinGroupRideByCodeSheetState
           GroupRideJoinFailure.badCode => l10n.joinRideBadCode,
           GroupRideJoinFailure.alreadyEnded => l10n.joinRideAlreadyEnded,
           GroupRideJoinFailure.full => l10n.joinRideFull,
+          GroupRideJoinFailure.removed => l10n.joinRideRemoved,
         };
       });
     } catch (e) {

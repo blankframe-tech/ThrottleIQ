@@ -76,15 +76,21 @@ final nearbyPlacesProvider =
 /// one-shot `getPlace`) so the rating aggregate updates live for every
 /// viewer when *any* user submits a review, not just the client that
 /// submitted it.
-final placeDetailProvider = StreamProvider.family<PlaceEntity?, String>((ref, placeId) {
+///
+/// autoDispose (issues §90.A-LOW): each place opened used to leave its doc
+/// listener running for the rest of the session.
+final placeDetailProvider =
+    StreamProvider.autoDispose.family<PlaceEntity?, String>((ref, placeId) {
   return _placeRepository.streamPlace(placeId);
 });
 
 /// Live reviews for a place. Uses `streamReviewsForPlace` (rather than the
 /// one-shot `getReviewsForPlace`) so a review submitted from this same
 /// screen — or by another rider — appears without an explicit refresh.
+///
+/// autoDispose for the same reason as [placeDetailProvider].
 final reviewsForPlaceProvider =
-    StreamProvider.family<List<ReviewEntity>, String>((ref, placeId) {
+    StreamProvider.autoDispose.family<List<ReviewEntity>, String>((ref, placeId) {
   return _reviewRepository.streamReviewsForPlace(placeId);
 });
 

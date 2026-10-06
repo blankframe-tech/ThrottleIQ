@@ -95,6 +95,10 @@
 	<string>ThrottleIQ uses motion activity to notice when you start riding, so it can record the ride without you having to tap start.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>ThrottleIQ needs microphone access to send push-to-talk voice notes to the riders in your group ride.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ThrottleIQ uses the camera so you can photograph a place you're adding or your bike's odometer.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ThrottleIQ needs access to your photos so you can attach pictures to rides, places, your profile or an odometer reading.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<!-- Already present: keeps location flowing during a ride. -->

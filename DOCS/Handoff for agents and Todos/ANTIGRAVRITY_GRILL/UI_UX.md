@@ -68,7 +68,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ## 1. Life-Critical Cockpit Ergonomics (Riding Under Real Conditions)
 
 ### 1.1 The Glove-Unfriendly "End Ride" Dialog Trap
-* **The Crime:** Look at [`active_ride_screen.dart:442-487`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L442-L487):
+* **The Crime:** Look at [`active_ride_screen.dart:442-487`](../../../app/lib/features/record/presentation/active_ride_screen.dart#L442-L487):
   ```dart
   showDialog<bool>(
     context: context,
@@ -104,9 +104,9 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 1.2 Microscopic Telemetry on a Vibrating Mount
-* **The Crime:** Look at the typography in [`active_ride_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart):
-  - Secondary speed metrics: `fontSize: 12` ([line 405](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L405))
-  - G-Force indicator in `_GForceBar`: `fontSize: 9` ([line 611](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L611))
+* **The Crime:** Look at the typography in [`active_ride_screen.dart`](../../../app/lib/features/record/presentation/active_ride_screen.dart):
+  - Secondary speed metrics: `fontSize: 12` ([line 405](../../../app/lib/features/record/presentation/active_ride_screen.dart#L405))
+  - G-Force indicator in `_GForceBar`: `fontSize: 9` ([line 611](../../../app/lib/features/record/presentation/active_ride_screen.dart#L611))
   - Elevation and brake counters: `fontSize: 12`
 * **The Reality Check:**
   - **9-point font on a motorcycle handlebar?!** At 80 km/h, on a single-cylinder thumper vibrating at 4,000 RPM, 9pt text is an illegible grey blur.
@@ -126,7 +126,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ## 2. Severe Navigation & Architectural Identity Crises
 
 ### 2.1 Tab 5 Identity Crisis: "Profile" That Isn't Profile
-* **The Crime:** In [`app_router.dart:108-113`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/router/app_router.dart#L108-L113):
+* **The Crime:** In [`app_router.dart:108-113`](../../../app/lib/core/router/app_router.dart#L108-L113):
   ```dart
   StatefulShellBranch(
     routes: [
@@ -151,7 +151,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 2.2 The Nested Tap-Target Trap in the Bike Card
-* **The Crime:** Look at [`garage_screen.dart:247-352`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/garage_screen.dart#L247-L352):
+* **The Crime:** Look at [`garage_screen.dart:247-352`](../../../app/lib/features/garage/presentation/garage_screen.dart#L247-L352):
   ```dart
   Card(
     child: InkWell(
@@ -186,7 +186,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 2.5 Secret Navigation Hijack in Filter Bars
-* **The Crime:** Look at [`places_list_screen.dart:173-177`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/places/presentation/places_list_screen.dart#L173-L177):
+* **The Crime:** Look at [`places_list_screen.dart:173-177`](../../../app/lib/features/places/presentation/places_list_screen.dart#L173-L177):
   ```dart
   FilterChip(
     label: const Text('Routes'),
@@ -209,7 +209,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 3.2 "Directions" in Places Secretly Starts a Ride
-* **The Crime:** Look at [`place_detail_screen.dart:199-215`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/places/presentation/place_detail_screen.dart#L199-L215):
+* **The Crime:** Look at [`place_detail_screen.dart:199-215`](../../../app/lib/features/places/presentation/place_detail_screen.dart#L199-L215):
   ```dart
   FilledButton.icon(
     icon: const Icon(Icons.directions),
@@ -231,8 +231,8 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ### 3.3 The Route Saving Trap & The Discard Close Button
 * **The Crime:**
-  1. Inspect [`ride_summary_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/ride_summary_screen.dart). It has buttons for *"Export GPX"*, *"Share Ride"*, and *"Done"*. There is **no "Save as Route" button**.
-  2. The only way to save a recorded ride as a route is to tap *"Share Ride"*, which takes the user to [`ride_share_screen.dart:206`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/ride_share_screen.dart#L206), where there is a secondary button: *"Save as Personal Route"*.
+  1. Inspect [`ride_summary_screen.dart`](../../../app/lib/features/record/presentation/ride_summary_screen.dart). It has buttons for *"Export GPX"*, *"Share Ride"*, and *"Done"*. There is **no "Save as Route" button**.
+  2. The only way to save a recorded ride as a route is to tap *"Share Ride"*, which takes the user to [`ride_share_screen.dart:206`](../../../app/lib/features/record/presentation/ride_share_screen.dart#L206), where there is a secondary button: *"Save as Personal Route"*.
   3. On `ride_share_screen.dart`, look at the `X` (close) button in the AppBar:
      ```dart
      IconButton(
@@ -248,7 +248,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 3.4 Running "Pace" (min/km) Displayed for Motorcyclists
-* **The Crime:** Look at [`shared_ride_detail_screen.dart:170-177`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/social/presentation/shared_ride_detail_screen.dart#L170-L177):
+* **The Crime:** Look at [`shared_ride_detail_screen.dart:170-177`](../../../app/lib/features/social/presentation/shared_ride_detail_screen.dart#L170-L177):
   ```dart
   String _formatPace(double speedKmh) {
     if (speedKmh <= 0) return '--';
@@ -269,7 +269,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ## 4. Visual Hierarchy, Theming & Accessibility Sins
 
 ### 4.1 Nuclear Rebuild: `MaterialApp` Annihilation on Theme Change
-* **The Crime:** Look at [`app.dart:71-74`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/app.dart#L71-L74):
+* **The Crime:** Look at [`app.dart:71-74`](../../../app/lib/app.dart#L71-L74):
   ```dart
   return MaterialApp.router(
     key: ValueKey(appearance), // <--- Nuclear rebuild
@@ -278,7 +278,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
     darkTheme: AppTheme.darkTheme,
   );
   ```
-* **Why does this exist?** Because [`app_colors.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/theme/app_colors.dart#L84-L101) uses a **static mutable singleton facade**:
+* **Why does this exist?** Because [`app_colors.dart`](../../../app/lib/core/theme/app_colors.dart#L84-L101) uses a **static mutable singleton facade**:
   ```dart
   static Color get primary => _currentPalette.primary;
   ```
@@ -293,7 +293,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 4.3 Inverted Dark Mode Contrast: Dark-on-Red "End Ride" Button
-* **The Crime:** Look at [`active_ride_screen.dart:427-434`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L427-L434):
+* **The Crime:** Look at [`active_ride_screen.dart:427-434`](../../../app/lib/features/record/presentation/active_ride_screen.dart#L427-L434):
   ```dart
   ElevatedButton(
     style: ElevatedButton.styleFrom(
@@ -314,7 +314,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 
 ### 4.4 Hardcoded Dark Surfaces in Light Mode
 * **The Crime:**
-  1. In [`add_maintenance_log_screen.dart:137-140`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/maintenance/presentation/add_maintenance_log_screen.dart#L137-L140):
+  1. In [`add_maintenance_log_screen.dart:137-140`](../../../app/lib/features/maintenance/presentation/add_maintenance_log_screen.dart#L137-L140):
      ```dart
      builder: (context, child) => Theme(
        data: ThemeData.dark().copyWith(
@@ -324,7 +324,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
      ),
      ```
      The date picker explicitly forces `ThemeData.dark()`, even if the user is using the light theme!
-  2. In [`tour_floating_banner.dart:71`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/auth/presentation/widgets/tour_floating_banner.dart#L71):
+  2. In [`tour_floating_banner.dart:71`](../../../app/lib/features/auth/presentation/widgets/tour_floating_banner.dart#L71):
      The tour banner has a hardcoded background of `const Color(0xFF181D22)`.
 * **The Reality Check:**
   - In light mode, opening the date picker suddenly flashes a pitch-black modal on the screen.
@@ -338,7 +338,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ## 5. Data Loss, State Inconsistencies & Edge-Case Traps
 
 ### 5.1 Premature Chat Input Destruction (Data Loss)
-* **The Crime:** Look at [`chat_room_screen.dart:95-108`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/chat/presentation/chat_room_screen.dart#L95-L108):
+* **The Crime:** Look at [`chat_room_screen.dart:95-108`](../../../app/lib/features/chat/presentation/chat_room_screen.dart#L95-L108):
   ```dart
   void _sendMessage() {
     final text = _controller.text.trim();
@@ -364,7 +364,7 @@ This document lays out every flaw, UX anti-pattern, accessibility violation, and
 ---
 
 ### 5.5 Dead Profile Statistic Badges
-* **The Crime:** In [`user_profile_screen.dart:140-165`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/profile/presentation/user_profile_screen.dart#L140-L165):
+* **The Crime:** In [`user_profile_screen.dart:140-165`](../../../app/lib/features/profile/presentation/user_profile_screen.dart#L140-L165):
   - The profile header displays three stats:
     `Rides: 42` | `Distance: 1,850 km` | `Routes: 8`
   - They are visually styled with borders, elevation, and badges that look exactly like interactive cards.
@@ -410,21 +410,21 @@ PRIORITY MATRIX
 
 ### Phase 1: P0 Immediate Safety Fixes (Days 1–5)
 1. **Map Dynamic Heading:**
-   In [`active_ride_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart) and [`route_navigation_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart), hook `_mapCtrl.rotate()` to device compass/GPS bearing. Rotate vehicle marker icon.
+   In [`active_ride_screen.dart`](../../../app/lib/features/record/presentation/active_ride_screen.dart) and [`route_navigation_screen.dart`](../../../app/lib/features/routes/presentation/route_navigation_screen.dart), hook `_mapCtrl.rotate()` to device compass/GPS bearing. Rotate vehicle marker icon.
 2. **Cockpit Typography Upgrade:**
    Enlarge primary speed to `44pt bold`, lean angle to `32pt bold`, and distance/time to `20pt`. Drop 9pt text from `_GForceBar`.
 3. **Hold-to-Stop Ride Slider:**
    Replace the `AlertDialog` end-ride modal with a full-width `ActionSlider` requiring a deliberate 1.5-second thumb swipe to terminate the ride.
 4. **WCAG AA Theme Contrast Fix:**
-   In [`app_colors.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/theme/app_colors.dart), replace `#84A98B` in `calmingLight` with a high-contrast green (`#2D5A43`) that guarantees at least 4.5:1 contrast against white text.
+   In [`app_colors.dart`](../../../app/lib/core/theme/app_colors.dart), replace `#84A98B` in `calmingLight` with a high-contrast green (`#2D5A43`) that guarantees at least 4.5:1 contrast against white text.
 
 ### Phase 2: P1 Architectural Unification (Days 6–12)
 1. **Unify Navigation and Recording:**
-   Modify [`route_navigation_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart) to spin up `RideRecordingService`. Display the planned route polyline directly inside the active cockpit HUD.
+   Modify [`route_navigation_screen.dart`](../../../app/lib/features/routes/presentation/route_navigation_screen.dart) to spin up `RideRecordingService`. Display the planned route polyline directly inside the active cockpit HUD.
 2. **Fix Tab 5 Identity Crisis:**
-   In [`app_router.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/router/app_router.dart), rename Tab 5 to **"Garage"** (`Icons.two_wheeler`). Move user profile and settings to a persistent account button in the top AppBar.
+   In [`app_router.dart`](../../../app/lib/core/router/app_router.dart), rename Tab 5 to **"Garage"** (`Icons.two_wheeler`). Move user profile and settings to a persistent account button in the top AppBar.
 3. **Eliminate Theme Nuclear Rebuild:**
-   Refactor [`AppColors`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/theme/app_colors.dart) into a proper `ThemeExtension<AppCustomColors>`. Remove `key: ValueKey(appearance)` from `MaterialApp.router`.
+   Refactor [`AppColors`](../../../app/lib/core/theme/app_colors.dart) into a proper `ThemeExtension<AppCustomColors>`. Remove `key: ValueKey(appearance)` from `MaterialApp.router`.
 4. **Fix Maintenance Dead Ends:**
    Add `AppBar(automaticallyImplyLeading: true)` to `MaintenanceScreen`. Add a service logs card to `BikeDetailScreen`. Stop route hijacking in `add_edit_bike_screen.dart`.
 

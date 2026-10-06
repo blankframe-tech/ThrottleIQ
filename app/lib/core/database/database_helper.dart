@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 18;
+  static const int schemaVersion = 19;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -290,7 +290,60 @@ class DatabaseHelper {
           'typical_cost', 'typical_cost REAL');
       await db.execute(_createBikeRunningCostsSql);
     }
+    if (oldVersion < 19 && newVersion >= 19) {
+      // §90.C6: marks the first fix persisted after a resume, so rebuilding
+      // a killed ride's distance skips the pause gap (a paused bike put in a
+      // van must not have the van journey counted on restore). 0 on every
+      // existing row — no marker was ever recorded, which is the old
+      // behaviour.
+      await db.execute(_createRidePointsIfMissingSql);
+      await _addColumnIfMissing(db, 'ride_points', 'segment_start',
+          'segment_start INTEGER NOT NULL DEFAULT 0');
+      // §90.C10: ride tombstones, same idea as `deleted_bikes`.
+      await db.execute(_createDeletedRidesSql);
+    }
   }
+
+  /// Only for the v19 step's benefit on a partial test schema (or a re-run):
+  /// every real install reaching v19 already has `ride_points`.
+  static const String _createRidePointsIfMissingSql = '''
+    CREATE TABLE IF NOT EXISTS ride_points (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ride_id TEXT NOT NULL,
+      timestamp TEXT NOT NULL,
+      lat REAL NOT NULL,
+      lng REAL NOT NULL,
+      speed_ms REAL NOT NULL,
+      acceleration REAL,
+      jerk REAL,
+      altitude_m REAL,
+      period_type TEXT NOT NULL DEFAULT 'moving',
+      accuracy_m REAL,
+      heading_deg REAL,
+      confidence INTEGER,
+      imu_quality INTEGER,
+      is_cornering INTEGER,
+      FOREIGN KEY(ride_id) REFERENCES rides(id)
+    )
+  ''';
+
+  /// Tombstones for rides deleted on this device (§90.C10).
+  ///
+  /// A ride can reach Firestore before the rider throws it away — a crash
+  /// ride is uploaded the moment crash detection fires, and is then
+  /// discarded with "Discard ride" if it was a false alarm. Deleting only
+  /// locally let [CloudRepository.downloadRides] pull it straight back. Same
+  /// shape and lifecycle as `deleted_bikes`: `synced = 0` until the remote
+  /// copy is gone, row kept afterwards. Unlike `deleted_bikes` it records
+  /// its owner, so account deletion can scope it.
+  static const String _createDeletedRidesSql = '''
+    CREATE TABLE IF NOT EXISTS deleted_rides (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      deleted_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
 
   static const String _createBikeMaintenanceConfigsSql = '''
     CREATE TABLE IF NOT EXISTS bike_maintenance_configs (
@@ -527,6 +580,7 @@ class DatabaseHelper {
         confidence INTEGER,
         imu_quality INTEGER,
         is_cornering INTEGER,
+        segment_start INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY(ride_id) REFERENCES rides(id)
       )
     ''');
@@ -584,6 +638,7 @@ class DatabaseHelper {
     await db.execute(_createBikeMaintenanceConfigsIndexSql);
     await db.execute(_createBikeRunningCostsSql);
     await db.execute(_createDeletedBikesSql);
+    await db.execute(_createDeletedRidesSql);
     await db.execute(_createOutboxSql);
     await db.execute(_createOutboxIndexSql);
     await db.execute(_createAutoDetectionsSql);
@@ -641,6 +696,8 @@ class DatabaseHelper {
             where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
+      await txn.delete('deleted_rides',
+          where: 'user_id = ?', whereArgs: [userId]);
 
       final bikes = await txn.query('bikes',
           where: 'user_id = ?', whereArgs: [userId], columns: ['id']);

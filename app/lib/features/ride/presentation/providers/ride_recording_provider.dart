@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -26,6 +27,7 @@ import '../../data/models/ride_model.dart';
 import '../../domain/calculators/average_speed.dart';
 import '../../domain/calculators/event_detector.dart';
 import '../../domain/calculators/final_ride_stats.dart';
+import '../../domain/calculators/fix_kinematics.dart';
 import '../../domain/calculators/motion_calculator.dart';
 import '../../domain/calculators/recording_cadence_policy.dart';
 import '../../domain/calculators/ride_resume.dart';
@@ -34,6 +36,7 @@ import '../../domain/entities/ride_entity.dart';
 import '../../domain/entities/ride_point_entity.dart';
 import 'helpers/crash_coordinator.dart';
 import 'helpers/live_session_coordinator.dart';
+import 'helpers/ride_lifecycle.dart';
 import 'helpers/ride_persistence_coordinator.dart';
 import 'helpers/sensor_fusion_coordinator.dart';
 import '../../../../core/i18n/l10n_lookup.dart';
@@ -54,6 +57,11 @@ enum RecordingBlockKind { none, locationServicesOff, permissionDenied }
 /// (see `recordingErrorText` in widgets/recording_gate.dart); the English text here is
 /// what diagnostics and tests see.
 const kNoBikeRecordingError = 'Please add a bike before recording a ride.';
+
+/// [RideRecordingState.error] when starting a ride threw part-way (§90.C9) —
+/// a database or platform failure rather than a permission problem. Same
+/// pattern as [kNoBikeRecordingError]: localized by `recordingErrorText`.
+const kStartFailedRecordingError = 'Could not start the ride. Please try again.';
 
 class RideRecordingState {
   final RecordingStatus status;
@@ -104,6 +112,11 @@ class RideRecordingState {
   /// resumes.
   final bool restoredFromPreviousSession;
 
+  /// True while a start/pause/resume/stop is in progress (§90.C5). The
+  /// active ride screen disables Pause/Resume on it, so a double tap can't
+  /// queue a second transition behind the first.
+  final bool transitionPending;
+
   const RideRecordingState({
     this.status = RecordingStatus.idle,
     this.ride,
@@ -124,6 +137,7 @@ class RideRecordingState {
     this.liveSessionToken,
     this.confidence = 0,
     this.restoredFromPreviousSession = false,
+    this.transitionPending = false,
   });
 
   RideRecordingState copyWith({
@@ -158,6 +172,7 @@ class RideRecordingState {
     bool clearLiveSessionToken = false,
     int? confidence,
     bool? restoredFromPreviousSession,
+    bool? transitionPending,
   }) {
     return RideRecordingState(
       status: status ?? this.status,
@@ -183,6 +198,7 @@ class RideRecordingState {
       confidence: confidence ?? this.confidence,
       restoredFromPreviousSession:
           restoredFromPreviousSession ?? this.restoredFromPreviousSession,
+      transitionPending: transitionPending ?? this.transitionPending,
     );
   }
 }
@@ -222,12 +238,25 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   final _persistenceCoordinator = RidePersistenceCoordinator();
   final _sensorCoordinator = SensorFusionCoordinator();
 
-  StreamSubscription<Position>? _locationSub;
-  StreamSubscription<UserAccelerometerEvent>? _accelSub;
-  StreamSubscription<GyroscopeEvent>? _gyroSub;
-  // Gravity-including accelerometer, for ImpactDetector's orientation check.
-  // Only subscribed while the impact detector is live.
-  StreamSubscription<AccelerometerEvent>? _gravitySub;
+  /// GPS + IMU subscriptions (the gravity-including accelerometer, for
+  /// ImpactDetector's orientation check, only while that detector is live).
+  /// Cancelled on pause and reopened on resume — never `.pause()`d; see
+  /// [RecordingSubscriptions] (§90.C1).
+  final _subs = RecordingSubscriptions();
+
+  /// Single-flight latch for start/pause/resume/stop (§90.C5).
+  final _latch = TransitionLatch();
+
+  /// Whether this process is running the ride's machinery (timers, wakelock,
+  /// flush timer). False for a ride restored off disk until its first resume
+  /// — that is what makes a resume "cold".
+  bool _sessionLive = false;
+
+  /// Set when the next persisted fix starts a new segment (the first fix
+  /// after a resume) — stored as `segment_start = 1` so a restored ride's
+  /// rebuild skips the pause gap (§90.C6).
+  bool _nextFixStartsSegment = false;
+
   Timer? _elapsedTimer;
 
   /// When [RideRecordingState.activeAlert] was last set to a transient alert.
@@ -279,6 +308,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _displayStride *= 2;
   }
 
+  static const _prefsBatteryOptPrompted = 'battery_optimization_prompted';
+
   Future<bool> _requestPermissions() async {
     LocationPermission perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
@@ -297,10 +328,17 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
 
     if (Platform.isAndroid) {
+      // Asked once, ever (§90.C11). It used to be re-asked on every start
+      // and cold resume, so a rider who declined got the system dialog in
+      // front of every single ride.
       try {
-        final status = await Permission.ignoreBatteryOptimizations.status;
-        if (!status.isGranted) {
-          await Permission.ignoreBatteryOptimizations.request();
+        final prefs = await SharedPreferences.getInstance();
+        if (!(prefs.getBool(_prefsBatteryOptPrompted) ?? false)) {
+          final status = await Permission.ignoreBatteryOptimizations.status;
+          if (!status.isGranted) {
+            await Permission.ignoreBatteryOptimizations.request();
+          }
+          await prefs.setBool(_prefsBatteryOptPrompted, true);
         }
       } catch (_) {}
     }
@@ -344,90 +382,119 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     String? routeName,
   }) async {
     if (state.status != RecordingStatus.idle) return;
+    if (!_latch.tryEnter()) return;
     state = state.copyWith(status: RecordingStatus.starting);
     _userInitiated = userInitiated;
+    RideEntity? inserted;
 
-    final blocked = await _recordingBlockedReason();
-    if (blocked != null) {
-      state = state.copyWith(
-        status: RecordingStatus.idle,
-        error: blocked.message,
-        blockKind: blocked.kind,
+    try {
+      final blocked = await _recordingBlockedReason();
+      if (blocked != null) {
+        state = state.copyWith(
+          status: RecordingStatus.idle,
+          error: blocked.message,
+          blockKind: blocked.kind,
+        );
+        return;
+      }
+
+      final uid = _ref.read(currentUserProvider)?.uid;
+      final resolvedBikeId = bikeId ?? _ref.read(activeBikeProvider)?.id;
+      if (uid == null || resolvedBikeId == null) {
+        state = state.copyWith(
+          status: RecordingStatus.idle,
+          error: kNoBikeRecordingError,
+        );
+        return;
+      }
+
+      final ride = RideEntity(
+        id: _uuid.v4(),
+        userId: uid,
+        bikeId: resolvedBikeId,
+        startTime: DateTime.now(),
+        isAuto: !userInitiated,
+        bikeConfidence: bikeConfidence,
+        routeId: routeId,
+        routeName: routeName,
       );
-      return;
-    }
 
-    final uid = _ref.read(currentUserProvider)?.uid;
-    final resolvedBikeId = bikeId ?? _ref.read(activeBikeProvider)?.id;
-    if (uid == null || resolvedBikeId == null) {
+      await _rideDao.insert(RideModel.toMap(ride));
+      inserted = ride;
+
+      _totalDistance = 0;
+      _maxSpeed = 0;
+      _speedSum = 0;
+      _speedCount = 0;
+      _movingSeconds = 0;
+      _movingMilliseconds = 0;
+      _lastFixTime = null;
+      _accumulatedDuration = Duration.zero;
+      _activeStart = DateTime.now();
+      _detector.reset();
+      _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
+      _cadencePolicy.reset();
+      _sensorCoordinator.reset();
+      _activeAlertAt = null;
+      _lastCrashSignal = null;
+      _persistenceCoordinator.resetCounts();
+      _liveCoordinator.reset();
+      _crashCoordinator.dispose();
+      _lastPoint = null;
+      _polyline = <LatLng>[];
+      _displayStride = 1;
+      _fixCount = 0;
+      _skipNextDistanceDelta = false;
+      _nextFixStartsSegment = false;
+
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideStarted, param: AnalyticsParam.source, value: userInitiated ? 'manual' : 'auto'));
       state = state.copyWith(
-        status: RecordingStatus.idle,
-        error: kNoBikeRecordingError,
+        status: RecordingStatus.active,
+        ride: ride,
+        polyline: _polyline,
+        polylineVersion: 0,
+        currentSpeedMs: 0,
+        maxSpeedMs: 0,
+        distanceM: 0,
+        elapsed: Duration.zero,
+        activeAlert: RideAlert.none,
+        restoredFromPreviousSession: false,
       );
-      return;
+
+      await _persistenceCoordinator.persistRecordingState(ride);
+      WidgetsBinding.instance.addObserver(this);
+      if (_userInitiated) {
+        await WakelockPlus.enable();
+      }
+      await HapticService.rideStart();
+      _openStreams();
+      _startTimer();
+      _persistenceCoordinator.startFlushTimer();
+      _sessionLive = true;
+    } catch (e, stack) {
+      // §90.C9: a throw anywhere above used to leave status stuck at
+      // `starting` — Start was then blocked until the app was restarted.
+      // Undo whatever got set up and go back to idle with a reason.
+      debugPrint('[RideRecording] startRide failed: $e\n$stack');
+      await _subs.cancel();
+      _elapsedTimer?.cancel();
+      _elapsedTimer = null;
+      _persistenceCoordinator.dispose();
+      _sessionLive = false;
+      WidgetsBinding.instance.removeObserver(this);
+      try {
+        await WakelockPlus.disable();
+      } catch (_) {}
+      try {
+        await _persistenceCoordinator.clearRecordingState();
+        if (inserted != null) await _rideDao.delete(inserted.id);
+      } catch (_) {}
+      if (mounted) {
+        state = const RideRecordingState(error: kStartFailedRecordingError);
+      }
+    } finally {
+      _latch.exit();
     }
-
-    final ride = RideEntity(
-      id: _uuid.v4(),
-      userId: uid,
-      bikeId: resolvedBikeId,
-      startTime: DateTime.now(),
-      isAuto: !userInitiated,
-      bikeConfidence: bikeConfidence,
-      routeId: routeId,
-      routeName: routeName,
-    );
-
-    await _rideDao.insert(RideModel.toMap(ride));
-
-    _totalDistance = 0;
-    _maxSpeed = 0;
-    _speedSum = 0;
-    _speedCount = 0;
-    _movingSeconds = 0;
-    _movingMilliseconds = 0;
-    _lastFixTime = null;
-    _accumulatedDuration = Duration.zero;
-    _activeStart = DateTime.now();
-    _detector.reset();
-    _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
-    _cadencePolicy.reset();
-    _sensorCoordinator.reset();
-    _activeAlertAt = null;
-    _lastCrashSignal = null;
-    _persistenceCoordinator.resetCounts();
-    _liveCoordinator.reset();
-    _crashCoordinator.dispose();
-    _lastPoint = null;
-    _polyline = <LatLng>[];
-    _displayStride = 1;
-    _fixCount = 0;
-    _skipNextDistanceDelta = false;
-
-    unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideStarted, param: AnalyticsParam.source, value: userInitiated ? 'manual' : 'auto'));
-    state = state.copyWith(
-      status: RecordingStatus.active,
-      ride: ride,
-      polyline: _polyline,
-      polylineVersion: 0,
-      currentSpeedMs: 0,
-      maxSpeedMs: 0,
-      distanceM: 0,
-      elapsed: Duration.zero,
-      activeAlert: RideAlert.none,
-      restoredFromPreviousSession: false,
-    );
-
-    await _persistenceCoordinator.persistRecordingState(ride);
-    WidgetsBinding.instance.addObserver(this);
-    if (_userInitiated) {
-      await WakelockPlus.enable();
-    }
-    await HapticService.rideStart();
-    _startLocationStream();
-    _startSensorStream();
-    _startTimer();
-    _persistenceCoordinator.startFlushTimer();
   }
 
   @override
@@ -446,7 +513,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
   }
 
-  void _startLocationStream() {
+  /// Opens the GPS + IMU subscriptions, replacing any already open
+  /// (§90.C1/C5 — see [RecordingSubscriptions]).
+  void _openStreams() {
+    _subs.open(() => [
+          _listenLocation(),
+          ..._listenSensors(),
+        ]);
+  }
+
+  StreamSubscription<Position> _listenLocation() {
     // Notification text is fixed when the stream starts, so a snapshot of the
     // rider's language is right here — there is no widget to rebuild.
     final l10n = resolveL10n(_ref.read(appLocaleProvider));
@@ -479,22 +555,29 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
               enableWakeLock: true,
             ),
           );
-    _locationSub = Geolocator.getPositionStream(locationSettings: settings)
-        .listen(_onPosition);
+    return Geolocator.getPositionStream(locationSettings: settings).listen(
+      _onPosition,
+      // A location-service error (GPS switched off mid-ride, say) used to be
+      // unhandled. The ride carries on; fixes resume if the service does.
+      onError: (Object e) => debugPrint('[RideRecording] position error: $e'),
+    );
   }
 
-  void _startSensorStream() {
-    _accelSub = userAccelerometerEventStream(
-      samplingPeriod: const Duration(milliseconds: 50),
-    ).listen(_onSensor);
-    _gyroSub = gyroscopeEventStream(
-      samplingPeriod: const Duration(milliseconds: 50),
-    ).listen(_onGyro);
-    if (_sensorCoordinator.impactDetectionEnabled) {
-      _gravitySub = accelerometerEventStream(
+  List<StreamSubscription<Object?>> _listenSensors() {
+    void onSensorError(Object e) =>
+        debugPrint('[RideRecording] sensor error: $e');
+    return [
+      userAccelerometerEventStream(
         samplingPeriod: const Duration(milliseconds: 50),
-      ).listen(_onGravity);
-    }
+      ).listen(_onSensor, onError: onSensorError),
+      gyroscopeEventStream(
+        samplingPeriod: const Duration(milliseconds: 50),
+      ).listen(_onGyro, onError: onSensorError),
+      if (_sensorCoordinator.impactDetectionEnabled)
+        accelerometerEventStream(
+          samplingPeriod: const Duration(milliseconds: 50),
+        ).listen(_onGravity, onError: onSensorError),
+    ];
   }
 
   void _onGyro(GyroscopeEvent event) {
@@ -560,67 +643,44 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     if (pos.accuracy > SensorConstants.maxGpsAccuracyM) return;
 
-    double? accel;
-    double? jerk;
-    double distDelta = 0;
+    double? rawAccel;
+    double? rawJerk;
+    double rawDist = 0;
     double deltaT = 0;
 
-    if (_lastPoint != null && !_skipNextDistanceDelta) {
+    final segmentStart = _skipNextDistanceDelta;
+    final prevPoint = segmentStart ? null : _lastPoint;
+    if (prevPoint != null) {
       deltaT =
-          timestamp.difference(_lastPoint!.timestamp).inMilliseconds / 1000.0;
+          timestamp.difference(prevPoint.timestamp).inMilliseconds / 1000.0;
       final result = _calculator.calculate(
-        prev: _lastPoint!,
+        prev: prevPoint,
         currentSpeedMs: rawSpeedMs,
         currentLat: pos.latitude,
         currentLng: pos.longitude,
         currentTime: timestamp,
       );
-      accel = result.acceleration;
-      jerk = result.jerk;
-      distDelta = result.distanceDeltaM;
+      rawAccel = result.acceleration;
+      rawJerk = result.jerk;
+      rawDist = result.distanceDeltaM;
     }
     _skipNextDistanceDelta = false;
 
-    final hasValidDeltaT = deltaT >= 0.1;
-    final candidateDerivedSpeed = hasValidDeltaT ? distDelta / deltaT : 0.0;
-    final isPlausibleDerived =
-        candidateDerivedSpeed <= SensorConstants.maxPlausibleSpeedMs;
-    final hasRawSpeed =
-        rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
-            rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
-
-    double speedMs;
-    if (hasRawSpeed) {
-      if (_lastPoint != null && hasValidDeltaT) {
-        final maxAllowedSpeed = _lastPoint!.speedMs +
-            (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-        speedMs = (rawSpeedMs > maxAllowedSpeed && _lastPoint!.speedMs > 0)
-            ? maxAllowedSpeed
-            : rawSpeedMs;
-      } else {
-        speedMs = rawSpeedMs;
-      }
-    } else if (hasValidDeltaT &&
-        isPlausibleDerived &&
-        distDelta > 10.0 &&
-        candidateDerivedSpeed >=
-            SensorConstants.unreliableSpeedFallbackThresholdMs) {
-      if (_lastPoint != null) {
-        final maxAllowedSpeed = _lastPoint!.speedMs +
-            (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-        speedMs =
-            (candidateDerivedSpeed > maxAllowedSpeed && _lastPoint!.speedMs > 0)
-                ? maxAllowedSpeed
-                : candidateDerivedSpeed;
-      } else {
-        speedMs = candidateDerivedSpeed;
-      }
-    } else {
-      speedMs = 0.0;
-      distDelta = 0.0;
-      accel = 0.0;
-      jerk = 0.0;
-    }
+    // Speed/distance sanity rules, shared with the auto-detection replay —
+    // including the Doppler distance cap (§90.C12). See [evaluateFix].
+    final k = evaluateFix(
+      rawSpeedMs: rawSpeedMs,
+      prev: prevPoint == null ? null : (speedMs: prevPoint.speedMs),
+      rawDistanceM: rawDist,
+      deltaTSeconds: deltaT,
+      accuracyM: pos.accuracy,
+      acceleration: rawAccel,
+      jerk: rawJerk,
+    );
+    final speedMs = k.speedMs;
+    final distDelta = k.distanceDeltaM;
+    final accel = k.acceleration;
+    final jerk = k.jerk;
 
     if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > _maxSpeed) {
       _maxSpeed = speedMs;
@@ -680,8 +740,14 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     _lastPoint = point;
 
-    if (_cadencePolicy.shouldPersist(
-        timestamp: timestamp, vehicleState: vehicleState)) {
+    // The first fix after a resume is always persisted, marked as starting
+    // a segment, so a restore never bridges the pause gap (§90.C6). The
+    // cadence policy is still consulted so its own clock advances.
+    final cadenceSays = _cadencePolicy.shouldPersist(
+        timestamp: timestamp, vehicleState: vehicleState);
+    final markSegment = _nextFixStartsSegment;
+    if (cadenceSays || markSegment) {
+      _nextFixStartsSegment = false;
       _persistenceCoordinator.enqueuePoint({
         'ride_id': point.rideId,
         'timestamp': point.timestamp.toIso8601String(),
@@ -698,6 +764,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         'imu_quality': point.imuQuality,
         'is_cornering':
             point.isCornering == null ? null : (point.isCornering! ? 1 : 0),
+        if (markSegment) 'segment_start': 1,
       });
     }
 
@@ -814,77 +881,105 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
   Future<void> pauseRide() async {
     if (state.status != RecordingStatus.active) return;
-    await _persistenceCoordinator.flushPointBuffer();
-    _accumulatedDuration = state.elapsed;
-    _activeStart = null;
-    _locationSub?.pause();
-    _accelSub?.pause();
-    _gyroSub?.pause();
-    _gravitySub?.pause();
-    state = state.copyWith(status: RecordingStatus.paused);
-    // Stop the 10s live-share tick — otherwise it keeps republishing a stale
-    // fix (and burning battery/network) for as long as the ride sits paused.
-    // One best-effort publish lets a live viewer see "paused" instead of
-    // just going quiet; not awaited since pausing must never wait on the
-    // network.
-    if (_liveCoordinator.isLiveShareEnabled) {
-      _liveCoordinator.pausePeriodicPublishing();
-      unawaited(_liveCoordinator.publishLiveSession(
-        uid: _ref.read(currentUserProvider)?.uid,
-        rideId: state.ride?.id,
-        lastLat: _lastPoint?.lat,
-        lastLng: _lastPoint?.lng,
-        currentSpeedMs: state.currentSpeedMs,
-        crashDetected: state.crashDetected,
-        status: state.status,
-      ));
+    if (!_latch.tryEnter()) return;
+    state = state.copyWith(transitionPending: true, keepError: true);
+    try {
+      // Cancel, not `.pause()` (§90.C1): a paused broadcast subscription
+      // buffers every fix and IMU sample and replays them all on resume, so
+      // whatever the bike did while paused (a van ride) was counted. The
+      // status flip comes first so nothing arriving mid-cancel is processed.
+      _accumulatedDuration = state.elapsed;
+      _activeStart = null;
+      state = state.copyWith(status: RecordingStatus.paused, keepError: true);
+      await _subs.cancel();
+      await _persistenceCoordinator.flushPointBuffer();
+      // Stop the 10s live-share tick — otherwise it keeps republishing a stale
+      // fix (and burning battery/network) for as long as the ride sits paused.
+      // One best-effort publish lets a live viewer see "paused" instead of
+      // just going quiet; not awaited since pausing must never wait on the
+      // network.
+      if (_liveCoordinator.isLiveShareEnabled) {
+        _liveCoordinator.pausePeriodicPublishing();
+        unawaited(_liveCoordinator.publishLiveSession(
+          uid: _ref.read(currentUserProvider)?.uid,
+          rideId: state.ride?.id,
+          lastLat: _lastPoint?.lat,
+          lastLng: _lastPoint?.lng,
+          currentSpeedMs: state.currentSpeedMs,
+          crashDetected: state.crashDetected,
+          status: state.status,
+        ));
+      }
+      await _persistenceCoordinator.persistElapsed(state.elapsed, force: true);
+    } finally {
+      _latch.exit();
+      if (mounted) {
+        state = state.copyWith(transitionPending: false, keepError: true);
+      }
     }
-    await _persistenceCoordinator.persistElapsed(state.elapsed, force: true);
   }
 
   Future<void> resumeRide() async {
     if (state.status != RecordingStatus.paused) return;
+    // Claimed synchronously, before the first await (§90.C5): two taps
+    // landing together both used to pass the status check and each open a
+    // full set of subscriptions.
+    if (!_latch.tryEnter()) return;
+    state = state.copyWith(transitionPending: true, keepError: true);
 
-    final coldStart = _locationSub == null;
-    if (coldStart) {
-      final blocked = await _recordingBlockedReason();
-      if (blocked != null) {
-        state = state.copyWith(error: blocked.message, blockKind: blocked.kind);
-        return;
+    try {
+      final coldStart = !_sessionLive;
+      if (coldStart) {
+        final blocked = await _recordingBlockedReason();
+        if (blocked != null) {
+          state =
+              state.copyWith(error: blocked.message, blockKind: blocked.kind);
+          return;
+        }
       }
-    }
+      if (!mounted || state.status != RecordingStatus.paused) return;
 
-    _activeStart = DateTime.now();
-    _skipNextDistanceDelta = true;
-    // The first fix after a resume must not credit the paused interval as
-    // moving time (it would, via movingMsForGap, if both ends were moving).
-    _lastFixTime = null;
-    _userInitiated = true;
+      _activeStart = DateTime.now();
+      _skipNextDistanceDelta = true;
+      _nextFixStartsSegment = true;
+      // The first fix after a resume must not credit the paused interval as
+      // moving time (it would, via movingMsForGap, if both ends were moving).
+      _lastFixTime = null;
+      _userInitiated = true;
 
-    if (coldStart) {
-      await WakelockPlus.enable();
-      _startLocationStream();
-      _startSensorStream();
-      _startTimer();
-      _persistenceCoordinator.startFlushTimer();
+      if (coldStart) {
+        await WakelockPlus.enable();
+        _startTimer();
+        _persistenceCoordinator.startFlushTimer();
+        _sessionLive = true;
+      }
+      // Status first, then a fresh subscription set: a new subscription on a
+      // broadcast stream sees only what happens from now on (§90.C1).
+      state = state.copyWith(
+        status: RecordingStatus.active,
+        restoredFromPreviousSession: false,
+      );
+      _openStreams();
+      // pauseRide() suspended the live-share tick (or this is a cold resume
+      // with sharing on), so restart it.
       if (_liveCoordinator.isLiveShareEnabled) {
         _startLiveSessionTimer();
       }
-    } else {
-      _locationSub?.resume();
-      _accelSub?.resume();
-      _gyroSub?.resume();
-      _gravitySub?.resume();
-      // Warm resume: pauseRide() suspended the live-share tick, so restart it.
-      if (_liveCoordinator.isLiveShareEnabled) {
-        _startLiveSessionTimer();
+    } finally {
+      _latch.exit();
+      if (mounted) {
+        state = state.copyWith(transitionPending: false, keepError: true);
       }
     }
+  }
 
-    state = state.copyWith(
-      status: RecordingStatus.active,
-      restoredFromPreviousSession: false,
-    );
+  /// Stops the recording machinery: subscriptions, timers, observers.
+  /// Shared by [cancelRide] and [stopRide].
+  Future<void> _stopMachinery() async {
+    await _subs.cancel();
+    _elapsedTimer?.cancel();
+    _elapsedTimer = null;
+    _sessionLive = false;
   }
 
   Future<void> cancelRide() async {
@@ -892,28 +987,38 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         state.status != RecordingStatus.paused) {
       return;
     }
-    final ride = state.ride;
+    if (!await _latch.enterWhenFree()) return;
+    // The transition we waited on may have ended the ride already.
+    if (state.status != RecordingStatus.active &&
+        state.status != RecordingStatus.paused) {
+      _latch.exit();
+      return;
+    }
+    try {
+      final ride = state.ride;
 
-    _locationSub?.cancel();
-    _accelSub?.cancel();
-    _gyroSub?.cancel();
-    _gravitySub?.cancel();
-    _locationSub = null;
-    _accelSub = null;
-    _gyroSub = null;
-    _gravitySub = null;
-    _elapsedTimer?.cancel();
-    _persistenceCoordinator.dispose();
-    _crashCoordinator.dispose();
-    await NotificationService.instance.cancelCrashAlert();
-    WidgetsBinding.instance.removeObserver(this);
+      await _stopMachinery();
+      _persistenceCoordinator.dispose();
+      _crashCoordinator.dispose();
+      await NotificationService.instance.cancelCrashAlert();
+      WidgetsBinding.instance.removeObserver(this);
 
-    await _tearDownLiveShare();
-    await WakelockPlus.disable();
-    await _persistenceCoordinator.clearRecordingState();
-    if (ride != null) await _rideDao.delete(ride.id);
+      await _tearDownLiveShare();
+      await WakelockPlus.disable();
+      // Tombstoned, not just deleted (§90.C10): a crash ride is uploaded the
+      // moment crash detection fires, so a discarded one would otherwise be
+      // pulled straight back down by the next sync.
+      if (ride != null) {
+        await _rideDao.deleteWithTombstone(ride.id, userId: ride.userId);
+      }
+      // Marker last: if the delete throws, the next launch still finds the
+      // ride and offers it back rather than leaving an orphan `active` row.
+      await _persistenceCoordinator.clearRecordingState();
 
-    state = const RideRecordingState();
+      state = const RideRecordingState();
+    } finally {
+      _latch.exit();
+    }
   }
 
   Future<String?> stopRide() async {
@@ -921,50 +1026,77 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         state.status != RecordingStatus.paused) {
       return null;
     }
-
-    _locationSub?.cancel();
-    _accelSub?.cancel();
-    _gyroSub?.cancel();
-    _gravitySub?.cancel();
-    _locationSub = null;
-    _accelSub = null;
-    _gyroSub = null;
-    _gravitySub = null;
-    _elapsedTimer?.cancel();
-    // Flush BEFORE dispose. dispose() fires its own unawaited flush, which
-    // empties the buffer synchronously — so an awaited flush placed after it
-    // found nothing to wait on, and a failed insert would re-queue the last
-    // fixes into a buffer nobody reads again.
-    await _persistenceCoordinator.flushPointBuffer();
-    _persistenceCoordinator.dispose();
-    // Same as cancelRide(): a crash countdown still running when the rider
-    // taps Stop would otherwise keep ticking and dispatch an emergency alert
-    // ~60 s later for a ride the rider just ended by hand.
-    _crashCoordinator.dispose();
-    unawaited(NotificationService.instance.cancelCrashAlert());
-    WidgetsBinding.instance.removeObserver(this);
-
-    await _tearDownLiveShare();
-    await WakelockPlus.disable();
-    await _persistenceCoordinator.clearRecordingState();
+    if (!await _latch.enterWhenFree()) return null;
+    if (state.status != RecordingStatus.active &&
+        state.status != RecordingStatus.paused) {
+      _latch.exit();
+      return null;
+    }
+    state = state.copyWith(transitionPending: true, keepError: true);
 
     final ride = state.ride!;
-    await _rideDao.finalizeRide(ride.id, _buildFinalStats());
-    unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideEnded, param: AnalyticsParam.source, value: ride.isAuto ? 'auto' : 'manual'));
+    var finalized = false;
+    try {
+      await _stopMachinery();
+      // Flush BEFORE dispose. dispose() fires its own unawaited flush, which
+      // empties the buffer synchronously — so an awaited flush placed after it
+      // found nothing to wait on, and a failed insert would re-queue the last
+      // fixes into a buffer nobody reads again.
+      await _persistenceCoordinator.flushPointBuffer();
+      _persistenceCoordinator.dispose();
+      // Same as cancelRide(): a crash countdown still running when the rider
+      // taps Stop would otherwise keep ticking and dispatch an emergency alert
+      // ~60 s later for a ride the rider just ended by hand.
+      _crashCoordinator.dispose();
+      unawaited(NotificationService.instance.cancelCrashAlert());
+      WidgetsBinding.instance.removeObserver(this);
 
-    final bikeDao = BikeDao();
-    await bikeDao.incrementStats(ride.bikeId, _totalDistance);
-    _ref.invalidate(garageProvider);
-    unawaited(_persistenceCoordinator.updatePublicStats(ride.userId));
-    unawaited(HomeWidgetService.instance.refreshFromLocalData());
-    unawaited(_persistenceCoordinator.publishSegmentBaselines(
-        ride.id, ride.startTime));
+      await _tearDownLiveShare();
+      await WakelockPlus.disable();
 
-    await HapticService.rideStop();
+      // §90.C8: finalize first, recovery marker last. The marker used to be
+      // cleared before the row was finalized, so a kill in between left the
+      // ride `active` forever — out of history, never synced, unrecoverable.
+      final finalStats = _buildFinalStats();
+      await runStopSequence(
+        finalize: () async {
+          await _rideDao.finalizeRide(ride.id, finalStats);
+          finalized = true;
+        },
+        afterFinalize: () async {
+          unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideEnded,
+              param: AnalyticsParam.source,
+              value: ride.isAuto ? 'auto' : 'manual'));
+          await BikeDao().incrementStats(ride.bikeId, _totalDistance);
+        },
+        clearMarker: _persistenceCoordinator.clearRecordingState,
+      );
+    } catch (e, stack) {
+      debugPrint('[RideRecording] stopRide failed: $e\n$stack');
+      if (!finalized) {
+        // Finalizing failed: the marker is still set (see runStopSequence),
+        // so the next launch restores this ride rather than losing it.
+        _latch.exit();
+        if (mounted) state = const RideRecordingState();
+        return null;
+      }
+      // Finalized, but a post-finalize step (odometer) failed — the ride
+      // itself is safe and complete, so carry on to the summary.
+    }
 
-    final rideId = ride.id;
-    state = const RideRecordingState();
-    return rideId;
+    try {
+      _ref.invalidate(garageProvider);
+      unawaited(_persistenceCoordinator.updatePublicStats(ride.userId));
+      unawaited(HomeWidgetService.instance.refreshFromLocalData());
+      unawaited(_persistenceCoordinator.publishSegmentBaselines(
+          ride.id, ride.startTime));
+
+      await HapticService.rideStop();
+    } finally {
+      _latch.exit();
+      if (mounted) state = const RideRecordingState();
+    }
+    return ride.id;
   }
 
   /// The ride summary columns — see [buildFinalRideStats]. Shared by
@@ -1002,7 +1134,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final points = await _pointDao.getForRide(rideId);
     if (points.length < 2) {
-      await _rideDao.delete(rideId);
+      // Tombstoned: a `crash` row may already have been uploaded (§90.C10).
+      await _rideDao.deleteWithTombstone(rideId,
+          userId: row['user_id'] as String?);
       await _persistenceCoordinator.clearRecordingState();
       return;
     }
@@ -1016,7 +1150,14 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           speedMs: (p['speed_ms'] as num?)?.toDouble() ?? 0,
         ),
     ];
-    final aggregates = rebuildRideAggregates(fixes);
+    // Pause gaps are skipped via the persisted segment markers (§90.C6).
+    final aggregates = rebuildRideAggregates(
+      fixes,
+      segmentStartIndices: {
+        for (var i = 0; i < points.length; i++)
+          if ((points[i]['segment_start'] as num?) == 1) i,
+      },
+    );
 
     _totalDistance = aggregates.distanceM;
     _maxSpeed = aggregates.maxSpeedMs;
@@ -1047,6 +1188,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       speedMs: last.speedMs,
     );
     _skipNextDistanceDelta = true;
+    _nextFixStartsSegment = true;
+    _sessionLive = false;
 
     _polyline = <LatLng>[];
     _displayStride = 1;
@@ -1131,10 +1274,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
   @override
   void dispose() {
-    _locationSub?.cancel();
-    _accelSub?.cancel();
-    _gyroSub?.cancel();
-    _gravitySub?.cancel();
+    unawaited(_subs.cancel());
     _elapsedTimer?.cancel();
     _crashCoordinator.dispose();
     _liveCoordinator.dispose();

@@ -6068,3 +6068,142 @@ The fixes are uncommitted in the open55 pass. `flutter analyze` is clean and all
   - **Fix:** Switched `RideShareRepository.getRidesByAuthors` to issue one query per author. Because the query pins `userId == author`, `firestore.rules` can statically prove the `exists()` checks against the live `follows` graph during validation. `RideFeedNotifier` now queries `getFollowersAmong` to know which authors follow the rider back, enabling it to safely query for `mutual` posts without hitting permission denials.
   - **Rules:** `rideVisibleTo` updated to check the live `follows` graph (via `exists()`), while retaining the `allowedUserIds` fallback for old clients.
 
+
+
+---
+
+## 90. Full-codebase audit fixes — FIXED in code (2026-10-06), not committed, not verified on a device
+
+Findings are in `issues_open.md` §90 (kept there for detail; the still-open
+items are listed at its top). Checks at the end of the pass: `flutter analyze`
+0 issues, `flutter test` 1450/1450, rules emulator 177/177, `functions`
+`npm test` 5/5.
+
+**90.A social data layer**
+- **A1:** feed queries are now public `whereIn` chunks (≤30 authors) plus
+  per-author followers/mutual queries (limit 5), merged per source. A source that
+  is exhausted is skipped on `loadMore`. New `domain/feed_source_plan.dart`.
+- **A2:** `domain/utilities/group_ride_broadcast_gate.dart` sends every 20 s, or
+  when moved ≥ 25 m, with a 2 min heartbeat. `kGroupRideStaleAfter` is 30 s → 160 s.
+- **A3, A6, A10:**
+  - The live `followingUidsProvider` drives Following, mutual ids and `isFollowingProvider`.
+  - The one-shot `followingIdsProvider` is deleted.
+  - Count providers are autoDispose and invalidated after follow/unfollow.
+- **A5:** suggestions are bounded: 30 edges, 10 profiles, 20 recent users, cap 10.
+  They are kept alive for 10 min, filter out blocked riders, and use
+  `profileRepositoryProvider`.
+- **A7:** search waits 400 ms after the last keystroke, and the forum list is cached
+  for 10 min (`filterForumsByName`).
+- **A8:**
+  - Chat shows the newest 50 messages, with "Load older messages".
+  - Forum posts are paged 25 per forum with a cursor and "Load more".
+  - Comments are limited to 30, with a cursor.
+  - Voice notes show the newest 20.
+- **A9:** shared `widgets/follow_button.dart` plus `FollowController`:
+  - the follow is awaited before the notification is sent;
+  - the notification id is `follow_{fromUid}`;
+  - the button is disabled while the follow is in flight, and errors show.
+- **A12:**
+  - The feed notifier watches the uid.
+  - The chat list shows a "Rider" placeholder when a profile can't be read.
+  - `markMessagesAsRead` is removed (its rule is removed too).
+- **A-LOW:**
+  - Place and review providers are autoDispose.
+  - Comments use the profile `bestName`.
+  - All People has its own empty-state string, pages with a `createdBefore` cursor,
+    filters out blocked riders and marks riders you already follow.
+- **B7 (part):** `social_screen.dart` is split into `part` files `social_search`,
+  `social_feed_tab` and `social_people_tab`.
+
+**90.B architecture / CI / platform**
+- **B1:** the 3 lints in `social_screen.dart` are fixed. In CI, `flutter test` now
+  runs even if analyze fails.
+- **B2:** the Podfile appends `PERMISSION_MICROPHONE=1` (it no longer uses `||=`).
+- **B3:** `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` are in
+  Info.plist.
+- **B6 (start):** new `core/utils/error_reporter.dart` `reportNonFatal` reports
+  Crashlytics non-fatals. The CI ratchet allows at most 71 bare `catch (_)`.
+- **B8 (part):** dead `exportToJSON`/`exportToGPX`/`_generateGPX` are removed from
+  `cloud_repository.dart`.
+- **B9 (part):**
+  - `functions/` has tests (`functions/test/pure.test.js`, Node test runner), run in CI.
+  - The ride-recording decision logic is pulled into tested units
+    (`ride_lifecycle.dart`, `fix_kinematics.dart`, `auto_detection_policy.dart`).
+- **B11:** actions moved to v5, and the runner is pinned to `ubuntu-24.04`.
+
+**90.C ride pipeline / sync**
+- **C1:** pause cancels the GPS/IMU subscriptions, and resume recreates them
+  (`RecordingSubscriptions`).
+- **C2:** the foreground reconcile closes a `recording` detection only if the
+  service is down or its last fix is more than 10 min old.
+- **C3:**
+  - Detections are trimmed to the longest stretch that doesn't overlap an existing
+    ride, or discarded with `overlaps_ride`.
+  - `beginDetection` is skipped while the manual-ride marker is set
+    (`RidePrefsKeys`).
+- **C4:** the teardown outbox id is now `live-teardown:$uid:$token`, and the
+  pointer is cleared in a transaction only if the token matches.
+- **C5:** a `TransitionLatch` refuses a second start/pause/resume tap.
+  `transitionPending` disables the button while one is running.
+- **C6:** **schema v19** adds `ride_points.segment_start`; the resume rebuild skips
+  pause gaps and idle jitter.
+- **C7:** sync is incremental.
+  - Per-rider `syncedAt` watermarks (`pull_watermark.dart`), with a full pull on
+    first sign-in or an empty local DB.
+  - 30 s connectivity debounce.
+  - No downloads while recording.
+  - The maintenance-log upload now sets `syncedAt`.
+- **C8:** stop finalizes first and clears the marker in `finally`.
+- **C9:** a start failure rolls back and shows `recordingStartFailed`.
+- **C10:** `deleted_rides` tombstones stop a discarded ride coming back from the cloud.
+- **C11:** the battery-optimization prompt is shown once (`battery_optimization_prompted`).
+- **C12:** shared `evaluateFix` caps Doppler distance at
+  `max(raw, prev) * dt * 1.5 + accuracy`.
+
+**90.D security / backend**
+- **D1:**
+  - Comments can be deleted by their author or the ride owner.
+  - Creating a comment requires `rideVisibleTo`, a key allow-list, text of 1–2000
+    characters and `createdAt == request.time`.
+- **D2:** the ledger `publicId` must match `^[A-Za-z_]+/<uid>/`. The sweep checks
+  `isOwnedPublicId` (`functions/src/cloudinary-ownership.ts`) before destroying.
+  Voice notes now upload to `voiceNotes/<uid>/<rideId>`.
+- **D3, D4:**
+  - The creator can only shrink `memberIds`.
+  - A kick adds the rider to `bannedIds`, and the join clause checks it.
+  - New `GroupRideJoinFailure.removed` and `joinRideRemoved` string.
+- **D5, D11:**
+  - `postCount` changes are bound to the post being created or deleted in the
+    same commit, via `lastPostId`.
+  - `followerCount` changes are bound to the caller's own `forum_follows` doc.
+  - `createPost` is a single batch.
+- **D6:** `email`/`emailLower` must equal the auth token's email when changed.
+- **D7:** decision: `livePointers/{uid}` is written only when the new
+  "Public link (/r/@handle)" setting is on (off by default,
+  `public_live_link_setting.dart`).
+- **D8:**
+  - Decision: added a block check to `rideVisibleTo`, on the followers/mutual
+    branches only.
+  - The followee can delete follow edges that point at them.
+    `ProfileRepository.blockUser` is transactional and removes both edges.
+  - The audience label now reads "Anyone who follows you".
+  - Follow requests were not built.
+- **A4/D9:**
+  - The emulator confirmed that unfiltered `users` list queries returned private
+    profiles with their emails. `list` now requires `visibility == 'public'`.
+  - The client queries filter on it.
+  - `ensureProfile` backfills the field on sign-in.
+  - 3 indexes added.
+- **D10:** `photoUrlAllowed` / `nameValid` are applied to comments, posts, replies,
+  voice notes and `users`. Voice-note audio must be on our Cloudinary cloud.
+- **D12:**
+  - `ride-identity` uses `bestName` and skips reconciling when no identity field
+    changed.
+  - `crash-notifications` marks alerts with no contacts as `no_contacts`; its index
+    is fixed.
+  - `chat-moderation` reports keep the original text and use a fixed id.
+
+**90.E docs:** `features.md` PhotoCollage → `RideMediaCollage`. About 114
+`file:///…/dev/ThrottleIQ/` links in `issues_solved.md` and `ANTIGRAVRITY_GRILL/`
+now use relative paths. The README sensor/token/badge claims are corrected, and
+the rules count is now measured at 177.

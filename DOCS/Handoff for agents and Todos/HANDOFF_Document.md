@@ -2,7 +2,57 @@
 
 _Last updated: 2026-10-06 · Branch: `main`_
 
-## 2026-10-06: full-codebase audit, logged as `issues_open.md` §90 (no code changed)
+## 2026-10-06 (later): §90 fix pass — FIXED in code, not committed, not on a device
+
+Almost all of §90 is fixed in the working tree. Details per ID are in
+`issues_fixed.md` §90; what's still open is at the top of `issues_open.md` §90.
+**Nothing is committed, deployed or checked on a device.**
+
+- **Checks:** `flutter analyze` 0 issues · `flutter test` **1450/1450** (was 1357) ·
+  rules emulator **177/177** (was 138) · `functions` `npm test` **5/5** (new).
+- **CI:** 3 lints fixed (B1). `flutter test` now runs even if analyze fails. Actions
+  moved to v5 and the runner pinned to `ubuntu-24.04`. `functions` job runs `npm test`.
+  New ratchet: bare `catch (_)` ≤ 71. Branch protection is still **off** (needs the owner).
+- **iOS:** `PERMISSION_MICROPHONE=1` in the Podfile (append, not `||=`); camera and photo
+  usage strings in Info.plist. Run `pod install` and test on a device.
+- **Ride pipeline:**
+  - C1–C12 fixed. Pause now cancels the GPS/IMU streams, so the Android foreground
+    notification stops while paused.
+  - **DB schema v19:** `ride_points.segment_start` and a `deleted_rides` tombstone table.
+  - Sync is incremental via `syncedAt` watermarks, with a 30 s debounce and no downloads
+    while recording.
+  - Decision logic is pulled into pure, tested units (`ride_lifecycle.dart`,
+    `fix_kinematics.dart`, `auto_detection_policy.dart`, `pull_watermark.dart`).
+- **Social:**
+  - Feed: public posts use chunked `whereIn`; followers/mutual posts use per-author
+    limit 5.
+  - Group-ride broadcast: 20 s or 25 m, 2 min heartbeat; stale-member threshold 160 s.
+  - Search is debounced.
+  - Chat, forum, comment and voice-note lists are bounded.
+  - The live follow graph drives "Following", suggestions and `isFollowing`.
+  - Shared `FollowButton`.
+  - `social_screen.dart` is split into `part` files.
+- **Security:**
+  - Comment delete and visibility gate (D1).
+  - Cloudinary prefix check in both the rules and the function (D2); voice notes now
+    upload to `voiceNotes/<uid>/<rideId>`.
+  - Group-ride members can only shrink, and kicked riders are banned (D3, D4).
+  - Forum count bindings (D5, D11).
+  - Email pinned to the auth token (D6).
+  - Public `/r/@handle` link is now an opt-in setting, **off by default** (D7).
+  - Block check in `rideVisibleTo`, and blocking removes follow edges both ways (D8).
+  - `users` list queries need `visibility == 'public'` (A4/D9).
+  - Name and photo-URL limits (D10).
+  - Fixes in the functions logic (D12).
+- **Owner to-dos before/after release:**
+  1. Ship the app, **then** deploy rules and indexes together. Old builds lose search,
+     suggestions, All People and forum post create/delete once the new rules are live.
+  2. Backfill `visibility: 'public'` on `users` docs that lack it.
+  3. Confirm Cloudinary isn't in "dynamic folders" mode before deploying functions.
+  4. Turn on branch protection requiring `flutter`, `rules` and `functions`.
+  5. Approve deleting the dead files listed in `issues_open.md` §90 (B8).
+
+## 2026-10-06 (earlier): full-codebase audit, logged as `issues_open.md` §90 (no code changed)
 
 - ⚠️ **`main` CI has been red since `a51b3f8` (2026-09-30).** `flutter analyze` fails
   with 3 lints in `social_screen.dart`. Locally, `flutter test` passes **1357/1357**.

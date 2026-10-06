@@ -2,6 +2,7 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../entities/ride_point_entity.dart';
 import 'average_speed.dart';
 import 'event_detector.dart';
+import 'fix_kinematics.dart';
 import 'motion_calculator.dart';
 import 'recording_cadence_policy.dart';
 import 'vehicle_state_estimator.dart';
@@ -27,6 +28,11 @@ class ReconcileRejection {
   static const tooShortDuration = 'too_short_duration';
   static const tooSlow = 'too_slow';
   static const noMovement = 'no_movement';
+
+  /// Every fix fell inside (or between) rides already on record — the rider
+  /// was recording this journey by hand, or the detection was already
+  /// promoted once (§90.C3).
+  static const overlapsRide = 'overlaps_ride';
 }
 
 /// A detection rebuilt into everything a `rides` row and its `ride_points`
@@ -156,9 +162,9 @@ class AutoRideReconciler {
 
     for (final fix in fixes) {
       final rawSpeedMs = fix.speedMs < 0 ? 0.0 : fix.speedMs;
-      double? accel;
-      double? jerk;
-      var distDelta = 0.0;
+      double? rawAccel;
+      double? rawJerk;
+      var rawDist = 0.0;
       var deltaT = 0.0;
 
       if (lastPoint != null) {
@@ -170,54 +176,27 @@ class AutoRideReconciler {
           currentLng: fix.lng,
           currentTime: fix.timestamp,
         );
-        accel = result.acceleration;
-        jerk = result.jerk;
-        distDelta = result.distanceDeltaM;
+        rawAccel = result.acceleration;
+        rawJerk = result.jerk;
+        rawDist = result.distanceDeltaM;
       }
 
-      final hasValidDeltaT = deltaT >= 0.1;
-      final candidateDerived = hasValidDeltaT ? distDelta / deltaT : 0.0;
-      final isPlausibleDerived = candidateDerived <= SensorConstants.maxPlausibleSpeedMs;
-      final hasRawSpeed = rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
-          rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
-
-      double speedMs;
-      if (hasRawSpeed) {
-        if (lastPoint != null && hasValidDeltaT) {
-          final maxAllowedSpeed =
-              lastPoint.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-          speedMs = (rawSpeedMs > maxAllowedSpeed && lastPoint.speedMs > 0)
-              ? maxAllowedSpeed
-              : rawSpeedMs;
-        } else {
-          speedMs = rawSpeedMs;
-        }
-      } else if (hasValidDeltaT &&
-          isPlausibleDerived &&
-          distDelta > 10.0 &&
-          candidateDerived >= SensorConstants.unreliableSpeedFallbackThresholdMs) {
-        if (lastPoint != null) {
-          final maxAllowedSpeed =
-              lastPoint.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-          speedMs = (candidateDerived > maxAllowedSpeed && lastPoint.speedMs > 0)
-              ? maxAllowedSpeed
-              : candidateDerived;
-        } else {
-          speedMs = candidateDerived;
-        }
-      } else {
-        // issues §62 (found while fixing §62.8): the live recorder's
-        // equivalent branch (ride_recording_provider.dart) also zeroes
-        // distDelta/accel/jerk when a sample is rejected as implausible —
-        // this branch didn't, so a rejected sample's distance was still
-        // being added to the ride total below, letting a reconciled/
-        // auto-detected ride over-accumulate distance in a way a
-        // live-recorded ride cannot.
-        speedMs = 0.0;
-        distDelta = 0.0;
-        accel = 0.0;
-        jerk = 0.0;
-      }
+      // Same rules as the live path, from the same function (§90.C12):
+      // implausible fixes add nothing, Doppler fixes have their distance
+      // capped. issues §62: a rejected sample's distance must not count.
+      final k = evaluateFix(
+        rawSpeedMs: rawSpeedMs,
+        prev: lastPoint == null ? null : (speedMs: lastPoint.speedMs),
+        rawDistanceM: rawDist,
+        deltaTSeconds: deltaT,
+        accuracyM: fix.accuracyM ?? _accuracyGateM,
+        acceleration: rawAccel,
+        jerk: rawJerk,
+      );
+      final speedMs = k.speedMs;
+      final distDelta = k.distanceDeltaM;
+      final accel = k.acceleration;
+      final jerk = k.jerk;
 
       if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > maxSpeedMs) {
         maxSpeedMs = speedMs;

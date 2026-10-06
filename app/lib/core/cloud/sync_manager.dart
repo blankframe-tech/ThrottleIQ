@@ -17,6 +17,7 @@ import '../database/database_helper.dart';
 import 'cloud_repository.dart';
 import 'maintenance_settings_sync.dart';
 import 'outbox_service.dart';
+import 'pull_watermark.dart';
 
 /// Represents the sync status of the app
 enum SyncStatus { idle, syncing, success, failure }
@@ -35,6 +36,7 @@ class SyncManager {
   SyncManager([this._ref, OutboxService? outbox])
       : _outbox = outbox ?? OutboxService() {
     _initConnectivityListener();
+    _initAuthListener();
   }
 
   /// Nullable: only needed to invalidate providers after a download pulls
@@ -53,6 +55,17 @@ class SyncManager {
   bool _isSyncing = false;
   SyncStatus _status = SyncStatus.idle;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  StreamSubscription<User?>? _authSubscription;
+  String? _lastUid;
+
+  /// When the last sync pass started — the connectivity throttle's clock.
+  DateTime? _lastSyncStartedAt;
+  Timer? _connectivityTimer;
+
+  /// Minimum spacing between connectivity-triggered syncs (§90.C7). A
+  /// flapping connection (lift, tunnel, weak cell edge) used to fire a full
+  /// sync on every transition.
+  static const connectivityThrottle = Duration(seconds: 30);
 
   final List<VoidCallback> _listeners = [];
 
@@ -83,11 +96,88 @@ class SyncManager {
   void _initConnectivityListener() {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
       if (_hasNetwork(results)) {
-        // Internet is back - reset failure counter and sync immediately
+        // Internet is back - reset failure counter and sync, at most once
+        // per [connectivityThrottle]: immediately if the last pass was long
+        // enough ago, otherwise once the window has passed.
         _consecutiveFailures = 0;
-        _performSync();
+        final delay = connectivitySyncDelay(
+          lastSyncStartedAt: _lastSyncStartedAt,
+          now: DateTime.now(),
+        );
+        _connectivityTimer?.cancel();
+        if (delay == Duration.zero) {
+          _performSync();
+        } else {
+          _connectivityTimer = Timer(delay, _performSync);
+        }
       }
     });
+  }
+
+  /// How long a connectivity-triggered sync should wait (§90.C7): zero if
+  /// the last pass started at least [window] ago, otherwise the remainder.
+  @visibleForTesting
+  static Duration connectivitySyncDelay({
+    required DateTime? lastSyncStartedAt,
+    required DateTime now,
+    Duration window = connectivityThrottle,
+  }) {
+    if (lastSyncStartedAt == null) return Duration.zero;
+    final since = now.difference(lastSyncStartedAt);
+    if (since >= window || since.isNegative) return Duration.zero;
+    return window - since;
+  }
+
+  /// "Full pull once per sign-in" (§90.C7): signing out forgets that
+  /// rider's pull marks, so their next sign-in starts with a full pull.
+  void _initAuthListener() {
+    _authSubscription = _auth.authStateChanges().listen((user) {
+      final previous = _lastUid;
+      _lastUid = user?.uid;
+      if (previous != null && previous != user?.uid) {
+        unawaited(PullWatermark.clear(previous));
+      }
+    });
+  }
+
+  /// Whether a ride is being recorded (or sits paused). Downloads are skipped
+  /// meanwhile (§90.C7): they compete with the recorder for the main isolate
+  /// and the radio, and nothing in them is needed mid-ride.
+  bool get _isRecording {
+    final status = _ref?.read(rideRecordingProvider).status;
+    return status == RecordingStatus.starting ||
+        status == RecordingStatus.active ||
+        status == RecordingStatus.paused;
+  }
+
+  /// One incremental-or-full download of [collection] — see [PullWatermark].
+  Future<bool> _pull(
+    String uid,
+    String collection,
+    Future<bool> Function() hasLocalRows,
+    Future<PullResult> Function({DateTime? since}) download,
+  ) async {
+    final mark = await PullWatermark.read(uid, collection);
+    final since = PullWatermark.queryFloor(
+      watermark: mark,
+      hasLocalRows: mark == null ? false : await hasLocalRows(),
+    );
+    final result = await download(since: since);
+    await PullWatermark.write(
+      uid,
+      collection,
+      PullWatermark.advance(
+        current: since == null ? null : mark,
+        seen: result.maxSyncedAt,
+        wasFullPull: since == null,
+      ),
+    );
+    return result.pulledAny;
+  }
+
+  static Future<bool> _hasRows(String sql, List<Object?> args) async {
+    final db = await DatabaseHelper.instance.database;
+    return (await db.rawQuery(sql, args)).isNotEmpty;
   }
 
   /// Start automatic sync with 5-minute interval or adaptive backoff on failure
@@ -135,6 +225,8 @@ class SyncManager {
     // connectivity listener's initial event, say — both passed the guard
     // above and ran two full sync passes concurrently.
     _isSyncing = true;
+    _lastSyncStartedAt = DateTime.now();
+    _connectivityTimer?.cancel();
 
     // Check connectivity first
     final connectivityResult = await _connectivity.checkConnectivity();
@@ -185,16 +277,48 @@ class SyncManager {
       // install, reinstall). Runs before the upload pass below so a bike
       // just pulled down can't immediately re-upload as if it were a local
       // edit. See CloudRepository.downloadBikes's doc comment.
-      final pulledBikes = await _cloudRepository.downloadBikes(uid);
-      await _cloudRepository.downloadMaintenance(uid);
-      // After downloadBikes: a settings row needs its bike to exist.
-      if (await _cloudRepository.downloadMaintenanceSettings(uid)) {
-        _ref?.invalidate(maintenanceConfigProvider);
-        _ref?.invalidate(isMaintenanceCustomizedProvider);
-        _ref?.invalidate(bikeRunningCostProvider);
+      //
+      // Incremental after the first pull since sign-in, and skipped while a
+      // ride is being recorded — §90.C7.
+      final skipDownloads = _isRecording;
+      var pulledBikes = false;
+      var pulledRides = false;
+      if (!skipDownloads) {
+        pulledBikes = await _pull(
+          uid,
+          'bikes',
+          () => _hasRows('SELECT 1 FROM bikes WHERE user_id = ? LIMIT 1', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadBikes(uid, since: since),
+        );
+        await _pull(
+          uid,
+          'maintenance',
+          () => _hasRows('''
+            SELECT 1 FROM maintenance_logs
+            INNER JOIN bikes ON bikes.id = maintenance_logs.bike_id
+            WHERE bikes.user_id = ? LIMIT 1
+          ''', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadMaintenance(uid, since: since),
+        );
+        // After downloadBikes: a settings row needs its bike to exist.
+        if (await _cloudRepository.downloadMaintenanceSettings(uid)) {
+          _ref?.invalidate(maintenanceConfigProvider);
+          _ref?.invalidate(isMaintenanceCustomizedProvider);
+          _ref?.invalidate(bikeRunningCostProvider);
+        }
       }
       await _backfillMaintenanceSettings(uid);
-      final pulledRides = await _cloudRepository.downloadRides(uid);
+      if (!skipDownloads) {
+        pulledRides = await _pull(
+          uid,
+          'rides',
+          () => _hasRows('SELECT 1 FROM rides WHERE user_id = ? LIMIT 1', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadRides(uid, since: since),
+        );
+      }
       if (pulledBikes) _ref?.invalidate(garageProvider);
       // Rides that just landed in the local table are invisible until the
       // providers that read that table are rebuilt. riderStatsProvider watches
@@ -272,6 +396,18 @@ class SyncManager {
           // retry next cycle. The local tombstone keeps the bike deleted in
           // the meantime, so the rider never sees it come back.
           debugPrint('[SyncManager] remote bike delete failed for $bikeId: $e');
+        }
+      }
+
+      // Same for rides deleted on this device (§90.C10) — a discarded crash
+      // ride, uploaded the moment crash detection fired, would otherwise
+      // sit in the cloud and come back on every new device.
+      for (final rideId in await RideDao().pendingRemoteDeletions(uid)) {
+        try {
+          await _cloudRepository.deleteRideRemote(uid, rideId);
+          await RideDao().markDeletionSynced(rideId);
+        } catch (e) {
+          debugPrint('[SyncManager] remote ride delete failed for $rideId: $e');
         }
       }
 
@@ -368,7 +504,9 @@ class SyncManager {
   /// Cleanup resources
   void dispose() {
     stopAutoSync();
+    _connectivityTimer?.cancel();
     _connectivitySubscription.cancel();
+    _authSubscription?.cancel();
   }
 }
 

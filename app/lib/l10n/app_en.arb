@@ -1774,6 +1774,10 @@
   "@addBikeBeforeRecording": {
     "description": "Error shown when the rider tries to record with no bike."
   },
+  "recordingStartFailed": "Couldn't start the ride. Please try again.",
+  "@recordingStartFailed": {
+    "description": "Error shown when starting a ride failed unexpectedly (database or platform error)."
+  },
   "aRider": "A rider",
   "@aRider": {
     "description": "FromName in notification_repository (+2 more)."
@@ -1978,7 +1982,7 @@
   "@anyoneThrottleiq": {
     "description": "Text in ride_share_screen."
   },
-  "peopleWhoFollow": "People who follow you",
+  "peopleWhoFollow": "Includes people who follow you later. Following doesn't need your approval.",
   "@peopleWhoFollow": {
     "description": "Text in ride_share_screen."
   },
@@ -3706,6 +3710,27 @@
   "blockUser": "Block User",
   "@blockUser": {
     "description": "Text in user_profile_screen."
+  },
+  "couldntBlockRider": "Couldn't block this rider: {error}",
+  "@couldntBlockRider": {
+    "description": "Snackbar when blocking a rider fails (user_profile_screen).",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "publicLiveLinkTitle": "Public link (/r/@handle)",
+  "@publicLiveLinkTitle": {
+    "description": "Settings switch title. /r/@handle is a literal URL path; keep it unchanged."
+  },
+  "publicLiveLinkDesc": "While you share a live ride, anyone who knows your @username can watch it at /r/@username — no app or sign-in needed. Off by default. Your private live link works either way.",
+  "@publicLiveLinkDesc": {
+    "description": "Settings switch subtitle explaining the permanent public live link."
+  },
+  "audienceAnyFollower": "Anyone who follows you",
+  "@audienceAnyFollower": {
+    "description": "Ride share audience pill: anyone who follows the rider, with no approval step."
   },
   "tapEditFinishSetting": "Tap Edit to finish setting up your profile",
   "@tapEditFinishSetting": {
@@ -5940,6 +5965,10 @@
   "@joinRideFull": {
     "description": "Join-by-code failure: the group ride has no space left."
   },
+  "joinRideRemoved": "The ride's creator removed you from this ride.",
+  "@joinRideRemoved": {
+    "description": "Join-by-code failure: the creator kicked this rider, so the code no longer lets them back in."
+  },
   "groupRideTooManyFriends": "You can only ride with {max} friends at once.",
   "@groupRideTooManyFriends": {
     "description": "Friend picker refusing one rider too many.",
@@ -6056,5 +6085,11 @@
   "partOrderPlacedTitle": "Demo order recorded",
   "@partOrderPlacedTitle": {"description": "Maintenance part ordering (demo, cash on delivery)."},
   "partOrderPlacedBody": "This feature is being tested. No order was placed and nothing was charged.",
-  "@partOrderPlacedBody": {"description": "Maintenance part ordering (demo, cash on delivery)."}
+  "@partOrderPlacedBody": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "noOtherRidersYet": "No other riders to show yet.",
+  "@noOtherRidersYet": {"description": "All People screen empty state."},
+  "loadMore": "Load more",
+  "@loadMore": {"description": "Button that fetches the next page of a list."},
+  "loadOlderMessages": "Load older messages",
+  "@loadOlderMessages": {"description": "Chat room: fetch earlier messages."}
 }

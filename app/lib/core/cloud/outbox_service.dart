@@ -100,6 +100,32 @@ String? outboxEntryOwner(OutboxEntry entry) {
   return owner is String ? owner : null;
 }
 
+/// Outbox id of a live-share teardown: one per session (§90.C4), so a second
+/// ride's teardown can't overwrite a first one still waiting to be delivered.
+String liveTeardownEntryId(String uid, String? token) =>
+    'live-teardown:$uid:${token ?? 'none'}';
+
+/// Whether a live-share teardown may clear `livePointers/{uid}` (§90.C4).
+///
+/// - No pointer, or one already cleared: nothing to do.
+/// - The teardown names a session: clear only if the pointer still names
+///   that same session — any other token belongs to a newer share.
+/// - The teardown names no session (the ride was never shared in the process
+///   that ended it — e.g. a restored ride): clear only a pointer last written
+///   before the teardown was queued, i.e. one that can't belong to a share
+///   started since.
+bool shouldClearLivePointer({
+  required bool pointerExists,
+  required String? pointerToken,
+  required DateTime? pointerUpdatedAt,
+  required String? entryToken,
+  required DateTime entryCreatedAt,
+}) {
+  if (!pointerExists || pointerToken == null) return false;
+  if (entryToken != null) return pointerToken == entryToken;
+  return pointerUpdatedAt != null && pointerUpdatedAt.isBefore(entryCreatedAt);
+}
+
 /// Outcome of trying to deliver one queued operation.
 enum OutboxDeliveryResult {
   /// Landed in the cloud. The row is gone.
@@ -275,23 +301,28 @@ class OutboxService {
   /// Queues the end-of-ride live-share teardown.
   ///
   /// [token] may be null when the ride was never shared live; in that case only
-  /// the pointer clear is queued. Both writes are idempotent, which is what
-  /// makes it safe for this to race with Firestore's own offline replay of the
-  /// same writes.
+  /// a (guarded) pointer clear is queued. Both writes are idempotent, which is
+  /// what makes it safe for this to race with Firestore's own offline replay
+  /// of the same writes.
+  ///
+  /// Keyed per session (§90.C4). The key used to be per rider, with
+  /// replace-on-conflict, so two rides ended offline left only the second's
+  /// teardown — the first session was never revoked and stayed publicly
+  /// readable until its 24 h expiry.
   Future<bool> enqueueLiveSessionTeardown({
     required String uid,
     required String? token,
     bool attemptNow = true,
   }) async {
+    final entryId = liveTeardownEntryId(uid, token);
     await _dao.enqueue(
-      id: 'live-teardown:$uid',
+      id: entryId,
       kind: OutboxKind.liveSessionTeardown,
       payload: {'uid': uid, 'token': token},
     );
     _changes.add(null);
     if (!attemptNow) return false;
-    return await _attemptOne('live-teardown:$uid') ==
-        OutboxDeliveryResult.delivered;
+    return await _attemptOne(entryId) == OutboxDeliveryResult.delivered;
   }
 
   Future<String> enqueueMaintenanceLog({
@@ -556,11 +587,33 @@ class OutboxService {
           if (e.code != 'not-found') rethrow;
         }
       }
-      await _firestore.collection('livePointers').doc(uid).set({
-        'uid': uid,
-        'token': null,
-        'active': false,
-        'updatedAt': FieldValue.serverTimestamp(),
+      // §90.C4: only clear the pointer if it still points at THIS session.
+      // A stale teardown delivered after the rider started (and shared) the
+      // next ride used to null the new pointer, killing `/r/{username}` for
+      // the rest of that ride. Read-and-write in one transaction so a
+      // concurrent re-share can't slip in between. The pointer may not exist
+      // at all (sharing never turned on, or the public link is off) — then
+      // there is nothing to clear.
+      final pointerRef = _firestore.collection('livePointers').doc(uid);
+      await _firestore.runTransaction((tx) async {
+        final snap = await tx.get(pointerRef);
+        final data = snap.data();
+        final updatedAt = data?['updatedAt'];
+        if (!shouldClearLivePointer(
+          pointerExists: snap.exists,
+          pointerToken: data?['token'] as String?,
+          pointerUpdatedAt: updatedAt is Timestamp ? updatedAt.toDate() : null,
+          entryToken: token,
+          entryCreatedAt: entry.createdAt,
+        )) {
+          return;
+        }
+        tx.set(pointerRef, {
+          'uid': uid,
+          'token': null,
+          'active': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }).timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
@@ -582,7 +635,10 @@ class OutboxService {
           .doc(uid)
           .collection('maintenance')
           .doc(logId)
-          .set(log)
+          // `syncedAt` (server-set) like every other upload to this
+          // collection: other devices' incremental pull filters on it
+          // (§90.C7), so a log without it would never reach them.
+          .set({...log, 'syncedAt': FieldValue.serverTimestamp()})
           .timeout(kOutboxAttemptTimeout);
 
       try {

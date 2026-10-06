@@ -148,6 +148,56 @@ class AutoDetectionDao {
     );
   }
 
+  /// Every detection still `recording`, with the time of its last activity:
+  /// its newest fix, or its start if it has none. Input to the gated close in
+  /// `AutoRideReconcilerService` (§90.C2).
+  Future<List<({String id, DateTime lastActivity})>>
+      recordingDetectionsWithLastActivity() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT id, started_at,
+             (SELECT MAX(timestamp) FROM auto_fixes
+               WHERE auto_fixes.detection_id = auto_detections.id) AS last_fix
+        FROM auto_detections
+       WHERE status = ?
+      ''',
+      [AutoDetectionStatus.recording],
+    );
+    final out = <({String id, DateTime lastActivity})>[];
+    for (final r in rows) {
+      // MAX() over ISO strings is only a heuristic when offsets differ, so the
+      // newest of the fix and the start is taken after parsing.
+      final started = DateTime.tryParse(r['started_at'] as String? ?? '');
+      final lastFix = DateTime.tryParse(r['last_fix'] as String? ?? '');
+      final last = (lastFix != null && (started == null || lastFix.isAfter(started)))
+          ? lastFix
+          : started;
+      if (last == null) continue;
+      out.add((id: r['id'] as String, lastActivity: last));
+    }
+    return out;
+  }
+
+  /// [closeStaleRecordingDetections] for one detection: flips it to
+  /// `pending`, dated to its last fix. A no-op if it is no longer recording.
+  Future<void> closeRecordingDetection(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.rawUpdate(
+      '''
+      UPDATE auto_detections
+         SET status = ?,
+             ended_at = COALESCE(
+               (SELECT MAX(timestamp) FROM auto_fixes
+                 WHERE auto_fixes.detection_id = auto_detections.id),
+               started_at
+             )
+       WHERE id = ? AND status = ?
+      ''',
+      [AutoDetectionStatus.pending, id, AutoDetectionStatus.recording],
+    );
+  }
+
   /// Detections waiting to become [userId]'s rides.
   ///
   /// Scoped to the owner (grill §1.4.2): this used to return every

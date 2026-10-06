@@ -16,7 +16,7 @@ import '../models/group_ride_model.dart';
 /// — a repository has no `BuildContext` and can't produce Bangla. Same shape
 /// as `recordingErrorText` in `ride/presentation/widgets/recording_gate.dart`:
 /// the English text stays as a diagnostic, the enum is what the screen reads.
-enum GroupRideJoinFailure { badCode, alreadyEnded, full }
+enum GroupRideJoinFailure { badCode, alreadyEnded, full, removed }
 
 class GroupRideJoinException implements Exception {
   final GroupRideJoinFailure kind;
@@ -314,6 +314,13 @@ class GroupRideRepository {
       }
       final memberIds = (data['memberIds'] as List<dynamic>?) ?? const [];
       if (memberIds.contains(userId)) return;
+      // Kicked by the creator (removeMember): the rules would refuse the
+      // write anyway (§90.D4); saying so beats a bare permission error.
+      final bannedIds = (data['bannedIds'] as List<dynamic>?) ?? const [];
+      if (bannedIds.contains(userId)) {
+        throw const GroupRideJoinException(GroupRideJoinFailure.removed,
+            'The ride creator removed you from this ride.');
+      }
       final cap = (data['maxParticipants'] as num?)?.toInt() ?? 20;
       if (memberIds.length >= cap) {
         throw const GroupRideJoinException(
@@ -615,13 +622,23 @@ class GroupRideRepository {
     });
   }
 
-  /// Live view of a group ride's voice notes, oldest first.
-  Stream<List<VoiceNoteEntity>> watchVoiceNotes(String groupRideId) {
+  /// Live view of a group ride's most recent [limit] voice notes, oldest
+  /// first.
+  ///
+  /// Bounded (issues §90.A8): the only consumer, the group map, plays just
+  /// the notes sent after it opened and marks everything older as seen, so
+  /// re-reading a long ride's whole voice history on every (re)open bought
+  /// nothing.
+  Stream<List<VoiceNoteEntity>> watchVoiceNotes(
+    String groupRideId, {
+    int limit = 20,
+  }) {
     return _rideRef(groupRideId)
         .collection('voiceNotes')
-        .orderBy('createdAt')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
-        .map((snapshot) => snapshot.docs
+        .map((snapshot) => snapshot.docs.reversed
             .map((doc) =>
                 VoiceNoteModel.fromDocument(doc.data(), doc.id).toEntity())
             .toList());
@@ -778,6 +795,10 @@ class GroupRideRepository {
         // may write locations.
         'memberIds': FieldValue.arrayRemove([userId]),
         'invitedIds': FieldValue.arrayRemove([userId]),
+        // A kick is final for this ride: firestore.rules refuses a
+        // join-by-code from anyone listed here (issues §90.D4). Without it
+        // the kicked rider could simply re-enter the code.
+        'bannedIds': FieldValue.arrayUnion([userId]),
         if (legacy != null) 'members': legacy,
       });
     });

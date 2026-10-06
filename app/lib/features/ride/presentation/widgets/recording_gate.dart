@@ -80,13 +80,15 @@ void showRecordingBlockedSnackBar(BuildContext context, RideRecordingState state
 ///
 /// The notifier keeps `error` in English (it doubles as a diagnostic), so the
 /// screen localizes it from what it already knows: [RideRecordingState.blockKind]
-/// for the two location problems, and [kNoBikeRecordingError] for the missing
-/// bike. Anything else is shown as written.
+/// for the two location problems, [kNoBikeRecordingError] for the missing
+/// bike, and [kStartFailedRecordingError] for a start that threw. Anything else is shown as written.
 String recordingErrorText(AppLocalizations l10n, RideRecordingState state) =>
     switch (state.blockKind) {
       RecordingBlockKind.locationServicesOff => l10n.recordingLocationOff,
       RecordingBlockKind.permissionDenied => l10n.recordingPermissionDenied,
-      RecordingBlockKind.none => state.error == kNoBikeRecordingError
-          ? l10n.addBikeBeforeRecording
-          : state.error!,
+      RecordingBlockKind.none => switch (state.error) {
+          kNoBikeRecordingError => l10n.addBikeBeforeRecording,
+          kStartFailedRecordingError => l10n.recordingStartFailed,
+          _ => state.error!,
+        },
     };

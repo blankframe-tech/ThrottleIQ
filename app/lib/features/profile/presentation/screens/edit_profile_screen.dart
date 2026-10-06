@@ -181,6 +181,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _displayNameCtrl,
+                // firestore.rules caps names at 100 characters (§90.D10).
+                maxLength: 100,
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(labelText: context.l10n.displayName),
                 validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredField : null,
@@ -188,6 +190,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nicknameCtrl,
+                maxLength: 100,
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
                     labelText: context.l10n.nickname, hintText: context.l10n.shownCardsFeed),

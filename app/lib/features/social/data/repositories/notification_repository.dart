@@ -5,6 +5,9 @@ import '../../domain/entities/app_notification_entity.dart';
 /// In-app notifications at `users/{uid}/notifications/{id}`. See
 /// [AppNotificationEntity]'s doc comment for why this is in-app only, not a
 /// phone push.
+/// The one follow notification [fromUid] can have in anyone's inbox.
+String followNotificationId(String fromUid) => 'follow_$fromUid';
+
 class NotificationRepository {
   static final NotificationRepository _instance = NotificationRepository._internal();
   factory NotificationRepository() => _instance;
@@ -20,6 +23,13 @@ class NotificationRepository {
   /// [FollowRepository.follow] — kept as a separate call rather than folded
   /// into FollowRepository so that repository doesn't need to know about
   /// notification shapes for future edge types that shouldn't notify.
+  ///
+  /// Written at the deterministic id [followNotificationId] with `set`, not
+  /// `add` (issues §90.A9): a follow → unfollow → follow loop or a double tap
+  /// used to stack one new notification per toggle. With a fixed id the
+  /// first follow creates the doc; a later one targets the same doc, which
+  /// firestore.rules treats as an update (owner-only) and rejects — callers
+  /// treat that as "already notified" (see `FollowController`).
   Future<void> notifyFollow({
     required String toUid,
     required String fromUid,
@@ -27,7 +37,7 @@ class NotificationRepository {
     String? fromPhotoUrl,
   }) async {
     if (toUid == fromUid) return;
-    await _notifs(toUid).add({
+    await _notifs(toUid).doc(followNotificationId(fromUid)).set({
       'type': NotificationType.follow.name,
       'fromUid': fromUid,
       'fromName': fromName,

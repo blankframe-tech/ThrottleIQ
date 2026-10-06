@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../constants/ride_prefs_keys.dart';
 import '../database/daos/auto_detection_dao.dart';
 
 const _serviceId = 1000;
@@ -83,7 +84,7 @@ class _AutoTrackingTaskHandler extends TaskHandler {
       // traffic specifically: a long signal or a level crossing routinely
       // exceeds two minutes, and splitting one commute into three "rides" is
       // worse than a slightly late stop.
-      _stillnessTimer = Timer(const Duration(minutes: 5), () {
+      _stillnessTimer = Timer(AutoTrackingService.stillnessTimeout, () {
         _stillnessTimer = null;
         _moving = false;
         unawaited(_positionSub?.cancel());
@@ -112,11 +113,18 @@ class _AutoTrackingTaskHandler extends TaskHandler {
       _moving = false;
       return;
     }
-    await AutoTrackingService.beginDetection(
+    final opened = await AutoTrackingService.beginDetection(
       _dao,
       AutoTriggerSource.activityRecognition,
       userId: await AutoTrackingService.readOwner(),
     );
+    if (!opened) {
+      // A manual ride is being recorded (§90.C3). Not moving as far as this
+      // handler is concerned, so the next vehicle report after that ride ends
+      // gets a fresh chance to open a detection.
+      _moving = false;
+      return;
+    }
     _startPositionStream();
   }
 
@@ -233,6 +241,22 @@ class AutoTrackingService {
   static const _uuid = Uuid();
   static const _prefsEnabled = 'auto_tracking_enabled';
   static const _prefsCurrentDetection = 'auto_tracking_current_detection';
+
+  /// Non-vehicle activity this long ends a detection. See
+  /// `_AutoTrackingTaskHandler._onActivity` for why five minutes.
+  static const stillnessTimeout = Duration(minutes: 5);
+
+  /// Whether the auto-tracking foreground service is running, i.e. whether
+  /// anything can still be appending to a `recording` detection (§90.C2).
+  /// Errs on "running" when the platform can't say: the caller then falls
+  /// back to the staleness rule rather than closing a possibly-live ride.
+  static Future<bool> isServiceRunning() async {
+    try {
+      return await FlutterForegroundTask.isRunningService;
+    } catch (_) {
+      return true;
+    }
+  }
 
   // Package-visible (not private) so the task-handler isolate above can read
   // the same keys without a second copy of the string literals drifting out
@@ -424,17 +448,33 @@ class AutoTrackingService {
 
   // ── Shared work, callable from the task-handler isolate or this one ────
 
-  /// Opens a detection, unless one is already open.
+  /// Opens a detection, unless one is already open — or a manual ride is
+  /// being recorded, in which case nothing is opened and this returns false.
   ///
   /// The id is held in `SharedPreferences` rather than in a field because the
   /// task-handler isolate and this one cannot see each other's memory.
-  static Future<void> beginDetection(
+  ///
+  /// §90.C3: the manual recorder's recovery marker (`active_ride_id`) is set
+  /// for exactly as long as a ride is being recorded (or sits paused,
+  /// restored after a kill). Detecting the same journey in the background
+  /// produced a second, `is_auto` copy of it with the distance counted twice.
+  /// The reconciler also rejects overlap; this just avoids collecting the
+  /// fixes in the first place.
+  static Future<bool> beginDetection(
     AutoDetectionDao dao,
     String triggerSource, {
     String? userId,
   }) async {
+    final prefs = await SharedPreferences.getInstance();
+    // This isolate's cached copy can miss the UI isolate's write.
+    await prefs.reload();
+    if (prefs.getString(RidePrefsKeys.activeRideId) !=
+        null) {
+      return false;
+    }
+
     final existing = await dao.currentRecording();
-    if (existing != null) return;
+    if (existing != null) return true;
 
     final id = _uuid.v4();
     await dao.insertDetection(
@@ -443,8 +483,8 @@ class AutoTrackingService {
       triggerSource: triggerSource,
       userId: userId,
     );
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsCurrentDetection, id);
+    return true;
   }
 
   static Future<void> endDetection(AutoDetectionDao dao) async {

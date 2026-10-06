@@ -139,7 +139,7 @@ test('comment bump succeeds when the comment is created in the same transaction'
   // Exactly the shape RideShareRepository.addComment() now writes.
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'nice ride', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'nice ride', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(1), lastCommentId: commentRef.id });
     })
   );
@@ -189,7 +189,7 @@ test('comment bump larger than +1 is denied even with a real comment', async () 
 
   await assertFails(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(50), lastCommentId: commentRef.id });
     })
   );
@@ -202,7 +202,7 @@ test('comment bump cannot smuggle another field along with it', async () => {
 
   await assertFails(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, {
         comments: increment(1),
         lastCommentId: commentRef.id,
@@ -219,7 +219,7 @@ test('a second bump reusing the first transaction id is denied', async () => {
 
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(1), lastCommentId: commentRef.id });
     })
   );
@@ -1412,7 +1412,7 @@ test('a participant CAN update lastMessage/updatedAt only', async () => {
   );
 });
 
-test('a recipient can mark a message as read, but not rewrite its text', async () => {
+test('a recipient can no longer update a message at all (isRead or text)', async () => {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const adminDb = ctx.firestore();
     await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
@@ -1427,7 +1427,8 @@ test('a recipient can mark a message as read, but not rewrite its text', async (
     });
   });
   const mallory = dbFor(MALLORY);
-  await assertSucceeds(
+  // markMessagesAsRead was removed (§90.A12) and so was its update rule.
+  await assertFails(
     updateDoc(doc(mallory, 'chats', 'chat-alice-mallory', 'messages', 'msg-3'), {
       isRead: true,
     })

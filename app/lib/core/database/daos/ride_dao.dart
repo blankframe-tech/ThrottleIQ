@@ -297,6 +297,79 @@ class RideDao {
     });
   }
 
+  /// Deletes a ride locally AND records a tombstone, in one transaction
+  /// (§90.C10). Use this for any ride that may already be in Firestore — a
+  /// crash ride is uploaded the moment crash detection fires — or
+  /// [CloudRepository.downloadRides] pulls it straight back on the next
+  /// sync. SyncManager deletes the remote copy and flips `synced` to 1.
+  Future<void> deleteWithTombstone(String id, {String? userId}) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
+      await txn.insert(
+        'deleted_rides',
+        {
+          'id': id,
+          'user_id': userId,
+          'deleted_at': DateTime.now().toIso8601String(),
+          'synced': 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  /// Ride ids this device has deleted. The download path must skip these.
+  Future<Set<String>> deletedIds() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('deleted_rides', columns: ['id']);
+    return rows.map((r) => r['id'] as String).toSet();
+  }
+
+  /// [userId]'s ride tombstones whose remote copy still needs deleting.
+  /// Unowned rows are included: they can only have come from this device.
+  Future<List<String>> pendingRemoteDeletions(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('deleted_rides',
+        columns: ['id'],
+        where: 'synced = 0 AND (user_id = ? OR user_id IS NULL)',
+        whereArgs: [userId]);
+    return rows.map((r) => r['id'] as String).toList();
+  }
+
+  /// Marks a ride tombstone's remote delete as done. The row is kept so a
+  /// second device's copy can't reintroduce the ride.
+  Future<void> markDeletionSynced(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('deleted_rides', {'synced': 1},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Every ride of [userId]'s, finished or still recording, as a time window
+  /// — what an auto-detection must not overlap (§90.C3). A ride with no
+  /// `end_time` yet (being recorded right now) is open-ended.
+  Future<List<({String id, DateTime start, DateTime? end})>> rideWindows(
+      String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('rides',
+        columns: ['id', 'start_time', 'end_time'],
+        where: 'user_id = ?',
+        whereArgs: [userId]);
+    final out = <({String id, DateTime start, DateTime? end})>[];
+    for (final r in rows) {
+      final start = DateTime.tryParse(r['start_time'] as String? ?? '');
+      if (start == null) continue;
+      final endRaw = r['end_time'] as String?;
+      out.add((
+        id: r['id'] as String,
+        start: start,
+        end: endRaw == null ? null : DateTime.tryParse(endRaw),
+      ));
+    }
+    return out;
+  }
+
   Future<void> deleteForBike(String bikeId) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {

@@ -28,7 +28,9 @@ export const onMessageCreate = onDocumentCreated(
     if (!snapshot) return;
 
     const messageData = snapshot.data();
-    const text = messageData.text?.toLowerCase() || "";
+    const originalText: string =
+      typeof messageData.text === "string" ? messageData.text : "";
+    const text = originalText.toLowerCase();
 
     // Whole-word match only. A plain substring check hid perfectly innocent
     // messages: "whatever" contains "hate", "dumbbell" contains "dumb",
@@ -51,15 +53,28 @@ export const onMessageCreate = onDocumentCreated(
       // resolved). This write goes through the Admin SDK, which bypasses
       // firestore.rules entirely, but the semantics should still be honest:
       // hiding the message is automated, closing the report isn't.
-      await getFirestore().collection("reports").add({
-        reporterId: "system",
-        reportedId: messageData.senderId,
-        contentType: "chat",
-        contentId: snapshot.ref.id,
-        reason: "Automated toxicity detection",
-        createdAt: FieldValue.serverTimestamp(),
-        status: "pending",
-      });
+      //
+      // issues §90.D12: the report now carries what a reviewer needs — the
+      // chat id (contentId alone can't locate a message nested under
+      // chats/{chatId}) and the original text, which the update above has
+      // just overwritten on the message itself. Reports are admin-only in
+      // firestore.rules. The id is deterministic, so a retried trigger
+      // rewrites one report instead of filing a duplicate.
+      await getFirestore()
+        .collection("reports")
+        .doc(`auto_chat_${event.params.chatId}_${event.params.messageId}`)
+        .set({
+          reporterId: "system",
+          reportedId: messageData.senderId ?? "",
+          contentType: "chat",
+          contentId: snapshot.ref.id,
+          chatId: event.params.chatId,
+          contentPath: snapshot.ref.path,
+          originalText: originalText.slice(0, 1000),
+          reason: "Automated toxicity detection",
+          createdAt: FieldValue.serverTimestamp(),
+          status: "pending",
+        });
     }
   }
 );

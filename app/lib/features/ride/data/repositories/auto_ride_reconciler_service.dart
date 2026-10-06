@@ -9,9 +9,11 @@ import '../../../../core/database/daos/bike_dao.dart';
 import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/services/home_widget_service.dart';
+import '../../../../core/services/auto_tracking_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../domain/calculators/auto_detection_policy.dart';
 import '../../domain/calculators/auto_ride_reconciler.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../models/ride_model.dart';
@@ -57,7 +59,11 @@ class AutoRideReconcilerService {
       // A detection left `recording` means the process died mid-journey. It
       // still holds real fixes, so close it (dated to its last fix, not now)
       // and reconcile it like any other rather than abandoning the ride.
-      await _detectionDao.closeStaleRecordingDetections();
+      //
+      // §90.C2: but only when it really is abandoned. This runs on every
+      // foreground, and closing a detection the service is still appending
+      // to truncated the ride being ridden right now.
+      await _closeAbandonedRecordings();
 
       final uid = _ref.read(currentUserProvider)?.uid;
       if (uid == null) {
@@ -93,6 +99,30 @@ class AutoRideReconcilerService {
     }
   }
 
+  /// How long a `recording` detection may go without a fix, while the
+  /// auto-tracking service is running, before it counts as abandoned. Twice
+  /// the service's own stillness timeout: a live detection that quiet would
+  /// already have been closed by the service itself.
+  static final _staleRecordingAfter = AutoTrackingService.stillnessTimeout * 2;
+
+  Future<void> _closeAbandonedRecordings() async {
+    final recordings =
+        await _detectionDao.recordingDetectionsWithLastActivity();
+    if (recordings.isEmpty) return;
+    final serviceRunning = await AutoTrackingService.isServiceRunning();
+    final now = DateTime.now();
+    for (final r in recordings) {
+      if (shouldCloseRecordingDetection(
+        serviceRunning: serviceRunning,
+        lastActivity: r.lastActivity,
+        now: now,
+        staleAfter: _staleRecordingAfter,
+      )) {
+        await _detectionDao.closeRecordingDetection(r.id);
+      }
+    }
+  }
+
   Future<String?> _reconcileOne(
     Map<String, dynamic> detection,
     String uid,
@@ -100,7 +130,7 @@ class AutoRideReconcilerService {
     final detectionId = detection['id'] as String;
     final rows = await _detectionDao.fixesFor(detectionId);
 
-    final staged = <StagedFix>[
+    final allStaged = <StagedFix>[
       for (final r in rows)
         (
           timestamp: DateTime.parse(r['timestamp'] as String),
@@ -112,6 +142,24 @@ class AutoRideReconcilerService {
           headingDeg: (r['heading_deg'] as num?)?.toDouble(),
         ),
     ];
+
+    // §90.C3: never let an auto ride overlap one already on record — a
+    // manual recording of the same journey, or this very detection promoted
+    // once already by a run that died before marking it reconciled (which
+    // would otherwise also count its distance against the bike twice).
+    final staged = longestRunClearOfRides<StagedFix>(
+      allStaged,
+      (f) => f.timestamp,
+      [
+        for (final w in await _rideDao.rideWindows(uid))
+          (start: w.start, end: w.end),
+      ],
+    );
+    if (staged.isEmpty && allStaged.isNotEmpty) {
+      await _detectionDao.markDiscarded(
+          detectionId, ReconcileRejection.overlapsRide);
+      return null;
+    }
 
     final outcome = _reconciler.reconcile(staged);
     if (!outcome.isAccepted) {

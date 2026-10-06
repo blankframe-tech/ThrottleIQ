@@ -1402,6 +1402,9 @@ class AppLocalizationsBn extends AppLocalizations {
       'রাইড রেকর্ড করার আগে একটি বাইক যোগ করুন।';
 
   @override
+  String get recordingStartFailed => 'রাইড শুরু করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
   String get aRider => 'একজন রাইডার';
 
   @override
@@ -1538,7 +1541,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get anyoneThrottleiq => 'ThrottleIQ-র যে কেউ';
 
   @override
-  String get peopleWhoFollow => 'যারা আপনাকে ফলো করে';
+  String get peopleWhoFollow =>
+      'পরে যারা ফলো করবে তারাও দেখতে পাবে। ফলো করতে আপনার অনুমতি লাগে না।';
 
   @override
   String get ridersFollowEachOther => 'যাদের সাথে আপনারা পরস্পরকে ফলো করেন';
@@ -2737,6 +2741,21 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get blockUser => 'ইউজার ব্লক করুন';
+
+  @override
+  String couldntBlockRider(String error) {
+    return 'এই রাইডারকে ব্লক করা যায়নি: $error';
+  }
+
+  @override
+  String get publicLiveLinkTitle => 'পাবলিক লিংক (/r/@handle)';
+
+  @override
+  String get publicLiveLinkDesc =>
+      'লাইভ রাইড শেয়ার করার সময় আপনার @ইউজারনেম জানা যে কেউ /r/@username লিংকে রাইডটি দেখতে পারবে — অ্যাপ বা সাইন-ইন লাগবে না। শুরুতে বন্ধ থাকে। আপনার ব্যক্তিগত লাইভ লিংক দুই ক্ষেত্রেই কাজ করবে।';
+
+  @override
+  String get audienceAnyFollower => 'আপনার যেকোনো ফলোয়ার';
 
   @override
   String get tapEditFinishSetting =>
@@ -4360,6 +4379,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get joinRideFull => 'এই রাইডে আর জায়গা নেই।';
 
   @override
+  String get joinRideRemoved =>
+      'রাইডের আয়োজক আপনাকে এই রাইড থেকে সরিয়ে দিয়েছেন।';
+
+  @override
   String groupRideTooManyFriends(Object max) {
     return 'আপনি একসাথে সর্বোচ্চ $max জন বন্ধুর সাথে রাইড করতে পারবেন।';
   }
@@ -4515,4 +4538,13 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get partOrderPlacedBody =>
       'এই ফিচারটি পরীক্ষা করা হচ্ছে। কোনো অর্ডার দেওয়া হয়নি এবং কোনো টাকা কাটা হয়নি।';
+
+  @override
+  String get noOtherRidersYet => 'এখনো দেখানোর মতো অন্য কোনো রাইডার নেই।';
+
+  @override
+  String get loadMore => 'আরও লোড করুন';
+
+  @override
+  String get loadOlderMessages => 'পুরনো মেসেজ লোড করুন';
 }

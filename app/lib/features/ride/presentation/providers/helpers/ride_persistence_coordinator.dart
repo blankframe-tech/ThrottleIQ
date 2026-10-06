@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
+import 'package:throttleiq/core/constants/ride_prefs_keys.dart';
 import 'package:throttleiq/core/database/daos/bike_dao.dart';
 import 'package:throttleiq/core/database/daos/ride_dao.dart';
 import 'package:throttleiq/core/database/daos/ride_point_dao.dart';
@@ -38,7 +39,7 @@ class RidePersistenceCoordinator {
   final WeatherService _weatherService;
   final FirebaseFirestore _firestore;
 
-  static const String _prefsRideId = 'active_ride_id';
+  static const String _prefsRideId = RidePrefsKeys.activeRideId;
   static const String _prefsStartTime = 'ride_start_time';
   static const String _prefsElapsedS = 'ride_elapsed_s';
 

@@ -2,6 +2,7 @@ import * as functionsV1 from "firebase-functions/v1";
 import { getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { createHash } from "node:crypto";
+import { isOwnedPublicId } from "./cloudinary-ownership";
 
 /**
  * Cleans up a rider's Firestore profile once their Firebase Auth account is
@@ -245,6 +246,21 @@ async function destroyCloudinaryAssets(
     const publicId = doc.get("publicId") as string | undefined;
     const resourceType = (doc.get("resourceType") as string) || "image";
     if (!publicId) continue;
+    // §90.D2: only ever destroy an asset in this rider's own folder. A ledger
+    // row naming anyone else's media is skipped (and logged), never trusted.
+    if (!isOwnedPublicId(publicId, uid)) {
+      logger.warn(
+        `destroyCloudinaryAssets: skipped ledger row ${doc.id} for ${uid} — ` +
+          "publicId is not under this rider's own folder"
+      );
+      continue;
+    }
+    if (resourceType !== "image" && resourceType !== "video" && resourceType !== "raw") {
+      logger.warn(
+        `destroyCloudinaryAssets: skipped ledger row ${doc.id} — unknown resourceType`
+      );
+      continue;
+    }
     try {
       await cloudinaryDestroy({
         cloud,

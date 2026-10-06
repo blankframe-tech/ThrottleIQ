@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/database_helper.dart';
@@ -13,6 +11,7 @@ import '../database/daos/ride_point_dao.dart';
 import '../services/cloudinary_upload_service.dart';
 import '../utils/bike_image_resolver.dart';
 import 'maintenance_settings_sync.dart';
+import 'pull_watermark.dart';
 import 'ride_track_codec.dart';
 
 class CloudRepository {
@@ -324,9 +323,12 @@ class CloudRepository {
   /// stale cloud copy of the same id (ids are client-generated UUIDs, never
   /// reused across devices for different bikes).
   ///
-  /// Returns true if any new bikes were pulled down (so the caller knows to
-  /// invalidate garageProvider).
-  Future<bool> downloadBikes(String uid) async {
+  /// Returns whether any new bikes were pulled down (so the caller knows to
+  /// invalidate garageProvider) and the newest `syncedAt` seen.
+  ///
+  /// [since] makes it incremental (§90.C7): only documents whose server-set
+  /// `syncedAt` is newer are read. Null is a full pull — see [PullWatermark].
+  Future<PullResult> downloadBikes(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
     final localIds = (await db.query('bikes', columns: ['id']))
         .map((r) => r['id'] as String)
@@ -336,7 +338,10 @@ class CloudRepository {
     // tombstones this loop faithfully re-created every bike the rider had
     // just removed — which is precisely how the delete appeared not to work.
     final deletedIds = await _bikeDao.deletedIds();
-    final snap = await _firestore.collection('users').doc(uid).collection('bikes').get();
+    final snap = await _sinceQuery(
+            _firestore.collection('users').doc(uid).collection('bikes'), since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     final hasLocalActive = localIds.isNotEmpty &&
         (await db.query('bikes', where: 'is_active = 1', limit: 1)).isNotEmpty;
@@ -362,7 +367,30 @@ class CloudRepository {
       }
       if (data['is_active'] == 1) pulledAnyActive = true;
     }
-    return pulledAny;
+    return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
+  }
+
+  /// [collection] filtered to `syncedAt > since`, or unfiltered when [since]
+  /// is null. A single-field range filter: served by Firestore's automatic
+  /// index, no composite index needed.
+  Query<Map<String, dynamic>> _sinceQuery(
+          CollectionReference<Map<String, dynamic>> collection,
+          DateTime? since) =>
+      since == null
+          ? collection
+          : collection.where('syncedAt',
+              isGreaterThan: Timestamp.fromDate(since));
+
+  /// The newest `syncedAt` among [docs], or null if none carries one.
+  @visibleForTesting
+  static DateTime? newestSyncedAt(Iterable<Map<String, dynamic>> docs) {
+    DateTime? newest;
+    for (final d in docs) {
+      final v = d['syncedAt'];
+      final t = v is Timestamp ? v.toDate() : (v is DateTime ? v : null);
+      if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+    }
+    return newest;
   }
 
   /// Sanitizes downloaded bike document data before inserting it into local SQLite.
@@ -396,13 +424,18 @@ class CloudRepository {
 
   /// Same "pull anything missing locally" shape as [downloadBikes], for
   /// maintenance logs.
-  Future<bool> downloadMaintenance(String uid) async {
+  ///
+  /// [since]: incremental, as for [downloadBikes].
+  Future<PullResult> downloadMaintenance(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
     final localIds = (await db.query('maintenance_logs', columns: ['id']))
         .map((r) => r['id'] as String)
         .toSet();
-    final snap =
-        await _firestore.collection('users').doc(uid).collection('maintenance').get();
+    final snap = await _sinceQuery(
+            _firestore.collection('users').doc(uid).collection('maintenance'),
+            since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     var pulledAny = false;
     for (final doc in snap.docs) {
@@ -416,7 +449,7 @@ class CloudRepository {
         debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
       }
     }
-    return pulledAny;
+    return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
   }
 
   /// `uid/bikeId` pairs whose cloud settings doc was already checked this
@@ -463,7 +496,11 @@ class CloudRepository {
   /// Fixing that is a real gap but a materially bigger one (GPS trails are
   /// much larger payloads) — flagged here rather than silently left
   /// unaddressed.
-  Future<bool> downloadRides(String uid) async {
+  ///
+  /// [since]: incremental, as for [downloadBikes]. Rides this device deleted
+  /// (`deleted_rides`, §90.C10) are skipped, the same way [downloadBikes]
+  /// skips deleted bikes.
+  Future<PullResult> downloadRides(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
     final localIds =
         (await db.query('rides', columns: ['id'])).map((r) => r['id'] as String).toSet();
@@ -476,11 +513,15 @@ class CloudRepository {
     final rideColumns = (await db.rawQuery('PRAGMA table_info(rides)'))
         .map((row) => row['name'] as String)
         .toSet();
-    final snap = await _firestore.collection('users').doc(uid).collection('rides').get();
+    final deletedIds = await _rideDao.deletedIds();
+    final snap = await _sinceQuery(
+            _firestore.collection('users').doc(uid).collection('rides'), since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     var pulledAny = false;
     for (final doc in snap.docs) {
-      if (localIds.contains(doc.id)) continue;
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
       // Whatever trail this ride has is already in the cloud — it came from
@@ -503,7 +544,20 @@ class CloudRepository {
         debugPrint('[CloudRepository] ride download skipped for ${doc.id}: $e');
       }
     }
-    return pulledAny;
+    return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
+  }
+
+  /// Deletes a ride's remote copy and its `track` chunks (§90.C10). Same
+  /// best-effort contract as [deleteBikeRemote]: the caller marks the
+  /// tombstone synced only when this returns, so an offline delete retries.
+  Future<void> deleteRideRemote(String uid, String rideId) async {
+    final rideRef =
+        _firestore.collection('users').doc(uid).collection('rides').doc(rideId);
+    final track = await rideRef.collection('track').get();
+    await _deleteInChunks([
+      ...track.docs.map((d) => d.reference),
+      rideRef,
+    ]);
   }
 
   /// Uploads a ride's GPS trail as chunked `track` documents.
@@ -620,75 +674,6 @@ class CloudRepository {
         .map((d) => (d.data()['speedKmh'] as num?)?.toDouble())
         .whereType<double>()
         .toList();
-  }
-
-  /// Export ride data as JSON file to Downloads folder
-  Future<File> exportToJSON(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) async {
-    final directory = await getDownloadsDirectory();
-    if (directory == null) throw Exception('Downloads directory not available');
-
-    final rideId = ride['id'] as String;
-    final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
-    final file = File('${directory.path}/$fileName');
-
-    final jsonData = {
-      'ride': ride,
-      'points': ridePoints,
-      'exportedAt': DateTime.now().toIso8601String(),
-    };
-
-    await file.writeAsString(jsonEncode(jsonData), flush: true);
-    return file;
-  }
-
-  /// Export ride polyline as GPX file to Downloads folder
-  Future<File> exportToGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) async {
-    final directory = await getDownloadsDirectory();
-    if (directory == null) throw Exception('Downloads directory not available');
-
-    final rideId = ride['id'] as String;
-    final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
-    final file = File('${directory.path}/$fileName');
-
-    final gpxContent = _generateGPX(ride, ridePoints);
-    await file.writeAsString(gpxContent, flush: true);
-    return file;
-  }
-
-  /// Generate GPX XML string from ride data
-  String _generateGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
-    final startTime = ride['startTime'] as String;
-    final distanceKm = (ride['distanceM'] as num) / 1000;
-
-    final buffer = StringBuffer();
-    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
-    buffer.writeln('<gpx version="1.1" creator="ThrottleIQ" xmlns="http://www.topografix.com/GPX/1/1">');
-    buffer.writeln('  <metadata>');
-    buffer.writeln('    <name>Motorcycle Ride</name>');
-    buffer.writeln('    <time>$startTime</time>');
-    buffer.writeln('    <bounds minlat="0" minlon="0" maxlat="0" maxlon="0" />');
-    buffer.writeln('  </metadata>');
-    buffer.writeln('  <trk>');
-    buffer.writeln('    <name>Ride Track</name>');
-    buffer.writeln('    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
-    buffer.writeln('    <trkseg>');
-
-    for (final point in ridePoints) {
-      final lat = point['lat'] as num;
-      final lng = point['lng'] as num;
-      final timestamp = point['timestamp'] as String;
-      final elevation = point['altitudeM'] as num?;
-
-      buffer.write('      <trkpt lat="$lat" lon="$lng">');
-      if (elevation != null) buffer.write('<ele>$elevation</ele>');
-      buffer.writeln('<time>$timestamp</time></trkpt>');
-    }
-
-    buffer.writeln('    </trkseg>');
-    buffer.writeln('  </trk>');
-    buffer.writeln('</gpx>');
-
-    return buffer.toString();
   }
 
   /// Update bike synced status in local database

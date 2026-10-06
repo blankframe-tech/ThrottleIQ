@@ -19,6 +19,7 @@ import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/services/public_live_link_setting.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -509,6 +510,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           const _AnalyticsToggleTile(),
+          const SizedBox(height: 10),
+          const _PublicLiveLinkToggleTile(),
           const SizedBox(height: 10),
           Material(
             color: context.palette.surface,
@@ -1003,6 +1006,72 @@ class _OverspeedLimitTile extends ConsumerWidget {
                 ref.read(overspeedLimitProvider.notifier).setLimit(val);
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Settings → Privacy & Safety: whether a live share also publishes the
+/// permanent `/r/@handle` link (issues §90.D7). Off by default; persisted by
+/// [PublicLiveLinkSetting] and read by LiveSessionCoordinator on each share.
+class _PublicLiveLinkToggleTile extends ConsumerStatefulWidget {
+  const _PublicLiveLinkToggleTile();
+
+  @override
+  ConsumerState<_PublicLiveLinkToggleTile> createState() =>
+      _PublicLiveLinkToggleTileState();
+}
+
+class _PublicLiveLinkToggleTileState
+    extends ConsumerState<_PublicLiveLinkToggleTile> {
+  bool _enabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PublicLiveLinkSetting.isEnabled().then((v) {
+      if (mounted) setState(() => _enabled = v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.link, color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.l10n.publicLiveLinkTitle,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.publicLiveLinkDesc,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          Switch(
+            value: _enabled,
+            onChanged: (v) {
+              setState(() => _enabled = v);
+              PublicLiveLinkSetting.setEnabled(v,
+                  uid: ref.read(currentUserProvider)?.uid);
+            },
           ),
         ],
       ),

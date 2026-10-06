@@ -1,6 +1,7 @@
 import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/utils/geo_math.dart';
 import 'average_speed.dart';
+import 'fix_kinematics.dart';
 
 /// One GPS fix as it comes back off disk — the only columns the resume path
 /// needs out of a `ride_points` row.
@@ -70,13 +71,36 @@ class RideResumeAggregates {
 
 /// Rebuilds [RideResumeAggregates] from [fixes], which must be in
 /// chronological order (`RidePointDao.getForRide` returns them that way).
-RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
+///
+/// [segmentStartIndices] are the indices of fixes persisted with
+/// `segment_start = 1` — the first fix after a resume (§90.C6). The gap
+/// *into* such a fix is a pause, so it adds no distance and no moving time,
+/// exactly as `_onPosition` skips the first delta after a resume. Without it a
+/// rider who paused, vanned the bike and was then killed got the van journey
+/// back on restore.
+///
+/// The other live rules are mirrored as closely as thinned, persisted points
+/// allow (§90.C6/C12):
+/// - a segment between two fixes the live path stored as stationary
+///   (`speed_ms == 0`, i.e. rejected/idle) adds nothing — that is the
+///   below-threshold jitter `_onPosition` zeroes;
+/// - a segment's distance is capped at `max(v1, v2) · dt · 1.5 + accuracy`,
+///   the same Doppler cap the live path applies per fix.
+///
+/// A ride whose stored fixes carry no speed at all (legacy rows) keeps the
+/// old haversine sum, minus stationary jitter, so it isn't rebuilt to zero.
+RideResumeAggregates rebuildRideAggregates(
+  List<StoredFix> fixes, {
+  Set<int> segmentStartIndices = const {},
+}) {
   if (fixes.isEmpty) return RideResumeAggregates.empty;
 
   var distanceM = 0.0;
   var maxSpeedMs = 0.0;
   var speedSum = 0.0;
   var validSpeedCount = 0;
+
+  final hasSpeedInfo = fixes.any((f) => f.speedMs > 0);
 
   for (var i = 0; i < fixes.length; i++) {
     final speed = fixes[i].speedMs;
@@ -85,13 +109,8 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
       validSpeedCount++;
       if (speed > maxSpeedMs) maxSpeedMs = speed;
     }
-    if (i > 0) {
-      distanceM += haversineMeters(
-        fixes[i - 1].lat,
-        fixes[i - 1].lng,
-        fixes[i].lat,
-        fixes[i].lng,
-      );
+    if (i > 0 && !segmentStartIndices.contains(i)) {
+      distanceM += _segmentDistance(fixes[i - 1], fixes[i], hasSpeedInfo);
     }
   }
 
@@ -100,6 +119,7 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
     var derivedSum = 0.0;
     var derivedCount = 0;
     for (var i = 1; i < fixes.length; i++) {
+      if (segmentStartIndices.contains(i)) continue;
       final dt = fixes[i].time.difference(fixes[i - 1].time).inMilliseconds / 1000.0;
       if (dt >= 0.1) {
         final d = haversineMeters(
@@ -124,9 +144,18 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
     }
   }
 
-  final movingSecs = movingSeconds(
-    [for (final f in fixes) (time: f.time, speedMs: f.speedMs)],
-  );
+  // Moving time per segment, so a pause gap is never credited.
+  var movingSecs = 0;
+  var segStart = 0;
+  for (var i = 1; i <= fixes.length; i++) {
+    if (i == fixes.length || segmentStartIndices.contains(i)) {
+      movingSecs += movingSeconds([
+        for (final f in fixes.sublist(segStart, i))
+          (time: f.time, speedMs: f.speedMs),
+      ]);
+      segStart = i;
+    }
+  }
 
   return RideResumeAggregates(
     distanceM: distanceM,
@@ -137,4 +166,22 @@ RideResumeAggregates rebuildRideAggregates(List<StoredFix> fixes) {
     firstFixTime: fixes.first.time,
     lastFixTime: fixes.last.time,
   );
+}
+
+double _segmentDistance(StoredFix a, StoredFix b, bool hasSpeedInfo) {
+  final d = haversineMeters(a.lat, a.lng, b.lat, b.lng);
+  if (!hasSpeedInfo) {
+    // Legacy rows with no speed column worth trusting: the old sum, minus
+    // stationary drift.
+    return d < 1.5 ? 0 : d;
+  }
+  if (a.speedMs <= 0 && b.speedMs <= 0) return 0;
+  final dt = b.time.difference(a.time).inMilliseconds / 1000.0;
+  final cap = dopplerDistanceCapM(
+    rawSpeedMs: b.speedMs,
+    prevSpeedMs: a.speedMs,
+    deltaTSeconds: dt,
+    accuracyM: SensorConstants.maxGpsAccuracyM,
+  );
+  return d > cap ? cap : d;
 }

@@ -401,6 +401,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           status: s.status,
           activeAlert: s.activeAlert,
           restoredFromPreviousSession: s.restoredFromPreviousSession,
+          transitionPending: s.transitionPending,
         )));
 
     if (rideState.status == RecordingStatus.idle ||
@@ -593,9 +594,13 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                                 )
                               : null,
                           child: OutlinedButton.icon(
-                            onPressed: isPaused
-                                ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
-                                : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
+                            // Disabled while a transition is in flight so a
+                            // double tap can't stack a second one (§90.C5).
+                            onPressed: rideState.transitionPending
+                                ? null
+                                : isPaused
+                                    ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
+                                    : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
                             icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
                             label: Text(isPaused ? context.l10n.resume : context.l10n.pause),
                             style: OutlinedButton.styleFrom(

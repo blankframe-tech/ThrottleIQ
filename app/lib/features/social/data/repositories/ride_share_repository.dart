@@ -12,6 +12,9 @@ import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
 
+/// Comments fetched per page by [RideShareRepository.getComments].
+const int kRideCommentsPageSize = 30;
+
 class RideShareRepository {
   static final RideShareRepository _instance = RideShareRepository._internal();
 
@@ -188,52 +191,71 @@ class RideShareRepository {
   }
 
   /// Public rides authored by [uids] — the real backing query for the
-  /// "Following" chip.
+  /// "Following" chip, as one result list PER `whereIn` chunk.
   ///
   /// That chip used to filter the already-fetched 20-ride public page against
   /// the follow graph on the client, which meant a rider following 30 people
   /// whose posts weren't in the 20 most recent public rides saw an EMPTY
   /// "Following" feed while those 30 people were actively posting (§83.20).
   ///
-  /// `whereIn` caps at 30 values, so the follow list is chunked and the chunks
-  /// merged. Each chunk still carries `audience == 'public'`, which is what
-  /// lets firestore.rules' `rideVisibleTo` prove the query — see
-  /// [getSharedToMe] for the same constraint spelled out.
-  Future<List<SharedRideEntity>> getRidesByAuthors(
-    Iterable<String> uids, {
-    Set<String> mutualUids = const <String>{},
+  /// `whereIn` caps at 30 values, so the follow list is chunked; each chunk
+  /// is returned as its own list because each is an independently paged feed
+  /// source (`mergeFeedSources` judges "full page" per source). Each chunk
+  /// carries `audience == 'public'`, which is what lets firestore.rules'
+  /// `rideVisibleTo` prove the query without any per-author lookup — see
+  /// [getSharedToMe] for the same constraint spelled out. Served by the
+  /// (userId, audience, createdAt) composite index.
+  Future<List<List<SharedRideEntity>>> getPublicRidesByAuthorChunks(
+    List<List<String>> authorChunks, {
     int limit = 20,
     DateTime? before,
-    bool hydrateVotes = true,
   }) async {
-    final ids = uids.toList();
-    if (ids.isEmpty) return const [];
+    final snaps = await Future.wait([
+      for (final chunk in authorChunks)
+        if (chunk.isNotEmpty)
+          () {
+            var q = _firestore
+                .collection('rides')
+                .where('userId', whereIn: chunk)
+                .where('audience', isEqualTo: 'public')
+                .orderBy('createdAt', descending: true);
+            if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+            return q.limit(limit).get();
+          }(),
+    ]);
+    return [for (final snap in snaps) _toEntities(snap)];
+  }
 
-    // The live follow-graph query (issues §88.1). Rules allow a follower to see
-    // 'followers' posts and a mutual follower to see 'mutual' posts, but ONLY
-    // when the query pins a single author via `userId == author`. A `whereIn`
-    // across multiple authors cannot be proven against the rule's exists()
-    // clauses, so we fan out to one query per author.
-    final futures = <Future<QuerySnapshot<Map<String, dynamic>>>>[];
-    for (final author in ids) {
-      final audiences = mutualUids.contains(author)
-          ? ['public', 'followers', 'mutual']
-          : ['public', 'followers'];
-      var q = _firestore
-          .collection('rides')
-          .where('userId', isEqualTo: author)
-          .where('audience', whereIn: audiences)
-          .orderBy('createdAt', descending: true);
-      if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
-      futures.add(q.limit(limit).get());
-    }
-
-    final snaps = await Future.wait(futures);
-    final merged = [for (final snap in snaps) ..._toEntities(snap)]
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    final page = merged.take(limit).toList();
-    if (!hydrateVotes) return page;
-    return _hydrate(page);
+  /// One followed author's `followers` (and, when they follow back,
+  /// `mutual`) rides — the live follow-graph query (issues §88.1).
+  ///
+  /// Rules allow a follower to see 'followers' posts and a mutual follower to
+  /// see 'mutual' posts, but ONLY when the query pins a single author via
+  /// `userId == author`: a `whereIn` across authors can't be proven against
+  /// `rideVisibleTo`'s exists() clauses. So this stays one query per author,
+  /// but — unlike the old fan-out, which also re-fetched the author's PUBLIC
+  /// rides here at the full page limit (up to 20 reads × every followed
+  /// author, issues §90.A1) — it asks only for restricted audiences with a
+  /// small limit (`kRestrictedPerAuthorLimit`). Public rides come from
+  /// [getPublicRidesByAuthorChunks].
+  ///
+  /// [audiences] must be `['followers']` or `['followers', 'mutual']` (see
+  /// `restrictedAudiencesFor`) — never `public`, and never `mutual` for an
+  /// author who doesn't follow the viewer back, or the rules reject the
+  /// whole query.
+  Future<List<SharedRideEntity>> getRestrictedRidesByAuthor(
+    String author, {
+    required List<String> audiences,
+    int limit = 5,
+    DateTime? before,
+  }) async {
+    var q = _firestore
+        .collection('rides')
+        .where('userId', isEqualTo: author)
+        .where('audience', whereIn: audiences)
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    return _toEntities(await q.limit(limit).get());
   }
 
   /// Rides materialized as visible to the signed-in rider (followers/mutual
@@ -417,14 +439,23 @@ class RideShareRepository {
     return commentRef.id;
   }
 
-  /// Gets comments for a ride.
-  Future<List<RideCommentEntity>> getComments(String rideId) async {
-    final querySnapshot = await _firestore
+  /// Gets the newest [limit] comments for a ride, newest first.
+  ///
+  /// Bounded (issues §90.A8): this used to read every comment on every
+  /// expand of a feed card. [before] pages further back from the
+  /// `createdAt` of the oldest comment already shown.
+  Future<List<RideCommentEntity>> getComments(
+    String rideId, {
+    int limit = kRideCommentsPageSize,
+    DateTime? before,
+  }) async {
+    var q = _firestore
         .collection('rides')
         .doc(rideId)
         .collection('comments')
-        .orderBy('createdAt', descending: true)
-        .get();
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    final querySnapshot = await q.limit(limit).get();
 
     return querySnapshot.docs.map((doc) {
       final data = doc.data();

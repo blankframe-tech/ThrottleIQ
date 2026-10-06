@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-10-01 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-10-06 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
 
 What a signed-in user can actually do in the app today, organized by the
 five-tab bottom nav. This is a living document — regenerate/update it
@@ -218,7 +218,7 @@ Added 2026-08-01. Built on the route data layer that had existed with no UI.
     2. **The per-card location pill** (e.g. "Chittagong Hill Tracts") — `SharedRideEntity` has no place-name field at all; the only reverse-geocoding capability in the app (`poi_directory/data/services/nominatim_service.dart`) calls the OpenStreetMap Nominatim API live, which is explicitly against Nominatim's usage policy to call per-render for a whole feed (no caching, well above their rate limit) and would leak every rendered ride's start coordinate to a third party. Doing this properly needs a one-time reverse-geocode at share time with the result cached on the ride doc — real backend work, not a UI tweak — so the pill was removed rather than either faked or wired unsafely.
 - **Header search** (added 2026-08-04) — one box, riders and forums both, replacing the old standalone "Find riders" tile. A rider name or an email is routed to `searchByUsername`/`searchByEmail`; forums are matched in-memory over a bounded, most-followed page (`ForumRepository.searchForums`) since Firestore has no substring match. Debounced 250 ms so it isn't a query per keystroke. As of the redesign above, reached from the AppBar's search icon rather than an always-visible field.
 - **Feed tab** — shared rides with score, comment count, inline comments; empty state pointing users to share a ride from its summary screen.
-  - **Post photos have a hairline border** (2026-09-21) — the feed's `PhotoCollage` and the ride-detail "Ride Photos" thumbnails are outlined in the palette's `border` colour at the shape profile's `outlineWidth`, painted over the photo (a pale photo on a pale card had no visible edge). Not yet checked on a device.
+  - **Post photos have a hairline border** (2026-09-21) — the feed's `RideMediaCollage` and the ride-detail "Ride Photos" thumbnails are outlined in the palette's `border` colour at the shape profile's `outlineWidth`, painted over the photo (a pale photo on a pale card had no visible edge). Not yet checked on a device.
   - **Sort/filter chips** (added 2026-08-04, `FeedSort`) sit where "Find riders" used to: **Hot** (net upvotes, ties break by recency), **Recent** (default), **Following** (only riders you follow — an empty following list shows an empty feed on purpose, rather than silently ignoring the chip).
   - Each card renders the ride's **route map** (Strava-style). With photos, photos and map sit side by side; without any, the map spans the card.
   - **Up to 3 photos per ride** (added 2026-08-04, `kMaxRidePhotos`) — rendered as a swipeable strip with a "2/3" counter and page dots once there's more than one; a single photo behaves exactly as before (no swipe, no counter).
@@ -433,6 +433,42 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
 
 - **Maintenance settings section:** Units (km/mi, now remembered), Sync odometer, Customize checks, Reset service log and Running costs moved from the header to a card at the end of the maintenance page. The main action is one full-width "Log Service" button.
 - **Running costs and ride cost:** set a typical cost for each check (in its Edit sheet), plus fuel price and mileage for each bike. The ride summary shows a "Ride cost" card: distance × Σ(cost/km), broken down into Fuel, Engine oil, Chain and so on. Each check uses the average of its logged costs, or the typical cost when there are none. With no cost data the card shows a "Set up" hint instead. The settings are stored on the phone only.
+
+## Changes from the §90 fix pass (2026-10-06, issues_fixed.md §90; not committed, not on a device)
+
+- **Settings → Privacy & Safety → "Public link (/r/@handle)"** is a new switch,
+  off by default. The handle link only works while it's on. The per-ride
+  `/live/{token}` link is unchanged.
+- **Ride share audience:** "Followers" now reads **"Anyone who follows you"**. The
+  description says it includes people who follow you later.
+- **Blocking a rider** now also removes the follow in both directions. If it fails,
+  you see an error.
+- **Follow buttons** (search, suggestions, profile) are one shared widget. It shows
+  a spinner while the follow is saving, shows an error if it fails, and sends no
+  duplicate notifications.
+- **Social:**
+  - The Following list updates immediately.
+  - Suggestions skip blocked riders.
+  - Search runs after you stop typing.
+  - All People pages 30 at a time with "Load more".
+- **Lists:**
+  - Chat loads the newest 50 messages, with "Load older messages".
+  - Forum posts page 25 at a time, with "Load more".
+  - Ride comments show up to 30.
+  - Voice notes show the newest 20.
+- **Group ride map:** your position is sent every 20 s, or sooner after you move
+  25 m, and at least every 2 min. A member shows as stale after 160 s.
+- **Group ride join:** a rider removed by the creator can't rejoin with the code.
+  They see "joinRideRemoved".
+- **Recording:**
+  - Pause stops GPS (on Android the tracking notification stops while paused).
+  - Pause/Resume is disabled while it's changing.
+  - A failed start shows an error instead of getting stuck.
+  - The battery-optimization prompt appears only once.
+- **Auto-tracking:** it doesn't record while a manual ride is running. Opening the
+  app no longer cuts off a ride it's recording.
+- **iOS:** the camera and photo-library permission prompts now have text, and the
+  push-to-talk mic permission can be granted.
 
 ## Known UI gaps (as of this pass)
 

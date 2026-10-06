@@ -73,6 +73,18 @@ class FollowRepository {
         .toList();
   }
 
+  /// Up to [limit] uids that follow [uid] — a bounded sample for
+  /// suggestions (issues §90.A5), not the whole list. No `orderBy`, so it
+  /// rides the automatic single-field index.
+  Future<List<String>> getFollowersSample(String uid, {int limit = 30}) async {
+    final snap =
+        await _follows.where('followeeUid', isEqualTo: uid).limit(limit).get();
+    return snap.docs
+        .map((d) => d.data()['followerUid'] as String?)
+        .whereType<String>()
+        .toList();
+  }
+
   /// Uids that [uid] and each of them mutually follow (friends).
   Future<List<String>> getMutuals(String uid) async {
     final following = (await getFollowing(uid)).toSet();

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
+import '../../../../core/utils/photo_url_policy.dart';
 import '../../../garage/data/models/bike_model.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../domain/bike_visibility.dart';
@@ -46,18 +47,32 @@ class ProfileRepository {
   /// call on every login / onboarding — uses merge so it never clobbers
   /// nickname/bio/username the rider set later, and only fills the counters on
   /// first creation.
+  ///
+  /// Also stamps `visibility: 'public'` on a doc that has none: rider search
+  /// and suggestions only list profiles whose `visibility == 'public'`
+  /// (firestore.rules, issues §90.A4), and a legacy doc without the field
+  /// would otherwise never show up in search again.
+  ///
+  /// `email`/`emailLower` must equal the signed-in token's email (§90.D6) —
+  /// `user.email` is that same value. `photoUrl` is only seeded when it is on
+  /// an allow-listed host (§90.D10), so an unexpected avatar host can't fail
+  /// the whole profile write.
   Future<void> ensureProfile(User user) async {
     final ref = _users.doc(user.uid);
     final snap = await ref.get();
     final existing = snap.data() ?? const {};
+    final authPhoto = user.photoURL;
     await ref.set({
       'displayName': user.displayName ?? existing['displayName'] ?? '',
-      if (user.photoURL != null && existing['photoUrl'] == null)
-        'photoUrl': user.photoURL,
+      if (authPhoto != null &&
+          existing['photoUrl'] == null &&
+          isAllowedPhotoUrl(authPhoto))
+        'photoUrl': authPhoto,
       if (user.email != null) ...{
         'email': user.email,
         'emailLower': user.email!.toLowerCase(),
       },
+      if (existing['visibility'] == null) 'visibility': 'public',
       if (!snap.exists) ...{
         'followerCount': 0,
         'followingCount': 0,
@@ -257,7 +272,11 @@ class ProfileRepository {
       {int limit = 20}) async {
     final q = query.trim().toLowerCase().replaceAll('@', '');
     if (q.isEmpty) return [];
+    // `visibility == 'public'` is required by firestore.rules for any list
+    // query on users (issues §90.A4/§90.D9) — mutual/private riders are only
+    // reachable through a link to their profile, never through search.
     final snap = await _users
+        .where('visibility', isEqualTo: 'public')
         .where('usernameLower', isGreaterThanOrEqualTo: q)
         .where('usernameLower', isLessThan: q + String.fromCharCode(0xf8ff))
         .limit(limit)
@@ -267,12 +286,25 @@ class ProfileRepository {
         .toList();
   }
 
-  /// Get recent users for suggestions
-  Future<List<UserProfileEntity>> getRecentUsers({int limit = 50}) async {
-    final snap = await _users
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
+  /// Recently joined riders with a public profile, for suggestions and All
+  /// People. Public-only by rule (issues §90.A4) — needs the composite index
+  /// (visibility ASC, createdAt DESC) in firestore.indexes.json.
+  ///
+  /// [createdBefore] is a page cursor: pass the last returned profile's
+  /// `createdAt` to fetch the next page instead of re-reading the first one
+  /// with a bigger limit. Profiles sharing that exact timestamp may be
+  /// skipped — harmless for a browse list.
+  Future<List<UserProfileEntity>> getRecentUsers({
+    int limit = 50,
+    DateTime? createdBefore,
+  }) async {
+    Query<Map<String, dynamic>> q = _users
+        .where('visibility', isEqualTo: 'public')
+        .orderBy('createdAt', descending: true);
+    if (createdBefore != null) {
+      q = q.startAfter([Timestamp.fromDate(createdBefore)]);
+    }
+    final snap = await q.limit(limit).get();
     return snap.docs
         .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
         .toList();
@@ -283,20 +315,40 @@ class ProfileRepository {
       {int limit = 10}) async {
     final e = email.trim().toLowerCase();
     if (e.isEmpty) return [];
-    final snap =
-        await _users.where('emailLower', isEqualTo: e).limit(limit).get();
+    final snap = await _users
+        .where('visibility', isEqualTo: 'public')
+        .where('emailLower', isEqualTo: e)
+        .limit(limit)
+        .get();
     return snap.docs
         .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
         .toList();
   }
 
-  /// Blocks a user by adding their uid to the current user's blocks subcollection.
+  /// Blocks a user: writes `users/{me}/blocks/{them}` and, in the same
+  /// transaction, drops the follow edges in both directions.
+  ///
+  /// Their edge (`follows/{them}_{me}`) is the one that matters: since
+  /// §88.1 a followers/mutual post is visible to whoever holds a live follow
+  /// edge, so leaving it let a blocked rider keep reading those posts
+  /// (issues §90.A11). firestore.rules lets the followee delete an edge
+  /// pointing at them for exactly this. Mine (`follows/{me}_{them}`) goes
+  /// too, the way blocking works everywhere else. Each edge is read first
+  /// and only deleted if present — a delete of a missing doc has no
+  /// `resource` for the rule to check and would fail the whole block.
   Future<void> blockUser(String currentUserId, String blockedUserId) async {
-    await _users
-        .doc(currentUserId)
-        .collection('blocks')
-        .doc(blockedUserId)
-        .set({'blockedAt': FieldValue.serverTimestamp()});
+    final follows = _firestore.collection('follows');
+    final theirEdge = follows.doc('${blockedUserId}_$currentUserId');
+    final myEdge = follows.doc('${currentUserId}_$blockedUserId');
+    final blockRef =
+        _users.doc(currentUserId).collection('blocks').doc(blockedUserId);
+    await _firestore.runTransaction((txn) async {
+      final theirs = await txn.get(theirEdge);
+      final mine = await txn.get(myEdge);
+      txn.set(blockRef, {'blockedAt': FieldValue.serverTimestamp()});
+      if (theirs.exists) txn.delete(theirEdge);
+      if (mine.exists) txn.delete(myEdge);
+    });
   }
 
   /// Unblocks a user by removing their uid from the current user's blocks subcollection.

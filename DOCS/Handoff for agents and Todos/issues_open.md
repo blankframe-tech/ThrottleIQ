@@ -921,7 +921,48 @@ tests green. Scratch files deleted. Full detail in features.md §7.
 
 ---
 
-## 90. Full-codebase audit — 5 parallel reviews (2026-10-06) — OPEN
+## 90. Full-codebase audit — 5 parallel reviews (2026-10-06) — MOSTLY FIXED (see status)
+
+**Status after the 2026-10-06 fix pass:** fixed in code (not committed, not
+on a device) — see `issues_fixed.md` §90 for every ID. **Still open:**
+- **Owner actions:**
+  - Turn on branch protection (B1).
+  - Run `pod install` and do on-device iOS mic/camera checks (B2/B3).
+  - Ship the app, then deploy rules and indexes together.
+  - Backfill `users.visibility`.
+  - Check Cloudinary folder mode before the functions deploy (D2).
+  - Approve deleting the dead files (B8): `ride_repository.dart`,
+    `ride_repository_impl.dart`, `ride_repository_provider.dart`,
+    `test/repositories/ride_repository_test.dart`, `motorcycle_quotes.dart`,
+    `datetime_extensions.dart`, `auth/domain/entities/user_entity.dart` and
+    `test/widget_test.dart`. Removing them was blocked by the session's
+    permission check.
+- **Device checks:**
+  - Pause now stops the Android foreground notification; check that resume
+    restarts GPS and the notification (C1).
+  - Does `FlutterForegroundTask.isRunningService` work from the UI isolate (C2)?
+  - Does the background isolate see the ride marker after `prefs.reload()` (C3)?
+  - The C4 pointer transaction.
+  - The 20 s group-ride cadence.
+- **Not done (large refactors, or need a device):**
+  - B4/B5: providers for Firestore/Auth/DB/uid and the layering.
+  - B6: migrating about 42 debugPrint-only catches to `reportNonFatal`.
+  - B7: the other god files.
+  - B9: `RideRecordingNotifier` is still not constructible in tests.
+  - B10: dependency majors.
+  - B12: Play Console declarations.
+  - B13: `StatefulShellRoute`. Skipped because it changes every tab's lifecycle;
+    do it with the go_router upgrade and a device pass.
+  - B14: repo clutter, PDFs/LFS and the keystore location.
+- **Accepted / partial:**
+  - D9: the `follows` list stays unconstrained. Every client query filters on
+    one side, and the list exposes uids only, not emails.
+  - D6: profile emails spoofed before this fix aren't cleaned up.
+  - D8: no follow requests. The "Followers" label is kept in the edit-profile
+    garage control because the longer text doesn't fit there.
+  - A8: one vote read per visible forum post remains.
+- Paused rides block auto-detection until the rider resumes or ends them. This
+  is deliberate.
 
 Read-only audit across security/rules, ride pipeline + sync, social data layer,
 architecture/tests/tooling and docs accuracy. Each item was deduped against

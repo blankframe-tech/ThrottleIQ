@@ -49,7 +49,7 @@ Here is the unvarnished analysis of the weaknesses and blind spots that were lef
 ## 1. Data Loss, Retention & Deletion Bombs
 
 ### 1.2 `liveSessions` Deletion Lock & Timestamp Type Corruption
-* **Code Reference:** [`firestore.rules:478-484`](file:///Users/blackbird/Everything/dev/ThrottleIQ/firestore.rules#L478-L484) & [`live_session_coordinator.dart:181-188`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/helpers/live_session_coordinator.dart#L181-L188)
+* **Code Reference:** [`firestore.rules:478-484`](../../../firestore.rules#L478-L484) & [`live_session_coordinator.dart:181-188`](../../../app/lib/features/ride/presentation/providers/helpers/live_session_coordinator.dart#L181-L188)
 * **The Flaw:**
   1. In `firestore.rules`:
      ```javascript
@@ -68,20 +68,20 @@ Here is the unvarnished analysis of the weaknesses and blind spots that were lef
 ## 2. Offline-First Architectural Illusions & Outbox Traps
 
 ### 2.2 The 80% Unbuffered Outbox Coverage Gap
-* **Code Reference:** [`outbox_service.dart:18-31`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/outbox_service.dart#L18-L31)
+* **Code Reference:** [`outbox_service.dart:18-31`](../../../app/lib/core/cloud/outbox_service.dart#L18-L31)
 * **The Flaw:**
   - ThrottleIQ markets itself on its robust transactional offline outbox.
   - However, `OutboxKind` only supports three things: `share_ride`, `live_session_teardown`, and `maintenance_log`.
   - **Every other cloud write in the application bypasses the outbox entirely:**
-    - Adding or replying to forum threads ([`forum_repository.dart:75`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/forums/data/repositories/forum_repository.dart#L75) uses `runTransaction` directly, which crashes when offline).
+    - Adding or replying to forum threads ([`forum_repository.dart:75`](../../../app/lib/features/forums/data/repositories/forum_repository.dart#L75) uses `runTransaction` directly, which crashes when offline).
     - Upvoting, downvoting, or liking shared rides and forum posts.
     - Adding places or submitting reviews in the POI directory.
-    - Sending direct chat messages ([`chat_room_screen.dart:496`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/chat/presentation/chat_room_screen.dart#L496) clears text input and fires unbuffered Firestore writes).
+    - Sending direct chat messages ([`chat_room_screen.dart:496`](../../../app/lib/features/chat/presentation/chat_room_screen.dart#L496) clears text input and fires unbuffered Firestore writes).
     - Following or unfollowing other riders.
   - If a rider goes on a remote tour without cellular data, 80% of the app's interactive features freeze, throw unhandled network errors, or drop user input.
 
 ### 2.3 Emergency Crash Alert Bypasses the Outbox (Cellular Dead-Zone Abandonment)
-* **Code Reference:** [`crash_coordinator.dart:88-109`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/helpers/crash_coordinator.dart#L88-L109)
+* **Code Reference:** [`crash_coordinator.dart:88-109`](../../../app/lib/features/ride/presentation/providers/helpers/crash_coordinator.dart#L88-L109)
 * **The Flaw:**
   ```dart
   await _bestEffortWrite(
@@ -108,14 +108,14 @@ Here is the unvarnished analysis of the weaknesses and blind spots that were lef
 ## 4. Telemetry Calculation & Sensor Drift Realities
 
 ### 4.2 Auto-Tracking Commute Contamination & Persistent Service Leak on Logout
-* **Code Reference:** [`auto_tracking_service.dart:65-67`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/auto_tracking_service.dart#L65-L67) & [`auth_provider.dart:131-137`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/auth/presentation/providers/auth_provider.dart#L131-L137)
+* **Code Reference:** [`auto_tracking_service.dart:65-67`](../../../app/lib/core/services/auto_tracking_service.dart#L65-L67) & [`auth_provider.dart:131-137`](../../../app/lib/features/auth/presentation/providers/auth_provider.dart#L131-L137)
 * **The Flaw:**
   1. `_isVehicleLike` treats `ActivityType.IN_VEHICLE` and `ActivityType.ON_BICYCLE` as motorcycle rides. If a rider rides a bicycle, takes a public bus, rides in an Uber, or travels by train, the background tracker wakes up and logs fixes.
   2. On next launch, `AutoRideReconcilerService` automatically promotes the trip to the active motorcycle in the garage, increments the bike's odometer, and reduces oil-change intervals based on a bus ride!
-  3. When a user taps "Sign Out" ([`auth_provider.dart:131`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/auth/presentation/providers/auth_provider.dart#L131)), `AutoTrackingService.stop()` is **never called**. The foreground task keeps running, logging fixes while unauthenticated, and attributes them to the next user who signs in on that device.
+  3. When a user taps "Sign Out" ([`auth_provider.dart:131`](../../../app/lib/features/auth/presentation/providers/auth_provider.dart#L131)), `AutoTrackingService.stop()` is **never called**. The foreground task keeps running, logging fixes while unauthenticated, and attributes them to the next user who signs in on that device.
 
 ### 4.3 Open-Meteo Weather Local vs. UTC Timezone Offset Skew
-* **Code Reference:** [`weather_service.dart:55-69`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/weather_service.dart#L55-L69)
+* **Code Reference:** [`weather_service.dart:55-69`](../../../app/lib/core/services/weather_service.dart#L55-L69)
 * **The Flaw:**
   - `fetchForRide` queries Open-Meteo with `timezone=auto`. The API returns an array of timestamps in local solar time (e.g. `2026-09-20T14:00`).
   - The comparison loop compares `t.difference(at).abs()`, where `at` is the device's recorded timestamp.
@@ -126,7 +126,7 @@ Here is the unvarnished analysis of the weaknesses and blind spots that were lef
 ## 5. Audio, Hardware & Platform Constraints
 
 ### 5.1 Push-To-Talk Voice Notes are Dead-On-Arrival (`just_audio` Execution Race)
-* **Code Reference:** [`group_ride_map_screen.dart:340-354`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/social/presentation/screens/group_ride_map_screen.dart#L340-L354)
+* **Code Reference:** [`group_ride_map_screen.dart:340-354`](../../../app/lib/features/social/presentation/screens/group_ride_map_screen.dart#L340-L354)
 * **The Smoking Gun:**
   ```dart
   try {
@@ -179,17 +179,17 @@ REMEDIATION MATRIX
 
 ### Phase 1: P0 Immediate Data & Audio Fixes (Days 1–3)
 1. **Fix `just_audio` Playback Completion:**
-   In [`group_ride_map_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/social/presentation/screens/group_ride_map_screen.dart), await player state completion (`await _voicePlayer.playerStateStream.firstWhere((s) => s.processingState == ProcessingState.completed)`) before deactivating the audio session.
+   In [`group_ride_map_screen.dart`](../../../app/lib/features/social/presentation/screens/group_ride_map_screen.dart), await player state completion (`await _voicePlayer.playerStateStream.firstWhere((s) => s.processingState == ProcessingState.completed)`) before deactivating the audio session.
 2. **Prevent Ride Annihilation on Bike Delete:**
-   In [`bike_dao.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/database/daos/bike_dao.dart), remove `txn.delete('rides')` and `txn.delete('ride_points')`. Instead, set `bike_id = 'unassigned'` or add an `is_archived = 1` flag to the bike.
+   In [`bike_dao.dart`](../../../app/lib/core/database/daos/bike_dao.dart), remove `txn.delete('rides')` and `txn.delete('ride_points')`. Instead, set `bike_id = 'unassigned'` or add an `is_archived = 1` flag to the bike.
 3. **Allow `liveSessions` Deletion in Rules:**
-   In [`firestore.rules`](file:///Users/blackbird/Everything/dev/ThrottleIQ/firestore.rules), add `allow delete: if request.auth.uid == resource.data.uid;` to `match /liveSessions/{token}`.
+   In [`firestore.rules`](../../../firestore.rules), add `allow delete: if request.auth.uid == resource.data.uid;` to `match /liveSessions/{token}`.
 
 ### Phase 2: P1 Outbox Durability & Map Caching (Days 4–7)
 1. **Route Emergency Notifications through Outbox:**
-   In [`crash_coordinator.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/helpers/crash_coordinator.dart), replace `_bestEffortWrite` with a dedicated `OutboxKind.crashNotification` so an emergency alert survives cellular dead zones.
+   In [`crash_coordinator.dart`](../../../app/lib/features/ride/presentation/providers/helpers/crash_coordinator.dart), replace `_bestEffortWrite` with a dedicated `OutboxKind.crashNotification` so an emergency alert survives cellular dead zones.
 2. **Add Outbox Poison-Pill Quarantine:**
-   In [`outbox_service.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/outbox_service.dart), discard or quarantine entries after 10 failed attempts or when receiving a permanent `permission-denied` error.
+   In [`outbox_service.dart`](../../../app/lib/core/cloud/outbox_service.dart), discard or quarantine entries after 10 failed attempts or when receiving a permanent `permission-denied` error.
 3. **Implement Tile Caching:**
    Integrate `flutter_map_cache` with a local SQLite or file-system cache store on `TileLayer` to prevent blank screens in offline areas and comply with OSM terms.
 

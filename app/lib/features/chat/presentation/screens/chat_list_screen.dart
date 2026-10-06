@@ -103,37 +103,38 @@ class ChatListScreen extends ConsumerWidget {
               if (otherUserId.isEmpty) return const SizedBox.shrink();
 
               final otherProfileAsync = ref.watch(profileProvider(otherUserId));
-              
-              return otherProfileAsync.when(
-                loading: () => ListTile(title: Text(context.l10n.loading)),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (profile) {
-                  if (profile == null) return const SizedBox.shrink();
+              if (otherProfileAsync.isLoading && !otherProfileAsync.hasValue) {
+                return ListTile(title: Text(context.l10n.loading));
+              }
+              // A profile the rules won't let us read (private / mutual-only
+              // visibility) or that no longer exists used to hide the WHOLE
+              // conversation (issues §90.A12b). The chat itself is still
+              // readable, so show it under a placeholder name instead.
+              final profile = otherProfileAsync.valueOrNull;
+              final name = profile?.bestName ?? context.l10n.riderFallbackName;
 
-                  final lastMsg = chat.lastMessage;
-                  String subtitle = context.l10n.sayHi;
+              final lastMsg = chat.lastMessage;
+              String subtitle = context.l10n.sayHi;
 
-                  if (lastMsg != null) {
-                    subtitle = lastMsg['text'] ?? '';
-                  }
+              if (lastMsg != null) {
+                subtitle = lastMsg['text'] ?? '';
+              }
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 24),
-                    title: Text(profile.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
-                    subtitle: Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: context.palette.textSecondary),
-                    ),
-                    trailing: Text(
-                      DateFormat.MMMd().format(chat.updatedAt),
-                      style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
-                    ),
-                    onTap: () => context.push('/chats/${chat.id}', extra: profile),
-                  );
-                },
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: UserAvatar(photoUrl: profile?.photoUrl, name: name, radius: 24),
+                title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
+                subtitle: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.palette.textSecondary),
+                ),
+                trailing: Text(
+                  DateFormat.MMMd().format(chat.updatedAt),
+                  style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
+                ),
+                onTap: () => context.push('/chats/${chat.id}', extra: profile),
               );
             },
           );

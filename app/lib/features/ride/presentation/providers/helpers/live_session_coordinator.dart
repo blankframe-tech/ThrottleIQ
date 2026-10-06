@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
 import 'package:throttleiq/core/services/battery_service.dart';
+import 'package:throttleiq/core/services/public_live_link_setting.dart';
 import 'package:throttleiq/features/ride/domain/entities/live_session_entity.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
 
@@ -13,9 +14,17 @@ import 'package:throttleiq/features/ride/presentation/providers/ride_recording_p
 class LiveSessionCoordinator {
   LiveSessionCoordinator({
     FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+    Future<bool> Function()? publicLinkEnabled,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _publicLinkEnabled =
+            publicLinkEnabled ?? PublicLiveLinkSetting.isEnabled;
 
   final FirebaseFirestore _firestore;
+
+  /// Whether the rider opted in to the permanent `/r/{username}` link
+  /// (Settings → "Public link (/r/@handle)", issues §90.D7). Read per share,
+  /// so a change in Settings applies to the next share without a restart.
+  final Future<bool> Function() _publicLinkEnabled;
   String? _currentLiveSessionToken;
   Timer? _liveSessionTimer;
   bool _liveShareEnabled = false;
@@ -161,7 +170,7 @@ class LiveSessionCoordinator {
                 'updatedAt': FieldValue.serverTimestamp(),
               }),
         ),
-        if (existingToken == null) _publishLivePointer(uid, token),
+        if (existingToken == null) _maybePublishLivePointer(uid, token),
       ]);
 
       return token;
@@ -169,6 +178,19 @@ class LiveSessionCoordinator {
       debugPrint('[LiveSession] Failed to publish live session: $e');
       return null;
     }
+  }
+
+  /// Publishes `livePointers/{uid}` — the `/r/{username}` permanent link —
+  /// ONLY when the rider has turned on the public link setting. The pointer
+  /// is `get: if true` in firestore.rules, so anyone who knows the rider's
+  /// @handle can follow them unauthenticated; that used to happen silently on
+  /// every opt-in share, while the app only ever showed the private
+  /// `/live/{token}` link (issues §90.D7). Default OFF.
+  Future<void> _maybePublishLivePointer(String uid, String token) async {
+    if (!await _publicLinkEnabled()) return;
+    // Sharing may have been stopped while the setting was being read.
+    if (!_liveShareEnabled || _currentLiveSessionToken != token) return;
+    await _publishLivePointer(uid, token);
   }
 
   /// Publishes/refreshes `livePointers/{uid}` for permanent link indirection.

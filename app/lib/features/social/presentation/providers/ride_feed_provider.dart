@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../data/repositories/follow_repository.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../../domain/feed_page_merge.dart';
+import '../../domain/feed_source_plan.dart';
 import '../../domain/feed_sort.dart';
 import 'follow_providers.dart';
+
+// followingUidsProvider moved to follow_providers.dart (the one follow-graph
+// listener everything derives from); re-exported so existing imports work.
+export 'follow_providers.dart' show followingUidsProvider;
 
 /// How many rides each backing query fetches per page.
 const int kFeedPageSize = 20;
@@ -19,20 +23,6 @@ const int kFeedPageSize = 20;
 /// is a momentary "show me what's hot", not a preference. Defaults to
 /// [FeedSort.recent] — opening the tab should show what riders just posted.
 final feedSortProvider = StateProvider<FeedSort>((ref) => FeedSort.recent);
-
-/// Uids the signed-in rider follows — live.
-///
-/// The follow graph is small (one doc per edge). This used to be a one-shot
-/// `FutureProvider` that was never invalidated by follow/unfollow, so a rider
-/// followed mid-session never reached the feed's followed-authors source (or
-/// the Following chip) until the app was restarted.
-final followingUidsProvider = StreamProvider<Set<String>>((ref) {
-  final uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) return Stream.value(const <String>{});
-  return FollowRepository()
-      .watchFollowing(uid)
-      .map((ids) => ids.toSet());
-});
 
 /// Fetches a single shared ride by ID.
 final sharedRideProvider = FutureProvider.autoDispose
@@ -89,6 +79,11 @@ class FeedState {
 
 final rideFeedNotifierProvider =
     StateNotifierProvider<RideFeedNotifier, FeedState>((ref) {
+  // Rebuilt from scratch on account switch (issues §90.A12a): without this,
+  // signing out of A and into B — both following nobody, so the follow-set
+  // listener below never fires — kept showing B the feed fetched for A,
+  // including A's followers-only rides.
+  ref.watch(currentUserProvider.select((u) => u?.uid));
   final notifier = RideFeedNotifier(ref)..refresh();
   // Following (or unfollowing) someone changes which authors the feed
   // fetches, so re-pull from the top. Only on a real change of the set, not
@@ -142,15 +137,18 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
   /// Reloads the feed from the top, dropping the cursor.
   Future<void> refresh() async {
     _cursor = null;
+    _exhausted.clear();
     state = state.copyWith(isLoading: true, clearError: true, hasMore: true);
     try {
-      final page = await _fetchPage();
+      final page = await _fetchPage(refreshMutuals: true);
+      if (!mounted) return;
       state = FeedState(
         rides: page,
         isLoading: false,
         hasMore: _lastPageHasMore,
       );
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e);
     }
   }
@@ -162,6 +160,7 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     state = state.copyWith(isLoadingMore: true);
     try {
       final page = await _fetchPage();
+      if (!mounted) return;
       final merged = _merge(state.rides, page);
       state = state.copyWith(
         rides: merged,
@@ -172,20 +171,37 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
         clearError: true,
       );
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoadingMore: false, error: e);
     }
   }
+
+  /// Sources that came back exhausted (see [isFeedSourceExhausted]) since
+  /// the last [refresh] — skipped on every later page, since the cursor only
+  /// ever moves older. Keys: `public`, `shared`, `mine`, `pub:<chunk index>`,
+  /// `restricted:<uid>`.
+  final Set<String> _exhausted = <String>{};
 
   /// One page from every source the rider can see, merged newest-first.
   ///
   /// Firestore rules can't filter a single list query across audiences (see
   /// firestore.rules `rideVisibleTo`), so this fans out to the queries that
-  /// each line up with one visibility clause.
-  Future<List<SharedRideEntity>> _fetchPage() async {
+  /// each line up with one visibility clause:
+  ///  * every public ride (discovery);
+  ///  * rides materialized to me via `allowedUserIds` (followers/mutual at
+  ///    share time);
+  ///  * my own rides;
+  ///  * public rides by followed authors — chunked `whereIn`, ≤30 authors
+  ///    per query (issues §90.A1);
+  ///  * per followed author, their `followers`/`mutual` rides with a small
+  ///    limit — the §88.1 live-graph path, so a rider who followed after the
+  ///    share still sees it. Authors whose restricted source is exhausted
+  ///    aren't re-queried on later pages.
+  Future<List<SharedRideEntity>> _fetchPage({bool refreshMutuals = false}) async {
     final uid = _ref.read(currentUserProvider)?.uid;
     // The "Following" chip needs rides BY the people the rider follows, which
     // the public-discovery query can't be relied on to contain — that was the
-    // empty-Following bug. Fetched as its own source so the chip filters a
+    // empty-Following bug. Fetched as their own sources so the chip filters a
     // superset rather than a 20-ride sample.
     //
     // Awaited, not `.valueOrNull`: the very first page is fetched the instant
@@ -197,45 +213,85 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     try {
       following = await _ref.read(followingUidsProvider.future);
       if (uid != null && following.isNotEmpty) {
-        // Find which of these followed authors follow back, so we can request
-        // their 'mutual' posts. (issues §88.1)
-        final followRepo = _ref.read(followRepositoryProvider);
-        mutual = await followRepo.getFollowersAmong(uid, following);
+        // Which followed authors follow back, so their 'mutual' posts may be
+        // requested (issues §88.1). Cached in mutualIdsProvider across pages;
+        // re-checked only on a refresh.
+        if (refreshMutuals) _ref.invalidate(mutualIdsProvider);
+        mutual = await _ref.read(mutualIdsProvider.future);
       }
     } catch (_) {
       following = const <String>{};
     }
 
-    // hydrateVotes: false on every source — these four result sets overlap
+    final keys = <String>[];
+    final limits = <int>[];
+    final futures = <Future<List<SharedRideEntity>>>[];
+    void add(String key, int limit, Future<List<SharedRideEntity>> Function() run) {
+      if (_exhausted.contains(key)) return;
+      keys.add(key);
+      limits.add(limit);
+      futures.add(run());
+    }
+
+    // hydrateVotes: false on every source — these result sets overlap
     // heavily, and hydrating inside each query would fetch the same ride's
-    // vote up to four times. Hydrate once, after the merge (issues §83.20).
-    final results = await Future.wait([
-      _repo.getPublicRides(
-          limit: kFeedPageSize, before: _cursor, hydrateVotes: false),
-      if (uid != null)
-        _repo.getSharedToMe(uid,
-            limit: kFeedPageSize, before: _cursor, hydrateVotes: false)
-      else
-        Future.value(<SharedRideEntity>[]),
-      if (uid != null)
-        _repo.getMyRides(uid,
-            limit: kFeedPageSize, before: _cursor, hydrateVotes: false)
-      else
-        Future.value(<SharedRideEntity>[]),
-      if (following.isNotEmpty)
-        _repo.getRidesByAuthors(following,
-            mutualUids: mutual,
-            limit: kFeedPageSize, before: _cursor, hydrateVotes: false)
-      else
-        Future.value(<SharedRideEntity>[]),
-    ]);
+    // vote several times. Hydrate once, after the merge (issues §83.20).
+    final before = _cursor;
+    add('public', kFeedPageSize, () => _repo.getPublicRides(
+        limit: kFeedPageSize, before: before, hydrateVotes: false));
+    if (uid != null) {
+      add('shared', kFeedPageSize, () => _repo.getSharedToMe(uid,
+          limit: kFeedPageSize, before: before, hydrateVotes: false));
+      add('mine', kFeedPageSize, () => _repo.getMyRides(uid,
+          limit: kFeedPageSize, before: before, hydrateVotes: false));
+    }
+
+    final authors = following.where((a) => a != uid).toList()..sort();
+    final chunks = chunkList(authors);
+    final liveChunks = [
+      for (var i = 0; i < chunks.length; i++)
+        if (!_exhausted.contains('pub:$i')) i,
+    ];
+    final chunkResults = liveChunks.isEmpty
+        ? null
+        : _repo.getPublicRidesByAuthorChunks(
+            [for (final i in liveChunks) chunks[i]],
+            limit: kFeedPageSize,
+            before: before);
+    for (var j = 0; j < liveChunks.length; j++) {
+      add('pub:${liveChunks[j]}', kFeedPageSize,
+          () => chunkResults!.then((all) => all[j]));
+    }
+
+    for (final author in authors) {
+      add('restricted:$author', kRestrictedPerAuthorLimit,
+          // Tolerant per author: an edge that vanished mid-session (an
+          // unfollow racing this page, or the author blocking the viewer)
+          // makes the rules deny just this query — it must not blank the
+          // whole feed.
+          () => _repo
+              .getRestrictedRidesByAuthor(author,
+                  audiences: restrictedAudiencesFor(author, mutual),
+                  limit: kRestrictedPerAuthorLimit,
+                  before: before)
+              .catchError((Object _) => const <SharedRideEntity>[]));
+    }
+
+    final results = await Future.wait(futures);
 
     // See mergeFeedSources: the cursor is the newest "horizon" among sources
     // that returned a full page, not the oldest ride overall — the latter
     // skipped every ride a dense source had between the two.
-    final merged = mergeFeedSources(results, pageSize: kFeedPageSize);
+    final merged = mergeFeedSources(results,
+        pageSize: kFeedPageSize, pageSizes: limits);
     if (merged.cursor != null) _cursor = merged.cursor;
     _lastPageHasMore = merged.hasMore;
+    final cut = merged.hasMore ? merged.cursor : null;
+    for (var i = 0; i < results.length; i++) {
+      if (isFeedSourceExhausted(results[i], limit: limits[i], cut: cut)) {
+        _exhausted.add(keys[i]);
+      }
+    }
     return _repo.hydrateVotesFor(merged.rides);
   }
 

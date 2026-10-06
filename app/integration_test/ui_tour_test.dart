@@ -384,7 +384,11 @@ Future<void> loadData() async {
   final forums = await safe('forums', () => c.read(customForumsProvider.future).timeout(const Duration(seconds: 20)));
   if (forums != null) {
     for (final f in forums) {
-      final posts = await safe('posts', () => c.read(forumPostsProvider(f.id).future));
+      // forumPostsProvider is autoDispose and paged now: keep it alive for
+      // the read, then take the first page's posts.
+      final sub = c.listen(forumPostsProvider(f.id).future, (_, __) {});
+      final posts = (await safe('posts', () => sub.read()))?.page.posts;
+      sub.close();
       if (posts != null && posts.isNotEmpty) {
         data.forumId = f.id;
         data.forumPostId = posts.first.id;

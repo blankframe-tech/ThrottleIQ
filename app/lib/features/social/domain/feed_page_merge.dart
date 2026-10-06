@@ -38,17 +38,27 @@ class MergedFeedPage {
 /// than the *newest* such horizon can be shown yet. Everything at or after it
 /// is complete across every source; everything older is dropped from this
 /// page and re-fetched (and de-duplicated by id) on the next.
+///
+/// [pageSizes], when given, is the `limit` each source (same index) was
+/// queried with — sources don't all share one: the per-author restricted
+/// queries use a much smaller limit than the public ones (issues §90.A1), and
+/// a source is "full" relative to its OWN limit. Defaults to [pageSize] for
+/// every source.
 MergedFeedPage mergeFeedSources(
   List<List<SharedRideEntity>> sources, {
   required int pageSize,
+  List<int>? pageSizes,
 }) {
+  assert(pageSizes == null || pageSizes.length == sources.length);
   final byId = <String, SharedRideEntity>{};
   DateTime? horizon;
-  for (final source in sources) {
+  for (var i = 0; i < sources.length; i++) {
+    final source = sources[i];
+    final limit = pageSizes?[i] ?? pageSize;
     for (final ride in source) {
       byId[ride.id] = ride;
     }
-    if (source.length >= pageSize && source.isNotEmpty) {
+    if (source.length >= limit && source.isNotEmpty) {
       final oldest = source
           .map((r) => r.createdAt)
           .reduce((a, b) => a.isBefore(b) ? a : b);

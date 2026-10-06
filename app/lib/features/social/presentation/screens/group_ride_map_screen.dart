@@ -28,20 +28,7 @@ import '../widgets/share_group_ride_code_sheet.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/i18n/l10n_context.dart';
-
-/// How often this device publishes its own position to the group.
-///
-/// Slower than the ride recorder's own GPS cadence on purpose: the recorder
-/// keeps a 3 m-resolution trace for the ride file, whereas the group map only
-/// needs "roughly where is everyone", and every publish is a Firestore write
-/// billed against all group members' listeners.
-const Duration kGroupRideBroadcastInterval = Duration(seconds: 5);
-
-/// Past this age a member's position is shown as stale rather than current.
-/// Two broadcast intervals plus slack — long enough that one dropped write
-/// doesn't flag a rider who is fine, short enough that a rider who has lost
-/// signal for half a minute stops being rendered as live.
-const Duration kGroupRideStaleAfter = Duration(seconds: 30);
+import '../../domain/utilities/group_ride_broadcast_gate.dart';
 
 /// The shared live map for a group ride: every member as a differently
 /// coloured marker, updating as they move.
@@ -72,6 +59,11 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   static const _fallbackCenter = LatLng(23.8103, 90.4125);
 
   Timer? _broadcastTimer;
+
+  /// What this device last published, for the movement/heartbeat gate
+  /// ([shouldBroadcastPosition]).
+  LatLng? _lastSentPosition;
+  DateTime? _lastSentAt;
 
   /// Repaints the roster so "last seen 12s ago" keeps counting up even when
   /// nothing is arriving. Without it a group that all lost signal at once
@@ -271,6 +263,19 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     final position = await _resolvePosition();
     if (!mounted || position == null) return;
 
+    // Parked or crawling: skip the write unless the heartbeat is due
+    // (issues §90.A2) — every publish is billed against every member's
+    // listener.
+    final now = DateTime.now();
+    if (!shouldBroadcastPosition(
+      current: position,
+      now: now,
+      lastSent: _lastSentPosition,
+      lastSentAt: _lastSentAt,
+    )) {
+      return;
+    }
+
     try {
       await ref.read(groupRideRepositoryProvider).updateMemberLocation(
             groupRideId: widget.groupRideId,
@@ -278,10 +283,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             lat: position.latitude,
             lng: position.longitude,
           );
+      _lastSentPosition = position;
+      _lastSentAt = now;
     } catch (_) {
       // A single dropped publish is not worth a visible error — the next tick
-      // is five seconds away, and the staleness badge already tells the group
-      // this rider has gone quiet.
+      // retries (the gate stays open since nothing was recorded as sent), and
+      // the staleness badge already tells the group this rider has gone
+      // quiet.
     }
   }
 
@@ -532,7 +540,10 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     try {
       final url = await _uploadService.uploadAudio(
         file,
-        folder: 'voiceNotes/${widget.groupRideId}',
+        // `<kind>/<uid>/...`: the Cloudinary ledger rule and the account-
+        // deletion sweep only accept assets in the uploader's own folder
+        // (issues §90.D2).
+        folder: 'voiceNotes/$uid/${widget.groupRideId}',
       );
       final senderName = (user?.displayName ?? '').trim().isEmpty
           ? 'Rider'

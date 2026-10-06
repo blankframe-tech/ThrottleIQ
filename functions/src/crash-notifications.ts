@@ -37,6 +37,7 @@ interface CrashNotification {
     | 'pending'
     | 'contacted'
     | 'mock_not_sent'
+    | 'no_contacts'
     | 'acknowledged'
     | 'escalated';
 }
@@ -71,6 +72,14 @@ export const onCrashNotification = onDocumentCreated(
 
       if (contactsSnapshot.empty) {
         console.log(`No emergency contacts found for user ${uid}`);
+        // Terminal, like mock_not_sent. Returning without a status write
+        // left the alert at `pending` forever, indistinguishable from one
+        // the function never processed (issues §90.D12).
+        await snap.ref.update({
+          status: 'no_contacts',
+          contactedAt: new Date().toISOString(),
+          contactsResolved: 0,
+        });
         return;
       }
 
@@ -239,8 +248,12 @@ export const escalateCrashAlert = onSchedule(
       // next tick, rather than an arbitrary subset being picked. The cap is
       // logged when hit — silently truncating an emergency path is exactly the
       // sort of thing that should page someone.
+      // crashNotifications is a top-level collection, so a plain collection
+      // query (collectionGroup needed a COLLECTION_GROUP-scope index nobody
+      // had defined). Its composite index (status, contactedAt) is in
+      // firestore.indexes.json.
       const pendingSnapshot = await db
-        .collectionGroup('crashNotifications')
+        .collection('crashNotifications')
         .where('status', '==', 'contacted')
         .where('contactedAt', '<=', fifteenMinutesAgo.toISOString())
         .orderBy('contactedAt', 'asc')

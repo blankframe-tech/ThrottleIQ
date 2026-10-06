@@ -1397,6 +1397,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please add a bike before recording a ride.';
 
   @override
+  String get recordingStartFailed =>
+      'Couldn\'t start the ride. Please try again.';
+
+  @override
   String get aRider => 'A rider';
 
   @override
@@ -1533,7 +1537,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get anyoneThrottleiq => 'Anyone on ThrottleIQ';
 
   @override
-  String get peopleWhoFollow => 'People who follow you';
+  String get peopleWhoFollow =>
+      'Includes people who follow you later. Following doesn\'t need your approval.';
 
   @override
   String get ridersFollowEachOther => 'Riders you follow each other';
@@ -2726,6 +2731,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockUser => 'Block User';
+
+  @override
+  String couldntBlockRider(String error) {
+    return 'Couldn\'t block this rider: $error';
+  }
+
+  @override
+  String get publicLiveLinkTitle => 'Public link (/r/@handle)';
+
+  @override
+  String get publicLiveLinkDesc =>
+      'While you share a live ride, anyone who knows your @username can watch it at /r/@username — no app or sign-in needed. Off by default. Your private live link works either way.';
+
+  @override
+  String get audienceAnyFollower => 'Anyone who follows you';
 
   @override
   String get tapEditFinishSetting =>
@@ -4351,6 +4371,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get joinRideFull => 'This ride is full.';
 
   @override
+  String get joinRideRemoved =>
+      'The ride\'s creator removed you from this ride.';
+
+  @override
   String groupRideTooManyFriends(Object max) {
     return 'You can only ride with $max friends at once.';
   }
@@ -4504,4 +4528,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get partOrderPlacedBody =>
       'This feature is being tested. No order was placed and nothing was charged.';
+
+  @override
+  String get noOtherRidersYet => 'No other riders to show yet.';
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get loadOlderMessages => 'Load older messages';
 }

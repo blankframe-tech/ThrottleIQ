@@ -28,6 +28,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as logger from 'firebase-functions/logger';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { bestName } from './rider-name';
 
 /**
  * Firestore handle, resolved lazily rather than at module load.
@@ -57,11 +58,14 @@ async function canonicalIdentityFor(
   if (!profile.exists) return null;
 
   const data = profile.data() ?? {};
-  const displayName = data.displayName;
   const photoUrl = data.photoUrl;
 
+  // The app's own name rule (bestName), not the raw `displayName` field: a
+  // rider with no displayName on their profile doc (only a nickname or a
+  // handle) used to have every share's byline blanked to '' by this
+  // trigger (issues §90.D12).
   return {
-    userName: typeof displayName === 'string' ? displayName : '',
+    userName: bestName(data),
     userPhotoUrl: typeof photoUrl === 'string' ? photoUrl : '',
   };
 }
@@ -82,6 +86,23 @@ export const reconcileRideIdentity = onDocumentWritten(
     if (!after || !after.exists) return;
 
     const ride = after.data() ?? {};
+
+    // Only a create, or a write that touched the identity fields, needs
+    // reconciling. Every vote and comment bump from other riders is also a
+    // write to this doc; reconciling those cost a profile read each and
+    // changed nothing (issues §90.D12).
+    const before = event.data?.before;
+    if (before?.exists) {
+      const prev = before.data() ?? {};
+      if (
+        prev.userId === ride.userId &&
+        prev.userName === ride.userName &&
+        prev.userPhotoUrl === ride.userPhotoUrl
+      ) {
+        return;
+      }
+    }
+
     const uid = ride.userId;
     if (typeof uid !== 'string' || uid === '') {
       // Shouldn't happen — rules require userId on create — but a malformed

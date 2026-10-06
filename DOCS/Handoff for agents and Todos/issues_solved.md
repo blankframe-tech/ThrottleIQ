@@ -2,18 +2,18 @@
 
 ## codebase.md
 ### 1.1 The 8g GPS Deceleration Paradox (Crash Detection is Dead Code)
-* **Code Reference:** [`event_detector.dart:106-115`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/event_detector.dart#L106-L115) & [`ride_recording_provider.dart:611-625`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L611-L625)
+* **Code Reference:** [`event_detector.dart:106-115`](../../app/lib/features/ride/domain/calculators/event_detector.dart#L106-L115) & [`ride_recording_provider.dart:611-625`](../../app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L611-L625)
 * **The Claim:** ThrottleIQ detects violent vehicle crashes using a tri-factor rule: acceleration spike $>8g$ ($78.48\,\text{m/s}^2$), jerk spike $>10\,\text{m/s}^3$, and rapid deceleration to near-zero speed within 2 seconds.
 * **The Reality:**
-  - In [`ride_recording_provider.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L611), `_detector.detect()` is **only called inside `_onPosition`**, which processes the **1 Hz GPS location stream**.
-  - The `accel` parameter fed to `detect()` is computed by [`MotionCalculator`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/motion_calculator.dart#L31) strictly from GPS fixes: $\Delta v / \Delta t$.
+  - In [`ride_recording_provider.dart`](../../app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L611), `_detector.detect()` is **only called inside `_onPosition`**, which processes the **1 Hz GPS location stream**.
+  - The `accel` parameter fed to `detect()` is computed by [`MotionCalculator`](../../app/lib/features/ride/domain/calculators/motion_calculator.dart#L31) strictly from GPS fixes: $\Delta v / \Delta t$.
   - At a standard $1.0\text{ s}$ GPS fix rate, generating an acceleration magnitude $>78.48\,\text{m/s}^2$ ($8g$) requires the vehicle speed to drop by **at least $78.48\,\text{m/s}$—which is $282.5\,\text{km/h}$ ($175.5\,\text{mph}$)—in a single second**.
   - If a rider crashes into a vehicle or barrier at $80\,\text{km/h}$ ($22.2\,\text{m/s}$), the GPS deceleration over 1 second is at most $22.2\,\text{m/s}^2$ ($\approx 2.26g$), which **completely fails the $8g$ threshold**.
-  - Meanwhile, the hardware IMU (accelerometer/gyroscope) running at 20–50 Hz—which *actually* registers the 15g–30g physical impact shock—is routed exclusively to [`SensorFusionCoordinator.onAccelEvent`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/helpers/sensor_fusion_coordinator.dart#L61-L113). There, it is low-pass filtered with $\alpha = 0.1$ and checked *only* for hard braking ($<-4.0\,\text{m/s}^2$) and rapid acceleration ($>+3.5\,\text{m/s}^2$). **The raw accelerometer impact spike is never passed to `EventDetector`!**
-  - **The Smoking Gun:** The unit test [`crash_detector_test.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/test/calculators/crash_detector_test.dart#L47-L55) passes because the test author manually passed `accel: 90.0, jerk: 12.0` directly into `detector.detect()`. In the live app, this call site never receives IMU data. In production, **crash detection will never trigger at survivable road speeds.**
+  - Meanwhile, the hardware IMU (accelerometer/gyroscope) running at 20–50 Hz—which *actually* registers the 15g–30g physical impact shock—is routed exclusively to [`SensorFusionCoordinator.onAccelEvent`](../../app/lib/features/ride/presentation/providers/helpers/sensor_fusion_coordinator.dart#L61-L113). There, it is low-pass filtered with $\alpha = 0.1$ and checked *only* for hard braking ($<-4.0\,\text{m/s}^2$) and rapid acceleration ($>+3.5\,\text{m/s}^2$). **The raw accelerometer impact spike is never passed to `EventDetector`!**
+  - **The Smoking Gun:** The unit test [`crash_detector_test.dart`](../../app/test/calculators/crash_detector_test.dart#L47-L55) passes because the test author manually passed `accel: 90.0, jerk: 12.0` directly into `detector.detect()`. In the live app, this call site never receives IMU data. In production, **crash detection will never trigger at survivable road speeds.**
 
 ### 1.2 Moving Average Erases Jerk Spikes
-* **Code Reference:** [`event_detector.dart:127-130`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/event_detector.dart#L127-L130)
+* **Code Reference:** [`event_detector.dart:127-130`](../../app/lib/features/ride/domain/calculators/event_detector.dart#L127-L130)
 ```dart
 if (_highAccelStart != null) {
   _peakJerkInWindow = (_peakJerkInWindow == 0)
@@ -24,11 +24,11 @@ if (_highAccelStart != null) {
 * **The Flaw:** `_peakJerkInWindow` tracks an exponential moving average with weight 0.5 rather than `math.max(_peakJerkInWindow, jerk.abs())`. If a crash registers an initial jerk spike of $14\,\text{m/s}^3$ followed by a settling sample of $5.5\,\text{m/s}^3$, `_peakJerkInWindow` immediately drops to $9.75\,\text{m/s}^3$. Because `_crashJerkThreshold` is $10.0\,\text{m/s}^3$, the detector concludes no jerk spike occurred and aborts the crash alert.
 
 ### 1.3 Event Counter Double-Counting
-* **Code References:** [`sensor_fusion_coordinator.dart:101-105`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/helpers/sensor_fusion_coordinator.dart#L101-L105) & [`event_detector.dart:163-172`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/event_detector.dart#L163-L172)
+* **Code References:** [`sensor_fusion_coordinator.dart:101-105`](../../app/lib/features/ride/presentation/providers/helpers/sensor_fusion_coordinator.dart#L101-L105) & [`event_detector.dart:163-172`](../../app/lib/features/ride/domain/calculators/event_detector.dart#L163-L172)
 * **The Flaw:** When a hard brake occurs, `SensorFusionCoordinator.onAccelEvent` mutates `detector.hardBrakeCount++` directly on the IMU thread. Moments later, when the next GPS fix arrives, `_onPosition` calls `_detector.detect(accel: gpsAccel)`. If the GPS speed drop also exceeds $-4.0\,\text{m/s}^2$, `detect()` increments `hardBrakeCount++` a second time on the same instance. Ride analytics summaries systematically double-count aggressive riding metrics.
 
 ### 2.1 Emergency Escalation is a Mock on an Undeployable Tier
-* **Code Reference:** [`functions/src/crash-notifications.ts:53-75, 165-175`](file:///Users/blackbird/Everything/dev/ThrottleIQ/functions/src/crash-notifications.ts#L53-L75)
+* **Code Reference:** [`functions/src/crash-notifications.ts:53-75, 165-175`](../../functions/src/crash-notifications.ts#L53-L75)
 * **The Flaw:**
   1. The app markets automated emergency contact dispatch via SMS/email.
   2. In Cloud Functions, `sendContactNotification` is hardcoded as:
@@ -46,7 +46,7 @@ if (_highAccelStart != null) {
   4. Even if implemented, `throttleiqfb` is on the **Spark (free) tier**. Google Cloud enforces that Cloud Functions requires the Blaze (pay-as-you-go) tier (`artifactregistry.googleapis.com` is locked). **Not a single line of backend crash handling code has ever run or can run.**
 
 ### 2.2 Crashed Rides are Permanently Excluded from Cloud Backup
-* **Code Reference:** [`ride_dao.dart:178-183`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/database/daos/ride_dao.dart#L178-L183) & [`ride_recording_provider.dart:993-996`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L993-L996)
+* **Code Reference:** [`ride_dao.dart:178-183`](../../app/lib/core/database/daos/ride_dao.dart#L178-L183) & [`ride_recording_provider.dart:993-996`](../../app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L993-L996)
 ```dart
 // ride_recording_provider.dart
 await _rideDao.finalizeRide(state.ride!.id, {
@@ -64,15 +64,15 @@ Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
 * **The Flaw:** If a crash is flagged, the ride status is saved as `'crash'`. But `RideDao.getUnsynced()` **strictly queries `status = 'completed'`**. If the rider's phone is smashed or lost in an accident, the crash telemetry is never synced to the cloud.
 
 ### 2.3 SafeQR Medical Card Passcode Trap
-* **Code Reference:** [`safe_qr_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/profile/presentation/screens/safe_qr_screen.dart)
+* **Code Reference:** [`safe_qr_screen.dart`](../../app/lib/features/profile/presentation/screens/safe_qr_screen.dart)
 * **The Flaw:** The SafeQR medical card (blood type, allergies, emergency contacts) is advertised as an on-device card for first responders. But it lives inside an authenticated screen within the application. When an accident occurs, the rider is typically incapacitated and the phone is locked. Paramedics cannot unlock the device or launch ThrottleIQ. Without Lock Screen widget or Apple/Google Wallet integration, this feature is unusable when needed most.
 
 ### 2.4 Android 14+ `USE_FULL_SCREEN_INTENT` Rejection
-* **Code Reference:** [`AndroidManifest.xml:49`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/android/app/src/main/AndroidManifest.xml#L49)
+* **Code Reference:** [`AndroidManifest.xml:49`](../../app/android/app/src/main/AndroidManifest.xml#L49)
 * **The Flaw:** The app declares `USE_FULL_SCREEN_INTENT` for crash alert popups. As of Android 14 (API 34), Google Play restricts full-screen intents exclusively to calling and alarm apps unless an explicit Play Console policy declaration is granted. Without this, Play Store updates are rejected, or the OS silently revokes the capability at runtime, preventing the alert from appearing over the lock screen.
 
 ### 3.1 `downloadRideTrack` is Uncalled Dead Code (Blank Maps on Reinstall)
-* **Code Reference:** [`cloud_repository.dart:417`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/cloud_repository.dart#L417) & [`ride_summary_screen.dart:56-65`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/screens/ride_summary_screen.dart#L56-L65)
+* **Code Reference:** [`cloud_repository.dart:417`](../../app/lib/core/cloud/cloud_repository.dart#L417) & [`ride_summary_screen.dart:56-65`](../../app/lib/features/ride/presentation/screens/ride_summary_screen.dart#L56-L65)
 * **The Flaw:**
   - `CloudRepository.downloadRideTrack(uid, rideId)` was written and documented with the comment:  
     *`Called when a ride's summary/share screen needs a polyline and the local DB has none`*
@@ -81,7 +81,7 @@ Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
   - When a user signs in on a new device, `downloadRides` restores the ride metadata table, but **every past ride map is permanently blank**.
 
 ### 3.2 Sync Ordering Abandons Track Points on Network Drop
-* **Code Reference:** [`sync_manager.dart:268-285`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/sync_manager.dart#L268-L285)
+* **Code Reference:** [`sync_manager.dart:268-285`](../../app/lib/core/cloud/sync_manager.dart#L268-L285)
 * **The Flaw:**
   ```dart
   await _cloudRepository.uploadRides(uid, unsyncedRides);
@@ -94,11 +94,11 @@ Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
   `uploadRides` sets `synced = 1` on the `rides` table in SQLite before track uploads commence. If `uploadRideTrack` fails or times out, the error is caught, but on the next sync cycle, `getUnsynced()` ignores the ride because `synced == 1`. The GPS track points are permanently stranded on the local phone and will never be uploaded.
 
 ### 3.3 Batch Size Hard Limits Cause Unhandled Deletion Failures
-* **Code Reference:** [`cloud_repository.dart:48-62`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/cloud_repository.dart#L48-L62)
+* **Code Reference:** [`cloud_repository.dart:48-62`](../../app/lib/core/cloud/cloud_repository.dart#L48-L62)
 * **The Flaw:** `deleteBikeRemote` fetches all rides associated with a bike and deletes them in a single `_firestore.batch()`. Firestore batches have a hard ceiling of **500 operations**. If a rider has 500 or more rides on a bike, `batch.commit()` throws `IllegalArgumentException: A maximum of 500 writes are allowed in a single batch`, permanently preventing the bike from being deleted. Furthermore, the `track` subcollections under those rides are not deleted, leaving orphaned documents in Firestore.
 
 ### 4.1 PrivacyZoneClipper is a Geometric Illusion
-* **Code Reference:** [`privacy_zone_clipper.dart:41-73`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/social/domain/utilities/privacy_zone_clipper.dart#L41-L73)
+* **Code Reference:** [`privacy_zone_clipper.dart:41-73`](../../app/lib/features/social/domain/utilities/privacy_zone_clipper.dart#L41-L73)
 * **The Flaw:**
   - `_findClipIndex` walks along the polyline accumulating path distance until $\sum \text{segment} \ge 200\text{m}$.
   - If a rider warms up their engine in their driveway, idles at a curb, or circles an apartment garage, GPS drift accumulates $200\text{m}$ of path distance **while remaining within 10 meters of their front door**.
@@ -106,7 +106,7 @@ Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
   - A real privacy zone must clip points within a **$200\text{m}$ Euclidean radius circle** ($\text{haversine}(p_i, p_0) \le 200\text{m}$), not accumulated odometer distance.
 
 ### 4.2 Shared Device Multi-Tenant Contamination
-* **Code References:** [`database_helper.dart:524-538`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/database/database_helper.dart#L524-L538) & [`auto_ride_reconciler_service.dart:65-76`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart#L65-L76)
+* **Code References:** [`database_helper.dart:524-538`](../../app/lib/core/database/database_helper.dart#L524-L538) & [`auto_ride_reconciler_service.dart:65-76`](../../app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart#L65-L76)
 * **The Flaw:**
   - The `auto_detections` and `auto_fixes` SQLite tables contain no `user_id` column.
   - `DatabaseHelper.deleteUserData(userId)` intentionally does not clear these tables on account deletion/logout to avoid wiping in-flight queues.
@@ -114,26 +114,26 @@ Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
   - When User B opens the app, `AutoRideReconcilerService` sweeps `pendingDetections()`, grabs User B's `uid`, and assigns User A's trip data to User B's profile, syncing it to User B's cloud Firestore.
 
 ### 4.3 Static Follower Snapshot in Audience Rules
-* **Code References:** [`ride_share_repository.dart:73-77`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/social/data/repositories/ride_share_repository.dart#L73-L77) & [`firestore.rules:9-15`](file:///Users/blackbird/Everything/dev/ThrottleIQ/firestore.rules#L9-L15)
+* **Code References:** [`ride_share_repository.dart:73-77`](../../app/lib/features/social/data/repositories/ride_share_repository.dart#L73-L77) & [`firestore.rules:9-15`](../../firestore.rules#L9-L15)
 * **The Flaw:**
   - When a ride is shared with `audience: 'followers'`, the author's current followers are snapshotted into `allowedUserIds`.
   - A new follower who joins tomorrow can **never see historical follower-only rides**.
   - A follower who is blocked or unfollows the author tomorrow **retains permanent read access** to previously shared rides.
 
 ### 4.4 Unbounded Unsigned Cloudinary Credentials
-* **Code Reference:** [`cloudinary_upload_service.dart:28-40`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/cloudinary_upload_service.dart#L28-L40)
+* **Code Reference:** [`cloudinary_upload_service.dart:28-40`](../../app/lib/core/services/cloudinary_upload_service.dart#L28-L40)
 * **The Flaw:** Plaintext `cloudName: 'vjvcigkt'` and `uploadPreset: 'throttleiq_unsigned'` are embedded directly in Dart code. Anyone decompiling the APK can issue unauthenticated HTTP POST requests to Cloudinary with arbitrary files, bypassing Firebase Auth, exceeding quota caps, or hosting abusive media on ThrottleIQ's account.
 
 ### 4.5 Public Unauthenticated Voice Notes
-* **Code Reference:** [`cloudinary_upload_service.dart:48-54`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/cloudinary_upload_service.dart#L48-L54)
+* **Code Reference:** [`cloudinary_upload_service.dart:48-54`](../../app/lib/core/services/cloudinary_upload_service.dart#L48-L54)
 * **The Flaw:** Push-to-talk voice clips recorded during group rides are uploaded to Cloudinary as public URLs. Anyone with the URL can listen to private rider communications without authentication or access control.
 
 ### 4.6 Hardcoded Admin Identity
-* **Code References:** [`forum_permissions.dart:5`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/forums/domain/forum_permissions.dart#L5) & [`firestore.rules:91`](file:///Users/blackbird/Everything/dev/ThrottleIQ/firestore.rules#L91)
+* **Code References:** [`forum_permissions.dart:5`](../../app/lib/features/forums/domain/forum_permissions.dart#L5) & [`firestore.rules:91`](../../firestore.rules#L91)
 * **The Flaw:** System administration rights are hardcoded to `'the.abraar.rar@gmail.com'` in both the Flutter client and Firestore security rules. There is no role-based access control (RBAC) via Firebase Auth Custom Claims.
 
 ### 5.2 Chat Repository $O(N)$ Read Cost & Race-Condition Duplication
-* **Code Reference:** [`chat_repository.dart:44-65`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/chat/data/repositories/chat_repository.dart#L44-L65)
+* **Code Reference:** [`chat_repository.dart:44-65`](../../app/lib/features/chat/data/repositories/chat_repository.dart#L44-L65)
 * **The Flaw:**
   - `getOrCreateChat` executes `where('participants', arrayContains: currentUserId).get()`, downloading every chat document the user possesses just to find an existing match.
   - If two riders tap "Message" concurrently, both queries return empty, and both call `chats.add()`. This spawns **two distinct parallel chat rooms** between the same pair of users, bifurcating conversation history.
@@ -150,7 +150,7 @@ Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
 * **The Flaw:** The same spherical trigonometry formula is duplicated 6 times across features rather than centralized in a shared math utility.
 
 ### 6.2 Gyroscope Dead-Reckoning Sign Inversion
-* **Code Reference:** [`vehicle_state_estimator.dart:140-146`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart#L140-L146)
+* **Code Reference:** [`vehicle_state_estimator.dart:140-146`](../../app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart#L140-L146)
 ```dart
 final deltaDeg = yawRateRadS * dtSeconds * (180 / pi);
 _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
@@ -158,17 +158,17 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Flaw:** On Android and iOS, when the phone is mounted screen-up, rotation around the $+Z$ axis is positive in the counter-clockwise direction (turning left). In compass navigation, heading degrees increase clockwise (turning right from North toward East). Adding positive `deltaDeg` directly to `_fusedHeadingDeg` causes a left turn to erroneously increment the heading toward the East.
 
 ### 6.3 Axis Calibration False Positives from Potholes
-* **Code Reference:** [`accel_axis_calibrator.dart:19-25`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/domain/calculators/accel_axis_calibrator.dart#L19-L25)
+* **Code Reference:** [`accel_axis_calibrator.dart:19-25`](../../app/lib/features/ride/domain/calculators/accel_axis_calibrator.dart#L19-L25)
 * **The Flaw:** Before 20 paired samples are gathered, `dominantAxisSignedMagnitude` assigns the entire 3D magnitude to whichever single axis has the largest value. Hitting a sharp pothole produces a large vertical spike ($a_z \approx -10\,\text{m/s}^2$). The calibrator picks $Z$ as dominant and classifies the bump as an extreme $-10\,\text{m/s}^2$ hard braking event.
 
 ### 7.2 iOS Auto-Tracking Impossibility
-* **Code Reference:** [`auto_tracking_service.dart:29-37`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/auto_tracking_service.dart#L29-L37) & [`Info.plist:90-105`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/ios/Runner/Info.plist#L90-L105)
+* **Code Reference:** [`auto_tracking_service.dart:29-37`](../../app/lib/core/services/auto_tracking_service.dart#L29-L37) & [`Info.plist:90-105`](../../app/ios/Runner/Info.plist#L90-L105)
 * **The Flaw:** `flutter_foreground_task` on iOS relies on standard background fetch. iOS executes background fetch arbitrarily (often hours apart). Without native `CLLocationManager.startMonitoringSignificantLocationChanges()` or persistent CoreMotion activity subscriptions, auto-tracking will practically never detect rides on iOS devices.
 
 
 ## other_gaps.md
 ### 1.1 The Garage Cascade Annihilation (Deleting a Bike Wipes Lifetime Ride History)
-* **Code Reference:** [`bike_dao.dart:43-57`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/database/daos/bike_dao.dart#L43-L57) & [`cloud_repository.dart:48-62`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/cloud_repository.dart#L48-L62)
+* **Code Reference:** [`bike_dao.dart:43-57`](../../app/lib/core/database/daos/bike_dao.dart#L43-L57) & [`cloud_repository.dart:48-62`](../../app/lib/core/cloud/cloud_repository.dart#L48-L62)
 * **The Flaw:**
   ```dart
   await db.transaction((txn) async {
@@ -186,10 +186,10 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - When a rider sells their motorcycle or upgrades to a new bike, they tap "Delete Bike" in the Garage.
   - In normal vehicle tracking apps (Strava, Garmin, Rever, Detecht), removing a vehicle archives the bike or leaves historical rides attributed to an unassigned/archived bike ID.
   - **In ThrottleIQ, deleting a bike permanently obliterates every single ride ever taken on that motorcycle.** 200 rides, hundreds of hours of telemetry, personal achievements, and GPS breadcrumbs are instantly purged from both local SQLite and remote Firestore.
-  - The modal dialog in [`bike_detail_screen.dart:238`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/screens/bike_detail_screen.dart#L238) mentions this in one sentence, but providing no option to "Archive Bike" or "Keep Ride History" is a catastrophic data-loss trap.
+  - The modal dialog in [`bike_detail_screen.dart:238`](../../app/lib/features/garage/presentation/screens/bike_detail_screen.dart#L238) mentions this in one sentence, but providing no option to "Archive Bike" or "Keep Ride History" is a catastrophic data-loss trap.
 
 ### 1.3 Incomplete Account Deletion (Apple Guideline 5.1.1(v) & GDPR Failure)
-* **Code Reference:** [`account-deletion.ts:38-41, 83-92`](file:///Users/blackbird/Everything/dev/ThrottleIQ/functions/src/account-deletion.ts#L38-L41)
+* **Code Reference:** [`account-deletion.ts:38-41, 83-92`](../../functions/src/account-deletion.ts#L38-L41)
 * **The Flaw:**
   - Even if the Cloud Functions backend were deployable (it is currently blocked by Spark billing), `onUserAccountDeleted` explicitly admits in its own header comments:
     *`Still NOT covered: community content the rider authored inside other people's spaces (forum posts/replies, place reviews, comments on others' rides, group-ride membership, chats).`*
@@ -198,7 +198,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - Deleting an account leaves orphaned forum posts, hanging UGC, dangling storage files, and permanently corrupted profile statistics across the user base. Apple App Store reviewers routinely test account deletion by inspecting leftover public assets; this will trigger immediate rejection.
 
 ### 2.1 The Outbox Poison-Pill Infinite Retry Loop
-* **Code Reference:** [`outbox_service.dart:294-307`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/outbox_service.dart#L294-L307)
+* **Code Reference:** [`outbox_service.dart:294-307`](../../app/lib/core/cloud/outbox_service.dart#L294-L307)
 * **The Flaw:**
   ```dart
   } catch (e) {
@@ -217,7 +217,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - If User A queues a ride share and logs out, and User B logs in on the same device, User A's outbox writes fail with `permission-denied` (because the auth token belongs to User B). Those items will wake up the network radio, attempt to sync, fail, and reschedule **indefinitely every 30 minutes forever**, wasting CPU cycles, bandwidth, and battery.
 
 ### 3.1 OpenStreetMap Fair-Use Policy Breach & Zero Offline Map Caching
-* **Code Reference:** [`active_ride_screen.dart:71-74`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/screens/active_ride_screen.dart#L71-L74)
+* **Code Reference:** [`active_ride_screen.dart:71-74`](../../app/lib/features/ride/presentation/screens/active_ride_screen.dart#L71-L74)
 * **The Flaw:**
   ```dart
   TileLayer(
@@ -229,7 +229,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   2. **Zero Offline Map Tiles:** `TileLayer` is not wrapped in `flutter_map_cache`, `dio_cache_interceptor`, or vector tile packages (MBTiles/PMTiles). When a rider enters an area without high-speed cellular data, **the map is rendered as an empty, grey checkerboard grid.** For an app advertising offline-first navigation, this is an existential defect.
 
 ### 3.2 Unbounded $O(N)$ Geo-Scan in `PlaceRepository.getNearbyPlaces`
-* **Code Reference:** [`place_repository.dart:165-175`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/poi_directory/data/repositories/place_repository.dart#L165-L175)
+* **Code Reference:** [`place_repository.dart:165-175`](../../app/lib/features/poi_directory/data/repositories/place_repository.dart#L165-L175)
 * **The Flaw:**
   ```dart
   final places = await getAllPlaces(category: category);
@@ -243,14 +243,14 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - At 2,000–10,000 POIs, every tap on the "Places" tab downloads megabytes of data, consumes hundreds of Firestore read quotas per user per session, and triggers severe UI stutter.
 
 ### 3.3 Overpass POI Import: Sequential Network Choke & Identity Hijacking
-* **Code Reference:** [`places_provider.dart:122-136`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/poi_directory/presentation/providers/places_provider.dart#L122-L136)
+* **Code Reference:** [`places_provider.dart:122-136`](../../app/lib/features/poi_directory/presentation/providers/places_provider.dart#L122-L136)
 * **The Flaw:**
   - `importNearbyOsmPlaces` iterates over candidates with a sequential `for (...) await _placeRepository.addPlace(...)` loop. Importing 40 fuel stations in a city requires 40 individual, sequential Firestore network round-trips while the user stares at a loading indicator.
   - Line 132 sets `createdBy: uid`. Every imported public gas station, cafe, and repair shop is permanently attributed to the rider who tapped the import button.
-  - When that rider opens their personal "My Places" screen ([`place_repository.dart:131`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/poi_directory/data/repositories/place_repository.dart#L131)), it is flooded with dozens of generic OpenStreetMap amenity nodes.
+  - When that rider opens their personal "My Places" screen ([`place_repository.dart:131`](../../app/lib/features/poi_directory/data/repositories/place_repository.dart#L131)), it is flooded with dozens of generic OpenStreetMap amenity nodes.
 
 ### 3.4 One-Way GPX Island: Zero Route Import & The Double Cast Bomb
-* **Code Reference:** [`export_service.dart:131-132`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/cloud/export_service.dart#L131-L132)
+* **Code Reference:** [`export_service.dart:131-132`](../../app/lib/core/cloud/export_service.dart#L131-L132)
 * **The Flaw:**
   1. **No Ingestion Pipeline:** ThrottleIQ supports exporting recorded rides to GPX, but contains **zero GPX import capabilities**. Riders cannot import GPX files shared by riding clubs, downloaded from community forums (Wikiloc, ADVrider), or created in Garmin BaseCamp. The route feature is an isolated island.
   2. **Typecast Bomb in GPX Generation:**
@@ -261,7 +261,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
      Just like the typecast bugs flagged in `codebase.md` §3.4, if SQLite deserializes an exact integer coordinate (e.g. `24` or `90`), `p['lat'] as double` throws a fatal `_CastError`, crashing the export flow.
 
 ### 4.1 Moving-Time Distortion from GPS Gap Oversimplification
-* **Code Reference:** [`ride_recording_provider.dart:536-540`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L536-L540)
+* **Code Reference:** [`ride_recording_provider.dart:536-540`](../../app/lib/features/ride/presentation/providers/ride_recording_provider.dart#L536-L540)
 * **The Flaw:**
   ```dart
   if (gapMs <= _maxMovingGapSeconds * 1000) {
@@ -277,7 +277,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - In stop-and-go city riding, this flaw severely inflates moving time, corrupts average moving speed, and distorts the "jam time" traffic metric.
 
 ### 5.2 Global Window Portrait Lock in `main.dart`
-* **Code Reference:** [`main.dart:32-35`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/main.dart#L32-L35)
+* **Code Reference:** [`main.dart:32-35`](../../app/lib/main.dart#L32-L35)
 * **The Flaw:**
   ```dart
   await SystemChrome.setPreferredOrientations([
@@ -289,7 +289,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - Any motorcyclist using a horizontal handlebar stem mount (standard for QuadLock, Peak Design, and SP Connect to keep phone cameras clear of windshields) will find ThrottleIQ permanently rotated sideways with zero OS-level landscape support.
 
 ### 5.3 Home Widget SQLite Table-Scan Scalability Trap
-* **Code Reference:** [`home_widget_service.dart:437-440`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/services/home_widget_service.dart#L437-L440)
+* **Code Reference:** [`home_widget_service.dart:437-440`](../../app/lib/core/services/home_widget_service.dart#L437-L440)
 * **The Flaw:**
   ```dart
   final rideRows = await _rideDao.getAllForUser(uid);
@@ -307,7 +307,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - If external contributions or git branches are pushed, zero automated tests are executed in the cloud. Broken builds, broken rules, and failing tests can be merged to `master` completely undetected.
 
 ### 6.2 The Single-Laptop Keystore Vulnerability (Catastrophic Key Loss Risk)
-* **Code Reference:** [`HANDOFF_Document.md:727-730, 1052`](file:///Users/blackbird/Everything/dev/ThrottleIQ/DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md#L727-L730)
+* **Code Reference:** [`HANDOFF_Document.md:727-730, 1052`](../../DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md#L727-L730)
 * **The Flaw:**
   - The Android release keystore `throttleiq-release.keystore` and `key.properties` exist exclusively on the local developer machine and are gitignored.
   - There is no automated backup, no encrypted secret vault (1Password/Bitwarden), and no CI repository secret storage.
@@ -316,7 +316,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 
 ## UI_UX.md
 ### 1.3 Map Locked North-Up & The Static Dot (Spatial Disorientation)
-* **The Crime:** In both [`active_ride_screen.dart:159-163`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L159-L163) and [`route_navigation_screen.dart:106-113`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart#L106-L113):
+* **The Crime:** In both [`active_ride_screen.dart:159-163`](../../app/lib/features/record/presentation/active_ride_screen.dart#L159-L163) and [`route_navigation_screen.dart:106-113`](../../app/lib/features/routes/presentation/route_navigation_screen.dart#L106-L113):
   ```dart
   _mapCtrl.move(currentPoint, _mapCtrl.camera.zoom);
   ```
@@ -332,7 +332,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Fix:** Bind GPS bearing / gyro heading to camera rotation: `_mapCtrl.rotate(-bearing)`. Keep the vehicle heading pointing straight UP, rotating the world under the bike.
 
 ### 1.4 Zero Audio Turn Guidance (The Head-Down Riding Death Wish)
-* **The Crime:** Inspect [`route_navigation_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart).
+* **The Crime:** Inspect [`route_navigation_screen.dart`](../../app/lib/features/routes/presentation/route_navigation_screen.dart).
   - Turn cues are calculated purely as distance steps:
     ```dart
     Text('${nextStep.distanceRemainingMeters.round()}m ahead', style: TextStyle(fontSize: 22))
@@ -345,7 +345,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 
 ### 1.5 Landscape Cockpit Obliteration
 * **The Crime:** Most dedicated motorcycle mounts (Beeline, QuadLock horizontal stem mount, SP Connect) place the phone in landscape mode to avoid blocking the motorcycle's actual instrument cluster.
-* Look at [`active_ride_screen.dart:330-360`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/record/presentation/active_ride_screen.dart#L330-L360):
+* Look at [`active_ride_screen.dart:330-360`](../../app/lib/features/record/presentation/active_ride_screen.dart#L330-L360):
   ```dart
   Positioned(top: 16, left: 16, right: 16, child: TopBar()),
   Positioned(bottom: 160, left: 16, right: 16, child: SpeedAndLeanCard()),
@@ -358,7 +358,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Fix:** Use `OrientationBuilder`. In landscape, place the map on the left 50% and a high-contrast digital instrument cluster on the right 50%.
 
 ### 1.6 The Paused-Ride Scrim Disaster
-* **The Crime:** As identified in [`issues_open.md:50-53`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/../DOCS/Handoff%20for%20agents%20and%20Todos/issues_open.md#L50-L53):
+* **The Crime:** As identified in [`issues_open.md:50-53`](../../app/../DOCS/Handoff%20for%20agents%20and%20Todos/issues_open.md#L50-L53):
   When a ride is paused, the app drops a dark, translucent modal scrim across the **entire screen**, including the speed, distance, lean, and duration stats card.
 * **The Reality Check:**
   - Why does a rider pause? Usually when stopped at a traffic light, railway crossing, or scenic overlook.
@@ -368,15 +368,15 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 
 ### 2.3 The Maintenance Screen Dead-End & The Missing Link
 * **The Crime:**
-  1. Open [`maintenance_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/maintenance/presentation/maintenance_screen.dart). **It has no `AppBar` and no back button.** It lives inside `ShellRoute`, so the bottom navigation bar is present, but there is no arrow or button to go back to the screen that summoned it.
-  2. Open [`bike_detail_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/bike_detail_screen.dart). Search for any mention of maintenance or service logs. **There is none.**
+  1. Open [`maintenance_screen.dart`](../../app/lib/features/maintenance/presentation/maintenance_screen.dart). **It has no `AppBar` and no back button.** It lives inside `ShellRoute`, so the bottom navigation bar is present, but there is no arrow or button to go back to the screen that summoned it.
+  2. Open [`bike_detail_screen.dart`](../../app/lib/features/garage/presentation/bike_detail_screen.dart). Search for any mention of maintenance or service logs. **There is none.**
 * **The Reality Check:**
   - A user viewing a specific bike in their garage has zero access to that bike's maintenance history!
   - If a user enters `MaintenanceScreen` from anywhere, they cannot "go back" to where they came from without tapping a bottom nav tab to reset the stack.
 * **The Fix:** Add a standard `AppBar` with `automaticallyImplyLeading: true` to `MaintenanceScreen`. Add a prominent "Service & Maintenance Records" section with full status cards inside `BikeDetailScreen`.
 
 ### 2.4 The Add-Bike Hijacking Loop
-* **The Crime:** Look at [`add_edit_bike_screen.dart:156-162`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/add_edit_bike_screen.dart#L156-L162):
+* **The Crime:** Look at [`add_edit_bike_screen.dart:156-162`](../../app/lib/features/garage/presentation/add_edit_bike_screen.dart#L156-L162):
   ```dart
   if (widget.bikeId == null) {
     context.pushReplacement('/maintenance/config?bikeId=$id');
@@ -384,7 +384,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
     context.pop();
   }
   ```
-  Then in [`maintenance_config_screen.dart:182`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/maintenance/presentation/maintenance_config_screen.dart#L182):
+  Then in [`maintenance_config_screen.dart:182`](../../app/lib/features/maintenance/presentation/maintenance_config_screen.dart#L182):
   ```dart
   context.pushReplacement('/maintenance?bikeId=${widget.bikeId}');
   ```
@@ -400,14 +400,14 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - Home tab? No.
   - Social tab? No.
   - Chat room list? No.
-  - It is buried exclusively in the top AppBar of [`garage_screen.dart:81-86`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/garage/presentation/garage_screen.dart#L81-L86).
+  - It is buried exclusively in the top AppBar of [`garage_screen.dart:81-86`](../../app/lib/features/garage/presentation/garage_screen.dart#L81-L86).
 * **The Reality Check:**
   - Notifications in ThrottleIQ cover social comments, group ride invitations, chat pings, and safety alerts.
   - None of those relate directly to the Garage.
   - A user hanging out in the Social or Home tab will never see unread notification badges because the bell icon is sequestered on a completely unrelated tab.
 
 ### 3.1 "Navigate" Does NOT Record a Ride
-* **The Crime:** Look at [`routes_list_screen.dart:254`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/routes_list_screen.dart#L254) and [`route_navigation_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/routes/presentation/route_navigation_screen.dart):
+* **The Crime:** Look at [`routes_list_screen.dart:254`](../../app/lib/features/routes/presentation/routes_list_screen.dart#L254) and [`route_navigation_screen.dart`](../../app/lib/features/routes/presentation/route_navigation_screen.dart):
   - A rider finds a great twisty mountain route. They hit **"Navigate"**.
   - `RouteNavigationScreen` opens and guides them along the polyline.
   - **It does NOT record the ride.**
@@ -420,7 +420,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Fix:** Unify navigation and recording into a single execution engine. When starting navigation, automatically start a recording session bound to that route ID.
 
 ### 4.2 WCAG AA Contrast Failure in Default Theme (`calmingLight`)
-* **The Crime:** In [`app_colors.dart:12-21`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/core/theme/app_colors.dart#L12-L21):
+* **The Crime:** In [`app_colors.dart:12-21`](../../app/lib/core/theme/app_colors.dart#L12-L21):
   ```dart
   static const calmingLight = ThemePalette(
     primary: Color(0xFF84A98B),   // Muted Sage Green
@@ -447,7 +447,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Fix:** Replace `#84A98B` with a darker forest/racing green (`#2D5A43`, contrast 5.2:1) or use dark text (`#1A252C`) on buttons.
 
 ### 4.5 Sub-48dp Touch Targets (Fitts's Law Violations)
-* **The Crime:** Look at [`tour_floating_banner.dart:130-138`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/auth/presentation/widgets/tour_floating_banner.dart#L130-L138):
+* **The Crime:** Look at [`tour_floating_banner.dart:130-138`](../../app/lib/features/auth/presentation/widgets/tour_floating_banner.dart#L130-L138):
   ```dart
   InkWell(
     onTap: () {
@@ -466,7 +466,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
   - Tapping this close icon on a moving or idling motorcycle requires microsurgical precision.
 
 ### 5.2 The "Fake Private Profile" Error Screen
-* **The Crime:** Look at [`user_profile_screen.dart:78-95`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/profile/presentation/user_profile_screen.dart#L78-L95):
+* **The Crime:** Look at [`user_profile_screen.dart:78-95`](../../app/lib/features/profile/presentation/user_profile_screen.dart#L78-L95):
   ```dart
   profileAsync.when(
     data: (profile) {
@@ -484,7 +484,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Fix:** Never mask network errors as privacy blocks. Show a dedicated offline/error state with an explicit retry button.
 
 ### 5.3 Silent GPS Fallback to Dhaka, Bangladesh
-* **The Crime:** Look at [`add_place_screen.dart:187-191`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/places/presentation/add_place_screen.dart#L187-L191):
+* **The Crime:** Look at [`add_place_screen.dart:187-191`](../../app/lib/features/places/presentation/add_place_screen.dart#L187-L191):
   ```dart
   final lat = _selectedLocation?.latitude ?? 23.8103;
   final lng = _selectedLocation?.longitude ?? 90.4125;
@@ -495,7 +495,7 @@ _fusedHeadingDeg = _normalizeHeading(_fusedHeadingDeg! + deltaDeg);
 * **The Fix:** If GPS has not acquired a fix, disable the Save button and display: *"Acquiring GPS fix..."*.
 
 ### 5.4 The SafeQR Dead End
-* **The Crime:** Inspect [`safe_qr_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/profile/presentation/safe_qr_screen.dart).
+* **The Crime:** Inspect [`safe_qr_screen.dart`](../../app/lib/features/profile/presentation/safe_qr_screen.dart).
   - The screen renders an ICE (In Case of Emergency) QR code containing medical info and emergency contacts.
   - **There is no Save to Photos button.**
   - **There is no Share / Print button.**
@@ -515,7 +515,7 @@ In the iDEA pitch and marketing materials, ThrottleIQ is pitched as *"Bangladesh
 - For a project seeking Bangladeshi government grants, having zero Bengali localization on life-saving safety screens is an indefensible oversight.
 
 ### 6.3 False Sense of Security in Emergency Features
-Look at [`settings_screen.dart`](file:///Users/blackbird/Everything/dev/ThrottleIQ/app/lib/features/settings/presentation/settings_screen.dart):
+Look at [`settings_screen.dart`](../../app/lib/features/settings/presentation/settings_screen.dart):
 Under "Emergency Contacts", it allows users to enter names and phone numbers, with fine-print text:
 > *"Logged if a crash is detected... Automatic SMS/email alerts aren't live yet."*
 

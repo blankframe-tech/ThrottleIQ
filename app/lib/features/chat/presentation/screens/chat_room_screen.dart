@@ -11,6 +11,8 @@ import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/repositories/chat_repository.dart';
+import '../../domain/entities/chat_entity.dart';
 import '../providers/chat_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -28,19 +30,53 @@ class ChatRoomScreen extends ConsumerStatefulWidget {
 class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _textController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        final myUid = ref.read(currentUserProvider)?.uid;
-        if (myUid != null) {
-          await ref.read(chatRepositoryProvider).markMessagesAsRead(widget.chatId, myUid);
+  // -- Older messages (issues §90.A8) -------------------------------------
+  // The live stream only carries the newest kChatMessagesPageSize messages.
+  // Once the rider pages back, every message seen (live or fetched) is kept
+  // in [_pinned], so a new arrival pushing one out of the live window can't
+  // open a gap between the live window and the older pages.
+  final Map<String, MessageEntity> _pinned = {};
+  bool _pagingStarted = false;
+  bool _loadingOlder = false;
+  bool _hasOlder = true;
+
+  List<MessageEntity> _displayed(List<MessageEntity> live) {
+    if (!_pagingStarted) return live;
+    for (final m in live) {
+      _pinned[m.id] = m;
+    }
+    return _pinned.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  Future<void> _loadOlder(List<MessageEntity> shown) async {
+    if (_loadingOlder || shown.isEmpty) return;
+    setState(() => _loadingOlder = true);
+    try {
+      final page = await ref
+          .read(chatRepositoryProvider)
+          .fetchOlderMessages(widget.chatId, before: shown.last.createdAt);
+      if (!mounted) return;
+      setState(() {
+        if (!_pagingStarted) {
+          for (final m in shown) {
+            _pinned[m.id] = m;
+          }
+          _pagingStarted = true;
         }
-      } catch (e) {
-        debugPrint('Failed to mark messages as read: $e');
-      }
-    });
+        for (final m in page) {
+          _pinned[m.id] = m;
+        }
+        _hasOlder = page.length >= kChatMessagesPageSize;
+        _loadingOlder = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingOlder = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+      );
+    }
   }
 
   @override
@@ -139,16 +175,39 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 showBugReport: true,
                 onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatId)),
               ),
-              data: (messages) {
+              data: (live) {
+                final messages = _displayed(live);
                 if (messages.isEmpty) {
                   return Center(child: Text(context.l10n.sayHi, style: TextStyle(color: context.palette.textSecondary)));
                 }
-                
+                final showLoadOlder = _pagingStarted
+                    ? _hasOlder
+                    : live.length >= kChatMessagesPageSize;
+
                 return ListView.builder(
                   reverse: true, // Show bottom to top
                   padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: 8),
-                  itemCount: messages.length,
+                  itemCount: messages.length + (showLoadOlder ? 1 : 0),
                   itemBuilder: (context, index) {
+                    if (index == messages.length) {
+                      // Last index of a reversed list = the top of the room.
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Center(
+                          child: _loadingOlder
+                              ? SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: context.palette.primary),
+                                )
+                              : TextButton(
+                                  onPressed: () => _loadOlder(messages),
+                                  child: Text(context.l10n.loadOlderMessages),
+                                ),
+                        ),
+                      );
+                    }
                     final msg = messages[index];
                     final isMe = msg.senderId == myUid;
 
