@@ -2,7 +2,9 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
-## 2026-10-07 (latest): maintenance redesign — committed `238d12b` and pushed, not checked on a device
+## 2026-10-07 (latest): maintenance redesign — committed `238d12b`, released as `beta-v4.1` (1.0.0-beta.4.1.0+22)
+
+- **Release `beta-v4.1`:** the AAB and APK are attached on GitHub. The iOS release build was installed on the founder's iPhone 15, but iOS refused to launch it until the developer profile is trusted on the device (Settings → General → VPN & Device Management). Nothing was tested on a device yet.
 
 The maintenance page is rebuilt as a forecast ("what does my bike need next, and
 when?") instead of a km checklist. The proposal it implements is the
