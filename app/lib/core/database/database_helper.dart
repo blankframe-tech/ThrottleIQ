@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 20;
+  static const int schemaVersion = 21;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -305,7 +305,38 @@ class DatabaseHelper {
     if (oldVersion < 20 && newVersion >= 20) {
       await _migrateMaintenanceV20(db);
     }
+    if (oldVersion < 21 && newVersion >= 21) {
+      // Places hub bookmarks (Saved tab). A brand-new table, so nothing to
+      // backfill: every install simply starts with no saved places.
+      await db.execute(_createSavedPlacesSql);
+    }
   }
+
+  /// Places a rider bookmarked from the Places hub (schema v21).
+  ///
+  /// A snapshot of the place, not just its id, so the Saved tab still lists
+  /// names, coordinates and phone numbers with no signal — the moment a
+  /// rider most needs "that garage I saved" is out on a highway with one bar.
+  /// Keyed per rider so a shared phone keeps each account's list apart, and
+  /// [deleteUserData] can scope its wipe. `tags` is comma-separated
+  /// [PlaceTag] names.
+  static const String _createSavedPlacesSql = '''
+    CREATE TABLE IF NOT EXISTS saved_places (
+      user_id TEXT NOT NULL,
+      place_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      address TEXT NOT NULL DEFAULT '',
+      phone TEXT,
+      hours TEXT,
+      tags TEXT,
+      verified INTEGER NOT NULL DEFAULT 0,
+      saved_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, place_id)
+    )
+  ''';
 
   /// v20 — the maintenance redesign (issues §95): service visits, km-or-time
   /// intervals, baselines, setup profiles, paperwork, quick-check issues,
@@ -822,6 +853,7 @@ class DatabaseHelper {
     await db.execute(_createAutoFixesSql);
     await db.execute(_createAutoFixesIndexSql);
     await db.execute(_createAutoDetectionsIndexSql);
+    await db.execute(_createSavedPlacesSql);
   }
 
   /// Completely deletes all local database rows associated with [userId].
@@ -899,6 +931,7 @@ class DatabaseHelper {
           where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);
+      await txn.delete('saved_places', where: 'user_id = ?', whereArgs: [userId]);
 
       // v15 gave auto_detections an owner. Only rows stamped with this uid
       // go; unowned legacy rows are left alone for the reason given above.

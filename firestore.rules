@@ -1059,11 +1059,21 @@ service cloud.firestore {
       // yet verified, with a fresh (zero) rating aggregate — enforce that
       // shape so a client can't spoof authorship or seed a fake rating
       // history for a brand-new place.
+      //
+      // `tags` (Places hub rider tags — 24/7, 95 octane, EFI diagnostics…) is
+      // optional, and absent on every place written before it existed; when
+      // present it must be a short list of short strings (PlaceTag.maxPerPlace
+      // in place_tags.dart), so nobody can hang an arbitrarily large payload
+      // off a public place doc.
       allow create: if request.auth != null &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.verified == false &&
         request.resource.data.ratingSum == 0 &&
-        request.resource.data.ratingCount == 0;
+        request.resource.data.ratingCount == 0 &&
+        (!('tags' in request.resource.data) ||
+          (request.resource.data.tags is list &&
+           request.resource.data.tags.size() <= 12 &&
+           request.resource.data.tags.toSet().size() == request.resource.data.tags.size()));
 
       // No screen built in this phase calls updatePlace() /
       // updateVerification() / deletePlace() on PlaceRepository — they

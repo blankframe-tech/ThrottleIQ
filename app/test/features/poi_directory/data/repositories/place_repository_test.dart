@@ -195,7 +195,7 @@ void main() {
       final entity = model.toEntity();
       expect(entity.googleRating, 4.3);
       expect(entity.googleRatingCount, 515);
-      expect(entity.dualRatingDisplay, '4.3 + 5.0');
+      expect(entity.averageRating, 5.0);
 
       final backToModel = PlaceModel.fromEntity(entity);
       expect(backToModel.googleRating, 4.3);

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
+import 'package:throttleiq/features/poi_directory/domain/place_tags.dart';
 
 class PlaceModel {
   final String id;
@@ -21,6 +22,10 @@ class PlaceModel {
   final int googleRatingCount;
   final String? osmId;
 
+  /// [PlaceTag] names. Absent on docs written before tags existed, which
+  /// read back as an empty list.
+  final List<String> tags;
+
   const PlaceModel({
     required this.id,
     required this.name,
@@ -40,6 +45,7 @@ class PlaceModel {
     this.googleRating = 0,
     this.googleRatingCount = 0,
     this.osmId,
+    this.tags = const [],
   });
 
   PlaceEntity toEntity() {
@@ -62,6 +68,7 @@ class PlaceModel {
       googleRating: googleRating,
       googleRatingCount: googleRatingCount,
       osmId: osmId,
+      tags: PlaceTag.parseAll(tags),
     );
   }
 
@@ -85,6 +92,7 @@ class PlaceModel {
       googleRating: entity.googleRating,
       googleRatingCount: entity.googleRatingCount,
       osmId: entity.osmId,
+      tags: [for (final t in PlaceTag.values) if (entity.tags.contains(t)) t.name],
     );
   }
 
@@ -109,6 +117,10 @@ class PlaceModel {
       googleRating: (data['googleRating'] as num?)?.toDouble() ?? 0.0,
       googleRatingCount: (data['googleRatingCount'] as num?)?.toInt() ?? 0,
       osmId: data['osmId'],
+      tags: [
+        for (final t in (data['tags'] as List?) ?? const [])
+          if (t is String) t,
+      ],
     );
   }
 
@@ -131,6 +143,9 @@ class PlaceModel {
       'googleRating': googleRating,
       'googleRatingCount': googleRatingCount,
       'osmId': osmId,
+      // Only written when there's something to say, so a tagless place (every
+      // OSM import) keeps exactly the doc shape it had before tags existed.
+      if (tags.isNotEmpty) 'tags': tags,
     };
   }
 
@@ -153,6 +168,7 @@ class PlaceModel {
     double? googleRating,
     int? googleRatingCount,
     String? osmId,
+    List<String>? tags,
   }) {
     return PlaceModel(
       id: id ?? this.id,
@@ -173,6 +189,7 @@ class PlaceModel {
       googleRating: googleRating ?? this.googleRating,
       googleRatingCount: googleRatingCount ?? this.googleRatingCount,
       osmId: osmId ?? this.osmId,
+      tags: tags ?? this.tags,
     );
   }
 }
