@@ -5892,4 +5892,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String paddockPosts(int count) {
     return '$countটি পোস্ট';
   }
+
+  @override
+  String forumPhotoUploadFailed(String e) {
+    return 'ছবি আপলোড করা যায়নি: $e';
+  }
 }

@@ -34,10 +34,12 @@ class AutoTrackingTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: context.palette.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SwitchListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SwitchListTile(
             value: isEnabled,
             onChanged: enabled.isLoading
                 ? null
@@ -105,6 +107,7 @@ class AutoTrackingTile extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -226,9 +229,11 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: context.palette.border),
       ),
-      child: Column(
-        children: [
-          SwitchListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            SwitchListTile(
             value: schedule.enabled,
             onChanged: (value) =>
                 ref.read(autoTrackingScheduleProvider.notifier).setEnabled(value),
@@ -270,6 +275,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }

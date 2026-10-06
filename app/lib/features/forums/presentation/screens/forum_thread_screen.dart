@@ -323,9 +323,18 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
     final List<String> imageUrls;
     try {
       final repo = ForumRepository();
-      imageUrls = [
-        for (final path in _photoPaths) await repo.uploadPostPhoto(user.uid, File(path)),
-      ];
+      try {
+        imageUrls = [
+          for (final path in _photoPaths) await repo.uploadPostPhoto(user.uid, File(path)),
+        ];
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.forumPhotoUploadFailed(e.toString()))),
+        );
+        return;
+      }
       postId = await repo.createPost(
         forumId: widget.forumId,
         userId: user.uid,

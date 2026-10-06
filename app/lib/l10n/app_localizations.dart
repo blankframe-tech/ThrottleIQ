@@ -10181,6 +10181,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 post} other{{count} posts}}'**
   String paddockPosts(int count);
+
+  /// Forums photo upload error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not upload photo(s): {e}'**
+  String forumPhotoUploadFailed(String e);
 }
 
 class _AppLocalizationsDelegate

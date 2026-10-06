@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:throttleiq/core/utils/photo_url_policy.dart';
-import 'package:throttleiq/features/forums/domain/entities/forum_post_entity.dart';
+import '../../../../core/utils/photo_url_policy.dart';
+import '../../domain/entities/forum_post_entity.dart';
 
 /// Decodes a post doc's fields into an entity. Split from [ForumPostModel]
 /// (which needs a DocumentSnapshot) so the defaults for docs written before

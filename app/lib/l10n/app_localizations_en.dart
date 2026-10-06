@@ -5924,4 +5924,9 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String forumPhotoUploadFailed(String e) {
+    return 'Could not upload photo(s): $e';
+  }
 }

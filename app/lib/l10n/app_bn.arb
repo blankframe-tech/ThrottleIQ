@@ -1679,5 +1679,6 @@
   "shareToForumPick": "কোন ফোরামে শেয়ার করবেন?",
   "rideAttachmentTitle": "{date}-এর রাইড",
   "forumAddPhotos": "ছবি যোগ করুন ({count}/{max})",
-  "paddockPosts": "{count}টি পোস্ট"
+  "paddockPosts": "{count}টি পোস্ট",
+  "forumPhotoUploadFailed": "ছবি আপলোড করা যায়নি: {e}"
 }
