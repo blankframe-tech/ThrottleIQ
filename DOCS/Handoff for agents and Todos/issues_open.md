@@ -923,7 +923,7 @@ tests green. Scratch files deleted. Full detail in features.md §7.
 
 ## 90. Full-codebase audit — 5 parallel reviews (2026-10-06) — MOSTLY FIXED (see status)
 
-**Status after the 2026-10-06 fix pass:** fixed in code (not committed, not
+**Status after the 2026-10-06 fix pass:** fixed in code (commit `6264d72`, not checked
 on a device) — see `issues_fixed.md` §90 for every ID. **Still open:**
 - **Owner actions:**
   - Turn on branch protection (B1).

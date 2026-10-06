@@ -434,7 +434,7 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
 - **Maintenance settings section:** Units (km/mi, now remembered), Sync odometer, Customize checks, Reset service log and Running costs moved from the header to a card at the end of the maintenance page. The main action is one full-width "Log Service" button.
 - **Running costs and ride cost:** set a typical cost for each check (in its Edit sheet), plus fuel price and mileage for each bike. The ride summary shows a "Ride cost" card: distance × Σ(cost/km), broken down into Fuel, Engine oil, Chain and so on. Each check uses the average of its logged costs, or the typical cost when there are none. With no cost data the card shows a "Set up" hint instead. The settings are stored on the phone only.
 
-## Changes from the §90 fix pass (2026-10-06, issues_fixed.md §90; not committed, not on a device)
+## Changes from the §90 fix pass (2026-10-06, issues_fixed.md §90; commit `6264d72`, not checked on a device)
 
 - **Settings → Privacy & Safety → "Public link (/r/@handle)"** is a new switch,
   off by default. The handle link only works while it's on. The per-ride
