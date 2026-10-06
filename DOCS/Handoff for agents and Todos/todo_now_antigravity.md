@@ -53,4 +53,24 @@
   - [ ] **Fix §97.7 (Inconsistent imports):** Standardize `forum_post_model.dart:2-3` imports to relative paths (`../../../../core/...`, `../../domain/...`).
   - [ ] **Fix §97.8 (Partial photo upload failure):** Wrap `uploadPostPhoto` loop in `forum_thread_screen.dart:326` in dedicated try-catch with specific photo upload error feedback.
 
+- [ ] **8. iOS & Android Widgets Device Deployment & Verification**
+  - [ ] **Build & Deploy to Device:**
+    - Deploy release build to connected iPhone: `cd app && flutter run --release -d 00008120-001E5D190A85A01E` (or standard `flutter run` for Android).
+  - [ ] **Baseline Data Initialization:**
+    - Launch ThrottleIQ once on device so `HomeWidgetService.bootstrap()` writes baseline values into shared App Group (`group.com.bft.throttleiq`) / SharedPreferences.
+  - [ ] **Xcode App Group & Signing Check:**
+    - In `app/ios/Runner.xcworkspace`, verify the `ThrottleIQWidget` target has developer Team assigned under **Signing & Capabilities** and `App Groups` (`group.com.bft.throttleiq`) is ticked without provisioning warnings.
+  - [ ] **Home Screen Widgets Test:**
+    - Add **Apex Hunter** (`.systemSmall` and `.systemMedium`) to home screen; verify Max Lean Left/Right, volt accent bar, lean rating badge, and symmetry score.
+    - Add **Ride Stats** and **Maintenance** widgets; verify live telemetry updates and overdue chips.
+    - Add **Start Ride** and **Auto-Tracking** quick launchers; verify one-tap deep link routing.
+  - [ ] **iOS Lock Screen Accessories Test (iOS 16+):**
+    - Customize Lock Screen; add ThrottleIQ accessory widgets:
+      - `.accessoryCircular`: compact L/R lean gauge.
+      - `.accessoryRectangular`: Apex Hunter, Ride Stats, and Maintenance summaries.
+      - `.accessoryInline`: glanceable text banner under or above the clock.
+  - [ ] **In-App Telemetry & Cockpit Widgets Test:**
+    - Verify `DualLeanArcGauge` and `GForceFrictionCircle` render smoothly at 60/120fps during active rides and telemetry replays.
+    - Verify `ConsumablesHealthCard` radial wear gauges on Maintenance screen reflect real check intervals and respond to taps.
+
 - [ ] **Next Steps if Token Limit Reached**: Continue from the first unchecked item in this list.

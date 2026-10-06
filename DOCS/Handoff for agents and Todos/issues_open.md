@@ -21,6 +21,7 @@ but each one leaves a smaller item behind:
 - **§49:** the GPS-speed fallback still needs verifying on a real device, because simulator location playback doesn't populate `Position.speed`.
 - **§53:** testers have to re-open the opt-in link before the internal track reaches them.
 - **§62.1–§62.10:** the items marked PARTIALLY FIXED list their remaining work inline.
+- **§98:** OS home/lock screen widgets (Apex Hunter, Ride Stats, Maintenance) and in-app cockpit telemetry widgets (DualLeanArcGauge, GForceFrictionCircle, ConsumablesHealthCard) need physical device verification (iPhone 15 release deploy & Android), checking App Group sharing in Xcode and Lock Screen accessory layouts.
 
 ---
 
