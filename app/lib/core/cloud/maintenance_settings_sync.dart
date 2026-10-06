@@ -4,9 +4,12 @@ import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 
 /// Cloud backup of a bike's maintenance settings (issues §88.2): the checks
-/// it tracks (`bike_maintenance_configs`: interval, enabled, notes, typical
-/// cost) and its fuel price & mileage (`bike_running_costs`). Before this,
-/// both lived only in SQLite and were lost on reinstall or a new device.
+/// it tracks (`bike_maintenance_configs`: intervals, enabled, notes, typical
+/// cost, baselines, custom checks), its fuel price & mileage
+/// (`bike_running_costs`), and since v20 its setup profile
+/// (`bike_maintenance_profiles`) and paperwork expiries (`bike_paperwork`).
+/// Before this, all of it lived only in SQLite and was lost on reinstall or
+/// a new device.
 ///
 /// **Where:** one document per bike at
 /// `users/{uid}/private/maintenanceSettings_{bikeId}`. Deliberately NOT on
@@ -49,6 +52,22 @@ class MaintenanceSettingsSync {
     'is_enabled',
     'notes',
     'typical_cost',
+    'interval_days',
+    'warn_km',
+    'warn_days',
+    'baseline_km',
+    'baseline_date',
+    'source',
+    'custom_label',
+  ];
+
+  static const _profileColumns = [
+    'template_id',
+    'riding_profile',
+    'oil_grade',
+    'adapt_intervals',
+    'onboarded_at',
+    'last_precheck_at',
   ];
 
   /// The Firestore fields for [bikeId]'s current local settings, or null if
@@ -73,10 +92,45 @@ class MaintenanceSettingsSync {
       whereArgs: [bikeId],
       limit: 1,
     );
-    if (configs.isEmpty && running.isEmpty) return null;
+    final profile = await db.query(
+      'bike_maintenance_profiles',
+      where: 'bike_id = ?',
+      whereArgs: [bikeId],
+      limit: 1,
+    );
+    final paperwork = await db.query(
+      'bike_paperwork',
+      where: 'bike_id = ?',
+      whereArgs: [bikeId],
+      orderBy: 'kind',
+    );
+    if (configs.isEmpty &&
+        running.isEmpty &&
+        profile.isEmpty &&
+        paperwork.isEmpty) {
+      return null;
+    }
 
     return {
       'bikeId': bikeId,
+      // A placeholder profile (created by adding paperwork or a quick check
+      // before setup) is not sent: on a fresh device it could otherwise
+      // replace the real, set-up profile in the cloud before it's restored.
+      if (profile.isNotEmpty && profile.first['onboarded_at'] != null)
+        'profile': {for (final c in _profileColumns) c: profile.first[c]},
+      // Unlike the tables above, paperwork is sent even when it shrinks to
+      // empty once it exists: a removed document must stay removed. (Sent
+      // only when the bike has a profile or other settings, so a device that
+      // hasn't restored yet can't wipe the cloud copy.)
+      if (paperwork.isNotEmpty || profile.isNotEmpty)
+        'paperwork': [
+          for (final row in paperwork)
+            {
+              'kind': row['kind'],
+              'expires_on': row['expires_on'],
+              'notes': row['notes'],
+            },
+        ],
       if (configs.isNotEmpty)
         'configs': [
           for (final row in configs)
@@ -91,7 +145,10 @@ class MaintenanceSettingsSync {
   }
 
   /// Owned bikes that have no config rows or no running-cost row locally,
-  /// i.e. the ones a cloud copy could fill in. Pure SQLite, so the sync
+  /// i.e. the ones a cloud copy could fill in. A missing setup profile alone
+  /// doesn't count: a reinstall empties every table at once, and the profile
+  /// (with its paperwork) is restored in the same [applyDownloaded] pass —
+  /// counting it would cost a cloud read per never-set-up bike per session. Pure SQLite, so the sync
   /// cycle can skip the network entirely when there is nothing to restore.
   static Future<List<String>> bikesMissingSettings(String uid) async {
     final db = await DatabaseHelper.instance.database;
@@ -116,7 +173,9 @@ class MaintenanceSettingsSync {
         AND (EXISTS (SELECT 1 FROM bike_maintenance_configs c
                      WHERE c.bike_id = b.id)
              OR EXISTS (SELECT 1 FROM bike_running_costs r
-                        WHERE r.bike_id = b.id))
+                        WHERE r.bike_id = b.id)
+             OR EXISTS (SELECT 1 FROM bike_maintenance_profiles p
+                        WHERE p.bike_id = b.id))
     ''', [uid]);
     return rows.map((r) => r['id'] as String).toList();
   }
@@ -161,6 +220,55 @@ class MaintenanceSettingsSync {
         }
       }
 
+      final profile = data['profile'];
+      if (profile is Map && profile['template_id'] is String) {
+        final local = (await txn.query('bike_maintenance_profiles',
+                columns: ['onboarded_at'],
+                where: 'bike_id = ?',
+                whereArgs: [bikeId],
+                limit: 1))
+            .firstOrNull;
+        // Fill a missing profile, or replace a local placeholder (never set
+        // up) with a cloud profile that was.
+        final replace = local == null ||
+            (local['onboarded_at'] == null && profile['onboarded_at'] != null);
+        if (replace) {
+          await txn.insert(
+            'bike_maintenance_profiles',
+            {
+              'bike_id': bikeId,
+              for (final c in _profileColumns)
+                if (profile[c] != null) c: profile[c],
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          wrote = true;
+        }
+      }
+
+      // Paperwork merges by kind: anything the cloud has that this device
+      // lacks is added; a local row is never overwritten.
+      final papers = data['paperwork'];
+      if (papers is List) {
+        for (final raw in papers) {
+          if (raw is! Map) continue;
+          final kind = raw['kind'];
+          final expires = raw['expires_on'];
+          if (kind is! String || expires is! String) continue;
+          final id = await txn.insert(
+            'bike_paperwork',
+            {
+              'bike_id': bikeId,
+              'kind': kind,
+              'expires_on': expires,
+              'notes': raw['notes'] is String ? raw['notes'] : null,
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+          if (id > 0) wrote = true;
+        }
+      }
+
       final running = data['runningCost'];
       if (running is Map) {
         final hasLocal = (await txn.query('bike_running_costs',
@@ -192,9 +300,13 @@ class MaintenanceSettingsSync {
     final serviceType = raw['service_type'];
     final interval = raw['interval_km'];
     if (serviceType is! String || serviceType.isEmpty) return null;
-    if (interval is! num || interval <= 0) return null;
+    // 0 is a time-only check (e.g. a battery tracked by date alone).
+    if (interval is! num || interval < 0) return null;
     final enabled = raw['is_enabled'];
     final notes = raw['notes'];
+    num? optNum(String k) => raw[k] is num ? raw[k] as num : null;
+    String? optStr(String k) =>
+        raw[k] is String && (raw[k] as String).isNotEmpty ? raw[k] as String : null;
     return {
       'bike_id': bikeId,
       'service_type': serviceType,
@@ -202,6 +314,15 @@ class MaintenanceSettingsSync {
       'is_enabled': (enabled == 1 || enabled == true) ? 1 : 0,
       'notes': notes is String && notes.trim().isNotEmpty ? notes : null,
       'typical_cost': _positiveOrNull(raw['typical_cost']),
+      'interval_days': optNum('interval_days')?.toInt(),
+      'warn_km': optNum('warn_km')?.toDouble(),
+      'warn_days': optNum('warn_days')?.toInt(),
+      'baseline_km': optNum('baseline_km')?.toDouble(),
+      'baseline_date': optStr('baseline_date'),
+      // Docs backed up before v20 carry no source: those intervals were set
+      // by the rider, same as the v20 migration assumes.
+      'source': optStr('source') ?? 'user',
+      'custom_label': optStr('custom_label'),
     };
   }
 

@@ -1,7 +1,7 @@
 /// How much to trust which bike a ride is attributed to.
 ///
 /// This exists because ThrottleIQ's maintenance model is distance-based:
-/// service intervals, chain lube and `computeNextService` all read from
+/// service intervals, chain lube and the maintenance forecast all read from
 /// per-bike accumulated distance. A ride credited to the wrong bike does not
 /// merely mislabel a row in history — it moves two bikes' service schedules at
 /// once, in opposite directions, and the rider has no reason to suspect it.

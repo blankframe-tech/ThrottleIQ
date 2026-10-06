@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 19;
+  static const int schemaVersion = 20;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -302,7 +302,163 @@ class DatabaseHelper {
       // §90.C10: ride tombstones, same idea as `deleted_bikes`.
       await db.execute(_createDeletedRidesSql);
     }
+    if (oldVersion < 20 && newVersion >= 20) {
+      await _migrateMaintenanceV20(db);
+    }
   }
+
+  /// v20 — the maintenance redesign (issues §95): service visits, km-or-time
+  /// intervals, baselines, setup profiles, paperwork, quick-check issues,
+  /// log tombstones and detected-trip odometer credits.
+  Future<void> _migrateMaintenanceV20(Database db) async {
+    // A partial test schema (or a re-run) may lack these; real installs
+    // reaching v20 have both.
+    await db.execute(_createMaintenanceLogsIfMissingSql);
+    await db.execute(_createBikeMaintenanceConfigsSql);
+
+    // One visit = every item logged together. NULL on existing rows: each
+    // older log is a visit of one (see ServiceVisit).
+    for (final col in const [
+      ['visit_id', 'visit_id TEXT'],
+      ['check_key', 'check_key TEXT'],
+      ['shop_name', 'shop_name TEXT'],
+      ['shop_kind', 'shop_kind TEXT'],
+      ['receipt_path', 'receipt_path TEXT'],
+      ['visit_total', 'visit_total REAL'],
+      ['visit_label', 'visit_label TEXT'],
+      ['part_brand', 'part_brand TEXT'],
+      ['part_grade', 'part_grade TEXT'],
+    ]) {
+      await _addColumnIfMissing(db, 'maintenance_logs', col[0], col[1]);
+    }
+
+    for (final col in const [
+      ['interval_days', 'interval_days INTEGER'],
+      ['warn_km', 'warn_km REAL'],
+      ['warn_days', 'warn_days INTEGER'],
+      ['baseline_km', 'baseline_km REAL'],
+      ['baseline_date', 'baseline_date TEXT'],
+      ['source', "source TEXT NOT NULL DEFAULT 'template'"],
+      ['custom_label', 'custom_label TEXT'],
+    ]) {
+      await _addColumnIfMissing(db, 'bike_maintenance_configs', col[0], col[1]);
+    }
+    // Existing checks were configured before templates existed, possibly by
+    // hand, so they're marked the rider's own: picking a template or oil
+    // grade later never silently overwrites them. They do gain the time
+    // limit their type defaults to — km-only was the gap being fixed.
+    await db.execute(
+        "UPDATE bike_maintenance_configs SET source = 'user' "
+        "WHERE interval_days IS NULL");
+    await db.execute('''
+      UPDATE bike_maintenance_configs SET interval_days = CASE service_type
+        $_defaultIntervalDaysSqlCases
+        ELSE NULL END
+      WHERE interval_days IS NULL
+    ''');
+
+    await db.execute(_createDeletedMaintenanceLogsSql);
+    await db.execute(_createMaintenanceProfilesSql);
+    await db.execute(_createBikePaperworkSql);
+    await db.execute(_createPrecheckIssuesSql);
+    await db.execute(_createDetectionOdometerCreditsSql);
+  }
+
+  /// `WHEN 'oilChange' THEN 180 …` for every type with a default time limit
+  /// (mirrors `ServiceTypeExt.defaultIntervalDays`).
+  static const String _defaultIntervalDaysSqlCases = '''
+        WHEN 'oilChange' THEN 180
+        WHEN 'oilFilter' THEN 365
+        WHEN 'chain' THEN 30
+        WHEN 'chainTension' THEN 60
+        WHEN 'tire' THEN 30
+        WHEN 'clutchCable' THEN 180
+        WHEN 'throttleCables' THEN 365
+        WHEN 'battery' THEN 365
+        WHEN 'airFilter' THEN 365
+        WHEN 'sparkPlug' THEN 730
+        WHEN 'forkSeals' THEN 730
+        WHEN 'radiatorCoolant' THEN 730
+        WHEN 'brakeFluid' THEN 730''';
+
+  static const String _createMaintenanceLogsIfMissingSql = '''
+    CREATE TABLE IF NOT EXISTS maintenance_logs (
+      id TEXT PRIMARY KEY,
+      bike_id TEXT NOT NULL,
+      service_type TEXT NOT NULL,
+      date TEXT NOT NULL,
+      odometer_km REAL NOT NULL,
+      cost REAL,
+      notes TEXT,
+      custom_label TEXT,
+      synced INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )
+  ''';
+
+  /// Maintenance logs deleted on this device (§94.2). Same lifecycle as
+  /// `deleted_rides`: `synced = 0` until the Firestore copy is gone, kept
+  /// afterwards so another device's copy can't bring it back.
+  static const String _createDeletedMaintenanceLogsSql = '''
+    CREATE TABLE IF NOT EXISTS deleted_maintenance_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      deleted_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
+
+  /// Per-bike maintenance setup — see MaintenanceProfileEntity.
+  static const String _createMaintenanceProfilesSql = '''
+    CREATE TABLE IF NOT EXISTS bike_maintenance_profiles (
+      bike_id TEXT PRIMARY KEY,
+      template_id TEXT NOT NULL,
+      riding_profile TEXT NOT NULL DEFAULT 'normal',
+      oil_grade TEXT,
+      adapt_intervals INTEGER NOT NULL DEFAULT 1,
+      onboarded_at TEXT,
+      last_precheck_at TEXT,
+      FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+    )
+  ''';
+
+  static const String _createBikePaperworkSql = '''
+    CREATE TABLE IF NOT EXISTS bike_paperwork (
+      bike_id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      expires_on TEXT NOT NULL,
+      notes TEXT,
+      PRIMARY KEY (bike_id, kind),
+      FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+    )
+  ''';
+
+  /// Failed T-CLOCS quick-check tiles. Local only: they're short-lived
+  /// "fix this before riding" notes, not records.
+  static const String _createPrecheckIssuesSql = '''
+    CREATE TABLE IF NOT EXISTS precheck_issues (
+      id TEXT PRIMARY KEY,
+      bike_id TEXT NOT NULL,
+      item TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      resolved_at TEXT,
+      FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+    )
+  ''';
+
+  /// Distance from background-detected trips credited to a bike's odometer
+  /// (issues §93.1). One row per detection, so a credit can never be applied
+  /// twice; the bike's `odometer_km` holds the running total.
+  static const String _createDetectionOdometerCreditsSql = '''
+    CREATE TABLE IF NOT EXISTS detection_odometer_credits (
+      detection_id TEXT PRIMARY KEY,
+      bike_id TEXT NOT NULL,
+      distance_m REAL NOT NULL,
+      credited_at TEXT NOT NULL,
+      trip_end TEXT,
+      FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+    )
+  ''';
 
   /// Only for the v19 step's benefit on a partial test schema (or a re-run):
   /// every real install reaching v19 already has `ride_points`.
@@ -353,6 +509,13 @@ class DatabaseHelper {
       is_enabled INTEGER NOT NULL DEFAULT 1,
       notes TEXT,
       typical_cost REAL,
+      interval_days INTEGER,
+      warn_km REAL,
+      warn_days INTEGER,
+      baseline_km REAL,
+      baseline_date TEXT,
+      source TEXT NOT NULL DEFAULT 'template',
+      custom_label TEXT,
       PRIMARY KEY (bike_id, service_type),
       FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
     )
@@ -616,7 +779,16 @@ class DatabaseHelper {
         notes TEXT,
         custom_label TEXT,
         synced INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        visit_id TEXT,
+        check_key TEXT,
+        shop_name TEXT,
+        shop_kind TEXT,
+        receipt_path TEXT,
+        visit_total REAL,
+        visit_label TEXT,
+        part_brand TEXT,
+        part_grade TEXT
       )
     ''');
 
@@ -639,6 +811,11 @@ class DatabaseHelper {
     await db.execute(_createBikeRunningCostsSql);
     await db.execute(_createDeletedBikesSql);
     await db.execute(_createDeletedRidesSql);
+    await db.execute(_createDeletedMaintenanceLogsSql);
+    await db.execute(_createMaintenanceProfilesSql);
+    await db.execute(_createBikePaperworkSql);
+    await db.execute(_createPrecheckIssuesSql);
+    await db.execute(_createDetectionOdometerCreditsSql);
     await db.execute(_createOutboxSql);
     await db.execute(_createOutboxIndexSql);
     await db.execute(_createAutoDetectionsSql);
@@ -708,7 +885,18 @@ class DatabaseHelper {
             where: 'bike_id = ?', whereArgs: [bike['id']]);
         await txn.delete('maintenance_logs',
             where: 'bike_id = ?', whereArgs: [bike['id']]);
+        for (final table in const [
+          'bike_maintenance_profiles',
+          'bike_paperwork',
+          'precheck_issues',
+          'detection_odometer_credits',
+        ]) {
+          await txn.delete(table,
+              where: 'bike_id = ?', whereArgs: [bike['id']]);
+        }
       }
+      await txn.delete('deleted_maintenance_logs',
+          where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);
 

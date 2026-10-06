@@ -6207,3 +6207,35 @@ items are listed at its top). Checks at the end of the pass: `flutter analyze`
 `file:///…/dev/ThrottleIQ/` links in `issues_solved.md` and `ANTIGRAVRITY_GRILL/`
 now use relative paths. The README sensor/token/badge claims are corrected, and
 the rules count is now measured at 177.
+
+## 94. Maintenance audit findings — FIXED in code (2026-10-07), not verified on a device
+
+Logged 2026-10-06 while drafting the maintenance redesign proposal. All five
+were fixed by that redesign (`issues_open.md` §95, `features.md` §5).
+
+- **94.1 Home widget ignored the rider's settings.** It now headlines
+  `nextServiceDue(forecast)`, built from the same `forecastChecks` as the page
+  (the rider's intervals, enabled checks, km-or-time).
+  - The `SensorConstants` maintenance table, `computeNextService` and
+    `kWidgetReminderTypes` are deleted.
+  - Time-driven items are worded in days.
+- **94.2 Deleted logs came back.** Deletes now go through
+  `MaintenanceDao.deleteWithTombstone`, which:
+  - writes a row to `deleted_maintenance_logs` and drops any queued outbox
+    upload, in one transaction;
+  - lets `SyncManager` delete the Firestore doc;
+  - makes `downloadMaintenance` skip tombstoned ids;
+  - makes the outbox discard a delivery for a log deleted before it ran.
+- **94.3 Never-logged checks counted from 0 km.** They now count from:
+  1. the last log;
+  2. else the rider's "last done" baseline;
+  3. else the day the bike was added, only if it had ≤ 500 km then.
+
+  Otherwise they are "unknown" with a Set-last-done action, never overdue.
+- **94.4 Fake odometer scan.** Removed. The photo is kept as a reference and
+  the rider types the reading.
+- **94.5 Stale docs.** These now describe the current code:
+  - `features.md` §5 (rewritten);
+  - the `sensor_constants.dart` comment;
+  - the `HANDOFF_Document.md` "local only" note.
+

@@ -5,7 +5,10 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import 'package:uuid/uuid.dart';
+import '../../domain/catalog/schedule_templates.dart';
 import '../../domain/entities/maintenance_entity.dart';
+import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
 import '../widgets/edit_maintenance_check_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -38,33 +41,23 @@ class _MaintenanceConfigScreenState
   }
 
   void _initItems() {
-    final asyncConfigs = ref.read(maintenanceConfigProvider(widget.bikeId));
-    final configs = asyncConfigs.valueOrNull;
-    if (configs != null && configs.isNotEmpty) {
-      setState(() {
-        _items = configs.map((c) => c.copyWith()).toList();
+    final configs =
+        ref.read(maintenanceConfigProvider(widget.bikeId)).valueOrNull;
+    if (configs == null) {
+      // Still loading: try again next frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _initItems();
       });
-    } else {
-      // Fallback: build full catalog
-      setState(() {
-        _items = ServiceType.values
-            .where((t) => t != ServiceType.custom)
-            .map((t) => MaintenanceConfigEntity(
-                  bikeId: widget.bikeId,
-                  serviceType: t,
-                  intervalKm: t.defaultIntervalKm,
-                  isEnabled: t.isRecommendedDefault,
-                ))
-            .toList();
-      });
+      return;
     }
+    setState(() => _items = configs.map((c) => c.copyWith()).toList());
   }
 
-  void _toggleItem(ServiceType type) {
+  void _toggleItem(String key) {
     if (_items == null) return;
     setState(() {
       _items = _items!.map((item) {
-        if (item.serviceType == type) {
+        if (item.key == key) {
           return item.copyWith(isEnabled: !item.isEnabled);
         }
         return item;
@@ -72,12 +65,93 @@ class _MaintenanceConfigScreenState
     });
   }
 
+  /// The bike's schedule template's default set.
   void _selectRecommended() {
     if (_items == null) return;
+    final bike = ref
+        .read(garageProvider)
+        .valueOrNull
+        ?.where((b) => b.id == widget.bikeId)
+        .firstOrNull;
+    final template =
+        ref.read(maintenanceProfileProvider(widget.bikeId)).valueOrNull?.template ??
+            (bike == null
+                ? templateById(null)
+                : suggestTemplate(
+                    brand: bike.brand, model: bike.model, cc: bike.cc));
     setState(() {
       _items = _items!.map((item) {
-        return item.copyWith(isEnabled: item.serviceType.isRecommendedDefault);
+        if (item.isCustom) return item;
+        return item.copyWith(
+            isEnabled: template.enabledByDefault.contains(item.serviceType));
       }).toList();
+    });
+  }
+
+  Future<void> _addCustom() async {
+    final l10n = context.l10n;
+    final nameCtrl = TextEditingController();
+    final kmCtrl = TextEditingController();
+    final daysCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.addCustomCheck),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                  labelText: l10n.customCheckName, hintText: l10n.eGRadiatorFlush),
+            ),
+            TextField(
+              controller: kmCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                  labelText: l10n.intervalDistanceKm,
+                  suffixText: l10n.distanceStatLabel),
+            ),
+            TextField(
+              controller: daysCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                  labelText: l10n.intervalDaysLabel, suffixText: l10n.daysUnit),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.cancelAction)),
+          ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.addAction)),
+        ],
+      ),
+    );
+    final name = nameCtrl.text.trim();
+    final km = double.tryParse(kmCtrl.text.trim()) ?? 0;
+    final days = int.tryParse(daysCtrl.text.trim());
+    nameCtrl.dispose();
+    kmCtrl.dispose();
+    daysCtrl.dispose();
+    if (ok != true || name.isEmpty || (km <= 0 && (days ?? 0) <= 0)) return;
+    setState(() {
+      _items = [
+        ..._items!,
+        MaintenanceConfigEntity(
+          bikeId: widget.bikeId,
+          serviceType: ServiceType.custom,
+          customId: const Uuid().v4(),
+          customLabel: name,
+          intervalKm: km,
+          intervalDays: (days ?? 0) > 0 ? days : null,
+          source: IntervalSource.user,
+        ),
+      ];
     });
   }
 
@@ -104,7 +178,7 @@ class _MaintenanceConfigScreenState
     if (updated != null && mounted) {
       setState(() {
         _items = _items!.map((c) {
-          if (c.serviceType == item.serviceType) {
+          if (c.key == item.key) {
             return updated;
           }
           return c;
@@ -278,6 +352,17 @@ class _MaintenanceConfigScreenState
                           _buildCategorySection(category, items),
                           const SizedBox(height: 16),
                         ],
+                        EditorialLabel(context.l10n.customChecksSection),
+                        const SizedBox(height: 8),
+                        for (final item in items.where((i) => i.isCustom)) ...[
+                          _buildCheckTile(item),
+                          const SizedBox(height: 6),
+                        ],
+                        DashedAddButton(
+                          label: context.l10n.addCustomCheck,
+                          onTap: _addCustom,
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -319,8 +404,9 @@ class _MaintenanceConfigScreenState
 
   Widget _buildCategorySection(
       MaintenanceCategory category, List<MaintenanceConfigEntity> allItems) {
-    final categoryItems =
-        allItems.where((i) => i.serviceType.category == category).toList();
+    final categoryItems = allItems
+        .where((i) => !i.isCustom && i.serviceType.category == category)
+        .toList();
     if (categoryItems.isEmpty) return const SizedBox.shrink();
 
     final activeInCategory = categoryItems.where((i) => i.isEnabled).length;
@@ -363,7 +449,7 @@ class _MaintenanceConfigScreenState
         ),
       ),
       child: InkWell(
-        onTap: () => _toggleItem(item.serviceType),
+        onTap: () => _toggleItem(item.key),
         borderRadius: BorderRadius.circular(context.shape.radiusMd),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -371,7 +457,7 @@ class _MaintenanceConfigScreenState
             children: [
               Checkbox(
                 value: isEnabled,
-                onChanged: (_) => _toggleItem(item.serviceType),
+                onChanged: (_) => _toggleItem(item.key),
                 activeColor: context.palette.primary,
                 visualDensity: VisualDensity.compact,
               ),
@@ -387,7 +473,7 @@ class _MaintenanceConfigScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.serviceType.localizedLabel(context.l10n),
+                      configLabel(item, context.l10n),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: isEnabled ? FontWeight.w600 : FontWeight.w500,
@@ -447,7 +533,12 @@ class _MaintenanceConfigScreenState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${item.intervalKm.toStringAsFixed(0)} km',
+                        [
+                          if (item.intervalKm > 0)
+                            '${item.intervalKm.toStringAsFixed(0)} km',
+                          if (item.intervalDays != null)
+                            context.l10n.daysShort(item.intervalDays!),
+                        ].join(' · '),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

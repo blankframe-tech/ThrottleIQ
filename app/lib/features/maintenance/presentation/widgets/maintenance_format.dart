@@ -24,3 +24,20 @@ String formatTaka(double amount) =>
 /// A per-km/per-mi rate, which is usually a few taka or less.
 String formatTakaRate(double rate) =>
     rate >= 100 ? rate.toStringAsFixed(0) : rate.toStringAsFixed(2);
+
+/// `12,480` — thousands separators for odometer-sized numbers.
+String groupThousands(num value) {
+  final digits = value.round().abs().toString();
+  final b = StringBuffer(value < 0 ? '-' : '');
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) b.write(',');
+    b.write(digits[i]);
+  }
+  return b.toString();
+}
+
+/// [distLabel] with thousands separators: `12,480 km`.
+String distLabelLong(double km, bool imperial) {
+  final value = imperial ? km * kmToMi : km;
+  return '${groupThousands(value)} ${imperial ? 'mi' : 'km'}';
+}

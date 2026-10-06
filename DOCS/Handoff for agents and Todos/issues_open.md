@@ -530,7 +530,7 @@ release after the app stops sweeping that subcollection.
 **Most of this section is resolved — see `issues_fixed.md` §83** for the 20+
 sub-items fixed on 2026-09-21 (safety claims, EventDetector, feed pagination,
 account deletion, privacy salt, error states, comment rot). Full original
-writeup: `ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`.
+writeup (folder deleted 2026-10-06, see §91): `git show 4b1a1b2^:ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`.
 
 **Where the fixed work lives:** merged to `main` and pushed 2026-09-21
 (`b32165e..49c6b0e`). Firestore **rules and indexes are deployed and
@@ -776,7 +776,7 @@ load-bearing (ranking Discover by it, say).
 
 ---
 
-## 86. Social redesign (`ANTIGRAVITY_GRILL/new_task`) was left half-wired with fake data — FIXED (2026-09-27), two follow-ups still open
+## 86. Social redesign (mock was `ANTIGRAVITY_GRILL/new_task`, deleted, see §91.6) was left half-wired with fake data — FIXED (2026-09-27), two follow-ups still open
 
 An earlier same-day pass at the Rides/People/Forums mock was caught
 uncommitted before it landed: the AppBar search had been silently
@@ -1187,9 +1187,9 @@ Measured 2026-10-06: `flutter analyze` **3 issues (fails)**, `flutter test`
   constants. Bottom nav uses plain `ShellRoute` (`app_router.dart:222`), so every
   tab switch rebuilds the screen and loses scroll/local state →
   `StatefulShellRoute.indexedStack`.
-- **90.B14 — LOW — repo hygiene.** Tracked root clutter: `sum_claude.md`,
-  `sum_gemini.md`, `new_gravity.md`, `open55_handoff.md`, `setup-android.*`,
-  `ANTIGRAVITY_GRILL/` (has PDF + HTML). Duplicate misspelled
+- **90.B14 — LOW — repo hygiene.** Tracked root clutter: ~~`sum_claude.md`,
+  `sum_gemini.md`~~ (deleted 2026-10-06, see §92), `new_gravity.md`, `open55_handoff.md`, `setup-android.*`,
+  ~~`ANTIGRAVITY_GRILL/`~~ (deleted 2026-10-06). Duplicate misspelled
   `DOCS/Handoff for agents and Todos/ANTIGRAVRITY_GRILL/`. Three issue logs
   (`issues_open`/`issues_fixed`/`issues_solved`; the last has dead
   `file:///…/dev/ThrottleIQ/…` links). 28 tracked ~6 MB PDFs in
@@ -1389,3 +1389,248 @@ under `app/lib` and `app/test`. Fixed 8 dead `Contributers` links.
 - README claims "20+ data points per second" and "auth tokens in encrypted
   SharedPreferences" are unverified. The "Flutter 3.3+" badge is actually the
   Dart SDK constraint.
+
+---
+
+## 91. Critique leftovers carried over when `ANTIGRAVITY_GRILL/` was deleted (2026-10-06)
+
+The root `ANTIGRAVITY_GRILL/` folder (the 2026-09-20 critique `Claude_CRTITISIZE.md` and the
+Social Redesign mock HTML/PDF) was deleted. Everything in it that was fixed and pushed was
+dropped; the items below were never fixed and weren't already tracked in §83, so they live
+here now. (§83 still holds the other open critique items: 83.12 to 83.14, 83.16, 83.18,
+83.19, 83.22, 83.23, 83.26 to 83.28, 83.31. The original writeup is in git history:
+`git show 4b1a1b2^:ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`.)
+
+- **91.1 — LOW — `bikesVisibleTo(uid)` does a `get()` of the owner's profile per bike read**
+  (`firestore.rules:102`). These are billed rules reads and count against the 10/20 access
+  limits. Fix: denormalise the visibility onto the bike doc.
+- **91.2 — LOW — `crashNotifications` create has no rate limit** (`firestore.rules:~679`).
+  Any signed-in client can write unlimited `pending` docs for itself, each triggering a
+  Cloud Function. App Check (§83.19) narrows this but doesn't bound volume.
+- **91.3 — LOW — the cockpit alert flash can't be switched off.**
+  `active_ride_screen.dart:~206-223` washes the live map with a translucent colour on
+  brake / accel / overspeed / fatigue. Only the overspeed threshold is configurable. Add an
+  off switch in settings.
+- **91.4 — LOW — eager lists.** About 25 `ListView.builder`/`.separated` uses vs. many
+  `SingleChildScrollView` + `Column` lists (rides list, forum threads, places list).
+  Feed pagination hid the cost; convert the long lists to lazy builders.
+- **91.5 — LOW — 7-slide English-heavy onboarding tour before the first ride** (21 callout
+  pins). Consider cutting it to the Record tab's hold-to-start. Related: §83.26 and §83.23.
+- **91.6 — DESIGN — Social Redesign mock deleted.** The §86 follow-ups (solo "riding now"
+  cards, per-card location label) were designed against that mock. It's in git history:
+  `git show 4b1a1b2:"ANTIGRAVITY_GRILL/new_task/ThrottleIQ Social Redesign – Main.html"`.
+
+---
+
+## 92. Not-yet-done items carried over from `sum_claude.md` / `sum_gemini.md` (2026-10-06)
+
+Both 2026-09-08 project summaries were deleted (stale: 908 tests, v1.0.0-beta.2.2). Anything
+they described as built is already in `features.md`. What follows is only what they listed as
+**not done**. Both files are in git history (`git show 15b42f1:sum_claude.md`, `:sum_gemini.md`).
+Items already tracked elsewhere are pointed to rather than repeated: engineering debt is in
+`optimizerplan.md` (EKF = #21, configurable overspeed = #9, iOS force-swipe note = #8), the
+Blaze/Cloud Functions block is in §83.16/§83.19 and `HANDOFF_Document.md`, and hazard pins are
+in the `HANDOFF_Document.md` roadmap table.
+
+### 92.A Engineering roadmap, none of it built
+
+- **92.A1 — crash/sensor thresholds are theoretical.** 80 m/s² crash, -4.0/3.5 m/s² brake/accel,
+  100 km/h overspeed were set from first principles. Validate against real beta telemetry across
+  mounts (tank bag, handlebar, jacket pocket) before trusting them. Highest-value use of beta data.
+- **92.A2 — lean-angle telemetry** (roll rate + lateral accel → lean, max lean, corner entry/exit
+  asymmetry). Nothing in `app/lib` yet.
+- **92.A3 — threshold presets** (Urban Commute / Highway Touring / Track Day) on top of
+  `optimizerplan.md` #9.
+- **92.A4 — on-device crash classifier** (TFLite/ONNX trained on real waveforms to tell crashes
+  from potholes, speed bumps, railway crossings). Needs the corpus from 92.A1 first.
+- **92.A5 — predictive maintenance** (regress wear on riding intensity: jerk, hard braking,
+  stop-and-go time) instead of fixed km intervals.
+- **92.A6 — real map matching** (Valhalla/GraphHopper offline) and a "curviness" route planner. The
+  precision-7 geohash baselining is the stopgap.
+- **92.A7 — BLE OBD-II / TPMS** for RPM, throttle, coolant temp, tyre pressure.
+- **92.A8 — `ride_recording_provider.dart` is still a monolith** (1,308 lines now, down from 1,810).
+  The planned split was `RideSessionController` / `GpsPositionHandler` / `CrashAlertCoordinator` /
+  `LiveSessionManager` (`optimizerplan.md` #1).
+- **92.A9 — no verification on real Android OEM skins** (Xiaomi/Samsung aggressive battery
+  managers) for foreground-service survival. Matches §88.3's device-check gap.
+
+### 92.B Go-to-market, nothing started (marketing; no code)
+
+- **92.B1 — Phase 0 closed beta:** about 50 high-mileage riders from Facebook clubs (Yamaha Club BD,
+  Pulsar BD, RE Touring Club). Pre-seed brand forums with real maintenance discussions. Validate
+  Bangladesh payment gateways ahead of any monetisation.
+- **92.B2 — Phase 1 Play Store launch (target 5,000 installs / 1,500 weekly actives, Dhaka +
+  Chattogram):** founder-written launch posts in motorcycle groups, moto-vlogger early access
+  (demo group map + push-to-talk on a highway run), and a **garage/parts-shop programme**: onboard
+  about 100 independent shops to the Places directory free, with branded QR counter cards.
+- **92.B3 — Phase 2 (target 25,000 installs, Sylhet/Khulna/Rajshahi):** lubricant-brand sponsored
+  "first to the badge" mileage prizes (Motul, Shell Advance, Yamalube), iOS TestFlight and public
+  rollout, campus parking-lot activations with SafeQR helmet stickers.
+- **92.B4 — Phase 3 (100,000+ riders):** B2B with local manufacturers/distributors (Runner, Walton,
+  ACI Motors/Yamaha, Uttara Motors/Bajaj).
+- **92.B5 — marketing screenshots exist for only 2 of 7 colour families** (Carbon Mono, Editorial).
+  Deliberate (§58); don't claim more in the gallery until the rest are shot.
+- **92.B6 — Play Console internal-testing track had zero testers assigned** at the last check. UI-only
+  step (Testers tab). Verify whether it was ever done.
+- **92.B7 — claim guardrails for any copy:** no automatic SMS/email crash escalation (functions not
+  deployed, Blaze), no App Store availability claim until it ships, and chat messages persist for the
+  account's lifetime (as in the privacy policy).
+- **92.B8 — "weekly riding digest"** (Sunday summary: distance, moving vs jam time, fuel-efficiency
+  trend) was a proposed retention hook. A `notifChannelDigest` channel string exists, but I didn't
+  confirm a digest is actually sent. Check before promising it.
+
+### 92.C Monetisation ideas (none built; decision pending, nothing approved)
+
+- **Free tier:** offline tracking, crash detection, 2 bikes, core maintenance, forums.
+- **Pro (BDT 99–149/month or about 999/year):** lean analytics, route weather overlays, unlimited
+  GPX/JSON cloud backup, and a **Digital Vehicle Passport** (verifiable PDF of service history for
+  resale buyers).
+- **B2B:** certified resale verification, lubricant/tyre sponsored service alerts (for example
+  "brake pads due, 10% off at partner garages"), insurer partnerships on safe-riding scores, paid
+  verified garage listings.
+- Competitor price points quoted: Strava about $11.99/mo, Rever/Calimoto $39–59/yr, Detecht about $60/yr,
+  hardware trackers $40–100 plus SIM.
+
+### 92.D Launch copy drafts worth keeping (nothing here has been published)
+
+- **Taglines:** "ThrottleIQ — Machine Memory for Motorcycles." / "Works when your signal doesn't.
+  Remembers what your bike needs." / "Someone will know if you go down." / Bangla:
+  "বাইকের হিসাব থাকুক ফোনেই — অফলাইনেও প্রস্তুত।" and "সে রাইডে, আপনি নিশ্চিন্তে।"
+- **Play Store short description (78 chars):** "Track every ride: speed, routes, crash alerts, bike maintenance & rider feed."
+- **Poster lines:** EN "YOUR BIKE NEVER FORGETS A KILOMETER." / "Track speed, maintenance, and safety
+  offline. Free download."; BN "সিগন্যাল না থাকলেও, রাইড রেকর্ড হতে থাকে।" / "মেইনটেন্যান্স অ্যালার্ট ও ক্র্যাশ
+  ডিটেকশন এখন আপনার ফোনেই।"
+- **Bangla Facebook launch post** (4 ticks: 100% offline tracking, km-based service reminders, crash
+  detection + live location, group ride + push-to-talk; closing "no ads, no hidden charges"). Full text:
+  `git show 15b42f1:sum_gemini.md`, Channel A. **Update it before use:** it says crash detection
+  sends automatic alerts, which isn't true while functions are undeployed (see 92.B7).
+
+## 93. Auto-tracking daily summary + beta jam labels — follow-ups (2026-10-06, committed)
+
+What shipped is described in `features.md` → "Changes from the auto-tracking / jam pass". Still open:
+
+- **93.1 DECIDED 2026-10-07 (yes) and implemented — see §95.9 / `features.md` §5.** Was: *Decision needed: forgotten rides and the bike odometer.* Detected trips no longer become
+  ride rows, so they no longer add to a bike's distance or service-interval km. The "which bike?"
+  confirmation also no longer fires for new detections. Should forgotten rides still count toward
+  maintenance reminders?
+- **93.2 Fix storage grows without limit.** Fixes for `summarized` detections are kept forever
+  (about 150 KB per heavy riding day). Add a retention policy at some point.
+- **93.3 Needs a device test:**
+  - how quickly auto-tracking stands down after a manual Start;
+  - whether the background service on Android can show `flutter_local_notifications`;
+  - the 9pm digest replacing the fixed "Tap to see your day" message (the fixed text may show for
+    up to about 60 s first);
+  - iOS at 9pm, where the background handler may not be alive and opening the app is the fallback.
+- **93.4 Missing tests.** `DailyRideSummaryRepository.summaryFor` (the SQLite path) has no tests;
+  only the pure calculators are covered.
+- **93.5 Old docs.** `auto_tracking_plan.md` and `HANDOFF_Document.md` still describe the old
+  "promote each detection to a ride" flow.
+- **93.6 ✅ Firestore rules deployed (2026-10-06)**, including the `jamLabels` rule. The compiler printed a
+  warning at `398:46` (`publicStatsValid(resource == null ? null : ...)`), which comes from older
+  code, not this change.
+- **93.7 Bangla review.** The new BN strings (daily summary, jam labels) are machine-drafted and
+  listed in `bn_pending_review.txt`.
+- **93.8 Old auto rides.** Auto rides saved before this change stay in history and are counted as
+  recorded rides.
+
+## 94. Maintenance audit findings (2026-10-06) — FIXED in code 2026-10-07, see `issues_fixed.md` §94
+
+All five items were fixed by the maintenance redesign (§95). None of them has
+been verified on a device yet; that check is §95.1.
+
+## 95. Maintenance redesign (2026-10-07) — not committed, not checked on a device
+
+What shipped is in `features.md` §5. Analyze is clean and 1547/1547 tests pass.
+Still open:
+
+- **95.1 Device test.** None of the following has been run on a phone yet:
+  - setup → Log a visit → Undo → edit → delete (then reinstall: the deleted
+    visit must stay gone);
+  - notifications: due-soon/overdue after a ride, scheduled date reminders,
+    paperwork, tap → page;
+  - the home widget's new wording;
+  - PDF share;
+  - receipt photo after an app update (iOS container path change is handled by
+    `BikeImageResolver`, untested here);
+  - the 60-day strip at small widths;
+  - Bangla layout.
+- **95.2 Schedule templates are mostly approximate.**
+  - Only the Bajaj Pulsar 150 template was read off a manual, and that was the
+    Indian BS-VI manual.
+  - Hornet 160, FZ, R15/MT-15, Gixxer, Apache 160 and the three generic
+    templates come from coupon schedules and owner reports. The UI labels them
+    "Approximate".
+  - Each needs checking against the BD-market manual from ACI Yamaha, BHL Honda,
+    Uttara Bajaj, Rancon Suzuki and TVS.
+  - Each template's `source` note is English-only.
+- **95.3 Free-service counts per BD distributor are unverified.** The templates
+  carry Indian schedules.
+- **95.4 Adaptation factors are a heuristic**, not OEM figures:
+  - stop-and-go 0.8/0.9 at 35%/20% idle;
+  - hard braking 0.85 at ≥ 3 per 100 km;
+  - dusty/wet roads 0.7 on the air filter and chain;
+  - floor 0.7.
+
+  Validate them with 2–3 mechanics. The rider can switch adaptation off.
+- **95.5 Receipt photos aren't backed up.** They are stored only in the app
+  documents folder; the path syncs, the image doesn't. There is no receipt OCR
+  either. Uploading private receipts needs a non-public store (Cloudinary
+  presets here are unsigned/public).
+- **95.6 Quick-check issues are local only** (`precheck_issues`). Deliberate,
+  since they're short-lived.
+- **95.7 Bangla review.** About 180 new strings (batch "maintenance redesign
+  (§95)" in `bn_pending_review.txt`) are machine-drafted.
+- **95.8 Older app versions.**
+  - A log written with visit columns can't be inserted by a pre-v20 build; its
+    download skips that row (per-row try/catch), so the log is missing on an
+    un-updated second device.
+  - A custom tracked check (`service_type = custom:<id>`) shows as a plain
+    "Custom" check in old builds.
+- **95.9 Detected-trip credits** go to the active bike, since a detection
+  carries no bike. A rider who switches bikes without changing the active one
+  credits the wrong bike. The credits table is local; the bike's
+  `odometer_km`, which holds the total, does sync.
+- **95.10 Open product questions:**
+  - Should Maintenance get a bottom-nav tab? Garage cards now show "next due".
+  - Should snooze also support "100 km later"?
+  - Should the hero hide when everything is unknown?
+- **95.12 Code review findings (2026-10-07).** A read-only review of the diff
+  found these; the high and medium items were fixed the same day, with tests:
+  - alerts were cancelled the moment they were shown (the schedule is now
+    cancelled first);
+  - an older build skipped v20 visit logs but moved its pull mark past them (the
+    mark now stops before any failed row, plus a one-time full maintenance pull
+    after upgrading);
+  - editing a visit dropped items whose custom check was gone, and wiped
+    per-item prices;
+  - notification ids could collide (they are now allocated and remembered per
+    item);
+  - a tap from a killed app went nowhere, and an already-open page kept the old
+    bike;
+  - the restore could lose the cloud profile or paperwork (placeholder profiles
+    aren't uploaded; paperwork merges by kind);
+  - the due day itself counted as "overdue";
+  - the upgrade fired a burst of overdue alerts (the first run is silent);
+  - signed-out users kept scheduled alerts;
+  - `ref.watch` was used after an await;
+  - a paperwork date-picker assert;
+  - PDF receipt paths weren't resolved;
+  - deleting a visit had no confirmation.
+
+  **Still open from the review:**
+  - The new-bike baseline is derived from `odometer_km − credits`. An odometer
+    sync or a reinstall (credits are local) can push "km at add" past 500, and
+    never-logged checks then flip to "unknown". Fix: store the odometer reading
+    at add time.
+  - If the rider has no bike, a detection is marked summarised without its km
+    being credited.
+  - Receipt image files aren't deleted with their visit.
+  - A page left open past midnight shows yesterday's day counts until something
+    refreshes it.
+  - The home-screen widget text and the alert body are English and km-only;
+    alerts ignore the miles setting.
+  - On a fresh install, paperwork added *before* the first sync restores still
+    replaces the cloud paperwork list. Sync runs at sign-in, so the window is
+    small.
+- **95.11 The order button is still a demo.** It is now gated to
+  `BetaTesters.partOrdering`. It needs a parts partner before a real flow.

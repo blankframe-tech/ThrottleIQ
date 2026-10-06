@@ -11,6 +11,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
+import '../providers/jam_label_provider.dart';
 import '../providers/live_ride_places_provider.dart';
 import '../widgets/end_ride_sheet.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
@@ -577,6 +578,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const _JamLabelControl(),
                   Row(
                     children: [
                       Expanded(
@@ -649,6 +651,57 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           // it's up, and nothing else on this screen should repaint for that.
           const _CrashOverlayGate(),
         ],
+      ),
+    );
+  }
+}
+
+/// Beta-only (see BetaTesters.jamLabelling): "I'm in a jam" / "Jam released"
+/// so internal riders can label real jam windows as ground truth for the
+/// automatic jam detection. Renders nothing for everyone else.
+class _JamLabelControl extends ConsumerWidget {
+  const _JamLabelControl();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(canLabelJamsProvider)) return const SizedBox.shrink();
+    final active = ref.watch(
+        rideRecordingProvider.select((s) => s.status == RecordingStatus.active));
+    final open = ref.watch(jamLabelProvider);
+    if (!active && open == null) return const SizedBox.shrink();
+
+    final palette = context.palette;
+    final notifier = ref.read(jamLabelProvider.notifier);
+    final String label;
+    if (open == null) {
+      label = context.l10n.jamLabelStart;
+    } else {
+      // Rebuilds once a second off the ride clock while a jam is open.
+      ref.watch(rideRecordingProvider.select((s) => s.elapsed.inSeconds));
+      final d = DateTime.now().difference(open.start.at);
+      final mm = d.inMinutes.toString().padLeft(2, '0');
+      final ss = (d.inSeconds % 60).toString().padLeft(2, '0');
+      label = '${context.l10n.jamLabelRelease} · $mm:$ss';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () {
+            final s = ref.read(rideRecordingProvider);
+            open == null ? notifier.startJam(s) : notifier.releaseJam(s);
+          },
+          icon: Icon(open == null ? Icons.traffic : Icons.directions_bike),
+          label: Text('$label  ·  ${context.l10n.jamLabelBetaTag}'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 48),
+            foregroundColor: open == null ? palette.textPrimary : palette.background,
+            backgroundColor: open == null ? palette.surface : palette.warning,
+            side: BorderSide(color: palette.warning),
+          ),
+        ),
       ),
     );
   }

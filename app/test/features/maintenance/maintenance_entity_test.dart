@@ -143,20 +143,20 @@ void main() {
     });
   });
 
-  group('MaintenanceReminder', () {
-    test('carries notes from config', () {
-      const reminder = MaintenanceReminder(
-        serviceType: ServiceType.tire,
-        status: ReminderStatus.ok,
-        kmSinceService: 5000,
-        kmLimit: 15000,
-        notes: 'Front: 120/70-17, Rear: 160/60-17 (DOT 1524)',
+  group('MaintenanceConfigEntity key', () {
+    test('built-in checks are keyed by type, custom checks by id', () {
+      const builtIn = MaintenanceConfigEntity(
+          bikeId: 'b', serviceType: ServiceType.tire, intervalKm: 1000);
+      const custom = MaintenanceConfigEntity(
+        bikeId: 'b',
+        serviceType: ServiceType.custom,
+        intervalKm: 5000,
+        customId: 'abc',
+        customLabel: 'Steering bearings',
       );
-
-      expect(reminder.notes, 'Front: 120/70-17, Rear: 160/60-17 (DOT 1524)');
-      expect(reminder.serviceType, ServiceType.tire);
-      expect(reminder.kmSinceService, 5000);
-      expect(reminder.kmLimit, 15000);
+      expect(builtIn.key, 'tire');
+      expect(custom.key, 'custom:abc');
+      expect(custom.isCustom, isTrue);
     });
   });
 }

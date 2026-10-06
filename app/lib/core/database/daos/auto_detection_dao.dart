@@ -8,6 +8,12 @@ class AutoDetectionStatus {
   static const pending = 'pending';
   static const reconciled = 'reconciled';
   static const discarded = 'discarded';
+
+  /// Closed, owned, and counted in the rider's daily summary instead of being
+  /// promoted to a ride of its own. Its fixes are **kept**: the summary is
+  /// recomputed from them (so a manual ride entered later still trims it),
+  /// and nothing about a detection is destroyed by summarising it.
+  static const summarized = 'summarized';
 }
 
 /// What woke the app. Recorded so trigger quality can be measured per source
@@ -327,6 +333,41 @@ class AutoDetectionDao {
       await txn.delete('auto_fixes',
           where: 'detection_id = ?', whereArgs: [detectionId]);
     });
+  }
+
+  /// Moves a pending detection into the daily summary. Fixes are kept.
+  Future<void> markSummarized(String detectionId) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      'auto_detections',
+      {'status': AutoDetectionStatus.summarized},
+      where: 'id = ? AND status = ?',
+      whereArgs: [detectionId, AutoDetectionStatus.pending],
+    );
+  }
+
+  /// [userId]'s closed detections that started in [from, to) and still hold
+  /// their fixes — the daily summary's input. `reconciled` rows are left out
+  /// (they already are ride rows) and so are `discarded` ones.
+  Future<List<Map<String, dynamic>>> summaryDetectionsBetween(
+    String userId,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query(
+      'auto_detections',
+      where: 'user_id = ? AND status IN (?, ?) '
+          'AND started_at >= ? AND started_at < ?',
+      whereArgs: [
+        userId,
+        AutoDetectionStatus.pending,
+        AutoDetectionStatus.summarized,
+        from.toIso8601String(),
+        to.toIso8601String(),
+      ],
+      orderBy: 'started_at ASC',
+    );
   }
 
   /// Detection outcomes for the trigger-quality report, newest first.

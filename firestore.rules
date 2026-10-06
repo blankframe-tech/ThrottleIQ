@@ -411,6 +411,13 @@ service cloud.firestore {
         match /track/{chunkId} {
           allow read, write: if request.auth.uid == uid;
         }
+
+        // Beta jam labels ("I'm in a jam" / "Jam released"), written only by
+        // internal testers gated in the app (beta_testers.dart). Owner-only
+        // like the track they're analysed against.
+        match /jamLabels/{labelId} {
+          allow read, write: if request.auth.uid == uid;
+        }
       }
 
       // User bikes subcollection. Reads are gated by the rider's own

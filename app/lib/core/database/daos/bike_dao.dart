@@ -112,6 +112,14 @@ class BikeDao {
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bike_maintenance_configs', where: 'bike_id = ?', whereArgs: [id]);
+      for (final table in const [
+        'bike_maintenance_profiles',
+        'bike_paperwork',
+        'precheck_issues',
+        'detection_odometer_credits',
+      ]) {
+        await txn.delete(table, where: 'bike_id = ?', whereArgs: [id]);
+      }
       await txn.delete('bike_running_costs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
 

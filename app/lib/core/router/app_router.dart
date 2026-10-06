@@ -16,6 +16,8 @@ import '../../features/social/presentation/screens/ride_share_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_config_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
+import '../../features/maintenance/presentation/screens/check_detail_screen.dart';
+import '../../features/maintenance/presentation/screens/maintenance_setup_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
@@ -245,10 +247,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'configure',
-                builder: (_, state) => MaintenanceConfigScreen(
+                // A new bike's first visit here is setup now (schedule,
+                // roads, last oil change), not the bare checks list.
+                builder: (_, state) =>
+                    state.uri.queryParameters['isFirstTime'] == 'true'
+                        ? MaintenanceSetupScreen(
+                            bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                            firstTime: true,
+                          )
+                        : MaintenanceConfigScreen(
+                            bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                          ),
+              ),
+              GoRoute(
+                path: 'setup',
+                builder: (_, state) => MaintenanceSetupScreen(
                   bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                  isFirstTime:
-                      state.uri.queryParameters['isFirstTime'] == 'true',
+                  firstTime: state.uri.queryParameters['firstTime'] == 'true',
                 ),
               ),
               GoRoute(
@@ -256,6 +271,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => AddMaintenanceLogScreen(
                   bikeId: state.uri.queryParameters['bikeId'] ?? '',
                   initialServiceType: state.uri.queryParameters['serviceType'],
+                  visitId: state.uri.queryParameters['visitId'],
+                ),
+              ),
+              GoRoute(
+                path: 'check',
+                builder: (_, state) => CheckDetailScreen(
+                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                  checkKey: state.uri.queryParameters['key'] ?? '',
                 ),
               ),
             ],

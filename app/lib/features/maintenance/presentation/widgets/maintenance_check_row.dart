@@ -1,230 +1,157 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/beta_testers.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
+import '../../domain/entities/maintenance_profile.dart';
+import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
-import '../service_type_l10n.dart';
 import 'edit_maintenance_check_sheet.dart';
-import 'maintenance_format.dart';
+import 'forecast_text.dart';
 import 'order_part_sheet.dart';
 
-/// One tracked check: status, wear progress, and per-item Edit / Log.
+/// Whether the signed-in rider sees the demo parts-order button.
+final canOrderPartsProvider = Provider<bool>((ref) {
+  final profile = ref.watch(myProfileProvider).valueOrNull;
+  return BetaTesters.canOrderParts(profile?.username);
+});
+
+/// One tracked check: what's left in the rider's terms, why the interval
+/// was adapted, and a thin wear bar. Tapping opens the part's detail.
 class MaintenanceCheckRow extends ConsumerWidget {
-  final MaintenanceReminder reminder;
+  final CheckForecast forecast;
   final bool imperial;
   final String bikeId;
 
   const MaintenanceCheckRow({
     super.key,
-    required this.reminder,
+    required this.forecast,
     required this.imperial,
     required this.bikeId,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (tone, barColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, context.l10n.statusOverdue),
-      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, context.l10n.dueSoon),
-      ReminderStatus.ok => (PillTone.ok, context.palette.success, context.l10n.statusOk),
-    };
-    final isOverdue = reminder.status == ReminderStatus.overdue;
-    final progress = reminder.kmLimit > 0
-        ? (reminder.kmSinceService / reminder.kmLimit).clamp(0.0, 1.0)
-        : 0.0;
-    final kmLeft = reminder.kmLimit - reminder.kmSinceService;
-    final rightText = kmLeft >= 0
-        ? '${distLabel(kmLeft, imperial)} left'
-        : '${distLabel(-kmLeft, imperial)} over';
+    final f = forecast;
+    final l10n = context.l10n;
+    final color = statusColor(context, f.status);
+    final unknown = f.status == ReminderStatus.unknown;
+    final emphasise = f.needsAttention;
+    final canOrder = ref.watch(canOrderPartsProvider) &&
+        f.needsAttention &&
+        isOrderable(f.serviceType);
 
     return EditorialCard(
+      key: Key('checkRow_${f.key}'),
       radius: context.shape.radiusLg,
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-      borderColor: isOverdue ? context.palette.danger : context.palette.border,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(13, 11, 8, 11),
+      borderColor: f.status == ReminderStatus.overdue
+          ? context.palette.danger
+          : context.palette.border,
+      onTap: () => context.push(
+          '/home/maintenance/check?bikeId=$bikeId&key=${Uri.encodeComponent(f.key)}'),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(
-                iconForServiceType(reminder.serviceType),
-                size: 18,
-                color: barColor,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(reminder.serviceType.localizedLabel(context.l10n),
+          Icon(iconForServiceType(f.serviceType),
+              size: 20,
+              color: emphasise ? color : context.palette.textSecondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(forecastLabel(f, l10n),
                     style: display(context, 15, letterSpacing: 0)),
-              ),
-              EditorialPill(label, tone: tone, filled: isOverdue),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(context.l10n.intervalEvery(distLabel(reminder.kmLimit, imperial)),
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
-              Text(rightText,
+                const SizedBox(height: 2),
+                Text(
+                  rowRemainingText(f, l10n, imperial),
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isOverdue ? FontWeight.w700 : FontWeight.normal,
-                      color: isOverdue ? context.palette.danger : context.palette.textSecondary)),
-            ],
-          ),
-          if (reminder.notes != null && reminder.notes!.trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: context.palette.surfaceVariant.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(context.shape.radiusSm),
-                border:
-                    Border.all(color: context.palette.border.withValues(alpha: 0.6)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.notes, size: 12, color: context.palette.primary),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      reminder.notes!.trim(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: context.palette.textSecondary,
-                      ),
-                    ),
+                    fontSize: 12,
+                    fontWeight: emphasise ? FontWeight.w700 : FontWeight.normal,
+                    color: emphasise ? color : context.palette.textSecondary,
+                  ),
+                ),
+                if (f.reasons.isNotEmpty || (f.notes ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      for (final r in f.reasons)
+                        _Chip(adaptReasonLabel(r, l10n), icon: Icons.trending_down),
+                      if ((f.notes ?? '').trim().isNotEmpty)
+                        _Chip(f.notes!.trim(), icon: Icons.notes),
+                    ],
                   ),
                 ],
+                if (!unknown) ...[
+                  const SizedBox(height: 7),
+                  EditorialProgress(f.progress.clamp(0.0, 1.0),
+                      color: emphasise ? color : context.palette.textTertiary,
+                      height: 4),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          if (unknown)
+            TextButton(
+              onPressed: () => SetLastDoneSheet.show(context,
+                  bikeId: bikeId, checkKey: f.key, label: forecastLabel(f, l10n)),
+              child: Text(l10n.setLastDone,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            )
+          else ...[
+            if (canOrder)
+              IconButton(
+                tooltip: l10n.partOrderButton,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.shopping_bag_outlined, size: 20, color: color),
+                onPressed: () => OrderPartSheet.show(context, f.serviceType),
               ),
+            IconButton(
+              tooltip: l10n.log,
+              visualDensity: VisualDensity.compact,
+              icon: Icon(Icons.add_task, size: 20, color: context.palette.primary),
+              onPressed: () => context.push(
+                  '/home/maintenance/add?bikeId=$bikeId&serviceType=${Uri.encodeComponent(f.key)}'),
             ),
           ],
-          const SizedBox(height: 8),
-          EditorialProgress(progress, color: barColor, height: 5),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                reminder.lastServiceDate != null
-                    ? context.l10n.lastDone(formatServiceDate(reminder.lastServiceDate!))
-                    : context.l10n.noPreviousServiceRecorded,
-                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (reminder.status != ReminderStatus.ok &&
-                      isOrderable(reminder.serviceType)) ...[
-                    GestureDetector(
-                      onTap: () =>
-                          OrderPartSheet.show(context, reminder.serviceType),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: barColor.withValues(alpha: 0.15),
-                          borderRadius:
-                              BorderRadius.circular(context.shape.radiusSm),
-                          border: Border.all(color: barColor),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.shopping_bag_outlined,
-                                size: 12, color: barColor),
-                            const SizedBox(width: 2),
-                            Text(context.l10n.partOrderButton,
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: barColor)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                  GestureDetector(
-                    onTap: () {
-                      final configs = ref
-                              .read(maintenanceConfigProvider(bikeId))
-                              .valueOrNull ??
-                          [];
-                      final currentConfig = configs.firstWhere(
-                        (c) => c.serviceType == reminder.serviceType,
-                        orElse: () => MaintenanceConfigEntity(
-                          bikeId: bikeId,
-                          serviceType: reminder.serviceType,
-                          intervalKm: reminder.kmLimit,
-                          isEnabled: true,
-                          notes: reminder.notes,
-                        ),
-                      );
-                      EditMaintenanceCheckSheet.show(context,
-                          config: currentConfig);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: context.palette.surfaceVariant,
-                        borderRadius:
-                            BorderRadius.circular(context.shape.radiusSm),
-                        border: Border.all(color: context.palette.border),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.edit_outlined,
-                              size: 12, color: context.palette.textSecondary),
-                          const SizedBox(width: 2),
-                          Text(context.l10n.edit,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.palette.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () => context.go(
-                        '/home/maintenance/add?bikeId=$bikeId&serviceType=${reminder.serviceType.name}'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: context.palette.surfaceVariant,
-                        borderRadius:
-                            BorderRadius.circular(context.shape.radiusSm),
-                        border: Border.all(color: context.palette.border),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add, size: 12, color: context.palette.primary),
-                          const SizedBox(width: 2),
-                          Text(context.l10n.log,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.palette.primary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  const _Chip(this.text, {required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: context.palette.surfaceVariant.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(context.shape.radiusSm),
+        border: Border.all(color: context.palette.border.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: context.palette.textTertiary),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10.5, color: context.palette.textSecondary)),
           ),
         ],
       ),
@@ -232,60 +159,139 @@ class MaintenanceCheckRow extends ConsumerWidget {
   }
 }
 
-/// All / Needs attention / OK filter pill above the checks list.
-class MaintenanceFilterChip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final PillTone? tone;
-  final VoidCallback onTap;
-
-  const MaintenanceFilterChip({
-    super.key,
-    required this.label,
-    required this.active,
-    this.tone,
-    required this.onTap,
-  });
+/// A failed quick-check tile, shown with the due checks until it's fixed.
+class PrecheckIssueRow extends ConsumerWidget {
+  final PrecheckIssue issue;
+  const PrecheckIssueRow({super.key, required this.issue});
 
   @override
-  Widget build(BuildContext context) {
-    final bgColor = active
-        ? (tone == PillTone.overdue
-            ? context.palette.danger.withValues(alpha: 0.2)
-            : (tone == PillTone.ok
-                ? context.palette.success.withValues(alpha: 0.2)
-                : context.palette.ink))
-        : Colors.transparent;
-
-    final textColor = active
-        ? (tone == PillTone.overdue
-            ? context.palette.danger
-            : (tone == PillTone.ok
-                ? context.palette.success
-                : context.palette.onInk))
-        : context.palette.textTertiary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(context.shape.radiusFull),
-          border: Border.all(
-            color: active ? Colors.transparent : context.palette.border,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return EditorialCard(
+      radius: context.shape.radiusLg,
+      padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
+      borderColor: context.palette.attention,
+      child: Row(
+        children: [
+          Icon(Icons.report_problem_outlined,
+              size: 20, color: context.palette.attention),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(precheckLabel(issue.item, l10n),
+                    style: display(context, 15, letterSpacing: 0)),
+                const SizedBox(height: 2),
+                Text(l10n.precheckIssueFlagged(shortDate(context, issue.createdAt)),
+                    style: TextStyle(fontSize: 12, color: context.palette.attention)),
+              ],
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: textColor,
+          TextButton(
+            onPressed: () => ref
+                .read(precheckIssuesProvider(issue.bikeId).notifier)
+                .resolve(issue.id),
+            child: Text(l10n.markFixed,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
+/// "Set last done" for a check with nothing to count from: the odometer and
+/// date it was last done (either may be unknown).
+class SetLastDoneSheet extends ConsumerStatefulWidget {
+  final String bikeId;
+  final String checkKey;
+  final String label;
+  const SetLastDoneSheet(
+      {super.key, required this.bikeId, required this.checkKey, required this.label});
+
+  static Future<void> show(BuildContext context,
+      {required String bikeId, required String checkKey, required String label}) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.palette.surface,
+      builder: (_) =>
+          SetLastDoneSheet(bikeId: bikeId, checkKey: checkKey, label: label),
+    );
+  }
+
+  @override
+  ConsumerState<SetLastDoneSheet> createState() => _SetLastDoneSheetState();
+}
+
+class _SetLastDoneSheetState extends ConsumerState<SetLastDoneSheet> {
+  final _kmCtrl = TextEditingController();
+  DateTime? _date;
+
+  @override
+  void dispose() {
+    _kmCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.setLastDoneTitle(widget.label), style: display(context, 18)),
+          const SizedBox(height: 4),
+          Text(l10n.setLastDoneHelper,
+              style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _kmCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: l10n.odometerAtThatTime,
+              suffixText: l10n.distanceStatLabel,
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.event, size: 18),
+            label: Text(_date == null ? l10n.pickDateOptional : longDate(context, _date!)),
+            onPressed: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) setState(() => _date = picked);
+            },
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                final km = double.tryParse(_kmCtrl.text.trim());
+                if (km == null && _date == null) {
+                  Navigator.of(context).pop();
+                  return;
+                }
+                await ref
+                    .read(maintenanceConfigProvider(widget.bikeId).notifier)
+                    .setBaseline(widget.checkKey, km: km, date: _date);
+                if (context.mounted) Navigator.of(context).pop();
+              },
+              child: Text(l10n.safeQrSaveAction),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

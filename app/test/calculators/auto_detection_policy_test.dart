@@ -87,4 +87,37 @@ void main() {
       expect(clear(fixes(0, 10), [(start: at(0), end: at(10))]), isEmpty);
     });
   });
+
+  group('runsClearOfRides (daily summary)', () {
+    List<DateTime> fixes(int from, int to) =>
+        [for (var m = from; m <= to; m++) at(m)];
+    List<List<DateTime>> runs(List<DateTime> f, List<RideWindow> w) =>
+        runsClearOfRides<DateTime>(f, (t) => t, w);
+
+    test('no rides: one run of everything', () {
+      expect(runs(fixes(0, 5), []), [fixes(0, 5)]);
+    });
+
+    test('no fixes: no runs', () {
+      expect(runs([], [(start: at(0), end: at(1))]), isEmpty);
+    });
+
+    test('keeps the stretch before Start AND after Stop, drops the ride', () {
+      // Auto noticed the bike at 0, the rider tapped Start at 3 and Stop at
+      // 30, and auto kept going till 35.
+      final r = runs(fixes(0, 35), [(start: at(3), end: at(30))]);
+      expect(r, [fixes(0, 2), fixes(31, 35)]);
+    });
+
+    test('a still-recording ride (open window) swallows everything after it',
+        () {
+      expect(runs(fixes(0, 10), [(start: at(4), end: null)]), [fixes(0, 3)]);
+    });
+
+    test('longestRunClearOfRides is still the longest of these runs', () {
+      final w = [(start: at(3), end: at(30))];
+      expect(longestRunClearOfRides<DateTime>(fixes(0, 35), (t) => t, w),
+          fixes(31, 35));
+    });
+  });
 }

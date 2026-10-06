@@ -10,11 +10,9 @@ import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
-import '../../../maintenance/domain/entities/maintenance_entity.dart';
-import '../../../maintenance/presentation/providers/maintenance_provider.dart';
+import '../../../maintenance/presentation/widgets/next_due_line.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
-import '../../../maintenance/presentation/service_type_l10n.dart';
 
 class BikeDetailScreen extends ConsumerWidget {
   final String bikeId;
@@ -429,26 +427,6 @@ class _ServiceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Sorted most-urgent first by the provider.
-    final reminders = ref.watch(maintenanceRemindersProvider(bikeId));
-    final next = reminders.firstOrNull;
-
-    final (String summary, Color tone) = switch (next) {
-      null => (context.l10n.usingDefaultServiceIntervals, context.palette.textSecondary),
-      MaintenanceReminder(status: ReminderStatus.overdue) => (
-          context.l10n.serviceOverdueBy(next.serviceType.localizedLabel(context.l10n),
-              (next.kmSinceService - next.kmLimit).toStringAsFixed(0)),
-          context.palette.danger,
-        ),
-      _ => (
-          context.l10n.serviceDueIn(next.serviceType.localizedLabel(context.l10n),
-              (next.kmLimit - next.kmSinceService).clamp(0, double.infinity).toStringAsFixed(0)),
-          next.status == ReminderStatus.dueSoon
-              ? context.palette.warning
-              : context.palette.textSecondary,
-        ),
-    };
-
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
       decoration: BoxDecoration(
@@ -471,15 +449,15 @@ class _ServiceCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(context.l10n.nextSummary(summary), style: TextStyle(fontSize: 14, color: tone)),
+          NextDueLine(bikeId: bikeId, fontSize: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
                 style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
                 onPressed: () =>
-                    context.push('/home/maintenance/configure?bikeId=$bikeId'),
-                child: Text(context.l10n.intervals),
+                    context.push('/home/maintenance/add?bikeId=$bikeId'),
+                child: Text(context.l10n.logVisitTitle),
               ),
               TextButton.icon(
                 style: TextButton.styleFrom(minimumSize: const Size(48, 48)),

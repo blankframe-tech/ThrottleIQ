@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
+import '../providers/daily_ride_summary_provider.dart';
 import 'auto_detection_history_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
@@ -78,6 +79,7 @@ class AutoTrackingTile extends ConsumerWidget {
                 ),
               ),
             ),
+          if (isEnabled) const _TodaySummaryRow(),
           const Divider(height: 1),
           InkWell(
             onTap: () => AutoDetectionHistorySheet.show(context),
@@ -89,7 +91,7 @@ class AutoTrackingTile extends ConsumerWidget {
                   Icon(Icons.history, size: 18, color: context.palette.textSecondary),
                   const SizedBox(width: 8),
                   Text(
-                    l10n.recentDetectionsTitle,
+                    l10n.dailySummariesTitle,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -141,6 +143,58 @@ class AutoTrackingTile extends ConsumerWidget {
       case AutoTrackingEnableFailure.startFailed:
         return l10n.autoTrackingStartFailedMessage;
     }
+  }
+}
+
+/// Today's ride summary, under the switch while auto-tracking is on.
+///
+/// Replaces surfacing each auto-detected ride: the day's count covers manual
+/// rides and the ones the rider didn't record, with jam-split fragments
+/// merged (see `daily_ride_summary.dart`).
+class _TodaySummaryRow extends ConsumerWidget {
+  const _TodaySummaryRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summary = ref.watch(dailyRideSummaryProvider).valueOrNull;
+    if (summary == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.today, size: 18, color: context.palette.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.autoSummaryTodayTitle} · '
+                      '${l10n.autoSummaryRides(summary.rideCount)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary,
+                      ),
+                    ),
+                    if (!summary.isEmpty) ...[
+                      const SizedBox(height: 2),
+                      DailySummaryDetails(summary: summary),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 

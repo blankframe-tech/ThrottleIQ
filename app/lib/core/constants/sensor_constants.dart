@@ -67,6 +67,22 @@ class SensorConstants {
   static const double maxPlausibleSpeedMs = 70.0; // ~252 km/h; reject GPS spikes & jumps
   static const double maxPhysicalAccelMs2 = 12.0; // ~1.2g; maximum physically plausible motorcycle acceleration
 
+  // Auto-tracking daily summary: two background-detected segments whose gap
+  // (last fix of one → first fix of the next) is at most this long are
+  // counted as ONE ride, the gap counted as jam time. See
+  // daily_ride_summary.dart.
+  //
+  // Why 20 minutes. The background detector already bridges anything under
+  // its 5-minute stillness timeout (AutoTrackingService.stillnessTimeout), so
+  // the splits this exists to heal are stops of 5+ minutes. Dhaka jams at the
+  // big junctions (Farmgate, Mohakhali, Banglamotor, the level crossings)
+  // routinely run 10–15 minutes stationary; 20 minutes covers that with
+  // headroom. Much longer starts swallowing genuine stops — a lunch break,
+  // a shop visit, dropping someone at school — and "one commute counted as
+  // five rides" is the bug, "a 15-minute errand folded into the trip" is the
+  // lesser, accepted error.
+  static const Duration autoRideMergeGap = Duration(minutes: 20);
+
   // Motion classification
   static const double movingSpeedThresholdMs = 1.0; // matches existing periodType cutoff
   static const double corneringYawRateThresholdRadS = 0.26; // ~15°/s
@@ -101,22 +117,8 @@ class SensorConstants {
   static const int minConfidenceToThinRecording = 70;
   static const Duration minPersistIntervalOnSteadyStretches = Duration(seconds: 5);
 
-  // Maintenance thresholds (km)
-  static const double oilChangeMinKm = 1000;
-  static const double oilChangeMaxKm = 1500;
-  static const double airFilterMinKm = 8000;
-  static const double airFilterMaxKm = 10000;
-  static const double chainLubeMinKm = 500;
-  static const double chainLubeMaxKm = 700;
-  static const double tireCheckMinKm = 5000;
-  static const double tireCheckMaxKm = 8000;
-
-  // Brakes get reminders alongside the original four because they're the
-  // safety-critical ones. The rest of the expanded ServiceType list is
-  // loggable but deliberately not reminded on — see _reminderTypes in
-  // maintenance_provider.dart for why.
-  static const double brakeFluidMinKm = 18000;
-  static const double brakeFluidMaxKm = 20000;
-  static const double discPadsMinKm = 12000;
-  static const double discPadsMaxKm = 15000;
+  // Maintenance intervals live with the maintenance feature: per-type
+  // defaults in maintenance_entity.dart, per-model schedules in
+  // schedule_templates.dart. (A second copy here used to drive the
+  // home-screen widget and disagreed with the app — issues §94.1.)
 }

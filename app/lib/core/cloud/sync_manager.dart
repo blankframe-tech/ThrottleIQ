@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
+import '../database/daos/maintenance_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
 import '../../features/maintenance/presentation/providers/maintenance_provider.dart';
@@ -175,6 +176,21 @@ class SyncManager {
     return result.pulledAny;
   }
 
+  /// One full maintenance pull after upgrading to schema v20. Builds before
+  /// v20 skipped visit logs they couldn't store but still moved their pull
+  /// mark past them, so those logs would never arrive otherwise (§95).
+  Future<void> _resetMaintenanceMarkOnceForV20(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final flag = 'maintenance_pull_reset_v20_$uid';
+      if (prefs.getBool(flag) == true) return;
+      await prefs.remove(PullWatermark.key(uid, 'maintenance'));
+      await prefs.setBool(flag, true);
+    } catch (e) {
+      debugPrint('[SyncManager] maintenance mark reset skipped: $e');
+    }
+  }
+
   static Future<bool> _hasRows(String sql, List<Object?> args) async {
     final db = await DatabaseHelper.instance.database;
     return (await db.rawQuery(sql, args)).isNotEmpty;
@@ -291,6 +307,7 @@ class SyncManager {
           ({DateTime? since}) =>
               _cloudRepository.downloadBikes(uid, since: since),
         );
+        await _resetMaintenanceMarkOnceForV20(uid);
         await _pull(
           uid,
           'maintenance',
@@ -307,6 +324,8 @@ class SyncManager {
           _ref?.invalidate(maintenanceConfigProvider);
           _ref?.invalidate(isMaintenanceCustomizedProvider);
           _ref?.invalidate(bikeRunningCostProvider);
+          _ref?.invalidate(maintenanceProfileProvider);
+          _ref?.invalidate(paperworkProvider);
         }
       }
       await _backfillMaintenanceSettings(uid);
@@ -408,6 +427,18 @@ class SyncManager {
           await RideDao().markDeletionSynced(rideId);
         } catch (e) {
           debugPrint('[SyncManager] remote ride delete failed for $rideId: $e');
+        }
+      }
+
+      // And maintenance logs deleted here (§94.2): without this the
+      // download above restored every deleted log on the next full pull.
+      for (final logId in await MaintenanceDao().pendingRemoteDeletions(uid)) {
+        try {
+          await _cloudRepository.deleteMaintenanceRemote(uid, logId);
+          await MaintenanceDao().markDeletionSynced(logId);
+        } catch (e) {
+          debugPrint(
+              '[SyncManager] remote maintenance delete failed for $logId: $e');
         }
       }
 

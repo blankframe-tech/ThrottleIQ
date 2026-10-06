@@ -9,6 +9,7 @@ The following files are present in this directory:
 - `accel_axis_calibrator_test.dart`: Unit/Widget test file.
 - `auto_ride_reconciler_test.dart`: Unit/Widget test file.
 - `average_speed_test.dart`: Unit/Widget test file.
+- `daily_ride_summary_test.dart`: Unit/Widget test file.
 - `crash_detector_test.dart`: Unit/Widget test file.
 - `elevation_profile_test.dart`: Unit/Widget test file.
 - `event_detector_alerts_test.dart`: Unit/Widget test file.

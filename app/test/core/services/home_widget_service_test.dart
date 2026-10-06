@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/services/home_widget_service.dart';
+import 'package:throttleiq/features/maintenance/domain/calculators/maintenance_forecast.dart';
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 
@@ -186,73 +187,96 @@ void main() {
     });
   });
 
-  group('computeNextService', () {
-    test('a bike with no logs is measured from zero and picks the tightest '
-        'interval', () {
-      final next = computeNextService(currentOdometerKm: 0, logs: const []);
-      // Chain lube has the shortest limit (700 km) of the reminder types.
-      expect(next, isNotNull);
-      expect(next!.serviceType, ServiceType.chain);
+  group('nextServiceDue (shared forecast engine, §94.1)', () {
+    final now = DateTime(2026, 10, 6);
+    MaintenanceConfigEntity cfg(ServiceType t, double km, [int? days]) =>
+        MaintenanceConfigEntity(
+            bikeId: 'bike-1', serviceType: t, intervalKm: km, intervalDays: days);
+    List<CheckForecast> forecast(double odo, List<MaintenanceEntity> logs,
+            List<MaintenanceConfigEntity> configs) =>
+        forecastChecks(
+          configs: configs,
+          logs: logs,
+          input: ForecastInput(
+            currentOdometerKm: odo,
+            now: now,
+            fallbackBaseline: (km: 0, date: now),
+          ),
+        );
+
+    test('follows the rider\'s own intervals, not a separate table', () {
+      // A 3,000 km tyre interval used to read 8,000 on the widget.
+      final next = nextServiceDue(forecast(2900, const [], [
+        cfg(ServiceType.tire, 3000),
+        cfg(ServiceType.oilChange, 5000),
+      ]));
+      expect(next!.serviceType, ServiceType.tire);
+      expect(next.kmUntilDue, closeTo(100, 1e-9));
       expect(next.overdue, isFalse);
-      expect(next.kmUntilDue, 700);
     });
 
-    test('overdue once past the limit, reported as negative remaining', () {
-      final next = computeNextService(
-        currentOdometerKm: 2000,
-        logs: [_log(ServiceType.chain, 1900)],
-      );
-      expect(next, isNotNull);
-      // Oil change was never logged: 2000 km since, limit 1500 -> -500.
+    test('overdue reported as negative remaining and worded as overdue', () {
+      final next = nextServiceDue(forecast(
+        2000,
+        [_log(ServiceType.chain, 1900)],
+        [cfg(ServiceType.oilChange, 1500), cfg(ServiceType.chain, 700)],
+      ));
       expect(next!.serviceType, ServiceType.oilChange);
       expect(next.overdue, isTrue);
       expect(next.kmUntilDue, -500);
       expect(
         formatNextServiceSummary(
           serviceLabel: next.label,
-          kmUntilDue: next.kmUntilDue,
+          kmUntilDue: next.kmUntilDue!,
           overdue: next.overdue,
         ),
         'Oil Change overdue by 500.0 km',
       );
     });
 
-    test('the most overdue item wins over a merely due-soon one', () {
-      final next = computeNextService(
-        currentOdometerKm: 10000,
-        logs: [
-          _log(ServiceType.oilChange, 9200), // 800 since, 700 left
-          _log(ServiceType.chain, 9000), // 1000 since, limit 700 -> -300
-          _log(ServiceType.airFilter, 9990),
-          _log(ServiceType.tire, 9990),
-          _log(ServiceType.brakeFluid, 9990),
-          _log(ServiceType.frontDiscPads, 9990),
-        ],
-      );
-      expect(next!.serviceType, ServiceType.chain);
-      expect(next.overdue, isTrue);
-      expect(next.kmUntilDue, -300);
+    test('disabled checks and fuel never headline', () {
+      final next = nextServiceDue(forecast(10000, const [], [
+        cfg(ServiceType.fuel, 300),
+        const MaintenanceConfigEntity(
+            bikeId: 'bike-1',
+            serviceType: ServiceType.valveClearance,
+            intervalKm: 100,
+            isEnabled: false),
+        cfg(ServiceType.airFilter, 20000),
+      ]));
+      expect(next!.serviceType, ServiceType.airFilter);
     });
 
-    test('a freshly serviced bike still reports the next thing due', () {
-      final next = computeNextService(
-        currentOdometerKm: 5000,
+    test('a time-driven item is worded in days', () {
+      final next = nextServiceDue(forecastChecks(
+        configs: [cfg(ServiceType.brakeFluid, 0, 730)],
         logs: [
-          for (final t in kWidgetReminderTypes) _log(t, 5000),
+          MaintenanceEntity(
+            id: 'bf',
+            bikeId: 'bike-1',
+            serviceType: ServiceType.brakeFluid,
+            date: DateTime(2024, 10, 16),
+            odometerKm: 0,
+            createdAt: DateTime(2024, 10, 16),
+          ),
         ],
+        input: ForecastInput(currentOdometerKm: 100, now: now),
+      ));
+      expect(next!.byTime, isTrue);
+      expect(next.daysUntilDue, 10);
+      expect(
+        formatNextServiceSummary(
+          serviceLabel: next.label,
+          kmUntilDue: 0,
+          overdue: next.overdue,
+          daysUntilDue: next.daysUntilDue,
+        ),
+        'Brake Fluid in 10 days',
       );
-      expect(next!.overdue, isFalse);
-      expect(next.serviceType, ServiceType.chain);
-      expect(next.kmUntilDue, 700);
     });
 
-    test('log-only service types are ignored entirely', () {
-      final next = computeNextService(
-        currentOdometerKm: 100,
-        logs: [_log(ServiceType.valveClearance, 0)],
-      );
-      expect(next, isNotNull);
-      expect(kWidgetReminderTypes.contains(next!.serviceType), isTrue);
+    test('nothing tracked means nothing to say', () {
+      expect(nextServiceDue(const []), isNull);
     });
   });
 

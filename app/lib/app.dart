@@ -9,6 +9,7 @@ import 'core/router/app_router.dart';
 import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
+import 'features/maintenance/data/services/maintenance_alerts.dart';
 import 'features/ride/data/repositories/auto_ride_reconciler_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
@@ -44,6 +45,15 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       if (!mounted) return;
       ref.read(routerProvider).go('/ride/summary/$rideId');
     };
+    NotificationService.instance.onMaintenanceTapped = (bikeId) {
+      if (!mounted) return;
+      ref.read(routerProvider).go('/home/maintenance?bikeId=$bikeId');
+    };
+    // Cold start: anything that fell due while the app was closed, and a
+    // maintenance alert that launched the app opens its bike's page.
+    MaintenanceAlerts.instance.scheduleEvaluate();
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => NotificationService.instance.handleMaintenanceLaunchTap());
     // Tapping the home-screen "Start ride" widget should land on Record, not
     // just wherever the app happened to be. Registered here rather than in
     // main() because it needs the router, and once (not per rebuild) because
@@ -109,6 +119,9 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
   void didChangeAppLifecycleState(AppLifecycleState appState) {
     if (appState != AppLifecycleState.resumed) return;
     unawaited(_reconcileDetectedRides());
+    // Calendar-driven items (brake fluid age, tax token) fall due without a
+    // ride, so the check runs on every return to the app too.
+    MaintenanceAlerts.instance.scheduleEvaluate();
     // A rider who left to revoke (or grant) location permission from OS
     // Settings and comes straight back should see the Settings switch
     // reflect that immediately, not only after they next toggle it — see

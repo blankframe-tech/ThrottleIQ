@@ -38,7 +38,7 @@ void main() {
     await db.close();
   });
 
-  test('loads recommended defaults including fuel with hasCustomized false', () async {
+  test('defaults come from the suggested schedule template, not customised', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -48,16 +48,23 @@ void main() {
     final configs = await container.read(maintenanceConfigProvider('bike-prov-1').future);
     expect(configs, isNotEmpty);
 
-    // Fuel item exists in defaults and is enabled
-    final fuel = configs.firstWhere((c) => c.serviceType == ServiceType.fuel);
-    expect(fuel.isEnabled, isTrue);
-    expect(fuel.intervalKm, 300.0);
-    expect(fuel.notes, isNull);
-
-    // Engine oil exists in defaults
+    // A Ninja 400 with no cc on file matches no model template, so it gets
+    // the generic mid-size schedule.
     final oil = configs.firstWhere((c) => c.serviceType == ServiceType.oilChange);
     expect(oil.isEnabled, isTrue);
-    expect(oil.intervalKm, 1500.0);
+    expect(oil.intervalKm, 2500.0);
+    expect(oil.intervalDays, 180);
+    expect(oil.source, IntervalSource.template);
+
+    // Fuel is listed but off: it resets every few hundred km and isn't a
+    // service.
+    final fuel = configs.firstWhere((c) => c.serviceType == ServiceType.fuel);
+    expect(fuel.isEnabled, isFalse);
+
+    // Brake fluid ages on the stand, so it has a time limit.
+    final brakeFluid =
+        configs.firstWhere((c) => c.serviceType == ServiceType.brakeFluid);
+    expect(brakeFluid.intervalDays, 730);
   });
 
   test('updateSingleConfig modifies item and persists customized state', () async {
@@ -172,9 +179,9 @@ void main() {
       // back to empty lists.
       await container.read(maintenanceConfigProvider('bike-prov-1').future);
       await container.read(garageProvider.future);
-      final reminders = container.read(maintenanceRemindersProvider('bike-prov-1'));
-      final oilReminder = reminders.firstWhere((r) => r.serviceType == ServiceType.oilChange);
-      expect(oilReminder.kmSinceService, 0);
+      final forecasts = container.read(maintenanceForecastProvider('bike-prov-1'));
+      final oilForecast = forecasts.firstWhere((r) => r.serviceType == ServiceType.oilChange);
+      expect(oilForecast.kmSince, 0);
     });
 
     test('does nothing when no items are selected', () async {

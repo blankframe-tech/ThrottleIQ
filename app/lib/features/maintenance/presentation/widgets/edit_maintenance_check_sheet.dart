@@ -6,6 +6,7 @@ import '../../../../shared/widgets/editorial.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../maintenance_l10n.dart';
 import '../service_type_l10n.dart';
 
 IconData iconForServiceType(ServiceType type) {
@@ -108,6 +109,9 @@ List<int> presetIntervalsForServiceType(ServiceType type) {
   }
 }
 
+/// Time-limit quick picks, in days.
+const List<int> kPresetIntervalDays = [30, 90, 180, 365, 730];
+
 class EditMaintenanceCheckSheet extends ConsumerStatefulWidget {
   final MaintenanceConfigEntity config;
   final bool persistImmediately;
@@ -143,17 +147,28 @@ class _EditMaintenanceCheckSheetState
     extends ConsumerState<EditMaintenanceCheckSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _intervalCtrl;
+  late final TextEditingController _daysCtrl;
+  late final TextEditingController _warnKmCtrl;
+  late final TextEditingController _warnDaysCtrl;
+  late final TextEditingController _labelCtrl;
   late final TextEditingController _notesCtrl;
   late final TextEditingController _costCtrl;
   late bool _isEnabled;
   bool _saving = false;
+  bool _showAdvance = false;
+
+  static String _num(num? v) => v == null || v == 0 ? '' : v.toStringAsFixed(0);
 
   @override
   void initState() {
     super.initState();
-    _intervalCtrl = TextEditingController(
-      text: widget.config.intervalKm.toStringAsFixed(0),
-    );
+    final c = widget.config;
+    _intervalCtrl = TextEditingController(text: _num(c.intervalKm));
+    _daysCtrl = TextEditingController(text: _num(c.intervalDays));
+    _warnKmCtrl = TextEditingController(text: _num(c.warnKm));
+    _warnDaysCtrl = TextEditingController(text: _num(c.warnDays));
+    _labelCtrl = TextEditingController(text: c.customLabel ?? '');
+    _showAdvance = c.warnKm != null || c.warnDays != null;
     _notesCtrl = TextEditingController(text: widget.config.notes ?? '');
     final cost = widget.config.typicalCost;
     _costCtrl = TextEditingController(
@@ -167,6 +182,10 @@ class _EditMaintenanceCheckSheetState
   @override
   void dispose() {
     _intervalCtrl.dispose();
+    _daysCtrl.dispose();
+    _warnKmCtrl.dispose();
+    _warnDaysCtrl.dispose();
+    _labelCtrl.dispose();
     _notesCtrl.dispose();
     _costCtrl.dispose();
     super.dispose();
@@ -174,19 +193,38 @@ class _EditMaintenanceCheckSheetState
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final intervalVal = double.tryParse(_intervalCtrl.text.trim());
-    if (intervalVal == null || intervalVal <= 0) return;
+    final c = widget.config;
+    final intervalVal = double.tryParse(_intervalCtrl.text.trim()) ?? 0;
+    final daysVal = int.tryParse(_daysCtrl.text.trim());
+    final days = (daysVal != null && daysVal > 0) ? daysVal : null;
+    if (intervalVal <= 0 && days == null) return;
+    final warnKm = double.tryParse(_warnKmCtrl.text.trim());
+    final warnDays = int.tryParse(_warnDaysCtrl.text.trim());
 
     final trimmedNotes = _notesCtrl.text.trim();
     final costVal = double.tryParse(_costCtrl.text.trim());
     final hasCost = costVal != null && costVal > 0;
+    // Editing an interval makes it the rider's own: a later template or oil
+    // grade change won't overwrite it.
+    final intervalChanged =
+        intervalVal != c.intervalKm || days != c.intervalDays;
     final updated = MaintenanceConfigEntity(
-      bikeId: widget.config.bikeId,
-      serviceType: widget.config.serviceType,
+      bikeId: c.bikeId,
+      serviceType: c.serviceType,
       intervalKm: intervalVal,
+      intervalDays: days,
       isEnabled: _isEnabled,
       notes: trimmedNotes.isNotEmpty ? trimmedNotes : null,
       typicalCost: hasCost ? costVal : null,
+      warnKm: (warnKm != null && warnKm > 0) ? warnKm : null,
+      warnDays: (warnDays != null && warnDays > 0) ? warnDays : null,
+      baselineKm: c.baselineKm,
+      baselineDate: c.baselineDate,
+      source: intervalChanged ? IntervalSource.user : c.source,
+      customId: c.customId,
+      customLabel: c.isCustom && _labelCtrl.text.trim().isNotEmpty
+          ? _labelCtrl.text.trim()
+          : c.customLabel,
     );
 
     if (widget.persistImmediately) {
@@ -260,7 +298,8 @@ class _EditMaintenanceCheckSheetState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(type.localizedLabel(context.l10n), style: display(context, 18)),
+                        Text(configLabel(widget.config, context.l10n),
+                            style: display(context, 18)),
                         const SizedBox(height: 2),
                         Text(
                           type.localizedDescription(context.l10n),
@@ -319,10 +358,33 @@ class _EditMaintenanceCheckSheetState
               ),
               const SizedBox(height: 16),
 
+              if (widget.config.isCustom) ...[
+                TextFormField(
+                  controller: _labelCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(color: context.palette.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.customCheckName,
+                    filled: true,
+                    fillColor: context.palette.surfaceVariant,
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? context.l10n.nameService
+                      : null,
+                ),
+                const SizedBox(height: 16),
+              ],
+
               // Service Interval
               EditorialLabel(context.l10n.serviceInterval),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.intervalWhicheverFirst,
+                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+              ),
+              const SizedBox(height: 8),
               TextFormField(
+                key: const Key('intervalKmField'),
                 controller: _intervalCtrl,
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: context.palette.textPrimary),
@@ -334,9 +396,18 @@ class _EditMaintenanceCheckSheetState
                   fillColor: context.palette.surfaceVariant,
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return context.l10n.requiredField;
-                  final n = double.tryParse(v.trim());
-                  if (n == null || n <= 0) return context.l10n.enterPositiveNumber;
+                  final n = double.tryParse((v ?? '').trim());
+                  final d = int.tryParse(_daysCtrl.text.trim());
+                  final hasDays = d != null && d > 0;
+                  if ((v == null || v.trim().isEmpty) && !hasDays) {
+                    return context.l10n.intervalNeedKmOrDays;
+                  }
+                  if (v != null && v.trim().isNotEmpty && (n == null || n < 0)) {
+                    return context.l10n.enterPositiveNumber;
+                  }
+                  if ((n ?? 0) <= 0 && !hasDays) {
+                    return context.l10n.intervalNeedKmOrDays;
+                  }
                   return null;
                 },
               ),
@@ -375,6 +446,114 @@ class _EditMaintenanceCheckSheetState
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 14),
+              TextFormField(
+                key: const Key('intervalDaysField'),
+                controller: _daysCtrl,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                  labelText: context.l10n.intervalDaysLabel,
+                  suffixText: context.l10n.daysUnit,
+                  prefixIcon: const Icon(Icons.event, size: 20),
+                  filled: true,
+                  fillColor: context.palette.surfaceVariant,
+                ),
+                onChanged: (_) => setState(() {}),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final n = int.tryParse(v.trim());
+                  if (n == null || n < 0) return context.l10n.enterPositiveNumber;
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final d in kPresetIntervalDays)
+                    ActionChip(
+                      label: Text(
+                        context.l10n.daysShort(d),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _daysCtrl.text.trim() == '$d'
+                              ? FontWeight.w700
+                              : FontWeight.normal,
+                          color: _daysCtrl.text.trim() == '$d'
+                              ? context.palette.primary
+                              : context.palette.textSecondary,
+                        ),
+                      ),
+                      onPressed: () => setState(() => _daysCtrl.text = '$d'),
+                      backgroundColor: _daysCtrl.text.trim() == '$d'
+                          ? context.palette.primary.withValues(alpha: 0.15)
+                          : context.palette.surfaceVariant,
+                      side: BorderSide(
+                        color: _daysCtrl.text.trim() == '$d'
+                            ? context.palette.primary
+                            : context.palette.border,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => setState(() => _showAdvance = !_showAdvance),
+                child: Row(
+                  children: [
+                    Icon(
+                        _showAdvance ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: context.palette.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(context.l10n.advanceWarning,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textSecondary)),
+                  ],
+                ),
+              ),
+              if (_showAdvance) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _warnKmCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: context.palette.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.warnKmBefore,
+                          suffixText: context.l10n.distanceStatLabel,
+                          filled: true,
+                          fillColor: context.palette.surfaceVariant,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _warnDaysCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: context.palette.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.warnDaysBefore,
+                          suffixText: context.l10n.daysUnit,
+                          filled: true,
+                          fillColor: context.palette.surfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(context.l10n.advanceWarningHelper,
+                    style: TextStyle(
+                        fontSize: 11, color: context.palette.textTertiary)),
+              ],
               const SizedBox(height: 18),
 
               // Specifications & Extra Info Text

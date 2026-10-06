@@ -1,33 +1,26 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/daos/auto_detection_dao.dart';
-import '../../../../core/database/daos/bike_dao.dart';
-import '../../../../core/database/daos/ride_dao.dart';
-import '../../../../core/database/daos/ride_point_dao.dart';
-import '../../../../core/services/home_widget_service.dart';
 import '../../../../core/services/auto_tracking_service.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/calculators/auto_detection_policy.dart';
-import '../../domain/calculators/auto_ride_reconciler.dart';
-import '../../domain/entities/ride_entity.dart';
-import '../models/ride_model.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../presentation/providers/daily_ride_summary_provider.dart';
+import 'detected_odometer_credit.dart';
 
 final autoRideReconcilerServiceProvider =
     Provider<AutoRideReconcilerService>((ref) => AutoRideReconcilerService(ref));
 
-/// Turns detections captured by the background isolate into real rides.
+/// Hands detections captured by the background isolate to the rider's daily
+/// summary (it used to turn each into a ride row — see [_summarizeOne]).
 ///
 /// Runs on the **UI isolate**, at launch and whenever the app returns to the
 /// foreground. This split is the answer to the isolate problem: the background
 /// isolate can't reach `RideRecordingNotifier` or Riverpod, so it only ever
-/// writes raw fixes; everything that needs app state — which user, which bike,
-/// updating garage totals, notifying — happens here, where that state exists.
+/// writes raw fixes; everything that needs app state — which user, notifying —
+/// happens here, where that state exists.
 ///
 /// Nothing here runs unless auto-tracking is on and a detection is pending, so
 /// the cost on a normal launch is one indexed query returning no rows.
@@ -35,23 +28,19 @@ class AutoRideReconcilerService {
   AutoRideReconcilerService(this._ref);
 
   final Ref _ref;
-  static const _uuid = Uuid();
 
   final _detectionDao = AutoDetectionDao();
-  final _rideDao = RideDao();
-  final _pointDao = RidePointDao();
-  final _bikeDao = BikeDao();
-  final _reconciler = AutoRideReconciler();
+  final _odometerCredit = DetectedOdometerCredit();
 
   var _running = false;
 
-  /// Processes every pending detection.
+  /// Moves every pending detection into the daily summary. Returns the ids
+  /// of the detections moved.
   ///
   /// Reentrancy-guarded: this is called from both app launch and the
   /// foreground lifecycle hook, which on a cold start fire close together.
-  /// Two concurrent runs would each see the same pending rows and promote
-  /// them twice — the duplicate-ride bug that also motivates the transaction
-  /// in [AutoDetectionDao.markReconciled].
+  /// Two concurrent runs would each see the same pending rows; harmless now
+  /// (summarising is idempotent) but still pointless work.
   Future<List<String>> reconcilePending() async {
     if (_running) return const [];
     _running = true;
@@ -81,19 +70,26 @@ class AutoRideReconcilerService {
       // Only this rider's detections. Another rider's stay pending for when
       // they sign back in on this device (grill §1.4.2).
       final pending = await _detectionDao.pendingDetections(uid);
+
+      // The UI-isolate path to the end-of-day notification (the task handler
+      // has its own, see AutoTrackingService). Covers a rider who opens the
+      // app after 9pm, and iOS, where the handler may not be alive then.
+      unawaited(_ref
+          .read(dailyRideSummaryRepositoryProvider)
+          .showEndOfDayIfDue(uid));
+
       if (pending.isEmpty) return const [];
 
-      final createdRideIds = <String>[];
+      final summarized = <String>[];
+      var creditedKm = 0.0;
       for (final detection in pending) {
-        final rideId = await _reconcileOne(detection, uid);
-        if (rideId != null) createdRideIds.add(rideId);
+        creditedKm += await _summarizeOne(detection, uid);
+        summarized.add(detection['id'] as String);
       }
-
-      if (createdRideIds.isNotEmpty) {
-        _ref.invalidate(garageProvider);
-        unawaited(HomeWidgetService.instance.refreshFromLocalData());
-      }
-      return createdRideIds;
+      if (summarized.isNotEmpty) _ref.invalidate(dailyRideSummaryProvider);
+      // The bike's odometer moved, so every maintenance due date did too.
+      if (creditedKm > 0) _ref.invalidate(garageProvider);
+      return summarized;
     } finally {
       _running = false;
     }
@@ -123,123 +119,27 @@ class AutoRideReconcilerService {
     }
   }
 
-  Future<String?> _reconcileOne(
-    Map<String, dynamic> detection,
-    String uid,
-  ) async {
-    final detectionId = detection['id'] as String;
-    final rows = await _detectionDao.fixesFor(detectionId);
-
-    final allStaged = <StagedFix>[
-      for (final r in rows)
-        (
-          timestamp: DateTime.parse(r['timestamp'] as String),
-          lat: (r['lat'] as num).toDouble(),
-          lng: (r['lng'] as num).toDouble(),
-          speedMs: (r['speed_ms'] as num?)?.toDouble() ?? 0,
-          accuracyM: (r['accuracy_m'] as num?)?.toDouble(),
-          altitudeM: (r['altitude_m'] as num?)?.toDouble(),
-          headingDeg: (r['heading_deg'] as num?)?.toDouble(),
-        ),
-    ];
-
-    // §90.C3: never let an auto ride overlap one already on record — a
-    // manual recording of the same journey, or this very detection promoted
-    // once already by a run that died before marking it reconciled (which
-    // would otherwise also count its distance against the bike twice).
-    final staged = longestRunClearOfRides<StagedFix>(
-      allStaged,
-      (f) => f.timestamp,
-      [
-        for (final w in await _rideDao.rideWindows(uid))
-          (start: w.start, end: w.end),
-      ],
-    );
-    if (staged.isEmpty && allStaged.isNotEmpty) {
-      await _detectionDao.markDiscarded(
-          detectionId, ReconcileRejection.overlapsRide);
-      return null;
-    }
-
-    final outcome = _reconciler.reconcile(staged);
-    if (!outcome.isAccepted) {
-      await _detectionDao.markDiscarded(detectionId, outcome.rejectionReason!);
-      return null;
-    }
-
-    // Attribution. There is no signal in a background detection saying which
-    // bike was ridden, so this falls back to whichever bike is active and
-    // records that it guessed — see BikeAttributionConfidence. The one case
-    // that is *not* a guess is a single-bike garage, where "the active bike"
-    // and "the only bike" are the same statement.
-    final bikes = _ref.read(garageProvider).valueOrNull ?? const [];
-    final activeBike = _ref.read(activeBikeProvider);
-    if (activeBike == null) {
-      // No bike to attribute to at all. Keep the detection pending rather
-      // than discarding a real ride — once the rider adds a bike, the next
-      // launch picks it up.
-      debugPrint('[auto-tracking] $detectionId held: no bike in garage');
-      return null;
-    }
-    final confidence = bikes.length <= 1
-        ? BikeAttributionConfidence.high
-        : BikeAttributionConfidence.low;
-
-    final ride = outcome.ride!;
-    final startTime = staged.first.timestamp;
-    final rideId = _uuid.v4();
-
-    final entity = RideEntity(
-      id: rideId,
-      userId: uid,
-      bikeId: activeBike.id,
-      startTime: startTime,
-      endTime: staged.last.timestamp,
-      distanceM: ride.distanceM,
-      avgSpeedMs: ride.avgSpeedMs,
-      maxSpeedMs: ride.maxSpeedMs,
-      durationSeconds: ride.durationSeconds,
-      movingSeconds: ride.movingSeconds,
-      hardBrakeCount: ride.hardBrakeCount,
-      rapidAccelCount: ride.rapidAccelCount,
-      highJerkCount: ride.highJerkCount,
-      status: RideStatus.completed,
-      isAuto: true,
-      bikeConfidence: confidence,
-    );
-
-    // Inserted already-complete rather than inserted-then-finalized. The live
-    // path writes an `active` row at ride start because the ride is genuinely
-    // in progress and must survive a crash mid-recording; here the journey is
-    // over before the row exists, so a two-step write would only create a
-    // window where a half-formed ride is visible in history.
-    await _rideDao.insert(RideModel.toMap(entity));
-
-    await _pointDao.insertBatch([
-      for (final p in ride.points) {...p, 'ride_id': rideId},
-    ]);
-
-    await _bikeDao.incrementStats(activeBike.id, ride.distanceM);
-    await _detectionDao.markReconciled(detectionId, rideId);
-
-    // A crash signal found during replay is recorded and shown to the rider,
-    // and deliberately does NOT reach the emergency-contact flow. That flow
-    // summons help within a minute of an impact; firing it here would mean
-    // calling someone's family about a crash that — if it happened at all —
-    // is hours old and which the rider evidently survived, since the app is
-    // open. See ReconciledRide.crashSuspected.
-    if (ride.crashSuspected) {
-      debugPrint('[auto-tracking] ride $rideId replayed a crash signal');
-    }
-
-    if (confidence.needsConfirmation) {
-      unawaited(NotificationService.instance.showRideConfirmation(
-        rideId: rideId,
-        bikeLabel: '${activeBike.brand} ${activeBike.model}',
-        distanceKm: ride.distanceM / 1000,
-      ));
-    }
-
-    return rideId;
+  /// Moves one closed detection into the daily summary.
+  ///
+  /// Before 2026-10 this replayed the fixes and promoted every accepted
+  /// detection to a ride row of its own. In Dhaka traffic that surfaced one
+  /// commute as 2–5 "rides" — the background detector closes after 5 minutes
+  /// still, and jams last longer — and it also put fragments of journeys the
+  /// rider was recording by hand into history. Detections are now counted in
+  /// the end-of-day summary instead (`daily_ride_summary.dart`), merged across
+  /// jam gaps and trimmed against recorded rides at read time. Nothing is
+  /// replayed or discarded here, and the fixes stay on disk.
+  ///
+  /// A detection no longer becomes a ride row or needs a bike confirmation,
+  /// but its distance (clear of any recorded ride) still counts toward the
+  /// active bike's odometer so maintenance stays due on time — §93.1, see
+  /// [DetectedOdometerCredit]. Returns the km credited.
+  Future<double> _summarizeOne(
+      Map<String, dynamic> detection, String uid) async {
+    final id = detection['id'] as String;
+    final km =
+        await _odometerCredit.creditDetection(userId: uid, detectionId: id);
+    await _detectionDao.markSummarized(id);
+    return km;
   }
 }

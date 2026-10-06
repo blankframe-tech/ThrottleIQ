@@ -5,6 +5,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../providers/maintenance_provider.dart';
 import 'edit_maintenance_check_sheet.dart' show iconForServiceType;
@@ -49,14 +50,14 @@ class _ResetMaintenanceLogSheetState
     });
   }
 
-  Future<void> _confirmReset(List<MaintenanceReminder> reminders) async {
+  Future<void> _confirmReset(List<CheckForecast> reminders) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(ctx.l10n.resetSelectedItems),
         content: Text(
           _selected.length == 1
-              ? ctx.l10n.thisLogsAsServiced(_selected.first.label)
+              ? ctx.l10n.thisLogsAsServiced(_selected.first.localizedLabel(ctx.l10n))
               : ctx.l10n.thisLogsItemsAs(_selected.length),
         ),
         actions: [
@@ -111,7 +112,12 @@ class _ResetMaintenanceLogSheetState
 
   @override
   Widget build(BuildContext context) {
-    final reminders = ref.watch(maintenanceRemindersProvider(widget.bike.id));
+    final reminders = ref
+        .watch(maintenanceForecastProvider(widget.bike.id))
+        // Custom tracked checks are logged from their own row; the bulk
+        // reset covers the built-in catalogue.
+        .where((f) => !f.key.startsWith(kCustomCheckPrefix))
+        .toList();
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
@@ -253,7 +259,7 @@ class _ResetMaintenanceLogSheetState
 }
 
 class _ResetItemTile extends StatelessWidget {
-  final MaintenanceReminder reminder;
+  final CheckForecast reminder;
   final bool selected;
   final VoidCallback onTap;
 
@@ -266,9 +272,10 @@ class _ResetItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (tone, statusColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, 'Overdue'),
+      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, context.l10n.statusOverdue),
       ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, context.l10n.dueSoon),
-      ReminderStatus.ok => (PillTone.ok, context.palette.success, 'OK'),
+      ReminderStatus.ok => (PillTone.ok, context.palette.success, context.l10n.statusOk),
+      ReminderStatus.unknown => (PillTone.neutral, context.palette.textTertiary, context.l10n.statusUnknown),
     };
 
     return Container(
@@ -313,8 +320,8 @@ class _ResetItemTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      reminder.lastServiceDate != null
-                          ? context.l10n.lastDoneKmAgo(reminder.kmSinceService.toStringAsFixed(0))
+                      reminder.kmSince != null
+                          ? context.l10n.lastDoneKmAgo(reminder.kmSince!.toStringAsFixed(0))
                           : context.l10n.noPreviousServiceRecorded,
                       style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
                     ),

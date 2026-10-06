@@ -4537,4 +4537,841 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadOlderMessages => 'Load older messages';
+
+  @override
+  String get jamLabelStart => 'I\'m in a jam';
+
+  @override
+  String get jamLabelRelease => 'Jam released';
+
+  @override
+  String get jamLabelBetaTag => 'BETA';
+
+  @override
+  String notifDigestRideTime(int minutes) {
+    return ' · $minutes min riding';
+  }
+
+  @override
+  String notifDigestNotRecorded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count you didn\'t record',
+      one: '1 you didn\'t record',
+    );
+    return ' · $_temp0';
+  }
+
+  @override
+  String get autoSummaryTodayTitle => 'Today';
+
+  @override
+  String autoSummaryRides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rides',
+      one: '1 ride',
+      zero: 'No rides yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String autoSummaryStats(String km, int minutes, int jamMinutes) {
+    return '$km km · $minutes min riding · $jamMinutes min stopped in traffic';
+  }
+
+  @override
+  String autoSummaryNotRecorded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Includes $count rides you didn\'t record',
+      one: 'Includes 1 ride you didn\'t record',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dailySummariesTitle => 'Daily ride summaries';
+
+  @override
+  String get dailySummariesSubtitle =>
+      'Riding auto-tracking caught is joined across traffic stops and counted once per journey, together with the rides you recorded.';
+
+  @override
+  String get dailySummariesEmpty => 'No riding in the last two weeks.';
+
+  @override
+  String adaptHardBraking(String rate, int pct) {
+    return 'Hard braking $rate/100 km · −$pct%';
+  }
+
+  @override
+  String adaptSevereRoads(int pct) {
+    return 'Dusty or wet roads · −$pct%';
+  }
+
+  @override
+  String adaptStopAndGo(int share, int pct) {
+    return 'Stop-and-go $share% · −$pct%';
+  }
+
+  @override
+  String adaptedTo(String km) {
+    return 'Adapted to your riding: every $km';
+  }
+
+  @override
+  String get addCustomCheck => 'Add your own check';
+
+  @override
+  String get advanceWarning => 'Advance warning';
+
+  @override
+  String get advanceWarningHelper =>
+      'When \"due soon\" starts. Leave blank for the default.';
+
+  @override
+  String get allGoodNothingDue => 'All good, nothing due';
+
+  @override
+  String allGoodUntil(String date) {
+    return 'All good until ~$date';
+  }
+
+  @override
+  String atOdometer(String km) {
+    return 'at $km';
+  }
+
+  @override
+  String get bundleBrakeService => 'Brake service';
+
+  @override
+  String get bundleChainCare => 'Chain care';
+
+  @override
+  String get bundleGeneralService => 'General servicing';
+
+  @override
+  String get bundleOilChange => 'Oil change';
+
+  @override
+  String get checkNotTracked =>
+      'Not tracked. Turn it on in Customize checks to get reminders.';
+
+  @override
+  String comingUpNextDays(int days) {
+    return 'Coming up · next $days days';
+  }
+
+  @override
+  String costPerUnitLabel(String unit) {
+    return 'per $unit, all in';
+  }
+
+  @override
+  String costTrend(String first, String latest, String avg) {
+    return 'First $first → latest $latest · average $avg';
+  }
+
+  @override
+  String get countingFromBaseline => 'Counting from: ';
+
+  @override
+  String get customCheckName => 'Check name';
+
+  @override
+  String get customChecksSection => 'Your own checks';
+
+  @override
+  String daysShort(int days) {
+    return '$days d';
+  }
+
+  @override
+  String get daysUnit => 'days';
+
+  @override
+  String deleteVisitBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'This deletes all $count items logged in this visit, here and in the cloud.',
+      one: 'This deletes the logged item here and in the cloud.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteVisitTitle => 'Delete visit?';
+
+  @override
+  String get doneIt => 'Done it';
+
+  @override
+  String dueInDays(int days) {
+    return 'in ~$days days';
+  }
+
+  @override
+  String get dueOverdue => 'overdue';
+
+  @override
+  String get dueToday => 'due today';
+
+  @override
+  String get dueTomorrow => 'tomorrow';
+
+  @override
+  String get editInterval => 'Edit interval';
+
+  @override
+  String get editVisitTitle => 'Edit visit';
+
+  @override
+  String everyNDays(int days) {
+    return 'every $days days';
+  }
+
+  @override
+  String get exportFailed => 'Couldn\'t create the service record. Try again.';
+
+  @override
+  String get exportNothingYet =>
+      'Log a service first. There\'s nothing to export yet.';
+
+  @override
+  String get exportServiceRecord => 'Export service record';
+
+  @override
+  String get exportServiceRecordSubtitle =>
+      'A PDF of every visit and receipt, for a buyer or your mechanic';
+
+  @override
+  String freeServiceN(int n) {
+    return 'Free service #$n';
+  }
+
+  @override
+  String freeServicesSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count free services under warranty:',
+      one: '1 free service under warranty:',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fromGallery => 'Gallery';
+
+  @override
+  String groupAllGood(int count) {
+    return 'All good · $count';
+  }
+
+  @override
+  String groupComingUp(int count) {
+    return 'Coming up · $count';
+  }
+
+  @override
+  String groupNeedsAttention(int count) {
+    return 'Needs attention · $count';
+  }
+
+  @override
+  String groupUnknown(int count) {
+    return 'Not known yet · $count';
+  }
+
+  @override
+  String get intervalDaysLabel => 'Or every (days)';
+
+  @override
+  String get intervalNeedKmOrDays =>
+      'Enter a distance, a number of days, or both';
+
+  @override
+  String get intervalSection => 'Interval';
+
+  @override
+  String get intervalSourceTemplate => 'From your bike\'s schedule';
+
+  @override
+  String get intervalSourceUser => 'Set by you';
+
+  @override
+  String get intervalWhicheverFirst => 'Due at whichever comes first.';
+
+  @override
+  String get itemHistory => 'History';
+
+  @override
+  String lastServiceLine(String details) {
+    return 'Last: $details';
+  }
+
+  @override
+  String get lastServicedLabel => 'Last done: ';
+
+  @override
+  String limitsByDate(String date) {
+    return 'by $date';
+  }
+
+  @override
+  String limitsKmOrDate(String km, String date) {
+    return '$km or $date, whichever first';
+  }
+
+  @override
+  String get logItNow => 'Log it now';
+
+  @override
+  String get logVisitTitle => 'Log a visit';
+
+  @override
+  String get maintAdaptSubtitle =>
+      'Shorten intervals for stop-and-go traffic, hard braking and rough roads';
+
+  @override
+  String get maintAdaptTitle => 'Adapt to my riding';
+
+  @override
+  String maintAlertDueSoon(String item) {
+    return '$item due soon';
+  }
+
+  @override
+  String maintAlertOverdue(String item) {
+    return '$item is overdue';
+  }
+
+  @override
+  String get maintDueToday => 'Due today';
+
+  @override
+  String maintLeftDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintLeftKm(String km) {
+    return '$km left';
+  }
+
+  @override
+  String maintLeftKmOrDays(String km, int days) {
+    return '$km or $days days left, whichever comes first';
+  }
+
+  @override
+  String maintOverDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Was due $days days ago',
+      one: 'Was due yesterday',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintOverKm(String km) {
+    return 'Over by $km';
+  }
+
+  @override
+  String get maintRemindersSubtitle =>
+      'Notify me when something is due, and before papers expire';
+
+  @override
+  String get maintRemindersTitle => 'Maintenance reminders';
+
+  @override
+  String get maintScheduleNotSet =>
+      'Not set up. Tap to choose your bike\'s schedule';
+
+  @override
+  String get maintScheduleTitle => 'Schedule & riding conditions';
+
+  @override
+  String get maintUnknownStatus => 'Not known yet. Set when it was last done';
+
+  @override
+  String get markFixed => 'Fixed';
+
+  @override
+  String get moneyTitle => 'Running costs';
+
+  @override
+  String nextDueLine(String item, String when) {
+    return 'Next: $item · $when';
+  }
+
+  @override
+  String nextUpIs(String item) {
+    return 'Next up: $item';
+  }
+
+  @override
+  String get notSure => 'Not sure';
+
+  @override
+  String get notifChannelMaintenance => 'Maintenance';
+
+  @override
+  String get notifChannelMaintenanceDesc =>
+      'Service reminders and paperwork expiry';
+
+  @override
+  String get odometerAtThatTime => 'Odometer at the time';
+
+  @override
+  String get oilBrandLabel => 'Oil used';
+
+  @override
+  String get oilDetails => 'Engine oil';
+
+  @override
+  String get oilGradeFull => 'Full synthetic';
+
+  @override
+  String oilGradeInterval(String km, int days) {
+    return 'Change about every $km km or $days days';
+  }
+
+  @override
+  String get oilGradeMineral => 'Mineral';
+
+  @override
+  String oilGradeNextChange(String km, int days) {
+    return 'Next oil change set to $km km or $days days';
+  }
+
+  @override
+  String get oilGradeSemi => 'Semi-synthetic';
+
+  @override
+  String get oneOffJob => 'Something else (one-off)';
+
+  @override
+  String get orJoiner => ' or ';
+
+  @override
+  String paperworkAlertExpired(String doc) {
+    return '$doc has expired';
+  }
+
+  @override
+  String paperworkAlertExpiring(String doc, int days) {
+    return '$doc expires in $days days';
+  }
+
+  @override
+  String get paperworkDrivingLicence => 'Driving licence';
+
+  @override
+  String get paperworkEmpty =>
+      'Add your tax token, insurance and other papers to be reminded before they expire.';
+
+  @override
+  String paperworkExpiredOn(String date) {
+    return 'Expired on $date';
+  }
+
+  @override
+  String paperworkExpiresOn(String date, int days) {
+    return 'Expires $date · $days days left';
+  }
+
+  @override
+  String paperworkExpiryValue(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get paperworkFitness => 'Fitness certificate';
+
+  @override
+  String get paperworkInsurance => 'Insurance';
+
+  @override
+  String get paperworkPickExpiry => 'Pick expiry date';
+
+  @override
+  String get paperworkRegistration => 'Registration';
+
+  @override
+  String get paperworkTaxToken => 'Tax token';
+
+  @override
+  String get paperworkTitle => 'Papers';
+
+  @override
+  String perKmBreakdown(String maint, String fuel) {
+    return 'Servicing $maint + fuel $fuel';
+  }
+
+  @override
+  String get pickDateOptional => 'Date (optional)';
+
+  @override
+  String get precheckAllGood => 'All good';
+
+  @override
+  String get precheckChain => 'Chain';
+
+  @override
+  String get precheckChainHint => 'About 2–3 cm slack, lubed, no tight spots';
+
+  @override
+  String get precheckControls => 'Controls';
+
+  @override
+  String get precheckControlsHint =>
+      'Brakes, clutch, throttle and cables work smoothly';
+
+  @override
+  String get precheckInstructions =>
+      'Walk round the bike and tap anything that isn\'t right. About 30 seconds.';
+
+  @override
+  String precheckIssueFlagged(String date) {
+    return 'Flagged in quick check · $date';
+  }
+
+  @override
+  String precheckLastDone(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Last checked $days days ago',
+      one: 'Last checked yesterday',
+      zero: 'Checked today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get precheckLights => 'Lights';
+
+  @override
+  String get precheckLightsHint =>
+      'Headlight, tail, brake light, indicators, horn';
+
+  @override
+  String get precheckNeedsWork => 'Needs attention';
+
+  @override
+  String get precheckNever => 'A 30-second walk-round, once a week';
+
+  @override
+  String get precheckOil => 'Oil & fluids';
+
+  @override
+  String get precheckOilHint =>
+      'Oil level in the window, no leaks, brake fluid above MIN';
+
+  @override
+  String precheckSaveIssues(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Save $count issues',
+      one: 'Save 1 issue',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get precheckStands => 'Stands';
+
+  @override
+  String get precheckStandsHint => 'Side and centre stands spring back';
+
+  @override
+  String get precheckTires => 'Tyres & wheels';
+
+  @override
+  String get precheckTiresHint => 'Pressure, tread, no cuts or bulges';
+
+  @override
+  String get precheckTitle => 'Quick check';
+
+  @override
+  String projectedDue(String date, String when) {
+    return 'Projected: $date ($when)';
+  }
+
+  @override
+  String get quickPicks => 'Quick picks';
+
+  @override
+  String get receiptLabel => 'Receipt';
+
+  @override
+  String get receiptPickFailed => 'Couldn\'t add that photo.';
+
+  @override
+  String get remindMeLater => 'Remind me later';
+
+  @override
+  String get removeCheck => 'Remove check';
+
+  @override
+  String get ridingProfileNormal => 'Mostly paved roads';
+
+  @override
+  String get ridingProfileNormalHelper =>
+      'City and highway riding on decent roads.';
+
+  @override
+  String get ridingProfileSevere => 'Dusty, wet or broken roads';
+
+  @override
+  String get ridingProfileSevereHelper =>
+      'Construction dust, waterlogged streets, rough village roads. Air filter and chain come due sooner.';
+
+  @override
+  String rowLeftDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rowLeftKm(String km) {
+    return '$km left';
+  }
+
+  @override
+  String rowLeftKmOrDays(String km, int days) {
+    return '$km or $days days left';
+  }
+
+  @override
+  String rowOverBy(String km) {
+    return '$km over';
+  }
+
+  @override
+  String rowOverDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days over',
+      one: '1 day over',
+      zero: 'Due today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String saveVisitN(int count) {
+    return 'Save visit · $count items';
+  }
+
+  @override
+  String get scheduleApproximate => 'Approximate';
+
+  @override
+  String get scheduleVerified => 'From the manual';
+
+  @override
+  String get serviceRecordColCost => 'Cost';
+
+  @override
+  String get serviceRecordColDate => 'Date';
+
+  @override
+  String get serviceRecordColOdometer => 'Odometer';
+
+  @override
+  String get serviceRecordColShop => 'Workshop';
+
+  @override
+  String get serviceRecordColWork => 'Work done';
+
+  @override
+  String get serviceRecordFooter =>
+      'Made with ThrottleIQ from the owner\'s own records';
+
+  @override
+  String serviceRecordGenerated(String date) {
+    return 'Made on $date';
+  }
+
+  @override
+  String get serviceRecordTitle => 'Service record';
+
+  @override
+  String serviceRecordTotal(int count, String total) {
+    return '$count visits · ৳$total in total';
+  }
+
+  @override
+  String get serviceVisit => 'Service visit';
+
+  @override
+  String get setLastDone => 'Set last done';
+
+  @override
+  String get setLastDoneHelper =>
+      'Roughly is fine. It\'s only where the countdown starts.';
+
+  @override
+  String setLastDoneTitle(String item) {
+    return 'When was $item last done?';
+  }
+
+  @override
+  String get setupCardBody =>
+      'Pick your bike\'s schedule and say when the oil was last changed, and every due date becomes real.';
+
+  @override
+  String get setupCardTitle => 'Set up maintenance';
+
+  @override
+  String get setupLastOilQuestion => 'When was the oil last changed?';
+
+  @override
+  String get setupOilLabel => 'Engine oil';
+
+  @override
+  String get setupOilUnknown => 'I don\'t know';
+
+  @override
+  String get setupOthersSame => 'Everything else was done at that service too';
+
+  @override
+  String get setupResetIntervals =>
+      'Use this schedule\'s intervals for every check';
+
+  @override
+  String get setupResetIntervalsHelper =>
+      'Replaces intervals you\'ve edited. Off keeps your edits.';
+
+  @override
+  String get setupRoadsLabel => 'Your roads';
+
+  @override
+  String get setupSave => 'Save and show my maintenance';
+
+  @override
+  String get setupScheduleLabel => 'Service schedule';
+
+  @override
+  String get setupTelemetryNote =>
+      'Traffic and braking are measured from your rides. You can turn that off in settings.';
+
+  @override
+  String get setupTitle => 'Maintenance setup';
+
+  @override
+  String get shopKindAuthorized => 'Service centre';
+
+  @override
+  String get shopKindLocal => 'Local mechanic';
+
+  @override
+  String get shopKindSelf => 'Did it myself';
+
+  @override
+  String get shopNameHint => 'e.g. Rahim Motors, ACI 3S Mirpur';
+
+  @override
+  String get shopNameLabel => 'Where';
+
+  @override
+  String get showAllItems => 'Show all items';
+
+  @override
+  String showMoreVisits(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get showTrackedOnly => 'Show tracked only';
+
+  @override
+  String snoozedFor(int days) {
+    return 'OK, it\'ll be back in $days days.';
+  }
+
+  @override
+  String get spendOil => 'Engine oil & filter';
+
+  @override
+  String get spendParts => 'Other parts & work';
+
+  @override
+  String get spendVisits => 'Servicing (not itemised)';
+
+  @override
+  String get spentLast12Months => 'spent in the last 12 months';
+
+  @override
+  String get statusUnknown => 'Unknown';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get upNext => 'Up next';
+
+  @override
+  String get visitDetails => 'Visit details';
+
+  @override
+  String get visitPickSomething => 'Tick at least one thing that was done.';
+
+  @override
+  String visitSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Logged $count items',
+      one: 'Logged 1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get visitTotalCost => 'Total bill (optional)';
+
+  @override
+  String get visitUpdated => 'Visit updated';
+
+  @override
+  String get warnDaysBefore => 'Days before';
+
+  @override
+  String get warnKmBefore => 'Km before';
+
+  @override
+  String get whatWasDone => 'What was done';
+
+  @override
+  String get odometerPhotoHelper => 'Type the reading shown in your photo.';
 }

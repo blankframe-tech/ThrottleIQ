@@ -218,4 +218,33 @@ void main() {
       expect(alert, RideAlert.crash);
     });
   });
+
+  group('measure (daily summary, no ride gate)', () {
+    test('measures a jam-split fragment that reconcile would reject', () {
+      // ~165 m at 5.5 m/s: under minDistanceM on its own.
+      final fragment = _journey(speedMs: 5.5, seconds: 30);
+      expect(reconciler.reconcile(fragment).isAccepted, isFalse);
+
+      final m = reconciler.measure(fragment);
+      expect(m, isNotNull);
+      expect(m!.distanceM, closeTo(165, 15));
+      expect(m.durationSeconds, 30);
+    });
+
+    test('agrees with reconcile on an accepted ride', () {
+      final ride = _journey(speedMs: 11, seconds: 300);
+      final accepted = reconciler.reconcile(ride).ride!;
+      final measured = reconciler.measure(ride)!;
+      expect(measured.distanceM, accepted.distanceM);
+      expect(measured.movingSeconds, accepted.movingSeconds);
+      expect(measured.durationSeconds, accepted.durationSeconds);
+    });
+
+    test('null with fewer than two usable fixes', () {
+      expect(reconciler.measure(_journey(speedMs: 11, seconds: 0)), isNull);
+      expect(
+          reconciler.measure(_journey(speedMs: 11, seconds: 60, accuracyM: 80)),
+          isNull);
+    });
+  });
 }

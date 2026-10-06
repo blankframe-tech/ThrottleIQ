@@ -10,7 +10,8 @@ The following files are present in this directory:
 - `bike_dao.dart`: Dart source code.
 - `bike_running_cost_dao.dart`: Per-bike fuel price & mileage (`bike_running_costs`, schema v18).
 - `maintenance_config_dao.dart`: Per-bike maintenance check settings (`bike_maintenance_configs`).
-- `maintenance_dao.dart`: Dart source code.
+- `maintenance_dao.dart`: Maintenance logs (`maintenance_logs`), visit inserts, and delete tombstones (`deleted_maintenance_logs`, §94.2).
+- `maintenance_profile_dao.dart`: Per-bike setup profile, paperwork and quick-check issues (schema v20).
 - `outbox_dao.dart`: The SQLite `outbox` queue behind `OutboxService`.
 - `ride_dao.dart`: Dart source code.
 - `ride_point_dao.dart`: Dart source code.

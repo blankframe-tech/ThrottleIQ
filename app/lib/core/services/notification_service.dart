@@ -34,12 +34,22 @@ class NotificationService {
   static const crashChannelId = 'throttleiq_crash';
   static const ridesChannelId = 'throttleiq_rides';
   static const digestChannelId = 'throttleiq_digest';
+  static const maintenanceChannelId = 'throttleiq_maintenance';
 
   // ── Notification ids ──────────────────────────────────────────────────
   // Fixed ids so a second delivery replaces the first rather than stacking.
   static const crashNotificationId = 9001;
   static const confirmPromptId = 9002;
   static const weeklyDigestId = 9003;
+
+  /// Maintenance and paperwork alerts take ids in
+  /// [maintenanceIdBase, maintenanceIdBase + maintenanceIdSpan) — see
+  /// `MaintenanceAlerts.notificationIdFor`.
+  static const maintenanceIdBase = 9100;
+  static const maintenanceIdSpan = 800;
+
+  /// Payload prefix of a maintenance alert: `maint:<bikeId>`.
+  static const maintenancePayloadPrefix = 'maint:';
 
   // ── Action ids ────────────────────────────────────────────────────────
   static const actionImOk = 'crash_im_ok';
@@ -56,6 +66,9 @@ class NotificationService {
   /// Invoked when the rider taps a ride-confirmation notification.
   /// [rideId] is carried in the notification payload.
   void Function(String rideId)? onConfirmRideTapped;
+
+  /// Invoked when the rider taps a maintenance or paperwork alert.
+  void Function(String bikeId)? onMaintenanceTapped;
 
   Future<void> init() async {
     if (_initialised) return;
@@ -106,6 +119,13 @@ class NotificationService {
       ridesChannelId,
       l10n.notifChannelRides,
       description: l10n.notifChannelRidesDesc,
+      importance: Importance.defaultImportance,
+    ));
+
+    await android.createNotificationChannel(AndroidNotificationChannel(
+      maintenanceChannelId,
+      l10n.notifChannelMaintenance,
+      description: l10n.notifChannelMaintenanceDesc,
       importance: Importance.defaultImportance,
     ));
 
@@ -240,6 +260,11 @@ class NotificationService {
 
   /// The day-end update: what you rode today.
   ///
+  /// [rideCount] counts manual rides and the ones auto-tracking caught that
+  /// the rider forgot to record ([notRecordedCount] of them), with jam-split
+  /// fragments already merged — see `daily_ride_summary.dart`. Callable from
+  /// the auto-tracking task-handler isolate as well as the UI one.
+  ///
   /// Silent on days with no rides — a tracker that pings you to say nothing
   /// happened is the "daily nag" `hooked_throttleiq.md` warns against, and it
   /// trains riders to swipe the channel away, taking the confirmation prompts
@@ -247,7 +272,8 @@ class NotificationService {
   Future<void> showDailySummary({
     required int rideCount,
     required double distanceKm,
-    required int unconfirmedCount,
+    required int rideMinutes,
+    required int notRecordedCount,
   }) async {
     if (rideCount == 0) return;
     await init();
@@ -255,8 +281,9 @@ class NotificationService {
     final l10n = await savedL10n();
     final body = StringBuffer(
         l10n.notifDigestSummary(rideCount, distanceKm.toStringAsFixed(1)));
-    if (unconfirmedCount > 0) {
-      body.write(l10n.notifDigestUnconfirmed(unconfirmedCount));
+    body.write(l10n.notifDigestRideTime(rideMinutes));
+    if (notRecordedCount > 0) {
+      body.write(l10n.notifDigestNotRecorded(notRecordedCount));
     }
 
     await _plugin.show(
@@ -312,6 +339,77 @@ class NotificationService {
 
   Future<void> cancelDailySummary() => _plugin.cancel(weeklyDigestId);
 
+  NotificationDetails _maintenanceDetails(AppLocalizations l10n) =>
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          maintenanceChannelId,
+          l10n.notifChannelMaintenance,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      );
+
+  /// A maintenance or paperwork alert, now. [id] is stable per item so a
+  /// later alert for the same item replaces this one.
+  Future<void> showMaintenanceAlert({
+    required int id,
+    required String title,
+    required String body,
+    required String bikeId,
+  }) async {
+    await init();
+    final l10n = await savedL10n();
+    await _plugin.show(id, title, body, _maintenanceDetails(l10n),
+        payload: '$maintenancePayloadPrefix$bikeId');
+  }
+
+  /// The same alert, scheduled for [at] — for limits set by the calendar
+  /// (brake fluid age, tax token expiry) that fall due whether or not the
+  /// app is opened.
+  Future<void> scheduleMaintenanceAlert({
+    required int id,
+    required DateTime at,
+    required String title,
+    required String body,
+    required String bikeId,
+  }) async {
+    await init();
+    final l10n = await savedL10n();
+    await _plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(at, tz.local),
+      _maintenanceDetails(l10n),
+      payload: '$maintenancePayloadPrefix$bikeId',
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancel(int id) => _plugin.cancel(id);
+
+  /// Routes a maintenance alert that cold-started the app. A tap on a
+  /// notification while the app was killed never reaches
+  /// `onDidReceiveNotificationResponse`; it's only available here. Call once
+  /// the tap callbacks are registered.
+  Future<void> handleMaintenanceLaunchTap() async {
+    try {
+      await init();
+      final details = await _plugin.getNotificationAppLaunchDetails();
+      final payload = details?.notificationResponse?.payload;
+      if (details?.didNotificationLaunchApp != true || payload == null) return;
+      if (payload.startsWith(maintenancePayloadPrefix)) {
+        onMaintenanceTapped
+            ?.call(payload.substring(maintenancePayloadPrefix.length));
+      }
+    } catch (e) {
+      debugPrint('[notifications] launch details unavailable: $e');
+    }
+  }
+
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled =
@@ -340,6 +438,9 @@ class NotificationService {
     if (payload == null || payload.isEmpty) return;
     if (payload == actionImOk) {
       onCrashDismissed?.call();
+    } else if (payload.startsWith(maintenancePayloadPrefix)) {
+      onMaintenanceTapped
+          ?.call(payload.substring(maintenancePayloadPrefix.length));
     } else {
       onConfirmRideTapped?.call(payload);
     }

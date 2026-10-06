@@ -4547,4 +4547,840 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get loadOlderMessages => 'পুরনো মেসেজ লোড করুন';
+
+  @override
+  String get jamLabelStart => 'আমি জ্যামে আছি';
+
+  @override
+  String get jamLabelRelease => 'জ্যাম ছেড়েছে';
+
+  @override
+  String get jamLabelBetaTag => 'বেটা';
+
+  @override
+  String notifDigestRideTime(int minutes) {
+    return ' · $minutes মিনিট রাইড';
+  }
+
+  @override
+  String notifDigestNotRecorded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি রেকর্ড করা হয়নি',
+      one: '1টি রেকর্ড করা হয়নি',
+    );
+    return ' · $_temp0';
+  }
+
+  @override
+  String get autoSummaryTodayTitle => 'আজ';
+
+  @override
+  String autoSummaryRides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি রাইড',
+      one: '1টি রাইড',
+      zero: 'এখনো কোনো রাইড নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String autoSummaryStats(String km, int minutes, int jamMinutes) {
+    return '$km কিমি · $minutes মিনিট রাইড · $jamMinutes মিনিট জ্যামে থেমে';
+  }
+
+  @override
+  String autoSummaryNotRecorded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'রেকর্ড না করা $countটি রাইড সহ',
+      one: 'রেকর্ড না করা 1টি রাইড সহ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dailySummariesTitle => 'দৈনিক রাইডের সারাংশ';
+
+  @override
+  String get dailySummariesSubtitle =>
+      'অটো-ট্র্যাকিংয়ে ধরা রাইড জ্যামের বিরতি পেরিয়ে জোড়া লাগানো হয় এবং প্রতিটি যাত্রা একবারই গোনা হয়, আপনার রেকর্ড করা রাইডসহ।';
+
+  @override
+  String get dailySummariesEmpty => 'গত দুই সপ্তাহে কোনো রাইড নেই।';
+
+  @override
+  String adaptHardBraking(String rate, int pct) {
+    return 'জোরে ব্রেক $rate/100 কিমি · −$pct%';
+  }
+
+  @override
+  String adaptSevereRoads(int pct) {
+    return 'ধুলো বা ভেজা রাস্তা · −$pct%';
+  }
+
+  @override
+  String adaptStopAndGo(int share, int pct) {
+    return 'থেমে থেমে চলা $share% · −$pct%';
+  }
+
+  @override
+  String adaptedTo(String km) {
+    return 'আপনার চালানো অনুযায়ী: প্রতি $km';
+  }
+
+  @override
+  String get addCustomCheck => 'নিজের একটি চেক যোগ করুন';
+
+  @override
+  String get advanceWarning => 'আগাম সতর্কতা';
+
+  @override
+  String get advanceWarningHelper =>
+      'কখন থেকে \"শীঘ্রই সার্ভিস\" দেখাবে। ডিফল্টের জন্য ফাঁকা রাখুন।';
+
+  @override
+  String get allGoodNothingDue => 'সব ঠিক আছে, কিছুই বাকি নেই';
+
+  @override
+  String allGoodUntil(String date) {
+    return '~$date পর্যন্ত সব ঠিক আছে';
+  }
+
+  @override
+  String atOdometer(String km) {
+    return '$km-এ';
+  }
+
+  @override
+  String get bundleBrakeService => 'ব্রেক সার্ভিস';
+
+  @override
+  String get bundleChainCare => 'চেইনের যত্ন';
+
+  @override
+  String get bundleGeneralService => 'সাধারণ সার্ভিসিং';
+
+  @override
+  String get bundleOilChange => 'মবিল পরিবর্তন';
+
+  @override
+  String get checkNotTracked =>
+      'ট্র্যাক করা হচ্ছে না। রিমাইন্ডার পেতে চেক কাস্টমাইজে এটি চালু করুন।';
+
+  @override
+  String comingUpNextDays(int days) {
+    return 'আসছে · পরের $days দিন';
+  }
+
+  @override
+  String costPerUnitLabel(String unit) {
+    return 'প্রতি $unit, সব মিলিয়ে';
+  }
+
+  @override
+  String costTrend(String first, String latest, String avg) {
+    return 'প্রথম $first → সর্বশেষ $latest · গড় $avg';
+  }
+
+  @override
+  String get countingFromBaseline => 'গণনা শুরু: ';
+
+  @override
+  String get customCheckName => 'চেকের নাম';
+
+  @override
+  String get customChecksSection => 'আপনার নিজের চেক';
+
+  @override
+  String daysShort(int days) {
+    return '$days দিন';
+  }
+
+  @override
+  String get daysUnit => 'দিন';
+
+  @override
+  String deleteVisitBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'এটি এই ভিজিটে লগ করা $countটি আইটেম এখানে ও ক্লাউডে মুছে দেবে।',
+      one: 'এটি লগ করা আইটেমটি এখানে ও ক্লাউডে মুছে দেবে।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteVisitTitle => 'ভিজিট মুছবেন?';
+
+  @override
+  String get doneIt => 'করা হয়েছে';
+
+  @override
+  String dueInDays(int days) {
+    return '~$days দিনে';
+  }
+
+  @override
+  String get dueOverdue => 'সময় পেরিয়ে গেছে';
+
+  @override
+  String get dueToday => 'আজ করতে হবে';
+
+  @override
+  String get dueTomorrow => 'আগামীকাল';
+
+  @override
+  String get editInterval => 'ব্যবধান বদলান';
+
+  @override
+  String get editVisitTitle => 'ভিজিট সম্পাদনা';
+
+  @override
+  String everyNDays(int days) {
+    return 'প্রতি $days দিনে';
+  }
+
+  @override
+  String get exportFailed =>
+      'সার্ভিস রেকর্ড তৈরি করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get exportNothingYet =>
+      'আগে একটি সার্ভিস লগ করুন। এখনো এক্সপোর্ট করার কিছু নেই।';
+
+  @override
+  String get exportServiceRecord => 'সার্ভিস রেকর্ড এক্সপোর্ট';
+
+  @override
+  String get exportServiceRecordSubtitle =>
+      'প্রতিটি ভিজিট ও রসিদের PDF, ক্রেতা বা মেকানিকের জন্য';
+
+  @override
+  String freeServiceN(int n) {
+    return 'ফ্রি সার্ভিস #$n';
+  }
+
+  @override
+  String freeServicesSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ওয়ারেন্টিতে $countটি ফ্রি সার্ভিস:',
+      one: 'ওয়ারেন্টিতে 1টি ফ্রি সার্ভিস:',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fromGallery => 'গ্যালারি';
+
+  @override
+  String groupAllGood(int count) {
+    return 'সব ঠিক · $count';
+  }
+
+  @override
+  String groupComingUp(int count) {
+    return 'আসছে · $count';
+  }
+
+  @override
+  String groupNeedsAttention(int count) {
+    return 'মনোযোগ দরকার · $count';
+  }
+
+  @override
+  String groupUnknown(int count) {
+    return 'এখনো জানা নেই · $count';
+  }
+
+  @override
+  String get intervalDaysLabel => 'অথবা প্রতি (দিন)';
+
+  @override
+  String get intervalNeedKmOrDays => 'দূরত্ব, দিনের সংখ্যা, অথবা দুটোই লিখুন';
+
+  @override
+  String get intervalSection => 'ব্যবধান';
+
+  @override
+  String get intervalSourceTemplate => 'আপনার বাইকের সার্ভিস সূচি থেকে';
+
+  @override
+  String get intervalSourceUser => 'আপনার ঠিক করা';
+
+  @override
+  String get intervalWhicheverFirst => 'যেটি আগে আসে তখনই সার্ভিস।';
+
+  @override
+  String get itemHistory => 'ইতিহাস';
+
+  @override
+  String lastServiceLine(String details) {
+    return 'শেষবার: $details';
+  }
+
+  @override
+  String get lastServicedLabel => 'শেষ করা হয়েছে: ';
+
+  @override
+  String limitsByDate(String date) {
+    return '$date-এর মধ্যে';
+  }
+
+  @override
+  String limitsKmOrDate(String km, String date) {
+    return '$km অথবা $date, যেটি আগে';
+  }
+
+  @override
+  String get logItNow => 'এখনই লগ করুন';
+
+  @override
+  String get logVisitTitle => 'ভিজিট লগ করুন';
+
+  @override
+  String get maintAdaptSubtitle =>
+      'থেমে থেমে চলা, জোরে ব্রেক ও খারাপ রাস্তার জন্য ব্যবধান কমান';
+
+  @override
+  String get maintAdaptTitle => 'আমার চালানো অনুযায়ী মানিয়ে নিন';
+
+  @override
+  String maintAlertDueSoon(String item) {
+    return '$item শীঘ্রই করতে হবে';
+  }
+
+  @override
+  String maintAlertOverdue(String item) {
+    return '$item-এর সময় পেরিয়ে গেছে';
+  }
+
+  @override
+  String get maintDueToday => 'আজ করতে হবে';
+
+  @override
+  String maintLeftDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days দিন বাকি',
+      one: '1 দিন বাকি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintLeftKm(String km) {
+    return '$km বাকি';
+  }
+
+  @override
+  String maintLeftKmOrDays(String km, int days) {
+    return '$km অথবা $days দিন বাকি, যেটি আগে আসে';
+  }
+
+  @override
+  String maintOverDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days দিন আগে করার কথা ছিল',
+      one: 'গতকাল করার কথা ছিল',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintOverKm(String km) {
+    return '$km বেশি হয়ে গেছে';
+  }
+
+  @override
+  String get maintRemindersSubtitle =>
+      'কিছু করার সময় হলে এবং কাগজের মেয়াদ শেষের আগে জানান';
+
+  @override
+  String get maintRemindersTitle => 'মেইনটেন্যান্স রিমাইন্ডার';
+
+  @override
+  String get maintScheduleNotSet =>
+      'সেট আপ করা হয়নি। বাইকের সার্ভিস সূচি বেছে নিতে ট্যাপ করুন';
+
+  @override
+  String get maintScheduleTitle => 'সার্ভিস সূচি ও রাস্তার অবস্থা';
+
+  @override
+  String get maintUnknownStatus => 'এখনো জানা নেই। শেষ কবে করা হয়েছে লিখুন';
+
+  @override
+  String get markFixed => 'ঠিক করা হয়েছে';
+
+  @override
+  String get moneyTitle => 'চালানোর খরচ';
+
+  @override
+  String nextDueLine(String item, String when) {
+    return 'পরবর্তী: $item · $when';
+  }
+
+  @override
+  String nextUpIs(String item) {
+    return 'পরবর্তী: $item';
+  }
+
+  @override
+  String get notSure => 'নিশ্চিত নই';
+
+  @override
+  String get notifChannelMaintenance => 'মেইনটেন্যান্স';
+
+  @override
+  String get notifChannelMaintenanceDesc =>
+      'সার্ভিস রিমাইন্ডার ও কাগজপত্রের মেয়াদ';
+
+  @override
+  String get odometerAtThatTime => 'তখন ওডোমিটারে কত ছিল';
+
+  @override
+  String get oilBrandLabel => 'যে মবিল দেওয়া হয়েছে';
+
+  @override
+  String get oilDetails => 'ইঞ্জিন অয়েল';
+
+  @override
+  String get oilGradeFull => 'ফুল সিনথেটিক';
+
+  @override
+  String oilGradeInterval(String km, int days) {
+    return 'প্রায় প্রতি $km কিমি বা $days দিনে বদলান';
+  }
+
+  @override
+  String get oilGradeMineral => 'মিনারেল';
+
+  @override
+  String oilGradeNextChange(String km, int days) {
+    return 'পরের মবিল পরিবর্তন $km কিমি বা $days দিনে';
+  }
+
+  @override
+  String get oilGradeSemi => 'সেমি-সিনথেটিক';
+
+  @override
+  String get oneOffJob => 'অন্য কিছু (একবারের কাজ)';
+
+  @override
+  String get orJoiner => ' অথবা ';
+
+  @override
+  String paperworkAlertExpired(String doc) {
+    return '$doc-এর মেয়াদ শেষ';
+  }
+
+  @override
+  String paperworkAlertExpiring(String doc, int days) {
+    return '$doc-এর মেয়াদ $days দিনে শেষ হবে';
+  }
+
+  @override
+  String get paperworkDrivingLicence => 'ড্রাইভিং লাইসেন্স';
+
+  @override
+  String get paperworkEmpty =>
+      'ট্যাক্স টোকেন, ইন্সুরেন্স ও অন্য কাগজ যোগ করুন, মেয়াদ শেষের আগে মনে করিয়ে দেওয়া হবে।';
+
+  @override
+  String paperworkExpiredOn(String date) {
+    return '$date-এ মেয়াদ শেষ হয়েছে';
+  }
+
+  @override
+  String paperworkExpiresOn(String date, int days) {
+    return 'মেয়াদ $date · $days দিন বাকি';
+  }
+
+  @override
+  String paperworkExpiryValue(String date) {
+    return 'মেয়াদ $date';
+  }
+
+  @override
+  String get paperworkFitness => 'ফিটনেস সার্টিফিকেট';
+
+  @override
+  String get paperworkInsurance => 'ইন্সুরেন্স';
+
+  @override
+  String get paperworkPickExpiry => 'মেয়াদ শেষের তারিখ বাছুন';
+
+  @override
+  String get paperworkRegistration => 'রেজিস্ট্রেশন';
+
+  @override
+  String get paperworkTaxToken => 'ট্যাক্স টোকেন';
+
+  @override
+  String get paperworkTitle => 'কাগজপত্র';
+
+  @override
+  String perKmBreakdown(String maint, String fuel) {
+    return 'সার্ভিসিং $maint + জ্বালানি $fuel';
+  }
+
+  @override
+  String get pickDateOptional => 'তারিখ (ঐচ্ছিক)';
+
+  @override
+  String get precheckAllGood => 'সব ঠিক আছে';
+
+  @override
+  String get precheckChain => 'চেইন';
+
+  @override
+  String get precheckChainHint =>
+      'প্রায় 2–3 সেমি ঢিল, লুব দেওয়া, কোথাও টাইট নয়';
+
+  @override
+  String get precheckControls => 'কন্ট্রোল';
+
+  @override
+  String get precheckControlsHint =>
+      'ব্রেক, ক্লাচ, থ্রটল ও তার মসৃণভাবে কাজ করে';
+
+  @override
+  String get precheckInstructions =>
+      'বাইকের চারপাশ ঘুরে দেখুন, যা ঠিক নেই তাতে ট্যাপ করুন। প্রায় 30 সেকেন্ড।';
+
+  @override
+  String precheckIssueFlagged(String date) {
+    return 'দ্রুত চেকে ধরা পড়েছে · $date';
+  }
+
+  @override
+  String precheckLastDone(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'শেষ চেক $days দিন আগে',
+      one: 'শেষ চেক গতকাল',
+      zero: 'আজ চেক করা হয়েছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get precheckLights => 'লাইট';
+
+  @override
+  String get precheckLightsHint => 'হেডলাইট, টেইল, ব্রেক লাইট, ইন্ডিকেটর, হর্ন';
+
+  @override
+  String get precheckNeedsWork => 'মনোযোগ দরকার';
+
+  @override
+  String get precheckNever => 'সপ্তাহে একবার 30 সেকেন্ডের পরীক্ষা';
+
+  @override
+  String get precheckOil => 'মবিল ও তরল';
+
+  @override
+  String get precheckOilHint =>
+      'জানালায় মবিলের লেভেল, কোনো লিক নেই, ব্রেক ফ্লুইড MIN-এর উপরে';
+
+  @override
+  String precheckSaveIssues(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি সমস্যা সেভ করুন',
+      one: '1টি সমস্যা সেভ করুন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get precheckStands => 'স্ট্যান্ড';
+
+  @override
+  String get precheckStandsHint => 'সাইড ও সেন্টার স্ট্যান্ড ঠিকমতো ফিরে আসে';
+
+  @override
+  String get precheckTires => 'টায়ার ও চাকা';
+
+  @override
+  String get precheckTiresHint => 'হাওয়া, গ্রিপ, কাটা বা ফোলা নেই';
+
+  @override
+  String get precheckTitle => 'দ্রুত চেক';
+
+  @override
+  String projectedDue(String date, String when) {
+    return 'আনুমানিক: $date ($when)';
+  }
+
+  @override
+  String get quickPicks => 'দ্রুত বাছাই';
+
+  @override
+  String get receiptLabel => 'রসিদ';
+
+  @override
+  String get receiptPickFailed => 'ছবিটি যোগ করা যায়নি।';
+
+  @override
+  String get remindMeLater => 'পরে মনে করিয়ে দিন';
+
+  @override
+  String get removeCheck => 'চেক সরান';
+
+  @override
+  String get ridingProfileNormal => 'বেশিরভাগ পাকা রাস্তা';
+
+  @override
+  String get ridingProfileNormalHelper =>
+      'মোটামুটি ভালো রাস্তায় শহর ও হাইওয়েতে চালানো।';
+
+  @override
+  String get ridingProfileSevere => 'ধুলো, পানি বা ভাঙা রাস্তা';
+
+  @override
+  String get ridingProfileSevereHelper =>
+      'নির্মাণের ধুলো, জলাবদ্ধ রাস্তা, খারাপ গ্রামের রাস্তা। এয়ার ফিল্টার ও চেইনের সার্ভিস আগে লাগবে।';
+
+  @override
+  String rowLeftDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days দিন বাকি',
+      one: '1 দিন বাকি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rowLeftKm(String km) {
+    return '$km বাকি';
+  }
+
+  @override
+  String rowLeftKmOrDays(String km, int days) {
+    return '$km অথবা $days দিন বাকি';
+  }
+
+  @override
+  String rowOverBy(String km) {
+    return '$km বেশি';
+  }
+
+  @override
+  String rowOverDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days দিন পেরিয়ে গেছে',
+      one: '1 দিন পেরিয়ে গেছে',
+      zero: 'আজ করতে হবে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String saveVisitN(int count) {
+    return 'ভিজিট সেভ করুন · $countটি আইটেম';
+  }
+
+  @override
+  String get scheduleApproximate => 'আনুমানিক';
+
+  @override
+  String get scheduleVerified => 'ম্যানুয়াল থেকে';
+
+  @override
+  String get serviceRecordColCost => 'খরচ';
+
+  @override
+  String get serviceRecordColDate => 'তারিখ';
+
+  @override
+  String get serviceRecordColOdometer => 'ওডোমিটার';
+
+  @override
+  String get serviceRecordColShop => 'ওয়ার্কশপ';
+
+  @override
+  String get serviceRecordColWork => 'যে কাজ হয়েছে';
+
+  @override
+  String get serviceRecordFooter =>
+      'মালিকের নিজের রেকর্ড থেকে ThrottleIQ দিয়ে তৈরি';
+
+  @override
+  String serviceRecordGenerated(String date) {
+    return 'তৈরির তারিখ $date';
+  }
+
+  @override
+  String get serviceRecordTitle => 'সার্ভিস রেকর্ড';
+
+  @override
+  String serviceRecordTotal(int count, String total) {
+    return '$countটি ভিজিট · মোট ৳$total';
+  }
+
+  @override
+  String get serviceVisit => 'সার্ভিস ভিজিট';
+
+  @override
+  String get setLastDone => 'শেষ কবে করা হয়েছে';
+
+  @override
+  String get setLastDoneHelper =>
+      'আনুমানিক হলেই চলবে। এখান থেকেই গণনা শুরু হবে।';
+
+  @override
+  String setLastDoneTitle(String item) {
+    return '$item শেষ কবে করা হয়েছিল?';
+  }
+
+  @override
+  String get setupCardBody =>
+      'বাইকের সার্ভিস সূচি বাছুন এবং শেষ কবে মবিল বদলানো হয়েছে জানান, তাহলে প্রতিটি তারিখ সঠিক হবে।';
+
+  @override
+  String get setupCardTitle => 'মেইনটেন্যান্স সেট আপ করুন';
+
+  @override
+  String get setupLastOilQuestion => 'শেষ কবে মবিল বদলানো হয়েছে?';
+
+  @override
+  String get setupOilLabel => 'ইঞ্জিন অয়েল';
+
+  @override
+  String get setupOilUnknown => 'আমি জানি না';
+
+  @override
+  String get setupOthersSame => 'ওই সার্ভিসে বাকি সবকিছুও করা হয়েছিল';
+
+  @override
+  String get setupResetIntervals =>
+      'প্রতিটি চেকে এই সূচির ব্যবধান ব্যবহার করুন';
+
+  @override
+  String get setupResetIntervalsHelper =>
+      'আপনার বদলানো ব্যবধান মুছে যাবে। বন্ধ রাখলে আপনার পরিবর্তন থাকবে।';
+
+  @override
+  String get setupRoadsLabel => 'আপনার রাস্তা';
+
+  @override
+  String get setupSave => 'সেভ করে মেইনটেন্যান্স দেখান';
+
+  @override
+  String get setupScheduleLabel => 'সার্ভিস সূচি';
+
+  @override
+  String get setupTelemetryNote =>
+      'যানজট ও ব্রেকিং আপনার রাইড থেকে মাপা হয়। সেটিংসে এটি বন্ধ করতে পারেন।';
+
+  @override
+  String get setupTitle => 'মেইনটেন্যান্স সেটআপ';
+
+  @override
+  String get shopKindAuthorized => 'সার্ভিস সেন্টার';
+
+  @override
+  String get shopKindLocal => 'লোকাল মেকানিক';
+
+  @override
+  String get shopKindSelf => 'নিজে করেছি';
+
+  @override
+  String get shopNameHint => 'যেমন রহিম মোটরস, ACI 3S মিরপুর';
+
+  @override
+  String get shopNameLabel => 'কোথায়';
+
+  @override
+  String get showAllItems => 'সব আইটেম দেখান';
+
+  @override
+  String showMoreVisits(int count) {
+    return 'আরও $countটি দেখান';
+  }
+
+  @override
+  String get showTrackedOnly => 'শুধু ট্র্যাক করা দেখান';
+
+  @override
+  String snoozedFor(int days) {
+    return 'ঠিক আছে, $days দিন পর আবার দেখানো হবে।';
+  }
+
+  @override
+  String get spendOil => 'মবিল ও ফিল্টার';
+
+  @override
+  String get spendParts => 'অন্য পার্টস ও কাজ';
+
+  @override
+  String get spendVisits => 'সার্ভিসিং (আলাদা করা নয়)';
+
+  @override
+  String get spentLast12Months => 'গত 12 মাসে খরচ';
+
+  @override
+  String get statusUnknown => 'অজানা';
+
+  @override
+  String get today => 'আজ';
+
+  @override
+  String get undo => 'ফিরিয়ে নিন';
+
+  @override
+  String get upNext => 'পরবর্তী কাজ';
+
+  @override
+  String get visitDetails => 'ভিজিটের বিবরণ';
+
+  @override
+  String get visitPickSomething => 'অন্তত একটি করা কাজে টিক দিন।';
+
+  @override
+  String visitSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি আইটেম লগ হয়েছে',
+      one: '1টি আইটেম লগ হয়েছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get visitTotalCost => 'মোট বিল (ঐচ্ছিক)';
+
+  @override
+  String get visitUpdated => 'ভিজিট আপডেট হয়েছে';
+
+  @override
+  String get warnDaysBefore => 'কত দিন আগে';
+
+  @override
+  String get warnKmBefore => 'কত কিমি আগে';
+
+  @override
+  String get whatWasDone => 'কী করা হয়েছে';
+
+  @override
+  String get odometerPhotoHelper => 'ছবিতে যে রিডিং দেখা যাচ্ছে সেটি লিখুন।';
 }

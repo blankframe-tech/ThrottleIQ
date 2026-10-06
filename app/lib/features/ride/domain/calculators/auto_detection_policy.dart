@@ -50,7 +50,30 @@ List<T> longestRunClearOfRides<T>(
   DateTime Function(T) timeOf,
   List<RideWindow> windows,
 ) {
-  if (fixes.isEmpty || windows.isEmpty) return fixes;
+  final runs = runsClearOfRides(fixes, timeOf, windows);
+  if (runs.isEmpty) return <T>[];
+  var best = runs.first;
+  for (final r in runs) {
+    if (r.length > best.length) best = r;
+  }
+  return best;
+}
+
+/// Every run of [fixes] that touches no existing ride, in order — the same
+/// split as [longestRunClearOfRides], without keeping only the longest.
+///
+/// The daily summary needs all of them: the stretch before the rider tapped
+/// Start and the stretch after they tapped Stop are both real riding, and
+/// each is folded into the recorded ride it touches (or counted on its own)
+/// by `daily_ride_summary.dart`. Fixes inside a ride window are never part
+/// of any run, so a recorded journey is never counted twice.
+List<List<T>> runsClearOfRides<T>(
+  List<T> fixes,
+  DateTime Function(T) timeOf,
+  List<RideWindow> windows,
+) {
+  if (fixes.isEmpty) return <List<T>>[];
+  if (windows.isEmpty) return [fixes];
 
   bool inside(DateTime t) => windows.any((w) =>
       !t.isBefore(w.start) && (w.end == null || !t.isAfter(w.end!)));
@@ -58,28 +81,22 @@ List<T> longestRunClearOfRides<T>(
   bool windowBetween(DateTime a, DateTime b) => windows.any((w) =>
       w.start.isBefore(b) && (w.end == null || w.end!.isAfter(a)));
 
-  final runs = <({int start, int end})>[];
+  final runs = <List<T>>[];
   int? runStart;
   for (var i = 0; i < fixes.length; i++) {
     final t = timeOf(fixes[i]);
     if (inside(t)) {
-      if (runStart != null) runs.add((start: runStart, end: i));
+      if (runStart != null) runs.add(fixes.sublist(runStart, i));
       runStart = null;
       continue;
     }
     if (runStart != null && windowBetween(timeOf(fixes[i - 1]), t)) {
-      runs.add((start: runStart, end: i));
+      runs.add(fixes.sublist(runStart, i));
       runStart = i;
       continue;
     }
     runStart ??= i;
   }
-  if (runStart != null) runs.add((start: runStart, end: fixes.length));
-  if (runs.isEmpty) return <T>[];
-
-  var best = runs.first;
-  for (final r in runs) {
-    if (r.end - r.start > best.end - best.start) best = r;
-  }
-  return fixes.sublist(best.start, best.end);
+  if (runStart != null) runs.add(fixes.sublist(runStart));
+  return runs;
 }

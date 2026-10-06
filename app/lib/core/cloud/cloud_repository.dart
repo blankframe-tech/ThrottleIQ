@@ -11,6 +11,7 @@ import '../database/daos/ride_point_dao.dart';
 import '../services/cloudinary_upload_service.dart';
 import '../utils/bike_image_resolver.dart';
 import 'maintenance_settings_sync.dart';
+import '../database/daos/maintenance_dao.dart';
 import 'pull_watermark.dart';
 import 'ride_track_codec.dart';
 
@@ -431,6 +432,9 @@ class CloudRepository {
     final localIds = (await db.query('maintenance_logs', columns: ['id']))
         .map((r) => r['id'] as String)
         .toSet();
+    // Logs deleted on this device must stay deleted (§94.2) — "missing
+    // locally" is exactly what a deleted log looks like.
+    final deletedIds = await MaintenanceDao().deletedIds();
     final snap = await _sinceQuery(
             _firestore.collection('users').doc(uid).collection('maintenance'),
             since)
@@ -438,8 +442,9 @@ class CloudRepository {
     final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     var pulledAny = false;
+    DateTime? firstFailed;
     for (final doc in snap.docs) {
-      if (localIds.contains(doc.id)) continue;
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
       try {
@@ -447,9 +452,20 @@ class CloudRepository {
         pulledAny = true;
       } catch (e) {
         debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
+        final at = newestSyncedAt([doc.data()]);
+        if (at != null && (firstFailed == null || at.isBefore(firstFailed))) {
+          firstFailed = at;
+        }
       }
     }
-    return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
+    // A log this build couldn't store (e.g. one written by a newer schema)
+    // must be fetched again later, so the watermark stops short of it.
+    // Without this, an older build skipped a v20 visit log and then never
+    // pulled it even after upgrading (§95).
+    final mark = firstFailed == null
+        ? maxSyncedAt
+        : firstFailed.subtract(const Duration(milliseconds: 1));
+    return (pulledAny: pulledAny, maxSyncedAt: mark);
   }
 
   /// `uid/bikeId` pairs whose cloud settings doc was already checked this
@@ -545,6 +561,17 @@ class CloudRepository {
       }
     }
     return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
+  }
+
+  /// Deletes a maintenance log's remote copy (§94.2). The caller marks the
+  /// tombstone synced only when this returns, so an offline delete retries.
+  Future<void> deleteMaintenanceRemote(String uid, String logId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('maintenance')
+        .doc(logId)
+        .delete();
   }
 
   /// Deletes a ride's remote copy and its `track` chunks (§90.C10). Same

@@ -42,7 +42,7 @@ the single biggest lever in this document.
 
 **Ideas:**
 - **Maintenance-due local notification.** The distance-to-next-service math
-  already exists (`home_widget_service.dart:164-189` `computeNextService`,
+  already exists (`home_widget_service.dart` `nextServiceDue` (the shared maintenance forecast),
   mirrored in `maintenance_screen.dart`). It's computed but never pushed.
   A local notification ("Chain lube due in 150km") turns a passive widget
   into an active trigger — no backend needed, no Blaze plan, just

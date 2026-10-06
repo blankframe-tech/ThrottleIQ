@@ -1,6 +1,76 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-06 · Branch: `main`_
+_Last updated: 2026-10-07 · Branch: `main`_
+
+## 2026-10-07 (latest): maintenance redesign — not committed, not checked on a device
+
+The maintenance page is rebuilt as a forecast ("what does my bike need next, and
+when?") instead of a km checklist. The proposal it implements is the
+"ThrottleIQ Maintenance Redesign Proposal" doc (claude.ai artifact, 2026-10-06);
+all three of its phases were built. Full description: `features.md` §5. Open
+items: `issues_open.md` §95. §94.1–94.4 are fixed (`issues_fixed.md` §94).
+
+- **One engine.** `domain/calculators/maintenance_forecast.dart` is the only place
+  "due" is computed. The page, part detail, bike detail, the garage card, the
+  home-screen widget and notifications all read it. The widget's separate 6-type
+  table in `sensor_constants.dart` is gone.
+- **Km or time, whichever first**, with a projected date from the bike's riding pace.
+  Never-logged items are "unknown" (set last done) rather than counted from 0 km.
+- **Setup per bike** (`/home/maintenance/setup`): a schedule template by model or cc
+  (`domain/catalog/schedule_templates.dart`; only the Pulsar 150 is from a manual,
+  the rest are labelled approximate), riding conditions, oil grade, and when the
+  oil was last changed.
+- **Visits:** "Log a visit" logs several items in one go, with bundles, shop, oil
+  brand and grade, a receipt photo, edit, and Undo.
+- **Riding adaptation:** stop-and-go share and hard braking from ride telemetry,
+  plus a rider-chosen "dusty/wet roads" profile, shorten intervals by up to 30%
+  and show why. There is a switch to turn it off.
+- **Also new:**
+  - Local notifications for due items, scheduled reminders for date-based items,
+    and paperwork expiry.
+  - A weekly T-CLOCS quick check, where failed tiles become "Needs attention".
+  - A running-costs card.
+  - A paperwork card.
+  - A PDF service record export.
+  - Trackable custom checks.
+  - "Next due" on each garage card.
+- **Data:**
+  - **Schema v20.** Visit columns on `maintenance_logs`, and interval/baseline
+    columns on configs. New tables: `deleted_maintenance_logs`,
+    `bike_maintenance_profiles`, `bike_paperwork`, `precheck_issues` and
+    `detection_odometer_credits`.
+  - **Deleted logs stay deleted (§94.2).** Deletes are tombstoned and removed from
+    Firestore. The profile and paperwork are now part of the settings backup.
+- **§93.1 decided: yes.** Detected trips add their km, clear of any recorded ride,
+  to the active bike's odometer (`ride/data/repositories/detected_odometer_credit.dart`).
+- **Order button:** the demo parts-order button is now shown only to
+  `BetaTesters.partOrdering`.
+- **Tests:** Analyze is clean and 1547/1547 tests pass, including new engine,
+  template, migration, sync, credit and widget smoke tests. A code review's
+  high and medium findings are fixed; the rest are in §95.12.
+- **Bangla:** about 180 new Bangla strings are machine-drafted and listed in
+  `bn_pending_review.txt`.
+
+## 2026-10-06: beta jam labels + auto-tracking daily summary
+
+- **Beta jam labels:** riders listed in `BetaTesters.jamLabelling`
+  (`app/lib/core/constants/beta_testers.dart`, currently only `abraaraidev`) get an
+  "I'm in a jam" / "Jam released" button on the active ride screen. Each labelled window
+  is saved to `users/{uid}/rides/{rideId}/jamLabels`, along with what the app's own jam
+  detection counted over the same window. The point is ground-truth data to tune the jam
+  algorithm against. The `jamLabels` rule is deployed.
+- **Auto-tracking:**
+  - It now stops fully during a manual ride, including a detection that was already open
+    when the rider tapped Start.
+  - Detected trips are no longer saved as separate rides. A daily summary covers them
+    instead: trips split by jams of up to 20 minutes count as one ride, and the count
+    includes rides the rider forgot to record. It shows on the auto-tracking tile, in the
+    history sheet and in the 9pm notification.
+  - The old per-detection promotion described further down this file and in
+    `auto_tracking_plan.md` no longer happens.
+- Details are in `features.md` ("Changes from the auto-tracking / jam pass"), and the
+  open items are in `issues_open.md` §93. Analyze is clean and 1481/1481 tests pass.
+  Nothing has been checked on a device.
 
 ## 2026-10-06 (later): §90 fix pass — committed `6264d72`, pushed; release builds made
 
@@ -115,7 +185,7 @@ Six founder asks, done by three parallel subagents. The plan and success criteri
   - **Where it shows:** a "Ride cost" card with a breakdown on the ride summary.
   - **Calculator:** pure, in `maintenance/domain/calculators/ride_cost_calculator.dart`. It uses the average logged cost when there is one and the typical cost otherwise, ÷ the service interval.
   - **Database:** schema **17 → 18** (new `bike_running_costs` table, new `typical_cost` column).
-  - ⚠️ **Local only:** these settings are not synced to Firestore, same as the existing `bike_maintenance_configs`.
+  - ~~Local only~~ — superseded: since §88.2 these settings are backed up to `users/{uid}/private/maintenanceSettings_{bikeId}` (and since 2026-10-07 the setup profile and paperwork are included).
 - **Media collage:** the route map is now one tile in a single collage with the photos (`social/presentation/widgets/ride_media_collage.dart`, which replaces `PhotoCollage`). It covers the feed card and a new share preview; the ride detail screen shows photos only.
 - **Still to do:**
   - Check on a device: the list in §87, the new maintenance layout and cost card, the collage visuals, and the v18 upgrade on a real install.
@@ -1165,6 +1235,27 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 
 ## 📋 To do
 
+**Next (added 2026-10-06, jam labels + daily summary — see `issues_open.md` §93):**
+
+- [ ] **Founder decision:** should forgotten (auto-detected) rides still add km to the
+  bike's odometer and service reminders? They no longer do, and the "which bike?" prompt no
+  longer fires for them (§93.1).
+- [ ] **Device test, jam labels:** ride as `@abraaraidev`, tap "I'm in a jam" and then
+  "Jam released", and check that a doc appears under
+  `users/{uid}/rides/{rideId}/jamLabels`. After enough labelled jams, compare
+  `labelledSeconds` with `detectedStoppedSeconds` to tune the jam detection.
+- [ ] **Device test, auto-tracking (§93.3):**
+  - Turn auto-tracking on, start moving, then tap Start. No extra ride should appear for
+    the minutes before Start or after Stop.
+  - A jam-split commute should count as one ride.
+  - The 9pm digest should show on Android with the app closed. On iOS it may only show
+    when the app is opened after 9pm.
+- [ ] Add a retention policy for fixes from summarized detections (§93.2).
+- [ ] Add tests for `DailyRideSummaryRepository.summaryFor` against SQLite (§93.4).
+- [ ] Update `auto_tracking_plan.md` and the older auto-tracking sections of this file to
+  the summary flow (§93.5).
+- [ ] Get a native speaker to review the new Bangla strings (§93.7).
+
 - [x] ~~Deploy the 2026-09-19 `firestore.rules` change~~ **DEPLOYED
   2026-09-19** (`issues_fixed.md` §68) — added `ridingScoreCountsPlausible` (folded
   into `rideStatsPlausible`) so a shared ride's
@@ -1617,10 +1708,10 @@ ThrottleIQ's edge is that it already captures accel + jerk per point; competitor
 #### E. Garage & ownership — deepen the existing maintenance moat
 | Idea | Proven by | Effort / Tier |
 |---|---|---|
-| **Odometer auto-sync** — ride distance auto-advances each bike's odometer, driving maintenance reminders without manual entry. | (ThrottleIQ-native; no competitor does this well) | S / **T1** |
+| **Odometer auto-sync** — ride distance auto-advances each bike's odometer, driving maintenance reminders without manual entry. **Done 2026-10-07:** recorded rides already did; detected trips now add their km too (`issues_open.md` §93.1/§95). | (ThrottleIQ-native; no competitor does this well) | S / **T1** |
 | **Fuel log** — liters + cost per fill-up → cost/km and mileage (km/L) trends. Huge in cost-sensitive markets; pairs with fuel-pump POIs ("log a fill-up at this pump"). A rival BD app ships a dedicated fuel-log tab; lower priority than the trip planner or the localization pass above, but a real, cheap gap once those land. Not yet started as of 2026-08-28. | Fuelio/Drivvo (adjacent category) | M / **T1** |
 | **Documents wallet** — registration, insurance, license photos with expiry reminders. BD riders face frequent document checks; low effort, daily utility. | (market-native idea) | S / **T1** |
-| **Resale story** — a bike's full maintenance + ride history as an exportable PDF ("full service history, 92% smooth-riding score") to boost resale value. | (ThrottleIQ-native) | M / **T2** |
+| **Resale story** — a bike's full maintenance + ride history as an exportable PDF ("full service history, 92% smooth-riding score") to boost resale value. **Service-record half done 2026-10-07** (Maintenance → Export service record); ride history/score not included. | (ThrottleIQ-native) | M / **T2** |
 
 ### Proposed information architecture (UX pass)
 
@@ -1859,3 +1950,9 @@ completed rides (post-launch, real usage) to work from.
 - **imuQuality/confidence formulas are first-pass heuristics**, explicitly
   expected to need real-device tuning — same honest framing as the
   crash-threshold fix ("user will fine-tune with real rides").
+
+## 2026-10-06: repo cleanup (no app change)
+
+Deleted the regenerable files in `scripts/` (`node_modules`, `firestore-debug.log`, `dhaka_places.json`; run `npm install` there before `npm run test:rules`) and the root `ANTIGRAVITY_GRILL/` folder (the 2026-09-20 critique and the Social Redesign mock). The unfixed critique items it held are logged as `issues_open.md` §91; the rest were already in §83. Both files remain in git history (`git show 4b1a1b2^:ANTIGRAVITY_GRILL/Claude_CRTITISIZE.md`). Older mentions of `ANTIGRAVITY_GRILL/` in this file and `features.md` are historical.
+
+Also deleted `sum_claude.md` and `sum_gemini.md` (stale 2026-09-08 summaries). Their not-yet-done items (engineering roadmap, go-to-market phases, monetisation ideas, launch copy) are now `issues_open.md` §92. Both files remain in git history (`git show 15b42f1:sum_claude.md`).

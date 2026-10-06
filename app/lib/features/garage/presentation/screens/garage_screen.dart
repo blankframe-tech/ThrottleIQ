@@ -15,6 +15,7 @@ import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../maintenance/presentation/widgets/next_due_line.dart';
 
 /// The Profile tab's root screen (route `/home/profile`).
 ///
@@ -311,9 +312,17 @@ class _BikeCard extends ConsumerWidget {
                     foregroundColor: context.palette.primary,
                   ),
                   icon: const Icon(Icons.build_outlined, size: 18),
-                  label: Text(context.l10n.maintenance,
-                      style: display(context, 14,
-                          letterSpacing: 0, color: context.palette.primary)),
+                  label: Row(
+                    children: [
+                      Text(context.l10n.maintenance,
+                          style: display(context, 14,
+                              letterSpacing: 0, color: context.palette.primary)),
+                      const SizedBox(width: 10),
+                      // This bike's next job, so a multi-bike rider sees
+                      // every bike's without switching on the page.
+                      Expanded(child: NextDueLine(bikeId: bike.id)),
+                    ],
+                  ),
                 ),
               ],
             ),

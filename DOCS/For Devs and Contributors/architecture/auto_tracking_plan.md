@@ -132,7 +132,7 @@ nobody can see is not.
 bails with *"Please add a bike before recording a ride"* if it's null.
 
 Headlessly this is worse than it looks. ThrottleIQ's maintenance model is
-distance-based — service intervals, chain lube, `computeNextService`. A ride
+distance-based — service intervals, chain lube, the maintenance forecast. A ride
 silently attributed to the wrong bike doesn't just mislabel a row in history, it
 **corrupts the maintenance math on two bikes at once**, and the rider has no
 reason to suspect it.

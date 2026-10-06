@@ -1,24 +1,29 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throttleiq/features/maintenance/domain/calculators/maintenance_forecast.dart';
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
-import 'package:throttleiq/features/maintenance/presentation/providers/maintenance_provider.dart';
 
 /// issues §32: the status pill is an early-warning indicator, so a part close
 /// to its interval must not read the same green "OK" as one that was just
-/// serviced. Pins the thresholds in [computeMaintenanceReminders].
+/// serviced. Pins the default km warning window in [forecastChecks].
 void main() {
   ReminderStatus statusAt(double intervalKm, double kmSinceService) {
-    final reminders = computeMaintenanceReminders(
-      kmSinceService, // odometer; nothing logged, so km since service == odometer
-      const [],
-      [
+    final forecasts = forecastChecks(
+      logs: const [],
+      configs: [
         MaintenanceConfigEntity(
           bikeId: 'b',
           serviceType: ServiceType.oilChange,
           intervalKm: intervalKm,
         ),
       ],
+      // Counting from 0 km (a new bike); km since service == odometer.
+      input: ForecastInput(
+        currentOdometerKm: kmSinceService,
+        now: DateTime(2026, 10, 6),
+        fallbackBaseline: (km: 0, date: DateTime(2026, 10, 6)),
+      ),
     );
-    return reminders.single.status;
+    return forecasts.single.status;
   }
 
   group('long intervals (> 1000 km): due soon at 80% used', () {

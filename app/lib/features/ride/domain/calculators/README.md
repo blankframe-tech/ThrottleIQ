@@ -9,6 +9,7 @@ The following files are present in this directory:
 - `accel_axis_calibrator.dart`: Dart source code.
 - `auto_ride_reconciler.dart`: Dart source code.
 - `average_speed.dart`: Dart source code.
+- `daily_ride_summary.dart`: Dart source code. Auto-tracking end-of-day summary: merges jam-split detections (20-min gap) and counts them with recorded rides.
 - `elevation_profile.dart`: Dart source code.
 - `event_detector.dart`: Dart source code.
 - `final_ride_stats.dart`: Dart source code.

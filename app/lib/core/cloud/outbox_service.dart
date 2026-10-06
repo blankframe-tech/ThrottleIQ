@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../database/daos/maintenance_dao.dart';
 import '../database/daos/outbox_dao.dart';
 import '../database/database_helper.dart';
 import 'maintenance_settings_sync.dart';
@@ -629,6 +630,11 @@ class OutboxService {
     }
 
     final logId = log['id'].toString();
+    // Deleted before this delivery ran: uploading it now would re-create a
+    // log the rider removed (§94.2).
+    if (await MaintenanceDao().isDeleted(logId)) {
+      return OutboxDeliveryResult.discarded;
+    }
     try {
       await _firestore
           .collection('users')

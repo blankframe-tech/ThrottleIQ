@@ -106,6 +106,7 @@ Save Route, Group Ride map
   - ✅ **Closing a ride opened from a list now returns to that list** (fixed 2026-08-27, `issues_fixed.md` §36) — this screen is reached both right after finishing a recording (`go`, no back stack) and by tapping a past ride from All Rides / Stats / a bike's page (`push`, on top of that list); the close (✕) and "Save & done" buttons used to always land on the Record screen regardless, which was wrong for the second case. Both now check `context.canPop()` and pop back to the list when there is one.
   - **Blocked-recording errors on the Record screen are now impossible to miss** (fixed 2026-08-27, `issues_fixed.md` §37.1) — GPS-off/permission-denied used to only show in a card that could sit below the fold; a SnackBar with a one-tap "Turn on Location" / "Settings" action now fires the moment a start attempt is blocked, in addition to the persistent card.
   - **Time in jam** (added 2026-08-12) — a second stat card, **moving** vs **in jam** (amber when > 0), under the existing distance/duration/avg/max row. This was the "surface the jam time back to the rider" idea from the proposed-features list below — the data (`movingSeconds`) was already being collected for the average-speed fix, so this is presentation plus one new persisted column, not new tracking. `jamSeconds()` (`domain/calculators/jam_time.dart`, unit-tested) is just the ride clock minus moving time, clamped to zero — deliberately not a second GPS-derived measurement, so it can never disagree with the moving-time average speed computed from the same data. `rides.moving_s` is a new nullable column (schema v9); older rides finalized before it existed show no jam card at all rather than a guessed zero — `RideEntity.jamSeconds` returns `null`, not `0`, when either input is missing. Also fixed a pre-existing mislabel in the first stat row: the duration cell said "moving" while actually showing total elapsed time; it now says "duration".
+  - **Beta: rider-labelled jam windows** (added 2026-10-06, committed, not checked on a device) — internal-only ground truth for tuning the jam algorithm above. Riders whose handle is in `BetaTesters.jamLabelling` (`core/constants/beta_testers.dart`, currently just `abraaraidev`) get an "I'm in a jam · BETA" button above Pause/End on the active ride screen; tapping flips it to "Jam released · mm:ss". Each window is written straight to Firestore (`users/{uid}/rides/{rideId}/jamLabels/{id}`, fire-and-forget, SDK offline queue — no SQLite/outbox) with start/end snapshots (time, ride clock, moving s, distance, speed, lat/lng) plus derived `labelledSeconds`, `detectedStoppedSeconds` (what jam_time.dart's moving/idle split counted inside the same window) and `distanceDuringM`. Saved open on start so an app kill keeps the start; auto-closed with `endReason` `paused`/`rideEnded` if the ride pauses/ends mid-jam (only `released` is true ground truth). Code: `jam_label_entity.dart`, `jam_label_repository.dart`, `jam_label_provider.dart`; tests `test/features/ride/jam_label_test.dart`. `firestore.rules` gained a `jamLabels` match under `users/{uid}/rides` — ✅ deployed 2026-10-06.
   - **Route map is now speed-colored** (added 2026-08-27) — the polyline is split into runs colored by a 4-band speed bucket (idle/normal/brisk/hard, fixed km/h cutoffs, motorcycle-tuned — see `domain/calculators/speed_segments.dart`, unit-tested) instead of one flat accent-color line, with a small legend under the map. So a rider can look at the finished route and see *which road* they were doing *what speed on*, not just the overall max/avg numbers. Uses `speed_ms`, already stored per point in `ride_points` — no new tracking, no schema change. Colors are `AppColors` tokens (`textTertiary`/`success`/`warning`/`danger`), not literals, so this stays correct across every appearance skin, Retro included. Localized (English + Bengali, `speedBandIdleLabel` etc.). Falls back to the old single-color line if a ride's points somehow lack matching speed data rather than misdraw.
   - **Per-road speed baseline + private outlier insight** (built 2026-08-28, `issues_fixed.md` §42) — the "everyone does 30-50 km/h on a road, one rider hits 80" idea from the day before, now shipped as a v1. After every ride, the app anonymously contributes each segment's average speed (day of week, hour, weather) to a shared pool, then privately checks whether *this* ride's fastest segment was a real statistical outlier (z-score **and** an absolute km/h floor, both required — see `domain/calculators/speed_baseline.dart`) against that segment's pooled history. If so, a small card appears on the ride summary — visible only to the rider it's about, never posted or shared — reading "Faster than usual here" with the rider's speed and the typical speed for that stretch (localized, English + Bengali).
     - **"Road" is a geohash cell**, not a real road (`domain/calculators/segment_speed_aggregator.dart`, precision 7, ~150m), reusing the same `GeohashUtil` the POI directory already has. Not true map-matching — deliberately, to ship without a roads-API vendor/key decision.
@@ -161,12 +162,162 @@ chrome rather than the bike list alone:
 
 ## 5. Maintenance (`features/maintenance`) — reached from Garage/bike detail
 
-- **Maintenance screen** (`/home/maintenance?bikeId=`) — service log list per bike, reminders shown as "every N km", delete a log entry, empty state ("No active bike" / "No service logs yet").
-- **Add service log screen** (`/home/maintenance/add`).
-- **Service types** (expanded 2026-08-01): the original Oil Change / Air Filter / Chain Lube / Tire Check plus Radiator-Coolant, Front Disc Pads, Rear Drum Pads, Brake Fluid, Spark Plug, Battery, Valve Clearance, Clutch Cable and Suspension — and a **Custom** type that requires the rider to name the service ("What did you service?"), shown by that name in the log list.
-- **Reminders** cover the original four plus brake fluid and front disc pads. The rest are log-only by design: a card per type would bury the ones that matter. See `_reminderTypes` in `maintenance_provider.dart`.
-- **Reset Service Log** (added 2026-09-19, `issues_fixed.md` §71) — a `restart_alt` action on the Maintenance screen's action bar opens a checklist of every tracked check (status + km-since-service shown per row); ticking some or all and confirming logs each as serviced today at the bike's current odometer, resetting its due date while keeping prior history. Deliberately additive rather than deletion-based — maintenance logs have no delete-sync/tombstone mechanism yet, so a delete-based reset would resurrect already-synced entries on the next cloud sync.
-- **Order a low part — DEMO, cash on delivery** (added 2026-10-06) — a check row that is overdue/due soon and is a buyable part (oil, filters, chain, tires, coolant, brake pads/fluid/rotors, spark plug, battery, cables, fork seals, bearings, belt) shows an **Order** button opening `OrderPartSheet` (`presentation/widgets/order_part_sheet.dart`): name, phone, address, quantity, COD. It is a placeholder for testing: the sheet and the confirmation both say "This feature is being tested", and nothing is sent, stored or charged. No payments in-app by design. Strings: `partOrder*` in the ARBs (Bangla not yet reviewed).
+**Redesigned 2026-10-07 (not yet checked on a device).** The page answers "what
+does my bike need next, and when?" instead of listing checks with progress bars.
+Proposal: "ThrottleIQ Maintenance Redesign Proposal" (claude.ai doc,
+2026-10-06). Open items: `issues_open.md` §95.
+
+### The engine
+
+- `domain/calculators/maintenance_forecast.dart` (`forecastChecks`, `upNext`) is
+  the only definition of "due". The page, part detail, bike detail, the garage
+  card, the home-screen widget (`nextServiceDue`) and notifications all use it.
+- **Km or time, whichever first.** Each check has `interval_km` and optional
+  `interval_days`, with default warning windows: 20% / last 150 km, and 15% of
+  the days, clamped to 3–30. Riders can set their own windows.
+- **Projected date:** km left ÷ average daily km over the last 30 days (rides
+  plus detected trips; `data/repositories/maintenance_usage_repository.dart`).
+  The earlier of the km and time dates wins.
+- **Honest baselines.** A check counts from its last log, else from the rider's
+  "last done" (`baseline_km` / `baseline_date`), else from when the bike was
+  added (only if it had ≤ 500 km then). Otherwise it is **unknown** and shows
+  "Set last done". It is never shown as overdue by guesswork.
+- **Riding adaptation** (`riding_conditions.dart`). Each factor shows on the row
+  as a reason chip. Settings has an "Adapt to my riding" switch. The factors:
+  - ride telemetry over the last 60 days (needs ≥ 100 km): stop-and-go share
+    → oil / oil filter / clutch × 0.8–0.9;
+  - ≥ 3 hard brakes per 100 km → pads and rotors × 0.85;
+  - the rider's "dusty, wet or broken roads" profile → air filter × 0.7,
+    chain × 0.7, chain slack × 0.8.
+
+  The combined factor never goes below 0.7, and time limits are never scaled.
+
+### Setup and schedules
+
+- **Setup** (`/home/maintenance/setup`; a new bike's first-run link goes here
+  too). The rider picks:
+  - the schedule template;
+  - their roads (normal / severe);
+  - the oil grade;
+  - when the oil was last changed (km and date, or "don't know");
+  - optionally, "everything else was done then too".
+
+  It asks for notification permission at the end.
+- **Templates** (`domain/catalog/schedule_templates.dart`) are matched by
+  brand/model, then cc:
+  - Pulsar 150 (from the manual), Hornet 160, FZ, R15/MT-15, Gixxer and
+    Apache 160 (all approximate);
+  - generic ≤125cc, 126–200cc and >200cc.
+
+  Each template carries its free-service schedule. Intervals set by the rider
+  (`source = user`) are never retuned by a template or oil-grade change.
+- **Oil grade** decides the oil interval: mineral 1,500 km / 180 d,
+  semi-synthetic 2,500 / 240, full synthetic 3,500 / 365. Picking a grade
+  when logging oil retunes the next change.
+
+### The page (`/home/maintenance?bikeId=`), top to bottom
+
+1. A setup card, until the bike is set up (or if it was customised before
+   setup existed).
+2. **Up next** hero: "Oil change · in ~6 days", the limits ("410 km or 23 Oct,
+   whichever first"), and the last service (oil, km, ৳, shop). Buttons: **Done
+   it** (opens Log a visit with the item ticked) and **Remind me later** (hides
+   it for 3 days). When nothing is due within 14 days it shows a calm "All good
+   until ~date" instead. Fuel and unknown items never headline.
+3. **Coming up · next 60 days** strip: each item at its projected date, overdue
+   items pinned left of "today". Tapping an item opens its detail.
+4. Checks grouped by urgency:
+   - **Needs attention** (overdue, due soon, open quick-check issues);
+   - **Coming up** (due within 60 days);
+   - **All good** (collapsed);
+   - **Not known yet** (collapsed, with "Set last done").
+
+   A row shows what's left in the rider's units, the reason chips, a thin bar,
+   and a quick Log button. Tapping it opens **part detail**
+   (`/home/maintenance/check`): status, projected date, interval and where it
+   came from, the adaptation, its own history, the cost trend, and actions
+   (log, edit interval, set last done, remove a custom check).
+5. **Quick check** (MSF T-CLOCS, 6 tiles): nudges if not done for 7 days.
+   Failed tiles become "Needs attention" rows until marked fixed. Stored locally
+   only (`precheck_issues`).
+6. **Service history as visits** (`VisitTile`): date, km, shop, item chips,
+   bill and receipt thumbnail. Tap to edit; the menu deletes the whole visit.
+7. **Running costs** card: ৳/km all-in (servicing + fuel), the last 12 months'
+   spend, a 6-month bar chart, and the split between oil, parts and unitemised
+   servicing.
+8. **Papers**: tax token, insurance, fitness, registration and licence expiry,
+   with reminders 30 days before.
+9. **Maintenance settings**:
+   - Schedule & riding conditions (reopens setup)
+   - Adapt to my riding
+   - Maintenance reminders
+   - Running costs
+   - Customize checks (now with **your own checks**: name + km and/or days)
+   - Sync odometer
+   - Reset service log (one visit)
+   - **Export service record** (PDF of every visit plus receipts, share sheet)
+   - km/mi
+
+### Log a visit (`/home/maintenance/add?bikeId=&serviceType=&visitId=`)
+
+- One entry per trip to the mechanic. Due items are pre-ticked (or just the
+  item it was opened for).
+- Bundles: oil change, general servicing, chain care, brake service, and the
+  next **Free service #n** from the template.
+- "Show all items", and a one-off custom job.
+- Oil brand (with suggestions) and grade; odometer prefilled from rides; date;
+  one total bill; shop name (with remembered shops) and type (service centre /
+  local mechanic / self); notes; receipt photo (stored in app documents under
+  `receipts/`, local only).
+- Saving shows **Undo**. Opening with `visitId` edits the visit: kept items
+  are updated in place, unticked ones are tombstoned.
+
+### Data
+
+- `maintenance_logs` gained visit columns (v20). A visit is the rows sharing a
+  `visit_id`; older logs are visits of one.
+- `bike_maintenance_configs` gained `interval_days`, warning windows,
+  baselines, `source` and `custom_label`.
+  - A custom tracked check is keyed `custom:<id>` in `service_type`.
+  - The migration marks existing rows `source = user` and gives them their
+    type's default time limit.
+- New tables:
+  - `bike_maintenance_profiles` (template, roads, oil grade, adapt switch,
+    onboarded, last quick check);
+  - `bike_paperwork`;
+  - `precheck_issues`;
+  - `deleted_maintenance_logs` (tombstones);
+  - `detection_odometer_credits`.
+- **Deletes are durable** (§94.2): tombstone, queued upload dropped, Firestore
+  copy removed by `SyncManager`, downloads skip tombstoned ids.
+- **Settings backup** (`MaintenanceSettingsSync`) now also carries the new
+  config columns, the profile and paperwork.
+- **Detected trips add km** (§93.1): `DetectedOdometerCredit` adds the part of
+  each detection that no recorded ride covers, if it looks like riding, to the
+  active bike's `odometer_km`, once per detection.
+
+### Reminders outside the app (`data/services/maintenance_alerts.dart`)
+
+- A local notification when an item becomes due soon or overdue: once per item
+  per status per service, re-armed by logging it. Runs after a ride ends, after
+  any maintenance change, on cold start and on resume.
+- Date-driven items and paperwork are scheduled for the day they enter their
+  warning window (up to 12).
+- New Android channel "Maintenance". Tapping a notification opens that bike's
+  maintenance page.
+- Fuel and unknown items never notify.
+
+### Unchanged / kept
+
+- Service types: the 22-type catalogue (persisted by name).
+- Running-cost estimate on ride summaries (`RideCostCalculator`).
+- km/mi toggle and the bulk reset (now one visit).
+- **Order a low part — DEMO, cash on delivery** (added 2026-10-06). The
+  `OrderPartSheet` placeholder is unchanged, but the button now shows only for
+  riders in `BetaTesters.partOrdering` (on due rows and part detail). Nothing
+  is sent, stored or charged.
+- **Odometer sync** no longer pretends to scan. The photo is a reference and
+  the rider types the reading (§94.4).
 
 ## 6. Places / POI directory (`features/poi_directory`) — bottom nav tab "Places"
 
@@ -469,6 +620,29 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
   app no longer cuts off a ride it's recording.
 - **iOS:** the camera and photo-library permission prompts now have text, and the
   push-to-talk mic permission can be granted.
+
+## Changes from the auto-tracking / jam pass (2026-10-06, committed, not checked on a device)
+
+- **Beta jam labelling** for internal testers: see §2 "Beta: rider-labelled jam windows".
+- **Auto-tracking now fully stands down during a manual ride.** The §90 fix above only blocked
+  *opening* a detection. A detection already open when the rider tapped Start kept collecting fixes
+  for the whole manual ride, and the bit just before Start or just after Stop still became a
+  separate ride. Now every fix checks the recorder's `activeRideId` marker (at most every 15 s, plus
+  the 60 s service tick as a backstop). While a manual ride is active, including paused, the open
+  detection is closed and GPS is cancelled (`auto_tracking_service.dart`).
+- **Auto-detected trips are no longer saved as individual rides. You get a daily summary instead.**
+  Detections move to a new `summarized` status, and their raw fixes are kept.
+  `daily_ride_summary.dart` (pure, tested) works out the day's rides:
+  - Detected fragments separated by stops of up to `SensorConstants.autoRideMergeGap` (**20 min**)
+    merge into one ride, so one jam-split commute counts as one ride, not 3–5.
+  - They also merge into an adjacent manual ride. Two manual rides are never merged.
+  - The count covers recorded rides plus the ones the rider forgot to record. The summary also
+    shows km, ride time and time stopped in traffic.
+  - It shows in three places: a "Today" row on the auto-tracking tile, the history sheet (now
+    "Daily ride summaries", last 14 days), and the 9pm notification, which now has real numbers
+    instead of a fixed "Tap to see your day". That notification fires from the Android service tick
+    after 21:00, or when the app is opened after 21:00.
+  - Open follow-ups are in `issues_open.md` §93.
 
 ## Known UI gaps (as of this pass)
 

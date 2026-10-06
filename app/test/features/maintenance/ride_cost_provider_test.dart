@@ -55,13 +55,14 @@ void main() {
       final configs = await c.read(maintenanceConfigProvider('b1').future);
       final chain = configs.firstWhere((x) => x.serviceType == ServiceType.chain);
       await c.read(maintenanceConfigProvider('b1').notifier)
-          .updateSingleConfig(chain.copyWith(typicalCost: 300)); // 300/600 = .5
+          .updateSingleConfig(
+              chain.copyWith(intervalKm: 600, typicalCost: 300)); // 300/600 = .5
 
       // Oil has a typical cost but a logged actual cost wins.
       final oil =
           configs.firstWhere((x) => x.serviceType == ServiceType.oilChange);
       await c.read(maintenanceConfigProvider('b1').notifier)
-          .updateSingleConfig(oil.copyWith(typicalCost: 9999));
+          .updateSingleConfig(oil.copyWith(intervalKm: 1500, typicalCost: 9999));
       await c.read(maintenanceProvider('b1').notifier).addLog(
             bikeId: 'b1',
             serviceType: ServiceType.oilChange,

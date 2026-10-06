@@ -21,6 +21,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/home_widget_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../maintenance/data/services/maintenance_alerts.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../profile/presentation/providers/speed_alert_provider.dart';
 import '../../data/models/ride_model.dart';
@@ -1088,6 +1089,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _ref.invalidate(garageProvider);
       unawaited(_persistenceCoordinator.updatePublicStats(ride.userId));
       unawaited(HomeWidgetService.instance.refreshFromLocalData());
+      // The ride moved the odometer: anything it pushed past "due soon" or
+      // "overdue" is notified now ("You just passed your oil interval").
+      MaintenanceAlerts.instance.scheduleEvaluate();
       unawaited(_persistenceCoordinator.publishSegmentBaselines(
           ride.id, ride.startTime));
 

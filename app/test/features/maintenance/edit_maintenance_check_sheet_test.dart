@@ -95,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Enter specifications notes in second TextFormField
-    final notesField = find.byType(TextFormField).at(1);
+    final notesField = find.byType(TextFormField).at(2);
     await tester.enterText(notesField, 'Motul 7100 10W-40 Full Synthetic');
     await tester.pumpAndSettle();
 
@@ -194,7 +194,7 @@ void main() {
     await tester.tap(find.text('Open Sheet'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField).at(1), '');
+    await tester.enterText(find.byType(TextFormField).at(2), '');
     await tester.enterText(find.byKey(const Key('typicalCostField')), '');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();

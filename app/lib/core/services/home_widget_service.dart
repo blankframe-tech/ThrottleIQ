@@ -5,13 +5,12 @@ import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 
-import '../constants/sensor_constants.dart';
 import '../database/daos/bike_dao.dart';
-import '../database/daos/maintenance_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/data/models/bike_model.dart';
 import '../../features/garage/domain/entities/bike_entity.dart';
-import '../../features/maintenance/data/models/maintenance_model.dart';
+import '../../features/maintenance/data/repositories/maintenance_forecast_repository.dart';
+import '../../features/maintenance/domain/calculators/maintenance_forecast.dart';
 import '../../features/maintenance/domain/entities/maintenance_entity.dart';
 import '../../features/ride/data/models/ride_model.dart';
 import '../../features/ride/domain/entities/ride_entity.dart';
@@ -93,7 +92,8 @@ String formatRideCount(int count) {
 /// The one-line "what's next" sentence on the maintenance widget.
 ///
 /// [kmUntilDue] is signed distance-to-limit as computed by
-/// [computeNextService]; when [overdue] is true the caller may pass either the
+/// [nextServiceDue]; when [daysUntilDue] is given the sentence is in days
+/// instead (a time-driven check). When [overdue] is true the caller may pass either the
 /// negative remainder or its magnitude, so this normalises with `abs()` and
 /// lets [overdue] — not the sign — decide the wording. `kmUntilDue <= 0`
 /// without [overdue] means "at the limit but not past the hard threshold",
@@ -102,8 +102,16 @@ String formatNextServiceSummary({
   required String serviceLabel,
   required double kmUntilDue,
   required bool overdue,
+  int? daysUntilDue,
 }) {
   final label = serviceLabel.trim().isEmpty ? 'Service' : serviceLabel.trim();
+  if (daysUntilDue != null) {
+    final d = daysUntilDue.abs();
+    final days = '$d ${d == 1 ? 'day' : 'days'}';
+    if (overdue) return '$label overdue by $days';
+    if (daysUntilDue <= 0) return '$label due now';
+    return '$label in $days';
+  }
   if (overdue) return '$label overdue by ${formatKm(kmUntilDue.abs())}';
   if (kmUntilDue.isNaN || kmUntilDue <= 0) return '$label due now';
   return '$label in ${formatKm(kmUntilDue)}';
@@ -132,86 +140,49 @@ double weeklyDistanceKm(List<RideEntity> rides, {DateTime? now}) {
 /// The single service the maintenance widget should nag about.
 class NextServiceDue {
   final ServiceType serviceType;
+  final String label;
 
-  /// Distance left before the hard limit. Negative once past it.
-  final double kmUntilDue;
+  /// Distance left before the limit, negative once past it; null for a
+  /// check tracked by time alone.
+  final double? kmUntilDue;
+
+  /// Days left before the time limit, negative once past it; null for a
+  /// km-only check.
+  final int? daysUntilDue;
+
+  /// The time limit comes first, so the widget should talk in days.
+  final bool byTime;
   final bool overdue;
 
   const NextServiceDue({
     required this.serviceType,
-    required this.kmUntilDue,
+    required this.label,
+    this.kmUntilDue,
+    this.daysUntilDue,
+    this.byTime = false,
     required this.overdue,
   });
-
-  String get label => serviceType.label;
 }
 
-/// Which reminder-eligible services the widget considers. Mirrors the
-/// maintenance feature's own reminder list — the expanded [ServiceType] enum
-/// is log-only for the rest, and a widget that nagged about valve clearance
-/// would be noise.
-const List<ServiceType> kWidgetReminderTypes = [
-  ServiceType.oilChange,
-  ServiceType.airFilter,
-  ServiceType.chain,
-  ServiceType.tire,
-  ServiceType.brakeFluid,
-  ServiceType.frontDiscPads,
-];
-
-/// Picks the most urgent service for a bike: the one with the least distance
-/// left before its limit. Overdue items always beat not-yet-due ones, and
-/// among several overdue items the *most* overdue wins.
-///
-/// Returns null only when there is nothing to say at all (no eligible types),
-/// never for "no logs" — a bike with no oil change on record is exactly the
-/// bike that most needs the reminder, measured from 0 km.
-NextServiceDue? computeNextService({
-  required double currentOdometerKm,
-  required List<MaintenanceEntity> logs,
-}) {
-  NextServiceDue? best;
-  for (final type in kWidgetReminderTypes) {
-    final limitKm = _limitKmFor(type);
-    if (!limitKm.isFinite) continue;
-
-    final typeLogs = logs.where((l) => l.serviceType == type).toList()
-      ..sort((a, b) => b.odometerKm.compareTo(a.odometerKm));
-    final lastKm = typeLogs.isEmpty ? 0.0 : typeLogs.first.odometerKm;
-    final kmSince = currentOdometerKm - lastKm;
-    final kmUntilDue = limitKm - kmSince;
-
-    final candidate = NextServiceDue(
-      serviceType: type,
-      kmUntilDue: kmUntilDue,
-      overdue: kmSince >= limitKm,
-    );
-    if (best == null || candidate.kmUntilDue < best.kmUntilDue) {
-      best = candidate;
-    }
-  }
-  return best;
-}
-
-double _limitKmFor(ServiceType type) {
-  switch (type) {
-    case ServiceType.fuel:
-      return 300.0;
-    case ServiceType.oilChange:
-      return SensorConstants.oilChangeMaxKm;
-    case ServiceType.airFilter:
-      return SensorConstants.airFilterMaxKm;
-    case ServiceType.chain:
-      return SensorConstants.chainLubeMaxKm;
-    case ServiceType.tire:
-      return SensorConstants.tireCheckMaxKm;
-    case ServiceType.brakeFluid:
-      return SensorConstants.brakeFluidMaxKm;
-    case ServiceType.frontDiscPads:
-      return SensorConstants.discPadsMaxKm;
-    default:
-      return double.infinity;
-  }
+/// The widget's headline, from the same forecast the maintenance page uses
+/// (issues §94.1: it used to keep its own 6-type km table and ignore the
+/// rider's intervals and enabled checks). Null when nothing is tracked or
+/// known yet.
+NextServiceDue? nextServiceDue(List<CheckForecast> forecasts) {
+  final f = upNext(forecasts);
+  if (f == null) return null;
+  final byTime = f.daysLeft != null &&
+      (f.kmLeft == null || f.trigger == DueTrigger.time);
+  return NextServiceDue(
+    serviceType: f.serviceType,
+    label: (f.customLabel != null && f.customLabel!.trim().isNotEmpty)
+        ? f.customLabel!.trim()
+        : f.serviceType.label,
+    kmUntilDue: f.kmLeft,
+    daysUntilDue: f.daysLeft,
+    byTime: byTime,
+    overdue: f.status == ReminderStatus.overdue,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -230,14 +201,14 @@ class HomeWidgetService {
   HomeWidgetService({
     RideDao? rideDao,
     BikeDao? bikeDao,
-    MaintenanceDao? maintenanceDao,
+    MaintenanceForecastRepository? forecasts,
   })  : _rideDao = rideDao ?? RideDao(),
         _bikeDao = bikeDao ?? BikeDao(),
-        _maintenanceDao = maintenanceDao ?? MaintenanceDao();
+        _forecasts = forecasts ?? MaintenanceForecastRepository();
 
   final RideDao _rideDao;
   final BikeDao _bikeDao;
-  final MaintenanceDao _maintenanceDao;
+  final MaintenanceForecastRepository _forecasts;
 
   static final HomeWidgetService instance = HomeWidgetService();
 
@@ -361,12 +332,14 @@ class HomeWidgetService {
     required String nextServiceLabel,
     required double kmUntilDue,
     required bool overdue,
+    int? daysUntilDue,
   }) async {
     try {
       final summary = formatNextServiceSummary(
         serviceLabel: nextServiceLabel,
         kmUntilDue: kmUntilDue,
         overdue: overdue,
+        daysUntilDue: daysUntilDue,
       );
       await Future.wait([
         _save(kWidgetKeyBikeName,
@@ -449,23 +422,7 @@ class HomeWidgetService {
         await publishMaintenanceEmpty();
         return;
       }
-      final bike = _preferredBike(bikes);
-      final logRows = await _maintenanceDao.getForBike(bike.id);
-      final logs = logRows.map(MaintenanceModel.fromMap).toList();
-      final next = computeNextService(
-        currentOdometerKm: bike.currentOdometerKm,
-        logs: logs,
-      );
-      if (next == null) {
-        await publishMaintenanceEmpty();
-        return;
-      }
-      await publishMaintenance(
-        bikeName: bike.displayName,
-        nextServiceLabel: next.label,
-        kmUntilDue: next.kmUntilDue,
-        overdue: next.overdue,
-      );
+      await _publishMaintenanceFor(_preferredBike(bikes));
     } catch (e, s) {
       _log('refreshFromLocalData failed', e, s);
     }
@@ -476,7 +433,6 @@ class HomeWidgetService {
   Future<void> refreshWithData({
     required List<RideEntity> rides,
     required List<BikeEntity> bikes,
-    List<MaintenanceEntity>? maintenanceLogs,
   }) async {
     try {
       final totalKm = rides.fold<double>(0, (sum, r) => sum + r.distanceKm);
@@ -490,28 +446,25 @@ class HomeWidgetService {
         await publishMaintenanceEmpty();
         return;
       }
-      final bike = _preferredBike(bikes);
-      final logs = maintenanceLogs ??
-          (await _maintenanceDao.getForBike(bike.id))
-              .map(MaintenanceModel.fromMap)
-              .toList();
-      final next = computeNextService(
-        currentOdometerKm: bike.currentOdometerKm,
-        logs: logs,
-      );
-      if (next == null) {
-        await publishMaintenanceEmpty();
-        return;
-      }
-      await publishMaintenance(
-        bikeName: bike.displayName,
-        nextServiceLabel: next.label,
-        kmUntilDue: next.kmUntilDue,
-        overdue: next.overdue,
-      );
+      await _publishMaintenanceFor(_preferredBike(bikes));
     } catch (e, s) {
       _log('refreshWithData failed', e, s);
     }
+  }
+
+  Future<void> _publishMaintenanceFor(BikeEntity bike) async {
+    final next = nextServiceDue(await _forecasts.forecastFor(bike));
+    if (next == null) {
+      await publishMaintenanceEmpty();
+      return;
+    }
+    await publishMaintenance(
+      bikeName: bike.displayName,
+      nextServiceLabel: next.label,
+      kmUntilDue: next.kmUntilDue ?? 0,
+      overdue: next.overdue,
+      daysUntilDue: next.byTime ? next.daysUntilDue : null,
+    );
   }
 
   /// Maintenance widget with nothing to report yet.

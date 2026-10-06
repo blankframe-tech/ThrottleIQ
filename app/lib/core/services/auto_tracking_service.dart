@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../features/ride/data/repositories/daily_ride_summary_repository.dart';
 import '../constants/ride_prefs_keys.dart';
 import '../database/daos/auto_detection_dao.dart';
 
@@ -42,6 +43,12 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   StreamSubscription<Position>? _positionSub;
   Timer? _stillnessTimer;
   var _moving = false;
+
+  /// When the manual-recording marker was last checked from the fix path.
+  /// Throttled: fixes arrive every couple of seconds at speed, and a prefs
+  /// `reload()` per fix is wasted work for a rule that tolerates seconds.
+  DateTime? _lastManualCheck;
+  static const _manualCheckInterval = Duration(seconds: 15);
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -168,18 +175,70 @@ class _AutoTrackingTaskHandler extends TaskHandler {
           );
     _positionSub =
         Geolocator.getPositionStream(locationSettings: settings).listen(
-      (position) => unawaited(AutoTrackingService.recordFix(_dao, position)),
+      (position) => unawaited(_onFix(position)),
       onError: (Object error) => debugPrint('[auto-tracking] position error $error'),
     );
   }
 
+  Future<void> _onFix(Position position) async {
+    final now = DateTime.now();
+    if (_lastManualCheck == null ||
+        now.difference(_lastManualCheck!) >= _manualCheckInterval) {
+      _lastManualCheck = now;
+      if (await AutoTrackingService.isManualRecordingActive()) {
+        await _suspendForManualRide();
+        return;
+      }
+    }
+    await AutoTrackingService.recordFix(_dao, position);
+  }
+
+  /// The rider started recording by hand while a detection was open (the
+  /// common shape: auto-tracking notices the bike moving, then the rider
+  /// opens the app and taps Start). Before this, `beginDetection` only gated
+  /// *opening* a detection, so an already-open one kept collecting fixes for
+  /// the whole manual ride — a duplicate journey in the background.
+  ///
+  /// Closes the detection where it is (the stretch before Start is real,
+  /// unrecorded riding; the daily summary folds it into the manual ride it
+  /// touches) and turns GPS off. The next vehicle report after the manual
+  /// ride ends opens a fresh detection.
+  Future<void> _suspendForManualRide() async {
+    _stillnessTimer?.cancel();
+    _stillnessTimer = null;
+    _moving = false;
+    final sub = _positionSub;
+    _positionSub = null;
+    await sub?.cancel();
+    await AutoTrackingService.endDetection(_dao);
+  }
+
   @override
   void onRepeatEvent(DateTime timestamp) {
-    // Nothing to poll: activity and location both arrive as pushed stream
-    // events, not on a timer. The repeat event exists only because
-    // ForegroundTaskOptions.eventAction requires *some* action; kept as a
-    // no-op rather than removed so the intent (this is a deliberate choice,
-    // not an oversight) is visible to the next person reading this file.
+    // Activity and location both arrive as pushed stream events; nothing here
+    // polls a sensor. The once-a-minute tick (which
+    // ForegroundTaskOptions.eventAction requires anyway) is used only for
+    // two cheap checks.
+    unawaited(_onTick());
+  }
+
+  Future<void> _onTick() async {
+    try {
+      // Backstop for the throttled check in [_onFix]: a manual ride that
+      // started while the bike sits still produces no fixes to check on.
+      if (_positionSub != null &&
+          await AutoTrackingService.isManualRecordingActive()) {
+        await _suspendForManualRide();
+      }
+      // End-of-day summary notification, once per day after 9pm. Silent on
+      // a day with no rides; see DailyRideSummaryRepository.
+      final uid = await AutoTrackingService.readOwner();
+      if (uid != null) {
+        await DailyRideSummaryRepository().showEndOfDayIfDue(uid);
+      }
+    } catch (e) {
+      debugPrint('[auto-tracking] tick failed: $e');
+    }
   }
 
   @override
@@ -465,13 +524,8 @@ class AutoTrackingService {
     String triggerSource, {
     String? userId,
   }) async {
+    if (await isManualRecordingActive()) return false;
     final prefs = await SharedPreferences.getInstance();
-    // This isolate's cached copy can miss the UI isolate's write.
-    await prefs.reload();
-    if (prefs.getString(RidePrefsKeys.activeRideId) !=
-        null) {
-      return false;
-    }
 
     final existing = await dao.currentRecording();
     if (existing != null) return true;
@@ -485,6 +539,18 @@ class AutoTrackingService {
     );
     await prefs.setString(_prefsCurrentDetection, id);
     return true;
+  }
+
+  /// Whether a manual ride is being recorded right now — active *or* paused
+  /// (including one restored paused after a kill). The source of truth is the
+  /// recorder's recovery marker (`RidePrefsKeys.activeRideId`), which
+  /// `RideRecordingNotifier.startRide` sets once the ride is live and the
+  /// stop/discard paths clear last. Readable from either isolate.
+  static Future<bool> isManualRecordingActive() async {
+    final prefs = await SharedPreferences.getInstance();
+    // This isolate's cached copy can miss the UI isolate's write.
+    await prefs.reload();
+    return prefs.getString(RidePrefsKeys.activeRideId) != null;
   }
 
   static Future<void> endDetection(AutoDetectionDao dao) async {

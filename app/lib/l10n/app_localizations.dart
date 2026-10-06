@@ -8027,6 +8027,1242 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Load older messages'**
   String get loadOlderMessages;
+
+  /// Beta-only active ride button: rider marks that they are stuck in traffic now.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m in a jam'**
+  String get jamLabelStart;
+
+  /// Beta-only active ride button: rider marks that the traffic jam has cleared. Followed by a mm:ss timer.
+  ///
+  /// In en, this message translates to:
+  /// **'Jam released'**
+  String get jamLabelRelease;
+
+  /// Small tag on beta-only controls.
+  ///
+  /// In en, this message translates to:
+  /// **'BETA'**
+  String get jamLabelBetaTag;
+
+  /// Appended to the day-end summary notification: total ride time today, jam stops included.
+  ///
+  /// In en, this message translates to:
+  /// **' · {minutes} min riding'**
+  String notifDigestRideTime(int minutes);
+
+  /// Appended to the day-end summary notification: how many of today's rides were caught by auto-tracking because the rider didn't record them.
+  ///
+  /// In en, this message translates to:
+  /// **' · {count, plural, =1{1 you didn\'t record} other{{count} you didn\'t record}}'**
+  String notifDigestNotRecorded(int count);
+
+  /// Auto-tracking settings tile: label of today's ride summary row.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get autoSummaryTodayTitle;
+
+  /// Auto-tracking daily summary: number of rides that day (recorded plus not recorded; traffic-stop fragments merged).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No rides yet} =1{1 ride} other{{count} rides}}'**
+  String autoSummaryRides(int count);
+
+  /// Auto-tracking daily summary: distance, total ride time and the part of it spent stopped in traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km · {minutes} min riding · {jamMinutes} min stopped in traffic'**
+  String autoSummaryStats(String km, int minutes, int jamMinutes);
+
+  /// Auto-tracking daily summary: how many of the day's rides were detected in the background rather than recorded by the rider.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Includes 1 ride you didn\'t record} other{Includes {count} rides you didn\'t record}}'**
+  String autoSummaryNotRecorded(int count);
+
+  /// Title of the auto-tracking history sheet and its entry row in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily ride summaries'**
+  String get dailySummariesTitle;
+
+  /// Subtitle of the auto-tracking daily summaries sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding auto-tracking caught is joined across traffic stops and counted once per journey, together with the rides you recorded.'**
+  String get dailySummariesSubtitle;
+
+  /// Empty state of the auto-tracking daily summaries sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'No riding in the last two weeks.'**
+  String get dailySummariesEmpty;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Hard braking {rate}/100 km · −{pct}%'**
+  String adaptHardBraking(String rate, int pct);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Dusty or wet roads · −{pct}%'**
+  String adaptSevereRoads(int pct);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Stop-and-go {share}% · −{pct}%'**
+  String adaptStopAndGo(int share, int pct);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Adapted to your riding: every {km}'**
+  String adaptedTo(String km);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Add your own check'**
+  String get addCustomCheck;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Advance warning'**
+  String get advanceWarning;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'When \"due soon\" starts. Leave blank for the default.'**
+  String get advanceWarningHelper;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'All good, nothing due'**
+  String get allGoodNothingDue;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'All good until ~{date}'**
+  String allGoodUntil(String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'at {km}'**
+  String atOdometer(String km);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Brake service'**
+  String get bundleBrakeService;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Chain care'**
+  String get bundleChainCare;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'General servicing'**
+  String get bundleGeneralService;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Oil change'**
+  String get bundleOilChange;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Not tracked. Turn it on in Customize checks to get reminders.'**
+  String get checkNotTracked;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up · next {days} days'**
+  String comingUpNextDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'per {unit}, all in'**
+  String costPerUnitLabel(String unit);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'First {first} → latest {latest} · average {avg}'**
+  String costTrend(String first, String latest, String avg);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Counting from: '**
+  String get countingFromBaseline;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Check name'**
+  String get customCheckName;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Your own checks'**
+  String get customChecksSection;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{days} d'**
+  String daysShort(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get daysUnit;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{This deletes the logged item here and in the cloud.} other{This deletes all {count} items logged in this visit, here and in the cloud.}}'**
+  String deleteVisitBody(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete visit?'**
+  String get deleteVisitTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Done it'**
+  String get doneIt;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'in ~{days} days'**
+  String dueInDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'overdue'**
+  String get dueOverdue;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'due today'**
+  String get dueToday;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'tomorrow'**
+  String get dueTomorrow;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit interval'**
+  String get editInterval;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit visit'**
+  String get editVisitTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'every {days} days'**
+  String everyNDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the service record. Try again.'**
+  String get exportFailed;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Log a service first. There\'s nothing to export yet.'**
+  String get exportNothingYet;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Export service record'**
+  String get exportServiceRecord;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'A PDF of every visit and receipt, for a buyer or your mechanic'**
+  String get exportServiceRecordSubtitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Free service #{n}'**
+  String freeServiceN(int n);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 free service under warranty:} other{{count} free services under warranty:}}'**
+  String freeServicesSummary(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get fromGallery;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'All good · {count}'**
+  String groupAllGood(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up · {count}'**
+  String groupComingUp(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention · {count}'**
+  String groupNeedsAttention(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Not known yet · {count}'**
+  String groupUnknown(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Or every (days)'**
+  String get intervalDaysLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a distance, a number of days, or both'**
+  String get intervalNeedKmOrDays;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Interval'**
+  String get intervalSection;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'From your bike\'s schedule'**
+  String get intervalSourceTemplate;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Set by you'**
+  String get intervalSourceUser;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Due at whichever comes first.'**
+  String get intervalWhicheverFirst;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get itemHistory;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Last: {details}'**
+  String lastServiceLine(String details);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Last done: '**
+  String get lastServicedLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'by {date}'**
+  String limitsByDate(String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} or {date}, whichever first'**
+  String limitsKmOrDate(String km, String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Log it now'**
+  String get logItNow;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Log a visit'**
+  String get logVisitTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Shorten intervals for stop-and-go traffic, hard braking and rough roads'**
+  String get maintAdaptSubtitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Adapt to my riding'**
+  String get maintAdaptTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{item} due soon'**
+  String maintAlertDueSoon(String item);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{item} is overdue'**
+  String maintAlertOverdue(String item);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get maintDueToday;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day left} other{{days} days left}}'**
+  String maintLeftDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} left'**
+  String maintLeftKm(String km);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} or {days} days left, whichever comes first'**
+  String maintLeftKmOrDays(String km, int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Was due yesterday} other{Was due {days} days ago}}'**
+  String maintOverDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {km}'**
+  String maintOverKm(String km);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Notify me when something is due, and before papers expire'**
+  String get maintRemindersSubtitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance reminders'**
+  String get maintRemindersTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Not set up. Tap to choose your bike\'s schedule'**
+  String get maintScheduleNotSet;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule & riding conditions'**
+  String get maintScheduleTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Not known yet. Set when it was last done'**
+  String get maintUnknownStatus;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed'**
+  String get markFixed;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Running costs'**
+  String get moneyTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {item} · {when}'**
+  String nextDueLine(String item, String when);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Next up: {item}'**
+  String nextUpIs(String item);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure'**
+  String get notSure;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get notifChannelMaintenance;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Service reminders and paperwork expiry'**
+  String get notifChannelMaintenanceDesc;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer at the time'**
+  String get odometerAtThatTime;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Oil used'**
+  String get oilBrandLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Engine oil'**
+  String get oilDetails;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Full synthetic'**
+  String get oilGradeFull;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Change about every {km} km or {days} days'**
+  String oilGradeInterval(String km, int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Mineral'**
+  String get oilGradeMineral;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Next oil change set to {km} km or {days} days'**
+  String oilGradeNextChange(String km, int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Semi-synthetic'**
+  String get oilGradeSemi;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Something else (one-off)'**
+  String get oneOffJob;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **' or '**
+  String get orJoiner;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{doc} has expired'**
+  String paperworkAlertExpired(String doc);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{doc} expires in {days} days'**
+  String paperworkAlertExpiring(String doc, int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Driving licence'**
+  String get paperworkDrivingLicence;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Add your tax token, insurance and other papers to be reminded before they expire.'**
+  String get paperworkEmpty;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Expired on {date}'**
+  String paperworkExpiredOn(String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date} · {days} days left'**
+  String paperworkExpiresOn(String date, int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String paperworkExpiryValue(String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Fitness certificate'**
+  String get paperworkFitness;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance'**
+  String get paperworkInsurance;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Pick expiry date'**
+  String get paperworkPickExpiry;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Registration'**
+  String get paperworkRegistration;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Tax token'**
+  String get paperworkTaxToken;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Papers'**
+  String get paperworkTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Servicing {maint} + fuel {fuel}'**
+  String perKmBreakdown(String maint, String fuel);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Date (optional)'**
+  String get pickDateOptional;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'All good'**
+  String get precheckAllGood;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Chain'**
+  String get precheckChain;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'About 2–3 cm slack, lubed, no tight spots'**
+  String get precheckChainHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Controls'**
+  String get precheckControls;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Brakes, clutch, throttle and cables work smoothly'**
+  String get precheckControlsHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Walk round the bike and tap anything that isn\'t right. About 30 seconds.'**
+  String get precheckInstructions;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Flagged in quick check · {date}'**
+  String precheckIssueFlagged(String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =0{Checked today} =1{Last checked yesterday} other{Last checked {days} days ago}}'**
+  String precheckLastDone(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Lights'**
+  String get precheckLights;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Headlight, tail, brake light, indicators, horn'**
+  String get precheckLightsHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get precheckNeedsWork;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'A 30-second walk-round, once a week'**
+  String get precheckNever;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Oil & fluids'**
+  String get precheckOil;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Oil level in the window, no leaks, brake fluid above MIN'**
+  String get precheckOilHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Save 1 issue} other{Save {count} issues}}'**
+  String precheckSaveIssues(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Stands'**
+  String get precheckStands;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Side and centre stands spring back'**
+  String get precheckStandsHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Tyres & wheels'**
+  String get precheckTires;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Pressure, tread, no cuts or bulges'**
+  String get precheckTiresHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Quick check'**
+  String get precheckTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Projected: {date} ({when})'**
+  String projectedDue(String date, String when);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Quick picks'**
+  String get quickPicks;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get receiptLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add that photo.'**
+  String get receiptPickFailed;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me later'**
+  String get remindMeLater;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Remove check'**
+  String get removeCheck;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Mostly paved roads'**
+  String get ridingProfileNormal;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'City and highway riding on decent roads.'**
+  String get ridingProfileNormalHelper;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Dusty, wet or broken roads'**
+  String get ridingProfileSevere;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Construction dust, waterlogged streets, rough village roads. Air filter and chain come due sooner.'**
+  String get ridingProfileSevereHelper;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day left} other{{days} days left}}'**
+  String rowLeftDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} left'**
+  String rowLeftKm(String km);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} or {days} days left'**
+  String rowLeftKmOrDays(String km, int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} over'**
+  String rowOverBy(String km);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =0{Due today} =1{1 day over} other{{days} days over}}'**
+  String rowOverDays(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Save visit · {count} items'**
+  String saveVisitN(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate'**
+  String get scheduleApproximate;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'From the manual'**
+  String get scheduleVerified;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get serviceRecordColCost;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get serviceRecordColDate;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer'**
+  String get serviceRecordColOdometer;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop'**
+  String get serviceRecordColShop;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Work done'**
+  String get serviceRecordColWork;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Made with ThrottleIQ from the owner\'s own records'**
+  String get serviceRecordFooter;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Made on {date}'**
+  String serviceRecordGenerated(String date);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Service record'**
+  String get serviceRecordTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{count} visits · ৳{total} in total'**
+  String serviceRecordTotal(int count, String total);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Service visit'**
+  String get serviceVisit;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Set last done'**
+  String get setLastDone;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Roughly is fine. It\'s only where the countdown starts.'**
+  String get setLastDoneHelper;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'When was {item} last done?'**
+  String setLastDoneTitle(String item);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Pick your bike\'s schedule and say when the oil was last changed, and every due date becomes real.'**
+  String get setupCardBody;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Set up maintenance'**
+  String get setupCardTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'When was the oil last changed?'**
+  String get setupLastOilQuestion;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Engine oil'**
+  String get setupOilLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'I don\'t know'**
+  String get setupOilUnknown;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Everything else was done at that service too'**
+  String get setupOthersSame;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Use this schedule\'s intervals for every check'**
+  String get setupResetIntervals;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces intervals you\'ve edited. Off keeps your edits.'**
+  String get setupResetIntervalsHelper;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Your roads'**
+  String get setupRoadsLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Save and show my maintenance'**
+  String get setupSave;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Service schedule'**
+  String get setupScheduleLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic and braking are measured from your rides. You can turn that off in settings.'**
+  String get setupTelemetryNote;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance setup'**
+  String get setupTitle;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Service centre'**
+  String get shopKindAuthorized;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Local mechanic'**
+  String get shopKindLocal;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Did it myself'**
+  String get shopKindSelf;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Rahim Motors, ACI 3S Mirpur'**
+  String get shopNameHint;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Where'**
+  String get shopNameLabel;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Show all items'**
+  String get showAllItems;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String showMoreVisits(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Show tracked only'**
+  String get showTrackedOnly;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'OK, it\'ll be back in {days} days.'**
+  String snoozedFor(int days);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Engine oil & filter'**
+  String get spendOil;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Other parts & work'**
+  String get spendParts;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Servicing (not itemised)'**
+  String get spendVisits;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'spent in the last 12 months'**
+  String get spentLast12Months;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get statusUnknown;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Up next'**
+  String get upNext;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Visit details'**
+  String get visitDetails;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Tick at least one thing that was done.'**
+  String get visitPickSomething;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Logged 1 item} other{Logged {count} items}}'**
+  String visitSaved(int count);
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Total bill (optional)'**
+  String get visitTotalCost;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Visit updated'**
+  String get visitUpdated;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Days before'**
+  String get warnDaysBefore;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Km before'**
+  String get warnKmBefore;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'What was done'**
+  String get whatWasDone;
+
+  /// Maintenance redesign (issues §95).
+  ///
+  /// In en, this message translates to:
+  /// **'Type the reading shown in your photo.'**
+  String get odometerPhotoHelper;
 }
 
 class _AppLocalizationsDelegate
