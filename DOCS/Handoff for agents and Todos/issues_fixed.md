@@ -6239,3 +6239,14 @@ were fixed by that redesign (`issues_open.md` §95, `features.md` §5).
   - the `sensor_constants.dart` comment;
   - the `HANDOFF_Document.md` "local only" note.
 
+---
+
+## 95.13 CI red: bare-`catch (_)` ratchet at 80 (max 71) — FIXED (2026-10-07)
+
+The maintenance redesign (`238d12b`) added 9 bare `catch (_)`, so the `flutter`
+job failed from that commit on (`beta-v4.1` included; the AAB was unaffected).
+All 11 bare catches under `features/maintenance/` now call `reportNonFatal`
+(first real callers of it), except `MaintenanceAlerts._inTests`, which catches
+`UnsupportedError` (no `dart:io` Platform on web). Repo count 80 → 68; the CI
+ratchet is lowered to 68. Analyze clean, 1547/1547 tests pass. Not run on a
+device.

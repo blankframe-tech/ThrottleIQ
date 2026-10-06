@@ -96,7 +96,7 @@ indexes and functions are still the old ones).
   rules emulator **177/177** (was 138) · `functions` `npm test` **5/5** (new).
 - **CI:** 3 lints fixed (B1). `flutter test` now runs even if analyze fails. Actions
   moved to v5 and the runner pinned to `ubuntu-24.04`. `functions` job runs `npm test`.
-  New ratchet: bare `catch (_)` ≤ 71. Branch protection is still **off** (needs the owner).
+  New ratchet: bare `catch (_)` ≤ 68 (was 71; lowered 2026-10-07, issues §95.13). Branch protection is still **off** (needs the owner).
 - **iOS:** `PERMISSION_MICROPHONE=1` in the Podfile (append, not `||=`); camera and photo
   usage strings in Info.plist. Run `pod install` and test on a device.
 - **Ride pipeline:**

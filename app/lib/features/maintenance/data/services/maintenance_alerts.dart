@@ -62,7 +62,8 @@ class MaintenanceAlerts {
   static bool get _inTests {
     try {
       return Platform.environment.containsKey('FLUTTER_TEST');
-    } catch (_) {
+    } on UnsupportedError {
+      // dart:io Platform isn't available (web).
       return false;
     }
   }

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/calculators/riding_conditions.dart';
@@ -88,7 +89,9 @@ class _MaintenanceSetupScreenState
     // sense, so the permission is asked here rather than at launch.
     try {
       await NotificationService.instance.requestPermissions();
-    } catch (_) {}
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Maintenance setup: notification permission');
+    }
     if (!mounted) return;
     context.go('/home/maintenance?bikeId=${widget.bikeId}');
   }

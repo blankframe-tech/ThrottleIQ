@@ -46,8 +46,8 @@ jobs:
         working-directory: .
         run: |
           count=$(grep -rn "catch (_)" app/lib | wc -l)
-          echo "bare catch (_): $count (max 71)"
-          test "$count" -le 71
+          echo "bare catch (_): $count (max 68)"
+          test "$count" -le 68
 
   rules:
     runs-on: ubuntu-24.04

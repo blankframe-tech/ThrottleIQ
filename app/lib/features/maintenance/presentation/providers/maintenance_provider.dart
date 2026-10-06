@@ -10,6 +10,7 @@ import '../../../../core/database/daos/maintenance_dao.dart';
 import '../../../../core/database/daos/maintenance_config_dao.dart';
 import '../../../../core/database/daos/maintenance_profile_dao.dart';
 import '../../../../core/services/home_widget_service.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/data/models/bike_model.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
@@ -648,8 +649,9 @@ class MaintenanceImperialNotifier extends StateNotifier<bool> {
       final prefs = await SharedPreferences.getInstance();
       final v = prefs.getBool(_imperialPrefKey);
       if (v != null && mounted) state = v;
-    } catch (_) {
+    } catch (e, st) {
       // Preferences unavailable (tests, platform hiccup) — stay on km.
+      reportNonFatal(e, st, reason: 'Maintenance units: load failed');
     }
   }
 
@@ -658,6 +660,8 @@ class MaintenanceImperialNotifier extends StateNotifier<bool> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_imperialPrefKey, imperial);
-    } catch (_) {}
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Maintenance units: save failed');
+    }
   }
 }

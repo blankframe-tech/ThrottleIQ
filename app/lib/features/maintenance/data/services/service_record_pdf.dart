@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../core/utils/bike_image_resolver.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../domain/entities/service_visit.dart';
 
 /// The words the PDF needs, resolved by the caller in the app language —
@@ -69,8 +70,9 @@ Future<Uint8List> buildServiceRecordPdf({
       if (await f.exists()) {
         receipts.add((v, pw.MemoryImage(await f.readAsBytes())));
       }
-    } catch (_) {
+    } catch (e, st) {
       // A receipt that can't be read is left out, not fatal.
+      reportNonFatal(e, st, reason: 'Service record: unreadable receipt');
     }
   }
 

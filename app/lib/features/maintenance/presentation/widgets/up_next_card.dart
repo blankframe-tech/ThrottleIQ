@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
@@ -37,7 +38,9 @@ class HeroSnoozeNotifier extends StateNotifier<Map<String, DateTime>> {
       final map = (jsonDecode(raw) as Map).map((k, v) =>
           MapEntry(k as String, DateTime.tryParse(v as String) ?? DateTime(0)));
       state = map;
-    } catch (_) {}
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Up next: snooze load failed');
+    }
   }
 
   Future<void> snooze(String key) async {
@@ -52,7 +55,9 @@ class HeroSnoozeNotifier extends StateNotifier<Map<String, DateTime>> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefsKey,
           jsonEncode(state.map((k, v) => MapEntry(k, v.toIso8601String()))));
-    } catch (_) {}
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Up next: snooze save failed');
+    }
   }
 
   bool isSnoozed(String key, DateTime now) =>

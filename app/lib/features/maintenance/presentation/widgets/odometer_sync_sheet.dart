@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -60,8 +61,9 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
       // the app's own current value — issues §94.4). The rider types the
       // number they see.
       setState(() => _capturedImagePath = xfile.path);
-    } catch (_) {
-      // Picker cancelled or unavailable: nothing to show.
+    } catch (e, st) {
+      // Picker unavailable (a cancel returns null, not an error).
+      reportNonFatal(e, st, reason: 'Odometer sync: photo pick failed');
     }
   }
 

@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§89**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§97**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -1634,3 +1634,36 @@ Still open:
     small.
 - **95.11 The order button is still a demo.** It is now gated to
   `BetaTesters.partOrdering`. It needs a parts partner before a real flow.
+- **95.13 CI ratchet failure — FIXED (2026-10-07), see `issues_fixed.md` §95.13.**
+
+---
+
+## 96. Budget-phone readiness for Bangladesh riders (surfaced 2026-10-07, not started)
+
+The Play Console device count (12,312 phones, `minSdk 24`) already covers the
+budget phones sold in Bangladesh, so installing isn't the problem. The risk is
+whether the app keeps working on them once installed. Nothing below has been
+tested on a real budget phone yet. A full screen-off ride on a 2–3 GB itel,
+Tecno or Redmi would check all three.
+
+- **96.1 OEM battery managers kill background services — HIGH.** Xiaomi
+  MIUI/HyperOS, Tecno/Infinix/itel (HiOS/XOS) and Realme/Oppo (ColorOS) kill
+  background services aggressively. That can silently stop auto-tracking and
+  crash detection. Today the app only asks for the stock Android
+  battery-optimization exemption
+  (`ride_recording_provider.dart` `_prefsBatteryOptPrompted`,
+  `auto_tracking_service.dart` `requestIgnoreBatteryOptimization`). There is no
+  per-brand guidance. Onboarding should detect the manufacturer and send the
+  rider to the right autostart / background-activity / battery settings for
+  that brand (see dontkillmyapp.com for each brand's steps).
+- **96.2 Phones with no gyroscope / weak accelerometer — MEDIUM.** Many budget
+  phones have no gyroscope. The manifest already marks the accelerometer and
+  gyroscope `required="false"`, so the app installs. Still to check: crash
+  detection and lean-angle (`sensor_fusion_coordinator.dart`,
+  `vehicle_state_estimator.dart`) degrade gracefully when there's no gyroscope
+  stream. They should not crash, show 0° or fake lean, or fire false crash
+  alerts. The UI should say clearly when lean angle isn't available on the
+  phone.
+- **96.3 Low RAM (1–3 GB) — MEDIUM.** The OS is more likely to kill the app
+  mid-ride, and map screens can stutter. Check ride recovery after a process
+  kill on a low-RAM device, and map/ride-screen performance there.

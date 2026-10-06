@@ -12,6 +12,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/bike_image_resolver.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/calculators/maintenance_forecast.dart';
@@ -222,7 +223,8 @@ class _AddMaintenanceLogScreenState
       final dest = p.join(folder.path, '${const Uuid().v4()}.jpg');
       await File(picked.path).copy(dest);
       if (mounted) setState(() => _receiptPath = dest);
-    } catch (_) {
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Maintenance log: receipt pick failed');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.receiptPickFailed)));

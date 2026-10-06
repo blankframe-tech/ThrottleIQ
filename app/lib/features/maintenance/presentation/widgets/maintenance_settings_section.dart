@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../data/services/maintenance_alerts.dart';
@@ -272,14 +273,18 @@ class MaintenanceAlertsEnabledNotifier extends StateNotifier<bool> {
     try {
       final v = await MaintenanceAlerts.isEnabled();
       if (mounted) state = v;
-    } catch (_) {}
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Maintenance alerts: load setting failed');
+    }
   }
 
   Future<void> set(bool on) async {
     state = on;
     try {
       await MaintenanceAlerts.instance.setEnabled(on);
-    } catch (_) {}
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'Maintenance alerts: save setting failed');
+    }
   }
 }
 
@@ -341,7 +346,8 @@ Future<void> exportServiceRecord(
       bytes: bytes,
       filename: 'service-record-${bike.model.replaceAll(' ', '-')}.pdf',
     );
-  } catch (_) {
+  } catch (e, st) {
+    reportNonFatal(e, st, reason: 'Service record: export failed');
     messenger.showSnackBar(SnackBar(content: Text(l10n.exportFailed)));
   }
 }
