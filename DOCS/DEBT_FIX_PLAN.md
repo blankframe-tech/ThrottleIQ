@@ -18,7 +18,7 @@ network.
 |---|---|---|
 | Bare `catch (_)` | §83.14 | **56**, 10 with empty bodies |
 | Direct `FirebaseFirestore.instance` | §83.13 | **23** uses in 21 files; `FirebaseAuth.instance` **10** |
-| Screens vs screen tests | §83.28 | **43 screens, 1 `*_screen_test`**, 23 files call `pumpWidget`, **0 goldens** |
+| Screens vs screen tests | §83.28 | **43 screens, 1 `*_screen_test`**, 23 files call `pumpWidget`, **0 goldens** (2026-10-07: 46 screens, 2 `*_screen_test`; `maintenance_screen_test.dart` smoke-tests the four maintenance screens) |
 | `.select(` uses | §83.12 | **12** (was 3 before the cockpit fix) |
 | Accessibility | §83.22 | **6** `Semantics(`, **0** `semanticLabel`, 69 `tooltip:`; text scale clamped to 1.0–1.3× in `lib/app.dart:232` |
 | Onboarding mockups | §83.26 | `onboarding_ui_mockups.dart` is **1,175** lines |
@@ -90,7 +90,8 @@ the notifier just calls the no-arg constructor.
    interfaces. **These four are exactly what `issues_open.md` §78.21 says only a real ride
    could check.**
 3. File-level singletons like `maintenance_provider.dart`'s `final _dao = MaintenanceDao()`
-   become providers.
+   become providers. (Still true after the 2026-10-07 redesign, which added `_profileDao` and
+   `_usageRepo` in the same style.)
 4. **(added 2026-10-06, §90.B4)** The 11 repositories that use
    `static final _instance` + `factory X() => _instance` are hidden singletons:
    `XRepository()` looks like construction but can't be faked. There are 62 call

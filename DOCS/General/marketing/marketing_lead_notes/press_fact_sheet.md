@@ -25,7 +25,9 @@ outside direct installs.
   signal, syncs on reconnect
 - Crash detection: impact + speed-drop signature triggers a cancellable
   countdown, plus a manual live-location share link
-- Maintenance tracking by real distance ridden, not a memory-based log
+- Maintenance tracking by real distance ridden (and time), not a memory-based log:
+  per-model schedules, a forecast of what's due next, service visits with
+  receipts, reminders, paperwork expiry, an exportable service record
 - POI directory (fuel, garages, parts) with rider ratings
 - Social: follow, audience-tiered ride sharing, brand/model forums, group
   rides with live positions

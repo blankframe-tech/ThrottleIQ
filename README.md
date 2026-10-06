@@ -4,8 +4,9 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Dart](https://img.shields.io/badge/Dart-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta, `1.0.0-beta.4.0.0+21`, tagged
-> [`beta-v4`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4)
+> **Status:** pre-launch beta, `1.0.0-beta.4.1.0+22`, tagged
+> [`beta-v4.1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.1)
+> (2026-10-07)
 > — a signed Android APK/AAB on the GitHub release, plus an earlier Play
 > Console internal-testing build; no
 > public Play Store/App Store listing yet. Core ride recording,
@@ -68,7 +69,8 @@
 - **Offline-first SQLite**: All data stored locally; ride recording works 100% offline
 - **Automatic Firestore sync**: On app resume + every 5 min if online
 - **Data portability**: Export rides as JSON, CSV or GPX (import into other apps, mapping tools)
-- **Profile sync**: Backup your bike fleet, maintenance logs, emergency contacts to cloud
+- **Maintenance forecast**: what each bike needs next and roughly when — km or date, whichever comes first, per-model schedules, intervals adapted to traffic and road conditions, service visits with receipts, reminders, paperwork expiry and a PDF service record
+- **Profile sync**: Backup your bike fleet, maintenance logs and settings (schedule, papers), emergency contacts to cloud
 
 ---
 
@@ -166,9 +168,7 @@ flutter test --coverage
 
 ### Test Suite
 
-**1357/1357 green** (149 test files) as of 2026-10-06. `flutter analyze`
-currently reports **3 lint issues** in `social_screen.dart`, which keeps CI red
-on `main` (`issues_open.md` §90.B1). See `HANDOFF_Document.md` for how the count grew. Pure-logic calculators (motion, crash
+**1547/1547 green** as of 2026-10-07, and `flutter analyze` reports no issues. See `HANDOFF_Document.md` for how the count grew. Pure-logic calculators (motion, crash
 detection, jerk/acceleration, privacy-zone clipping, rating aggregation) are
 fixture-tested against realistic data — real coordinates (Dhaka,
 Chattogram), sensor thresholds, known distances. DAOs run against real

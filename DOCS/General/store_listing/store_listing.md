@@ -32,7 +32,11 @@ CRASH DETECTION
 
 GARAGE & MAINTENANCE
 • Track multiple bikes, their odometers, and service history
-• Log maintenance so you never lose track of what's due
+• See what each bike needs next and roughly when, by kilometres or date, whichever comes first
+• Service schedules for popular models, adjusted for traffic and dusty or wet roads
+• Log a whole service visit at once, with the bill and a photo of the receipt
+• Reminders before something is due, and before your tax token or insurance expires
+• Export a service record PDF when you sell your bike
 
 RIDER PLACES
 • Find fuel stops, repair garages, and parts shops near you, contributed and rated by other riders

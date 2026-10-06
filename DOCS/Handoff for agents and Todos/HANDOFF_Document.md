@@ -5,6 +5,7 @@ _Last updated: 2026-10-07 · Branch: `main`_
 ## 2026-10-07 (latest): maintenance redesign — committed `238d12b`, released as `beta-v4.1` (1.0.0-beta.4.1.0+22)
 
 - **Release `beta-v4.1`:** the AAB and APK are attached on GitHub. The iOS release build was installed on the founder's iPhone 15, but iOS refused to launch it until the developer profile is trusted on the device (Settings → General → VPN & Device Management). Nothing was tested on a device yet.
+- **Docs sweep (2026-10-07):** for the new version, test count, schema v20 and the maintenance redesign, these were updated: `README.md`, `arch.md`, `DOCS/needs_attention.md`, `DOCS/BIGGG_JOBB.md`, `DOCS/DEBT_FIX_PLAN.md`, the iOS widget README, the store listing and the press fact sheet. Pitch and gov-pitch submissions were left as written, since they are submitted documents.
 
 The maintenance page is rebuilt as a forecast ("what does my bike need next, and
 when?") instead of a km checklist. The proposal it implements is the
@@ -220,7 +221,7 @@ Signature Scheme v2). The Gradle 8.13 warning above is **still outstanding** and
 | Firestore **indexes** | ✅ Live and verified |
 | **Hosting** (`privacy.html`) | Live copy is the **old** one — the analytics-aware policy is written but must ship *with* the release |
 | **Functions** | ❌ Not deployable — Spark plan, no `artifactregistry` (Node 20 dies late Oct 2026) |
-| **App build** | `pubspec` is now `1.0.0-beta.4.0.0+21`, committed and pushed (`main` @ `c12d152`). **✅ GitHub release `beta-v4` published 2026-09-28** with the APK and AAB attached (https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4). |
+| **App build** | _Superseded 2026-10-07: now `1.0.0-beta.4.1.0+22`, release `beta-v4.1`._ `pubspec` is now `1.0.0-beta.4.0.0+21`, committed and pushed (`main` @ `c12d152`). **✅ GitHub release `beta-v4` published 2026-09-28** with the APK and AAB attached (https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4). |
 | **iOS device run** | ✅ **Resolved 2026-10-05 — release build runs on "Abraar's iPhone".** The Apple ID is signed into Xcode and the developer certificate is now trusted on the device, so the app launches. Signed `Apple Development: abraar.rar@icloud.com`, team `NJ4675FFUX`. **Caveat:** `flutter run --release` still fails at *its own* install step ("Could not run build/ios/iphoneos/Runner.app") even though the Xcode build succeeds (93.8 s) — the working path is to let the build finish, then `xcrun devicectl device install app --device <udid> build/ios/iphoneos/Runner.app` and `xcrun devicectl device process launch --device <udid> com.bft.throttleiq`. **The profile is a free personal team and expires 2026-10-12**; after that it needs a re-sign. See `issues_open.md` §87. |
 | **App Check enforcement** | Console action, only after a release containing the code is what riders run |
 | **Founder's iPhone** | ✅ `1.0.0-beta.3.1.0+20` **release build installed and launched** 2026-09-21 (`flutter run --release -d 00008120-001E5D190A85A01E`; Xcode build 106 s, install+launch 7.3 s). First real-hardware run of everything since 3.0.2 — launch only so far; nothing on the device test list has been exercised yet |

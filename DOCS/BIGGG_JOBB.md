@@ -29,7 +29,7 @@ think one is wrong, say so once, in a sentence, and then do it.
 | | |
 |---|---|
 | Branch | **`main` @ `0222f03`**, in sync with `origin/main`. All four branches (`appcolors` → `i18n` → `job3-ux` → `job4-infra`) merged 2026-09-21; nothing is left to merge. |
-| Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`). **Since superseded:** `1.0.0-beta.4.0.0+21`, GitHub release `beta-v4` (2026-09-27) |
+| Version | `1.0.0-beta.3.0.2+19` (GitHub release `beta-v3.0.2`). **Since superseded:** `1.0.0-beta.4.0.0+21` (`beta-v4`, 2026-09-27), then `1.0.0-beta.4.1.0+22` (`beta-v4.1`, 2026-10-07, maintenance redesign) |
 | Tests | **1298** passing on `main` (re-run 2026-09-21 evening); **1349** after the open55 pass (2026-10-01); **1357** on 2026-10-06, but `flutter analyze` fails (3 lints, §90.B1) |
 | Analyzer | clean (zero issues) |
 | Rules suite | **114** passing |
@@ -296,7 +296,7 @@ looked at Bangla on a device (overflow).
 2. **Places FAB overlaps the last list row** — no reserved bottom padding.
 3. **`★ —` on zero-review places** → "No ratings yet".
 4. **Ride summary shows the riding score twice** in adjacent cards.
-5. **Maintenance pill never escalates** — 13% remaining shows the same green
+5. **Maintenance pill never escalates** _(fixed long since; and the page was redesigned 2026-10-07 — `features.md` §5)_ — 13% remaining shows the same green
    "OK" as 99%, which defeats an early-warning indicator.
 
 **Explicitly NOT doing** (founder decision — do not re-raise as bugs):

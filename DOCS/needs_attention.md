@@ -6,9 +6,11 @@ What is left needs the founder: an account, a real device, a decision, or the Bl
 
 ## Release — the one thing everything else waits on
 
-_Update 2026-10-06:_ the release item below is done — `beta-v4` (`1.0.0-beta.4.0.0+21`) was
-published on GitHub on 2026-09-27 and is the current `pubspec` version. The follow-ups after it
-still apply.
+_Update 2026-10-07:_ the current release is `beta-v4.1` (`1.0.0-beta.4.1.0+22`, AAB + APK on
+GitHub, 2026-10-07): the maintenance redesign plus the auto-tracking daily summary. It has **not
+been tested on a device**. The iOS release build installed on the founder's iPhone but won't
+launch until the developer profile is trusted (Settings → General → VPN & Device Management).
+Device checks to do: `issues_open.md` §95.1. The follow-ups below still apply.
 
 - [x] **Publish the release.** Shipped as `beta-v4` (`1.0.0-beta.4.0.0+21`, 2026-09-27). It carries
       two things nobody has checked on hardware (route navigation, Bangla) and the machine-drafted
