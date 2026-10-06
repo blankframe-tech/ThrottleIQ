@@ -191,6 +191,19 @@ service cloud.firestore {
       return exists(docPath) && !existsAfter(docPath);
     }
 
+    // A forum post's shared ride / maintenance card (ForumAttachment.toMap):
+    // a fixed key set, a known kind, and caps matching the client's.
+    function forumAttachmentValid(a) {
+      return a is map &&
+        a.keys().hasOnly(['kind', 'refId', 'title', 'subtitle', 'bikeId']) &&
+        a.keys().hasAll(['kind', 'refId', 'title', 'subtitle']) &&
+        a.kind in ['ride', 'maintenance'] &&
+        a.refId is string && a.refId.size() > 0 && a.refId.size() <= 128 &&
+        a.title is string && a.title.size() <= 80 &&
+        a.subtitle is string && a.subtitle.size() <= 160 &&
+        (a.get('bikeId', null) == null || (a.bikeId is string && a.bikeId.size() <= 128));
+    }
+
     function voteBumpValid(voteDocPath, upvotesBefore, upvotesAfter, downvotesBefore, downvotesAfter) {
       let before = exists(voteDocPath) ? get(voteDocPath).data.value : 0;
       let after = existsAfter(voteDocPath) ? getAfter(voteDocPath).data.value : 0;
@@ -929,13 +942,26 @@ service cloud.firestore {
         // §90.D10: only the keys createPost writes, a capped byline and an
         // allow-listed avatar URL (the byline photo is fetched by every
         // viewer's device — the §33.4 beacon).
+        // Pit Wall fields (all optional, so pre-redesign clients still pass):
+        // `postType` from the fixed set, a post always starts unsolved with
+        // no accepted reply, a capped `authorBike` byline, and an
+        // `attachment` snapshot card (forumAttachmentValid).
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
           request.resource.data.replyCount == 0 &&
           request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0 &&
           request.resource.data.keys().hasOnly([
             'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
-            'createdAt', 'replyCount', 'upvotes', 'downvotes'
+            'createdAt', 'replyCount', 'upvotes', 'downvotes',
+            'postType', 'isSolved', 'authorBike', 'attachment'
           ]) &&
+          request.resource.data.get('postType', 'general') in
+            ['troubleshoot', 'diyGuide', 'gearReview', 'general'] &&
+          request.resource.data.get('isSolved', false) == false &&
+          (request.resource.data.get('authorBike', null) == null ||
+           (request.resource.data.authorBike is string &&
+            request.resource.data.authorBike.size() <= 80)) &&
+          (request.resource.data.get('attachment', null) == null ||
+           forumAttachmentValid(request.resource.data.attachment)) &&
           optionalNameValid(request.resource.data.get('userName', null)) &&
           photoUrlAllowed(request.resource.data.get('userPhotoUrl', null));
         // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
@@ -976,7 +1002,20 @@ service cloud.firestore {
             voteBumpValid(
               /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/votes/$(request.auth.uid),
               resource.data.upvotes, request.resource.data.upvotes,
-              resource.data.downvotes, request.resource.data.downvotes)));
+              resource.data.downvotes, request.resource.data.downvotes)) ||
+           // ForumRepository.setPostSolution: only the post's author, only
+           // on a troubleshoot post, only these two fields. An accepted
+           // reply must exist on THIS post and implies solved; clearing it
+           // is always allowed (forum_solution.dart's toggles).
+           (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['isSolved', 'solutionReplyId']) &&
+            resource.data.userId == request.auth.uid &&
+            resource.data.get('postType', 'general') == 'troubleshoot' &&
+            request.resource.data.isSolved is bool &&
+            (request.resource.data.get('solutionReplyId', null) == null ||
+             (request.resource.data.solutionReplyId is string &&
+              request.resource.data.isSolved == true &&
+              exists(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/replies/$(request.resource.data.solutionReplyId))))));
 
         // A rider may always remove their own post; removing someone else's
         // requires admin/creator/maintainer. The client shows the trash icon
