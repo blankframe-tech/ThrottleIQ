@@ -346,6 +346,33 @@ class AutoDetectionDao {
     );
   }
 
+  /// Drops raw fixes for old summarized detections to free up disk space.
+  /// 
+  /// Once purged, these detections no longer contribute to the recomputed
+  /// daily summary's distance/duration totals. By default this keeps
+  /// fixes for 14 days, matching the summary's UI lookback window.
+  Future<int> purgeOldSummarizedFixes(DateTime now, {Duration retention = const Duration(days: 14)}) async {
+    final db = await DatabaseHelper.instance.database;
+    final cutoff = now.subtract(retention).toIso8601String();
+    return db.transaction((txn) async {
+      final rows = await txn.query('auto_detections',
+          columns: ['id'],
+          where: 'status = ? AND fixes_purged = 0 AND started_at < ?',
+          whereArgs: [AutoDetectionStatus.summarized, cutoff]);
+      for (final row in rows) {
+        await txn.update(
+          'auto_detections',
+          {'fixes_purged': 1},
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        );
+        await txn.delete('auto_fixes',
+            where: 'detection_id = ?', whereArgs: [row['id']]);
+      }
+      return rows.length;
+    });
+  }
+
   /// [userId]'s closed detections that started in [from, to) and still hold
   /// their fixes — the daily summary's input. `reconciled` rows are left out
   /// (they already are ride rows) and so are `discarded` ones.
@@ -357,7 +384,7 @@ class AutoDetectionDao {
     final db = await DatabaseHelper.instance.database;
     return db.query(
       'auto_detections',
-      where: 'user_id = ? AND status IN (?, ?) '
+      where: 'user_id = ? AND status IN (?, ?) AND fixes_purged = 0 '
           'AND started_at >= ? AND started_at < ?',
       whereArgs: [
         userId,

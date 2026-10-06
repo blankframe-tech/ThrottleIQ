@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 21;
+  static const int schemaVersion = 22;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -309,6 +309,12 @@ class DatabaseHelper {
       // Places hub bookmarks (Saved tab). A brand-new table, so nothing to
       // backfill: every install simply starts with no saved places.
       await db.execute(_createSavedPlacesSql);
+    }
+    if (oldVersion < 22 && newVersion >= 22) {
+      // Free up disk space from raw fixes of older summarized detections.
+      // 0 means fixes are present. 1 means fixes were purged.
+      await _addColumnIfMissing(db, 'auto_detections', 'fixes_purged',
+          'fixes_purged INTEGER NOT NULL DEFAULT 0');
     }
   }
 
@@ -603,7 +609,8 @@ class DatabaseHelper {
       ride_id TEXT,
       discard_reason TEXT,
       created_at TEXT NOT NULL,
-      user_id TEXT
+      user_id TEXT,
+      fixes_purged INTEGER NOT NULL DEFAULT 0
     )
   ''';
 
