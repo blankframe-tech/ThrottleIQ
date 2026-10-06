@@ -1538,7 +1538,7 @@ What shipped is described in `features.md` → "Changes from the auto-tracking /
 All five items were fixed by the maintenance redesign (§95). None of them has
 been verified on a device yet; that check is §95.1.
 
-## 95. Maintenance redesign (2026-10-07) — not committed, not checked on a device
+## 95. Maintenance redesign (2026-10-07) — committed `238d12b`, not checked on a device
 
 What shipped is in `features.md` §5. Analyze is clean and 1547/1547 tests pass.
 Still open:

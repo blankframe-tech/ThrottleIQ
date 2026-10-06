@@ -2,7 +2,7 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
-## 2026-10-07 (latest): maintenance redesign — not committed, not checked on a device
+## 2026-10-07 (latest): maintenance redesign — committed `238d12b` and pushed, not checked on a device
 
 The maintenance page is rebuilt as a forecast ("what does my bike need next, and
 when?") instead of a km checklist. The proposal it implements is the
