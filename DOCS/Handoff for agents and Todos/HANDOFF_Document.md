@@ -1,6 +1,16 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-07 · Branch: `feature/places-forums-reimagine`_
+_Last updated: 2026-10-07 · Branch: `main`_
+
+## 2026-10-07 (latest): released `beta-v4.2` (1.0.0-beta.4.2.0+23) — Places hub + Forums Pit Wall on `main`
+
+- `feature/places-forums-reimagine` was fast-forwarded into `main`, and the feature branch was deleted.
+  The release has the Places hub (§96), the Forums Pit Wall, and the two founder-reported forum fixes
+  (issues_fixed §97): photos on posts (up to 4), and brand paddocks counting model-forum riders/posts
+  instead of "0 riders".
+- `firestore.rules` was deployed together with this build (place `tags` cap, forum post types/solved/attachment/`imageUrls`).
+- Still open from the first iPhone debug run: issues_open §97 (hidden ListTile ripple, a 3 px
+  overflow, "Invalid image data").
 
 ## 2026-10-07 (later): Forums "Pit Wall" redesign — same feature branch, not on a device yet
 
