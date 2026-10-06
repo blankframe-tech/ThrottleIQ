@@ -188,9 +188,11 @@ class RouteDetailScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(context.shape.radiusMd),
                     border: Border.all(color: context.palette.border),
                   ),
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: route.isPublic,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: route.isPublic,
                     activeThumbColor: context.palette.primary,
                     onChanged: (v) => _setPublic(context, ref, v),
                     title: Text(
@@ -205,6 +207,7 @@ class RouteDetailScreen extends ConsumerWidget {
                       style: TextStyle(
                           fontSize: 12, color: context.palette.textSecondary),
                     ),
+                  ),
                   ),
                 )
               else

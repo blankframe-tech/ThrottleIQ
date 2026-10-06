@@ -184,8 +184,10 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                   borderRadius: BorderRadius.circular(context.shape.radiusMd),
                   border: Border.all(color: context.palette.border),
                 ),
-                child: SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
+                child: Material(
+                  color: Colors.transparent,
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
                   value: _isPublic,
                   activeThumbColor: context.palette.primary,
                   onChanged: (v) => setState(() => _isPublic = v),
@@ -198,6 +200,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                         ? context.l10n.anyRiderCanFind
                         : context.l10n.onlyCanSeeThis,
                     style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  ),
                   ),
                 ),
               ),

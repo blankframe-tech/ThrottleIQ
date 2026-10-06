@@ -17,20 +17,32 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
-    return CircleAvatar(
+    
+    final fallback = CircleAvatar(
       radius: radius,
       backgroundColor: context.palette.primary.withValues(alpha: 0.15),
-      backgroundImage: hasPhoto ? CachedNetworkImageProvider(photoUrl!) : null,
-      child: hasPhoto
-          ? null
-          : Text(
-              initialsFrom(name),
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: context.palette.primary,
-                fontSize: radius * 0.7,
-              ),
-            ),
+      child: Text(
+        initialsFrom(name),
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: context.palette.primary,
+          fontSize: radius * 0.7,
+        ),
+      ),
+    );
+
+    if (!hasPhoto) {
+      return fallback;
+    }
+
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: photoUrl!,
+        width: radius * 2,
+        height: radius * 2,
+        fit: BoxFit.cover,
+        errorWidget: (context, url, error) => fallback,
+      ),
     );
   }
 }

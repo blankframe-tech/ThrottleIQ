@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../../core/utils/slugify.dart';
@@ -129,7 +130,10 @@ ForumPostsPage mergeForumPostPages(
 }
 
 class ForumRepository {
-  static final ForumRepository _instance = ForumRepository._internal();
+  static ForumRepository _instance = ForumRepository._internal();
+
+  @visibleForTesting
+  static set instanceForTest(ForumRepository mock) => _instance = mock;
 
   factory ForumRepository() => _instance;
 

@@ -98,7 +98,7 @@
   },
   "themeCarbonLabel": "Carbon Mono",
   "@themeCarbonLabel": {
-    "description": "Name of the Carbon Mono color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Carbon Mono color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeCarbonDescription": "Lime and magenta",
   "@themeCarbonDescription": {
@@ -106,7 +106,7 @@
   },
   "themeEditorialLabel": "Editorial",
   "@themeEditorialLabel": {
-    "description": "Name of the Editorial color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Editorial color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeEditorialDescription": "Blue and orange, paper warmth",
   "@themeEditorialDescription": {
@@ -114,7 +114,7 @@
   },
   "themeNocturneLabel": "Nocturne",
   "@themeNocturneLabel": {
-    "description": "Name of the Nocturne color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Nocturne color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeNocturneDescription": "Indigo and lavender glow",
   "@themeNocturneDescription": {
@@ -122,7 +122,7 @@
   },
   "themeTrailSocialLabel": "Trail Social",
   "@themeTrailSocialLabel": {
-    "description": "Name of the Trail Social color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Trail Social color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeTrailSocialDescription": "Punchy kudos orange",
   "@themeTrailSocialDescription": {
@@ -130,7 +130,7 @@
   },
   "themeCalmingLabel": "Calming",
   "@themeCalmingLabel": {
-    "description": "Name of the Calming color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Calming color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeCalmingDescription": "Warm sage and tan",
   "@themeCalmingDescription": {
@@ -138,7 +138,7 @@
   },
   "themeRetroLabel": "Retro",
   "@themeRetroLabel": {
-    "description": "Name of the Retro color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Retro color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeRetroDescription": "Blocky 70s poster, mustard & rust",
   "@themeRetroDescription": {
@@ -146,7 +146,7 @@
   },
   "themeAnalystBlueLabel": "Analyst Blue",
   "@themeAnalystBlueLabel": {
-    "description": "Name of the Analyst Blue color mode. Product name — kept recognisable across languages."
+    "description": "Name of the Analyst Blue color mode. Product name \u2014 kept recognisable across languages."
   },
   "themeAnalystBlueDescription": "Navy console, cyan telemetry",
   "@themeAnalystBlueDescription": {
@@ -172,7 +172,7 @@
   "@languageEnglishDescription": {
     "description": "One-line description under the English language option."
   },
-  "languageBanglaLabel": "বাংলা",
+  "languageBanglaLabel": "\u09ac\u09be\u0982\u09b2\u09be",
   "@languageBanglaLabel": {
     "description": "The Bangla language option. Language names are always written in their own language, so this stays in Bangla even in the English ARB."
   },
@@ -186,11 +186,11 @@
   },
   "emergencyContactsDescription": "Logged if a crash is detected and you don't respond within 60 seconds. Automatic SMS/email alerts aren't live yet.",
   "@emergencyContactsDescription": {
-    "description": "Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet — issues §24.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
+    "description": "Explains when emergency contacts get alerted, and is honest that delivery isn't implemented yet \u2014 issues \u00a724.8: the crash-alert Cloud Function (crash-notifications.ts) only ever logs a mock send, it never actually contacts anyone, and this copy previously claimed contacts ARE notified. The 60 stays a Western numeral in every language \u2014 see core/i18n/numeric_locale.dart."
   },
   "emergencyContactsNotAlertedBanner": "ThrottleIQ does not yet alert these contacts automatically.",
   "@emergencyContactsNotAlertedBanner": {
-    "description": "Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (grill §3.6.3) — adding a contact must not read as being protected."
+    "description": "Warning-colored banner above the emergency contact list. Must stay unmissable until crash alerts actually send (grill \u00a73.6.3) \u2014 adding a contact must not read as being protected."
   },
   "emergencyContactsAckTitle": "Contacts aren't alerted yet",
   "@emergencyContactsAckTitle": {
@@ -204,7 +204,7 @@
   "@emergencyContactsAckAction": {
     "description": "Dismisses the one-time emergency-contact acknowledgement dialog."
   },
-  "emergencyContactsEmpty": "No contacts yet — add someone you trust.",
+  "emergencyContactsEmpty": "No contacts yet \u2014 add someone you trust.",
   "@emergencyContactsEmpty": {
     "description": "Empty state for the emergency contact list."
   },
@@ -370,9 +370,9 @@
   "@speedOutlierTitle": {
     "description": "Title of the private post-ride card shown when part of this ride was a statistical outlier against the anonymous road-speed baseline for that stretch. Never shown to anyone but the rider themselves."
   },
-  "speedOutlierBody": "You hit {riderKmh} km/h on part of this ride — riders here are usually around {baselineKmh} km/h.",
+  "speedOutlierBody": "You hit {riderKmh} km/h on part of this ride \u2014 riders here are usually around {baselineKmh} km/h.",
   "@speedOutlierBody": {
-    "description": "Body of the speed-outlier card. {riderKmh} and {baselineKmh} are both whole-number km/h, always Western digits regardless of language — see core/i18n/numeric_locale.dart.",
+    "description": "Body of the speed-outlier card. {riderKmh} and {baselineKmh} are both whole-number km/h, always Western digits regardless of language \u2014 see core/i18n/numeric_locale.dart.",
     "placeholders": {
       "riderKmh": {
         "type": "int",
@@ -390,7 +390,7 @@
   },
   "outOf100Label": "out of 100",
   "@outOf100Label": {
-    "description": "Sits under the riding-score rating word, clarifying the score's scale. The 100 stays a Western numeral in every language — see core/i18n/numeric_locale.dart."
+    "description": "Sits under the riding-score rating word, clarifying the score's scale. The 100 stays a Western numeral in every language \u2014 see core/i18n/numeric_locale.dart."
   },
   "hardBrakesStatLabel": "hard brakes",
   "@hardBrakesStatLabel": {
@@ -410,7 +410,7 @@
   },
   "saveAndDoneAction": "Save & done",
   "@saveAndDoneAction": {
-    "description": "Primary button on the ride summary screen — dismisses the screen, keeping the ride."
+    "description": "Primary button on the ride summary screen \u2014 dismisses the screen, keeping the ride."
   },
   "shareAction": "Share",
   "@shareAction": {
@@ -501,7 +501,7 @@
   "@autoTrackingTileTitle": {
     "description": "Title of the settings switch that turns on background ride detection."
   },
-  "autoTrackingTileSubtitle": "Logs a ride without you tapping start. Uses about 3–5% battery a day when you are not riding.",
+  "autoTrackingTileSubtitle": "Logs a ride without you tapping start. Uses about 3\u20135% battery a day when you are not riding.",
   "@autoTrackingTileSubtitle": {
     "description": "Subtitle under the auto-tracking switch, naming the battery cost so the ask reads as honest rather than evasive."
   },
@@ -611,7 +611,7 @@
   "@shareRideCodeCopied": {
     "description": "Snackbar shown after tapping Copy code in the share-ride-code sheet."
   },
-  "shareRideCodeMessage": "Join my ThrottleIQ ride \"{rideName}\" — use code {code} to hop in!",
+  "shareRideCodeMessage": "Join my ThrottleIQ ride \"{rideName}\" \u2014 use code {code} to hop in!",
   "@shareRideCodeMessage": {
     "description": "Text handed to the system share sheet when sharing a group ride's join code.",
     "placeholders": {
@@ -631,7 +631,7 @@
   "@safeQrSettingsSubtitle": {
     "description": "Subtitle under the SafeQR tile in Settings."
   },
-  "safeQrIntro": "Anyone can scan this with a phone camera — no app or account needed on their end. Fill in what you'd want a first responder or traffic police to know.",
+  "safeQrIntro": "Anyone can scan this with a phone camera \u2014 no app or account needed on their end. Fill in what you'd want a first responder or traffic police to know.",
   "@safeQrIntro": {
     "description": "Explanatory text at the top of the SafeQR screen."
   },
@@ -685,7 +685,7 @@
   "@safeQrSavedMessage": {
     "description": "Snackbar shown after saving SafeQR medical info."
   },
-  "safeQrLocalOnlyDisclaimer": "Saved only on this device — it is not backed up or synced.",
+  "safeQrLocalOnlyDisclaimer": "Saved only on this device \u2014 it is not backed up or synced.",
   "@safeQrLocalOnlyDisclaimer": {
     "description": "Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced."
   },
@@ -833,7 +833,7 @@
   "@everyBikeOwnTracked": {
     "description": "Subtitle in onboarding_manifest."
   },
-  "addUnlimitedBikesBrand": "Add unlimited bikes — brand, model, year, CC",
+  "addUnlimitedBikesBrand": "Add unlimited bikes \u2014 brand, model, year, CC",
   "@addUnlimitedBikesBrand": {
     "description": "Text in onboarding_manifest."
   },
@@ -933,7 +933,7 @@
   "@ridesThatDetectRecord": {
     "description": "Subtitle in onboarding_manifest."
   },
-  "enableOnceSettingsAuto": "Enable once in Settings → Auto-Tracking",
+  "enableOnceSettingsAuto": "Enable once in Settings \u2192 Auto-Tracking",
   "@enableOnceSettingsAuto": {
     "description": "Text in onboarding_manifest."
   },
@@ -981,7 +981,7 @@
   "@neverForgetAnotherOil": {
     "description": "Subtitle in onboarding_manifest."
   },
-  "alertsWhenYoureDue": "Alerts when you're due for oil, filter, chain lube…",
+  "alertsWhenYoureDue": "Alerts when you're due for oil, filter, chain lube\u2026",
   "@alertsWhenYoureDue": {
     "description": "Text in onboarding_manifest."
   },
@@ -1029,7 +1029,7 @@
   "@fuelStationsRepairShops": {
     "description": "Text in onboarding_manifest."
   },
-  "tapDirectionsOpensMaps": "Tap Directions → opens Maps, and offers to record",
+  "tapDirectionsOpensMaps": "Tap Directions \u2192 opens Maps, and offers to record",
   "@tapDirectionsOpensMaps": {
     "description": "Text in onboarding_manifest."
   },
@@ -1069,7 +1069,7 @@
   "@ridingCommunityAllOne": {
     "description": "Subtitle in onboarding_manifest."
   },
-  "shareRidesFeedHome": "Share rides to the feed — home location is hidden",
+  "shareRidesFeedHome": "Share rides to the feed \u2014 home location is hidden",
   "@shareRidesFeedHome": {
     "description": "Text in onboarding_manifest."
   },
@@ -1081,7 +1081,7 @@
   "@pushTalkIntercomBluetooth": {
     "description": "Text in onboarding_manifest."
   },
-  "bikeModelForumsTalk": "Bike-model forums — talk to FZ-S, Pulsar & CBR riders",
+  "bikeModelForumsTalk": "Bike-model forums \u2014 talk to FZ-S, Pulsar & CBR riders",
   "@bikeModelForumsTalk": {
     "description": "Text in onboarding_manifest."
   },
@@ -1117,7 +1117,7 @@
   "@yourProfile": {
     "description": "Title in onboarding_manifest."
   },
-  "makeItYoursAdd": "Make it yours — add a bio to stand out.",
+  "makeItYoursAdd": "Make it yours \u2014 add a bio to stand out.",
   "@makeItYoursAdd": {
     "description": "Subtitle in onboarding_manifest."
   },
@@ -1157,7 +1157,7 @@
   "@keepUp5Contacts": {
     "description": "Description in onboarding_manifest."
   },
-  "thatUsernameTakenTry": "That username is taken — try another.",
+  "thatUsernameTakenTry": "That username is taken \u2014 try another.",
   "@thatUsernameTakenTry": {
     "description": "Text in onboarding_screen."
   },
@@ -1186,7 +1186,7 @@
   "@throttleiqTracksRidesMaintenance": {
     "description": "Text in onboarding_screen."
   },
-  "continueAction": "Continue →",
+  "continueAction": "Continue \u2192",
   "@continueAction": {
     "description": "Text in onboarding_screen."
   },
@@ -1194,7 +1194,7 @@
   "@addBikeTakeTour": {
     "description": "Text in onboarding_screen."
   },
-  "backArrow": "← Back",
+  "backArrow": "\u2190 Back",
   "@backArrow": {
     "description": "Text in onboarding_screen."
   },
@@ -1218,7 +1218,7 @@
   "@username": {
     "description": "LabelText in onboarding_screen."
   },
-  "lettersNumbersUnderscore3": "Letters, numbers, underscore · 3–20 chars",
+  "lettersNumbersUnderscore3": "Letters, numbers, underscore \u00b7 3\u201320 chars",
   "@lettersNumbersUnderscore3": {
     "description": "HelperText in onboarding_screen."
   },
@@ -1322,11 +1322,11 @@
   "@showMe": {
     "description": "Text in onboarding_slide_page."
   },
-  "getRiding": "Get Riding 🏍️",
+  "getRiding": "Get Riding \ud83c\udfcd\ufe0f",
   "@getRiding": {
     "description": "Text in onboarding_slide_page."
   },
-  "gotIt": "Got it  →",
+  "gotIt": "Got it  \u2192",
   "@gotIt": {
     "description": "Text in onboarding_slide_page."
   },
@@ -1358,7 +1358,7 @@
   "@gpsLocked": {
     "description": "Text in onboarding_ui_mockups."
   },
-  "avg52": "AVG 52 · ",
+  "avg52": "AVG 52 \u00b7 ",
   "@avg52": {
     "description": "Text in onboarding_ui_mockups."
   },
@@ -1430,7 +1430,7 @@
   "@good2100Km": {
     "description": "DueText in onboarding_ui_mockups."
   },
-  "n49VerifiedPure": "★ 4.9 · Verified Pure Fuel · Open 24/7",
+  "n49VerifiedPure": "\u2605 4.9 \u00b7 Verified Pure Fuel \u00b7 Open 24/7",
   "@n49VerifiedPure": {
     "description": "Text in onboarding_ui_mockups."
   },
@@ -1454,7 +1454,7 @@
   "@privacyZone200mEndpoints": {
     "description": "Text in onboarding_ui_mockups."
   },
-  "roadCaptainDhakaMetro": "Road Captain · Dhaka Metro",
+  "roadCaptainDhakaMetro": "Road Captain \u00b7 Dhaka Metro",
   "@roadCaptainDhakaMetro": {
     "description": "Text in onboarding_ui_mockups."
   },
@@ -1470,11 +1470,11 @@
   "@safeqrOfflineMedicalCard": {
     "description": "Text in onboarding_ui_mockups."
   },
-  "bloodOIceEmergency": "Blood: O+ · ICE Emergency SOS Armed",
+  "bloodOIceEmergency": "Blood: O+ \u00b7 ICE Emergency SOS Armed",
   "@bloodOIceEmergency": {
     "description": "Text in onboarding_ui_mockups."
   },
-  "guideProgressDot": "GUIDE · {slideIndex} OF {total}",
+  "guideProgressDot": "GUIDE \u00b7 {slideIndex} OF {total}",
   "@guideProgressDot": {
     "description": "Text in tour_floating_banner.",
     "placeholders": {
@@ -1490,7 +1490,7 @@
   "@backTour": {
     "description": "Text in tour_floating_banner."
   },
-  "next": "Next →",
+  "next": "Next \u2192",
   "@next": {
     "description": "Text in tour_floating_banner."
   },
@@ -1626,7 +1626,7 @@
   "@backgroundLocation": {
     "description": "Text in record_screen."
   },
-  "backgroundLocationRationale": "ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn't cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.",
+  "backgroundLocationRationale": "ThrottleIQ records your route, speed, and distance using your location while a ride is active \u2014 including while your phone is locked or in a pocket, so the ride isn't cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.",
   "@backgroundLocationRationale": {
     "description": "Text in record_screen."
   },
@@ -1654,7 +1654,7 @@
   "@close": {
     "description": "Tooltip in ride_summary_screen (+1 more)."
   },
-  "fetchingRoute": "Fetching route…",
+  "fetchingRoute": "Fetching route\u2026",
   "@fetchingRoute": {
     "description": "Text in ride_summary_screen."
   },
@@ -1750,7 +1750,7 @@
   "@endRidePressHold": {
     "description": "Label in end_ride_sheet."
   },
-  "keepHolding": "Keep holding…",
+  "keepHolding": "Keep holding\u2026",
   "@keepHolding": {
     "description": "Text in end_ride_sheet."
   },
@@ -1815,7 +1815,7 @@
       }
     }
   },
-  "locationPermissionOffGroup": "Location permission is off — the group can't see you. You can still see them.",
+  "locationPermissionOffGroup": "Location permission is off \u2014 the group can't see you. You can still see them.",
   "@locationPermissionOffGroup": {
     "description": "Text in group_ride_map_screen."
   },
@@ -1832,7 +1832,7 @@
   "@leaveGroupRide": {
     "description": "Text in group_ride_map_screen."
   },
-  "othersStopSeeingPosition": "The others stop seeing your position. Your own ride recording keeps running — end it from the ride screen.",
+  "othersStopSeeingPosition": "The others stop seeing your position. Your own ride recording keeps running \u2014 end it from the ride screen.",
   "@othersStopSeeingPosition": {
     "description": "Text in group_ride_map_screen."
   },
@@ -1853,7 +1853,7 @@
       }
     }
   },
-  "microphoneAccessOffCan": "Microphone access is off — you can still hear the group.",
+  "microphoneAccessOffCan": "Microphone access is off \u2014 you can still hear the group.",
   "@microphoneAccessOffCan": {
     "description": "SetState in group_ride_map_screen."
   },
@@ -1883,11 +1883,11 @@
   "@thisGroupRideNo": {
     "description": "Message in group_ride_map_screen."
   },
-  "recordingReleaseSend": "Recording — release to send",
+  "recordingReleaseSend": "Recording \u2014 release to send",
   "@recordingReleaseSend": {
     "description": "Text in group_ride_map_screen."
   },
-  "playing": "Playing {note}…",
+  "playing": "Playing {note}\u2026",
   "@playing": {
     "description": "Text in group_ride_map_screen.",
     "placeholders": {
@@ -1912,7 +1912,7 @@
   "@nobodyThisRideYet": {
     "description": "Text in group_ride_map_screen."
   },
-  "ridingJoined": "Riding — {joinedCount}",
+  "ridingJoined": "Riding \u2014 {joinedCount}",
   "@ridingJoined": {
     "description": "Text in group_ride_map_screen.",
     "placeholders": {
@@ -1921,7 +1921,7 @@
       }
     }
   },
-  "invitedWaiting": "Invited — {pendingCount} waiting",
+  "invitedWaiting": "Invited \u2014 {pendingCount} waiting",
   "@invitedWaiting": {
     "description": "Text in group_ride_map_screen.",
     "placeholders": {
@@ -1943,7 +1943,7 @@
       }
     }
   },
-  "waitingFirstPosition": "Waiting for the first position…",
+  "waitingFirstPosition": "Waiting for the first position\u2026",
   "@waitingFirstPosition": {
     "description": "Text in group_ride_map_screen."
   },
@@ -1984,7 +1984,7 @@
       }
     }
   },
-  "tapJoin": "{relativeTime} · tap to join",
+  "tapJoin": "{relativeTime} \u00b7 tap to join",
   "@tapJoin": {
     "description": "Text in notifications_screen.",
     "placeholders": {
@@ -1993,7 +1993,7 @@
       }
     }
   },
-  "tapView": "{relativeTime} · tap to view",
+  "tapView": "{relativeTime} \u00b7 tap to view",
   "@tapView": {
     "description": "Subtitle on a 'so-and-so joined your ride' notification row in notifications_screen.",
     "placeholders": {
@@ -2023,7 +2023,7 @@
       }
     }
   },
-  "onlyPhotosPerRide": "Only {maxRidePhotos} photos per ride — kept the first {remaining}.",
+  "onlyPhotosPerRide": "Only {maxRidePhotos} photos per ride \u2014 kept the first {remaining}.",
   "@onlyPhotosPerRide": {
     "description": "_showCapMessage in ride_share_screen.",
     "placeholders": {
@@ -2039,7 +2039,7 @@
   "@rideShared": {
     "description": "Text in ride_share_screen."
   },
-  "savedWellPostIt": "Saved — we'll post it when you're back online",
+  "savedWellPostIt": "Saved \u2014 we'll post it when you're back online",
   "@savedWellPostIt": {
     "description": "Text in ride_share_screen."
   },
@@ -2265,7 +2265,7 @@
   "@noForumsMatchThat": {
     "description": "_SectionMessage in social_screen."
   },
-  "followersPosts": "{followerCount} followers · {postCount} posts",
+  "followersPosts": "{followerCount} followers \u00b7 {postCount} posts",
   "@followersPosts": {
     "description": "Text in social_screen.",
     "placeholders": {
@@ -2333,7 +2333,7 @@
       }
     }
   },
-  "pickRidersRideStarts": "Pick {minGroupRideFriends}–{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications.",
+  "pickRidersRideStarts": "Pick {minGroupRideFriends}\u2013{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications.",
   "@pickRidersRideStarts": {
     "description": "Text in group_ride_friend_picker.",
     "placeholders": {
@@ -2442,7 +2442,7 @@
   "@postNotFound": {
     "description": "Text in forum_post_detail_screen."
   },
-  "noRepliesYetBe": "No replies yet — be the first to help out.",
+  "noRepliesYetBe": "No replies yet \u2014 be the first to help out.",
   "@noRepliesYetBe": {
     "description": "Text in forum_post_detail_screen."
   },
@@ -2490,7 +2490,7 @@
   "@saySomethingBeforePosting": {
     "description": "ErrorText in forum_thread_screen."
   },
-  "couldntRecordVoteCheck": "Couldn't record your vote — check your connection and try again.",
+  "couldntRecordVoteCheck": "Couldn't record your vote \u2014 check your connection and try again.",
   "@couldntRecordVoteCheck": {
     "description": "Text in forum_thread_screen."
   },
@@ -2602,7 +2602,7 @@
   "@topics": {
     "description": "Label in forums_home_screen."
   },
-  "postsFollowers": "{postCount} posts · {followerCount} followers",
+  "postsFollowers": "{postCount} posts \u00b7 {followerCount} followers",
   "@postsFollowers": {
     "description": "Text in forums_home_screen.",
     "placeholders": {
@@ -2957,7 +2957,7 @@
   "@serviceHistory": {
     "description": "EditorialLabel in maintenance_screen."
   },
-  "total": "Total: ৳{totalCost}",
+  "total": "Total: \u09f3{totalCost}",
   "@total": {
     "description": "Text in maintenance_screen.",
     "placeholders": {
@@ -3496,7 +3496,7 @@
       }
     }
   },
-  "ridesAndDistance": "{rideCount} rides · {totalDistanceM}",
+  "ridesAndDistance": "{rideCount} rides \u00b7 {totalDistanceM}",
   "@ridesAndDistance": {
     "description": "Text in garage_screen.",
     "placeholders": {
@@ -3748,7 +3748,7 @@
   "@publicLiveLinkTitle": {
     "description": "Settings switch title. /r/@handle is a literal URL path; keep it unchanged."
   },
-  "publicLiveLinkDesc": "While you share a live ride, anyone who knows your @username can watch it at /r/@username — no app or sign-in needed. Off by default. Your private live link works either way.",
+  "publicLiveLinkDesc": "While you share a live ride, anyone who knows your @username can watch it at /r/@username \u2014 no app or sign-in needed. Off by default. Your private live link works either way.",
   "@publicLiveLinkDesc": {
     "description": "Settings switch subtitle explaining the permanent public live link."
   },
@@ -3809,7 +3809,7 @@
   "@garage": {
     "description": "Text in user_profile_screen."
   },
-  "whoCanSeeBikesChangeUnderEdit": "Who can see my bikes — change this under Edit",
+  "whoCanSeeBikesChangeUnderEdit": "Who can see my bikes \u2014 change this under Edit",
   "@whoCanSeeBikesChangeUnderEdit": {
     "description": "Text in user_profile_screen."
   },
@@ -4038,7 +4038,7 @@
   "@maintCatChassisElectrical": {
     "description": "Maintenance category heading (chassisElectrical)."
   },
-  "serviceOverdueBy": "{item} · overdue by {km} km",
+  "serviceOverdueBy": "{item} \u00b7 overdue by {km} km",
   "@serviceOverdueBy": {
     "description": "Garage summary line for the most urgent overdue check.",
     "placeholders": {
@@ -4050,7 +4050,7 @@
       }
     }
   },
-  "serviceDueIn": "{item} · due in {km} km",
+  "serviceDueIn": "{item} \u00b7 due in {km} km",
   "@serviceDueIn": {
     "description": "Garage summary line for the next check that is coming due.",
     "placeholders": {
@@ -4087,11 +4087,11 @@
       }
     }
   },
-  "couldntLookThatSpot": "Couldn't look that spot up — just describe it yourself.",
+  "couldntLookThatSpot": "Couldn't look that spot up \u2014 just describe it yourself.",
   "@couldntLookThatSpot": {
     "description": "Text in add_place_screen."
   },
-  "photoDidntUploadSaving": "Photo didn't upload — saving the place without it.",
+  "photoDidntUploadSaving": "Photo didn't upload \u2014 saving the place without it.",
   "@photoDidntUploadSaving": {
     "description": "Text in add_place_screen."
   },
@@ -4152,11 +4152,11 @@
   "@eGBesideOmuk": {
     "description": "HintText in add_place_screen."
   },
-  "writeItWayYoud": "Write it the way you'd tell a friend — landmarks, not a formal street address. \"Beside Omuk School\" or \"just after the Mirpur 10 circle\" helps far more here.",
+  "writeItWayYoud": "Write it the way you'd tell a friend \u2014 landmarks, not a formal street address. \"Beside Omuk School\" or \"just after the Mirpur 10 circle\" helps far more here.",
   "@writeItWayYoud": {
     "description": "HelperText in add_place_screen."
   },
-  "lookingUp": "Looking up…",
+  "lookingUp": "Looking up\u2026",
   "@lookingUp": {
     "description": "Text in add_place_screen."
   },
@@ -4180,7 +4180,7 @@
   "@haventAddedAnyPlaces": {
     "description": "Text in my_places_list_screen."
   },
-  "verified": "{displayName} · Verified",
+  "verified": "{displayName} \u00b7 Verified",
   "@verified": {
     "description": "Text in my_places_list_screen.",
     "placeholders": {
@@ -4230,7 +4230,7 @@
   "@reviews": {
     "description": "Text in place_detail_screen."
   },
-  "noReviewsYetBe": "No reviews yet — be the first!",
+  "noReviewsYetBe": "No reviews yet \u2014 be the first!",
   "@noReviewsYetBe": {
     "description": "Text in place_detail_screen."
   },
@@ -4238,11 +4238,11 @@
   "@officialPoint": {
     "description": "Text in place_detail_screen (+1 more)."
   },
-  "n0NotGoogle": "★ 0 (Not on Google)",
+  "n0NotGoogle": "\u2605 0 (Not on Google)",
   "@n0NotGoogle": {
     "description": "Text in place_detail_screen."
   },
-  "n00Reviews": "★ 0 (0 reviews)",
+  "n00Reviews": "\u2605 0 (0 reviews)",
   "@n00Reviews": {
     "description": "Text in place_detail_screen."
   },
@@ -4303,7 +4303,7 @@
   "@allFilter": {
     "description": "Label in places_list_screen."
   },
-  "browseRoutes": "Browse routes →",
+  "browseRoutes": "Browse routes \u2192",
   "@browseRoutes": {
     "description": "Text in places_list_screen."
   },
@@ -4324,149 +4324,354 @@
     "description": "Text in places_list_screen."
   },
   "placesHubTabPlaces": "Places",
-  "@placesHubTabPlaces": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesHubTabPlaces": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesHubTabRoutes": "Routes",
-  "@placesHubTabRoutes": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesHubTabRoutes": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesHubTabSaved": "Saved",
-  "@placesHubTabSaved": {"description": "Places hub redesign (Places | Routes | Saved)."},
-  "placesSearchHint": "Search pumps, garages, biker cafés…",
-  "@placesSearchHint": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesHubTabSaved": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
+  "placesSearchHint": "Search pumps, garages, biker caf\u00e9s\u2026",
+  "@placesSearchHint": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesClearSearch": "Clear search",
-  "@placesClearSearch": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesClearSearch": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesFiltersTooltip": "Filters",
-  "@placesFiltersTooltip": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesFiltersTooltip": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesMapView": "Map",
-  "@placesMapView": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesMapView": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesListView": "List",
-  "@placesListView": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesListView": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesLocateMe": "Centre on me",
-  "@placesLocateMe": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesLocateMe": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesRadiusLabel": "Search radius",
-  "@placesRadiusLabel": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesRadiusLabel": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesRadiusKm": "{km} km",
-  "@placesRadiusKm": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"km": {"type": "String"}}},
+  "@placesRadiusKm": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "placesSortLabel": "Sort by",
-  "@placesSortLabel": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesSortLabel": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesSortDistance": "Nearest",
-  "@placesSortDistance": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesSortDistance": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesSortRating": "Top rated",
-  "@placesSortRating": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesSortRating": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesVerifiedOnly": "Verified places only",
-  "@placesVerifiedOnly": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesVerifiedOnly": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesVerifiedOnlyHint": "Checked by the ThrottleIQ team",
-  "@placesVerifiedOnlyHint": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesVerifiedOnlyHint": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesFeaturesLabel": "Features",
-  "@placesFeaturesLabel": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesFeaturesLabel": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesFiltersReset": "Reset",
-  "@placesFiltersReset": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesFiltersReset": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesNoMatches": "No places match",
-  "@placesNoMatches": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesNoMatches": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesNoMatchesHint": "Try a wider radius, another category or fewer filters.",
-  "@placesNoMatchesHint": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesNoMatchesHint": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesClearFilters": "Clear filters",
-  "@placesClearFilters": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesClearFilters": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesWidenRadius": "Search {km} km",
-  "@placesWidenRadius": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"km": {"type": "String"}}},
+  "@placesWidenRadius": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "placeTagOpen24h": "Open 24/7",
-  "@placeTagOpen24h": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagOpen24h": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagOctane95": "Octane 95",
-  "@placeTagOctane95": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagOctane95": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagDigitalPayment": "Digital payment",
-  "@placeTagDigitalPayment": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagDigitalPayment": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagEfiDiagnostics": "EFI diagnostics",
-  "@placeTagEfiDiagnostics": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagEfiDiagnostics": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagPunctureRepair": "Puncture repair",
-  "@placeTagPunctureRepair": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagPunctureRepair": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagPaddockStand": "Paddock stand",
-  "@placeTagPaddockStand": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagPaddockStand": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagGenuineParts": "Genuine parts",
-  "@placeTagGenuineParts": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagGenuineParts": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagBikeParking": "Bike parking",
-  "@placeTagBikeParking": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagBikeParking": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeTagRestrooms": "Restrooms",
-  "@placeTagRestrooms": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeTagRestrooms": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeApproxMinutes": "~{minutes} min",
-  "@placeApproxMinutes": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"minutes": {"type": "int"}}},
+  "@placeApproxMinutes": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "placeVerifiedBadge": "Verified",
-  "@placeVerifiedBadge": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeVerifiedBadge": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeRiderApproved": "Rider Approved",
-  "@placeRiderApproved": {"description": "Places hub redesign (Places | Routes | Saved)."},
-  "placeRiderApprovedHint": "Rated 4.5★ or more by at least 5 ThrottleIQ riders",
-  "@placeRiderApprovedHint": {"description": "Places hub redesign (Places | Routes | Saved)."},
-  "placeGoogleRatingBadge": "★ {rating} ({count} Google)",
-  "@placeGoogleRatingBadge": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"rating": {"type": "String"}, "count": {"type": "int"}}},
-  "placeRiderRatingBadge": "★ {rating} ({count, plural, =1{1 rider} other{{count} riders}})",
-  "@placeRiderRatingBadge": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"rating": {"type": "String"}, "count": {"type": "int"}}},
+  "@placeRiderApproved": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
+  "placeRiderApprovedHint": "Rated 4.5\u2605 or more by at least 5 ThrottleIQ riders",
+  "@placeRiderApprovedHint": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
+  "placeGoogleRatingBadge": "\u2605 {rating} ({count} Google)",
+  "@placeGoogleRatingBadge": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "placeRiderRatingBadge": "\u2605 {rating} ({count, plural, =1{1 rider} other{{count} riders}})",
+  "@placeRiderRatingBadge": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "placeSave": "Save",
-  "@placeSave": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeSave": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeSavedLabel": "Saved",
-  "@placeSavedLabel": {"description": "Places hub redesign (Places | Routes | Saved)."},
-  "placeSavedSnack": "Saved — find it in the Saved tab, even offline",
-  "@placeSavedSnack": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeSavedLabel": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
+  "placeSavedSnack": "Saved \u2014 find it in the Saved tab, even offline",
+  "@placeSavedSnack": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeUnsavedSnack": "Removed from saved places",
-  "@placeUnsavedSnack": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeUnsavedSnack": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placeSaveFailed": "Couldn't update your saved places",
-  "@placeSaveFailed": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placeSaveFailed": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "radarTitle": "Highway Radar",
-  "@radarTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@radarTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "radarCameras": "{count, plural, =1{1 speed camera} other{{count} speed cameras}}",
-  "@radarCameras": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"count": {"type": "int"}}},
+  "@radarCameras": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "radarPolice": "{count, plural, =1{1 police checkpost} other{{count} police checkposts}}",
-  "@radarPolice": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"count": {"type": "int"}}},
+  "@radarPolice": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "radarWithin": "within {km} km",
-  "@radarWithin": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"km": {"type": "String"}}},
+  "@radarWithin": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "radarNearest": "Nearest {distance} away",
-  "@radarNearest": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"distance": {"type": "String"}}},
+  "@radarNearest": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
   "radarShowOnMap": "Show on map",
-  "@radarShowOnMap": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@radarShowOnMap": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "radarHideOnMap": "Hide on map",
-  "@radarHideOnMap": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@radarHideOnMap": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "radarDismiss": "Dismiss radar",
-  "@radarDismiss": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@radarDismiss": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "radarListTitle": "Safety points near you",
-  "@radarListTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@radarListTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesScanOsmTitle": "Nothing mapped here yet",
-  "@placesScanOsmTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesScanOsmTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesScanOsmBody": "ThrottleIQ can pull fuel pumps, garages and parts shops for this area from OpenStreetMap, the free community map. It only runs when you tap, and never adds a place twice.",
-  "@placesScanOsmBody": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesScanOsmBody": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesScanOsm": "Scan OpenStreetMap",
-  "@placesScanOsm": {"description": "Places hub redesign (Places | Routes | Saved)."},
-  "placesScanning": "Scanning…",
-  "@placesScanning": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesScanOsm": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
+  "placesScanning": "Scanning\u2026",
+  "@placesScanning": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesOsmDialogTitle": "Import from OpenStreetMap?",
-  "@placesOsmDialogTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesOsmDialogTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesOsmDialogBody": "Adds the fuel pumps, garages and parts shops within {km} km that OpenStreetMap knows about and ThrottleIQ doesn't yet. Places already here aren't duplicated.",
-  "@placesOsmDialogBody": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"km": {"type": "String"}}},
+  "@placesOsmDialogBody": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "placesOsmImportAction": "Import",
-  "@placesOsmImportAction": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesOsmImportAction": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesMoreActions": "More",
-  "@placesMoreActions": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesMoreActions": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesAddedByMe": "Places I added",
-  "@placesAddedByMe": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesAddedByMe": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesLocationDeniedTitle": "ThrottleIQ can't see your location",
-  "@placesLocationDeniedTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesLocationDeniedTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesAllowLocation": "Allow location",
-  "@placesAllowLocation": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesAllowLocation": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesGpsOffTitle": "GPS is off",
-  "@placesGpsOffTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesGpsOffTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesOfflineTitle": "You're offline",
-  "@placesOfflineTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesOfflineTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesOfflineBody": "Nearby places need a connection. Your saved places still work offline.",
-  "@placesOfflineBody": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesOfflineBody": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesOpenSaved": "Open saved places",
-  "@placesOpenSaved": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@placesOpenSaved": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "savedPlacesEmptyTitle": "No saved places yet",
-  "@savedPlacesEmptyTitle": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@savedPlacesEmptyTitle": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "savedPlacesEmptyBody": "Tap the bookmark on any place to keep it here. Saved places work even with no signal.",
-  "@savedPlacesEmptyBody": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@savedPlacesEmptyBody": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "savedPlacesContributedBody": "See and manage the spots you've added for other riders.",
-  "@savedPlacesContributedBody": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@savedPlacesContributedBody": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "addPlaceFeaturesLabel": "Features (optional)",
-  "@addPlaceFeaturesLabel": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@addPlaceFeaturesLabel": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "addPlaceFeaturesHint": "What will the next rider be glad to know?",
-  "@addPlaceFeaturesHint": {"description": "Places hub redesign (Places | Routes | Saved)."},
+  "@addPlaceFeaturesHint": {
+    "description": "Places hub redesign (Places | Routes | Saved)."
+  },
   "placesResultCount": "{count, plural, =1{1 place} other{{count} places}}",
-  "@placesResultCount": {"description": "Places hub redesign (Places | Routes | Saved).", "placeholders": {"count": {"type": "int"}}},
+  "@placesResultCount": {
+    "description": "Places hub redesign (Places | Routes | Saved).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "couldNotUpdateVisibility": "Could not update visibility: {e}",
   "@couldNotUpdateVisibility": {
     "description": "Text in route_detail_screen.",
@@ -4520,7 +4725,7 @@
   "@turnByTurn": {
     "description": "Text in route_detail_screen."
   },
-  "derivedFromRecordedTrack": "Derived from the recorded track — distances are along the route.",
+  "derivedFromRecordedTrack": "Derived from the recorded track \u2014 distances are along the route.",
   "@derivedFromRecordedTrack": {
     "description": "Text in route_detail_screen."
   },
@@ -4553,7 +4758,7 @@
   "@thisRouteHasNo": {
     "description": "Text in route_navigation_screen."
   },
-  "offRouteFromLine": "Off route — {distanceM} from the line",
+  "offRouteFromLine": "Off route \u2014 {distanceM} from the line",
   "@offRouteFromLine": {
     "description": "Text in route_navigation_screen.",
     "placeholders": {
@@ -4608,7 +4813,7 @@
       }
     }
   },
-  "navArrivedStillRecording": "You've arrived — still recording",
+  "navArrivedStillRecording": "You've arrived \u2014 still recording",
   "@navArrivedStillRecording": {
     "description": "Turn banner once the rider reaches the end of a followed route."
   },
@@ -4620,7 +4825,7 @@
   "@navStopGuidance": {
     "description": "Tooltip on the turn banner's close button."
   },
-  "navRoutePreflightSummary": "{distance} · {turns} turns",
+  "navRoutePreflightSummary": "{distance} \u00b7 {turns} turns",
   "@navRoutePreflightSummary": {
     "description": "Route length and manoeuvre count on the pre-ride screen.",
     "placeholders": {
@@ -4685,7 +4890,7 @@
   "@publicRoutesOtherRiders": {
     "description": "Text in routes_list_screen."
   },
-  "routeRiddenSummary": "{distanceKm} km · ridden {timesRidden}×",
+  "routeRiddenSummary": "{distanceKm} km \u00b7 ridden {timesRidden}\u00d7",
   "@routeRiddenSummary": {
     "description": "Text in routes_list_screen.",
     "placeholders": {
@@ -4705,11 +4910,11 @@
   "@routeSaved": {
     "description": "Text in save_route_screen."
   },
-  "loadingTrack": "Loading track…",
+  "loadingTrack": "Loading track\u2026",
   "@loadingTrack": {
     "description": "Text in save_route_screen."
   },
-  "kmPoints": "{distanceKm} km · {polylineCount} points",
+  "kmPoints": "{distanceKm} km \u00b7 {polylineCount} points",
   "@kmPoints": {
     "description": "Text in save_route_screen.",
     "placeholders": {
@@ -4725,7 +4930,7 @@
   "@routeName": {
     "description": "EditorialLabel in save_route_screen."
   },
-  "eGDhakaMawa": "e.g. Dhaka – Mawa morning run",
+  "eGDhakaMawa": "e.g. Dhaka \u2013 Mawa morning run",
   "@eGDhakaMawa": {
     "description": "HintText in save_route_screen."
   },
@@ -4733,7 +4938,7 @@
   "@giveRouteName": {
     "description": "Validator in save_route_screen."
   },
-  "roadSurfaceBestTime": "Road surface, best time to ride, where to stop…",
+  "roadSurfaceBestTime": "Road surface, best time to ride, where to stop\u2026",
   "@roadSurfaceBestTime": {
     "description": "HintText in save_route_screen."
   },
@@ -4777,7 +4982,7 @@
   "@topLower": {
     "description": "Label in all_rides_screen."
   },
-  "hardBrakesRapidAccel": "{hardBrakeCount} hard brakes · {rapidAccelCount} rapid accel · {highJerkCount} jerks",
+  "hardBrakesRapidAccel": "{hardBrakeCount} hard brakes \u00b7 {rapidAccelCount} rapid accel \u00b7 {highJerkCount} jerks",
   "@hardBrakesRapidAccel": {
     "description": "Text in all_rides_screen.",
     "placeholders": {
@@ -4804,7 +5009,7 @@
   "@totalKm": {
     "description": "Label in stats_screen."
   },
-  "level": "Level {level} · {rank}",
+  "level": "Level {level} \u00b7 {rank}",
   "@level": {
     "description": "Text in stats_screen.",
     "placeholders": {
@@ -4895,7 +5100,7 @@
       }
     }
   },
-  "nextGo": "Next: {def} — {progress} {unit} to go",
+  "nextGo": "Next: {def} \u2014 {progress} {unit} to go",
   "@nextGo": {
     "description": "Text in badge_grid.",
     "placeholders": {
@@ -4981,11 +5186,11 @@
   "@describeWhatHappenedUid": {
     "description": "Text in bug_report_sheet."
   },
-  "eGMessagesWouldnt": "e.g. \"Messages wouldn't send — I got an error about permissions.\"",
+  "eGMessagesWouldnt": "e.g. \"Messages wouldn't send \u2014 I got an error about permissions.\"",
   "@eGMessagesWouldnt": {
     "description": "HintText in bug_report_sheet."
   },
-  "sending": "Sending…",
+  "sending": "Sending\u2026",
   "@sending": {
     "description": "Text in bug_report_sheet."
   },
@@ -5013,7 +5218,7 @@
       }
     }
   },
-  "gpsPointsTapRoute": "{polylineCount} GPS points • Tap route to inspect waypoints",
+  "gpsPointsTapRoute": "{polylineCount} GPS points \u2022 Tap route to inspect waypoints",
   "@gpsPointsTapRoute": {
     "description": "Text in full_screen_route_map_screen.",
     "placeholders": {
@@ -5059,7 +5264,7 @@
   "@errNoPermission": {
     "description": "Error: permission denied when reading data."
   },
-  "errNotFound": "That could not be found — it may have been removed.",
+  "errNotFound": "That could not be found \u2014 it may have been removed.",
   "@errNotFound": {
     "description": "Error: the requested item does not exist."
   },
@@ -5139,7 +5344,7 @@
   "@errLocationOff": {
     "description": "Location error: services off."
   },
-  "errLocationPermission": "Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.",
+  "errLocationPermission": "Location permission is needed for this feature. Grant it in Settings \u2192 ThrottleIQ.",
   "@errLocationPermission": {
     "description": "Location error: permission missing."
   },
@@ -5559,7 +5764,7 @@
   "@badgeFamFirstName": {
     "description": "Badge family name (first)."
   },
-  "badgeFamFirstAbout": "Where every rider starts — your first recorded ride.",
+  "badgeFamFirstAbout": "Where every rider starts \u2014 your first recorded ride.",
   "@badgeFamFirstAbout": {
     "description": "What the first badge family measures."
   },
@@ -5843,7 +6048,7 @@
   "@badgeFamSmoothName": {
     "description": "Badge family name (smooth)."
   },
-  "badgeFamSmoothAbout": "Your average riding score — fewer hard brakes, rapid accelerations and jerky inputs score higher.",
+  "badgeFamSmoothAbout": "Your average riding score \u2014 fewer hard brakes, rapid accelerations and jerky inputs score higher.",
   "@badgeFamSmoothAbout": {
     "description": "What the smooth badge family measures."
   },
@@ -6038,7 +6243,7 @@
   "@notifImOk": {
     "description": "Action button on the crash alert."
   },
-  "notifRideDetectedTitle": "Ride detected — {km} km",
+  "notifRideDetectedTitle": "Ride detected \u2014 {km} km",
   "@notifRideDetectedTitle": {
     "description": "Notification title after an auto-detected ride ends.",
     "placeholders": {
@@ -6080,7 +6285,7 @@
       }
     }
   },
-  "notifDigestUnconfirmed": " · {count, plural, =1{1 needs a bike confirmed} other{{count} need a bike confirmed}}",
+  "notifDigestUnconfirmed": " \u00b7 {count, plural, =1{1 needs a bike confirmed} other{{count} need a bike confirmed}}",
   "@notifDigestUnconfirmed": {
     "description": "Appended to the day-end summary when detected rides lack a confirmed bike.",
     "placeholders": {
@@ -6093,7 +6298,7 @@
   "@shareUsageStats": {
     "description": "Settings switch: turns Firebase Analytics on or off."
   },
-  "shareUsageStatsDesc": "Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising.",
+  "shareUsageStatsDesc": "Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name \u2014 and no advertising.",
   "@shareUsageStatsDesc": {
     "description": "Explains exactly what the usage-statistics switch shares."
   },
@@ -6150,7 +6355,7 @@
   "@groupRidePickAtLeastOne": {
     "description": "Friend picker: nothing selected yet, and the minimum is one."
   },
-  "groupRidePickAtLeastMany": "Pick at least {min} riders — {short} more to go.",
+  "groupRidePickAtLeastMany": "Pick at least {min} riders \u2014 {short} more to go.",
   "@groupRidePickAtLeastMany": {
     "description": "Friend picker: used only if the minimum is ever raised above one.",
     "placeholders": {
@@ -6183,643 +6388,1717 @@
     "description": "Group map action that returns to the ride cockpit (speed, distance) while recording."
   },
   "maintSettingsTitle": "Maintenance settings",
-  "@maintSettingsTitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintSettingsTitle": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintCustomizeChecks": "Customize checks",
-  "@maintCustomizeChecks": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintCustomizeChecks": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintCustomizeChecksSubtitle": "Choose what to track and how often",
-  "@maintCustomizeChecksSubtitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintCustomizeChecksSubtitle": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintSyncOdometer": "Sync odometer",
-  "@maintSyncOdometer": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintSyncOdometer": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintSyncOdometerSubtitle": "Match the app to your bike's real reading",
-  "@maintSyncOdometerSubtitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintSyncOdometerSubtitle": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintResetLogSubtitle": "Mark several items as serviced at once",
-  "@maintResetLogSubtitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintResetLogSubtitle": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintDistanceUnits": "Distance units",
-  "@maintDistanceUnits": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintDistanceUnits": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintRunningCosts": "Running costs",
-  "@maintRunningCosts": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintRunningCosts": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintRunningCostsEmpty": "Set fuel price, mileage and service costs to see what each ride costs",
-  "@maintRunningCostsEmpty": {"description": "Maintenance settings / running cost (ride cost) feature."},
-  "maintCostPerUnit": "≈ ৳{cost} per {unit}",
-  "@maintCostPerUnit": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"cost": {"type": "String"}, "unit": {"type": "String"}}},
+  "@maintRunningCostsEmpty": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
+  "maintCostPerUnit": "\u2248 \u09f3{cost} per {unit}",
+  "@maintCostPerUnit": {
+    "description": "Maintenance settings / running cost (ride cost) feature.",
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
   "maintFuelPricePerLitre": "Price per litre",
-  "@maintFuelPricePerLitre": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintFuelPricePerLitre": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintFuelPricePerGallon": "Price per gallon",
-  "@maintFuelPricePerGallon": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintFuelPricePerGallon": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintAverageMileage": "Average mileage",
-  "@maintAverageMileage": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintAverageMileage": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintServiceCosts": "Service costs",
-  "@maintServiceCosts": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintServiceCosts": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintServiceCostsHint": "Tap an item to set its typical cost. Once you log services with a cost, their average is used instead.",
-  "@maintServiceCostsHint": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintServiceCostsHint": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintTypicalCost": "Typical cost per service",
-  "@maintTypicalCost": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintTypicalCost": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "maintTypicalCostHelper": "Used to estimate ride cost until you log actual costs.",
-  "@maintTypicalCostHelper": {"description": "Maintenance settings / running cost (ride cost) feature."},
-  "maintCostFromHistory": "avg ৳{cost} logged",
-  "@maintCostFromHistory": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"cost": {"type": "String"}}},
-  "maintCostFromTypical": "typical ৳{cost}",
-  "@maintCostFromTypical": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"cost": {"type": "String"}}},
+  "@maintTypicalCostHelper": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
+  "maintCostFromHistory": "avg \u09f3{cost} logged",
+  "@maintCostFromHistory": {
+    "description": "Maintenance settings / running cost (ride cost) feature.",
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "maintCostFromTypical": "typical \u09f3{cost}",
+  "@maintCostFromTypical": {
+    "description": "Maintenance settings / running cost (ride cost) feature.",
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
   "maintCostNotSet": "Cost not set",
-  "@maintCostNotSet": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@maintCostNotSet": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "rideCostTitle": "Ride cost",
-  "@rideCostTitle": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@rideCostTitle": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "rideCostHint": "Add your fuel price, mileage and service costs to see what this ride cost you.",
-  "@rideCostHint": {"description": "Maintenance settings / running cost (ride cost) feature."},
+  "@rideCostHint": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
   "rideCostSetUp": "Set up",
-  "@rideCostSetUp": {"description": "Maintenance settings / running cost (ride cost) feature."},
-  "rideCostEstimateNote": "Estimate · {distance} km at ৳{perKm}/km",
-  "@rideCostEstimateNote": {"description": "Maintenance settings / running cost (ride cost) feature.", "placeholders": {"distance": {"type": "String"}, "perKm": {"type": "String"}}},
+  "@rideCostSetUp": {
+    "description": "Maintenance settings / running cost (ride cost) feature."
+  },
+  "rideCostEstimateNote": "Estimate \u00b7 {distance} km at \u09f3{perKm}/km",
+  "@rideCostEstimateNote": {
+    "description": "Maintenance settings / running cost (ride cost) feature.",
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "perKm": {
+        "type": "String"
+      }
+    }
+  },
   "partOrderButton": "Order",
-  "@partOrderButton": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderButton": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderTitle": "Order {part}",
-  "@partOrderTitle": {"description": "Maintenance part ordering (demo, cash on delivery).", "placeholders": {"part": {"type": "String"}}},
+  "@partOrderTitle": {
+    "description": "Maintenance part ordering (demo, cash on delivery).",
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  },
   "partOrderTestingNotice": "This feature is being tested. No real order is placed and nothing is charged.",
-  "@partOrderTestingNotice": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderTestingNotice": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderCod": "Cash on delivery",
-  "@partOrderCod": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderCod": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderName": "Your name",
-  "@partOrderName": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderName": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderPhone": "Phone number",
-  "@partOrderPhone": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderPhone": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderAddress": "Delivery address",
-  "@partOrderAddress": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderAddress": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderQuantity": "Quantity",
-  "@partOrderQuantity": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderQuantity": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderRequired": "Required",
-  "@partOrderRequired": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderRequired": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderPlace": "Place demo order",
-  "@partOrderPlace": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderPlace": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderPlacedTitle": "Demo order recorded",
-  "@partOrderPlacedTitle": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderPlacedTitle": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "partOrderPlacedBody": "This feature is being tested. No order was placed and nothing was charged.",
-  "@partOrderPlacedBody": {"description": "Maintenance part ordering (demo, cash on delivery)."},
+  "@partOrderPlacedBody": {
+    "description": "Maintenance part ordering (demo, cash on delivery)."
+  },
   "noOtherRidersYet": "No other riders to show yet.",
-  "@noOtherRidersYet": {"description": "All People screen empty state."},
+  "@noOtherRidersYet": {
+    "description": "All People screen empty state."
+  },
   "loadMore": "Load more",
-  "@loadMore": {"description": "Button that fetches the next page of a list."},
+  "@loadMore": {
+    "description": "Button that fetches the next page of a list."
+  },
   "loadOlderMessages": "Load older messages",
-  "@loadOlderMessages": {"description": "Chat room: fetch earlier messages."},
+  "@loadOlderMessages": {
+    "description": "Chat room: fetch earlier messages."
+  },
   "jamLabelStart": "I'm in a jam",
-  "@jamLabelStart": {"description": "Beta-only active ride button: rider marks that they are stuck in traffic now."},
+  "@jamLabelStart": {
+    "description": "Beta-only active ride button: rider marks that they are stuck in traffic now."
+  },
   "jamLabelRelease": "Jam released",
-  "@jamLabelRelease": {"description": "Beta-only active ride button: rider marks that the traffic jam has cleared. Followed by a mm:ss timer."},
+  "@jamLabelRelease": {
+    "description": "Beta-only active ride button: rider marks that the traffic jam has cleared. Followed by a mm:ss timer."
+  },
   "jamLabelBetaTag": "BETA",
-  "@jamLabelBetaTag": {"description": "Small tag on beta-only controls."},
-  "notifDigestRideTime": " · {minutes} min riding",
-  "@notifDigestRideTime": {"description": "Appended to the day-end summary notification: total ride time today, jam stops included.", "placeholders": {"minutes": {"type": "int"}}},
-  "notifDigestNotRecorded": " · {count, plural, =1{1 you didn't record} other{{count} you didn't record}}",
-  "@notifDigestNotRecorded": {"description": "Appended to the day-end summary notification: how many of today's rides were caught by auto-tracking because the rider didn't record them.", "placeholders": {"count": {"type": "int"}}},
+  "@jamLabelBetaTag": {
+    "description": "Small tag on beta-only controls."
+  },
+  "notifDigestRideTime": " \u00b7 {minutes} min riding",
+  "@notifDigestRideTime": {
+    "description": "Appended to the day-end summary notification: total ride time today, jam stops included.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "notifDigestNotRecorded": " \u00b7 {count, plural, =1{1 you didn't record} other{{count} you didn't record}}",
+  "@notifDigestNotRecorded": {
+    "description": "Appended to the day-end summary notification: how many of today's rides were caught by auto-tracking because the rider didn't record them.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "autoSummaryTodayTitle": "Today",
-  "@autoSummaryTodayTitle": {"description": "Auto-tracking settings tile: label of today's ride summary row."},
+  "@autoSummaryTodayTitle": {
+    "description": "Auto-tracking settings tile: label of today's ride summary row."
+  },
   "autoSummaryRides": "{count, plural, =0{No rides yet} =1{1 ride} other{{count} rides}}",
-  "@autoSummaryRides": {"description": "Auto-tracking daily summary: number of rides that day (recorded plus not recorded; traffic-stop fragments merged).", "placeholders": {"count": {"type": "int"}}},
-  "autoSummaryStats": "{km} km · {minutes} min riding · {jamMinutes} min stopped in traffic",
-  "@autoSummaryStats": {"description": "Auto-tracking daily summary: distance, total ride time and the part of it spent stopped in traffic.", "placeholders": {"km": {"type": "String"}, "minutes": {"type": "int"}, "jamMinutes": {"type": "int"}}},
+  "@autoSummaryRides": {
+    "description": "Auto-tracking daily summary: number of rides that day (recorded plus not recorded; traffic-stop fragments merged).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "autoSummaryStats": "{km} km \u00b7 {minutes} min riding \u00b7 {jamMinutes} min stopped in traffic",
+  "@autoSummaryStats": {
+    "description": "Auto-tracking daily summary: distance, total ride time and the part of it spent stopped in traffic.",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      },
+      "jamMinutes": {
+        "type": "int"
+      }
+    }
+  },
   "autoSummaryNotRecorded": "{count, plural, =1{Includes 1 ride you didn't record} other{Includes {count} rides you didn't record}}",
-  "@autoSummaryNotRecorded": {"description": "Auto-tracking daily summary: how many of the day's rides were detected in the background rather than recorded by the rider.", "placeholders": {"count": {"type": "int"}}},
+  "@autoSummaryNotRecorded": {
+    "description": "Auto-tracking daily summary: how many of the day's rides were detected in the background rather than recorded by the rider.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "dailySummariesTitle": "Daily ride summaries",
-  "@dailySummariesTitle": {"description": "Title of the auto-tracking history sheet and its entry row in Settings."},
+  "@dailySummariesTitle": {
+    "description": "Title of the auto-tracking history sheet and its entry row in Settings."
+  },
   "dailySummariesSubtitle": "Riding auto-tracking caught is joined across traffic stops and counted once per journey, together with the rides you recorded.",
-  "@dailySummariesSubtitle": {"description": "Subtitle of the auto-tracking daily summaries sheet."},
+  "@dailySummariesSubtitle": {
+    "description": "Subtitle of the auto-tracking daily summaries sheet."
+  },
   "dailySummariesEmpty": "No riding in the last two weeks.",
-  "@dailySummariesEmpty": {"description": "Empty state of the auto-tracking daily summaries sheet."},
-  "adaptHardBraking": "Hard braking {rate}/100 km · −{pct}%",
-  "@adaptHardBraking": {"description": "Maintenance redesign (issues §95).", "placeholders": {"rate": {"type": "String"}, "pct": {"type": "int"}}},
-  "adaptSevereRoads": "Dusty or wet roads · −{pct}%",
-  "@adaptSevereRoads": {"description": "Maintenance redesign (issues §95).", "placeholders": {"pct": {"type": "int"}}},
-  "adaptStopAndGo": "Stop-and-go {share}% · −{pct}%",
-  "@adaptStopAndGo": {"description": "Maintenance redesign (issues §95).", "placeholders": {"share": {"type": "int"}, "pct": {"type": "int"}}},
+  "@dailySummariesEmpty": {
+    "description": "Empty state of the auto-tracking daily summaries sheet."
+  },
+  "adaptHardBraking": "Hard braking {rate}/100 km \u00b7 \u2212{pct}%",
+  "@adaptHardBraking": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      },
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "adaptSevereRoads": "Dusty or wet roads \u00b7 \u2212{pct}%",
+  "@adaptSevereRoads": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "adaptStopAndGo": "Stop-and-go {share}% \u00b7 \u2212{pct}%",
+  "@adaptStopAndGo": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "share": {
+        "type": "int"
+      },
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
   "adaptedTo": "Adapted to your riding: every {km}",
-  "@adaptedTo": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}}},
+  "@adaptedTo": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "addCustomCheck": "Add your own check",
-  "@addCustomCheck": {"description": "Maintenance redesign (issues §95)."},
+  "@addCustomCheck": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "advanceWarning": "Advance warning",
-  "@advanceWarning": {"description": "Maintenance redesign (issues §95)."},
+  "@advanceWarning": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "advanceWarningHelper": "When \"due soon\" starts. Leave blank for the default.",
-  "@advanceWarningHelper": {"description": "Maintenance redesign (issues §95)."},
+  "@advanceWarningHelper": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "allGoodNothingDue": "All good, nothing due",
-  "@allGoodNothingDue": {"description": "Maintenance redesign (issues §95)."},
+  "@allGoodNothingDue": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "allGoodUntil": "All good until ~{date}",
-  "@allGoodUntil": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}}},
+  "@allGoodUntil": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "atOdometer": "at {km}",
-  "@atOdometer": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}}},
+  "@atOdometer": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "bundleBrakeService": "Brake service",
-  "@bundleBrakeService": {"description": "Maintenance redesign (issues §95)."},
+  "@bundleBrakeService": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "bundleChainCare": "Chain care",
-  "@bundleChainCare": {"description": "Maintenance redesign (issues §95)."},
+  "@bundleChainCare": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "bundleGeneralService": "General servicing",
-  "@bundleGeneralService": {"description": "Maintenance redesign (issues §95)."},
+  "@bundleGeneralService": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "bundleOilChange": "Oil change",
-  "@bundleOilChange": {"description": "Maintenance redesign (issues §95)."},
+  "@bundleOilChange": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "checkNotTracked": "Not tracked. Turn it on in Customize checks to get reminders.",
-  "@checkNotTracked": {"description": "Maintenance redesign (issues §95)."},
-  "comingUpNextDays": "Coming up · next {days} days",
-  "@comingUpNextDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@checkNotTracked": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
+  "comingUpNextDays": "Coming up \u00b7 next {days} days",
+  "@comingUpNextDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "costPerUnitLabel": "per {unit}, all in",
-  "@costPerUnitLabel": {"description": "Maintenance redesign (issues §95).", "placeholders": {"unit": {"type": "String"}}},
-  "costTrend": "First {first} → latest {latest} · average {avg}",
-  "@costTrend": {"description": "Maintenance redesign (issues §95).", "placeholders": {"first": {"type": "String"}, "latest": {"type": "String"}, "avg": {"type": "String"}}},
+  "@costPerUnitLabel": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "costTrend": "First {first} \u2192 latest {latest} \u00b7 average {avg}",
+  "@costTrend": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "avg": {
+        "type": "String"
+      }
+    }
+  },
   "countingFromBaseline": "Counting from: ",
-  "@countingFromBaseline": {"description": "Maintenance redesign (issues §95)."},
+  "@countingFromBaseline": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "customCheckName": "Check name",
-  "@customCheckName": {"description": "Maintenance redesign (issues §95)."},
+  "@customCheckName": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "customChecksSection": "Your own checks",
-  "@customChecksSection": {"description": "Maintenance redesign (issues §95)."},
+  "@customChecksSection": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "daysShort": "{days} d",
-  "@daysShort": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@daysShort": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "daysUnit": "days",
-  "@daysUnit": {"description": "Maintenance redesign (issues §95)."},
+  "@daysUnit": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "deleteVisitBody": "{count, plural, =1{This deletes the logged item here and in the cloud.} other{This deletes all {count} items logged in this visit, here and in the cloud.}}",
-  "@deleteVisitBody": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@deleteVisitBody": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteVisitTitle": "Delete visit?",
-  "@deleteVisitTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@deleteVisitTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "doneIt": "Done it",
-  "@doneIt": {"description": "Maintenance redesign (issues §95)."},
+  "@doneIt": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "dueInDays": "in ~{days} days",
-  "@dueInDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@dueInDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "dueOverdue": "overdue",
-  "@dueOverdue": {"description": "Maintenance redesign (issues §95)."},
+  "@dueOverdue": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "dueToday": "due today",
-  "@dueToday": {"description": "Maintenance redesign (issues §95)."},
+  "@dueToday": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "dueTomorrow": "tomorrow",
-  "@dueTomorrow": {"description": "Maintenance redesign (issues §95)."},
+  "@dueTomorrow": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "editInterval": "Edit interval",
-  "@editInterval": {"description": "Maintenance redesign (issues §95)."},
+  "@editInterval": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "editVisitTitle": "Edit visit",
-  "@editVisitTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@editVisitTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "everyNDays": "every {days} days",
-  "@everyNDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@everyNDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "exportFailed": "Couldn't create the service record. Try again.",
-  "@exportFailed": {"description": "Maintenance redesign (issues §95)."},
+  "@exportFailed": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "exportNothingYet": "Log a service first. There's nothing to export yet.",
-  "@exportNothingYet": {"description": "Maintenance redesign (issues §95)."},
+  "@exportNothingYet": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "exportServiceRecord": "Export service record",
-  "@exportServiceRecord": {"description": "Maintenance redesign (issues §95)."},
+  "@exportServiceRecord": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "exportServiceRecordSubtitle": "A PDF of every visit and receipt, for a buyer or your mechanic",
-  "@exportServiceRecordSubtitle": {"description": "Maintenance redesign (issues §95)."},
+  "@exportServiceRecordSubtitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "freeServiceN": "Free service #{n}",
-  "@freeServiceN": {"description": "Maintenance redesign (issues §95).", "placeholders": {"n": {"type": "int"}}},
+  "@freeServiceN": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "freeServicesSummary": "{count, plural, =1{1 free service under warranty:} other{{count} free services under warranty:}}",
-  "@freeServicesSummary": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@freeServicesSummary": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "fromGallery": "Gallery",
-  "@fromGallery": {"description": "Maintenance redesign (issues §95)."},
-  "groupAllGood": "All good · {count}",
-  "@groupAllGood": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
-  "groupComingUp": "Coming up · {count}",
-  "@groupComingUp": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
-  "groupNeedsAttention": "Needs attention · {count}",
-  "@groupNeedsAttention": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
-  "groupUnknown": "Not known yet · {count}",
-  "@groupUnknown": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@fromGallery": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
+  "groupAllGood": "All good \u00b7 {count}",
+  "@groupAllGood": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupComingUp": "Coming up \u00b7 {count}",
+  "@groupComingUp": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupNeedsAttention": "Needs attention \u00b7 {count}",
+  "@groupNeedsAttention": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupUnknown": "Not known yet \u00b7 {count}",
+  "@groupUnknown": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "intervalDaysLabel": "Or every (days)",
-  "@intervalDaysLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@intervalDaysLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "intervalNeedKmOrDays": "Enter a distance, a number of days, or both",
-  "@intervalNeedKmOrDays": {"description": "Maintenance redesign (issues §95)."},
+  "@intervalNeedKmOrDays": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "intervalSection": "Interval",
-  "@intervalSection": {"description": "Maintenance redesign (issues §95)."},
+  "@intervalSection": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "intervalSourceTemplate": "From your bike's schedule",
-  "@intervalSourceTemplate": {"description": "Maintenance redesign (issues §95)."},
+  "@intervalSourceTemplate": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "intervalSourceUser": "Set by you",
-  "@intervalSourceUser": {"description": "Maintenance redesign (issues §95)."},
+  "@intervalSourceUser": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "intervalWhicheverFirst": "Due at whichever comes first.",
-  "@intervalWhicheverFirst": {"description": "Maintenance redesign (issues §95)."},
+  "@intervalWhicheverFirst": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "itemHistory": "History",
-  "@itemHistory": {"description": "Maintenance redesign (issues §95)."},
+  "@itemHistory": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "lastServiceLine": "Last: {details}",
-  "@lastServiceLine": {"description": "Maintenance redesign (issues §95).", "placeholders": {"details": {"type": "String"}}},
+  "@lastServiceLine": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
   "lastServicedLabel": "Last done: ",
-  "@lastServicedLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@lastServicedLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "limitsByDate": "by {date}",
-  "@limitsByDate": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}}},
+  "@limitsByDate": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "limitsKmOrDate": "{km} or {date}, whichever first",
-  "@limitsKmOrDate": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}, "date": {"type": "String"}}},
+  "@limitsKmOrDate": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "logItNow": "Log it now",
-  "@logItNow": {"description": "Maintenance redesign (issues §95)."},
+  "@logItNow": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "logVisitTitle": "Log a visit",
-  "@logVisitTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@logVisitTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintAdaptSubtitle": "Shorten intervals for stop-and-go traffic, hard braking and rough roads",
-  "@maintAdaptSubtitle": {"description": "Maintenance redesign (issues §95)."},
+  "@maintAdaptSubtitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintAdaptTitle": "Adapt to my riding",
-  "@maintAdaptTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@maintAdaptTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintAlertDueSoon": "{item} due soon",
-  "@maintAlertDueSoon": {"description": "Maintenance redesign (issues §95).", "placeholders": {"item": {"type": "String"}}},
+  "@maintAlertDueSoon": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
   "maintAlertOverdue": "{item} is overdue",
-  "@maintAlertOverdue": {"description": "Maintenance redesign (issues §95).", "placeholders": {"item": {"type": "String"}}},
+  "@maintAlertOverdue": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
   "maintDueToday": "Due today",
-  "@maintDueToday": {"description": "Maintenance redesign (issues §95)."},
+  "@maintDueToday": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintLeftDays": "{days, plural, =1{1 day left} other{{days} days left}}",
-  "@maintLeftDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@maintLeftDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "maintLeftKm": "{km} left",
-  "@maintLeftKm": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}}},
+  "@maintLeftKm": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "maintLeftKmOrDays": "{km} or {days} days left, whichever comes first",
-  "@maintLeftKmOrDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}, "days": {"type": "int"}}},
+  "@maintLeftKmOrDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "maintOverDays": "{days, plural, =1{Was due yesterday} other{Was due {days} days ago}}",
-  "@maintOverDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@maintOverDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "maintOverKm": "Over by {km}",
-  "@maintOverKm": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}}},
+  "@maintOverKm": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "maintRemindersSubtitle": "Notify me when something is due, and before papers expire",
-  "@maintRemindersSubtitle": {"description": "Maintenance redesign (issues §95)."},
+  "@maintRemindersSubtitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintRemindersTitle": "Maintenance reminders",
-  "@maintRemindersTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@maintRemindersTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintScheduleNotSet": "Not set up. Tap to choose your bike's schedule",
-  "@maintScheduleNotSet": {"description": "Maintenance redesign (issues §95)."},
+  "@maintScheduleNotSet": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintScheduleTitle": "Schedule & riding conditions",
-  "@maintScheduleTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@maintScheduleTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "maintUnknownStatus": "Not known yet. Set when it was last done",
-  "@maintUnknownStatus": {"description": "Maintenance redesign (issues §95)."},
+  "@maintUnknownStatus": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "markFixed": "Fixed",
-  "@markFixed": {"description": "Maintenance redesign (issues §95)."},
+  "@markFixed": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "moneyTitle": "Running costs",
-  "@moneyTitle": {"description": "Maintenance redesign (issues §95)."},
-  "nextDueLine": "Next: {item} · {when}",
-  "@nextDueLine": {"description": "Maintenance redesign (issues §95).", "placeholders": {"item": {"type": "String"}, "when": {"type": "String"}}},
+  "@moneyTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
+  "nextDueLine": "Next: {item} \u00b7 {when}",
+  "@nextDueLine": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "nextUpIs": "Next up: {item}",
-  "@nextUpIs": {"description": "Maintenance redesign (issues §95).", "placeholders": {"item": {"type": "String"}}},
+  "@nextUpIs": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
   "notSure": "Not sure",
-  "@notSure": {"description": "Maintenance redesign (issues §95)."},
+  "@notSure": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "notifChannelMaintenance": "Maintenance",
-  "@notifChannelMaintenance": {"description": "Maintenance redesign (issues §95)."},
+  "@notifChannelMaintenance": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "notifChannelMaintenanceDesc": "Service reminders and paperwork expiry",
-  "@notifChannelMaintenanceDesc": {"description": "Maintenance redesign (issues §95)."},
+  "@notifChannelMaintenanceDesc": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "odometerAtThatTime": "Odometer at the time",
-  "@odometerAtThatTime": {"description": "Maintenance redesign (issues §95)."},
+  "@odometerAtThatTime": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "oilBrandLabel": "Oil used",
-  "@oilBrandLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@oilBrandLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "oilDetails": "Engine oil",
-  "@oilDetails": {"description": "Maintenance redesign (issues §95)."},
+  "@oilDetails": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "oilGradeFull": "Full synthetic",
-  "@oilGradeFull": {"description": "Maintenance redesign (issues §95)."},
+  "@oilGradeFull": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "oilGradeInterval": "Change about every {km} km or {days} days",
-  "@oilGradeInterval": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}, "days": {"type": "int"}}},
+  "@oilGradeInterval": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "oilGradeMineral": "Mineral",
-  "@oilGradeMineral": {"description": "Maintenance redesign (issues §95)."},
+  "@oilGradeMineral": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "oilGradeNextChange": "Next oil change set to {km} km or {days} days",
-  "@oilGradeNextChange": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}, "days": {"type": "int"}}},
+  "@oilGradeNextChange": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "oilGradeSemi": "Semi-synthetic",
-  "@oilGradeSemi": {"description": "Maintenance redesign (issues §95)."},
+  "@oilGradeSemi": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "oneOffJob": "Something else (one-off)",
-  "@oneOffJob": {"description": "Maintenance redesign (issues §95)."},
+  "@oneOffJob": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "orJoiner": " or ",
-  "@orJoiner": {"description": "Maintenance redesign (issues §95)."},
+  "@orJoiner": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkAlertExpired": "{doc} has expired",
-  "@paperworkAlertExpired": {"description": "Maintenance redesign (issues §95).", "placeholders": {"doc": {"type": "String"}}},
+  "@paperworkAlertExpired": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "doc": {
+        "type": "String"
+      }
+    }
+  },
   "paperworkAlertExpiring": "{doc} expires in {days} days",
-  "@paperworkAlertExpiring": {"description": "Maintenance redesign (issues §95).", "placeholders": {"doc": {"type": "String"}, "days": {"type": "int"}}},
+  "@paperworkAlertExpiring": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "doc": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "paperworkDrivingLicence": "Driving licence",
-  "@paperworkDrivingLicence": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkDrivingLicence": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkEmpty": "Add your tax token, insurance and other papers to be reminded before they expire.",
-  "@paperworkEmpty": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkEmpty": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkExpiredOn": "Expired on {date}",
-  "@paperworkExpiredOn": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}}},
-  "paperworkExpiresOn": "Expires {date} · {days} days left",
-  "@paperworkExpiresOn": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}, "days": {"type": "int"}}},
+  "@paperworkExpiredOn": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "paperworkExpiresOn": "Expires {date} \u00b7 {days} days left",
+  "@paperworkExpiresOn": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "paperworkExpiryValue": "Expires {date}",
-  "@paperworkExpiryValue": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}}},
+  "@paperworkExpiryValue": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "paperworkFitness": "Fitness certificate",
-  "@paperworkFitness": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkFitness": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkInsurance": "Insurance",
-  "@paperworkInsurance": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkInsurance": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkPickExpiry": "Pick expiry date",
-  "@paperworkPickExpiry": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkPickExpiry": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkRegistration": "Registration",
-  "@paperworkRegistration": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkRegistration": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkTaxToken": "Tax token",
-  "@paperworkTaxToken": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkTaxToken": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "paperworkTitle": "Papers",
-  "@paperworkTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@paperworkTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "perKmBreakdown": "Servicing {maint} + fuel {fuel}",
-  "@perKmBreakdown": {"description": "Maintenance redesign (issues §95).", "placeholders": {"maint": {"type": "String"}, "fuel": {"type": "String"}}},
+  "@perKmBreakdown": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "maint": {
+        "type": "String"
+      },
+      "fuel": {
+        "type": "String"
+      }
+    }
+  },
   "pickDateOptional": "Date (optional)",
-  "@pickDateOptional": {"description": "Maintenance redesign (issues §95)."},
+  "@pickDateOptional": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckAllGood": "All good",
-  "@precheckAllGood": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckAllGood": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckChain": "Chain",
-  "@precheckChain": {"description": "Maintenance redesign (issues §95)."},
-  "precheckChainHint": "About 2–3 cm slack, lubed, no tight spots",
-  "@precheckChainHint": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckChain": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
+  "precheckChainHint": "About 2\u20133 cm slack, lubed, no tight spots",
+  "@precheckChainHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckControls": "Controls",
-  "@precheckControls": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckControls": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckControlsHint": "Brakes, clutch, throttle and cables work smoothly",
-  "@precheckControlsHint": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckControlsHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckInstructions": "Walk round the bike and tap anything that isn't right. About 30 seconds.",
-  "@precheckInstructions": {"description": "Maintenance redesign (issues §95)."},
-  "precheckIssueFlagged": "Flagged in quick check · {date}",
-  "@precheckIssueFlagged": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}}},
+  "@precheckInstructions": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
+  "precheckIssueFlagged": "Flagged in quick check \u00b7 {date}",
+  "@precheckIssueFlagged": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "precheckLastDone": "{days, plural, =0{Checked today} =1{Last checked yesterday} other{Last checked {days} days ago}}",
-  "@precheckLastDone": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@precheckLastDone": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "precheckLights": "Lights",
-  "@precheckLights": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckLights": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckLightsHint": "Headlight, tail, brake light, indicators, horn",
-  "@precheckLightsHint": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckLightsHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckNeedsWork": "Needs attention",
-  "@precheckNeedsWork": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckNeedsWork": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckNever": "A 30-second walk-round, once a week",
-  "@precheckNever": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckNever": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckOil": "Oil & fluids",
-  "@precheckOil": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckOil": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckOilHint": "Oil level in the window, no leaks, brake fluid above MIN",
-  "@precheckOilHint": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckOilHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckSaveIssues": "{count, plural, =1{Save 1 issue} other{Save {count} issues}}",
-  "@precheckSaveIssues": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@precheckSaveIssues": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "precheckStands": "Stands",
-  "@precheckStands": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckStands": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckStandsHint": "Side and centre stands spring back",
-  "@precheckStandsHint": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckStandsHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckTires": "Tyres & wheels",
-  "@precheckTires": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckTires": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckTiresHint": "Pressure, tread, no cuts or bulges",
-  "@precheckTiresHint": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckTiresHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "precheckTitle": "Quick check",
-  "@precheckTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@precheckTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "projectedDue": "Projected: {date} ({when})",
-  "@projectedDue": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}, "when": {"type": "String"}}},
+  "@projectedDue": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "quickPicks": "Quick picks",
-  "@quickPicks": {"description": "Maintenance redesign (issues §95)."},
+  "@quickPicks": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "receiptLabel": "Receipt",
-  "@receiptLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@receiptLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "receiptPickFailed": "Couldn't add that photo.",
-  "@receiptPickFailed": {"description": "Maintenance redesign (issues §95)."},
+  "@receiptPickFailed": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "remindMeLater": "Remind me later",
-  "@remindMeLater": {"description": "Maintenance redesign (issues §95)."},
+  "@remindMeLater": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "removeCheck": "Remove check",
-  "@removeCheck": {"description": "Maintenance redesign (issues §95)."},
+  "@removeCheck": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "ridingProfileNormal": "Mostly paved roads",
-  "@ridingProfileNormal": {"description": "Maintenance redesign (issues §95)."},
+  "@ridingProfileNormal": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "ridingProfileNormalHelper": "City and highway riding on decent roads.",
-  "@ridingProfileNormalHelper": {"description": "Maintenance redesign (issues §95)."},
+  "@ridingProfileNormalHelper": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "ridingProfileSevere": "Dusty, wet or broken roads",
-  "@ridingProfileSevere": {"description": "Maintenance redesign (issues §95)."},
+  "@ridingProfileSevere": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "ridingProfileSevereHelper": "Construction dust, waterlogged streets, rough village roads. Air filter and chain come due sooner.",
-  "@ridingProfileSevereHelper": {"description": "Maintenance redesign (issues §95)."},
+  "@ridingProfileSevereHelper": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "rowLeftDays": "{days, plural, =1{1 day left} other{{days} days left}}",
-  "@rowLeftDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@rowLeftDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "rowLeftKm": "{km} left",
-  "@rowLeftKm": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}}},
+  "@rowLeftKm": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "rowLeftKmOrDays": "{km} or {days} days left",
-  "@rowLeftKmOrDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}, "days": {"type": "int"}}},
+  "@rowLeftKmOrDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "rowOverBy": "{km} over",
-  "@rowOverBy": {"description": "Maintenance redesign (issues §95).", "placeholders": {"km": {"type": "String"}}},
+  "@rowOverBy": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "rowOverDays": "{days, plural, =0{Due today} =1{1 day over} other{{days} days over}}",
-  "@rowOverDays": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
-  "saveVisitN": "Save visit · {count} items",
-  "@saveVisitN": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@rowOverDays": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "saveVisitN": "Save visit \u00b7 {count} items",
+  "@saveVisitN": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "scheduleApproximate": "Approximate",
-  "@scheduleApproximate": {"description": "Maintenance redesign (issues §95)."},
+  "@scheduleApproximate": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "scheduleVerified": "From the manual",
-  "@scheduleVerified": {"description": "Maintenance redesign (issues §95)."},
+  "@scheduleVerified": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordColCost": "Cost",
-  "@serviceRecordColCost": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceRecordColCost": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordColDate": "Date",
-  "@serviceRecordColDate": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceRecordColDate": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordColOdometer": "Odometer",
-  "@serviceRecordColOdometer": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceRecordColOdometer": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordColShop": "Workshop",
-  "@serviceRecordColShop": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceRecordColShop": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordColWork": "Work done",
-  "@serviceRecordColWork": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceRecordColWork": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordFooter": "Made with ThrottleIQ from the owner's own records",
-  "@serviceRecordFooter": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceRecordFooter": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "serviceRecordGenerated": "Made on {date}",
-  "@serviceRecordGenerated": {"description": "Maintenance redesign (issues §95).", "placeholders": {"date": {"type": "String"}}},
+  "@serviceRecordGenerated": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "serviceRecordTitle": "Service record",
-  "@serviceRecordTitle": {"description": "Maintenance redesign (issues §95)."},
-  "serviceRecordTotal": "{count} visits · ৳{total} in total",
-  "@serviceRecordTotal": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}, "total": {"type": "String"}}},
+  "@serviceRecordTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
+  "serviceRecordTotal": "{count} visits \u00b7 \u09f3{total} in total",
+  "@serviceRecordTotal": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "serviceVisit": "Service visit",
-  "@serviceVisit": {"description": "Maintenance redesign (issues §95)."},
+  "@serviceVisit": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setLastDone": "Set last done",
-  "@setLastDone": {"description": "Maintenance redesign (issues §95)."},
+  "@setLastDone": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setLastDoneHelper": "Roughly is fine. It's only where the countdown starts.",
-  "@setLastDoneHelper": {"description": "Maintenance redesign (issues §95)."},
+  "@setLastDoneHelper": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setLastDoneTitle": "When was {item} last done?",
-  "@setLastDoneTitle": {"description": "Maintenance redesign (issues §95).", "placeholders": {"item": {"type": "String"}}},
+  "@setLastDoneTitle": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
   "setupCardBody": "Pick your bike's schedule and say when the oil was last changed, and every due date becomes real.",
-  "@setupCardBody": {"description": "Maintenance redesign (issues §95)."},
+  "@setupCardBody": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupCardTitle": "Set up maintenance",
-  "@setupCardTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@setupCardTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupLastOilQuestion": "When was the oil last changed?",
-  "@setupLastOilQuestion": {"description": "Maintenance redesign (issues §95)."},
+  "@setupLastOilQuestion": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupOilLabel": "Engine oil",
-  "@setupOilLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@setupOilLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupOilUnknown": "I don't know",
-  "@setupOilUnknown": {"description": "Maintenance redesign (issues §95)."},
+  "@setupOilUnknown": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupOthersSame": "Everything else was done at that service too",
-  "@setupOthersSame": {"description": "Maintenance redesign (issues §95)."},
+  "@setupOthersSame": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupResetIntervals": "Use this schedule's intervals for every check",
-  "@setupResetIntervals": {"description": "Maintenance redesign (issues §95)."},
+  "@setupResetIntervals": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupResetIntervalsHelper": "Replaces intervals you've edited. Off keeps your edits.",
-  "@setupResetIntervalsHelper": {"description": "Maintenance redesign (issues §95)."},
+  "@setupResetIntervalsHelper": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupRoadsLabel": "Your roads",
-  "@setupRoadsLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@setupRoadsLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupSave": "Save and show my maintenance",
-  "@setupSave": {"description": "Maintenance redesign (issues §95)."},
+  "@setupSave": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupScheduleLabel": "Service schedule",
-  "@setupScheduleLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@setupScheduleLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupTelemetryNote": "Traffic and braking are measured from your rides. You can turn that off in settings.",
-  "@setupTelemetryNote": {"description": "Maintenance redesign (issues §95)."},
+  "@setupTelemetryNote": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "setupTitle": "Maintenance setup",
-  "@setupTitle": {"description": "Maintenance redesign (issues §95)."},
+  "@setupTitle": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "shopKindAuthorized": "Service centre",
-  "@shopKindAuthorized": {"description": "Maintenance redesign (issues §95)."},
+  "@shopKindAuthorized": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "shopKindLocal": "Local mechanic",
-  "@shopKindLocal": {"description": "Maintenance redesign (issues §95)."},
+  "@shopKindLocal": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "shopKindSelf": "Did it myself",
-  "@shopKindSelf": {"description": "Maintenance redesign (issues §95)."},
+  "@shopKindSelf": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "shopNameHint": "e.g. Rahim Motors, ACI 3S Mirpur",
-  "@shopNameHint": {"description": "Maintenance redesign (issues §95)."},
+  "@shopNameHint": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "shopNameLabel": "Where",
-  "@shopNameLabel": {"description": "Maintenance redesign (issues §95)."},
+  "@shopNameLabel": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "showAllItems": "Show all items",
-  "@showAllItems": {"description": "Maintenance redesign (issues §95)."},
+  "@showAllItems": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "showMoreVisits": "Show {count} more",
-  "@showMoreVisits": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@showMoreVisits": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "showTrackedOnly": "Show tracked only",
-  "@showTrackedOnly": {"description": "Maintenance redesign (issues §95)."},
+  "@showTrackedOnly": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "snoozedFor": "OK, it'll be back in {days} days.",
-  "@snoozedFor": {"description": "Maintenance redesign (issues §95).", "placeholders": {"days": {"type": "int"}}},
+  "@snoozedFor": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "spendOil": "Engine oil & filter",
-  "@spendOil": {"description": "Maintenance redesign (issues §95)."},
+  "@spendOil": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "spendParts": "Other parts & work",
-  "@spendParts": {"description": "Maintenance redesign (issues §95)."},
+  "@spendParts": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "spendVisits": "Servicing (not itemised)",
-  "@spendVisits": {"description": "Maintenance redesign (issues §95)."},
+  "@spendVisits": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "spentLast12Months": "spent in the last 12 months",
-  "@spentLast12Months": {"description": "Maintenance redesign (issues §95)."},
+  "@spentLast12Months": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "statusUnknown": "Unknown",
-  "@statusUnknown": {"description": "Maintenance redesign (issues §95)."},
+  "@statusUnknown": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "today": "Today",
-  "@today": {"description": "Maintenance redesign (issues §95)."},
+  "@today": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "undo": "Undo",
-  "@undo": {"description": "Maintenance redesign (issues §95)."},
+  "@undo": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "upNext": "Up next",
-  "@upNext": {"description": "Maintenance redesign (issues §95)."},
+  "@upNext": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "visitDetails": "Visit details",
-  "@visitDetails": {"description": "Maintenance redesign (issues §95)."},
+  "@visitDetails": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "visitPickSomething": "Tick at least one thing that was done.",
-  "@visitPickSomething": {"description": "Maintenance redesign (issues §95)."},
+  "@visitPickSomething": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "visitSaved": "{count, plural, =1{Logged 1 item} other{Logged {count} items}}",
-  "@visitSaved": {"description": "Maintenance redesign (issues §95).", "placeholders": {"count": {"type": "int"}}},
+  "@visitSaved": {
+    "description": "Maintenance redesign (issues \u00a795).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "visitTotalCost": "Total bill (optional)",
-  "@visitTotalCost": {"description": "Maintenance redesign (issues §95)."},
+  "@visitTotalCost": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "visitUpdated": "Visit updated",
-  "@visitUpdated": {"description": "Maintenance redesign (issues §95)."},
+  "@visitUpdated": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "warnDaysBefore": "Days before",
-  "@warnDaysBefore": {"description": "Maintenance redesign (issues §95)."},
+  "@warnDaysBefore": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "warnKmBefore": "Km before",
-  "@warnKmBefore": {"description": "Maintenance redesign (issues §95)."},
+  "@warnKmBefore": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "whatWasDone": "What was done",
-  "@whatWasDone": {"description": "Maintenance redesign (issues §95)."},
+  "@whatWasDone": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "odometerPhotoHelper": "Type the reading shown in your photo.",
-  "@odometerPhotoHelper": {"description": "Maintenance redesign (issues §95)."},
+  "@odometerPhotoHelper": {
+    "description": "Maintenance redesign (issues \u00a795)."
+  },
   "forumPulse": "Pulse",
-  "@forumPulse": {"description": "Forums Pit Wall redesign."},
+  "@forumPulse": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumHubs": "Hubs",
-  "@forumHubs": {"description": "Forums Pit Wall redesign."},
+  "@forumHubs": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseFilterAll": "All",
-  "@pulseFilterAll": {"description": "Forums Pit Wall redesign."},
+  "@pulseFilterAll": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseFilterMyBikes": "My bikes",
-  "@pulseFilterMyBikes": {"description": "Forums Pit Wall redesign."},
+  "@pulseFilterMyBikes": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseFilterHelp": "Help & fixes",
-  "@pulseFilterHelp": {"description": "Forums Pit Wall redesign."},
+  "@pulseFilterHelp": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseFilterDiy": "DIY guides",
-  "@pulseFilterDiy": {"description": "Forums Pit Wall redesign."},
+  "@pulseFilterDiy": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseFilterMostVoted": "Most voted",
-  "@pulseFilterMostVoted": {"description": "Forums Pit Wall redesign."},
+  "@pulseFilterMostVoted": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseFilterSaved": "Saved",
-  "@pulseFilterSaved": {"description": "Forums Pit Wall redesign."},
+  "@pulseFilterSaved": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseEmptyTitle": "Your pit wall is quiet",
-  "@pulseEmptyTitle": {"description": "Forums Pit Wall redesign."},
+  "@pulseEmptyTitle": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseEmptyBody": "Follow a few hubs or add your bike in Garage, and their latest discussions land here.",
-  "@pulseEmptyBody": {"description": "Forums Pit Wall redesign."},
+  "@pulseEmptyBody": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseExploreHubs": "Explore hubs",
-  "@pulseExploreHubs": {"description": "Forums Pit Wall redesign."},
+  "@pulseExploreHubs": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseNoPostsYet": "No discussions in your hubs yet. Start one!",
-  "@pulseNoPostsYet": {"description": "Forums Pit Wall redesign."},
+  "@pulseNoPostsYet": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseNoMatches": "No posts match this filter yet.",
-  "@pulseNoMatches": {"description": "Forums Pit Wall redesign."},
+  "@pulseNoMatches": {
+    "description": "Forums Pit Wall redesign."
+  },
   "pulseNoSaved": "Tap the bookmark on any post to save it here.",
-  "@pulseNoSaved": {"description": "Forums Pit Wall redesign."},
+  "@pulseNoSaved": {
+    "description": "Forums Pit Wall redesign."
+  },
   "savePost": "Save post",
-  "@savePost": {"description": "Forums Pit Wall redesign."},
+  "@savePost": {
+    "description": "Forums Pit Wall redesign."
+  },
   "unsavePost": "Remove from saved",
-  "@unsavePost": {"description": "Forums Pit Wall redesign."},
+  "@unsavePost": {
+    "description": "Forums Pit Wall redesign."
+  },
   "searchForumsHint": "Search forums, brands, riders",
-  "@searchForumsHint": {"description": "Forums Pit Wall redesign."},
+  "@searchForumsHint": {
+    "description": "Forums Pit Wall redesign."
+  },
   "startDiscussion": "Start a discussion",
-  "@startDiscussion": {"description": "Forums Pit Wall redesign."},
+  "@startDiscussion": {
+    "description": "Forums Pit Wall redesign."
+  },
   "startDiscussionPickForum": "Where should this go?",
-  "@startDiscussionPickForum": {"description": "Forums Pit Wall redesign."},
+  "@startDiscussionPickForum": {
+    "description": "Forums Pit Wall redesign."
+  },
   "createRiderClub": "Create club",
-  "@createRiderClub": {"description": "Forums Pit Wall redesign."},
+  "@createRiderClub": {
+    "description": "Forums Pit Wall redesign."
+  },
   "yourGarageHubs": "Your garage",
-  "@yourGarageHubs": {"description": "Forums Pit Wall redesign."},
+  "@yourGarageHubs": {
+    "description": "Forums Pit Wall redesign."
+  },
   "garageHubEmpty": "Add your bike in Garage to unlock owner-only troubleshooting and tuning discussions.",
-  "@garageHubEmpty": {"description": "Forums Pit Wall redesign."},
+  "@garageHubEmpty": {
+    "description": "Forums Pit Wall redesign."
+  },
   "openGarage": "Open Garage",
-  "@openGarage": {"description": "Forums Pit Wall redesign."},
+  "@openGarage": {
+    "description": "Forums Pit Wall redesign."
+  },
   "askOwners": "Ask owners",
-  "@askOwners": {"description": "Forums Pit Wall redesign."},
+  "@askOwners": {
+    "description": "Forums Pit Wall redesign."
+  },
   "browseModelBoard": "Browse board",
-  "@browseModelBoard": {"description": "Forums Pit Wall redesign."},
+  "@browseModelBoard": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumThreadsCount": "{count, plural, =1{1 thread} other{{count} threads}}",
-  "@forumThreadsCount": {"description": "Forums Pit Wall redesign.", "placeholders": {"count": {"type": "int"}}},
+  "@forumThreadsCount": {
+    "description": "Forums Pit Wall redesign.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "brandPaddocks": "Brand paddocks",
-  "@brandPaddocks": {"description": "Forums Pit Wall redesign."},
+  "@brandPaddocks": {
+    "description": "Forums Pit Wall redesign."
+  },
   "openPaddock": "Open paddock",
-  "@openPaddock": {"description": "Forums Pit Wall redesign."},
+  "@openPaddock": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumMembers": "{count, plural, =1{1 rider} other{{count} riders}}",
-  "@forumMembers": {"description": "Forums Pit Wall redesign.", "placeholders": {"count": {"type": "int"}}},
+  "@forumMembers": {
+    "description": "Forums Pit Wall redesign.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "topicBoards": "Topic boards",
-  "@topicBoards": {"description": "Forums Pit Wall redesign."},
+  "@topicBoards": {
+    "description": "Forums Pit Wall redesign."
+  },
   "communityClubs": "Rider clubs",
-  "@communityClubs": {"description": "Forums Pit Wall redesign."},
+  "@communityClubs": {
+    "description": "Forums Pit Wall redesign."
+  },
   "clubMaintainerBadge": "Maintainer",
-  "@clubMaintainerBadge": {"description": "Forums Pit Wall redesign."},
+  "@clubMaintainerBadge": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardWrenchBench": "The Wrench Bench",
-  "@boardWrenchBench": {"description": "Forums Pit Wall redesign."},
+  "@boardWrenchBench": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardWrenchBenchBlurb": "Maintenance, servicing, DIY fixes",
-  "@boardWrenchBenchBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardWrenchBenchBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardSparkPlug": "Spark Plug Corner",
-  "@boardSparkPlug": {"description": "Forums Pit Wall redesign."},
+  "@boardSparkPlug": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardSparkPlugBlurb": "Electrical, battery, ECU tuning",
-  "@boardSparkPlugBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardSparkPlugBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardApexLab": "Apex Lab",
-  "@boardApexLab": {"description": "Forums Pit Wall redesign."},
+  "@boardApexLab": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardApexLabBlurb": "Riding skills, track days, cornering",
-  "@boardApexLabBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardApexLabBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardTwoStroke": "Two-Stroke Smoke",
-  "@boardTwoStroke": {"description": "Forums Pit Wall redesign."},
+  "@boardTwoStroke": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardTwoStrokeBlurb": "Classic 2Ts, carbs, premix",
-  "@boardTwoStrokeBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardTwoStrokeBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardEngineRebuild": "Engine Rebuild",
-  "@boardEngineRebuild": {"description": "Forums Pit Wall redesign."},
+  "@boardEngineRebuild": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardEngineRebuildBlurb": "Top ends, bottom ends, machining",
-  "@boardEngineRebuildBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardEngineRebuildBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardOilReviews": "Oil Reviews",
-  "@boardOilReviews": {"description": "Forums Pit Wall redesign."},
+  "@boardOilReviews": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardOilReviewsBlurb": "Engine oil, grades, change intervals",
-  "@boardOilReviewsBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardOilReviewsBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardDirtTrails": "Dirt & Trails",
-  "@boardDirtTrails": {"description": "Forums Pit Wall redesign."},
+  "@boardDirtTrails": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardDirtTrailsBlurb": "Off-road bikes and trail riding",
-  "@boardDirtTrailsBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardDirtTrailsBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardMileageLab": "Mileage Lab",
-  "@boardMileageLab": {"description": "Forums Pit Wall redesign."},
+  "@boardMileageLab": {
+    "description": "Forums Pit Wall redesign."
+  },
   "boardMileageLabBlurb": "Fuel economy tips and real numbers",
-  "@boardMileageLabBlurb": {"description": "Forums Pit Wall redesign."},
+  "@boardMileageLabBlurb": {
+    "description": "Forums Pit Wall redesign."
+  },
   "openBrandForumNamed": "Open the \"{brand}\" brand forum",
-  "@openBrandForumNamed": {"description": "Forums Pit Wall redesign.", "placeholders": {"brand": {"type": "String"}}},
+  "@openBrandForumNamed": {
+    "description": "Forums Pit Wall redesign.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
   "forumPostTypeLabel": "Post type",
-  "@forumPostTypeLabel": {"description": "Forums Pit Wall redesign."},
+  "@forumPostTypeLabel": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumPostTypeTroubleshoot": "Troubleshoot",
-  "@forumPostTypeTroubleshoot": {"description": "Forums Pit Wall redesign."},
+  "@forumPostTypeTroubleshoot": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumPostTypeDiyGuide": "DIY guide",
-  "@forumPostTypeDiyGuide": {"description": "Forums Pit Wall redesign."},
+  "@forumPostTypeDiyGuide": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumPostTypeGearReview": "Gear review",
-  "@forumPostTypeGearReview": {"description": "Forums Pit Wall redesign."},
+  "@forumPostTypeGearReview": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumPostTypeGeneral": "General",
-  "@forumPostTypeGeneral": {"description": "Forums Pit Wall redesign."},
+  "@forumPostTypeGeneral": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumTagSolved": "Solved",
-  "@forumTagSolved": {"description": "Forums Pit Wall redesign."},
+  "@forumTagSolved": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumTagHelpNeeded": "Help needed",
-  "@forumTagHelpNeeded": {"description": "Forums Pit Wall redesign."},
+  "@forumTagHelpNeeded": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumTagGuide": "Guide",
-  "@forumTagGuide": {"description": "Forums Pit Wall redesign."},
+  "@forumTagGuide": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumTagGear": "Gear",
-  "@forumTagGear": {"description": "Forums Pit Wall redesign."},
+  "@forumTagGear": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumAttachMyBike": "Show my bike on this post",
-  "@forumAttachMyBike": {"description": "Forums Pit Wall redesign."},
+  "@forumAttachMyBike": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumNoBikeToAttach": "Add a bike in Garage to show it on your posts.",
-  "@forumNoBikeToAttach": {"description": "Forums Pit Wall redesign."},
+  "@forumNoBikeToAttach": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumAttachmentRide": "Ride summary",
-  "@forumAttachmentRide": {"description": "Forums Pit Wall redesign."},
+  "@forumAttachmentRide": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumAttachmentMaintenance": "Maintenance log",
-  "@forumAttachmentMaintenance": {"description": "Forums Pit Wall redesign."},
+  "@forumAttachmentMaintenance": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumRemoveAttachment": "Remove attachment",
-  "@forumRemoveAttachment": {"description": "Forums Pit Wall redesign."},
+  "@forumRemoveAttachment": {
+    "description": "Forums Pit Wall redesign."
+  },
   "attachmentSharedFrom": "Shared from {name}'s own log.",
-  "@attachmentSharedFrom": {"description": "Forums Pit Wall redesign.", "placeholders": {"name": {"type": "String"}}},
+  "@attachmentSharedFrom": {
+    "description": "Forums Pit Wall redesign.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "forumAcceptedSolution": "Accepted solution",
-  "@forumAcceptedSolution": {"description": "Forums Pit Wall redesign."},
+  "@forumAcceptedSolution": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumAcceptSolution": "Accept as solution",
-  "@forumAcceptSolution": {"description": "Forums Pit Wall redesign."},
+  "@forumAcceptSolution": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumUnacceptSolution": "Remove as solution",
-  "@forumUnacceptSolution": {"description": "Forums Pit Wall redesign."},
+  "@forumUnacceptSolution": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumMarkSolved": "Mark solved",
-  "@forumMarkSolved": {"description": "Forums Pit Wall redesign."},
+  "@forumMarkSolved": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumReopen": "Reopen",
-  "@forumReopen": {"description": "Forums Pit Wall redesign."},
+  "@forumReopen": {
+    "description": "Forums Pit Wall redesign."
+  },
   "forumCouldNotUpdateSolution": "Couldn't update the solution: {e}",
-  "@forumCouldNotUpdateSolution": {"description": "Forums Pit Wall redesign.", "placeholders": {"e": {"type": "Object"}}},
+  "@forumCouldNotUpdateSolution": {
+    "description": "Forums Pit Wall redesign.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
+  },
   "shareToForum": "Share to forum",
-  "@shareToForum": {"description": "Forums Pit Wall redesign."},
+  "@shareToForum": {
+    "description": "Forums Pit Wall redesign."
+  },
   "shareToForumPick": "Share to which forum?",
-  "@shareToForumPick": {"description": "Forums Pit Wall redesign."},
+  "@shareToForumPick": {
+    "description": "Forums Pit Wall redesign."
+  },
   "rideAttachmentTitle": "Ride on {date}",
-  "@rideAttachmentTitle": {"description": "Forums Pit Wall redesign.", "placeholders": {"date": {"type": "String"}}},
+  "@rideAttachmentTitle": {
+    "description": "Forums Pit Wall redesign.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "forumAddPhotos": "Add photos ({count}/{max})",
-  "@forumAddPhotos": {"description": "Forum new-post sheet: button to attach photos, with how many are attached of the maximum.", "placeholders": {"count": {"type": "int"}, "max": {"type": "int"}}},
+  "@forumAddPhotos": {
+    "description": "Forum new-post sheet: button to attach photos, with how many are attached of the maximum.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "paddockPosts": "{count, plural, =1{1 post} other{{count} posts}}",
-  "@paddockPosts": {"description": "Forums brand paddock card: total posts across the brand and its model forums.", "placeholders": {"count": {"type": "int"}}}
+  "@paddockPosts": {
+    "description": "Forums brand paddock card: total posts across the brand and its model forums.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "forumPhotoUploadFailed": "Could not upload photo(s): {e}",
+  "@forumPhotoUploadFailed": {
+    "description": "Forums photo upload error",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  }
 }

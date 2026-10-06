@@ -122,6 +122,7 @@ class AppTileLayer extends StatelessWidget {
           additionalOptions: const {'apiKey': _apiKey},
           userAgentPackageName: _userAgentPackageName,
           tileProvider: _tileProvider,
+          errorImage: MemoryImage(_BlankTileProvider._pixel),
         ),
         // Hand-rolled rather than flutter_map's SimpleAttributionWidget,
         // which prefixes "flutter_map |" at full text size and overflows the
