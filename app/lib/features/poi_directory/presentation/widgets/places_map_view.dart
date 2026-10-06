@@ -25,7 +25,7 @@ double zoomForRadius(double radiusKm) {
 }
 
 /// Height of the bottom carousel strip.
-const double placesCarouselHeight = 196;
+const double placesCarouselHeight = 208;
 
 /// The Places hub's map canvas: category-colored pins (grid-clustered when
 /// they crowd), the search-radius ring, a pulsing "you are here" dot, the

@@ -153,18 +153,25 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
               PopupMenuItem(
                 value: 'osm',
                 enabled: !_importing,
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.travel_explore_outlined),
-                  title: Text(menuContext.l10n.importNearbyPlacesFrom),
+                // §97.1: Replaced ListTile with Row inside PopupMenuItem to avoid layout and accessibility issues
+                // that can occur when nesting a complex widget like ListTile inside a popup menu context.
+                child: Row(
+                  children: [
+                    const Icon(Icons.travel_explore_outlined),
+                    const SizedBox(width: 12),
+                    Text(menuContext.l10n.importNearbyPlacesFrom),
+                  ],
                 ),
               ),
               PopupMenuItem(
                 value: 'mine',
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.add_location_alt_outlined),
-                  title: Text(menuContext.l10n.placesAddedByMe),
+                // §97.1: Replaced ListTile with Row inside PopupMenuItem for the same layout/accessibility reasons.
+                child: Row(
+                  children: [
+                    const Icon(Icons.add_location_alt_outlined),
+                    const SizedBox(width: 12),
+                    Text(menuContext.l10n.placesAddedByMe),
+                  ],
                 ),
               ),
             ],
@@ -345,7 +352,8 @@ class _PlacesExplorer extends ConsumerWidget {
           ),
         ),
         SizedBox(
-          height: 48,
+          // Ribbon height increased per §97.2 requirements.
+          height: 52,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(

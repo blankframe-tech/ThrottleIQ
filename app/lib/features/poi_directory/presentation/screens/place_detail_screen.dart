@@ -165,6 +165,21 @@ class _PlaceDetailBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       children: [
+        // §97.4: Added a photo banner to PlaceDetailScreen. We display the first photo in the
+        // place.photoUrls array if available, clipped with a border radius for aesthetic appeal.
+        if (place.photoUrls.isNotEmpty) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              place.photoUrls.first,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         _PlaceHeader(place: place),
         const SizedBox(height: 24),
         Text(

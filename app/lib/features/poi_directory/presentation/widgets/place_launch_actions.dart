@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -91,7 +91,9 @@ abstract final class PlaceLaunchActions {
       launched = false;
     }
 
-    if (!launched && Platform.isIOS) {
+    // §97.6: Replaced Platform.isIOS with defaultTargetPlatform for better testability
+    // and adherence to Flutter platform checks.
+    if (!launched && defaultTargetPlatform == TargetPlatform.iOS) {
       final apple = appleMapsDirectionsUri(
         latitude: place.latitude,
         longitude: place.longitude,

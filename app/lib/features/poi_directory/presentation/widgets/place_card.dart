@@ -24,6 +24,7 @@ final ButtonStyle placeActionButtonStyle = TextButton.styleFrom(
   minimumSize: const Size(0, 40),
   padding: const EdgeInsets.symmetric(horizontal: 6),
   visualDensity: VisualDensity.compact,
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
 );
 
 /// A place in the hub's list, the map carousel and the Saved tab.
