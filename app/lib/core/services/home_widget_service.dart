@@ -301,6 +301,9 @@ class HomeWidgetService {
   /// The URI the "Start Auto-Tracking" widget launches the app with.
   static final Uri autoTrackingUri = Uri.parse('throttleiq://autotracking');
 
+  /// The URI the "Apex Hunter" widget launches the app with.
+  static final Uri apexHunterUri = Uri.parse('throttleiq://apexhunter');
+
   /// Whether [uri] is the widget's start-ride request.
   ///
   /// Compares scheme + host rather than the whole string: Android and iOS
@@ -312,6 +315,10 @@ class HomeWidgetService {
   /// Whether [uri] is the widget's start-auto-tracking request.
   static bool isAutoTrackingUri(Uri? uri) =>
       uri != null && uri.scheme == 'throttleiq' && uri.host == 'autotracking';
+
+  /// Whether [uri] is the widget's apex hunter request.
+  static bool isApexHunterUri(Uri? uri) =>
+      uri != null && uri.scheme == 'throttleiq' && uri.host == 'apexhunter';
 
   /// Fires [onStartRide] when the app is opened from the start-ride widget —
   /// both for a cold launch and for a tap while the app is already alive.

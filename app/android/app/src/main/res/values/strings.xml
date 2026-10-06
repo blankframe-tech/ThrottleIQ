@@ -14,6 +14,8 @@
     <string name="widget_maintenance_description">The next service due on your bike.</string>
     <string name="widget_auto_tracking_label">ThrottleIQ · Auto-Tracking</string>
     <string name="widget_auto_tracking_description">One tap to open ThrottleIQ\'s automatic ride detection setting.</string>
+    <string name="widget_apex_hunter_label">ThrottleIQ · Apex Hunter</string>
+    <string name="widget_apex_hunter_description">Maximum lean angles, symmetry, and apex rating.</string>
 
     <!-- Start ride widget -->
     <string name="widget_start_ride_title">THROTTLEIQ</string>
@@ -21,6 +23,11 @@
 
     <!-- Start auto-tracking widget -->
     <string name="widget_auto_tracking_cta">AUTO-TRACK</string>
+
+    <!-- Apex hunter widget -->
+    <string name="widget_apex_title">APEX HUNTER</string>
+    <string name="widget_apex_lean_left">MAX LEFT</string>
+    <string name="widget_apex_lean_right">MAX RIGHT</string>
 
     <!-- Ride stats widget -->
     <string name="widget_stats_title">RIDE STATS</string>

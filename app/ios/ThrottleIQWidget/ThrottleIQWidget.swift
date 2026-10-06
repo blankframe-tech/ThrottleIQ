@@ -68,6 +68,15 @@ enum WidgetKeys {
     static let kmUntilDue = "ti_km_until_due"
     static let kmUntilDueRaw = "ti_km_until_due_raw"
     static let overdue = "ti_overdue"
+
+    // Apex Hunter (Lean Angle)
+    static let maxLeanLeft = "ti_max_lean_left"
+    static let maxLeanLeftRaw = "ti_max_lean_left_raw"
+    static let maxLeanRight = "ti_max_lean_right"
+    static let maxLeanRightRaw = "ti_max_lean_right_raw"
+    static let leanRating = "ti_lean_rating"
+    static let leanSymmetry = "ti_lean_symmetry"
+    static let apexUpdatedAt = "ti_apex_updated_at"
 }
 
 enum Placeholder {
@@ -325,9 +334,33 @@ private struct StatColumn: View {
 }
 
 struct RideStatsWidgetView: View {
+    @Environment(\.widgetFamily) var family
     var entry: RideStatsEntry
 
     var body: some View {
+        if #available(iOS 16.0, *) {
+            switch family {
+            case .accessoryRectangular:
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("WEEK: \(entry.weeklyKm)")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    Text("TOTAL: \(entry.totalKm)")
+                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                    Text(entry.rideCount)
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
+            case .accessoryInline:
+                Text("This week: \(entry.weeklyKm)")
+            default:
+                mediumView
+            }
+        } else {
+            mediumView
+        }
+    }
+
+    private var mediumView: some View {
         CarbonPanel {
             HStack(spacing: 0) {
                 Carbon.primary.frame(width: 3)
@@ -365,13 +398,21 @@ struct RideStatsWidgetView: View {
 struct ThrottleIQRideStatsWidget: Widget {
     let kind = "ThrottleIQRideStatsWidget"
 
+    private var supportedFamilies: [WidgetFamily] {
+        if #available(iOS 16.0, *) {
+            return [.systemMedium, .accessoryRectangular, .accessoryInline]
+        } else {
+            return [.systemMedium]
+        }
+    }
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: RideStatsProvider()) { entry in
             RideStatsWidgetView(entry: entry)
         }
         .configurationDisplayName("Ride Stats")
         .description("Distance ridden this week and all time.")
-        .supportedFamilies([.systemMedium])
+        .supportedFamilies(supportedFamilies)
     }
 }
 
@@ -424,6 +465,7 @@ struct MaintenanceProvider: TimelineProvider {
 }
 
 struct MaintenanceWidgetView: View {
+    @Environment(\.widgetFamily) var family
     var entry: MaintenanceEntry
 
     private var accentColor: Color {
@@ -431,6 +473,37 @@ struct MaintenanceWidgetView: View {
     }
 
     var body: some View {
+        if #available(iOS 16.0, *) {
+            switch family {
+            case .accessoryRectangular:
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("SERVICE")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        if entry.hasData {
+                            Text(entry.overdue ? "OVERDUE" : "DUE")
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        }
+                    }
+                    Text(entry.summary)
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .lineLimit(1)
+                    Text(entry.bikeName)
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            case .accessoryInline:
+                Text("Next: \(entry.summary)")
+            default:
+                mediumView
+            }
+        } else {
+            mediumView
+        }
+    }
+
+    private var mediumView: some View {
         CarbonPanel {
             HStack(spacing: 0) {
                 accentColor.frame(width: 3)
@@ -474,13 +547,268 @@ struct MaintenanceWidgetView: View {
 struct ThrottleIQMaintenanceWidget: Widget {
     let kind = "ThrottleIQMaintenanceWidget"
 
+    private var supportedFamilies: [WidgetFamily] {
+        if #available(iOS 16.0, *) {
+            return [.systemMedium, .accessoryRectangular, .accessoryInline]
+        } else {
+            return [.systemMedium]
+        }
+    }
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MaintenanceProvider()) { entry in
             MaintenanceWidgetView(entry: entry)
         }
         .configurationDisplayName("Maintenance")
         .description("The next service due on your bike.")
-        .supportedFamilies([.systemMedium])
+        .supportedFamilies(supportedFamilies)
+    }
+}
+
+// MARK: - Apex Hunter
+
+struct ApexHunterEntry: TimelineEntry {
+    let date: Date
+    let left: String
+    let right: String
+    let rating: String
+    let symmetry: String
+    let hasData: Bool
+
+    static let placeholder = ApexHunterEntry(
+        date: Date(),
+        left: Placeholder.value,
+        right: Placeholder.value,
+        rating: Placeholder.noData,
+        symmetry: Placeholder.value,
+        hasData: false
+    )
+
+    static func current() -> ApexHunterEntry {
+        let left = ThrottleIQWidgetStore.string(WidgetKeys.maxLeanLeft)
+        let right = ThrottleIQWidgetStore.string(WidgetKeys.maxLeanRight)
+        return ApexHunterEntry(
+            date: Date(),
+            left: left ?? Placeholder.value,
+            right: right ?? Placeholder.value,
+            rating: ThrottleIQWidgetStore.string(WidgetKeys.leanRating) ?? Placeholder.noData,
+            symmetry: ThrottleIQWidgetStore.string(WidgetKeys.leanSymmetry) ?? Placeholder.value,
+            hasData: left != nil || right != nil
+        )
+    }
+}
+
+struct ApexHunterProvider: TimelineProvider {
+    func placeholder(in context: Context) -> ApexHunterEntry {
+        .placeholder
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (ApexHunterEntry) -> Void) {
+        completion(context.isPreview ? .placeholder : .current())
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ApexHunterEntry>) -> Void) {
+        let next = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
+        completion(Timeline(entries: [.current()], policy: .after(next)))
+    }
+}
+
+struct ApexHunterWidgetView: View {
+    @Environment(\.widgetFamily) var family
+    var entry: ApexHunterEntry
+
+    var body: some View {
+        if #available(iOS 16.0, *) {
+            switch family {
+            case .accessoryCircular:
+                circularAccessoryView
+            case .accessoryRectangular:
+                rectangularAccessoryView
+            case .accessoryInline:
+                Text("Apex: L \(entry.left) / R \(entry.right) (\(entry.rating))")
+            case .systemSmall:
+                smallView
+            default:
+                mediumView
+            }
+        } else {
+            switch family {
+            case .systemSmall:
+                smallView
+            default:
+                mediumView
+            }
+        }
+    }
+
+    @available(iOS 16.0, *)
+    private var circularAccessoryView: some View {
+        VStack(spacing: 1) {
+            Text("L \(entry.left)")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+            Text("R \(entry.right)")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+            Text(entry.rating)
+                .font(.system(size: 7, weight: .medium, design: .monospaced))
+        }
+    }
+
+    @available(iOS 16.0, *)
+    private var rectangularAccessoryView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text("APEX HUNTER")
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                Spacer()
+                Text(entry.rating)
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+            }
+            HStack {
+                Text("L \(entry.left)")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                Text("•")
+                Text("R \(entry.right)")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+            }
+            Text("SYM: \(entry.symmetry)")
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var smallView: some View {
+        CarbonPanel {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    SectionLabel(text: "APEX HUNTER")
+                    Spacer()
+                    if entry.hasData {
+                        Text(entry.rating)
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundColor(Carbon.onPrimary)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(Carbon.primary)
+                            .cornerRadius(2)
+                    }
+                }
+
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("LEFT")
+                            .font(.system(size: 8, weight: .medium, design: .monospaced))
+                            .foregroundColor(Carbon.textTertiary)
+                        Text(entry.left)
+                            .font(.system(size: 20, weight: .bold, design: .monospaced))
+                            .foregroundColor(Carbon.primary)
+                            .minimumScaleFactor(0.7)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("RIGHT")
+                            .font(.system(size: 8, weight: .medium, design: .monospaced))
+                            .foregroundColor(Carbon.textTertiary)
+                        Text(entry.right)
+                            .font(.system(size: 20, weight: .bold, design: .monospaced))
+                            .foregroundColor(Carbon.textPrimary)
+                            .minimumScaleFactor(0.7)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Spacer(minLength: 0)
+
+                Text("SYM: \(entry.symmetry)")
+                    .font(.system(size: 10, weight: .regular, design: .monospaced))
+                    .foregroundColor(Carbon.textSecondary)
+                    .lineLimit(1)
+            }
+            .padding(10)
+        }
+        .carbonContainerBackground()
+        .widgetURL(URL(string: "throttleiq://apexhunter"))
+    }
+
+    private var mediumView: some View {
+        CarbonPanel {
+            HStack(spacing: 0) {
+                Carbon.primary.frame(width: 3)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .center) {
+                        SectionLabel(text: "APEX HUNTER · LEAN ANGLE")
+                        Spacer()
+                        if entry.hasData {
+                            Text(entry.rating)
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .foregroundColor(Carbon.onPrimary)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Carbon.primary)
+                                .cornerRadius(2)
+                        }
+                    }
+
+                    HStack(alignment: .top, spacing: 16) {
+                        StatColumn(
+                            label: "MAX LEFT",
+                            value: entry.left,
+                            valueColor: Carbon.primary
+                        )
+                        StatColumn(
+                            label: "MAX RIGHT",
+                            value: entry.right,
+                            valueColor: Carbon.textPrimary
+                        )
+                        StatColumn(
+                            label: "SYMMETRY",
+                            value: entry.symmetry,
+                            valueColor: Carbon.textSecondary
+                        )
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Text("Calculated from gyroscope and lateral gravity telemetry")
+                        .font(.system(size: 9, weight: .regular, design: .monospaced))
+                        .foregroundColor(Carbon.textTertiary)
+                        .lineLimit(1)
+                }
+                .padding(12)
+            }
+        }
+        .carbonContainerBackground()
+        .widgetURL(URL(string: "throttleiq://apexhunter"))
+    }
+}
+
+struct ThrottleIQApexHunterWidget: Widget {
+    let kind = "ThrottleIQApexHunterWidget"
+
+    private var supportedFamilies: [WidgetFamily] {
+        if #available(iOS 16.0, *) {
+            return [
+                .systemSmall,
+                .systemMedium,
+                .accessoryRectangular,
+                .accessoryCircular,
+                .accessoryInline
+            ]
+        } else {
+            return [.systemSmall, .systemMedium]
+        }
+    }
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: ApexHunterProvider()) { entry in
+            ApexHunterWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Apex Hunter")
+        .description("Maximum lean angles, symmetry, and cornering grade.")
+        .supportedFamilies(supportedFamilies)
     }
 }
 
@@ -493,5 +821,6 @@ struct ThrottleIQWidgetBundle: WidgetBundle {
         ThrottleIQAutoTrackingWidget()
         ThrottleIQRideStatsWidget()
         ThrottleIQMaintenanceWidget()
+        ThrottleIQApexHunterWidget()
     }
 }
