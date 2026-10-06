@@ -1683,6 +1683,7 @@ following, and none of the sources has been pinned down yet:
   Likely a fixed-height card or chip row in the new Places carousel or Forums cards.
 - **97.3 `Exception: Invalid image data` — LOW/MEDIUM.** An image failed to decode. It might be a
   broken network avatar or forum attachment, or a marker or tile asset. Find which, and give that
-  image an `errorBuilder`.
+  image an `errorBuilder`. It repeated in bursts (10+ times). Map tiles are probably not the cause: an OSM
+  tile fetched with the app's User-Agent came back as a valid PNG.
 - App Check debug-token exchange returns 403 `SERVICE_DISABLED`. This isn't from the redesign; see
   §62.12 / §83.19.
