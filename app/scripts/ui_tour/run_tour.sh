@@ -5,7 +5,7 @@
 # usage: scripts/ui_tour/run_tour.sh <sim-udid> <out-dir> [combo_id,combo_id,...]
 #
 # Screenshots land in <out-dir>/<NN_color_vibe_brightness>/NNN__section__name.png.
-# Combo ids look like `calming_curvy_light`; omit to run all 28.
+# Combo ids look like `daily_curvy_light`; omit to run all 12.
 # Env: TOUR_FROM=<n> skips the first n tour parts; TOUR_DUMP=1 logs on-screen text;
 #      TOUR_LOCALE=bn walks the app in Bangla and logs layout overflows to the tour log.
 #
@@ -21,7 +21,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 UDID="$1"; OUT="$2"; COMBOS="${3:-}"
 BUNDLE=com.bft.throttleiq
 ALL=$(python3 - <<'EOF'
-colors = ['carbonMono', 'editorial', 'nocturne', 'trailSocial', 'calming', 'retro', 'analystBlue']
+colors = ['daily', 'sport', 'adventure']
 print(','.join(f'{c}_{v}_{b}' for c in colors for v in ('curvy', 'boxy') for b in ('light', 'dark')))
 EOF
 )

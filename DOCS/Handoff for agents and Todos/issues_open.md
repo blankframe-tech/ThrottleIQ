@@ -1705,28 +1705,25 @@ Debug build on iPhone 15 (iOS 27). The app launched and ran without crashing. Fo
 - App Check debug-token exchange returns 403 `SERVICE_DISABLED`. This isn't from the redesign; see
   §62.12 / §83.19.
 
-## 98. UI screenshot tour on a physical iPhone — not working yet (2026-10-07, branch `feature/places-forums-reimagine`)
+## 98. UI screenshot tour on a physical iPhone — not working yet (2026-10-07)
 
 `app/integration_test/ui_tour_test.dart` now has a device mode (`--dart-define=TOUR_DEVICE=true`) that
-captures each shot in-app to `Documents/tour/shots/` instead of using host `simctl`. The first attempt
-to run it on the iPhone 15 produced no screenshots, so `DOCS/General/designs/live_UI_screenshots/` is
-still the old iPhone 17 simulator set.
+captures each shot in-app to `Documents/tour/shots/` instead of using host `simctl`. It has not worked
+on the iPhone 15 yet, so the screenshots in `DOCS/General/designs/live_UI_screenshots/` were captured
+on the iPhone 17 simulator instead (see below). The simulator path is verified; the device path is not.
 
 - **98.1 Test runner can't attach over wireless debugging — MEDIUM (tooling).** `flutter test -d <iPhone>`
   built and installed fine (about 170 s build), then failed with `WebSocketChannelException: Connection
   reset by peer` on the VM service. The phone was connected wirelessly. Retry over USB with the phone
   unlocked. `flutter run -t integration_test/ui_tour_test.dart` is not an alternative: it launches the
-  normal app and never runs the test.
-- **98.2 Firebase sign-in "Too many attempts" — MEDIUM, unconfirmed cause.** The run log showed that
-  error alongside the App Check 403 from §97. It is not confirmed that App Check causes it, or whether
-  the `rider@example.com` lockout is still in place. Check before re-running the tour, since the tour
-  signs in with that account.
-- **98.3 Tour combos stale after the theme refactor — MEDIUM (tooling).** The simulator build failed with
-  `Member not found: 'calming'` because `AppColorMode` is now `daily | sport | adventure`.
-  `app/scripts/ui_tour/run_tour.sh` still lists the old seven names (`carbonMono`, `trailSocial`, ...),
-  and the "Carbon Mono / Trail Social" folders in `live_UI_screenshots/` no longer match any skin in
-  the code. Update the combo list and the screenshot READMEs after the theme refactor is committed,
-  then recapture. (The compile error may also have contributed to the iPhone failure in 98.1.)
-- The pull step is not written yet. Once the tour finishes, copy the PNGs off the phone with
+  normal app and never runs the test. The pull step is not written yet: copy the PNGs off the phone with
   `xcrun devicectl device copy from --domain-type appDataContainer --domain-identifier com.bft.throttleiq
   --source Documents/tour/shots`.
+- **98.2 Firebase sign-in "Too many attempts" — MEDIUM, unconfirmed cause.** The device run log showed
+  that error alongside the App Check 403 from §97. The later simulator run signed in fine as
+  `rider@example.com`, so the lockout cleared; the cause was never pinned down.
+- **98.3 Tour combos stale after the theme refactor — FIXED 2026-10-07.** `run_tour.sh` listed the old
+  seven color names; it now uses `daily | sport | adventure` (12 combos). `live_UI_screenshots/` was
+  recaptured as three looks (`daily_curvy_light`, `sport_boxy_dark`, `adventure_boxy_dark`), 55 screens
+  each, replacing the old Carbon Mono / Trail Social folders. The tour captures 95 shots per look; scroll
+  continuations, filled forms and tour slides 2-7 are left out to keep the repo small.

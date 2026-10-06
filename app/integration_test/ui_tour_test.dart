@@ -1,8 +1,8 @@
 // Automated UI screenshot tour.
 //
 // Walks the whole app — auth, onboarding tour, every tab, detail screens,
-// sheets and dialogs — once per appearance combination (7 color modes x
-// Curvy/Boxy x Light/Dark = 28), asking the host to screenshot each step.
+// sheets and dialogs — once per appearance combination (3 color modes x
+// Curvy/Boxy x Light/Dark = 12), asking the host to screenshot each step.
 //
 // The screenshots themselves are taken on the HOST with
 // `xcrun simctl io <udid> screenshot`, not with integration_test's
@@ -14,7 +14,7 @@
 //
 // Run with app/scripts/ui_tour/run_tour.sh, which starts the host watcher
 // and `flutter test`. `--dart-define=TOUR_COMBOS=a,b` limits
-// the run to some combos (ids like `calming_curvy_light`).
+// the run to some combos (ids like `daily_curvy_light`).
 import 'dart:async';
 import 'dart:io';
 

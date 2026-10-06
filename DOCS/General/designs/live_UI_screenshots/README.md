@@ -1,33 +1,22 @@
 # ThrottleIQ — Screen Walkthrough
 
-Every screen in the app, captured from the iOS Simulator (iPhone 17, iOS 26.5)
-and numbered in the order you'd want to walk someone new through it.
+Every main screen in the app, captured from the iOS Simulator (iPhone 17, iOS 26.5, 9:41 status bar,
+Dhaka location) by the automated UI tour (`app/scripts/ui_tour/run_tour.sh`), and numbered in the
+order you would walk someone new through it. Each look has 55 screens with identical
+filenames, so `04_record_record_dashboard.png` in any folder is the same screen in a different look.
 
-Two skins, 40 screens each, identical filenames — so `01_login.png` in either
-folder is the same screen in a different theme, easy to compare side by side.
+| Folder | Color mode | Shape | Brightness |
+|--------|-----------|-------|------------|
+| [`daily_curvy_light/`](daily_curvy_light/) | Daily (app default) | Curvy | Light |
+| [`sport_boxy_dark/`](sport_boxy_dark/) | Sport | Boxy | Dark |
+| [`adventure_boxy_dark/`](adventure_boxy_dark/) | Adventure | Boxy | Dark |
 
-| Folder | Skin | Look |
-|--------|------|------|
-| [`carbon_mono/`](carbon_mono/) | Carbon Mono (app default) | Dark, sharp, instrument-panel |
-| [`trail_social/`](trail_social/) | Trail Social | Dark feed, punchy orange, rounded |
-
-Each folder has its own README listing what every numbered screenshot shows.
-
-## The run, in order
-
-Auth (01–02) → recording a ride (03–12) → your rides and progress (13–16) →
-garage and maintenance (17–22) → places and routes (23–28) →
-social and community (29–35) → profile and settings (36–40).
-
-## Skin differences worth knowing
-
-Skins change more than colour — they carry a shape profile too. On the Record
-screen, rounded skins like Trail Social render the start control as a circular
-**press-and-hold** button, where sharp-edged skins like Carbon Mono use a
-**slide-to-start** track. Compare `03_home_record.png` across the two folders.
+The themes are three independent axes (color mode x shape x brightness = 12 looks); these three are a
+representative sample. Re-run the tour with other combo ids (e.g. `sport_curvy_light`) to capture more.
+Each folder has its own README listing every screenshot.
 
 ## Not captured
 
-- **Onboarding** (`/auth/onboarding`) — only shown to a brand-new account with no display name.
-- **Group ride live map** (`/group-ride/:id`) — needs a real group ride with an invited rider.
-- **Route detail / navigation** — no saved or public routes exist on this account yet.
+- Scroll continuations, filled-in forms and feature-tour slides 2-7 (the tour takes them; they were left out to keep the repo small).
+- **Group ride live map** (`/group-ride/:id`): needs a real group ride with an invited rider.
+- **Route detail / navigation**: no saved or public routes exist on the test account.
