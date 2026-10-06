@@ -9263,6 +9263,444 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Type the reading shown in your photo.'**
   String get odometerPhotoHelper;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulse'**
+  String get forumPulse;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Hubs'**
+  String get forumHubs;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get pulseFilterAll;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'My bikes'**
+  String get pulseFilterMyBikes;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & fixes'**
+  String get pulseFilterHelp;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'DIY guides'**
+  String get pulseFilterDiy;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Most voted'**
+  String get pulseFilterMostVoted;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get pulseFilterSaved;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pit wall is quiet'**
+  String get pulseEmptyTitle;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow a few hubs or add your bike in Garage, and their latest discussions land here.'**
+  String get pulseEmptyBody;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore hubs'**
+  String get pulseExploreHubs;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'No discussions in your hubs yet. Start one!'**
+  String get pulseNoPostsYet;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts match this filter yet.'**
+  String get pulseNoMatches;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the bookmark on any post to save it here.'**
+  String get pulseNoSaved;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Save post'**
+  String get savePost;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from saved'**
+  String get unsavePost;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Search forums, brands, riders'**
+  String get searchForumsHint;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a discussion'**
+  String get startDiscussion;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should this go?'**
+  String get startDiscussionPickForum;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Create club'**
+  String get createRiderClub;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Your garage'**
+  String get yourGarageHubs;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your bike in Garage to unlock owner-only troubleshooting and tuning discussions.'**
+  String get garageHubEmpty;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Garage'**
+  String get openGarage;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask owners'**
+  String get askOwners;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse board'**
+  String get browseModelBoard;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 thread} other{{count} threads}}'**
+  String forumThreadsCount(int count);
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand paddocks'**
+  String get brandPaddocks;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Open paddock'**
+  String get openPaddock;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rider} other{{count} riders}}'**
+  String forumMembers(int count);
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic boards'**
+  String get topicBoards;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider clubs'**
+  String get communityClubs;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintainer'**
+  String get clubMaintainerBadge;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'The Wrench Bench'**
+  String get boardWrenchBench;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance, servicing, DIY fixes'**
+  String get boardWrenchBenchBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Spark Plug Corner'**
+  String get boardSparkPlug;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Electrical, battery, ECU tuning'**
+  String get boardSparkPlugBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Apex Lab'**
+  String get boardApexLab;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding skills, track days, cornering'**
+  String get boardApexLabBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-Stroke Smoke'**
+  String get boardTwoStroke;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic 2Ts, carbs, premix'**
+  String get boardTwoStrokeBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine Rebuild'**
+  String get boardEngineRebuild;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Top ends, bottom ends, machining'**
+  String get boardEngineRebuildBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Oil Reviews'**
+  String get boardOilReviews;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine oil, grades, change intervals'**
+  String get boardOilReviewsBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Dirt & Trails'**
+  String get boardDirtTrails;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Off-road bikes and trail riding'**
+  String get boardDirtTrailsBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage Lab'**
+  String get boardMileageLab;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel economy tips and real numbers'**
+  String get boardMileageLabBlurb;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the \"{brand}\" brand forum'**
+  String openBrandForumNamed(String brand);
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Post type'**
+  String get forumPostTypeLabel;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Troubleshoot'**
+  String get forumPostTypeTroubleshoot;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'DIY guide'**
+  String get forumPostTypeDiyGuide;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Gear review'**
+  String get forumPostTypeGearReview;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get forumPostTypeGeneral;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Solved'**
+  String get forumTagSolved;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Help needed'**
+  String get forumTagHelpNeeded;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Guide'**
+  String get forumTagGuide;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Gear'**
+  String get forumTagGear;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Show my bike on this post'**
+  String get forumAttachMyBike;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a bike in Garage to show it on your posts.'**
+  String get forumNoBikeToAttach;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride summary'**
+  String get forumAttachmentRide;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance log'**
+  String get forumAttachmentMaintenance;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove attachment'**
+  String get forumRemoveAttachment;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared from {name}\'s own log.'**
+  String attachmentSharedFrom(String name);
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted solution'**
+  String get forumAcceptedSolution;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept as solution'**
+  String get forumAcceptSolution;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove as solution'**
+  String get forumUnacceptSolution;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark solved'**
+  String get forumMarkSolved;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get forumReopen;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update the solution: {e}'**
+  String forumCouldNotUpdateSolution(Object e);
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to forum'**
+  String get shareToForum;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to which forum?'**
+  String get shareToForumPick;
+
+  /// Forums Pit Wall redesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride on {date}'**
+  String rideAttachmentTitle(String date);
 }
 
 class _AppLocalizationsDelegate

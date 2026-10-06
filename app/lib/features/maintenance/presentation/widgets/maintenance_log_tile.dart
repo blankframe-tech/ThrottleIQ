@@ -7,6 +7,8 @@ import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/bike_image_resolver.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../forums/domain/entities/forum_post_entity.dart';
+import '../../../forums/presentation/widgets/forum_picker_sheet.dart';
 import '../../domain/entities/service_visit.dart';
 import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
@@ -112,6 +114,27 @@ class VisitTile extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, size: 18, color: context.palette.textTertiary),
             onSelected: (choice) async {
+              if (choice == 'share') {
+                await showForumPickerSheet(
+                  context,
+                  title: l10n.shareToForumPick,
+                  attachment: ForumAttachment(
+                    kind: ForumAttachmentKind.maintenance,
+                    refId: v.id,
+                    bikeId: v.bikeId,
+                    title: v.freeServiceNumber != null
+                        ? l10n.freeServiceN(v.freeServiceNumber!)
+                        : (v.items.length == 1
+                            ? v.items.first.localizedDisplayLabel(l10n)
+                            : v.items.map((i) => i.localizedDisplayLabel(l10n)).join(', ')),
+                    subtitle: [
+                      meta,
+                      if (v.totalCost != null) '৳${formatTaka(v.totalCost!)}',
+                    ].join(' · '),
+                  ),
+                );
+                return;
+              }
               if (choice != 'delete') return;
               final ok = await showDialog<bool>(
                 context: context,
@@ -141,6 +164,7 @@ class VisitTile extends ConsumerWidget {
               }
             },
             itemBuilder: (ctx) => [
+              PopupMenuItem(value: 'share', child: Text(ctx.l10n.shareToForum)),
               PopupMenuItem(value: 'delete', child: Text(ctx.l10n.delete)),
             ],
           ),

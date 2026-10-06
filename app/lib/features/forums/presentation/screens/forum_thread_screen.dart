@@ -15,26 +15,44 @@ import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../domain/forum_author_bike.dart';
+import '../widgets/forum_post_badges.dart';
 
 /// Post list for a single forum, with a "New post" FAB.
-class ForumThreadScreen extends ConsumerWidget {
+///
+/// [compose] opens the new-post sheet as soon as the screen appears ("Ask
+/// owners", "Start a discussion", "Share to forum"), pre-filled with
+/// [attachment] when one is being shared.
+class ForumThreadScreen extends ConsumerStatefulWidget {
   final String forumId;
-  const ForumThreadScreen({super.key, required this.forumId});
+  final bool compose;
+  final ForumAttachment? attachment;
+  const ForumThreadScreen({
+    super.key,
+    required this.forumId,
+    this.compose = false,
+    this.attachment,
+  });
 
-  Future<void> _toggleFollow(BuildContext context, WidgetRef ref, bool isFollowing) async {
-    final uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
-    if (isFollowing) {
-      await ForumRepository().unfollowForum(forumId, uid);
-    } else {
-      await ForumRepository().followForum(forumId, uid);
+  @override
+  ConsumerState<ForumThreadScreen> createState() => _ForumThreadScreenState();
+}
+
+class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
+  String get forumId => widget.forumId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.compose) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showNewPostSheet(context, ref, attachment: widget.attachment);
+      });
     }
-    if (!context.mounted) return;
-    ref.invalidate(forumFollowingProvider(forumId));
-    ref.invalidate(forumsForGarageProvider);
   }
 
-  void _showNewPostSheet(BuildContext context, WidgetRef ref) {
+  void _showNewPostSheet(BuildContext context, WidgetRef ref, {ForumAttachment? attachment}) {
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -43,19 +61,20 @@ class ForumThreadScreen extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(
             top: Radius.circular(context.shape.radiusLg)),
       ),
-      builder: (_) => _NewPostSheet(forumId: forumId),
+      builder: (_) => _NewPostSheet(forumId: forumId, initialAttachment: attachment),
     ).then((posted) {
       // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
       // which inserts the new post into forumPostsNotifierProvider directly
       // instead (issues §54).
-      if (posted == true) {
+      if (posted == true && mounted) {
         ref.invalidate(forumsForGarageProvider);
+        ref.invalidate(forumsPulseFeedProvider);
       }
     });
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final forumAsync = ref.watch(forumByIdProvider(forumId));
     final postsAsync = ref.watch(forumPostsProvider(forumId));
     final followingAsync = ref.watch(forumFollowingProvider(forumId));
@@ -73,7 +92,7 @@ class ForumThreadScreen extends ConsumerWidget {
           IconButton(
             icon: Icon(isFollowing ? Icons.notifications_active : Icons.notifications_none),
             tooltip: isFollowing ? context.l10n.unfollow : context.l10n.follow,
-            onPressed: () => _toggleFollow(context, ref, isFollowing),
+            onPressed: () => setForumFollowing(context, ref, forumId, follow: !isFollowing),
           ),
           if (showMaintainers)
             IconButton(
@@ -193,7 +212,8 @@ class ForumThreadScreen extends ConsumerWidget {
 /// widget is actually gone for good, not merely "popped."
 class _NewPostSheet extends ConsumerStatefulWidget {
   final String forumId;
-  const _NewPostSheet({required this.forumId});
+  final ForumAttachment? initialAttachment;
+  const _NewPostSheet({required this.forumId, this.initialAttachment});
 
   @override
   ConsumerState<_NewPostSheet> createState() => _NewPostSheetState();
@@ -203,6 +223,14 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
   bool _submitting = false;
+  // A shared maintenance visit is usually a "here's what I did" write-up,
+  // so it starts as a DIY guide; the rider can still change it.
+  late ForumPostType _postType =
+      widget.initialAttachment?.kind == ForumAttachmentKind.maintenance
+          ? ForumPostType.diyGuide
+          : ForumPostType.general;
+  late ForumAttachment? _attachment = widget.initialAttachment;
+  bool _attachBike = true;
   // Only set once the rider has tried to submit — an empty field isn't an
   // error until then (issues §54: submitting blank/title-only used
   // to just silently do nothing, with no inline error, shake, or disabled
@@ -231,15 +259,32 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
+    final bike = _attachBike ? ref.read(activeBikeProvider) : null;
+    final authorBike = bike == null ? null : authorBikeLabel(bike);
+
     setState(() => _submitting = true);
-    final postId = await ForumRepository().createPost(
-      forumId: widget.forumId,
-      userId: user.uid,
-      userName: user.displayName ?? 'Rider',
-      userPhotoUrl: user.photoURL ?? '',
-      title: title,
-      body: body,
-    );
+    final String postId;
+    try {
+      postId = await ForumRepository().createPost(
+        forumId: widget.forumId,
+        userId: user.uid,
+        userName: user.displayName ?? 'Rider',
+        userPhotoUrl: user.photoURL ?? '',
+        title: title,
+        body: body,
+        postType: _postType,
+        authorBike: authorBike,
+        attachment: _attachment,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+      );
+      return;
+    }
+    if (!mounted) return;
     ref.read(forumPostsNotifierProvider(widget.forumId).notifier).addPost(
           ForumPostEntity(
             id: postId,
@@ -250,13 +295,17 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
             title: title,
             body: body,
             createdAt: DateTime.now(),
+            postType: _postType,
+            authorBike: authorBike,
+            attachment: _attachment,
           ),
         );
-    if (mounted) Navigator.pop(context, true);
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bike = ref.watch(activeBikeProvider);
     return Padding(
       padding: EdgeInsets.only(
         left: AppDimensions.paddingMd,
@@ -264,13 +313,39 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         top: AppDimensions.paddingMd,
         bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
-      child: Column(
+      child: SingleChildScrollView(
+       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             context.l10n.newPost,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            context.l10n.forumPostTypeLabel,
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              for (final type in [
+                ForumPostType.general,
+                ForumPostType.troubleshoot,
+                ForumPostType.diyGuide,
+                ForumPostType.gearReview,
+              ])
+                ChoiceChip(
+                  key: Key('post_type_${type.name}'),
+                  avatar: Icon(forumPostTypeIcon(type), size: 16),
+                  label: Text(forumPostTypeLabel(context.l10n, type)),
+                  selected: _postType == type,
+                  onSelected: (_) => setState(() => _postType = type),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           TextField(
@@ -297,7 +372,33 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
               errorText: _bodyError ? context.l10n.saySomethingBeforePosting : null,
             ),
           ),
-          const SizedBox(height: 16),
+          if (_attachment != null) ...[
+            const SizedBox(height: 12),
+            ForumAttachmentCard(
+              attachment: _attachment!,
+              viewerIsAuthor: true,
+              authorName: '',
+              onRemove: () => setState(() => _attachment = null),
+            ),
+          ],
+          const SizedBox(height: 8),
+          if (bike != null)
+            SwitchListTile(
+              key: const Key('post_attach_bike'),
+              contentPadding: EdgeInsets.zero,
+              value: _attachBike,
+              onChanged: (v) => setState(() => _attachBike = v),
+              title: Text(context.l10n.forumAttachMyBike,
+                  style: TextStyle(fontSize: 14, color: context.palette.textPrimary)),
+              subtitle: Text(authorBikeLabel(bike),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+            )
+          else
+            Text(
+              context.l10n.forumNoBikeToAttach,
+              style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+            ),
+          const SizedBox(height: 12),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: context.palette.primary),
             onPressed: _submitting ? null : _submit,
@@ -309,6 +410,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
                 : Text(context.l10n.post, style: const TextStyle(color: Colors.white)),
           ),
         ],
+       ),
       ),
     );
   }
@@ -409,12 +511,23 @@ class _PostCard extends ConsumerWidget {
                   children: [
                     UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
                     const SizedBox(width: 8),
-                    Text(post.userName,
-                        style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(post.userName,
+                            style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
+                        if (post.authorBike != null)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 200),
+                            child: AuthorBikeBadge(bike: post.authorBike!),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
               const Spacer(),
+              ForumPostTypeTag(post: post),
               if (canDelete)
                 IconButton(
                   padding: EdgeInsets.zero,
@@ -476,6 +589,14 @@ class _PostCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+          if (post.attachment != null) ...[
+            const SizedBox(height: 8),
+            ForumAttachmentCard(
+              attachment: post.attachment!,
+              viewerIsAuthor: post.userId == user?.uid,
+              authorName: post.userName,
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [

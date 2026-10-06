@@ -131,18 +131,36 @@ class BikeDetailScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _openForum(context, bike),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: context.palette.primary,
-                  side: BorderSide(color: context.palette.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+            // "Discuss in Forum": the model's board, or straight into a new
+            // question for its owners.
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openForum(context, bike),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.palette.primary,
+                      side: BorderSide(color: context.palette.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.forum_outlined),
+                    label: Text(context.l10n.discussThisBike, overflow: TextOverflow.ellipsis),
+                  ),
                 ),
-                icon: const Icon(Icons.forum_outlined),
-                label: Text(context.l10n.discussThisBike),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    key: const Key('bike_ask_owners'),
+                    onPressed: () => _openForum(context, bike, compose: true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.palette.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.help_outline),
+                    label: Text(context.l10n.askOwners, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             _ServiceCard(bikeId: bikeId),
@@ -227,11 +245,11 @@ class BikeDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openForum(BuildContext context, BikeEntity bike) async {
+  Future<void> _openForum(BuildContext context, BikeEntity bike, {bool compose = false}) async {
     try {
       final forum = await ForumRepository().getOrCreateForum(brand: bike.brand, model: bike.model);
       if (!context.mounted) return;
-      context.push('/forums/${forum.id}');
+      context.push('/forums/${forum.id}${compose ? '?compose=1' : ''}');
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

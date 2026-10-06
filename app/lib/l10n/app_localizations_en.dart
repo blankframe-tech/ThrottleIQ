@@ -5374,4 +5374,250 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get odometerPhotoHelper => 'Type the reading shown in your photo.';
+
+  @override
+  String get forumPulse => 'Pulse';
+
+  @override
+  String get forumHubs => 'Hubs';
+
+  @override
+  String get pulseFilterAll => 'All';
+
+  @override
+  String get pulseFilterMyBikes => 'My bikes';
+
+  @override
+  String get pulseFilterHelp => 'Help & fixes';
+
+  @override
+  String get pulseFilterDiy => 'DIY guides';
+
+  @override
+  String get pulseFilterMostVoted => 'Most voted';
+
+  @override
+  String get pulseFilterSaved => 'Saved';
+
+  @override
+  String get pulseEmptyTitle => 'Your pit wall is quiet';
+
+  @override
+  String get pulseEmptyBody =>
+      'Follow a few hubs or add your bike in Garage, and their latest discussions land here.';
+
+  @override
+  String get pulseExploreHubs => 'Explore hubs';
+
+  @override
+  String get pulseNoPostsYet => 'No discussions in your hubs yet. Start one!';
+
+  @override
+  String get pulseNoMatches => 'No posts match this filter yet.';
+
+  @override
+  String get pulseNoSaved => 'Tap the bookmark on any post to save it here.';
+
+  @override
+  String get savePost => 'Save post';
+
+  @override
+  String get unsavePost => 'Remove from saved';
+
+  @override
+  String get searchForumsHint => 'Search forums, brands, riders';
+
+  @override
+  String get startDiscussion => 'Start a discussion';
+
+  @override
+  String get startDiscussionPickForum => 'Where should this go?';
+
+  @override
+  String get createRiderClub => 'Create club';
+
+  @override
+  String get yourGarageHubs => 'Your garage';
+
+  @override
+  String get garageHubEmpty =>
+      'Add your bike in Garage to unlock owner-only troubleshooting and tuning discussions.';
+
+  @override
+  String get openGarage => 'Open Garage';
+
+  @override
+  String get askOwners => 'Ask owners';
+
+  @override
+  String get browseModelBoard => 'Browse board';
+
+  @override
+  String forumThreadsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count threads',
+      one: '1 thread',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get brandPaddocks => 'Brand paddocks';
+
+  @override
+  String get openPaddock => 'Open paddock';
+
+  @override
+  String forumMembers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count riders',
+      one: '1 rider',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicBoards => 'Topic boards';
+
+  @override
+  String get communityClubs => 'Rider clubs';
+
+  @override
+  String get clubMaintainerBadge => 'Maintainer';
+
+  @override
+  String get boardWrenchBench => 'The Wrench Bench';
+
+  @override
+  String get boardWrenchBenchBlurb => 'Maintenance, servicing, DIY fixes';
+
+  @override
+  String get boardSparkPlug => 'Spark Plug Corner';
+
+  @override
+  String get boardSparkPlugBlurb => 'Electrical, battery, ECU tuning';
+
+  @override
+  String get boardApexLab => 'Apex Lab';
+
+  @override
+  String get boardApexLabBlurb => 'Riding skills, track days, cornering';
+
+  @override
+  String get boardTwoStroke => 'Two-Stroke Smoke';
+
+  @override
+  String get boardTwoStrokeBlurb => 'Classic 2Ts, carbs, premix';
+
+  @override
+  String get boardEngineRebuild => 'Engine Rebuild';
+
+  @override
+  String get boardEngineRebuildBlurb => 'Top ends, bottom ends, machining';
+
+  @override
+  String get boardOilReviews => 'Oil Reviews';
+
+  @override
+  String get boardOilReviewsBlurb => 'Engine oil, grades, change intervals';
+
+  @override
+  String get boardDirtTrails => 'Dirt & Trails';
+
+  @override
+  String get boardDirtTrailsBlurb => 'Off-road bikes and trail riding';
+
+  @override
+  String get boardMileageLab => 'Mileage Lab';
+
+  @override
+  String get boardMileageLabBlurb => 'Fuel economy tips and real numbers';
+
+  @override
+  String openBrandForumNamed(String brand) {
+    return 'Open the \"$brand\" brand forum';
+  }
+
+  @override
+  String get forumPostTypeLabel => 'Post type';
+
+  @override
+  String get forumPostTypeTroubleshoot => 'Troubleshoot';
+
+  @override
+  String get forumPostTypeDiyGuide => 'DIY guide';
+
+  @override
+  String get forumPostTypeGearReview => 'Gear review';
+
+  @override
+  String get forumPostTypeGeneral => 'General';
+
+  @override
+  String get forumTagSolved => 'Solved';
+
+  @override
+  String get forumTagHelpNeeded => 'Help needed';
+
+  @override
+  String get forumTagGuide => 'Guide';
+
+  @override
+  String get forumTagGear => 'Gear';
+
+  @override
+  String get forumAttachMyBike => 'Show my bike on this post';
+
+  @override
+  String get forumNoBikeToAttach =>
+      'Add a bike in Garage to show it on your posts.';
+
+  @override
+  String get forumAttachmentRide => 'Ride summary';
+
+  @override
+  String get forumAttachmentMaintenance => 'Maintenance log';
+
+  @override
+  String get forumRemoveAttachment => 'Remove attachment';
+
+  @override
+  String attachmentSharedFrom(String name) {
+    return 'Shared from $name\'s own log.';
+  }
+
+  @override
+  String get forumAcceptedSolution => 'Accepted solution';
+
+  @override
+  String get forumAcceptSolution => 'Accept as solution';
+
+  @override
+  String get forumUnacceptSolution => 'Remove as solution';
+
+  @override
+  String get forumMarkSolved => 'Mark solved';
+
+  @override
+  String get forumReopen => 'Reopen';
+
+  @override
+  String forumCouldNotUpdateSolution(Object e) {
+    return 'Couldn\'t update the solution: $e';
+  }
+
+  @override
+  String get shareToForum => 'Share to forum';
+
+  @override
+  String get shareToForumPick => 'Share to which forum?';
+
+  @override
+  String rideAttachmentTitle(String date) {
+    return 'Ride on $date';
+  }
 }
