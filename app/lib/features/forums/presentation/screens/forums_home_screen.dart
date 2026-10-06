@@ -1,396 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/error_view.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../data/repositories/forum_repository.dart';
-import '../../domain/entities/forum_entity.dart';
-import '../providers/forum_providers.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/theme/app_theme_context.dart';
+import 'forums_hubs_view.dart';
+import 'forums_pulse_view.dart';
 
-/// Forums tab inside SocialScreen: "Your bikes" forums (auto-created from the
-/// garage) first, then a simple brand search/discover list to find and
-/// follow forums for bikes the rider doesn't own.
-class ForumsHomeScreen extends ConsumerStatefulWidget {
-  const ForumsHomeScreen({super.key});
+/// Which lens the Forums tab shows.
+enum ForumsLens { pulse, hubs }
+
+/// Forums tab inside SocialScreen — "The Pit Wall". Two lenses:
+///
+///  * **Pulse** ([ForumsPulseView]): recent discussions across the rider's
+///    garage and followed forums, as a feed.
+///  * **Hubs** ([ForumsHubsView]): the directory — garage hero cards, brand
+///    paddocks, topic boards, rider clubs.
+///
+/// Both stay mounted (IndexedStack) so flipping lenses keeps scroll position
+/// and costs no re-reads. Search is the Social AppBar's ([onOpenSearch]);
+/// this tab no longer carries a second search box.
+class ForumsHomeScreen extends StatefulWidget {
+  final VoidCallback? onOpenSearch;
+  const ForumsHomeScreen({super.key, this.onOpenSearch});
 
   @override
-  ConsumerState<ForumsHomeScreen> createState() => _ForumsHomeScreenState();
+  State<ForumsHomeScreen> createState() => _ForumsHomeScreenState();
 }
 
-class _ForumsHomeScreenState extends ConsumerState<ForumsHomeScreen> {
-  final _searchController = TextEditingController();
-  // The brand/topic currently being resolved (getOrCreateForum can be a
-  // multi-second Firestore transaction on first open) — null when nothing is
-  // in flight. Tracking *which* entry, not just a bool, lets the tapped row
-  // itself show a spinner (issues §54: opening a brand forum used to
-  // just disable the row with no visible feedback at all, "for a moment it
-  // reads as broken rather than loading" — the per-bike tiles above never had
-  // this problem because their forum is already resolved before the tile
-  // exists to tap).
-  String? _resolvingEntry;
+class _ForumsHomeScreenState extends State<ForumsHomeScreen> {
+  ForumsLens _lens = ForumsLens.pulse;
+  bool _hubsVisited = false;
 
-  static const _popularBrands = [
-    'Yamaha',
-    'Honda',
-    'Royal Enfield',
-    'KTM',
-    'Bajaj',
-    'TVS',
-    'Suzuki',
-    'Kawasaki',
-    'Hero',
-  ];
-
-  static const _generalTopics = [
-    'Maintenance',
-    'Riding Skills',
-    'Two-Strokes',
-    'Dirt Bikes',
-    'Spark Plug Corner',
-    'Engine Rebuild',
-    'Mileage Tips',
-    'Engine Oil Review',
-  ];
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _openBrandForum(String brand) async {
-    final trimmed = brand.trim();
-    if (trimmed.isEmpty || _resolvingEntry != null) return;
-    setState(() => _resolvingEntry = trimmed);
-    try {
-      final forum = await ForumRepository().getOrCreateForum(brand: trimmed);
-      if (!mounted) return;
-      context.push('/forums/${forum.id}');
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldNotOpenForum(e))),
-      );
-    } finally {
-      if (mounted) setState(() => _resolvingEntry = null);
-    }
-  }
-
-  Future<void> _openGeneralForum(String topic) async {
-    if (_resolvingEntry != null) return;
-    setState(() => _resolvingEntry = topic);
-    try {
-      final forum = await ForumRepository().getOrCreateGeneralForum(topic: topic);
-      if (!mounted) return;
-      context.push('/forums/${forum.id}');
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldNotOpenForum(e))),
-      );
-    } finally {
-      if (mounted) setState(() => _resolvingEntry = null);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final garageForumsAsync = ref.watch(forumsForGarageProvider);
-    final customForumsAsync = ref.watch(customForumsProvider);
-
-    return ListView(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      children: [
-        Text(
-          context.l10n.yourBikes,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
-        ),
-        const SizedBox(height: 12),
-        garageForumsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
-          error: (e, _) =>
-              ErrorView(error: e, onRetry: () => ref.invalidate(forumsForGarageProvider)),
-          data: (forums) {
-            if (forums.isEmpty) {
-              return Text(
-                context.l10n.addBikeGarageSee,
-                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
-              );
-            }
-            return Column(
-              children: [
-                for (final forum in forums) ...[
-                  _ForumCard(forum: forum),
-                  const SizedBox(height: 12),
-                ],
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.riderForums,
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () async {
-                await context.push('/forums/create');
-                // A forum created on that screen should show up here on the
-                // way back without needing a pull-to-refresh.
-                if (context.mounted) ref.invalidate(customForumsProvider);
-              },
-              icon: Icon(Icons.add, size: 18, color: context.palette.primary),
-              label: Text(context.l10n.create, style: TextStyle(color: context.palette.primary)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        customForumsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
-          error: (e, _) =>
-              ErrorView(error: e, onRetry: () => ref.invalidate(customForumsProvider)),
-          data: (forums) {
-            if (forums.isEmpty) {
-              return Text(
-                context.l10n.noRiderMadeForums,
-                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
-              );
-            }
-            return Column(
-              children: [
-                for (final forum in forums) ...[
-                  _ForumCard(forum: forum),
-                  const SizedBox(height: 12),
-                ],
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-        Text(
-          context.l10n.findForum,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                style: TextStyle(color: context.palette.textPrimary),
-                decoration: InputDecoration(
-                  hintText: context.l10n.searchBrandEG,
-                  hintStyle: TextStyle(color: context.palette.textTertiary),
-                ),
-                onSubmitted: _openBrandForum,
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: context.l10n.searchForums,
-              icon: _resolvingEntry != null &&
-                      _resolvingEntry == _searchController.text.trim()
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          color: context.palette.primary, strokeWidth: 2),
-                    )
-                  : Icon(Icons.search, color: context.palette.primary),
-              onPressed: _resolvingEntry != null
-                  ? null
-                  : () => _openBrandForum(_searchController.text),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Brands and topics are both "a forum you don't own your way into" —
-        // the same discovery act, so they share one block rather than each
-        // getting a top-level section. Brands lead because the search box
-        // directly above them searches brands.
-        _DiscoverGroup(
-          label: context.l10n.brands,
-          icon: Icons.two_wheeler,
-          entries: _popularBrands,
-          resolvingEntry: _resolvingEntry,
-          onTap: _openBrandForum,
-        ),
-        const SizedBox(height: 16),
-        _DiscoverGroup(
-          label: context.l10n.topics,
-          icon: Icons.topic_outlined,
-          entries: _generalTopics,
-          resolvingEntry: _resolvingEntry,
-          onTap: _openGeneralForum,
-        ),
-      ],
-    );
-  }
-}
-
-/// One labelled group of discovery rows inside "Find a forum".
-class _DiscoverGroup extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final List<String> entries;
-  // The entry currently being resolved (null = nothing in flight). Passed
-  // through rather than a plain `enabled` bool so the tapped row can show a
-  // spinner instead of just going inert — see _resolvingEntry's doc comment.
-  final String? resolvingEntry;
-  final void Function(String) onTap;
-
-  const _DiscoverGroup({
-    required this.label,
-    required this.icon,
-    required this.entries,
-    required this.resolvingEntry,
-    required this.onTap,
-  });
+  void _show(ForumsLens lens) => setState(() {
+        _lens = lens;
+        if (lens == ForumsLens.hubs) _hubsVisited = true;
+      });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.2,
-            color: context.palette.textTertiary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(context.shape.radiusLg),
-            border: Border.all(color: context.palette.border),
-          ),
-          child: Column(
-            children: [
-              for (var i = 0; i < entries.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: context.palette.border),
-                _DiscoverRow(
-                  icon: icon,
-                  label: entries[i],
-                  enabled: resolvingEntry == null,
-                  resolving: resolvingEntry == entries[i],
-                  onTap: () => onTap(entries[i]),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 4),
+          child: SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<ForumsLens>(
+              key: const Key('forums_lens_toggle'),
+              showSelectedIcon: false,
+              style: SegmentedButton.styleFrom(
+                selectedBackgroundColor: context.palette.primary.withValues(alpha: 0.16),
+                selectedForegroundColor: context.palette.primary,
+                foregroundColor: context.palette.textSecondary,
+              ),
+              segments: [
+                ButtonSegment(
+                  value: ForumsLens.pulse,
+                  icon: const Icon(Icons.bolt, size: 18),
+                  label: Text(context.l10n.forumPulse),
+                ),
+                ButtonSegment(
+                  value: ForumsLens.hubs,
+                  icon: const Icon(Icons.sports_score, size: 18),
+                  label: Text(context.l10n.forumHubs),
                 ),
               ],
+              selected: {_lens},
+              onSelectionChanged: (s) => _show(s.first),
+            ),
+          ),
+        ),
+        Expanded(
+          child: IndexedStack(
+            index: _lens.index,
+            children: [
+              ForumsPulseView(
+                onExploreHubs: () => _show(ForumsLens.hubs),
+              ),
+              // Built on first visit only, so a rider who never leaves Pulse
+              // never pays for the directory's stats read.
+              if (_hubsVisited)
+                ForumsHubsView(onOpenSearch: widget.onOpenSearch)
+              else
+                const SizedBox.shrink(),
             ],
           ),
         ),
       ],
-    );
-  }
-}
-
-/// A plain tappable list row used for forum discovery (popular brands,
-/// general topics) — these forums may not exist yet, so unlike [_ForumCard]
-/// there are no post/follower stats to show.
-class _DiscoverRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool enabled;
-  final bool resolving;
-  final VoidCallback onTap;
-  const _DiscoverRow({
-    required this.icon,
-    required this.label,
-    required this.enabled,
-    required this.resolving,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: enabled ? onTap : null,
-      leading: Icon(icon, color: context.palette.primary, size: 22),
-      title: Text(label, style: TextStyle(fontSize: 14, color: context.palette.textPrimary)),
-      trailing: resolving
-          ? SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(color: context.palette.primary, strokeWidth: 2),
-            )
-          : Icon(Icons.chevron_right, color: context.palette.textTertiary, size: 20),
-    );
-  }
-}
-
-class _ForumCard extends ConsumerWidget {
-  final ForumEntity forum;
-  const _ForumCard({required this.forum});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final followingAsync = ref.watch(forumFollowingProvider(forum.id));
-    final isFollowing = followingAsync.valueOrNull ?? false;
-
-    return AppCard(
-      onTap: () => context.push('/forums/${forum.id}'),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: context.palette.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.forum_outlined, color: context.palette.primary, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  forum.displayName,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
-                ),
-                Text(
-                  context.l10n.postsFollowers(forum.postCount, forum.followerCount),
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: context.l10n.notificationSettings,
-            icon: Icon(
-              isFollowing ? Icons.notifications_active : Icons.notifications_none,
-              color: isFollowing ? context.palette.primary : context.palette.textSecondary,
-            ),
-            onPressed: () async {
-              final uid = ref.read(currentUserProvider)?.uid;
-              if (uid == null) return;
-              if (isFollowing) {
-                await ForumRepository().unfollowForum(forum.id, uid);
-              } else {
-                await ForumRepository().followForum(forum.id, uid);
-              }
-              if (!context.mounted) return;
-              ref.invalidate(forumFollowingProvider(forum.id));
-              ref.invalidate(forumsForGarageProvider);
-            },
-          ),
-        ],
-      ),
     );
   }
 }

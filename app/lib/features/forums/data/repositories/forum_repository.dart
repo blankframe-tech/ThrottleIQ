@@ -431,23 +431,44 @@ class ForumRepository {
     return doc.exists;
   }
 
-  /// Forums the given user follows.
-  Future<List<ForumEntity>> getFollowedForums(String userId) async {
+  /// Ids of the forums [userId] follows — the follow docs only, no forum doc
+  /// reads (Pulse needs ids to page posts, not each forum's metadata).
+  Future<List<String>> getFollowedForumIds(String userId) async {
     final follows = await _forumFollows.where('userId', isEqualTo: userId).get();
-    final forumIds = follows.docs
+    return follows.docs
         .map((d) => d.data()['forumId'] as String?)
         .whereType<String>()
         .toList();
-    if (forumIds.isEmpty) return [];
+  }
 
-    final docs = await Future.wait(forumIds.map((id) => _forums.doc(id).get()));
-    return docs
-        .where((d) => d.exists)
-        .map((d) => ForumModel.fromFirestore(d).toEntity())
-        .toList();
+  /// The forums among [ids] that exist, in one `documentId in [...]` query
+  /// per 30 ids (Firestore's `in` cap) — a document-id lookup, so it needs no
+  /// composite index. Ids with no forum doc yet are simply absent.
+  Future<List<ForumEntity>> getForumsByIds(List<String> ids) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return const [];
+    final chunks = [
+      for (var i = 0; i < unique.length; i += 30)
+        unique.sublist(i, i + 30 > unique.length ? unique.length : i + 30),
+    ];
+    final snaps = await Future.wait(chunks.map(
+        (chunk) => _forums.where(FieldPath.documentId, whereIn: chunk).get()));
+    return [
+      for (final snap in snaps)
+        for (final doc in snap.docs) ForumModel.fromFirestore(doc).toEntity(),
+    ];
+  }
+
+  /// Forums the given user follows.
+  Future<List<ForumEntity>> getFollowedForums(String userId) async {
+    return getForumsByIds(await getFollowedForumIds(userId));
   }
 
   /// Creates a post in a forum and bumps its `postCount`.
+  ///
+  /// [postType], [authorBike] and [attachment] are the Pit Wall fields
+  /// (post tag, byline bike badge, shared ride/maintenance card). A new post
+  /// always starts unsolved; only [setPostSolution] moves that.
   Future<String> createPost({
     required String forumId,
     required String userId,
@@ -455,6 +476,9 @@ class ForumRepository {
     required String userPhotoUrl,
     required String title,
     required String body,
+    ForumPostType postType = ForumPostType.general,
+    String? authorBike,
+    ForumAttachment? attachment,
   }) async {
     final postRef = _forums.doc(forumId).collection('posts').doc();
 
@@ -465,16 +489,18 @@ class ForumRepository {
     // whenever the second write failed.
     final batch = _firestore.batch();
     batch.set(postRef, {
-      'forumId': forumId,
-      'userId': userId,
-      'userName': userName,
-      'userPhotoUrl': userPhotoUrl,
-      'title': title,
-      'body': body,
+      ...newForumPostFields(
+        forumId: forumId,
+        userId: userId,
+        userName: userName,
+        userPhotoUrl: userPhotoUrl,
+        title: title,
+        body: body,
+        postType: postType,
+        authorBike: authorBike,
+        attachment: attachment,
+      ),
       'createdAt': FieldValue.serverTimestamp(),
-      'replyCount': 0,
-      'upvotes': 0,
-      'downvotes': 0,
     });
     batch.update(_forums.doc(forumId), {
       'postCount': FieldValue.increment(1),
@@ -483,6 +509,22 @@ class ForumRepository {
     await batch.commit();
 
     return postRef.id;
+  }
+
+  /// Sets a troubleshooting post's solved state (see `forum_solution.dart`
+  /// for the toggles). firestore.rules lets only the post's author write
+  /// these two fields, only on a `troubleshoot` post, and only with a
+  /// [solutionReplyId] that names an existing reply of that post.
+  Future<void> setPostSolution({
+    required String forumId,
+    required String postId,
+    required bool isSolved,
+    String? solutionReplyId,
+  }) async {
+    await _forums.doc(forumId).collection('posts').doc(postId).update({
+      'isSolved': isSolved,
+      'solutionReplyId': solutionReplyId,
+    });
   }
 
   /// The forums whose posts make up [forumId]'s post list: itself, plus —

@@ -5383,4 +5383,240 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get odometerPhotoHelper => 'ছবিতে যে রিডিং দেখা যাচ্ছে সেটি লিখুন।';
+
+  @override
+  String get forumPulse => 'পালস';
+
+  @override
+  String get forumHubs => 'হাব';
+
+  @override
+  String get pulseFilterAll => 'সব';
+
+  @override
+  String get pulseFilterMyBikes => 'আমার বাইক';
+
+  @override
+  String get pulseFilterHelp => 'সাহায্য ও সমাধান';
+
+  @override
+  String get pulseFilterDiy => 'DIY গাইড';
+
+  @override
+  String get pulseFilterMostVoted => 'সবচেয়ে বেশি ভোট';
+
+  @override
+  String get pulseFilterSaved => 'সংরক্ষিত';
+
+  @override
+  String get pulseEmptyTitle => 'আপনার পিট ওয়াল এখন শান্ত';
+
+  @override
+  String get pulseEmptyBody =>
+      'কয়েকটি হাব ফলো করুন বা গ্যারেজে আপনার বাইক যোগ করুন, তাদের সর্বশেষ আলোচনা এখানে আসবে।';
+
+  @override
+  String get pulseExploreHubs => 'হাব ঘুরে দেখুন';
+
+  @override
+  String get pulseNoPostsYet =>
+      'আপনার হাবগুলোতে এখনও কোনো আলোচনা নেই। একটি শুরু করুন!';
+
+  @override
+  String get pulseNoMatches => 'এই ফিল্টারে এখনও কোনো পোস্ট নেই।';
+
+  @override
+  String get pulseNoSaved =>
+      'যেকোনো পোস্টের বুকমার্কে ট্যাপ করে এখানে সংরক্ষণ করুন।';
+
+  @override
+  String get savePost => 'পোস্ট সংরক্ষণ করুন';
+
+  @override
+  String get unsavePost => 'সংরক্ষিত থেকে সরান';
+
+  @override
+  String get searchForumsHint => 'ফোরাম, ব্র্যান্ড, রাইডার খুঁজুন';
+
+  @override
+  String get startDiscussion => 'আলোচনা শুরু করুন';
+
+  @override
+  String get startDiscussionPickForum => 'এটি কোথায় পোস্ট করবেন?';
+
+  @override
+  String get createRiderClub => 'ক্লাব তৈরি করুন';
+
+  @override
+  String get yourGarageHubs => 'আপনার গ্যারেজ';
+
+  @override
+  String get garageHubEmpty =>
+      'মালিকদের সমস্যা সমাধান ও টিউনিং আলোচনায় যোগ দিতে গ্যারেজে আপনার বাইক যোগ করুন।';
+
+  @override
+  String get openGarage => 'গ্যারেজ খুলুন';
+
+  @override
+  String get askOwners => 'মালিকদের জিজ্ঞেস করুন';
+
+  @override
+  String get browseModelBoard => 'বোর্ড দেখুন';
+
+  @override
+  String forumThreadsCount(int count) {
+    return '$countটি থ্রেড';
+  }
+
+  @override
+  String get brandPaddocks => 'ব্র্যান্ড প্যাডক';
+
+  @override
+  String get openPaddock => 'প্যাডক খুলুন';
+
+  @override
+  String forumMembers(int count) {
+    return '$count জন রাইডার';
+  }
+
+  @override
+  String get topicBoards => 'টপিক বোর্ড';
+
+  @override
+  String get communityClubs => 'রাইডার ক্লাব';
+
+  @override
+  String get clubMaintainerBadge => 'রক্ষণাবেক্ষণকারী';
+
+  @override
+  String get boardWrenchBench => 'রেঞ্চ বেঞ্চ';
+
+  @override
+  String get boardWrenchBenchBlurb => 'রক্ষণাবেক্ষণ, সার্ভিসিং, নিজে মেরামত';
+
+  @override
+  String get boardSparkPlug => 'স্পার্ক প্লাগ কর্নার';
+
+  @override
+  String get boardSparkPlugBlurb => 'ইলেকট্রিক্যাল, ব্যাটারি, ECU টিউনিং';
+
+  @override
+  String get boardApexLab => 'এপেক্স ল্যাব';
+
+  @override
+  String get boardApexLabBlurb => 'রাইডিং দক্ষতা, ট্র্যাক ডে, কর্নারিং';
+
+  @override
+  String get boardTwoStroke => 'টু-স্ট্রোক স্মোক';
+
+  @override
+  String get boardTwoStrokeBlurb => 'ক্লাসিক টু-স্ট্রোক, কার্বুরেটর, প্রিমিক্স';
+
+  @override
+  String get boardEngineRebuild => 'ইঞ্জিন রিবিল্ড';
+
+  @override
+  String get boardEngineRebuildBlurb => 'টপ এন্ড, বটম এন্ড, মেশিনিং';
+
+  @override
+  String get boardOilReviews => 'অয়েল রিভিউ';
+
+  @override
+  String get boardOilReviewsBlurb => 'ইঞ্জিন অয়েল, গ্রেড, পরিবর্তনের ব্যবধান';
+
+  @override
+  String get boardDirtTrails => 'ডার্ট ও ট্রেইল';
+
+  @override
+  String get boardDirtTrailsBlurb => 'অফ-রোড বাইক ও ট্রেইল রাইডিং';
+
+  @override
+  String get boardMileageLab => 'মাইলেজ ল্যাব';
+
+  @override
+  String get boardMileageLabBlurb => 'জ্বালানি সাশ্রয়ের টিপস ও আসল হিসাব';
+
+  @override
+  String openBrandForumNamed(String brand) {
+    return '\"$brand\" ব্র্যান্ড ফোরাম খুলুন';
+  }
+
+  @override
+  String get forumPostTypeLabel => 'পোস্টের ধরন';
+
+  @override
+  String get forumPostTypeTroubleshoot => 'সমস্যা সমাধান';
+
+  @override
+  String get forumPostTypeDiyGuide => 'DIY গাইড';
+
+  @override
+  String get forumPostTypeGearReview => 'গিয়ার রিভিউ';
+
+  @override
+  String get forumPostTypeGeneral => 'সাধারণ';
+
+  @override
+  String get forumTagSolved => 'সমাধান হয়েছে';
+
+  @override
+  String get forumTagHelpNeeded => 'সাহায্য দরকার';
+
+  @override
+  String get forumTagGuide => 'গাইড';
+
+  @override
+  String get forumTagGear => 'গিয়ার';
+
+  @override
+  String get forumAttachMyBike => 'এই পোস্টে আমার বাইক দেখান';
+
+  @override
+  String get forumNoBikeToAttach =>
+      'আপনার পোস্টে দেখাতে গ্যারেজে একটি বাইক যোগ করুন।';
+
+  @override
+  String get forumAttachmentRide => 'রাইডের সারাংশ';
+
+  @override
+  String get forumAttachmentMaintenance => 'রক্ষণাবেক্ষণ লগ';
+
+  @override
+  String get forumRemoveAttachment => 'সংযুক্তি সরান';
+
+  @override
+  String attachmentSharedFrom(String name) {
+    return '$name-এর নিজের লগ থেকে শেয়ার করা।';
+  }
+
+  @override
+  String get forumAcceptedSolution => 'গৃহীত সমাধান';
+
+  @override
+  String get forumAcceptSolution => 'সমাধান হিসেবে গ্রহণ করুন';
+
+  @override
+  String get forumUnacceptSolution => 'সমাধান থেকে সরান';
+
+  @override
+  String get forumMarkSolved => 'সমাধান হয়েছে চিহ্নিত করুন';
+
+  @override
+  String get forumReopen => 'আবার খুলুন';
+
+  @override
+  String forumCouldNotUpdateSolution(Object e) {
+    return 'সমাধান আপডেট করা যায়নি: $e';
+  }
+
+  @override
+  String get shareToForum => 'ফোরামে শেয়ার করুন';
+
+  @override
+  String get shareToForumPick => 'কোন ফোরামে শেয়ার করবেন?';
+
+  @override
+  String rideAttachmentTitle(String date) {
+    return '$date-এর রাইড';
+  }
 }

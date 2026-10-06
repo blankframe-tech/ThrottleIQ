@@ -29,6 +29,7 @@ import '../../features/profile/presentation/screens/user_profile_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../features/social/presentation/screens/group_ride_map_screen.dart';
+import '../../features/forums/domain/entities/forum_post_entity.dart';
 import '../../features/forums/presentation/screens/create_forum_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
@@ -155,7 +156,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/forums/create', builder: (_, __) => const CreateForumScreen()),
       GoRoute(
         path: '/forums/:forumId',
-        builder: (_, state) => ForumThreadScreen(forumId: state.pathParameters['forumId']!),
+        // `?compose=1` opens the new-post sheet on arrival ("Ask owners",
+        // "Share to forum"); `extra` may carry the ForumAttachment to share.
+        builder: (_, state) => ForumThreadScreen(
+          forumId: state.pathParameters['forumId']!,
+          compose: state.uri.queryParameters['compose'] == '1',
+          attachment: state.extra is ForumAttachment ? state.extra as ForumAttachment : null,
+        ),
         routes: [
           GoRoute(
             path: 'post/:postId',

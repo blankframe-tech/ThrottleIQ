@@ -1,78 +1,76 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:throttleiq/features/forums/domain/entities/forum_post_entity.dart';
 
+/// Decodes a post doc's fields into an entity. Split from [ForumPostModel]
+/// (which needs a DocumentSnapshot) so the defaults for docs written before
+/// post types, solutions and attachments existed are unit-testable.
+ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data) {
+  final solutionReplyId = data['solutionReplyId'];
+  final authorBike = data['authorBike'];
+  return ForumPostEntity(
+    id: id,
+    forumId: data['forumId'] ?? '',
+    userId: data['userId'] ?? '',
+    userName: data['userName'] ?? '',
+    userPhotoUrl: data['userPhotoUrl'] ?? '',
+    title: data['title'] ?? '',
+    body: data['body'] ?? '',
+    createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    replyCount: (data['replyCount'] as num?)?.toInt() ?? 0,
+    upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
+    downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
+    postType: ForumPostType.fromString(data['postType'] as String?),
+    isSolved: data['isSolved'] == true,
+    solutionReplyId:
+        solutionReplyId is String && solutionReplyId.isNotEmpty ? solutionReplyId : null,
+    authorBike: authorBike is String && authorBike.trim().isNotEmpty ? authorBike : null,
+    attachment: ForumAttachment.fromMap(data['attachment']),
+  );
+}
+
+/// The fields a new post is created with — what `ForumRepository.createPost`
+/// writes, minus `createdAt` (a server timestamp). Kept in step with the
+/// post create rule's key allow-list in firestore.rules.
+Map<String, dynamic> newForumPostFields({
+  required String forumId,
+  required String userId,
+  required String userName,
+  required String userPhotoUrl,
+  required String title,
+  required String body,
+  ForumPostType postType = ForumPostType.general,
+  String? authorBike,
+  ForumAttachment? attachment,
+}) {
+  final bike = authorBike?.trim();
+  return {
+    'forumId': forumId,
+    'userId': userId,
+    'userName': userName,
+    'userPhotoUrl': userPhotoUrl,
+    'title': title,
+    'body': body,
+    'replyCount': 0,
+    'upvotes': 0,
+    'downvotes': 0,
+    'postType': postType.name,
+    'isSolved': false,
+    if (bike != null && bike.isNotEmpty)
+      'authorBike': bike.length <= kAuthorBikeMaxLength
+          ? bike
+          : bike.substring(0, kAuthorBikeMaxLength),
+    if (attachment != null) 'attachment': attachment.toMap(),
+  };
+}
+
 class ForumPostModel {
-  final String id;
-  final String forumId;
-  final String userId;
-  final String userName;
-  final String userPhotoUrl;
-  final String title;
-  final String body;
-  final DateTime createdAt;
-  final int replyCount;
-  final int upvotes;
-  final int downvotes;
+  final ForumPostEntity _entity;
 
-  const ForumPostModel({
-    required this.id,
-    required this.forumId,
-    required this.userId,
-    required this.userName,
-    this.userPhotoUrl = '',
-    required this.title,
-    required this.body,
-    required this.createdAt,
-    this.replyCount = 0,
-    this.upvotes = 0,
-    this.downvotes = 0,
-  });
+  const ForumPostModel._(this._entity);
 
-  ForumPostEntity toEntity() {
-    return ForumPostEntity(
-      id: id,
-      forumId: forumId,
-      userId: userId,
-      userName: userName,
-      userPhotoUrl: userPhotoUrl,
-      title: title,
-      body: body,
-      createdAt: createdAt,
-      replyCount: replyCount,
-      upvotes: upvotes,
-      downvotes: downvotes,
-    );
-  }
+  ForumPostEntity toEntity() => _entity;
 
   factory ForumPostModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
-    return ForumPostModel(
-      id: doc.id,
-      forumId: data['forumId'] ?? '',
-      userId: data['userId'] ?? '',
-      userName: data['userName'] ?? '',
-      userPhotoUrl: data['userPhotoUrl'] ?? '',
-      title: data['title'] ?? '',
-      body: data['body'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      replyCount: data['replyCount'] ?? 0,
-      upvotes: data['upvotes'] ?? 0,
-      downvotes: data['downvotes'] ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
-    return {
-      'forumId': forumId,
-      'userId': userId,
-      'userName': userName,
-      'userPhotoUrl': userPhotoUrl,
-      'title': title,
-      'body': body,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'replyCount': replyCount,
-      'upvotes': upvotes,
-      'downvotes': downvotes,
-    };
+    return ForumPostModel._(forumPostFromMap(doc.id, doc.data()!));
   }
 }

@@ -34,6 +34,8 @@ import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../maintenance/presentation/widgets/ride_cost_card.dart';
+import '../../../forums/domain/entities/forum_post_entity.dart';
+import '../../../forums/presentation/widgets/forum_picker_sheet.dart';
 
 enum _ExportFormat { json, gpx, csv }
 
@@ -219,6 +221,29 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           icon: const Icon(Icons.close),
           onPressed: () => _dismiss(context),
         ),
+        actions: [
+          if (rideVal != null)
+            IconButton(
+              key: const Key('ride_share_to_forum'),
+              tooltip: context.l10n.shareToForum,
+              icon: const Icon(Icons.forum_outlined),
+              onPressed: () => showForumPickerSheet(
+                context,
+                title: context.l10n.shareToForumPick,
+                attachment: ForumAttachment(
+                  kind: ForumAttachmentKind.ride,
+                  refId: rideVal.id,
+                  bikeId: rideVal.bikeId,
+                  title: context.l10n.rideAttachmentTitle(_formatDate(rideVal.startTime)),
+                  subtitle: [
+                    SpeedFormatter.distanceKm(rideVal.distanceM),
+                    SpeedFormatter.durationFromSeconds(rideVal.durationSeconds ?? 0),
+                    '${rideVal.maxSpeedKmh.toStringAsFixed(0)} km/h',
+                  ].join(' · '),
+                ),
+              ),
+            ),
+        ],
       ),
       body: rideAsync.when(
         loading: () =>

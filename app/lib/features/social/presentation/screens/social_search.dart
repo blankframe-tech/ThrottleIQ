@@ -109,10 +109,17 @@ class _SearchResults extends ConsumerWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Text(
-            context.l10n.nothingFoundTryUsername(query),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                context.l10n.nothingFoundTryUsername(query),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              _OpenBrandForumTile(brand: query.trim()),
+            ],
           ),
         ),
       );
@@ -148,7 +155,66 @@ class _SearchResults extends ConsumerWidget {
             _ForumResultTile(forum: forum),
             const SizedBox(height: 8),
           ],
+        // What the Forums tab's own brand search box used to do: open (or
+        // create on first use) the brand forum for exactly what was typed,
+        // for a brand nobody has a forum for yet. Hidden once a forum by
+        // that exact name already shows above.
+        if (!forumsAsync.isLoading &&
+            !forums.any((f) => f.displayName.toLowerCase() == query.trim().toLowerCase())) ...[
+          const SizedBox(height: 4),
+          _OpenBrandForumTile(brand: query.trim()),
+        ],
       ],
+    );
+  }
+}
+
+class _OpenBrandForumTile extends StatefulWidget {
+  final String brand;
+  const _OpenBrandForumTile({required this.brand});
+
+  @override
+  State<_OpenBrandForumTile> createState() => _OpenBrandForumTileState();
+}
+
+class _OpenBrandForumTileState extends State<_OpenBrandForumTile> {
+  bool _resolving = false;
+
+  Future<void> _open() async {
+    if (_resolving) return;
+    setState(() => _resolving = true);
+    try {
+      final forum = await ForumRepository().getOrCreateForum(brand: widget.brand);
+      if (!mounted) return;
+      context.push('/forums/${forum.id}');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.couldNotOpenForum(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _resolving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      key: const Key('search_open_brand_forum'),
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(Icons.add_circle_outline, color: context.palette.primary),
+      title: Text(
+        context.l10n.openBrandForumNamed(widget.brand),
+        style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
+      ),
+      trailing: _resolving
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: context.palette.primary),
+            )
+          : null,
+      onTap: _resolving ? null : _open,
     );
   }
 }
