@@ -242,11 +242,11 @@ prompt**, which is a different thing and is genuinely daily: auto-detected rides
 need labelling while the rider still remembers the trip. "Was 4:30pm your bike
 or a bus?" is worthless on Sunday.
 
-**Suggested split:**
+**The Summary Flow:**
 
-- **Daily, and only on days with unconfirmed detections** — a confirmation
-  prompt, not a summary. Silent on days with nothing to confirm. This is also
-  what feeds the option-1 corpus and, later, bike attribution (finding B).
+- **Summarizing instead of Reconciling:** At the end of the day, any unclaimed `pending` detections are marked as `summarized` instead of becoming permanent ride rows. 
+- **Dynamic View vs Persistent Row:** `DailyRideSummaryRepository.summaryFor` dynamically rebuilds the day's summary by reading both confirmed `rides` and these `summarized` (and remaining `pending`) detections. The fixes for `summarized` detections are kept around so the summary can be correctly recomputed even if the user later adds manual rides that overlap.
+- **Retention Policy:** Because raw fixes take up significant disk space, an automated job purges fixes for `summarized` detections that are older than the 14-day lookback window (`fixes_purged = 1`). Once purged, those detections drop off the dynamic summary.
 - **Weekly, Sunday evening** — the actual digest, as already specified.
 
 Both are `flutter_local_notifications`, both read from SQLite, neither needs a
