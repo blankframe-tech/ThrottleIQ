@@ -1668,22 +1668,56 @@ Tecno or Redmi would check all three.
   mid-ride, and map screens can stutter. Check ride recovery after a process
   kill on a low-RAM device, and map/ride-screen performance there.
 
-## 97. Places/Forums redesign — first iPhone debug run (2026-10-07, branch `feature/places-forums-reimagine`)
+## 97. Places/Forums redesign — first iPhone debug run & audit findings (2026-10-07, branch `feature/places-forums-reimagine`)
 
-Debug build on iPhone 15 (iOS 27). The app launched and ran without crashing. It logged the
-following, and none of the sources has been pinned down yet:
+Debug build on iPhone 15 (iOS 27). The app launched and ran without crashing. Follow-up audit identified the exact sources and fixes for each logged finding, plus two feature/architecture gaps:
 
 - **97.1 ListTile inside a coloured DecoratedBox — LOW.** Framework assertion: "ListTile background
-  color or ink splashes may be invisible". A ListTile sits in a dark (#14151F) rounded-12 bordered
-  box, so the tap ripple is hidden. The fix is to wrap the tile in `Material(type: transparency)`
-  or put the colour on a Material/Ink. The screen isn't identified yet; candidates are the new
-  ListTiles in places/forums/social search.
-- **97.2 RenderFlex overflowed by 3.0 px on the bottom (×2) — LOW.** No details were printed
-  because it wasn't the first error in the run. Find it with a hot restart, then reproduce it.
-  Likely a fixed-height card or chip row in the new Places carousel or Forums cards.
-- **97.3 `Exception: Invalid image data` — LOW/MEDIUM.** An image failed to decode. It might be a
-  broken network avatar or forum attachment, or a marker or tile asset. Find which, and give that
-  image an `errorBuilder`. It repeated in bursts (10+ times). Map tiles are probably not the cause: an OSM
-  tile fetched with the app's User-Agent came back as a valid PNG.
+  color or ink splashes may be invisible".
+  - **Source identified:** `places_list_screen.dart:156,164` — inside the AppBar's `PopupMenuButton<String>`,
+    `PopupMenuItem`'s child is set to `ListTile`. `PopupMenuItem` already handles tap gestures and splashes
+    on a themed surface card (`#14151F`), so nesting a `ListTile` inside it produces conflicting ink splashes
+    and triggers the assertion.
+  - **Fix:** Replace `ListTile` inside both `PopupMenuItem` widgets with a standard `Row(children: [Icon(...), SizedBox(width: 12), Expanded(child: Text(...))])`.
+- **97.2 RenderFlex overflowed by 3.0 px on the bottom (×2) — LOW.**
+  - **Source identified:**
+    1. Category chip ribbon (`places_list_screen.dart:348`) sits in a fixed `height: 48` `SizedBox` with vertical padding `6`. On iOS devices with 3x fractional pixel scales (iPhone 15) and dynamic font scaling, the chip container (`_CategoryChip` with text, count badge, and vertical padding 1) exceeds the 36 dp remaining height by 3 px.
+    2. Map carousel (`places_map_view.dart:28,323`) has `placesCarouselHeight = 196`. When `PlaceCard(compact: true)` has a place name or action buttons with enlarged system accessibility fonts, it exceeds 196 dp.
+  - **Fix:** Bump ribbon height in `places_list_screen.dart:348` from `48` to `52` (or reduce vertical padding to `4`). In `places_map_view.dart:28`, bump `placesCarouselHeight` from `196` to `204`, and enforce strict single-line truncation on `PlaceCard` subtitle.
+- **97.3 `Exception: Invalid image data` — LOW/MEDIUM.**
+  - **Source identified:** `user_avatar.dart:23` uses `CircleAvatar(backgroundImage: CachedNetworkImageProvider(photoUrl!))` with NO `onBackgroundImageError` callback. When an avatar URL is invalid, 404s, or returns non-image data (common with seeded QA test users or slow network handshakes), `CachedNetworkImageProvider` throws an uncaught decode exception into the framework. Because `UserAvatar` renders for every review in `PlaceDetailScreen` and every post in Forums Pit Wall, it fires in bursts (10+ times).
+  - **Fix:** Add `onBackgroundImageError: hasPhoto ? (_, __) {} : null` to `CircleAvatar` in `user_avatar.dart`, letting it gracefully fall back to the initials child.
+- **97.4 Place photos uploaded in `AddPlaceScreen` are never displayed in `PlaceDetailScreen` — MEDIUM.**
+  - **The Flaw:** `AddPlaceScreen:182-195` allows riders to upload place photos via Cloudinary, `PlaceEntity` and `PlaceModel` persist `photoUrls`, but `PlaceDetailScreen` has no photos gallery or header photo widget. Any photos submitted by riders are saved in the cloud but never shown to anyone.
+  - **Fix:** Add a horizontal photo thumbnail row or hero image banner at the top of `PlaceDetailScreen` when `place.photoUrls.isNotEmpty`.
+- **97.5 `SavedPlacesTab` eager list instantiation (§91.4) — LOW.**
+  - **The Flaw:** `saved_places_tab.dart:69-91` renders saved places using an eager `ListView(children: [contributed, ...for (h in hits) PlaceCard(...)])`. When a rider accumulates 20+ saved bookmarks, all `PlaceCard` widgets and buttons are instantiated eagerly rather than lazily.
+  - **Fix:** Convert `SavedPlacesTab` list to `ListView.builder` or `ListView.separated`.
 - App Check debug-token exchange returns 403 `SERVICE_DISABLED`. This isn't from the redesign; see
   §62.12 / §83.19.
+
+## 98. UI screenshot tour on a physical iPhone — not working yet (2026-10-07, branch `feature/places-forums-reimagine`)
+
+`app/integration_test/ui_tour_test.dart` now has a device mode (`--dart-define=TOUR_DEVICE=true`) that
+captures each shot in-app to `Documents/tour/shots/` instead of using host `simctl`. The first attempt
+to run it on the iPhone 15 produced no screenshots, so `DOCS/General/designs/live_UI_screenshots/` is
+still the old iPhone 17 simulator set.
+
+- **98.1 Test runner can't attach over wireless debugging — MEDIUM (tooling).** `flutter test -d <iPhone>`
+  built and installed fine (about 170 s build), then failed with `WebSocketChannelException: Connection
+  reset by peer` on the VM service. The phone was connected wirelessly. Retry over USB with the phone
+  unlocked. `flutter run -t integration_test/ui_tour_test.dart` is not an alternative: it launches the
+  normal app and never runs the test.
+- **98.2 Firebase sign-in "Too many attempts" — MEDIUM, unconfirmed cause.** The run log showed that
+  error alongside the App Check 403 from §97. It is not confirmed that App Check causes it, or whether
+  the `rider@example.com` lockout is still in place. Check before re-running the tour, since the tour
+  signs in with that account.
+- **98.3 Tour combos stale after the theme refactor — MEDIUM (tooling).** The simulator build failed with
+  `Member not found: 'calming'` because `AppColorMode` is now `daily | sport | adventure`.
+  `app/scripts/ui_tour/run_tour.sh` still lists the old seven names (`carbonMono`, `trailSocial`, ...),
+  and the "Carbon Mono / Trail Social" folders in `live_UI_screenshots/` no longer match any skin in
+  the code. Update the combo list and the screenshot READMEs after the theme refactor is committed,
+  then recapture. (The compile error may also have contributed to the iPhone failure in 98.1.)
+- The pull step is not written yet. Once the tour finishes, copy the PNGs off the phone with
+  `xcrun devicectl device copy from --domain-type appDataContainer --domain-identifier com.bft.throttleiq
+  --source Documents/tour/shots`.

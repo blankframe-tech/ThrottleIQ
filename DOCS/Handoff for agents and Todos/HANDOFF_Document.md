@@ -9,8 +9,12 @@ _Last updated: 2026-10-07 · Branch: `main`_
   (issues_fixed §97): photos on posts (up to 4), and brand paddocks counting model-forum riders/posts
   instead of "0 riders".
 - `firestore.rules` was deployed together with this build (place `tags` cap, forum post types/solved/attachment/`imageUrls`).
-- Still open from the first iPhone debug run: issues_open §97 (hidden ListTile ripple, a 3 px
-  overflow, "Invalid image data").
+- Identified flaws and exact fixes logged in `issues_open.md` §97:
+  - **§97.1 ListTile inside PopupMenuItem:** In `places_list_screen.dart:156,164`, `PopupMenuItem` has `ListTile` child causing assertion warnings on `#14151F` surface. Fix: replace with `Row(children: [Icon, SizedBox(12), Text])`.
+  - **§97.2 3.0 px RenderFlex overflow:** Category ribbon in `places_list_screen.dart:348` (fixed `height: 48` vs 3x iOS scale) and map carousel in `places_map_view.dart:28` (`placesCarouselHeight = 196`). Fix: bump ribbon height to 52; bump carousel to 204.
+  - **§97.3 Invalid image data bursts:** `UserAvatar` (`user_avatar.dart:23`) lacks `onBackgroundImageError` on `CircleAvatar`, throwing unhandled decode errors for invalid/seed URLs. Fix: add `onBackgroundImageError: hasPhoto ? (_, __) {} : null`.
+  - **§97.4 Place photos missing in detail screen:** `AddPlaceScreen` uploads photos and `PlaceEntity` holds `photoUrls`, but `PlaceDetailScreen` has no photos gallery. Fix: add photo banner/gallery in `PlaceDetailScreen`.
+  - **§97.5 SavedPlacesTab eager list:** `saved_places_tab.dart:69` uses eager `ListView(children: ...)`. Fix: refactor to `ListView.builder` per §91.4.
 
 ## 2026-10-07 (later): Forums "Pit Wall" redesign — same feature branch, not on a device yet
 

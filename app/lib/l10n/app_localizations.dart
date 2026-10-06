@@ -206,6 +206,42 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get colorFieldLabel;
 
+  /// Name of the Daily color mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get themeDailyLabel;
+
+  /// One-line description under the Daily color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Calm & collected, sage and tan'**
+  String get themeDailyDescription;
+
+  /// Name of the Sport color mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport'**
+  String get themeSportLabel;
+
+  /// One-line description under the Sport color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Lime carbon & tachometer energy'**
+  String get themeSportDescription;
+
+  /// Name of the Adventure color mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Adventure'**
+  String get themeAdventureLabel;
+
+  /// One-line description under the Adventure color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Console cyan & nocturne wayfinding'**
+  String get themeAdventureDescription;
+
   /// Name of the Carbon Mono color mode. Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:

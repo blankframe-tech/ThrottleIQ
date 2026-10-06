@@ -63,6 +63,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorFieldLabel => 'Color';
 
   @override
+  String get themeDailyLabel => 'Daily';
+
+  @override
+  String get themeDailyDescription => 'Calm & collected, sage and tan';
+
+  @override
+  String get themeSportLabel => 'Sport';
+
+  @override
+  String get themeSportDescription => 'Lime carbon & tachometer energy';
+
+  @override
+  String get themeAdventureLabel => 'Adventure';
+
+  @override
+  String get themeAdventureDescription => 'Console cyan & nocturne wayfinding';
+
+  @override
   String get themeCarbonLabel => 'Carbon Mono';
 
   @override

@@ -34,28 +34,28 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
-      expect(_palette(container).primary, AppColorPalette.calmingLight.primary);
-      expect(_palette(container).background, AppColorPalette.calmingLight.background);
+      expect(_palette(container).primary, AppColorPalette.dailyLight.primary);
+      expect(_palette(container).background, AppColorPalette.dailyLight.background);
 
       await pumpEventQueue();
     });
 
-    test('setColorMode(editorial) flips the provider state and its palette, and persists it', () async {
+    test('setColorMode(sport) flips the provider state and its palette, and persists it', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.editorial);
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.sport);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.editorial);
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.sport);
       // Brightness/vibe are untouched by a color-only change.
       expect(container.read(appearanceProvider).brightness, Brightness.light);
-      expect(_palette(container).primary, AppColorPalette.editorialLight.primary);
-      expect(_palette(container).background, AppColorPalette.editorialLight.background);
+      expect(_palette(container).primary, AppColorPalette.sportLight.primary);
+      expect(_palette(container).background, AppColorPalette.sportLight.background);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('color_mode'), 'editorial');
+      expect(prefs.getString('color_mode'), 'sport');
     });
 
     test('setBrightnessMode(dark) flips brightness only, and persists it',
@@ -70,9 +70,9 @@ void main() {
           .read(appearanceProvider.notifier)
           .setBrightnessMode(AppBrightnessMode.dark);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.calming);
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.daily);
       expect(container.read(appearanceProvider).brightness, Brightness.dark);
-      expect(_palette(container).background, AppColorPalette.calmingDark.background);
+      expect(_palette(container).background, AppColorPalette.dailyDark.background);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('brightness'), 'dark');
@@ -87,7 +87,7 @@ void main() {
       // Curvy is the default now, so boxy is the one that's a real transition.
       await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.calming);
+      expect(container.read(appearanceProvider).colorMode, AppColorMode.daily);
       expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.boxy);
       expect(_shape(container), same(AppShapeProfile.boxy));
 
@@ -102,7 +102,7 @@ void main() {
       // All three set to values other than the default, so every axis's
       // persistence is actually exercised rather than one falling back to
       // an un-set key that happens to match the default anyway.
-      await writer.read(appearanceProvider.notifier).setColorMode(AppColorMode.analystBlue);
+      await writer.read(appearanceProvider.notifier).setColorMode(AppColorMode.adventure);
       await writer.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
       await writer
           .read(appearanceProvider.notifier)
@@ -115,7 +115,7 @@ void main() {
       await pumpEventQueue();
 
       final restored = reader.read(appearanceProvider);
-      expect(restored.colorMode, AppColorMode.analystBlue);
+      expect(restored.colorMode, AppColorMode.adventure);
       expect(restored.shapeVibe, AppShapeVibe.boxy);
       expect(restored.brightness, Brightness.dark);
     });
@@ -126,10 +126,10 @@ void main() {
         final writer = ProviderContainer();
         await pumpEventQueue();
         // setColorMode is a no-op (and so persists nothing) when already on
-        // the requested mode — real for the default, Calming, so detour
+        // the requested mode — real for the default, Daily, so detour
         // through a different mode first to force an actual transition.
         final detour =
-            mode == AppColorMode.retro ? AppColorMode.editorial : AppColorMode.retro;
+            mode == AppColorMode.daily ? AppColorMode.sport : AppColorMode.daily;
         await writer.read(appearanceProvider.notifier).setColorMode(detour);
         await writer.read(appearanceProvider.notifier).setColorMode(mode);
         writer.dispose();
@@ -164,41 +164,37 @@ void main() {
           AppAppearance.defaultAppearance.colorMode);
       expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.boxy);
       expect(container.read(appearanceProvider).brightness, Brightness.dark);
-      expect(_palette(container).primary, AppColorPalette.calmingDark.primary);
+      expect(_palette(container).primary, AppColorPalette.dailyDark.primary);
     });
 
     group('legacy single-key migration', () {
       // Riders who picked a skin before Vibe/Brightness/Color became three
       // separate choices have one flat 'theme_style' value on disk. It must
-      // decode to the equivalent triple exactly once, including the three
-      // color modes that no longer exist as standalone options.
+      // decode to the equivalent triple exactly once.
       const cases = <String, AppAppearance>{
         'carbon': AppAppearance(
-            colorMode: AppColorMode.carbonMono,
+            colorMode: AppColorMode.sport,
             shapeVibe: AppShapeVibe.boxy,
             brightness: Brightness.dark),
         'editorial': AppAppearance(
-            colorMode: AppColorMode.editorial,
+            colorMode: AppColorMode.daily,
             shapeVibe: AppShapeVibe.boxy,
             brightness: Brightness.light),
         'trailSocial': AppAppearance(
-            colorMode: AppColorMode.trailSocial,
+            colorMode: AppColorMode.adventure,
             shapeVibe: AppShapeVibe.curvy,
             brightness: Brightness.dark),
         'retro': AppAppearance(
-            colorMode: AppColorMode.retro,
+            colorMode: AppColorMode.sport,
             shapeVibe: AppShapeVibe.boxy,
             brightness: Brightness.light),
-        // Dropped modes map to their closest surviving equivalent.
         'positiveVibes': AppAppearance(
-            colorMode: AppColorMode.calming,
+            colorMode: AppColorMode.daily,
             shapeVibe: AppShapeVibe.curvy,
             brightness: Brightness.light),
         'genesis': AppAppearance.defaultAppearance,
-        // Cute Analyst was always exactly Analyst Blue's palette + rounded
-        // shape, so this migration is exact, not an approximation.
         'cuteAnalyst': AppAppearance(
-            colorMode: AppColorMode.analystBlue,
+            colorMode: AppColorMode.adventure,
             shapeVibe: AppShapeVibe.curvy,
             brightness: Brightness.dark),
       };
@@ -219,9 +215,7 @@ void main() {
 
     test('an appearance resolves its shape profile alongside its palette', () async {
       // AppTheme.build resolves color, shape and type from one appearance on
-      // purpose. The failure this guards is a half-applied appearance — the
-      // new palette with the previous vibe's corner radius still in place,
-      // which looks like a rendering bug rather than a settings bug.
+      // purpose.
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -240,35 +234,14 @@ void main() {
       expect(_shape(container).radiusMd, AppShapeProfile.curvy.radiusMd);
     });
 
-    test('Retro resolves mono type independent of vibe/brightness', () async {
-      SharedPreferences.setMockInitialValues({});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      await pumpEventQueue();
-
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.retro);
-      expect(_palette(container).monoDisplay, isTrue);
-      // Brightness is still the default (light) at this point.
-      expect(_palette(container).border, AppColorPalette.retroLight.ink);
-
-      // Curvy is already the default, so boxy is the one that's a real
-      // transition here.
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
-      expect(_palette(container).monoDisplay, isTrue); // unchanged by the vibe switch
-      expect(_shape(container).radiusXl, AppShapeProfile.boxy.radiusXl);
-
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.carbonMono);
-      expect(_palette(container).monoDisplay, isFalse);
-    });
-
     test('setColorMode is a no-op when already on the requested mode', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      // Calming is the default now, so requesting it again is the no-op case.
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.calming);
+      // Daily is the default now, so requesting it again is the no-op case.
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.daily);
 
       expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
       final prefs = await SharedPreferences.getInstance();
@@ -336,14 +309,14 @@ void _systemBrightnessTests() {
 
     test('an explicit brightness implies the matching mode', () {
       const dark = AppAppearance(
-        colorMode: AppColorMode.carbonMono,
+        colorMode: AppColorMode.sport,
         shapeVibe: AppShapeVibe.boxy,
         brightness: Brightness.dark,
       );
       expect(dark.brightnessMode, AppBrightnessMode.dark);
 
       const light = AppAppearance(
-        colorMode: AppColorMode.calming,
+        colorMode: AppColorMode.daily,
         shapeVibe: AppShapeVibe.curvy,
         brightness: Brightness.light,
       );

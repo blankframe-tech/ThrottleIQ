@@ -51,15 +51,15 @@ void main() {
     final probe = tester.state<_ProbeState>(find.byType(_Probe));
     probe.counter = 7; // stands in for a scroll offset / half-typed form
     final before = tester.widget<Container>(find.byKey(_Probe.swatch)).color;
-    expect(before, AppColorPalette.calmingLight.primary);
+    expect(before, AppColorPalette.dailyLight.primary);
 
     final container = ProviderScope.containerOf(tester.element(find.byType(_Probe)));
-    await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.retro);
+    await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.sport);
     await tester.pumpAndSettle();
 
     // Re-themed everywhere it reads a token...
     expect(tester.widget<Container>(find.byKey(_Probe.swatch)).color,
-        AppColorPalette.retroLight.primary);
+        AppColorPalette.sportLight.primary);
     // ...without being remounted: same State object, same in-memory value.
     expect(tester.state<_ProbeState>(find.byType(_Probe)), same(probe));
     expect(probe.counter, 7);

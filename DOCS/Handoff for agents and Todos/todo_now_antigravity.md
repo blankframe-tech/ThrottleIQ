@@ -35,4 +35,11 @@
 - [ ] **6. Documentation**
   - [ ] **Write a PRD in ASD-STE100 format.** Cover the app (rides, forum, profiles, chat, trust & safety) and the Firebase backend: problem, users, goals and non-goals, functional and non-functional requirements, constraints and success metrics. Follow ASD-STE100 (Simplified Technical English): use only approved words and their approved meanings, keep procedural sentences to 20 words or fewer and descriptive sentences to 25 or fewer, write one instruction per sentence, use the active voice, and use the imperative for procedures. Save it as `DOCS/PRD.md`.
 
+- [ ] **7. Places Hub Redesign Follow-ups & Fixes (§97)**
+  - [ ] **Fix §97.1 (ListTile in PopupMenuItem):** Replace `ListTile` inside `PopupMenuItem` with `Row` in `places_list_screen.dart:156,164`.
+  - [ ] **Fix §97.2 (RenderFlex 3.0 px overflow):** Bump ribbon height to 52 in `places_list_screen.dart:348` and carousel height to 204 in `places_map_view.dart:28`.
+  - [ ] **Fix §97.3 (Invalid image data bursts):** Add `onBackgroundImageError: hasPhoto ? (_, __) {} : null` in `user_avatar.dart:23`.
+  - [ ] **Fix §97.4 (Place photos in detail view):** Add photo thumbnails/banner in `PlaceDetailScreen` when `place.photoUrls.isNotEmpty`.
+  - [ ] **Fix §97.5 (Lazy list in Saved tab):** Refactor `SavedPlacesTab` (`saved_places_tab.dart:69`) from eager `ListView` to `ListView.builder` per §91.4.
+
 - [ ] **Next Steps if Token Limit Reached**: Continue from the first unchecked item in this list.

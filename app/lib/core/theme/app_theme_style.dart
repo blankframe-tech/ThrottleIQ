@@ -13,13 +13,9 @@ import 'package:flutter/material.dart';
 /// Enum member names are the persisted values (see `theme_style_provider.dart`)
 /// — renaming one silently resets riders who had it selected.
 enum AppColorMode {
-  carbonMono,
-  editorial,
-  nocturne,
-  trailSocial,
-  calming,
-  retro,
-  analystBlue,
+  daily,
+  sport,
+  adventure,
 }
 
 /// One immutable set of color tokens.
@@ -617,24 +613,26 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     isDark: false,
   );
 
+  // ── 3-Mode Primary Palettes ──────────────────────────────────────────────
+  static const AppColorPalette dailyDark = calmingDark;
+  static const AppColorPalette dailyLight = calmingLight;
+
+  static const AppColorPalette sportDark = carbonMonoDark;
+  static const AppColorPalette sportLight = carbonMonoLight;
+
+  static const AppColorPalette adventureDark = analystBlueDark;
+  static const AppColorPalette adventureLight = analystBlueLight;
+
   /// Exhaustive by design — a nested `switch` with no `default`, so adding a
   /// member to [AppColorMode] or to [Brightness] without a palette is a
-  /// compile error rather than a mode that silently renders as Carbon Mono.
+  /// compile error rather than a mode that silently renders as default.
   static AppColorPalette forMode(AppColorMode mode, Brightness brightness) =>
       switch ((mode, brightness)) {
-        (AppColorMode.carbonMono, Brightness.dark) => carbonMonoDark,
-        (AppColorMode.carbonMono, Brightness.light) => carbonMonoLight,
-        (AppColorMode.editorial, Brightness.dark) => editorialDark,
-        (AppColorMode.editorial, Brightness.light) => editorialLight,
-        (AppColorMode.nocturne, Brightness.dark) => nocturneDark,
-        (AppColorMode.nocturne, Brightness.light) => nocturneLight,
-        (AppColorMode.trailSocial, Brightness.dark) => trailSocialDark,
-        (AppColorMode.trailSocial, Brightness.light) => trailSocialLight,
-        (AppColorMode.calming, Brightness.dark) => calmingDark,
-        (AppColorMode.calming, Brightness.light) => calmingLight,
-        (AppColorMode.retro, Brightness.dark) => retroDark,
-        (AppColorMode.retro, Brightness.light) => retroLight,
-        (AppColorMode.analystBlue, Brightness.dark) => analystBlueDark,
-        (AppColorMode.analystBlue, Brightness.light) => analystBlueLight,
+        (AppColorMode.daily, Brightness.dark) => dailyDark,
+        (AppColorMode.daily, Brightness.light) => dailyLight,
+        (AppColorMode.sport, Brightness.dark) => sportDark,
+        (AppColorMode.sport, Brightness.light) => sportLight,
+        (AppColorMode.adventure, Brightness.dark) => adventureDark,
+        (AppColorMode.adventure, Brightness.light) => adventureLight,
       };
 }

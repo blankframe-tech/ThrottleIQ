@@ -205,7 +205,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const ColorModeDropdown(),
+          const ColorModeSegmentedPicker(),
           const SizedBox(height: 24),
 
           // ── Language ───────────────────────────────────────────────────
