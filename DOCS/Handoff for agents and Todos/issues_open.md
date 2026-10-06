@@ -1667,3 +1667,22 @@ Tecno or Redmi would check all three.
 - **96.3 Low RAM (1–3 GB) — MEDIUM.** The OS is more likely to kill the app
   mid-ride, and map screens can stutter. Check ride recovery after a process
   kill on a low-RAM device, and map/ride-screen performance there.
+
+## 97. Places/Forums redesign — first iPhone debug run (2026-10-07, branch `feature/places-forums-reimagine`)
+
+Debug build on iPhone 15 (iOS 27). The app launched and ran without crashing. It logged the
+following, and none of the sources has been pinned down yet:
+
+- **97.1 ListTile inside a coloured DecoratedBox — LOW.** Framework assertion: "ListTile background
+  color or ink splashes may be invisible". A ListTile sits in a dark (#14151F) rounded-12 bordered
+  box, so the tap ripple is hidden. The fix is to wrap the tile in `Material(type: transparency)`
+  or put the colour on a Material/Ink. The screen isn't identified yet; candidates are the new
+  ListTiles in places/forums/social search.
+- **97.2 RenderFlex overflowed by 3.0 px on the bottom (×2) — LOW.** No details were printed
+  because it wasn't the first error in the run. Find it with a hot restart, then reproduce it.
+  Likely a fixed-height card or chip row in the new Places carousel or Forums cards.
+- **97.3 `Exception: Invalid image data` — LOW/MEDIUM.** An image failed to decode. It might be a
+  broken network avatar or forum attachment, or a marker or tile asset. Find which, and give that
+  image an `errorBuilder`.
+- App Check debug-token exchange returns 403 `SERVICE_DISABLED`. This isn't from the redesign; see
+  §62.12 / §83.19.
