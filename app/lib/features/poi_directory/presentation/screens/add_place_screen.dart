@@ -18,7 +18,9 @@ import '../../data/utils/image_compression_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../domain/place_tags.dart';
 import '../place_category_l10n.dart';
+import '../place_tag_l10n.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
 /// real fix is available yet. Only ever the map's *initial camera* — never a
@@ -43,6 +45,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   final _phoneCtrl = TextEditingController();
   final _hoursCtrl = TextEditingController();
   PlaceCategory _selectedCategory = PlaceCategory.fuel;
+
+  /// Rider tags for the place. Only tags valid for [_selectedCategory] are
+  /// offered, and switching category drops any that no longer apply.
+  final Set<PlaceTag> _tags = {};
   bool _submitting = false;
   LatLng? _pickedLocation;
 
@@ -208,6 +214,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         photoUrls: photoUrls,
         createdBy: uid,
         createdAt: DateTime.now(),
+        tags: {
+          for (final tag in _tags)
+            if (tag.categories.contains(_selectedCategory)) tag,
+        },
       );
 
       await PlaceRepository().addPlace(place);
@@ -381,7 +391,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 children: PlaceCategory.values.map((category) {
                   final selected = category == _selectedCategory;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = category),
+                    onTap: () => setState(() {
+                      _selectedCategory = category;
+                      _tags.removeWhere((t) => !t.categories.contains(category));
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
@@ -408,6 +421,27 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   );
                 }).toList(),
               ),
+              if (PlaceTag.forCategory(_selectedCategory).isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Text(context.l10n.addPlaceFeaturesLabel,
+                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.addPlaceFeaturesHint,
+                    style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final tag in PlaceTag.forCategory(_selectedCategory))
+                      FilterChip(
+                        label: Text('${tag.icon} ${tag.localizedName(context.l10n)}'),
+                        selected: _tags.contains(tag),
+                        onSelected: (on) => setState(() => on ? _tags.add(tag) : _tags.remove(tag)),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameCtrl,

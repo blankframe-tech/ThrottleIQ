@@ -6250,3 +6250,42 @@ All 11 bare catches under `features/maintenance/` now call `reportNonFatal`
 `UnsupportedError` (no `dart:io` Platform on web). Repo count 80 → 68; the CI
 ratchet is lowered to 68. Analyze clean, 1547/1547 tests pass. Not run on a
 device.
+
+---
+
+## 96. Places hub redesign — DONE in code (2026-10-07), not verified on a device
+
+The Places tab was a vertical text list. It is now a map-first hub (features.md §6).
+
+- **96.1 Search & filters.** Added `PlacesQuery` and `applyPlacesQuery` (`domain/places_query.dart`, pure)
+  and `PlacesQueryNotifier` (debounced text; radius is persisted). Search is client-side over one
+  radius fetch, so a chip or a keystroke costs no reads. The 7-chip `Wrap` is now a horizontal ribbon
+  with counts.
+- **96.2 Radius.** The hard-coded 25 km is now a choice of 5/15/25/50 km.
+  `nearbyPlacesProvider` is a family keyed by radius (it used to be keyed by category) and fetches
+  all categories at once.
+- **96.3 Ratings.** The `dualRatingDisplay` "x + y" string is removed. Ratings now show as labelled
+  badges, plus `isRiderApproved` (≥ 4.5 from ≥ 5 riders).
+- **96.4 Map.** `PlacesMapView` has clustered category pins, a radius ring, locate-me and a synced
+  carousel. Clustering is a grid in `domain/marker_clustering.dart`; no new dependency.
+- **96.5 Tabs.** Places | Routes | Saved replace the "Browse routes" button. `RoutesBrowser` was
+  extracted from `RoutesListScreen` so the Routes tab can embed it. Saved places use SQLite (schema
+  **v21**, `saved_places`, `SavedPlaceDao`); `deleteUserData` wipes them for the deleted user.
+- **96.6 Highway Radar.** Cameras and checkposts moved out of the chips into
+  `computeHighwayRadar` and its banner.
+- **96.7 OSM import.** Moved out of the AppBar into the empty state and the overflow menu, with an
+  explanation.
+- **96.8 Rider tags.** Added `PlaceTag` (place doc field `tags`) and tag chips in the add-place
+  form. The `places` create rule allows at most 12 unique tags, tested in
+  `scripts/test/rules/places_rules.test.js`.
+- **96.9 GPS-off bug.** With GPS off, `currentPositionProvider` threw "Location is turned off".
+  `isLocationServicesError` never matched that message, so the screen showed the generic error card
+  and no "Turn on location" button. It now throws a typed `PlaceLocationException`, and each case
+  gets its own fix button.
+- **96.10 Shared launchers.** The Directions/Call launch code (and the record-this-ride sheet) moved
+  from the detail screen to `widgets/place_launch_actions.dart`, so every card uses it. The bare
+  `catch (_)` count is unchanged (68).
+
+Tests: places query, radar, clustering, tags/badges, saved-places DB and migration, the notifier,
+and widget tests of the hub (list, map, radar, search, save, empty/GPS/offline states, 360 dp in
+en and bn). `flutter analyze` is clean; 1609/1609 tests pass; 183/183 rules tests pass.

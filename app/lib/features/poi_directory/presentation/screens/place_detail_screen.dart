@@ -1,16 +1,10 @@
-import 'dart:async';
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
@@ -18,7 +12,12 @@ import '../../domain/place_directions.dart';
 import '../providers/places_provider.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../domain/place_tags.dart';
 import '../place_category_l10n.dart';
+import '../place_tag_l10n.dart';
+import '../widgets/place_card.dart';
+import '../widgets/place_launch_actions.dart';
+import '../widgets/place_rating_badges.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
 ///
@@ -108,7 +107,13 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
 
     return Scaffold(
       backgroundColor: context.palette.background,
-      appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? context.l10n.place)),
+      appBar: AppBar(
+        title: Text(placeAsync.valueOrNull?.name ?? context.l10n.place),
+        actions: [
+          if (placeAsync.valueOrNull != null)
+            PlaceSaveButton(place: placeAsync.valueOrNull!, iconOnly: true),
+        ],
+      ),
       body: placeAsync.when(
         loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
@@ -278,35 +283,31 @@ class _PlaceHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.star, size: 16, color: context.palette.warning),
-                      const SizedBox(width: 2),
-                      Text(
-                        (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
-                            ? '—'
-                            : place.dualRatingDisplay,
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    (place.category == PlaceCategory.police || place.category == PlaceCategory.aiCamera)
-                        ? context.l10n.officialPoint
-                        : (place.hasAnyReviews
-                            ? place.reviewsSummarySubtitle
-                            : context.l10n.noReviewsYet),
-                    style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
-                  ),
-                ],
-              ),
+              if (place.verified)
+                Tooltip(
+                  message: context.l10n.placesVerifiedOnlyHint,
+                  child: Icon(Icons.verified, size: 20, color: context.palette.success),
+                ),
             ],
           ),
+          const SizedBox(height: 10),
+          PlaceRatingBadges(place: place),
+          if (place.tags.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final tag in PlaceTag.values)
+                  if (place.tags.contains(tag))
+                    Chip(
+                      visualDensity: VisualDensity.compact,
+                      label: Text('${tag.icon} ${tag.localizedName(context.l10n)}',
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Container(height: 1, color: context.palette.border),
           const SizedBox(height: 12),
@@ -345,7 +346,7 @@ class _PlaceHeader extends StatelessWidget {
               ],
             ),
           ],
-          if (place.category != PlaceCategory.police && place.category != PlaceCategory.aiCamera) ...[
+          if (!place.category.isSafetyPoint) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -434,115 +435,11 @@ class _PlaceHeader extends StatelessWidget {
 ///
 /// Directions is the primary action — for a petrol pump or a garage, getting
 /// there is the whole reason the rider opened this screen, so it's a filled
-/// button at full width rather than an icon in the app bar.
+/// button at full width rather than an icon in the app bar. The launch logic
+/// is shared with the hub's cards (see [PlaceLaunchActions]).
 class _PlaceActions extends ConsumerWidget {
   final PlaceEntity place;
   const _PlaceActions({required this.place});
-
-  /// Opens the rider's maps app at driving directions to this place.
-  ///
-  /// `LaunchMode.externalApplication` matters: the default mode can open the
-  /// link in an in-app webview on Android, which produces a *map of the route*
-  /// with no live guidance — the opposite of what "Directions" promises. This
-  /// forces the real Google Maps app (or the browser if it isn't installed).
-  ///
-  /// On iOS, if that fails outright we retry with Apple Maps, which is always
-  /// present. A failure on either is reported rather than swallowed: a button
-  /// that silently does nothing is worse than one that says why.
-  /// SharedPreferences key for a remembered "Record this ride?" answer —
-  /// `'record'` or `'directions'`; absent means ask every time.
-  static const directionsChoiceKey = 'place_directions_record_choice';
-
-  /// Whether to record a ride alongside the directions. Asked rather than
-  /// assumed (grill §3.2.2): the button used to start a recording
-  /// silently, which a rider who only wanted the route never agreed to.
-  /// Returns null when the rider backed out of the sheet, in which case
-  /// nothing launches at all.
-  Future<bool?> _shouldRecord(BuildContext context, WidgetRef ref) async {
-    // A ride already running is just carried on — nothing to ask.
-    final status = ref.read(rideRecordingProvider).status;
-    if (status != RecordingStatus.idle && status != RecordingStatus.completed) {
-      return false;
-    }
-    final prefs = await SharedPreferences.getInstance();
-    final remembered = prefs.getString(directionsChoiceKey);
-    if (remembered == 'record') return true;
-    if (remembered == 'directions') return false;
-    if (!context.mounted) return null;
-
-    final answer = await showModalBottomSheet<(bool, bool)>(
-      context: context,
-      backgroundColor: context.palette.surface,
-      builder: (_) => const _RecordChoiceSheet(),
-    );
-    if (answer == null) return null;
-    final (record, dontAskAgain) = answer;
-    if (dontAskAgain) {
-      await prefs.setString(directionsChoiceKey, record ? 'record' : 'directions');
-    }
-    return record;
-  }
-
-  Future<void> _openDirections(BuildContext context, WidgetRef ref) async {
-    final record = await _shouldRecord(context, ref);
-    if (record == null) return;
-
-    // Started *before* handing off to the external app, not after: once
-    // launchUrl backgrounds ThrottleIQ, there is no foreground window left for
-    // a location-permission prompt to appear in. Silently no-ops (see
-    // RideRecordingNotifier.startRide) if there's no bike or permission is
-    // missing — a rider who only wanted directions should never see an error
-    // from the ride the tap also started.
-    if (record) {
-      unawaited(ref.read(rideRecordingProvider.notifier).startRide());
-    }
-
-    final google = googleMapsDirectionsUri(
-      latitude: place.latitude,
-      longitude: place.longitude,
-    );
-
-    var launched = false;
-    try {
-      launched = await launchUrl(google, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      launched = false;
-    }
-
-    if (!launched && Platform.isIOS) {
-      final apple = appleMapsDirectionsUri(
-        latitude: place.latitude,
-        longitude: place.longitude,
-        label: place.name,
-      );
-      try {
-        launched =
-            await launchUrl(apple, mode: LaunchMode.externalApplication);
-      } catch (_) {
-        launched = false;
-      }
-    }
-
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldntOpenMapsApp)),
-      );
-    }
-  }
-
-  Future<void> _call(BuildContext context, Uri uri) async {
-    var launched = false;
-    try {
-      launched = await launchUrl(uri);
-    } catch (_) {
-      launched = false;
-    }
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldntOpenDialler)),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -554,7 +451,7 @@ class _PlaceActions extends ConsumerWidget {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => _openDirections(context, ref),
+            onPressed: () => PlaceLaunchActions.openDirections(context, ref, place),
             icon: const Icon(Icons.directions, size: 18),
             label: Text(context.l10n.directions),
           ),
@@ -562,7 +459,7 @@ class _PlaceActions extends ConsumerWidget {
         if (tel != null) ...[
           const SizedBox(width: 8),
           OutlinedButton.icon(
-            onPressed: () => _call(context, tel),
+            onPressed: () => PlaceLaunchActions.call(context, tel),
             // The theme's minimumSize is Size.fromHeight (infinite width),
             // which inside a Row with no Expanded fails layout and blanks
             // the whole screen for any place that has a phone number.
@@ -618,67 +515,6 @@ class _ReviewTile extends StatelessWidget {
             Text(review.text, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// "Record this ride in ThrottleIQ?" asked before the Directions hand-off.
-/// Pops `(record, dontAskAgain)`.
-class _RecordChoiceSheet extends StatefulWidget {
-  const _RecordChoiceSheet();
-
-  @override
-  State<_RecordChoiceSheet> createState() => _RecordChoiceSheetState();
-}
-
-class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
-  bool _dontAskAgain = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(context.l10n.recordThisRideThrottleiq,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: context.palette.textPrimary)),
-            const SizedBox(height: 6),
-            Text(
-              context.l10n.mapsAppGivesDirections,
-              style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context, (true, _dontAskAgain)),
-              icon: const Icon(Icons.fiber_manual_record, size: 18),
-              label: Text(context.l10n.recordGo),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pop(context, (false, _dontAskAgain)),
-              icon: const Icon(Icons.directions, size: 18),
-              label: Text(context.l10n.justDirections),
-            ),
-            const SizedBox(height: 4),
-            CheckboxListTile(
-              value: _dontAskAgain,
-              onChanged: (v) => setState(() => _dontAskAgain = v ?? false),
-              title: Text(context.l10n.dontAskAgain,
-                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
-              activeColor: context.palette.primary,
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -3188,6 +3188,276 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addPlaceLower => 'Add place';
 
   @override
+  String get placesHubTabPlaces => 'Places';
+
+  @override
+  String get placesHubTabRoutes => 'Routes';
+
+  @override
+  String get placesHubTabSaved => 'Saved';
+
+  @override
+  String get placesSearchHint => 'Search pumps, garages, biker cafés…';
+
+  @override
+  String get placesClearSearch => 'Clear search';
+
+  @override
+  String get placesFiltersTooltip => 'Filters';
+
+  @override
+  String get placesMapView => 'Map';
+
+  @override
+  String get placesListView => 'List';
+
+  @override
+  String get placesLocateMe => 'Centre on me';
+
+  @override
+  String get placesRadiusLabel => 'Search radius';
+
+  @override
+  String placesRadiusKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String get placesSortLabel => 'Sort by';
+
+  @override
+  String get placesSortDistance => 'Nearest';
+
+  @override
+  String get placesSortRating => 'Top rated';
+
+  @override
+  String get placesVerifiedOnly => 'Verified places only';
+
+  @override
+  String get placesVerifiedOnlyHint => 'Checked by the ThrottleIQ team';
+
+  @override
+  String get placesFeaturesLabel => 'Features';
+
+  @override
+  String get placesFiltersReset => 'Reset';
+
+  @override
+  String get placesNoMatches => 'No places match';
+
+  @override
+  String get placesNoMatchesHint =>
+      'Try a wider radius, another category or fewer filters.';
+
+  @override
+  String get placesClearFilters => 'Clear filters';
+
+  @override
+  String placesWidenRadius(String km) {
+    return 'Search $km km';
+  }
+
+  @override
+  String get placeTagOpen24h => 'Open 24/7';
+
+  @override
+  String get placeTagOctane95 => 'Octane 95';
+
+  @override
+  String get placeTagDigitalPayment => 'Digital payment';
+
+  @override
+  String get placeTagEfiDiagnostics => 'EFI diagnostics';
+
+  @override
+  String get placeTagPunctureRepair => 'Puncture repair';
+
+  @override
+  String get placeTagPaddockStand => 'Paddock stand';
+
+  @override
+  String get placeTagGenuineParts => 'Genuine parts';
+
+  @override
+  String get placeTagBikeParking => 'Bike parking';
+
+  @override
+  String get placeTagRestrooms => 'Restrooms';
+
+  @override
+  String placeApproxMinutes(int minutes) {
+    return '~$minutes min';
+  }
+
+  @override
+  String get placeVerifiedBadge => 'Verified';
+
+  @override
+  String get placeRiderApproved => 'Rider Approved';
+
+  @override
+  String get placeRiderApprovedHint =>
+      'Rated 4.5★ or more by at least 5 ThrottleIQ riders';
+
+  @override
+  String placeGoogleRatingBadge(String rating, int count) {
+    return '★ $rating ($count Google)';
+  }
+
+  @override
+  String placeRiderRatingBadge(String rating, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count riders',
+      one: '1 rider',
+    );
+    return '★ $rating ($_temp0)';
+  }
+
+  @override
+  String get placeSave => 'Save';
+
+  @override
+  String get placeSavedLabel => 'Saved';
+
+  @override
+  String get placeSavedSnack =>
+      'Saved — find it in the Saved tab, even offline';
+
+  @override
+  String get placeUnsavedSnack => 'Removed from saved places';
+
+  @override
+  String get placeSaveFailed => 'Couldn\'t update your saved places';
+
+  @override
+  String get radarTitle => 'Highway Radar';
+
+  @override
+  String radarCameras(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count speed cameras',
+      one: '1 speed camera',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String radarPolice(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count police checkposts',
+      one: '1 police checkpost',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String radarWithin(String km) {
+    return 'within $km km';
+  }
+
+  @override
+  String radarNearest(String distance) {
+    return 'Nearest $distance away';
+  }
+
+  @override
+  String get radarShowOnMap => 'Show on map';
+
+  @override
+  String get radarHideOnMap => 'Hide on map';
+
+  @override
+  String get radarDismiss => 'Dismiss radar';
+
+  @override
+  String get radarListTitle => 'Safety points near you';
+
+  @override
+  String get placesScanOsmTitle => 'Nothing mapped here yet';
+
+  @override
+  String get placesScanOsmBody =>
+      'ThrottleIQ can pull fuel pumps, garages and parts shops for this area from OpenStreetMap, the free community map. It only runs when you tap, and never adds a place twice.';
+
+  @override
+  String get placesScanOsm => 'Scan OpenStreetMap';
+
+  @override
+  String get placesScanning => 'Scanning…';
+
+  @override
+  String get placesOsmDialogTitle => 'Import from OpenStreetMap?';
+
+  @override
+  String placesOsmDialogBody(String km) {
+    return 'Adds the fuel pumps, garages and parts shops within $km km that OpenStreetMap knows about and ThrottleIQ doesn\'t yet. Places already here aren\'t duplicated.';
+  }
+
+  @override
+  String get placesOsmImportAction => 'Import';
+
+  @override
+  String get placesMoreActions => 'More';
+
+  @override
+  String get placesAddedByMe => 'Places I added';
+
+  @override
+  String get placesLocationDeniedTitle => 'ThrottleIQ can\'t see your location';
+
+  @override
+  String get placesAllowLocation => 'Allow location';
+
+  @override
+  String get placesGpsOffTitle => 'GPS is off';
+
+  @override
+  String get placesOfflineTitle => 'You\'re offline';
+
+  @override
+  String get placesOfflineBody =>
+      'Nearby places need a connection. Your saved places still work offline.';
+
+  @override
+  String get placesOpenSaved => 'Open saved places';
+
+  @override
+  String get savedPlacesEmptyTitle => 'No saved places yet';
+
+  @override
+  String get savedPlacesEmptyBody =>
+      'Tap the bookmark on any place to keep it here. Saved places work even with no signal.';
+
+  @override
+  String get savedPlacesContributedBody =>
+      'See and manage the spots you\'ve added for other riders.';
+
+  @override
+  String get addPlaceFeaturesLabel => 'Features (optional)';
+
+  @override
+  String get addPlaceFeaturesHint =>
+      'What will the next rider be glad to know?';
+
+  @override
+  String placesResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places',
+      one: '1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String couldNotUpdateVisibility(Object e) {
     return 'Could not update visibility: $e';
   }

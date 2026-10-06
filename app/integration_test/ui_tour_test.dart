@@ -35,6 +35,7 @@ import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/features/chat/presentation/providers/chat_providers.dart';
 import 'package:throttleiq/features/forums/presentation/providers/forum_providers.dart';
 import 'package:throttleiq/features/garage/presentation/providers/garage_provider.dart';
+import 'package:throttleiq/features/poi_directory/domain/places_query.dart';
 import 'package:throttleiq/features/poi_directory/presentation/providers/places_provider.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
 import 'package:throttleiq/features/routes/presentation/providers/route_providers.dart';
@@ -410,7 +411,7 @@ Future<void> loadData() async {
     }
   }
   final places =
-      await safe('places', () => c.read(nearbyPlacesProvider(null).future).timeout(const Duration(seconds: 25)));
+      await safe('places', () => c.read(nearbyPlacesProvider(placesDefaultRadiusKm).future).timeout(const Duration(seconds: 25)));
   if (places != null && places.isNotEmpty) data.placeId = places.first.id;
   final myPlaces = await safe('myPlaces', () => c.read(myPlacesProvider.future).timeout(const Duration(seconds: 20)));
   if (myPlaces != null && myPlaces.isNotEmpty) data.myPlaceId = myPlaces.first.id;
@@ -593,20 +594,35 @@ Future<void> tourSocial() async {
 Future<void> tourPlaces() async {
   await step('Places', () async {
     await go('/home/places', after: 3500);
-    await snapScroll('Places near you', maxPages: 3);
-    final chips = find.byType(ChoiceChip).hitTestable();
-    if (ev(chips).length > 1) {
-      await t.tap(chips.at(1), warnIfMissed: false);
+    await snap('Places map');
+    final garages = find.byKey(const ValueKey('places-chip-garage')).hitTestable();
+    if (ev(garages).isNotEmpty) {
+      await t.tap(garages, warnIfMissed: false);
       await wait(2200);
       await snap('Places filtered');
-      await t.tap(find.byType(ChoiceChip).hitTestable().at(0), warnIfMissed: false);
+      await t.tap(find.byKey(const ValueKey('places-chip-all')).hitTestable(), warnIfMissed: false);
       await wait(600);
     }
+    final listToggle = find.byIcon(Icons.view_list_outlined).hitTestable();
+    if (ev(listToggle).isNotEmpty) {
+      await t.tap(listToggle, warnIfMissed: false);
+      await wait(1200);
+      await snapScroll('Places list', maxPages: 3);
+    }
+    for (final tab in [Icons.route, Icons.bookmark_outline]) {
+      final segment = find.byIcon(tab).hitTestable();
+      if (ev(segment).isEmpty) continue;
+      await t.tap(segment.first, warnIfMissed: false);
+      await wait(1500);
+      await snap(tab == Icons.route ? 'Places routes' : 'Places saved');
+    }
+    final placesSegment = find.byIcon(Icons.place_outlined).hitTestable();
+    if (ev(placesSegment).isNotEmpty) await t.tap(placesSegment.first, warnIfMissed: false);
   });
   await step('Place detail', () async {
     if (data.placeId == null) {
       // The list on screen has loaded by now even if the up-front lookup timed out.
-      final loaded = c.read(nearbyPlacesProvider(null)).valueOrNull;
+      final loaded = c.read(nearbyPlacesProvider(placesDefaultRadiusKm)).valueOrNull;
       if (loaded != null && loaded.isNotEmpty) data.placeId = loaded.first.id;
     }
     if (data.placeId == null) return;

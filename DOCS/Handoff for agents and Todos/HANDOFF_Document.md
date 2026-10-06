@@ -1,8 +1,35 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-07 · Branch: `main`_
+_Last updated: 2026-10-07 · Branch: `feature/places-forums-reimagine`_
 
-## 2026-10-07 (latest): maintenance redesign — committed `238d12b`, released as `beta-v4.1` (1.0.0-beta.4.1.0+22)
+## 2026-10-07 (later): Forums "Pit Wall" redesign — same feature branch, not on a device yet
+
+- The Forums tab now has a **Pulse | Hubs** toggle. Pulse is a feed of recent posts from garage
+  and followed forums, at most 8 forums × 10 posts per page. Hubs has garage hero cards, a brand
+  carousel, a grid of topic boards and rider clubs. The duplicate in-page search is gone, and
+  Social search now offers "Open the X brand forum".
+- Posts now have a type (troubleshoot / DIY guide / gear review / general), an author bike, solved
+  state with an accepted solution, and an attached ride or maintenance card. Older posts read as
+  unsolved General posts. Only the author can mark a post solved; `firestore.rules` enforces this.
+  Deploy the rules with the build.
+- New entry points: Ask owners on bike detail, and Share to forum on ride summary and each
+  maintenance visit. The CI limit on bare `catch (_)` is now 67. Details in features.md.
+- Merged branch check: analyze clean, 1652 Flutter tests and 197 rules tests pass. New Bangla
+  strings for both redesigns are in `bn_pending_review.txt`.
+
+## 2026-10-07 (later): Places hub redesign — on a feature branch, not on a device yet
+
+- Places is now a map-first hub with three tabs: **Places | Routes | Saved**. It has search,
+  category chips with counts, a radius setting (5/15/25/50 km), a filter sheet, a map with
+  clustering and a synced carousel, and Directions/Call/Save on every card. Cameras and
+  checkposts moved into a Highway Radar banner. Saved places work offline. See issues_fixed §96 and
+  features.md §6.
+- **Schema v21** (`saved_places`). The `places` create rule now limits `tags`; deploy
+  `firestore.rules` together with the build that writes tags.
+- To check on a device: the map carousel against the bottom nav; the GPS-off and permission flows;
+  Bangla layout of the chip ribbon.
+
+## 2026-10-07: maintenance redesign — committed `238d12b`, released as `beta-v4.1` (1.0.0-beta.4.1.0+22)
 
 - **Release `beta-v4.1`:** the AAB and APK are attached on GitHub. The iOS release build was installed on the founder's iPhone 15, but iOS refused to launch it until the developer profile is trusted on the device (Settings → General → VPN & Device Management). Nothing was tested on a device yet.
 - **Docs sweep (2026-10-07):** for the new version, test count, schema v20 and the maintenance redesign, these were updated: `README.md`, `arch.md`, `DOCS/needs_attention.md`, `DOCS/BIGGG_JOBB.md`, `DOCS/DEBT_FIX_PLAN.md`, the iOS widget README, the store listing and the press fact sheet. Pitch and gov-pitch submissions were left as written, since they are submitted documents.

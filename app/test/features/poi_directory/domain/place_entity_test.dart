@@ -56,7 +56,6 @@ void main() {
       expect(place.googleRatingCount, 0);
       expect(place.hasGoogleRating, isFalse);
       expect(place.hasThrottleIqRating, isFalse);
-      expect(place.dualRatingDisplay, '0 + 0');
       expect(place.reviewsSummarySubtitle, 'No reviews yet');
     });
 
@@ -79,7 +78,6 @@ void main() {
 
       expect(place.hasGoogleRating, isTrue);
       expect(place.hasThrottleIqRating, isTrue);
-      expect(place.dualRatingDisplay, '4.3 + 4.7');
       expect(place.reviewsSummarySubtitle, '515 Google · 3 ThrottleIQ');
     });
 
@@ -102,7 +100,6 @@ void main() {
 
       expect(place.hasGoogleRating, isTrue);
       expect(place.hasThrottleIqRating, isFalse);
-      expect(place.dualRatingDisplay, '4.6 + 0');
       expect(place.reviewsSummarySubtitle, '185 Google · 0 ThrottleIQ');
     });
   });
