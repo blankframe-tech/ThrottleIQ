@@ -72,6 +72,30 @@
   "@colorFieldLabel": {
     "description": "Label above the dropdown that picks the app's color mode."
   },
+  "themeDailyLabel": "Daily",
+  "@themeDailyLabel": {
+    "description": "Name of the Daily color mode."
+  },
+  "themeDailyDescription": "Calm & collected, sage and tan",
+  "@themeDailyDescription": {
+    "description": "One-line description under the Daily color option."
+  },
+  "themeSportLabel": "Sport",
+  "@themeSportLabel": {
+    "description": "Name of the Sport color mode."
+  },
+  "themeSportDescription": "Lime carbon & tachometer energy",
+  "@themeSportDescription": {
+    "description": "One-line description under the Sport color option."
+  },
+  "themeAdventureLabel": "Adventure",
+  "@themeAdventureLabel": {
+    "description": "Name of the Adventure color mode."
+  },
+  "themeAdventureDescription": "Console cyan & nocturne wayfinding",
+  "@themeAdventureDescription": {
+    "description": "One-line description under the Adventure color option."
+  },
   "themeCarbonLabel": "Carbon Mono",
   "@themeCarbonLabel": {
     "description": "Name of the Carbon Mono color mode. Product name — kept recognisable across languages."

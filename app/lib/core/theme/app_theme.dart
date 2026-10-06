@@ -31,7 +31,7 @@ class AppTheme {
   /// Pulled out of [build] so the WCAG contrast test can check every
   /// palette against exactly what the button renders.
   static Color primaryButtonForeground(AppColorPalette palette,
-          {required bool isRetro}) =>
+          {bool isRetro = false}) =>
       isRetro
           ? const Color(0xFF1A1A1A)
           : (palette.isDark ? palette.surface : Colors.white);
@@ -40,17 +40,11 @@ class AppTheme {
     final isDark = appearance.brightness == Brightness.dark;
     final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
 
-    final isRetro = appearance.colorMode == AppColorMode.retro;
     final palette =
         AppColorPalette.forMode(appearance.colorMode, appearance.brightness);
     final shape = AppShapeProfile.forVibe(appearance.shapeVibe);
 
-    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Retro, where a
-    // proportional body face would break the illusion the rest of the
-    // direction is building.
-    final bodyText = isRetro
-        ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
-        : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
+    final bodyText = GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText
         .copyWith(
           displayLarge: GoogleFonts.ibmPlexMono(
@@ -171,10 +165,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: palette.primary,
-          // Retro's mustard accent is a mid-light fill in both brightnesses,
-          // so it always takes dark ink text rather than flipping with
-          // brightness the way every other mode's white/surface text does.
-          foregroundColor: primaryButtonForeground(palette, isRetro: isRetro),
+          foregroundColor: primaryButtonForeground(palette),
           elevation: 0,
           minimumSize: Size.fromHeight(shape.controlHeight),
           shape: RoundedRectangleBorder(

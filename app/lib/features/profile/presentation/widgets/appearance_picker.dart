@@ -6,44 +6,139 @@ import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/theme_style_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// The display name for a color mode, in the current language. Color modes
-/// are product names, so Bangla transliterates rather than translates them —
-/// see the `theme*Label` keys in `app_en.arb` / `app_bn.arb`.
-///
-/// A `switch` with no `default`, so adding a mode without naming it is a
-/// compile error rather than a blank row in the picker.
+/// The display name for a color mode, in the current language.
 String colorModeLabel(AppLocalizations l10n, AppColorMode mode) => switch (mode) {
-      AppColorMode.carbonMono => l10n.themeCarbonLabel,
-      AppColorMode.editorial => l10n.themeEditorialLabel,
-      AppColorMode.nocturne => l10n.themeNocturneLabel,
-      AppColorMode.trailSocial => l10n.themeTrailSocialLabel,
-      AppColorMode.calming => l10n.themeCalmingLabel,
-      AppColorMode.retro => l10n.themeRetroLabel,
-      AppColorMode.analystBlue => l10n.themeAnalystBlueLabel,
+      AppColorMode.daily => l10n.themeDailyLabel,
+      AppColorMode.sport => l10n.themeSportLabel,
+      AppColorMode.adventure => l10n.themeAdventureLabel,
     };
 
-/// The one-line "what this color mode looks like" blurb shown under each
-/// name. Deliberately brightness/shape-agnostic — a color mode no longer
-/// implies either, so its blurb only ever names its hues.
+/// The one-line "what this color mode looks like" blurb shown under each name.
 String colorModeDescription(AppLocalizations l10n, AppColorMode mode) =>
     switch (mode) {
-      AppColorMode.carbonMono => l10n.themeCarbonDescription,
-      AppColorMode.editorial => l10n.themeEditorialDescription,
-      AppColorMode.nocturne => l10n.themeNocturneDescription,
-      AppColorMode.trailSocial => l10n.themeTrailSocialDescription,
-      AppColorMode.calming => l10n.themeCalmingDescription,
-      AppColorMode.retro => l10n.themeRetroDescription,
-      AppColorMode.analystBlue => l10n.themeAnalystBlueDescription,
+      AppColorMode.daily => l10n.themeDailyDescription,
+      AppColorMode.sport => l10n.themeSportDescription,
+      AppColorMode.adventure => l10n.themeAdventureDescription,
     };
 
-/// The color-mode picker for Settings › Appearance: every [AppColorMode] as
-/// one row of a dropdown, each with its name, its blurb, and a swatch.
-///
-/// Unlike the old flat skin list, a row's swatch previews its palette
-/// resolved against the rider's CURRENTLY chosen [AppShapeVibe] and
-/// [Brightness] — color is now the third, independent axis, so "what would
-/// picking this row actually look like" depends on the other two choices,
-/// not on a brightness/shape baked into the mode itself.
+/// The 3-mode segmented selector for Settings › Appearance: Daily, Sport, Adventure.
+/// Matches the segmented design of the Brightness and Shape Vibe controls.
+class ColorModeSegmentedPicker extends ConsumerWidget {
+  const ColorModeSegmentedPicker({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final appearance = ref.watch(appearanceProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          for (int i = 0; i < AppColorMode.values.length; i++) ...[
+            if (i > 0) const SizedBox(width: 4),
+            Expanded(
+              child: _ColorModeSegmentOption(
+                mode: AppColorMode.values[i],
+                label: colorModeLabel(l10n, AppColorMode.values[i]),
+                description: colorModeDescription(l10n, AppColorMode.values[i]),
+                selected: appearance.colorMode == AppColorMode.values[i],
+                shapeVibe: appearance.shapeVibe,
+                brightness: appearance.brightness,
+                onTap: () => ref
+                    .read(appearanceProvider.notifier)
+                    .setColorMode(AppColorMode.values[i]),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ColorModeSegmentOption extends StatelessWidget {
+  const _ColorModeSegmentOption({
+    required this.mode,
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.shapeVibe,
+    required this.brightness,
+    required this.onTap,
+  });
+
+  final AppColorMode mode;
+  final String label;
+  final String description;
+  final bool selected;
+  final AppShapeVibe shapeVibe;
+  final Brightness brightness;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(context.shape.radiusSm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                ColorModeSwatch(
+                  mode: mode,
+                  shapeVibe: shapeVibe,
+                  brightness: brightness,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? context.palette.surface
+                          : context.palette.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 10,
+                color: selected
+                    ? context.palette.surface.withValues(alpha: 0.85)
+                    : context.palette.textTertiary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dropdown variant for backward compatibility with existing tests and call sites.
 class ColorModeDropdown extends ConsumerWidget {
   const ColorModeDropdown({super.key});
 
@@ -64,8 +159,6 @@ class ColorModeDropdown extends ConsumerWidget {
       borderRadius: BorderRadius.circular(context.shape.radiusMd),
       icon: Icon(Icons.expand_more, color: context.palette.textSecondary),
       style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
-      // The closed field gets one compact line; the two-line rows below
-      // would overflow it.
       selectedItemBuilder: (context) => [
         for (final mode in AppColorMode.values)
           Align(
@@ -146,9 +239,7 @@ class ColorModeDropdown extends ConsumerWidget {
 }
 
 /// A miniature of one color mode, resolved against a given shape/brightness:
-/// its background and corner shape, with its primary and secondary accents
-/// stacked on top. Small enough to sit inline in a dropdown row and still
-/// tell seven color families apart at a glance.
+/// its background and corner shape, with its primary and secondary accents.
 class ColorModeSwatch extends StatelessWidget {
   const ColorModeSwatch({
     super.key,
@@ -166,23 +257,18 @@ class ColorModeSwatch extends StatelessWidget {
     final palette = AppColorPalette.forMode(mode, brightness);
     final shape = AppShapeProfile.forVibe(shapeVibe);
     return Container(
-      width: 34,
-      height: 24,
+      width: 26,
+      height: 18,
       decoration: BoxDecoration(
         color: palette.background,
         borderRadius: BorderRadius.circular(shape.radiusLg / 2),
-        // Deliberately the *current* appearance's border, not this row's:
-        // several palettes' own borders are invisible against their own
-        // background (Retro's rule is ink-strength, Editorial's a warm
-        // hairline), and the job here is to keep the swatch legible on the
-        // surface it is drawn on.
         border: Border.all(color: context.palette.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _dot(palette.primary),
-          const SizedBox(width: 3),
+          const SizedBox(width: 2),
           _dot(palette.secondary),
         ],
       ),
@@ -190,8 +276,8 @@ class ColorModeSwatch extends StatelessWidget {
   }
 
   Widget _dot(Color color) => Container(
-        width: 9,
-        height: 9,
+        width: 7,
+        height: 7,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
 }

@@ -391,6 +391,101 @@ void main() {
     });
   });
 
+  group('HomeWidgetService.isApexHunterUri', () {
+    test('matches the apex hunter URI', () {
+      expect(
+        HomeWidgetService.isApexHunterUri(
+            Uri.parse('throttleiq://apexhunter')),
+        isTrue,
+      );
+    });
+
+    test('matches regardless of trailing slash or query', () {
+      expect(
+        HomeWidgetService.isApexHunterUri(
+            Uri.parse('throttleiq://apexhunter/')),
+        isTrue,
+      );
+      expect(
+        HomeWidgetService.isApexHunterUri(
+            Uri.parse('throttleiq://apexhunter?filter=all')),
+        isTrue,
+      );
+    });
+
+    test('rejects null or non-matching URIs', () {
+      expect(HomeWidgetService.isApexHunterUri(null), isFalse);
+      expect(
+        HomeWidgetService.isApexHunterUri(
+            Uri.parse('throttleiq://startride')),
+        isFalse,
+      );
+      expect(
+        HomeWidgetService.isApexHunterUri(
+            Uri.parse('https://apexhunter')),
+        isFalse,
+      );
+    });
+
+    test('matches the advertised apexHunterUri constant', () {
+      expect(
+        HomeWidgetService.isApexHunterUri(HomeWidgetService.apexHunterUri),
+        isTrue,
+      );
+    });
+  });
+
+  group('formatLeanAngle', () {
+    test('formats rounded whole degrees with degree sign', () {
+      expect(formatLeanAngle(0), '0°');
+      expect(formatLeanAngle(24.3), '24°');
+      expect(formatLeanAngle(45.6), '46°');
+      expect(formatLeanAngle(55.0), '55°');
+    });
+
+    test('collapses negative, NaN, and infinite inputs to 0°', () {
+      expect(formatLeanAngle(-12), '0°');
+      expect(formatLeanAngle(double.nan), '0°');
+      expect(formatLeanAngle(double.infinity), '0°');
+      expect(formatLeanAngle(double.negativeInfinity), '0°');
+    });
+  });
+
+  group('calculateLeanSymmetry', () {
+    test('computes symmetry percentage accurately', () {
+      expect(calculateLeanSymmetry(45, 45), '100%');
+      expect(calculateLeanSymmetry(30, 40), '75%');
+      expect(calculateLeanSymmetry(40, 30), '75%');
+      expect(calculateLeanSymmetry(0, 0), '100%');
+    });
+
+    test('handles edge cases safely without dividing by zero or exploding', () {
+      expect(calculateLeanSymmetry(0, 45), '0%');
+      expect(calculateLeanSymmetry(45, 0), '0%');
+      expect(calculateLeanSymmetry(-10, 45), '0%');
+      expect(calculateLeanSymmetry(double.nan, 45), '0%');
+      expect(calculateLeanSymmetry(double.infinity, 45), '0%');
+    });
+  });
+
+  group('resolveLeanRating', () {
+    test('categorizes angles by performance thresholds', () {
+      expect(resolveLeanRating(15), 'STREET');
+      expect(resolveLeanRating(20), 'CANYON');
+      expect(resolveLeanRating(28), 'CANYON');
+      expect(resolveLeanRating(32), 'SPORT');
+      expect(resolveLeanRating(38), 'SPORT');
+      expect(resolveLeanRating(42), 'KNEE DOWN');
+      expect(resolveLeanRating(58), 'KNEE DOWN');
+    });
+
+    test('safe fallbacks for invalid inputs', () {
+      expect(resolveLeanRating(-5), 'STREET');
+      expect(resolveLeanRating(double.nan), 'STREET');
+      expect(resolveLeanRating(double.infinity), 'STREET');
+    });
+  });
+
   group('homeWidgetServiceProvider & refreshWithData', () {
     test('homeWidgetServiceProvider provides the HomeWidgetService instance', () {
       final container = ProviderContainer();
@@ -401,6 +496,11 @@ void main() {
     test('refreshWithData runs safely without throwing when widgets are unplaced', () async {
       final service = HomeWidgetService();
       await service.refreshWithData(rides: [], bikes: []);
+    });
+
+    test('publishApexHunter runs safely without throwing', () async {
+      final service = HomeWidgetService();
+      await service.publishApexHunter(maxLeanLeft: 38.5, maxLeanRight: 42.1);
     });
   });
 }

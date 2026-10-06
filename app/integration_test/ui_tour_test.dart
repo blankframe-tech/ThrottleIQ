@@ -53,6 +53,11 @@ const _onlyCombos = String.fromEnvironment('TOUR_COMBOS');
 const _tourLocale = String.fromEnvironment('TOUR_LOCALE');
 const _dumpTexts = bool.fromEnvironment('TOUR_DUMP_TEXTS');
 
+/// `--dart-define=TOUR_DEVICE=true` is for a physical device, where the host
+/// can't screenshot: each shot is captured in-app (binding.takeScreenshot)
+/// and written under Documents/tour/shots/, to be pulled with `devicectl`.
+const _device = bool.fromEnvironment('TOUR_DEVICE');
+
 /// Development aid: skip the first N tour parts (0 = auth ... 6 = profile).
 const _fromPart = int.fromEnvironment('TOUR_FROM');
 
@@ -90,6 +95,14 @@ Future<void> snap(String name, {int settleMs = 1100}) async {
   shot++;
   seq++;
   final rel = '$comboDir/${shot.toString().padLeft(3, '0')}__${_slug(section)}__${_slug(name)}.png';
+  if (_device) {
+    final bytes = await IntegrationTestWidgetsFlutterBinding.instance.takeScreenshot(rel);
+    final out = File('${tourDir.path}/shots/$rel')..parent.createSync(recursive: true);
+    await out.writeAsBytes(bytes);
+    log('snap $rel ($location)');
+    if (_dumpTexts) _dump(rel);
+    return;
+  }
   final ack = File('${tourDir.path}/ack_$seq');
   await File('${tourDir.path}/req_$seq.tmp').writeAsString(rel);
   await File('${tourDir.path}/req_$seq.tmp').rename('${tourDir.path}/req_$seq.txt');
@@ -796,7 +809,7 @@ void main() {
     final docs = await getApplicationDocumentsDirectory();
     tourDir = Directory('${docs.path}/tour')..createSync(recursive: true);
     for (final f in tourDir.listSync()) {
-      f.deleteSync();
+      f.deleteSync(recursive: true);
     }
     File('${tourDir.path}/ready').writeAsStringSync('1');
     if (_dumpTexts) textLog = File('${tourDir.path}/texts.log').openWrite();
@@ -834,7 +847,7 @@ void main() {
       }
 
       // Leave the simulator signed in on the default look.
-      await applyCombo(const Combo(AppColorMode.calming, AppShapeVibe.curvy, Brightness.light));
+      await applyCombo(const Combo(AppColorMode.daily, AppShapeVibe.curvy, Brightness.light));
       await textLog?.flush();
       await textLog?.close();
     } catch (e, st) {

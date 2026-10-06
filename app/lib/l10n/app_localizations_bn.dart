@@ -63,6 +63,24 @@ class AppLocalizationsBn extends AppLocalizations {
   String get colorFieldLabel => 'রং';
 
   @override
+  String get themeDailyLabel => 'ডেইলি';
+
+  @override
+  String get themeDailyDescription => 'শান্ত ও স্থির, সেজ ও ট্যান';
+
+  @override
+  String get themeSportLabel => 'স্পোর্ট';
+
+  @override
+  String get themeSportDescription => 'লাইম কার্বন ও রেসিং শক্তি';
+
+  @override
+  String get themeAdventureLabel => 'অ্যাডভেঞ্চার';
+
+  @override
+  String get themeAdventureDescription => 'কনসোল সায়ান ও ট্যুরিং আভা';
+
+  @override
   String get themeCarbonLabel => 'কার্বন মোনো';
 
   @override

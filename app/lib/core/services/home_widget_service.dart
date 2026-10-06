@@ -1,9 +1,11 @@
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
 import '../database/daos/ride_dao.dart';
@@ -24,9 +26,10 @@ final homeWidgetServiceProvider = Provider<HomeWidgetService>((ref) {
 //
 // These are the contract between Dart and the native widget code. The Android
 // providers (StartRideWidgetProvider / RideStatsWidgetProvider /
-// MaintenanceWidgetProvider) and the iOS WidgetKit bundle
-// (ios/ThrottleIQWidget/ThrottleIQWidget.swift) read these exact strings, so
-// renaming one here silently blanks a widget. Change both sides together.
+// MaintenanceWidgetProvider / AutoTrackingWidgetProvider / ApexHunterWidgetProvider)
+// and the iOS WidgetKit bundle (ios/ThrottleIQWidget/ThrottleIQWidget.swift) read
+// these exact strings, so renaming one here silently blanks a widget. Change
+// both sides together.
 //
 // Every "display" key holds a fully-formatted, ready-to-render string so the
 // native layouts stay dumb (no number formatting in Kotlin or Swift). The
@@ -51,6 +54,15 @@ const String kWidgetKeyKmUntilDue = 'ti_km_until_due';
 const String kWidgetKeyKmUntilDueRaw = 'ti_km_until_due_raw';
 const String kWidgetKeyOverdue = 'ti_overdue';
 const String kWidgetKeyMaintenanceUpdatedAt = 'ti_maintenance_updated_at';
+
+/// Apex Hunter (cornering telemetry) widget keys.
+const String kWidgetKeyMaxLeanLeft = 'ti_max_lean_left';
+const String kWidgetKeyMaxLeanLeftRaw = 'ti_max_lean_left_raw';
+const String kWidgetKeyMaxLeanRight = 'ti_max_lean_right';
+const String kWidgetKeyMaxLeanRightRaw = 'ti_max_lean_right_raw';
+const String kWidgetKeyLeanRating = 'ti_lean_rating';
+const String kWidgetKeyLeanSymmetry = 'ti_lean_symmetry';
+const String kWidgetKeyApexUpdatedAt = 'ti_apex_updated_at';
 
 /// Shown by both platforms before the app has ever published anything. Native
 /// code has its own copy of these as a defensive default; keeping them here
@@ -125,6 +137,38 @@ String _withThousandsSeparator(int value) {
     buffer.write(digits[i]);
   }
   return buffer.toString();
+}
+
+/// Renders a lean angle: `'42°'`, `'0°'`. Non-finite or negative collapses to `'0°'`.
+String formatLeanAngle(double deg) {
+  if (deg.isNaN || deg.isInfinite || deg < 0) return '0°';
+  return '${deg.round()}°';
+}
+
+/// Computes cornering balance symmetry percentage: e.g. `'95%'`.
+/// Clamped to 0..100. Returns '100%' if both are 0.
+String calculateLeanSymmetry(double left, double right) {
+  final l = left.isNaN || left.isInfinite || left < 0 ? 0.0 : left;
+  final r = right.isNaN || right.isInfinite || right < 0 ? 0.0 : right;
+  if (l == 0 && r == 0) return '100%';
+  final maxVal = math.max(l, r);
+  final minVal = math.min(l, r);
+  if (maxVal == 0) return '100%';
+  final ratio = (minVal / maxVal) * 100;
+  return '${ratio.clamp(0, 100).round()}%';
+}
+
+/// Resolves lean rating label:
+/// >= 42° -> 'KNEE DOWN'
+/// >= 32° -> 'SPORT'
+/// >= 20° -> 'CANYON'
+/// else -> 'STREET'
+String resolveLeanRating(double maxDeg) {
+  if (maxDeg.isNaN || maxDeg.isInfinite || maxDeg < 0) return 'STREET';
+  if (maxDeg >= 42) return 'KNEE DOWN';
+  if (maxDeg >= 32) return 'SPORT';
+  if (maxDeg >= 20) return 'CANYON';
+  return 'STREET';
 }
 
 /// Kilometres ridden in the rolling 7 days ending at [now] (defaults to
@@ -222,10 +266,12 @@ class HomeWidgetService {
   static const String androidRideStatsWidget = 'RideStatsWidgetProvider';
   static const String androidMaintenanceWidget = 'MaintenanceWidgetProvider';
   static const String androidAutoTrackingWidget = 'AutoTrackingWidgetProvider';
+  static const String androidApexHunterWidget = 'ApexHunterWidgetProvider';
   static const String iosStartRideWidget = 'ThrottleIQStartRideWidget';
   static const String iosRideStatsWidget = 'ThrottleIQRideStatsWidget';
   static const String iosMaintenanceWidget = 'ThrottleIQMaintenanceWidget';
   static const String iosAutoTrackingWidget = 'ThrottleIQAutoTrackingWidget';
+  static const String iosApexHunterWidget = 'ThrottleIQApexHunterWidget';
 
   static const String _androidPackage = 'com.bft.throttleiq';
 
@@ -255,6 +301,9 @@ class HomeWidgetService {
   /// The URI the "Start Auto-Tracking" widget launches the app with.
   static final Uri autoTrackingUri = Uri.parse('throttleiq://autotracking');
 
+  /// The URI the "Apex Hunter" widget launches the app with.
+  static final Uri apexHunterUri = Uri.parse('throttleiq://apexhunter');
+
   /// Whether [uri] is the widget's start-ride request.
   ///
   /// Compares scheme + host rather than the whole string: Android and iOS
@@ -266,6 +315,10 @@ class HomeWidgetService {
   /// Whether [uri] is the widget's start-auto-tracking request.
   static bool isAutoTrackingUri(Uri? uri) =>
       uri != null && uri.scheme == 'throttleiq' && uri.host == 'autotracking';
+
+  /// Whether [uri] is the widget's apex hunter request.
+  static bool isApexHunterUri(Uri? uri) =>
+      uri != null && uri.scheme == 'throttleiq' && uri.host == 'apexhunter';
 
   /// Fires [onStartRide] when the app is opened from the start-ride widget —
   /// both for a cold launch and for a tap while the app is already alive.
@@ -360,7 +413,37 @@ class HomeWidgetService {
     }
   }
 
-  /// Resets both data widgets to their "nothing to show" state — used when
+  Future<void> publishApexHunter({
+    required double maxLeanLeft,
+    required double maxLeanRight,
+  }) async {
+    try {
+      final maxLeft = maxLeanLeft.isNaN || maxLeanLeft < 0 ? 0.0 : maxLeanLeft;
+      final maxRight =
+          maxLeanRight.isNaN || maxLeanRight < 0 ? 0.0 : maxLeanRight;
+      final maxAngle = math.max(maxLeft, maxRight);
+      final rating = resolveLeanRating(maxAngle);
+      final symmetry = calculateLeanSymmetry(maxLeft, maxRight);
+
+      await Future.wait([
+        _save(kWidgetKeyMaxLeanLeft, formatLeanAngle(maxLeft)),
+        _save(kWidgetKeyMaxLeanLeftRaw, maxLeft),
+        _save(kWidgetKeyMaxLeanRight, formatLeanAngle(maxRight)),
+        _save(kWidgetKeyMaxLeanRightRaw, maxRight),
+        _save(kWidgetKeyLeanRating, rating),
+        _save(kWidgetKeyLeanSymmetry, symmetry),
+        _save(kWidgetKeyApexUpdatedAt, DateTime.now().toIso8601String()),
+      ]);
+      await _update(
+        androidName: androidApexHunterWidget,
+        iOSName: iosApexHunterWidget,
+      );
+    } catch (e, s) {
+      _log('publishApexHunter failed', e, s);
+    }
+  }
+
+  /// Resets all data widgets to their "nothing to show" state — used when
   /// signed out or when the rider has no bikes, so a previous account's
   /// numbers don't linger on the home screen.
   Future<void> publishPlaceholders() async {
@@ -374,6 +457,12 @@ class HomeWidgetService {
         _save(kWidgetKeyServiceSummary, kWidgetPlaceholderNoService),
         _save(kWidgetKeyKmUntilDue, kWidgetPlaceholderValue),
         _save(kWidgetKeyOverdue, false),
+        _save(kWidgetKeyMaxLeanLeft, kWidgetPlaceholderValue),
+        _save(kWidgetKeyMaxLeanLeftRaw, 0.0),
+        _save(kWidgetKeyMaxLeanRight, kWidgetPlaceholderValue),
+        _save(kWidgetKeyMaxLeanRightRaw, 0.0),
+        _save(kWidgetKeyLeanRating, 'STREET'),
+        _save(kWidgetKeyLeanSymmetry, kWidgetPlaceholderValue),
       ]);
       await refreshAllWidgets();
     } catch (e, s) {
@@ -381,7 +470,7 @@ class HomeWidgetService {
     }
   }
 
-  /// Re-renders all four widgets from whatever is already stored.
+  /// Re-renders all five widgets from whatever is already stored.
   Future<void> refreshAllWidgets() async {
     await _update(
         androidName: androidStartRideWidget, iOSName: iosStartRideWidget);
@@ -392,10 +481,13 @@ class HomeWidgetService {
     await _update(
         androidName: androidAutoTrackingWidget,
         iOSName: iosAutoTrackingWidget);
+    await _update(
+        androidName: androidApexHunterWidget,
+        iOSName: iosApexHunterWidget);
   }
 
   /// Reads the offline-first local database (the same tables the Stats hub and
-  /// Maintenance screen read) and republishes both data widgets.
+  /// Maintenance screen read) and republishes all data widgets.
   ///
   /// Signed out, or DB not yet created on a fresh install, publishes
   /// placeholders instead of leaving the widget blank.
@@ -416,6 +508,15 @@ class HomeWidgetService {
         rideCount: rides.length,
       );
 
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final leanLeft = prefs.getDouble(kWidgetKeyMaxLeanLeftRaw) ?? 0.0;
+        final leanRight = prefs.getDouble(kWidgetKeyMaxLeanRightRaw) ?? 0.0;
+        await publishApexHunter(maxLeanLeft: leanLeft, maxLeanRight: leanRight);
+      } catch (e, s) {
+        _log('publishApexHunter in refreshFromLocalData failed', e, s);
+      }
+
       final bikeRows = await _bikeDao.getAllForUser(uid);
       final bikes = bikeRows.map(BikeModel.fromMap).toList();
       if (bikes.isEmpty) {
@@ -433,6 +534,8 @@ class HomeWidgetService {
   Future<void> refreshWithData({
     required List<RideEntity> rides,
     required List<BikeEntity> bikes,
+    double maxLeanLeft = 0.0,
+    double maxLeanRight = 0.0,
   }) async {
     try {
       final totalKm = rides.fold<double>(0, (sum, r) => sum + r.distanceKm);
@@ -440,6 +543,10 @@ class HomeWidgetService {
         weeklyKm: weeklyDistanceKm(rides),
         totalKm: totalKm,
         rideCount: rides.length,
+      );
+      await publishApexHunter(
+        maxLeanLeft: maxLeanLeft,
+        maxLeanRight: maxLeanRight,
       );
 
       if (bikes.isEmpty) {

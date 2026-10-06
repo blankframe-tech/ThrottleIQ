@@ -64,7 +64,7 @@ class AppAppearance {
   /// a returning rider who only ever changed the other two — see
   /// [AppearanceNotifier._loadPersisted].
   static const defaultAppearance = AppAppearance(
-    colorMode: AppColorMode.calming,
+    colorMode: AppColorMode.daily,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.light,
   );
@@ -96,63 +96,51 @@ class AppAppearance {
 }
 
 /// The full (colorMode, shapeVibe, brightness) triple a pre-migration rider's
-/// single skin choice decodes to. The three modes dropped in the
-/// Vibe/Brightness/Color split (`positiveVibes`, `genesis`, `cuteAnalyst`)
-/// map to their closest surviving equivalent rather than to the default, so
-/// switching builds doesn't silently reset an existing rider's look more
-/// than necessary:
-///   - `positiveVibes` (light, rounded, green) → Calming (closest rounded
-///     light green-family mode).
-///   - `cuteAnalyst` (Analyst Blue's colors, rounded) → Analyst Blue, Curvy,
-///     Dark — an EXACT match, since that skin was always just Analyst Blue's
-///     palette with a different shape.
-///   - `genesis` (dark, boxy, gold/violet) → no surviving hue is close, so it
-///     falls back to whatever [AppAppearance.defaultAppearance] currently is
-///     rather than guessing a resemblance that isn't really there.
+/// single skin choice decodes to.
 const Map<String, AppAppearance> _legacyTriple = {
   'carbon': AppAppearance(
-    colorMode: AppColorMode.carbonMono,
+    colorMode: AppColorMode.sport,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.dark,
   ),
   'editorial': AppAppearance(
-    colorMode: AppColorMode.editorial,
+    colorMode: AppColorMode.daily,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.light,
   ),
   'nocturne': AppAppearance(
-    colorMode: AppColorMode.nocturne,
+    colorMode: AppColorMode.adventure,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.dark,
   ),
   'trailSocial': AppAppearance(
-    colorMode: AppColorMode.trailSocial,
+    colorMode: AppColorMode.adventure,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.dark,
   ),
   'calming': AppAppearance(
-    colorMode: AppColorMode.calming,
+    colorMode: AppColorMode.daily,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.light,
   ),
   'positiveVibes': AppAppearance(
-    colorMode: AppColorMode.calming,
+    colorMode: AppColorMode.daily,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.light,
   ),
   'retro': AppAppearance(
-    colorMode: AppColorMode.retro,
+    colorMode: AppColorMode.sport,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.light,
   ),
   'analystBlue': AppAppearance(
-    colorMode: AppColorMode.analystBlue,
+    colorMode: AppColorMode.adventure,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.dark,
   ),
   'genesis': AppAppearance.defaultAppearance,
   'cuteAnalyst': AppAppearance(
-    colorMode: AppColorMode.analystBlue,
+    colorMode: AppColorMode.adventure,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.dark,
   ),
@@ -163,7 +151,13 @@ AppColorMode? _decodeColorMode(String? saved) {
   for (final mode in AppColorMode.values) {
     if (mode.name == saved) return mode;
   }
-  return null; // a mode removed since this was written
+  // Migration from legacy color modes
+  return switch (saved) {
+    'calming' || 'editorial' => AppColorMode.daily,
+    'carbonMono' || 'carbon' || 'retro' => AppColorMode.sport,
+    'analystBlue' || 'nocturne' || 'trailSocial' => AppColorMode.adventure,
+    _ => null,
+  };
 }
 
 AppShapeVibe? _decodeShapeVibe(String? saved) {

@@ -112,26 +112,13 @@ void main() {
       }
     });
 
-    test('the newly-authored light/dark companions clear AA contrast for UI components (3:1)', () {
-      // 3:1 is WCAG AA's bar for large text/UI components (icons, button
-      // fills, chart lines) — what `primary` is actually used for, as
-      // opposed to 4.5:1's small-body-text bar. Scoped to the SIX new
-      // companion palettes this change authored (carbonMonoLight,
-      // editorialDark, nocturneLight, trailSocialLight, calmingDark,
-      // analystBlueLight — Retro has no accent hue to check), each
-      // deliberately darkened/lightened for this — not asserted against the
-      // four original, unmodified light/dark palettes, some of which
-      // (Editorial's blue at ~4.0:1, Calming's sage at ~2.4:1) already
-      // shipped below this bar and are out of scope for this change to fix.
-      final newCompanions = {
-        'carbonMonoLight': AppColorPalette.carbonMonoLight,
-        'editorialDark': AppColorPalette.editorialDark,
-        'nocturneLight': AppColorPalette.nocturneLight,
-        'trailSocialLight': AppColorPalette.trailSocialLight,
-        'calmingDark': AppColorPalette.calmingDark,
-        'analystBlueLight': AppColorPalette.analystBlueLight,
+    test('the light/dark companions clear AA contrast for UI components (3:1)', () {
+      final companions = {
+        'sportLight': AppColorPalette.sportLight,
+        'dailyDark': AppColorPalette.dailyDark,
+        'adventureLight': AppColorPalette.adventureLight,
       };
-      newCompanions.forEach((name, p) {
+      companions.forEach((name, p) {
         final bg = p.background.computeLuminance();
         final fg = p.primary.computeLuminance();
         final contrast = (max(bg, fg) + 0.05) / (min(bg, fg) + 0.05);
@@ -142,12 +129,7 @@ void main() {
     });
 
     test('secondary is a distinct accent from primary, in every combination', () {
-      // Several directions specify only one true accent; the rest derive a
-      // second one. A combination where the two collapse to the same value
-      // silently flattens every UI that uses them to distinguish two things.
-      // Retro is exempt by design — see the dedicated Retro group below.
       for (final (mode, brightness) in allCombos) {
-        if (mode == AppColorMode.retro) continue;
         final p = AppColorPalette.forMode(mode, brightness);
         expect(p.secondary.toARGB32(), isNot(p.primary.toARGB32()),
             reason: '$mode/$brightness');
@@ -200,7 +182,7 @@ void main() {
       // install/account starts on. If it ever resolves to another
       // combination, every rider who never touched Settings gets a silent
       // restyle.
-      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.calming);
+      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.daily);
       expect(AppAppearance.defaultAppearance.shapeVibe, AppShapeVibe.curvy);
       expect(AppAppearance.defaultAppearance.brightness, Brightness.light);
       expect(AppShapeProfile.forVibe(AppAppearance.defaultAppearance.shapeVibe),
@@ -247,17 +229,13 @@ void main() {
     });
 
     test('the palette cross-fades colors and flips its flags at the halfway point', () {
-      const a = AppColorPalette.carbonMonoDark;
-      const b = AppColorPalette.retroLight;
+      const a = AppColorPalette.sportDark;
+      const b = AppColorPalette.dailyLight;
       expect(a.lerp(b, 0).primary, a.primary);
       expect(a.lerp(b, 0).background, a.background);
       expect(a.lerp(b, 1).primary, b.primary);
       expect(a.lerp(b, 0.5).primary, Color.lerp(a.primary, b.primary, 0.5));
-      // Retro sets hard shadows and monospace type; Carbon Mono neither.
-      expect(a.lerp(b, 0.49).hasHardShadow, isFalse);
-      expect(a.lerp(b, 0.49).monoDisplay, isFalse);
-      expect(a.lerp(b, 0.5).hasHardShadow, isTrue);
-      expect(a.lerp(b, 0.5).monoDisplay, isTrue);
+      expect(a.lerp(b, 0.49).isDark, isTrue);
       expect(a.lerp(b, 0.5).isDark, isFalse);
     });
 
@@ -272,10 +250,10 @@ void main() {
     });
 
     test('copyWith overrides only what it is given', () {
-      final p = AppColorPalette.calmingLight.copyWith(primary: const Color(0xFF123456));
+      final p = AppColorPalette.dailyLight.copyWith(primary: const Color(0xFF123456));
       expect(p.primary, const Color(0xFF123456));
-      expect(p.background, AppColorPalette.calmingLight.background);
-      expect(p.monoDisplay, AppColorPalette.calmingLight.monoDisplay);
+      expect(p.background, AppColorPalette.dailyLight.background);
+      expect(p.monoDisplay, AppColorPalette.dailyLight.monoDisplay);
       final s = AppShapeProfile.boxy.copyWith(radiusMd: 9);
       expect(s.radiusMd, 9);
       expect(s.radiusSm, AppShapeProfile.boxy.radiusSm);
@@ -295,7 +273,7 @@ void main() {
     test('the card radius is the requested vibe\'s, not a shared constant', () {
       double cardRadius(AppShapeVibe vibe) {
         final appearance = AppAppearance(
-            colorMode: AppColorMode.carbonMono, shapeVibe: vibe, brightness: Brightness.dark);
+            colorMode: AppColorMode.sport, shapeVibe: vibe, brightness: Brightness.dark);
         final shape = themeFor(appearance).cardTheme.shape;
         return ((shape! as RoundedRectangleBorder).borderRadius as BorderRadius)
             .topLeft
@@ -307,29 +285,14 @@ void main() {
       }
     });
 
-    test('Retro respects the requested vibe like every other color mode', () {
-      // Retro's identity is now entirely in its palette (monochrome, an
-      // ink-strength border, monospace type) — NOT in a fixed shape. Boxy
-      // Retro and Curvy Retro must differ in corner radius exactly the way
-      // any other color mode's two vibes would.
-      for (final vibe in AppShapeVibe.values) {
-        final appearance = AppAppearance(
-            colorMode: AppColorMode.retro, shapeVibe: vibe, brightness: Brightness.light);
-        final card = themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
-        expect((card.borderRadius as BorderRadius).topLeft.x,
-            AppShapeProfile.forVibe(vibe).radiusXl,
-            reason: '$vibe');
-      }
-    });
-
-    test('only Retro is monospace, regardless of vibe or brightness', () {
+    test('no mode is monospace display by default', () {
       for (final mode in AppColorMode.values) {
         for (final vibe in AppShapeVibe.values) {
           for (final brightness in Brightness.values) {
             final palette = themeFor(AppAppearance(
                     colorMode: mode, shapeVibe: vibe, brightness: brightness))
                 .extension<AppColorPalette>()!;
-            expect(palette.monoDisplay, mode == AppColorMode.retro,
+            expect(palette.monoDisplay, isFalse,
                 reason: '$mode/$vibe/$brightness');
           }
         }
@@ -388,102 +351,51 @@ void main() {
     });
   });
 
-  group('Retro, the Rawblock color mode', () {
-    double channelSpread(Color color) {
-      final channels = [color.r, color.g, color.b];
-      return channels.reduce(max) - channels.reduce(min);
-    }
-
-    void checkNeutral(AppColorPalette retro, String label) {
-      // Paper, rule and ink stay a warm near-neutral — the ground the
-      // mustard/rust accents sit on. A token that drifts to real chroma here
-      // (a copy-pasted accent color, say) reads as the background itself
-      // going off-color, which is easy to miss in review at a glance.
-      final tokens = <String, Color>{
-        'background': retro.background,
-        'surface': retro.surface,
-        'border': retro.border,
-        'surfaceVariant': retro.surfaceVariant,
-        'ink': retro.ink,
-        'onInk': retro.onInk,
-        'onInkMuted': retro.onInkMuted,
-        'textPrimary': retro.textPrimary,
-        'textSecondary': retro.textSecondary,
-        'textTertiary': retro.textTertiary,
-        'shimmerBase': retro.shimmerBase,
-        'shimmerHighlight': retro.shimmerHighlight,
-      };
-
-      tokens.forEach((name, color) {
-        final spread = channelSpread(color);
-        expect(spread, lessThan(0.15),
-            reason: '$label.$name is not warm-neutral: $color (channel spread $spread)');
-      });
-    }
-
-    void checkAccented(AppColorPalette retro, String label) {
-      // The "Retro (Rawblock)" style direction is mustard + rust on cream
-      // paper, not black-and-white — a token that has drifted back to a
-      // neutral grey (a copy-pasted borderline value, say) is the failure
-      // this catches.
-      final tokens = <String, Color>{
-        'primary': retro.primary,
-        'primaryHighlight': retro.primaryHighlight,
-        'primaryDark': retro.primaryDark,
-        'attention': retro.attention,
-        'warning': retro.warning,
-        'danger': retro.danger,
-      };
-
-      tokens.forEach((name, color) {
-        final spread = channelSpread(color);
-        expect(spread, greaterThan(0.18),
-            reason: '$label.$name has lost its mustard/rust chroma: $color (channel spread $spread)');
-      });
-    }
-
-    test('retroLight keeps paper/rule/text tokens warm-neutral', () =>
-        checkNeutral(AppColorPalette.retroLight, 'retroLight'));
-    test('retroDark keeps paper/rule/text tokens warm-neutral', () =>
-        checkNeutral(AppColorPalette.retroDark, 'retroDark'));
-
-    test('retroLight accent tokens carry real mustard/rust chroma', () =>
-        checkAccented(AppColorPalette.retroLight, 'retroLight'));
-    test('retroDark accent tokens carry real mustard/rust chroma', () =>
-        checkAccented(AppColorPalette.retroDark, 'retroDark'));
-
-    test('danger stays a distinct hue family from success in both brightnesses', () {
-      // Severity used to be encoded in value alone (monochrome); now that
-      // Retro has real hues, danger (rust) and success (olive) must sit far
-      // enough apart in hue that they're never confusable with each other.
-      for (final retro in [AppColorPalette.retroLight, AppColorPalette.retroDark]) {
-        final dangerHue = HSLColor.fromColor(retro.danger).hue;
-        final successHue = HSLColor.fromColor(retro.success).hue;
-        final gap = (dangerHue - successHue).abs();
-        final wrapped = gap > 180 ? 360 - gap : gap;
-        expect(wrapped, greaterThan(60),
-            reason:
-                '${retro.isDark ? "retroDark" : "retroLight"} danger ($dangerHue°) too close to success ($successHue°)');
-      }
+  group('Sport mode (Lime Carbon)', () {
+    test('sportDark uses high-contrast pitch carbon background with electric lime', () {
+      expect(AppColorPalette.sportDark.background, const Color(0xFF0D0D0D));
+      expect(AppColorPalette.sportDark.primary, const Color(0xFFC8FF3D));
+      expect(AppColorPalette.sportDark.secondary, const Color(0xFFD633FF));
+      expect(AppColorPalette.sportDark.isDark, isTrue);
     });
 
-    test('keeps a full-strength rule rather than a hairline tint', () {
-      // The heavy rule is the direction; softening it to a tint of the
-      // background would leave a bland theme. Both palettes' border matches
-      // their own `ink` exactly — retroLight's is black-on-cream, retroDark's
-      // inverts `ink` itself to be the pale tone, so the rule is still the
-      // boldest mark available either way. See the palette's doc comment.
-      expect(AppColorPalette.retroLight.border.toARGB32(),
-          AppColorPalette.retroLight.ink.toARGB32());
-      expect(AppColorPalette.retroDark.border.toARGB32(),
-          AppColorPalette.retroDark.ink.toARGB32());
+    test('sportLight uses technical daylight background with deep olive', () {
+      expect(AppColorPalette.sportLight.background, const Color(0xFFF7F8F4));
+      expect(AppColorPalette.sportLight.primary, const Color(0xFF5C7A1E));
+      expect(AppColorPalette.sportLight.secondary, const Color(0xFFA82BC0));
+      expect(AppColorPalette.sportLight.isDark, isFalse);
+    });
+  });
+
+  group('Adventure mode (Analyst Blue & Nocturne)', () {
+    test('adventureDark uses midnight navy with cyan telemetry', () {
+      expect(AppColorPalette.adventureDark.background, const Color(0xFF0B1C2C));
+      expect(AppColorPalette.adventureDark.primary, const Color(0xFF25C0E6));
+      expect(AppColorPalette.adventureDark.secondary, const Color(0xFFF3906D));
+      expect(AppColorPalette.adventureDark.isDark, isTrue);
     });
 
-    test('opts into the hard offset shadow', () {
-      // The "8px 8px 0 #1a1a1a" no-blur shadow is as much a part of the
-      // Rawblock direction as the color story — see AppCard/StatCard.
-      expect(AppColorPalette.retroLight.hasHardShadow, isTrue);
-      expect(AppColorPalette.retroDark.hasHardShadow, isTrue);
+    test('adventureLight uses glacier ice background with console cyan', () {
+      expect(AppColorPalette.adventureLight.background, const Color(0xFFF2F7FA));
+      expect(AppColorPalette.adventureLight.primary, const Color(0xFF0A7F9E));
+      expect(AppColorPalette.adventureLight.secondary, const Color(0xFFC15A38));
+      expect(AppColorPalette.adventureLight.isDark, isFalse);
+    });
+  });
+
+  group('Daily mode (Calm & Collected)', () {
+    test('dailyLight uses warm cream with sage green', () {
+      expect(AppColorPalette.dailyLight.background, const Color(0xFFF8F5EF));
+      expect(AppColorPalette.dailyLight.primary, const Color(0xFF537D5C));
+      expect(AppColorPalette.dailyLight.secondary, const Color(0xFFBD8D65));
+      expect(AppColorPalette.dailyLight.isDark, isFalse);
+    });
+
+    test('dailyDark uses warm charcoal with soft sage', () {
+      expect(AppColorPalette.dailyDark.background, const Color(0xFF17170F));
+      expect(AppColorPalette.dailyDark.primary, const Color(0xFFA8C7AD));
+      expect(AppColorPalette.dailyDark.secondary, const Color(0xFFDBB597));
+      expect(AppColorPalette.dailyDark.isDark, isTrue);
     });
   });
 }

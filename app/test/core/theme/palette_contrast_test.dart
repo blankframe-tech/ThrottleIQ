@@ -22,8 +22,7 @@ void main() {
       test('${mode.name}/${brightness.name} primary button text meets WCAG AA',
           () {
         final palette = AppColorPalette.forMode(mode, brightness);
-        final fg = AppTheme.primaryButtonForeground(palette,
-            isRetro: mode == AppColorMode.retro);
+        final fg = AppTheme.primaryButtonForeground(palette);
         final ratio = contrastRatio(palette.primary, fg);
         expect(ratio, greaterThanOrEqualTo(4.5),
             reason: '${mode.name}/${brightness.name}: '
@@ -32,8 +31,8 @@ void main() {
     }
   }
 
-  test('calmingLight keeps the old sage as the non-text highlight', () {
-    expect(AppColorPalette.calmingLight.primary, const Color(0xFF537D5C));
-    expect(AppColorPalette.calmingLight.primaryHighlight, const Color(0xFF84A98B));
+  test('dailyLight keeps the old sage as the non-text highlight', () {
+    expect(AppColorPalette.dailyLight.primary, const Color(0xFF537D5C));
+    expect(AppColorPalette.dailyLight.primaryHighlight, const Color(0xFF84A98B));
   });
 }

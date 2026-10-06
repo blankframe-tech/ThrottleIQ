@@ -13,12 +13,16 @@ _Last updated: 2026-10-07 · Branch: `main`_
   The iOS **release** build of `ed8fd34` is installed and launched on the founder's iPhone 15 (iOS 27).
   It was built from a clean worktree of `main`, so the parallel session's uncommitted edits weren't in it.
   Photos on posts and the paddock counts have not been tried on the device yet.
-- Still open from the first iPhone debug run: issues_open §97 (hidden ListTile ripple, a 3 px
-  overflow, "Invalid image data").
-- **Parallel work, not on `main`:** `feature/three-theme-modes` (pushed, `c3a74fe`) is another session's
-  unfinished three-theme-modes / appearance-picker / lean-arc and g-force widgets. It was committed as
-  WIP on request. `flutter analyze` shows 16 issues there (tests still use the removed `AppColorMode`
-  values `calming`/`carbonMono`/`retro`). Finish and clean it up before merging.
+- Identified flaws and exact fixes logged in `issues_open.md` §97:
+  - **§97.1 ListTile inside coloured DecoratedBox assertion:** In `auto_tracking_tile.dart:31-40` & `222-231`, `Container(decoration: ...)` wraps `SwitchListTile` in a `#14151F` box without a `Material`, triggering the framework assertion on `RecordScreen` launch. Also in `route_detail_screen.dart:183`, `save_route_screen.dart:180`, and `places_list_screen.dart:156,164` (ListTile inside PopupMenuItem). Fix: wrap in `Material(color: context.palette.surface, shape: RoundedRectangleBorder(...), clipBehavior: Clip.antiAlias, child: Column(...))` and replace menu ListTiles with `Row`s.
+  - **§97.2 3.0 px RenderFlex overflow (×2):** In `places_map_view.dart:28`, `placesCarouselHeight = 196`. `PlaceCard(compact: true)` measures 199.0 px when highlighted on iOS (iPhone 15) with SF Pro line-heights and native button tap padding (lacking `shrinkWrap`), overflowing by 3.0 px across the 2 pre-rendered cards in `PageView`. Fix: bump carousel height to 208 in `places_map_view.dart:28`, add `tapTargetSize: MaterialTapTargetSize.shrinkWrap` to `placeActionButtonStyle` in `place_card.dart:23`, and bump ribbon height to 52 in `places_list_screen.dart:348`.
+  - **§97.3 Invalid image data bursts (10+):** `UserAvatar` (`user_avatar.dart:20-34`) uses `CircleAvatar` without `onBackgroundImageError`, throwing unhandled decode errors on feed/pulse when avatar URLs fail, and leaving a blank circle without initials fallback. Fix: refactor to `ClipOval` + `CachedNetworkImage` with `placeholder` & `errorWidget` rendering the initials fallback; add `errorImage` to `TileLayer` in `app_tile_layer.dart:120`.
+  - **§97.4 Place photos missing in detail screen:** `AddPlaceScreen` uploads photos and `PlaceEntity` holds `photoUrls`, but `PlaceDetailScreen` has no photos gallery. Fix: add photo banner/gallery in `PlaceDetailScreen`.
+  - **§97.5 SavedPlacesTab eager list:** `saved_places_tab.dart:69` uses eager `ListView(children: ...)`. Fix: refactor to `ListView.builder` per §91.4.
+  - **§97.6 Web crash hazard with Platform.isIOS:** In `place_launch_actions.dart:94`, `Platform.isIOS` throws on Flutter Web. Fix: use `defaultTargetPlatform == TargetPlatform.iOS`.
+  - **§97.7 Inconsistent imports:** `forum_post_model.dart:2-3` uses package imports. Fix: normalize to relative imports.
+  - **§97.8 Partial photo upload error feedback:** In `forum_thread_screen.dart:326`, failures in photo uploads show generic Firestore errors. Fix: wrap in try-catch with specific photo upload error feedback.
+- **Widgets & Theme system on `main`:** Three theme modes (`Daily`, `Sport`, `Adventure`) with appearance picker and high-contrast Carbon Mono tokens. Added modular cockpit widgets (`DualLeanArcGauge`, `GForceFrictionCircle`, `ConsumablesHealthCard`), and OS-level widgets: Android AppWidget (`ApexHunterWidgetProvider`) and iOS WidgetKit / Lock Screen accessory families (`ThrottleIQApexHunterWidget`, `ThrottleIQRideStatsWidget`, `ThrottleIQMaintenanceWidget`). Static analysis is 100% clean and full test suite passes (1,667 tests).
 
 ## 2026-10-07 (later): Forums "Pit Wall" redesign — same feature branch, not on a device yet
 
