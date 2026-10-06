@@ -1670,29 +1670,38 @@ Tecno or Redmi would check all three.
 
 ## 97. Places/Forums redesign — first iPhone debug run & audit findings (2026-10-07, branch `feature/places-forums-reimagine`)
 
-Debug build on iPhone 15 (iOS 27). The app launched and ran without crashing. Follow-up audit identified the exact sources and fixes for each logged finding, plus two feature/architecture gaps:
+Debug build on iPhone 15 (iOS 27). The app launched and ran without crashing. Follow-up audit identified the exact sources and fixes for each logged finding, plus feature/architecture flaws:
 
 - **97.1 ListTile inside a coloured DecoratedBox — LOW.** Framework assertion: "ListTile background
   color or ink splashes may be invisible".
-  - **Source identified:** `places_list_screen.dart:156,164` — inside the AppBar's `PopupMenuButton<String>`,
-    `PopupMenuItem`'s child is set to `ListTile`. `PopupMenuItem` already handles tap gestures and splashes
-    on a themed surface card (`#14151F`), so nesting a `ListTile` inside it produces conflicting ink splashes
-    and triggers the assertion.
-  - **Fix:** Replace `ListTile` inside both `PopupMenuItem` widgets with a standard `Row(children: [Icon(...), SizedBox(width: 12), Expanded(child: Text(...))])`.
+  - **Sources identified:**
+    1. Primary: `auto_tracking_tile.dart:31-40` & `222-231` — `Container(decoration: BoxDecoration(color: context.palette.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: context.palette.border)))` wraps `SwitchListTile`. In dark mode, `surface` is `#14151F` (the exact hex in the assertion). `RecordScreen` loads this tile on app startup; Flutter's `ListTile._debugCheckBackgroundIsHidden` detects the colored `DecoratedBox` without an intervening `Material`, throwing the assertion because ink ripple splashes are occluded.
+    2. Route screens: `route_detail_screen.dart:183` and `save_route_screen.dart:180` — both wrap `SwitchListTile` in a rounded `#14151F` `Container` decoration.
+    3. Overflow menu: `places_list_screen.dart:156,164` — inside the AppBar's `PopupMenuButton<String>`, `PopupMenuItem`'s child is set to `ListTile`. `PopupMenuItem` already handles ink on a themed surface card, so nesting a `ListTile` inside it produces conflicting ink splashes.
+  - **Fix:** In `auto_tracking_tile.dart`, `route_detail_screen.dart`, and `save_route_screen.dart`, replace `Container(decoration: ...)` with `Material(color: context.palette.surface, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: context.palette.border)), clipBehavior: Clip.antiAlias, child: Column(...))`. In `places_list_screen.dart`, replace `ListTile` inside both `PopupMenuItem` widgets with a standard `Row(children: [Icon(...), SizedBox(width: 12), Expanded(child: Text(...))])`.
 - **97.2 RenderFlex overflowed by 3.0 px on the bottom (×2) — LOW.**
   - **Source identified:**
-    1. Category chip ribbon (`places_list_screen.dart:348`) sits in a fixed `height: 48` `SizedBox` with vertical padding `6`. On iOS devices with 3x fractional pixel scales (iPhone 15) and dynamic font scaling, the chip container (`_CategoryChip` with text, count badge, and vertical padding 1) exceeds the 36 dp remaining height by 3 px.
-    2. Map carousel (`places_map_view.dart:28,323`) has `placesCarouselHeight = 196`. When `PlaceCard(compact: true)` has a place name or action buttons with enlarged system accessibility fonts, it exceeds 196 dp.
-  - **Fix:** Bump ribbon height in `places_list_screen.dart:348` from `48` to `52` (or reduce vertical padding to `4`). In `places_map_view.dart:28`, bump `placesCarouselHeight` from `196` to `204`, and enforce strict single-line truncation on `PlaceCard` subtitle.
+    1. Map carousel (`places_map_view.dart:28,323`): `placesCarouselHeight = 196`. In `place_card.dart:66-192`, `PlaceCard(compact: true)` has Category icon row (40px) + SizedBox(8) + `PlaceRatingBadges` pill (~24px) + SizedBox(6) + Divider(1) + Action buttons row (`minimumSize: Size(0, 40)`) + Card padding (20px) + AppCard border (2px) + Highlight border when selected (`DecoratedBox`, 4px). On iOS (iPhone 15) with SF Pro system typography line heights and default button tap padding without `shrinkWrap`, the highlighted card measures exactly **199.0 px**. `199.0 px - 196.0 px = exactly 3.0 px overflow`. It logs `(×2)` because `PageView.builder` with `viewportFraction: 0.9` renders page 0 and pre-renders page 1 simultaneously.
+    2. Category chip ribbon (`places_list_screen.dart:348`): sits in a fixed `height: 48` `SizedBox` with vertical padding `6`. With enlarged system accessibility fonts, the chip container can also exceed the 36 dp remaining height.
+  - **Fix:** In `places_map_view.dart:28`, bump `placesCarouselHeight` from `196` to `208`. In `place_card.dart:23`, add `tapTargetSize: MaterialTapTargetSize.shrinkWrap` to `placeActionButtonStyle`. In `places_list_screen.dart:348`, bump ribbon height from `48` to `52`.
 - **97.3 `Exception: Invalid image data` — LOW/MEDIUM.**
-  - **Source identified:** `user_avatar.dart:23` uses `CircleAvatar(backgroundImage: CachedNetworkImageProvider(photoUrl!))` with NO `onBackgroundImageError` callback. When an avatar URL is invalid, 404s, or returns non-image data (common with seeded QA test users or slow network handshakes), `CachedNetworkImageProvider` throws an uncaught decode exception into the framework. Because `UserAvatar` renders for every review in `PlaceDetailScreen` and every post in Forums Pit Wall, it fires in bursts (10+ times).
-  - **Fix:** Add `onBackgroundImageError: hasPhoto ? (_, __) {} : null` to `CircleAvatar` in `user_avatar.dart`, letting it gracefully fall back to the initials child.
+  - **Source identified:** `user_avatar.dart:20-34` uses `CircleAvatar(backgroundImage: hasPhoto ? CachedNetworkImageProvider(photoUrl!) : null, child: hasPhoto ? null : Text(...))` with NO `onBackgroundImageError` callback. When an avatar URL is invalid, 404s, or returns non-image HTML/corrupt bytes (common with seeded QA test users or broken URLs), `CachedNetworkImageProvider` fails during image decoding (`instantiateImageCodec`), and Flutter's default listener throws an uncaught decode exception into the framework zone. Because `UserAvatar` renders for every post in `ForumsPulseView`, every card in `_FeedTab`, and every rider in `_PeopleTab`, opening those views triggers bursts of 10+ unhandled exceptions. Additionally, `child: hasPhoto ? null : ...` leaves the avatar as a blank circle instead of displaying user initials.
+  - **Fix:** Refactor `UserAvatar` to use `CachedNetworkImage` inside `ClipOval` with `placeholder: (_, __) => fallback` and `errorWidget: (_, __, ___) => fallback`, ensuring no unhandled decode exceptions escape and fallback initials are always shown. Also in `app_tile_layer.dart:120`, pass `errorImage: MemoryImage(Uint8List.fromList(_transparentPixelPng))` to `TileLayer` to catch any OSM rate-limit HTML responses.
 - **97.4 Place photos uploaded in `AddPlaceScreen` are never displayed in `PlaceDetailScreen` — MEDIUM.**
   - **The Flaw:** `AddPlaceScreen:182-195` allows riders to upload place photos via Cloudinary, `PlaceEntity` and `PlaceModel` persist `photoUrls`, but `PlaceDetailScreen` has no photos gallery or header photo widget. Any photos submitted by riders are saved in the cloud but never shown to anyone.
   - **Fix:** Add a horizontal photo thumbnail row or hero image banner at the top of `PlaceDetailScreen` when `place.photoUrls.isNotEmpty`.
 - **97.5 `SavedPlacesTab` eager list instantiation (§91.4) — LOW.**
   - **The Flaw:** `saved_places_tab.dart:69-91` renders saved places using an eager `ListView(children: [contributed, ...for (h in hits) PlaceCard(...)])`. When a rider accumulates 20+ saved bookmarks, all `PlaceCard` widgets and buttons are instantiated eagerly rather than lazily.
   - **Fix:** Convert `SavedPlacesTab` list to `ListView.builder` or `ListView.separated`.
+- **97.6 Web crash hazard in `place_launch_actions.dart:94` — LOW.**
+  - **The Flaw:** `place_launch_actions.dart:94` uses `Platform.isIOS` from `dart:io`. On Flutter Web, accessing `Platform` properties throws `UnsupportedOperation: Platform._operatingSystem`.
+  - **Fix:** Import `package:flutter/foundation.dart` and use `defaultTargetPlatform == TargetPlatform.iOS`.
+- **97.7 Inconsistent package imports in `forum_post_model.dart` — LOW.**
+  - **The Flaw:** `forum_post_model.dart:2-3` uses package imports (`package:throttleiq/...`) while the rest of `features/forums/` uses relative imports (`../../../../core/...`, `../../domain/...`).
+  - **Fix:** Switch to relative imports for codebase consistency.
+- **97.8 Partial photo upload error handling in `forum_thread_screen.dart:326` — LOW.**
+  - **The Flaw:** In `forum_thread_screen.dart:326`, `for (final path in _photoPaths) await repo.uploadPostPhoto(...)` executes in a loop. If upload 3 of 4 fails, earlier uploads remain in Cloudinary without a post pointing to them, and the error toast displays a generic Firestore error (`mapFirestoreError`) rather than informing the user that photo upload specifically failed.
+  - **Fix:** Wrap photo uploads in a dedicated try-catch with a specific photo upload error message and non-fatal crash reporting.
 - App Check debug-token exchange returns 403 `SERVICE_DISABLED`. This isn't from the redesign; see
   §62.12 / §83.19.
 

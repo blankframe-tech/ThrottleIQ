@@ -35,11 +35,22 @@
 - [ ] **6. Documentation**
   - [ ] **Write a PRD in ASD-STE100 format.** Cover the app (rides, forum, profiles, chat, trust & safety) and the Firebase backend: problem, users, goals and non-goals, functional and non-functional requirements, constraints and success metrics. Follow ASD-STE100 (Simplified Technical English): use only approved words and their approved meanings, keep procedural sentences to 20 words or fewer and descriptive sentences to 25 or fewer, write one instruction per sentence, use the active voice, and use the imperative for procedures. Save it as `DOCS/PRD.md`.
 
-- [ ] **7. Places Hub Redesign Follow-ups & Fixes (§97)**
-  - [ ] **Fix §97.1 (ListTile in PopupMenuItem):** Replace `ListTile` inside `PopupMenuItem` with `Row` in `places_list_screen.dart:156,164`.
-  - [ ] **Fix §97.2 (RenderFlex 3.0 px overflow):** Bump ribbon height to 52 in `places_list_screen.dart:348` and carousel height to 204 in `places_map_view.dart:28`.
-  - [ ] **Fix §97.3 (Invalid image data bursts):** Add `onBackgroundImageError: hasPhoto ? (_, __) {} : null` in `user_avatar.dart:23`.
+- [ ] **7. Places Hub & Forums Pit Wall Redesign Follow-ups & Fixes (§97)**
+  - [ ] **Fix §97.1 (ListTile inside coloured DecoratedBox assertion):**
+    - Replace `Container(decoration: BoxDecoration(color: context.palette.surface...))` with `Material(color: context.palette.surface, shape: RoundedRectangleBorder(...), clipBehavior: Clip.antiAlias, child: Column(...))` in `auto_tracking_tile.dart:31-40` & `222-231`.
+    - Apply same `Material` wrapper to `route_detail_screen.dart:183` and `save_route_screen.dart:180`.
+    - Replace `ListTile` inside `PopupMenuItem` with `Row(children: [Icon(...), SizedBox(width: 12), Expanded(child: Text(...))])` in `places_list_screen.dart:156,164`.
+  - [ ] **Fix §97.2 (RenderFlex 3.0 px overflow ×2):**
+    - Bump carousel height from `196` to `208` in `places_map_view.dart:28`.
+    - Add `tapTargetSize: MaterialTapTargetSize.shrinkWrap` to `placeActionButtonStyle` in `place_card.dart:23`.
+    - Bump ribbon height to `52` in `places_list_screen.dart:348`.
+  - [ ] **Fix §97.3 (Invalid image data bursts of 10+):**
+    - Refactor `user_avatar.dart:20-34` from `CircleAvatar(backgroundImage: CachedNetworkImageProvider(...))` to `ClipOval` + `CachedNetworkImage` with `placeholder: (_, __) => fallback` and `errorWidget: (_, __, ___) => fallback` so failed images gracefully display user initials and no unhandled decode exceptions escape into the zone.
+    - Add `errorImage: MemoryImage(Uint8List.fromList(_transparentPixelPng))` to `TileLayer` in `app_tile_layer.dart:120`.
   - [ ] **Fix §97.4 (Place photos in detail view):** Add photo thumbnails/banner in `PlaceDetailScreen` when `place.photoUrls.isNotEmpty`.
   - [ ] **Fix §97.5 (Lazy list in Saved tab):** Refactor `SavedPlacesTab` (`saved_places_tab.dart:69`) from eager `ListView` to `ListView.builder` per §91.4.
+  - [ ] **Fix §97.6 (Web crash risk with Platform.isIOS):** Replace `Platform.isIOS` in `place_launch_actions.dart:94` with `defaultTargetPlatform == TargetPlatform.iOS` from `package:flutter/foundation.dart`.
+  - [ ] **Fix §97.7 (Inconsistent imports):** Standardize `forum_post_model.dart:2-3` imports to relative paths (`../../../../core/...`, `../../domain/...`).
+  - [ ] **Fix §97.8 (Partial photo upload failure):** Wrap `uploadPostPhoto` loop in `forum_thread_screen.dart:326` in dedicated try-catch with specific photo upload error feedback.
 
 - [ ] **Next Steps if Token Limit Reached**: Continue from the first unchecked item in this list.
