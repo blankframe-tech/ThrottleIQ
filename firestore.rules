@@ -193,6 +193,22 @@ service cloud.firestore {
 
     // A forum post's shared ride / maintenance card (ForumAttachment.toMap):
     // a fixed key set, a known kind, and caps matching the client's.
+    // A forum post's photos: at most 4, each a Cloudinary upload in the
+    // author's own `forumPhotos/<uid>/` folder (ForumRepository.uploadPostPhoto),
+    // so a post can't hotlink arbitrary hosts into every viewer's feed.
+    function forumImageUrlValid(url, uid) {
+      return url is string && url.size() <= 1000 &&
+        url.matches('^https://res\\.cloudinary\\.com/vjvcigkt/image/upload/(.*/)?forumPhotos/' + uid + '/.+');
+    }
+
+    function forumImagesValid(urls, uid) {
+      return urls is list && urls.size() >= 1 && urls.size() <= 4 &&
+        forumImageUrlValid(urls[0], uid) &&
+        (urls.size() < 2 || forumImageUrlValid(urls[1], uid)) &&
+        (urls.size() < 3 || forumImageUrlValid(urls[2], uid)) &&
+        (urls.size() < 4 || forumImageUrlValid(urls[3], uid));
+    }
+
     function forumAttachmentValid(a) {
       return a is map &&
         a.keys().hasOnly(['kind', 'refId', 'title', 'subtitle', 'bikeId']) &&
@@ -945,15 +961,18 @@ service cloud.firestore {
         // Pit Wall fields (all optional, so pre-redesign clients still pass):
         // `postType` from the fixed set, a post always starts unsolved with
         // no accepted reply, a capped `authorBike` byline, and an
-        // `attachment` snapshot card (forumAttachmentValid).
+        // `attachment` snapshot card (forumAttachmentValid), and up to four
+        // own-folder Cloudinary `imageUrls` (forumImagesValid).
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
           request.resource.data.replyCount == 0 &&
           request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0 &&
           request.resource.data.keys().hasOnly([
             'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
             'createdAt', 'replyCount', 'upvotes', 'downvotes',
-            'postType', 'isSolved', 'authorBike', 'attachment'
+            'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls'
           ]) &&
+          (request.resource.data.get('imageUrls', null) == null ||
+           forumImagesValid(request.resource.data.imageUrls, request.auth.uid)) &&
           request.resource.data.get('postType', 'general') in
             ['troubleshoot', 'diyGuide', 'gearReview', 'general'] &&
           request.resource.data.get('isSolved', false) == false &&

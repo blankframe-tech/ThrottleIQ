@@ -10133,6 +10133,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ride on {date}'**
   String rideAttachmentTitle(String date);
+
+  /// Forum new-post sheet: button to attach photos, with how many are attached of the maximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos ({count}/{max})'**
+  String forumAddPhotos(int count, int max);
+
+  /// Forums brand paddock card: total posts across the brand and its model forums.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post} other{{count} posts}}'**
+  String paddockPosts(int count);
 }
 
 class _AppLocalizationsDelegate

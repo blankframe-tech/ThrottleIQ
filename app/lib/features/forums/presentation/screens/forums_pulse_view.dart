@@ -9,6 +9,7 @@ import '../../../../core/utils/extensions/datetime_extensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../widgets/forum_post_images.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../domain/entities/forum_post_entity.dart';
@@ -352,6 +353,10 @@ class PulsePostCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+          if (post.imageUrls.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ForumPostImages(urls: post.imageUrls, compact: true),
+          ],
           if (post.attachment != null) ...[
             const SizedBox(height: 8),
             Row(

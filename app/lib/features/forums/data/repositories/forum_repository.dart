@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../../core/utils/slugify.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../../domain/entities/forum_post_entity.dart';
@@ -133,6 +136,8 @@ class ForumRepository {
   ForumRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  late final CloudinaryUploadService _uploadService = CloudinaryUploadService();
 
   CollectionReference<Map<String, dynamic>> get _forums =>
       _firestore.collection('forums');
@@ -464,6 +469,24 @@ class ForumRepository {
     return getForumsByIds(await getFollowedForumIds(userId));
   }
 
+  /// Uploads a photo for a forum post (Cloudinary, like place and ride
+  /// photos) and returns its public URL for [ForumPostEntity.imageUrls].
+  /// Foldered per author, since the post has no id until [createPost] runs
+  /// and the account-deletion sweep matches `<kind>/<uid>/` folders.
+  Future<String> uploadPostPhoto(String uid, File file) {
+    return _uploadService.upload(file, folder: 'forumPhotos/$uid');
+  }
+
+  /// Every forum whose `brand` is one of [brands] — the brand docs and the
+  /// model forums under them — for the brand paddocks' aggregate counts.
+  /// One single-field `whereIn` query (auto-indexed), capped at [limit].
+  Future<List<ForumEntity>> getForumsForBrands(List<String> brands, {int limit = 300}) async {
+    final unique = brands.where((b) => b.trim().isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return const [];
+    final snap = await _forums.where('brand', whereIn: unique.take(30).toList()).limit(limit).get();
+    return snap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
+  }
+
   /// Creates a post in a forum and bumps its `postCount`.
   ///
   /// [postType], [authorBike] and [attachment] are the Pit Wall fields
@@ -479,6 +502,7 @@ class ForumRepository {
     ForumPostType postType = ForumPostType.general,
     String? authorBike,
     ForumAttachment? attachment,
+    List<String> imageUrls = const [],
   }) async {
     final postRef = _forums.doc(forumId).collection('posts').doc();
 
@@ -499,6 +523,7 @@ class ForumRepository {
         postType: postType,
         authorBike: authorBike,
         attachment: attachment,
+        imageUrls: imageUrls,
       ),
       'createdAt': FieldValue.serverTimestamp(),
     });

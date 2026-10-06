@@ -173,4 +173,36 @@ void main() {
       expect(post.copyWith(upvotes: 4).solutionReplyId, 'r1');
     });
   });
+
+  group('post photos', () {
+    const ok = 'https://res.cloudinary.com/vjvcigkt/image/upload/v1/forumPhotos/u/a.jpg';
+
+    test('a post without imageUrls reads as no photos', () {
+      final post = forumPostFromMap('p', {'title': 't', 'body': 'b'});
+      expect(post.imageUrls, isEmpty);
+    });
+
+    test('keeps allow-listed URLs, drops junk, caps at the max', () {
+      expect(
+        forumImageUrlsFromRaw([ok, 'https://evil.example.com/x.jpg', 7, '', ok, ok, ok, ok]),
+        List.filled(kForumPostMaxImages, ok),
+      );
+      expect(forumImageUrlsFromRaw('nope'), isEmpty);
+    });
+
+    test('newForumPostFields writes imageUrls only when there are photos', () {
+      Map<String, dynamic> fields(List<String> urls) => newForumPostFields(
+            forumId: 'f',
+            userId: 'u',
+            userName: 'n',
+            userPhotoUrl: '',
+            title: 't',
+            body: 'b',
+            imageUrls: urls,
+          );
+      expect(fields(const []).containsKey('imageUrls'), isFalse);
+      expect(fields([ok])['imageUrls'], [ok]);
+      expect(fields(List.filled(6, ok))['imageUrls'], hasLength(kForumPostMaxImages));
+    });
+  });
 }

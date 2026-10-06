@@ -5890,4 +5890,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String rideAttachmentTitle(String date) {
     return 'Ride on $date';
   }
+
+  @override
+  String forumAddPhotos(int count, int max) {
+    return 'Add photos ($count/$max)';
+  }
+
+  @override
+  String paddockPosts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts',
+      one: '1 post',
+    );
+    return '$_temp0';
+  }
 }

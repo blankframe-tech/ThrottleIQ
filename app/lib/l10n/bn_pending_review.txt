@@ -1485,3 +1485,7 @@ savedPlacesContributedBody
 addPlaceFeaturesLabel
 addPlaceFeaturesHint
 placesResultCount
+
+# batch: forum-photos-paddock-stats
+forumAddPhotos
+paddockPosts

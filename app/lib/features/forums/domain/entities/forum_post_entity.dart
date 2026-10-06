@@ -23,6 +23,9 @@ enum ForumPostType {
 /// Mirrors firestore.rules' cap on a post's `authorBike`.
 const int kAuthorBikeMaxLength = 80;
 
+/// Mirrors firestore.rules' cap on a post's `imageUrls` (forumImagesValid).
+const int kForumPostMaxImages = 4;
+
 /// What a [ForumAttachment] points at.
 enum ForumAttachmentKind {
   ride,
@@ -119,6 +122,10 @@ class ForumPostEntity extends Equatable {
 
   final ForumAttachment? attachment;
 
+  /// Photos attached to the post (Cloudinary URLs, at most
+  /// [kForumPostMaxImages]). Empty on posts written before photos existed.
+  final List<String> imageUrls;
+
   /// The signed-in rider's own vote on this post: 1, -1, or null (none).
   /// Entity-only — hydrated from the `votes/{uid}` subcollection at read
   /// time, never stored on the post doc itself (mirrors
@@ -142,6 +149,7 @@ class ForumPostEntity extends Equatable {
     this.solutionReplyId,
     this.authorBike,
     this.attachment,
+    this.imageUrls = const [],
     this.myVote,
   });
 
@@ -181,6 +189,7 @@ class ForumPostEntity extends Equatable {
           : solutionReplyId as String?,
       authorBike: authorBike,
       attachment: attachment,
+      imageUrls: imageUrls,
       myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
     );
   }
@@ -203,6 +212,7 @@ class ForumPostEntity extends Equatable {
         solutionReplyId,
         authorBike,
         attachment,
+        imageUrls,
         myVote,
       ];
 }

@@ -65,11 +65,13 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(directoryForumStatsProvider).valueOrNull ?? const {};
+    final paddockStats = ref.watch(brandPaddockStatsProvider).valueOrNull;
 
     return RefreshIndicator(
       color: context.palette.primary,
       onRefresh: () async {
         ref.invalidate(directoryForumStatsProvider);
+        ref.invalidate(brandPaddockStatsProvider);
         ref.invalidate(customForumsProvider);
         await refreshGarageForums(ref);
       },
@@ -117,6 +119,9 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
                 return _BrandPaddockCard(
                   paddock: paddock,
                   forum: stats[paddock.slug],
+                  activity: paddockStats == null
+                      ? null
+                      : paddockStats[paddock.slug] ?? BrandPaddockStats.empty,
                   resolving: _resolving == paddock.slug,
                   onTap: () => _resolveAndOpen(
                     paddock.slug,
@@ -376,12 +381,17 @@ class _GarageHeroCard extends ConsumerWidget {
 class _BrandPaddockCard extends StatelessWidget {
   final BrandPaddock paddock;
   final ForumEntity? forum;
+
+  /// Brand + model forum totals; null while they load (or if the read
+  /// failed), when the card falls back to the brand forum's own counts.
+  final BrandPaddockStats? activity;
   final bool resolving;
   final VoidCallback onTap;
 
   const _BrandPaddockCard({
     required this.paddock,
     required this.forum,
+    required this.activity,
     required this.resolving,
     required this.onTap,
   });
@@ -424,18 +434,29 @@ class _BrandPaddockCard extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2, color: accent),
                   )
                 else
-                  Text(
-                    forum == null
-                        ? context.l10n.openPaddock
-                        : context.l10n.forumMembers(forum!.followerCount),
-                    style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
-                  ),
+                  ..._activityLines(context),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+  List<Widget> _activityLines(BuildContext context) {
+    final riders = activity?.riders ?? forum?.followerCount ?? 0;
+    final posts = activity?.posts ?? forum?.postCount ?? 0;
+    final style = TextStyle(fontSize: 11, color: context.palette.textSecondary);
+    if (riders == 0 && posts == 0) {
+      return [Text(context.l10n.openPaddock, maxLines: 1, overflow: TextOverflow.ellipsis, style: style)];
+    }
+    return [
+      if (posts > 0)
+        Text(context.l10n.paddockPosts(posts),
+            maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+      if (riders > 0)
+        Text(context.l10n.forumMembers(riders),
+            maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+    ];
   }
 }
 

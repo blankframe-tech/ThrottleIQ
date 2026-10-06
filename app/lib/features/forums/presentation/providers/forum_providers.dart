@@ -509,3 +509,17 @@ final directoryForumStatsProvider =
   _keepFor(ref, kForumsHubTtl);
   return {for (final f in forums) f.id: f};
 });
+
+/// Aggregate rider/post counts for each brand paddock — the brand forum plus
+/// its model forums ([aggregateBrandPaddockStats]). One capped `brand
+/// whereIn` query, reused for [kForumsHubTtl]. A forum's `brand` is whatever
+/// its first rider typed, so the query also asks for the lower- and
+/// upper-case spellings (9 brands × 3 stays under whereIn's 30).
+final brandPaddockStatsProvider =
+    FutureProvider.autoDispose<Map<String, BrandPaddockStats>>((ref) async {
+  final forums = await _forumRepository.getForumsForBrands([
+    for (final p in kBrandPaddocks) ...[p.brand, p.brand.toLowerCase(), p.brand.toUpperCase()],
+  ]);
+  _keepFor(ref, kForumsHubTtl);
+  return aggregateBrandPaddockStats(forums);
+});

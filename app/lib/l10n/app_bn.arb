@@ -1671,5 +1671,7 @@
   "forumCouldNotUpdateSolution": "সমাধান আপডেট করা যায়নি: {e}",
   "shareToForum": "ফোরামে শেয়ার করুন",
   "shareToForumPick": "কোন ফোরামে শেয়ার করবেন?",
-  "rideAttachmentTitle": "{date}-এর রাইড"
+  "rideAttachmentTitle": "{date}-এর রাইড",
+  "forumAddPhotos": "ছবি যোগ করুন ({count}/{max})",
+  "paddockPosts": "{count}টি পোস্ট"
 }

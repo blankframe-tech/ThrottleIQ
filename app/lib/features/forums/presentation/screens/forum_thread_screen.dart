@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -18,6 +21,7 @@ import '../../../../core/i18n/l10n_context.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/forum_author_bike.dart';
 import '../widgets/forum_post_badges.dart';
+import '../widgets/forum_post_images.dart';
 
 /// Post list for a single forum, with a "New post" FAB.
 ///
@@ -231,6 +235,8 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
           : ForumPostType.general;
   late ForumAttachment? _attachment = widget.initialAttachment;
   bool _attachBike = true;
+  // Local paths of photos picked for the post; uploaded on submit.
+  final List<String> _photoPaths = [];
   // Only set once the rider has tried to submit — an empty field isn't an
   // error until then (issues §54: submitting blank/title-only used
   // to just silently do nothing, with no inline error, shake, or disabled
@@ -243,6 +249,56 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
     _titleController.dispose();
     _bodyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    if (_photoPaths.length >= kForumPostMaxImages) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: context.palette.surface,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.takeAPhoto,
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.chooseFromGallery,
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    try {
+      final picker = ImagePicker();
+      final remaining = kForumPostMaxImages - _photoPaths.length;
+      final List<XFile> picked;
+      if (source == ImageSource.gallery && remaining > 1) {
+        picked = await picker.pickMultiImage(
+            imageQuality: 80, maxWidth: 2048, maxHeight: 2048, limit: remaining);
+      } else {
+        final one = await picker.pickImage(
+            source: source, imageQuality: 80, maxWidth: 2048, maxHeight: 2048);
+        picked = [if (one != null) one];
+      }
+      if (picked.isEmpty || !mounted) return;
+      setState(() {
+        _photoPaths.addAll(picked.take(remaining).map((x) => x.path));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.couldNotOpenCamera(e))),
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -264,8 +320,13 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
 
     setState(() => _submitting = true);
     final String postId;
+    final List<String> imageUrls;
     try {
-      postId = await ForumRepository().createPost(
+      final repo = ForumRepository();
+      imageUrls = [
+        for (final path in _photoPaths) await repo.uploadPostPhoto(user.uid, File(path)),
+      ];
+      postId = await repo.createPost(
         forumId: widget.forumId,
         userId: user.uid,
         userName: user.displayName ?? 'Rider',
@@ -275,6 +336,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         postType: _postType,
         authorBike: authorBike,
         attachment: _attachment,
+        imageUrls: imageUrls,
       );
     } catch (e) {
       if (!mounted) return;
@@ -298,6 +360,7 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
             postType: _postType,
             authorBike: authorBike,
             attachment: _attachment,
+            imageUrls: imageUrls,
           ),
         );
     Navigator.pop(context, true);
@@ -381,7 +444,26 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
               onRemove: () => setState(() => _attachment = null),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          if (_photoPaths.isNotEmpty) ...[
+            ForumPickedPhotos(
+              paths: _photoPaths,
+              onRemove: (i) => setState(() => _photoPaths.removeAt(i)),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('post_add_photo'),
+              onPressed: _submitting || _photoPaths.length >= kForumPostMaxImages
+                  ? null
+                  : _pickPhoto,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(context.l10n.forumAddPhotos(_photoPaths.length, kForumPostMaxImages)),
+            ),
+          ),
+          const SizedBox(height: 4),
           if (bike != null)
             SwitchListTile(
               key: const Key('post_attach_bike'),
@@ -589,6 +671,10 @@ class _PostCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+          if (post.imageUrls.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ForumPostImages(urls: post.imageUrls, compact: true),
+          ],
           if (post.attachment != null) ...[
             const SizedBox(height: 8),
             ForumAttachmentCard(

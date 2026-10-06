@@ -1,4 +1,5 @@
 import '../../../core/utils/slugify.dart';
+import 'entities/forum_entity.dart';
 
 /// The fixed part of the Hubs directory: brand paddocks and topic boards.
 ///
@@ -58,3 +59,40 @@ List<String> directoryForumIds() => [
       for (final b in kBrandPaddocks) b.slug,
       for (final t in TopicBoard.values) t.slug,
     ];
+
+/// A brand paddock's activity: the brand forum plus every model forum under
+/// that brand. Riders post and follow in model forums ("Yamaha MT-15"), and
+/// the brand thread merges those posts in, so the brand doc's own counts
+/// alone read as zero while the paddock is busy.
+class BrandPaddockStats {
+  final int riders;
+  final int posts;
+  const BrandPaddockStats({required this.riders, required this.posts});
+
+  static const empty = BrandPaddockStats(riders: 0, posts: 0);
+}
+
+/// Sums follower and post counts per paddock slug over [forums] (brand and
+/// model forums, matched on `brand`, case-insensitively). General/custom
+/// forums are left out even if they share a brand string. `riders` sums
+/// follows across forums, so a rider following two of a brand's forums
+/// counts twice.
+Map<String, BrandPaddockStats> aggregateBrandPaddockStats(
+  List<ForumEntity> forums, {
+  List<BrandPaddock> paddocks = kBrandPaddocks,
+}) {
+  final byBrand = {for (final p in paddocks) p.brand.toLowerCase(): p.slug};
+  final riders = <String, int>{};
+  final posts = <String, int>{};
+  for (final f in forums) {
+    if (f.type != ForumType.brand && f.type != ForumType.bikeModel) continue;
+    final slug = byBrand[f.brand.trim().toLowerCase()];
+    if (slug == null) continue;
+    riders[slug] = (riders[slug] ?? 0) + f.followerCount;
+    posts[slug] = (posts[slug] ?? 0) + f.postCount;
+  }
+  return {
+    for (final slug in {...riders.keys, ...posts.keys})
+      slug: BrandPaddockStats(riders: riders[slug] ?? 0, posts: posts[slug] ?? 0),
+  };
+}

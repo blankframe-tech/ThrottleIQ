@@ -15,6 +15,7 @@ import '../../domain/forum_solution.dart';
 import '../providers/forum_bookmarks_provider.dart';
 import '../providers/forum_providers.dart';
 import '../widgets/forum_post_badges.dart';
+import '../widgets/forum_post_images.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
 /// Post body + replies list + reply composer.
@@ -287,6 +288,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           post.body,
           style: TextStyle(fontSize: 14, color: context.palette.textPrimary, height: 1.4),
         ),
+        if (post.imageUrls.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          ForumPostImages(urls: post.imageUrls),
+        ],
         if (post.attachment != null) ...[
           const SizedBox(height: 12),
           ForumAttachmentCard(

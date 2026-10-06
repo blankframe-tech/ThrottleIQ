@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:throttleiq/features/forums/data/repositories/forum_repository.dart';
 import 'package:throttleiq/features/forums/domain/entities/forum_entity.dart';
+import 'package:throttleiq/features/forums/domain/forum_directory.dart';
 import 'package:throttleiq/features/forums/presentation/providers/forum_providers.dart';
 import 'package:throttleiq/features/forums/presentation/screens/forums_home_screen.dart';
 import 'package:throttleiq/features/garage/domain/entities/bike_entity.dart';
@@ -64,6 +65,11 @@ void main() {
                   createdAt: DateTime(2026),
                 ),
               }),
+          // The brand doc alone has no posts; the paddock shows brand +
+          // model-forum totals.
+          brandPaddockStatsProvider.overrideWith((ref) async => const {
+                'yamaha': BrandPaddockStats(riders: 45, posts: 31),
+              }),
           forumsPulseFeedProvider.overrideWith((ref) async => const PulseFirstPage(
                 sources: PulseSources.empty,
                 page: ForumPostsPage(posts: [], cursor: null, hasMore: false),
@@ -91,7 +97,8 @@ void main() {
     expect(find.text('Ask owners'), findsOneWidget);
 
     expect(find.byKey(const Key('paddock_yamaha')), findsOneWidget);
-    expect(find.text('42 riders'), findsOneWidget);
+    expect(find.text('45 riders'), findsOneWidget);
+    expect(find.text('31 posts'), findsOneWidget);
 
     expect(find.text('The Wrench Bench'), findsOneWidget);
     expect(find.text('Apex Lab'), findsOneWidget);

@@ -5864,4 +5864,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String rideAttachmentTitle(String date) {
     return '$date-এর রাইড';
   }
+
+  @override
+  String forumAddPhotos(int count, int max) {
+    return 'ছবি যোগ করুন ($count/$max)';
+  }
+
+  @override
+  String paddockPosts(int count) {
+    return '$countটি পোস্ট';
+  }
 }

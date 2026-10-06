@@ -6289,3 +6289,22 @@ The Places tab was a vertical text list. It is now a map-first hub (features.md 
 Tests: places query, radar, clustering, tags/badges, saved-places DB and migration, the notifier,
 and widget tests of the hub (list, map, radar, search, save, empty/GPS/offline states, 360 dp in
 en and bn). `flutter analyze` is clean; 1609/1609 tests pass; 183/183 rules tests pass.
+
+## 97. Forums: no photos on posts; brand paddocks said "0 riders" — FIXED (2026-10-07)
+
+Reported by the founder after the first iPhone run of the Pit Wall redesign.
+
+- **97.1 No way to add a picture to a forum post.** The composer now takes up to 4 photos (camera or
+  gallery). They upload to Cloudinary `forumPhotos/<uid>/` and are written as `imageUrls`. Thread,
+  Pulse and detail views render them, with the full-screen gallery on tap. `firestore.rules`
+  `forumImagesValid` caps the list at 4 and requires each URL to be in the author's own folder. The
+  account-deletion sweep already covers `<kind>/<uid>/` folders. Tests: `forum_post_model_test.dart`
+  (parse/cap/write) and 2 new rules tests in `forum_pitwall_rules.test.js`.
+- **97.2 Brand paddocks showed "0 riders" on every brand.** The card read `followerCount` off the
+  brand forum doc only. Riders follow and post in the **model** forums ("Yamaha MT-15"), which the
+  brand thread merges in, so the brand doc stayed at 0 while the Yamaha thread was busy. Now
+  `aggregateBrandPaddockStats` sums riders and posts over the brand doc plus every model forum with
+  that brand (case-insensitive). The read is one capped `brand whereIn` query with lower/upper-case
+  variants, kept 10 min. Tests: `brand_paddock_stats_test.dart` and the updated
+  `forums_hubs_view_test.dart`. Known limit: a rider who follows two forums of one brand counts twice.
+

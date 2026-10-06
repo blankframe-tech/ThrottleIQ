@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:throttleiq/core/utils/photo_url_policy.dart';
 import 'package:throttleiq/features/forums/domain/entities/forum_post_entity.dart';
 
 /// Decodes a post doc's fields into an entity. Split from [ForumPostModel]
@@ -25,7 +26,18 @@ ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data) {
         solutionReplyId is String && solutionReplyId.isNotEmpty ? solutionReplyId : null,
     authorBike: authorBike is String && authorBike.trim().isNotEmpty ? authorBike : null,
     attachment: ForumAttachment.fromMap(data['attachment']),
+    imageUrls: forumImageUrlsFromRaw(data['imageUrls']),
   );
+}
+
+/// A post's `imageUrls`, keeping only non-empty allow-listed URLs and at most
+/// [kForumPostMaxImages] — a malformed field drops photos, never the post.
+List<String> forumImageUrlsFromRaw(Object? raw) {
+  if (raw is! List) return const [];
+  return [
+    for (final url in raw)
+      if (url is String && url.isNotEmpty && isAllowedPhotoUrl(url)) url,
+  ].take(kForumPostMaxImages).toList();
 }
 
 /// The fields a new post is created with — what `ForumRepository.createPost`
@@ -41,6 +53,7 @@ Map<String, dynamic> newForumPostFields({
   ForumPostType postType = ForumPostType.general,
   String? authorBike,
   ForumAttachment? attachment,
+  List<String> imageUrls = const [],
 }) {
   final bike = authorBike?.trim();
   return {
@@ -60,6 +73,7 @@ Map<String, dynamic> newForumPostFields({
           ? bike
           : bike.substring(0, kAuthorBikeMaxLength),
     if (attachment != null) 'attachment': attachment.toMap(),
+    if (imageUrls.isNotEmpty) 'imageUrls': imageUrls.take(kForumPostMaxImages).toList(),
   };
 }
 

@@ -6793,5 +6793,9 @@
   "shareToForumPick": "Share to which forum?",
   "@shareToForumPick": {"description": "Forums Pit Wall redesign."},
   "rideAttachmentTitle": "Ride on {date}",
-  "@rideAttachmentTitle": {"description": "Forums Pit Wall redesign.", "placeholders": {"date": {"type": "String"}}}
+  "@rideAttachmentTitle": {"description": "Forums Pit Wall redesign.", "placeholders": {"date": {"type": "String"}}},
+  "forumAddPhotos": "Add photos ({count}/{max})",
+  "@forumAddPhotos": {"description": "Forum new-post sheet: button to attach photos, with how many are attached of the maximum.", "placeholders": {"count": {"type": "int"}, "max": {"type": "int"}}},
+  "paddockPosts": "{count, plural, =1{1 post} other{{count} posts}}",
+  "@paddockPosts": {"description": "Forums brand paddock card: total posts across the brand and its model forums.", "placeholders": {"count": {"type": "int"}}}
 }

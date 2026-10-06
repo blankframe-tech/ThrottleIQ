@@ -149,6 +149,43 @@ test('a malformed attachment is refused', async () => {
   );
 });
 
+const PHOTO = (uid, n = 1) =>
+  `https://res.cloudinary.com/vjvcigkt/image/upload/v1712345/forumPhotos/${uid}/photo${n}.jpg`;
+
+test('a post with up to four own-folder photos can be created', async () => {
+  await assertSucceeds(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph1'),
+      newPost(ALICE, { imageUrls: [PHOTO(ALICE)] }))
+  );
+  await assertSucceeds(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph2'),
+      newPost(ALICE, { imageUrls: [1, 2, 3, 4].map((n) => PHOTO(ALICE, n)) }))
+  );
+});
+
+test('post photos must be own-folder Cloudinary uploads, at most four', async () => {
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph3'),
+      newPost(ALICE, { imageUrls: [1, 2, 3, 4, 5].map((n) => PHOTO(ALICE, n)) }))
+  );
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph4'),
+      newPost(ALICE, { imageUrls: ['https://evil.example.com/x.jpg'] }))
+  );
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph5'),
+      newPost(ALICE, { imageUrls: [PHOTO(MALLORY)] }))
+  );
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph6'),
+      newPost(ALICE, { imageUrls: [PHOTO(ALICE), 'https://evil.example.com/x.jpg'] }))
+  );
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph7'),
+      newPost(ALICE, { imageUrls: 'not-a-list' }))
+  );
+});
+
 // ---------------------------------------------------------------------------
 // setPostSolution
 // ---------------------------------------------------------------------------
