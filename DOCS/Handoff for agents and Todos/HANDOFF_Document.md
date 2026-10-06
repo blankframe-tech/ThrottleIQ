@@ -1308,7 +1308,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   the summary flow (§93.5).
 - [ ] Get a native speaker to review the new Bangla strings (§93.7).
 
-- [x] ~~Deploy the 2026-09-19 `firestore.rules` change~~ **DEPLOYED
+- [x] [STALE] ~~Deploy the 2026-09-19 `firestore.rules` change~~ **DEPLOYED
   2026-09-19** (`issues_fixed.md` §68) — added `ridingScoreCountsPlausible` (folded
   into `rideStatsPlausible`) so a shared ride's
   `hardBrakeCount`/`rapidAccelCount`/`highJerkCount` are bounded non-negative
@@ -1322,7 +1322,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   `scripts/`); deployed on hand-review against the existing
   `rideStatsPlausible` pattern it extends instead. Run that suite when a
   Java runtime is available, to close the gap retroactively.
-- [x] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-09-11** — same
+- [x] [STALE] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-09-11** — same
   stale/undeployed-ruleset pattern as §47, this time on the chat feature:
   a user reported messaging showed `permission-denied` everywhere (chat
   list on open, and starting a new chat from search). Code review found no
@@ -1338,7 +1338,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   fixes, which per §62/§63's own notes were verified but never deployed
   either. **Still needs on-device re-verification** — see "Done, but NOT
   yet verified" below.
-- [x] ~~Reseed the QA test riders~~ **DONE 2026-09-19.**
+- [x] [STALE] ~~Reseed the QA test riders~~ **DONE 2026-09-19.**
   `scripts/seed_qa_test_riders.js`/`scripts/qa_seed_catalog.js` were updated
   2026-08-29 (`issues_fixed.md` §55) — all-male rider names, Banglish forum
   post copy, and a bike catalog restricted above 150cc to CFMoto/Royal
@@ -1351,7 +1351,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   than a human terminal). 30 new accounts created, 0 failed.
   `scripts/README.md`'s "Live roster" table is regenerated from the new
   live data.
-- [x] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-08-29** — the QA sweep's
+- [x] [STALE] ~~Deploy `firestore.rules`~~ **DEPLOYED 2026-08-29** — the QA sweep's
   "can't delete your own forum post" (`issues_fixed.md` §47) turned out not to be
   a rules-*text* bug: the post-delete rule already correctly allows the
   author (new `npm run test:rules` case `'a rider can delete their own
@@ -1359,7 +1359,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   throttleiqfb` reported the content as already uploaded but **not yet
   released** — this deploy is what made it the live-serving ruleset, which
   lines up with what QA actually saw.
-- [x] ~~Buy the `flutter_background_geolocation` license key~~ **RESOLVED
+- [x] [STALE] ~~Buy the `flutter_background_geolocation` license key~~ **RESOLVED
   DIFFERENTLY, 2026-08-28** — instead of buying the key, the plugin was
   replaced with a free stand-in (`flutter_activity_recognition` +
   `flutter_foreground_task`, see `auto_tracking_service.dart`'s doc comment
@@ -1378,7 +1378,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 - [ ] **On-device verification that a crash actually reaches the Firebase
   Crashlytics console** — added 2026-08-28 (`issues_fixed.md` §38), never run on a
   device or simulator.
-- [x] ~~Deploy the updated `firestore.rules`~~ **DEPLOYED 2026-08-28** for
+- [x] [STALE] ~~Deploy the updated `firestore.rules`~~ **DEPLOYED 2026-08-28** for
   the join-a-group-ride-by-code feature (`Features.md` §7b) — new
   `groupRideJoinCodes` collection, a new `groupRides` update clause (a
   stranger adding themselves to `memberIds` on an active ride), and a
@@ -1387,7 +1387,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   throttleiqfb` shipped it live. Joining by code should now work against
   production — still needs the real-device check listed under "Done, but
   NOT yet verified" above.
-- [x] ~~Close the two launch-blocking security findings~~ **CODE FIXED
+- [x] [STALE] ~~Close the two launch-blocking security findings~~ **CODE FIXED
   2026-08-12, DEPLOYED 2026-08-14.** Audit found 8 findings (`issues_fixed.md`
   §24.1–§24.9); all fixed and the rules deploy is live on `throttleiqfb`.
   Two loose ends: **Cloud Functions still can't deploy** (needs Blaze — see
@@ -1395,7 +1395,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   `scripts/set_admin_claim.js` still needs a human to run it once with real
   credentials (the email-fallback admin check keeps working until then, so
   this isn't blocking).
-- [x] ~~Second security/bug sweep~~ **16 of 18 FIXED, 2 DEFERRED, 2026-08-23**
+- [x] [STALE] ~~Second security/bug sweep~~ **16 of 18 FIXED, 2 DEFERRED, 2026-08-23**
   — `issues_fixed.md` §33. Includes two more launch-blocking findings: signing out
   didn't clear local data on a shared device, and live-share links had no
   server-side expiry. Both closed.
@@ -1407,13 +1407,13 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 - [x] ~~Wire the orphaned P5–P8 features~~ **DONE 2026-07-14** — crash
   countdown overlay, SyncManager, exports, emergency contacts, live share,
   POI directory, social feed all wired end-to-end.
-- [x] ~~Deploy `firestore.rules` + hosting~~ **DONE, re-run after every rules
+- [x] [STALE] ~~Deploy `firestore.rules` + hosting~~ **DONE, re-run after every rules
   edit.** `firebase deploy --only firestore:rules,hosting`. **Test rules
   first**: `npm run test:rules` from `scripts/` (Firestore emulator — see the
   JBR note in "Operational notes" above). Careful with rules that require a
   field only the newest client build sends — ship the app before the rule,
   not after (this bit the §24.7/§24.11 batch).
-- [x] ~~Run the test suite~~, ~~deploy the live-share viewer~~ **DONE
+- [x] [STALE] ~~Run the test suite~~, ~~deploy the live-share viewer~~ **DONE
   2026-07-14.**
 
 ### Soon (requires the Blaze pay-as-you-go plan — still ~$0/mo at beta scale)
@@ -1438,7 +1438,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 - [x] ~~Firebase Storage bucket~~ **SUPERSEDED 2026-07-23** — Storage needs
   Blaze even within its free tier; photo uploads use Cloudinary instead
   (cloud name `vjvcigkt`), no bucket needed.
-- [x] ~~Deploy the privacy policy~~ **DONE 2026-08-01** —
+- [x] [STALE] ~~Deploy the privacy policy~~ **DONE 2026-08-01** —
   `https://throttleiqfb.web.app/privacy.html`.
 - [x] ~~Sync GPS trails to Firestore~~ **DONE 2026-08-01** — chunked
   `track/{i}` docs, 500 points each. **Still unverified**: a reinstall
@@ -1548,11 +1548,10 @@ the actual pre-launch QA punch list — ordered roughly by risk.
 1. **Enroll in the Apple Developer Program** ($99/yr) —
    <https://developer.apple.com/programs/enroll/>.
 2. Create the App ID / bundle identifier.
-3. **Fix the two things that get an automatic rejection, before submitting**:
-   an **in-app account-deletion flow** (required —
-   <https://developer.apple.com/support/account-deletion/>; none exists
-   yet), and a **report/block mechanism** for forum/social UGC (Guideline
-   1.2; none exists yet).
+3. **Review the App Store UGC requirements before submitting**:
+   the **in-app account-deletion flow** (required —
+   <https://developer.apple.com/support/account-deletion/>; ✅ implemented), and a **report/block mechanism** for forum/social UGC (Guideline
+   1.2; ✅ implemented).
 4. Create the app record in **App Store Connect**, fill in **App Privacy**
    (nutrition labels).
 5. Archive and upload a build (Xcode Organizer or Transporter) — add the iOS
