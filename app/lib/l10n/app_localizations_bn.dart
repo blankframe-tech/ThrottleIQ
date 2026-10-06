@@ -3201,6 +3201,251 @@ class AppLocalizationsBn extends AppLocalizations {
   String get addPlaceLower => 'জায়গা যোগ করুন';
 
   @override
+  String get placesHubTabPlaces => 'জায়গা';
+
+  @override
+  String get placesHubTabRoutes => 'রুট';
+
+  @override
+  String get placesHubTabSaved => 'সংরক্ষিত';
+
+  @override
+  String get placesSearchHint => 'পাম্প, গ্যারেজ, বাইকার ক্যাফে খুঁজুন…';
+
+  @override
+  String get placesClearSearch => 'খোঁজা মুছুন';
+
+  @override
+  String get placesFiltersTooltip => 'ফিল্টার';
+
+  @override
+  String get placesMapView => 'ম্যাপ';
+
+  @override
+  String get placesListView => 'তালিকা';
+
+  @override
+  String get placesLocateMe => 'আমার অবস্থানে যান';
+
+  @override
+  String get placesRadiusLabel => 'খোঁজার পরিধি';
+
+  @override
+  String placesRadiusKm(String km) {
+    return '$km কিমি';
+  }
+
+  @override
+  String get placesSortLabel => 'সাজান';
+
+  @override
+  String get placesSortDistance => 'সবচেয়ে কাছে';
+
+  @override
+  String get placesSortRating => 'সেরা রেটিং';
+
+  @override
+  String get placesVerifiedOnly => 'শুধু যাচাই করা জায়গা';
+
+  @override
+  String get placesVerifiedOnlyHint => 'ThrottleIQ টিম যাচাই করেছে';
+
+  @override
+  String get placesFeaturesLabel => 'সুবিধা';
+
+  @override
+  String get placesFiltersReset => 'রিসেট';
+
+  @override
+  String get placesNoMatches => 'মিলে যায় এমন কোনো জায়গা নেই';
+
+  @override
+  String get placesNoMatchesHint =>
+      'আরও বড় পরিধি, অন্য ক্যাটাগরি বা কম ফিল্টার দিয়ে চেষ্টা করুন।';
+
+  @override
+  String get placesClearFilters => 'ফিল্টার মুছুন';
+
+  @override
+  String placesWidenRadius(String km) {
+    return '$km কিমি জুড়ে খুঁজুন';
+  }
+
+  @override
+  String get placeTagOpen24h => '24/7 খোলা';
+
+  @override
+  String get placeTagOctane95 => 'অকটেন 95';
+
+  @override
+  String get placeTagDigitalPayment => 'ডিজিটাল পেমেন্ট';
+
+  @override
+  String get placeTagEfiDiagnostics => 'ইএফআই ডায়াগনস্টিক';
+
+  @override
+  String get placeTagPunctureRepair => 'পাংচার সারাই';
+
+  @override
+  String get placeTagPaddockStand => 'প্যাডক স্ট্যান্ড';
+
+  @override
+  String get placeTagGenuineParts => 'আসল পার্টস';
+
+  @override
+  String get placeTagBikeParking => 'বাইক পার্কিং';
+
+  @override
+  String get placeTagRestrooms => 'শৌচাগার';
+
+  @override
+  String placeApproxMinutes(int minutes) {
+    return '~$minutes মিনিট';
+  }
+
+  @override
+  String get placeVerifiedBadge => 'যাচাই করা';
+
+  @override
+  String get placeRiderApproved => 'রাইডারদের পছন্দ';
+
+  @override
+  String get placeRiderApprovedHint =>
+      'অন্তত 5 জন ThrottleIQ রাইডার 4.5★ বা বেশি দিয়েছেন';
+
+  @override
+  String placeGoogleRatingBadge(String rating, int count) {
+    return '★ $rating ($count গুগল)';
+  }
+
+  @override
+  String placeRiderRatingBadge(String rating, int count) {
+    return '★ $rating ($count জন রাইডার)';
+  }
+
+  @override
+  String get placeSave => 'সংরক্ষণ';
+
+  @override
+  String get placeSavedLabel => 'সংরক্ষিত';
+
+  @override
+  String get placeSavedSnack => 'সংরক্ষিত — অফলাইনেও সংরক্ষিত ট্যাবে পাবেন';
+
+  @override
+  String get placeUnsavedSnack => 'সংরক্ষিত জায়গা থেকে সরানো হয়েছে';
+
+  @override
+  String get placeSaveFailed => 'সংরক্ষিত জায়গা আপডেট করা যায়নি';
+
+  @override
+  String get radarTitle => 'হাইওয়ে রাডার';
+
+  @override
+  String radarCameras(int count) {
+    return '$countটি স্পিড ক্যামেরা';
+  }
+
+  @override
+  String radarPolice(int count) {
+    return '$countটি পুলিশ চেকপোস্ট';
+  }
+
+  @override
+  String radarWithin(String km) {
+    return '$km কিমির মধ্যে';
+  }
+
+  @override
+  String radarNearest(String distance) {
+    return 'সবচেয়ে কাছেরটি $distance দূরে';
+  }
+
+  @override
+  String get radarShowOnMap => 'ম্যাপে দেখুন';
+
+  @override
+  String get radarHideOnMap => 'ম্যাপ থেকে লুকান';
+
+  @override
+  String get radarDismiss => 'রাডার বন্ধ করুন';
+
+  @override
+  String get radarListTitle => 'আপনার কাছের সতর্কতার জায়গা';
+
+  @override
+  String get placesScanOsmTitle => 'এখানে এখনো কিছু ম্যাপ করা নেই';
+
+  @override
+  String get placesScanOsmBody =>
+      'ThrottleIQ ফ্রি কমিউনিটি ম্যাপ OpenStreetMap থেকে এই এলাকার ফুয়েল পাম্প, গ্যারেজ ও পার্টসের দোকান আনতে পারে। আপনি ট্যাপ করলেই শুধু চলে, আর কোনো জায়গা দুবার যোগ করে না।';
+
+  @override
+  String get placesScanOsm => 'OpenStreetMap স্ক্যান করুন';
+
+  @override
+  String get placesScanning => 'স্ক্যান হচ্ছে…';
+
+  @override
+  String get placesOsmDialogTitle => 'OpenStreetMap থেকে ইম্পোর্ট করবেন?';
+
+  @override
+  String placesOsmDialogBody(String km) {
+    return '$km কিমির মধ্যে যেসব ফুয়েল পাম্প, গ্যারেজ ও পার্টসের দোকান OpenStreetMap-এ আছে কিন্তু ThrottleIQ-তে এখনো নেই, সেগুলো যোগ করে। আগে থেকে থাকা জায়গা আবার যোগ হয় না।';
+  }
+
+  @override
+  String get placesOsmImportAction => 'ইম্পোর্ট';
+
+  @override
+  String get placesMoreActions => 'আরও';
+
+  @override
+  String get placesAddedByMe => 'আমার যোগ করা জায়গা';
+
+  @override
+  String get placesLocationDeniedTitle =>
+      'ThrottleIQ আপনার অবস্থান দেখতে পাচ্ছে না';
+
+  @override
+  String get placesAllowLocation => 'অবস্থানের অনুমতি দিন';
+
+  @override
+  String get placesGpsOffTitle => 'জিপিএস বন্ধ';
+
+  @override
+  String get placesOfflineTitle => 'আপনি অফলাইনে আছেন';
+
+  @override
+  String get placesOfflineBody =>
+      'কাছের জায়গা দেখতে ইন্টারনেট লাগে। সংরক্ষিত জায়গাগুলো অফলাইনেও কাজ করে।';
+
+  @override
+  String get placesOpenSaved => 'সংরক্ষিত জায়গা খুলুন';
+
+  @override
+  String get savedPlacesEmptyTitle => 'এখনো কোনো জায়গা সংরক্ষণ করা হয়নি';
+
+  @override
+  String get savedPlacesEmptyBody =>
+      'যেকোনো জায়গার বুকমার্কে ট্যাপ করে এখানে রাখুন। নেটওয়ার্ক না থাকলেও সংরক্ষিত জায়গা কাজ করে।';
+
+  @override
+  String get savedPlacesContributedBody =>
+      'অন্য রাইডারদের জন্য আপনার যোগ করা জায়গাগুলো দেখুন ও ম্যানেজ করুন।';
+
+  @override
+  String get addPlaceFeaturesLabel => 'সুবিধা (ঐচ্ছিক)';
+
+  @override
+  String get addPlaceFeaturesHint => 'পরের রাইডার কী জানলে খুশি হবেন?';
+
+  @override
+  String placesResultCount(int count) {
+    return '$countটি জায়গা';
+  }
+
+  @override
   String couldNotUpdateVisibility(Object e) {
     return 'দৃশ্যমানতা বদলানো যায়নি: $e';
   }

@@ -20,31 +20,47 @@ class RoutesListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.palette.background,
+      appBar: AppBar(
+        backgroundColor: context.palette.background,
+        title: Text(context.l10n.routes),
+        // Explicit, rather than relying on AppBar's automatic back button.
+        // This screen is also reachable without a back stack (a deep link,
+        // or a cold launch straight to /routes), and in that case the
+        // automatic leading isn't rendered at all — leaving the rider
+        // stranded on a full-screen page with no way out. Pop when there's
+        // something to pop, otherwise fall back to the tab it belongs to.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: context.l10n.back,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home/places');
+            }
+          },
+        ),
+      ),
+      body: const RoutesBrowser(),
+    );
+  }
+}
+
+/// "My routes" / "Discover" tabs with their lists — the body of
+/// [RoutesListScreen], and embedded as-is in the Places hub's Routes tab so
+/// "where do I stop?" and "how do I get there?" live under one roof.
+class RoutesBrowser extends StatelessWidget {
+  const RoutesBrowser({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: context.palette.background,
-        appBar: AppBar(
-          backgroundColor: context.palette.background,
-          title: Text(context.l10n.routes),
-          // Explicit, rather than relying on AppBar's automatic back button.
-          // This screen is also reachable without a back stack (a deep link,
-          // or a cold launch straight to /routes), and in that case the
-          // automatic leading isn't rendered at all — leaving the rider
-          // stranded on a full-screen page with no way out. Pop when there's
-          // something to pop, otherwise fall back to the tab it belongs to.
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: context.l10n.back,
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('/home/places');
-              }
-            },
-          ),
-          bottom: TabBar(
+      child: Column(
+        children: [
+          TabBar(
             labelColor: context.palette.primary,
             unselectedLabelColor: context.palette.textSecondary,
             indicatorColor: context.palette.primary,
@@ -53,13 +69,15 @@ class RoutesListScreen extends StatelessWidget {
               Tab(text: context.l10n.discover),
             ],
           ),
-        ),
-        body: const TabBarView(
-          children: [
-            _RoutesTab(mine: true),
-            _RoutesTab(mine: false),
-          ],
-        ),
+          const Expanded(
+            child: TabBarView(
+              children: [
+                _RoutesTab(mine: true),
+                _RoutesTab(mine: false),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

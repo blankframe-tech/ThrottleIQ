@@ -5703,6 +5703,438 @@ abstract class AppLocalizations {
   /// **'Add place'**
   String get addPlaceLower;
 
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get placesHubTabPlaces;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Routes'**
+  String get placesHubTabRoutes;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get placesHubTabSaved;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Search pumps, garages, biker cafés…'**
+  String get placesSearchHint;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get placesClearSearch;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get placesFiltersTooltip;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get placesMapView;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get placesListView;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Centre on me'**
+  String get placesLocateMe;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Search radius'**
+  String get placesRadiusLabel;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String placesRadiusKm(String km);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get placesSortLabel;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest'**
+  String get placesSortDistance;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Top rated'**
+  String get placesSortRating;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Verified places only'**
+  String get placesVerifiedOnly;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Checked by the ThrottleIQ team'**
+  String get placesVerifiedOnlyHint;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get placesFeaturesLabel;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get placesFiltersReset;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'No places match'**
+  String get placesNoMatches;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Try a wider radius, another category or fewer filters.'**
+  String get placesNoMatchesHint;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get placesClearFilters;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Search {km} km'**
+  String placesWidenRadius(String km);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Open 24/7'**
+  String get placeTagOpen24h;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Octane 95'**
+  String get placeTagOctane95;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Digital payment'**
+  String get placeTagDigitalPayment;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'EFI diagnostics'**
+  String get placeTagEfiDiagnostics;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Puncture repair'**
+  String get placeTagPunctureRepair;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Paddock stand'**
+  String get placeTagPaddockStand;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Genuine parts'**
+  String get placeTagGenuineParts;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Bike parking'**
+  String get placeTagBikeParking;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Restrooms'**
+  String get placeTagRestrooms;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'~{minutes} min'**
+  String placeApproxMinutes(int minutes);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get placeVerifiedBadge;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Approved'**
+  String get placeRiderApproved;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Rated 4.5★ or more by at least 5 ThrottleIQ riders'**
+  String get placeRiderApprovedHint;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'★ {rating} ({count} Google)'**
+  String placeGoogleRatingBadge(String rating, int count);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'★ {rating} ({count, plural, =1{1 rider} other{{count} riders}})'**
+  String placeRiderRatingBadge(String rating, int count);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get placeSave;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get placeSavedLabel;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Saved — find it in the Saved tab, even offline'**
+  String get placeSavedSnack;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from saved places'**
+  String get placeUnsavedSnack;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update your saved places'**
+  String get placeSaveFailed;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Highway Radar'**
+  String get radarTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 speed camera} other{{count} speed cameras}}'**
+  String radarCameras(int count);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 police checkpost} other{{count} police checkposts}}'**
+  String radarPolice(int count);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'within {km} km'**
+  String radarWithin(String km);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest {distance} away'**
+  String radarNearest(String distance);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Show on map'**
+  String get radarShowOnMap;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Hide on map'**
+  String get radarHideOnMap;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss radar'**
+  String get radarDismiss;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Safety points near you'**
+  String get radarListTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing mapped here yet'**
+  String get placesScanOsmTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ can pull fuel pumps, garages and parts shops for this area from OpenStreetMap, the free community map. It only runs when you tap, and never adds a place twice.'**
+  String get placesScanOsmBody;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Scan OpenStreetMap'**
+  String get placesScanOsm;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get placesScanning;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Import from OpenStreetMap?'**
+  String get placesOsmDialogTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Adds the fuel pumps, garages and parts shops within {km} km that OpenStreetMap knows about and ThrottleIQ doesn\'t yet. Places already here aren\'t duplicated.'**
+  String placesOsmDialogBody(String km);
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get placesOsmImportAction;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get placesMoreActions;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Places I added'**
+  String get placesAddedByMe;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ can\'t see your location'**
+  String get placesLocationDeniedTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location'**
+  String get placesAllowLocation;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'GPS is off'**
+  String get placesGpsOffTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline'**
+  String get placesOfflineTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby places need a connection. Your saved places still work offline.'**
+  String get placesOfflineBody;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Open saved places'**
+  String get placesOpenSaved;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'No saved places yet'**
+  String get savedPlacesEmptyTitle;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the bookmark on any place to keep it here. Saved places work even with no signal.'**
+  String get savedPlacesEmptyBody;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'See and manage the spots you\'ve added for other riders.'**
+  String get savedPlacesContributedBody;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'Features (optional)'**
+  String get addPlaceFeaturesLabel;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'What will the next rider be glad to know?'**
+  String get addPlaceFeaturesHint;
+
+  /// Places hub redesign (Places | Routes | Saved).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 place} other{{count} places}}'**
+  String placesResultCount(int count);
+
   /// Text in route_detail_screen.
   ///
   /// In en, this message translates to:

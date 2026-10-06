@@ -2,21 +2,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../data/repositories/place_repository.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../data/services/overpass_service.dart';
 import '../../data/utils/geohash_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
+import '../../domain/places_query.dart';
 
 final _placeRepository = PlaceRepository();
 final _reviewRepository = ReviewRepository();
 final _overpassService = OverpassService();
 
-/// Radius used for the nearby-places query. Not user-configurable in this
-/// phase — the whole list is client-filtered further by category chips.
-const double placesSearchRadiusKm = 25;
+/// Why [currentPositionProvider] couldn't produce a fix — typed, so the
+/// Places screen can offer the one button that actually fixes each case
+/// (ask again / open app settings / open location settings) instead of
+/// pattern-matching message text.
+enum PlaceLocationProblem { permissionDenied, permissionDeniedForever, serviceDisabled }
+
+class PlaceLocationException implements Exception {
+  final PlaceLocationProblem problem;
+  const PlaceLocationException(this.problem);
+
+  /// English diagnostics, worded so the shared `isLocationServicesError` /
+  /// `isLocationPermissionError` helpers in firebase_error_mapper.dart still
+  /// recognise them for any screen that hasn't moved to [problem].
+  @override
+  String toString() => switch (problem) {
+        PlaceLocationProblem.permissionDenied =>
+          'Location permission denied. It is needed for this feature.',
+        PlaceLocationProblem.permissionDeniedForever =>
+          'Location permission permanently denied. Grant it in Settings → ThrottleIQ.',
+        PlaceLocationProblem.serviceDisabled =>
+          'Location services are disabled. Enable GPS in your device settings.',
+      };
+}
 
 /// Current device position, fetched once per provider lifetime. Mirrors the
 /// permission-check flow in `RideRecordingNotifier._requestPermissions`
@@ -24,50 +44,47 @@ const double placesSearchRadiusKm = 25;
 /// (`getCurrentPosition`) rather than a continuous stream — the Places tab
 /// and the add-place form only need one fix, not live tracking.
 ///
-/// Throws a user-friendly string (via [mapLocationError]) rather than a raw
-/// platform exception so every `.when(error:)` branch that consumes this can
-/// show the message directly without its own mapping layer.
+/// Fails with a [PlaceLocationException]. The service-disabled message used
+/// to read "Location is turned off", which `isLocationServicesError` never
+/// matched, so a rider with GPS off got the generic "couldn't load" card and
+/// no "Turn on location" button.
 final currentPositionProvider = FutureProvider<Position>((ref) async {
   var permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
   }
-  if (permission == LocationPermission.denied ||
-      permission == LocationPermission.deniedForever) {
-    throw Exception(
-      'Location permission is needed for this feature. Grant it in Settings → ThrottleIQ.',
-    );
+  if (permission == LocationPermission.deniedForever) {
+    throw const PlaceLocationException(PlaceLocationProblem.permissionDeniedForever);
+  }
+  if (permission == LocationPermission.denied) {
+    throw const PlaceLocationException(PlaceLocationProblem.permissionDenied);
   }
 
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    throw Exception(
-      'Location is turned off. Enable GPS in your device settings to use this feature.',
-    );
+    throw const PlaceLocationException(PlaceLocationProblem.serviceDisabled);
   }
 
   return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 });
 
-/// Nearby places within [placesSearchRadiusKm], optionally filtered by
-/// category (`null` = all categories). Keyed by category so switching the
-/// filter chip doesn't refetch/discard the other categories' cached results.
+/// Every nearby place within [radiusKm] (a [placesRadiusOptionsKm] value),
+/// all categories, safety points included. The Places hub filters by
+/// category, search text and tags client-side (`applyPlacesQuery`) and pulls
+/// the cameras/checkposts out for the Highway Radar, so one fetch per radius
+/// serves the chips, the list, the map and the radar together: switching a
+/// chip costs no reads, only changing the radius refetches.
 ///
-/// IMPORTANT: because the same place can be cached under both the `null`
-/// ("All") key and its own category key, a mutation that changes a place's
-/// rating or adds a new place must invalidate the *whole family* —
-/// `ref.invalidate(nearbyPlacesProvider)` with no argument — not just the
-/// currently-selected category. This is exactly the "stale cached count"
-/// class of bug flagged from Phase 2/3's reviews: invalidating only one key
-/// would leave the other still showing the old rating/count.
+/// IMPORTANT: a mutation that changes a place's rating or adds a place must
+/// invalidate the *whole family* — `ref.invalidate(nearbyPlacesProvider)`
+/// with no argument — so no other radius keeps showing the stale copy.
 final nearbyPlacesProvider =
-    FutureProvider.family<List<PlaceEntity>, PlaceCategory?>((ref, category) async {
+    FutureProvider.family<List<PlaceEntity>, double>((ref, radiusKm) async {
   final position = await ref.watch(currentPositionProvider.future);
   return _placeRepository.getNearbyPlaces(
     latitude: position.latitude,
     longitude: position.longitude,
-    radiusKm: placesSearchRadiusKm,
-    category: category,
+    radiusKm: radiusKm,
   );
 });
 
@@ -95,21 +112,31 @@ final reviewsForPlaceProvider =
 });
 
 /// Places the signed-in rider added themselves ("My places", reached from
-/// the garage header's user menu).
+/// the garage header's user menu and the Places hub's Saved tab).
 final myPlacesProvider = FutureProvider<List<PlaceEntity>>((ref) async {
   final uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return [];
   return _placeRepository.getPlacesByOwner(uid);
 });
 
+/// Largest radius sent to Overpass. A 50 km query is slow and heavy on a
+/// volunteer-run server, and the import is a one-off seeding of the area,
+/// not a mirror of it.
+const double osmImportMaxRadiusKm = placesDefaultRadiusKm;
+
 /// Pulls nearby fuel/parts/garage POIs from OpenStreetMap's Overpass API and
 /// imports any not already known (by `osmId`), then invalidates the whole
 /// `nearbyPlacesProvider` family so the Places tab picks them up — mirrors
 /// the stale-cache discipline documented on that provider above. Only ever
-/// called from an explicit "Import nearby" tap (`places_list_screen.dart`):
-/// Overpass is a free, rate-limited public service, not something to hit
-/// automatically on every tab open. Returns how many new places were added.
-Future<int> importNearbyOsmPlaces(WidgetRef ref) async {
+/// called from an explicit, explained "Scan OpenStreetMap" tap (the empty
+/// state or the overflow menu in `places_list_screen.dart`): Overpass is a
+/// free, rate-limited public service, not something to hit automatically on
+/// every tab open. Searches [radiusKm] capped at [osmImportMaxRadiusKm].
+/// Returns how many new places were added.
+Future<int> importNearbyOsmPlaces(
+  WidgetRef ref, {
+  double radiusKm = placesDefaultRadiusKm,
+}) async {
   final uid = ref.read(currentUserProvider)?.uid;
   if (uid == null) return 0;
 
@@ -117,7 +144,8 @@ Future<int> importNearbyOsmPlaces(WidgetRef ref) async {
   final candidates = await _overpassService.fetchNearby(
     latitude: position.latitude,
     longitude: position.longitude,
-    radiusMeters: placesSearchRadiusKm * 1000,
+    radiusMeters:
+        (radiusKm > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radiusKm) * 1000,
   );
   if (candidates.isEmpty) return 0;
 
