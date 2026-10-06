@@ -1510,28 +1510,28 @@ in the `HANDOFF_Document.md` roadmap table.
 
 What shipped is described in `features.md` → "Changes from the auto-tracking / jam pass". Still open:
 
-- **93.1 DECIDED 2026-10-07 (yes) and implemented — see §95.9 / `features.md` §5.** Was: *Decision needed: forgotten rides and the bike odometer.* Detected trips no longer become
+- **[needs-you] 93.1 DECIDED 2026-10-07 (yes) and implemented — see §95.9 / `features.md` §5.** Was: *Decision needed: forgotten rides and the bike odometer.* Detected trips no longer become
   ride rows, so they no longer add to a bike's distance or service-interval km. The "which bike?"
   confirmation also no longer fires for new detections. Should forgotten rides still count toward
   maintenance reminders?
-- **93.2 Fix storage grows without limit.** Fixes for `summarized` detections are kept forever
+- **[doable-now] 93.2 Fix storage grows without limit.** Fixes for `summarized` detections are kept forever
   (about 150 KB per heavy riding day). Add a retention policy at some point.
-- **93.3 Needs a device test:**
+- **[needs-you] 93.3 Needs a device test:**
   - how quickly auto-tracking stands down after a manual Start;
   - whether the background service on Android can show `flutter_local_notifications`;
   - the 9pm digest replacing the fixed "Tap to see your day" message (the fixed text may show for
     up to about 60 s first);
   - iOS at 9pm, where the background handler may not be alive and opening the app is the fallback.
-- **93.4 Missing tests.** `DailyRideSummaryRepository.summaryFor` (the SQLite path) has no tests;
+- **[doable-now] 93.4 Missing tests.** `DailyRideSummaryRepository.summaryFor` (the SQLite path) has no tests;
   only the pure calculators are covered.
-- **93.5 Old docs.** `auto_tracking_plan.md` and `HANDOFF_Document.md` still describe the old
+- **[doable-now] 93.5 Old docs.** `auto_tracking_plan.md` and `HANDOFF_Document.md` still describe the old
   "promote each detection to a ride" flow.
-- **93.6 ✅ Firestore rules deployed (2026-10-06)**, including the `jamLabels` rule. The compiler printed a
+- **[doable-now] 93.6 ✅ Firestore rules deployed (2026-10-06)**, including the `jamLabels` rule. The compiler printed a
   warning at `398:46` (`publicStatsValid(resource == null ? null : ...)`), which comes from older
   code, not this change.
-- **93.7 Bangla review.** The new BN strings (daily summary, jam labels) are machine-drafted and
+- **[needs-you] 93.7 Bangla review.** The new BN strings (daily summary, jam labels) are machine-drafted and
   listed in `bn_pending_review.txt`.
-- **93.8 Old auto rides.** Auto rides saved before this change stay in history and are counted as
+- **[needs-you] 93.8 Old auto rides.** Auto rides saved before this change stay in history and are counted as
   recorded rides.
 
 ## 94. Maintenance audit findings (2026-10-06) — FIXED in code 2026-10-07, see `issues_fixed.md` §94
@@ -1544,7 +1544,7 @@ been verified on a device yet; that check is §95.1.
 What shipped is in `features.md` §5. Analyze is clean and 1547/1547 tests pass.
 Still open:
 
-- **95.1 Device test.** None of the following has been run on a phone yet:
+- **[needs-you] 95.1 Device test.** None of the following has been run on a phone yet:
   - setup → Log a visit → Undo → edit → delete (then reinstall: the deleted
     visit must stay gone);
   - notifications: due-soon/overdue after a ride, scheduled date reminders,
@@ -1555,7 +1555,7 @@ Still open:
     `BikeImageResolver`, untested here);
   - the 60-day strip at small widths;
   - Bangla layout.
-- **95.2 Schedule templates are mostly approximate.**
+- **[needs-you] 95.2 Schedule templates are mostly approximate.**
   - Only the Bajaj Pulsar 150 template was read off a manual, and that was the
     Indian BS-VI manual.
   - Hornet 160, FZ, R15/MT-15, Gixxer, Apache 160 and the three generic
@@ -1564,38 +1564,38 @@ Still open:
   - Each needs checking against the BD-market manual from ACI Yamaha, BHL Honda,
     Uttara Bajaj, Rancon Suzuki and TVS.
   - Each template's `source` note is English-only.
-- **95.3 Free-service counts per BD distributor are unverified.** The templates
+- **[needs-you] 95.3 Free-service counts per BD distributor are unverified.** The templates
   carry Indian schedules.
-- **95.4 Adaptation factors are a heuristic**, not OEM figures:
+- **[needs-you] 95.4 Adaptation factors are a heuristic**, not OEM figures:
   - stop-and-go 0.8/0.9 at 35%/20% idle;
   - hard braking 0.85 at ≥ 3 per 100 km;
   - dusty/wet roads 0.7 on the air filter and chain;
   - floor 0.7.
 
   Validate them with 2–3 mechanics. The rider can switch adaptation off.
-- **95.5 Receipt photos aren't backed up.** They are stored only in the app
+- **[needs-you] 95.5 Receipt photos aren't backed up.** They are stored only in the app
   documents folder; the path syncs, the image doesn't. There is no receipt OCR
   either. Uploading private receipts needs a non-public store (Cloudinary
   presets here are unsigned/public).
-- **95.6 Quick-check issues are local only** (`precheck_issues`). Deliberate,
+- **[needs-you] 95.6 Quick-check issues are local only** (`precheck_issues`). Deliberate,
   since they're short-lived.
-- **95.7 Bangla review.** About 180 new strings (batch "maintenance redesign
+- **[needs-you] 95.7 Bangla review.** About 180 new strings (batch "maintenance redesign
   (§95)" in `bn_pending_review.txt`) are machine-drafted.
-- **95.8 Older app versions.**
+- **[needs-you] 95.8 Older app versions.**
   - A log written with visit columns can't be inserted by a pre-v20 build; its
     download skips that row (per-row try/catch), so the log is missing on an
     un-updated second device.
   - A custom tracked check (`service_type = custom:<id>`) shows as a plain
     "Custom" check in old builds.
-- **95.9 Detected-trip credits** go to the active bike, since a detection
+- **[doable-now] 95.9 Detected-trip credits** go to the active bike, since a detection
   carries no bike. A rider who switches bikes without changing the active one
   credits the wrong bike. The credits table is local; the bike's
   `odometer_km`, which holds the total, does sync.
-- **95.10 Open product questions:**
+- **[needs-you] 95.10 Open product questions:**
   - Should Maintenance get a bottom-nav tab? Garage cards now show "next due".
   - Should snooze also support "100 km later"?
   - Should the hero hide when everything is unknown?
-- **95.12 Code review findings (2026-10-07).** A read-only review of the diff
+- **[doable-now] 95.12 Code review findings (2026-10-07).** A read-only review of the diff
   found these; the high and medium items were fixed the same day, with tests:
   - alerts were cancelled the moment they were shown (the schedule is now
     cancelled first);
@@ -1633,9 +1633,9 @@ Still open:
   - On a fresh install, paperwork added *before* the first sync restores still
     replaces the cloud paperwork list. Sync runs at sign-in, so the window is
     small.
-- **95.11 The order button is still a demo.** It is now gated to
+- **[needs-you] 95.11 The order button is still a demo.** It is now gated to
   `BetaTesters.partOrdering`. It needs a parts partner before a real flow.
-- **95.13 CI ratchet failure — FIXED (2026-10-07), see `issues_fixed.md` §95.13.**
+- **[doable-now] 95.13 CI ratchet failure — FIXED (2026-10-07), see `issues_fixed.md` §95.13.**
 
 ---
 
