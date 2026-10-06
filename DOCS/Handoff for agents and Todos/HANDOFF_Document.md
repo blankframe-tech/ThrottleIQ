@@ -9,8 +9,16 @@ _Last updated: 2026-10-07 · Branch: `main`_
   (issues_fixed §97): photos on posts (up to 4), and brand paddocks counting model-forum riders/posts
   instead of "0 riders".
 - `firestore.rules` was deployed together with this build (place `tags` cap, forum post types/solved/attachment/`imageUrls`).
+- **Shipped:** the GitHub release `beta-v4.2` (tag on `ed8fd34`) has `app-release.apk` and `app-release.aab`.
+  The iOS **release** build of `ed8fd34` is installed and launched on the founder's iPhone 15 (iOS 27).
+  It was built from a clean worktree of `main`, so the parallel session's uncommitted edits weren't in it.
+  Photos on posts and the paddock counts have not been tried on the device yet.
 - Still open from the first iPhone debug run: issues_open §97 (hidden ListTile ripple, a 3 px
   overflow, "Invalid image data").
+- **Parallel work, not on `main`:** `feature/three-theme-modes` (pushed, `c3a74fe`) is another session's
+  unfinished three-theme-modes / appearance-picker / lean-arc and g-force widgets. It was committed as
+  WIP on request. `flutter analyze` shows 16 issues there (tests still use the removed `AppColorMode`
+  values `calming`/`carbonMono`/`retro`). Finish and clean it up before merging.
 
 ## 2026-10-07 (later): Forums "Pit Wall" redesign — same feature branch, not on a device yet
 
