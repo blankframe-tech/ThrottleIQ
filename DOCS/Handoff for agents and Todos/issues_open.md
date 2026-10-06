@@ -963,6 +963,11 @@ on a device) — see `issues_fixed.md` §90 for every ID. **Still open:**
   - A8: one vote read per visible forum post remains.
 - Paused rides block auto-detection until the rider resumes or ends them. This
   is deliberate.
+- **90.A13 (new, LOW):** the delete in My Shared Rides fails silently.
+  `my_shared_rides_screen.dart:43` awaits `deleteSharedRide` with no try/catch, so
+  a failure shows nothing. Until the D1 rules are deployed, a shared ride with
+  comments can't be deleted, and the rider gets no message. *Fix:* try/catch
+  around the delete, with a SnackBar on failure.
 
 Read-only audit across security/rules, ride pipeline + sync, social data layer,
 architecture/tests/tooling and docs accuracy. Each item was deduped against
