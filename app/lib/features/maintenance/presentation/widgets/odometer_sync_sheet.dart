@@ -85,7 +85,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
           );
     } catch (e) {
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text('Failed to sync odometer.')));
+        messenger.showSnackBar(const SnackBar(content: Text('Failed to sync odometer.')));
       }
       return;
     }

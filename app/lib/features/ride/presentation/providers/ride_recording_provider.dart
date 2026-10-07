@@ -283,7 +283,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   DateTime? _lastFixTime;
   static const int _maxMovingGapSeconds = 60;
   final Stopwatch _stopwatch = Stopwatch();
-  DateTime? _activeStart;
+  // DateTime? _activeStart;
   Duration _accumulatedDuration = Duration.zero;
 
   bool _skipNextDistanceDelta = false;
@@ -435,7 +435,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _movingMilliseconds = 0;
       _lastFixTime = null;
       _accumulatedDuration = Duration.zero;
-      _activeStart = DateTime.now();
+      // DateTime.now();
       _stopwatch.reset();
       _stopwatch.start();
       _detector.reset();
@@ -907,7 +907,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       // status flip comes first so nothing arriving mid-cancel is processed.
       _stopwatch.stop();
       _accumulatedDuration = state.elapsed;
-      _activeStart = null;
+      // null;
       state = state.copyWith(status: RecordingStatus.paused, keepError: true);
       await _subs.cancel();
       await _persistenceCoordinator.flushPointBuffer();
@@ -957,7 +957,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       }
       if (!mounted || state.status != RecordingStatus.paused) return;
 
-      _activeStart = DateTime.now();
+      // DateTime.now();
       _stopwatch.reset();
       _stopwatch.start();
       _skipNextDistanceDelta = true;
@@ -1195,7 +1195,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _accumulatedDuration = Duration(
       seconds: snapshotSeconds ?? aggregates.span.inSeconds,
     );
-    _activeStart = null;
+    // null;
 
     _sensorCoordinator.reset();
     _detector.reset();
