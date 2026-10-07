@@ -118,7 +118,9 @@ class CheckForecast {
   /// How used-up the item is, 0–1+, by whichever limit is closer.
   double get progress {
     var p = 0.0;
-    if (kmSince != null && kmLimit > 0) p = kmSince! / kmLimit;
+    if (kmSince != null && kmLimit > 0) {
+      p = math.max(0.0, kmSince! / kmLimit);
+    }
     if (daysLimit != null && daysLimit! > 0 && daysLeft != null) {
       p = math.max(p, (daysLimit! - daysLeft!) / daysLimit!);
     }
@@ -147,14 +149,14 @@ int _dayDiff(DateTime a, DateTime b) {
   return (db.difference(da).inHours / 24).round();
 }
 
-/// The latest log for [key]: highest odometer, then latest date.
+/// The latest log for [key]: latest date, then highest odometer.
 MaintenanceEntity? latestLogFor(String key, List<MaintenanceEntity> logs) {
   MaintenanceEntity? best;
   for (final l in logs) {
     if (l.key != key) continue;
     if (best == null ||
-        l.odometerKm > best.odometerKm ||
-        (l.odometerKm == best.odometerKm && l.date.isAfter(best.date))) {
+        l.date.isAfter(best.date) ||
+        (l.date.isAtSameMomentAs(best.date) && l.odometerKm > best.odometerKm)) {
       best = l;
     }
   }
@@ -200,7 +202,7 @@ CheckForecast forecastOne(
   double? kmSince;
   double? kmLeft;
   if (baseKm != null) {
-    kmSince = math.max(0, input.currentOdometerKm - baseKm).toDouble();
+    kmSince = (input.currentOdometerKm - baseKm).toDouble();
     if (kmLimit > 0) kmLeft = kmLimit - kmSince;
   }
   int? daysLeft;

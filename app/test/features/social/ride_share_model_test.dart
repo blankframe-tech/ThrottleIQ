@@ -32,7 +32,7 @@ void main() {
       expect(firestoreData['id'], 'ride1');
       expect(firestoreData['userId'], 'user1');
       expect(firestoreData['distanceKm'], 50.0);
-      expect(firestoreData['polyline'], isA<List>());
+      expect(firestoreData['polyline'], isA<List>()); // ignore: strict_raw_type // TODO(audit-101): fix strict mode typing
       expect(firestoreData['polyline'].length, 3);
     });
 

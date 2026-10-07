@@ -66,7 +66,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     final bikes = state.valueOrNull ?? [];
     final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
     if (bike == null) return;
-    final newBaseline = (newOdometerKm - bike.totalDistanceKm).clamp(0.0, double.infinity);
+    final newBaseline = newOdometerKm - bike.totalDistanceKm;
     await _dao.updateOdometer(bikeId, newBaseline);
     ref.invalidateSelf();
   }

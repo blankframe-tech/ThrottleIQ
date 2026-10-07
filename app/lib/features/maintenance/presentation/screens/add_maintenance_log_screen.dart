@@ -24,6 +24,7 @@ import '../providers/maintenance_provider.dart';
 import '../service_type_l10n.dart';
 import '../widgets/edit_maintenance_check_sheet.dart' show iconForServiceType;
 import '../widgets/forecast_text.dart';
+import '../../../../core/utils/number_parser.dart';
 
 /// "Log a visit": one entry per trip to the mechanic, however many jobs were
 /// done (proposal: "the visit is the unit, not the item"). Everything is
@@ -81,6 +82,7 @@ class _AddMaintenanceLogScreenState
   bool _oneOff = false;
   bool _saving = false;
   bool _loaded = false;
+  bool _warnedOdometer = false;
 
   bool get _editing => widget.visitId != null;
 
@@ -270,9 +272,9 @@ class _AddMaintenanceLogScreenState
     setState(() => _saving = true);
     final draft = VisitDraft(
       date: _date,
-      odometerKm: double.parse(_odometerCtrl.text.trim()),
+      odometerKm: parseLocalizedNumber(_odometerCtrl.text) ?? 0,
       items: items,
-      totalCost: double.tryParse(_costCtrl.text.trim()),
+      totalCost: parseLocalizedNumber(_costCtrl.text),
       shopName: _shopCtrl.text,
       shopKind: _shopKind,
       receiptPath: _receiptPath,
@@ -282,15 +284,20 @@ class _AddMaintenanceLogScreenState
     final notifier = ref.read(maintenanceProvider(widget.bikeId).notifier);
     final messenger = ScaffoldMessenger.of(context);
     String? newVisitId;
-    if (_editing) {
-      await notifier.updateVisit(widget.visitId!, draft);
-    } else {
-      newVisitId = await notifier.saveVisit(draft);
-    }
-    if (_oilGrade != null && items.any((i) => i.type == ServiceType.oilChange)) {
-      await ref
-          .read(maintenanceProfileProvider(widget.bikeId).notifier)
-          .applyOilGrade(_oilGrade!);
+    try {
+      if (_editing) {
+        await notifier.updateVisit(widget.visitId!, draft);
+      } else {
+        newVisitId = await notifier.saveVisit(draft);
+      }
+      if (_oilGrade != null && items.any((i) => i.type == ServiceType.oilChange)) {
+        await ref
+            .read(maintenanceProfileProvider(widget.bikeId).notifier)
+            .applyOilGrade(_oilGrade!);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _saving = false);
+      rethrow;
     }
     if (!mounted) return;
     messenger.showSnackBar(SnackBar(
@@ -530,7 +537,13 @@ class _AddMaintenanceLogScreenState
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return l10n.requiredField;
-                      if (double.tryParse(v) == null) return l10n.invalidNumber;
+                      final n = parseLocalizedNumber(v);
+                      if (n == null || n < 0 || n > 2000000) return l10n.invalidNumber;
+         .           final maxOdo = logs.fold<double>(0, (m, l) => l.visitKey == widget.visitId ? m : math.max(m, l.odometerKm)) ?? 0;
+                      if (n < maxOdo && !_warnedOdometer) {
+                        _warnedOdometer = true;
+                        return 'Below previous log (${maxOdo.toInt()})';
+                      }
                       return null;
                     },
                   ),

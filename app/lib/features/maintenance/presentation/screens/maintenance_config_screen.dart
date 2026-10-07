@@ -134,7 +134,7 @@ class _MaintenanceConfigScreenState
     );
     final name = nameCtrl.text.trim();
     final km = double.tryParse(kmCtrl.text.trim()) ?? 0;
-    final days = int.tryParse(daysCtrl.text.trim());
+    final days = parseLocalizedInt(daysCtrl.text.trim());
     nameCtrl.dispose();
     kmCtrl.dispose();
     daysCtrl.dispose();

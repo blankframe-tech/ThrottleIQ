@@ -195,11 +195,11 @@ class _EditMaintenanceCheckSheetState
     if (!_formKey.currentState!.validate()) return;
     final c = widget.config;
     final intervalVal = double.tryParse(_intervalCtrl.text.trim()) ?? 0;
-    final daysVal = int.tryParse(_daysCtrl.text.trim());
+    final daysVal = parseLocalizedInt(_daysCtrl.text.trim());
     final days = (daysVal != null && daysVal > 0) ? daysVal : null;
     if (intervalVal <= 0 && days == null) return;
     final warnKm = double.tryParse(_warnKmCtrl.text.trim());
-    final warnDays = int.tryParse(_warnDaysCtrl.text.trim());
+    final warnDays = parseLocalizedInt(_warnDaysCtrl.text.trim());
 
     final trimmedNotes = _notesCtrl.text.trim();
     final costVal = double.tryParse(_costCtrl.text.trim());
@@ -397,7 +397,7 @@ class _EditMaintenanceCheckSheetState
                 ),
                 validator: (v) {
                   final n = double.tryParse((v ?? '').trim());
-                  final d = int.tryParse(_daysCtrl.text.trim());
+                  final d = parseLocalizedInt(_daysCtrl.text.trim());
                   final hasDays = d != null && d > 0;
                   if ((v == null || v.trim().isEmpty) && !hasDays) {
                     return context.l10n.intervalNeedKmOrDays;
@@ -462,7 +462,7 @@ class _EditMaintenanceCheckSheetState
                 onChanged: (_) => setState(() {}),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null;
-                  final n = int.tryParse(v.trim());
+                  final n = parseLocalizedInt(v.trim());
                   if (n == null || n < 0) return context.l10n.enterPositiveNumber;
                   return null;
                 },

@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../social/presentation/providers/group_ride_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -24,9 +26,10 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
-  AuthNotifier(this._auth) : super(const AsyncValue.data(null));
+  AuthNotifier(this._auth, this._ref) : super(const AsyncValue.data(null));
 
   final FirebaseAuth _auth;
+  final Ref _ref;
   final ProfileRepository _profiles = ProfileRepository();
 
   /// Best-effort seeding of the public `users/{uid}` profile doc from the auth
@@ -139,6 +142,20 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   ///     that would destroy exactly the offline data durability the outbox/
   ///     local-first design exists for, on every ordinary sign-out.
   Future<void> signOut() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid != null) {
+      try {
+        await _ref.read(rideRecordingProvider.notifier).stopLiveSharing();
+      } catch (_) {}
+      try {
+        final rides = _ref.read(activeGroupRidesForUserProvider).valueOrNull ?? const [];
+        final channel = _ref.read(groupRideLiveChannelProvider);
+        await Future.wait([
+          for (final ride in rides) channel.removeLocation(ride.id, uid)
+        ]);
+      } catch (_) {}
+    }
+
     await _auth.signOut();
     try {
       await GoogleSignIn().signOut();
@@ -207,5 +224,5 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 }
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
-  return AuthNotifier(ref.watch(firebaseAuthProvider));
+  return AuthNotifier(ref.watch(firebaseAuthProvider), ref);
 });

@@ -70,7 +70,7 @@ void main() {
         for (final value in chunk) {
           expect(value, isA<num>(),
               reason: 'a nested array here is what crashed the app');
-          expect(value, isNot(isA<List>()));
+          expect(value, isNot(isA<List>())); // ignore: strict_raw_type // TODO(audit-101): fix strict mode typing
         }
       }
     });

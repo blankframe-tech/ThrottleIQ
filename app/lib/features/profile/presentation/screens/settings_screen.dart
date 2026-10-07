@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
@@ -694,6 +695,46 @@ class SettingsScreen extends ConsumerWidget {
         await ref.read(authNotifierProvider.notifier).deleteAccount();
         if (context.mounted) {
           context.go('/auth/login');
+        }
+      } on firebase_auth.FirebaseAuthException catch (e) {
+        if (context.mounted) {
+          if (e.code == 'requires-recent-login') {
+            showDialog<void>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: ctx.palette.surface,
+                title: Text(
+                  'Reauthentication Required',
+                  style: TextStyle(color: ctx.palette.textPrimary),
+                ),
+                content: Text(
+                  'For your security, you must log out and log back in before deleting your account.',
+                  style: TextStyle(color: ctx.palette.textSecondary),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(ctx.l10n.cancelAction),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      ref.read(authNotifierProvider.notifier).signOut();
+                    },
+                    style: FilledButton.styleFrom(backgroundColor: ctx.palette.primary),
+                    child: Text(ctx.l10n.signOut),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.l10n.errorDeletingAccount(e.message ?? e.toString())),
+                backgroundColor: context.palette.danger,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (context.mounted) {

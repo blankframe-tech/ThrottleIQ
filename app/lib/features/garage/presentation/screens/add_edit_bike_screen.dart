@@ -17,6 +17,7 @@ import '../../../../shared/widgets/brand_model_field.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
+import '../../../../core/utils/number_parser.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
 
@@ -56,7 +57,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       _modelCtrl.text = _existingBike!.model;
       _yearCtrl.text = _existingBike!.year?.toString() ?? '';
       _ccCtrl.text = _existingBike!.cc?.toString() ?? '';
-      _odometerCtrl.text = _existingBike!.odometerKm?.toString() ?? '';
+      _odometerCtrl.text = _existingBike!.odometerKm != null ? _existingBike!.currentOdometerKm.toString() : '';
       _imagePath = _existingBike!.imagePath;
       _colorValue = _existingBike!.colorValue;
       setState(() {});
@@ -155,27 +156,33 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     }
 
     if (_existingBike != null) {
+      final enteredOdo = parseLocalizedNumber(_odometerCtrl.text);
+      final newBaseline = enteredOdo != null 
+          ? enteredOdo - _existingBike!.totalDistanceKm 
+          : null;
       await ref.read(garageProvider.notifier).updateBike(
             _existingBike!.copyWith(
               brand: _brandCtrl.text.trim(),
               model: _modelCtrl.text.trim(),
-              year: int.tryParse(_yearCtrl.text),
-              cc: int.tryParse(_ccCtrl.text),
+              year: parseLocalizedInt(_yearCtrl.text),
+              cc: parseLocalizedInt(_ccCtrl.text),
               imagePath: savedImagePath,
-              odometerKm: double.tryParse(_odometerCtrl.text),
+              odometerKm: newBaseline,
+              clearOdometer: _odometerCtrl.text.trim().isEmpty,
               colorValue: _colorValue,
               clearColor: _colorValue == null,
             ),
           );
       if (mounted) context.pop();
     } else {
+      final enteredOdo = parseLocalizedNumber(_odometerCtrl.text);
       final newBikeId = await ref.read(garageProvider.notifier).addBike(
             brand: _brandCtrl.text.trim(),
             model: _modelCtrl.text.trim(),
-            year: int.tryParse(_yearCtrl.text),
-            cc: int.tryParse(_ccCtrl.text),
+            year: parseLocalizedInt(_yearCtrl.text),
+            cc: parseLocalizedInt(_ccCtrl.text),
             imagePath: savedImagePath,
-            odometerKm: double.tryParse(_odometerCtrl.text),
+            odometerKm: enteredOdo,
             colorValue: _colorValue,
           );
       if (newBikeId != null) AnalyticsService.instance.log(AnalyticsEvent.bikeAdded);
@@ -187,13 +194,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
         // Router and messenger are captured before the pop unmounts us.
         final router = GoRouter.of(context);
         final messenger = ScaffoldMessenger.of(context);
+        final l10n = context.l10n;
         context.pop();
         if (newBikeId != null) {
           messenger.showSnackBar(SnackBar(
-            content: Text(context.l10n.bikeAdded),
+            content: Text(l10n.bikeAdded),
             duration: const Duration(seconds: 6),
             action: SnackBarAction(
-              label: context.l10n.setServiceIntervals,
+              label: l10n.setServiceIntervals,
               onPressed: () => router.push(
                   '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true'),
             ),
@@ -315,6 +323,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       style: TextStyle(color: context.palette.textPrimary),
                       decoration: InputDecoration(
                           labelText: context.l10n.year, hintText: '2023'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        final y = parseLocalizedInt(v);
+                        if (y == null || y < 1900 || y > DateTime.now().year + 1) {
+                          return context.l10n.invalidNumber;
+                        }
+                        return null;
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -325,6 +341,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       style: TextStyle(color: context.palette.textPrimary),
                       decoration: InputDecoration(
                           labelText: context.l10n.engineCc, hintText: '155'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        final c = parseLocalizedInt(v);
+                        if (c == null || c <= 0 || c > 10000) {
+                          return context.l10n.invalidNumber;
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -337,6 +361,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
                     labelText: context.l10n.odometerReadingKm, hintText: '12000'),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final o = parseLocalizedNumber(v);
+                  if (o == null || o < 0 || o > 2000000) {
+                    return context.l10n.invalidNumber;
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
               Text(context.l10n.bikeColor,

@@ -106,7 +106,7 @@ class _FakeHttpClientRequest implements HttpClientRequest {
   @override
   void addError(Object error, [StackTrace? stackTrace]) {}
   @override
-  Future addStream(Stream<List<int>> stream) async {}
+  Future addStream(Stream<List<int>> stream) async {} // ignore: strict_raw_type // TODO(audit-101): fix strict mode typing
   @override
   Future<HttpClientResponse> close() async => _FakeHttpClientResponse();
   @override
@@ -116,7 +116,7 @@ class _FakeHttpClientRequest implements HttpClientRequest {
   @override
   Future<HttpClientResponse> get done async => _FakeHttpClientResponse();
   @override
-  Future flush() async {}
+  Future flush() async {} // ignore: strict_raw_type // TODO(audit-101): fix strict mode typing
   @override
   String get method => 'GET';
   @override
