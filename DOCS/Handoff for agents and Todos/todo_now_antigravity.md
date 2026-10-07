@@ -83,4 +83,20 @@
   - [x] **F7 (branch):** all this work is on `experimental`, not merged into `main`. — RESOLVED: `main` contains the work and is pushed.
   - [ ] **F8 (no device check):** the §97 fixes and the new widget tests were verified by code reading and the test suite only, not on a device.
 
+## 10. Audit follow-ups (2026-10-07) — details in `issues_open.md` §101
+
+Groups are independent (disjoint files) and can run as parallel agents. Rules: add a test per fix, run `flutter analyze` and `flutter test`, do not deploy.
+
+- [ ] **G1 Firestore rules hardening** — 101.S1, S3, S11 (`firestore.rules`, `firestore.indexes.json`, `scripts/test/rules/`).
+- [ ] **G2 RTDB rules and realtime** — 101.S6 (`database.rules.json`, `app/lib/core/realtime/`, rules tests).
+- [ ] **G3 Cloud Functions** — 101.S2, S4, S5 (`functions/`).
+- [ ] **G4 Hosting, scripts, CI** — 101.S7, S8, S9, S10, D3 gitignore (`firebase.json`, `public/`, `scripts/`, `.github/`, `.gitignore`).
+- [ ] **G5 Auth and social client** — 101.A1-A4.
+- [ ] **G6 Sync and core robustness** — 101.C1-C3, C5, C7-C9.
+- [ ] **G7 Ride, maintenance, garage** — 101.R1-R10 (includes shared `parseLocalizedNumber`).
+- [ ] **G8 Places, theme, i18n, a11y** — 101.P1-P3, P5-P7, 101.R9, A4 a11y.
+- [ ] **G9 Tests, build, native config** — 101.B1, B3, B5, B6, B8 (not B2, B4, B7).
+- [ ] **G10 Docs cleanup** — 101.D2, D3 (stale PRD/README versions, FIXED stubs, F6 re-scope, §83.19 status).
+- [ ] **Founder only:** 101.B2, B4, B7, C4, C6, C10, P4, S12-S14, D1, A5; device checks (F8, §8 widgets).
+
 - [ ] **Next Steps if Token Limit Reached**: Continue from the first unchecked item in this list.

@@ -2,6 +2,14 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
+## 2026-10-07 (latest): full-project audit — findings logged, nothing fixed
+
+- Seven read-only passes (security/functions, core/sync, ride/maintenance, social/auth, places/theme/i18n, build/native/tests, docs/hygiene) found about 150 flaws. All are in `issues_open.md` §101 with severity and an AUTO flag; the work list is `todo_now_antigravity.md` §10 (groups G1-G10).
+- No code changed. Baseline at audit time: `flutter analyze` clean, `flutter test` 1758/1758.
+- Worst items: rating inflation rule (101.S1); account deletion leaves chats, RTDB nodes and forum identity behind and has no re-auth (101.S2, S4, A1); sign-out does not stop live share (101.A2); sync has no timeouts (101.C1); bike edit double-counts distance (101.R1); white-on-lime contrast and failing `textTertiary` (101.P1, P2); empty `sync_manager_test.dart` (101.B1); no `PrivacyInfo.xcprivacy` (101.B2).
+- Founder-only: Play and Apple declarations, analytics consent policy, conflict policy for multi-device edits, release version format, tracked-file bloat, local secret layout.
+- Audit agents did not run the emulators or device; line numbers are approximate.
+
 ## 2026-10-07 (latest): Realtime Database movement channel — committed `8f8f774`, pushed; RTDB not provisioned yet
 
 - Checklist for going live, device checks and hardening: `DOCS/websockets_todo.md`.
