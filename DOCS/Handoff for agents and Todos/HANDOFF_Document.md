@@ -2,6 +2,20 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
+## 2026-10-07 (latest): Realtime Database movement channel — uncommitted, RTDB not provisioned yet
+
+- Live share, group-ride dots and chat typing now also run over Firebase Realtime Database (one WebSocket). Firestore is still the source of truth and the fallback. Contract and setup: `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
+- **Inert in production until someone acts.** `throttleiqfb` has no RTDB instance, and the app only turns RTDB on when built with `--dart-define=RTDB_URL=…`. Until both happen, behaviour is exactly as before. Steps are in `issues_open.md` §99.1.
+- New: `database.rules.json`, `app/lib/core/realtime/`, `GroupRideLiveChannel`, `ChatTypingChannel`, `public/live-viewer-core.js`, `scripts/verify_realtime.js`, plus rules and WebSocket delivery suites (`npm run test:rtdb` in `scripts/`).
+- Verified:
+  - `flutter analyze` is clean; `flutter test` passes 1,758 (74 of them new realtime tests).
+  - `npm run test:rtdb:ci` passes 61/61: 36 rules tests, 9 two-client WebSocket delivery tests (p95 ≈ 16 ms on the emulator), and 16 viewer-logic tests.
+  - The emulator smoke run delivered 20/20.
+  - The viewer was checked once in headless Chrome against the emulators. That check is not committed.
+- Not verified: on a device, or against production. `integration_test/realtime_emulator_test.dart` has not been run.
+- CI runs `test:rtdb:ci` in the rules job (`.github/workflows/ci.yml`).
+- Behaviour to know: when an RTDB node a listener is reading gets deleted (share stopped, ride ended, rider banned), the listener is **cancelled with `permission_denied`**. It does not receive `null`. Readers treat that as "fall back to Firestore".
+
 ## 2026-10-07 (latest): branch cleanup and PRD rewrite
 
 - `experimental` (with `exp-group-a` to `exp-group-f`) was fast-forwarded into `main` (`9d3b6d6`) and pushed. This closes todo F7.

@@ -6,6 +6,11 @@
   <title>ThrottleIQ Live Viewer</title>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <!-- Realtime Database: the ~1 Hz position channel (live_shares/{token}).
+       Optional — if it fails to load, or the project has no databaseURL, the
+       page runs on Firestore alone exactly as before. -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+  <script src="/live-viewer-core.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -118,6 +123,32 @@
       color: #2c5282;
       border: 2px solid #90cdf4;
     }
+
+    /* Which channel the map is moving on — see LiveViewerCore.transportState. */
+    .transport-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: -8px 0 16px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .transport-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .transport-realtime { background: #c6f6d5; color: #22543d; }
+    .transport-delayed { background: #feebc8; color: #7c2d12; }
+    .transport-offline { background: #edf2f7; color: #718096; }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -348,6 +379,7 @@
 
       <div id="viewer" class="hidden">
         <div id="statusBanner" class="status-banner"></div>
+        <div id="transportBadge" class="transport-badge transport-delayed hidden"></div>
 
         <div id="mapContainer" class="map-container">
           <div id="mapPlaceholder" class="map-placeholder">
@@ -500,12 +532,36 @@
         // Not served from Firebase Hosting — fall through to FALLBACK_CONFIG.
       }
 
+      // Local testing against the emulators (`?emulator=1`), honoured only
+      // on localhost so a crafted link can never point a real viewer at
+      // someone else's backend.
+      const useEmulators = new URLSearchParams(window.location.search).get('emulator') === '1' &&
+        ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      if (useEmulators) {
+        config = { ...config, databaseURL: `http://127.0.0.1:9000?ns=${config.projectId}-default-rtdb` };
+      }
+
       try {
         firebase.initializeApp(config);
         db = firebase.firestore();
+        if (useEmulators) db.useEmulator('127.0.0.1', 8080);
       } catch (e) {
         showError('Could not connect to ThrottleIQ. Please try again later.');
         return;
+      }
+
+      // Realtime Database is optional. init.json only carries databaseURL
+      // once the project has an RTDB instance; without it (or without the
+      // SDK script) the page stays Firestore-only. firebase.database() does
+      // not open a socket until the first ref is listened to.
+      try {
+        if (config.databaseURL && typeof firebase.database === 'function' && window.LiveViewerCore) {
+          rtdb = firebase.database();
+          if (useEmulators) rtdb.useEmulator('127.0.0.1', 9000);
+        }
+      } catch (e) {
+        console.warn('[realtime] disabled:', e);
+        rtdb = null;
       }
 
       if (route.mode === 'handle') {
@@ -587,11 +643,43 @@
     /// unsubscribe function. Shared by both link shapes; `permanent` only
     /// changes what a finished/stale/absent session means — a dead end for a
     /// one-off token, an ordinary "not riding" for a permanent link.
+    ///
+    /// The Firestore document stays the authority on whether there is
+    /// anything to show at all (shareable, unexpired, not finished). Only
+    /// while it says yes does this also listen to the ~1 Hz Realtime Database
+    /// channel, live_shares/{token}/location, and the marker follows
+    /// whichever of the two positions is newer (LiveViewerCore.pickFreshest).
     function watchLiveSession(token, { permanent } = { permanent: false }) {
       let lastUpdateTime = Date.now();
       let updateWarningShown = false;
 
+      // Latest value from each channel. `session` is null whenever the
+      // Firestore doc says "not live" — RTDB fixes are ignored then, so a
+      // leftover live_shares node can never resurrect a revoked share.
+      let session = null;
+      let rtLocation = null;
+      const realtime = attachRealtime(token, {
+        onLocation: (location) => {
+          rtLocation = location;
+          if (!session) return;
+          lastUpdateTime = Date.now();
+          render();
+        },
+        onEnded: () => {
+          // Node removed or expired (the server cancels the listen with
+          // permission_denied) — the Firestore doc will say why. The last
+          // RTDB fix is kept: dropping it would snap the marker BACK to the
+          // older Firestore position, and pickFreshest already hands over to
+          // Firestore as soon as it has anything newer.
+          if (session) render();
+        },
+      });
+
+      const render = () => updateUI(session, rtLocation, realtime);
+
       const notLive = (tokenMessage) => {
+        session = null;
+        realtime.pause();
         if (permanent) {
           showIdle();
         } else {
@@ -607,7 +695,7 @@
             notLive('Session not found or has expired.');
             return;
           }
-          const session = doc.data();
+          const data = doc.data();
 
           // Sessions carry a 24h expiry the app sets at publish time.
           // Nothing sweeps expired docs, so honour it client-side rather
@@ -617,7 +705,7 @@
           // on a Timestamp object yields an Invalid Date, which the
           // isNaN guard below would silently treat as "never expires" —
           // so unwrap it via toDate() when it's available.
-          const expiresAt = toDate(session.expiresAt);
+          const expiresAt = toDate(data.expiresAt);
           if (expiresAt && expiresAt < new Date()) {
             notLive('This live ride link has expired.');
             return;
@@ -629,27 +717,41 @@
           // mid-ride never runs that cleanup, and a permanent link must not
           // become a frozen "last seen here" beacon because of it.
           if (permanent) {
-            const updatedAt = toDate(session.updatedAt);
+            const updatedAt = toDate(data.updatedAt);
             const stale = updatedAt && (Date.now() - updatedAt.getTime()) > STALE_OFFLINE_MS;
-            if (session.active === false || session.status === 'completed' || stale) {
-              showIdle();
+            if (data.active === false || data.status === 'completed' || stale) {
+              notLive();
               return;
             }
           }
 
+          session = data;
+          // A finished ride has nothing more to stream; anything else
+          // (riding, paused, crash) keeps the 1 Hz channel open.
+          if (data.status === 'completed') realtime.pause();
+          else realtime.resume();
+
           showViewer();
-          updateUI(session);
+          render();
           lastUpdateTime = Date.now();
           updateWarningShown = false;
           document.getElementById('warningMsg').style.display = 'none';
         },
         (error) => {
           console.error('Firestore error:', error);
+          // Firestore is the authority on whether this share may be shown at
+          // all; without it, stop the RTDB channel too rather than keep
+          // painting positions under an error message.
+          session = null;
+          realtime.pause();
           showError('Failed to connect to session. Please check permissions.');
         }
       );
 
-      // Check for stale data every 5 seconds
+      // Stale warning and the transport badge / "Xs ago" text. Ticks every
+      // second (it used to be every 5s, warning only) so the badge can drop
+      // from "Live" the moment the 1 Hz channel goes quiet. Both channels
+      // reset lastUpdateTime, so the warning means "neither is moving".
       const staleTimer = setInterval(() => {
         const timeSinceUpdate = Date.now() - lastUpdateTime;
         if (timeSinceUpdate > 30000 && !updateWarningShown) {
@@ -659,11 +761,90 @@
           document.getElementById('warningMsg').style.display = 'none';
           updateWarningShown = false;
         }
-      }, 5000);
+        if (session) renderFreshness(session, rtLocation, realtime);
+      }, 1000);
 
       return () => {
         clearInterval(staleTimer);
         unsubscribe();
+        realtime.detach();
+      };
+    }
+
+    // ------------------------------------------------------------------
+    // Realtime Database channel
+    //
+    // One handle per watched token. Listeners are attached lazily by
+    // resume() (the first time the Firestore doc says the ride is live) and
+    // removed by pause()/detach(), so a viewer sitting on an idle permanent
+    // link holds no RTDB listen. Every failure path — no RTDB on the page,
+    // no databaseURL, a rules rejection — degrades to "no RTDB fix", which
+    // leaves the Firestore-only behaviour untouched.
+    // ------------------------------------------------------------------
+    let rtdb = null;
+    let rtdbConnected = false;
+    let serverTimeOffsetMs = 0;
+    let infoListenersAttached = false;
+
+    function attachInfoListeners() {
+      if (!rtdb || infoListenersAttached) return;
+      infoListenersAttached = true;
+      rtdb.ref('.info/connected').on('value', (snap) => {
+        rtdbConnected = snap.val() === true;
+      });
+      rtdb.ref('.info/serverTimeOffset').on('value', (snap) => {
+        serverTimeOffsetMs = snap.val() || 0;
+      });
+    }
+
+    function attachRealtime(token, { onLocation, onEnded }) {
+      const seq = window.LiveViewerCore ? LiveViewerCore.createSeqTracker() : null;
+      let ref = null;
+
+      const pause = () => {
+        if (ref) ref.off();
+        ref = null;
+      };
+
+      const resume = () => {
+        if (!rtdb || !seq || ref) return;
+        attachInfoListeners();
+        try {
+          ref = rtdb.ref(`live_shares/${token}/location`);
+          ref.on(
+            'value',
+            (snap) => {
+              const location = snap.val();
+              if (!location) return; // Not published yet (older app build).
+              const kind = seq.observe(location.seq);
+              if (kind === 'gap' || kind === 'out_of_order') {
+                console.debug('[realtime] seq', kind, seq.stats());
+              }
+              onLocation(location);
+            },
+            (error) => {
+              // Expected when the rider stops sharing / the ride ends: the
+              // node is deleted, the read rule no longer holds, and the
+              // server cancels this listen. Also what a viewer gets if it
+              // arrives before the app's first 1 Hz write has created the
+              // node — the next Firestore snapshot calls resume() again, so
+              // it picks the channel up within ~10s. Never fatal.
+              console.info('[realtime] channel closed:', error && error.code);
+              ref = null;
+              onEnded();
+            }
+          );
+        } catch (e) {
+          console.warn('[realtime] unavailable, Firestore only:', e);
+          ref = null;
+        }
+      };
+
+      return {
+        resume,
+        pause,
+        detach: pause,
+        seqStats: () => (seq ? seq.stats() : null),
       };
     }
 
@@ -685,7 +866,7 @@
       }
     }
 
-    function updateUI(session) {
+    function updateUI(session, rtLocation, realtime) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('viewer').classList.remove('hidden');
       // Idempotent — updateUI runs on every snapshot, renderInstallCta just
@@ -701,10 +882,16 @@
       statusBanner.className = `status-banner status-${status}`;
       statusBanner.textContent = `🏍️ ${status.toUpperCase()}`;
 
+      // Position and speed come from whichever channel is fresher; battery
+      // and status only ever come from the Firestore doc.
+      const pos = freshestPosition(session, rtLocation);
+
       // Stats. Note the `!= null` checks rather than truthiness: a battery of
       // 0% and a latitude/longitude of exactly 0 are all legitimate values
       // that `||` would have replaced with '--'.
-      const speedMs = typeof session.speedMs === 'number' ? session.speedMs : 0;
+      const speedMs = pos && typeof pos.speedMs === 'number'
+        ? pos.speedMs
+        : (typeof session.speedMs === 'number' ? session.speedMs : 0);
       document.getElementById('speed').textContent = (speedMs * 3.6).toFixed(1);
 
       const battery = session.batteryPct;
@@ -712,23 +899,69 @@
       document.getElementById('batteryFill').style.width =
         battery != null ? `${battery}%` : '0%';
 
-      const lat = session.lastLat;
-      const lng = session.lastLng;
+      const lat = pos ? pos.lat : null;
+      const lng = pos ? pos.lng : null;
       document.getElementById('lat').textContent = lat != null ? lat.toFixed(6) : '--';
       document.getElementById('lng').textContent = lng != null ? lng.toFixed(6) : '--';
       if (lat != null && lng != null) updateMap(lat, lng, status);
 
-      // Last update time
-      const updateTime = new Date(session.updatedAt);
+      renderFreshness(session, rtLocation, realtime);
+    }
+
+    /// Merged position from both channels. Without live-viewer-core.js (e.g.
+    /// the file failed to load) this is exactly the old Firestore-only read.
+    function freshestPosition(session, rtLocation) {
+      if (!window.LiveViewerCore) {
+        if (session.lastLat == null || session.lastLng == null) return null;
+        const updatedAt = toDate(session.updatedAt);
+        return {
+          lat: session.lastLat,
+          lng: session.lastLng,
+          speedMs: session.speedMs,
+          atMs: updatedAt ? updatedAt.getTime() : null,
+        };
+      }
+      return LiveViewerCore.pickFreshest(
+        LiveViewerCore.firestorePosition(session),
+        LiveViewerCore.rtdbPosition(rtLocation)
+      );
+    }
+
+    /// "Last updated" text and the transport badge. Called on every render
+    /// and once a second from watchLiveSession's timer.
+    function renderFreshness(session, rtLocation, realtime) {
+      const pos = freshestPosition(session, rtLocation);
       const lastUpdateEl = document.getElementById('lastUpdate');
-      if (isNaN(updateTime.getTime())) {
+      if (!pos || pos.atMs == null) {
         lastUpdateEl.textContent = '--';
+      } else {
+        // Both timestamps are server time; compare against the server clock
+        // (local + .info/serverTimeOffset, which is 0 without RTDB).
+        const diffSeconds = Math.max(0, Math.floor((Date.now() + serverTimeOffsetMs - pos.atMs) / 1000));
+        lastUpdateEl.textContent = diffSeconds < 60
+          ? `${diffSeconds}s ago`
+          : new Date(pos.atMs).toLocaleTimeString();
+      }
+
+      const badge = document.getElementById('transportBadge');
+      if (!window.LiveViewerCore || !rtdb) {
+        // No realtime channel on this page at all — nothing to badge.
+        badge.classList.add('hidden');
         return;
       }
-      const diffSeconds = Math.floor((Date.now() - updateTime.getTime()) / 1000);
-      lastUpdateEl.textContent = diffSeconds < 60
-        ? `${diffSeconds}s ago`
-        : updateTime.toLocaleTimeString();
+      const state = LiveViewerCore.transportState({
+        rtdbConnected,
+        rtPos: LiveViewerCore.rtdbPosition(rtLocation),
+        fsPos: LiveViewerCore.firestorePosition(session),
+        nowMs: Date.now(),
+        offsetMs: serverTimeOffsetMs,
+      });
+      badge.className = `transport-badge transport-${state}`;
+      badge.textContent = LiveViewerCore.badgeLabel(state);
+      const stats = realtime && realtime.seqStats();
+      badge.title = stats
+        ? `Realtime updates received: ${stats.received}, skipped: ${stats.missed}, out of order: ${stats.outOfOrder}`
+        : '';
     }
 
     // Live map. The container previously held a static "Rider location will
@@ -760,7 +993,12 @@
 
       marker.setLatLng(here);
       marker.setStyle({ fillColor: status === 'crash' ? '#e53e3e' : '#667eea' });
-      trail.addLatLng(here);
+      // Both channels re-render with the same freshest fix (a Firestore
+      // snapshot that loses the race to an RTDB fix repaints the RTDB one),
+      // so only extend the trail when the point actually moved.
+      const points = trail.getLatLngs();
+      const last = points[points.length - 1];
+      if (!last || last.lat !== lat || last.lng !== lng) trail.addLatLng(here);
       map.panTo(here);
     }
 

@@ -1,10 +1,64 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/realtime/realtime_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/chat_entity.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../data/repositories/chat_typing_channel.dart';
 
 final chatRepositoryProvider = Provider((ref) => ChatRepository());
+
+final chatTypingChannelProvider = Provider(
+  (ref) => ChatTypingChannel(ref.watch(realtimeServicesProvider)),
+);
+
+/// Whether the other rider in a 1:1 chat is typing right now. Always false
+/// when RTDB isn't configured or the chat has a legacy (non-DM) id.
+///
+/// Re-evaluated every second as well as on each change, so "typing…"
+/// expires [kTypingExpiry] after the peer's last refresh even if their
+/// `false` never arrives. Holds a socket lease while watched.
+final peerTypingProvider = StreamProvider.autoDispose
+    .family<bool, ({String chatId, String peerUid})>((ref, args) {
+  final channel = ref.watch(chatTypingChannelProvider);
+  if (!channel.supports(args.chatId)) return Stream.value(false);
+
+  final lease = channel.services.acquire('chat-typing-read');
+  final controller = StreamController<bool>();
+  ChatPresence? presence;
+  var offsetMs = 0;
+  void emit() {
+    if (controller.isClosed) return;
+    controller.add(isPeerTyping(presence,
+        localNow: DateTime.now(), serverTimeOffsetMs: offsetMs));
+  }
+
+  final presenceSub =
+      channel.watchPresence(args.chatId, args.peerUid).listen((p) {
+    presence = p;
+    emit();
+  }, onError: (Object _) {
+    presence = null;
+    emit();
+  });
+  final offsetSub =
+      channel.services.store.watchServerTimeOffset().listen((o) {
+    offsetMs = o;
+    emit();
+  }, onError: (Object _) {});
+  final ticker = Timer.periodic(const Duration(seconds: 1), (_) => emit());
+  ref.onDispose(() {
+    ticker.cancel();
+    presenceSub.cancel();
+    offsetSub.cancel();
+    controller.close();
+    lease.release();
+  });
+  emit();
+  return controller.stream.distinct();
+});
 
 final userChatsProvider = StreamProvider.autoDispose<List<ChatEntity>>((ref) {
   final user = ref.watch(currentUserProvider);

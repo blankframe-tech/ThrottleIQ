@@ -17,6 +17,8 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/database/daos/bike_dao.dart';
 import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
+import '../../../../core/realtime/realtime_location_publisher.dart';
+import '../../../../core/realtime/realtime_providers.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/home_widget_service.dart';
 import '../../../../core/services/notification_service.dart';
@@ -234,7 +236,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   final _cadencePolicy = RecordingCadencePolicy();
 
   // Helper coordinators
-  final _liveCoordinator = LiveSessionCoordinator();
+  late final _liveCoordinator =
+      LiveSessionCoordinator(realtime: _ref.read(realtimeServicesProvider));
   final _crashCoordinator = CrashCoordinator();
   final _persistenceCoordinator = RidePersistenceCoordinator();
   final _sensorCoordinator = SensorFusionCoordinator();
@@ -740,6 +743,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     );
 
     _lastPoint = point;
+
+    // 1 Hz relay to the live viewer over RTDB; a no-op unless sharing. Only
+    // reached while recording is active — fixes stop arriving on pause.
+    _liveCoordinator.offerLocation(LocationSample(
+      lat: point.lat,
+      lng: point.lng,
+      speedMs: point.speedMs,
+      headingDeg: point.headingDeg,
+      accuracyM: point.accuracyM,
+    ));
 
     // The first fix after a resume is always persisted, marked as starting
     // a segment, so a restore never bridges the pause gap (§90.C6). The

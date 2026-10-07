@@ -658,6 +658,15 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
     after 21:00, or when the app is opened after 21:00.
   - Open follow-ups are in `issues_open.md` §93.
 
+## Changes from the realtime pass (2026-10-07, uncommitted, inactive until RTDB is set up)
+
+Nothing below is visible until an RTDB instance exists and the app is built with `RTDB_URL` (`issues_open.md` §99.1). Without it, every feature behaves as before.
+
+- **Live share (partner viewer):** while sharing, the rider's position also goes to `/live_shares/{token}` once a second. The web viewer moves the marker from whichever source is newer (RTDB or the Firestore session). It shows a "Live" / "Updates every 10s" badge. The Firestore session is still what decides whether the link works. While RTDB carries position, the Firestore write drops from every 10 s to every 20 s.
+- **Group ride map:** dots move every 2 s (when the rider moved 5 m or more, with a 30 s heartbeat) over `/group_rides/{id}/locations`. Firestore `memberLocations` drops to a 2-minute heartbeat, so riders on older builds still see everyone. Each marker uses the newer of the two. The title shows a "Live" / "Delayed" badge. A kick also bans the rider on the RTDB side.
+- **Chat:** "typing…" under the other rider's name in 1:1 chats. It is not sent to or shown for a blocked rider, and it clears itself within 6 s if their app dies.
+- **Connection budget:** the app keeps the RTDB socket open only while sharing, on the group map, or in a chat room. It disconnects 30 s after the last of those closes (Spark plan cap: 100 connections).
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).

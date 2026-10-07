@@ -4,12 +4,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../../core/realtime/realtime_providers.dart';
+import '../../data/repositories/group_ride_live_channel.dart';
 import '../../data/repositories/group_ride_repository.dart';
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_liveness.dart';
 
-final groupRideRepositoryProvider =
-    Provider<GroupRideRepository>((ref) => GroupRideRepository());
+/// The RTDB movement channel for group rides (moving dots). See
+/// [GroupRideLiveChannel].
+final groupRideLiveChannelProvider = Provider<GroupRideLiveChannel>(
+  (ref) => GroupRideLiveChannel(ref.watch(realtimeServicesProvider)),
+);
+
+final groupRideRepositoryProvider = Provider<GroupRideRepository>(
+  (ref) => GroupRideRepository()
+    ..attachLiveChannel(ref.watch(groupRideLiveChannelProvider)),
+);
 
 /// The signed-in rider's live group rides — the Social feed's "Riding Now"
 /// strip, the ride cockpit's push-to-talk button and the Record screen's

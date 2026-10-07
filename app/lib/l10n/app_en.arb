@@ -8100,5 +8100,17 @@
         "type": "String"
       }
     }
+  },
+  "groupRideRealtimeLive": "Live",
+  "@groupRideRealtimeLive": {
+    "description": "Badge on the group ride map: positions are arriving over the realtime channel (every ~2s)."
+  },
+  "groupRideRealtimeDelayed": "Delayed",
+  "@groupRideRealtimeDelayed": {
+    "description": "Badge on the group ride map: realtime channel down, positions update every ~20s via the fallback."
+  },
+  "chatTyping": "typing…",
+  "@chatTyping": {
+    "description": "Shown under the chat partner's name while they are typing."
   }
 }

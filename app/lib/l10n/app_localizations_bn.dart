@@ -5897,4 +5897,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String forumPhotoUploadFailed(String e) {
     return 'ছবি আপলোড করা যায়নি: $e';
   }
+
+  @override
+  String get groupRideRealtimeLive => 'লাইভ';
+
+  @override
+  String get groupRideRealtimeDelayed => 'বিলম্বিত';
+
+  @override
+  String get chatTyping => 'টাইপ করছে…';
 }

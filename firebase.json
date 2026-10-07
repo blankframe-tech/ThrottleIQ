@@ -3,6 +3,9 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "database": {
+    "rules": "database.rules.json"
+  },
   "functions": {
     "source": "functions",
     "codebase": "default",
@@ -17,6 +20,12 @@
     },
     "ui": {
       "enabled": false
+    },
+    "database": {
+      "port": 9000
+    },
+    "auth": {
+      "port": 9099
     }
   },
   "hosting": {

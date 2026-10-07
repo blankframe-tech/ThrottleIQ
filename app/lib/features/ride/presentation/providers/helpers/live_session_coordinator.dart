@@ -4,22 +4,53 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
+import 'package:throttleiq/core/realtime/realtime_connection_manager.dart';
+import 'package:throttleiq/core/realtime/realtime_health.dart';
+import 'package:throttleiq/core/realtime/realtime_location_publisher.dart';
+import 'package:throttleiq/core/realtime/realtime_providers.dart';
 import 'package:throttleiq/core/services/battery_service.dart';
 import 'package:throttleiq/core/services/public_live_link_setting.dart';
 import 'package:throttleiq/features/ride/domain/entities/live_session_entity.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
 
+/// How often the RTDB relay may write the rider's position while sharing:
+/// once per GPS fix at 1 Hz. A hair under a second so a fix arriving 990 ms
+/// after the last one isn't skipped, which would halve the rate.
+const Duration kLiveRelayInterval = Duration(milliseconds: 900);
+
+/// While the RTDB relay is carrying position, only every Nth 10 s Firestore
+/// tick is written (so every 20 s). The Firestore doc still carries status,
+/// battery and expiry, and is the viewer's fallback; the viewer's 30 s
+/// "updates delayed" warning stays clear of a 20 s cadence.
+const int kFirestoreTickDivisorWhenRealtime = 2;
+
 /// Coordinates live-sharing sessions: token creation, periodic position updates,
 /// permanent user pointers, and durable offline teardown via [OutboxService].
+///
+/// Position also goes out at 1 Hz over the Realtime Database
+/// (`/live_shares/{token}`) when [RealtimeServices] is enabled — see
+/// DOCS/For Devs and Contributors/architecture/realtime-database.md. The
+/// Firestore session doc stays authoritative for whether the link is live.
 class LiveSessionCoordinator {
   LiveSessionCoordinator({
     FirebaseFirestore? firestore,
     Future<bool> Function()? publicLinkEnabled,
+    RealtimeServices? realtime,
+    @visibleForTesting
+    Timer Function(Duration, void Function(Timer))? periodicTimerFactory,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _publicLinkEnabled =
-            publicLinkEnabled ?? PublicLiveLinkSetting.isEnabled;
+            publicLinkEnabled ?? PublicLiveLinkSetting.isEnabled,
+        _realtime = realtime,
+        _periodicTimer = periodicTimerFactory ?? Timer.periodic;
 
   final FirebaseFirestore _firestore;
+  final RealtimeServices? _realtime;
+  final Timer Function(Duration, void Function(Timer)) _periodicTimer;
+  RealtimeLocationPublisher? _relay;
+  RealtimeLease? _relayLease;
+  String? _relayToken;
+  int _ticks = 0;
 
   /// Whether the rider opted in to the permanent `/r/{username}` link
   /// (Settings → "Public link (/r/@handle)", issues §90.D7). Read per share,
@@ -34,7 +65,26 @@ class LiveSessionCoordinator {
   bool get isLiveShareEnabled => _liveShareEnabled;
   String? get currentLiveSessionToken => _currentLiveSessionToken;
 
+  /// The live RTDB relay, for tests and diagnostics. Null when not sharing
+  /// or RTDB isn't configured.
+  @visibleForTesting
+  RealtimeLocationPublisher? get relay => _relay;
+
+  /// Whether the 1 Hz RTDB relay is currently the thing carrying position.
+  bool get _relayCarriesPosition =>
+      _relay != null &&
+      _realtime?.transportNow() == RealtimeTransport.realtime;
+
+  /// Hands one GPS fix to the RTDB relay. Called for every fix while the
+  /// ride is active; the relay throttles to [kLiveRelayInterval]. A no-op
+  /// unless sharing is on and the relay is up.
+  void offerLocation(LocationSample sample) {
+    if (!_liveShareEnabled) return;
+    _relay?.offer(sample);
+  }
+
   void reset() {
+    _stopRelay();
     _liveSessionTimer?.cancel();
     _liveSessionTimer = null;
     _currentLiveSessionToken = null;
@@ -98,7 +148,12 @@ class LiveSessionCoordinator {
   /// `state`/`_lastPoint` at call time instead.
   void startPeriodicPublishing({required VoidCallback onTick}) {
     _liveSessionTimer?.cancel();
-    _liveSessionTimer = Timer.periodic(_liveSessionUpdateInterval, (_) {
+    _liveSessionTimer = _periodicTimer(_liveSessionUpdateInterval, (_) {
+      _ticks++;
+      if (_relayCarriesPosition &&
+          _ticks % kFirestoreTickDivisorWhenRealtime != 0) {
+        return;
+      }
       onTick();
     });
   }
@@ -152,6 +207,8 @@ class LiveSessionCoordinator {
         updatedAt: DateTime.now(),
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
+
+      _ensureRelay(uid, token, session.expiresAt);
 
       // Independent docs — run concurrently rather than sequentially so the
       // first share tap (the only time both fire together) isn't stuck
@@ -242,6 +299,7 @@ class LiveSessionCoordinator {
   /// existing owner-update rule allows and which closes the link just the
   /// same.
   Future<void> stopSharingNow({required String? uid}) async {
+    _stopRelay();
     final token = _currentLiveSessionToken;
     _currentLiveSessionToken = null;
     _liveShareEnabled = false;
@@ -303,6 +361,7 @@ class LiveSessionCoordinator {
     required String? uid,
     required OutboxService outbox,
   }) async {
+    _stopRelay();
     final token = _currentLiveSessionToken;
     _currentLiveSessionToken = null;
     _liveShareEnabled = false;
@@ -329,7 +388,55 @@ class LiveSessionCoordinator {
     }
   }
 
+  /// Starts the RTDB relay for [token], once per token: writes the node's
+  /// owner/expiry, then hands position writes to a 1 Hz publisher. Sync on
+  /// purpose — it runs after [publishLiveSession]'s "still sharing?" check
+  /// and must not open a gap for "Stop sharing now" to land in.
+  void _ensureRelay(String uid, String token, DateTime expiresAt) {
+    final realtime = _realtime;
+    if (realtime == null || !realtime.isEnabled || _relayToken == token) {
+      return;
+    }
+    _stopRelay();
+    _relayToken = token;
+    _relayLease = realtime.acquire('live-share');
+    unawaited(realtime.store.set('live_shares/$token', {
+      'uid': uid,
+      'expiresAt': expiresAt.millisecondsSinceEpoch,
+    }).catchError((Object e) {
+      debugPrint('[LiveSession] realtime relay init failed: $e');
+    }));
+    _relay = RealtimeLocationPublisher(
+      store: realtime.store,
+      path: 'live_shares/$token/location',
+      minInterval: kLiveRelayInterval,
+      onAck: realtime.health.recordAck,
+    );
+  }
+
+  /// Stops the relay and removes `/live_shares/{token}` so the 1 Hz channel
+  /// dies with the share. The lease is released once the remove is acked (or
+  /// has timed out into the SDK's queue), so the socket isn't torn down with
+  /// the remove still unsent.
+  void _stopRelay() {
+    final relay = _relay;
+    final lease = _relayLease;
+    final token = _relayToken;
+    _relay = null;
+    _relayLease = null;
+    _relayToken = null;
+    _ticks = 0;
+    if (relay == null || token == null) {
+      lease?.release();
+      return;
+    }
+    unawaited(relay
+        .stop(removePath: 'live_shares/$token')
+        .whenComplete(() => lease?.release()));
+  }
+
   void dispose() {
+    _stopRelay();
     _liveSessionTimer?.cancel();
     _liveSessionTimer = null;
   }

@@ -1489,3 +1489,8 @@ placesResultCount
 # batch: forum-photos-paddock-stats
 forumAddPhotos
 paddockPosts
+
+# batch: realtime
+groupRideRealtimeLive
+groupRideRealtimeDelayed
+chatTyping

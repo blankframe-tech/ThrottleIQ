@@ -31,7 +31,10 @@
     "test": "node --test \"test/*.test.js\"",
     "test:rules": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" firebase emulators:exec --project=throttleiq-rules-test --only firestore \"'$npm_node_execpath' --test test/rules/*.test.js\"",
     "test:rules:ci": "firebase emulators:exec --project=throttleiq-rules-test --only firestore \"'$npm_node_execpath' --test test/rules/*.test.js\"",
-    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js && node --check seed_qa_test_riders.js && node --check cleanup_qa_test_riders.js && node --check cleanup_qa_engagement.js && node --check qa_seed_catalog.js && node --check seed_ai_cameras.js && node --check seed_police_checkposts.js && node --check seed_police_checkposts_v2.js && node --check seed_police_checkposts_v3.js && node --check update_places_google_ratings.js"
+    "test:rtdb": "JAVA_HOME=\"/opt/homebrew/opt/openjdk@21\" firebase emulators:exec --project=throttleiq-rtdb-test --only database \"'$npm_node_execpath' --test test/rtdb/*.test.js test/live_viewer_core.test.js\"",
+    "test:rtdb:ci": "firebase emulators:exec --project=throttleiq-rtdb-test --only database \"'$npm_node_execpath' --test test/rtdb/*.test.js test/live_viewer_core.test.js\"",
+    "verify:realtime:emulator": "firebase emulators:exec --project=throttleiq-rtdb-test --only database \"'$npm_node_execpath' verify_realtime.js --emulator\"",
+    "check": "node --check reset_beta_data.js && node --check seed_dhaka_places.js && node --check seed_qa_test_riders.js && node --check cleanup_qa_test_riders.js && node --check cleanup_qa_engagement.js && node --check qa_seed_catalog.js && node --check seed_ai_cameras.js && node --check seed_police_checkposts.js && node --check seed_police_checkposts_v2.js && node --check seed_police_checkposts_v3.js && node --check update_places_google_ratings.js && node --check verify_realtime.js"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0"

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/realtime/realtime_connection_manager.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -13,6 +16,7 @@ import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../domain/entities/chat_entity.dart';
+import '../../domain/typing_indicator_controller.dart';
 import '../providers/chat_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -29,6 +33,30 @@ class ChatRoomScreen extends ConsumerStatefulWidget {
 
 class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _textController = TextEditingController();
+
+  /// Debounces keystrokes into RTDB typing-state writes. Null when typing
+  /// indicators aren't available for this chat (no RTDB, legacy chat id).
+  TypingIndicatorController? _typing;
+  RealtimeLease? _typingLease;
+
+  /// Set from build: no "typing…" goes to someone the rider can't message.
+  bool _blocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final channel = ref.read(chatTypingChannelProvider);
+    final myUid = ref.read(currentUserProvider)?.uid;
+    if (myUid != null && channel.supports(widget.chatId)) {
+      _typingLease = channel.services.acquire('chat-typing-write');
+      _typing = TypingIndicatorController(
+        send: (typing) {
+          if (typing && _blocked) return;
+          unawaited(channel.setTyping(widget.chatId, myUid, typing));
+        },
+      );
+    }
+  }
 
   // -- Older messages (issues §90.A8) -------------------------------------
   // The live stream only carries the newest kChatMessagesPageSize messages.
@@ -81,6 +109,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
   @override
   void dispose() {
+    _typing?.dispose();
+    _typingLease?.release();
     _textController.dispose();
     super.dispose();
   }
@@ -93,6 +123,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     if (myUid == null) return;
 
     _textController.clear();
+    _typing?.onSent();
 
     try {
       await ref.read(chatRepositoryProvider).sendMessage(
@@ -143,6 +174,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     _otherUid = profileLookupUid;
     final blocked = profileLookupUid != null &&
         (ref.watch(chatBlockedProvider(profileLookupUid)).valueOrNull ?? false);
+    _blocked = blocked;
+    final peerTyping = profileLookupUid != null &&
+        !blocked &&
+        (ref
+                .watch(peerTypingProvider(
+                    (chatId: widget.chatId, peerUid: profileLookupUid)))
+                .valueOrNull ??
+            false);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -156,10 +195,25 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                resolvedOtherUser?.bestName ?? context.l10n.chat,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    resolvedOtherUser?.bestName ?? context.l10n.chat,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  if (peerTyping)
+                    Text(
+                      context.l10n.chatTyping,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: context.palette.textSecondary,
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -320,6 +374,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                       fillColor: context.palette.background,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
+                    onChanged: _typing?.onTextChanged,
                     onSubmitted: (_) => _sendMessage(),
                   ),
                 ),

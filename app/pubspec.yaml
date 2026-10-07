@@ -24,6 +24,10 @@ dependencies:
   firebase_auth: ^5.0.0
   firebase_crashlytics: ^4.1.3
   cloud_firestore: ^5.0.0
+  # Realtime Database carries only high-frequency movement (live-share 1 Hz,
+  # group-ride dots, chat typing) over one WebSocket; Firestore stays the
+  # source of truth. See DOCS/For Devs and Contributors/architecture/realtime-database.md.
+  firebase_database: ^11.3.10
   google_sign_in: ^6.1.0
 
   # Maps & Location

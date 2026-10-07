@@ -58,6 +58,43 @@ The runner also passes `$npm_node_execpath` explicitly rather than saying
 binary shadowing `node` on PATH, which otherwise tries to resolve `--test` as a
 module path and fails.
 
+## Realtime Database tests
+
+Contract and rationale: `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
+
+```bash
+cd scripts
+npm run test:rtdb        # Mac: JAVA_HOME -> Homebrew openjdk@21
+npm run test:rtdb:ci     # same, JAVA_HOME from the environment (CI)
+```
+
+Runs, against the RTDB emulator (port 9000):
+
+- `test/rtdb/rtdb_rules.test.js` — `database.rules.json`, allow + deny for
+  `live_shares`, `group_rides`, `chat_presence`.
+- `test/rtdb/rtdb_delivery.test.js` — two real SDK clients, each on its own
+  WebSocket: ordered gap-free `seq` delivery with a p95 latency bound,
+  `.info/connected` across `goOffline()`/`goOnline()`, `onDisconnect()`
+  cleanup, offline-queued writes, and permission errors surfacing to a
+  refused listener. Also pins one non-obvious behaviour the viewer relies
+  on: deleting a `live_shares` node **cancels** an attached viewer's listen
+  with `permission_denied` rather than delivering `null`.
+- `test/live_viewer_core.test.js` — the pure merge/staleness/seq logic in
+  `public/live-viewer-core.js` (no emulator needed; also picked up by
+  `npm test`).
+
+`verify_realtime.js` is the production smoke test: an admin writer streams
+1 Hz updates to a throwaway `/live_shares/{token}` and an unauthenticated
+client reads them back through the rules, then reports loss, ordering and
+p50/p95 latency and deletes the node.
+
+```bash
+npm run verify:realtime:emulator                                   # emulator
+node verify_realtime.js --url=https://<instance>.firebasedatabase.app  # prod (ADC)
+```
+
+It refuses to run without `--emulator` or an explicit `--url`.
+
 ---
 
 # ⚠️ `reset_beta_data.js` — READ THIS FIRST

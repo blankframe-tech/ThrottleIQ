@@ -71,6 +71,8 @@ jobs:
       - run: npm test
       # Same as `npm run test:rules` minus the Mac-only JAVA_HOME.
       - run: npm run test:rules:ci
+      # Realtime Database: rules + two-client WebSocket delivery suite.
+      - run: npm run test:rtdb:ci
 
   functions:
     runs-on: ubuntu-24.04

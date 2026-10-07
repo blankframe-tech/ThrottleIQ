@@ -10187,6 +10187,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not upload photo(s): {e}'**
   String forumPhotoUploadFailed(String e);
+
+  /// Badge on the group ride map: positions are arriving over the realtime channel (every ~2s).
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get groupRideRealtimeLive;
+
+  /// Badge on the group ride map: realtime channel down, positions update every ~20s via the fallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Delayed'**
+  String get groupRideRealtimeDelayed;
+
+  /// Shown under the chat partner's name while they are typing.
+  ///
+  /// In en, this message translates to:
+  /// **'typing…'**
+  String get chatTyping;
 }
 
 class _AppLocalizationsDelegate

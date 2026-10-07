@@ -5929,4 +5929,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String forumPhotoUploadFailed(String e) {
     return 'Could not upload photo(s): $e';
   }
+
+  @override
+  String get groupRideRealtimeLive => 'Live';
+
+  @override
+  String get groupRideRealtimeDelayed => 'Delayed';
+
+  @override
+  String get chatTyping => 'typing…';
 }

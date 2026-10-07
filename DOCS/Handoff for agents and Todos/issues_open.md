@@ -1728,3 +1728,19 @@ on the iPhone 17 simulator instead (see below). The simulator path is verified; 
   recaptured as three looks (`daily_curvy_light`, `sport_boxy_dark`, `adventure_boxy_dark`), 55 screens
   each, replacing the old Carbon Mono / Trail Social folders. The tour captures 95 shots per look; scroll
   continuations, filled forms and tour slides 2-7 are left out to keep the repo small.
+
+## 99. Realtime Database movement channel — open items (2026-10-07, uncommitted)
+
+Design: `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
+
+- **99.1 Not live: no RTDB instance, no `RTDB_URL` in builds — HIGH (blocks the feature).** Steps: (1) Firebase console → Realtime Database → create it in `asia-southeast1`, locked mode. (2) `firebase deploy --only database`. (3) Add `--dart-define=RTDB_URL=<instance URL>` to the release build scripts. (4) Deploy hosting, so the viewer picks up `databaseURL` from `/__/firebase/init.json`. (5) Run `node scripts/verify_realtime.js --url=<URL>` against production. Note that `firebase.json` now has a `database` target, so a bare `firebase deploy` fails until step 1 is done.
+- **99.2 Group-ride positions readable by anyone holding the ride id — MEDIUM (accepted for now).** RTDB rules can't read Firestore `memberIds`, so `/group_rides/{id}/locations` is readable by any signed-in user who knows the id (from the join code), not only members. Kicked riders are blocked through `banned/`. Fix: a Cloud Function that mirrors `memberIds` into RTDB, once functions can deploy.
+- **99.3 RTDB `meta` claim is first-writer-wins — LOW.** A member who knew the id before the creator's claim landed could claim `meta`. The claim goes out in the same step as ride creation, and the app ignores the channel when `meta.creatorId` doesn't match Firestore's creator, so the worst case is falling back to Firestore. Rides created by older builds have no `meta` and stay on Firestore.
+- **99.4 Orphaned `/live_shares` node if the app is killed mid-share — LOW.** The Firestore teardown goes through the outbox, but the RTDB node doesn't. It stays readable until its `expiresAt` (at most 24 h), and the viewer won't show it because it gates on the Firestore session. A share longer than 24 h stops getting RTDB reads; the viewer falls back to Firestore.
+- **99.5 Not checked on a device — MEDIUM.** Run `app/integration_test/realtime_emulator_test.dart` against the emulators (instructions are in its header). Then check on two phones: a live share open in a browser, a group ride, and a chat.
+- **99.6 Bangla strings need native review — LOW.** `groupRideRealtimeLive`, `groupRideRealtimeDelayed` and `chatTyping` are in `bn_pending_review.txt`.
+
+
+## 100. E2E integration test can't start: Firebase never initialized — MEDIUM (tooling, found 2026-10-07)
+
+`app/integration_test/e2e_test.dart` pumps `ThrottleIQApp` without calling `Firebase.initializeApp()`, and the test's own comment says so. On the iPhone simulator it fails at once with `[core/no-app] No Firebase App '[DEFAULT]'`, raised from `groupRideLifecycleProvider` building `rideRecordingProvider`. The test never reaches the Places/Saved/bottom-nav assertions. The same failure shows on a clean checkout of `ca1f3f6`, so it predates the §99 work. Fix: add a `setUpAll` that runs `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`, as `main.dart` does.

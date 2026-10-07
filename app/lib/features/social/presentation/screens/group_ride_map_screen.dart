@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_session/audio_session.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,12 +15,19 @@ import 'package:record/record.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/realtime/realtime_connection_manager.dart';
+import '../../../../core/realtime/realtime_health.dart';
+import '../../../../core/realtime/realtime_location.dart';
+import '../../../../core/realtime/realtime_location_publisher.dart';
+import '../../../../core/realtime/realtime_providers.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../ride/presentation/widgets/recording_gate.dart';
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_members.dart';
+import '../../domain/utilities/group_ride_positions.dart';
+import '../../data/repositories/group_ride_live_channel.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
 import '../widgets/share_group_ride_code_sheet.dart';
@@ -75,6 +81,28 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   StreamSubscription<Map<String, Map<String, dynamic>>>? _locationsSub;
 
   Map<String, Map<String, dynamic>> _locations = const {};
+
+  // -- Realtime Database channel (moving dots) ----------------------------
+  //
+  // Firestore `memberLocations` above stays subscribed and published (on a
+  // 2-minute heartbeat while RTDB is healthy): riders on older builds only
+  // read it, and it's the fallback if the socket dies. Each marker shows
+  // whichever of the two is fresher — see freshestMemberPosition.
+
+  RealtimeLease? _rtLease;
+  StreamSubscription<Map<String, RealtimeLocation>>? _rtSub;
+  RealtimeLocationPublisher? _rtPublisher;
+  Timer? _rtTimer;
+  Map<String, RealtimeLocation> _rtLocations = const {};
+
+  /// Only true once RTDB `meta.creatorId` matched Firestore's creator —
+  /// see [isGroupRideChannelTrusted].
+  bool _rtTrusted = false;
+
+  /// Seq gap / reorder counts for the RTDB stream, logged on dispose — the
+  /// on-device evidence that the channel delivered what it should.
+  final RealtimeDeliveryStats _rtStats = RealtimeDeliveryStats();
+
   String? _locationError;
   bool _hasLocationPermission = false;
   bool _leaving = false;
@@ -163,6 +191,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       },
     );
 
+    unawaited(_startRealtime());
+
     // Publish once immediately so the rest of the group sees this rider
     // without waiting a full interval, then keep it ticking.
     unawaited(_broadcastPosition());
@@ -186,6 +216,84 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   }
 
   Timer? _heartbeatTimer;
+
+  /// Opens the RTDB channel for this ride: subscribes to everyone's dots and
+  /// starts publishing this rider's own every [kGroupRideRealtimeInterval]
+  /// (gated by movement). Does nothing — leaving Firestore to carry
+  /// everything — when RTDB isn't configured or its `meta` doesn't match the
+  /// ride's real creator.
+  Future<void> _startRealtime() async {
+    final live = ref.read(groupRideLiveChannelProvider);
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (!live.isEnabled || uid == null) return;
+
+    _rtLease = ref.read(realtimeServicesProvider).acquire('group-ride-map');
+    final ride = await ref
+        .read(groupRideRepositoryProvider)
+        .getGroupRide(widget.groupRideId)
+        .catchError((Object _) => null);
+    final realtimeCreator =
+        ride == null ? null : await live.creatorOf(widget.groupRideId);
+    if (!mounted) return;
+    if (ride == null ||
+        !isGroupRideChannelTrusted(
+          realtimeCreatorId: realtimeCreator,
+          firestoreCreatorId: ride.creatorId,
+        )) {
+      debugPrint('[GroupRideMap] realtime channel not trusted for '
+          '${widget.groupRideId} (rtdb creator: $realtimeCreator) — '
+          'Firestore only');
+      _rtLease?.release();
+      _rtLease = null;
+      return;
+    }
+
+    setState(() => _rtTrusted = true);
+    _rtSub = live.watchLocations(widget.groupRideId).listen(
+      (locations) {
+        for (final entry in locations.entries) {
+          _rtStats.observe(entry.key, entry.value.seq);
+        }
+        if (!mounted) return;
+        setState(() => _rtLocations = locations);
+      },
+      onError: (Object e) {
+        // Permission denied (kicked) or the node vanished: fall back to
+        // Firestore positions rather than freezing the dots.
+        debugPrint('[GroupRideMap] realtime locations error: $e');
+        if (!mounted) return;
+        setState(() {
+          _rtTrusted = false;
+          _rtLocations = const {};
+        });
+      },
+    );
+    _rtPublisher = live.publisherFor(widget.groupRideId, uid);
+    _rtTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      // The recorder's hot fix only — polling Geolocator every second for a
+      // rider who isn't recording would burn the battery. They still get
+      // published on the 20 s Firestore tick (see _broadcastPosition).
+      final ride = ref.read(rideRecordingProvider);
+      final position = ride.currentPosition;
+      if (position == null) return;
+      _offerRealtime(position, speedMs: ride.currentSpeedMs);
+    });
+  }
+
+  void _offerRealtime(LatLng position, {double? speedMs}) {
+    _rtPublisher?.offer(LocationSample(
+      lat: position.latitude,
+      lng: position.longitude,
+      speedMs: speedMs,
+    ));
+  }
+
+  /// Whether RTDB is the thing carrying this rider's position right now.
+  bool get _realtimeCarriesPosition =>
+      _rtTrusted &&
+      _rtPublisher != null &&
+      ref.read(realtimeServicesProvider).transportNow() ==
+          RealtimeTransport.realtime;
 
   Future<void> _heartbeatIfCreator() async {
     final uid = ref.read(currentUserProvider)?.uid;
@@ -262,16 +370,21 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
     final position = await _resolvePosition();
     if (!mounted || position == null) return;
+    _offerRealtime(position);
 
     // Parked or crawling: skip the write unless the heartbeat is due
     // (issues §90.A2) — every publish is billed against every member's
-    // listener.
+    // listener. While RTDB carries the moving dot, Firestore drops to the
+    // heartbeat alone: it's then only for older builds and the fallback.
     final now = DateTime.now();
     if (!shouldBroadcastPosition(
       current: position,
       now: now,
       lastSent: _lastSentPosition,
       lastSentAt: _lastSentAt,
+      minMoveMeters: _realtimeCarriesPosition
+          ? double.infinity
+          : kGroupRideMinMoveMeters,
     )) {
       return;
     }
@@ -323,6 +436,11 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     // tick could re-create the location document we're about to delete.
     _broadcastTimer?.cancel();
     _broadcastTimer = null;
+    _rtTimer?.cancel();
+    _rtTimer = null;
+    // No remove here: leaveGroupRide clears the RTDB dot (or the whole ride,
+    // for the creator) after the Firestore write.
+    unawaited(_rtPublisher?.stop(remove: false));
 
     try {
       await ref.read(groupRideRepositoryProvider).leaveGroupRide(
@@ -572,6 +690,17 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     _staleTicker?.cancel();
     _heartbeatTimer?.cancel();
     _locationsSub?.cancel();
+    _rtTimer?.cancel();
+    _rtSub?.cancel();
+    // The rider is still on the ride (they may just be back on the cockpit),
+    // so their dot stays and simply ages, as the Firestore one always has.
+    unawaited(_rtPublisher?.stop(remove: false));
+    _rtLease?.release();
+    if (_rtTrusted) {
+      debugPrint('[GroupRideMap] realtime delivery: $_rtStats; '
+          'published ${_rtPublisher?.writesIssued ?? 0} '
+          '(${_rtPublisher?.writesFailed ?? 0} failed)');
+    }
     // Best-effort: if the rider navigates away mid-hold there is nobody left
     // to send the clip to anyway, so the recording is simply abandoned
     // rather than raced to finish.
@@ -598,35 +727,32 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
     return [
       for (var i = 0; i < ordered.length; i++)
-        _MemberView(
-          member: ordered[i],
-          color: colorForMember(ordered[i].userId, i),
-          isMe: ordered[i].userId == myUid,
-          position: _positionFor(ordered[i]),
-          lastUpdate: _lastUpdateFor(ordered[i]),
-        ),
+        _memberView(ordered[i], i, myUid),
     ];
   }
 
-  LatLng? _positionFor(GroupRideMember member) {
-    final live = _locations[member.userId];
-    final lat = (live?['lat'] as num?)?.toDouble() ?? member.currentLat;
-    final lng = (live?['lng'] as num?)?.toDouble() ?? member.currentLng;
-    // A member who has never published anything has no coordinates at all.
-    // Returning null (rather than defaulting to 0,0) is what keeps them off
-    // the map instead of pinned in the Gulf of Guinea.
-    if (lat == null || lng == null) return null;
-    return LatLng(lat, lng);
+  _MemberView _memberView(GroupRideMember member, int index, String? myUid) {
+    final freshest = _freshestFor(member);
+    return _MemberView(
+      member: member,
+      color: colorForMember(member.userId, index),
+      isMe: member.userId == myUid,
+      position: freshest?.position,
+      lastUpdate: freshest?.updatedAt,
+    );
   }
 
-  DateTime? _lastUpdateFor(GroupRideMember member) {
-    final raw = _locations[member.userId]?['timestamp'];
-    // serverTimestamp() reads back null on the writing device until the
-    // server round-trip lands, so fall back to whatever the roster carries.
-    if (raw is Timestamp) return raw.toDate();
-    if (raw is DateTime) return raw;
-    return member.lastLocationUpdate;
-  }
+  /// A member who has never published anything has no position at all —
+  /// null (rather than 0,0) is what keeps them off the map instead of pinned
+  /// in the Gulf of Guinea.
+  MemberPosition? _freshestFor(GroupRideMember member) =>
+      freshestMemberPosition(
+        realtime: _rtTrusted ? _rtLocations[member.userId] : null,
+        firestore: _locations[member.userId],
+        rosterLat: member.currentLat,
+        rosterLng: member.currentLng,
+        rosterUpdatedAt: member.lastLocationUpdate,
+      );
 
   void _fitToMembers(List<_MemberView> members) {
     final points = [
@@ -680,7 +806,20 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(context.l10n.groupRide),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: Text(context.l10n.groupRide)),
+            if (ref.watch(groupRideLiveChannelProvider).isEnabled) ...[
+              const SizedBox(width: 8),
+              _TransportBadge(
+                live: _rtTrusted &&
+                    (ref.watch(realtimeHealthProvider).valueOrNull?.isRealtime ??
+                        false),
+              ),
+            ],
+          ],
+        ),
         actions: [
           if (recording)
             IconButton(
@@ -1127,6 +1266,39 @@ class _MemberRow extends StatelessWidget {
                   ? context.palette.attention
                   : context.palette.textTertiary,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Live" while dots arrive over the realtime channel, "Delayed" while the
+/// map is on the slower Firestore fallback — so a rider can tell a quiet
+/// group from a degraded connection.
+class _TransportBadge extends StatelessWidget {
+  final bool live;
+  const _TransportBadge({required this.live});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = live ? context.palette.primary : context.palette.attention;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, size: 8, color: color),
+          const SizedBox(width: 4),
+          Text(
+            live
+                ? context.l10n.groupRideRealtimeLive
+                : context.l10n.groupRideRealtimeDelayed,
+            style: TextStyle(fontSize: 11, color: context.palette.textPrimary),
           ),
         ],
       ),

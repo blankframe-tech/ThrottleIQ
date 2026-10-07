@@ -1680,5 +1680,8 @@
   "rideAttachmentTitle": "{date}-এর রাইড",
   "forumAddPhotos": "ছবি যোগ করুন ({count}/{max})",
   "paddockPosts": "{count}টি পোস্ট",
-  "forumPhotoUploadFailed": "ছবি আপলোড করা যায়নি: {e}"
+  "forumPhotoUploadFailed": "ছবি আপলোড করা যায়নি: {e}",
+  "groupRideRealtimeLive": "লাইভ",
+  "groupRideRealtimeDelayed": "বিলম্বিত",
+  "chatTyping": "টাইপ করছে…"
 }
