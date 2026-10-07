@@ -433,6 +433,59 @@ class _MaintenanceConfigScreenState
     );
   }
 
+  /// The interval pill that opens the edit sheet. issues §101.R9: it is
+  /// ~24dp tall inside a row whose own tap toggles the item, so a near miss
+  /// flipped the toggle. The hit box is 48dp; the pill looks the same.
+  Widget _buildEditPill(MaintenanceConfigEntity item, bool isEnabled) {
+    return Semantics(
+      button: true,
+      label: context.l10n.editInterval,
+      child: GestureDetector(
+        key: ValueKey('maint-config-edit-${item.key}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _editItem(item),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                border: Border.all(color: context.palette.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    [
+                      if (item.intervalKm > 0)
+                        '${item.intervalKm.toStringAsFixed(0)} km',
+                      if (item.intervalDays != null)
+                        context.l10n.daysShort(item.intervalDays!),
+                    ].join(' · '),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isEnabled
+                          ? context.palette.textSecondary
+                          : context.palette.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Icon(Icons.edit_outlined,
+                      size: 11, color: context.palette.textTertiary),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCheckTile(MaintenanceConfigEntity item) {
     final isEnabled = item.isEnabled;
 
@@ -518,42 +571,7 @@ class _MaintenanceConfigScreenState
                 ),
               ),
               const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _editItem(item),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: context.palette.surface,
-                    borderRadius:
-                        BorderRadius.circular(context.shape.radiusFull),
-                    border: Border.all(color: context.palette.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        [
-                          if (item.intervalKm > 0)
-                            '${item.intervalKm.toStringAsFixed(0)} km',
-                          if (item.intervalDays != null)
-                            context.l10n.daysShort(item.intervalDays!),
-                        ].join(' · '),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isEnabled
-                              ? context.palette.textSecondary
-                              : context.palette.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Icon(Icons.edit_outlined,
-                          size: 11, color: context.palette.textTertiary),
-                    ],
-                  ),
-                ),
-              ),
+              _buildEditPill(item, isEnabled),
             ],
           ),
         ),

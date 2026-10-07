@@ -403,24 +403,35 @@ class _SwatchTile extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
+  /// `#RRGGBB`, the swatch's screen-reader label (no per-colour strings).
+  String get _hexLabel =>
+      '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _ColorSwatchPicker._size,
-        height: _ColorSwatchPicker._size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? context.palette.textPrimary : Colors.transparent,
-            width: 2.5,
+    // issues §101.R9: a button with a selected state, not an unlabeled tap.
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      inMutuallyExclusiveGroup: true,
+      label: _hexLabel,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: _ColorSwatchPicker._size,
+          height: _ColorSwatchPicker._size,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? context.palette.textPrimary : Colors.transparent,
+              width: 2.5,
+            ),
           ),
+          child: isSelected
+              ? const Icon(Icons.check, color: Colors.white, size: 18)
+              : null,
         ),
-        child: isSelected
-            ? const Icon(Icons.check, color: Colors.white, size: 18)
-            : null,
       ),
     );
   }
@@ -434,21 +445,29 @@ class _AutoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _ColorSwatchPicker._size,
-        height: _ColorSwatchPicker._size,
-        decoration: BoxDecoration(
-          color: context.palette.surface,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? context.palette.textPrimary : context.palette.border,
-            width: isSelected ? 2.5 : 1,
+    // issues §101.R9. No "Auto" string exists yet, so the tile is announced
+    // with the section's "Bike color" label; selected means "not picked".
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      inMutuallyExclusiveGroup: true,
+      label: context.l10n.bikeColor,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: _ColorSwatchPicker._size,
+          height: _ColorSwatchPicker._size,
+          decoration: BoxDecoration(
+            color: context.palette.surface,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? context.palette.textPrimary : context.palette.border,
+              width: isSelected ? 2.5 : 1,
+            ),
           ),
+          child:
+              Icon(Icons.auto_awesome, size: 16, color: context.palette.textSecondary),
         ),
-        child:
-            Icon(Icons.auto_awesome, size: 16, color: context.palette.textSecondary),
       ),
     );
   }

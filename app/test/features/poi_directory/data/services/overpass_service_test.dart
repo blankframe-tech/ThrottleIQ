@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/poi_directory/data/services/overpass_service.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
@@ -126,6 +127,68 @@ void main() {
       });
 
       expect(candidate, isNull);
+    });
+  });
+
+  group('OverpassService.parseElement ways (issues §101.P5)', () {
+    test('reads coords from center for a way and keeps its type in osmId',
+        () {
+      final candidate = service.parseElement({
+        'type': 'way',
+        'id': 1,
+        'center': {'lat': 23.7, 'lon': 90.4},
+        'tags': {'amenity': 'fuel'},
+      });
+
+      expect(candidate, isNotNull);
+      expect(candidate!.osmId, 'way/1');
+      expect(candidate.latitude, 23.7);
+      expect(candidate.longitude, 90.4);
+    });
+
+    test('a typed node keeps the node/<id> osmId', () {
+      final candidate = service.parseElement({
+        'type': 'node',
+        'id': 9,
+        'lat': 23.81,
+        'lon': 90.41,
+        'tags': {'amenity': 'fuel'},
+      });
+
+      expect(candidate!.osmId, 'node/9');
+    });
+  });
+
+  group('OverpassService.fetchNearby request (issues §101.P5)', () {
+    test('sends a User-Agent and client timeouts; a failure returns []',
+        () async {
+      RequestOptions? captured;
+      final dio = Dio()
+        ..interceptors.add(InterceptorsWrapper(
+          onRequest: (options, handler) {
+            captured = options;
+            handler.reject(DioException.connectionTimeout(
+              timeout: const Duration(seconds: 10),
+              requestOptions: options,
+            ));
+          },
+        ));
+
+      final result = await OverpassService(dio: dio).fetchNearby(
+        latitude: 23.81,
+        longitude: 90.41,
+        radiusMeters: 5000,
+      );
+
+      expect(result, isEmpty);
+      expect(captured, isNotNull);
+      expect(captured!.headers['User-Agent'], OverpassService.userAgent);
+      expect(captured!.receiveTimeout, isNotNull);
+      expect(captured!.receiveTimeout, greaterThan(Duration.zero));
+      expect(captured!.sendTimeout, isNotNull);
+      final query = (captured!.data as Map)['data'] as String;
+      expect(query, contains('nwr["amenity"="fuel"]'));
+      expect(query, contains('out center;'));
     });
   });
 }

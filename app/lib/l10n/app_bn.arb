@@ -885,7 +885,7 @@
   "pickLocationMapFirst": "আগে ম্যাপে লোকেশন বেছে নিন।",
   "takeAPhoto": "ছবি তুলুন",
   "chooseFromGallery": "গ্যালারি থেকে বেছে নিন",
-  "couldNotOpenCamera": "ক্যামেরা বা গ্যালারি খোলা যায়নি: {e}",
+  "couldNotOpenCamera": "ক্যামেরা বা গ্যালারি খোলা যায়নি।",
   "couldntLookThatSpot": "জায়গাটি খুঁজে পাওয়া যায়নি — নিজেই বর্ণনা লিখে দিন।",
   "photoDidntUploadSaving": "ছবি আপলোড হয়নি — ছবি ছাড়াই জায়গাটি সেভ করা হচ্ছে।",
   "couldNotAddPlace": "জায়গা যোগ করা যায়নি: {e}",

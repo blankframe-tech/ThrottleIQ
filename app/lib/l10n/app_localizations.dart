@@ -5409,11 +5409,11 @@ abstract class AppLocalizations {
   /// **'Choose from gallery'**
   String get chooseFromGallery;
 
-  /// Text in add_place_screen.
+  /// Snackbar when the image picker fails (add place, forum reply). The raw exception is logged, not shown.
   ///
   /// In en, this message translates to:
-  /// **'Could not open the camera or gallery: {e}'**
-  String couldNotOpenCamera(Object e);
+  /// **'Could not open the camera or gallery.'**
+  String get couldNotOpenCamera;
 
   /// Text in add_place_screen.
   ///

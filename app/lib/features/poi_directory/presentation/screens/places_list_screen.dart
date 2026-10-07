@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../routes/presentation/screens/routes_list_screen.dart';
 import '../../domain/entities/place_entity.dart';
@@ -186,8 +187,14 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
               heroTag: 'add_place_fab',
               onPressed: _addPlace,
               backgroundColor: context.palette.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(context.l10n.addPlaceLower, style: const TextStyle(color: Colors.white)),
+              foregroundColor:
+                  AppTheme.primaryButtonForeground(context.palette),
+              icon: Icon(Icons.add,
+                  color: AppTheme.primaryButtonForeground(context.palette)),
+              label: Text(context.l10n.addPlaceLower,
+                  style: TextStyle(
+                      color:
+                          AppTheme.primaryButtonForeground(context.palette))),
             ),
       body: Column(
         children: [

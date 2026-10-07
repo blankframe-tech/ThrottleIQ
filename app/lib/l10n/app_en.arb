@@ -4078,14 +4078,9 @@
   "@chooseFromGallery": {
     "description": "Text in add_place_screen."
   },
-  "couldNotOpenCamera": "Could not open the camera or gallery: {e}",
+  "couldNotOpenCamera": "Could not open the camera or gallery.",
   "@couldNotOpenCamera": {
-    "description": "Text in add_place_screen.",
-    "placeholders": {
-      "e": {
-        "type": "Object"
-      }
-    }
+    "description": "Snackbar when the image picker fails (add place, forum reply). The raw exception is logged, not shown."
   },
   "couldntLookThatSpot": "Couldn't look that spot up \u2014 just describe it yourself.",
   "@couldntLookThatSpot": {

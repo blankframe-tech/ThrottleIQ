@@ -191,12 +191,20 @@ class RideSortChips extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final option = RideSort.values[i];
-          return GestureDetector(
-            onTap: () => onChanged(option),
-            child: EditorialPill(
-              option.localizedLabel(context.l10n),
-              filled: option == sort,
-              tone: option == sort ? PillTone.accent : PillTone.neutral,
+          // issues §101.R9: announce the chip as a button and which sort
+          // is active.
+          return Semantics(
+            button: true,
+            selected: option == sort,
+            inMutuallyExclusiveGroup: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onChanged(option),
+              child: EditorialPill(
+                option.localizedLabel(context.l10n),
+                filled: option == sort,
+                tone: option == sort ? PillTone.accent : PillTone.neutral,
+              ),
             ),
           );
         },
