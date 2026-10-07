@@ -89,6 +89,24 @@ class DailyRideSummaryRepository {
     return true;
   }
 
+  /// SharedPreferences key: the `yyyy-mm-dd` the fix-retention purge last ran.
+  static const prefsLastPurgeDay = 'auto_tracking_fix_purge_day';
+
+  /// Drops raw fixes of summarized detections older than the retention window
+  /// ([AutoDetectionDao.purgeOldSummarizedFixes], 14 days — the same span as
+  /// [recentDays], so every day the UI lists keeps its totals). Runs at most
+  /// once per local day; returns how many detections were purged.
+  Future<int> purgeOldFixesIfDue({DateTime? now}) async {
+    final at = now ?? DateTime.now();
+    final dayKey = _dayKey(at);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    if (prefs.getString(prefsLastPurgeDay) == dayKey) return 0;
+    final purged = await _detectionDao.purgeOldSummarizedFixes(at);
+    await prefs.setString(prefsLastPurgeDay, dayKey);
+    return purged;
+  }
+
   static String _dayKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';

@@ -2,6 +2,20 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
+## 2026-10-07 (latest): branch cleanup and PRD rewrite
+
+- `experimental` (with `exp-group-a` to `exp-group-f`) was fast-forwarded into `main` (`9d3b6d6`) and pushed. This closes todo F7.
+- Deleted locally and on origin: `experimental`, `feat/remove-ride-status-pill`, `feature/three-theme-modes`, `fix/critique-83`, `job3-ux`, `job4-infra`. Deleted locally only: `exp-group-*`, `fix/grill-78`, five `subagent-*` branches and their worktrees.
+- **Kept on purpose:** `test` (2 commits not in `main`, conflicts in 9 files), plus `appcolors`, `beta`, `i18n`, `indriyo`.
+- `DOCS/PRD.md` was rewritten (diagrams, requirement IDs, status per requirement). Crash alerts are marked not live. The §10 metric targets are proposals and need founder confirmation. Todo §6/F6 still needs the ASD-STE100 word-list check.
+
+## 2026-10-07 (flaw fix pass): F1–F5, F7 closed; F6 (PRD) and F8 (device) remain
+
+- Retention is now wired: `purgeOldFixesIfDue` runs at most once a day from the auto-tracking tick. New tests are in `app/test/database/fix_retention_purge_test.dart`.
+- The failing route-screen tests were already removed and `main` was already pushed by the time this pass started.
+- Checks: analyze clean, `flutter test` 1684/1684.
+- **Still open:** F6 (PRD incomplete, deliberately left) and F8 (device verification of §97 and the new tests).
+
 ## 2026-10-07 (verification pass): parallel groups A–F landed on `experimental`
 
 - **Verified in code:** all §97.1–§97.8 fixes are present (carousel 208, `shrinkWrap`, ribbon 52, `Row` menu items, `Material` wrappers, `UserAvatar` `ClipOval` + `errorWidget`, tile `errorImage`, place photo banner, `ListView.builder` in Saved, `defaultTargetPlatform`, relative imports, photo-upload try/catch). They are checked off in the todo file.

@@ -235,6 +235,8 @@ class _AutoTrackingTaskHandler extends TaskHandler {
       final uid = await AutoTrackingService.readOwner();
       if (uid != null) {
         await DailyRideSummaryRepository().showEndOfDayIfDue(uid);
+        // Retention (issues §93.2): once a day, drop old summarized fixes.
+        await DailyRideSummaryRepository().purgeOldFixesIfDue();
       }
     } catch (e) {
       debugPrint('[auto-tracking] tick failed: $e');
