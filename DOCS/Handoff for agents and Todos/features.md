@@ -658,7 +658,7 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
     after 21:00, or when the app is opened after 21:00.
   - Open follow-ups are in `issues_open.md` §93.
 
-## Changes from the realtime pass (2026-10-07, uncommitted, inactive until RTDB is set up)
+## Changes from the realtime pass (2026-10-07, commit `8f8f774`, inactive until RTDB is set up)
 
 Nothing below is visible until an RTDB instance exists and the app is built with `RTDB_URL` (`issues_open.md` §99.1). Without it, every feature behaves as before.
 

@@ -1729,7 +1729,7 @@ on the iPhone 17 simulator instead (see below). The simulator path is verified; 
   each, replacing the old Carbon Mono / Trail Social folders. The tour captures 95 shots per look; scroll
   continuations, filled forms and tour slides 2-7 are left out to keep the repo small.
 
-## 99. Realtime Database movement channel — open items (2026-10-07, uncommitted)
+## 99. Realtime Database movement channel — open items (2026-10-07, commit `8f8f774`; checklist in `DOCS/websockets_todo.md`)
 
 Design: `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
 

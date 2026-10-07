@@ -2,7 +2,9 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
-## 2026-10-07 (latest): Realtime Database movement channel — uncommitted, RTDB not provisioned yet
+## 2026-10-07 (latest): Realtime Database movement channel — committed `8f8f774`, pushed; RTDB not provisioned yet
+
+- Checklist for going live, device checks and hardening: `DOCS/websockets_todo.md`.
 
 - Live share, group-ride dots and chat typing now also run over Firebase Realtime Database (one WebSocket). Firestore is still the source of truth and the fallback. Contract and setup: `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
 - **Inert in production until someone acts.** `throttleiqfb` has no RTDB instance, and the app only turns RTDB on when built with `--dart-define=RTDB_URL=…`. Until both happen, behaviour is exactly as before. Steps are in `issues_open.md` §99.1.
