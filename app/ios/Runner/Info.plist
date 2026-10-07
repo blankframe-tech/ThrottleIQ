@@ -38,7 +38,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Throttleiq</string>
+	<string>ThrottleIQ</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -99,6 +99,8 @@
 	<string>ThrottleIQ uses the camera so you can photograph a place you're adding or your bike's odometer.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ThrottleIQ needs access to your photos so you can attach pictures to rides, places, your profile or an odometer reading.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app requires access to save photos to your photo library.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<!-- Already present: keeps location flowing during a ride. -->

@@ -10,6 +10,8 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+
+
   exclude:
     # `build/` is generated output and has no business being analyzed.
     #

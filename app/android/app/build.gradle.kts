@@ -28,6 +28,8 @@ android {
     signingConfigs {
         create("release") {
             val keystorePropertiesFile = rootProject.file("key.properties")
+            if (!keystorePropertiesFile.exists()) throw GradleException("key.properties not found")
+
             if (keystorePropertiesFile.exists()) {
                 val keystoreProperties = Properties()
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
@@ -42,7 +44,7 @@ android {
     defaultConfig {
         applicationId = "com.bft.throttleiq"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

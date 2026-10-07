@@ -37,6 +37,12 @@ jobs:
       # Run even when analyze fails, so a lint can't hide a test failure
       # (that's how main went untested from 2026-09-30, §90.B1).
       - run: flutter test
+      - run: flutter test --coverage
+      - name: Create mock key.properties
+        run: echo "storeFile=mock.jksnstorePassword=mocknkeyAlias=mocknkeyPassword=mock" > android/key.properties
+
+      - name: Build Android Release
+        run: flutter build apk --release
         if: ${{ !cancelled() }}
       # Raw `x['k'] as double` casts crash on an int from Firestore/JSON
       # (grill 78, §1.3.4). Use asDouble/asDoubleOrNull from

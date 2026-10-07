@@ -7,10 +7,6 @@
 -dontwarn com.google.android.play.core.**
 
 # Firestore/Firebase
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
--keep class com.google.android.libraries.** { *; }
--keep class java.util.** { *; }
 
 # Dart
 -keep class com.google.dart.** { *; }
@@ -19,10 +15,9 @@
 -keep class org.sqlite.** { *; }
 
 # Riverpod/Provider state management
--keep class ** extends ChangeNotifier { *; }
 
 # --- Added while diagnosing a release-only launch crash (2026-07-25) ---
-# Minification is currently OFF in build.gradle.kts because this crash was
+# Minification is ON because this crash was
 # never root-caused with an actual device stack trace. These rules are added
 # so that whoever re-enables isMinifyEnabled has a real starting point instead
 # of the previous partial ruleset (which had nothing for the plugins below,
