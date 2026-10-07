@@ -276,6 +276,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                       child: Semantics(
                         onLongPressHint: isMe ? null : context.l10n.report,
                         child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onLongPress: isMe ? null : () {
                             ReportBottomSheet.show(
                               context,
@@ -295,7 +296,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                               ),
                               border: isMe ? null : Border.all(color: context.palette.border),
                             ),
-                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                            constraints: BoxConstraints(
+                              minHeight: 48,
+                              maxWidth: MediaQuery.of(context).size.width * 0.75,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

@@ -187,7 +187,7 @@ class AutoRideReconciler {
     final samples = <SpeedSample>[];
 
     for (final fix in fixes) {
-      final rawSpeedMs = fix.speedMs < 0 ? 0.0 : fix.speedMs;
+      final rawSpeedMs = (!fix.speedMs.isFinite || fix.speedMs < 0) ? 0.0 : fix.speedMs;
       double? rawAccel;
       double? rawJerk;
       var rawDist = 0.0;

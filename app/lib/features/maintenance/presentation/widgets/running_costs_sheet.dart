@@ -1,3 +1,4 @@
+import '../../../../core/utils/number_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,8 +69,8 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
   }
 
   Future<void> _saveFuel(bool imperial) async {
-    final price = double.tryParse(_priceCtrl.text.trim());
-    final mileage = double.tryParse(_mileageCtrl.text.trim());
+    final price = parseLocalizedNumber(_priceCtrl.text.trim());
+    final mileage = parseLocalizedNumber(_mileageCtrl.text.trim());
     setState(() => _saving = true);
     await ref.read(bikeRunningCostProvider(widget.bikeId).notifier).save(
           fuelPricePerLitre: price == null

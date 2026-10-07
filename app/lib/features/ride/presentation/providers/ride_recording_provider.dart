@@ -282,6 +282,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   int _movingMilliseconds = 0;
   DateTime? _lastFixTime;
   static const int _maxMovingGapSeconds = 60;
+  final Stopwatch _stopwatch = Stopwatch();
   DateTime? _activeStart;
   Duration _accumulatedDuration = Duration.zero;
 
@@ -435,6 +436,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _lastFixTime = null;
       _accumulatedDuration = Duration.zero;
       _activeStart = DateTime.now();
+      _stopwatch.reset();
+      _stopwatch.start();
       _detector.reset();
       _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
       _cadencePolicy.reset();
@@ -642,7 +645,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   void _onPosition(Position pos) {
     if (state.status != RecordingStatus.active) return;
 
-    final rawSpeedMs = pos.speed < 0 ? 0.0 : pos.speed;
+    final rawSpeedMs = (!pos.speed.isFinite || pos.speed < 0) ? 0.0 : pos.speed;
     final timestamp = pos.timestamp;
 
     if (pos.accuracy > SensorConstants.maxGpsAccuracyM) return;
@@ -831,7 +834,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         // (distance filter), so _onPosition alone can't be relied on.
         state = state.copyWith(
           elapsed:
-              _accumulatedDuration + DateTime.now().difference(_activeStart!),
+              _accumulatedDuration + _stopwatch.elapsed,
           activeAlert: _alertAfterTtl(DateTime.now()),
           // A once-a-second tick is not the thing that resolved an error.
           keepError: true,
@@ -902,6 +905,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       // buffers every fix and IMU sample and replays them all on resume, so
       // whatever the bike did while paused (a van ride) was counted. The
       // status flip comes first so nothing arriving mid-cancel is processed.
+      _stopwatch.stop();
       _accumulatedDuration = state.elapsed;
       _activeStart = null;
       state = state.copyWith(status: RecordingStatus.paused, keepError: true);
@@ -954,6 +958,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       if (!mounted || state.status != RecordingStatus.paused) return;
 
       _activeStart = DateTime.now();
+      _stopwatch.reset();
+      _stopwatch.start();
       _skipNextDistanceDelta = true;
       _nextFixStartsSegment = true;
       // The first fix after a resume must not credit the paused interval as

@@ -154,7 +154,7 @@ int? etaSeconds(double metres, double? speedMs) {
 NavigationProgress computeNavigationProgress({
   required List<LatLng> polyline,
   required List<TurnInstruction> turns,
-  required int previousTurnIndex,
+  required NavigationProgress previous,
   LatLng? position,
   double? speedMs,
 }) {
@@ -176,7 +176,7 @@ NavigationProgress computeNavigationProgress({
     polyline: polyline,
     turns: turns,
     position: position,
-    from: previousTurnIndex,
+    from: previous.turnIndex,
   );
 
   final metresToTurn = (turnIndex >= 0 &&
@@ -189,7 +189,14 @@ NavigationProgress computeNavigationProgress({
   final metresRemaining =
       nearest == null ? 0.0 : remainingDistanceM(polyline, nearest.index);
 
-  final arrived = haversineMetersLatLng(position, polyline.last) <= kArrivedM;
+  // For a loop route, the start and end are close. If we just started,
+  // metresRemaining is near the full length. So we must have traversed
+  // at least some distance before arriving.
+  final routeLength = remainingDistanceM(polyline, 0);
+  final hasTraversed = metresRemaining < routeLength * 0.9;
+  
+  final arrived = previous.arrived || 
+      (haversineMetersLatLng(position, polyline.last) <= kArrivedM && hasTraversed);
 
   return NavigationProgress(
     turnIndex: turnIndex,

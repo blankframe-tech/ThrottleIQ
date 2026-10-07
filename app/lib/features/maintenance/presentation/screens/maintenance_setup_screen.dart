@@ -1,3 +1,4 @@
+import '../../../../core/utils/number_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -72,7 +73,7 @@ class _MaintenanceSetupScreenState
     final template = _template;
     if (template == null) return;
     setState(() => _saving = true);
-    final km = _oilUnknown ? null : double.tryParse(_oilKmCtrl.text.trim());
+    final km = _oilUnknown ? null : parseLocalizedNumber(_oilKmCtrl.text.trim());
     final date = _oilUnknown ? null : _oilDate;
     await ref
         .read(maintenanceProfileProvider(widget.bikeId).notifier)

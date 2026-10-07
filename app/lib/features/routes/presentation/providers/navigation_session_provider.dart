@@ -115,7 +115,7 @@ class NavigationSessionNotifier extends StateNotifier<NavigationSessionState> {
       progress: computeNavigationProgress(
         polyline: state.polyline,
         turns: state.turns,
-        previousTurnIndex: state.progress.turnIndex,
+        previous: state.progress,
         position: position,
         speedMs: ride.currentSpeedMs,
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
@@ -88,7 +89,7 @@ class ForecastStrip extends StatelessWidget {
               final above = i.isEven;
               final color = statusColor(context, f.status);
               children.add(Positioned(
-                left: x - 40,
+                left: math.max(0.0, x - 40),
                 width: 80,
                 top: above ? 0 : 44,
                 child: GestureDetector(

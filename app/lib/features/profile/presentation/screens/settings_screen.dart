@@ -610,8 +610,19 @@ class SettingsScreen extends ConsumerWidget {
           // ── Sign out ───────────────────────────────────────────────────
           OutlinedButton.icon(
             onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).signOut();
-              if (context.mounted) context.go('/auth/login');
+              try {
+                await ref.read(authNotifierProvider.notifier).signOut();
+                if (context.mounted) context.go('/auth/login');
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to sign out: $e'),
+                      backgroundColor: context.palette.danger,
+                    ),
+                  );
+                }
+              }
             },
             icon: const Icon(Icons.logout, size: 18),
             label: Text(l10n.signOutAction),
@@ -722,7 +733,7 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(authNotifierProvider.notifier).signOut();
                     },
                     style: FilledButton.styleFrom(backgroundColor: ctx.palette.primary),
-                    child: Text(ctx.l10n.signOut),
+                    child: Text(ctx.l10n.signOutAction),
                   ),
                 ],
               ),

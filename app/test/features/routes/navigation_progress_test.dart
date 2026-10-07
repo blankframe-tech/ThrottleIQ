@@ -144,7 +144,7 @@ void main() {
 
     test('before the first fix the whole route is still ahead', () {
       final p = computeNavigationProgress(
-          polyline: polyline, turns: turns, previousTurnIndex: 0);
+          polyline: polyline, turns: turns, previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),);
       expect(p.metresRemaining, closeTo(1000, 5));
       expect(p.metresToTurn, isNull);
       expect(p.offRouteM, isNull);
@@ -159,7 +159,7 @@ void main() {
       final p = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previousTurnIndex: 0,
+        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: _offset(_dhaka, 90, 400),
         speedMs: 10,
       );
@@ -171,7 +171,7 @@ void main() {
       final onRoute = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previousTurnIndex: 0,
+        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: _offset(_offset(_dhaka, 90, 400), 0, 20),
       );
       expect(onRoute.isOffRoute, isFalse);
@@ -180,7 +180,7 @@ void main() {
       final wandered = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previousTurnIndex: 0,
+        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: _offset(_offset(_dhaka, 90, 400), 0, 250),
       );
       expect(wandered.isOffRoute, isTrue);
@@ -191,7 +191,7 @@ void main() {
       final p = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previousTurnIndex: 0,
+        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: polyline.last,
         speedMs: 10,
       );
@@ -205,7 +205,7 @@ void main() {
       final atEnd = computeNavigationProgress(
         polyline: cornerPoly,
         turns: cornerTurns,
-        previousTurnIndex: 0,
+        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: cornerPoly.last,
       );
       // A rider who doubles back doesn't get the corner re-announced: the
@@ -213,7 +213,7 @@ void main() {
       final doubledBack = computeNavigationProgress(
         polyline: cornerPoly,
         turns: cornerTurns,
-        previousTurnIndex: atEnd.turnIndex,
+        previous: NavigationProgress(turnIndex: atEnd.turnIndex, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: cornerPoly.first,
       );
       expect(doubledBack.turnIndex, atEnd.turnIndex);
@@ -223,7 +223,7 @@ void main() {
       final p = computeNavigationProgress(
         polyline: const [],
         turns: const [],
-        previousTurnIndex: 0,
+        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
         position: _dhaka,
       );
       expect(p.turnIndex, -1);

@@ -1,6 +1,6 @@
 import 'dart:async';
-import '../../ride/presentation/providers/ride_recording_provider.dart';
-import '../../social/presentation/providers/group_ride_providers.dart';
+import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../social/presentation/providers/group_ride_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';

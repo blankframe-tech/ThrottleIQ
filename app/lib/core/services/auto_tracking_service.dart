@@ -600,7 +600,7 @@ class AutoTrackingService {
       timestamp: position.timestamp,
       lat: position.latitude,
       lng: position.longitude,
-      speedMs: position.speed < 0 ? 0 : position.speed,
+      speedMs: (!position.speed.isFinite || position.speed < 0) ? 0 : position.speed,
       accuracyM: position.accuracy,
       altitudeM: position.altitude,
       headingDeg: position.heading < 0 ? null : position.heading,

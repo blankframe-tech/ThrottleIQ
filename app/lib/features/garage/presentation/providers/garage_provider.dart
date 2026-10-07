@@ -49,7 +49,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     );
     await _dao.insert(BikeModel.toMap(bike));
     // If first bike, make it active
-    final current = state.valueOrNull ?? [];
+    final current = await future;
     if (current.isEmpty) {
       await _dao.setActive(bike.id, uid);
     }

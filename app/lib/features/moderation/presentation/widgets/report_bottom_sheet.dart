@@ -106,7 +106,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.failedSubmitReport(e)), backgroundColor: context.palette.danger),
+          SnackBar(content: Text(context.l10n.couldNotSendReport), backgroundColor: context.palette.danger),
         );
       }
     }

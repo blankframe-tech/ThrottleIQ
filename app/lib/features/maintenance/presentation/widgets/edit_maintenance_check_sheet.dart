@@ -1,3 +1,4 @@
+import '../../../../core/utils/number_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme_context.dart';
@@ -194,15 +195,15 @@ class _EditMaintenanceCheckSheetState
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final c = widget.config;
-    final intervalVal = double.tryParse(_intervalCtrl.text.trim()) ?? 0;
+    final intervalVal = parseLocalizedNumber(_intervalCtrl.text.trim()) ?? 0;
     final daysVal = parseLocalizedInt(_daysCtrl.text.trim());
     final days = (daysVal != null && daysVal > 0) ? daysVal : null;
     if (intervalVal <= 0 && days == null) return;
-    final warnKm = double.tryParse(_warnKmCtrl.text.trim());
+    final warnKm = parseLocalizedNumber(_warnKmCtrl.text.trim());
     final warnDays = parseLocalizedInt(_warnDaysCtrl.text.trim());
 
     final trimmedNotes = _notesCtrl.text.trim();
-    final costVal = double.tryParse(_costCtrl.text.trim());
+    final costVal = parseLocalizedNumber(_costCtrl.text.trim());
     final hasCost = costVal != null && costVal > 0;
     // Editing an interval makes it the rider's own: a later template or oil
     // grade change won't overwrite it.
@@ -396,7 +397,7 @@ class _EditMaintenanceCheckSheetState
                   fillColor: context.palette.surfaceVariant,
                 ),
                 validator: (v) {
-                  final n = double.tryParse((v ?? '').trim());
+                  final n = parseLocalizedNumber((v ?? '').trim());
                   final d = parseLocalizedInt(_daysCtrl.text.trim());
                   final hasDays = d != null && d > 0;
                   if ((v == null || v.trim().isEmpty) && !hasDays) {
@@ -628,7 +629,7 @@ class _EditMaintenanceCheckSheetState
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return null;
-                    final n = double.tryParse(v.trim());
+                    final n = parseLocalizedNumber(v.trim());
                     if (n == null || n < 0) {
                       return context.l10n.enterPositiveNumber;
                     }

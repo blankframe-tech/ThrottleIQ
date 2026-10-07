@@ -1,3 +1,4 @@
+import '../../../../core/utils/number_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -97,9 +98,10 @@ class _MaintenanceConfigScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.addCustomCheck),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             TextField(
               controller: nameCtrl,
               autofocus: true,
@@ -120,7 +122,8 @@ class _MaintenanceConfigScreenState
               decoration: InputDecoration(
                   labelText: l10n.intervalDaysLabel, suffixText: l10n.daysUnit),
             ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -133,7 +136,7 @@ class _MaintenanceConfigScreenState
       ),
     );
     final name = nameCtrl.text.trim();
-    final km = double.tryParse(kmCtrl.text.trim()) ?? 0;
+    final km = parseLocalizedNumber(kmCtrl.text.trim()) ?? 0;
     final days = parseLocalizedInt(daysCtrl.text.trim());
     nameCtrl.dispose();
     kmCtrl.dispose();

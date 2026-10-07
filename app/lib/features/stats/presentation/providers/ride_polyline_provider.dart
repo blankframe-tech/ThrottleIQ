@@ -26,12 +26,13 @@ const int thumbnailPointBudget = 80;
 /// ever runs for rides the rider has actually scrolled to.
 final ridePolylineProvider =
     FutureProvider.family<List<LatLng>, String>((ref, rideId) async {
-  final rows = await RidePointDao().getForRide(rideId);
+  final rows = await RidePointDao().getSampledForRide(rideId, thumbnailPointBudget);
   final points = <LatLng>[
     for (final r in rows)
       if (r['lat'] is num && r['lng'] is num)
         LatLng((r['lat'] as num).toDouble(), (r['lng'] as num).toDouble()),
   ];
+  // Re-downsample just in case SQL yielded slightly more than budget
   return downsamplePolyline(points, thumbnailPointBudget);
 });
 

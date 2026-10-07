@@ -1,3 +1,4 @@
+import '../../../../core/utils/number_parser.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,25 +72,37 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _syncing = true);
 
-    final newKm = double.tryParse(_odometerCtrl.text.trim()) ?? 0.0;
-    await ref.read(garageProvider.notifier).syncOdometer(
-          bikeId: widget.bike.id,
-          newOdometerKm: newKm,
-        );
+    final newKm = parseLocalizedNumber(_odometerCtrl.text.trim()) ?? 0.0;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final nav = Navigator.of(context);
+    final palette = context.palette;
+
+    try {
+      await ref.read(garageProvider.notifier).syncOdometer(
+            bikeId: widget.bike.id,
+            newOdometerKm: newKm,
+          );
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('Failed to sync odometer.')));
+      }
+      return;
+    }
 
     if (!mounted) return;
-    Navigator.of(context).pop();
+    nav.pop();
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
-        backgroundColor: context.palette.surfaceVariant,
+        backgroundColor: palette.surfaceVariant,
         content: Row(
           children: [
-            Icon(Icons.check_circle, color: context.palette.success, size: 18),
+            Icon(Icons.check_circle, color: palette.success, size: 18),
             const SizedBox(width: 8),
             Text(
-              context.l10n.odometerSyncedKm(newKm.toStringAsFixed(0)),
-              style: TextStyle(color: context.palette.textPrimary),
+              l10n.odometerSyncedKm(newKm.toStringAsFixed(0)),
+              style: TextStyle(color: palette.textPrimary),
             ),
           ],
         ),
@@ -101,7 +114,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final currentOdo = widget.bike.currentOdometerKm;
-    final parsedEntered = double.tryParse(_odometerCtrl.text.trim()) ?? currentOdo;
+    final parsedEntered = parseLocalizedNumber(_odometerCtrl.text.trim()) ?? currentOdo;
     final delta = parsedEntered - currentOdo;
 
     return Container(
@@ -283,7 +296,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return context.l10n.requiredField;
-                        final numVal = double.tryParse(v.trim());
+                        final numVal = parseLocalizedNumber(v.trim());
                         if (numVal == null || numVal < 0) {
                           return context.l10n.enterValidPositiveNumber;
                         }

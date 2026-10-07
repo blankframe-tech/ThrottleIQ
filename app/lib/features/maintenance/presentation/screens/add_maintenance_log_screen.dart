@@ -539,7 +539,7 @@ class _AddMaintenanceLogScreenState
                       if (v == null || v.isEmpty) return l10n.requiredField;
                       final n = parseLocalizedNumber(v);
                       if (n == null || n < 0 || n > 2000000) return l10n.invalidNumber;
-         .           final maxOdo = logs.fold<double>(0, (m, l) => l.visitKey == widget.visitId ? m : math.max(m, l.odometerKm)) ?? 0;
+                               final maxOdo = logs.fold<double>(0, (m, l) => l.visitKey == widget.visitId ? m : (l.odometerKm > m ? l.odometerKm : m));
                       if (n < maxOdo && !_warnedOdometer) {
                         _warnedOdometer = true;
                         return 'Below previous log (${maxOdo.toInt()})';

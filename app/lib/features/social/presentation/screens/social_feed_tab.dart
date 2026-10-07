@@ -265,8 +265,10 @@ class _LiveGroupRideCard extends ConsumerWidget {
     final overflow = joined.length - initials.length;
     final ridingCount = joined.isEmpty ? ride.memberIds.length : joined.length;
 
-    return GestureDetector(
-      onTap: () => context.push('/group-ride/${ride.id}'),
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: () => context.push('/group-ride/${ride.id}'),
       child: Container(
         width: 170,
         padding: const EdgeInsets.all(12),
@@ -374,6 +376,7 @@ class _LiveGroupRideCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -554,14 +557,21 @@ class _RideCardState extends ConsumerState<_RideCard> {
                             ],
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => context.push('/profile/${ride.userId}'),
-                          child: Text(
-                            ride.userName,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: context.palette.textSecondary,
-                                fontWeight: FontWeight.w500),
+                        Semantics(
+                          button: true,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => context.push('/profile/${ride.userId}'),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                ride.userName,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.palette.textSecondary,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ),
                           ),
                         ),
                         PopupMenuButton<String>(

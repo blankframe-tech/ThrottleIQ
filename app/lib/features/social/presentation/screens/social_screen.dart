@@ -125,7 +125,7 @@ class _SocialScreenState extends State<SocialScreen> {
         backgroundColor: context.palette.background,
         appBar: AppBar(
           titleSpacing: AppDimensions.paddingMd,
-          title: Text('Social',
+          title: Text(context.l10n.navSocialLabel,
               style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
