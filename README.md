@@ -4,9 +4,10 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Dart](https://img.shields.io/badge/Dart-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta, `1.0.0-beta.4.1.0+22`, tagged
-> [`beta-v4.1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.1)
-> (2026-10-07)
+> **Status:** pre-launch beta, `1.0.0-beta.4.2.0+23`, tagged
+> [`beta-v4.2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.2)
+> (2026-10-07; `app/pubspec.yaml` is already bumped to `1.0.0-beta.4.3.0+24`
+> for the next release, which is not tagged yet)
 > — a signed Android APK/AAB on the GitHub release, plus an earlier Play
 > Console internal-testing build; no
 > public Play Store/App Store listing yet. Core ride recording,
