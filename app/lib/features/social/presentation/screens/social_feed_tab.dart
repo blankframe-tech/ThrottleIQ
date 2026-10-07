@@ -198,11 +198,6 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
   }
 }
 
-/// One card in the "Riding Now" strip: a group ride the signed-in rider is
-/// currently an active member of. Avatars and the live member count come
-/// from [groupRideMembersProvider] — the same per-ride roster stream the
-/// group-ride map screen already watches — so this never shows more than
-/// what that ride's `members` subcollection actually has.
 /// One Following/Discover sort toggle. issues §101.A4: the pills were bare
 /// GestureDetectors, so the active sort was never announced.
 class FeedSortPill extends StatelessWidget {
@@ -246,6 +241,11 @@ class FeedSortPill extends StatelessWidget {
   }
 }
 
+/// One card in the "Riding Now" strip: a group ride the signed-in rider is
+/// currently an active member of. Avatars and the live member count come
+/// from [groupRideMembersProvider] — the same per-ride roster stream the
+/// group-ride map screen already watches — so this never shows more than
+/// what that ride's `members` subcollection actually has.
 class _LiveGroupRideCard extends ConsumerWidget {
   final GroupRideEntity ride;
   const _LiveGroupRideCard({required this.ride});

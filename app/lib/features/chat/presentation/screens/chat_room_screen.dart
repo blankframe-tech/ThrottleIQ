@@ -314,7 +314,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                                 Text(
                                   DateFormat.jm().format(msg.createdAt),
                                   style: TextStyle(
-                                    color: isMe ? ownFg.withValues(alpha: 0.75) : context.palette.textTertiary,
+                                    color: isMe ? ownFg : context.palette.textTertiary,
                                     fontSize: 10,
                                   ),
                                 ),
