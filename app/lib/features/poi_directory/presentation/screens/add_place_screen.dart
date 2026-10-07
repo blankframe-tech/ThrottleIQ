@@ -18,6 +18,7 @@ import '../../data/utils/image_compression_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../domain/place_tags.dart';
 import '../place_category_l10n.dart';
 import '../place_tag_l10n.dart';
@@ -122,10 +123,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           await ImagePicker().pickImage(source: source, imageQuality: 80);
       if (xfile == null || !mounted) return;
       setState(() => _photoPath = xfile.path);
-    } catch (e) {
+    } catch (e, st) {
+      // issues §101.P7: log the raw exception; riders get plain text.
+      reportNonFatal(e, st, reason: 'image picker');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldNotOpenCamera(e))),
+        SnackBar(content: Text(context.l10n.couldNotOpenCamera)),
       );
     }
   }

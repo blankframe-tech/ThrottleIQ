@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/realtime/realtime_connection_manager.dart';
@@ -265,48 +266,56 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     final msg = messages[index];
                     final isMe = msg.senderId == myUid;
 
+                    // issues §101.A4: own bubbles sit on palette.primary, where
+                    // white text was 1.18:1 on sport/dark lime.
+                    final ownFg = AppTheme.primaryButtonForeground(context.palette);
+
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: GestureDetector(
-                        onLongPress: isMe ? null : () {
-                          ReportBottomSheet.show(
-                            context,
-                            reportedId: msg.senderId,
-                            contentType: 'chat',
-                            contentId: msg.id,
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isMe ? context.palette.primary : context.palette.surface,
-                            borderRadius: BorderRadius.circular(16).copyWith(
-                              bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(16),
-                              bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(0),
+                      // Tells a screen reader the long press reports the message.
+                      child: Semantics(
+                        onLongPressHint: isMe ? null : context.l10n.report,
+                        child: GestureDetector(
+                          onLongPress: isMe ? null : () {
+                            ReportBottomSheet.show(
+                              context,
+                              reportedId: msg.senderId,
+                              contentType: 'chat',
+                              contentId: msg.id,
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isMe ? context.palette.primary : context.palette.surface,
+                              borderRadius: BorderRadius.circular(16).copyWith(
+                                bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(16),
+                                bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(0),
+                              ),
+                              border: isMe ? null : Border.all(color: context.palette.border),
                             ),
-                            border: isMe ? null : Border.all(color: context.palette.border),
-                          ),
-                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                msg.text,
-                                style: TextStyle(
-                                  color: isMe ? Colors.white : context.palette.textPrimary,
-                                  fontSize: 14,
+                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  msg.text,
+                                  style: TextStyle(
+                                    color: isMe ? ownFg : context.palette.textPrimary,
+                                    fontSize: 14,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat.jm().format(msg.createdAt),
-                                style: TextStyle(
-                                  color: isMe ? Colors.white70 : context.palette.textTertiary,
-                                  fontSize: 10,
+                                const SizedBox(height: 4),
+                                Text(
+                                  DateFormat.jm().format(msg.createdAt),
+                                  style: TextStyle(
+                                    color: isMe ? ownFg.withValues(alpha: 0.75) : context.palette.textTertiary,
+                                    fontSize: 10,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

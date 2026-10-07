@@ -503,4 +503,37 @@ void main() {
       await service.publishApexHunter(maxLeanLeft: 38.5, maxLeanRight: 42.1);
     });
   });
+
+  // issues §101.C9: one shared click subscription routes each widget's URI
+  // to its own handler. Two separate listens on the same EventChannel meant
+  // the second replaced the first, and live Start-ride taps were lost.
+  group('HomeWidgetService.dispatchWidgetUri', () {
+    test('each URI reaches only its own handler', () {
+      var startRide = 0;
+      var autoTracking = 0;
+      final service = HomeWidgetService()
+        ..setHandlersForTesting(
+          onStartRide: () => startRide++,
+          onAutoTracking: () => autoTracking++,
+        );
+
+      service.dispatchWidgetUri(Uri.parse('throttleiq://startride'));
+      expect([startRide, autoTracking], [1, 0]);
+
+      service.dispatchWidgetUri(Uri.parse('throttleiq://autotracking'));
+      expect([startRide, autoTracking], [1, 1]);
+
+      service.dispatchWidgetUri(Uri.parse('throttleiq://apexhunter'));
+      service.dispatchWidgetUri(null);
+      expect([startRide, autoTracking], [1, 1]);
+    });
+
+    test('no handler registered is a no-op', () {
+      expect(
+        () => HomeWidgetService()
+            .dispatchWidgetUri(Uri.parse('throttleiq://startride')),
+        returnsNormally,
+      );
+    });
+  });
 }

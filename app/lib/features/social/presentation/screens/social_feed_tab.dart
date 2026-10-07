@@ -85,42 +85,16 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                   padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
                   child: Row(
                     children: [
-                      GestureDetector(
+                      FeedSortPill(
+                        label: context.l10n.following,
+                        selected: sort == FeedSort.following,
                         onTap: () => ref.read(feedSortProvider.notifier).state = FeedSort.following,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: sort == FeedSort.following ? context.palette.primary : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: sort == FeedSort.following ? context.palette.primary : context.palette.border),
-                          ),
-                          child: Text(
-                            context.l10n.following,
-                            style: TextStyle(
-                              color: sort == FeedSort.following ? context.palette.background : context.palette.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
                       ),
                       const SizedBox(width: 8),
-                      GestureDetector(
+                      FeedSortPill(
+                        label: context.l10n.discover,
+                        selected: sort == FeedSort.recent,
                         onTap: () => ref.read(feedSortProvider.notifier).state = FeedSort.recent,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: sort == FeedSort.recent ? context.palette.primary : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: sort == FeedSort.recent ? context.palette.primary : context.palette.border),
-                          ),
-                          child: Text(
-                            context.l10n.discover,
-                            style: TextStyle(
-                              color: sort == FeedSort.recent ? context.palette.background : context.palette.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -229,6 +203,49 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
 /// from [groupRideMembersProvider] — the same per-ride roster stream the
 /// group-ride map screen already watches — so this never shows more than
 /// what that ride's `members` subcollection actually has.
+/// One Following/Discover sort toggle. issues §101.A4: the pills were bare
+/// GestureDetectors, so the active sort was never announced.
+class FeedSortPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const FeedSortPill({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? context.palette.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: selected ? context.palette.primary : context.palette.border),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? context.palette.background : context.palette.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LiveGroupRideCard extends ConsumerWidget {
   final GroupRideEntity ride;
   const _LiveGroupRideCard({required this.ride});

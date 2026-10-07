@@ -339,6 +339,11 @@ class CloudRepository {
     // tombstones this loop faithfully re-created every bike the rider had
     // just removed — which is precisely how the delete appeared not to work.
     final deletedIds = await _bikeDao.deletedIds();
+    // Same newer-schema guard as downloadRides (issues §101.C3): bikes were
+    // inserted verbatim, so a field from a newer app version threw.
+    final bikeColumns = (await db.rawQuery('PRAGMA table_info(bikes)'))
+        .map((row) => row['name'] as String)
+        .toSet();
     final snap = await _sinceQuery(
             _firestore.collection('users').doc(uid).collection('bikes'), since)
         .get();
@@ -348,6 +353,7 @@ class CloudRepository {
         (await db.query('bikes', where: 'is_active = 1', limit: 1)).isNotEmpty;
     var pulledAnyActive = false;
     var pulledAny = false;
+    DateTime? firstFailed;
 
     for (final doc in snap.docs) {
       if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
@@ -357,18 +363,24 @@ class CloudRepository {
         pulledAnyActive: pulledAnyActive,
       );
       try {
-        await db.insert('bikes', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('bikes', knownRideColumnsOnly(data, bikeColumns),
+            conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
       } catch (e) {
         // Same per-doc isolation as downloadRides, and it matters more here:
         // this runs first in the sync cycle, so an unguarded throw took the
         // ride and maintenance downloads down with it.
         debugPrint('[CloudRepository] bike download skipped for ${doc.id}: $e');
+        firstFailed = earlierFailure(firstFailed, doc.data());
         continue;
       }
       if (data['is_active'] == 1) pulledAnyActive = true;
     }
-    return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
+    // A bike that failed must be fetched again next cycle (issues §101.C3).
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
   }
 
   /// [collection] filtered to `syncedAt > since`, or unfiltered when [since]
@@ -392,6 +404,26 @@ class CloudRepository {
       if (t != null && (newest == null || t.isAfter(newest))) newest = t;
     }
     return newest;
+  }
+
+  /// The pull watermark to save after a download pass: [maxSyncedAt] when
+  /// every doc landed, otherwise just short of the earliest failed doc's
+  /// `syncedAt` ([firstFailed]), so the next incremental query
+  /// (`syncedAt > mark - overlap`) asks for it again. Without this, one
+  /// failed insert was skipped until the next full pull (issues §101.C3).
+  @visibleForTesting
+  static DateTime? markShortOfFailures(
+          DateTime? maxSyncedAt, DateTime? firstFailed) =>
+      firstFailed == null
+          ? maxSyncedAt
+          : firstFailed.subtract(const Duration(milliseconds: 1));
+
+  /// [current] or the `syncedAt` of [failedDoc], whichever is earlier.
+  static DateTime? earlierFailure(
+      DateTime? current, Map<String, dynamic> failedDoc) {
+    final at = newestSyncedAt([failedDoc]);
+    if (at != null && (current == null || at.isBefore(current))) return at;
+    return current;
   }
 
   /// Sanitizes downloaded bike document data before inserting it into local SQLite.
@@ -452,20 +484,17 @@ class CloudRepository {
         pulledAny = true;
       } catch (e) {
         debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
-        final at = newestSyncedAt([doc.data()]);
-        if (at != null && (firstFailed == null || at.isBefore(firstFailed))) {
-          firstFailed = at;
-        }
+        firstFailed = earlierFailure(firstFailed, doc.data());
       }
     }
     // A log this build couldn't store (e.g. one written by a newer schema)
     // must be fetched again later, so the watermark stops short of it.
     // Without this, an older build skipped a v20 visit log and then never
     // pulled it even after upgrading (§95).
-    final mark = firstFailed == null
-        ? maxSyncedAt
-        : firstFailed.subtract(const Duration(milliseconds: 1));
-    return (pulledAny: pulledAny, maxSyncedAt: mark);
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
   }
 
   /// `uid/bikeId` pairs whose cloud settings doc was already checked this
@@ -530,12 +559,17 @@ class CloudRepository {
         .map((row) => row['name'] as String)
         .toSet();
     final deletedIds = await _rideDao.deletedIds();
+    // Rides of a bike this device deleted can never insert (FK) and will be
+    // removed remotely by deleteBikeRemote, so they must not pin the
+    // watermark (issues §101.C3).
+    final deletedBikeIds = await _bikeDao.deletedIds();
     final snap = await _sinceQuery(
             _firestore.collection('users').doc(uid).collection('rides'), since)
         .get();
     final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     var pulledAny = false;
+    DateTime? firstFailed;
     for (final doc in snap.docs) {
       if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
@@ -558,9 +592,16 @@ class CloudRepository {
         // skipped — and since Firestore returns docs in id order, the same
         // arbitrary subset landed every cycle and the count never moved.
         debugPrint('[CloudRepository] ride download skipped for ${doc.id}: $e');
+        if (!deletedBikeIds.contains(data['bike_id'])) {
+          firstFailed = earlierFailure(firstFailed, doc.data());
+        }
       }
     }
-    return (pulledAny: pulledAny, maxSyncedAt: maxSyncedAt);
+    // A failed ride is asked for again next cycle (issues §101.C3).
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
   }
 
   /// Deletes a maintenance log's remote copy (§94.2). The caller marks the

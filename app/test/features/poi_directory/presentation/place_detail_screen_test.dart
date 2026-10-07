@@ -56,5 +56,11 @@ void main() {
     // We check for the ClipRRect that wraps the banner, because Image.network 
     // might fail in tests and trigger the errorBuilder, but ClipRRect is always there.
     expect(find.byType(ClipRRect), findsWidgets);
+
+    // issues §101.P6: the banner decodes at screen width, not full size.
+    expect(
+      find.byWidgetPredicate((w) => w is Image && w.image is ResizeImage),
+      findsOneWidget,
+    );
   });
 }

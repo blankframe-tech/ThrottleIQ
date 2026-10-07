@@ -116,23 +116,32 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   /// behaviour, but it does mean a rider who starts riding one minute before
   /// their window closes keeps getting tracked past it.
   Future<void> _maybeBegin() async {
-    if (!await _withinScheduleWindow()) {
+    // Guarded (issues §101.C7): `_moving` is already true when this runs, so
+    // an unhandled throw (prefs reload, SQLite in beginDetection) left it
+    // stuck and every later vehicle report was ignored — the whole trip
+    // lost. Clearing it lets the next IN_VEHICLE report retry.
+    try {
+      if (!await _withinScheduleWindow()) {
+        _moving = false;
+        return;
+      }
+      final opened = await AutoTrackingService.beginDetection(
+        _dao,
+        AutoTriggerSource.activityRecognition,
+        userId: await AutoTrackingService.readOwner(),
+      );
+      if (!opened) {
+        // A manual ride is being recorded (§90.C3). Not moving as far as
+        // this handler is concerned, so the next vehicle report after that
+        // ride ends gets a fresh chance to open a detection.
+        _moving = false;
+        return;
+      }
+      _startPositionStream();
+    } catch (e) {
       _moving = false;
-      return;
+      debugPrint('[auto-tracking] begin detection failed: $e');
     }
-    final opened = await AutoTrackingService.beginDetection(
-      _dao,
-      AutoTriggerSource.activityRecognition,
-      userId: await AutoTrackingService.readOwner(),
-    );
-    if (!opened) {
-      // A manual ride is being recorded (§90.C3). Not moving as far as this
-      // handler is concerned, so the next vehicle report after that ride ends
-      // gets a fresh chance to open a detection.
-      _moving = false;
-      return;
-    }
-    _startPositionStream();
   }
 
   Future<bool> _withinScheduleWindow() async {
@@ -175,7 +184,8 @@ class _AutoTrackingTaskHandler extends TaskHandler {
           );
     _positionSub =
         Geolocator.getPositionStream(locationSettings: settings).listen(
-      (position) => unawaited(_onFix(position)),
+      (position) => unawaited(
+          AutoTrackingService.guardedFix(() => _onFix(position))),
       onError: (Object error) => debugPrint('[auto-tracking] position error $error'),
     );
   }
@@ -561,6 +571,18 @@ class AutoTrackingService {
     await dao.closeDetection(current['id'] as String, DateTime.now());
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsCurrentDetection);
+  }
+
+  /// Runs one position-fix handler, logging instead of throwing (issues
+  /// §101.C7). One bad fix (a SQLite append failing, say) used to surface
+  /// as an uncaught async error in the foreground-task isolate, untagged.
+  @visibleForTesting
+  static Future<void> guardedFix(Future<void> Function() handle) async {
+    try {
+      await handle();
+    } catch (e) {
+      debugPrint('[auto-tracking] fix failed: $e');
+    }
   }
 
   /// Appends a fix to the open detection.

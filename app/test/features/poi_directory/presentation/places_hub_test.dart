@@ -1,15 +1,23 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:throttleiq/core/theme/app_shape_profile.dart';
+import 'package:throttleiq/core/theme/app_theme.dart';
+import 'package:throttleiq/core/theme/app_theme_style.dart';
+import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:throttleiq/features/poi_directory/data/repositories/saved_places_repository.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
 import 'package:throttleiq/features/poi_directory/domain/place_tags.dart';
 import 'package:throttleiq/features/poi_directory/domain/places_query.dart';
+import 'package:throttleiq/features/poi_directory/presentation/place_category_style.dart';
 import 'package:throttleiq/features/poi_directory/presentation/providers/places_provider.dart';
 import 'package:throttleiq/features/poi_directory/presentation/providers/places_search_provider.dart';
 import 'package:throttleiq/features/poi_directory/presentation/providers/saved_places_provider.dart';
@@ -18,6 +26,19 @@ import 'package:throttleiq/features/poi_directory/presentation/widgets/places_ma
 import 'package:throttleiq/l10n/app_localizations.dart';
 
 const _lat = 23.7580;
+
+double _contrast(Color a, Color b) {
+  final la = a.computeLuminance();
+  final lb = b.computeLuminance();
+  return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+}
+
+/// Sport/dark: the lime primary that white text failed on (issues §101.P1).
+final _sportDark = AppTheme.build(const AppAppearance(
+  colorMode: AppColorMode.sport,
+  shapeVibe: AppShapeVibe.boxy,
+  brightness: Brightness.dark,
+));
 const _lng = 90.3900;
 
 class _FakeUser extends Fake implements User {
@@ -134,6 +155,7 @@ void main() {
     Locale locale = const Locale('en'),
     List<PlaceEntity>? places,
     Object? error,
+    ThemeData? theme,
   }) async {
     // A tall phone, so all three cards are laid out at once.
     tester.view.physicalSize = const Size(1080, 2800);
@@ -144,6 +166,7 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: c,
       child: MaterialApp(
+        theme: theme,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -399,6 +422,103 @@ void main() {
       
       final listView = tester.widget<ListView>(find.byType(ListView).last);
       expect(listView.childrenDelegate, isA<SliverChildBuilderDelegate>());
+    });
+
+    group('sport/dark contrast (issues §101.P1)', () {
+      const palette = AppColorPalette.carbonMonoDark;
+
+      testWidgets('list add-place FAB uses the primary button foreground',
+          (tester) async {
+        await pumpHub(tester, theme: _sportDark);
+        final fab = find.byWidgetPredicate(
+            (w) => w is FloatingActionButton && w.heroTag == 'add_place_fab');
+        expect(fab, findsOneWidget);
+        final expected = AppTheme.primaryButtonForeground(palette);
+        final icon = tester.widget<Icon>(
+            find.descendant(of: fab, matching: find.byIcon(Icons.add)));
+        expect(icon.color, expected);
+        final label = tester.widget<Text>(
+            find.descendant(of: fab, matching: find.text('Add place')));
+        expect(label.style?.color, expected);
+        expect(_contrast(expected, palette.primary), greaterThanOrEqualTo(4.5));
+      });
+
+      testWidgets('map add FAB uses the primary button foreground',
+          (tester) async {
+        await pumpHub(tester, mode: PlacesViewMode.map, theme: _sportDark);
+        final fab = tester.widget<FloatingActionButton>(find.byWidgetPredicate(
+            (w) => w is FloatingActionButton && w.heroTag == 'places_map_add'));
+        expect(fab.foregroundColor, AppTheme.primaryButtonForeground(palette));
+      });
+
+      testWidgets('cluster count text is readable on the primary bubble',
+          (tester) async {
+        await pumpHub(
+          tester,
+          mode: PlacesViewMode.map,
+          theme: _sportDark,
+          places: [
+            _place('a', 'Pump A', PlaceCategory.fuel, kmNorth: 1),
+            _place('b', 'Pump B', PlaceCategory.fuel, kmNorth: 1),
+          ],
+        );
+        final count = tester.widget<Text>(find.descendant(
+          of: find.byType(MarkerLayer),
+          matching: find.text('2'),
+        ));
+        final expected = AppTheme.primaryButtonForeground(palette);
+        expect(count.style?.color, expected);
+        expect(_contrast(expected, palette.primary), greaterThanOrEqualTo(4.5));
+      });
+
+      testWidgets('a garage pin on the lime accent draws a dark icon',
+          (tester) async {
+        // Alone, so it is drawn as its own pin rather than in a cluster.
+        await pumpHub(tester,
+            mode: PlacesViewMode.map,
+            theme: _sportDark,
+            places: [_places[1]]);
+        final icon = tester.widget<Icon>(find.descendant(
+          of: find.byKey(const ValueKey('place-marker-moto')),
+          matching: find.byIcon(Icons.build),
+        ));
+        expect(icon.color, markerDarkInk);
+        expect(_contrast(icon.color!, palette.primary),
+            greaterThanOrEqualTo(3));
+      });
+    });
+
+    group('markerIconColor', () {
+      test('lime accent gets dark ink', () {
+        const lime = Color(0xFFC8FF3D);
+        expect(markerIconColor(lime), markerDarkInk);
+        expect(_contrast(markerIconColor(lime), lime), greaterThanOrEqualTo(3));
+      });
+
+      test('danger red gets white', () {
+        const red = Color(0xFFC62828);
+        expect(markerIconColor(red), Colors.white);
+        expect(_contrast(markerIconColor(red), red), greaterThanOrEqualTo(3));
+      });
+
+      test('every palette accent meets 3:1', () {
+        for (final mode in AppColorMode.values) {
+          for (final b in Brightness.values) {
+            final p = AppColorPalette.forMode(mode, b);
+            for (final accent in [
+              p.primary,
+              p.secondary,
+              p.warning,
+              p.success,
+              p.danger,
+            ]) {
+              expect(_contrast(markerIconColor(accent), accent),
+                  greaterThanOrEqualTo(3),
+                  reason: '${mode.name}/${b.name} $accent');
+            }
+          }
+        }
+      });
     });
   });
 }

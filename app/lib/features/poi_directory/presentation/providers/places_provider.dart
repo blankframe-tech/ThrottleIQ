@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -65,8 +67,23 @@ final currentPositionProvider = FutureProvider<Position>((ref) async {
     throw const PlaceLocationException(PlaceLocationProblem.serviceDisabled);
   }
 
-  return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  // issues §101.P6: with no time limit a poor fix (indoors, cold GPS)
+  // left the Places spinner up forever. On timeout use the last known
+  // fix; only a device with no fix at all surfaces the error.
+  try {
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+      timeLimit: currentPositionTimeLimit,
+    );
+  } on TimeoutException {
+    final lastKnown = await Geolocator.getLastKnownPosition();
+    if (lastKnown == null) rethrow;
+    return lastKnown;
+  }
 });
+
+/// How long [currentPositionProvider] waits for a fresh fix.
+const currentPositionTimeLimit = Duration(seconds: 15);
 
 /// Every nearby place within [radiusKm] (a [placesRadiusOptionsKm] value),
 /// all categories, safety points included. The Places hub filters by

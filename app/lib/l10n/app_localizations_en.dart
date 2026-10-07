@@ -3024,9 +3024,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseFromGallery => 'Choose from gallery';
 
   @override
-  String couldNotOpenCamera(Object e) {
-    return 'Could not open the camera or gallery: $e';
-  }
+  String get couldNotOpenCamera => 'Could not open the camera or gallery.';
 
   @override
   String get couldntLookThatSpot =>

@@ -87,4 +87,17 @@ void main() {
     expect(message, contains('permission-denied'));
     expect(message, contains('কন্টাক্ট'));
   });
+
+  // issues §101.P7: the picker error used to splice in the raw exception
+  // ("PlatformException(camera_access_denied, ...)").
+  testWidgets('couldNotOpenCamera is plain text in both languages',
+      (tester) async {
+    for (final locale in supportedLocales) {
+      final l10n = await localizationsFor(tester, locale);
+      final message = l10n.couldNotOpenCamera;
+      expect(message, isNotEmpty);
+      expect(message, isNot(contains('Exception')));
+      expect(message, isNot(contains('{')));
+    }
+  });
 }

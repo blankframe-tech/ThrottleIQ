@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/foundation.dart' show VoidCallback, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -327,13 +328,11 @@ class HomeWidgetService {
   /// URI at all, i.e. a normal icon tap) is a silent no-op rather than an
   /// error on every start.
   Future<void> registerStartRideHandler(VoidCallback onStartRide) async {
+    _onStartRide = onStartRide;
     try {
       final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
       if (isStartRideUri(launched)) onStartRide();
-
-      HomeWidget.widgetClicked.listen((uri) {
-        if (isStartRideUri(uri)) onStartRide();
-      });
+      _listenForClicks();
     } catch (e, s) {
       _log('registerStartRideHandler failed', e, s);
     }
@@ -344,16 +343,51 @@ class HomeWidgetService {
   /// [registerStartRideHandler], and the same no-op-on-failure contract.
   Future<void> registerAutoTrackingHandler(
       VoidCallback onStartAutoTracking) async {
+    _onAutoTracking = onStartAutoTracking;
     try {
       final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
       if (isAutoTrackingUri(launched)) onStartAutoTracking();
-
-      HomeWidget.widgetClicked.listen((uri) {
-        if (isAutoTrackingUri(uri)) onStartAutoTracking();
-      });
+      _listenForClicks();
     } catch (e, s) {
       _log('registerAutoTrackingHandler failed', e, s);
     }
+  }
+
+  VoidCallback? _onStartRide;
+  VoidCallback? _onAutoTracking;
+
+  /// The one live-tap subscription, shared by every handler (issues
+  /// §101.C9). Each `HomeWidget.widgetClicked` call is a fresh
+  /// `receiveBroadcastStream()` on the same EventChannel, and a second
+  /// listen replaces the first's platform handler — so the auto-tracking
+  /// listener used to silently cut off live Start-ride taps.
+  StreamSubscription<Uri?>? _clickSub;
+
+  void _listenForClicks() {
+    _clickSub ??= HomeWidget.widgetClicked.listen(
+      dispatchWidgetUri,
+      onError: (Object e, StackTrace s) => _log('widgetClicked error', e, s),
+    );
+  }
+
+  /// Routes a widget launch URI to the handler registered for it.
+  @visibleForTesting
+  void dispatchWidgetUri(Uri? uri) {
+    if (isStartRideUri(uri)) {
+      _onStartRide?.call();
+    } else if (isAutoTrackingUri(uri)) {
+      _onAutoTracking?.call();
+    }
+  }
+
+  /// Sets the handlers without touching the platform channel.
+  @visibleForTesting
+  void setHandlersForTesting({
+    VoidCallback? onStartRide,
+    VoidCallback? onAutoTracking,
+  }) {
+    _onStartRide = onStartRide;
+    _onAutoTracking = onAutoTracking;
   }
 
   Future<void> publishRideStats({

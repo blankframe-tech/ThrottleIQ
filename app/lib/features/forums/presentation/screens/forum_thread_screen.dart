@@ -18,6 +18,7 @@ import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/forum_author_bike.dart';
 import '../widgets/forum_post_badges.dart';
@@ -293,10 +294,12 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
       setState(() {
         _photoPaths.addAll(picked.take(remaining).map((x) => x.path));
       });
-    } catch (e) {
+    } catch (e, st) {
+      // issues §101.P7: log the raw exception; riders get plain text.
+      reportNonFatal(e, st, reason: 'image picker');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldNotOpenCamera(e))),
+        SnackBar(content: Text(context.l10n.couldNotOpenCamera)),
       );
     }
   }

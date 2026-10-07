@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../domain/marker_clustering.dart';
@@ -298,7 +299,8 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
                   heroTag: 'places_map_add',
                   tooltip: context.l10n.addPlaceLower,
                   backgroundColor: context.palette.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor:
+                      AppTheme.primaryButtonForeground(context.palette),
                   onPressed: widget.onAddPlace,
                   child: const Icon(Icons.add_location_alt_outlined),
                 ),
@@ -378,7 +380,7 @@ class _PlacePin extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(hit.place.category.markerIcon, size: size * 0.5, color: Colors.white),
+              child: Icon(hit.place.category.markerIcon, size: size * 0.5, color: markerIconColor(accent)),
             ),
             if (hit.place.isRiderApproved)
               Icon(Icons.verified, size: 12, color: context.palette.success),
@@ -414,7 +416,11 @@ class _ClusterBubble extends StatelessWidget {
           ),
           child: Text(
             count > 99 ? '99+' : '$count',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
+            style: TextStyle(
+              color: AppTheme.primaryButtonForeground(context.palette),
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
           ),
         ),
       ),
@@ -458,7 +464,7 @@ class _RadarPin extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
           ),
-          child: Icon(hit.place.category.markerIcon, size: 13, color: Colors.white),
+          child: Icon(hit.place.category.markerIcon, size: 13, color: markerIconColor(danger)),
         ),
       ),
     );

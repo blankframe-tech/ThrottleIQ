@@ -240,20 +240,32 @@ class _UnitSegment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    // issues §101.R9: announce the segment as a button and which unit is
+    // active. excludeSemantics drops the bare text node, so the tap is
+    // re-exposed here.
+    return Semantics(
+      button: true,
+      selected: active,
+      inMutuallyExclusiveGroup: true,
+      label: label,
+      excludeSemantics: true,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? context.palette.ink : Colors.transparent,
-          borderRadius: BorderRadius.circular(context.shape.radiusFull),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-            color: active ? context.palette.onInk : context.palette.textTertiary,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          decoration: BoxDecoration(
+            color: active ? context.palette.ink : Colors.transparent,
+            borderRadius: BorderRadius.circular(context.shape.radiusFull),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+              color: active ? context.palette.onInk : context.palette.textTertiary,
+            ),
           ),
         ),
       ),

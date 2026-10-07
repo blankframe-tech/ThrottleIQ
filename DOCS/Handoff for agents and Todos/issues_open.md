@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§97**. (§85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§102**. (§97–§101 are taken in this file. §97 is also used in `issues_fixed.md` for a different writeup: here it is the Places/Forums first-iPhone-run findings, there it is the forum photos / paddock counts fix. §85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -174,7 +174,7 @@ feeds at effectively unlimited rate.
 
 ---
 
-## 64. User report: chat/messaging shows `permission-denied` everywhere — stale/undeployed rules, same pattern as §47 — FIXED (2026-09-11) (open parts)
+## 64. Open parts of §64 (chat `permission-denied` report) — 63.3 Cloudinary unsigned preset NOT FIXED; the resolved parts are in `issues_fixed.md` §64
 
 > The resolved parts and the full context of this section are in `issues_fixed.md` §64.
 
@@ -584,11 +584,17 @@ blocked user's content still reaches the victim's device on every refresh, and
 nothing stops a blocked user reading the blocker's public content. Wants a
 server-side edge, not a `.where()`.
 
-### 83.19 (part) — App Check is not enabled
+### 83.19 (part) — App Check: client activation done, console enforcement still off
 
-Crash notifications are idempotent now, but rules cannot bound request volume;
-any signed-in client can still drive function invocations. App Check is the
-control, and it is not set up on this project.
+**Done in code:** `app/lib/main.dart` `_activateAppCheck()` calls
+`FirebaseAppCheck.instance.activate` (Play Integrity / App Attest, debug provider in
+debug builds) right after `Firebase.initializeApp`. See `issues_fixed.md` §83.19.
+
+**Still open (founder, console action):** register the debug token and switch on
+App Check enforcement in the Firebase console. Do this only after a release with
+this code is what riders run, or older builds get locked out (same rule as §78.27).
+Until then rules cannot bound request volume, and any signed-in client can still
+drive function invocations.
 
 **APPROVED 2026-09-21: enable it.** Free, and works on Spark.
 

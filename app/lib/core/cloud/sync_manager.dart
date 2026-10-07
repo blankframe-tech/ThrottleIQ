@@ -27,15 +27,26 @@ enum SyncStatus { idle, syncing, success, failure }
 class SyncManager {
   // issues §62.13: `outbox` is always passed explicitly in
   // production (see the `syncManagerProvider` below) — this default only
-  // matters for a bare `SyncManager()`/`SyncManager(ref)` construction
+  // matters for a bare `SyncManager()`/`SyncManager(ref: ref)` construction
   // (ad-hoc tests). It used to fall back to a static `OutboxService.instance`
   // singleton, a second, never-drained OutboxService with its own DAO and
   // its own `_changes` StreamController that's never disposed — a latent
   // trap for any future caller that hit this path. A fresh instance per
   // construction is no worse for the (currently nonexistent) callers of the
   // bare constructor and removes the trap entirely.
-  SyncManager([this._ref, OutboxService? outbox])
-      : _outbox = outbox ?? OutboxService() {
+  //
+  // [connectivity] and [auth] default to the live plugins; tests inject
+  // fakes (issues §101.C2) so the sync guard can be exercised without
+  // Firebase or a platform channel.
+  SyncManager({
+    Ref? ref,
+    OutboxService? outbox,
+    Connectivity? connectivity,
+    FirebaseAuth? auth,
+  })  : _ref = ref,
+        _outbox = outbox ?? OutboxService(),
+        _connectivity = connectivity ?? Connectivity(),
+        _auth = auth ?? FirebaseAuth.instance {
     _initConnectivityListener();
     _initAuthListener();
   }
@@ -45,10 +56,12 @@ class SyncManager {
   /// live UI refresh can omit it.
   final Ref? _ref;
 
-  final CloudRepository _cloudRepository = CloudRepository();
+  // Late so constructing a SyncManager doesn't touch FirebaseFirestore
+  // (CloudRepository grabs the instance eagerly).
+  late final CloudRepository _cloudRepository = CloudRepository();
   final OutboxService _outbox;
-  final Connectivity _connectivity = Connectivity();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Connectivity _connectivity;
+  final FirebaseAuth _auth;
 
   Timer? _autoSyncTimer;
   bool _autoSyncEnabled = false;
@@ -244,21 +257,6 @@ class SyncManager {
     _lastSyncStartedAt = DateTime.now();
     _connectivityTimer?.cancel();
 
-    // Check connectivity first
-    final connectivityResult = await _connectivity.checkConnectivity();
-
-    if (!_hasNetwork(connectivityResult)) {
-      _isSyncing = false;
-      _status = SyncStatus.failure;
-      _consecutiveFailures++;
-      _notifyListeners();
-      _scheduleNextAutoSync();
-      return;
-    }
-
-    _status = SyncStatus.syncing;
-    _notifyListeners();
-
     // Anything the rider already committed to while offline goes FIRST, ahead
     // of the bulk ride/bike sync below. Two reasons: these are explicit
     // rider-initiated actions ("end this ride", "share this ride") rather than
@@ -267,6 +265,21 @@ class SyncManager {
     // Failures inside drain() are recorded per-entry and never thrown, so this
     // cannot abort the sync that follows.
     try {
+      // Connectivity check inside the try (issues §101.C2): connectivity_plus
+      // can throw a PlatformException here, and outside the try that left
+      // `_isSyncing` stuck at true for the rest of the session. The
+      // `finally` below now clears the flag, notifies and reschedules for
+      // the no-network branch too.
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (!_hasNetwork(connectivityResult)) {
+        _status = SyncStatus.failure;
+        _consecutiveFailures++;
+        return;
+      }
+
+      _status = SyncStatus.syncing;
+      _notifyListeners();
+
       // Inside the try so an unexpected throw (e.g. the outbox table itself
       // failing to open) still reaches the `finally` below. Outside it, the
       // throw escaped with `_isSyncing` stuck at true, and every later
@@ -544,7 +557,7 @@ class SyncManager {
 /// Riverpod provider for SyncManager
 final syncManagerProvider = Provider<SyncManager>((ref) {
   final outbox = ref.watch(outboxServiceProvider);
-  final syncManager = SyncManager(ref, outbox);
+  final syncManager = SyncManager(ref: ref, outbox: outbox);
   ref.onDispose(() => syncManager.dispose());
   return syncManager;
 });

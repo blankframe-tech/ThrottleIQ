@@ -3036,9 +3036,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get chooseFromGallery => 'গ্যালারি থেকে বেছে নিন';
 
   @override
-  String couldNotOpenCamera(Object e) {
-    return 'ক্যামেরা বা গ্যালারি খোলা যায়নি: $e';
-  }
+  String get couldNotOpenCamera => 'ক্যামেরা বা গ্যালারি খোলা যায়নি।';
 
   @override
   String get couldntLookThatSpot =>

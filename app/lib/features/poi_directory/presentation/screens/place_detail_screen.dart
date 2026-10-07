@@ -21,11 +21,11 @@ import '../widgets/place_rating_badges.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
 ///
-/// Submitting a review writes the new review doc, then recomputes the
-/// place's ratingSum/ratingCount (`ReviewRepository.addReviewAndUpdatePlaceRating`)
-/// — see that method's doc comment for why those are two sequential writes
-/// rather than one atomic transaction (the places/{placeId} security rule
-/// needs the review to already exist to authorize the rating bump).
+/// Submitting a review writes the new review doc and recomputes the
+/// place's ratingSum/ratingCount in one transaction
+/// (`ReviewRepository.addReviewAndUpdatePlaceRating`) — the places/{placeId}
+/// security rule only allows the bump in the same commit that creates the
+/// rider's review (issues §101.S1).
 class PlaceDetailScreen extends ConsumerStatefulWidget {
   final String placeId;
   const PlaceDetailScreen({super.key, required this.placeId});
@@ -175,6 +175,18 @@ class _PlaceDetailBody extends ConsumerWidget {
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
+              // issues §101.P6: decode at the banner's width, not the
+              // photo's full upload resolution.
+              cacheWidth: (MediaQuery.sizeOf(context).width *
+                      MediaQuery.devicePixelRatioOf(context))
+                  .round(),
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: ColoredBox(color: context.palette.surfaceVariant),
+                    ),
               errorBuilder: (_, __, ___) => const SizedBox.shrink(),
             ),
           ),

@@ -6,11 +6,16 @@ What is left needs the founder: an account, a real device, a decision, or the Bl
 
 ## Release — the one thing everything else waits on
 
-_Update 2026-10-07:_ the current release is `beta-v4.1` (`1.0.0-beta.4.1.0+22`, AAB + APK on
-GitHub, 2026-10-07): the maintenance redesign plus the auto-tracking daily summary. It has **not
-been tested on a device**. The iOS release build installed on the founder's iPhone but won't
-launch until the developer profile is trusted (Settings → General → VPN & Device Management).
-Device checks to do: `issues_open.md` §95.1. The follow-ups below still apply.
+_Update 2026-10-07 (later):_ the current release is `beta-v4.2` (`1.0.0-beta.4.2.0+23`, AAB + APK
+on GitHub, tag on `ed8fd34`): the Places hub (§96), the Forums Pit Wall, and the two forum fixes
+(photos on posts, brand paddock counts; issues_fixed §97). The iOS release build of `ed8fd34` is
+installed and launched on the founder's iPhone 15, but photos on posts and the paddock counts have
+not been tried on the device yet. `app/pubspec.yaml` is already bumped to `1.0.0-beta.4.3.0+24` for
+the next release; that one is not tagged yet.
+
+_Earlier, 2026-10-07:_ `beta-v4.1` (`1.0.0-beta.4.1.0+22`): the maintenance redesign plus the
+auto-tracking daily summary. It has **not been tested on a device**. Device checks to do:
+`issues_open.md` §95.1. The follow-ups below still apply.
 
 - [x] **Publish the release.** Shipped as `beta-v4` (`1.0.0-beta.4.0.0+21`, 2026-09-27). It carries
       two things nobody has checked on hardware (route navigation, Bangla) and the machine-drafted
