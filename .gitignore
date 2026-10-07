@@ -88,12 +88,15 @@ android/app/google-services.json
 # Environment
 .env
 .env.local
+.env.*
+!.env.example
 *.key.properties
 key.properties
 
 # Signing keystores (NEVER commit real release keys)
 *.keystore
 *.jks
+*.p12
 
 # Google Cloud service account keys (NEVER commit — grants Play Publisher API access)
 /secrets/
@@ -138,6 +141,8 @@ google-services.json.*.bak
 # Claude Code local settings (personal permission overrides, not for the team)
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+# Agent worktrees (each one is a full checkout of the repo)
+.claude/worktrees/
 
 # Obsidian personal vault/workspace state (not project content)
 docs/.obsidian/

@@ -8,6 +8,11 @@ on:
   push:
   pull_request:
 
+# Every job only checks out code and runs local tools; nothing writes to the
+# repo, so the GITHUB_TOKEN gets read-only access (issues §101.S10).
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -64,7 +69,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: npm install -g firebase-tools
+      # Pinned to the major the rules/rtdb suites pass with locally, so a new
+      # firebase-tools major can't break the emulator jobs unannounced.
+      - run: npm install -g firebase-tools@15
       # scripts/ has no committed lockfile (its .gitignore drops *.json), so
       # this is `npm install`, not `npm ci`.
       - run: npm install

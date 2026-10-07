@@ -1,0 +1,66 @@
+<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    
+    <radialGradient id="supernova_inapp_halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="28%" stop-color="#A5F3FC" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#06B6D4" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0891B2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="supernova_inapp_beam" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#67E8F9" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+    </radialGradient>
+    
+  </defs>
+
+  <rect width="512" height="512" fill="#131317"/>
+
+  <!-- Speedometer Arc -->
+  <path d="M 142.87,396.82 A 176.00,176.00 0 0 1 286.56,88.67" fill="none" stroke="#4A80E8" stroke-width="38.0" stroke-linecap="round"/>
+  <path d="M 286.56,88.67 A 176.00,176.00 0 0 1 430.29,237.51" fill="none" stroke="#42B558" stroke-width="38.0" stroke-linecap="round"/>
+  <circle cx="430.29" cy="237.51" r="19.0" fill="#DE6032"/>
+  <path d="M 430.29,237.51 A 176.00,176.00 0 0 1 369.13,396.82" fill="none" stroke="#D84F2A" stroke-width="38.0" stroke-linecap="round"/>
+
+  <!-- Instrument Ticks -->
+  <line x1="149.82" y1="368.18" x2="113.28" y2="404.72" stroke="rgba(255, 255, 255, 0.26)" stroke-width="6.5" stroke-linecap="round"/>
+  <line x1="362.18" y1="368.18" x2="398.72" y2="404.72" stroke="rgba(255, 255, 255, 0.26)" stroke-width="6.5" stroke-linecap="round"/>
+
+  <!-- Needle & Hub -->
+  <path d="M 267.57,247.76 L 402.34,166.78 L 408.78,177.49 L 274.01,258.47 Z" fill="#FFFFFF"/>
+  <circle cx="256.00" cy="262.00" r="23.0" fill="#FFFFFF"/>
+  <circle cx="256.00" cy="262.00" r="17.2" fill="#131317"/>
+
+  <!-- Satellite Spoke Connectors -->
+  <line x1="405.56" y1="172.14" x2="437.76" y2="147.99" stroke="#B0C4DE" stroke-width="3.8" stroke-linecap="round" opacity="0.88"/>
+  <line x1="405.56" y1="172.14" x2="433.73" y2="193.41" stroke="#B0C4DE" stroke-width="3.8" stroke-linecap="round" opacity="0.88"/>
+  <line x1="405.56" y1="172.14" x2="386.58" y2="194.56" stroke="#B0C4DE" stroke-width="3.8" stroke-linecap="round" opacity="0.88"/>
+
+  <!-- Satellite Nodes -->
+  <circle cx="437.76" cy="147.99" r="10.6" fill="#42B558"/>
+  <circle cx="433.73" cy="193.41" r="9.5" fill="#FFFFFF"/>
+  <circle cx="386.58" cy="194.56" r="9.5" fill="#4A80E8"/>
+
+  <!-- Main Crown Bulb -->
+  <circle cx="405.56" cy="172.14" r="15.5" fill="#FFFFFF"/>
+
+  <!-- Supernova Flare Layer -->
+  
+    <!-- Supernova Aura -->
+    <circle cx="405.56" cy="172.14" r="56.3" fill="url(#supernova_inapp_halo)"/>
+    
+    <!-- 8-point Supernova Starburst -->
+    <g transform="translate(405.56, 172.14)">
+      <polygon points="-69.0,0 0,-7.5 69.0,0 0,7.5" fill="url(#supernova_inapp_beam)"/>
+      <polygon points="0,-69.0 -7.5,0 0,69.0 7.5,0" fill="url(#supernova_inapp_beam)"/>
+      <g transform="rotate(45)">
+        <polygon points="-41.4,0 0,-4.3 41.4,0 0,4.3" fill="url(#supernova_inapp_beam)" opacity="0.85"/>
+        <polygon points="0,-41.4 -4.3,0 0,41.4 4.3,0" fill="url(#supernova_inapp_beam)" opacity="0.85"/>
+      </g>
+    </g>
+    
+
+  <!-- Luminous Core -->
+  <circle cx="405.56" cy="172.14" r="9.3" fill="#FFFFFF"/>
+</svg>

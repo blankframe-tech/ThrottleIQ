@@ -121,9 +121,20 @@ fi
 echo ""
 echo "==> [2/5] Committing & Pushing to GitHub..."
 cd "${REPO_ROOT}"
+# Never auto-stage new files (issues §101.S9): a stray secret dropped in the
+# tree (.env.production, a .p12, a service-account key) would otherwise be
+# committed and pushed. Only tracked files (e.g. the pubspec version bump) are
+# staged; anything untracked must be committed or ignored by hand first.
+UNTRACKED_FILES="$(git ls-files --others --exclude-standard)"
+if [ -n "${UNTRACKED_FILES}" ]; then
+  echo "❌ Untracked files in the working tree — refusing to auto-commit them:"
+  echo "${UNTRACKED_FILES}" | sed 's/^/    /'
+  echo "Commit them yourself, add them to .gitignore, or remove them, then re-run."
+  exit 1
+fi
 if [ -n "$(git status --porcelain)" ]; then
-  echo "Found uncommitted changes. Staging and committing..."
-  git add -A
+  echo "Found uncommitted changes to tracked files. Staging and committing..."
+  git add -u
   git commit -m "chore(release): bump version to ${PUBSPEC_VERSION} and update deployment artifacts"
 else
   echo "Working tree is clean."
