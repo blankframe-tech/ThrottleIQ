@@ -53,6 +53,7 @@ void main() {
         layer.tileProvider.headers['User-Agent'],
         'ThrottleIQ (com.bft.throttleiq; contact@blankframe.com)',
       );
+      expect(layer.errorImage, isA<MemoryImage>());
 
       await disposeMap(tester);
     });

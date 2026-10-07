@@ -2,6 +2,13 @@
 
 _Last updated: 2026-10-07 · Branch: `main`_
 
+## 2026-10-07 (verification pass): parallel groups A–F landed on `experimental`
+
+- **Verified in code:** all §97.1–§97.8 fixes are present (carousel 208, `shrinkWrap`, ribbon 52, `Row` menu items, `Material` wrappers, `UserAvatar` `ClipOval` + `errorWidget`, tile `errorImage`, place photo banner, `ListView.builder` in Saved, `defaultTargetPlatform`, relative imports, photo-upload try/catch). They are checked off in the todo file.
+- **Also landed:** schema **v22** (`auto_detections.fixes_purged`, via `_addColumnIfMissing`) with `purgeOldSummarizedFixes`; SQLite tests for `DailyRideSummaryRepository.summaryFor`; `auto_tracking_plan.md` describes the summary flow; issues triage and stale handoff marks; a first `DOCS/PRD.md`.
+- **Checks:** `flutter analyze` shows 4 warnings; `flutter test` is 1679 pass, 1 fail. Both come from the new, uncommitted route-screen tests. Rules and functions were not touched, so their tests were not run.
+- **Flaws found, deliberately NOT fixed (todo §9, F1–F8):** a failing `save_route_screen_test`, 4 unused imports, `purgeOldSummarizedFixes` has no caller, no tests for the purge or the v22 migration, purge drops old days from summary totals, the PRD is incomplete and partly inaccurate, the work is not merged to `main`, nothing is checked on a device.
+
 ## 2026-10-07 (latest): released `beta-v4.2` (1.0.0-beta.4.2.0+23) — Places hub + Forums Pit Wall on `main`
 
 - `feature/places-forums-reimagine` was fast-forwarded into `main`, and the feature branch was deleted.
