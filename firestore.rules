@@ -621,6 +621,13 @@ service cloud.firestore {
       }
     }
 
+    // liveSessions/{token}.expiresAt bound — see the write rules there.
+    function liveSessionExpiryValid(data) {
+      return !('expiresAt' in data) ||
+        (data.expiresAt is timestamp &&
+         data.expiresAt <= request.time + duration.value(48, 'h'));
+    }
+
     // Live sessions - readable by anyone with token (capability-based access)
     // Writable only by ride owner
     match /liveSessions/{token} {
@@ -665,9 +672,25 @@ service cloud.firestore {
       allow get: if resource.data.get('shareable', false) == true &&
         resource.data.get('expiresAt', request.time) > request.time;
 
-      // Only the ride owner (uid) can write
-      allow create: if request.auth.uid == request.resource.data.uid;
-      allow update: if request.auth.uid == resource.data.uid;
+      // Only the ride owner (uid) can write.
+      //
+      // issues §101.S3: update used to check only the stored uid, so the
+      // owner could rewrite `uid` (handing the doc to another rider) or push
+      // `expiresAt` out indefinitely, which defeats the 24h TTL on the get
+      // rule above. `uid` is now pinned on both create and update, and
+      // `expiresAt` (when present) may be at most 48h out — the client
+      // (live_session_coordinator.dart) writes now+24h on every publish,
+      // and the extra 24h is slack for a rider whose phone clock runs fast.
+      // The status/teardown updates (live_session_coordinator.dart,
+      // outbox_service.dart) never touch either field, so the stored values
+      // carry through request.resource and pass unchanged.
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.uid &&
+        liveSessionExpiryValid(request.resource.data);
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.uid &&
+        request.resource.data.uid == resource.data.uid &&
+        liveSessionExpiryValid(request.resource.data);
       // The rider's "Stop sharing now" (live_session_coordinator.dart
       // `stopSharingNow`) deletes the session outright rather than waiting
       // for ride end or the 24h `expiresAt` — §78.7. Owner only; a viewer
@@ -711,11 +734,33 @@ service cloud.firestore {
     // later states with Admin privileges, and a client that could rewrite
     // `status` could mark its own alert `acknowledged` and silence the
     // escalation sweep.
+    //
+    // issues §101.S3: the payload is also pinned to exactly what
+    // CrashCoordinator writes — {uid, rideId, timestamp (ISO string),
+    // lastLat, lastLng, status} — and the coordinates must be real numbers in
+    // range or null (no GPS fix yet). functions/src/crash-notifications.ts
+    // interpolates lastLat/lastLng into the maps link it sends by SMS/email,
+    // so a string there would land verbatim in an emergency contact's
+    // message. Null coordinates MUST keep passing: a crash before the first
+    // fix still has to alert.
     match /crashNotifications/{documentId} {
       allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.uid &&
         request.resource.data.get('rideId', '') == documentId &&
-        request.resource.data.get('status', '') == 'pending';
+        request.resource.data.get('status', '') == 'pending' &&
+        request.resource.data.keys().hasOnly([
+          'uid', 'rideId', 'timestamp', 'lastLat', 'lastLng', 'status'
+        ]) &&
+        (request.resource.data.get('lastLat', null) == null ||
+         (request.resource.data.lastLat is number &&
+          request.resource.data.lastLat >= -90 &&
+          request.resource.data.lastLat <= 90)) &&
+        (request.resource.data.get('lastLng', null) == null ||
+         (request.resource.data.lastLng is number &&
+          request.resource.data.lastLng >= -180 &&
+          request.resource.data.lastLng <= 180)) &&
+        (!('timestamp' in request.resource.data) ||
+         request.resource.data.timestamp is string);
       allow read: if request.auth != null && request.auth.uid == resource.data.uid;
     }
 
@@ -820,18 +865,31 @@ service cloud.firestore {
       // the rules).
       match /likes/{userId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
-        allow create, update: if request.auth != null && request.auth.uid == userId;
+        // issues §101.S3: no shipped build writes a like any more, so new
+        // like docs are closed (they used to accept any shape, on any ride,
+        // visible or not). read + delete stay exactly as they were — the
+        // deleteSharedRide sweep needs both.
+        allow create, update: if false;
         // The ride's owner may sweep other riders' legacy likes too, or
         // deleteSharedRide fails on the first one it isn't the author of.
         allow delete: if request.auth != null && (request.auth.uid == userId ||
           get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid);
       }
       // One vote doc per user: { value: 1 | -1 }.
+      //
+      // issues §101.S3: create/update also require that the voter can see
+      // the ride (a stranger could otherwise plant vote docs on a
+      // followers/mutual share) and that the doc is exactly
+      // RideShareRepository.vote's `{value}`. Delete stays owner-only with
+      // no visibility check, so a rider can still clear their vote after
+      // the author narrows the audience.
       match /votes/{userId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
-        allow write: if request.auth != null && request.auth.uid == userId &&
-          (request.method == 'delete' ||
-           request.resource.data.value == 1 || request.resource.data.value == -1);
+        allow create, update: if request.auth != null && request.auth.uid == userId &&
+          rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data) &&
+          request.resource.data.keys().hasOnly(['value']) &&
+          (request.resource.data.value == 1 || request.resource.data.value == -1);
+        allow delete: if request.auth != null && request.auth.uid == userId;
       }
       // §90.D1: comments used to be create + read only, so the first comment
       // on a share made it undeletable (deleteSharedRide removes comments
@@ -982,7 +1040,17 @@ service cloud.firestore {
           (request.resource.data.get('attachment', null) == null ||
            forumAttachmentValid(request.resource.data.attachment)) &&
           optionalNameValid(request.resource.data.get('userName', null)) &&
-          photoUrlAllowed(request.resource.data.get('userPhotoUrl', null));
+          photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
+          // §101.S3: typed, size-capped title/body and a server timestamp
+          // (createPost writes FieldValue.serverTimestamp()). The composer
+          // has no maxLength, so the caps are deliberately generous; it does
+          // refuse an empty title or body.
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 300 &&
+          request.resource.data.body is string &&
+          request.resource.data.body.size() <= 20000 &&
+          request.resource.data.createdAt == request.time;
         // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
         // the reply doc named by `lastReplyId` being created in the same
         // transaction (issues §24.7 — addReply() was made
@@ -1049,11 +1117,13 @@ service cloud.firestore {
         // One vote doc per user: { value: 1 | -1 }. No rideVisibleTo-style
         // gate needed — forum posts have no audience tiers, they're readable
         // by any authed rider same as the post itself.
+        // §101.S3: exactly ForumRepository.votePost's `{value}`, nothing else.
         match /votes/{userId} {
           allow read: if request.auth != null;
-          allow write: if request.auth != null && request.auth.uid == userId &&
-            (request.method == 'delete' ||
-             request.resource.data.value == 1 || request.resource.data.value == -1);
+          allow create, update: if request.auth != null && request.auth.uid == userId &&
+            request.resource.data.keys().hasOnly(['value']) &&
+            (request.resource.data.value == 1 || request.resource.data.value == -1);
+          allow delete: if request.auth != null && request.auth.uid == userId;
         }
 
         match /replies/{replyId} {
@@ -1064,7 +1134,13 @@ service cloud.firestore {
               'postId', 'forumId', 'userId', 'userName', 'userPhotoUrl', 'body', 'createdAt'
             ]) &&
             optionalNameValid(request.resource.data.get('userName', null)) &&
-            photoUrlAllowed(request.resource.data.get('userPhotoUrl', null));
+            photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
+            // §101.S3: same body cap as posts; the reply box refuses an
+            // empty (trimmed) body, and addReply stamps a server timestamp.
+            request.resource.data.body is string &&
+            request.resource.data.body.size() > 0 &&
+            request.resource.data.body.size() <= 20000 &&
+            request.resource.data.createdAt == request.time;
           // Same ownership-or-moderator shape as the post delete above.
           allow delete: if request.auth != null &&
             (resource.data.userId == request.auth.uid || canModerateForum(forumId));
@@ -1140,52 +1216,35 @@ service cloud.firestore {
       // ... so scope the rule to exactly what addReply does") we don't
       // grant a broad owner-edit or admin-verify rule for features that
       // aren't built yet. The only update path this phase's UI actually
-      // exercises is PlaceDetailScreen's review-submission flow, which
-      // writes a new reviews/{reviewId} doc and then bumps this place's
-      // ratingSum/ratingCount (ReviewRepository.addReviewAndUpdatePlaceRating
-      // — see that method's doc comment for why those two writes are no
-      // longer a single atomic transaction). Since updatePlaceRating() sets
-      // *absolute* totals (not a FieldValue.increment), a broad "owner can
-      // update ratingSum/ratingCount" rule would let anyone set an
-      // arbitrary rating — instead, bound the transition precisely, the
-      // same way the rides.likes / forums.followerCount ±1-delta rules
-      // above do: ratingCount must move by exactly +1 (one review at a
-      // time) and ratingSum may only grow by between 1 and 5 (a single new
-      // review's star value).
+      // exercises is PlaceDetailScreen's review-submission flow
+      // (ReviewRepository.addReviewAndUpdatePlaceRating), which creates
+      // reviews/{uid}_{placeId} and bumps this place's ratingSum/ratingCount
+      // in ONE transaction. Since the bump sets *absolute* totals (not a
+      // FieldValue.increment), the transition is bounded precisely:
+      // ratingCount moves by exactly +1 and ratingSum by 1..5.
       //
-      // That alone still isn't enough: without more, any authenticated
-      // user could call this update directly with no review ever having
-      // been written (the fabricated-rating vulnerability this rule used
-      // to have). Reviews are keyed deterministically as `{uid}_{placeId}`
-      // (see reviews/{reviewId} below) specifically so this rule can
-      // require a real, matching review to exist before allowing the bump,
-      // and that its star value is exactly what's being added — so this
-      // update can never fabricate a rating for a place the caller hasn't
-      // actually reviewed, nor apply a delta other than their own review's
-      // real star count.
+      // issues §101.S1: the bump is also tied to the caller's own review
+      // being CREATED in the same commit — it must not exist before this
+      // write (`exists`) and must exist after it (`existsAfter`), and the
+      // delta must equal that review's stars (`getAfter`). Reviews are keyed
+      // deterministically as `{uid}_{placeId}` and have no update/delete
+      // rule, so each rider gets exactly one review per place and therefore
+      // exactly one bump. The old rule only required the review to exist
+      // already, which let a rider replay their single review's +stars as
+      // many times as they liked; the client used to write the review first
+      // and bump in a second request precisely because of that rule shape.
       //
-      // Known residual limitation (not fully closed by rules alone): this
-      // does NOT stop a user from calling this update multiple times and
-      // replaying their *own* single real review's delta repeatedly, since
-      // there is deliberately no mutable per-review "already applied"
-      // marker here — flipping such a marker would need to happen in the
-      // same commit as this write (to stay attacker-proof against a client
-      // simply skipping a separate "mark applied" call), which runs into
-      // the same get()-visibility-within-a-transaction question flagged on
-      // addReviewAndUpdatePlaceRating's doc comment. Fully closing that
-      // would need either a live-verified same-transaction get() design or
-      // a trusted server-side (Cloud Function) aggregate update — out of
-      // scope here. This rule still fully closes the original
-      // zero-reviews fabrication case: the bump is impossible without at
-      // least one real, matching review, and is bounded to that review's
-      // actual star value.
+      // Rollout (§78.27): an app build still on the old two-step flow saves
+      // the review but gets permission-denied on the bump, so ship the
+      // single-transaction client before deploying this rule.
       allow update: if request.auth != null &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingSum', 'ratingCount']) &&
         request.resource.data.ratingCount == resource.data.ratingCount + 1 &&
         request.resource.data.ratingSum >= resource.data.ratingSum + 1 &&
         request.resource.data.ratingSum <= resource.data.ratingSum + 5 &&
-        exists(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
-        get(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)).data.stars
+        !exists(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
+        existsAfter(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
+        getAfter(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)).data.stars
           == request.resource.data.ratingSum - resource.data.ratingSum;
     }
 
@@ -1206,8 +1265,8 @@ service cloud.firestore {
       // collection (see comment below), so that second write falls
       // through to the deny-all catch-all and is rejected outright. It
       // also lets the places/{placeId} rating-update rule above key off
-      // this exact id via exists()/get() to require a real review backing
-      // any rating-aggregate bump.
+      // this exact id via exists()/existsAfter()/getAfter() to require the
+      // caller's review to be created in the same commit as the bump.
       //
       // reviewId must match the authenticated user's uid + the place being
       // reviewed — the same way forum_follows's create rule pins followId
@@ -1248,11 +1307,23 @@ service cloud.firestore {
     // shareable link is that the person opening it doesn't need the app.
     // Every real caller does a keyed `.doc(handle)` lookup (ProfileRepository,
     // live-viewer.html), so nothing legitimately lists this collection.
+    //
+    // issues §101.S3: the handle itself must match the format
+    // ProfileRepository.setUsername enforces (`^[a-z0-9_]{3,20}$`, already
+    // lowercased), and the doc must be exactly its `{uid}` — otherwise a
+    // client could reserve uppercase/emoji/overlong ids that the app can
+    // never resolve, or hang arbitrary data off a world-readable doc.
+    // Admin scripts (create_review_account.js, seed_qa_test_riders.js) use
+    // the Admin SDK and are unaffected.
     match /usernames/{handle} {
       allow get: if true;
       allow create: if request.auth != null &&
+        handle.matches('^[a-z0-9_]{3,20}$') &&
+        request.resource.data.keys().hasOnly(['uid']) &&
         request.resource.data.uid == request.auth.uid;
       allow update: if request.auth != null &&
+        handle.matches('^[a-z0-9_]{3,20}$') &&
+        request.resource.data.keys().hasOnly(['uid']) &&
         resource.data.uid == request.auth.uid &&
         request.resource.data.uid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
@@ -1611,17 +1682,21 @@ service cloud.firestore {
       allow get: if request.auth != null;
       allow list: if false;
       // Written once, by createGroupRide, in the same batch as the ride
-      // itself; never changes afterward. Not tied to the ride's creatorId
-      // here — the ride document doesn't exist yet elsewhere in the same
-      // batch for a rule's `get()` to check against — so this only pins the
-      // shape, not the linkage. Low-severity accepted gap: a signed-in rider
-      // could squat an unused code with a bogus groupRideId, which at worst
-      // makes joinByCode resolve to "no such ride" for whoever tries that
-      // exact code next — it grants no read/write access to anything real.
+      // itself; never changes afterward.
+      //
+      // issues §101.S3: the mapping is tied to that ride with getAfter(),
+      // which sees the sibling groupRides/{id} write in the same batch: the
+      // ride must exist once the batch lands, be created by the caller, and
+      // carry this exact `joinCode` (GroupRideModel.toFirestore writes it).
+      // A standalone code doc pointing at a missing ride or someone else's
+      // ride — the old "squat a code" gap — is denied.
       allow create: if request.auth != null &&
         request.resource.data.keys().hasOnly(['groupRideId', 'createdAt']) &&
         request.resource.data.groupRideId is string &&
-        request.resource.data.createdAt == request.time;
+        request.resource.data.createdAt == request.time &&
+        existsAfter(/databases/$(database)/documents/groupRides/$(request.resource.data.groupRideId)) &&
+        getAfter(/databases/$(database)/documents/groupRides/$(request.resource.data.groupRideId)).data.get('creatorId', '') == request.auth.uid &&
+        getAfter(/databases/$(database)/documents/groupRides/$(request.resource.data.groupRideId)).data.get('joinCode', '') == code;
       allow update, delete: if false;
     }
 
@@ -1671,12 +1746,29 @@ service cloud.firestore {
       // review entirely) against an arbitrary reportedId. The automated
       // moderation function (chat-moderation.ts) writes via the Admin SDK,
       // which bypasses rules entirely, so it's unaffected by this.
+      //
+      // issues §101.S3: also pinned to ReportModel.toFirestore's exact keys,
+      // the four contentType values the app's report entry points use, size
+      // caps on every free-text field, and a server timestamp. No dedupe —
+      // that would need a deterministic report id (a client change).
       allow create: if request.auth != null &&
+        request.resource.data.keys().hasOnly([
+          'reporterId', 'reportedId', 'contentType', 'contentId', 'reason',
+          'additionalDetails', 'createdAt', 'status'
+        ]) &&
         request.resource.data.reporterId == request.auth.uid &&
         request.resource.data.reportedId is string &&
         request.resource.data.reportedId.size() > 0 &&
-        request.resource.data.contentType is string &&
+        request.resource.data.reportedId.size() <= 128 &&
+        request.resource.data.contentType in ['post', 'chat', 'ride', 'user'] &&
+        request.resource.data.contentId is string &&
+        request.resource.data.contentId.size() <= 200 &&
         request.resource.data.reason is string &&
+        request.resource.data.reason.size() <= 100 &&
+        (!('additionalDetails' in request.resource.data) ||
+         (request.resource.data.additionalDetails is string &&
+          request.resource.data.additionalDetails.size() <= 2000)) &&
+        request.resource.data.createdAt == request.time &&
         request.resource.data.get('status', 'pending') == 'pending';
     }
 
@@ -1700,8 +1792,21 @@ service cloud.firestore {
       // `lastMessage`/`updatedAt`, so restricting to exactly those two keeps
       // `participants` immutable as a side effect of the allow-list, not a
       // separate check that could itself be gamed.
+      //
+      // issues §101.S3: the VALUES are pinned too, to exactly what that
+      // batch writes — lastMessage is {senderId, text, createdAt} with the
+      // caller as sender (no spoofing the other rider as the author of the
+      // inbox preview), text capped like a message, and both timestamps
+      // server-stamped.
       allow update: if request.auth != null && request.auth.uid in resource.data.participants &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'updatedAt']);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'updatedAt']) &&
+        request.resource.data.lastMessage is map &&
+        request.resource.data.lastMessage.keys().hasOnly(['senderId', 'text', 'createdAt']) &&
+        request.resource.data.lastMessage.get('senderId', '') == request.auth.uid &&
+        request.resource.data.lastMessage.get('text', null) is string &&
+        request.resource.data.lastMessage.text.size() <= 5000 &&
+        request.resource.data.lastMessage.get('createdAt', null) == request.time &&
+        request.resource.data.updatedAt == request.time;
       // §78.14: new chats must live at the deterministic DM id with
       // `participants` stored sorted, so the doc id alone names the pair and
       // two concurrent "Message" taps can't create two rooms. Only
@@ -1731,7 +1836,19 @@ service cloud.firestore {
 
         // Can create if they are a participant of the parent chat AND the sender is correctly attributed.
         // We also check that the sender is not in the recipient's blocks subcollection.
-        allow create: if request.auth != null && 
+        //
+        // issues §101.S3: exactly ChatRepository.sendMessage's shape —
+        // {senderId, text, createdAt, isRead:false} — so a sender can't
+        // preset `isToxic` or any other moderation field; non-empty text
+        // capped at 5000 characters (the room trims and refuses empty
+        // sends); a server timestamp.
+        allow create: if request.auth != null &&
+          request.resource.data.keys().hasOnly(['senderId', 'text', 'createdAt', 'isRead']) &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() > 0 &&
+          request.resource.data.text.size() <= 5000 &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.get('isRead', false) == false &&
           request.resource.data.senderId == request.auth.uid &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
           // Determine the recipient ID (the other participant)

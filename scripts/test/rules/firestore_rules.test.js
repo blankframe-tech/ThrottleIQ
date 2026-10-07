@@ -241,7 +241,10 @@ test('reply bump succeeds when the reply is created in the same transaction', as
 
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(replyRef, { userId: MALLORY, body: 'agreed', postId: POST_ID, forumId: FORUM_ID });
+      tx.set(replyRef, {
+        userId: MALLORY, body: 'agreed', postId: POST_ID, forumId: FORUM_ID,
+        createdAt: serverTimestamp(),
+      });
       tx.update(postRef, { replyCount: increment(1), lastReplyId: replyRef.id });
     })
   );
@@ -397,11 +400,18 @@ test('the likes subcollection is still reachable, so share deletes work', async 
   // a list against a path with no matching rule is denied even when it would
   // return nothing. Dropping the match block would turn every share-delete
   // into permission-denied.
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', RIDE_ID, 'likes', MALLORY), { likedAt: 1 });
+  });
   const db = dbFor(MALLORY);
   const rideRef = doc(db, 'rides', RIDE_ID);
   await assertSucceeds(getDocs(collection(rideRef, 'likes')));
-  await assertSucceeds(setDoc(doc(rideRef, 'likes', MALLORY), { likedAt: 1 }));
   await assertSucceeds(deleteDoc(doc(rideRef, 'likes', MALLORY)));
+});
+
+test('a new like doc can no longer be created (§101.S3)', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(setDoc(doc(db, 'rides', RIDE_ID, 'likes', MALLORY), { likedAt: 1 }));
 });
 
 test('vote bump still succeeds alongside its own votes/{uid} doc', async () => {
@@ -971,9 +981,11 @@ test('join codes cannot be listed/enumerated', async () => {
   await assertFails(getDocs(collection(db, 'groupRideJoinCodes')));
 });
 
-test('a signed-in rider can create a well-shaped join code mapping', async () => {
+test('a standalone join code mapping pointing at a missing ride is denied (§101.S3)', async () => {
+  // This used to succeed: the rule only pinned the shape, so any rider could
+  // squat an unused code with a bogus groupRideId.
   const db = dbFor(STRANGER);
-  await assertSucceeds(
+  await assertFails(
     setDoc(doc(db, 'groupRideJoinCodes', 'ZZ99ZZ'), {
       groupRideId: 'some-other-ride',
       createdAt: serverTimestamp(),
@@ -1406,7 +1418,7 @@ test('a participant CAN update lastMessage/updatedAt only', async () => {
   const db = dbFor(ALICE);
   await assertSucceeds(
     updateDoc(doc(db, 'chats', 'chat-alice-mallory'), {
-      lastMessage: { senderId: ALICE, text: 'hi', createdAt: new Date() },
+      lastMessage: { senderId: ALICE, text: 'hi', createdAt: serverTimestamp() },
       updatedAt: serverTimestamp(),
     })
   );
@@ -1646,6 +1658,7 @@ test('a well-formed pending report from the real reporter succeeds', async () =>
       contentType: 'chat',
       contentId: 'msg-1',
       reason: 'spam',
+      createdAt: serverTimestamp(),
       status: 'pending',
     })
   );
