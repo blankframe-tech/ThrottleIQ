@@ -75,12 +75,18 @@ class NotificationService {
     _initialised = true;
 
     tzdata.initializeTimeZones();
+    // A device whose zone can't be read or isn't in the tz database still
+    // gets notifications. It used to fall back silently to UTC, which put
+    // the 9 pm daily summary at 03:00 in Bangladesh (issues §101.C8); now
+    // the device's UTC offset picks a fixed-offset zone instead.
+    String? zoneName;
     try {
-      tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
-    } catch (_) {
-      // A device with an unrecognised zone name still gets notifications, just
-      // scheduled against UTC. Failing startup over this would be absurd.
+      zoneName = await FlutterTimezone.getLocalTimezone();
+    } catch (e) {
+      debugPrint('[notifications] local timezone unavailable: $e');
     }
+    tz.setLocalLocation(
+        resolveLocalLocation(zoneName, DateTime.now().timeZoneOffset));
 
     await _plugin.initialize(
       const InitializationSettings(
@@ -319,7 +325,7 @@ class NotificationService {
       weeklyDigestId,
       l10n.notifDigestTitle,
       l10n.notifDigestTap,
-      _nextInstanceOf(hour, minute),
+      nextInstanceOf(tz.TZDateTime.now(tz.local), hour, minute),
       NotificationDetails(
         android: AndroidNotificationDetails(
           digestChannelId,
@@ -410,14 +416,55 @@ class NotificationService {
     }
   }
 
-  tz.TZDateTime _nextInstanceOf(int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
+  /// The next [hour]:[minute] on the wall clock of [now]'s zone. Tomorrow
+  /// is built from the calendar date rather than by adding 24 hours, so a
+  /// DST change overnight doesn't shift it to 20:00 or 22:00 (issues
+  /// §101.C9).
+  @visibleForTesting
+  static tz.TZDateTime nextInstanceOf(tz.TZDateTime now, int hour, int minute) {
+    final location = now.location;
     var scheduled =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+        tz.TZDateTime(location, now.year, now.month, now.day, hour, minute);
     if (!scheduled.isAfter(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
+      scheduled = tz.TZDateTime(
+          location, now.year, now.month, now.day + 1, hour, minute);
     }
     return scheduled;
+  }
+
+  /// The zone to schedule against. [name] is what the device reported; if
+  /// it's missing or unknown, a whole-hour [deviceOffset] maps to the
+  /// matching `Etc/GMT` zone (the tz database inverts the sign, so +6 h is
+  /// `Etc/GMT-6`). Failing that: Asia/Dhaka for +6 h, otherwise UTC.
+  /// Never throws.
+  @visibleForTesting
+  static tz.Location resolveLocalLocation(String? name, Duration deviceOffset) {
+    if (name != null && name.isNotEmpty) {
+      try {
+        return tz.getLocation(name);
+      } catch (e) {
+        debugPrint('[notifications] unknown timezone "$name": $e');
+      }
+    }
+    if (deviceOffset.inMinutes % 60 == 0) {
+      final hours = deviceOffset.inHours;
+      final etc = hours == 0
+          ? 'Etc/GMT'
+          : (hours > 0 ? 'Etc/GMT-$hours' : 'Etc/GMT+${-hours}');
+      try {
+        return tz.getLocation(etc);
+      } catch (e) {
+        debugPrint('[notifications] no fixed-offset zone $etc: $e');
+      }
+    }
+    if (deviceOffset == const Duration(hours: 6)) {
+      try {
+        return tz.getLocation('Asia/Dhaka');
+      } catch (e) {
+        debugPrint('[notifications] Asia/Dhaka unavailable: $e');
+      }
+    }
+    return tz.UTC;
   }
 
   void _onResponse(NotificationResponse response) {

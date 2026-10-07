@@ -65,6 +65,17 @@ class ImageCropScreen extends StatefulWidget {
     );
   }
 
+  /// [image] if the screen is still [mounted]; otherwise frees it and
+  /// returns null. A screen popped mid-decode never assigned the image to
+  /// `_preview`, so [dispose] never freed it and a full-resolution native
+  /// image leaked (issues §101.C9).
+  @visibleForTesting
+  static ui.Image? adoptOrDispose(ui.Image image, {required bool mounted}) {
+    if (mounted) return image;
+    image.dispose();
+    return null;
+  }
+
   @override
   State<ImageCropScreen> createState() => _ImageCropScreenState();
 }
@@ -106,8 +117,9 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   Future<void> _load() async {
     try {
       final bytes = await File(widget.sourcePath).readAsBytes();
-      final decoded = await decodeImageFromList(bytes);
-      if (!mounted) return;
+      final decoded = ImageCropScreen.adoptOrDispose(
+          await decodeImageFromList(bytes), mounted: mounted);
+      if (decoded == null) return;
       setState(() => _preview = decoded);
     } catch (e) {
       if (!mounted) return;

@@ -86,11 +86,17 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
     // We guard on ServiceStatus.enabled only (not disabled): disabling while
     // the app is open is handled per-screen already (geolocator stream errors),
     // and we don't want to fire redundant invalidations on every status change.
-    _locationServiceSub = Geolocator.getServiceStatusStream().listen((status) {
-      if (status == ServiceStatus.enabled && mounted) {
-        _invalidateLocationProviders();
-      }
-    });
+    _locationServiceSub = Geolocator.getServiceStatusStream().listen(
+      (status) {
+        if (status == ServiceStatus.enabled && mounted) {
+          _invalidateLocationProviders();
+        }
+      },
+      // A platform error on this stream was otherwise uncaught and reported
+      // as fatal through PlatformDispatcher.onError (issues §101.C9).
+      onError: (Object e) =>
+          debugPrint('[app] location service status stream error: $e'),
+    );
   }
 
   /// Clears the error state of every provider that depends on device GPS so
@@ -143,9 +149,21 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
     try {
       // Cloud sync lifecycle: start on login, stop on logout. SyncManager itself
       // no-ops when signed out, so starting is safe; stopping avoids idle timers.
+      //
+      // authStateProvider is `userChanges()`, which also fires on token
+      // refreshes and profile reloads. Acting only on a change of uid keeps
+      // those from re-running restore and re-prompting the auto-tracking
+      // permission dialogs, and an error emission no longer stops sync
+      // (issues §101.C5).
       ref.listen(authStateProvider, (prev, next) {
+        final effect = authSideEffect(
+          prev?.valueOrNull?.uid,
+          next.valueOrNull?.uid,
+          isError: next.hasError,
+        );
+        if (effect == AuthSideEffect.none) return;
         final sync = ref.read(syncManagerProvider);
-        if (next.valueOrNull != null) {
+        if (effect == AuthSideEffect.signedIn) {
           sync.startAutoSync();
           // Pick up any ride that was still recording when the app last went
           // away (swiped out of recents, killed process — no chance to call
@@ -153,7 +171,11 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // end, or discard; see
           // RideRecordingNotifier.restoreInterruptedRide. Only meaningful
           // once signed in, since it touches the per-user local ride DB.
-          ref.read(rideRecordingProvider.notifier).restoreInterruptedRide();
+          unawaited(ref
+              .read(rideRecordingProvider.notifier)
+              .restoreInterruptedRide()
+              .catchError((Object e) =>
+                  debugPrint('[app] restoreInterruptedRide failed: $e')));
           // Auto-tracking is per-rider: it needs a uid to attribute detected
           // rides to, and reconciling before sign-in would have nothing to
           // attach them to. Both no-op unless the rider has opted in.
@@ -162,7 +184,11 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // detection is stamped with this rider (grill §1.4.2).
           final uid = next.valueOrNull!.uid;
           unawaited(AutoTrackingService.setOwner(uid)
-              .then((_) => AutoTrackingService.instance.start()));
+              .then((_) => AutoTrackingService.instance.start())
+              .catchError((Object e) {
+            debugPrint('[app] auto-tracking start failed: $e');
+            return false;
+          }));
           unawaited(_reconcileDetectedRides());
         } else {
           sync.stopAutoSync();
@@ -170,7 +196,9 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // can be stamped with the rider who just signed out.
           unawaited(AutoTrackingService.instance
               .stop()
-              .then((_) => AutoTrackingService.setOwner(null)));
+              .then((_) => AutoTrackingService.setOwner(null))
+              .catchError((Object e) =>
+                  debugPrint('[app] auto-tracking stop failed: $e')));
         }
       });
 
@@ -208,17 +236,53 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       );
     } catch (e) {
       debugPrint('App initialization error: $e');
-      return MaterialApp(
-        builder: (context, child) => KeyboardDismissWrapper(
-          child: child ?? const SizedBox.shrink(),
-        ),
-        home: Scaffold(
+      return AppInitErrorScreen(error: e);
+    }
+  }
+}
+
+/// What a change on the auth stream should trigger (issues §101.C5).
+enum AuthSideEffect { none, signedIn, signedOut }
+
+/// Sign-in/sign-out side effects run only when the signed-in uid actually
+/// changes. A token refresh or profile reload (same uid) and an error
+/// emission do nothing.
+@visibleForTesting
+AuthSideEffect authSideEffect(
+  String? prevUid,
+  String? nextUid, {
+  bool isError = false,
+}) {
+  if (isError || prevUid == nextUid) return AuthSideEffect.none;
+  return nextUid != null ? AuthSideEffect.signedIn : AuthSideEffect.signedOut;
+}
+
+/// Fallback shown when building the app itself throws. Brings its own
+/// localizations: it sits above the main MaterialApp, so `context.l10n`
+/// from the app's own context had no Localizations ancestor and threw,
+/// and the fallback never showed (issues §101.C9).
+class AppInitErrorScreen extends StatelessWidget {
+  const AppInitErrorScreen({super.key, required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const [Locale('en'), Locale('bn')],
+      builder: (context, child) => KeyboardDismissWrapper(
+        child: child ?? const SizedBox.shrink(),
+      ),
+      home: Builder(
+        builder: (ctx) => Scaffold(
           body: Center(
-            child: Text(context.l10n.errorWithDetail(e)),
+            child: Text(ctx.l10n.errorWithDetail(error)),
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 }
 

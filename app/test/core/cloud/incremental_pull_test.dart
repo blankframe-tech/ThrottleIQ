@@ -132,4 +132,43 @@ void main() {
       );
     });
   });
+
+  // issues §101.C3: bikes and rides used to save the snapshot's newest
+  // syncedAt even when a doc failed to insert, so that doc was never asked
+  // for again until a full pull.
+  group('CloudRepository.markShortOfFailures', () {
+    test('no failure: the newest stamp seen', () {
+      expect(CloudRepository.markShortOfFailures(t, null), t);
+    });
+
+    test('a failure: just short of the failed doc', () {
+      final failed = t.subtract(const Duration(hours: 1));
+      expect(CloudRepository.markShortOfFailures(t, failed),
+          failed.subtract(const Duration(milliseconds: 1)));
+    });
+
+    test('nothing seen and nothing failed: null', () {
+      expect(CloudRepository.markShortOfFailures(null, null), isNull);
+    });
+
+    test('earlierFailure keeps the earliest failed stamp', () {
+      final early = t.subtract(const Duration(hours: 2));
+      final late = t.subtract(const Duration(hours: 1));
+      var first = CloudRepository.earlierFailure(
+          null, {'syncedAt': Timestamp.fromDate(late)});
+      first = CloudRepository.earlierFailure(
+          first, {'syncedAt': Timestamp.fromDate(early)});
+      first = CloudRepository.earlierFailure(
+          first, {'syncedAt': Timestamp.fromDate(t)});
+      expect(first!.isAtSameMomentAs(early), isTrue);
+      expect(
+          CloudRepository.markShortOfFailures(t, first)!.isAtSameMomentAs(
+              early.subtract(const Duration(milliseconds: 1))),
+          isTrue);
+    });
+
+    test('a failed doc without a stamp does not move the mark', () {
+      expect(CloudRepository.earlierFailure(null, {'id': 'x'}), isNull);
+    });
+  });
 }
