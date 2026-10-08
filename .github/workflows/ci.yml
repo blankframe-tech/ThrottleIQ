@@ -61,7 +61,7 @@ jobs:
         working-directory: scripts
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           # firebase-tools' Firestore emulator needs a JDK 21+.
