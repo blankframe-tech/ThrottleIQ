@@ -70,7 +70,7 @@ dependencies:
   # drifting the way a fixed 24-hour interval would. flutter_timezone supplies
   # the device's zone name to seed it.
   timezone: ^0.9.4
-  flutter_timezone: ^3.0.1
+  flutter_timezone: ^5.1.1
 
   # Background tracking.
   #
