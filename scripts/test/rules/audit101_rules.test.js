@@ -246,6 +246,32 @@ test('S3 votes: a follower can vote on a followers ride', async () => {
   await assertSucceeds(rideVoteTx(dbFor(BOB), BOB, { value: 1 }));
 });
 
+test('S3 votes: a follower can flip an existing ride vote (-1 to 1, an update)', async () => {
+  // RideShareRepository.vote's flip branch: set over the existing vote doc
+  // and move both tallies in the same transaction.
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', 'r-followers', 'votes', BOB), { value: -1 });
+  });
+  const db = dbFor(BOB);
+  const rideRef = doc(db, 'rides', 'r-followers');
+  await assertSucceeds(
+    runTransaction(db, async (tx) => {
+      await tx.get(doc(rideRef, 'votes', BOB));
+      tx.set(doc(rideRef, 'votes', BOB), { value: 1 });
+      tx.update(rideRef, { upvotes: increment(1), downvotes: increment(-1) });
+    })
+  );
+});
+
+test('S3 votes: flipping a ride vote with extra keys or a bad value is denied', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', 'r-followers', 'votes', BOB), { value: -1 });
+  });
+  const voteRef = doc(dbFor(BOB), 'rides', 'r-followers', 'votes', BOB);
+  await assertFails(setDoc(voteRef, { value: 1, junk: 'x' }));
+  await assertFails(setDoc(voteRef, { value: 2 }));
+});
+
 test('S3 votes: a stranger cannot plant a vote doc on a followers ride', async () => {
   await assertFails(
     setDoc(doc(dbFor(MALLORY), 'rides', 'r-followers', 'votes', MALLORY), { value: 1 })
@@ -271,6 +297,10 @@ test('S3 votes: forum post votes accept exactly {value}', async () => {
   await assertFails(setDoc(voteRef, { value: 1, junk: 'x' }));
   await assertFails(setDoc(voteRef, { value: 2 }));
   await assertSucceeds(setDoc(voteRef, { value: -1 }));
+  // Flip (-1 -> 1) is an update of the existing doc: same allow-list.
+  await assertFails(setDoc(voteRef, { value: 1, junk: 'x' }));
+  await assertFails(setDoc(voteRef, { value: 2 }));
+  await assertSucceeds(setDoc(voteRef, { value: 1 }));
   await assertSucceeds(deleteDoc(voteRef));
 });
 
@@ -521,7 +551,7 @@ test('S3 crash: extra keys or a non-string timestamp are denied', async () => {
 // ---------------------------------------------------------------------------
 
 /** GroupRideModel.toFirestore's fields that matter to the rules. */
-function groupRide(creatorId, joinCode) {
+function groupRide(creatorId, joinCode, invitedIds = []) {
   return {
     creatorId,
     creatorName: 'Bob',
@@ -529,7 +559,7 @@ function groupRide(creatorId, joinCode) {
     startTime: new Date(),
     status: 'planned',
     memberIds: [creatorId],
-    invitedIds: [],
+    invitedIds,
     createdAt: new Date(),
     maxParticipants: 20,
     joinCode,
@@ -537,15 +567,24 @@ function groupRide(creatorId, joinCode) {
   };
 }
 
-test('S3 join codes: the real createGroupRide batch succeeds', async () => {
+/** GroupRideMemberModel.toDocument for a roster row. */
+function rosterRow(userId, userName, status) {
+  return {
+    userId, userName, userPhotoUrl: '', joinedAt: new Date(), status,
+    currentLat: null, currentLng: null, lastLocationUpdate: null,
+  };
+}
+
+test('S3 join codes: the real createGroupRide batch succeeds (with invitees)', async () => {
+  // GroupRideRepository.createGroupRide: ride + creator row + one `pending`
+  // row per invitee + the join code, all in one batch.
   const db = dbFor(BOB);
   const rideRef = doc(collection(db, 'groupRides'));
   const batch = writeBatch(db);
-  batch.set(rideRef, groupRide(BOB, 'QX7K2M'));
-  batch.set(doc(rideRef, 'members', BOB), {
-    userId: BOB, userName: 'Bob', userPhotoUrl: '', joinedAt: new Date(), status: 'joined',
-    currentLat: null, currentLng: null, lastLocationUpdate: null,
-  });
+  batch.set(rideRef, groupRide(BOB, 'QX7K2M', [ALICE, MALLORY]));
+  batch.set(doc(rideRef, 'members', BOB), rosterRow(BOB, 'Bob', 'joined'));
+  batch.set(doc(rideRef, 'members', ALICE), rosterRow(ALICE, 'Alice', 'pending'));
+  batch.set(doc(rideRef, 'members', MALLORY), rosterRow(MALLORY, 'Mallory', 'pending'));
   batch.set(doc(db, 'groupRideJoinCodes', 'QX7K2M'), {
     groupRideId: rideRef.id,
     createdAt: serverTimestamp(),
