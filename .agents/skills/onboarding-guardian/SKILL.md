@@ -41,13 +41,15 @@ Every `featureKey` in `kOnboardingSlides` must correspond to a real, existing fe
 
 **Known stable key→route mappings** (update this list when manifest changes):
 ```
-garage         → /home/profile  (GarageScreen)
-ride_recording → /home/record   (RecordScreen)
-auto_tracking  → /settings      (SettingsScreen has auto-tracking tile)
+ride_recording → /home/record       (RecordScreen)
+ride_cockpit   → (none)             (ActiveRideScreen /ride/active, only mid-ride)
+auto_tracking  → /settings          (SettingsScreen has the auto-tracking tile)
+rides_stats    → /home/stats        (StatsScreen — Rides tab: score, charts, badges)
+garage         → /home/profile      (GarageScreen — Garage tab, bikes + archive)
 maintenance    → /home/maintenance
 places         → /home/places
-social_forums  → /home/social   (forums/ feature dir exists)
-profile        → /home/profile  + /profile/edit
+social_forums  → /home/social       (forums/ feature dir exists)
+profile        → /profile           (UserProfileScreen — QR follow; SafeQR in /settings)
 ```
 
 ### Rule 2 — No Missing Slides
@@ -57,8 +59,10 @@ Every **major** feature in the app should have a corresponding slide. A "major f
 
 Currently the mandatory set is:
 ```
-garage / profile, ride_recording, auto_tracking, maintenance, places, social_forums
+ride_recording, ride_cockpit, auto_tracking, rides_stats, garage, maintenance, places, social_forums, profile
 ```
+`test/features/auth/onboarding_manifest_test.dart` also enforces this set, that
+`TourTab` mirrors `shellTabs`, and that every `showMeRoute` is a real GoRoute.
 If any of these are absent from `kOnboardingSlides` → **FAIL**.
 
 If a **new** feature directory appears in `features/` that doesn't have a slide and is clearly user-facing (has a `presentation/screens/` sub-directory) → **WARN: Consider adding a slide for [feature]**.
@@ -129,14 +133,16 @@ When a feature is removed:
 
 ---
 
-## Quick Reference — Current Slide List (v1)
+## Quick Reference — Current Slide List (v4)
 
-| # | featureKey     | Icon              | Target route      |
-|---|---------------|-------------------|-------------------|
-| 1 | garage         | two_wheeler       | /home/profile     |
-| 2 | ride_recording | radio_button_checked | /home/record   |
-| 3 | auto_tracking  | sensors           | /settings         |
-| 4 | maintenance    | build             | /home/maintenance |
-| 5 | places         | place             | /home/places      |
-| 6 | social_forums  | people            | /home/social      |
-| 7 | profile        | person            | /home/profile     |
+| # | featureKey     | Tab spotlit | Target route      |
+|---|----------------|-------------|-------------------|
+| 1 | ride_recording | Record      | /home/record      |
+| 2 | ride_cockpit   | Record      | (none — mid-ride) |
+| 3 | auto_tracking  | Garage      | /settings         |
+| 4 | rides_stats    | Rides       | /home/stats       |
+| 5 | garage         | Garage      | /home/profile     |
+| 6 | maintenance    | Garage      | /home/maintenance |
+| 7 | places         | Places      | /home/places      |
+| 8 | social_forums  | Social      | /home/social      |
+| 9 | profile        | Garage      | /profile          |

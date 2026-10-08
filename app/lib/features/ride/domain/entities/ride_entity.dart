@@ -28,6 +28,10 @@ class RideEntity extends Equatable {
   final int hardBrakeCount;
   final int rapidAccelCount;
   final int highJerkCount;
+
+  /// Overspeed episodes during the ride (schema v25). Null on rides recorded
+  /// before it was tracked — "unknown", not "none" — so charts skip them.
+  final int? overspeedCount;
   final RideStatus status;
   final String? mapSnapshotPath;
 
@@ -66,6 +70,7 @@ class RideEntity extends Equatable {
     this.hardBrakeCount = 0,
     this.rapidAccelCount = 0,
     this.highJerkCount = 0,
+    this.overspeedCount,
     this.status = RideStatus.active,
     this.mapSnapshotPath,
     this.isAuto = false,
@@ -104,6 +109,7 @@ class RideEntity extends Equatable {
     int? hardBrakeCount,
     int? rapidAccelCount,
     int? highJerkCount,
+    int? overspeedCount,
     RideStatus? status,
     DateTime? endTime,
     String? mapSnapshotPath,
@@ -127,6 +133,7 @@ class RideEntity extends Equatable {
       hardBrakeCount: hardBrakeCount ?? this.hardBrakeCount,
       rapidAccelCount: rapidAccelCount ?? this.rapidAccelCount,
       highJerkCount: highJerkCount ?? this.highJerkCount,
+      overspeedCount: overspeedCount ?? this.overspeedCount,
       status: status ?? this.status,
       mapSnapshotPath: mapSnapshotPath ?? this.mapSnapshotPath,
       isAuto: isAuto ?? this.isAuto,

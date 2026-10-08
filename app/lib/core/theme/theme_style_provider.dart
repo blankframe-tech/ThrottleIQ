@@ -58,13 +58,14 @@ class AppAppearance {
     AppBrightnessMode? brightnessMode,
   }) : _brightnessMode = brightnessMode;
 
-  /// Calming, Curvy, Light — the default for every new install and every
+  /// Commute (the Calming palette), Curvy, Light — the default for every new
+  /// install and every
   /// newly-created account (changed 2026-08-27, from the original Carbon
   /// Mono / Boxy / Dark). Also what any single un-set axis falls back to for
   /// a returning rider who only ever changed the other two — see
   /// [AppearanceNotifier._loadPersisted].
   static const defaultAppearance = AppAppearance(
-    colorMode: AppColorMode.daily,
+    colorMode: AppColorMode.commute,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.light,
   );
@@ -96,7 +97,14 @@ class AppAppearance {
 }
 
 /// The full (colorMode, shapeVibe, brightness) triple a pre-migration rider's
-/// single skin choice decodes to.
+/// single skin choice decodes to. Every surviving family maps EXACTLY to the
+/// ride mode that now carries its palette; the three skins dropped in the
+/// Vibe/Brightness/Color split map to their closest equivalent:
+///   - `positiveVibes` (light, rounded, green) → Commute (Calming's palette).
+///   - `cuteAnalyst` (Analyst Blue's colors, rounded) → Adv, Curvy, Dark —
+///     exact, since that skin was always Analyst Blue with a rounder shape.
+///   - `genesis` (dark, boxy, gold/violet) → no close hue survives, so it
+///     falls back to [AppAppearance.defaultAppearance].
 const Map<String, AppAppearance> _legacyTriple = {
   'carbon': AppAppearance(
     colorMode: AppColorMode.sport,
@@ -104,59 +112,71 @@ const Map<String, AppAppearance> _legacyTriple = {
     brightness: Brightness.dark,
   ),
   'editorial': AppAppearance(
-    colorMode: AppColorMode.daily,
+    colorMode: AppColorMode.city,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.light,
   ),
   'nocturne': AppAppearance(
-    colorMode: AppColorMode.adventure,
+    colorMode: AppColorMode.rain,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.dark,
   ),
   'trailSocial': AppAppearance(
-    colorMode: AppColorMode.adventure,
+    colorMode: AppColorMode.tour,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.dark,
   ),
   'calming': AppAppearance(
-    colorMode: AppColorMode.daily,
+    colorMode: AppColorMode.commute,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.light,
   ),
   'positiveVibes': AppAppearance(
-    colorMode: AppColorMode.daily,
+    colorMode: AppColorMode.commute,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.light,
   ),
   'retro': AppAppearance(
-    colorMode: AppColorMode.sport,
+    colorMode: AppColorMode.race,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.light,
   ),
   'analystBlue': AppAppearance(
-    colorMode: AppColorMode.adventure,
+    colorMode: AppColorMode.adv,
     shapeVibe: AppShapeVibe.boxy,
     brightness: Brightness.dark,
   ),
   'genesis': AppAppearance.defaultAppearance,
   'cuteAnalyst': AppAppearance(
-    colorMode: AppColorMode.adventure,
+    colorMode: AppColorMode.adv,
     shapeVibe: AppShapeVibe.curvy,
     brightness: Brightness.dark,
   ),
 };
 
+/// Decodes a persisted `color_mode` value. Current values are the
+/// [AppColorMode] names; older builds wrote either the palette-family names
+/// (`carbonMono`, `calming`, `retro`, …) or, briefly, the three-mode names
+/// (`daily`, `sport`, `adventure`). Each maps to the ride mode that now
+/// carries the same palette, so no rider's colors change on upgrade.
 AppColorMode? _decodeColorMode(String? saved) {
   if (saved == null) return null;
   for (final mode in AppColorMode.values) {
     if (mode.name == saved) return mode;
   }
-  // Migration from legacy color modes
   return switch (saved) {
-    'calming' || 'editorial' => AppColorMode.daily,
-    'carbonMono' || 'carbon' || 'retro' => AppColorMode.sport,
-    'analystBlue' || 'nocturne' || 'trailSocial' => AppColorMode.adventure,
-    _ => null,
+    // Three-mode build (c3a74fe).
+    'daily' => AppColorMode.commute,
+    'adventure' => AppColorMode.adv,
+    // Palette-family names, from before the three-mode build.
+    'carbonMono' || 'carbon' => AppColorMode.sport,
+    'nocturne' => AppColorMode.rain,
+    'retro' => AppColorMode.race,
+    'calming' => AppColorMode.commute,
+    'trailSocial' => AppColorMode.tour,
+    'analystBlue' => AppColorMode.adv,
+    'editorial' => AppColorMode.city,
+    _ => null, // a mode removed since this was written
   };
 }
 
@@ -192,7 +212,7 @@ Brightness _resolveBrightness(AppBrightnessMode mode) => switch (mode) {
 /// Persisted appearance preference: three independent choices — color
 /// family, shape vibe, brightness — rather than one flat skin name.
 ///
-/// Defaults to [AppAppearance.defaultAppearance] (Calming / Curvy / Light)
+/// Defaults to [AppAppearance.defaultAppearance] (Commute / Curvy / Light)
 /// until a saved choice loads from
 /// [SharedPreferences]. A rider who already had a skin picked under the old
 /// single-key scheme has it decoded via [_legacyTriple] on first load under

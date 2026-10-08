@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Follow this rider on ThrottleIQ</title>
+<meta name="description" content="Open ThrottleIQ to follow this rider, or install the app.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/icon-dark.svg" type="image/svg+xml">
+<!--
+  Follow-link fallback page. Served for
+    https://blankframe.tech/ThrottleIQ/u/<uid>   (canonical, what the in-app QR encodes)
+    https://throttleiqfb.web.app/u/<uid>         (Firebase Hosting mirror)
+  via the rewrites in firebase.json.
+
+  With the app installed and App Links / Universal Links verified, the OS opens
+  the app directly and this page never loads. Otherwise it:
+    1. on Android, tries an intent:// URL (custom scheme throttleiq://u/<uid>,
+       package com.bft.throttleiq) whose browser_fallback_url is the install page;
+    2. offers an "Open in ThrottleIQ" button (custom scheme) everywhere;
+    3. shows the install link.
+  The uid format and paths must stay in sync with
+  app/lib/features/social/domain/utilities/follow_link.dart.
+-->
+<style>
+  :root {
+    --bg: #090B0E;
+    --surf: #13171E;
+    --line: #262F3D;
+    --text: #F3F5F8;
+    --text-sec: #9BA6B5;
+    --text-mut: #687484;
+    --blue: #3B82F6;
+    --orange: #FF6A00;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15), transparent 60%);
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    margin: 24px 20px;
+    padding: 32px 24px;
+    background: var(--surf);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-align: center;
+  }
+  img.logo { width: 56px; height: 56px; margin-bottom: 16px; }
+  h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 8px; }
+  p { color: var(--text-sec); font-size: 14px; margin-bottom: 20px; }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 12px;
+  }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-secondary { border: 1px solid var(--line); color: var(--text); }
+  .small { font-size: 12px; color: var(--text-mut); margin: 8px 0 0; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main class="card">
+  <img class="logo" src="/icon-dark.svg" alt="ThrottleIQ">
+  <div id="valid">
+    <h1>Follow this rider on ThrottleIQ</h1>
+    <p>Open the app to follow them. Don't have ThrottleIQ yet? Install it, then scan the code again.</p>
+    <a id="open-app" class="btn btn-primary" href="#">Open in ThrottleIQ</a>
+    <a id="install" class="btn btn-secondary" href="https://blankframe.tech/ThrottleIQ/install?c=follow_qr">Install ThrottleIQ</a>
+    <p class="small">ThrottleIQ রাইডারকে ফলো করতে অ্যাপটি খুলুন, অথবা ইনস্টল করে কোডটি আবার স্ক্যান করুন।</p>
+  </div>
+  <div id="invalid" class="hidden">
+    <h1>This link isn't valid</h1>
+    <p>It doesn't point to a ThrottleIQ rider.</p>
+    <a class="btn btn-secondary" href="https://blankframe.tech/ThrottleIQ/install?c=follow_qr_invalid">Get ThrottleIQ</a>
+  </div>
+</main>
+<script>
+  (function () {
+    var INSTALL_URL = 'https://blankframe.tech/ThrottleIQ/install?c=follow_qr';
+    var PACKAGE = 'com.bft.throttleiq';
+    // /ThrottleIQ/u/<uid> (any casing of the prefix) or /u/<uid>; the uid
+    // itself is case-sensitive. Same rule as follow_link.dart.
+    var m = window.location.pathname.match(/^\/(?:throttleiq\/)?u\/([A-Za-z0-9_-]{1,128})\/?$/i);
+    if (!m) {
+      document.getElementById('valid').classList.add('hidden');
+      document.getElementById('invalid').classList.remove('hidden');
+      return;
+    }
+    var uid = m[1];
+    var schemeUrl = 'throttleiq://u/' + uid;
+    var ua = navigator.userAgent || '';
+    var isAndroid = /Android/i.test(ua);
+
+    var openUrl = isAndroid
+      ? 'intent://u/' + uid + '#Intent;scheme=throttleiq;package=' + PACKAGE +
+        ';S.browser_fallback_url=' + encodeURIComponent(INSTALL_URL) + ';end'
+      : schemeUrl;
+    document.getElementById('open-app').setAttribute('href', openUrl);
+
+    // Android: the intent URL is safe to try straight away — if the app isn't
+    // installed, Chrome follows browser_fallback_url to the install page.
+    // iOS: an unknown custom scheme shows Safari's "address is invalid"
+    // alert, so it's left to the button (with the app installed, the
+    // Universal Link opens the app before this page ever loads).
+    if (isAndroid) {
+      window.location.replace(openUrl);
+    }
+  })();
+</script>
+</body>
+</html>

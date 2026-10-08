@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bft.throttleiq",
+      "sha256_cert_fingerprints": [
+        "4A:7B:66:38:D0:55:FB:5C:6D:0B:87:06:F4:0B:A8:4A:EE:4A:5B:20:EF:EE:FE:75:C2:91:AB:3D:5F:36:67:76"
+      ]
+    }
+  }
+]

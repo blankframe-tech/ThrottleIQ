@@ -1,6 +1,11 @@
+import 'package:flutter/material.dart' show Brightness, Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/services/home_widget_service.dart';
+import 'package:throttleiq/core/theme/app_theme.dart';
+import 'package:throttleiq/core/theme/app_theme_style.dart';
+import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/features/maintenance/domain/calculators/maintenance_forecast.dart';
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
@@ -536,4 +541,116 @@ void main() {
       );
     });
   });
+
+  group('widget theme payload', () {
+    test('colors are #AARRGGBB, upper-case, zero-padded', () {
+      expect(widgetColorHex(const Color(0xFFC8FF3D)), '#FFC8FF3D');
+      expect(widgetColorHex(const Color(0x0000000A)), '#0000000A');
+      expect(widgetColorHex(const Color(0xCC020A15)), '#CC020A15');
+    });
+
+    test('carries every themed role from the palette, plus brightness and mode', () {
+      const palette = AppColorPalette.commuteLight;
+      final data = widgetThemeData(palette, colorMode: AppColorMode.commute);
+      expect(data[kWidgetKeyThemeBackground], widgetColorHex(palette.background));
+      expect(data[kWidgetKeyThemeSurface], widgetColorHex(palette.surface));
+      expect(data[kWidgetKeyThemeBorder], widgetColorHex(palette.border));
+      expect(data[kWidgetKeyThemeInk], widgetColorHex(palette.textPrimary));
+      expect(data[kWidgetKeyThemePrimary], widgetColorHex(palette.primary));
+      expect(data[kWidgetKeyThemeAccent], widgetColorHex(palette.secondary));
+      expect(data[kWidgetKeyThemeTextPrimary], widgetColorHex(palette.textPrimary));
+      expect(data[kWidgetKeyThemeTextMuted], widgetColorHex(palette.textSecondary));
+      expect(data[kWidgetKeyThemeTextTertiary], widgetColorHex(palette.textTertiary));
+      expect(data[kWidgetKeyThemeDanger], widgetColorHex(palette.danger));
+      expect(data[kWidgetKeyThemeIsDark], isFalse);
+      expect(data[kWidgetKeyThemeMode], 'commute');
+    });
+
+    test('on-primary matches the app\'s filled-button ink (dark on Race mustard)', () {
+      for (final mode in AppColorMode.values) {
+        for (final brightness in Brightness.values) {
+          final palette = AppColorPalette.forMode(mode, brightness);
+          expect(widgetThemeData(palette)[kWidgetKeyThemeOnPrimary],
+              widgetColorHex(AppTheme.primaryButtonForeground(palette)),
+              reason: '$mode/$brightness');
+        }
+      }
+      expect(widgetThemeData(AppColorPalette.raceLight)[kWidgetKeyThemeOnPrimary],
+          '#FF1A1A1A');
+    });
+
+    test('the keys match the native contract strings', () {
+      // WidgetKeys.kt and ThrottleIQWidget.swift read these exact strings.
+      expect(kWidgetKeyThemeBackground, 'ti_theme_background');
+      expect(kWidgetKeyThemeSurface, 'ti_theme_surface');
+      expect(kWidgetKeyThemeBorder, 'ti_theme_border');
+      expect(kWidgetKeyThemeInk, 'ti_theme_ink');
+      expect(kWidgetKeyThemePrimary, 'ti_theme_primary');
+      expect(kWidgetKeyThemeOnPrimary, 'ti_theme_on_primary');
+      expect(kWidgetKeyThemeAccent, 'ti_theme_accent');
+      expect(kWidgetKeyThemeTextPrimary, 'ti_theme_text_primary');
+      expect(kWidgetKeyThemeTextMuted, 'ti_theme_text_muted');
+      expect(kWidgetKeyThemeTextTertiary, 'ti_theme_text_tertiary');
+      expect(kWidgetKeyThemeDanger, 'ti_theme_danger');
+      expect(kWidgetKeyThemeIsDark, 'ti_theme_is_dark');
+      expect(kWidgetKeyThemeMode, 'ti_theme_mode');
+    });
+
+    test('mode is omitted when unknown', () {
+      expect(widgetThemeData(AppColorPalette.sportDark)
+          .containsKey(kWidgetKeyThemeMode), isFalse);
+      expect(widgetThemeData(AppColorPalette.sportDark)[kWidgetKeyThemeIsDark],
+          isTrue);
+    });
+  });
+
+  group('HomeWidgetService.publishTheme', () {
+    test('is no-op safe with no platform plugin, and remembers the theme', () async {
+      final service = HomeWidgetService();
+      await service.publishTheme(AppColorPalette.rainDark,
+          colorMode: AppColorMode.rain);
+      expect(service.publishedThemeData,
+          widgetThemeData(AppColorPalette.rainDark, colorMode: AppColorMode.rain));
+    });
+  });
+
+  group('homeWidgetThemeSyncProvider', () {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    test('publishes the active palette now and on every appearance change',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final fake = _RecordingWidgetService();
+      final container = ProviderContainer(overrides: [
+        homeWidgetServiceProvider.overrideWithValue(fake),
+      ]);
+      addTearDown(container.dispose);
+
+      container.read(homeWidgetThemeSyncProvider);
+      await pumpEventQueue();
+      const initial = AppAppearance.defaultAppearance;
+      expect(fake.published.last.$2, initial.colorMode);
+      expect(fake.published.last.$1,
+          same(AppColorPalette.forMode(initial.colorMode, initial.brightness)));
+
+      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.race);
+      expect(fake.published.last.$1, same(AppColorPalette.raceLight));
+      expect(fake.published.last.$2, AppColorMode.race);
+
+      await container
+          .read(appearanceProvider.notifier)
+          .setBrightnessMode(AppBrightnessMode.dark);
+      expect(fake.published.last.$1, same(AppColorPalette.raceDark));
+    });
+  });
+}
+
+class _RecordingWidgetService extends HomeWidgetService {
+  final published = <(AppColorPalette, AppColorMode?)>[];
+
+  @override
+  Future<void> publishTheme(AppColorPalette palette,
+      {AppColorMode? colorMode}) async {
+    published.add((palette, colorMode));
+  }
 }

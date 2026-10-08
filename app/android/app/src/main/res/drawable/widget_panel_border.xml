@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Outer layer of the widget panel chrome: the 1dp hairline border shows where
+    widget_panel_fill (inset 1dp on top) doesn't cover it. Its default color is
+    the Carbon Mono border; WidgetTheme recolors it to the app theme's border
+    with setColorFilter. 2dp corners, matching the old widget_background.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_border" />
+    <corners android:radius="2dp" />
+</shape>

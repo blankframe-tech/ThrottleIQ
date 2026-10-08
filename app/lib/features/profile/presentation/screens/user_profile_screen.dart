@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/numeric_locale.dart';
-import '../../../../core/utils/badges.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
@@ -22,8 +21,9 @@ import '../providers/profile_providers.dart';
 import '../widgets/profile_load_error_view.dart';
 import '../../../chat/presentation/providers/chat_providers.dart';
 
-/// A rider's profile: avatar, bio, follow button, total km/rides, earned
-/// badges and (permission allowing) their garage. Reached by tapping a
+/// A rider's profile: avatar, bio, follow button, total km/rides and
+/// (permission allowing) their garage. Badges are not listed here — they live
+/// on the Rides (stats) tab's Badges view. Reached by tapping a
 /// rider's name/avatar in "Find riders" search results or on a forum post —
 /// and, with [uid] omitted, it's the signed-in rider's OWN profile view,
 /// reached from the garage header menu ('/profile').
@@ -42,7 +42,6 @@ import '../../../chat/presentation/providers/chat_providers.dart';
 /// [canSeeBikes] / [UserProfileEntity.bikesVisibility].
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
-import '../../../stats/presentation/badge_l10n.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   /// The rider to show. Null → the signed-in rider's own profile.
@@ -164,7 +163,6 @@ class _ProfileBody extends ConsumerWidget {
     final followerCount = ref.watch(followerCountProvider(profile.uid));
     final followingCount = ref.watch(followingCountProvider(profile.uid));
     final isFollowingAsync = isMe ? null : ref.watch(isFollowingProvider(profile.uid));
-    final earnedBadges = badgeDefs.where((b) => profile.badgeIds.contains(b.id)).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -211,6 +209,28 @@ class _ProfileBody extends ConsumerWidget {
               _CountStat(label: context.l10n.followingLabel, value: followingCount),
             ],
           ),
+          if (isMe) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/profile/qr'),
+                    icon: const Icon(Icons.qr_code_2, size: 18),
+                    label: Text(context.l10n.myQrTitle),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/profile/scan'),
+                    icon: const Icon(Icons.qr_code_scanner, size: 18),
+                    label: Text(context.l10n.scanQrAction),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (!isMe && myUid != null && isFollowingAsync != null) ...[
             const SizedBox(height: 16),
             Row(
@@ -270,27 +290,6 @@ class _ProfileBody extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Text(context.l10n.badges,
-              style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
-          const SizedBox(height: 12),
-          earnedBadges.isEmpty
-              ? Text(context.l10n.noBadgesEarnedYet,
-                  style: TextStyle(fontSize: 13, color: context.palette.textTertiary))
-              : Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final b in earnedBadges)
-                      Chip(
-                        avatar: Icon(Icons.military_tech, size: 16, color: context.palette.primary),
-                        label: Text(b.localizedName(context.l10n)),
-                        backgroundColor: context.palette.surface,
-                        side: BorderSide(color: context.palette.border),
-                      ),
-                  ],
-                ),
           // The garage. Hidden outright — no placeholder, nothing to probe —
           // when this viewer isn't allowed to see it. The same decision is
           // re-made server-side in firestore.rules; this is the cosmetic half.

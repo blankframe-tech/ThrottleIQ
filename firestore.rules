@@ -1860,6 +1860,17 @@ service cloud.firestore {
       }
     }
 
+    // Aggregate badge ownership (`stats/badges`: totalRiders + per-badge
+    // owner counts), maintained only by functions/src/badge-stats.ts via the
+    // Admin SDK, which bypasses rules. Any signed-in rider may read it for
+    // the "X% of riders own this badge" figure; no client may write it, or
+    // a rider could make any badge look Legendary. Holds counts only, no
+    // per-rider data.
+    match /stats/{docId} {
+      allow read: if request.auth != null && docId == 'badges';
+      allow write: if false;
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

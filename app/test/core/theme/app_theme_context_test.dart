@@ -51,7 +51,7 @@ void main() {
     final probe = tester.state<_ProbeState>(find.byType(_Probe));
     probe.counter = 7; // stands in for a scroll offset / half-typed form
     final before = tester.widget<Container>(find.byKey(_Probe.swatch)).color;
-    expect(before, AppColorPalette.dailyLight.primary);
+    expect(before, AppColorPalette.commuteLight.primary);
 
     final container = ProviderScope.containerOf(tester.element(find.byType(_Probe)));
     await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.sport);

@@ -38,6 +38,11 @@ class EventDetector {
   int rapidAccelCount = 0;
   int highJerkCount = 0;
 
+  /// Overspeed episodes this ride: one per excursion above
+  /// [overspeedThreshold], counted on the same edge as the alert (see
+  /// [_overspeedArmed]), so a sustained fast stretch is one, not one per fix.
+  int overspeedCount = 0;
+
   RideAlert? _lastAlert;
   DateTime? _lastAlertTime;
   static const Duration _alertTTL = Duration(seconds: 5);
@@ -238,6 +243,7 @@ class EventDetector {
     }
     if (_overspeedArmed && speedMs > overspeedThreshold) {
       _overspeedArmed = false;
+      overspeedCount++;
       _lastAlert = RideAlert.overspeed;
       _lastAlertTime = now;
       return RideAlert.overspeed;
@@ -314,6 +320,7 @@ class EventDetector {
     hardBrakeCount = 0;
     rapidAccelCount = 0;
     highJerkCount = 0;
+    overspeedCount = 0;
     _lastAlert = null;
     _lastAlertTime = null;
     _brakeArmed = true;

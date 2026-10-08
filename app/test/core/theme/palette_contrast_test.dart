@@ -31,8 +31,8 @@ void main() {
     }
   }
 
-  test('dailyLight keeps the old sage as the non-text highlight', () {
-    expect(AppColorPalette.dailyLight.primary, const Color(0xFF537D5C));
-    expect(AppColorPalette.dailyLight.primaryHighlight, const Color(0xFF84A98B));
+  test('commuteLight (Calming) keeps the old sage as the non-text highlight', () {
+    expect(AppColorPalette.commuteLight.primary, const Color(0xFF537D5C));
+    expect(AppColorPalette.commuteLight.primaryHighlight, const Color(0xFF84A98B));
   });
 }

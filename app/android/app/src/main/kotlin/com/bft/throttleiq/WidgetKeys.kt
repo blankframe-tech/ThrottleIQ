@@ -38,6 +38,22 @@ object WidgetKeys {
     const val LEAN_RATING = "ti_lean_rating"
     const val LEAN_SYMMETRY = "ti_lean_symmetry"
     const val APEX_UPDATED_AT = "ti_apex_updated_at"
+
+    // Theme — `#AARRGGBB` strings from `widgetThemeData` in Dart; read by
+    // [WidgetTheme], which falls back to res/values/colors.xml when absent.
+    const val THEME_BACKGROUND = "ti_theme_background"
+    const val THEME_SURFACE = "ti_theme_surface"
+    const val THEME_BORDER = "ti_theme_border"
+    const val THEME_INK = "ti_theme_ink"
+    const val THEME_PRIMARY = "ti_theme_primary"
+    const val THEME_ON_PRIMARY = "ti_theme_on_primary"
+    const val THEME_ACCENT = "ti_theme_accent"
+    const val THEME_TEXT_PRIMARY = "ti_theme_text_primary"
+    const val THEME_TEXT_MUTED = "ti_theme_text_muted"
+    const val THEME_TEXT_TERTIARY = "ti_theme_text_tertiary"
+    const val THEME_DANGER = "ti_theme_danger"
+    const val THEME_IS_DARK = "ti_theme_is_dark"
+    const val THEME_MODE = "ti_theme_mode"
 }
 
 /**

@@ -72,85 +72,61 @@
   "@colorFieldLabel": {
     "description": "Label above the dropdown that picks the app's color mode."
   },
-  "themeDailyLabel": "Daily",
-  "@themeDailyLabel": {
-    "description": "Name of the Daily color mode."
-  },
-  "themeDailyDescription": "Calm & collected, sage and tan",
-  "@themeDailyDescription": {
-    "description": "One-line description under the Daily color option."
-  },
   "themeSportLabel": "Sport",
   "@themeSportLabel": {
-    "description": "Name of the Sport color mode."
+    "description": "Name of the Sport color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeSportDescription": "Lime carbon & tachometer energy",
+  "themeSportDescription": "Lime and magenta, carbon-black panel",
   "@themeSportDescription": {
-    "description": "One-line description under the Sport color option."
+    "description": "One-line description of the Sport color mode's hues, shown under its name in the picker."
   },
-  "themeAdventureLabel": "Adventure",
-  "@themeAdventureLabel": {
-    "description": "Name of the Adventure color mode."
+  "themeRainLabel": "Rain",
+  "@themeRainLabel": {
+    "description": "Name of the Rain color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeAdventureDescription": "Console cyan & nocturne wayfinding",
-  "@themeAdventureDescription": {
-    "description": "One-line description under the Adventure color option."
+  "themeRainDescription": "Indigo dusk, lavender and teal",
+  "@themeRainDescription": {
+    "description": "One-line description of the Rain color mode's hues, shown under its name in the picker."
   },
-  "themeCarbonLabel": "Carbon Mono",
-  "@themeCarbonLabel": {
-    "description": "Name of the Carbon Mono color mode. Product name \u2014 kept recognisable across languages."
+  "themeRaceLabel": "Race",
+  "@themeRaceLabel": {
+    "description": "Name of the Race color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeCarbonDescription": "Lime and magenta",
-  "@themeCarbonDescription": {
-    "description": "One-line description under the Carbon Mono color option."
+  "themeRaceDescription": "Blocky race poster, mustard and rust",
+  "@themeRaceDescription": {
+    "description": "One-line description of the Race color mode's hues, shown under its name in the picker."
   },
-  "themeEditorialLabel": "Editorial",
-  "@themeEditorialLabel": {
-    "description": "Name of the Editorial color mode. Product name \u2014 kept recognisable across languages."
+  "themeCommuteLabel": "Commute",
+  "@themeCommuteLabel": {
+    "description": "Name of the Commute color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeEditorialDescription": "Blue and orange, paper warmth",
-  "@themeEditorialDescription": {
-    "description": "One-line description under the Editorial color option."
+  "themeCommuteDescription": "Calm cream, sage and tan",
+  "@themeCommuteDescription": {
+    "description": "One-line description of the Commute color mode's hues, shown under its name in the picker."
   },
-  "themeNocturneLabel": "Nocturne",
-  "@themeNocturneLabel": {
-    "description": "Name of the Nocturne color mode. Product name \u2014 kept recognisable across languages."
+  "themeTourLabel": "Tour",
+  "@themeTourLabel": {
+    "description": "Name of the Tour color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeNocturneDescription": "Indigo and lavender glow",
-  "@themeNocturneDescription": {
-    "description": "One-line description under the Nocturne color option."
+  "themeTourDescription": "Punchy orange and sky blue",
+  "@themeTourDescription": {
+    "description": "One-line description of the Tour color mode's hues, shown under its name in the picker."
   },
-  "themeTrailSocialLabel": "Trail Social",
-  "@themeTrailSocialLabel": {
-    "description": "Name of the Trail Social color mode. Product name \u2014 kept recognisable across languages."
+  "themeAdvLabel": "ADV",
+  "@themeAdvLabel": {
+    "description": "Name of the ADV color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeTrailSocialDescription": "Punchy kudos orange",
-  "@themeTrailSocialDescription": {
-    "description": "One-line description under the Trail Social color option."
+  "themeAdvDescription": "Navy console, cyan telemetry",
+  "@themeAdvDescription": {
+    "description": "One-line description of the ADV color mode's hues, shown under its name in the picker."
   },
-  "themeCalmingLabel": "Calming",
-  "@themeCalmingLabel": {
-    "description": "Name of the Calming color mode. Product name \u2014 kept recognisable across languages."
+  "themeCityLabel": "City",
+  "@themeCityLabel": {
+    "description": "Name of the City color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
   },
-  "themeCalmingDescription": "Warm sage and tan",
-  "@themeCalmingDescription": {
-    "description": "One-line description under the Calming color option."
-  },
-  "themeRetroLabel": "Retro",
-  "@themeRetroLabel": {
-    "description": "Name of the Retro color mode. Product name \u2014 kept recognisable across languages."
-  },
-  "themeRetroDescription": "Blocky 70s poster, mustard & rust",
-  "@themeRetroDescription": {
-    "description": "One-line description under the Retro color option."
-  },
-  "themeAnalystBlueLabel": "Analyst Blue",
-  "@themeAnalystBlueLabel": {
-    "description": "Name of the Analyst Blue color mode. Product name \u2014 kept recognisable across languages."
-  },
-  "themeAnalystBlueDescription": "Navy console, cyan telemetry",
-  "@themeAnalystBlueDescription": {
-    "description": "One-line description under the Analyst Blue color option."
+  "themeCityDescription": "Paper warmth, blue and orange",
+  "@themeCityDescription": {
+    "description": "One-line description of the City color mode's hues, shown under its name in the picker."
   },
   "languageSection": "Language",
   "@languageSection": {
@@ -693,6 +669,101 @@
   "@safeQrShareImageAction": {
     "description": "Button that exports the SafeQR card as a PNG through the system share sheet (which also offers Save to Photos/Files), e.g. to set as a lock-screen wallpaper or print as a helmet sticker."
   },
+  "myQrTitle": "My QR code",
+  "@myQrTitle": {
+    "description": "Title of the screen / button showing the rider's own follow QR code."
+  },
+  "myQrIntro": "Riders who scan this code follow you. It works with ThrottleIQ's scanner or any phone camera.",
+  "@myQrIntro": {
+    "description": "Explainer above the rider's own follow QR code."
+  },
+  "myQrShareAction": "Share",
+  "@myQrShareAction": {
+    "description": "Button that shares the follow QR image through the system share sheet."
+  },
+  "myQrSaveAction": "Save image",
+  "@myQrSaveAction": {
+    "description": "Button that saves the follow QR image to the phone's photos."
+  },
+  "myQrShareText": "Follow me on ThrottleIQ: {link}",
+  "@myQrShareText": {
+    "description": "Text sent alongside the shared follow QR image.",
+    "placeholders": {
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "myQrSaved": "QR code saved to your photos.",
+  "@myQrSaved": {
+    "description": "Snackbar after the follow QR image is saved to photos."
+  },
+  "myQrSaveNoAccess": "ThrottleIQ can't save to your photos. Allow photo access in Settings.",
+  "@myQrSaveNoAccess": {
+    "description": "Snackbar when photo-library access for saving the QR was refused."
+  },
+  "myQrImageFailed": "Couldn't create your QR code image.",
+  "@myQrImageFailed": {
+    "description": "Snackbar when rendering/sharing/saving the follow QR image fails."
+  },
+  "scanQrAction": "Scan QR",
+  "@scanQrAction": {
+    "description": "Button that opens the camera to scan another rider's follow QR."
+  },
+  "scanQrTitle": "Scan a rider's QR",
+  "@scanQrTitle": {
+    "description": "Title of the QR scanner screen."
+  },
+  "scanQrHint": "Point the camera at another rider's ThrottleIQ QR code to follow them.",
+  "@scanQrHint": {
+    "description": "Hint under the QR scanner viewfinder."
+  },
+  "scanQrTorch": "Flashlight",
+  "@scanQrTorch": {
+    "description": "Tooltip of the scanner's flashlight toggle."
+  },
+  "scanQrCameraDenied": "Camera access is off. Allow it in Settings to scan QR codes.",
+  "@scanQrCameraDenied": {
+    "description": "Shown in place of the scanner when camera permission is denied."
+  },
+  "scanQrCameraError": "The camera couldn't start.",
+  "@scanQrCameraError": {
+    "description": "Shown in place of the scanner when the camera fails for another reason."
+  },
+  "followLinkFollowed": "You're now following {name}.",
+  "@followLinkFollowed": {
+    "description": "Snackbar after following a rider from their QR code / follow link.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followLinkAlreadyFollowing": "You already follow {name}.",
+  "@followLinkAlreadyFollowing": {
+    "description": "Snackbar when a scanned / opened follow link is for a rider already followed.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followLinkSelf": "That's your own QR code.",
+  "@followLinkSelf": {
+    "description": "Snackbar when the rider scans their own follow QR."
+  },
+  "followLinkInvalid": "That isn't a ThrottleIQ rider code.",
+  "@followLinkInvalid": {
+    "description": "Snackbar when a scanned code / opened link is not a valid ThrottleIQ follow link."
+  },
+  "followLinkSignInFirst": "Sign in to finish following this rider.",
+  "@followLinkSignInFirst": {
+    "description": "Snackbar when a follow link is opened while signed out; the follow completes after sign-in."
+  },
+  "followLinkFailed": "Couldn't follow this rider. Check your connection and try again.",
+  "@followLinkFailed": {
+    "description": "Snackbar when the follow from a QR code / link is rejected."
+  },
   "safeQrShareImageFailed": "Couldn't create the QR image.",
   "@safeQrShareImageFailed": {
     "description": "Snackbar shown when rendering the SafeQR card to an image fails."
@@ -825,337 +896,17 @@
   "@signInSubtitle": {
     "description": "Text in login_screen."
   },
-  "yourGarage": "Your Garage",
-  "@yourGarage": {
-    "description": "Title in onboarding_manifest."
-  },
-  "everyBikeOwnTracked": "Every bike you own, tracked in one place.",
-  "@everyBikeOwnTracked": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "addUnlimitedBikesBrand": "Add unlimited bikes \u2014 brand, model, year, CC",
-  "@addUnlimitedBikesBrand": {
-    "description": "Text in onboarding_manifest."
-  },
-  "bikesPaintColorTints": "Your bike's paint color tints the whole app",
-  "@bikesPaintColorTints": {
-    "description": "Text in onboarding_manifest."
-  },
-  "tapAnyBikeView": "Tap any bike to view full history & details",
-  "@tapAnyBikeView": {
-    "description": "Text in onboarding_manifest."
-  },
-  "switchActiveBikeBefore": "Switch active bike before each ride",
-  "@switchActiveBikeBefore": {
-    "description": "Text in onboarding_manifest."
-  },
-  "activeMotorcycle": "Active Motorcycle",
-  "@activeMotorcycle": {
-    "description": "Title in onboarding_manifest."
-  },
-  "tintsEntireAppTheme": "Tints the entire app theme and binds to your trip logs.",
-  "@tintsEntireAppTheme": {
-    "description": "Description in onboarding_manifest."
-  },
-  "serviceCountdown": "Service Countdown",
-  "@serviceCountdown": {
-    "description": "Title in onboarding_manifest."
-  },
-  "realTimeMaintenanceTracker": "Real-time maintenance tracker based on actual km ridden.",
-  "@realTimeMaintenanceTracker": {
-    "description": "Description in onboarding_manifest."
-  },
-  "addSwitch": "Add & Switch",
-  "@addSwitch": {
-    "description": "Title in onboarding_manifest."
-  },
-  "manageMultipleBikesSwap": "Manage multiple bikes and swap your active ride anytime.",
-  "@manageMultipleBikesSwap": {
-    "description": "Description in onboarding_manifest."
-  },
   "startRide": "Start a Ride",
   "@startRide": {
     "description": "Title in onboarding_manifest."
-  },
-  "holdButtonThrottleiqDoes": "Hold the button. ThrottleIQ does the rest.",
-  "@holdButtonThrottleiqDoes": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "holdStartRecordTab": "Hold-to-start on the Record tab to begin",
-  "@holdStartRecordTab": {
-    "description": "Text in onboarding_manifest."
-  },
-  "gpsSensorFusionCaptures": "GPS + sensor fusion captures every moment",
-  "@gpsSensorFusionCaptures": {
-    "description": "Text in onboarding_manifest."
-  },
-  "continuesRecordingBackground": "Continues recording in the background",
-  "@continuesRecordingBackground": {
-    "description": "Text in onboarding_manifest."
-  },
-  "pausedRideSurvivesApp": "A paused ride survives the app being closed",
-  "@pausedRideSurvivesApp": {
-    "description": "Text in onboarding_manifest."
-  },
-  "shareLiveLocationWith": "Share your live location with family in real time",
-  "@shareLiveLocationWith": {
-    "description": "Text in onboarding_manifest."
-  },
-  "cockpitTelemetry": "Cockpit Telemetry",
-  "@cockpitTelemetry": {
-    "description": "Title in onboarding_manifest."
-  },
-  "liveGpsSpeedDistance": "Live GPS speed, distance, and ride telemetry as you go.",
-  "@liveGpsSpeedDistance": {
-    "description": "Description in onboarding_manifest."
-  },
-  "hold1sRecord": "Hold 1s to Record",
-  "@hold1sRecord": {
-    "description": "Title in onboarding_manifest."
-  },
-  "hold1sStartStop": "Hold 1s to start or stop; prevents accidental touches.",
-  "@hold1sStartStop": {
-    "description": "Description in onboarding_manifest."
-  },
-  "liveShare": "Live Share",
-  "@liveShare": {
-    "description": "Title in onboarding_manifest."
-  },
-  "sendRevocableLinkSo": "Send a revocable link so family can follow your ride.",
-  "@sendRevocableLinkSo": {
-    "description": "Description in onboarding_manifest."
   },
   "autoTracking": "Auto Tracking",
   "@autoTracking": {
     "description": "Title in onboarding_manifest."
   },
-  "ridesThatDetectRecord": "Rides that detect and record themselves.",
-  "@ridesThatDetectRecord": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "enableOnceSettingsAuto": "Enable once in Settings \u2192 Auto-Tracking",
-  "@enableOnceSettingsAuto": {
-    "description": "Text in onboarding_manifest."
-  },
-  "activityRecognitionStartsRecording": "Activity recognition starts recording when you ride",
-  "@activityRecognitionStartsRecording": {
-    "description": "Text in onboarding_manifest."
-  },
-  "shortWalksSubwayTrips": "Short walks and subway trips are filtered out",
-  "@shortWalksSubwayTrips": {
-    "description": "Text in onboarding_manifest."
-  },
-  "eachAutoDetectedRide": "Each auto-detected ride appears ready to review",
-  "@eachAutoDetectedRide": {
-    "description": "Text in onboarding_manifest."
-  },
-  "smartDetection": "Smart Detection",
-  "@smartDetection": {
-    "description": "Title in onboarding_manifest."
-  },
-  "detectsMotorcycleMovementVia": "Detects motorcycle movement via IMU sensors & speed.",
-  "@detectsMotorcycleMovementVia": {
-    "description": "Description in onboarding_manifest."
-  },
-  "nonRideFilter": "Non-Ride Filter",
-  "@nonRideFilter": {
-    "description": "Title in onboarding_manifest."
-  },
-  "ignoresWalkingBusRides": "Ignores walking, bus rides, and minor phone jostling.",
-  "@ignoresWalkingBusRides": {
-    "description": "Description in onboarding_manifest."
-  },
-  "zeroInteraction": "Zero Interaction",
-  "@zeroInteraction": {
-    "description": "Title in onboarding_manifest."
-  },
-  "runsSilentlyBackgroundReview": "Runs silently in background; review rides when done.",
-  "@runsSilentlyBackgroundReview": {
-    "description": "Description in onboarding_manifest."
-  },
   "maintenance": "Maintenance",
   "@maintenance": {
     "description": "Title in onboarding_manifest."
-  },
-  "neverForgetAnotherOil": "Never forget another oil change.",
-  "@neverForgetAnotherOil": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "alertsWhenYoureDue": "Alerts when you're due for oil, filter, chain lube\u2026",
-  "@alertsWhenYoureDue": {
-    "description": "Text in onboarding_manifest."
-  },
-  "logServiceResetCountdown": "Log a service to reset the countdown",
-  "@logServiceResetCountdown": {
-    "description": "Text in onboarding_manifest."
-  },
-  "addCustomIntervalsAny": "Add custom intervals for any part you care about",
-  "@addCustomIntervalsAny": {
-    "description": "Text in onboarding_manifest."
-  },
-  "n13ServiceItems": "13+ Service Items",
-  "@n13ServiceItems": {
-    "description": "Title in onboarding_manifest."
-  },
-  "trackEngineOilChain": "Track engine oil, chain lube, brake fluid, coolant, and more.",
-  "@trackEngineOilChain": {
-    "description": "Description in onboarding_manifest."
-  },
-  "dueBadges": "Due Badges",
-  "@dueBadges": {
-    "description": "Title in onboarding_manifest."
-  },
-  "colorCodedProgressBars": "Color-coded progress bars alert you before intervals expire.",
-  "@colorCodedProgressBars": {
-    "description": "Description in onboarding_manifest."
-  },
-  "logReset": "Log & Reset",
-  "@logReset": {
-    "description": "Title in onboarding_manifest."
-  },
-  "recordMaintenanceNotesReset": "Record maintenance notes and reset the interval odometer.",
-  "@recordMaintenanceNotesReset": {
-    "description": "Description in onboarding_manifest."
-  },
-  "riderPlaces": "Rider Places",
-  "@riderPlaces": {
-    "description": "Title in onboarding_manifest."
-  },
-  "everyGaragePumpViewpoint": "Every garage, pump, and viewpoint near you.",
-  "@everyGaragePumpViewpoint": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "fuelStationsRepairShops": "Fuel stations, repair shops, spare parts & cafes",
-  "@fuelStationsRepairShops": {
-    "description": "Text in onboarding_manifest."
-  },
-  "tapDirectionsOpensMaps": "Tap Directions \u2192 opens Maps, and offers to record",
-  "@tapDirectionsOpensMaps": {
-    "description": "Text in onboarding_manifest."
-  },
-  "addRatePlacesHelp": "Add and rate places to help the community",
-  "@addRatePlacesHelp": {
-    "description": "Text in onboarding_manifest."
-  },
-  "n395RiderPois": "395+ Rider POIs",
-  "@n395RiderPois": {
-    "description": "Title in onboarding_manifest."
-  },
-  "verifiedFuelStationsWorkshops": "Verified fuel stations, workshops, parts, and rider cafes.",
-  "@verifiedFuelStationsWorkshops": {
-    "description": "Description in onboarding_manifest."
-  },
-  "navigateRecord": "Navigate & Record",
-  "@navigateRecord": {
-    "description": "Title in onboarding_manifest."
-  },
-  "opensMapsAppCan": "Opens your maps app, and can record the trip alongside it.",
-  "@opensMapsAppCan": {
-    "description": "Description in onboarding_manifest."
-  },
-  "riderReviews": "Rider Reviews",
-  "@riderReviews": {
-    "description": "Title in onboarding_manifest."
-  },
-  "rateOctanePurityMechanic": "Rate octane purity, mechanic honesty, and parking security.",
-  "@rateOctanePurityMechanic": {
-    "description": "Description in onboarding_manifest."
-  },
-  "rideTogether": "Ride Together",
-  "@rideTogether": {
-    "description": "Title in onboarding_manifest."
-  },
-  "ridingCommunityAllOne": "Your riding community, all in one place.",
-  "@ridingCommunityAllOne": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "shareRidesFeedHome": "Share rides to the feed \u2014 home location is hidden",
-  "@shareRidesFeedHome": {
-    "description": "Text in onboarding_manifest."
-  },
-  "startGroupRideWith": "Start a group ride with a 6-character join code",
-  "@startGroupRideWith": {
-    "description": "Text in onboarding_manifest."
-  },
-  "pushTalkIntercomBluetooth": "Push-to-talk intercom for your Bluetooth helmet",
-  "@pushTalkIntercomBluetooth": {
-    "description": "Text in onboarding_manifest."
-  },
-  "bikeModelForumsTalk": "Bike-model forums \u2014 talk to FZ-S, Pulsar & CBR riders",
-  "@bikeModelForumsTalk": {
-    "description": "Text in onboarding_manifest."
-  },
-  "directMessageAnyRider": "Direct message any rider on the platform",
-  "@directMessageAnyRider": {
-    "description": "Text in onboarding_manifest."
-  },
-  "privacyZones": "Privacy Zones",
-  "@privacyZones": {
-    "description": "Title in onboarding_manifest."
-  },
-  "eachRidesStartEnd": "Each ride's start and end are clipped before it is shared.",
-  "@eachRidesStartEnd": {
-    "description": "Description in onboarding_manifest."
-  },
-  "groupPinIntercom": "Group PIN & Intercom",
-  "@groupPinIntercom": {
-    "description": "Title in onboarding_manifest."
-  },
-  "liveMapTrackingBluetooth": "Live map tracking and Bluetooth helmet PTT intercom.",
-  "@liveMapTrackingBluetooth": {
-    "description": "Description in onboarding_manifest."
-  },
-  "bikeModelForums": "Bike Model Forums",
-  "@bikeModelForums": {
-    "description": "Title in onboarding_manifest."
-  },
-  "discussModsIssuesMeets": "Discuss mods, issues, and meets with owners of your bike.",
-  "@discussModsIssuesMeets": {
-    "description": "Description in onboarding_manifest."
-  },
-  "yourProfile": "Your Profile",
-  "@yourProfile": {
-    "description": "Title in onboarding_manifest."
-  },
-  "makeItYoursAdd": "Make it yours \u2014 add a bio to stand out.",
-  "@makeItYoursAdd": {
-    "description": "Subtitle in onboarding_manifest."
-  },
-  "publicProfileWithStats": "Public profile with your stats & shared rides",
-  "@publicProfileWithStats": {
-    "description": "Text in onboarding_manifest."
-  },
-  "handleLetsOtherRiders": "Your @handle lets other riders find and follow you",
-  "@handleLetsOtherRiders": {
-    "description": "Text in onboarding_manifest."
-  },
-  "controlWhoSeesProfile": "Control who sees your profile and your bikes",
-  "@controlWhoSeesProfile": {
-    "description": "Text in onboarding_manifest."
-  },
-  "safeqrOfflineEmergencyMedical": "SafeQR: an offline emergency medical card",
-  "@safeqrOfflineEmergencyMedical": {
-    "description": "Text in onboarding_manifest."
-  },
-  "riderStats": "Rider Stats",
-  "@riderStats": {
-    "description": "Title in onboarding_manifest."
-  },
-  "showcaseTotalKmSafety": "Showcase total km, safety score, and peak achievements.",
-  "@showcaseTotalKmSafety": {
-    "description": "Description in onboarding_manifest."
-  },
-  "safeqrCard": "SafeQR Card",
-  "@safeqrCard": {
-    "description": "Title in onboarding_manifest."
-  },
-  "offlineMedicalCardEmergency": "Offline medical card for emergency responders on the road.",
-  "@offlineMedicalCardEmergency": {
-    "description": "Description in onboarding_manifest."
-  },
-  "keepUp5Contacts": "Keep up to 5 contacts on file for a responder to reach.",
-  "@keepUp5Contacts": {
-    "description": "Description in onboarding_manifest."
   },
   "thatUsernameTakenTry": "That username is taken \u2014 try another.",
   "@thatUsernameTakenTry": {
@@ -1302,37 +1053,9 @@
   "@rideSmarterTrackDeeper": {
     "description": "Text in splash_screen."
   },
-  "guideProgress": "GUIDE {slideIndex} OF {totalSlides}",
-  "@guideProgress": {
-    "description": "Text in onboarding_slide_page.",
-    "placeholders": {
-      "slideIndex": {
-        "type": "Object"
-      },
-      "totalSlides": {
-        "type": "Object"
-      }
-    }
-  },
   "skipTour": "Skip tour",
   "@skipTour": {
-    "description": "Text in onboarding_slide_page."
-  },
-  "showMe": "Show me",
-  "@showMe": {
-    "description": "Text in onboarding_slide_page."
-  },
-  "getRiding": "Get Riding \ud83c\udfcd\ufe0f",
-  "@getRiding": {
-    "description": "Text in onboarding_slide_page."
-  },
-  "gotIt": "Got it  \u2192",
-  "@gotIt": {
-    "description": "Text in onboarding_slide_page."
-  },
-  "myGarage": "My Garage",
-  "@myGarage": {
-    "description": "Text in onboarding_ui_mockups."
+    "description": "Feature tour: top-right button that ends the first-run tour."
   },
   "addBike": "Add Bike",
   "@addBike": {
@@ -1342,153 +1065,17 @@
   "@active": {
     "description": "Text in onboarding_ui_mockups."
   },
-  "n4280KmLogged": "4,280 km logged",
-  "@n4280KmLogged": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "oilFilterDue720": "Oil & Filter Due in 720 km",
-  "@oilFilterDue720": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "themeTint": "Theme Tint:",
-  "@themeTint": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "gpsLocked": "GPS LOCKED",
-  "@gpsLocked": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "avg52": "AVG 52 \u00b7 ",
-  "@avg52": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "top124": "TOP 124",
-  "@top124": {
-    "description": "Text in onboarding_ui_mockups."
-  },
   "distance": "DISTANCE",
   "@distance": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "moving31m": "MOVING 31m",
-  "@moving31m": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "hold1sStart": "HOLD 1s TO START",
-  "@hold1sStart": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "autoTrackingSettings": "Auto-Tracking Settings",
-  "@autoTrackingSettings": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "smartNonRideFilter": "Smart Non-Ride Filter Active",
-  "@smartNonRideFilter": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "walkingBusesSubwayRides": "Walking, buses & subway rides automatically ignored",
-  "@walkingBusesSubwayRides": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "detectedRide": "Detected Ride",
-  "@detectedRide": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "autoSaved": "AUTO SAVED",
-  "@autoSaved": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "maintenanceSchedule": "Maintenance Schedule",
-  "@maintenanceSchedule": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "logService": "+ Log Service",
-  "@logService": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "engineOilFilter": "Engine Oil & Filter",
-  "@engineOilFilter": {
-    "description": "Title in onboarding_ui_mockups."
-  },
-  "due320Km": "Due in 320 km",
-  "@due320Km": {
-    "description": "DueText in onboarding_ui_mockups."
-  },
-  "chainCleanLube": "Chain Clean & Lube",
-  "@chainCleanLube": {
-    "description": "Title in onboarding_ui_mockups."
-  },
-  "good850Km": "Good for 850 km",
-  "@good850Km": {
-    "description": "DueText in onboarding_ui_mockups."
-  },
-  "brakeFluidFlush": "Brake Fluid Flush",
-  "@brakeFluidFlush": {
-    "description": "Title in onboarding_ui_mockups."
-  },
-  "good2100Km": "Good for 2,100 km",
-  "@good2100Km": {
-    "description": "DueText in onboarding_ui_mockups."
-  },
-  "n49VerifiedPure": "\u2605 4.9 \u00b7 Verified Pure Fuel \u00b7 Open 24/7",
-  "@n49VerifiedPure": {
     "description": "Text in onboarding_ui_mockups."
   },
   "directions": "Directions",
   "@directions": {
     "description": "Text in onboarding_ui_mockups."
   },
-  "riderFeed": "Rider Feed",
-  "@riderFeed": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "n2hAgo": "2h ago",
-  "@n2hAgo": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "morningTwistiesThrough300": "Morning twisties through 300 Feet Highway!",
-  "@morningTwistiesThrough300": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "privacyZone200mEndpoints": "Privacy Zone: 200m Endpoints Clipped",
-  "@privacyZone200mEndpoints": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "roadCaptainDhakaMetro": "Road Captain \u00b7 Dhaka Metro",
-  "@roadCaptainDhakaMetro": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "kmRidden": "KM RIDDEN",
-  "@kmRidden": {
-    "description": "_statCol in onboarding_ui_mockups."
-  },
-  "safetyScore": "SAFETY SCORE",
-  "@safetyScore": {
-    "description": "_statCol in onboarding_ui_mockups."
-  },
-  "safeqrOfflineMedicalCard": "SafeQR Offline Medical Card",
-  "@safeqrOfflineMedicalCard": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "bloodOIceEmergency": "Blood: O+ \u00b7 ICE Emergency SOS Armed",
-  "@bloodOIceEmergency": {
-    "description": "Text in onboarding_ui_mockups."
-  },
-  "guideProgressDot": "GUIDE \u00b7 {slideIndex} OF {total}",
-  "@guideProgressDot": {
-    "description": "Text in tour_floating_banner.",
-    "placeholders": {
-      "slideIndex": {
-        "type": "Object"
-      },
-      "total": {
-        "type": "Object"
-      }
-    }
-  },
   "backTour": "Back to Tour",
   "@backTour": {
-    "description": "Text in tour_floating_banner."
+    "description": "Floating tour banner on a live screen opened via Show me: returns to the tour step."
   },
   "next": "Next \u2192",
   "@next": {
@@ -5153,6 +4740,330 @@
   "@notEnoughRidesYet": {
     "description": "Text in ride_line_chart."
   },
+  "ridesAnalyticsTab": "Analytics",
+  "@ridesAnalyticsTab": {
+    "description": "Rides tab: tab label for the charts list."
+  },
+  "ridesHistoryTab": "History",
+  "@ridesHistoryTab": {
+    "description": "Rides tab: tab label for the ride history list."
+  },
+  "riderLevel": "Level {level}",
+  "@riderLevel": {
+    "description": "Rides tab header: the rider's level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "chartDistancePerRide": "Distance per ride",
+  "@chartDistancePerRide": {
+    "description": "Analytics chart title."
+  },
+  "chartWeeklyDistance": "Distance per week",
+  "@chartWeeklyDistance": {
+    "description": "Analytics chart title."
+  },
+  "chartAvgSpeed": "Average speed",
+  "@chartAvgSpeed": {
+    "description": "Analytics chart title."
+  },
+  "chartTopSpeed": "Top speed",
+  "@chartTopSpeed": {
+    "description": "Analytics chart title."
+  },
+  "chartRideDuration": "Ride duration",
+  "@chartRideDuration": {
+    "description": "Analytics chart title."
+  },
+  "chartMovingVsStopped": "Moving vs stopped",
+  "@chartMovingVsStopped": {
+    "description": "Analytics chart title: moving time vs time stopped in each ride."
+  },
+  "chartJamTime": "Time stuck in traffic",
+  "@chartJamTime": {
+    "description": "Analytics chart title: minutes stopped while recording, per ride."
+  },
+  "chartRidingScore": "Riding score",
+  "@chartRidingScore": {
+    "description": "Analytics chart title."
+  },
+  "chartHardBraking": "Hard braking",
+  "@chartHardBraking": {
+    "description": "Analytics chart title: hard-braking events per ride."
+  },
+  "chartRapidAccel": "Rapid acceleration",
+  "@chartRapidAccel": {
+    "description": "Analytics chart title: rapid-acceleration events per ride."
+  },
+  "chartOverspeed": "Overspeed alerts per ride",
+  "@chartOverspeed": {
+    "description": "Analytics chart title: overspeed episodes (alerts) per ride."
+  },
+  "chartActivityCalendar": "Riding days",
+  "@chartActivityCalendar": {
+    "description": "Analytics chart title: calendar heatmap of days ridden."
+  },
+  "chartHourOfDay": "Rides by hour of day",
+  "@chartHourOfDay": {
+    "description": "Analytics chart title."
+  },
+  "chartWeekday": "Rides by day of week",
+  "@chartWeekday": {
+    "description": "Analytics chart title."
+  },
+  "chartDistanceByBike": "Distance per bike",
+  "@chartDistanceByBike": {
+    "description": "Analytics chart title."
+  },
+  "chartLongestRides": "Longest rides",
+  "@chartLongestRides": {
+    "description": "Analytics chart title."
+  },
+  "analyticsRange7d": "7D",
+  "@analyticsRange7d": {
+    "description": "Time range chip: last 7 days."
+  },
+  "analyticsRange30d": "30D",
+  "@analyticsRange30d": {
+    "description": "Time range chip: last 30 days."
+  },
+  "analyticsRange90d": "90D",
+  "@analyticsRange90d": {
+    "description": "Time range chip: last 90 days."
+  },
+  "analyticsRange1y": "1Y",
+  "@analyticsRange1y": {
+    "description": "Time range chip: last 12 months."
+  },
+  "analyticsRangeAll": "All",
+  "@analyticsRangeAll": {
+    "description": "Time range chip: all time."
+  },
+  "analyticsMin": "Min",
+  "@analyticsMin": {
+    "description": "Summary stat label."
+  },
+  "analyticsMax": "Max",
+  "@analyticsMax": {
+    "description": "Summary stat label."
+  },
+  "analyticsAvg": "Average",
+  "@analyticsAvg": {
+    "description": "Summary stat label."
+  },
+  "analyticsTotal": "Total",
+  "@analyticsTotal": {
+    "description": "Summary stat label."
+  },
+  "analyticsTrend": "vs previous",
+  "@analyticsTrend": {
+    "description": "Summary stat label: change compared with the previous period of the same length."
+  },
+  "analyticsNoTrend": "No earlier data",
+  "@analyticsNoTrend": {
+    "description": "Shown instead of a trend when there is no previous period to compare."
+  },
+  "analyticsInsight": "Insight",
+  "@analyticsInsight": {
+    "description": "Section label above the plain-language insight."
+  },
+  "analyticsData": "Data",
+  "@analyticsData": {
+    "description": "Section label above the data table."
+  },
+  "analyticsDownloadData": "Download data",
+  "@analyticsDownloadData": {
+    "description": "Button that exports a chart's data as CSV."
+  },
+  "analyticsExportFailed": "Could not export the data",
+  "@analyticsExportFailed": {
+    "description": "Snackbar when the CSV export fails."
+  },
+  "analyticsShareSubject": "ThrottleIQ: {chart}",
+  "@analyticsShareSubject": {
+    "description": "Share-sheet subject for an exported chart CSV.",
+    "placeholders": {
+      "chart": {
+        "type": "String"
+      }
+    }
+  },
+  "analyticsColDate": "Date",
+  "@analyticsColDate": {
+    "description": "Table/CSV column header."
+  },
+  "analyticsColWeekOf": "Week of",
+  "@analyticsColWeekOf": {
+    "description": "Table/CSV column header: the Monday a week starts on."
+  },
+  "analyticsColHour": "Hour",
+  "@analyticsColHour": {
+    "description": "Table/CSV column header."
+  },
+  "analyticsColDay": "Day",
+  "@analyticsColDay": {
+    "description": "Table/CSV column header: day of the week."
+  },
+  "analyticsColBike": "Bike",
+  "@analyticsColBike": {
+    "description": "Table/CSV column header."
+  },
+  "analyticsColRides": "Rides",
+  "@analyticsColRides": {
+    "description": "Table/CSV column header: ride count."
+  },
+  "analyticsColMoving": "Moving",
+  "@analyticsColMoving": {
+    "description": "Table/CSV column header and legend: moving time."
+  },
+  "analyticsColStopped": "Stopped",
+  "@analyticsColStopped": {
+    "description": "Table/CSV column header and legend: stopped time."
+  },
+  "analyticsUnitMin": "min",
+  "@analyticsUnitMin": {
+    "description": "Unit: minutes."
+  },
+  "analyticsUnitRides": "rides",
+  "@analyticsUnitRides": {
+    "description": "Unit: rides."
+  },
+  "analyticsUnitEvents": "events",
+  "@analyticsUnitEvents": {
+    "description": "Unit: harsh riding events."
+  },
+  "analyticsUnknownBike": "Unknown bike",
+  "@analyticsUnknownBike": {
+    "description": "Label for rides whose bike no longer exists."
+  },
+  "analyticsTapForDetails": "Tap a chart for details",
+  "@analyticsTapForDetails": {
+    "description": "Hint above the analytics charts list."
+  },
+  "insightNotEnoughData": "Not enough rides in this period yet.",
+  "@insightNotEnoughData": {
+    "description": "Insight when the period has no data."
+  },
+  "insightTrendUp": "Up {percent}% on the previous period.",
+  "@insightTrendUp": {
+    "description": "Insight: value rose vs the previous period.",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "insightTrendDown": "Down {percent}% on the previous period.",
+  "@insightTrendDown": {
+    "description": "Insight: value fell vs the previous period.",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "insightTrendFlat": "About the same as the previous period.",
+  "@insightTrendFlat": {
+    "description": "Insight: little change vs the previous period."
+  },
+  "insightPeakValue": "Your highest was {value} on {date}.",
+  "@insightPeakValue": {
+    "description": "Insight: highest value and the date. {date} like '8 Oct'.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "insightPeakHour": "You ride most often around {hour}.",
+  "@insightPeakHour": {
+    "description": "Insight: busiest start hour, e.g. '18:00'.",
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      }
+    }
+  },
+  "insightPeakWeekday": "{day} is your busiest riding day.",
+  "@insightPeakWeekday": {
+    "description": "Insight: busiest weekday.",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "insightTopBike": "{bike} covers {percent}% of your distance.",
+  "@insightTopBike": {
+    "description": "Insight: share of distance on the most-used bike.",
+    "placeholders": {
+      "bike": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "insightStreak": "You have ridden {current} days in a row. Your record is {longest}.",
+  "@insightStreak": {
+    "description": "Insight: current and longest riding-day streak.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "longest": {
+        "type": "int"
+      }
+    }
+  },
+  "insightStreakRecordOnly": "Your longest run of riding days is {longest}.",
+  "@insightStreakRecordOnly": {
+    "description": "Insight when there is no current streak.",
+    "placeholders": {
+      "longest": {
+        "type": "int"
+      }
+    }
+  },
+  "insightLongestRide": "Your longest ride was {value} on {date}.",
+  "@insightLongestRide": {
+    "description": "Insight: longest ride. {value} like '42 km'.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "insightCleanRides": "{clean} of {total} rides had none.",
+  "@insightCleanRides": {
+    "description": "Insight: rides with zero harsh events of this type.",
+    "placeholders": {
+      "clean": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "insightStoppedShare": "You spent {percent}% of your riding time stopped.",
+  "@insightStoppedShare": {
+    "description": "Insight: share of ride time spent stopped.",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "cropPhoto": "Crop photo",
   "@cropPhoto": {
     "description": "Text in image_crop_screen."
@@ -6324,10 +6235,6 @@
   "feedSortHot": "Hot",
   "@feedSortHot": {
     "description": "Feed sort chip: most upvoted first."
-  },
-  "ridesCapsLabel": "RIDES",
-  "@ridesCapsLabel": {
-    "description": "Stat-column label in the onboarding mockup, matched in case to KM RIDDEN / SAFETY SCORE beside it."
   },
   "joinRideBadCode": "That code doesn't match a ride.",
   "@joinRideBadCode": {
@@ -8233,5 +8140,462 @@
   "couldNotArchiveSharedRides": "Could not remove the shared rides, so the bike was not archived. Check your connection and try again.",
   "@couldNotArchiveSharedRides": {
     "description": "Snackbar when archiving fails because the shared rides could not be deleted."
+  },
+  "badgeRarityCommon": "Common",
+  "@badgeRarityCommon": {
+    "description": "Badge rarity tier: 40% or more of riders own it."
+  },
+  "badgeRarityUncommon": "Uncommon",
+  "@badgeRarityUncommon": {
+    "description": "Badge rarity tier: 15–40% of riders own it."
+  },
+  "badgeRarityRare": "Rare",
+  "@badgeRarityRare": {
+    "description": "Badge rarity tier: 5–15% of riders own it."
+  },
+  "badgeRarityEpic": "Epic",
+  "@badgeRarityEpic": {
+    "description": "Badge rarity tier: 1–5% of riders own it."
+  },
+  "badgeRarityLegendary": "Legendary",
+  "@badgeRarityLegendary": {
+    "description": "Badge rarity tier: under 1% of riders own it."
+  },
+  "badgeOwnedByPercent": "{percent} of riders own this badge",
+  "@badgeOwnedByPercent": {
+    "description": "Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeOwnershipUnknown": "Rarity isn't available right now",
+  "@badgeOwnershipUnknown": {
+    "description": "Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available."
+  },
+  "badgeRarityLabel": "Rarity",
+  "@badgeRarityLabel": {
+    "description": "Badge detail sheet: section label for the rarity figure."
+  },
+  "badgeHowToEarn": "How to earn it",
+  "@badgeHowToEarn": {
+    "description": "Badge detail sheet: section label for the requirement."
+  },
+  "badgeEarnedOn": "Earned {date}",
+  "@badgeEarnedOn": {
+    "description": "Badge detail sheet: earned status with the date, e.g. 'Earned 8 Oct 2026'.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeEarnedStatus": "Earned",
+  "@badgeEarnedStatus": {
+    "description": "Badge status: earned (no date known)."
+  },
+  "badgeLockedStatus": "Locked",
+  "@badgeLockedStatus": {
+    "description": "Badge status: not earned yet."
+  },
+  "badgeProgressFraction": "{progress} / {target} {unit}",
+  "@badgeProgressFraction": {
+    "description": "Badge detail sheet: progress toward a locked badge, e.g. '420 / 500 km'.",
+    "placeholders": {
+      "progress": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeProgressToGo": "{remaining} {unit} to go",
+  "@badgeProgressToGo": {
+    "description": "Badge detail sheet: what's left to earn a locked badge.",
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeShareAction": "Share",
+  "@badgeShareAction": {
+    "description": "Badge detail sheet: share button for an earned badge."
+  },
+  "badgeShareText": "I earned the {badge} badge on ThrottleIQ.",
+  "@badgeShareText": {
+    "description": "Share text for an earned badge.",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeShareTextRarity": "I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.",
+  "@badgeShareTextRarity": {
+    "description": "Share text for an earned badge when its rarity is known.",
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      },
+      "rarity": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeViewDetails": "Tap for details",
+  "@badgeViewDetails": {
+    "description": "Accessibility hint on a badge row that opens the badge detail sheet."
+  },
+  "tourStepCounter": "Step {current} of {total}",
+  "@tourStepCounter": {
+    "description": "Feature tour: step counter above the progress bar and in the floating tour banner.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tourBack": "Back",
+  "@tourBack": {
+    "description": "Feature tour: button that goes to the previous step."
+  },
+  "tourNext": "Next",
+  "@tourNext": {
+    "description": "Feature tour: button that goes to the next step (also in the floating tour banner)."
+  },
+  "tourFinish": "Start riding",
+  "@tourFinish": {
+    "description": "Feature tour: button on the last step that closes the tour."
+  },
+  "tourShowMeLive": "Show me the screen",
+  "@tourShowMeLive": {
+    "description": "Feature tour: link that opens the real screen the current step describes."
+  },
+  "tourRecordTitle": "Ready, set, ride",
+  "@tourRecordTitle": {
+    "description": "Feature tour, Record step: title."
+  },
+  "tourRecordSubtitle": "The Record tab is home base: pick a bike, choose how you ride, and go.",
+  "@tourRecordSubtitle": {
+    "description": "Feature tour, Record step: one-line summary."
+  },
+  "tourRecordBikeTitle": "Your active bike",
+  "@tourRecordBikeTitle": {
+    "description": "Feature tour, Record step: callout about the bike card."
+  },
+  "tourRecordBikeBody": "The bike card up top is the one this ride counts toward. Tap it to switch bikes.",
+  "@tourRecordBikeBody": {
+    "description": "Feature tour, Record step: explains the bike card."
+  },
+  "tourRecordModeTitle": "Solo or group",
+  "@tourRecordModeTitle": {
+    "description": "Feature tour, Record step: callout about the Solo/Group selector."
+  },
+  "tourRecordModeBody": "Ride solo, or start a group ride and invite friends or share a join code.",
+  "@tourRecordModeBody": {
+    "description": "Feature tour, Record step: explains Solo/Group."
+  },
+  "tourRecordStartTitle": "Hold or slide to start",
+  "@tourRecordStartTitle": {
+    "description": "Feature tour, Record step: callout about the start control."
+  },
+  "tourRecordStartBody": "Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.",
+  "@tourRecordStartBody": {
+    "description": "Feature tour, Record step: explains hold-to-start / slide-to-start."
+  },
+  "tourCockpitTitle": "Your live cockpit",
+  "@tourCockpitTitle": {
+    "description": "Feature tour, live ride step: title."
+  },
+  "tourCockpitSubtitle": "Once you start, a cockpit you can read at a glance takes over the screen.",
+  "@tourCockpitSubtitle": {
+    "description": "Feature tour, live ride step: one-line summary."
+  },
+  "tourCockpitLocation": "Record \u203a Start ride",
+  "@tourCockpitLocation": {
+    "description": "Feature tour, live ride step: breadcrumb of where the screen lives."
+  },
+  "tourCockpitGaugesTitle": "Speed at a glance",
+  "@tourCockpitGaugesTitle": {
+    "description": "Feature tour, live ride step: callout about the gauges."
+  },
+  "tourCockpitGaugesBody": "Big live speed, distance and average speed, readable from a handlebar mount. Pause, resume or end any time.",
+  "@tourCockpitGaugesBody": {
+    "description": "Feature tour, live ride step: explains the gauges."
+  },
+  "tourCockpitShareTitle": "Share your live location",
+  "@tourCockpitShareTitle": {
+    "description": "Feature tour, live ride step: callout about live sharing."
+  },
+  "tourCockpitShareBody": "Send family a live link so they can follow your ride. It stops when the ride ends.",
+  "@tourCockpitShareBody": {
+    "description": "Feature tour, live ride step: explains live sharing."
+  },
+  "tourCockpitSafetyTitle": "Ride alerts and crash check",
+  "@tourCockpitSafetyTitle": {
+    "description": "Feature tour, live ride step: callout about alerts and crash detection."
+  },
+  "tourCockpitSafetyBody": "Get warned about overspeed, hard braking and fatigue. After a suspected crash, tap \"I'm OK\" or your emergency contacts are notified.",
+  "@tourCockpitSafetyBody": {
+    "description": "Feature tour, live ride step: explains ride alerts and crash detection."
+  },
+  "tourCockpitJamTitle": "Label traffic jams",
+  "@tourCockpitJamTitle": {
+    "description": "Feature tour, live ride step: callout about the beta jam-labelling buttons (only shown to beta testers)."
+  },
+  "tourCockpitJamBody": "Tap \"I'm in a jam\" when you get stuck and \"Jam released\" when it clears, to help train jam detection.",
+  "@tourCockpitJamBody": {
+    "description": "Feature tour, live ride step: explains the beta jam-labelling buttons."
+  },
+  "tourAutoTitle": "Auto tracking",
+  "@tourAutoTitle": {
+    "description": "Feature tour, auto tracking step: title."
+  },
+  "tourAutoSubtitle": "Forgot to press start? ThrottleIQ can notice your rides and log them for you.",
+  "@tourAutoSubtitle": {
+    "description": "Feature tour, auto tracking step: one-line summary."
+  },
+  "tourAutoLocation": "Garage \u203a Settings",
+  "@tourAutoLocation": {
+    "description": "Feature tour, auto tracking step: breadcrumb of where the setting lives."
+  },
+  "tourAutoDetectTitle": "Turn it on once",
+  "@tourAutoDetectTitle": {
+    "description": "Feature tour, auto tracking step: callout about enabling it."
+  },
+  "tourAutoDetectBody": "Enable Auto Tracking in Settings and recording starts by itself when you ride off.",
+  "@tourAutoDetectBody": {
+    "description": "Feature tour, auto tracking step: explains enabling it."
+  },
+  "tourAutoFilterTitle": "Skips what isn't a ride",
+  "@tourAutoFilterTitle": {
+    "description": "Feature tour, auto tracking step: callout about the non-ride filter."
+  },
+  "tourAutoFilterBody": "Walks, buses and car trips are filtered out, so only motorcycle rides are kept.",
+  "@tourAutoFilterBody": {
+    "description": "Feature tour, auto tracking step: explains the non-ride filter."
+  },
+  "tourAutoHistoryTitle": "Review detections",
+  "@tourAutoHistoryTitle": {
+    "description": "Feature tour, auto tracking step: callout about the detection history."
+  },
+  "tourAutoHistoryBody": "Open the detection history from the Auto Tracking tile to see what was recorded and why.",
+  "@tourAutoHistoryBody": {
+    "description": "Feature tour, auto tracking step: explains the detection history."
+  },
+  "tourRidesTitle": "Your riding, in numbers",
+  "@tourRidesTitle": {
+    "description": "Feature tour, Rides tab step: title."
+  },
+  "tourRidesSubtitle": "The Rides tab turns every trip into trends, a score and badges.",
+  "@tourRidesSubtitle": {
+    "description": "Feature tour, Rides tab step: one-line summary."
+  },
+  "tourRidesScoreTitle": "Score and rider rank",
+  "@tourRidesScoreTitle": {
+    "description": "Feature tour, Rides tab step: callout about the score and rank."
+  },
+  "tourRidesScoreBody": "Your journey score and rank grow the more you ride.",
+  "@tourRidesScoreBody": {
+    "description": "Feature tour, Rides tab step: explains the score and rank."
+  },
+  "tourRidesChartsTitle": "Trend charts",
+  "@tourRidesChartsTitle": {
+    "description": "Feature tour, Rides tab step: callout about the charts."
+  },
+  "tourRidesChartsBody": "Distance and speed over time. Open All rides to sort them and see any ride's summary.",
+  "@tourRidesChartsBody": {
+    "description": "Feature tour, Rides tab step: explains the charts and the All rides list."
+  },
+  "tourRidesBadgesTitle": "Badges",
+  "@tourRidesBadgesTitle": {
+    "description": "Feature tour, Rides tab step: callout about badges."
+  },
+  "tourRidesBadgesBody": "Earn badges for milestones. Tap any badge to see what it takes to unlock.",
+  "@tourRidesBadgesBody": {
+    "description": "Feature tour, Rides tab step: explains badges and the badge detail sheet."
+  },
+  "tourGarageTitle": "Your garage",
+  "@tourGarageTitle": {
+    "description": "Feature tour, Garage tab step: title."
+  },
+  "tourGarageSubtitle": "Every bike you own, each with its own rides, distance and service history.",
+  "@tourGarageSubtitle": {
+    "description": "Feature tour, Garage tab step: one-line summary."
+  },
+  "tourGarageActiveTitle": "Set the active bike",
+  "@tourGarageActiveTitle": {
+    "description": "Feature tour, Garage tab step: callout about the active bike."
+  },
+  "tourGarageActiveBody": "New rides and kilometres go to the active bike. Switch it any time.",
+  "@tourGarageActiveBody": {
+    "description": "Feature tour, Garage tab step: explains the active bike."
+  },
+  "tourGarageDetailTitle": "Bike details",
+  "@tourGarageDetailTitle": {
+    "description": "Feature tour, Garage tab step: callout about the bike detail screen."
+  },
+  "tourGarageDetailBody": "Tap a bike to add a photo, edit its specs and see its rides.",
+  "@tourGarageDetailBody": {
+    "description": "Feature tour, Garage tab step: explains the bike detail screen."
+  },
+  "tourGarageArchiveTitle": "Archive old bikes",
+  "@tourGarageArchiveTitle": {
+    "description": "Feature tour, Garage tab step: callout about archiving bikes."
+  },
+  "tourGarageArchiveBody": "Sold a bike? Archive it. It stays under Archived bikes for 90 days, and you can unarchive it until then.",
+  "@tourGarageArchiveBody": {
+    "description": "Feature tour, Garage tab step: explains archiving and the 90-day purge."
+  },
+  "tourMaintenanceTitle": "Maintenance on schedule",
+  "@tourMaintenanceTitle": {
+    "description": "Feature tour, maintenance step: title."
+  },
+  "tourMaintenanceSubtitle": "Service reminders based on the kilometres you actually ride.",
+  "@tourMaintenanceSubtitle": {
+    "description": "Feature tour, maintenance step: one-line summary."
+  },
+  "tourMaintenanceLocation": "Garage \u203a Maintenance",
+  "@tourMaintenanceLocation": {
+    "description": "Feature tour, maintenance step: breadcrumb of where the screen lives."
+  },
+  "tourMaintenanceDueTitle": "What's due, at a glance",
+  "@tourMaintenanceDueTitle": {
+    "description": "Feature tour, maintenance step: callout about due items."
+  },
+  "tourMaintenanceDueBody": "Oil, chain, brakes and more, each with a colour-coded countdown to its next service.",
+  "@tourMaintenanceDueBody": {
+    "description": "Feature tour, maintenance step: explains the due countdowns."
+  },
+  "tourMaintenanceOdoTitle": "Sync the odometer",
+  "@tourMaintenanceOdoTitle": {
+    "description": "Feature tour, maintenance step: callout about the odometer sync."
+  },
+  "tourMaintenanceOdoBody": "Enter your bike's real odometer reading now and then to keep every countdown accurate.",
+  "@tourMaintenanceOdoBody": {
+    "description": "Feature tour, maintenance step: explains the odometer sync."
+  },
+  "tourMaintenanceLogTitle": "Log a service",
+  "@tourMaintenanceLogTitle": {
+    "description": "Feature tour, maintenance step: callout about logging a service."
+  },
+  "tourMaintenanceLogBody": "Record what was done and the countdown starts over.",
+  "@tourMaintenanceLogBody": {
+    "description": "Feature tour, maintenance step: explains logging a service."
+  },
+  "tourPlacesTitle": "Rider places",
+  "@tourPlacesTitle": {
+    "description": "Feature tour, Places tab step: title."
+  },
+  "tourPlacesSubtitle": "Fuel, workshops, parts and hangouts near you, on a map or in a list.",
+  "@tourPlacesSubtitle": {
+    "description": "Feature tour, Places tab step: one-line summary."
+  },
+  "tourPlacesMapTitle": "Map and filters",
+  "@tourPlacesMapTitle": {
+    "description": "Feature tour, Places tab step: callout about the map and filters."
+  },
+  "tourPlacesMapBody": "Filter by category, switch between map and list, and get directions to any place.",
+  "@tourPlacesMapBody": {
+    "description": "Feature tour, Places tab step: explains the map and filters."
+  },
+  "tourPlacesRoutesTitle": "Routes and saved places",
+  "@tourPlacesRoutesTitle": {
+    "description": "Feature tour, Places tab step: callout about routes and saved places."
+  },
+  "tourPlacesRoutesBody": "Save a ride as a route, discover other riders' routes, and keep your favourite places.",
+  "@tourPlacesRoutesBody": {
+    "description": "Feature tour, Places tab step: explains routes and saved places."
+  },
+  "tourPlacesAddTitle": "Add a place",
+  "@tourPlacesAddTitle": {
+    "description": "Feature tour, Places tab step: callout about adding places."
+  },
+  "tourPlacesAddBody": "Know a good mechanic? Add it, and rate places to help other riders.",
+  "@tourPlacesAddBody": {
+    "description": "Feature tour, Places tab step: explains adding and rating places."
+  },
+  "tourSocialTitle": "Ride together",
+  "@tourSocialTitle": {
+    "description": "Feature tour, Social tab step: title."
+  },
+  "tourSocialSubtitle": "Share rides, find riders and talk bikes, all in one place.",
+  "@tourSocialSubtitle": {
+    "description": "Feature tour, Social tab step: one-line summary."
+  },
+  "tourSocialFeedTitle": "Ride feed and people",
+  "@tourSocialFeedTitle": {
+    "description": "Feature tour, Social tab step: callout about the feed and People tab."
+  },
+  "tourSocialFeedBody": "See shared rides, find riders to follow, and message them directly.",
+  "@tourSocialFeedBody": {
+    "description": "Feature tour, Social tab step: explains the feed, People tab and chats."
+  },
+  "tourSocialForumsTitle": "Forums",
+  "@tourSocialForumsTitle": {
+    "description": "Feature tour, Social tab step: callout about forums."
+  },
+  "tourSocialForumsBody": "Bike-model forums for mods, problems and meetups.",
+  "@tourSocialForumsBody": {
+    "description": "Feature tour, Social tab step: explains forums."
+  },
+  "tourSocialGroupTitle": "Group rides",
+  "@tourSocialGroupTitle": {
+    "description": "Feature tour, Social tab step: callout about group rides."
+  },
+  "tourSocialGroupBody": "Ride as a pack on a live map, with push-to-talk to the whole group.",
+  "@tourSocialGroupBody": {
+    "description": "Feature tour, Social tab step: explains group rides and group talk."
+  },
+  "tourProfileTitle": "Your rider profile",
+  "@tourProfileTitle": {
+    "description": "Feature tour, profile step: title."
+  },
+  "tourProfileSubtitle": "Your public page: stats, garage, followers and who you follow.",
+  "@tourProfileSubtitle": {
+    "description": "Feature tour, profile step: one-line summary."
+  },
+  "tourProfileLocation": "Garage \u203a View profile",
+  "@tourProfileLocation": {
+    "description": "Feature tour, profile step: breadcrumb of where the profile is opened from."
+  },
+  "tourProfileQrTitle": "Follow by QR",
+  "@tourProfileQrTitle": {
+    "description": "Feature tour, profile step: callout about the follow QR code."
+  },
+  "tourProfileQrBody": "Show your QR code so a riding buddy can follow you in one scan, or scan theirs.",
+  "@tourProfileQrBody": {
+    "description": "Feature tour, profile step: explains generating and scanning a follow QR code."
+  },
+  "tourProfilePrivacyTitle": "You choose who sees what",
+  "@tourProfilePrivacyTitle": {
+    "description": "Feature tour, profile step: callout about profile privacy."
+  },
+  "tourProfilePrivacyBody": "Under Edit profile, decide who can see your profile and your bikes.",
+  "@tourProfilePrivacyBody": {
+    "description": "Feature tour, profile step: explains profile privacy settings."
+  },
+  "tourProfileSafeQrTitle": "SafeQR medical card",
+  "@tourProfileSafeQrTitle": {
+    "description": "Feature tour, profile step: callout about SafeQR."
+  },
+  "tourProfileSafeQrBody": "In Settings, set up a scannable card with your blood group and emergency contacts for first responders.",
+  "@tourProfileSafeQrBody": {
+    "description": "Feature tour, profile step: explains SafeQR."
   }
 }

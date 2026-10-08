@@ -55,24 +55,24 @@ void main() {
     addTearDown(container.dispose);
     await tester.pumpWidget(harness(container));
     await tester.pumpAndSettle();
-    expect(container.read(appearanceProvider).colorMode, AppColorMode.daily);
+    expect(container.read(appearanceProvider).colorMode, AppColorMode.commute);
 
     await tester.tap(find.byType(DropdownButtonFormField<AppColorMode>));
     await tester.pumpAndSettle();
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await tester.tap(find.text(colorModeLabel(l10n, AppColorMode.adventure)).last);
+    await tester.tap(find.text(colorModeLabel(l10n, AppColorMode.adv)).last);
     await tester.pumpAndSettle();
 
-    expect(container.read(appearanceProvider).colorMode, AppColorMode.adventure);
+    expect(container.read(appearanceProvider).colorMode, AppColorMode.adv);
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('color_mode'), 'adventure');
+    expect(prefs.getString('color_mode'), 'adv');
   });
 
   testWidgets('the closed field shows the color mode already in effect',
       (tester) async {
     SharedPreferences.setMockInitialValues({
-      'color_mode': 'sport',
+      'color_mode': 'race',
       'shape_vibe': 'boxy',
       'brightness': 'light',
     });
@@ -83,7 +83,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    expect(find.text(colorModeLabel(l10n, AppColorMode.sport)), findsOneWidget);
+    expect(find.text(colorModeLabel(l10n, AppColorMode.race)), findsOneWidget);
   });
 
   testWidgets('rows grow with accessibility text scaling rather than clipping',
@@ -166,34 +166,58 @@ void main() {
     }
   });
 
-  testWidgets('ColorModeSegmentedPicker displays all 3 modes and switches mode on tap',
+  Widget segmentedHarness(ProviderContainer container) =>
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: theme,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(
+              body: SingleChildScrollView(child: ColorModeSegmentedPicker())),
+        ),
+      );
+
+  testWidgets('ColorModeSegmentedPicker shows all seven ride modes and switches on tap',
       (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        theme: theme,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: const Scaffold(body: ColorModeSegmentedPicker()),
-      ),
-    ));
+    await tester.pumpWidget(segmentedHarness(container));
     await tester.pumpAndSettle();
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    expect(AppColorMode.values, hasLength(7));
     for (final mode in AppColorMode.values) {
       expect(find.text(colorModeLabel(l10n, mode)), findsOneWidget);
       expect(find.text(colorModeDescription(l10n, mode)), findsOneWidget);
     }
 
-    // Tap Sport
-    await tester.tap(find.text(colorModeLabel(l10n, AppColorMode.sport)));
+    for (final mode in [AppColorMode.race, AppColorMode.city, AppColorMode.rain]) {
+      await tester.tap(find.text(colorModeLabel(l10n, mode)));
+      await tester.pumpAndSettle();
+      expect(container.read(appearanceProvider).colorMode, mode);
+    }
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('color_mode'), 'rain');
+  });
+
+  testWidgets('ColorModeSegmentedPicker fits a narrow phone at large text',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(segmentedHarness(container));
     await tester.pumpAndSettle();
-    expect(container.read(appearanceProvider).colorMode, AppColorMode.sport);
+    expect(tester.takeException(), isNull);
+    expect(find.byType(ColorModeSwatch), findsNWidgets(7));
   });
 }

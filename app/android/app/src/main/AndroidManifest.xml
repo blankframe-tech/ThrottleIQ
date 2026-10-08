@@ -33,6 +33,14 @@
     <!-- Voice notes ("Ride with friends" push-to-talk). -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- "Scan QR" on the profile (mobile_scanner): reads another rider's
+         follow QR. Optional hardware so camera-less devices still install. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- "Save image" of the rider's follow QR (gal). Only Android 9 and below
+         need a permission to write to the gallery. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -98,6 +106,42 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Follow links are handled by app_links in Dart
+                 (follow_link_listener.dart). Flutter's built-in deep linking
+                 would otherwise hand /ThrottleIQ/u/<uid> to go_router as a
+                 route, which doesn't exist. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <!-- Follow links (App Links): https://blankframe.tech/ThrottleIQ/u/<uid>
+                 opens the app directly once the host serves
+                 /.well-known/assetlinks.json (public/well-known/assetlinks.json).
+                 Both path casings, since a hand-typed link may lowercase it.
+                 throttleiqfb.web.app/u/<uid> is the Firebase Hosting mirror. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="blankframe.tech" />
+                <data android:host="www.blankframe.tech" />
+                <data android:pathPrefix="/ThrottleIQ/u/" />
+                <data android:pathPrefix="/throttleiq/u/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="throttleiqfb.web.app" />
+                <data android:pathPrefix="/u/" />
+            </intent-filter>
+            <!-- Custom-scheme fallback, throttleiq://u/<uid>: what the web
+                 fallback page launches when App Links aren't verified. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="throttleiq" android:host="u" />
             </intent-filter>
         </activity>
 

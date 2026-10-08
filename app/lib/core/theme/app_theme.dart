@@ -20,7 +20,8 @@ class AppTheme {
   /// [AppShapeProfile.forVibe]. Nothing about the layout hierarchy changes
   /// with the appearance, only how the same widgets are drawn.
   ///
-  /// Retro remains the one color mode that is more than shape and color: it
+  /// Race (the Retro palette) remains the one color mode that is more than
+  /// shape and color: it
   /// drops body type to monospace regardless of which shape/brightness it's
   /// paired with, and its mustard accent always takes dark ink text rather
   /// than the white/surface foreground every other mode's primary button
@@ -29,10 +30,11 @@ class AppTheme {
   /// [AppColorPalette.retroLight]/[AppColorPalette.retroDark].
   /// Text/icon color drawn on a filled `primary` button for [palette].
   /// Pulled out of [build] so the WCAG contrast test can check every
-  /// palette against exactly what the button renders.
-  static Color primaryButtonForeground(AppColorPalette palette,
-          {bool isRetro = false}) =>
-      isRetro
+  /// palette against exactly what the button renders. Race/Retro is told
+  /// apart by its palette flag ([AppColorPalette.monoDisplay], which only the
+  /// Retro palettes set), so callers that only hold a palette get it right.
+  static Color primaryButtonForeground(AppColorPalette palette) =>
+      palette.monoDisplay
           ? const Color(0xFF1A1A1A)
           : (palette.isDark ? palette.surface : Colors.white);
 
@@ -44,7 +46,12 @@ class AppTheme {
         AppColorPalette.forMode(appearance.colorMode, appearance.brightness);
     final shape = AppShapeProfile.forVibe(appearance.shapeVibe);
 
-    final bodyText = GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
+    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Race (Retro),
+    // where a proportional body face would break the illusion the rest of
+    // the direction is building.
+    final bodyText = palette.monoDisplay
+        ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
+        : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText
         .copyWith(
           displayLarge: GoogleFonts.ibmPlexMono(

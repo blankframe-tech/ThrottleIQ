@@ -44,6 +44,19 @@
           { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },
           { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
         ]
+      },
+      {
+        "source": "/.well-known/**",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Cache-Control", "value": "public, max-age=3600" }
+        ]
+      },
+      {
+        "source": "/apple-app-site-association",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" }
+        ]
       }
     ],
     "rewrites": [
@@ -62,6 +75,30 @@
       {
         "source": "/install",
         "destination": "/install/index.html"
+      },
+      {
+        "source": "/u/**",
+        "destination": "/follow.html"
+      },
+      {
+        "source": "/ThrottleIQ/u/**",
+        "destination": "/follow.html"
+      },
+      {
+        "source": "/throttleiq/u/**",
+        "destination": "/follow.html"
+      },
+      {
+        "source": "/.well-known/assetlinks.json",
+        "destination": "/well-known/assetlinks.json"
+      },
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "destination": "/well-known/apple-app-site-association.json"
+      },
+      {
+        "source": "/apple-app-site-association",
+        "destination": "/well-known/apple-app-site-association.json"
       }
     ]
   }

@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 24;
+  static const int schemaVersion = 25;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -327,6 +327,13 @@ class DatabaseHelper {
       await _addColumnIfMissing(db, 'bikes', 'archived_at', 'archived_at TEXT');
       await db.update('bikes', {'archived_at': DateTime.now().toIso8601String()},
           where: 'archived = 1 AND archived_at IS NULL');
+    }
+    if (oldVersion < 25 && newVersion >= 25) {
+      // Per-ride overspeed episodes. Nullable with no default on purpose:
+      // existing rides were never counted, and NULL ("unknown") keeps them
+      // out of the overspeed chart instead of reading as a clean 0.
+      await _addColumnIfMissing(
+          db, 'rides', 'overspeed_count', 'overspeed_count INTEGER');
     }
   }
 
@@ -766,6 +773,7 @@ class DatabaseHelper {
         hard_brake_count INTEGER NOT NULL DEFAULT 0,
         rapid_accel_count INTEGER NOT NULL DEFAULT 0,
         high_jerk_count INTEGER NOT NULL DEFAULT 0,
+        overspeed_count INTEGER,
         status TEXT NOT NULL DEFAULT 'active',
         map_snapshot_path TEXT,
         is_auto INTEGER NOT NULL DEFAULT 0,

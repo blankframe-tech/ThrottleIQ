@@ -26,6 +26,8 @@ import '../../features/profile/presentation/screens/sync_issues_screen.dart';
 import '../../features/profile/presentation/screens/safe_qr_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
+import '../../features/profile/presentation/screens/my_follow_qr_screen.dart';
+import '../../features/social/presentation/screens/scan_follow_qr_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../features/social/presentation/screens/group_ride_map_screen.dart';
@@ -133,6 +135,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // "Edit" action. Both literals must precede '/profile/:uid' below.
       GoRoute(path: '/profile', builder: (_, __) => const UserProfileScreen()),
       GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
+      // The rider's own follow QR, and the scanner that reads someone else's.
+      // Literals, so they too must precede '/profile/:uid'.
+      GoRoute(path: '/profile/qr', builder: (_, __) => const MyFollowQrScreen()),
+      GoRoute(path: '/profile/scan', builder: (_, __) => const ScanFollowQrScreen()),
       // Must come after the literal '/profile/edit' above — go_router tries
       // routes in listed order, so the exact-match route wins for that one
       // path and every other uid falls through to this param route.
@@ -231,7 +237,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),
         routes: [
-          GoRoute(path: '/home/social', builder: (_, __) => const SocialScreen()),
+          // `?tab=people` opens on the People tab (who you follow) — where a
+          // follow from a scanned/opened follow link lands.
+          GoRoute(
+            path: '/home/social',
+            builder: (_, state) => SocialScreen(
+              // Keyed on the tab so re-opening /home/social?tab=people while
+              // already on Social actually switches tabs (DefaultTabController
+              // only reads initialIndex once per State).
+              key: ValueKey('social-${state.uri.queryParameters['tab']}'),
+              initialTab: state.uri.queryParameters['tab'] == 'people'
+                  ? SocialScreen.peopleTab
+                  : 0,
+            ),
+          ),
           GoRoute(path: '/home/stats', builder: (_, __) => const StatsScreen()),
           GoRoute(path: '/home/record', builder: (_, __) => const RecordScreen()),
           GoRoute(

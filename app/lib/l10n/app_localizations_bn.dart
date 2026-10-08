@@ -63,64 +63,46 @@ class AppLocalizationsBn extends AppLocalizations {
   String get colorFieldLabel => 'রং';
 
   @override
-  String get themeDailyLabel => 'ডেইলি';
-
-  @override
-  String get themeDailyDescription => 'শান্ত ও স্থির, সেজ ও ট্যান';
-
-  @override
   String get themeSportLabel => 'স্পোর্ট';
 
   @override
-  String get themeSportDescription => 'লাইম কার্বন ও রেসিং শক্তি';
+  String get themeSportDescription => 'লাইম আর ম্যাজেন্টা, কার্বন প্যানেল';
 
   @override
-  String get themeAdventureLabel => 'অ্যাডভেঞ্চার';
+  String get themeRainLabel => 'রেইন';
 
   @override
-  String get themeAdventureDescription => 'কনসোল সায়ান ও ট্যুরিং আভা';
+  String get themeRainDescription => 'গাঢ় নীল সন্ধ্যা, বেগুনি আর টিল';
 
   @override
-  String get themeCarbonLabel => 'কার্বন মোনো';
+  String get themeRaceLabel => 'রেস';
 
   @override
-  String get themeCarbonDescription => 'লাইম আর ম্যাজেন্টা';
+  String get themeRaceDescription => 'রেস পোস্টার, সরিষা ও মরিচা রং';
 
   @override
-  String get themeEditorialLabel => 'এডিটোরিয়াল';
+  String get themeCommuteLabel => 'কমিউট';
 
   @override
-  String get themeEditorialDescription => 'নীল আর কমলা, কাগজের উষ্ণতা';
+  String get themeCommuteDescription => 'শান্ত ক্রিম, সবুজ আর বাদামি';
 
   @override
-  String get themeNocturneLabel => 'নকটার্ন';
+  String get themeTourLabel => 'ট্যুর';
 
   @override
-  String get themeNocturneDescription => 'গাঢ় নীল আর বেগুনি আভা';
+  String get themeTourDescription => 'ঝলমলে কমলা আর আকাশি নীল';
 
   @override
-  String get themeTrailSocialLabel => 'ট্রেইল সোশ্যাল';
+  String get themeAdvLabel => 'এডিভি';
 
   @override
-  String get themeTrailSocialDescription => 'ঝলমলে কমলা';
+  String get themeAdvDescription => 'নেভি কনসোল, সায়ান মিটার';
 
   @override
-  String get themeCalmingLabel => 'কামিং';
+  String get themeCityLabel => 'সিটি';
 
   @override
-  String get themeCalmingDescription => 'উষ্ণ সবুজ আর বাদামি';
-
-  @override
-  String get themeRetroLabel => 'রেট্রো';
-
-  @override
-  String get themeRetroDescription => '70-দশকের পোস্টার, সরিষা ও মরিচা রং';
-
-  @override
-  String get themeAnalystBlueLabel => 'অ্যানালিস্ট ব্লু';
-
-  @override
-  String get themeAnalystBlueDescription => 'নেভি কনসোল, সায়ান মিটার';
+  String get themeCityDescription => 'কাগজের উষ্ণতা, নীল আর কমলা';
 
   @override
   String get languageSection => 'ভাষা';
@@ -535,6 +517,78 @@ class AppLocalizationsBn extends AppLocalizations {
   String get safeQrShareImageAction => 'QR ছবি সংরক্ষণ বা শেয়ার করুন';
 
   @override
+  String get myQrTitle => 'আমার QR কোড';
+
+  @override
+  String get myQrIntro =>
+      'যে রাইডাররা এই কোড স্ক্যান করবেন, তাঁরা আপনাকে ফলো করবেন। ThrottleIQ-এর স্ক্যানার বা যেকোনো ফোনের ক্যামেরায় কাজ করে।';
+
+  @override
+  String get myQrShareAction => 'শেয়ার করুন';
+
+  @override
+  String get myQrSaveAction => 'ছবি সেভ করুন';
+
+  @override
+  String myQrShareText(String link) {
+    return 'ThrottleIQ-এ আমাকে ফলো করুন: $link';
+  }
+
+  @override
+  String get myQrSaved => 'QR কোড আপনার ফটোতে সেভ হয়েছে।';
+
+  @override
+  String get myQrSaveNoAccess =>
+      'ThrottleIQ আপনার ফটোতে সেভ করতে পারছে না। সেটিংসে ফটো অ্যাক্সেস চালু করুন।';
+
+  @override
+  String get myQrImageFailed => 'আপনার QR কোডের ছবি তৈরি করা যায়নি।';
+
+  @override
+  String get scanQrAction => 'QR স্ক্যান করুন';
+
+  @override
+  String get scanQrTitle => 'রাইডারের QR স্ক্যান করুন';
+
+  @override
+  String get scanQrHint =>
+      'অন্য রাইডারকে ফলো করতে তাঁর ThrottleIQ QR কোডের দিকে ক্যামেরা ধরুন।';
+
+  @override
+  String get scanQrTorch => 'ফ্ল্যাশলাইট';
+
+  @override
+  String get scanQrCameraDenied =>
+      'ক্যামেরা অ্যাক্সেস বন্ধ। QR কোড স্ক্যান করতে সেটিংসে এটি চালু করুন।';
+
+  @override
+  String get scanQrCameraError => 'ক্যামেরা চালু হয়নি।';
+
+  @override
+  String followLinkFollowed(String name) {
+    return 'আপনি এখন $name-কে ফলো করছেন।';
+  }
+
+  @override
+  String followLinkAlreadyFollowing(String name) {
+    return 'আপনি আগে থেকেই $name-কে ফলো করছেন।';
+  }
+
+  @override
+  String get followLinkSelf => 'এটি আপনার নিজের QR কোড।';
+
+  @override
+  String get followLinkInvalid => 'এটি ThrottleIQ রাইডারের কোড নয়।';
+
+  @override
+  String get followLinkSignInFirst =>
+      'এই রাইডারকে ফলো করা শেষ করতে সাইন ইন করুন।';
+
+  @override
+  String get followLinkFailed =>
+      'এই রাইডারকে ফলো করা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
+
+  @override
   String get safeQrShareImageFailed => 'QR ছবি তৈরি করা গেল না।';
 
   @override
@@ -640,304 +694,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get signInSubtitle => 'রাইড ট্র্যাক করতে সাইন ইন করুন';
 
   @override
-  String get yourGarage => 'আপনার গ্যারেজ';
-
-  @override
-  String get everyBikeOwnTracked => 'আপনার সব বাইক, এক জায়গায় ট্র্যাক করা।';
-
-  @override
-  String get addUnlimitedBikesBrand =>
-      'আনলিমিটেড বাইক যোগ করুন — ব্র্যান্ড, মডেল, বছর, সিসি';
-
-  @override
-  String get bikesPaintColorTints =>
-      'আপনার বাইকের রঙে পুরো অ্যাপের থিম বদলে যায়';
-
-  @override
-  String get tapAnyBikeView => 'বাইকে ট্যাপ করে পুরো ইতিহাস ও বিস্তারিত দেখুন';
-
-  @override
-  String get switchActiveBikeBefore =>
-      'প্রতিটি রাইডের আগে সক্রিয় বাইক বদলে নিন';
-
-  @override
-  String get activeMotorcycle => 'সক্রিয় মোটরসাইকেল';
-
-  @override
-  String get tintsEntireAppTheme =>
-      'পুরো অ্যাপের থিমে রং ছড়িয়ে দেয় এবং আপনার ট্রিপ লগের সাথে যুক্ত হয়।';
-
-  @override
-  String get serviceCountdown => 'সার্ভিস কাউন্টডাউন';
-
-  @override
-  String get realTimeMaintenanceTracker =>
-      'আসলে চালানো কিমি ধরে রিয়েল-টাইম মেইনটেন্যান্স ট্র্যাকার।';
-
-  @override
-  String get addSwitch => 'যোগ ও পরিবর্তন';
-
-  @override
-  String get manageMultipleBikesSwap =>
-      'একাধিক বাইক পরিচালনা করুন এবং যখন খুশি সক্রিয় বাইক বদলান।';
-
-  @override
   String get startRide => 'রাইড শুরু করুন';
-
-  @override
-  String get holdButtonThrottleiqDoes =>
-      'বোতামটি ধরে রাখুন। বাকিটা ThrottleIQ করবে।';
-
-  @override
-  String get holdStartRecordTab => 'শুরু করতে রেকর্ড ট্যাবে ধরে রাখুন';
-
-  @override
-  String get gpsSensorFusionCaptures =>
-      'GPS ও সেন্সর মিলিয়ে প্রতিটি মুহূর্ত ধরা হয়';
-
-  @override
-  String get continuesRecordingBackground =>
-      'ব্যাকগ্রাউন্ডেও রেকর্ডিং চলতে থাকে';
-
-  @override
-  String get pausedRideSurvivesApp =>
-      'বিরতি দেওয়া রাইড অ্যাপ বন্ধ করলেও থেকে যায়';
-
-  @override
-  String get shareLiveLocationWith =>
-      'পরিবারের সাথে রিয়েল-টাইমে আপনার লাইভ লোকেশন শেয়ার করুন';
-
-  @override
-  String get cockpitTelemetry => 'ককপিট টেলিমেট্রি';
-
-  @override
-  String get liveGpsSpeedDistance =>
-      'চলার সাথে সাথে লাইভ GPS গতি, দূরত্ব ও রাইডের তথ্য।';
-
-  @override
-  String get hold1sRecord => 'রেকর্ড করতে 1 সেকেন্ড ধরে রাখুন';
-
-  @override
-  String get hold1sStartStop =>
-      'শুরু বা শেষ করতে 1 সেকেন্ড ধরে রাখুন; ভুলে ছোঁয়া থেকে রক্ষা করে।';
-
-  @override
-  String get liveShare => 'লাইভ শেয়ার';
-
-  @override
-  String get sendRevocableLinkSo =>
-      'বাতিলযোগ্য একটি লিংক পাঠান, যাতে পরিবার আপনার রাইড অনুসরণ করতে পারে।';
 
   @override
   String get autoTracking => 'অটো ট্র্যাকিং';
 
   @override
-  String get ridesThatDetectRecord => 'নিজে থেকেই রাইড শনাক্ত ও রেকর্ড হয়।';
-
-  @override
-  String get enableOnceSettingsAuto =>
-      'সেটিংস → অটো-ট্র্যাকিং থেকে একবার চালু করুন';
-
-  @override
-  String get activityRecognitionStartsRecording =>
-      'আপনি চালানো শুরু করলে অ্যাক্টিভিটি শনাক্তকরণ রেকর্ডিং শুরু করে';
-
-  @override
-  String get shortWalksSubwayTrips =>
-      'ছোট হাঁটা ও সাবওয়ে ট্রিপ বাদ দেওয়া হয়';
-
-  @override
-  String get eachAutoDetectedRide =>
-      'প্রতিটি অটো-শনাক্ত রাইড রিভিউয়ের জন্য প্রস্তুত থাকে';
-
-  @override
-  String get smartDetection => 'স্মার্ট শনাক্তকরণ';
-
-  @override
-  String get detectsMotorcycleMovementVia =>
-      'IMU সেন্সর ও গতি দেখে মোটরসাইকেলের চলাচল শনাক্ত করে।';
-
-  @override
-  String get nonRideFilter => 'নন-রাইড ফিল্টার';
-
-  @override
-  String get ignoresWalkingBusRides =>
-      'হাঁটা, বাস যাত্রা ও ফোন সামান্য নড়াচড়া উপেক্ষা করে।';
-
-  @override
-  String get zeroInteraction => 'শূন্য ঝামেলা';
-
-  @override
-  String get runsSilentlyBackgroundReview =>
-      'ব্যাকগ্রাউন্ডে নীরবে চলে; শেষ হলে রাইড রিভিউ করুন।';
-
-  @override
   String get maintenance => 'মেইনটেন্যান্স';
-
-  @override
-  String get neverForgetAnotherOil => 'তেল বদলানোর কথা আর কখনো ভুলবেন না।';
-
-  @override
-  String get alertsWhenYoureDue =>
-      'তেল, ফিল্টার, চেইন লুব… এর সময় হলে অ্যালার্ট';
-
-  @override
-  String get logServiceResetCountdown =>
-      'কাউন্টডাউন রিসেট করতে সার্ভিস লগ করুন';
-
-  @override
-  String get addCustomIntervalsAny =>
-      'যেকোনো যন্ত্রাংশের জন্য নিজের মতো ইন্টারভাল যোগ করুন';
-
-  @override
-  String get n13ServiceItems => '13+ সার্ভিস আইটেম';
-
-  @override
-  String get trackEngineOilChain =>
-      'ইঞ্জিন অয়েল, চেইন লুব, ব্রেক ফ্লুইড, কুল্যান্টসহ আরও অনেক কিছু ট্র্যাক করুন।';
-
-  @override
-  String get dueBadges => 'ডিউ ব্যাজ';
-
-  @override
-  String get colorCodedProgressBars =>
-      'ইন্টারভাল শেষ হওয়ার আগেই রঙিন প্রগ্রেস বার সতর্ক করে।';
-
-  @override
-  String get logReset => 'লগ ও রিসেট';
-
-  @override
-  String get recordMaintenanceNotesReset =>
-      'মেইনটেন্যান্সের নোট রাখুন এবং ইন্টারভাল ওডোমিটার রিসেট করুন।';
-
-  @override
-  String get riderPlaces => 'রাইডার প্লেসেস';
-
-  @override
-  String get everyGaragePumpViewpoint =>
-      'আপনার কাছের প্রতিটি গ্যারেজ, পাম্প ও ভিউপয়েন্ট।';
-
-  @override
-  String get fuelStationsRepairShops =>
-      'জ্বালানি স্টেশন, মেরামতের দোকান, যন্ত্রাংশ ও ক্যাফে';
-
-  @override
-  String get tapDirectionsOpensMaps =>
-      'ডিরেকশনসে ট্যাপ করলে ম্যাপ খোলে এবং রেকর্ডের প্রস্তাব দেয়';
-
-  @override
-  String get addRatePlacesHelp =>
-      'কমিউনিটির সুবিধায় জায়গা যোগ করুন ও রেটিং দিন';
-
-  @override
-  String get n395RiderPois => '395+ রাইডার POI';
-
-  @override
-  String get verifiedFuelStationsWorkshops =>
-      'যাচাইকৃত জ্বালানি স্টেশন, ওয়ার্কশপ, যন্ত্রাংশের দোকান ও রাইডার ক্যাফে।';
-
-  @override
-  String get navigateRecord => 'নেভিগেট ও রেকর্ড';
-
-  @override
-  String get opensMapsAppCan =>
-      'আপনার ম্যাপ অ্যাপ খোলে, আর চাইলে সাথে সাথে ট্রিপও রেকর্ড করে।';
-
-  @override
-  String get riderReviews => 'রাইডার রিভিউ';
-
-  @override
-  String get rateOctanePurityMechanic =>
-      'অকটেনের খাঁটিত্ব, মেকানিকের সততা ও পার্কিংয়ের নিরাপত্তায় রেটিং দিন।';
-
-  @override
-  String get rideTogether => 'একসাথে রাইড';
-
-  @override
-  String get ridingCommunityAllOne =>
-      'আপনার রাইডিং কমিউনিটি, সবকিছু এক জায়গায়।';
-
-  @override
-  String get shareRidesFeedHome =>
-      'রাইড ফিডে শেয়ার করুন — বাড়ির অবস্থান লুকানো থাকে';
-
-  @override
-  String get startGroupRideWith =>
-      '6 অক্ষরের জয়েন কোড দিয়ে গ্রুপ রাইড শুরু করুন';
-
-  @override
-  String get pushTalkIntercomBluetooth =>
-      'ব্লুটুথ হেলমেটের জন্য পুশ-টু-টক ইন্টারকম';
-
-  @override
-  String get bikeModelForumsTalk =>
-      'বাইক-মডেল ফোরাম — FZ-S, পালসার ও CBR রাইডারদের সাথে কথা বলুন';
-
-  @override
-  String get directMessageAnyRider =>
-      'প্ল্যাটফর্মের যেকোনো রাইডারকে সরাসরি মেসেজ করুন';
-
-  @override
-  String get privacyZones => 'প্রাইভেসি জোন';
-
-  @override
-  String get eachRidesStartEnd =>
-      'শেয়ার করার আগে প্রতিটি রাইডের শুরু ও শেষ অংশ কেটে ফেলা হয়।';
-
-  @override
-  String get groupPinIntercom => 'গ্রুপ পিন ও ইন্টারকম';
-
-  @override
-  String get liveMapTrackingBluetooth =>
-      'লাইভ ম্যাপ ট্র্যাকিং ও ব্লুটুথ হেলমেট PTT ইন্টারকম।';
-
-  @override
-  String get bikeModelForums => 'বাইক মডেল ফোরাম';
-
-  @override
-  String get discussModsIssuesMeets =>
-      'আপনার বাইকের মালিকদের সাথে মডিফিকেশন, সমস্যা ও মিটআপ নিয়ে আলোচনা করুন।';
-
-  @override
-  String get yourProfile => 'আপনার প্রোফাইল';
-
-  @override
-  String get makeItYoursAdd =>
-      'নিজের মতো করে সাজান — আলাদা হতে একটি বায়ো যোগ করুন।';
-
-  @override
-  String get publicProfileWithStats =>
-      'আপনার পরিসংখ্যান ও শেয়ার করা রাইডসহ পাবলিক প্রোফাইল';
-
-  @override
-  String get handleLetsOtherRiders =>
-      'আপনার @হ্যান্ডেল দিয়ে অন্য রাইডাররা আপনাকে খুঁজে ফলো করতে পারে';
-
-  @override
-  String get controlWhoSeesProfile =>
-      'কে আপনার প্রোফাইল ও বাইক দেখবে তা নিয়ন্ত্রণ করুন';
-
-  @override
-  String get safeqrOfflineEmergencyMedical =>
-      'SafeQR: অফলাইনে কাজ করা জরুরি মেডিকেল কার্ড';
-
-  @override
-  String get riderStats => 'রাইডার পরিসংখ্যান';
-
-  @override
-  String get showcaseTotalKmSafety =>
-      'মোট কিমি, সেফটি স্কোর ও সেরা অর্জন তুলে ধরুন।';
-
-  @override
-  String get safeqrCard => 'SafeQR কার্ড';
-
-  @override
-  String get offlineMedicalCardEmergency =>
-      'রাস্তায় জরুরি সহায়তাকারীদের জন্য অফলাইন মেডিকেল কার্ড।';
-
-  @override
-  String get keepUp5Contacts =>
-      'যোগাযোগের জন্য একজন সহায়তাকারীর কাছে সর্বোচ্চ 5টি কন্টাক্ট রাখুন।';
 
   @override
   String get thatUsernameTakenTry =>
@@ -1052,24 +815,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get rideSmarterTrackDeeper => 'আরও স্মার্ট রাইড। আরও গভীর ট্র্যাকিং।';
 
   @override
-  String guideProgress(Object slideIndex, Object totalSlides) {
-    return 'গাইড $slideIndex / $totalSlides';
-  }
-
-  @override
   String get skipTour => 'ট্যুর এড়িয়ে যান';
-
-  @override
-  String get showMe => 'দেখান';
-
-  @override
-  String get getRiding => 'রাইড শুরু করুন 🏍️';
-
-  @override
-  String get gotIt => 'বুঝেছি  →';
-
-  @override
-  String get myGarage => 'আমার গ্যারেজ';
 
   @override
   String get addBike => 'বাইক যোগ করুন';
@@ -1078,111 +824,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get active => 'সক্রিয়';
 
   @override
-  String get n4280KmLogged => '4,280 কিমি লগ করা হয়েছে';
-
-  @override
-  String get oilFilterDue720 => 'তেল ও ফিল্টার বদলাতে বাকি 720 কিমি';
-
-  @override
-  String get themeTint => 'থিম টিন্ট:';
-
-  @override
-  String get gpsLocked => 'GPS লক হয়েছে';
-
-  @override
-  String get avg52 => 'গড় 52 · ';
-
-  @override
-  String get top124 => 'সর্বোচ্চ 124';
-
-  @override
   String get distance => 'দূরত্ব';
 
   @override
-  String get moving31m => 'চলমান 31 মি';
-
-  @override
-  String get hold1sStart => 'শুরু করতে 1 সেকেন্ড ধরে রাখুন';
-
-  @override
-  String get autoTrackingSettings => 'অটো-ট্র্যাকিং সেটিংস';
-
-  @override
-  String get smartNonRideFilter => 'স্মার্ট নন-রাইড ফিল্টার চালু';
-
-  @override
-  String get walkingBusesSubwayRides =>
-      'হাঁটা, বাস ও সাবওয়ে যাত্রা নিজে থেকেই উপেক্ষা করা হয়';
-
-  @override
-  String get detectedRide => 'শনাক্ত করা রাইড';
-
-  @override
-  String get autoSaved => 'অটো সেভ হয়েছে';
-
-  @override
-  String get maintenanceSchedule => 'মেইনটেন্যান্স সূচি';
-
-  @override
-  String get logService => '+ সার্ভিস লগ করুন';
-
-  @override
-  String get engineOilFilter => 'ইঞ্জিন অয়েল ও ফিল্টার';
-
-  @override
-  String get due320Km => '320 কিমি পরে বাকি';
-
-  @override
-  String get chainCleanLube => 'চেইন পরিষ্কার ও লুব';
-
-  @override
-  String get good850Km => 'আরও 850 কিমি ভালো';
-
-  @override
-  String get brakeFluidFlush => 'ব্রেক ফ্লুইড ফ্লাশ';
-
-  @override
-  String get good2100Km => 'আরও 2,100 কিমি ভালো';
-
-  @override
-  String get n49VerifiedPure => '★ 4.9 · যাচাইকৃত খাঁটি জ্বালানি · 24/7 খোলা';
-
-  @override
   String get directions => 'ডিরেকশনস';
-
-  @override
-  String get riderFeed => 'রাইডার ফিড';
-
-  @override
-  String get n2hAgo => '2 ঘণ্টা আগে';
-
-  @override
-  String get morningTwistiesThrough300 =>
-      '300 ফুট হাইওয়ে ধরে সকালের আঁকাবাঁকা পথে রাইড!';
-
-  @override
-  String get privacyZone200mEndpoints =>
-      'প্রাইভেসি জোন: 200 মিটার শেষ প্রান্ত কাটা হয়েছে';
-
-  @override
-  String get roadCaptainDhakaMetro => 'রোড ক্যাপ্টেন · ঢাকা মেট্রো';
-
-  @override
-  String get kmRidden => 'কিমি চালানো';
-
-  @override
-  String get safetyScore => 'সেফটি স্কোর';
-
-  @override
-  String get safeqrOfflineMedicalCard => 'SafeQR অফলাইন মেডিকেল কার্ড';
-
-  @override
-  String get bloodOIceEmergency => 'রক্ত: O+ · ICE জরুরি SOS প্রস্তুত';
-
-  @override
-  String guideProgressDot(Object slideIndex, Object total) {
-    return 'গাইড · $slideIndex / $total';
-  }
 
   @override
   String get backTour => 'ট্যুরে ফিরে যান';
@@ -3768,6 +3413,215 @@ class AppLocalizationsBn extends AppLocalizations {
   String get notEnoughRidesYet => 'এখনো যথেষ্ট রাইড নেই';
 
   @override
+  String get ridesAnalyticsTab => 'অ্যানালিটিক্স';
+
+  @override
+  String get ridesHistoryTab => 'ইতিহাস';
+
+  @override
+  String riderLevel(int level) {
+    return 'লেভেল $level';
+  }
+
+  @override
+  String get chartDistancePerRide => 'প্রতি রাইডে দূরত্ব';
+
+  @override
+  String get chartWeeklyDistance => 'প্রতি সপ্তাহে দূরত্ব';
+
+  @override
+  String get chartAvgSpeed => 'গড় গতি';
+
+  @override
+  String get chartTopSpeed => 'সর্বোচ্চ গতি';
+
+  @override
+  String get chartRideDuration => 'রাইডের সময়';
+
+  @override
+  String get chartMovingVsStopped => 'চলমান বনাম থেমে থাকা';
+
+  @override
+  String get chartJamTime => 'জ্যামে আটকে থাকার সময়';
+
+  @override
+  String get chartRidingScore => 'রাইডিং স্কোর';
+
+  @override
+  String get chartHardBraking => 'হার্ড ব্রেকিং';
+
+  @override
+  String get chartRapidAccel => 'দ্রুত অ্যাক্সিলারেশন';
+
+  @override
+  String get chartOverspeed => 'প্রতি রাইডে ওভারস্পিড সতর্কতা';
+
+  @override
+  String get chartActivityCalendar => 'রাইডের দিনগুলো';
+
+  @override
+  String get chartHourOfDay => 'দিনের কোন সময়ে রাইড';
+
+  @override
+  String get chartWeekday => 'সপ্তাহের কোন দিনে রাইড';
+
+  @override
+  String get chartDistanceByBike => 'প্রতি বাইকে দূরত্ব';
+
+  @override
+  String get chartLongestRides => 'সবচেয়ে লম্বা রাইড';
+
+  @override
+  String get analyticsRange7d => '7 দিন';
+
+  @override
+  String get analyticsRange30d => '30 দিন';
+
+  @override
+  String get analyticsRange90d => '90 দিন';
+
+  @override
+  String get analyticsRange1y => '1 বছর';
+
+  @override
+  String get analyticsRangeAll => 'সব';
+
+  @override
+  String get analyticsMin => 'সর্বনিম্ন';
+
+  @override
+  String get analyticsMax => 'সর্বোচ্চ';
+
+  @override
+  String get analyticsAvg => 'গড়';
+
+  @override
+  String get analyticsTotal => 'মোট';
+
+  @override
+  String get analyticsTrend => 'আগের তুলনায়';
+
+  @override
+  String get analyticsNoTrend => 'আগের তথ্য নেই';
+
+  @override
+  String get analyticsInsight => 'পর্যবেক্ষণ';
+
+  @override
+  String get analyticsData => 'তথ্য';
+
+  @override
+  String get analyticsDownloadData => 'তথ্য ডাউনলোড করুন';
+
+  @override
+  String get analyticsExportFailed => 'তথ্য এক্সপোর্ট করা যায়নি';
+
+  @override
+  String analyticsShareSubject(String chart) {
+    return 'ThrottleIQ তথ্য: $chart';
+  }
+
+  @override
+  String get analyticsColDate => 'তারিখ';
+
+  @override
+  String get analyticsColWeekOf => 'সপ্তাহ শুরু';
+
+  @override
+  String get analyticsColHour => 'ঘণ্টা';
+
+  @override
+  String get analyticsColDay => 'দিন';
+
+  @override
+  String get analyticsColBike => 'বাইক';
+
+  @override
+  String get analyticsColRides => 'রাইড';
+
+  @override
+  String get analyticsColMoving => 'চলমান';
+
+  @override
+  String get analyticsColStopped => 'থেমে থাকা';
+
+  @override
+  String get analyticsUnitMin => 'মিনিট';
+
+  @override
+  String get analyticsUnitRides => 'রাইড';
+
+  @override
+  String get analyticsUnitEvents => 'বার';
+
+  @override
+  String get analyticsUnknownBike => 'অজানা বাইক';
+
+  @override
+  String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
+
+  @override
+  String get insightNotEnoughData => 'এই সময়ে এখনো যথেষ্ট রাইড নেই।';
+
+  @override
+  String insightTrendUp(String percent) {
+    return 'আগের সময়ের চেয়ে $percent% বেশি।';
+  }
+
+  @override
+  String insightTrendDown(String percent) {
+    return 'আগের সময়ের চেয়ে $percent% কম।';
+  }
+
+  @override
+  String get insightTrendFlat => 'আগের সময়ের প্রায় সমান।';
+
+  @override
+  String insightPeakValue(String value, String date) {
+    return 'সর্বোচ্চ ছিল $value, $date তারিখে।';
+  }
+
+  @override
+  String insightPeakHour(String hour) {
+    return 'আপনি সবচেয়ে বেশি রাইড করেন $hour এর দিকে।';
+  }
+
+  @override
+  String insightPeakWeekday(String day) {
+    return '$day আপনার সবচেয়ে বেশি রাইডের দিন।';
+  }
+
+  @override
+  String insightTopBike(String bike, String percent) {
+    return 'আপনার দূরত্বের $percent% $bike দিয়ে।';
+  }
+
+  @override
+  String insightStreak(int current, int longest) {
+    return 'আপনি টানা $current দিন রাইড করেছেন। আপনার রেকর্ড $longest দিন।';
+  }
+
+  @override
+  String insightStreakRecordOnly(int longest) {
+    return 'টানা রাইডের দিনে আপনার রেকর্ড $longest দিন।';
+  }
+
+  @override
+  String insightLongestRide(String value, String date) {
+    return 'আপনার সবচেয়ে লম্বা রাইড ছিল $value, $date তারিখে।';
+  }
+
+  @override
+  String insightCleanRides(int clean, int total) {
+    return '$totalটি রাইডের মধ্যে $cleanটিতে একবারও হয়নি।';
+  }
+
+  @override
+  String insightStoppedShare(String percent) {
+    return 'রাইডের সময়ের $percent% আপনি থেমে ছিলেন।';
+  }
+
+  @override
   String get cropPhoto => 'ছবি ক্রপ করুন';
 
   @override
@@ -4633,9 +4487,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get feedSortHot => 'জনপ্রিয়';
-
-  @override
-  String get ridesCapsLabel => 'রাইড';
 
   @override
   String get joinRideBadCode => 'এই কোডের সাথে কোনো রাইড মেলেনি।';
@@ -6007,4 +5858,359 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get couldNotArchiveSharedRides =>
       'শেয়ার করা রাইড সরানো যায়নি, তাই বাইকটি আর্কাইভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get badgeRarityCommon => 'সাধারণ';
+
+  @override
+  String get badgeRarityUncommon => 'কিছুটা বিরল';
+
+  @override
+  String get badgeRarityRare => 'দুর্লভ';
+
+  @override
+  String get badgeRarityEpic => 'এপিক';
+
+  @override
+  String get badgeRarityLegendary => 'কিংবদন্তি';
+
+  @override
+  String badgeOwnedByPercent(String percent) {
+    return '$percent রাইডারের কাছে এই ব্যাজ আছে';
+  }
+
+  @override
+  String get badgeOwnershipUnknown =>
+      'এই মুহূর্তে বিরলতার তথ্য পাওয়া যাচ্ছে না';
+
+  @override
+  String get badgeRarityLabel => 'বিরলতা';
+
+  @override
+  String get badgeHowToEarn => 'কীভাবে পাবেন';
+
+  @override
+  String badgeEarnedOn(String date) {
+    return 'অর্জিত $date';
+  }
+
+  @override
+  String get badgeEarnedStatus => 'অর্জিত';
+
+  @override
+  String get badgeLockedStatus => 'লক করা';
+
+  @override
+  String badgeProgressFraction(String progress, String target, String unit) {
+    return '$target $unit-এর মধ্যে $progress';
+  }
+
+  @override
+  String badgeProgressToGo(String remaining, String unit) {
+    return 'আরও $remaining $unit বাকি';
+  }
+
+  @override
+  String get badgeShareAction => 'শেয়ার করুন';
+
+  @override
+  String badgeShareText(String badge) {
+    return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি।';
+  }
+
+  @override
+  String badgeShareTextRarity(String badge, String rarity, String percent) {
+    return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি। $rarity: $percent রাইডারের কাছে এটি আছে।';
+  }
+
+  @override
+  String get badgeViewDetails => 'বিস্তারিত দেখতে ট্যাপ করুন';
+
+  @override
+  String tourStepCounter(int current, int total) {
+    return 'ধাপ $current / $total';
+  }
+
+  @override
+  String get tourBack => 'পেছনে';
+
+  @override
+  String get tourNext => 'পরবর্তী';
+
+  @override
+  String get tourFinish => 'রাইড শুরু করুন';
+
+  @override
+  String get tourShowMeLive => 'স্ক্রিনটি দেখান';
+
+  @override
+  String get tourRecordTitle => 'তৈরি? চলুন রাইডে';
+
+  @override
+  String get tourRecordSubtitle =>
+      'রেকর্ড ট্যাবই মূল জায়গা: বাইক বাছুন, কীভাবে চালাবেন ঠিক করুন, আর বেরিয়ে পড়ুন।';
+
+  @override
+  String get tourRecordBikeTitle => 'আপনার সক্রিয় বাইক';
+
+  @override
+  String get tourRecordBikeBody =>
+      'ওপরের বাইক কার্ডের বাইকেই এই রাইড যোগ হবে। বাইক বদলাতে কার্ডে ট্যাপ করুন।';
+
+  @override
+  String get tourRecordModeTitle => 'একা বা দলে';
+
+  @override
+  String get tourRecordModeBody =>
+      'একা চালান, অথবা গ্রুপ রাইড শুরু করে বন্ধুদের আমন্ত্রণ জানান বা জয়েন কোড শেয়ার করুন।';
+
+  @override
+  String get tourRecordStartTitle => 'শুরু করতে চেপে ধরুন বা স্লাইড করুন';
+
+  @override
+  String get tourRecordStartBody =>
+      'স্টার্ট রিং চেপে ধরুন (বক্সি স্টাইলে বারটি স্লাইড করুন), যাতে ভুল ছোঁয়ায় রাইড শুরু না হয়।';
+
+  @override
+  String get tourCockpitTitle => 'আপনার লাইভ ককপিট';
+
+  @override
+  String get tourCockpitSubtitle =>
+      'শুরু করলেই এক নজরে পড়ার মতো ককপিট পুরো স্ক্রিন জুড়ে দেখায়।';
+
+  @override
+  String get tourCockpitLocation => 'রেকর্ড › রাইড শুরু';
+
+  @override
+  String get tourCockpitGaugesTitle => 'এক নজরে গতি';
+
+  @override
+  String get tourCockpitGaugesBody =>
+      'বড় করে লাইভ গতি, দূরত্ব ও গড় গতি, হ্যান্ডেলবারে লাগানো ফোন থেকেও পড়া যায়। যেকোনো সময় থামান, আবার চালু করুন বা শেষ করুন।';
+
+  @override
+  String get tourCockpitShareTitle => 'লাইভ লোকেশন শেয়ার করুন';
+
+  @override
+  String get tourCockpitShareBody =>
+      'পরিবারকে একটি লাইভ লিংক পাঠান, যাতে তারা আপনার রাইড দেখতে পারে। রাইড শেষ হলে এটি বন্ধ হয়ে যায়।';
+
+  @override
+  String get tourCockpitSafetyTitle => 'রাইড সতর্কতা ও দুর্ঘটনা যাচাই';
+
+  @override
+  String get tourCockpitSafetyBody =>
+      'অতিরিক্ত গতি, হঠাৎ ব্রেক ও ক্লান্তি নিয়ে সতর্কবার্তা পান। দুর্ঘটনা সন্দেহ হলে \"আমি ঠিক আছি\" ট্যাপ করুন, নইলে আপনার জরুরি যোগাযোগদের জানানো হবে।';
+
+  @override
+  String get tourCockpitJamTitle => 'জ্যাম চিহ্নিত করুন';
+
+  @override
+  String get tourCockpitJamBody =>
+      'আটকে গেলে \"আমি জ্যামে আছি\" আর ছাড়লে \"জ্যাম ছেড়েছে\" ট্যাপ করুন; এতে জ্যাম শনাক্তকরণ আরও ভালো হয়।';
+
+  @override
+  String get tourAutoTitle => 'অটো ট্র্যাকিং';
+
+  @override
+  String get tourAutoSubtitle =>
+      'স্টার্ট চাপতে ভুলে গেছেন? ThrottleIQ নিজেই আপনার রাইড বুঝে লগ করতে পারে।';
+
+  @override
+  String get tourAutoLocation => 'গ্যারেজ › সেটিংস';
+
+  @override
+  String get tourAutoDetectTitle => 'একবার চালু করুন';
+
+  @override
+  String get tourAutoDetectBody =>
+      'সেটিংসে অটো ট্র্যাকিং চালু করুন, তাহলে রওনা দিলেই নিজে থেকে রেকর্ডিং শুরু হবে।';
+
+  @override
+  String get tourAutoFilterTitle => 'রাইড নয় এমন যাত্রা বাদ';
+
+  @override
+  String get tourAutoFilterBody =>
+      'হাঁটা, বাস ও গাড়ির যাত্রা বাদ পড়ে, শুধু মোটরসাইকেল রাইড রাখা হয়।';
+
+  @override
+  String get tourAutoHistoryTitle => 'শনাক্তকরণ দেখুন';
+
+  @override
+  String get tourAutoHistoryBody =>
+      'অটো ট্র্যাকিং টাইল থেকে শনাক্তকরণের ইতিহাস খুলে দেখুন কী রেকর্ড হয়েছে এবং কেন।';
+
+  @override
+  String get tourRidesTitle => 'সংখ্যায় আপনার রাইডিং';
+
+  @override
+  String get tourRidesSubtitle =>
+      'রাইড ট্যাব প্রতিটি যাত্রাকে ট্রেন্ড, স্কোর ও ব্যাজে রূপ দেয়।';
+
+  @override
+  String get tourRidesScoreTitle => 'স্কোর ও রাইডার র‍্যাংক';
+
+  @override
+  String get tourRidesScoreBody =>
+      'যত বেশি চালাবেন, আপনার জার্নি স্কোর ও র‍্যাংক তত বাড়বে।';
+
+  @override
+  String get tourRidesChartsTitle => 'ট্রেন্ড চার্ট';
+
+  @override
+  String get tourRidesChartsBody =>
+      'সময়ের সাথে দূরত্ব ও গতি। সব রাইড খুলে সাজিয়ে দেখুন, যেকোনো রাইডের সারাংশও পাবেন।';
+
+  @override
+  String get tourRidesBadgesTitle => 'ব্যাজ';
+
+  @override
+  String get tourRidesBadgesBody =>
+      'মাইলফলক ছুঁয়ে ব্যাজ অর্জন করুন। কোনো ব্যাজ আনলক করতে কী লাগে দেখতে সেটিতে ট্যাপ করুন।';
+
+  @override
+  String get tourGarageTitle => 'আপনার গ্যারেজ';
+
+  @override
+  String get tourGarageSubtitle =>
+      'আপনার প্রতিটি বাইক, প্রত্যেকটির আলাদা রাইড, দূরত্ব ও সার্ভিস ইতিহাসসহ।';
+
+  @override
+  String get tourGarageActiveTitle => 'সক্রিয় বাইক বেছে নিন';
+
+  @override
+  String get tourGarageActiveBody =>
+      'নতুন রাইড ও কিলোমিটার সক্রিয় বাইকে যোগ হয়। যেকোনো সময় বদলাতে পারবেন।';
+
+  @override
+  String get tourGarageDetailTitle => 'বাইকের বিস্তারিত';
+
+  @override
+  String get tourGarageDetailBody =>
+      'ছবি যোগ করতে, স্পেসিফিকেশন বদলাতে ও রাইড দেখতে বাইকে ট্যাপ করুন।';
+
+  @override
+  String get tourGarageArchiveTitle => 'পুরোনো বাইক আর্কাইভ করুন';
+
+  @override
+  String get tourGarageArchiveBody =>
+      'বাইক বিক্রি করেছেন? আর্কাইভ করুন। এটি 90 দিন আর্কাইভ করা বাইকের তালিকায় থাকে, এর মধ্যে আবার ফিরিয়ে আনতে পারবেন।';
+
+  @override
+  String get tourMaintenanceTitle => 'সময়মতো রক্ষণাবেক্ষণ';
+
+  @override
+  String get tourMaintenanceSubtitle =>
+      'আপনি আসলে যত কিলোমিটার চালান, তার ভিত্তিতে সার্ভিস রিমাইন্ডার।';
+
+  @override
+  String get tourMaintenanceLocation => 'গ্যারেজ › রক্ষণাবেক্ষণ';
+
+  @override
+  String get tourMaintenanceDueTitle => 'কী বাকি, এক নজরে';
+
+  @override
+  String get tourMaintenanceDueBody =>
+      'ইঞ্জিন অয়েল, চেইন, ব্রেকসহ সবকিছুর পরের সার্ভিস পর্যন্ত রঙে চিহ্নিত কাউন্টডাউন।';
+
+  @override
+  String get tourMaintenanceOdoTitle => 'ওডোমিটার মিলিয়ে নিন';
+
+  @override
+  String get tourMaintenanceOdoBody =>
+      'মাঝে মাঝে বাইকের আসল ওডোমিটার রিডিং দিন, যাতে প্রতিটি কাউন্টডাউন ঠিক থাকে।';
+
+  @override
+  String get tourMaintenanceLogTitle => 'সার্ভিস লগ করুন';
+
+  @override
+  String get tourMaintenanceLogBody =>
+      'কী করা হলো লিখে রাখুন, কাউন্টডাউন আবার শুরু হবে।';
+
+  @override
+  String get tourPlacesTitle => 'রাইডারদের জায়গা';
+
+  @override
+  String get tourPlacesSubtitle =>
+      'কাছের পেট্রোল পাম্প, ওয়ার্কশপ, পার্টস ও আড্ডার জায়গা, ম্যাপে বা তালিকায়।';
+
+  @override
+  String get tourPlacesMapTitle => 'ম্যাপ ও ফিল্টার';
+
+  @override
+  String get tourPlacesMapBody =>
+      'ধরন অনুযায়ী ফিল্টার করুন, ম্যাপ ও তালিকার মধ্যে বদলান, আর যেকোনো জায়গার দিকনির্দেশনা নিন।';
+
+  @override
+  String get tourPlacesRoutesTitle => 'রুট ও সংরক্ষিত জায়গা';
+
+  @override
+  String get tourPlacesRoutesBody =>
+      'রাইডকে রুট হিসেবে সংরক্ষণ করুন, অন্য রাইডারদের রুট খুঁজুন, আর প্রিয় জায়গাগুলো রেখে দিন।';
+
+  @override
+  String get tourPlacesAddTitle => 'জায়গা যোগ করুন';
+
+  @override
+  String get tourPlacesAddBody =>
+      'ভালো মেকানিক চেনেন? যোগ করুন, আর জায়গাগুলোকে রেটিং দিয়ে অন্য রাইডারদের সাহায্য করুন।';
+
+  @override
+  String get tourSocialTitle => 'একসাথে রাইড';
+
+  @override
+  String get tourSocialSubtitle =>
+      'রাইড শেয়ার করুন, রাইডার খুঁজুন, বাইক নিয়ে আলাপ করুন, সব এক জায়গায়।';
+
+  @override
+  String get tourSocialFeedTitle => 'রাইড ফিড ও মানুষ';
+
+  @override
+  String get tourSocialFeedBody =>
+      'শেয়ার করা রাইড দেখুন, ফলো করার মতো রাইডার খুঁজুন, আর সরাসরি মেসেজ পাঠান।';
+
+  @override
+  String get tourSocialForumsTitle => 'ফোরাম';
+
+  @override
+  String get tourSocialForumsBody =>
+      'মডিফিকেশন, সমস্যা ও মিটআপ নিয়ে বাইক মডেলভিত্তিক ফোরাম।';
+
+  @override
+  String get tourSocialGroupTitle => 'গ্রুপ রাইড';
+
+  @override
+  String get tourSocialGroupBody =>
+      'লাইভ ম্যাপে দল বেঁধে চালান, পুরো দলের সাথে পুশ-টু-টক।';
+
+  @override
+  String get tourProfileTitle => 'আপনার রাইডার প্রোফাইল';
+
+  @override
+  String get tourProfileSubtitle =>
+      'আপনার পাবলিক পেজ: পরিসংখ্যান, গ্যারেজ, ফলোয়ার ও আপনি যাদের ফলো করেন।';
+
+  @override
+  String get tourProfileLocation => 'গ্যারেজ › প্রোফাইল দেখুন';
+
+  @override
+  String get tourProfileQrTitle => 'QR দিয়ে ফলো';
+
+  @override
+  String get tourProfileQrBody =>
+      'আপনার QR কোড দেখান, যাতে রাইডিং সঙ্গী এক স্ক্যানেই আপনাকে ফলো করতে পারে, অথবা তাদেরটা স্ক্যান করুন।';
+
+  @override
+  String get tourProfilePrivacyTitle => 'কে কী দেখবে, আপনিই ঠিক করুন';
+
+  @override
+  String get tourProfilePrivacyBody =>
+      'প্রোফাইল এডিট থেকে ঠিক করুন কে আপনার প্রোফাইল ও বাইক দেখতে পারবে।';
+
+  @override
+  String get tourProfileSafeQrTitle => 'SafeQR মেডিকেল কার্ড';
+
+  @override
+  String get tourProfileSafeQrBody =>
+      'সেটিংসে রক্তের গ্রুপ ও জরুরি যোগাযোগসহ একটি স্ক্যানযোগ্য কার্ড তৈরি করুন, যা উদ্ধারকারীদের কাজে আসবে।';
 }

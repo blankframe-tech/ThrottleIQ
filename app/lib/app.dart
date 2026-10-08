@@ -21,6 +21,8 @@ import 'features/ride/presentation/providers/ride_recording_provider.dart';
 import 'features/social/presentation/providers/group_ride_providers.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/widgets/keyboard_dismiss_wrapper.dart';
+import 'shared/widgets/root_messenger.dart';
+import 'features/social/presentation/follow_link_listener.dart';
 import 'core/i18n/l10n_context.dart';
 
 class ThrottleIQApp extends ConsumerStatefulWidget {
@@ -78,6 +80,11 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       if (!mounted) return;
       ref.read(routerProvider).go('/settings');
     });
+    // Follow links (QR scanned with the system camera, or the web fallback
+    // page's hand-off): follow the rider, then open the People tab — or
+    // stash it until sign-in. Started here, early, so a link that cold-starts
+    // the app isn't missed.
+    unawaited(ref.read(followLinkListenerProvider).start());
 
     // Watches the OS location-service toggle. When the rider turns GPS back on
     // after launching the app with it off, all location-dependent providers
@@ -217,6 +224,10 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       // screen, not only the group map.
       ref.watch(groupRideLifecycleProvider);
 
+      // Pushes the active palette to the home-screen widgets on every
+      // appearance change, so they follow the app's color theme.
+      ref.watch(homeWidgetThemeSyncProvider);
+
       final router = ref.watch(routerProvider);
       final appearance = ref.watch(appearanceProvider);
       // null = follow the device language, resolved against supportedLocales.
@@ -237,6 +248,7 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: const [Locale('en'), Locale('bn')],
         routerConfig: router,
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
         builder: (context, child) => _ClampedTextScale(
           child: KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),

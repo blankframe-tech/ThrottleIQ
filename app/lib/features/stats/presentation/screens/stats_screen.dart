@@ -5,14 +5,19 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
+import '../../../../core/utils/rider_stats.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_sort.dart';
 import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/badge_grid.dart';
-import '../widgets/ride_line_chart.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../domain/ride_analytics.dart';
+import '../analytics_chart_l10n.dart';
+import '../widgets/analytics_chart_card.dart';
 import 'all_rides_screen.dart'; // For RideSortChips and AllRidesRow
+import 'analytics_detail_screen.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -39,7 +44,6 @@ class StatsScreen extends ConsumerStatefulWidget {
 class _StatsScreenState extends ConsumerState<StatsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _showDistanceChart = true;
 
   @override
   void initState() {
@@ -67,9 +71,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
               child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => Center(
               child: ErrorView(
-                error: e,
-                onRetry: () => ref.invalidate(riderStatsProvider),
-              )),
+            error: e,
+            onRetry: () => ref.invalidate(riderStatsProvider),
+          )),
           data: (stats) {
             final source =
                 stats.allRides.isNotEmpty ? stats.allRides : stats.recentRides;
@@ -108,12 +112,11 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                         labelColor: context.palette.textPrimary,
                         unselectedLabelColor: context.palette.textSecondary,
                         labelStyle: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                            fontWeight: FontWeight.bold, fontSize: 13),
                         tabs: [
-                          // Using fallback strings since there's no l10n for analytics in the app
-                          const Tab(text: 'Analytics'),
+                          Tab(text: context.l10n.ridesAnalyticsTab),
                           Tab(text: context.l10n.badges),
-                          const Tab(text: 'History'),
+                          Tab(text: context.l10n.ridesHistoryTab),
                         ],
                       ),
                       context.palette.background,
@@ -126,8 +129,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                 children: [
                   _buildAnalyticsTab(context, stats),
                   _buildBadgesTab(context, stats),
-                  _buildHistoryTab(
-                      context, visibleRides, sort, source.length),
+                  _buildHistoryTab(context, visibleRides, sort, source.length),
                 ],
               ),
             );
@@ -158,8 +160,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                   const SizedBox(height: 16),
                   Text(context.l10n.noRidesYet,
                       style: TextStyle(
-                          color: context.palette.textSecondary,
-                          fontSize: 16)),
+                          color: context.palette.textSecondary, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(context.l10n.goRideStartJourney,
                       textAlign: TextAlign.center,
@@ -181,161 +182,145 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
     required String rank,
     required double kmIntoLevel,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(context.l10n.journey, style: display(context, 28)),
-            ],
-          ),
-        ),
-        // Hero Progress
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+    // Deliberately compact (one slim level bar + one dense stats strip) so
+    // the analytics charts start above the fold on a ~800dp phone.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l10n.journey, style: display(context, 22)),
+          const SizedBox(height: 8),
+          EditorialCard(
+            padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  alignment: Alignment.center,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: CircularProgressIndicator(
-                        value: kmIntoLevel / _kmPerLevel,
-                        strokeWidth: 8,
-                        backgroundColor: context.palette.border,
-                        color: context.palette.primary,
-                      ),
+                    Text(context.l10n.riderLevel(level).toUpperCase(),
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: context.palette.primary)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(rank,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: display(context, 14, letterSpacing: 0)),
                     ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('LEVEL $level',
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                                color: context.palette.primary)),
-                        const SizedBox(height: 4),
-                        Text(stats.avgRidingScore.toStringAsFixed(0),
-                            style: display(context, 36)),
-                        Text(context.l10n.score,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: context.palette.textSecondary)),
-                      ],
-                    ),
+                    Text(stats.avgRidingScore.toStringAsFixed(0),
+                        style: display(context, 16)),
+                    const SizedBox(width: 3),
+                    Text(context.l10n.score,
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: context.palette.textSecondary)),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text(rank, style: display(context, 20)),
-                const SizedBox(height: 4),
-                Text(
-                    '${kmIntoLevel.toStringAsFixed(0)} / ${_kmPerLevel.toStringAsFixed(0)} km',
-                    style: TextStyle(
-                        fontSize: 13, color: context.palette.textSecondary)),
+                const SizedBox(height: 7),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: kmIntoLevel / _kmPerLevel,
+                          minHeight: 5,
+                          backgroundColor: context.palette.border,
+                          color: context.palette.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                        '${kmIntoLevel.toStringAsFixed(0)} / ${_kmPerLevel.toStringAsFixed(0)} km',
+                        style: TextStyle(
+                            fontSize: 10, color: context.palette.textTertiary)),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-        // Quick Stats Grid
-        Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-          child: GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2.2,
-            children: [
-              _QuickStatCard(
-                value: '${stats.totalRides}',
-                label: context.l10n.ridesLower,
+          const SizedBox(height: 8),
+          EditorialCard(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  _QuickStatCard(
+                    value: '${stats.totalRides}',
+                    label: context.l10n.ridesLower,
+                  ),
+                  const _QuickStatDivider(),
+                  _QuickStatCard(
+                    value: _daysSinceLastRide(stats.recentRides),
+                    label: context.l10n.lastRide,
+                  ),
+                  const _QuickStatDivider(),
+                  _QuickStatCard(
+                    value: stats.allTimeTopSpeedKmh.toStringAsFixed(0),
+                    unit: 'km/h',
+                    label: context.l10n.topSpeedLower,
+                  ),
+                  const _QuickStatDivider(),
+                  _QuickStatCard(
+                    value: stats.allTimeAvgSpeedKmh.toStringAsFixed(0),
+                    unit: 'km/h',
+                    label: context.l10n.avgSpeedLower,
+                  ),
+                ],
               ),
-              _QuickStatCard(
-                value: _daysSinceLastRide(stats.recentRides),
-                label: context.l10n.lastRide,
-              ),
-              _QuickStatCard(
-                value: stats.allTimeTopSpeedKmh.toStringAsFixed(0),
-                unit: 'km/h',
-                label: context.l10n.topSpeedLower,
-              ),
-              _QuickStatCard(
-                value: stats.allTimeAvgSpeedKmh.toStringAsFixed(0),
-                unit: 'km/h',
-                label: context.l10n.avgSpeedLower,
-              ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildAnalyticsTab(BuildContext context, dynamic stats) {
-    final distanceSeries = stats.chartRides
-        .map<double>((r) => (r.distanceKm as num).toDouble())
-        .toList();
-    final speedSeries = stats.chartRides
-        .map<double>((r) => (r.avgSpeedKmh as num).toDouble())
-        .toList();
-    final chartDates = stats.chartRides
-        .map<DateTime>((r) => r.startTime as DateTime)
-        .toList();
+  Widget _buildAnalyticsTab(BuildContext context, RiderStatsSummary stats) {
+    final rides =
+        stats.allRides.isNotEmpty ? stats.allRides : stats.recentRides;
+    final bikes = ref.watch(allBikesProvider).valueOrNull ?? const [];
+    final bikeNames = {for (final b in bikes) b.id: b.displayName};
+    final l10n = context.l10n;
+    String bikeName(String id) => bikeNames[id] ?? l10n.analyticsUnknownBike;
+    final now = DateTime.now();
 
-    return ListView(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            EditorialLabel(_showDistanceChart
-                ? context.l10n.distanceOverTime
-                : context.l10n.avgSpeedOverTime),
-            Row(
-              children: [
-                _ToggleButton(
-                  label: 'Dist',
-                  isActive: _showDistanceChart,
-                  onTap: () => setState(() => _showDistanceChart = true),
-                ),
-                const SizedBox(width: 4),
-                _ToggleButton(
-                  label: 'Speed',
-                  isActive: !_showDistanceChart,
-                  onTap: () => setState(() => _showDistanceChart = false),
-                ),
-              ],
-            )
-          ],
-        ),
-        const SizedBox(height: 12),
-        EditorialCard(
-          padding: const EdgeInsets.all(AppDimensions.paddingMd),
-          child: _showDistanceChart
-              ? RideLineChart(
-                  values: distanceSeries,
-                  dates: chartDates,
-                  unit: 'km',
-                )
-              : RideLineChart(
-                  values: speedSeries,
-                  color: context.palette.secondary,
-                  dates: chartDates,
-                  unit: 'km/h',
-                ),
-        ),
-      ],
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd, 10, AppDimensions.paddingMd, 24),
+      itemCount: AnalyticsChart.values.length + 1,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, i) {
+        if (i == 0) {
+          return Text(l10n.analyticsTapForDetails,
+              style:
+                  TextStyle(fontSize: 11, color: context.palette.textTertiary));
+        }
+        final chart = AnalyticsChart.values[i - 1];
+        final points = buildPreviewSeries(chart, rides, now: now);
+        final insights = buildInsights(chart, rides, points, now: now);
+        return AnalyticsChartCard(
+          chart: chart,
+          points: points,
+          bikeName: bikeName,
+          insight: insightText(l10n, chart, insights.first, bikeName: bikeName),
+          onTap: () => Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute<void>(
+              builder: (_) => AnalyticsDetailScreen(
+                chart: chart,
+                rides: rides,
+                bikeNames: bikeNames,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -430,72 +415,46 @@ class _QuickStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EditorialCard(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+    return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: display(context, 22)),
-              if (unit != null) ...[
-                const SizedBox(width: 4),
-                Text(unit!,
+          Text.rich(
+            TextSpan(
+              text: value,
+              style: display(context, 16),
+              children: [
+                if (unit != null)
+                  TextSpan(
+                    text: ' $unit',
                     style: TextStyle(
-                        fontSize: 12, color: context.palette.textSecondary)),
-              ]
-            ],
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        color: context.palette.textSecondary),
+                  ),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontSize: 11, color: context.palette.textSecondary)),
+                  fontSize: 10, color: context.palette.textSecondary)),
         ],
       ),
     );
   }
 }
 
-class _ToggleButton extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _ToggleButton({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
+class _QuickStatDivider extends StatelessWidget {
+  const _QuickStatDivider();
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? context.palette.surfaceVariant : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            color: isActive
-                ? context.palette.textPrimary
-                : context.palette.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      VerticalDivider(width: 1, thickness: 1, color: context.palette.border);
 }
 
 class _AllRidesButton extends StatelessWidget {
@@ -519,8 +478,8 @@ class _AllRidesButton extends StatelessWidget {
                     letterSpacing: 0, color: context.palette.primary)),
           ),
           Text(context.l10n.shown(showing, total),
-              style: TextStyle(
-                  fontSize: 12, color: context.palette.textTertiary)),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textTertiary)),
           const SizedBox(width: 6),
           Icon(Icons.chevron_right,
               size: 18, color: context.palette.textTertiary),

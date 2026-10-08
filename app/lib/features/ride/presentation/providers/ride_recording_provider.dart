@@ -426,6 +426,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         bikeConfidence: bikeConfidence,
         routeId: routeId,
         routeName: routeName,
+        // Tracked from the first fix, so a new ride is 0, never "unknown".
+        overspeedCount: 0,
       );
 
       await _rideDao.insert(RideModel.toMap(ride));
@@ -1147,6 +1149,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         hardBrakeCount: _detector.hardBrakeCount,
         rapidAccelCount: _detector.rapidAccelCount,
         highJerkCount: _detector.highJerkCount,
+        overspeedCount: _detector.overspeedCount,
       );
 
   Future<void> restoreInterruptedRide() async {

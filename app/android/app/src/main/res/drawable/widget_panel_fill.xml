@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Inner layer of the widget panel chrome (see widget_panel_border). Default
+    is the Carbon Mono background; WidgetTheme recolors it to the app theme's
+    background with setColorFilter.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_background" />
+    <corners android:radius="1dp" />
+</shape>

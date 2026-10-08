@@ -13,6 +13,7 @@ This directory contains the following submodules:
 
 The following files are present in this directory:
 
+- `badge_rarity.dart`: Badge rarity tiers, ownership % math, and local earned-date replay (pure).
 - `badges.dart`: Dart source code.
 - `bike_image_resolver.dart`: Resolves and validates bike photo paths and URLs.
 - `crop_geometry.dart`: Pure geometry for the photo cropper.

@@ -110,7 +110,13 @@ final _followingProfilesProvider =
 /// carries its own rider-only search box for the common case of "find a
 /// specific rider" without leaving the tab.
 class SocialScreen extends StatefulWidget {
-  const SocialScreen({super.key});
+  const SocialScreen({super.key, this.initialTab = 0});
+
+  /// Index of the People tab (rider search + who you follow).
+  static const int peopleTab = 1;
+
+  /// Tab shown first: 0 Rides, [peopleTab], 2 Forums.
+  final int initialTab;
 
   @override
   State<SocialScreen> createState() => _SocialScreenState();
@@ -121,6 +127,7 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
+      initialIndex: widget.initialTab.clamp(0, 2),
       child: Scaffold(
         backgroundColor: context.palette.background,
         appBar: AppBar(

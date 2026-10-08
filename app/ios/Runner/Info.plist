@@ -14,6 +14,12 @@
 	<true/>
 	<key>GIDClientID</key>
 	<string>603325098273-gkjts7olcqevdkc1kiful0gtjspfe0bv.apps.googleusercontent.com</string>
+	<!-- Follow links (https://blankframe.tech/ThrottleIQ/u/<uid> and
+	     throttleiq://u/<uid>) are handled by app_links in Dart
+	     (follow_link_listener.dart). Flutter's built-in deep linking would
+	     otherwise push the link's path into go_router as a route. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -96,7 +102,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>ThrottleIQ needs microphone access to send push-to-talk voice notes to the riders in your group ride.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>ThrottleIQ uses the camera so you can photograph a place you're adding or your bike's odometer.</string>
+	<string>ThrottleIQ uses the camera to scan another rider's QR code to follow them, and so you can photograph a place you're adding or your bike's odometer.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ThrottleIQ needs access to your photos so you can attach pictures to rides, places, your profile or an odometer reading.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

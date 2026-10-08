@@ -13,5 +13,18 @@
 	<array>
 		<string>group.com.bft.throttleiq</string>
 	</array>
+	<!--
+	    Universal Links for follow links (https://blankframe.tech/ThrottleIQ/u/<uid>).
+	    Each host must serve /.well-known/apple-app-site-association
+	    (public/well-known/apple-app-site-association) naming
+	    NJ4675FFUX.com.bft.throttleiq, and the App ID needs the Associated
+	    Domains capability enabled on the Apple Developer portal.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:blankframe.tech</string>
+		<string>applinks:www.blankframe.tech</string>
+		<string>applinks:throttleiqfb.web.app</string>
+	</array>
 </dict>
 </plist>

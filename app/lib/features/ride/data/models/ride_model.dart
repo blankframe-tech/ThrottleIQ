@@ -15,6 +15,8 @@ class RideModel {
         hardBrakeCount: m['hard_brake_count'] as int,
         rapidAccelCount: m['rapid_accel_count'] as int,
         highJerkCount: m['high_jerk_count'] as int,
+        // Null on rides finalized before schema v25: unknown, not zero.
+        overspeedCount: (m['overspeed_count'] as num?)?.toInt(),
         status: _statusFromString(m['status'] as String),
         mapSnapshotPath: m['map_snapshot_path'] as String?,
         // Null-tolerant rather than `as int`: rides written before schema v11
@@ -44,6 +46,7 @@ class RideModel {
         'hard_brake_count': e.hardBrakeCount,
         'rapid_accel_count': e.rapidAccelCount,
         'high_jerk_count': e.highJerkCount,
+        'overspeed_count': e.overspeedCount,
         'status': e.status.name,
         'map_snapshot_path': e.mapSnapshotPath,
         'is_auto': e.isAuto ? 1 : 0,

@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-10-06 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-10-09 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
 
 What a signed-in user can actually do in the app today, organized by the
 five-tab bottom nav. This is a living document — regenerate/update it
@@ -688,6 +688,35 @@ Nothing below is visible until an RTDB instance exists and the app is built with
   payload only carries `archived_at` for an archived bike.
 - **Dates read "8 Oct 2026" in Bangla too:** English month names and Western digits via `kNumericLocale`, in
   the Bangla font. Covers chat, shared rides, auto-detection history, maintenance forecast and money chart.
+
+## Changes from the themes / analytics / badges / QR / tour pass (2026-10-09, in the working tree, not committed, not checked on a device)
+
+- **Seven color modes are back**, renamed: sport (carbonMono), rain (nocturne), race (retro, mono type), commute
+  (calming, default), tour (trailSocial), adv (analystBlue), city (editorial). Stored `daily`→commute,
+  `adventure`→adv; old family names map to the mode carrying the same palette. Picker is a 2-column grid.
+- **Home-screen widgets follow the app theme.** `HomeWidgetService.publishTheme` writes `ti_theme_*` hex colors +
+  brightness; `homeWidgetThemeSyncProvider` (watched in `app.dart`) republishes on theme/brightness change.
+  Android `WidgetTheme.kt` tints via RemoteViews; iOS `WidgetPalette` reads the App Group. Falls back to Carbon Mono.
+- **Rides tab (`/home/stats`):** slim level bar and one dense 4-stat strip; the Dist/Speed toggle is gone. 16
+  stacked chart cards (distance per ride/week, avg/top speed, duration, moving vs stopped, jam time, riding
+  score, hard brakes, rapid accel, overspeed alerts, riding-days heatmap + streaks, rides by hour/weekday,
+  distance per bike, longest rides). Tap → `AnalyticsDetailScreen`: range 7D–All, min/max/avg/total, trend vs
+  previous period, insight, per-ride/day table, CSV download via share sheet. Logic in `stats/domain/ride_analytics.dart`.
+- **Overspeed count persisted:** schema v25 `rides.overspeed_count` (NULL for legacy rides, skipped by the chart);
+  `EventDetector` counts episodes, not samples.
+- **Badge detail sheet:** tier rows in the badge ladder (and the single-tier First ride tile) open
+  `BadgeDetailSheet` — rarity ring, earned date (replayed from local rides) or progress bar, "X% of riders own
+  this", rarity tier (Legendary <1%, Epic 1–5%, Rare 5–15%, Uncommon 15–40%, Common ≥40%), celebration + share.
+  Backed by `stats/badges` (Cloud Functions `badge-stats.ts`: create/delete triggers + `recomputeBadgeStatsDaily`).
+  Shows "—" until the first recompute runs.
+- **Profile (`/profile`):** badge list removed. New *My QR code* (`/profile/qr`, link
+  `https://blankframe.tech/ThrottleIQ/u/<uid>`, cached per uid, share/save) and *Scan QR* (`/profile/scan`,
+  mobile_scanner) — follows via `FollowController` then opens `/home/social?tab=people`. System-camera scans open
+  the app via App Links / Universal Links / `throttleiq://u/<uid>` (`app_links`); pending follows survive sign-in.
+  Web fallback `public/follow.html` → install page `blankframe.tech/ThrottleIQ/install?c=follow_qr`.
+- **Feature tour v4** (onboarding + Settings demo): 9 steps on design tokens (record, cockpit, auto-tracking,
+  rides & badges, garage, maintenance, places, social, profile/QR), progress bar, mini bottom-nav preview,
+  "Show me" with a restyled floating banner whose Next returns to the tour. Old mockups file deleted.
 
 ## Known UI gaps (as of this pass)
 

@@ -115,8 +115,12 @@ void main() {
     test('the light/dark companions clear AA contrast for UI components (3:1)', () {
       final companions = {
         'sportLight': AppColorPalette.sportLight,
-        'dailyDark': AppColorPalette.dailyDark,
-        'adventureLight': AppColorPalette.adventureLight,
+        'rainLight': AppColorPalette.rainLight,
+        'raceDark': AppColorPalette.raceDark,
+        'commuteDark': AppColorPalette.commuteDark,
+        'tourLight': AppColorPalette.tourLight,
+        'advLight': AppColorPalette.advLight,
+        'cityDark': AppColorPalette.cityDark,
       };
       companions.forEach((name, p) {
         final bg = p.background.computeLuminance();
@@ -177,12 +181,12 @@ void main() {
       expect(AppShapeProfile.boxy.controlHeight, 52);
     });
 
-    test('the default appearance is Calming, Curvy, Light', () {
+    test('the default appearance is Commute, Curvy, Light', () {
       // The fallback for an unknown persisted preference, and what every new
       // install/account starts on. If it ever resolves to another
       // combination, every rider who never touched Settings gets a silent
       // restyle.
-      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.daily);
+      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.commute);
       expect(AppAppearance.defaultAppearance.shapeVibe, AppShapeVibe.curvy);
       expect(AppAppearance.defaultAppearance.brightness, Brightness.light);
       expect(AppShapeProfile.forVibe(AppAppearance.defaultAppearance.shapeVibe),
@@ -230,7 +234,7 @@ void main() {
 
     test('the palette cross-fades colors and flips its flags at the halfway point', () {
       const a = AppColorPalette.sportDark;
-      const b = AppColorPalette.dailyLight;
+      const b = AppColorPalette.commuteLight;
       expect(a.lerp(b, 0).primary, a.primary);
       expect(a.lerp(b, 0).background, a.background);
       expect(a.lerp(b, 1).primary, b.primary);
@@ -250,10 +254,10 @@ void main() {
     });
 
     test('copyWith overrides only what it is given', () {
-      final p = AppColorPalette.dailyLight.copyWith(primary: const Color(0xFF123456));
+      final p = AppColorPalette.commuteLight.copyWith(primary: const Color(0xFF123456));
       expect(p.primary, const Color(0xFF123456));
-      expect(p.background, AppColorPalette.dailyLight.background);
-      expect(p.monoDisplay, AppColorPalette.dailyLight.monoDisplay);
+      expect(p.background, AppColorPalette.commuteLight.background);
+      expect(p.monoDisplay, AppColorPalette.commuteLight.monoDisplay);
       final s = AppShapeProfile.boxy.copyWith(radiusMd: 9);
       expect(s.radiusMd, 9);
       expect(s.radiusSm, AppShapeProfile.boxy.radiusSm);
@@ -285,14 +289,25 @@ void main() {
       }
     });
 
-    test('no mode is monospace display by default', () {
+    test('Race (Retro) takes its shape from the vibe, like every other mode', () {
+      for (final vibe in AppShapeVibe.values) {
+        final appearance = AppAppearance(
+            colorMode: AppColorMode.race, shapeVibe: vibe, brightness: Brightness.light);
+        final card = themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
+        expect((card.borderRadius as BorderRadius).topLeft.x,
+            AppShapeProfile.forVibe(vibe).radiusXl,
+            reason: '$vibe');
+      }
+    });
+
+    test('only Race (Retro) is monospace, regardless of vibe or brightness', () {
       for (final mode in AppColorMode.values) {
         for (final vibe in AppShapeVibe.values) {
           for (final brightness in Brightness.values) {
             final palette = themeFor(AppAppearance(
                     colorMode: mode, shapeVibe: vibe, brightness: brightness))
                 .extension<AppColorPalette>()!;
-            expect(palette.monoDisplay, isFalse,
+            expect(palette.monoDisplay, mode == AppColorMode.race,
                 reason: '$mode/$vibe/$brightness');
           }
         }
@@ -367,35 +382,62 @@ void main() {
     });
   });
 
-  group('Adventure mode (Analyst Blue & Nocturne)', () {
-    test('adventureDark uses midnight navy with cyan telemetry', () {
-      expect(AppColorPalette.adventureDark.background, const Color(0xFF0B1C2C));
-      expect(AppColorPalette.adventureDark.primary, const Color(0xFF25C0E6));
-      expect(AppColorPalette.adventureDark.secondary, const Color(0xFFF3906D));
-      expect(AppColorPalette.adventureDark.isDark, isTrue);
+  group('Adv mode (Analyst Blue)', () {
+    test('advDark uses midnight navy with cyan telemetry', () {
+      expect(AppColorPalette.advDark.background, const Color(0xFF0B1C2C));
+      expect(AppColorPalette.advDark.primary, const Color(0xFF25C0E6));
+      expect(AppColorPalette.advDark.secondary, const Color(0xFFF3906D));
+      expect(AppColorPalette.advDark.isDark, isTrue);
     });
 
-    test('adventureLight uses glacier ice background with console cyan', () {
-      expect(AppColorPalette.adventureLight.background, const Color(0xFFF2F7FA));
-      expect(AppColorPalette.adventureLight.primary, const Color(0xFF0A7F9E));
-      expect(AppColorPalette.adventureLight.secondary, const Color(0xFFC15A38));
-      expect(AppColorPalette.adventureLight.isDark, isFalse);
+    test('advLight uses glacier ice background with console cyan', () {
+      expect(AppColorPalette.advLight.background, const Color(0xFFF2F7FA));
+      expect(AppColorPalette.advLight.primary, const Color(0xFF0A7F9E));
+      expect(AppColorPalette.advLight.secondary, const Color(0xFFC15A38));
+      expect(AppColorPalette.advLight.isDark, isFalse);
     });
   });
 
-  group('Daily mode (Calm & Collected)', () {
-    test('dailyLight uses warm cream with sage green', () {
-      expect(AppColorPalette.dailyLight.background, const Color(0xFFF8F5EF));
-      expect(AppColorPalette.dailyLight.primary, const Color(0xFF537D5C));
-      expect(AppColorPalette.dailyLight.secondary, const Color(0xFFBD8D65));
-      expect(AppColorPalette.dailyLight.isDark, isFalse);
+  group('Commute mode (Calming)', () {
+    test('commuteLight uses warm cream with sage green', () {
+      expect(AppColorPalette.commuteLight.background, const Color(0xFFF8F5EF));
+      expect(AppColorPalette.commuteLight.primary, const Color(0xFF537D5C));
+      expect(AppColorPalette.commuteLight.secondary, const Color(0xFFBD8D65));
+      expect(AppColorPalette.commuteLight.isDark, isFalse);
     });
 
-    test('dailyDark uses warm charcoal with soft sage', () {
-      expect(AppColorPalette.dailyDark.background, const Color(0xFF17170F));
-      expect(AppColorPalette.dailyDark.primary, const Color(0xFFA8C7AD));
-      expect(AppColorPalette.dailyDark.secondary, const Color(0xFFDBB597));
-      expect(AppColorPalette.dailyDark.isDark, isTrue);
+    test('commuteDark uses warm charcoal with soft sage', () {
+      expect(AppColorPalette.commuteDark.background, const Color(0xFF17170F));
+      expect(AppColorPalette.commuteDark.primary, const Color(0xFFA8C7AD));
+      expect(AppColorPalette.commuteDark.secondary, const Color(0xFFDBB597));
+      expect(AppColorPalette.commuteDark.isDark, isTrue);
+    });
+  });
+
+  group('ride-mode names', () {
+    test('each mode resolves to the palette family it was named for', () {
+      const families = {
+        AppColorMode.sport: (AppColorPalette.carbonMonoDark, AppColorPalette.carbonMonoLight),
+        AppColorMode.rain: (AppColorPalette.nocturneDark, AppColorPalette.nocturneLight),
+        AppColorMode.race: (AppColorPalette.retroDark, AppColorPalette.retroLight),
+        AppColorMode.commute: (AppColorPalette.calmingDark, AppColorPalette.calmingLight),
+        AppColorMode.tour: (AppColorPalette.trailSocialDark, AppColorPalette.trailSocialLight),
+        AppColorMode.adv: (AppColorPalette.analystBlueDark, AppColorPalette.analystBlueLight),
+        AppColorMode.city: (AppColorPalette.editorialDark, AppColorPalette.editorialLight),
+      };
+      expect(families.keys.toSet(), AppColorMode.values.toSet());
+      families.forEach((mode, pair) {
+        expect(AppColorPalette.forMode(mode, Brightness.dark), same(pair.$1), reason: '$mode');
+        expect(AppColorPalette.forMode(mode, Brightness.light), same(pair.$2), reason: '$mode');
+      });
+    });
+
+    test('all seven modes are distinct palettes', () {
+      final backgrounds = {
+        for (final mode in AppColorMode.values)
+          AppColorPalette.forMode(mode, Brightness.dark).background.toARGB32(),
+      };
+      expect(backgrounds.length, 7);
     });
   });
 }

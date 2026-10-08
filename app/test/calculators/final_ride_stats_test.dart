@@ -24,6 +24,7 @@ void main() {
         hardBrakeCount: 2,
         rapidAccelCount: 3,
         highJerkCount: 1,
+        overspeedCount: 4,
       );
 
   test('writes every summary column the ride summary reads', () {
@@ -31,6 +32,7 @@ void main() {
     expect(stats.keys, containsAll(<String>[
       'end_time', 'distance_m', 'avg_speed_ms', 'max_speed_ms', 'duration_s',
       'moving_s', 'hard_brake_count', 'rapid_accel_count', 'high_jerk_count',
+      'overspeed_count',
     ]));
     expect(stats.containsKey('status'), isFalse,
         reason: 'callers choose the status (completed vs crash)');
@@ -38,6 +40,7 @@ void main() {
     expect(stats['avg_speed_ms'], closeTo(10, 1e-9));
     expect(stats['duration_s'], 700);
     expect(stats['hard_brake_count'], 2);
+    expect(stats['overspeed_count'], 4);
   });
 
   test('caps an implausible max speed', () {

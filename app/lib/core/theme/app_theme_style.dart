@@ -12,10 +12,25 @@ import 'package:flutter/material.dart';
 ///
 /// Enum member names are the persisted values (see `theme_style_provider.dart`)
 /// — renaming one silently resets riders who had it selected.
+///
+/// Named after riding modes rather than the palettes' design-deck names. The
+/// families behind them (and the names a pre-rename install may still have
+/// on disk, decoded in `theme_style_provider.dart`):
+///   - [sport]   → Carbon Mono  (lime/magenta instrument panel)
+///   - [rain]    → Nocturne     (deep indigo, lavender, teal)
+///   - [race]    → Retro        (mustard/rust 70s race-poster livery)
+///   - [commute] → Calming      (cream, sage, tan) — the default
+///   - [tour]    → Trail Social (kudos orange, sky blue)
+///   - [adv]     → Analyst Blue (navy console, cyan telemetry)
+///   - [city]    → Editorial    (warm paper, blue and orange)
 enum AppColorMode {
-  daily,
   sport,
-  adventure,
+  rain,
+  race,
+  commute,
+  tour,
+  adv,
+  city,
 }
 
 /// One immutable set of color tokens.
@@ -613,26 +628,41 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     isDark: false,
   );
 
-  // ── 3-Mode Primary Palettes ──────────────────────────────────────────────
-  static const AppColorPalette dailyDark = calmingDark;
-  static const AppColorPalette dailyLight = calmingLight;
-
+  // ── Ride-mode aliases ───────────────────────────────────────────────────
+  // The names [forMode] resolves through, one pair per [AppColorMode].
   static const AppColorPalette sportDark = carbonMonoDark;
   static const AppColorPalette sportLight = carbonMonoLight;
-
-  static const AppColorPalette adventureDark = analystBlueDark;
-  static const AppColorPalette adventureLight = analystBlueLight;
+  static const AppColorPalette rainDark = nocturneDark;
+  static const AppColorPalette rainLight = nocturneLight;
+  static const AppColorPalette raceDark = retroDark;
+  static const AppColorPalette raceLight = retroLight;
+  static const AppColorPalette commuteDark = calmingDark;
+  static const AppColorPalette commuteLight = calmingLight;
+  static const AppColorPalette tourDark = trailSocialDark;
+  static const AppColorPalette tourLight = trailSocialLight;
+  static const AppColorPalette advDark = analystBlueDark;
+  static const AppColorPalette advLight = analystBlueLight;
+  static const AppColorPalette cityDark = editorialDark;
+  static const AppColorPalette cityLight = editorialLight;
 
   /// Exhaustive by design — a nested `switch` with no `default`, so adding a
   /// member to [AppColorMode] or to [Brightness] without a palette is a
   /// compile error rather than a mode that silently renders as default.
   static AppColorPalette forMode(AppColorMode mode, Brightness brightness) =>
       switch ((mode, brightness)) {
-        (AppColorMode.daily, Brightness.dark) => dailyDark,
-        (AppColorMode.daily, Brightness.light) => dailyLight,
         (AppColorMode.sport, Brightness.dark) => sportDark,
         (AppColorMode.sport, Brightness.light) => sportLight,
-        (AppColorMode.adventure, Brightness.dark) => adventureDark,
-        (AppColorMode.adventure, Brightness.light) => adventureLight,
+        (AppColorMode.rain, Brightness.dark) => rainDark,
+        (AppColorMode.rain, Brightness.light) => rainLight,
+        (AppColorMode.race, Brightness.dark) => raceDark,
+        (AppColorMode.race, Brightness.light) => raceLight,
+        (AppColorMode.commute, Brightness.dark) => commuteDark,
+        (AppColorMode.commute, Brightness.light) => commuteLight,
+        (AppColorMode.tour, Brightness.dark) => tourDark,
+        (AppColorMode.tour, Brightness.light) => tourLight,
+        (AppColorMode.adv, Brightness.dark) => advDark,
+        (AppColorMode.adv, Brightness.light) => advLight,
+        (AppColorMode.city, Brightness.dark) => cityDark,
+        (AppColorMode.city, Brightness.light) => cityLight,
       };
 }

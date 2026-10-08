@@ -62,13 +62,17 @@ void main() {
       }
     });
 
-    testWidgets('sets all modes in Space Grotesk',
+    testWidgets('sets Race in a monospace face and every other mode in Space Grotesk',
         (tester) async {
       for (final mode in AppColorMode.values) {
         final style = await resolve(tester,
             AppColorPalette.forMode(mode, Brightness.light),
             (c) => AppTypography.display(c, 20));
-        expect(style.fontFamily!.contains('SpaceGrotesk'), isTrue, reason: '$mode');
+        final isMono = style.fontFamily!.contains('IBMPlexMono');
+        expect(isMono, mode == AppColorMode.race, reason: '$mode');
+        if (!isMono) {
+          expect(style.fontFamily!.contains('SpaceGrotesk'), isTrue, reason: '$mode');
+        }
       }
     });
 

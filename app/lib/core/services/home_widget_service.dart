@@ -4,11 +4,15 @@ import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show VoidCallback, visibleForTesting;
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_theme_style.dart';
+import '../theme/theme_style_provider.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/data/models/bike_model.dart';
 import '../../features/garage/domain/entities/bike_entity.dart';
@@ -20,6 +24,22 @@ import '../../features/ride/domain/entities/ride_entity.dart';
 
 final homeWidgetServiceProvider = Provider<HomeWidgetService>((ref) {
   return HomeWidgetService.instance;
+});
+
+/// Keeps the home-screen widgets in the app's color theme: publishes the
+/// active palette now and again on every appearance change (color mode,
+/// brightness — including an OS flip while on "System"). Watched once from
+/// the app root so it lives as long as the app does.
+final homeWidgetThemeSyncProvider = Provider<void>((ref) {
+  final service = ref.watch(homeWidgetServiceProvider);
+  ref.listen<AppAppearance>(
+    appearanceProvider,
+    (_, appearance) => service.publishTheme(
+      AppColorPalette.forMode(appearance.colorMode, appearance.brightness),
+      colorMode: appearance.colorMode,
+    ),
+    fireImmediately: true,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -64,6 +84,24 @@ const String kWidgetKeyMaxLeanRightRaw = 'ti_max_lean_right_raw';
 const String kWidgetKeyLeanRating = 'ti_lean_rating';
 const String kWidgetKeyLeanSymmetry = 'ti_lean_symmetry';
 const String kWidgetKeyApexUpdatedAt = 'ti_apex_updated_at';
+
+/// Theme keys: the active palette as `#AARRGGBB` hex strings, plus whether it
+/// is a dark palette and which color mode it came from. Native widgets read
+/// these at render time and fall back to their built-in Carbon Mono colors
+/// when a key is missing (widget placed before the app ever ran).
+const String kWidgetKeyThemeBackground = 'ti_theme_background';
+const String kWidgetKeyThemeSurface = 'ti_theme_surface';
+const String kWidgetKeyThemeBorder = 'ti_theme_border';
+const String kWidgetKeyThemeInk = 'ti_theme_ink';
+const String kWidgetKeyThemePrimary = 'ti_theme_primary';
+const String kWidgetKeyThemeOnPrimary = 'ti_theme_on_primary';
+const String kWidgetKeyThemeAccent = 'ti_theme_accent';
+const String kWidgetKeyThemeTextPrimary = 'ti_theme_text_primary';
+const String kWidgetKeyThemeTextMuted = 'ti_theme_text_muted';
+const String kWidgetKeyThemeTextTertiary = 'ti_theme_text_tertiary';
+const String kWidgetKeyThemeDanger = 'ti_theme_danger';
+const String kWidgetKeyThemeIsDark = 'ti_theme_is_dark';
+const String kWidgetKeyThemeMode = 'ti_theme_mode';
 
 /// Shown by both platforms before the app has ever published anything. Native
 /// code has its own copy of these as a defensive default; keeping them here
@@ -172,6 +210,38 @@ String resolveLeanRating(double maxDeg) {
   return 'STREET';
 }
 
+/// `#AARRGGBB`, upper-case — the one color format both `Color.parseColor`
+/// (Android) and the Swift widget's hex parser read.
+String widgetColorHex(Color color) =>
+    '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+
+/// The theme payload published for the native widgets: [palette]'s colors as
+/// hex strings keyed by the `kWidgetKeyTheme*` constants, plus brightness and
+/// (when known) the color mode's persisted name.
+///
+/// "ink" is the palette's text-primary color (what the widgets draw their
+/// main figures in) — not [AppColorPalette.ink], which is a fill token whose
+/// role flips between palettes. "on primary" is exactly what a filled primary
+/// button uses, so Race's mustard gets dark text like it does in the app.
+Map<String, Object> widgetThemeData(AppColorPalette palette,
+        {AppColorMode? colorMode}) =>
+    {
+      kWidgetKeyThemeBackground: widgetColorHex(palette.background),
+      kWidgetKeyThemeSurface: widgetColorHex(palette.surface),
+      kWidgetKeyThemeBorder: widgetColorHex(palette.border),
+      kWidgetKeyThemeInk: widgetColorHex(palette.textPrimary),
+      kWidgetKeyThemePrimary: widgetColorHex(palette.primary),
+      kWidgetKeyThemeOnPrimary:
+          widgetColorHex(AppTheme.primaryButtonForeground(palette)),
+      kWidgetKeyThemeAccent: widgetColorHex(palette.secondary),
+      kWidgetKeyThemeTextPrimary: widgetColorHex(palette.textPrimary),
+      kWidgetKeyThemeTextMuted: widgetColorHex(palette.textSecondary),
+      kWidgetKeyThemeTextTertiary: widgetColorHex(palette.textTertiary),
+      kWidgetKeyThemeDanger: widgetColorHex(palette.danger),
+      kWidgetKeyThemeIsDark: palette.isDark,
+      if (colorMode != null) kWidgetKeyThemeMode: colorMode.name,
+    };
+
 /// Kilometres ridden in the rolling 7 days ending at [now] (defaults to
 /// wall-clock now). Rolling rather than calendar-week so the widget never
 /// resets to zero mid-Monday-morning commute.
@@ -277,6 +347,46 @@ class HomeWidgetService {
   static const String _androidPackage = 'com.bft.throttleiq';
 
   bool _appGroupSet = false;
+
+  /// The last theme handed to [publishTheme], re-saved on every full refresh
+  /// so the widgets never render a refreshed panel in a stale theme.
+  Map<String, Object>? _themeData;
+
+  /// Publishes [palette] as the widgets' color theme and re-renders every
+  /// widget. Called by [homeWidgetThemeSyncProvider] on each appearance
+  /// change. No-op safe, like everything else here.
+  Future<void> publishTheme(AppColorPalette palette,
+      {AppColorMode? colorMode}) async {
+    final data = widgetThemeData(palette, colorMode: colorMode);
+    if (_mapEquals(data, _themeData)) return;
+    _themeData = data;
+    try {
+      await _saveTheme();
+      await refreshAllWidgets();
+    } catch (e, s) {
+      _log('publishTheme failed', e, s);
+    }
+  }
+
+  /// The theme most recently published, for tests.
+  @visibleForTesting
+  Map<String, Object>? get publishedThemeData => _themeData;
+
+  Future<void> _saveTheme() async {
+    final data = _themeData;
+    if (data == null) return;
+    await Future.wait([
+      for (final e in data.entries) _save(e.key, e.value),
+    ]);
+  }
+
+  static bool _mapEquals(Map<String, Object> a, Map<String, Object>? b) {
+    if (b == null || a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
 
   /// Call once on app start. Safe to call again.
   Future<void> initialize() async {
@@ -504,8 +614,10 @@ class HomeWidgetService {
     }
   }
 
-  /// Re-renders all five widgets from whatever is already stored.
+  /// Re-renders all five widgets from whatever is already stored (re-saving
+  /// the current theme first, so every update carries it).
   Future<void> refreshAllWidgets() async {
+    await _saveTheme();
     await _update(
         androidName: androidStartRideWidget, iOSName: iosStartRideWidget);
     await _update(
@@ -527,6 +639,7 @@ class HomeWidgetService {
   /// placeholders instead of leaving the widget blank.
   Future<void> refreshFromLocalData() async {
     try {
+      await _saveTheme();
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) {
         await publishPlaceholders();
@@ -572,6 +685,7 @@ class HomeWidgetService {
     double maxLeanRight = 0.0,
   }) async {
     try {
+      await _saveTheme();
       final totalKm = rides.fold<double>(0, (sum, r) => sum + r.distanceKm);
       await publishRideStats(
         weeklyKm: weeklyDistanceKm(rides),

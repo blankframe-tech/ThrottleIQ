@@ -167,6 +167,10 @@ class CloudRepository {
       out.remove('route_id');
       out.remove('route_name');
     }
+    // Same rule for the v25 overspeed count: a legacy ride (NULL) keeps the
+    // document shape it always had; a counted ride uploads it like the other
+    // event counts.
+    if (out['overspeed_count'] == null) out.remove('overspeed_count');
     return out;
   }
 

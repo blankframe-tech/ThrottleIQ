@@ -143,6 +143,15 @@ dependencies:
   # side widget, no backend/scanning half needed since the payload is just
   # plain text a phone camera app already reads.
   qr_flutter: ^4.1.0
+  # "Scan QR" on the profile: reads another rider's follow-link QR in-app
+  # (features/social/presentation/screens/scan_follow_qr_screen.dart).
+  mobile_scanner: ^7.4.2
+  # Follow links opened from the system camera / browser (App Links,
+  # Universal Links and the throttleiq:// scheme) — see
+  # features/social/presentation/follow_link_listener.dart.
+  app_links: ^7.2.2
+  # "Save image" for the rider's own follow QR (writes to Photos/Gallery).
+  gal: ^2.3.3
 
   # Imported directly by add_edit_bike_screen.dart (fetching a remote bike
   # photo to a local file for re-cropping). It was only ever a transitive dependency

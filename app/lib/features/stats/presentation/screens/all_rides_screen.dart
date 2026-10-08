@@ -86,7 +86,8 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
           icon: Icon(Icons.arrow_back, color: context.palette.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: Text(context.l10n.allRides, style: display(context, 20, letterSpacing: 0)),
+        title: Text(context.l10n.allRides,
+            style: display(context, 20, letterSpacing: 0)),
       ),
       body: SafeArea(
         top: false,
@@ -95,9 +96,9 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
               child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => Center(
               child: ErrorView(
-                error: e,
-                onRetry: () => ref.invalidate(riderStatsProvider),
-              )),
+            error: e,
+            onRetry: () => ref.invalidate(riderStatsProvider),
+          )),
           data: (stats) {
             // Same fallback as the Rides tab: an older cached summary has no
             // allRides, and an empty page would be a lie.
@@ -132,18 +133,15 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                       AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 8),
                   child: Text(
                     context.l10n.showing(shown.length, sorted.length),
-                    style:
-                        TextStyle(fontSize: 12, color: context.palette.textTertiary),
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textTertiary),
                   ),
                 ),
                 Expanded(
                   child: ListView.separated(
                     controller: _controller,
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimensions.paddingMd,
-                        0,
-                        AppDimensions.paddingMd,
-                        AppDimensions.paddingLg),
+                    padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
+                        0, AppDimensions.paddingMd, AppDimensions.paddingLg),
                     itemCount: shown.length + (hasMore ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
@@ -155,7 +153,8 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: context.palette.primary),
+                                  strokeWidth: 2,
+                                  color: context.palette.primary),
                             ),
                           ),
                         );
@@ -287,7 +286,8 @@ class AllRidesRow extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(formatRideDate(ride.startTime),
-                                style: display(context, 16, letterSpacing: 0, color: Colors.white)),
+                                style: display(context, 16,
+                                    letterSpacing: 0, color: Colors.white)),
                             const SizedBox(height: 2),
                             Text(formatRideTime(ride.startTime),
                                 style: const TextStyle(
@@ -303,7 +303,9 @@ class AllRidesRow extends StatelessWidget {
                             border: Border.all(
                               color: score >= 90
                                   ? context.palette.success
-                                  : (score >= 70 ? Colors.white54 : context.palette.attention),
+                                  : (score >= 70
+                                      ? Colors.white54
+                                      : context.palette.attention),
                               width: 2,
                             ),
                             color: Colors.black54,
@@ -320,7 +322,7 @@ class AllRidesRow extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Stats Section
             Padding(
               padding: const EdgeInsets.all(16),
@@ -343,12 +345,14 @@ class AllRidesRow extends StatelessWidget {
                       Expanded(
                         child: _Figure(
                             label: context.l10n.avgSpeedStatLabel,
-                            value: '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                            value:
+                                '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
                       ),
                       Expanded(
                         child: _Figure(
                             label: context.l10n.topLower,
-                            value: '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
+                            value:
+                                '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
                       ),
                     ],
                   ),
@@ -365,8 +369,10 @@ class AllRidesRow extends StatelessWidget {
                         const SizedBox(width: 8),
                       ],
                       if (ride.routeName != null) ...[
-                        EditorialPill(context.l10n.followedRoutePill(ride.routeName!),
-                            tone: PillTone.neutral, filled: false),
+                        EditorialPill(
+                            context.l10n.followedRoutePill(ride.routeName!),
+                            tone: PillTone.neutral,
+                            filled: false),
                         const SizedBox(width: 8),
                       ],
                       if (ride.hardBrakeCount +
@@ -375,11 +381,15 @@ class AllRidesRow extends StatelessWidget {
                           0)
                         Expanded(
                           child: Text(
-                            context.l10n.hardBrakesRapidAccel(ride.hardBrakeCount, ride.rapidAccelCount, ride.highJerkCount),
+                            context.l10n.hardBrakesRapidAccel(
+                                ride.hardBrakeCount,
+                                ride.rapidAccelCount,
+                                ride.highJerkCount),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                fontSize: 11, color: context.palette.textTertiary),
+                                fontSize: 11,
+                                color: context.palette.textTertiary),
                           ),
                         ),
                     ],
@@ -410,15 +420,26 @@ class _Figure extends StatelessWidget {
             style: display(context, 13, letterSpacing: 0)),
         const SizedBox(height: 2),
         Text(label,
-            style: TextStyle(fontSize: 10, color: context.palette.textTertiary)),
+            style:
+                TextStyle(fontSize: 10, color: context.palette.textTertiary)),
       ],
     );
   }
 }
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 String formatRideDate(DateTime dt) =>

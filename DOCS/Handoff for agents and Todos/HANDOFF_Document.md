@@ -1,8 +1,18 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-08 · Branch: `audit-101-integration`_
+_Last updated: 2026-10-09 · Branch: `experimental`_
 
-## 2026-10-08 (latest): audit §101 fix pass on `audit-101-integration`
+## 2026-10-09 (latest): themes, rides analytics, badge rarity, follow-QR, tour v4 — working tree on `experimental`, not committed
+
+- Seven ride-mode color themes restored (sport/rain/race/commute/tour/adv/city) and home-screen widgets now follow the app theme.
+- Rides tab: compact header, 16 stacked charts with tap-to-detail + CSV export; schema v25 adds `rides.overspeed_count`.
+- Badge detail sheet with "% of riders own this" + rarity tiers (Cloud Functions `badge-stats.ts`, `stats/badges` doc).
+- Profile: badges list removed; My QR / Scan QR follow, App Links + Universal Links + `throttleiq://u/<uid>`, web fallback `public/follow.html`.
+- Feature tour rebuilt (manifest v4, 9 steps). Details: `features.md` (2026-10-09 section); follow-ups and deploy steps: `issues_open.md` §102.
+- Jam labels (asked this session): stored only in Firestore at `users/{uid}/rides/{rideId}/jamLabels/{id}` (`JamLabelRepository`), queued offline by the Firestore SDK.
+- QA: analyze clean, `flutter test` 2016/2016, functions build OK, debug APK builds. Not run: device, E2E, `ui_tour_test`.
+
+## 2026-10-08: audit §101 fix pass on `audit-101-integration`
 
 - Branch `audit-101-integration` (on `main` 13ad9d2) holds the verified §101 fixes for groups G1, G3-G10. G2 had nothing safe to fix (the `group_rides` location membership check needs a Cloud Function). The earlier unreviewed user commits (G5, G7, G9) were reviewed and corrected, and out-of-plan changes were reverted.
 - Per-item verdicts and one-line reasons are in `issues_open.md` §101 (**Resolution** lines); the summary is `issues_fixed.md` §101. Skipped items (real-but-skip, not-real, harmful-as-suggested) are annotated so they are not redone.

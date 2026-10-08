@@ -77,6 +77,21 @@ enum WidgetKeys {
     static let leanRating = "ti_lean_rating"
     static let leanSymmetry = "ti_lean_symmetry"
     static let apexUpdatedAt = "ti_apex_updated_at"
+
+    // Theme — `#AARRGGBB` strings from `widgetThemeData` in Dart.
+    static let themeBackground = "ti_theme_background"
+    static let themeSurface = "ti_theme_surface"
+    static let themeBorder = "ti_theme_border"
+    static let themeInk = "ti_theme_ink"
+    static let themePrimary = "ti_theme_primary"
+    static let themeOnPrimary = "ti_theme_on_primary"
+    static let themeAccent = "ti_theme_accent"
+    static let themeTextPrimary = "ti_theme_text_primary"
+    static let themeTextMuted = "ti_theme_text_muted"
+    static let themeTextTertiary = "ti_theme_text_tertiary"
+    static let themeDanger = "ti_theme_danger"
+    static let themeIsDark = "ti_theme_is_dark"
+    static let themeMode = "ti_theme_mode"
 }
 
 enum Placeholder {
@@ -85,31 +100,72 @@ enum Placeholder {
     static let noService = "No service data yet"
 }
 
-// MARK: - Carbon Mono design tokens
+// MARK: - Theme tokens
 
-/// Mirrors AppColorPalette.carbonMono in lib/core/theme/app_theme_style.dart.
-/// Widgets always render Carbon Mono regardless of the in-app theme toggle —
-/// a widget sits on the wallpaper, and this is the brand mark there.
-enum Carbon {
-    static let background = Color(red: 0.051, green: 0.051, blue: 0.051) // #0D0D0D
-    static let surface = Color(red: 0.086, green: 0.086, blue: 0.086)    // #161616
-    static let border = Color(red: 0.224, green: 0.224, blue: 0.224)     // #393939
-    static let primary = Color(red: 0.784, green: 1.0, blue: 0.239)      // #C8FF3D
-    static let onPrimary = Color(red: 0.051, green: 0.051, blue: 0.051)  // #0D0D0D
-    static let textPrimary = Color(red: 0.957, green: 0.957, blue: 0.957) // #F4F4F4
-    static let textSecondary = Color(red: 0.541, green: 0.541, blue: 0.541) // #8A8A8A
-    static let textTertiary = Color(red: 0.435, green: 0.435, blue: 0.435)  // #6F6F6F
-    static let danger = Color(red: 0.980, green: 0.302, blue: 0.337)     // #FA4D56
+/// The app's active color theme, published by `HomeWidgetService.publishTheme`
+/// as `#AARRGGBB` strings under the `ti_theme_*` keys. Every token is read at
+/// render time, so a theme change in the app shows on the next reload (the
+/// app reloads every widget right after publishing). A missing or malformed
+/// key falls back to the Carbon Mono value below — what the widgets looked
+/// like before they followed the theme, and what a widget placed before the
+/// app ever ran still shows.
+enum WidgetPalette {
+    static var background: Color { themed(WidgetKeys.themeBackground, 0xFF0D0D0D) }
+    static var surface: Color { themed(WidgetKeys.themeSurface, 0xFF161616) }
+    static var border: Color { themed(WidgetKeys.themeBorder, 0xFF393939) }
+    static var primary: Color { themed(WidgetKeys.themePrimary, 0xFFC8FF3D) }
+    static var onPrimary: Color { themed(WidgetKeys.themeOnPrimary, 0xFF0D0D0D) }
+    static var accent: Color { themed(WidgetKeys.themeAccent, 0xFFD633FF) }
+    static var textPrimary: Color { themed(WidgetKeys.themeTextPrimary, 0xFFF4F4F4) }
+    static var textSecondary: Color { themed(WidgetKeys.themeTextMuted, 0xFF8A8A8A) }
+    static var textTertiary: Color { themed(WidgetKeys.themeTextTertiary, 0xFF6F6F6F) }
+    static var danger: Color { themed(WidgetKeys.themeDanger, 0xFFFA4D56) }
+
+    /// Whether the published palette is a dark one. Defaults to true (Carbon
+    /// Mono is dark) when nothing has been published.
+    static var isDark: Bool {
+        guard let defaults = ThrottleIQWidgetStore.defaults,
+              defaults.object(forKey: WidgetKeys.themeIsDark) != nil else {
+            return true
+        }
+        return defaults.bool(forKey: WidgetKeys.themeIsDark)
+    }
 
     /// Sharp corners, 2–4dp — the app's shape system, deliberately not the
     /// system widget radius.
     static let cornerRadius: CGFloat = 3
+
+    private static func themed(_ key: String, _ fallback: UInt32) -> Color {
+        color(argb: ThrottleIQWidgetStore.string(key).flatMap(parseHex) ?? fallback)
+    }
+
+    /// `#AARRGGBB` or `#RRGGBB` (alpha defaults to opaque) → 0xAARRGGBB.
+    static func parseHex(_ hex: String) -> UInt32? {
+        var digits = hex.trimmingCharacters(in: .whitespaces)
+        if digits.hasPrefix("#") { digits.removeFirst() }
+        guard let value = UInt32(digits, radix: 16) else { return nil }
+        switch digits.count {
+        case 8: return value
+        case 6: return 0xFF000000 | value
+        default: return nil
+        }
+    }
+
+    private static func color(argb: UInt32) -> Color {
+        Color(
+            .sRGB,
+            red: Double((argb >> 16) & 0xFF) / 255,
+            green: Double((argb >> 8) & 0xFF) / 255,
+            blue: Double(argb & 0xFF) / 255,
+            opacity: Double((argb >> 24) & 0xFF) / 255
+        )
+    }
 }
 
 /// Small-caps monospaced section label, e.g. "RIDE STATS".
 private struct SectionLabel: View {
     let text: String
-    var color: Color = Carbon.textSecondary
+    var color: Color = WidgetPalette.textSecondary
 
     var body: some View {
         Text(text)
@@ -120,17 +176,17 @@ private struct SectionLabel: View {
     }
 }
 
-/// The shared panel chrome: carbon fill + hairline border, sharp corners.
-private struct CarbonPanel<Content: View>: View {
+/// The shared panel chrome: themed fill + hairline border, sharp corners.
+private struct ThemedPanel<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(Carbon.background)
+            .background(WidgetPalette.background)
             .overlay(
-                RoundedRectangle(cornerRadius: Carbon.cornerRadius)
-                    .stroke(Carbon.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: WidgetPalette.cornerRadius)
+                    .stroke(WidgetPalette.border, lineWidth: 1)
             )
     }
 }
@@ -140,11 +196,11 @@ private struct CarbonPanel<Content: View>: View {
 /// raising the extension's deployment target.
 private extension View {
     @ViewBuilder
-    func carbonContainerBackground() -> some View {
+    func themedContainerBackground() -> some View {
         if #available(iOS 17.0, *) {
-            self.containerBackground(Carbon.background, for: .widget)
+            self.containerBackground(WidgetPalette.background, for: .widget)
         } else {
-            self.background(Carbon.background)
+            self.background(WidgetPalette.background)
         }
     }
 }
@@ -174,22 +230,22 @@ struct StartRideWidgetView: View {
     var entry: StartRideEntry
 
     var body: some View {
-        CarbonPanel {
+        ThemedPanel {
             VStack(alignment: .leading, spacing: 8) {
                 SectionLabel(text: "THROTTLEIQ")
 
                 Text("START RIDE")
                     .font(.system(size: 13, weight: .bold, design: .monospaced))
                     .kerning(0.8)
-                    .foregroundColor(Carbon.onPrimary)
+                    .foregroundColor(WidgetPalette.onPrimary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Carbon.primary)
-                    .cornerRadius(Carbon.cornerRadius)
+                    .background(WidgetPalette.primary)
+                    .cornerRadius(WidgetPalette.cornerRadius)
             }
             .padding(10)
         }
-        .carbonContainerBackground()
+        .themedContainerBackground()
         .widgetURL(URL(string: "throttleiq://startride"))
     }
 }
@@ -234,22 +290,22 @@ struct AutoTrackingWidgetView: View {
     var entry: AutoTrackingEntry
 
     var body: some View {
-        CarbonPanel {
+        ThemedPanel {
             VStack(alignment: .leading, spacing: 8) {
                 SectionLabel(text: "THROTTLEIQ")
 
                 Text("AUTO-TRACK")
                     .font(.system(size: 13, weight: .bold, design: .monospaced))
                     .kerning(0.8)
-                    .foregroundColor(Carbon.onPrimary)
+                    .foregroundColor(WidgetPalette.onPrimary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Carbon.primary)
-                    .cornerRadius(Carbon.cornerRadius)
+                    .background(WidgetPalette.primary)
+                    .cornerRadius(WidgetPalette.cornerRadius)
             }
             .padding(10)
         }
-        .carbonContainerBackground()
+        .themedContainerBackground()
         // Opens Settings rather than flipping the switch itself — enabling
         // auto-tracking can prompt for "Always" location and can fail, and
         // neither has anywhere to surface from a bare widget tap. See
@@ -322,7 +378,7 @@ private struct StatColumn: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            SectionLabel(text: label, color: Carbon.textTertiary)
+            SectionLabel(text: label, color: WidgetPalette.textTertiary)
             Text(value)
                 .font(.system(size: 20, weight: .bold, design: .monospaced))
                 .foregroundColor(valueColor)
@@ -361,9 +417,9 @@ struct RideStatsWidgetView: View {
     }
 
     private var mediumView: some View {
-        CarbonPanel {
+        ThemedPanel {
             HStack(spacing: 0) {
-                Carbon.primary.frame(width: 3)
+                WidgetPalette.primary.frame(width: 3)
 
                 VStack(alignment: .leading, spacing: 8) {
                     SectionLabel(text: "RIDE STATS")
@@ -372,12 +428,12 @@ struct RideStatsWidgetView: View {
                         StatColumn(
                             label: "THIS WEEK",
                             value: entry.weeklyKm,
-                            valueColor: Carbon.primary
+                            valueColor: WidgetPalette.primary
                         )
                         StatColumn(
                             label: "ALL TIME",
                             value: entry.totalKm,
-                            valueColor: Carbon.textPrimary
+                            valueColor: WidgetPalette.textPrimary
                         )
                     }
 
@@ -385,13 +441,13 @@ struct RideStatsWidgetView: View {
 
                     Text(entry.rideCount)
                         .font(.system(size: 11, weight: .regular, design: .monospaced))
-                        .foregroundColor(Carbon.textSecondary)
+                        .foregroundColor(WidgetPalette.textSecondary)
                         .lineLimit(1)
                 }
                 .padding(12)
             }
         }
-        .carbonContainerBackground()
+        .themedContainerBackground()
     }
 }
 
@@ -469,7 +525,7 @@ struct MaintenanceWidgetView: View {
     var entry: MaintenanceEntry
 
     private var accentColor: Color {
-        entry.hasData && entry.overdue ? Carbon.danger : Carbon.primary
+        entry.hasData && entry.overdue ? WidgetPalette.danger : WidgetPalette.primary
     }
 
     var body: some View {
@@ -504,7 +560,7 @@ struct MaintenanceWidgetView: View {
     }
 
     private var mediumView: some View {
-        CarbonPanel {
+        ThemedPanel {
             HStack(spacing: 0) {
                 accentColor.frame(width: 3)
 
@@ -517,7 +573,7 @@ struct MaintenanceWidgetView: View {
                                 .font(.system(size: 8, weight: .bold, design: .monospaced))
                                 .kerning(0.8)
                                 .foregroundColor(
-                                    entry.overdue ? Carbon.textPrimary : Carbon.onPrimary
+                                    entry.overdue ? Color.white : WidgetPalette.onPrimary
                                 )
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
@@ -528,19 +584,19 @@ struct MaintenanceWidgetView: View {
 
                     Text(entry.summary)
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
-                        .foregroundColor(Carbon.textPrimary)
+                        .foregroundColor(WidgetPalette.textPrimary)
                         .minimumScaleFactor(0.7)
                         .lineLimit(1)
 
                     Text(entry.bikeName)
                         .font(.system(size: 10, weight: .regular, design: .monospaced))
-                        .foregroundColor(Carbon.textSecondary)
+                        .foregroundColor(WidgetPalette.textSecondary)
                         .lineLimit(1)
                 }
                 .padding(10)
             }
         }
-        .carbonContainerBackground()
+        .themedContainerBackground()
     }
 }
 
@@ -677,7 +733,7 @@ struct ApexHunterWidgetView: View {
     }
 
     private var smallView: some View {
-        CarbonPanel {
+        ThemedPanel {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     SectionLabel(text: "APEX HUNTER")
@@ -685,10 +741,10 @@ struct ApexHunterWidgetView: View {
                     if entry.hasData {
                         Text(entry.rating)
                             .font(.system(size: 8, weight: .bold, design: .monospaced))
-                            .foregroundColor(Carbon.onPrimary)
+                            .foregroundColor(WidgetPalette.onPrimary)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
-                            .background(Carbon.primary)
+                            .background(WidgetPalette.primary)
                             .cornerRadius(2)
                     }
                 }
@@ -697,10 +753,10 @@ struct ApexHunterWidgetView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("LEFT")
                             .font(.system(size: 8, weight: .medium, design: .monospaced))
-                            .foregroundColor(Carbon.textTertiary)
+                            .foregroundColor(WidgetPalette.textTertiary)
                         Text(entry.left)
                             .font(.system(size: 20, weight: .bold, design: .monospaced))
-                            .foregroundColor(Carbon.primary)
+                            .foregroundColor(WidgetPalette.primary)
                             .minimumScaleFactor(0.7)
                             .lineLimit(1)
                     }
@@ -709,10 +765,10 @@ struct ApexHunterWidgetView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("RIGHT")
                             .font(.system(size: 8, weight: .medium, design: .monospaced))
-                            .foregroundColor(Carbon.textTertiary)
+                            .foregroundColor(WidgetPalette.textTertiary)
                         Text(entry.right)
                             .font(.system(size: 20, weight: .bold, design: .monospaced))
-                            .foregroundColor(Carbon.textPrimary)
+                            .foregroundColor(WidgetPalette.textPrimary)
                             .minimumScaleFactor(0.7)
                             .lineLimit(1)
                     }
@@ -723,19 +779,19 @@ struct ApexHunterWidgetView: View {
 
                 Text("SYM: \(entry.symmetry)")
                     .font(.system(size: 10, weight: .regular, design: .monospaced))
-                    .foregroundColor(Carbon.textSecondary)
+                    .foregroundColor(WidgetPalette.textSecondary)
                     .lineLimit(1)
             }
             .padding(10)
         }
-        .carbonContainerBackground()
+        .themedContainerBackground()
         .widgetURL(URL(string: "throttleiq://apexhunter"))
     }
 
     private var mediumView: some View {
-        CarbonPanel {
+        ThemedPanel {
             HStack(spacing: 0) {
-                Carbon.primary.frame(width: 3)
+                WidgetPalette.primary.frame(width: 3)
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .center) {
@@ -744,10 +800,10 @@ struct ApexHunterWidgetView: View {
                         if entry.hasData {
                             Text(entry.rating)
                                 .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                .foregroundColor(Carbon.onPrimary)
+                                .foregroundColor(WidgetPalette.onPrimary)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
-                                .background(Carbon.primary)
+                                .background(WidgetPalette.primary)
                                 .cornerRadius(2)
                         }
                     }
@@ -756,17 +812,17 @@ struct ApexHunterWidgetView: View {
                         StatColumn(
                             label: "MAX LEFT",
                             value: entry.left,
-                            valueColor: Carbon.primary
+                            valueColor: WidgetPalette.primary
                         )
                         StatColumn(
                             label: "MAX RIGHT",
                             value: entry.right,
-                            valueColor: Carbon.textPrimary
+                            valueColor: WidgetPalette.textPrimary
                         )
                         StatColumn(
                             label: "SYMMETRY",
                             value: entry.symmetry,
-                            valueColor: Carbon.textSecondary
+                            valueColor: WidgetPalette.textSecondary
                         )
                     }
 
@@ -774,13 +830,13 @@ struct ApexHunterWidgetView: View {
 
                     Text("Calculated from gyroscope and lateral gravity telemetry")
                         .font(.system(size: 9, weight: .regular, design: .monospaced))
-                        .foregroundColor(Carbon.textTertiary)
+                        .foregroundColor(WidgetPalette.textTertiary)
                         .lineLimit(1)
                 }
                 .padding(12)
             }
         }
-        .carbonContainerBackground()
+        .themedContainerBackground()
         .widgetURL(URL(string: "throttleiq://apexhunter"))
     }
 }

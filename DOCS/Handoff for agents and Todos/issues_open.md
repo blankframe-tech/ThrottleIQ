@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§102**. (§97–§101 are taken in this file. §97 is also used in `issues_fixed.md` for a different writeup: here it is the Places/Forums first-iPhone-run findings, there it is the forum photos / paddock counts fix. §85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§103**. (§97–§102 are taken in this file. §97 is also used in `issues_fixed.md` for a different writeup: here it is the Places/Forums first-iPhone-run findings, there it is the forum photos / paddock counts fix. §85 exists in both files — the stub here and the writeup in `issues_fixed.md`. §78 sub-items run to 78.30; §83 to 83.31. Note §79 and §81 are each used twice, and §82 was taken before §83 — check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -1951,3 +1951,33 @@ the Places hub keeps animating or loading and never settles on the simulator, so
 are still never reached. Not caused by the archive/Garage/date changes as far as can be told (the tap
 itself worked), but not proven either way. Likely fix: replace that `pumpAndSettle()` with a bounded
 `pump(Duration)` loop or wait for `find.text('Saved')`.
+
+
+---
+
+## 102. Themes / analytics / badges / QR / tour pass — open follow-ups (2026-10-09)
+
+**Status:** Code done in the working tree (not committed). `flutter analyze` clean, `flutter test` 2016/2016,
+`functions` `tsc` build OK, `flutter build apk --debug` OK. Nothing deployed; nothing checked on a device;
+`integration_test/e2e_test.dart` and `ui_tour_test.dart` not run (no simulator).
+
+- **102.1 Deploy for badge rarity:** `firebase deploy --only functions,firestore:rules`, then force-run
+  `recomputeBadgeStatsDaily` once. Until then the % is hidden. `totalRiders` counts all accounts (including
+  riders with no rides), and clients can still self-award `earnedBadges` docs (existing rules gap), which skews counts.
+- **102.2 QR deep links need blankframe.tech:** the site must serve `/.well-known/assetlinks.json`,
+  `/.well-known/apple-app-site-association` (application/json, no redirect) and `/ThrottleIQ/u/*` (copy from
+  `public/` or proxy to Firebase Hosting). Add Play App Signing SHA-256 to `assetlinks.json` if used. Enable
+  Associated Domains for `com.bft.throttleiq` (team `NJ4675FFUX`) and regenerate profiles. Then
+  `firebase deploy --only hosting`.
+- **102.3 QR gaps:** no deferred deep link (after installing, the rider must re-scan); a well-formed uid for a
+  non-existent rider still writes a harmless follow doc (rules make missing and private look the same); QR
+  buttons only on `/profile`, not the Garage tab header; the saved QR PNG keeps the colors of first render.
+- **102.4 Widgets:** theme-following widgets unverified on device; Android button/DUE chip lost 2dp rounded
+  corners; widgets don't follow the shape vibe.
+- **102.5 Analytics not built:** lean angle / peak g (not computed live — `DualLeanArcGauge`/`GForceFrictionCircle`
+  are unused and the recorder never writes lean prefs), fuel/cost (not tracked), elevation gain (needs every ride point).
+- **102.6 Tour:** card tour + "Show me" rather than real-widget coach marks; no floating banner on `/profile`.
+  `.agents/skills/onboarding-guardian/SKILL.md` was updated to accept the v4 step list.
+- **102.7 Bangla review:** new keys for themes, analytics, badge rarity, follow-QR and tour v4 are machine-drafted;
+  listed in `app/lib/l10n/bn_pending_review.txt`.
+- **102.8 Diff noise:** a `dart format` run may have reflowed `all_rides_screen.dart` and `badge_grid.dart` beyond their real edits.

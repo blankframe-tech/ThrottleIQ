@@ -4,45 +4,72 @@
     (near-black panel, hairline border, one solid lime action block) so the two
     launcher widgets read as a matched pair.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_auto_tracking_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/widget_background"
-    android:padding="10dp"
     android:contentDescription="@string/widget_auto_tracking_content_description">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/widget_start_ride_title"
-        android:textColor="@color/widget_text_secondary"
-        android:textSize="9sp"
-        android:fontFamily="monospace"
-        android:letterSpacing="0.18"
-        android:maxLines="1"
-        android:ellipsize="end" />
+    <!-- Panel chrome as two tintable images (border, then fill inset by
+         1dp) so WidgetTheme can recolor it with setColorFilter; a
+         RemoteViews background drawable cannot be recolored. -->
+    <ImageView
+        android:id="@+id/widget_bg_border"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/widget_panel_border"
+        android:scaleType="fitXY"
+        android:contentDescription="@null" />
+
+    <ImageView
+        android:id="@+id/widget_bg_fill"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="1dp"
+        android:src="@drawable/widget_panel_fill"
+        android:scaleType="fitXY"
+        android:contentDescription="@null" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="8dp"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center"
-        android:background="@drawable/widget_button_primary">
+        android:padding="10dp">
 
         <TextView
+            android:id="@+id/widget_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/widget_auto_tracking_cta"
-            android:textColor="@color/widget_on_primary"
-            android:textSize="13sp"
-            android:textStyle="bold"
+            android:text="@string/widget_start_ride_title"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="9sp"
             android:fontFamily="monospace"
-            android:letterSpacing="0.10"
+            android:letterSpacing="0.18"
             android:maxLines="1"
             android:ellipsize="end" />
+
+        <LinearLayout
+            android:id="@+id/widget_cta_block"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/widget_button_primary">
+
+            <TextView
+                android:id="@+id/widget_cta_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_auto_tracking_cta"
+                android:textColor="@color/widget_on_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.10"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

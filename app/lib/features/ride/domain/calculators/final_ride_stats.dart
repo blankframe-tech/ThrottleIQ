@@ -20,6 +20,7 @@ Map<String, dynamic> buildFinalRideStats({
   required int hardBrakeCount,
   required int rapidAccelCount,
   required int highJerkCount,
+  required int overspeedCount,
 }) {
   var effectiveMax = maxSpeedMs;
   if (effectiveMax > SensorConstants.maxPlausibleSpeedMs) {
@@ -59,5 +60,6 @@ Map<String, dynamic> buildFinalRideStats({
     'hard_brake_count': hardBrakeCount,
     'rapid_accel_count': rapidAccelCount,
     'high_jerk_count': highJerkCount,
+    'overspeed_count': overspeedCount,
   };
 }

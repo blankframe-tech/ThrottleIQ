@@ -32,6 +32,7 @@ import 'package:throttleiq/core/i18n/locale_provider.dart';
 import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
+import 'package:throttleiq/features/auth/presentation/screens/onboarding_manifest.dart';
 import 'package:throttleiq/features/chat/presentation/providers/chat_providers.dart';
 import 'package:throttleiq/features/forums/presentation/providers/forum_providers.dart';
 import 'package:throttleiq/features/garage/presentation/providers/garage_provider.dart';
@@ -478,11 +479,34 @@ Future<void> tourAuth() async {
 
 Future<void> tourOnboarding() async {
   await step('Feature tour', () async {
-    for (var i = 0; i < 7; i++) {
-      await push('/auth/onboarding?demo=1&slide=$i', after: 1600);
-      await snap('Slide ${i + 1}');
-      await back();
+    // One push, then the tour's own Next button: exercises the real step
+    // transitions and progress bar rather than deep-linking each slide.
+    await push('/auth/onboarding?demo=1', after: 1600);
+    for (var i = 0; i < kOnboardingSlideCount; i++) {
+      await snap('Step ${i + 1}');
+      if (i < kOnboardingSlideCount - 1) {
+        await t.tap(find.byKey(const ValueKey('tour-next')).hitTestable(), warnIfMissed: false);
+        await wait(900);
+      }
     }
+    await back();
+  });
+  await step('Feature tour', () async {
+    // "Show me" from step 1 (Record), with the floating tour banner on the
+    // live screen, then "Back to tour".
+    await push('/auth/onboarding?demo=1', after: 1600);
+    final showMe = find.byKey(const ValueKey('tour-show-me')).hitTestable();
+    if (has(showMe)) {
+      await t.tap(showMe, warnIfMissed: false);
+      await wait(1800);
+      await snap('Show me with tour banner');
+      final backToTour = find.byKey(const ValueKey('tour-banner-back')).hitTestable();
+      if (has(backToTour)) {
+        await t.tap(backToTour, warnIfMissed: false);
+        await wait(900);
+      }
+    }
+    await back();
   });
 }
 
@@ -847,7 +871,7 @@ void main() {
       }
 
       // Leave the simulator signed in on the default look.
-      await applyCombo(const Combo(AppColorMode.daily, AppShapeVibe.curvy, Brightness.light));
+      await applyCombo(const Combo(AppColorMode.commute, AppShapeVibe.curvy, Brightness.light));
       await textLog?.flush();
       await textLog?.close();
     } catch (e, st) {

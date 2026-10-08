@@ -206,125 +206,89 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get colorFieldLabel;
 
-  /// Name of the Daily color mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily'**
-  String get themeDailyLabel;
-
-  /// One-line description under the Daily color option.
-  ///
-  /// In en, this message translates to:
-  /// **'Calm & collected, sage and tan'**
-  String get themeDailyDescription;
-
-  /// Name of the Sport color mode.
+  /// Name of the Sport color mode (a riding-mode name). Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
   /// **'Sport'**
   String get themeSportLabel;
 
-  /// One-line description under the Sport color option.
+  /// One-line description of the Sport color mode's hues, shown under its name in the picker.
   ///
   /// In en, this message translates to:
-  /// **'Lime carbon & tachometer energy'**
+  /// **'Lime and magenta, carbon-black panel'**
   String get themeSportDescription;
 
-  /// Name of the Adventure color mode.
+  /// Name of the Rain color mode (a riding-mode name). Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
-  /// **'Adventure'**
-  String get themeAdventureLabel;
+  /// **'Rain'**
+  String get themeRainLabel;
 
-  /// One-line description under the Adventure color option.
+  /// One-line description of the Rain color mode's hues, shown under its name in the picker.
   ///
   /// In en, this message translates to:
-  /// **'Console cyan & nocturne wayfinding'**
-  String get themeAdventureDescription;
+  /// **'Indigo dusk, lavender and teal'**
+  String get themeRainDescription;
 
-  /// Name of the Carbon Mono color mode. Product name — kept recognisable across languages.
+  /// Name of the Race color mode (a riding-mode name). Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
-  /// **'Carbon Mono'**
-  String get themeCarbonLabel;
+  /// **'Race'**
+  String get themeRaceLabel;
 
-  /// One-line description under the Carbon Mono color option.
+  /// One-line description of the Race color mode's hues, shown under its name in the picker.
   ///
   /// In en, this message translates to:
-  /// **'Lime and magenta'**
-  String get themeCarbonDescription;
+  /// **'Blocky race poster, mustard and rust'**
+  String get themeRaceDescription;
 
-  /// Name of the Editorial color mode. Product name — kept recognisable across languages.
+  /// Name of the Commute color mode (a riding-mode name). Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
-  /// **'Editorial'**
-  String get themeEditorialLabel;
+  /// **'Commute'**
+  String get themeCommuteLabel;
 
-  /// One-line description under the Editorial color option.
+  /// One-line description of the Commute color mode's hues, shown under its name in the picker.
   ///
   /// In en, this message translates to:
-  /// **'Blue and orange, paper warmth'**
-  String get themeEditorialDescription;
+  /// **'Calm cream, sage and tan'**
+  String get themeCommuteDescription;
 
-  /// Name of the Nocturne color mode. Product name — kept recognisable across languages.
+  /// Name of the Tour color mode (a riding-mode name). Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
-  /// **'Nocturne'**
-  String get themeNocturneLabel;
+  /// **'Tour'**
+  String get themeTourLabel;
 
-  /// One-line description under the Nocturne color option.
+  /// One-line description of the Tour color mode's hues, shown under its name in the picker.
   ///
   /// In en, this message translates to:
-  /// **'Indigo and lavender glow'**
-  String get themeNocturneDescription;
+  /// **'Punchy orange and sky blue'**
+  String get themeTourDescription;
 
-  /// Name of the Trail Social color mode. Product name — kept recognisable across languages.
+  /// Name of the ADV color mode (a riding-mode name). Product name — kept recognisable across languages.
   ///
   /// In en, this message translates to:
-  /// **'Trail Social'**
-  String get themeTrailSocialLabel;
+  /// **'ADV'**
+  String get themeAdvLabel;
 
-  /// One-line description under the Trail Social color option.
-  ///
-  /// In en, this message translates to:
-  /// **'Punchy kudos orange'**
-  String get themeTrailSocialDescription;
-
-  /// Name of the Calming color mode. Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Calming'**
-  String get themeCalmingLabel;
-
-  /// One-line description under the Calming color option.
-  ///
-  /// In en, this message translates to:
-  /// **'Warm sage and tan'**
-  String get themeCalmingDescription;
-
-  /// Name of the Retro color mode. Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Retro'**
-  String get themeRetroLabel;
-
-  /// One-line description under the Retro color option.
-  ///
-  /// In en, this message translates to:
-  /// **'Blocky 70s poster, mustard & rust'**
-  String get themeRetroDescription;
-
-  /// Name of the Analyst Blue color mode. Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Analyst Blue'**
-  String get themeAnalystBlueLabel;
-
-  /// One-line description under the Analyst Blue color option.
+  /// One-line description of the ADV color mode's hues, shown under its name in the picker.
   ///
   /// In en, this message translates to:
   /// **'Navy console, cyan telemetry'**
-  String get themeAnalystBlueDescription;
+  String get themeAdvDescription;
+
+  /// Name of the City color mode (a riding-mode name). Product name — kept recognisable across languages.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get themeCityLabel;
+
+  /// One-line description of the City color mode's hues, shown under its name in the picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper warmth, blue and orange'**
+  String get themeCityDescription;
 
   /// Section header for the app language control.
   ///
@@ -1058,6 +1022,126 @@ abstract class AppLocalizations {
   /// **'Save or share QR image'**
   String get safeQrShareImageAction;
 
+  /// Title of the screen / button showing the rider's own follow QR code.
+  ///
+  /// In en, this message translates to:
+  /// **'My QR code'**
+  String get myQrTitle;
+
+  /// Explainer above the rider's own follow QR code.
+  ///
+  /// In en, this message translates to:
+  /// **'Riders who scan this code follow you. It works with ThrottleIQ\'s scanner or any phone camera.'**
+  String get myQrIntro;
+
+  /// Button that shares the follow QR image through the system share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get myQrShareAction;
+
+  /// Button that saves the follow QR image to the phone's photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Save image'**
+  String get myQrSaveAction;
+
+  /// Text sent alongside the shared follow QR image.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow me on ThrottleIQ: {link}'**
+  String myQrShareText(String link);
+
+  /// Snackbar after the follow QR image is saved to photos.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code saved to your photos.'**
+  String get myQrSaved;
+
+  /// Snackbar when photo-library access for saving the QR was refused.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ can\'t save to your photos. Allow photo access in Settings.'**
+  String get myQrSaveNoAccess;
+
+  /// Snackbar when rendering/sharing/saving the follow QR image fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create your QR code image.'**
+  String get myQrImageFailed;
+
+  /// Button that opens the camera to scan another rider's follow QR.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR'**
+  String get scanQrAction;
+
+  /// Title of the QR scanner screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a rider\'s QR'**
+  String get scanQrTitle;
+
+  /// Hint under the QR scanner viewfinder.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at another rider\'s ThrottleIQ QR code to follow them.'**
+  String get scanQrHint;
+
+  /// Tooltip of the scanner's flashlight toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flashlight'**
+  String get scanQrTorch;
+
+  /// Shown in place of the scanner when camera permission is denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off. Allow it in Settings to scan QR codes.'**
+  String get scanQrCameraDenied;
+
+  /// Shown in place of the scanner when the camera fails for another reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera couldn\'t start.'**
+  String get scanQrCameraError;
+
+  /// Snackbar after following a rider from their QR code / follow link.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re now following {name}.'**
+  String followLinkFollowed(String name);
+
+  /// Snackbar when a scanned / opened follow link is for a rider already followed.
+  ///
+  /// In en, this message translates to:
+  /// **'You already follow {name}.'**
+  String followLinkAlreadyFollowing(String name);
+
+  /// Snackbar when the rider scans their own follow QR.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s your own QR code.'**
+  String get followLinkSelf;
+
+  /// Snackbar when a scanned code / opened link is not a valid ThrottleIQ follow link.
+  ///
+  /// In en, this message translates to:
+  /// **'That isn\'t a ThrottleIQ rider code.'**
+  String get followLinkInvalid;
+
+  /// Snackbar when a follow link is opened while signed out; the follow completes after sign-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to finish following this rider.'**
+  String get followLinkSignInFirst;
+
+  /// Snackbar when the follow from a QR code / link is rejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t follow this rider. Check your connection and try again.'**
+  String get followLinkFailed;
+
   /// Snackbar shown when rendering the SafeQR card to an image fails.
   ///
   /// In en, this message translates to:
@@ -1259,152 +1343,8 @@ abstract class AppLocalizations {
   /// Title in onboarding_manifest.
   ///
   /// In en, this message translates to:
-  /// **'Your Garage'**
-  String get yourGarage;
-
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Every bike you own, tracked in one place.'**
-  String get everyBikeOwnTracked;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Add unlimited bikes — brand, model, year, CC'**
-  String get addUnlimitedBikesBrand;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Your bike\'s paint color tints the whole app'**
-  String get bikesPaintColorTints;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap any bike to view full history & details'**
-  String get tapAnyBikeView;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch active bike before each ride'**
-  String get switchActiveBikeBefore;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Active Motorcycle'**
-  String get activeMotorcycle;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Tints the entire app theme and binds to your trip logs.'**
-  String get tintsEntireAppTheme;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Service Countdown'**
-  String get serviceCountdown;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Real-time maintenance tracker based on actual km ridden.'**
-  String get realTimeMaintenanceTracker;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Add & Switch'**
-  String get addSwitch;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage multiple bikes and swap your active ride anytime.'**
-  String get manageMultipleBikesSwap;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
   /// **'Start a Ride'**
   String get startRide;
-
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Hold the button. ThrottleIQ does the rest.'**
-  String get holdButtonThrottleiqDoes;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Hold-to-start on the Record tab to begin'**
-  String get holdStartRecordTab;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'GPS + sensor fusion captures every moment'**
-  String get gpsSensorFusionCaptures;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Continues recording in the background'**
-  String get continuesRecordingBackground;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'A paused ride survives the app being closed'**
-  String get pausedRideSurvivesApp;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Share your live location with family in real time'**
-  String get shareLiveLocationWith;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Cockpit Telemetry'**
-  String get cockpitTelemetry;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Live GPS speed, distance, and ride telemetry as you go.'**
-  String get liveGpsSpeedDistance;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Hold 1s to Record'**
-  String get hold1sRecord;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Hold 1s to start or stop; prevents accidental touches.'**
-  String get hold1sStartStop;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Live Share'**
-  String get liveShare;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Send a revocable link so family can follow your ride.'**
-  String get sendRevocableLinkSo;
 
   /// Title in onboarding_manifest.
   ///
@@ -1412,347 +1352,11 @@ abstract class AppLocalizations {
   /// **'Auto Tracking'**
   String get autoTracking;
 
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Rides that detect and record themselves.'**
-  String get ridesThatDetectRecord;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable once in Settings → Auto-Tracking'**
-  String get enableOnceSettingsAuto;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity recognition starts recording when you ride'**
-  String get activityRecognitionStartsRecording;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Short walks and subway trips are filtered out'**
-  String get shortWalksSubwayTrips;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Each auto-detected ride appears ready to review'**
-  String get eachAutoDetectedRide;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Smart Detection'**
-  String get smartDetection;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Detects motorcycle movement via IMU sensors & speed.'**
-  String get detectsMotorcycleMovementVia;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-Ride Filter'**
-  String get nonRideFilter;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Ignores walking, bus rides, and minor phone jostling.'**
-  String get ignoresWalkingBusRides;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Zero Interaction'**
-  String get zeroInteraction;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs silently in background; review rides when done.'**
-  String get runsSilentlyBackgroundReview;
-
   /// Title in onboarding_manifest.
   ///
   /// In en, this message translates to:
   /// **'Maintenance'**
   String get maintenance;
-
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Never forget another oil change.'**
-  String get neverForgetAnotherOil;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Alerts when you\'re due for oil, filter, chain lube…'**
-  String get alertsWhenYoureDue;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Log a service to reset the countdown'**
-  String get logServiceResetCountdown;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Add custom intervals for any part you care about'**
-  String get addCustomIntervalsAny;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'13+ Service Items'**
-  String get n13ServiceItems;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Track engine oil, chain lube, brake fluid, coolant, and more.'**
-  String get trackEngineOilChain;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Due Badges'**
-  String get dueBadges;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Color-coded progress bars alert you before intervals expire.'**
-  String get colorCodedProgressBars;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Log & Reset'**
-  String get logReset;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Record maintenance notes and reset the interval odometer.'**
-  String get recordMaintenanceNotesReset;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Rider Places'**
-  String get riderPlaces;
-
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Every garage, pump, and viewpoint near you.'**
-  String get everyGaragePumpViewpoint;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Fuel stations, repair shops, spare parts & cafes'**
-  String get fuelStationsRepairShops;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap Directions → opens Maps, and offers to record'**
-  String get tapDirectionsOpensMaps;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Add and rate places to help the community'**
-  String get addRatePlacesHelp;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'395+ Rider POIs'**
-  String get n395RiderPois;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Verified fuel stations, workshops, parts, and rider cafes.'**
-  String get verifiedFuelStationsWorkshops;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Navigate & Record'**
-  String get navigateRecord;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Opens your maps app, and can record the trip alongside it.'**
-  String get opensMapsAppCan;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Rider Reviews'**
-  String get riderReviews;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Rate octane purity, mechanic honesty, and parking security.'**
-  String get rateOctanePurityMechanic;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Ride Together'**
-  String get rideTogether;
-
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Your riding community, all in one place.'**
-  String get ridingCommunityAllOne;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Share rides to the feed — home location is hidden'**
-  String get shareRidesFeedHome;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Start a group ride with a 6-character join code'**
-  String get startGroupRideWith;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Push-to-talk intercom for your Bluetooth helmet'**
-  String get pushTalkIntercomBluetooth;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Bike-model forums — talk to FZ-S, Pulsar & CBR riders'**
-  String get bikeModelForumsTalk;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Direct message any rider on the platform'**
-  String get directMessageAnyRider;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy Zones'**
-  String get privacyZones;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Each ride\'s start and end are clipped before it is shared.'**
-  String get eachRidesStartEnd;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Group PIN & Intercom'**
-  String get groupPinIntercom;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Live map tracking and Bluetooth helmet PTT intercom.'**
-  String get liveMapTrackingBluetooth;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Bike Model Forums'**
-  String get bikeModelForums;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Discuss mods, issues, and meets with owners of your bike.'**
-  String get discussModsIssuesMeets;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Your Profile'**
-  String get yourProfile;
-
-  /// Subtitle in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Make it yours — add a bio to stand out.'**
-  String get makeItYoursAdd;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Public profile with your stats & shared rides'**
-  String get publicProfileWithStats;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Your @handle lets other riders find and follow you'**
-  String get handleLetsOtherRiders;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Control who sees your profile and your bikes'**
-  String get controlWhoSeesProfile;
-
-  /// Text in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'SafeQR: an offline emergency medical card'**
-  String get safeqrOfflineEmergencyMedical;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Rider Stats'**
-  String get riderStats;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Showcase total km, safety score, and peak achievements.'**
-  String get showcaseTotalKmSafety;
-
-  /// Title in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'SafeQR Card'**
-  String get safeqrCard;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Offline medical card for emergency responders on the road.'**
-  String get offlineMedicalCardEmergency;
-
-  /// Description in onboarding_manifest.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep up to 5 contacts on file for a responder to reach.'**
-  String get keepUp5Contacts;
 
   /// Text in onboarding_screen.
   ///
@@ -1964,41 +1568,11 @@ abstract class AppLocalizations {
   /// **'Ride smarter. Track deeper.'**
   String get rideSmarterTrackDeeper;
 
-  /// Text in onboarding_slide_page.
-  ///
-  /// In en, this message translates to:
-  /// **'GUIDE {slideIndex} OF {totalSlides}'**
-  String guideProgress(Object slideIndex, Object totalSlides);
-
-  /// Text in onboarding_slide_page.
+  /// Feature tour: top-right button that ends the first-run tour.
   ///
   /// In en, this message translates to:
   /// **'Skip tour'**
   String get skipTour;
-
-  /// Text in onboarding_slide_page.
-  ///
-  /// In en, this message translates to:
-  /// **'Show me'**
-  String get showMe;
-
-  /// Text in onboarding_slide_page.
-  ///
-  /// In en, this message translates to:
-  /// **'Get Riding 🏍️'**
-  String get getRiding;
-
-  /// Text in onboarding_slide_page.
-  ///
-  /// In en, this message translates to:
-  /// **'Got it  →'**
-  String get gotIt;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'My Garage'**
-  String get myGarage;
 
   /// Text in onboarding_ui_mockups.
   ///
@@ -2015,140 +1589,8 @@ abstract class AppLocalizations {
   /// Text in onboarding_ui_mockups.
   ///
   /// In en, this message translates to:
-  /// **'4,280 km logged'**
-  String get n4280KmLogged;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Oil & Filter Due in 720 km'**
-  String get oilFilterDue720;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Theme Tint:'**
-  String get themeTint;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'GPS LOCKED'**
-  String get gpsLocked;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'AVG 52 · '**
-  String get avg52;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'TOP 124'**
-  String get top124;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
   /// **'DISTANCE'**
   String get distance;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'MOVING 31m'**
-  String get moving31m;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'HOLD 1s TO START'**
-  String get hold1sStart;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-Tracking Settings'**
-  String get autoTrackingSettings;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Smart Non-Ride Filter Active'**
-  String get smartNonRideFilter;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Walking, buses & subway rides automatically ignored'**
-  String get walkingBusesSubwayRides;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Detected Ride'**
-  String get detectedRide;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'AUTO SAVED'**
-  String get autoSaved;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Maintenance Schedule'**
-  String get maintenanceSchedule;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'+ Log Service'**
-  String get logService;
-
-  /// Title in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Engine Oil & Filter'**
-  String get engineOilFilter;
-
-  /// DueText in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Due in 320 km'**
-  String get due320Km;
-
-  /// Title in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Chain Clean & Lube'**
-  String get chainCleanLube;
-
-  /// DueText in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Good for 850 km'**
-  String get good850Km;
-
-  /// Title in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Brake Fluid Flush'**
-  String get brakeFluidFlush;
-
-  /// DueText in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Good for 2,100 km'**
-  String get good2100Km;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'★ 4.9 · Verified Pure Fuel · Open 24/7'**
-  String get n49VerifiedPure;
 
   /// Text in onboarding_ui_mockups.
   ///
@@ -2156,67 +1598,7 @@ abstract class AppLocalizations {
   /// **'Directions'**
   String get directions;
 
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Rider Feed'**
-  String get riderFeed;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'2h ago'**
-  String get n2hAgo;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning twisties through 300 Feet Highway!'**
-  String get morningTwistiesThrough300;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy Zone: 200m Endpoints Clipped'**
-  String get privacyZone200mEndpoints;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Road Captain · Dhaka Metro'**
-  String get roadCaptainDhakaMetro;
-
-  /// _statCol in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'KM RIDDEN'**
-  String get kmRidden;
-
-  /// _statCol in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'SAFETY SCORE'**
-  String get safetyScore;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'SafeQR Offline Medical Card'**
-  String get safeqrOfflineMedicalCard;
-
-  /// Text in onboarding_ui_mockups.
-  ///
-  /// In en, this message translates to:
-  /// **'Blood: O+ · ICE Emergency SOS Armed'**
-  String get bloodOIceEmergency;
-
-  /// Text in tour_floating_banner.
-  ///
-  /// In en, this message translates to:
-  /// **'GUIDE · {slideIndex} OF {total}'**
-  String guideProgressDot(Object slideIndex, Object total);
-
-  /// Text in tour_floating_banner.
+  /// Floating tour banner on a live screen opened via Show me: returns to the tour step.
   ///
   /// In en, this message translates to:
   /// **'Back to Tour'**
@@ -6672,6 +6054,372 @@ abstract class AppLocalizations {
   /// **'Not enough rides yet'**
   String get notEnoughRidesYet;
 
+  /// Rides tab: tab label for the charts list.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get ridesAnalyticsTab;
+
+  /// Rides tab: tab label for the ride history list.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get ridesHistoryTab;
+
+  /// Rides tab header: the rider's level.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}'**
+  String riderLevel(int level);
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance per ride'**
+  String get chartDistancePerRide;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance per week'**
+  String get chartWeeklyDistance;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Average speed'**
+  String get chartAvgSpeed;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Top speed'**
+  String get chartTopSpeed;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride duration'**
+  String get chartRideDuration;
+
+  /// Analytics chart title: moving time vs time stopped in each ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving vs stopped'**
+  String get chartMovingVsStopped;
+
+  /// Analytics chart title: minutes stopped while recording, per ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Time stuck in traffic'**
+  String get chartJamTime;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding score'**
+  String get chartRidingScore;
+
+  /// Analytics chart title: hard-braking events per ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard braking'**
+  String get chartHardBraking;
+
+  /// Analytics chart title: rapid-acceleration events per ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Rapid acceleration'**
+  String get chartRapidAccel;
+
+  /// Analytics chart title: overspeed episodes (alerts) per ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Overspeed alerts per ride'**
+  String get chartOverspeed;
+
+  /// Analytics chart title: calendar heatmap of days ridden.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding days'**
+  String get chartActivityCalendar;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides by hour of day'**
+  String get chartHourOfDay;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides by day of week'**
+  String get chartWeekday;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance per bike'**
+  String get chartDistanceByBike;
+
+  /// Analytics chart title.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest rides'**
+  String get chartLongestRides;
+
+  /// Time range chip: last 7 days.
+  ///
+  /// In en, this message translates to:
+  /// **'7D'**
+  String get analyticsRange7d;
+
+  /// Time range chip: last 30 days.
+  ///
+  /// In en, this message translates to:
+  /// **'30D'**
+  String get analyticsRange30d;
+
+  /// Time range chip: last 90 days.
+  ///
+  /// In en, this message translates to:
+  /// **'90D'**
+  String get analyticsRange90d;
+
+  /// Time range chip: last 12 months.
+  ///
+  /// In en, this message translates to:
+  /// **'1Y'**
+  String get analyticsRange1y;
+
+  /// Time range chip: all time.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get analyticsRangeAll;
+
+  /// Summary stat label.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get analyticsMin;
+
+  /// Summary stat label.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get analyticsMax;
+
+  /// Summary stat label.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get analyticsAvg;
+
+  /// Summary stat label.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get analyticsTotal;
+
+  /// Summary stat label: change compared with the previous period of the same length.
+  ///
+  /// In en, this message translates to:
+  /// **'vs previous'**
+  String get analyticsTrend;
+
+  /// Shown instead of a trend when there is no previous period to compare.
+  ///
+  /// In en, this message translates to:
+  /// **'No earlier data'**
+  String get analyticsNoTrend;
+
+  /// Section label above the plain-language insight.
+  ///
+  /// In en, this message translates to:
+  /// **'Insight'**
+  String get analyticsInsight;
+
+  /// Section label above the data table.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get analyticsData;
+
+  /// Button that exports a chart's data as CSV.
+  ///
+  /// In en, this message translates to:
+  /// **'Download data'**
+  String get analyticsDownloadData;
+
+  /// Snackbar when the CSV export fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not export the data'**
+  String get analyticsExportFailed;
+
+  /// Share-sheet subject for an exported chart CSV.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ: {chart}'**
+  String analyticsShareSubject(String chart);
+
+  /// Table/CSV column header.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get analyticsColDate;
+
+  /// Table/CSV column header: the Monday a week starts on.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of'**
+  String get analyticsColWeekOf;
+
+  /// Table/CSV column header.
+  ///
+  /// In en, this message translates to:
+  /// **'Hour'**
+  String get analyticsColHour;
+
+  /// Table/CSV column header: day of the week.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get analyticsColDay;
+
+  /// Table/CSV column header.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike'**
+  String get analyticsColBike;
+
+  /// Table/CSV column header: ride count.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides'**
+  String get analyticsColRides;
+
+  /// Table/CSV column header and legend: moving time.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving'**
+  String get analyticsColMoving;
+
+  /// Table/CSV column header and legend: stopped time.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get analyticsColStopped;
+
+  /// Unit: minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get analyticsUnitMin;
+
+  /// Unit: rides.
+  ///
+  /// In en, this message translates to:
+  /// **'rides'**
+  String get analyticsUnitRides;
+
+  /// Unit: harsh riding events.
+  ///
+  /// In en, this message translates to:
+  /// **'events'**
+  String get analyticsUnitEvents;
+
+  /// Label for rides whose bike no longer exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown bike'**
+  String get analyticsUnknownBike;
+
+  /// Hint above the analytics charts list.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a chart for details'**
+  String get analyticsTapForDetails;
+
+  /// Insight when the period has no data.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough rides in this period yet.'**
+  String get insightNotEnoughData;
+
+  /// Insight: value rose vs the previous period.
+  ///
+  /// In en, this message translates to:
+  /// **'Up {percent}% on the previous period.'**
+  String insightTrendUp(String percent);
+
+  /// Insight: value fell vs the previous period.
+  ///
+  /// In en, this message translates to:
+  /// **'Down {percent}% on the previous period.'**
+  String insightTrendDown(String percent);
+
+  /// Insight: little change vs the previous period.
+  ///
+  /// In en, this message translates to:
+  /// **'About the same as the previous period.'**
+  String get insightTrendFlat;
+
+  /// Insight: highest value and the date. {date} like '8 Oct'.
+  ///
+  /// In en, this message translates to:
+  /// **'Your highest was {value} on {date}.'**
+  String insightPeakValue(String value, String date);
+
+  /// Insight: busiest start hour, e.g. '18:00'.
+  ///
+  /// In en, this message translates to:
+  /// **'You ride most often around {hour}.'**
+  String insightPeakHour(String hour);
+
+  /// Insight: busiest weekday.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} is your busiest riding day.'**
+  String insightPeakWeekday(String day);
+
+  /// Insight: share of distance on the most-used bike.
+  ///
+  /// In en, this message translates to:
+  /// **'{bike} covers {percent}% of your distance.'**
+  String insightTopBike(String bike, String percent);
+
+  /// Insight: current and longest riding-day streak.
+  ///
+  /// In en, this message translates to:
+  /// **'You have ridden {current} days in a row. Your record is {longest}.'**
+  String insightStreak(int current, int longest);
+
+  /// Insight when there is no current streak.
+  ///
+  /// In en, this message translates to:
+  /// **'Your longest run of riding days is {longest}.'**
+  String insightStreakRecordOnly(int longest);
+
+  /// Insight: longest ride. {value} like '42 km'.
+  ///
+  /// In en, this message translates to:
+  /// **'Your longest ride was {value} on {date}.'**
+  String insightLongestRide(String value, String date);
+
+  /// Insight: rides with zero harsh events of this type.
+  ///
+  /// In en, this message translates to:
+  /// **'{clean} of {total} rides had none.'**
+  String insightCleanRides(int clean, int total);
+
+  /// Insight: share of ride time spent stopped.
+  ///
+  /// In en, this message translates to:
+  /// **'You spent {percent}% of your riding time stopped.'**
+  String insightStoppedShare(String percent);
+
   /// Text in image_crop_screen.
   ///
   /// In en, this message translates to:
@@ -8195,12 +7943,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hot'**
   String get feedSortHot;
-
-  /// Stat-column label in the onboarding mockup, matched in case to KM RIDDEN / SAFETY SCORE beside it.
-  ///
-  /// In en, this message translates to:
-  /// **'RIDES'**
-  String get ridesCapsLabel;
 
   /// Join-by-code failure: no ride has this code.
   ///
@@ -10367,6 +10109,612 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.'**
   String get couldNotArchiveSharedRides;
+
+  /// Badge rarity tier: 40% or more of riders own it.
+  ///
+  /// In en, this message translates to:
+  /// **'Common'**
+  String get badgeRarityCommon;
+
+  /// Badge rarity tier: 15–40% of riders own it.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncommon'**
+  String get badgeRarityUncommon;
+
+  /// Badge rarity tier: 5–15% of riders own it.
+  ///
+  /// In en, this message translates to:
+  /// **'Rare'**
+  String get badgeRarityRare;
+
+  /// Badge rarity tier: 1–5% of riders own it.
+  ///
+  /// In en, this message translates to:
+  /// **'Epic'**
+  String get badgeRarityEpic;
+
+  /// Badge rarity tier: under 1% of riders own it.
+  ///
+  /// In en, this message translates to:
+  /// **'Legendary'**
+  String get badgeRarityLegendary;
+
+  /// Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} of riders own this badge'**
+  String badgeOwnedByPercent(String percent);
+
+  /// Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available.
+  ///
+  /// In en, this message translates to:
+  /// **'Rarity isn\'t available right now'**
+  String get badgeOwnershipUnknown;
+
+  /// Badge detail sheet: section label for the rarity figure.
+  ///
+  /// In en, this message translates to:
+  /// **'Rarity'**
+  String get badgeRarityLabel;
+
+  /// Badge detail sheet: section label for the requirement.
+  ///
+  /// In en, this message translates to:
+  /// **'How to earn it'**
+  String get badgeHowToEarn;
+
+  /// Badge detail sheet: earned status with the date, e.g. 'Earned 8 Oct 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned {date}'**
+  String badgeEarnedOn(String date);
+
+  /// Badge status: earned (no date known).
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get badgeEarnedStatus;
+
+  /// Badge status: not earned yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get badgeLockedStatus;
+
+  /// Badge detail sheet: progress toward a locked badge, e.g. '420 / 500 km'.
+  ///
+  /// In en, this message translates to:
+  /// **'{progress} / {target} {unit}'**
+  String badgeProgressFraction(String progress, String target, String unit);
+
+  /// Badge detail sheet: what's left to earn a locked badge.
+  ///
+  /// In en, this message translates to:
+  /// **'{remaining} {unit} to go'**
+  String badgeProgressToGo(String remaining, String unit);
+
+  /// Badge detail sheet: share button for an earned badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get badgeShareAction;
+
+  /// Share text for an earned badge.
+  ///
+  /// In en, this message translates to:
+  /// **'I earned the {badge} badge on ThrottleIQ.'**
+  String badgeShareText(String badge);
+
+  /// Share text for an earned badge when its rarity is known.
+  ///
+  /// In en, this message translates to:
+  /// **'I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.'**
+  String badgeShareTextRarity(String badge, String rarity, String percent);
+
+  /// Accessibility hint on a badge row that opens the badge detail sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap for details'**
+  String get badgeViewDetails;
+
+  /// Feature tour: step counter above the progress bar and in the floating tour banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String tourStepCounter(int current, int total);
+
+  /// Feature tour: button that goes to the previous step.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get tourBack;
+
+  /// Feature tour: button that goes to the next step (also in the floating tour banner).
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tourNext;
+
+  /// Feature tour: button on the last step that closes the tour.
+  ///
+  /// In en, this message translates to:
+  /// **'Start riding'**
+  String get tourFinish;
+
+  /// Feature tour: link that opens the real screen the current step describes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show me the screen'**
+  String get tourShowMeLive;
+
+  /// Feature tour, Record step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready, set, ride'**
+  String get tourRecordTitle;
+
+  /// Feature tour, Record step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'The Record tab is home base: pick a bike, choose how you ride, and go.'**
+  String get tourRecordSubtitle;
+
+  /// Feature tour, Record step: callout about the bike card.
+  ///
+  /// In en, this message translates to:
+  /// **'Your active bike'**
+  String get tourRecordBikeTitle;
+
+  /// Feature tour, Record step: explains the bike card.
+  ///
+  /// In en, this message translates to:
+  /// **'The bike card up top is the one this ride counts toward. Tap it to switch bikes.'**
+  String get tourRecordBikeBody;
+
+  /// Feature tour, Record step: callout about the Solo/Group selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Solo or group'**
+  String get tourRecordModeTitle;
+
+  /// Feature tour, Record step: explains Solo/Group.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride solo, or start a group ride and invite friends or share a join code.'**
+  String get tourRecordModeBody;
+
+  /// Feature tour, Record step: callout about the start control.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold or slide to start'**
+  String get tourRecordStartTitle;
+
+  /// Feature tour, Record step: explains hold-to-start / slide-to-start.
+  ///
+  /// In en, this message translates to:
+  /// **'Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.'**
+  String get tourRecordStartBody;
+
+  /// Feature tour, live ride step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your live cockpit'**
+  String get tourCockpitTitle;
+
+  /// Feature tour, live ride step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Once you start, a cockpit you can read at a glance takes over the screen.'**
+  String get tourCockpitSubtitle;
+
+  /// Feature tour, live ride step: breadcrumb of where the screen lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Record › Start ride'**
+  String get tourCockpitLocation;
+
+  /// Feature tour, live ride step: callout about the gauges.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed at a glance'**
+  String get tourCockpitGaugesTitle;
+
+  /// Feature tour, live ride step: explains the gauges.
+  ///
+  /// In en, this message translates to:
+  /// **'Big live speed, distance and average speed, readable from a handlebar mount. Pause, resume or end any time.'**
+  String get tourCockpitGaugesBody;
+
+  /// Feature tour, live ride step: callout about live sharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your live location'**
+  String get tourCockpitShareTitle;
+
+  /// Feature tour, live ride step: explains live sharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Send family a live link so they can follow your ride. It stops when the ride ends.'**
+  String get tourCockpitShareBody;
+
+  /// Feature tour, live ride step: callout about alerts and crash detection.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride alerts and crash check'**
+  String get tourCockpitSafetyTitle;
+
+  /// Feature tour, live ride step: explains ride alerts and crash detection.
+  ///
+  /// In en, this message translates to:
+  /// **'Get warned about overspeed, hard braking and fatigue. After a suspected crash, tap \"I\'m OK\" or your emergency contacts are notified.'**
+  String get tourCockpitSafetyBody;
+
+  /// Feature tour, live ride step: callout about the beta jam-labelling buttons (only shown to beta testers).
+  ///
+  /// In en, this message translates to:
+  /// **'Label traffic jams'**
+  String get tourCockpitJamTitle;
+
+  /// Feature tour, live ride step: explains the beta jam-labelling buttons.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \"I\'m in a jam\" when you get stuck and \"Jam released\" when it clears, to help train jam detection.'**
+  String get tourCockpitJamBody;
+
+  /// Feature tour, auto tracking step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto tracking'**
+  String get tourAutoTitle;
+
+  /// Feature tour, auto tracking step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot to press start? ThrottleIQ can notice your rides and log them for you.'**
+  String get tourAutoSubtitle;
+
+  /// Feature tour, auto tracking step: breadcrumb of where the setting lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage › Settings'**
+  String get tourAutoLocation;
+
+  /// Feature tour, auto tracking step: callout about enabling it.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it on once'**
+  String get tourAutoDetectTitle;
+
+  /// Feature tour, auto tracking step: explains enabling it.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Auto Tracking in Settings and recording starts by itself when you ride off.'**
+  String get tourAutoDetectBody;
+
+  /// Feature tour, auto tracking step: callout about the non-ride filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Skips what isn\'t a ride'**
+  String get tourAutoFilterTitle;
+
+  /// Feature tour, auto tracking step: explains the non-ride filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Walks, buses and car trips are filtered out, so only motorcycle rides are kept.'**
+  String get tourAutoFilterBody;
+
+  /// Feature tour, auto tracking step: callout about the detection history.
+  ///
+  /// In en, this message translates to:
+  /// **'Review detections'**
+  String get tourAutoHistoryTitle;
+
+  /// Feature tour, auto tracking step: explains the detection history.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the detection history from the Auto Tracking tile to see what was recorded and why.'**
+  String get tourAutoHistoryBody;
+
+  /// Feature tour, Rides tab step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your riding, in numbers'**
+  String get tourRidesTitle;
+
+  /// Feature tour, Rides tab step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'The Rides tab turns every trip into trends, a score and badges.'**
+  String get tourRidesSubtitle;
+
+  /// Feature tour, Rides tab step: callout about the score and rank.
+  ///
+  /// In en, this message translates to:
+  /// **'Score and rider rank'**
+  String get tourRidesScoreTitle;
+
+  /// Feature tour, Rides tab step: explains the score and rank.
+  ///
+  /// In en, this message translates to:
+  /// **'Your journey score and rank grow the more you ride.'**
+  String get tourRidesScoreBody;
+
+  /// Feature tour, Rides tab step: callout about the charts.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend charts'**
+  String get tourRidesChartsTitle;
+
+  /// Feature tour, Rides tab step: explains the charts and the All rides list.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance and speed over time. Open All rides to sort them and see any ride\'s summary.'**
+  String get tourRidesChartsBody;
+
+  /// Feature tour, Rides tab step: callout about badges.
+  ///
+  /// In en, this message translates to:
+  /// **'Badges'**
+  String get tourRidesBadgesTitle;
+
+  /// Feature tour, Rides tab step: explains badges and the badge detail sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn badges for milestones. Tap any badge to see what it takes to unlock.'**
+  String get tourRidesBadgesBody;
+
+  /// Feature tour, Garage tab step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your garage'**
+  String get tourGarageTitle;
+
+  /// Feature tour, Garage tab step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Every bike you own, each with its own rides, distance and service history.'**
+  String get tourGarageSubtitle;
+
+  /// Feature tour, Garage tab step: callout about the active bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the active bike'**
+  String get tourGarageActiveTitle;
+
+  /// Feature tour, Garage tab step: explains the active bike.
+  ///
+  /// In en, this message translates to:
+  /// **'New rides and kilometres go to the active bike. Switch it any time.'**
+  String get tourGarageActiveBody;
+
+  /// Feature tour, Garage tab step: callout about the bike detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike details'**
+  String get tourGarageDetailTitle;
+
+  /// Feature tour, Garage tab step: explains the bike detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a bike to add a photo, edit its specs and see its rides.'**
+  String get tourGarageDetailBody;
+
+  /// Feature tour, Garage tab step: callout about archiving bikes.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive old bikes'**
+  String get tourGarageArchiveTitle;
+
+  /// Feature tour, Garage tab step: explains archiving and the 90-day purge.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold a bike? Archive it. It stays under Archived bikes for 90 days, and you can unarchive it until then.'**
+  String get tourGarageArchiveBody;
+
+  /// Feature tour, maintenance step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance on schedule'**
+  String get tourMaintenanceTitle;
+
+  /// Feature tour, maintenance step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Service reminders based on the kilometres you actually ride.'**
+  String get tourMaintenanceSubtitle;
+
+  /// Feature tour, maintenance step: breadcrumb of where the screen lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage › Maintenance'**
+  String get tourMaintenanceLocation;
+
+  /// Feature tour, maintenance step: callout about due items.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s due, at a glance'**
+  String get tourMaintenanceDueTitle;
+
+  /// Feature tour, maintenance step: explains the due countdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'Oil, chain, brakes and more, each with a colour-coded countdown to its next service.'**
+  String get tourMaintenanceDueBody;
+
+  /// Feature tour, maintenance step: callout about the odometer sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync the odometer'**
+  String get tourMaintenanceOdoTitle;
+
+  /// Feature tour, maintenance step: explains the odometer sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your bike\'s real odometer reading now and then to keep every countdown accurate.'**
+  String get tourMaintenanceOdoBody;
+
+  /// Feature tour, maintenance step: callout about logging a service.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a service'**
+  String get tourMaintenanceLogTitle;
+
+  /// Feature tour, maintenance step: explains logging a service.
+  ///
+  /// In en, this message translates to:
+  /// **'Record what was done and the countdown starts over.'**
+  String get tourMaintenanceLogBody;
+
+  /// Feature tour, Places tab step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider places'**
+  String get tourPlacesTitle;
+
+  /// Feature tour, Places tab step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel, workshops, parts and hangouts near you, on a map or in a list.'**
+  String get tourPlacesSubtitle;
+
+  /// Feature tour, Places tab step: callout about the map and filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Map and filters'**
+  String get tourPlacesMapTitle;
+
+  /// Feature tour, Places tab step: explains the map and filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by category, switch between map and list, and get directions to any place.'**
+  String get tourPlacesMapBody;
+
+  /// Feature tour, Places tab step: callout about routes and saved places.
+  ///
+  /// In en, this message translates to:
+  /// **'Routes and saved places'**
+  String get tourPlacesRoutesTitle;
+
+  /// Feature tour, Places tab step: explains routes and saved places.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a ride as a route, discover other riders\' routes, and keep your favourite places.'**
+  String get tourPlacesRoutesBody;
+
+  /// Feature tour, Places tab step: callout about adding places.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a place'**
+  String get tourPlacesAddTitle;
+
+  /// Feature tour, Places tab step: explains adding and rating places.
+  ///
+  /// In en, this message translates to:
+  /// **'Know a good mechanic? Add it, and rate places to help other riders.'**
+  String get tourPlacesAddBody;
+
+  /// Feature tour, Social tab step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride together'**
+  String get tourSocialTitle;
+
+  /// Feature tour, Social tab step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Share rides, find riders and talk bikes, all in one place.'**
+  String get tourSocialSubtitle;
+
+  /// Feature tour, Social tab step: callout about the feed and People tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride feed and people'**
+  String get tourSocialFeedTitle;
+
+  /// Feature tour, Social tab step: explains the feed, People tab and chats.
+  ///
+  /// In en, this message translates to:
+  /// **'See shared rides, find riders to follow, and message them directly.'**
+  String get tourSocialFeedBody;
+
+  /// Feature tour, Social tab step: callout about forums.
+  ///
+  /// In en, this message translates to:
+  /// **'Forums'**
+  String get tourSocialForumsTitle;
+
+  /// Feature tour, Social tab step: explains forums.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike-model forums for mods, problems and meetups.'**
+  String get tourSocialForumsBody;
+
+  /// Feature tour, Social tab step: callout about group rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Group rides'**
+  String get tourSocialGroupTitle;
+
+  /// Feature tour, Social tab step: explains group rides and group talk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride as a pack on a live map, with push-to-talk to the whole group.'**
+  String get tourSocialGroupBody;
+
+  /// Feature tour, profile step: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rider profile'**
+  String get tourProfileTitle;
+
+  /// Feature tour, profile step: one-line summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Your public page: stats, garage, followers and who you follow.'**
+  String get tourProfileSubtitle;
+
+  /// Feature tour, profile step: breadcrumb of where the profile is opened from.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage › View profile'**
+  String get tourProfileLocation;
+
+  /// Feature tour, profile step: callout about the follow QR code.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow by QR'**
+  String get tourProfileQrTitle;
+
+  /// Feature tour, profile step: explains generating and scanning a follow QR code.
+  ///
+  /// In en, this message translates to:
+  /// **'Show your QR code so a riding buddy can follow you in one scan, or scan theirs.'**
+  String get tourProfileQrBody;
+
+  /// Feature tour, profile step: callout about profile privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'You choose who sees what'**
+  String get tourProfilePrivacyTitle;
+
+  /// Feature tour, profile step: explains profile privacy settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Under Edit profile, decide who can see your profile and your bikes.'**
+  String get tourProfilePrivacyBody;
+
+  /// Feature tour, profile step: callout about SafeQR.
+  ///
+  /// In en, this message translates to:
+  /// **'SafeQR medical card'**
+  String get tourProfileSafeQrTitle;
+
+  /// Feature tour, profile step: explains SafeQR.
+  ///
+  /// In en, this message translates to:
+  /// **'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.'**
+  String get tourProfileSafeQrBody;
 }
 
 class _AppLocalizationsDelegate

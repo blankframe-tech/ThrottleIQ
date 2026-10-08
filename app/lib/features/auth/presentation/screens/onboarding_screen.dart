@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_catalog.dart';
@@ -12,6 +13,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import 'onboarding_manifest.dart';
 import 'onboarding_tour_provider.dart';
 import '../widgets/onboarding_slide_page.dart';
+import '../widgets/tour_floating_banner.dart';
+import '../../../ride/presentation/providers/jam_label_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/utils/parse_localized_number.dart';
 
@@ -155,6 +158,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // ─── Tour navigation ────────────────────────────────────────────────────────
 
+  Duration get _pageDuration => (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+      ? const Duration(milliseconds: 1)
+      : const Duration(milliseconds: 380);
+
   Future<void> _skipTour() async {
     if (!widget.demoMode) {
       await markOnboardingTourComplete();
@@ -163,17 +170,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     ref.read(activeTourGuideProvider.notifier).state = null;
     if (widget.demoMode && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
+    } else if (widget.demoMode) {
+      context.go('/settings');
     } else {
       context.go('/home/record');
     }
   }
 
+  void _goToSlide(int index) {
+    if (!_pageCtrl.hasClients) return;
+    _pageCtrl.animateToPage(
+      index.clamp(0, kOnboardingSlideCount - 1),
+      duration: _pageDuration,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _backTour() {
+    if (_tourSlide > 0) _goToSlide(_tourSlide - 1);
+  }
+
   Future<void> _advanceTour() async {
     if (_tourSlide < kOnboardingSlideCount - 1) {
-      _pageCtrl.nextPage(
-        duration: const Duration(milliseconds: 380),
-        curve: Curves.easeInOut,
-      );
+      _goToSlide(_tourSlide + 1);
     } else {
       // Last slide — finish tour
       await _finishTour(navigateTo: '/home/record');
@@ -181,11 +200,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   /// "Show me" CTA: opens the target route so the rider can inspect it live,
-  /// but DOES NOT mark the tour complete. Sets [activeTourGuideProvider] so that
-  /// a floating tour banner appears on the destination screen, letting the rider
-  /// return to the exact slide or proceed to the next guide!
-  Future<void> _showMeFor(int slideIndex) async {
-    final slide = onboardingSlides(context.l10n)[slideIndex];
+  /// but DOES NOT mark the tour complete. Sets [activeTourGuideProvider] so a
+  /// [TourFloatingBanner] on the destination offers "Back to tour" / "Next";
+  /// the banner pops back here with [kTourResultNext] for "Next".
+  Future<void> _showMeFor(OnboardingSlide slide, int slideIndex) async {
     final route = slide.showMeRoute;
     if (route == null) return;
 
@@ -197,13 +215,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       showMeRoute: route,
     );
 
-    await context.push(route);
+    final result = await context.push<Object?>(route);
 
     if (!mounted) return;
     ref.read(activeTourGuideProvider.notifier).state = null;
     if (_pageCtrl.hasClients && _pageCtrl.page?.round() != _tourSlide) {
       _pageCtrl.jumpToPage(_tourSlide);
     }
+    if (result == kTourResultNext) await _advanceTour();
   }
 
   Future<void> _finishTour({required String navigateTo}) async {
@@ -213,24 +232,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (!mounted) return;
     ref.read(activeTourGuideProvider.notifier).state = null;
 
-    if (widget.demoMode && Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
+    if (widget.demoMode) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        context.go('/settings');
+      }
       return;
     }
 
-    // If this is the profile slide, show the bio prompt sheet after navigating.
-    final isProfile = onboardingSlides(context.l10n)[_tourSlide].featureKey == 'profile';
+    // First run ends on the Profile step: prompt for a bio once the rider
+    // lands on the home screen.
     final router = GoRouter.of(context);
-
     router.go(navigateTo);
 
-    if (isProfile) {
-      // Small delay so the destination screen finishes mounting before the
-      // bottom sheet opens on top of it.
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
-      EditProfileScreen.showBioPromptSheet(context);
-    }
+    // Small delay so the destination screen finishes mounting before the
+    // bottom sheet opens on top of it.
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    EditProfileScreen.showBioPromptSheet(context);
   }
 
 
@@ -299,10 +319,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ElevatedButton(
                   onPressed: _loading ? null : _submit,
                   child: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          // The button is disabled while loading, so the
+                          // spinner sits on the disabled fill, not on primary.
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: context.palette.primary),
                         )
                       : Text(_step == 0 ? context.l10n.continueAction : context.l10n.addBikeTakeTour),
                 ),
@@ -412,50 +435,55 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ─── Tour builder ───────────────────────────────────────────────────────────
 
   Widget _buildTour() {
-    return Stack(
-      children: [
-        PageView.builder(
-          controller: _pageCtrl,
-          physics: const ClampingScrollPhysics(),
-          onPageChanged: (i) => setState(() => _tourSlide = i),
-          itemCount: kOnboardingSlideCount,
-          itemBuilder: (context, i) {
-            final slide = onboardingSlides(context.l10n)[i];
-            return OnboardingSlidePage(
-              key: ValueKey(slide.featureKey),
-              slide: slide,
-              totalSlides: kOnboardingSlideCount,
-              slideIndex: i,
-              isLastSlide: i == kOnboardingSlideCount - 1,
-              onNext: _advanceTour,
-              onSkip: _skipTour,
-              onShowMe: () => _showMeFor(i),
-            );
-          },
-        ),
-        if (widget.demoMode)
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 6.0, left: 10.0),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.black.withValues(alpha: 0.6),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-                  tooltip: context.l10n.exitDemo,
-                  onPressed: () {
-                    ref.read(activeTourGuideProvider.notifier).state = null;
-                    if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    } else {
-                      context.go('/settings');
-                    }
-                  },
+    final slides = onboardingSlides(
+      context.l10n,
+      showJamLabelling: ref.watch(canLabelJamsProvider),
+    );
+    final slide = slides[_tourSlide];
+    final accent = slide.accent.resolve(context.palette);
+
+    return Scaffold(
+      backgroundColor: context.palette.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+              child: TourProgressHeader(
+                current: _tourSlide,
+                total: kOnboardingSlideCount,
+                accent: accent,
+                demoMode: widget.demoMode,
+                onSkip: _skipTour,
+              ),
+            ),
+            Expanded(
+              child: PageView.builder(
+                key: const ValueKey('tour-pages'),
+                controller: _pageCtrl,
+                onPageChanged: (i) => setState(() => _tourSlide = i),
+                itemCount: kOnboardingSlideCount,
+                itemBuilder: (context, i) => OnboardingSlidePage(
+                  key: ValueKey(slides[i].featureKey),
+                  slide: slides[i],
                 ),
               ),
             ),
-          ),
-      ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: TourControls(
+                isFirst: _tourSlide == 0,
+                isLast: _tourSlide == kOnboardingSlideCount - 1,
+                onBack: _backTour,
+                onNext: _advanceTour,
+                onShowMe: slide.showMeRoute == null
+                    ? null
+                    : () => _showMeFor(slide, _tourSlide),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -505,7 +533,9 @@ class _SetupProgressBar extends StatelessWidget {
                   ),
                 ),
                 child: isDone
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    ? Icon(Icons.check,
+                        size: 14,
+                        color: AppTheme.primaryButtonForeground(context.palette))
                     : Center(
                         child: Text(
                           '${i + 1}',
