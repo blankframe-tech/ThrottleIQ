@@ -6308,3 +6308,27 @@ Reported by the founder after the first iPhone run of the Pit Wall redesign.
   variants, kept 10 min. Tests: `brand_paddock_stats_test.dart` and the updated
   `forums_hubs_view_test.dart`. Known limit: a rider who follows two forums of one brand counts twice.
 
+
+## 101. Full-project audit — verified items FIXED in code (2026-10-08), not verified on a device
+
+Pointer section. Each audit item was re-verified before work (verdicts and one-line reasons are in
+`issues_open.md` §101, under each item's **Resolution** line). Only `real-fix` items were
+implemented; `not-real`, `already-fixed`, `real-but-skip` and `harmful-as-suggested` items were
+deliberately left alone, so do not redo them. Nothing was deployed.
+
+- **Rules (G1):** places rating bump needs a first review in the same transaction (S1); usernames,
+  ride likes/votes, forum post/reply, chat message and `lastMessage`, liveSessions, crashNotifications,
+  groupRideJoinCodes and reports got shape, size and `request.time` checks (S3). Tests in
+  `scripts/test/rules/`.
+- **Functions (G3):** account deletion now covers forum follows, group-ride membership, RTDB nodes
+  and writes a completion marker; crash notifications use a transactional claim (S4, S5). S2 index
+  overrides still need `firestore.indexes.json` + a deploy.
+- **Hosting/scripts/CI (G4):** security headers, install page dedupe and links, `deploy.sh` no longer
+  `git add -A`, CI read-only permissions and `firebase-tools@15`, `.gitignore` additions.
+- **Client (G5, G6, G7, G8, G9):** delete-account re-auth and friendly errors, sign-out live-share
+  revoke; sync guard, pull watermark, auth side-effect gating, timezone fallback, DST; localized number
+  parsing, loop-route arrival, odometer sheet, elapsed `Stopwatch`; places contrast, Overpass UA/timeouts/ways,
+  a11y semantics; placebo sync test replaced, proguard header, release-signing guard, iOS Info.plist.
+- **Docs (G10):** README/needs_attention version, next free number, §83.19 status, §64 heading, F6.
+- **Still open from §101:** R1, R2, R8, parts of R5 and R10 (G7); S2 index deploy; and every
+  founder-only item listed in `todo_now_antigravity.md` §10.

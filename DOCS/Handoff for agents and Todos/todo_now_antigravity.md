@@ -87,16 +87,16 @@
 
 Groups are independent (disjoint files) and can run as parallel agents. Rules: add a test per fix, run `flutter analyze` and `flutter test`, do not deploy.
 
-- [ ] **G1 Firestore rules hardening** — 101.S1, S3, S11 (`firestore.rules`, `firestore.indexes.json`, `scripts/test/rules/`).
-- [ ] **G2 RTDB rules and realtime** — 101.S6 (`database.rules.json`, `app/lib/core/realtime/`, rules tests).
-- [ ] **G3 Cloud Functions** — 101.S2, S4, S5 (`functions/`).
-- [ ] **G4 Hosting, scripts, CI** — 101.S7, S8, S9, S10, D3 gitignore (`firebase.json`, `public/`, `scripts/`, `.github/`, `.gitignore`).
-- [ ] **G5 Auth and social client** — 101.A1-A4.
-- [ ] **G6 Sync and core robustness** — 101.C1-C3, C5, C7-C9.
-- [ ] **G7 Ride, maintenance, garage** — 101.R1-R10 (includes shared `parseLocalizedNumber`).
-- [ ] **G8 Places, theme, i18n, a11y** — 101.P1-P3, P5-P7, 101.R9, A4 a11y.
-- [ ] **G9 Tests, build, native config** — 101.B1, B3, B5, B6, B8 (not B2, B4, B7).
-- [ ] **G10 Docs cleanup** — 101.D2, D3 (stale PRD/README versions, FIXED stubs, F6 re-scope, §83.19 status).
+- [x] **G1 Firestore rules hardening (done 2026-10-08)** — 101.S1, S3 fixed with rules tests; S11 real-but-skip, S3 squatting/members/emergencyContacts skipped (`firestore.rules`, `firestore.indexes.json`, `scripts/test/rules/`).
+- [x] **G2 RTDB rules and realtime (done 2026-10-08: nothing safe to fix)** — 101.S6: chat_presence and live_shares uid are not real; `group_rides` locations membership check needs a Cloud Function (RTDB rules cannot read Firestore membership), founder decision (`database.rules.json`, `app/lib/core/realtime/`, rules tests).
+- [x] **G3 Cloud Functions (done 2026-10-08)** — S4/S5 fixed; S2 needs the three COLLECTION_GROUP index overrides in `firestore.indexes.json` plus an index deploy (founder); `test:emulator` not run in the final QA (`functions/`).
+- [x] **G4 Hosting, scripts, CI (done 2026-10-08, not deployed)** — 101.S7, S8, S9, S10, D3 gitignore (`firebase.json`, `public/`, `scripts/`, `.github/`, `.gitignore`).
+- [x] **G5 Auth and social client (done 2026-10-08)** — 101.A1-A4 (group-ride sign-out and A3 skipped on purpose; see issues_open §101).
+- [x] **G6 Sync and core robustness (done 2026-10-08)** — C2, C3, C5, C7, C8, most of C9; C1 real-but-skip.
+- [ ] **G7 Ride, maintenance, garage** — partly done 2026-10-08 (R4, R6, R7, parts of R5/R10). Still open: R1, R2 (bike form), R8, R5 acceleration from raw speed, R10 'Rider' fallback / km unit / average-speed weighting.
+- [x] **G8 Places, theme, i18n, a11y (done 2026-10-08)** — 101.P1-P3, P5-P7, 101.R9, A4 a11y.
+- [x] **G9 Tests, build, native config (done 2026-10-08)** — 101.B1, B3, B5, B6, B8 (not B2, B4, B7).
+- [x] **G10 Docs cleanup (done 2026-10-08)** — 101.D2, D3 (stale PRD/README versions, FIXED stubs, F6 re-scope, §83.19 status).
 - [ ] **Founder only:** 101.B2, B4, B7, C4, C6, C10, P4, S12-S14, D1, A5; device checks (F8, §8 widgets).
 
 - [ ] **Next Steps if Token Limit Reached**: Continue from the first unchecked item in this list.
