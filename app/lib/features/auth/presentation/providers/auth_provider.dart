@@ -2,6 +2,7 @@ import 'dart:async';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../social/presentation/providers/group_ride_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -146,14 +147,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     if (uid != null) {
       try {
         await _ref.read(rideRecordingProvider.notifier).stopLiveSharing();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('signOut: stopLiveSharing failed: $e');
+      }
       try {
         final rides = _ref.read(activeGroupRidesForUserProvider).valueOrNull ?? const [];
         final channel = _ref.read(groupRideLiveChannelProvider);
         await Future.wait([
           for (final ride in rides) channel.removeLocation(ride.id, uid)
         ]);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('signOut: group-ride removeLocation failed: $e');
+      }
     }
 
     await _auth.signOut();

@@ -28,8 +28,19 @@ android {
     signingConfigs {
         create("release") {
             val keystorePropertiesFile = rootProject.file("key.properties")
-            if (!keystorePropertiesFile.exists()) throw GradleException("key.properties not found")
-
+            // Fail loudly on a release build without key.properties instead of
+            // producing an unsigned/half-configured artifact (§101.B5). Debug
+            // builds, `flutter run` and `flutter test` never request a
+            // *Release task, so they are unaffected. A CI job that builds an
+            // unsigned release on purpose can pass -PallowUnsignedRelease=true.
+            val wantsRelease = gradle.startParameter.taskNames.any {
+                it.contains("release", ignoreCase = true)
+            }
+            val allowUnsignedRelease =
+                project.findProperty("allowUnsignedRelease")?.toString() == "true"
+            if (!keystorePropertiesFile.exists() && wantsRelease && !allowUnsignedRelease) {
+                throw GradleException("android/key.properties missing — see key.properties.example")
+            }
             if (keystorePropertiesFile.exists()) {
                 val keystoreProperties = Properties()
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
@@ -44,7 +55,7 @@ android {
     defaultConfig {
         applicationId = "com.bft.throttleiq"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
