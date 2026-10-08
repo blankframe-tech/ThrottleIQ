@@ -2,7 +2,15 @@
 
 _Last updated: 2026-10-09 · Branch: `experimental`_
 
-## 2026-10-09 (latest): themes, rides analytics, badge rarity, follow-QR, tour v4 — working tree on `experimental`, not committed
+## 2026-10-09 (latest): agent environment cleanup — commit `bc5bb51` on `experimental`, not pushed
+
+- Stop hooks are idempotent: the docs hook skips when these handoff docs are newer than the code change; the E2E hook reports each changed-file/device state once (stamp in `.git/claude-e2e-last`).
+- `.agents/skills/*` are symlinked into `.claude/skills/` so Claude Code loads them; new root `CLAUDE.md` (pointers only) and `.agents/rules/parallel-agents.md` (one worktree per parallel agent).
+- Deploy skill now records that team `NJ4675FFUX` is a personal Apple team (no Associated Domains, push, iCloud, Sign in with Apple); deploy docs say `main`, not `master`.
+- CI: format check on changed Dart files; guard against paid-only iOS entitlements. Session Dart files were formatted once to start green (pure formatting, plus braces on four `if`s in `ui_tour_test.dart`).
+- One-off `patch_*`/`fix_*`/`update_*` scripts moved to `scripts/archive/`. Dependabot limited to minor/patch, 3 open PRs per ecosystem; 13 PRs from the earlier config are still open.
+
+## 2026-10-09: themes, rides analytics, badge rarity, follow-QR, tour v4 — working tree on `experimental`, not committed
 
 - Seven ride-mode color themes restored (sport/rain/race/commute/tour/adv/city) and home-screen widgets now follow the app theme.
 - Rides tab: compact header, 16 stacked charts with tap-to-detail + CSV export; schema v25 adds `rides.overspeed_count`.
