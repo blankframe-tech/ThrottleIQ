@@ -6330,5 +6330,8 @@ deliberately left alone, so do not redo them. Nothing was deployed.
   parsing, loop-route arrival, odometer sheet, elapsed `Stopwatch`; places contrast, Overpass UA/timeouts/ways,
   a11y semantics; placebo sync test replaced, proguard header, release-signing guard, iOS Info.plist.
 - **Docs (G10):** README/needs_attention version, next free number, §83.19 status, §64 heading, F6.
-- **Still open from §101:** R1, R2, R8, parts of R5 and R10 (G7); S2 index deploy; and every
-  founder-only item listed in `todo_now_antigravity.md` §10.
+- **G7 finish pass:** bike edit odometer conversion (R1), numeric validation (R2), shared
+  `parse_localized_number.dart` (R4), clamped-speed accel/jerk (R5), outbox `catchError` (R8), and
+  most of R10, each with tests. R3 and the `deltaT`/`Stopwatch` changes stay skipped.
+- **Still open from §101:** S2 index deploy and S6 `group_rides` location membership (needs a Cloud
+  Function); every founder-only item listed in `todo_now_antigravity.md` §10.

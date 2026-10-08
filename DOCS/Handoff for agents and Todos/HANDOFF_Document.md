@@ -4,12 +4,14 @@ _Last updated: 2026-10-08 · Branch: `audit-101-integration`_
 
 ## 2026-10-08 (latest): audit §101 fix pass on `audit-101-integration`
 
-- Branch `audit-101-integration` (on `main` 13ad9d2) holds the verified §101 fixes for groups G1, G3-G6, G8-G10 and most of G7. G2 had nothing safe to fix (the `group_rides` location membership check needs a Cloud Function). The earlier unreviewed user commits (G5, G7, G9) were reviewed and corrected, and out-of-plan changes were reverted.
+- Branch `audit-101-integration` (on `main` 13ad9d2) holds the verified §101 fixes for groups G1, G3-G10. G2 had nothing safe to fix (the `group_rides` location membership check needs a Cloud Function). The earlier unreviewed user commits (G5, G7, G9) were reviewed and corrected, and out-of-plan changes were reverted.
 - Per-item verdicts and one-line reasons are in `issues_open.md` §101 (**Resolution** lines); the summary is `issues_fixed.md` §101. Skipped items (real-but-skip, not-real, harmful-as-suggested) are annotated so they are not redone.
 - QA: analyze clean and flutter tests green on the working tree, which includes uncommitted user edits (garage, stats, jam label, database_helper). The `functions` `test:emulator` suite was not run.
 - Nothing deployed. To go live (founder): `firebase deploy --only firestore:rules,hosting` plus `firestore:indexes` after adding the three COLLECTION_GROUP `userId` overrides (posts, replies, comments) that S2 needs, and functions for S4/S5.
 - Founder-only, unchanged: Play/Apple declarations (B2, B4), version format (B7), analytics consent (P4), multi-device conflict policy (C4), wakelock battery test (C6), weather coordinate disclosure (C10), contact email and secrets layout (S12-S14), screenshot bloat (D1), chat moderation policy (A5), contrast palette redesign (P2), CSP/SRI and the group-ride location Cloud Function.
-- Still open in code: G7 R1, R2, R8, R5 raw-speed acceleration, R10 'Rider' fallback, km unit and average-speed weighting.
+- G7 finished in a later pass (R1, R2, R4, R5 accel/jerk, R7, R8, most of R10, with tests). Skipped on purpose: R3, `MotionCalculator` `deltaT` floor, `Stopwatch` migration.
+- Deploy order note: ship the single-transaction place review client (`addReviewAndUpdatePlaceRating`) BEFORE deploying the new existing-review rule in `firestore.rules`.
+- Open housekeeping: `.claude/settings.json` runs `.claude/hooks/docs-on-change.sh`, which is still an untracked user file (commit it or revert the setting). Uncommitted garage edits add an `isEbike` parameter to `addBike` that breaks the test fake in `app/test/features/garage/add_edit_bike_screen_test.dart`; fix before committing them. `functions` `npm run test:emulator` was not run.
 
 ## 2026-10-07 (latest): full-project audit — findings logged, nothing fixed
 
