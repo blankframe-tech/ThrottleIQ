@@ -5936,4 +5936,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatTyping => 'typing…';
+
+  @override
+  String get signOutFailed => 'Could not sign out. Please try again.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Could not delete your account. Please try again.';
+
+  @override
+  String get deleteAccountOffline =>
+      'No connection. Check your internet and try again.';
+
+  @override
+  String get reauthRequiredTitle => 'Confirm it\'s you';
+
+  @override
+  String get reauthRequiredBody =>
+      'For your security, confirm your password to delete your account.';
+
+  @override
+  String get reauthWrongPassword => 'That password is incorrect.';
+
+  @override
+  String get reauthFailed =>
+      'Could not confirm your identity. Account not deleted.';
 }

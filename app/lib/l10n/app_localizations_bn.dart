@@ -5904,4 +5904,29 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get chatTyping => 'টাইপ করছে…';
+
+  @override
+  String get signOutFailed => 'সাইন আউট করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get deleteAccountFailed =>
+      'আপনার অ্যাকাউন্ট মুছে ফেলা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get deleteAccountOffline =>
+      'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
+  String get reauthRequiredTitle => 'নিশ্চিত করুন এটি আপনিই';
+
+  @override
+  String get reauthRequiredBody =>
+      'নিরাপত্তার জন্য অ্যাকাউন্ট মুছতে আপনার পাসওয়ার্ড নিশ্চিত করুন।';
+
+  @override
+  String get reauthWrongPassword => 'পাসওয়ার্ডটি সঠিক নয়।';
+
+  @override
+  String get reauthFailed =>
+      'আপনার পরিচয় নিশ্চিত করা যায়নি। অ্যাকাউন্ট মুছে ফেলা হয়নি।';
 }

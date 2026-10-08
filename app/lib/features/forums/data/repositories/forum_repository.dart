@@ -443,7 +443,7 @@ class ForumRepository {
   /// Ids of the forums [userId] follows — the follow docs only, no forum doc
   /// reads (Pulse needs ids to page posts, not each forum's metadata).
   Future<List<String>> getFollowedForumIds(String userId) async {
-    final follows = await _forumFollows.where('userId', isEqualTo: userId).limit(500).get();
+    final follows = await _forumFollows.where('userId', isEqualTo: userId).get();
     return follows.docs
         .map((d) => d.data()['forumId'] as String?)
         .whereType<String>()
@@ -637,7 +637,7 @@ class ForumRepository {
   /// composite index for it — not worth risking here too.
   Future<List<ForumEntity>> _modelForumsUnder(String brand) async {
     if (brand.trim().isEmpty) return const [];
-    final candidatesSnap = await _forums.where('brand', isEqualTo: brand).limit(100).get();
+    final candidatesSnap = await _forums.where('brand', isEqualTo: brand).get();
     final candidates =
         candidatesSnap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
     return modelForumsToMergeInto(brand, candidates);

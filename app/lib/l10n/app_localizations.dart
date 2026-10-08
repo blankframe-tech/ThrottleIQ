@@ -10205,6 +10205,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'typing…'**
   String get chatTyping;
+
+  /// Snackbar when sign-out fails. The raw exception is logged, not shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign out. Please try again.'**
+  String get signOutFailed;
+
+  /// Snackbar for an unexpected delete-account failure. The raw exception is logged, not shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete your account. Please try again.'**
+  String get deleteAccountFailed;
+
+  /// Snackbar when delete-account fails with network-request-failed.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Check your internet and try again.'**
+  String get deleteAccountOffline;
+
+  /// Title of the re-authentication dialog before deleting an account.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm it\'s you'**
+  String get reauthRequiredTitle;
+
+  /// Body of the password re-authentication dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'For your security, confirm your password to delete your account.'**
+  String get reauthRequiredBody;
+
+  /// Snackbar when re-authentication fails because of a wrong password.
+  ///
+  /// In en, this message translates to:
+  /// **'That password is incorrect.'**
+  String get reauthWrongPassword;
+
+  /// Snackbar when re-authentication fails for any other reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not confirm your identity. Account not deleted.'**
+  String get reauthFailed;
 }
 
 class _AppLocalizationsDelegate

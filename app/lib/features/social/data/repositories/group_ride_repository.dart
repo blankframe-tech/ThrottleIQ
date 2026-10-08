@@ -667,7 +667,6 @@ class GroupRideRepository {
         .collection('groupRides')
         .where('memberIds', arrayContains: uid)
         .where('status', isEqualTo: 'active')
-        .limit(50)
         .get();
     return snapshot.docs
         .map((doc) =>

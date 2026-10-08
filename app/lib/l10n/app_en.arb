@@ -8107,5 +8107,33 @@
   "chatTyping": "typing…",
   "@chatTyping": {
     "description": "Shown under the chat partner's name while they are typing."
+  },
+  "signOutFailed": "Could not sign out. Please try again.",
+  "@signOutFailed": {
+    "description": "Snackbar when sign-out fails. The raw exception is logged, not shown."
+  },
+  "deleteAccountFailed": "Could not delete your account. Please try again.",
+  "@deleteAccountFailed": {
+    "description": "Snackbar for an unexpected delete-account failure. The raw exception is logged, not shown."
+  },
+  "deleteAccountOffline": "No connection. Check your internet and try again.",
+  "@deleteAccountOffline": {
+    "description": "Snackbar when delete-account fails with network-request-failed."
+  },
+  "reauthRequiredTitle": "Confirm it's you",
+  "@reauthRequiredTitle": {
+    "description": "Title of the re-authentication dialog before deleting an account."
+  },
+  "reauthRequiredBody": "For your security, confirm your password to delete your account.",
+  "@reauthRequiredBody": {
+    "description": "Body of the password re-authentication dialog."
+  },
+  "reauthWrongPassword": "That password is incorrect.",
+  "@reauthWrongPassword": {
+    "description": "Snackbar when re-authentication fails because of a wrong password."
+  },
+  "reauthFailed": "Could not confirm your identity. Account not deleted.",
+  "@reauthFailed": {
+    "description": "Snackbar when re-authentication fails for any other reason."
   }
 }

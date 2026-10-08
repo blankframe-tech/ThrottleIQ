@@ -613,11 +613,12 @@ class SettingsScreen extends ConsumerWidget {
               try {
                 await ref.read(authNotifierProvider.notifier).signOut();
                 if (context.mounted) context.go('/auth/login');
-              } catch (e) {
+              } on Exception catch (e) {
+                debugPrint('signOut failed: $e');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to sign out: $e'),
+                      content: Text(context.l10n.signOutFailed),
                       backgroundColor: context.palette.danger,
                     ),
                   );
@@ -702,62 +703,99 @@ class SettingsScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.deletingAccount)),
       );
-      try {
-        await ref.read(authNotifierProvider.notifier).deleteAccount();
-        if (context.mounted) {
-          context.go('/auth/login');
-        }
-      } on firebase_auth.FirebaseAuthException catch (e) {
-        if (context.mounted) {
-          if (e.code == 'requires-recent-login') {
-            showDialog<void>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                backgroundColor: ctx.palette.surface,
-                title: Text(
-                  'Reauthentication Required',
-                  style: TextStyle(color: ctx.palette.textPrimary),
-                ),
-                content: Text(
-                  'For your security, you must log out and log back in before deleting your account.',
-                  style: TextStyle(color: ctx.palette.textSecondary),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(ctx.l10n.cancelAction),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      ref.read(authNotifierProvider.notifier).signOut();
-                    },
-                    style: FilledButton.styleFrom(backgroundColor: ctx.palette.primary),
-                    child: Text(ctx.l10n.signOutAction),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(context.l10n.errorDeletingAccount(e.message ?? e.toString())),
-                backgroundColor: context.palette.danger,
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.errorDeletingAccount(e)),
-              backgroundColor: context.palette.danger,
-            ),
-          );
-        }
-      }
+      await _deleteAccountWithReauth(context, ref);
     }
+  }
+
+  /// Deletes the account; on `requires-recent-login` asks the rider to
+  /// re-prove their identity (issues §101.A1) and retries exactly once.
+  /// Raw exception text is never shown (issues §101.A4).
+  Future<void> _deleteAccountWithReauth(BuildContext context, WidgetRef ref) async {
+    final auth = ref.read(authNotifierProvider.notifier);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final l10n = context.l10n;
+    final danger = context.palette.danger;
+    void fail(String message) =>
+        messenger.showSnackBar(SnackBar(content: Text(message), backgroundColor: danger));
+
+    String deleteFailure(Object e) {
+      debugPrint('deleteAccount failed: $e');
+      return e is firebase_auth.FirebaseAuthException && e.code == 'network-request-failed'
+          ? l10n.deleteAccountOffline
+          : l10n.deleteAccountFailed;
+    }
+
+    try {
+      try {
+        await auth.deleteAccount();
+      } on firebase_auth.FirebaseAuthException catch (e) {
+        if (e.code != 'requires-recent-login') rethrow;
+        if (!context.mounted) return;
+        final isPasswordUser = ref
+                .read(firebaseAuthProvider)
+                .currentUser
+                ?.providerData
+                .any((p) => p.providerId == 'password') ??
+            false;
+        String? password;
+        if (isPasswordUser) {
+          password = await _askPassword(context);
+          if (password == null) return; // cancelled — nothing was deleted
+        }
+        try {
+          if (!await auth.reauthenticate(password: password)) return;
+        } on firebase_auth.FirebaseAuthException catch (re) {
+          debugPrint('reauthenticate failed: ${re.code}');
+          fail(re.code == 'wrong-password' || re.code == 'invalid-credential'
+              ? l10n.reauthWrongPassword
+              : re.code == 'network-request-failed'
+                  ? l10n.deleteAccountOffline
+                  : l10n.reauthFailed);
+          return;
+        }
+        await auth.deleteAccount();
+      }
+      router.go('/auth/login');
+    } on Exception catch (e) {
+      fail(deleteFailure(e));
+    }
+  }
+
+  Future<String?> _askPassword(BuildContext context) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
+        title: Text(ctx.l10n.reauthRequiredTitle,
+            style: TextStyle(color: ctx.palette.textPrimary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(ctx.l10n.reauthRequiredBody,
+                style: TextStyle(color: ctx.palette.textSecondary)),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              autofocus: true,
+              decoration: InputDecoration(labelText: ctx.l10n.password),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancelAction),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            style: FilledButton.styleFrom(backgroundColor: ctx.palette.danger),
+            child: Text(ctx.l10n.deletePermanently),
+          ),
+        ],
+      ),
+    ).whenComplete(controller.dispose);
   }
 
   /// SharedPreferences flag: the "contacts aren't alerted yet" dialog has
