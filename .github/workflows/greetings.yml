@@ -1,0 +1,16 @@
+name: Greetings
+
+on: [pull_request_target, issues]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+    - uses: actions/first-interaction@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        issue-message: "Welcome to ThrottleIQ! 🎉 Thank you for taking the time to open your first issue. We really appreciate your help in making this project better. A maintainer will take a look at it as soon as possible. In the meantime, please make sure you've provided all the necessary details!"
+        pr-message: "Welcome to the ThrottleIQ project! 🚀 Thank you for submitting your first pull request! We're thrilled to have your contribution. A maintainer will review your code soon. Please ensure your PR description clearly explains the changes and that all automated CI checks pass. If you need any help, just ask!"
