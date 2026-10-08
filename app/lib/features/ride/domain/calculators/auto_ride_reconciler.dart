@@ -182,14 +182,14 @@ class AutoRideReconciler {
     var maxSpeedMs = 0.0;
     var crashSuspected = false;
     RidePointEntity? lastPoint;
+    var lastFixClamped = false;
     final points = <Map<String, Object?>>[];
 
     final samples = <SpeedSample>[];
 
     for (final fix in fixes) {
-      final rawSpeedMs = (!fix.speedMs.isFinite || fix.speedMs < 0) ? 0.0 : fix.speedMs;
-      double? rawAccel;
-      double? rawJerk;
+      final rawSpeedMs =
+          (fix.speedMs.isFinite && fix.speedMs > 0) ? fix.speedMs : 0.0;
       var rawDist = 0.0;
       var deltaT = 0.0;
 
@@ -202,8 +202,6 @@ class AutoRideReconciler {
           currentLng: fix.lng,
           currentTime: fix.timestamp,
         );
-        rawAccel = result.acceleration;
-        rawJerk = result.jerk;
         rawDist = result.distanceDeltaM;
       }
 
@@ -212,13 +210,16 @@ class AutoRideReconciler {
       // capped. issues §62: a rejected sample's distance must not count.
       final k = evaluateFix(
         rawSpeedMs: rawSpeedMs,
-        prev: lastPoint == null ? null : (speedMs: lastPoint.speedMs),
+        prev: lastPoint == null
+            ? null
+            : prevFixOf(lastPoint.speedMs,
+                acceleration: lastPoint.acceleration,
+                clamped: lastFixClamped),
         rawDistanceM: rawDist,
         deltaTSeconds: deltaT,
         accuracyM: fix.accuracyM ?? _accuracyGateM,
-        acceleration: rawAccel,
-        jerk: rawJerk,
       );
+      lastFixClamped = k.clamped;
       final speedMs = k.speedMs;
       final distDelta = k.distanceDeltaM;
       final accel = k.acceleration;

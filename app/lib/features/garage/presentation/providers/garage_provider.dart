@@ -48,9 +48,11 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
       createdAt: DateTime.now(),
     );
     await _dao.insert(BikeModel.toMap(bike));
-    // If first bike, make it active
-    final current = await future;
-    if (current.isEmpty) {
+    // Decide from the database, not provider state: while the garage is
+    // loading (or errored) `state` is empty and would force the new bike
+    // active over the rider's real one (issues §101.R10).
+    final rows = await _dao.getAllForUser(uid);
+    if (!rows.any((r) => r['is_active'] == 1)) {
       await _dao.setActive(bike.id, uid);
     }
     ref.invalidateSelf();
@@ -59,16 +61,23 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
 
   /// Calibrates the bike's baseline odometer so `currentOdometerKm` matches
   /// the physical instrument cluster reading captured during sync.
-  Future<void> syncOdometer({
+  ///
+  /// Returns the odometer the bike actually shows afterwards. That is the
+  /// entered reading unless it is below the GPS-tracked total, in which case
+  /// the baseline is floored at 0 and the tracked total wins (§101.R7).
+  /// Null when the bike isn't found.
+  Future<double?> syncOdometer({
     required String bikeId,
     required double newOdometerKm,
   }) async {
     final bikes = state.valueOrNull ?? [];
     final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
-    if (bike == null) return;
-    final newBaseline = newOdometerKm - bike.totalDistanceKm;
+    if (bike == null) return null;
+    final newBaseline =
+        (newOdometerKm - bike.totalDistanceKm).clamp(0.0, double.infinity);
     await _dao.updateOdometer(bikeId, newBaseline);
     ref.invalidateSelf();
+    return newBaseline + bike.totalDistanceKm;
   }
 
   Future<void> updateBike(BikeEntity bike) async {

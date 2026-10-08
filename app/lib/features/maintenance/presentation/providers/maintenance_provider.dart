@@ -28,6 +28,7 @@ import '../../domain/calculators/riding_conditions.dart';
 import '../../domain/catalog/schedule_templates.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../../domain/entities/maintenance_profile.dart';
+import '../widgets/maintenance_format.dart' show kMaintenanceImperialPrefKey;
 import '../../domain/entities/service_visit.dart';
 
 const _uuid = Uuid();
@@ -152,7 +153,14 @@ class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, S
     if (user != null) {
       final outbox = ref.read(outboxServiceProvider);
       for (final map in maps) {
-        unawaited(outbox.enqueueMaintenanceLog(uid: user.uid, logData: map));
+        // The local rows are saved; a failed backup enqueue is a non-fatal
+        // (§101.R8), not an uncaught async error.
+        unawaited(outbox
+            .enqueueMaintenanceLog(uid: user.uid, logData: map)
+            .catchError((Object e, StackTrace st) {
+          reportNonFatal(e, st, reason: 'Maintenance: outbox enqueue failed');
+          return '';
+        }));
       }
     }
     ref.invalidateSelf();
@@ -289,7 +297,12 @@ void queueMaintenanceSettingsBackup(Ref ref, String bikeId) {
   if (user == null) return;
   unawaited(ref
       .read(outboxServiceProvider)
-      .enqueueMaintenanceSettings(uid: user.uid, bikeId: bikeId));
+      .enqueueMaintenanceSettings(uid: user.uid, bikeId: bikeId)
+      .catchError((Object e, StackTrace st) {
+    reportNonFatal(e, st,
+        reason: 'Maintenance: settings outbox enqueue failed');
+    return '';
+  }));
 }
 
 // ── Setup profile ────────────────────────────────────────────────────────
@@ -630,8 +643,6 @@ final maintenanceMoneyProvider =
 
 // ── Distance unit on the maintenance page ────────────────────────────────
 
-const _imperialPrefKey = 'maintenance_imperial_units';
-
 /// km vs mi for the maintenance page, remembered across launches (it used
 /// to reset to km every time the screen was opened).
 final maintenanceImperialProvider =
@@ -647,7 +658,7 @@ class MaintenanceImperialNotifier extends StateNotifier<bool> {
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final v = prefs.getBool(_imperialPrefKey);
+      final v = prefs.getBool(kMaintenanceImperialPrefKey);
       if (v != null && mounted) state = v;
     } catch (e, st) {
       // Preferences unavailable (tests, platform hiccup) — stay on km.
@@ -659,7 +670,7 @@ class MaintenanceImperialNotifier extends StateNotifier<bool> {
     state = imperial;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_imperialPrefKey, imperial);
+      await prefs.setBool(kMaintenanceImperialPrefKey, imperial);
     } catch (e, st) {
       reportNonFatal(e, st, reason: 'Maintenance units: save failed');
     }

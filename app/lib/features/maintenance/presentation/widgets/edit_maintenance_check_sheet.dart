@@ -1,4 +1,4 @@
-import '../../../../core/utils/number_parser.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme_context.dart';

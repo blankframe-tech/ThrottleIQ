@@ -618,6 +618,8 @@
   "odometerKm": "ওডোমিটার (কিমি) *",
   "requiredField": "আবশ্যক",
   "invalidNumber": "সংখ্যাটি সঠিক নয়",
+  "odometerSyncFailed": "ওডোমিটার সিঙ্ক করা যায়নি। আবার চেষ্টা করুন।",
+  "visitSaveFailed": "ভিজিট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।",
   "costOptional": "খরচ (ঐচ্ছিক)",
   "notesOptional": "নোট (ঐচ্ছিক)",
   "configuredSpec": "নির্ধারিত স্পেক: {specNote}",

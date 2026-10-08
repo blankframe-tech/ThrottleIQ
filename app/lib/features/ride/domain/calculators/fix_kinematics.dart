@@ -8,10 +8,20 @@ typedef FixKinematics = ({
   double distanceDeltaM,
   double? acceleration,
   double? jerk,
+
+  /// This fix's speed was cut back by the physical-acceleration limit. The
+  /// caller carries it to the next fix as [PrevFix.clamped].
+  bool clamped,
 });
 
-/// The previous fix as the kinematics rules need it.
-typedef PrevFix = ({double speedMs});
+/// The previous fix as the kinematics rules need it: its final (clamped)
+/// speed, the acceleration it was stored with, and whether its speed was
+/// clamped.
+typedef PrevFix = ({double speedMs, double? acceleration, bool clamped});
+
+/// Builds a [PrevFix] from a stored point's values.
+PrevFix prevFixOf(double speedMs, {double? acceleration, bool clamped = false}) =>
+    (speedMs: speedMs, acceleration: acceleration, clamped: clamped);
 
 /// Most distance a fix with a usable Doppler speed may add (§90.C12).
 ///
@@ -39,27 +49,34 @@ double dopplerDistanceCapM({
 ///
 /// [prev] is null for the first fix of a segment (ride start, or the first
 /// fix after a resume): such a fix contributes speed but no distance.
-/// [rawDistanceM]/[deltaTSeconds]/[acceleration]/[jerk] are what
-/// `MotionCalculator.calculate` returned against [prev].
+/// [rawDistanceM]/[deltaTSeconds] are what `MotionCalculator.calculate`
+/// returned against [prev].
+///
+/// Acceleration and jerk are derived here, from the final clamped speeds, not
+/// taken from the raw Doppler speeds (issues §101.R5): a single spike
+/// (10 -> 40 -> 10 m/s) used to read as +30 then -30 m/s^2, a phantom hard
+/// brake. They are null when there is no usable interval (first fix, or
+/// under 0.1 s, where dividing inflates noise 50x), when this fix was
+/// clamped, and for the fix right after a clamped one (the rebound).
 FixKinematics evaluateFix({
   required double rawSpeedMs,
   required PrevFix? prev,
   required double rawDistanceM,
   required double deltaTSeconds,
   required double accuracyM,
-  double? acceleration,
-  double? jerk,
 }) {
   var distDelta = prev == null ? 0.0 : rawDistanceM;
   final deltaT = prev == null ? 0.0 : deltaTSeconds;
-  double? accel = acceleration;
-  double? jrk = jerk;
+  double? accel;
+  double? jrk;
+  var clamped = false;
 
   final hasValidDeltaT = deltaT >= 0.1;
   final candidateDerivedSpeed = hasValidDeltaT ? distDelta / deltaT : 0.0;
   final isPlausibleDerived =
       candidateDerivedSpeed <= SensorConstants.maxPlausibleSpeedMs;
-  final hasRawSpeed =
+  // A NaN/Infinity Doppler speed is treated as "none" (derived-speed branch).
+  final hasRawSpeed = rawSpeedMs.isFinite &&
       rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
           rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
 
@@ -68,9 +85,8 @@ FixKinematics evaluateFix({
     if (prev != null && hasValidDeltaT) {
       final maxAllowedSpeed =
           prev.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-      speedMs = (rawSpeedMs > maxAllowedSpeed && prev.speedMs > 0)
-          ? maxAllowedSpeed
-          : rawSpeedMs;
+      clamped = rawSpeedMs > maxAllowedSpeed && prev.speedMs > 0;
+      speedMs = clamped ? maxAllowedSpeed : rawSpeedMs;
     } else {
       speedMs = rawSpeedMs;
     }
@@ -91,9 +107,8 @@ FixKinematics evaluateFix({
     if (prev != null) {
       final maxAllowedSpeed =
           prev.speedMs + (SensorConstants.maxPhysicalAccelMs2 * deltaT);
-      speedMs = (candidateDerivedSpeed > maxAllowedSpeed && prev.speedMs > 0)
-          ? maxAllowedSpeed
-          : candidateDerivedSpeed;
+      clamped = candidateDerivedSpeed > maxAllowedSpeed && prev.speedMs > 0;
+      speedMs = clamped ? maxAllowedSpeed : candidateDerivedSpeed;
     } else {
       speedMs = candidateDerivedSpeed;
     }
@@ -102,6 +117,20 @@ FixKinematics evaluateFix({
     distDelta = 0.0;
     accel = 0.0;
     jrk = 0.0;
+    return (
+      speedMs: speedMs,
+      distanceDeltaM: distDelta,
+      acceleration: accel,
+      jerk: jrk,
+      clamped: false,
+    );
+  }
+
+  if (prev != null && hasValidDeltaT && !clamped && !prev.clamped) {
+    accel = (speedMs - prev.speedMs) / deltaT;
+    if (prev.acceleration != null) {
+      jrk = (accel - prev.acceleration!) / deltaT;
+    }
   }
 
   return (
@@ -109,5 +138,6 @@ FixKinematics evaluateFix({
     distanceDeltaM: distDelta,
     acceleration: accel,
     jerk: jrk,
+    clamped: clamped,
   );
 }

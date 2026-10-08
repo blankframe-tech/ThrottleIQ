@@ -108,7 +108,7 @@ class _ProfileSummary extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final profile = ref.watch(myProfileProvider).valueOrNull;
-    final name = profile?.bestName ?? user?.displayName ?? 'Rider';
+    final name = profile?.bestName ?? user?.displayName ?? context.l10n.riderFallbackName;
 
     return GestureDetector(
       onTap: () => _showMenu(context),

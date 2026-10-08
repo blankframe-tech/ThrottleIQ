@@ -24,7 +24,7 @@ import '../providers/maintenance_provider.dart';
 import '../service_type_l10n.dart';
 import '../widgets/edit_maintenance_check_sheet.dart' show iconForServiceType;
 import '../widgets/forecast_text.dart';
-import '../../../../core/utils/number_parser.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 
 /// "Log a visit": one entry per trip to the mechanic, however many jobs were
 /// done (proposal: "the visit is the unit, not the item"). Everything is
@@ -82,7 +82,6 @@ class _AddMaintenanceLogScreenState
   bool _oneOff = false;
   bool _saving = false;
   bool _loaded = false;
-  bool _warnedOdometer = false;
 
   bool get _editing => widget.visitId != null;
 
@@ -295,9 +294,13 @@ class _AddMaintenanceLogScreenState
             .read(maintenanceProfileProvider(widget.bikeId).notifier)
             .applyOilGrade(_oilGrade!);
       }
-    } catch (e) {
+    } catch (e, st) {
+      // Reset the button and tell the rider; a throw here used to leave
+      // `_saving` true forever (issues §101.R2).
+      reportNonFatal(e, st, reason: 'AddMaintenanceLog: save failed');
       if (mounted) setState(() => _saving = false);
-      rethrow;
+      messenger.showSnackBar(SnackBar(content: Text(l10n.visitSaveFailed)));
+      return;
     }
     if (!mounted) return;
     messenger.showSnackBar(SnackBar(
@@ -537,13 +540,10 @@ class _AddMaintenanceLogScreenState
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return l10n.requiredField;
-                      final n = parseLocalizedNumber(v);
-                      if (n == null || n < 0 || n > 2000000) return l10n.invalidNumber;
-                               final maxOdo = logs.fold<double>(0, (m, l) => l.visitKey == widget.visitId ? m : (l.odometerKm > m ? l.odometerKm : m));
-                      if (n < maxOdo && !_warnedOdometer) {
-                        _warnedOdometer = true;
-                        return 'Below previous log (${maxOdo.toInt()})';
-                      }
+                      // Rejects negative, NaN and Infinity (issues §101.R2).
+                      final n =
+                          parseLocalizedNumber(v, min: 0, max: 2000000);
+                      if (n == null) return l10n.invalidNumber;
                       return null;
                     },
                   ),
@@ -579,6 +579,12 @@ class _AddMaintenanceLogScreenState
                 labelText: l10n.visitTotalCost,
                 prefixText: '৳ ',
               ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return null;
+                return parseLocalizedNumber(v, min: 0) == null
+                    ? l10n.invalidNumber
+                    : null;
+              },
             ),
             const SizedBox(height: 12),
             SuggestField(

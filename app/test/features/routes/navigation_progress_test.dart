@@ -144,7 +144,7 @@ void main() {
 
     test('before the first fix the whole route is still ahead', () {
       final p = computeNavigationProgress(
-          polyline: polyline, turns: turns, previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),);
+          polyline: polyline, turns: turns, previousTurnIndex: 0);
       expect(p.metresRemaining, closeTo(1000, 5));
       expect(p.metresToTurn, isNull);
       expect(p.offRouteM, isNull);
@@ -159,7 +159,7 @@ void main() {
       final p = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: 0,
         position: _offset(_dhaka, 90, 400),
         speedMs: 10,
       );
@@ -171,7 +171,7 @@ void main() {
       final onRoute = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: 0,
         position: _offset(_offset(_dhaka, 90, 400), 0, 20),
       );
       expect(onRoute.isOffRoute, isFalse);
@@ -180,7 +180,7 @@ void main() {
       final wandered = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: 0,
         position: _offset(_offset(_dhaka, 90, 400), 0, 250),
       );
       expect(wandered.isOffRoute, isTrue);
@@ -191,7 +191,7 @@ void main() {
       final p = computeNavigationProgress(
         polyline: polyline,
         turns: turns,
-        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: 0,
         position: polyline.last,
         speedMs: 10,
       );
@@ -205,7 +205,7 @@ void main() {
       final atEnd = computeNavigationProgress(
         polyline: cornerPoly,
         turns: cornerTurns,
-        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: 0,
         position: cornerPoly.last,
       );
       // A rider who doubles back doesn't get the corner re-announced: the
@@ -213,7 +213,7 @@ void main() {
       final doubledBack = computeNavigationProgress(
         polyline: cornerPoly,
         turns: cornerTurns,
-        previous: NavigationProgress(turnIndex: atEnd.turnIndex, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: atEnd.turnIndex,
         position: cornerPoly.first,
       );
       expect(doubledBack.turnIndex, atEnd.turnIndex);
@@ -223,12 +223,92 @@ void main() {
       final p = computeNavigationProgress(
         polyline: const [],
         turns: const [],
-        previous: const NavigationProgress(turnIndex: 0, metresToTurn: 0, offRouteM: 0, etaSeconds: 0, metresRemaining: 0, arrived: false),
+        previousTurnIndex: 0,
         position: _dhaka,
       );
       expect(p.turnIndex, -1);
       expect(p.metresRemaining, 0);
       expect(p.isOffRoute, isFalse);
+    });
+  });
+
+  group('loop routes (issues §101.R6)', () {
+    /// A 1 km square ridden clockwise from and back to _dhaka, a point every
+    /// 25 m, so the start and end are the same place.
+    List<LatLng> loop() {
+      final pts = <LatLng>[_dhaka];
+      var cur = _dhaka;
+      for (final bearing in [90.0, 180.0, 270.0, 0.0]) {
+        for (var i = 0; i < 10; i++) {
+          cur = _offset(cur, bearing, 25);
+          pts.add(cur);
+        }
+      }
+      pts[pts.length - 1] = _dhaka;
+      return pts;
+    }
+
+    test('the first fix at the start is not "arrived" and does not jump to the end', () {
+      final poly = loop();
+      final turns = buildTurnInstructions(poly);
+      final p = computeNavigationProgress(
+        polyline: poly,
+        turns: turns,
+        previousTurnIndex: 0,
+        position: _dhaka,
+        speedMs: 5,
+      );
+      expect(p.arrived, isFalse);
+      // The departure point counts as reached; it must not jump to the end.
+      expect(p.turnIndex, lessThan(2));
+      expect(p.turnIndex, lessThan(turns.length - 1));
+      expect(p.nearestIndex, lessThan(3));
+      expect(p.metresRemaining, greaterThan(900));
+    });
+
+    test('riding the loop arrives at the end, and arrival latches', () {
+      final poly = loop();
+      final turns = buildTurnInstructions(poly);
+      var progress = NavigationProgress.initial(poly);
+      for (final point in poly) {
+        progress = computeNavigationProgress(
+          polyline: poly,
+          turns: turns,
+          previousTurnIndex: progress.turnIndex,
+          previousNearestIndex: progress.nearestIndex,
+          previouslyArrived: progress.arrived,
+          position: point,
+          speedMs: 8,
+        );
+      }
+      expect(progress.arrived, isTrue);
+      expect(progress.etaSeconds, isNull);
+
+      // One later fix 100 m away keeps it arrived.
+      final later = computeNavigationProgress(
+        polyline: poly,
+        turns: turns,
+        previousTurnIndex: progress.turnIndex,
+        previousNearestIndex: progress.nearestIndex,
+        previouslyArrived: progress.arrived,
+        position: _offset(_dhaka, 90, 100),
+      );
+      expect(later.arrived, isTrue);
+    });
+
+    test('a fix near the end early in the ride does not skip ahead', () {
+      final poly = loop();
+      final turns = buildTurnInstructions(poly);
+      // Ridden 100 m in; matching continues forward from there.
+      final p = computeNavigationProgress(
+        polyline: poly,
+        turns: turns,
+        previousTurnIndex: 0,
+        previousNearestIndex: 4,
+        position: _offset(_dhaka, 90, 110),
+      );
+      expect(p.nearestIndex, inInclusiveRange(4, 5));
+      expect(p.arrived, isFalse);
     });
   });
 }

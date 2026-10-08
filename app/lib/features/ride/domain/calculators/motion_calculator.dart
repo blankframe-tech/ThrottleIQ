@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:throttleiq/core/utils/geo_math.dart';
 
 import '../entities/ride_point_entity.dart';
@@ -30,9 +29,8 @@ class MotionCalculator {
       return MotionResult(speedMs: currentSpeedMs, distanceDeltaM: 0);
     }
 
-    final dtForDeriv = math.max(0.1, deltaT);
-    final accel = (currentSpeedMs - prev.speedMs) / dtForDeriv;
-    final jerk = prev.acceleration != null ? (accel - prev.acceleration!) / dtForDeriv : null;
+    final accel = (currentSpeedMs - prev.speedMs) / deltaT;
+    final jerk = prev.acceleration != null ? (accel - prev.acceleration!) / deltaT : null;
     final dist = haversineMeters(prev.lat, prev.lng, currentLat, currentLng);
 
     return MotionResult(

@@ -17,7 +17,8 @@ import '../../../../shared/widgets/brand_model_field.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
-import '../../../../core/utils/number_parser.dart';
+import '../../../../core/utils/parse_localized_number.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
 
@@ -41,6 +42,10 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   bool _loading = false;
   BikeEntity? _existingBike;
 
+  /// What the odometer field was prefilled with, so an untouched field keeps
+  /// the stored baseline instead of re-deriving it from a rounded number.
+  String? _odoPrefill;
+
   @override
   void initState() {
     super.initState();
@@ -49,15 +54,27 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     }
   }
 
-  void _loadBike() {
-    final bikes = ref.read(garageProvider).valueOrNull ?? [];
+  Future<void> _loadBike() async {
+    final List<BikeEntity> bikes;
+    try {
+      bikes = await ref.read(garageProvider.future);
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'AddEditBike: garage load failed');
+      return;
+    }
+    if (!mounted) return;
     _existingBike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
     if (_existingBike != null) {
       _brandCtrl.text = _existingBike!.brand;
       _modelCtrl.text = _existingBike!.model;
       _yearCtrl.text = _existingBike!.year?.toString() ?? '';
       _ccCtrl.text = _existingBike!.cc?.toString() ?? '';
-      _odometerCtrl.text = _existingBike!.odometerKm != null ? _existingBike!.currentOdometerKm.toString() : '';
+      // The field shows what the dashboard shows (baseline + tracked km);
+      // _submit converts it back to a baseline (issues §101.R1).
+      _odoPrefill = _existingBike!.odometerKm != null
+          ? _existingBike!.currentOdometerKm.toStringAsFixed(0)
+          : '';
+      _odometerCtrl.text = _odoPrefill!;
       _imagePath = _existingBike!.imagePath;
       _colorValue = _existingBike!.colorValue;
       setState(() {});
@@ -155,20 +172,34 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       }
     }
 
-    if (_existingBike != null) {
-      final enteredOdo = parseLocalizedNumber(_odometerCtrl.text);
-      final newBaseline = enteredOdo != null 
-          ? enteredOdo - _existingBike!.totalDistanceKm 
-          : null;
+    // Branch on the route, not on whether the garage had loaded: editing
+    // while it was still loading used to fall into addBike and duplicate
+    // the bike (issues §101.R1).
+    if (widget.bikeId != null) {
+      if (_existingBike == null) {
+        final bikes = await ref.read(garageProvider.future);
+        _existingBike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
+      }
+      final existing = _existingBike;
+      if (existing == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
+      final text = _odometerCtrl.text.trim();
+      final enteredOdo = parseLocalizedNumber(text);
+      final unchanged = text == _odoPrefill?.trim();
+      final newBaseline = unchanged || enteredOdo == null
+          ? existing.odometerKm
+          : (enteredOdo - existing.totalDistanceKm).clamp(0.0, double.infinity);
       await ref.read(garageProvider.notifier).updateBike(
-            _existingBike!.copyWith(
+            existing.copyWith(
               brand: _brandCtrl.text.trim(),
               model: _modelCtrl.text.trim(),
               year: parseLocalizedInt(_yearCtrl.text),
               cc: parseLocalizedInt(_ccCtrl.text),
               imagePath: savedImagePath,
               odometerKm: newBaseline,
-              clearOdometer: _odometerCtrl.text.trim().isEmpty,
+              clearOdometer: text.isEmpty,
               colorValue: _colorValue,
               clearColor: _colorValue == null,
             ),
@@ -344,7 +375,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final c = parseLocalizedInt(v);
-                        if (c == null || c <= 0 || c > 10000) {
+                        if (c == null || c <= 0 || c > 3000) {
                           return context.l10n.invalidNumber;
                         }
                         return null;
@@ -363,8 +394,13 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     labelText: context.l10n.odometerReadingKm, hintText: '12000'),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null;
-                  final o = parseLocalizedNumber(v);
-                  if (o == null || o < 0 || o > 2000000) {
+                  final o = parseLocalizedNumber(v, min: 0, max: 2000000);
+                  if (o == null) return context.l10n.invalidNumber;
+                  // On edit the field is the dashboard reading, which can't
+                  // be below the km GPS already tracked (0.5 km slack for
+                  // the rounded prefill).
+                  final tracked = _existingBike?.totalDistanceKm ?? 0;
+                  if (widget.bikeId != null && o + 0.5 < tracked) {
                     return context.l10n.invalidNumber;
                   }
                   return null;

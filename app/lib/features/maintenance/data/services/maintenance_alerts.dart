@@ -15,6 +15,7 @@ import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../../domain/entities/maintenance_profile.dart';
 import '../../presentation/maintenance_l10n.dart';
+import '../../presentation/widgets/maintenance_format.dart';
 import '../repositories/maintenance_forecast_repository.dart';
 
 /// Maintenance reminders outside the app (proposal §"Reach the rider outside
@@ -96,6 +97,7 @@ class MaintenanceAlerts {
         return;
       }
       if (!(prefs.getBool(prefsEnabled) ?? true)) return;
+      final imperial = prefs.getBool(kMaintenanceImperialPrefKey) ?? false;
 
       // First run after upgrading to the redesign: existing checks just
       // gained time limits, so many would turn "overdue" at once. Record
@@ -137,7 +139,7 @@ class MaintenanceAlerts {
                 title: f.status == ReminderStatus.overdue
                     ? l10n.maintAlertOverdue(label)
                     : l10n.maintAlertDueSoon(label),
-                body: '${remainingText(f, l10n, at)} · ${bike.displayName}',
+                body: '${remainingText(f, l10n, at, imperial: imperial)} · ${bike.displayName}',
                 bikeId: bike.id,
               ));
             }
@@ -341,8 +343,11 @@ class _Pending {
 }
 
 /// Notification body text for how much is left (or how far over).
-String remainingText(CheckForecast f, AppLocalizations l10n, DateTime now) {
-  String km(double v) => '${v.abs().toStringAsFixed(0)} km';
+///
+/// [imperial] follows the maintenance page's km/mi choice (§101.R10).
+String remainingText(CheckForecast f, AppLocalizations l10n, DateTime now,
+    {bool imperial = false}) {
+  String km(double v) => distLabelLong(v.abs(), imperial);
   if (f.status == ReminderStatus.overdue) {
     if (f.kmLeft != null && f.kmLeft! <= 0) return l10n.maintOverKm(km(f.kmLeft!));
     if (f.daysLeft != null && f.daysLeft! < 0) {

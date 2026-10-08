@@ -2087,6 +2087,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidNumber => 'Invalid number';
 
   @override
+  String get odometerSyncFailed =>
+      'Couldn\'t sync the odometer. Please try again.';
+
+  @override
+  String get visitSaveFailed => 'Couldn\'t save the visit. Please try again.';
+
+  @override
   String get costOptional => 'Cost (optional)';
 
   @override
