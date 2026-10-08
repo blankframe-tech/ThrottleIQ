@@ -6,9 +6,10 @@ void main() {
   const uid = 'aB3dE5gH7jK9mN1pQ3sT5vX7zZ90';
 
   group('buildFollowLink', () {
-    test('is the canonical blankframe.tech/ThrottleIQ/u/<uid> https link', () {
+    test('is the canonical www.blankframe.tech/ThrottleIQ/u/<uid> https link',
+        () {
       expect(buildFollowLink(uid).toString(),
-          'https://blankframe.tech/ThrottleIQ/u/$uid');
+          'https://www.blankframe.tech/ThrottleIQ/u/$uid');
     });
 
     test('custom-scheme form is throttleiq://u/<uid>', () {

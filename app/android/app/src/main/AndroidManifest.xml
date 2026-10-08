@@ -112,9 +112,10 @@
                  would otherwise hand /ThrottleIQ/u/<uid> to go_router as a
                  route, which doesn't exist. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <!-- Follow links (App Links): https://blankframe.tech/ThrottleIQ/u/<uid>
-                 opens the app directly once the host serves
-                 /.well-known/assetlinks.json (public/well-known/assetlinks.json).
+            <!-- Follow links (App Links): https://www.blankframe.tech/ThrottleIQ/u/<uid>
+                 opens the app directly; the site serves /.well-known/assetlinks.json.
+                 Only www. is listed: the bare domain 301-redirects, so it can never
+                 verify, and on Android 11 and older one failing host fails them all.
                  Both path casings, since a hand-typed link may lowercase it.
                  throttleiqfb.web.app/u/<uid> is the Firebase Hosting mirror. -->
             <intent-filter android:autoVerify="true">
@@ -122,7 +123,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
-                <data android:host="blankframe.tech" />
                 <data android:host="www.blankframe.tech" />
                 <data android:pathPrefix="/ThrottleIQ/u/" />
                 <data android:pathPrefix="/throttleiq/u/" />

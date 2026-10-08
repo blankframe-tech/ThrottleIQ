@@ -9,7 +9,7 @@
 <link rel="icon" href="/icon-dark.svg" type="image/svg+xml">
 <!--
   Follow-link fallback page. Served for
-    https://blankframe.tech/ThrottleIQ/u/<uid>   (canonical, what the in-app QR encodes)
+    https://www.blankframe.tech/ThrottleIQ/u/<uid>  (canonical; the live copy is landing-page 404.html)
     https://throttleiqfb.web.app/u/<uid>         (Firebase Hosting mirror)
   via the rewrites in firebase.json.
 
@@ -84,18 +84,18 @@
     <h1>Follow this rider on ThrottleIQ</h1>
     <p>Open the app to follow them. Don't have ThrottleIQ yet? Install it, then scan the code again.</p>
     <a id="open-app" class="btn btn-primary" href="#">Open in ThrottleIQ</a>
-    <a id="install" class="btn btn-secondary" href="https://blankframe.tech/ThrottleIQ/install?c=follow_qr">Install ThrottleIQ</a>
+    <a id="install" class="btn btn-secondary" href="https://www.blankframe.tech/throttle-iq/install/?c=follow_qr">Install ThrottleIQ</a>
     <p class="small">ThrottleIQ রাইডারকে ফলো করতে অ্যাপটি খুলুন, অথবা ইনস্টল করে কোডটি আবার স্ক্যান করুন।</p>
   </div>
   <div id="invalid" class="hidden">
     <h1>This link isn't valid</h1>
     <p>It doesn't point to a ThrottleIQ rider.</p>
-    <a class="btn btn-secondary" href="https://blankframe.tech/ThrottleIQ/install?c=follow_qr_invalid">Get ThrottleIQ</a>
+    <a class="btn btn-secondary" href="https://www.blankframe.tech/throttle-iq/install/?c=follow_qr_invalid">Get ThrottleIQ</a>
   </div>
 </main>
 <script>
   (function () {
-    var INSTALL_URL = 'https://blankframe.tech/ThrottleIQ/install?c=follow_qr';
+    var INSTALL_URL = 'https://www.blankframe.tech/throttle-iq/install/?c=follow_qr';
     var PACKAGE = 'com.bft.throttleiq';
     // /ThrottleIQ/u/<uid> (any casing of the prefix) or /u/<uid>; the uid
     // itself is case-sensitive. Same rule as follow_link.dart.

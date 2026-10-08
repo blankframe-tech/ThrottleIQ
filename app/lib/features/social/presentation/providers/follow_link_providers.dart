@@ -25,7 +25,15 @@ final myFollowLinkProvider = FutureProvider.autoDispose<String?>((ref) async {
   if (uid == null) return null;
   final store = ref.watch(followLinkStoreProvider);
   final saved = await store.readMyLink(uid);
-  if (saved != null && parseFollowLink(saved) == uid) return saved;
+  if (saved != null &&
+      parseFollowLink(saved) == uid &&
+      Uri.tryParse(saved)?.host == kFollowLinkHost) {
+    return saved;
+  }
+  // First QR, or one saved before the host moved to www. (2026-10-09): drop
+  // the image rendered from the old link so the new one is drawn.
+  final image = await store.myQrImageFile(uid);
+  if (await image.exists()) await image.delete();
   final link = buildFollowLink(uid).toString();
   await store.saveMyLink(uid, link);
   return link;

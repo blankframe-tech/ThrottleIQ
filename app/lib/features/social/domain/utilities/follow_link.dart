@@ -1,12 +1,13 @@
 /// Follow links: the URL a rider's "My QR code" encodes, and the parser that
 /// turns a scanned / opened link back into the uid to follow.
 ///
-/// The canonical form is `https://blankframe.tech/ThrottleIQ/u/<uid>` — the
-/// same host and `/ThrottleIQ/` path prefix the install posters already use
-/// (`https://blankframe.tech/ThrottleIQ/install`). It is an https link, not a
+/// The canonical form is `https://www.blankframe.tech/ThrottleIQ/u/<uid>`. The
+/// site is GitHub Pages: the bare domain 301-redirects to `www.`, and Android
+/// App Link verification fails across a redirect, so codes use `www.`. The
+/// site's root 404.html routes this path (any casing) to the follow page. It is an https link, not a
 /// custom scheme, so a phone's system camera opens it even when ThrottleIQ is
 /// not installed: App Links / Universal Links hand it to the app when it is,
-/// and otherwise the web page at that path (public/follow.html) tries the
+/// and otherwise the web page at that path (landing-page 404.html, mirrored in public/follow.html) tries the
 /// `throttleiq://u/<uid>` scheme and then falls back to the install page.
 ///
 /// Pure Dart, no Flutter or Firebase, so it is unit-tested directly
@@ -14,7 +15,7 @@
 library;
 
 /// Host the canonical follow link lives on.
-const String kFollowLinkHost = 'blankframe.tech';
+const String kFollowLinkHost = 'www.blankframe.tech';
 
 /// Path prefix (before the uid) of the canonical follow link.
 const String kFollowLinkPathPrefix = '/ThrottleIQ/u/';
