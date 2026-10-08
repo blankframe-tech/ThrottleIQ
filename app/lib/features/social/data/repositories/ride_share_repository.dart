@@ -474,22 +474,25 @@ class RideShareRepository {
     }).toList();
   }
 
+  /// Deletes a shared ride.
   Future<void> deleteSharedRide(String rideId) async {
     final docRef = _firestore.collection('rides').doc(rideId);
 
+    // Fetch both subcollections concurrently, then fire every delete at
+    // once rather than awaiting them one at a time — a popular ride with
+    // many comments/votes used to stall proportionally to that count.
     final commentsFuture = docRef.collection('comments').get();
+    // `likes` is a retired engagement model (issues_fixed.md §81); legacy
+    // docs are still swept up here so a delete leaves nothing behind.
     final likesFuture = docRef.collection('likes').get();
     final comments = await commentsFuture;
     final likes = await likesFuture;
-    
-    final batch = _firestore.batch();
-    for (final comment in comments.docs) {
-      batch.delete(comment.reference);
-    }
-    for (final like in likes.docs) {
-      batch.delete(like.reference);
-    }
-    batch.delete(docRef);
-    await batch.commit();
+    await Future.wait([
+      for (final comment in comments.docs) comment.reference.delete(),
+      for (final like in likes.docs) like.reference.delete(),
+    ]);
+
+    // Delete the ride
+    await docRef.delete();
   }
 }

@@ -1494,3 +1494,12 @@ paddockPosts
 groupRideRealtimeLive
 groupRideRealtimeDelayed
 chatTyping
+
+# batch: audit101-g5
+signOutFailed
+deleteAccountFailed
+deleteAccountOffline
+reauthRequiredTitle
+reauthRequiredBody
+reauthWrongPassword
+reauthFailed

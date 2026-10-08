@@ -1,6 +1,4 @@
 import 'dart:async';
-import '../../../ride/presentation/providers/ride_recording_provider.dart';
-import '../../../social/presentation/providers/group_ride_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/database/database_helper.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
+import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../../core/analytics/analytics_service.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -27,11 +26,21 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
-  AuthNotifier(this._auth, this._ref) : super(const AsyncValue.data(null));
+  AuthNotifier(this._auth, {Future<void> Function()? beforeSignOut})
+      : _beforeSignOut = beforeSignOut,
+        super(const AsyncValue.data(null));
 
   final FirebaseAuth _auth;
-  final Ref _ref;
-  final ProfileRepository _profiles = ProfileRepository();
+
+  /// Runs while the rider is still authenticated, before `_auth.signOut()`
+  /// (issues §101.A2): used to revoke an active live-share link, whose
+  /// teardown writes are rejected / skipped once the uid is gone.
+  final Future<void> Function()? _beforeSignOut;
+
+  /// Upper bound on [_beforeSignOut] so an offline phone can still sign out.
+  static const Duration beforeSignOutTimeout = Duration(seconds: 6);
+  // Lazy: constructing it touches Firestore, which unit tests don't have.
+  late final ProfileRepository _profiles = ProfileRepository();
 
   /// Best-effort seeding of the public `users/{uid}` profile doc from the auth
   /// user. Never allowed to fail a sign-in — the profile can be re-seeded on
@@ -143,21 +152,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   ///     that would destroy exactly the offline data durability the outbox/
   ///     local-first design exists for, on every ordinary sign-out.
   Future<void> signOut() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid != null) {
+    if (_auth.currentUser != null && _beforeSignOut != null) {
       try {
-        await _ref.read(rideRecordingProvider.notifier).stopLiveSharing();
-      } catch (e) {
-        debugPrint('signOut: stopLiveSharing failed: $e');
-      }
-      try {
-        final rides = _ref.read(activeGroupRidesForUserProvider).valueOrNull ?? const [];
-        final channel = _ref.read(groupRideLiveChannelProvider);
-        await Future.wait([
-          for (final ride in rides) channel.removeLocation(ride.id, uid)
-        ]);
-      } catch (e) {
-        debugPrint('signOut: group-ride removeLocation failed: $e');
+        await _beforeSignOut().timeout(beforeSignOutTimeout);
+      } on Exception catch (e) {
+        debugPrint('signOut: pre-sign-out cleanup failed: $e');
       }
     }
 
@@ -166,6 +165,37 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       await GoogleSignIn().signOut();
     } catch (_) {/* not signed in via Google, or already signed out */}
     state = const AsyncValue.data(null);
+  }
+
+  /// Re-proves the rider's identity so a sensitive operation such as
+  /// [deleteAccount] is accepted after `requires-recent-login`
+  /// (issues §101.A1). Uses the Google picker for Google accounts, otherwise
+  /// the email [password]. Returns false when the rider dismissed the Google
+  /// picker; throws [FirebaseAuthException] (e.g. `wrong-password`) on failure.
+  Future<bool> reauthenticate({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    final providers = user.providerData.map((p) => p.providerId).toList();
+    if (providers.contains('password')) {
+      final email = user.email;
+      if (email == null || password == null || password.isEmpty) {
+        throw FirebaseAuthException(code: 'missing-password');
+      }
+      await user.reauthenticateWithCredential(
+          EmailAuthProvider.credential(email: email, password: password));
+      return true;
+    }
+    if (providers.contains('google.com')) {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return false;
+      final googleAuth = await googleUser.authentication;
+      await user.reauthenticateWithCredential(GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      ));
+      return true;
+    }
+    throw FirebaseAuthException(code: 'requires-recent-login');
   }
 
   /// Completely deletes the current rider's account:
@@ -229,5 +259,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 }
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
-  return AuthNotifier(ref.watch(firebaseAuthProvider), ref);
+  return AuthNotifier(
+    ref.watch(firebaseAuthProvider),
+    beforeSignOut: () => ref.read(rideRecordingProvider.notifier).stopLiveSharing(),
+  );
 });
