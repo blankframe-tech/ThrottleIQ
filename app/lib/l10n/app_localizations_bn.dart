@@ -2092,6 +2092,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get invalidNumber => 'সংখ্যাটি সঠিক নয়';
 
   @override
+  String get odometerSyncFailed =>
+      'ওডোমিটার সিঙ্ক করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get visitSaveFailed => 'ভিজিট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
   String get costOptional => 'খরচ (ঐচ্ছিক)';
 
   @override

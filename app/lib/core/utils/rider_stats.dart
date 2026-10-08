@@ -73,7 +73,20 @@ RiderStatsSummary computeRiderStats({
     );
   }
 
-  final avgSpeedSum = rides.fold<double>(0, (sum, r) => sum + r.avgSpeedKmh);
+  // Weighted by time (issues §101.R10): a 2-minute ride must not count as
+  // much as a 3-hour one. Falls back to the plain mean when no ride carries
+  // a duration (legacy rides).
+  var weightedSpeed = 0.0;
+  var totalWeight = 0.0;
+  for (final r in rides) {
+    final w = (r.movingSeconds ?? r.durationSeconds ?? 0).toDouble();
+    if (w <= 0) continue;
+    weightedSpeed += r.avgSpeedKmh * w;
+    totalWeight += w;
+  }
+  final avgSpeed = totalWeight > 0
+      ? weightedSpeed / totalWeight
+      : rides.fold<double>(0, (sum, r) => sum + r.avgSpeedKmh) / rides.length;
   final topSpeed = rides.fold<double>(
       0, (max, r) => r.maxSpeedKmh > max ? r.maxSpeedKmh : max);
   final scoreSum = rides.fold<int>(
@@ -94,7 +107,7 @@ RiderStatsSummary computeRiderStats({
   final sortedChronologically = sortedByRecency.reversed.toList();
 
   return RiderStatsSummary(
-    allTimeAvgSpeedKmh: avgSpeedSum / rides.length,
+    allTimeAvgSpeedKmh: avgSpeed,
     allTimeTopSpeedKmh: topSpeed,
     avgRidingScore: scoreSum / rides.length,
     mostUsedBike: mostUsedBike,

@@ -3,6 +3,10 @@ library;
 
 const double kmToMi = 0.621371;
 
+/// SharedPreferences key for the km/mi choice on the maintenance page. Public
+/// so notification text (maintenance_alerts) honours the same choice.
+const kMaintenanceImperialPrefKey = 'maintenance_imperial_units';
+
 String distLabel(double km, bool imperial) {
   final value = imperial ? km * kmToMi : km;
   return '${value.toStringAsFixed(0)} ${imperial ? 'mi' : 'km'}';

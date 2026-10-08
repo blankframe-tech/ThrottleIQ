@@ -13,6 +13,7 @@ import 'onboarding_manifest.dart';
 import 'onboarding_tour_provider.dart';
 import '../widgets/onboarding_slide_page.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 
 /// Multi-step onboarding flow for new ThrottleIQ users.
 ///
@@ -130,8 +131,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         await ref.read(garageProvider.notifier).addBike(
               brand: _brandCtrl.text.trim(),
               model: _modelCtrl.text.trim(),
-              year: int.tryParse(_yearCtrl.text),
-              cc: int.tryParse(_ccCtrl.text),
+              year: parseLocalizedInt(_yearCtrl.text, min: 1900, max: DateTime.now().year + 1),
+              cc: parseLocalizedInt(_ccCtrl.text, min: 1, max: 3000),
             );
         if (mounted) {
           setState(() {

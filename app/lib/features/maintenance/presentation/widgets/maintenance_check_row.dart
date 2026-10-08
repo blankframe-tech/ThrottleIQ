@@ -12,6 +12,7 @@ import '../../domain/entities/maintenance_profile.dart';
 import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
 import 'edit_maintenance_check_sheet.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 import 'forecast_text.dart';
 import 'order_part_sheet.dart';
 
@@ -277,7 +278,7 @@ class _SetLastDoneSheetState extends ConsumerState<SetLastDoneSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                final km = double.tryParse(_kmCtrl.text.trim());
+                final km = parseLocalizedNumber(_kmCtrl.text.trim(), min: 0, max: 2000000);
                 if (km == null && _date == null) {
                   Navigator.of(context).pop();
                   return;

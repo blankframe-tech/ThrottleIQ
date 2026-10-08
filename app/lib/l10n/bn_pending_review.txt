@@ -1503,3 +1503,6 @@ reauthRequiredTitle
 reauthRequiredBody
 reauthWrongPassword
 reauthFailed
+# batch: audit101-g7
+odometerSyncFailed
+visitSaveFailed

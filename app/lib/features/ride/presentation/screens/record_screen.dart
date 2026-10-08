@@ -160,7 +160,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                               greeting.usesName ? null : greeting.line,
                           titleText: greeting.usesName
                               ? greeting.line
-                              : (_name ?? 'Rider'),
+                              : (_name ?? context.l10n.riderFallbackName),
                           accentColor: accent,
                         )
                       else

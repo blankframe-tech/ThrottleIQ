@@ -1,6 +1,6 @@
-import '../../../../core/utils/number_parser.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme_context.dart';
@@ -78,15 +78,20 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
     final nav = Navigator.of(context);
     final palette = context.palette;
 
+    var shownKm = newKm;
     try {
-      await ref.read(garageProvider.notifier).syncOdometer(
+      // The odometer the bike really shows now: below the tracked total the
+      // baseline is floored, so the entered number may not be what stuck.
+      final actual = await ref.read(garageProvider.notifier).syncOdometer(
             bikeId: widget.bike.id,
             newOdometerKm: newKm,
           );
-    } catch (e) {
-      if (mounted) {
-        messenger.showSnackBar(const SnackBar(content: Text('Failed to sync odometer.')));
-      }
+      shownKm = actual ?? newKm;
+    } catch (e, st) {
+      // Keep the sheet open and the button usable so the rider can retry.
+      reportNonFatal(e, st, reason: 'Odometer sync: save failed');
+      if (mounted) setState(() => _syncing = false);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.odometerSyncFailed)));
       return;
     }
 
@@ -101,7 +106,7 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
             Icon(Icons.check_circle, color: palette.success, size: 18),
             const SizedBox(width: 8),
             Text(
-              l10n.odometerSyncedKm(newKm.toStringAsFixed(0)),
+              l10n.odometerSyncedKm(shownKm.toStringAsFixed(0)),
               style: TextStyle(color: palette.textPrimary),
             ),
           ],
@@ -296,8 +301,12 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return context.l10n.requiredField;
-                        final numVal = parseLocalizedNumber(v.trim());
-                        if (numVal == null || numVal < 0) {
+                        final numVal =
+                            parseLocalizedNumber(v.trim(), min: 0, max: 2000000);
+                        // Can't be below the km GPS has already tracked: the
+                        // baseline would go negative (issues §101.R7).
+                        if (numVal == null ||
+                            numVal + 0.5 < widget.bike.totalDistanceKm) {
                           return context.l10n.enterValidPositiveNumber;
                         }
                         return null;

@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
@@ -34,6 +35,13 @@ class ForecastStrip extends StatelessWidget {
         .take(_maxItems)
         .toList();
   }
+
+  /// Left edge of an 80 px label centred on [x], kept inside the strip so
+  /// overdue items (pinned left of "today") and items at the horizon aren't
+  /// drawn outside the Stack, where they can't be tapped (issues §101.R10).
+  @visibleForTesting
+  static double labelLeft(double x, double maxWidth) =>
+      (x - 40).clamp(0.0, math.max(0.0, maxWidth - 80));
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +97,7 @@ class ForecastStrip extends StatelessWidget {
               final above = i.isEven;
               final color = statusColor(context, f.status);
               children.add(Positioned(
-                left: math.max(0.0, x - 40),
+                left: labelLeft(x, c.maxWidth),
                 width: 80,
                 top: above ? 0 : 44,
                 child: GestureDetector(

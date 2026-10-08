@@ -37,6 +37,7 @@ import '../../domain/calculators/ride_resume.dart';
 import '../../domain/entities/live_session_entity.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/entities/ride_point_entity.dart';
+import '../../domain/calculators/elapsed_at_pause.dart';
 import 'helpers/crash_coordinator.dart';
 import 'helpers/live_session_coordinator.dart';
 import 'helpers/ride_lifecycle.dart';
@@ -281,9 +282,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   int _movingSeconds = 0;
   int _movingMilliseconds = 0;
   DateTime? _lastFixTime;
+
+  /// The last fix's speed was cut back by the acceleration limit, so the
+  /// next fix's acceleration/jerk is a rebound, not a real event (§101.R5).
+  bool _lastFixClamped = false;
   static const int _maxMovingGapSeconds = 60;
-  final Stopwatch _stopwatch = Stopwatch();
-  // DateTime? _activeStart;
+  DateTime? _activeStart;
   Duration _accumulatedDuration = Duration.zero;
 
   bool _skipNextDistanceDelta = false;
@@ -435,9 +439,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _movingMilliseconds = 0;
       _lastFixTime = null;
       _accumulatedDuration = Duration.zero;
-      // DateTime.now();
-      _stopwatch.reset();
-      _stopwatch.start();
+      _activeStart = DateTime.now();
       _detector.reset();
       _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
       _cadencePolicy.reset();
@@ -645,13 +647,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   void _onPosition(Position pos) {
     if (state.status != RecordingStatus.active) return;
 
-    final rawSpeedMs = (!pos.speed.isFinite || pos.speed < 0) ? 0.0 : pos.speed;
+    // NaN compares false against everything, so `< 0` alone let it through
+    // (issues §101.R10).
+    final rawSpeedMs = (pos.speed.isFinite && pos.speed > 0) ? pos.speed : 0.0;
     final timestamp = pos.timestamp;
 
-    if (pos.accuracy > SensorConstants.maxGpsAccuracyM) return;
+    if (!pos.accuracy.isFinite ||
+        pos.accuracy > SensorConstants.maxGpsAccuracyM) {
+      return;
+    }
 
-    double? rawAccel;
-    double? rawJerk;
     double rawDist = 0;
     double deltaT = 0;
 
@@ -667,8 +672,6 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         currentLng: pos.longitude,
         currentTime: timestamp,
       );
-      rawAccel = result.acceleration;
-      rawJerk = result.jerk;
       rawDist = result.distanceDeltaM;
     }
     _skipNextDistanceDelta = false;
@@ -677,13 +680,16 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // including the Doppler distance cap (§90.C12). See [evaluateFix].
     final k = evaluateFix(
       rawSpeedMs: rawSpeedMs,
-      prev: prevPoint == null ? null : (speedMs: prevPoint.speedMs),
+      prev: prevPoint == null
+          ? null
+          : prevFixOf(prevPoint.speedMs,
+              acceleration: prevPoint.acceleration,
+              clamped: _lastFixClamped),
       rawDistanceM: rawDist,
       deltaTSeconds: deltaT,
       accuracyM: pos.accuracy,
-      acceleration: rawAccel,
-      jerk: rawJerk,
     );
+    _lastFixClamped = k.clamped;
     final speedMs = k.speedMs;
     final distDelta = k.distanceDeltaM;
     final accel = k.acceleration;
@@ -834,7 +840,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         // (distance filter), so _onPosition alone can't be relied on.
         state = state.copyWith(
           elapsed:
-              _accumulatedDuration + _stopwatch.elapsed,
+              _accumulatedDuration + DateTime.now().difference(_activeStart!),
           activeAlert: _alertAfterTtl(DateTime.now()),
           // A once-a-second tick is not the thing that resolved an error.
           keepError: true,
@@ -905,10 +911,17 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       // buffers every fix and IMU sample and replays them all on resume, so
       // whatever the bike did while paused (a van ride) was counted. The
       // status flip comes first so nothing arriving mid-cancel is processed.
-      _stopwatch.stop();
-      _accumulatedDuration = state.elapsed;
-      // null;
-      state = state.copyWith(status: RecordingStatus.paused, keepError: true);
+      _accumulatedDuration = elapsedAtPause(
+        accumulated: _accumulatedDuration,
+        activeStart: _activeStart,
+        now: DateTime.now(),
+        lastTick: state.elapsed,
+      );
+      _activeStart = null;
+      state = state.copyWith(
+          status: RecordingStatus.paused,
+          elapsed: _accumulatedDuration,
+          keepError: true);
       await _subs.cancel();
       await _persistenceCoordinator.flushPointBuffer();
       // Stop the 10s live-share tick — otherwise it keeps republishing a stale
@@ -957,9 +970,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       }
       if (!mounted || state.status != RecordingStatus.paused) return;
 
-      // DateTime.now();
-      _stopwatch.reset();
-      _stopwatch.start();
+      _activeStart = DateTime.now();
       _skipNextDistanceDelta = true;
       _nextFixStartsSegment = true;
       // The first fix after a resume must not credit the paused interval as
@@ -1195,7 +1206,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _accumulatedDuration = Duration(
       seconds: snapshotSeconds ?? aggregates.span.inSeconds,
     );
-    // null;
+    _activeStart = null;
 
     _sensorCoordinator.reset();
     _detector.reset();

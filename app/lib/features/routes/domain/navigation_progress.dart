@@ -64,6 +64,12 @@ class NavigationProgress extends Equatable {
   /// True once the rider is within [kArrivedM] of the route's last point.
   final bool arrived;
 
+  /// Polyline index the rider was last matched to. Carried into the next fix
+  /// so matching only searches forward from here (issues §101.R6): on a loop
+  /// the start and end are the same place, and a global nearest search at the
+  /// start used to snap to the end.
+  final int nearestIndex;
+
   const NavigationProgress({
     required this.turnIndex,
     required this.metresToTurn,
@@ -71,6 +77,7 @@ class NavigationProgress extends Equatable {
     required this.offRouteM,
     required this.etaSeconds,
     required this.arrived,
+    this.nearestIndex = 0,
   });
 
   /// The state before any fix has arrived: everything unknown, the whole route
@@ -88,8 +95,15 @@ class NavigationProgress extends Equatable {
   bool get isOffRoute => offRouteM != null && offRouteM! > kOffRouteM;
 
   @override
-  List<Object?> get props =>
-      [turnIndex, metresToTurn, metresRemaining, offRouteM, etaSeconds, arrived];
+  List<Object?> get props => [
+        turnIndex,
+        metresToTurn,
+        metresRemaining,
+        offRouteM,
+        etaSeconds,
+        arrived,
+        nearestIndex,
+      ];
 
   @override
   String toString() => 'NavigationProgress(turn $turnIndex, '
@@ -120,22 +134,58 @@ int advanceTurnIndex({
   required LatLng position,
   required int from,
   double reachedM = kTurnReachedM,
+
+  /// The rider's matched polyline index, when the caller already has a
+  /// forward-only one. Defaults to a global nearest search.
+  int? nearestIndex,
 }) {
   if (turns.isEmpty) return -1;
   var next = from.clamp(0, turns.length - 1);
   if (polyline.isEmpty) return next;
 
-  final nearest = nearestPointOnPolyline(polyline, position);
+  final matchedIndex =
+      nearestIndex ?? nearestPointOnPolyline(polyline, position)?.index;
   while (next < turns.length - 1) {
     final pointIndex = turns[next].pointIndex;
     if (pointIndex < 0 || pointIndex >= polyline.length) break;
     final reached =
         haversineMetersLatLng(position, polyline[pointIndex]) <= reachedM;
-    final passed = nearest != null && pointIndex < nearest.index;
+    final passed = matchedIndex != null && pointIndex < matchedIndex;
     if (!reached && !passed) break;
     next++;
   }
   return next;
+}
+
+/// How far ahead (along the line) of the previous match to look for the
+/// rider's new position.
+const double kForwardWindowM = 500;
+
+/// Nearest polyline point searching only forward from [fromIndex], within
+/// [windowM] of line length. Falls back to a global search when the best
+/// match is beyond [kOffRouteM] (off route, or a gap longer than the window),
+/// which is the only time a match may jump.
+({int index, double distanceM})? forwardNearestPoint(
+  List<LatLng> polyline,
+  LatLng position, {
+  int fromIndex = 0,
+  double windowM = kForwardWindowM,
+}) {
+  if (polyline.isEmpty) return null;
+  final start = fromIndex.clamp(0, polyline.length - 1);
+  var bestIndex = start;
+  var bestDistance = haversineMetersLatLng(polyline[start], position);
+  var walked = 0.0;
+  for (var i = start + 1; i < polyline.length && walked <= windowM; i++) {
+    walked += haversineMetersLatLng(polyline[i - 1], polyline[i]);
+    final d = haversineMetersLatLng(polyline[i], position);
+    if (d < bestDistance) {
+      bestDistance = d;
+      bestIndex = i;
+    }
+  }
+  if (bestDistance > kOffRouteM) return nearestPointOnPolyline(polyline, position);
+  return (index: bestIndex, distanceM: bestDistance);
 }
 
 /// Seconds to cover [metres] at [speedMs], or null when that number would be
@@ -150,11 +200,16 @@ int? etaSeconds(double metres, double? speedMs) {
 ///
 /// [previousTurnIndex] is the last value this function returned, so the
 /// manoeuvre pointer only ever moves forward; passing 0 restarts it.
+/// [previousNearestIndex] likewise is the last matched polyline index, and
+/// [previouslyArrived] latches arrival (issues §101.R6): without them a loop
+/// route read "arrived" at its own start, and leaving the end zone un-arrived.
 /// A null [position] (no fix yet) yields [NavigationProgress.initial].
 NavigationProgress computeNavigationProgress({
   required List<LatLng> polyline,
   required List<TurnInstruction> turns,
-  required NavigationProgress previous,
+  required int previousTurnIndex,
+  int previousNearestIndex = 0,
+  bool previouslyArrived = false,
   LatLng? position,
   double? speedMs,
 }) {
@@ -172,11 +227,14 @@ NavigationProgress computeNavigationProgress({
         : initial;
   }
 
+  final nearest = forwardNearestPoint(polyline, position,
+      fromIndex: previousNearestIndex);
   final turnIndex = advanceTurnIndex(
     polyline: polyline,
     turns: turns,
     position: position,
-    from: previous.turnIndex,
+    from: previousTurnIndex,
+    nearestIndex: nearest?.index,
   );
 
   final metresToTurn = (turnIndex >= 0 &&
@@ -185,18 +243,17 @@ NavigationProgress computeNavigationProgress({
       ? haversineMetersLatLng(position, polyline[turns[turnIndex].pointIndex])
       : null;
 
-  final nearest = nearestPointOnPolyline(polyline, position);
   final metresRemaining =
       nearest == null ? 0.0 : remainingDistanceM(polyline, nearest.index);
 
-  // For a loop route, the start and end are close. If we just started,
-  // metresRemaining is near the full length. So we must have traversed
-  // at least some distance before arriving.
-  final routeLength = remainingDistanceM(polyline, 0);
-  final hasTraversed = metresRemaining < routeLength * 0.9;
-  
-  final arrived = previous.arrived || 
-      (haversineMetersLatLng(position, polyline.last) <= kArrivedM && hasTraversed);
+  // Near the end is not enough: on a loop the start is near the end too.
+  // The rider must also be on the last manoeuvre and on the last stretch of
+  // the line. Once true it stays true.
+  final onLastTurn = turns.isEmpty || turnIndex >= turns.length - 1;
+  final arrived = previouslyArrived ||
+      (onLastTurn &&
+          metresRemaining <= 2 * kArrivedM &&
+          haversineMetersLatLng(position, polyline.last) <= kArrivedM);
 
   return NavigationProgress(
     turnIndex: turnIndex,
@@ -205,5 +262,6 @@ NavigationProgress computeNavigationProgress({
     offRouteM: nearest?.distanceM,
     etaSeconds: arrived ? null : etaSeconds(metresRemaining, speedMs),
     arrived: arrived,
+    nearestIndex: nearest?.index ?? previousNearestIndex,
   );
 }

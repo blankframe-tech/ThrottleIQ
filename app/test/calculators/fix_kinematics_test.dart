@@ -35,7 +35,7 @@ void main() {
       // accuracy gate). Before §90.C12 all 24 m were credited.
       final k = evaluateFix(
         rawSpeedMs: 10,
-        prev: (speedMs: 10),
+        prev: prevFixOf(10),
         rawDistanceM: 24 + 15.0,
         deltaTSeconds: 1,
         accuracyM: 5,
@@ -47,7 +47,7 @@ void main() {
     test('honest movement is never clipped', () {
       final k = evaluateFix(
         rawSpeedMs: 10,
-        prev: (speedMs: 9),
+        prev: prevFixOf(9),
         rawDistanceM: 9.6,
         deltaTSeconds: 1,
         accuracyM: 4,
@@ -70,12 +70,10 @@ void main() {
     test('a rejected fix contributes nothing', () {
       final k = evaluateFix(
         rawSpeedMs: 0,
-        prev: (speedMs: 0),
+        prev: prevFixOf(0),
         rawDistanceM: 3,
         deltaTSeconds: 2,
         accuracyM: 10,
-        acceleration: 1,
-        jerk: 1,
       );
       expect(k.speedMs, 0);
       expect(k.distanceDeltaM, 0);
@@ -83,11 +81,76 @@ void main() {
       expect(k.jerk, 0);
     });
 
+    test('a single Doppler spike produces no hard-brake accel or jerk', () {
+      // 10 -> 40 -> 10 m/s at 1 s spacing (issues §101.R5).
+      final accels = <double?>[];
+      final jerks = <double?>[];
+      var prev = prevFixOf(10, acceleration: 0);
+      for (final raw in [40.0, 10.0, 10.0]) {
+        final k = evaluateFix(
+          rawSpeedMs: raw,
+          prev: prev,
+          rawDistanceM: 10,
+          deltaTSeconds: 1,
+          accuracyM: 5,
+        );
+        accels.add(k.acceleration);
+        jerks.add(k.jerk);
+        prev = prevFixOf(k.speedMs,
+            acceleration: k.acceleration, clamped: k.clamped);
+      }
+      expect(accels.where((a) => a != null && a <= -4), isEmpty);
+      expect(jerks.where((j) => j != null && j.abs() > 10), isEmpty);
+      // The spike fix and its rebound are both null; the third is normal.
+      expect(accels[0], isNull);
+      expect(accels[1], isNull);
+      expect(accels[2], isNotNull);
+    });
+
+    test('a sub-0.1 s gap gives no accel or jerk', () {
+      final k = evaluateFix(
+        rawSpeedMs: 10,
+        prev: prevFixOf(9, acceleration: 0.5),
+        rawDistanceM: 0.2,
+        deltaTSeconds: 0.02,
+        accuracyM: 5,
+      );
+      expect(k.jerk, isNull);
+      expect(k.acceleration, isNull);
+    });
+
+    test('steady 10 -> 14 m/s over 1 s gives accel 4 and a real jerk', () {
+      final k = evaluateFix(
+        rawSpeedMs: 14,
+        prev: prevFixOf(10, acceleration: 1),
+        rawDistanceM: 12,
+        deltaTSeconds: 1,
+        accuracyM: 5,
+      );
+      expect(k.clamped, isFalse);
+      expect(k.acceleration, closeTo(4, 1e-9));
+      expect(k.jerk, closeTo(3, 1e-9));
+    });
+
+    test('a NaN Doppler speed yields finite outputs', () {
+      final k = evaluateFix(
+        rawSpeedMs: double.nan,
+        prev: prevFixOf(9, acceleration: 0),
+        rawDistanceM: 50,
+        deltaTSeconds: 5,
+        accuracyM: 5,
+      );
+      expect(k.speedMs.isFinite, isTrue);
+      expect(k.distanceDeltaM.isFinite, isTrue);
+      expect(k.acceleration == null || k.acceleration!.isFinite, isTrue);
+      expect(k.jerk == null || k.jerk!.isFinite, isTrue);
+    });
+
     test('the derived-speed fallback is not capped by the Doppler rule', () {
       // No Doppler speed; 50 m in 5 s → 10 m/s derived.
       final k = evaluateFix(
         rawSpeedMs: 0,
-        prev: (speedMs: 9),
+        prev: prevFixOf(9),
         rawDistanceM: 50,
         deltaTSeconds: 5,
         accuracyM: 5,
@@ -104,7 +167,7 @@ void main() {
         for (var i = 1; i < track.length; i++) {
           total += evaluateFix(
             rawSpeedMs: fixes[i].speedMs,
-            prev: (speedMs: fixes[i - 1].speedMs),
+            prev: prevFixOf(fixes[i - 1].speedMs),
             rawDistanceM: haversineMeters(track[i - 1].latitude,
                 track[i - 1].longitude, track[i].latitude, track[i].longitude),
             deltaTSeconds: 1,

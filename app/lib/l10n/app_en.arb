@@ -2777,6 +2777,14 @@
   "@invalidNumber": {
     "description": "Text in add_maintenance_log_screen."
   },
+  "odometerSyncFailed": "Couldn't sync the odometer. Please try again.",
+  "@odometerSyncFailed": {
+    "description": "Snackbar in odometer_sync_sheet when saving the new reading throws."
+  },
+  "visitSaveFailed": "Couldn't save the visit. Please try again.",
+  "@visitSaveFailed": {
+    "description": "Snackbar in add_maintenance_log_screen when saving the visit throws."
+  },
   "costOptional": "Cost (optional)",
   "@costOptional": {
     "description": "LabelText in add_maintenance_log_screen."

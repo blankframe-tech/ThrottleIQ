@@ -3807,6 +3807,18 @@ abstract class AppLocalizations {
   /// **'Invalid number'**
   String get invalidNumber;
 
+  /// Snackbar in odometer_sync_sheet when saving the new reading throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sync the odometer. Please try again.'**
+  String get odometerSyncFailed;
+
+  /// Snackbar in add_maintenance_log_screen when saving the visit throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the visit. Please try again.'**
+  String get visitSaveFailed;
+
   /// LabelText in add_maintenance_log_screen.
   ///
   /// In en, this message translates to:

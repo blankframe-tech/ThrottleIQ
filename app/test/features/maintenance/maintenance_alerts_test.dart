@@ -73,6 +73,17 @@ void main() {
     expect(remainingText(f(daysLeft: 1), l10n, now), '1 day left');
   });
 
+  test('body text honours the imperial unit choice (issues §101.R10)', () {
+    expect(
+        remainingText(f(kmLeft: 410, daysLeft: 17), l10n, now, imperial: true),
+        '255 mi or 17 days left, whichever comes first');
+    expect(
+        remainingText(
+            f(status: ReminderStatus.overdue, kmLeft: -120), l10n, now,
+            imperial: true),
+        'Over by 75 mi');
+  });
+
   test('every item gets its own id, and keeps it', () {
     final keys = [
       for (var b = 0; b < 5; b++)

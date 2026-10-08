@@ -1,4 +1,3 @@
-import '../../../../core/utils/number_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +12,7 @@ import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
 import '../widgets/edit_maintenance_check_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 import '../service_type_l10n.dart';
 
 class MaintenanceConfigScreen extends ConsumerStatefulWidget {
@@ -90,58 +90,15 @@ class _MaintenanceConfigScreenState
   }
 
   Future<void> _addCustom() async {
-    final l10n = context.l10n;
-    final nameCtrl = TextEditingController();
-    final kmCtrl = TextEditingController();
-    final daysCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
+    final result = await showDialog<_CustomCheckInput>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.addCustomCheck),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-            TextField(
-              controller: nameCtrl,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                  labelText: l10n.customCheckName, hintText: l10n.eGRadiatorFlush),
-            ),
-            TextField(
-              controller: kmCtrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                  labelText: l10n.intervalDistanceKm,
-                  suffixText: l10n.distanceStatLabel),
-            ),
-            TextField(
-              controller: daysCtrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                  labelText: l10n.intervalDaysLabel, suffixText: l10n.daysUnit),
-            ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.cancelAction)),
-          ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.addAction)),
-        ],
-      ),
+      builder: (_) => const _CustomCheckDialog(),
     );
-    final name = nameCtrl.text.trim();
-    final km = parseLocalizedNumber(kmCtrl.text.trim()) ?? 0;
-    final days = parseLocalizedInt(daysCtrl.text.trim());
-    nameCtrl.dispose();
-    kmCtrl.dispose();
-    daysCtrl.dispose();
-    if (ok != true || name.isEmpty || (km <= 0 && (days ?? 0) <= 0)) return;
+    if (result == null || !mounted) return;
+    final name = result.name;
+    final km = result.km;
+    final days = result.days;
+    if (name.isEmpty || (km <= 0 && (days ?? 0) <= 0)) return;
     setState(() {
       _items = [
         ..._items!,
@@ -579,6 +536,80 @@ class _MaintenanceConfigScreenState
           ),
         ),
       ),
+    );
+  }
+}
+
+/// What the "add custom check" dialog hands back.
+typedef _CustomCheckInput = ({String name, double km, int? days});
+
+/// Owns its text controllers so they are disposed with the dialog's state,
+/// after the exit animation, not the moment `showDialog` resolves while the
+/// TextFields are still attached (issues §101.R10). Scrolls so the three
+/// fields stay reachable with the keyboard open on a small screen.
+class _CustomCheckDialog extends StatefulWidget {
+  const _CustomCheckDialog();
+
+  @override
+  State<_CustomCheckDialog> createState() => _CustomCheckDialogState();
+}
+
+class _CustomCheckDialogState extends State<_CustomCheckDialog> {
+  final _nameCtrl = TextEditingController();
+  final _kmCtrl = TextEditingController();
+  final _daysCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _kmCtrl.dispose();
+    _daysCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.addCustomCheck),
+      scrollable: true,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameCtrl,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+                labelText: l10n.customCheckName, hintText: l10n.eGRadiatorFlush),
+          ),
+          TextField(
+            controller: _kmCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+                labelText: l10n.intervalDistanceKm,
+                suffixText: l10n.distanceStatLabel),
+          ),
+          TextField(
+            controller: _daysCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+                labelText: l10n.intervalDaysLabel, suffixText: l10n.daysUnit),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancelAction)),
+        ElevatedButton(
+            onPressed: () => Navigator.of(context).pop((
+                  name: _nameCtrl.text.trim(),
+                  km: parseLocalizedNumber(_kmCtrl.text.trim(), min: 0) ?? 0,
+                  days: parseLocalizedInt(_daysCtrl.text.trim(), min: 0),
+                )),
+            child: Text(l10n.addAction)),
+      ],
     );
   }
 }
