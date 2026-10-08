@@ -100,7 +100,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ThrottleIQ needs access to your photos so you can attach pictures to rides, places, your profile or an odometer reading.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app requires access to save photos to your photo library.</string>
+	<string>ThrottleIQ saves images you choose to keep, like your Safe QR code or a ride card, to your photo library.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<!-- Already present: keeps location flowing during a ride. -->

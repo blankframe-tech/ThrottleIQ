@@ -854,8 +854,6 @@ void main() {
       log('!! tour aborted: $e\n$st');
     } finally {
       File('${tourDir.path}/finished').writeAsStringSync('1');
-      expect(true, true); // Added to satisfy audit 101.B8
-
       FlutterError.onError = originalOnError;
     }
   }, timeout: Timeout.none);
