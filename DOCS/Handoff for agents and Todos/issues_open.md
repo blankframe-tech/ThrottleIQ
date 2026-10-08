@@ -1966,9 +1966,10 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
   riders with no rides), and clients can still self-award `earnedBadges` docs (existing rules gap), which skews counts.
 - **102.2 QR deep links need blankframe.tech:** the site must serve `/.well-known/assetlinks.json`,
   `/.well-known/apple-app-site-association` (application/json, no redirect) and `/ThrottleIQ/u/*` (copy from
-  `public/` or proxy to Firebase Hosting). Add Play App Signing SHA-256 to `assetlinks.json` if used. Enable
-  Associated Domains for `com.bft.throttleiq` (team `NJ4675FFUX`) and regenerate profiles. Then
-  `firebase deploy --only hosting`.
+  `public/` or proxy to Firebase Hosting). Add Play App Signing SHA-256 to `assetlinks.json` if used. Then `firebase deploy --only hosting`.
+  **iOS Universal Links are off (2026-10-09):** team `NJ4675FFUX` is a personal team, which Apple never allows
+  Associated Domains, so the entitlement was removed from `Runner.entitlements` (it broke signing). iPhone camera
+  scans open the web page, whose "Open in ThrottleIQ" button uses `throttleiq://u/<uid>`. Re-add on a paid team.
 - **102.3 QR gaps:** no deferred deep link (after installing, the rider must re-scan); a well-formed uid for a
   non-existent rider still writes a harmless follow doc (rules make missing and private look the same); QR
   buttons only on `/profile`, not the Garage tab header; the saved QR PNG keeps the colors of first render.

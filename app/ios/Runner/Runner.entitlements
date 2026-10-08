@@ -14,17 +14,12 @@
 		<string>group.com.bft.throttleiq</string>
 	</array>
 	<!--
-	    Universal Links for follow links (https://blankframe.tech/ThrottleIQ/u/<uid>).
-	    Each host must serve /.well-known/apple-app-site-association
-	    (public/well-known/apple-app-site-association) naming
-	    NJ4675FFUX.com.bft.throttleiq, and the App ID needs the Associated
-	    Domains capability enabled on the Apple Developer portal.
+	    Universal Links (com.apple.developer.associated-domains for
+	    applinks:blankframe.tech etc.) are deliberately NOT enabled: team
+	    NJ4675FFUX is a personal development team, which Apple does not allow
+	    to use Associated Domains, and the entitlement breaks signing. iOS
+	    follow links go through the web fallback (public/follow.html) and the
+	    throttleiq://u/<uid> custom scheme instead. Re-add once on a paid team.
 	-->
-	<key>com.apple.developer.associated-domains</key>
-	<array>
-		<string>applinks:blankframe.tech</string>
-		<string>applinks:www.blankframe.tech</string>
-		<string>applinks:throttleiqfb.web.app</string>
-	</array>
 </dict>
 </plist>
