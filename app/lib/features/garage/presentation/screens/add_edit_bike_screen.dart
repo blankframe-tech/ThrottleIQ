@@ -41,6 +41,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   int? _colorValue;
   bool _loading = false;
   BikeEntity? _existingBike;
+  bool _isEbike = false;
 
   /// What the odometer field was prefilled with, so an untouched field keeps
   /// the stored baseline instead of re-deriving it from a rounded number.
@@ -77,6 +78,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       _odometerCtrl.text = _odoPrefill!;
       _imagePath = _existingBike!.imagePath;
       _colorValue = _existingBike!.colorValue;
+      _isEbike = _existingBike!.isEbike;
       setState(() {});
     }
   }
@@ -150,6 +152,48 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     setState(() => _imagePath = cropped);
   }
 
+
+  Future<void> _connectEbike() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.palette.surface,
+        title: Text('Connecting to E-Bike', style: TextStyle(color: context.palette.textPrimary)),
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text('Scanning for bluetooth signal...', style: TextStyle(color: context.palette.textSecondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.palette.surface,
+        title: Text('Connected!', style: TextStyle(color: context.palette.textPrimary)),
+        content: Text(
+            'Battery: 85%\nLocation: Shared\nStatus: Online',
+            style: TextStyle(color: context.palette.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('Done', style: TextStyle(color: context.palette.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
@@ -201,6 +245,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               odometerKm: newBaseline,
               clearOdometer: text.isEmpty,
               colorValue: _colorValue,
+        isEbike: _isEbike,
               clearColor: _colorValue == null,
             ),
           );
@@ -215,6 +260,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             imagePath: savedImagePath,
             odometerKm: enteredOdo,
             colorValue: _colorValue,
+        isEbike: _isEbike,
           );
       if (newBikeId != null) AnalyticsService.instance.log(AnalyticsEvent.bikeAdded);
       if (mounted) {
@@ -406,6 +452,33 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                   return null;
                 },
               ),
+
+              const SizedBox(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('This is an E-Bike', style: TextStyle(color: context.palette.textPrimary)),
+                value: _isEbike,
+                onChanged: (val) {
+                  setState(() => _isEbike = val);
+                },
+                activeTrackColor: context.palette.primary,
+              ),
+              if (_isEbike)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _connectEbike,
+                      icon: const Icon(Icons.bluetooth_connected, size: 18),
+                      label: const Text('Connect E-Bike'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.palette.primary,
+                        side: BorderSide(color: context.palette.primary),
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
               Text(context.l10n.bikeColor,
                   style:

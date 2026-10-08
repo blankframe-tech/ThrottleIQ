@@ -192,6 +192,10 @@ class CloudRepository {
   static Map<String, dynamic> bikePayload(Map<String, dynamic> bike) {
     final out = Map<String, dynamic>.from(bike);
     if (out['archived'] != 1) out.remove('archived');
+    // Same rule for the archive clock: only sent for an archived bike.
+    if (out['archived'] != 1 || out['archived_at'] == null) {
+      out.remove('archived_at');
+    }
     return out;
   }
 

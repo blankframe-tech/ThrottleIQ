@@ -1873,3 +1873,81 @@ IDs are `101.<area><n>`. "AUTO" = an agent can fix and verify it with analyze/te
   **Resolution:** PARTLY FIXED (2026-10-08): README release version/tag, `needs_attention.md`, next free number (now §102), §83.19 App Check status, §64 heading, todo F6 re-scoped. NOT REAL: PRD version (matches the latest tag). REAL-BUT-SKIP: duplicate §79, ANTIGRAVRITY_GRILL folder/`issues_solved.md` (referenced from other docs). HARMFUL-AS-SUGGESTED: deleting FIXED pointer stubs (§32 carries a 'do not re-raise' instruction). ASD-STE100 check on the PRD not run.
 - **101.D3 LOW — repo hygiene:** `SKILLS/SKILL*.md` are 5 copy-paste duplicates in a third skill location; duplicate `carbon-mono.png`; root `arch.md` and `new_gravity.md` should be folded in; `.gitignore` lacks `.claude/worktrees/`, `.claude/settings.local.json`, `.env*`, `*.jks`, `*.p12`, `google-services.json`. AUTO except the SKILL duplicates.  
   **Resolution:** PARTLY FIXED (2026-10-08): `.gitignore` gains `.claude/worktrees/`, `.env.*` (keeps `.env.example`), `*.p12` (test in hosting hygiene test). NOT REAL: `SKILLS/` duplicates (4 distinct skills), root `arch.md` (maintained). HARMFUL-AS-SUGGESTED: removing `carbon-mono.png` copy (website demo depends on it). REAL-BUT-SKIP: `new_gravity.md`. Note: `app/ios/Runner/GoogleService-Info.plist` is tracked and now matches an ignore rule.
+
+---
+
+## 102. Founder decisions of 2026-10-08 — BUILT in the working tree 2026-10-08 (not committed, not checked on a device)
+
+> Built: archive flow with cleanup options, 90-day purge on app start, Garage tab rename, English-style Bangla
+> dates. Details in `features.md` ("Changes from the bike-archive pass"). The paragraph below is the original
+> decision. Still to check on a device: the share-sheet export, the purge, and the new Bangla strings (listed
+> under `# batch: bike-archive` in `bn_pending_review.txt`).
+
+Decided, no code written yet:
+
+- **Deleting a bike archives it.** The delete dialog asks whether to also delete shared rides,
+  calculated miles, service logs and photos (default: keep). After archiving, the rider is told the
+  bike is permanently deleted after 3 months, with **Download a local copy** and **Delete now**.
+  Needs an `archivedAt` field + migration (`bike_model`, `database_helper`). The 3-month purge runs
+  on app start (Spark has no scheduled functions).
+- **Profile tab is renamed "Garage"** (label, icon, EN/BN keys).
+- **Bangla dates look like English dates** (`8 Oct 2026`) shown in the Bangla font — English month
+  names, Western digits. Closes the §83.23 question.
+- **Blocking (§83.18):** recommended, not yet confirmed: single-document rules only, document the
+  feed-listing gap. **Cloudinary (§83.16):** recommended, not yet confirmed: dashboard lock-down
+  only, no signing proxy. Both are in `DEBT_FIX_PLAN.md` §6/§7.
+- **Pitch Slide 9 team details:** still waiting on the founder's names/roles.
+
+**E2E:** `integration_test/e2e_test.dart` fails at launch with `[core/no-app] No Firebase App
+'[DEFAULT]'` (via `groupRideLifecycleProvider`, `app.dart:209`) — the test never calls
+`Firebase.initializeApp()`, so the Places/Saved/bottom-nav flow has not actually been exercised.
+
+**GitHub security follow-ups (2026-10-08):** CI (`flutter`, `rules`, `functions`) is green on GitHub;
+required-check branch protection is still to be set. Dependabot alerts #1 (`uuid`) and #2
+(`@fastify/busboy`) are fixed locally in `functions/` (lockfile bump plus a `uuid` override in
+`package.json`) but **not committed or pushed yet**. `.github/dependabot.yml` was invalid (empty
+ecosystem) and is rewritten. CodeQL default setup fails for `java-kotlin` and `swift` (it cannot
+autobuild a Flutter app): untick both in Settings → Code security. The template workflows
+`swift.yml`, `android.yml`, `dart.yml` pulled from the remote will likely fail on this repo.
+
+**Cloudinary preset lock-down — plan correction (2026-10-08):** do NOT lock a fixed folder on
+`throttleiq_unsigned`. `CloudinaryUploadService` sends a per-upload `folder` (`avatars`,
+`rideShares/$uid`, `<kind>/<uid>`) and the account-deletion sweep relies on the `<kind>/<uid>`
+prefix. The one preset also serves the `image/upload` and `video/upload` (voice notes) endpoints,
+so set: allowed formats for both (check whether iPhone photos arrive as HEIC), a single max file
+size (~10 MB), overwrite off. The usage alert stays a console-only step. Applying it through the
+Admin API is waiting on the numeric API key (`secret/.envclound.txt` holds only a 27-character
+value that looks like the API secret).
+
+**Cloudinary preset — current state (2026-10-08):** the `def` API key + `secret/.env.new` pair works
+against the Admin API. `throttleiq_unsigned` already has `overwrite:false` and `use_filename:false`
+but **no `allowed_formats` and no size limit**. Proposed `allowed_formats=jpg,jpeg,png,webp,heic,
+heif,m4a,aac,mp3` (founder to apply via `PUT`, then verify one photo + one voice note upload; undo
+by PUTting an empty `allowed_formats`). A size cap is probably account-level (console Settings →
+Upload), unconfirmed. Usage alert is console-only.
+
+**Cloudinary `allowed_formats` applied (2026-10-08):** `throttleiq_unsigned` now allows
+`jpg,jpeg,png,webp,heic,heif,m4a,aac,mp3`. Verified with unsigned uploads: PNG accepted (image),
+`.m4a` accepted (video resource, format `m4a`), `.txt` rejected ("Raw file format txt not allowed").
+Two test assets sit in the `preset_test/` folder and can be deleted in the Media Library. Still open:
+size cap (probably account-level) and the console usage alert; a real in-app photo + voice note
+upload on a device has not been tried.
+
+**§4 TTL attempt (2026-10-08):** creating the TTL policy on `liveSessions.expiresAt` in the Google
+Cloud console fails with `403: Project throttleiqfb has billing disabled`. TTL needs Blaze, so it is
+**blocked on Spark** like the other Blaze-only items. Fallbacks, not built yet: filter reads on
+`expiresAt > now`, delete the rider's own expired `liveSessions` docs from the client, and clear old
+string-timestamp docs by hand.
+
+**CI cleanup (2026-10-08):** removed the GitHub starter workflows `android.yml`, `dart.yml` and
+`swift.yml` (they failed on this Flutter repo and `ci.yml` already covers `flutter`, `rules`,
+`functions`) and the `testtt.md` CI-trigger file. Not yet committed or pushed. `greetings.yml` and
+`summary.yml` (AI issue summary) are kept but optional.
+
+**E2E test status (2026-10-08, after the bike-archive pass):** `integration_test/e2e_test.dart` now
+initialises Firebase in `setUpAll`, so the app launches and the test taps the Places tab. It then
+**fails with `pumpAndSettle timed out`** (`e2e_test.dart:41`, the `pumpAndSettle()` right after the Places tap):
+the Places hub keeps animating or loading and never settles on the simulator, so the Saved/Routes checks
+are still never reached. Not caused by the archive/Garage/date changes as far as can be told (the tap
+itself worked), but not proven either way. Likely fix: replace that `pumpAndSettle()` with a bounded
+`pump(Duration)` loop or wait for `find.text('Saved')`.

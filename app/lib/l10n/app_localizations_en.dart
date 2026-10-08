@@ -5968,4 +5968,76 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reauthFailed =>
       'Could not confirm your identity. Account not deleted.';
+
+  @override
+  String get navGarageLabel => 'Garage';
+
+  @override
+  String get archiveAlsoDelete => 'Also delete (optional):';
+
+  @override
+  String get archiveOptSharedRides => 'Shared rides';
+
+  @override
+  String get archiveOptSharedRidesHint =>
+      'Removes this bike\'s rides from the community feed.';
+
+  @override
+  String get archiveOptMiles => 'Calculated miles';
+
+  @override
+  String get archiveOptMilesHint =>
+      'Resets this bike\'s distance and ride counters. The rides stay in your history.';
+
+  @override
+  String get archiveOptServiceLogs => 'Service logs';
+
+  @override
+  String get archiveOptServiceLogsHint =>
+      'Deletes this bike\'s maintenance history.';
+
+  @override
+  String get archiveOptPhotos => 'Photos';
+
+  @override
+  String get archiveOptPhotosHint =>
+      'Removes the bike picture and service receipts.';
+
+  @override
+  String get archiveBikeConfirm => 'Archive bike';
+
+  @override
+  String get bikeArchivedTitle => 'Bike archived';
+
+  @override
+  String bikeArchivedBody(String bike, String date) {
+    return '$bike is archived. It will be permanently deleted on $date, three months from now. Until then you can unarchive it, download a copy of its data, or delete it now.';
+  }
+
+  @override
+  String get downloadLocalCopy => 'Download a local copy';
+
+  @override
+  String get deleteNowAction => 'Delete now';
+
+  @override
+  String archivedPurgesIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+      zero: 'less than a day',
+    );
+    return 'Deleted in $_temp0';
+  }
+
+  @override
+  String couldNotExportBike(Object error) {
+    return 'Could not export: $error';
+  }
+
+  @override
+  String get couldNotArchiveSharedRides =>
+      'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.';
 }

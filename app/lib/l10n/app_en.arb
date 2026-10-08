@@ -8143,5 +8143,95 @@
   "reauthFailed": "Could not confirm your identity. Account not deleted.",
   "@reauthFailed": {
     "description": "Snackbar when re-authentication fails for any other reason."
+  },
+  "navGarageLabel": "Garage",
+  "@navGarageLabel": {
+    "description": "Bottom-nav tab label for the Garage tab (profile, settings, bikes)."
+  },
+  "archiveAlsoDelete": "Also delete (optional):",
+  "@archiveAlsoDelete": {
+    "description": "Heading above the checkboxes in the archive-bike dialog."
+  },
+  "archiveOptSharedRides": "Shared rides",
+  "@archiveOptSharedRides": {
+    "description": "Archive dialog checkbox: shared rides."
+  },
+  "archiveOptSharedRidesHint": "Removes this bike's rides from the community feed.",
+  "@archiveOptSharedRidesHint": {
+    "description": "Hint under the shared-rides checkbox."
+  },
+  "archiveOptMiles": "Calculated miles",
+  "@archiveOptMiles": {
+    "description": "Archive dialog checkbox: the bike's calculated distance."
+  },
+  "archiveOptMilesHint": "Resets this bike's distance and ride counters. The rides stay in your history.",
+  "@archiveOptMilesHint": {
+    "description": "Hint under the calculated-miles checkbox."
+  },
+  "archiveOptServiceLogs": "Service logs",
+  "@archiveOptServiceLogs": {
+    "description": "Archive dialog checkbox: maintenance history."
+  },
+  "archiveOptServiceLogsHint": "Deletes this bike's maintenance history.",
+  "@archiveOptServiceLogsHint": {
+    "description": "Hint under the service-logs checkbox."
+  },
+  "archiveOptPhotos": "Photos",
+  "@archiveOptPhotos": {
+    "description": "Archive dialog checkbox: photos."
+  },
+  "archiveOptPhotosHint": "Removes the bike picture and service receipts.",
+  "@archiveOptPhotosHint": {
+    "description": "Hint under the photos checkbox."
+  },
+  "archiveBikeConfirm": "Archive bike",
+  "@archiveBikeConfirm": {
+    "description": "Confirm button of the archive-bike dialog."
+  },
+  "bikeArchivedTitle": "Bike archived",
+  "@bikeArchivedTitle": {
+    "description": "Title of the notice shown after archiving a bike."
+  },
+  "bikeArchivedBody": "{bike} is archived. It will be permanently deleted on {date}, three months from now. Until then you can unarchive it, download a copy of its data, or delete it now.",
+  "@bikeArchivedBody": {
+    "description": "Body of the notice shown after archiving a bike. {date} is formatted like '8 Oct 2026'.",
+    "placeholders": {
+      "bike": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadLocalCopy": "Download a local copy",
+  "@downloadLocalCopy": {
+    "description": "Button that exports a bike's data as a file."
+  },
+  "deleteNowAction": "Delete now",
+  "@deleteNowAction": {
+    "description": "Button that permanently deletes an archived bike immediately."
+  },
+  "archivedPurgesIn": "Deleted in {days, plural, =0{less than a day} =1{1 day} other{{days} days}}",
+  "@archivedPurgesIn": {
+    "description": "Subtitle on an archived bike: time left before it is permanently deleted.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotExportBike": "Could not export: {error}",
+  "@couldNotExportBike": {
+    "description": "Snackbar when exporting a bike's data fails.",
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "couldNotArchiveSharedRides": "Could not remove the shared rides, so the bike was not archived. Check your connection and try again.",
+  "@couldNotArchiveSharedRides": {
+    "description": "Snackbar when archiving fails because the shared rides could not be deleted."
   }
 }

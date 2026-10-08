@@ -5936,4 +5936,75 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get reauthFailed =>
       'আপনার পরিচয় নিশ্চিত করা যায়নি। অ্যাকাউন্ট মুছে ফেলা হয়নি।';
+
+  @override
+  String get navGarageLabel => 'গ্যারেজ';
+
+  @override
+  String get archiveAlsoDelete => 'এগুলোও মুছুন (ঐচ্ছিক):';
+
+  @override
+  String get archiveOptSharedRides => 'শেয়ার করা রাইড';
+
+  @override
+  String get archiveOptSharedRidesHint =>
+      'কমিউনিটি ফিড থেকে এই বাইকের রাইড সরিয়ে দেয়।';
+
+  @override
+  String get archiveOptMiles => 'হিসাব করা দূরত্ব';
+
+  @override
+  String get archiveOptMilesHint =>
+      'এই বাইকের দূরত্ব ও রাইড গণনা শূন্য করে। রাইডগুলো আপনার ইতিহাসে থাকবে।';
+
+  @override
+  String get archiveOptServiceLogs => 'সার্ভিস লগ';
+
+  @override
+  String get archiveOptServiceLogsHint =>
+      'এই বাইকের রক্ষণাবেক্ষণের ইতিহাস মুছে দেয়।';
+
+  @override
+  String get archiveOptPhotos => 'ছবি';
+
+  @override
+  String get archiveOptPhotosHint => 'বাইকের ছবি ও সার্ভিসের রসিদ সরিয়ে দেয়।';
+
+  @override
+  String get archiveBikeConfirm => 'বাইক আর্কাইভ করুন';
+
+  @override
+  String get bikeArchivedTitle => 'বাইক আর্কাইভ হয়েছে';
+
+  @override
+  String bikeArchivedBody(String bike, String date) {
+    return '$bike আর্কাইভ হয়েছে। তিন মাস পরে, $date তারিখে এটি স্থায়ীভাবে মুছে যাবে। তার আগে আপনি এটি ফিরিয়ে আনতে, এর তথ্যের একটি কপি ডাউনলোড করতে, বা এখনই মুছে ফেলতে পারবেন।';
+  }
+
+  @override
+  String get downloadLocalCopy => 'একটি লোকাল কপি ডাউনলোড করুন';
+
+  @override
+  String get deleteNowAction => 'এখনই মুছুন';
+
+  @override
+  String archivedPurgesIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days দিনে',
+      one: '1 দিনে',
+      zero: 'এক দিনেরও কম সময়ে',
+    );
+    return '$_temp0 মুছে যাবে';
+  }
+
+  @override
+  String couldNotExportBike(Object error) {
+    return 'এক্সপোর্ট করা যায়নি: $error';
+  }
+
+  @override
+  String get couldNotArchiveSharedRides =>
+      'শেয়ার করা রাইড সরানো যায়নি, তাই বাইকটি আর্কাইভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
 }

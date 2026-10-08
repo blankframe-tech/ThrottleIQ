@@ -38,7 +38,20 @@ class BikeDao {
   /// active bike hands "active" to the most recently added bike still in the
   /// garage, in the same transaction. `synced = 0` so the flag reaches the
   /// cloud copy.
-  Future<void> setArchived(String id, bool archived) async {
+  ///
+  /// [deleteServiceLogs], [deletePhotos] and [resetMiles] only apply when
+  /// archiving, and run in the same transaction so a half-cleaned bike can't
+  /// be left behind. Service logs go with tombstones so the cloud copies are
+  /// removed too (§94.2); photos means the bike picture and the service
+  /// receipts; miles means the bike's own distance and ride counters (the rides
+  /// themselves stay in history).
+  Future<void> setArchived(
+    String id,
+    bool archived, {
+    bool deleteServiceLogs = false,
+    bool deletePhotos = false,
+    bool resetMiles = false,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
       final rows = await txn.query('bikes',
@@ -49,12 +62,41 @@ class BikeDao {
         'bikes',
         {
           'archived': archived ? 1 : 0,
+          'archived_at': archived ? DateTime.now().toIso8601String() : null,
           if (archived) 'is_active': 0,
+          if (archived && deletePhotos) 'image_path': null,
+          if (archived && resetMiles) 'total_distance_m': 0,
+          if (archived && resetMiles) 'ride_count': 0,
           'synced': 0,
         },
         where: 'id = ?',
         whereArgs: [id],
       );
+      if (archived && deleteServiceLogs) {
+        final logs = await txn.query('maintenance_logs',
+            columns: ['id'], where: 'bike_id = ?', whereArgs: [id]);
+        final now = DateTime.now().toIso8601String();
+        for (final log in logs) {
+          final logId = log['id'] as String;
+          await txn.delete('maintenance_logs',
+              where: 'id = ?', whereArgs: [logId]);
+          await txn.delete('outbox',
+              where: 'id = ?', whereArgs: ['maintenance:$logId']);
+          await txn.insert(
+            'deleted_maintenance_logs',
+            {
+              'id': logId,
+              'user_id': rows.first['user_id'],
+              'deleted_at': now,
+              'synced': 0,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      } else if (archived && deletePhotos) {
+        await txn.update('maintenance_logs', {'receipt_path': null, 'synced': 0},
+            where: 'bike_id = ? AND receipt_path IS NOT NULL', whereArgs: [id]);
+      }
       if (archived && wasActive) {
         final next = await txn.query('bikes',
             columns: ['id'],
@@ -68,6 +110,17 @@ class BikeDao {
         }
       }
     });
+  }
+
+  /// Archived bikes whose [kArchiveRetention] has run out, for the purge on
+  /// app start.
+  Future<List<Map<String, dynamic>>> getExpiredArchived(
+      String userId, DateTime cutoff) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query('bikes',
+        where: 'user_id = ? AND archived = 1 AND archived_at IS NOT NULL '
+            'AND archived_at < ?',
+        whereArgs: [userId, cutoff.toIso8601String()]);
   }
 
   Future<Map<String, dynamic>?> getById(String id) async {

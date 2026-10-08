@@ -13,6 +13,7 @@ import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -131,7 +132,7 @@ class ChatListScreen extends ConsumerWidget {
                   style: TextStyle(color: context.palette.textSecondary),
                 ),
                 trailing: Text(
-                  DateFormat.MMMd().format(chat.updatedAt),
+                  DateFormat('d MMM', kNumericLocale).format(chat.updatedAt),
                   style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
                 ),
                 onTap: () => context.push('/chats/${chat.id}', extra: profile),

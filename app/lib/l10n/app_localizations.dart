@@ -10259,6 +10259,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not confirm your identity. Account not deleted.'**
   String get reauthFailed;
+
+  /// Bottom-nav tab label for the Garage tab (profile, settings, bikes).
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get navGarageLabel;
+
+  /// Heading above the checkboxes in the archive-bike dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Also delete (optional):'**
+  String get archiveAlsoDelete;
+
+  /// Archive dialog checkbox: shared rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared rides'**
+  String get archiveOptSharedRides;
+
+  /// Hint under the shared-rides checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes this bike\'s rides from the community feed.'**
+  String get archiveOptSharedRidesHint;
+
+  /// Archive dialog checkbox: the bike's calculated distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated miles'**
+  String get archiveOptMiles;
+
+  /// Hint under the calculated-miles checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Resets this bike\'s distance and ride counters. The rides stay in your history.'**
+  String get archiveOptMilesHint;
+
+  /// Archive dialog checkbox: maintenance history.
+  ///
+  /// In en, this message translates to:
+  /// **'Service logs'**
+  String get archiveOptServiceLogs;
+
+  /// Hint under the service-logs checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this bike\'s maintenance history.'**
+  String get archiveOptServiceLogsHint;
+
+  /// Archive dialog checkbox: photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get archiveOptPhotos;
+
+  /// Hint under the photos checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes the bike picture and service receipts.'**
+  String get archiveOptPhotosHint;
+
+  /// Confirm button of the archive-bike dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive bike'**
+  String get archiveBikeConfirm;
+
+  /// Title of the notice shown after archiving a bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike archived'**
+  String get bikeArchivedTitle;
+
+  /// Body of the notice shown after archiving a bike. {date} is formatted like '8 Oct 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'{bike} is archived. It will be permanently deleted on {date}, three months from now. Until then you can unarchive it, download a copy of its data, or delete it now.'**
+  String bikeArchivedBody(String bike, String date);
+
+  /// Button that exports a bike's data as a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Download a local copy'**
+  String get downloadLocalCopy;
+
+  /// Button that permanently deletes an archived bike immediately.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete now'**
+  String get deleteNowAction;
+
+  /// Subtitle on an archived bike: time left before it is permanently deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted in {days, plural, =0{less than a day} =1{1 day} other{{days} days}}'**
+  String archivedPurgesIn(int days);
+
+  /// Snackbar when exporting a bike's data fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not export: {error}'**
+  String couldNotExportBike(Object error);
+
+  /// Snackbar when archiving fails because the shared rides could not be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.'**
+  String get couldNotArchiveSharedRides;
 }
 
 class _AppLocalizationsDelegate

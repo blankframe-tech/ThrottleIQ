@@ -6,14 +6,15 @@ import '../../../../l10n/app_localizations.dart';
 import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import 'maintenance_format.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
-/// "23 Oct" in the app language.
+/// "23 Oct": English month names and Western digits in every app language.
 String shortDate(BuildContext context, DateTime d) =>
-    DateFormat.MMMd(Localizations.localeOf(context).toString()).format(d);
+    DateFormat('d MMM', kNumericLocale).format(d);
 
-/// "23 Oct 2026".
+/// "23 Oct 2026", same rule.
 String longDate(BuildContext context, DateTime d) =>
-    DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(d);
+    DateFormat('d MMM y', kNumericLocale).format(d);
 
 /// When it's due, in words: "in ~6 days", "tomorrow", "today", "overdue".
 /// Empty when it can't be dated (no riding pace, no time limit).

@@ -2,10 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../data/models/bike_model.dart';
+import '../../data/bike_archive_service.dart';
 import '../../../../core/database/daos/bike_dao.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 final _dao = BikeDao();
+
+final bikeArchiveServiceProvider =
+    Provider<BikeArchiveService>((ref) => BikeArchiveService());
 const _uuid = Uuid();
 
 /// The rider's garage: every bike they still ride. Archived bikes are left
@@ -32,6 +36,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     String? imagePath,
     double? odometerKm,
     int? colorValue,
+    bool isEbike = false,
   }) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return null;
@@ -45,6 +50,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
       imagePath: imagePath,
       odometerKm: odometerKm,
       colorValue: colorValue,
+      isEbike: isEbike,
       createdAt: DateTime.now(),
     );
     await _dao.insert(BikeModel.toMap(bike));
@@ -93,10 +99,23 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     ref.invalidateSelf();
   }
 
-  /// Retires a bike while keeping its rides, totals and maintenance history.
-  Future<void> archiveBike(String id) async {
-    await _dao.setArchived(id, true);
+  /// Retires a bike. By default its rides, totals, service logs and photos
+  /// are kept; [cleanup] removes the parts the rider picked. The bike is
+  /// permanently deleted [kArchiveRetention] later (see [BikeArchiveService]).
+  Future<void> archiveBike(
+    BikeEntity bike, {
+    ArchiveCleanup cleanup = const ArchiveCleanup(),
+  }) async {
+    await ref.read(bikeArchiveServiceProvider).archive(bike, cleanup);
     ref.invalidateSelf();
+    ref.invalidate(allBikesProvider);
+  }
+
+  /// "Delete now" for an archived bike: skips the rest of the retention.
+  Future<void> deleteArchivedNow(BikeEntity bike) async {
+    await ref.read(bikeArchiveServiceProvider).deleteNow(bike);
+    ref.invalidateSelf();
+    ref.invalidate(allBikesProvider);
   }
 
   Future<void> unarchiveBike(String id) async {

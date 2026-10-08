@@ -10,6 +10,7 @@ import '../../domain/calculators/fuel_units.dart';
 import '../../domain/calculators/maintenance_money.dart';
 import '../providers/maintenance_provider.dart';
 import 'maintenance_format.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
 /// What the bike costs to run: ৳ per km (maintenance + fuel), the last six
 /// months of service spend, and where the money went.
@@ -26,7 +27,6 @@ class MoneyCard extends ConsumerWidget {
     final unit = imperial ? 'mi' : 'km';
     double rate(double perKm) =>
         imperial ? FuelUnits.costPerKmToPerMile(perKm) : perKm;
-    final locale = Localizations.localeOf(context).toString();
     final maxMonth = money.monthly
         .map((m) => m.amount)
         .fold<double>(0, (a, b) => a > b ? a : b);
@@ -112,7 +112,7 @@ class MoneyCard extends ConsumerWidget {
                               }
                               final m = money.monthly[i];
                               return Text(
-                                DateFormat.MMM(locale).format(DateTime(m.year, m.month)),
+                                DateFormat.MMM(kNumericLocale).format(DateTime(m.year, m.month)),
                                 style: TextStyle(
                                     fontSize: 10, color: context.palette.textTertiary),
                               );

@@ -1,7 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:throttleiq/app.dart';
+import 'package:throttleiq/firebase_options.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
@@ -9,6 +11,12 @@ void main() {
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   group('End-to-End Application Flow', () {
+    // The app reads Firebase on its first frame (group-ride lifecycle), so it
+    // has to be initialised the way main.dart does it.
+    setUpAll(() async {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    });
+
     testWidgets('App launches, navigation works, and places load', (tester) async {
       // Load the app.
       // This boots the entire application using Riverpod's ProviderScope.

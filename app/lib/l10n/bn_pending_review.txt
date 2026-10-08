@@ -1506,3 +1506,22 @@ reauthFailed
 # batch: audit101-g7
 odometerSyncFailed
 visitSaveFailed
+# batch: bike-archive
+navGarageLabel
+archiveAlsoDelete
+archiveOptSharedRides
+archiveOptSharedRidesHint
+archiveOptMiles
+archiveOptMilesHint
+archiveOptServiceLogs
+archiveOptServiceLogsHint
+archiveOptPhotos
+archiveOptPhotosHint
+archiveBikeConfirm
+bikeArchivedTitle
+bikeArchivedBody
+downloadLocalCopy
+deleteNowAction
+archivedPurgesIn
+couldNotExportBike
+couldNotArchiveSharedRides

@@ -20,7 +20,7 @@ auto-tracking daily summary. It has **not been tested on a device**. Device chec
 - [x] **Publish the release.** Shipped as `beta-v4` (`1.0.0-beta.4.0.0+21`, 2026-09-27). It carries
       two things nobody has checked on hardware (route navigation, Bangla) and the machine-drafted
       Bangla keys.
-- [ ] After it ships: **deploy hosting** (`firebase deploy --only hosting`) so `privacy.html`
+- [x] (Deployed 2026-10-08 by the founder, together with the Firestore rules and indexes; the rules compiler warned `[W] 427:46 Invalid type. Received one of [null]`, worth a look. Check the analytics build is out.) After it ships: **deploy hosting** (`firebase deploy --only hosting`) so `privacy.html`
       describes the analytics the app now does — *not before*, the live policy would then describe
       behaviour the installed app doesn't have.
 - [ ] After riders are on it: **turn on App Check enforcement** in the Firebase console (register
@@ -35,9 +35,9 @@ auto-tracking daily summary. It has **not been tested on a device**. Device chec
 - [ ] **Play Console:** Data Safety form (audio, precise location, crash logs, **and now app
       interactions / analytics — "collected, optional, not shared"**), the full-screen intent
       declaration (crash countdown), and add testers to the internal track (it has none).
-- [ ] **Cloudinary:** lock the `throttleiq_unsigned` preset — allowed formats, max size, locked
+- [~] **Cloudinary:** (formats locked and verified 2026-10-08; size cap and usage alert remain) lock the `throttleiq_unsigned` preset — allowed formats, max size, locked
       folder, usage alert.
-- [ ] **Map tiles:** sign up for a provider (Thunderforest recommended), then export
+- [x] **Map tiles (done 2026-10-08):** Thunderforest `atlas` key is in git-ignored `secret/tiles.env`; `scripts/deploy.sh` sources it automatically. Free tier is 150k tiles/month, which is enough for the beta but not for ~100 daily riders; the app already has an on-disk tile cache. Original note: sign up for a provider (Thunderforest recommended), then export
       `TILE_URL_TEMPLATE` / `TILE_API_KEY` / `TILE_ATTRIBUTION` before `scripts/deploy.sh`. Restrict
       the key to `com.bft.throttleiq`. Without them, release builds hit OSM directly.
 
@@ -52,9 +52,9 @@ auto-tracking daily summary. It has **not been tested on a device**. Device chec
 
 ## Decisions
 
-- [ ] **Deleting a bike:** archive by default? (recommended)
-- [ ] **Profile tab:** rename to "Garage"?
-- [ ] **Dates in Bangla:** localized month names with Western digits? (§83.23)
+- [x] **Deleting a bike:** archive by default — built 2026-10-08 (uncommitted), see issues_open §102.
+- [x] **Profile tab:** renamed to "Garage" — built, §102.
+- [x] **Dates in Bangla:** English-style dates in the Bangla font — built, §102.
 - [ ] **Blocking (§83.18) and Cloudinary uploads (§83.16):** how far to go on Spark — see
       `DOCS/DEBT_FIX_PLAN.md` §6 and §7.
 - [ ] **Pitch Slide 9:** does the team on the slide exist? The deck still claims working crash
@@ -62,7 +62,7 @@ auto-tracking daily summary. It has **not been tested on a device**. Device chec
 
 ## Needs Blaze (decision: staying on Spark)
 
-- Real SMS and escalation, signed Cloudinary uploads, full account deletion (the trigger has
+- Firestore TTL on `liveSessions.expiresAt` (tried 2026-10-08: 403 billing disabled), real SMS and escalation, signed Cloudinary uploads, full account deletion (the trigger has
   never been deployed), adding new followers to old posts.
 - **Dated:** Cloud Functions Node 20 is decommissioned late October 2026. The `functions/` source
   already targets Node 22 (`package.json` `engines`, `firebase.json` `runtime`; §69.O6), so this

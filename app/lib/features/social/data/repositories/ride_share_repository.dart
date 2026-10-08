@@ -474,6 +474,21 @@ class RideShareRepository {
     }).toList();
   }
 
+  /// Deletes every ride [uid] has shared from [bikeId], with their comments
+  /// and votes. Used when a bike's shared rides are removed on archive or
+  /// purge. Returns how many were deleted.
+  Future<int> deleteSharedRidesForBike(String uid, String bikeId) async {
+    final snap = await _firestore
+        .collection('rides')
+        .where('userId', isEqualTo: uid)
+        .where('bikeId', isEqualTo: bikeId)
+        .get();
+    for (final doc in snap.docs) {
+      await deleteSharedRide(doc.id);
+    }
+    return snap.docs.length;
+  }
+
   /// Deletes a shared ride.
   Future<void> deleteSharedRide(String rideId) async {
     final docRef = _firestore.collection('rides').doc(rideId);

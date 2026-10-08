@@ -7,6 +7,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../domain/calculators/daily_ride_summary.dart';
 import '../providers/daily_ride_summary_provider.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
 /// Auto-tracking's history, one row per day.
 ///
@@ -96,7 +97,7 @@ class AutoDetectionHistorySheet extends ConsumerWidget {
               error: (_, __) => _empty(context, l10n),
               data: (list) {
                 if (list.isEmpty) return _empty(context, l10n);
-                final dateFormat = DateFormat('EEE, MMM d');
+                final dateFormat = DateFormat('EEE, d MMM', kNumericLocale);
                 return ListView.separated(
                   shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(vertical: 8),

@@ -130,8 +130,9 @@ Save Route, Group Ride map
   - **A "Followed \<route\>" pill** (added 2026-09-21) on any ride recorded while following a saved route — see §6a.
 - Empty state for zero-ride accounts.
 
-## 4. Garage (`features/garage`) — bottom nav tab "Profile" (route `/home/profile`)
+## 4. Garage (`features/garage`) — bottom nav tab "Garage" (route `/home/profile`)
 
+**Tab renamed back to "Garage" 2026-10-08** (it was "Profile" from 2026-08-17 to then).
 **Tab renamed from "Garage" to "Profile" 2026-08-17.** `GarageScreen` is still
 the screen behind it (route path kept as `/home/profile` internally — the
 `features/garage` folder and `GarageScreen` class name are unchanged, scoped
@@ -666,6 +667,27 @@ Nothing below is visible until an RTDB instance exists and the app is built with
 - **Group ride map:** dots move every 2 s (when the rider moved 5 m or more, with a 30 s heartbeat) over `/group_rides/{id}/locations`. Firestore `memberLocations` drops to a 2-minute heartbeat, so riders on older builds still see everyone. Each marker uses the newer of the two. The title shows a "Live" / "Delayed" badge. A kick also bans the rider on the RTDB side.
 - **Chat:** "typing…" under the other rider's name in 1:1 chats. It is not sent to or shown for a blocked rider, and it clears itself within 6 s if their app dies.
 - **Connection budget:** the app keeps the RTDB socket open only while sharing, on the group map, or in a chat room. It disconnects 30 s after the last of those closes (Spark plan cap: 100 connections).
+
+## Changes from the bike-archive pass (2026-10-08, in the working tree, not committed, not checked on a device)
+
+- **Bottom-nav tab "Profile" is now "Garage"** (label `navGarageLabel`, `Icons.two_wheeler`). Screen titles that
+  say "Profile" are unchanged; the route is still `/home/profile`.
+- **Removing a bike archives it.** The remove dialog (`ArchiveBikeDialog`) has four unticked options: shared
+  rides, calculated miles, service logs, photos. "Archive bike" keeps everything not ticked. Shared rides are
+  deleted from Firestore first; if that fails the bike is not archived. Miles resets the bike's own distance and
+  ride counters (rides stay in history). Service logs are deleted with tombstones. Photos clears the bike
+  picture and service receipts.
+- **After archiving** a notice gives the permanent-deletion date (90 days, `kArchiveRetention`) with *Download a
+  local copy* (JSON via the share sheet, `BikeArchiveService.shareExport`), *Delete now* (type-the-name check) and
+  *Done*. An archived bike's detail screen has unarchive and delete-now buttons; the garage's archived list shows
+  "Deleted in N days".
+- **Purge on app start.** `BikeArchiveService.purgeExpired` runs when the rider signs in/starts the app and deletes
+  archived bikes older than 90 days (and their shared rides, best effort). Spark has no scheduled functions, so
+  a bike is only purged once the app is opened after its deadline.
+- **Schema v24:** `bikes.archived_at`. Bikes already archived start their 90 days at the upgrade. The cloud
+  payload only carries `archived_at` for an archived bike.
+- **Dates read "8 Oct 2026" in Bangla too:** English month names and Western digits via `kNumericLocale`, in
+  the Bangla font. Covers chat, shared rides, auto-detection history, maintenance forecast and money chart.
 
 ## Known UI gaps (as of this pass)
 

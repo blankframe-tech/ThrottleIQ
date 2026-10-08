@@ -39,6 +39,7 @@ class _FakeGarage extends GarageNotifier {
     String? imagePath,
     double? odometerKm,
     int? colorValue,
+    bool isEbike = false,
   }) async {
     added++;
     return 'new';

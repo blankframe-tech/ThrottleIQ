@@ -14,6 +14,7 @@ import 'features/ride/data/repositories/auto_ride_reconciler_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/garage/presentation/providers/garage_provider.dart';
 import 'features/poi_directory/presentation/providers/places_provider.dart';
 import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
@@ -190,6 +191,14 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
             return false;
           }));
           unawaited(_reconcileDetectedRides());
+          // Archived bikes older than three months are deleted for good. No
+          // scheduled functions on Spark, so this is where it happens.
+          unawaited(ref
+              .read(bikeArchiveServiceProvider)
+              .purgeExpired(uid)
+              .then((n) {
+            if (n > 0) ref.invalidate(garageProvider);
+          }));
         } else {
           sync.stopAutoSync();
           // Stop first, then forget the owner, so nothing detected in between

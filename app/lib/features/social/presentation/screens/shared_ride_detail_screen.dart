@@ -23,6 +23,7 @@ import '../providers/ride_feed_provider.dart';
 import '../widgets/ride_media_collage.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
 class SharedRideDetailScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -574,7 +575,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                DateFormat.yMMMd().format(ride.rideDate),
+                DateFormat('d MMM y', kNumericLocale).format(ride.rideDate),
                 style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
               ),
             ],
@@ -886,7 +887,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600, color: context.palette.textPrimary, fontSize: 13)),
                             const Spacer(),
-                            Text(DateFormat.MMMd().format(comment.createdAt),
+                            Text(DateFormat('d MMM', kNumericLocale).format(comment.createdAt),
                                 style: TextStyle(color: context.palette.textTertiary, fontSize: 11)),
                           ],
                         ),

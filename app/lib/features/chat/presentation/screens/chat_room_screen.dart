@@ -21,6 +21,7 @@ import '../../domain/typing_indicator_controller.dart';
 import '../providers/chat_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -312,7 +313,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  DateFormat.jm().format(msg.createdAt),
+                                  DateFormat.jm(kNumericLocale).format(msg.createdAt),
                                   style: TextStyle(
                                     color: isMe ? ownFg : context.palette.textTertiary,
                                     fontSize: 10,

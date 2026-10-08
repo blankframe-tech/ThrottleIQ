@@ -6,6 +6,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/stat_card.dart';
 import '../providers/garage_provider.dart';
+import '../../data/bike_archive_service.dart';
 import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
@@ -51,13 +52,20 @@ class BikeDetailScreen extends ConsumerWidget {
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.go('/home/profile/$bikeId/edit'),
           ),
-          if (bike.isArchived)
+          if (bike.isArchived) ...[
             IconButton(
               icon: const Icon(Icons.unarchive_outlined),
               tooltip: context.l10n.unarchiveBike,
               onPressed: () => _unarchive(context, ref),
-            )
-          else
+            ),
+            IconButton(
+              key: const Key('bike-delete-now'),
+              icon: Icon(Icons.delete_forever_outlined,
+                  color: context.palette.danger),
+              tooltip: context.l10n.deleteNowAction,
+              onPressed: () => _deleteNow(context, ref, bike),
+            ),
+          ] else
             IconButton(
               icon: Icon(Icons.delete_outline, color: context.palette.danger),
               tooltip: context.l10n.archiveDeleteBike,
@@ -275,68 +283,72 @@ class BikeDetailScreen extends ConsumerWidget {
   // it, which is rarely what "I sold this bike" means.
   Future<void> _confirmRemove(
       BuildContext context, WidgetRef ref, BikeEntity bike) async {
-    final choice = await showDialog<_RemoveChoice>(
+    final cleanup = await showDialog<ArchiveCleanup>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: dialogContext.palette.surface,
-        title: Text(dialogContext.l10n.removeBikeQuestion(bike.displayName),
-            style: TextStyle(color: dialogContext.palette.textPrimary)),
-        content: Text(
-            dialogContext.l10n.archivingHidesThisBike,
-            style: TextStyle(color: dialogContext.palette.textSecondary)),
-        actionsOverflowDirection: VerticalDirection.up,
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(dialogContext.l10n.cancelAction)),
-          TextButton(
-            key: const Key('bike-delete-with-rides'),
-            onPressed: () =>
-                Navigator.pop(dialogContext, _RemoveChoice.deleteWithRides),
-            child: Text(dialogContext.l10n.deleteBikeAllIts,
-                style: TextStyle(color: dialogContext.palette.danger)),
-          ),
-          FilledButton(
-            key: const Key('bike-archive'),
-            onPressed: () =>
-                Navigator.pop(dialogContext, _RemoveChoice.archive),
-            child: Text(dialogContext.l10n.archiveBikeKeepRides),
-          ),
-        ],
-      ),
+      builder: (_) => ArchiveBikeDialog(bike: bike),
     );
-    if (choice == null || !context.mounted) return;
+    if (cleanup == null || !context.mounted) return;
 
-    if (choice == _RemoveChoice.archive) {
-      try {
-        await ref.read(garageProvider.notifier).archiveBike(bikeId);
-        if (context.mounted) context.go('/home/profile');
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.couldNotArchiveThis(e))),
-        );
-      }
+    try {
+      await ref.read(garageProvider.notifier).archiveBike(bike, cleanup: cleanup);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(cleanup.sharedRides
+                ? context.l10n.couldNotArchiveSharedRides
+                : context.l10n.couldNotArchiveThis(e))),
+      );
       return;
     }
+    if (!context.mounted) return;
 
+    final deleteNow = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => _ArchivedNoticeDialog(
+        bike: bike,
+        purgeDate: _formatDate(DateTime.now().add(kArchiveRetention)),
+        onExport: () => _export(dialogContext, ref, bike),
+      ),
+    );
+    if (!context.mounted) return;
+    if (deleteNow == true) {
+      await _deleteNow(context, ref, bike);
+      return;
+    }
+    context.go('/home/profile');
+  }
+
+  /// Permanently deletes an (archived) bike after the type-the-name check.
+  Future<void> _deleteNow(
+      BuildContext context, WidgetRef ref, BikeEntity bike) async {
     final typed = await showDialog<bool>(
       context: context,
       builder: (_) => TypeToDeleteBikeDialog(bike: bike),
     );
     if (typed != true || !context.mounted) return;
 
-    // Awaited, and errors surfaced. Previously this was fire-and-forget and
-    // navigated away regardless, so when the delete failed (it deadlocked —
-    // see BikeDao.delete) the rider was returned to a garage that still had
-    // the bike in it, with nothing explaining why.
+    // Awaited, and errors surfaced: see BikeDao.delete for the deadlock that
+    // used to make this fail silently.
     try {
-      await ref.read(garageProvider.notifier).deleteBike(bikeId);
+      await ref.read(garageProvider.notifier).deleteArchivedNow(bike);
       if (context.mounted) context.go('/home/profile');
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.couldNotDeleteThis(e))),
+      );
+    }
+  }
+
+  Future<void> _export(
+      BuildContext context, WidgetRef ref, BikeEntity bike) async {
+    try {
+      await ref.read(bikeArchiveServiceProvider).shareExport(bike);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.couldNotExportBike(e))),
       );
     }
   }
@@ -363,7 +375,138 @@ class BikeDetailScreen extends ConsumerWidget {
   }
 }
 
-enum _RemoveChoice { archive, deleteWithRides }
+/// First step of removing a bike. Archiving is the default and keeps
+/// everything; each checkbox adds something to delete along with it. Pops an
+/// [ArchiveCleanup], or null on cancel.
+class ArchiveBikeDialog extends StatefulWidget {
+  final BikeEntity bike;
+  const ArchiveBikeDialog({super.key, required this.bike});
+
+  @override
+  State<ArchiveBikeDialog> createState() => _ArchiveBikeDialogState();
+}
+
+class _ArchiveBikeDialogState extends State<ArchiveBikeDialog> {
+  bool _sharedRides = false;
+  bool _miles = false;
+  bool _serviceLogs = false;
+  bool _photos = false;
+
+  Widget _option(String key, String title, String hint, bool value,
+      ValueChanged<bool> onChanged) {
+    return CheckboxListTile(
+      key: Key(key),
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      controlAffinity: ListTileControlAffinity.leading,
+      value: value,
+      onChanged: (v) => onChanged(v ?? false),
+      title: Text(title, style: TextStyle(color: context.palette.textPrimary)),
+      subtitle: Text(hint,
+          style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      backgroundColor: context.palette.surface,
+      title: Text(l10n.removeBikeQuestion(widget.bike.displayName),
+          style: TextStyle(color: context.palette.textPrimary)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.archivingHidesThisBike,
+                style: TextStyle(color: context.palette.textSecondary)),
+            const SizedBox(height: 12),
+            Text(l10n.archiveAlsoDelete,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: context.palette.textPrimary)),
+            _option('archive-opt-shared', l10n.archiveOptSharedRides,
+                l10n.archiveOptSharedRidesHint, _sharedRides,
+                (v) => setState(() => _sharedRides = v)),
+            _option('archive-opt-miles', l10n.archiveOptMiles,
+                l10n.archiveOptMilesHint, _miles,
+                (v) => setState(() => _miles = v)),
+            _option('archive-opt-logs', l10n.archiveOptServiceLogs,
+                l10n.archiveOptServiceLogsHint, _serviceLogs,
+                (v) => setState(() => _serviceLogs = v)),
+            _option('archive-opt-photos', l10n.archiveOptPhotos,
+                l10n.archiveOptPhotosHint, _photos,
+                (v) => setState(() => _photos = v)),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancelAction)),
+        FilledButton(
+          key: const Key('bike-archive'),
+          onPressed: () => Navigator.pop(
+            context,
+            ArchiveCleanup(
+              sharedRides: _sharedRides,
+              miles: _miles,
+              serviceLogs: _serviceLogs,
+              photos: _photos,
+            ),
+          ),
+          child: Text(l10n.archiveBikeConfirm),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shown right after archiving: when the bike will be permanently deleted,
+/// with a way to keep a copy of its data or delete it right away. Pops true
+/// for "Delete now".
+class _ArchivedNoticeDialog extends StatelessWidget {
+  final BikeEntity bike;
+  final String purgeDate;
+  final Future<void> Function() onExport;
+  const _ArchivedNoticeDialog({
+    required this.bike,
+    required this.purgeDate,
+    required this.onExport,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      backgroundColor: context.palette.surface,
+      title: Text(l10n.bikeArchivedTitle,
+          style: TextStyle(color: context.palette.textPrimary)),
+      content: Text(l10n.bikeArchivedBody(bike.displayName, purgeDate),
+          style: TextStyle(color: context.palette.textSecondary)),
+      actionsOverflowDirection: VerticalDirection.up,
+      actions: [
+        TextButton(
+          key: const Key('bike-archived-delete-now'),
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(l10n.deleteNowAction,
+              style: TextStyle(color: context.palette.danger)),
+        ),
+        TextButton(
+          key: const Key('bike-archived-download'),
+          onPressed: onExport,
+          child: Text(l10n.downloadLocalCopy),
+        ),
+        FilledButton(
+          key: const Key('bike-archived-ok'),
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n.done),
+        ),
+      ],
+    );
+  }
+}
 
 /// Second step of the destructive path: the rider types the bike's name
 /// before "Delete" enables. Deleting takes every ride on the bike with it,

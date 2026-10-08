@@ -224,112 +224,171 @@ class AllRidesRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final score = rideScoreOf(ride);
+    final isCrash = ride.status == RideStatus.crash;
+    final borderColor = isCrash
+        ? context.palette.danger
+        : context.palette.primary.withValues(alpha: 0.4);
+    final shadowColor = isCrash
+        ? context.palette.danger.withValues(alpha: 0.2)
+        : context.palette.primary.withValues(alpha: 0.15);
 
-    return EditorialCard(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      borderColor:
-          ride.status == RideStatus.crash ? context.palette.danger : null,
+    return GestureDetector(
       onTap: () => context.push('/ride/summary/${ride.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(formatRideDate(ride.startTime),
-                        style: display(context, 15, letterSpacing: 0)),
-                    const SizedBox(height: 2),
-                    Text(formatRideTime(ride.startTime),
-                        style: TextStyle(
-                            fontSize: 12, color: context.palette.textTertiary)),
-                  ],
-                ),
-              ),
-              // Whatever the list is ranked by, shown large — so the ordering
-              // visibly explains itself. Recency's key is the date above.
-              Text(
-                sort.trailingValue(ride) ??
-                    SpeedFormatter.distanceKm(ride.distanceM),
-                style: display(context, 16, letterSpacing: 0, color: context.palette.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _Figure(
-                    label: context.l10n.distanceLower,
-                    value: SpeedFormatter.distanceKm(ride.distanceM)),
-              ),
-              Expanded(
-                child: _Figure(
-                    label: context.l10n.durationStatLabel,
-                    value: SpeedFormatter.durationFromSeconds(
-                        ride.durationSeconds ?? 0)),
-              ),
-              Expanded(
-                child: _Figure(
-                    label: context.l10n.avgSpeedStatLabel,
-                    value: '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
-              ),
-              Expanded(
-                child: _Figure(
-                    label: context.l10n.topLower,
-                    value: '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              // A recorded crash signal is the one thing on this row that
-              // matters more than the score, and history is the only place a
-              // rider can see it (the live detector is switched off — see
-              // SensorConstants.impactDetectorLiveEnabled), so it leads.
-              if (ride.status == RideStatus.crash) ...[
-                Semantics(
-                  label: context.l10n.crashSuspectedBadge,
-                  child: EditorialPill(context.l10n.crashSuspectedBadge,
-                      tone: PillTone.overdue),
-                ),
-                const SizedBox(width: 8),
-              ],
-              // A ride recorded while following a saved route says so, and
-              // says which — the route may since have been renamed or
-              // deleted, which is exactly why the name is stored on the ride
-              // (see RideEntity.routeId) rather than looked up here.
-              if (ride.routeName != null) ...[
-                EditorialPill(context.l10n.followedRoutePill(ride.routeName!),
-                    tone: PillTone.neutral, filled: false),
-                const SizedBox(width: 8),
-              ],
-              EditorialPill(context.l10n.scoreValue(score),
-                  tone: score >= 90
-                      ? PillTone.ok
-                      : (score >= 70 ? PillTone.neutral : PillTone.attention),
-                  filled: false),
-              const SizedBox(width: 8),
-              if (ride.hardBrakeCount +
-                      ride.rapidAccelCount +
-                      ride.highJerkCount >
-                  0)
-                Expanded(
-                  child: Text(
-                    context.l10n.hardBrakesRapidAccel(ride.hardBrakeCount, ride.rapidAccelCount, ride.highJerkCount),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 11, color: context.palette.textTertiary),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 10,
+              spreadRadius: 1,
+            )
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Hero Map Section
+            SizedBox(
+              height: 120,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  RideRouteThumbnail(rideId: ride.id, height: 120),
+                  // Gradient for text readability
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.6),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-            ],
-          ),
-          RideRouteThumbnail(rideId: ride.id),
-        ],
+                  // Date and Score Overlay
+                  Positioned(
+                    top: 12,
+                    left: 16,
+                    right: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(formatRideDate(ride.startTime),
+                                style: display(context, 16, letterSpacing: 0, color: Colors.white)),
+                            const SizedBox(height: 2),
+                            Text(formatRideTime(ride.startTime),
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.white70)),
+                          ],
+                        ),
+                        // Circular Score Gauge
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: score >= 90
+                                  ? context.palette.success
+                                  : (score >= 70 ? Colors.white54 : context.palette.attention),
+                              width: 2,
+                            ),
+                            color: Colors.black54,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            score.toString(),
+                            style: display(context, 16, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Stats Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.distanceLower,
+                            value: SpeedFormatter.distanceKm(ride.distanceM)),
+                      ),
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.durationStatLabel,
+                            value: SpeedFormatter.durationFromSeconds(
+                                ride.durationSeconds ?? 0)),
+                      ),
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.avgSpeedStatLabel,
+                            value: '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                      ),
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.topLower,
+                            value: '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Pills and alerts
+                  Row(
+                    children: [
+                      if (isCrash) ...[
+                        Semantics(
+                          label: context.l10n.crashSuspectedBadge,
+                          child: EditorialPill(context.l10n.crashSuspectedBadge,
+                              tone: PillTone.overdue),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (ride.routeName != null) ...[
+                        EditorialPill(context.l10n.followedRoutePill(ride.routeName!),
+                            tone: PillTone.neutral, filled: false),
+                        const SizedBox(width: 8),
+                      ],
+                      if (ride.hardBrakeCount +
+                              ride.rapidAccelCount +
+                              ride.highJerkCount >
+                          0)
+                        Expanded(
+                          child: Text(
+                            context.l10n.hardBrakesRapidAccel(ride.hardBrakeCount, ride.rapidAccelCount, ride.highJerkCount),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 11, color: context.palette.textTertiary),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

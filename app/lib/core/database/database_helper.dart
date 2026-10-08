@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 22;
+  static const int schemaVersion = 24;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -315,6 +315,18 @@ class DatabaseHelper {
       // 0 means fixes are present. 1 means fixes were purged.
       await _addColumnIfMissing(db, 'auto_detections', 'fixes_purged',
           'fixes_purged INTEGER NOT NULL DEFAULT 0');
+    }
+    if (oldVersion < 23 && newVersion >= 23) {
+      // E-bike toggle and connection feature.
+      await _addColumnIfMissing(db, 'bikes', 'is_ebike', 'is_ebike INTEGER NOT NULL DEFAULT 0');
+    }
+    if (oldVersion < 24 && newVersion >= 24) {
+      // When a bike was archived. Archived bikes are permanently deleted three
+      // months after this (BikeArchiveService.purgeExpired). Bikes archived
+      // before this column existed start their clock at the upgrade.
+      await _addColumnIfMissing(db, 'bikes', 'archived_at', 'archived_at TEXT');
+      await db.update('bikes', {'archived_at': DateTime.now().toIso8601String()},
+          where: 'archived = 1 AND archived_at IS NULL');
     }
   }
 
@@ -733,7 +745,9 @@ class DatabaseHelper {
         color_value INTEGER,
         archived INTEGER NOT NULL DEFAULT 0,
         synced INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        is_ebike INTEGER NOT NULL DEFAULT 0,
+        archived_at TEXT
       )
     ''');
 

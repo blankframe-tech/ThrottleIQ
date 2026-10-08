@@ -150,6 +150,10 @@ echo "✅ Git push complete!"
 # TILE_URL_TEMPLATE / TILE_API_KEY / TILE_ATTRIBUTION before running this script
 # and they are passed to every release build below as --dart-define; AppTileLayer
 # reads them. Whatever is unset is simply not defined. See app_tile_layer.dart.
+# Local, git-ignored provider settings (secret/tiles.env) fill in whatever isn't exported.
+TILES_ENV="$(dirname "$0")/../secret/tiles.env"
+# shellcheck disable=SC1090
+[ -z "${TILE_URL_TEMPLATE:-}" ] && [ -f "$TILES_ENV" ] && . "$TILES_ENV"
 TILE_DEFINES=()
 [ -n "${TILE_URL_TEMPLATE:-}" ] && TILE_DEFINES+=("--dart-define=TILE_URL_TEMPLATE=${TILE_URL_TEMPLATE}")
 [ -n "${TILE_API_KEY:-}" ] && TILE_DEFINES+=("--dart-define=TILE_API_KEY=${TILE_API_KEY}")

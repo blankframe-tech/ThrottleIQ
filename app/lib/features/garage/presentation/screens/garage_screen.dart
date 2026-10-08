@@ -358,7 +358,11 @@ class _ArchivedBikesSection extends ConsumerWidget {
               ListTile(
                 title: Text(bike.displayName),
                 subtitle: Text(
-                    context.l10n.ridesAndDistance(bike.rideCount, SpeedFormatter.distanceKm(bike.totalDistanceM)),
+                    [
+                      context.l10n.ridesAndDistance(bike.rideCount, SpeedFormatter.distanceKm(bike.totalDistanceM)),
+                      if (bike.daysUntilPurge() != null)
+                        context.l10n.archivedPurgesIn(bike.daysUntilPurge()!),
+                    ].join(' · '),
                     style: TextStyle(color: context.palette.textSecondary)),
                 onTap: () => context.go('/home/profile/${bike.id}'),
                 trailing: TextButton(

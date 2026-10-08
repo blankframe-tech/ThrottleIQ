@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+/// How long an archived bike is kept before it is permanently deleted.
+const Duration kArchiveRetention = Duration(days: 90);
+
 class BikeEntity extends Equatable {
   final String id;
   final String userId;
@@ -31,6 +34,11 @@ class BikeEntity extends Equatable {
   /// Hidden from the garage list and every bike picker; see
   /// `BikeDao.setArchived`.
   final bool isArchived;
+  final bool isEbike;
+
+  /// When the bike was archived; null while it isn't. The bike is permanently
+  /// deleted [kArchiveRetention] after this.
+  final DateTime? archivedAt;
 
   final DateTime createdAt;
 
@@ -49,6 +57,8 @@ class BikeEntity extends Equatable {
     this.odometerKm,
     this.colorValue,
     this.isArchived = false,
+    this.isEbike = false,
+    this.archivedAt,
     required this.createdAt,
   });
 
@@ -62,6 +72,17 @@ class BikeEntity extends Equatable {
   String get displayName => '$brand $model${year != null ? ' ($year)' : ''}';
 
   Color? get color => colorValue != null ? Color(colorValue!) : null;
+
+  /// When an archived bike will be permanently deleted; null if not archived.
+  DateTime? get purgeAt => archivedAt?.add(kArchiveRetention);
+
+  /// Whole days until [purgeAt], never negative; null if not archived.
+  int? daysUntilPurge([DateTime? now]) {
+    final at = purgeAt;
+    if (at == null) return null;
+    final left = at.difference(now ?? DateTime.now()).inDays;
+    return left < 0 ? 0 : left;
+  }
 
   BikeEntity copyWith({
     String? brand,
@@ -78,6 +99,7 @@ class BikeEntity extends Equatable {
     int? colorValue,
     bool clearColor = false,
     bool? isArchived,
+    bool? isEbike,
   }) {
     return BikeEntity(
       id: id,
@@ -94,6 +116,8 @@ class BikeEntity extends Equatable {
       odometerKm: clearOdometer ? null : (odometerKm ?? this.odometerKm),
       colorValue: clearColor ? null : (colorValue ?? this.colorValue),
       isArchived: isArchived ?? this.isArchived,
+      isEbike: isEbike ?? this.isEbike,
+      archivedAt: archivedAt,
       createdAt: createdAt,
     );
   }
@@ -110,6 +134,8 @@ class BikeEntity extends Equatable {
         isActive,
         odometerKm,
         colorValue,
-        isArchived
+        isArchived,
+        isEbike,
+        archivedAt
       ];
 }

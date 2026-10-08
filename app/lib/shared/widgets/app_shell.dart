@@ -94,7 +94,7 @@ class AppShell extends StatelessWidget {
             BottomNavigationBarItem(icon: const Icon(Icons.place_outlined), activeIcon: const Icon(Icons.place), label: l10n.navPlacesLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: l10n.navProfileLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.two_wheeler_outlined), activeIcon: const Icon(Icons.two_wheeler), label: l10n.navGarageLabel),
           ],
         ),
       ),

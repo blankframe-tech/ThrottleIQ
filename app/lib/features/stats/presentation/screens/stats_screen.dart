@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
-import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_sort.dart';
@@ -12,12 +12,11 @@ import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/badge_grid.dart';
 import '../widgets/ride_line_chart.dart';
-import 'all_rides_screen.dart';
+import 'all_rides_screen.dart'; // For RideSortChips and AllRidesRow
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Rank names by level (index = level - 1, clamped), in the rider's language.
 List<String> _ranks(AppLocalizations l10n) => [
       l10n.rankNewRider,
       l10n.rankWeekendRider,
@@ -28,20 +27,37 @@ List<String> _ranks(AppLocalizations l10n) => [
       l10n.rankRoadMaster,
     ];
 const _kmPerLevel = 500.0;
-
-/// How many rides the list shows. Ranking always considers the full history;
-/// this only caps what's drawn, so "Top speed" really is your fastest ten
-/// rides ever rather than the fastest of your ten most recent.
 const int _ridesListLimit = 10;
 
-class StatsScreen extends ConsumerWidget {
+class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends ConsumerState<StatsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  bool _showDistanceChart = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final statsAsync = ref.watch(riderStatsProvider);
     final sort = ref.watch(rideSortProvider);
-    ref.watch(badgeSyncProvider); // fire-and-forget; UI never awaits this
+    ref.watch(badgeSyncProvider);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -55,50 +71,13 @@ class StatsScreen extends ConsumerWidget {
                 onRetry: () => ref.invalidate(riderStatsProvider),
               )),
           data: (stats) {
-            // Sort the whole history, then cap — never the other way round.
-            // Falls back to recentRides so an older cached summary (which has
-            // no allRides) still renders its list instead of going blank.
             final source =
                 stats.allRides.isNotEmpty ? stats.allRides : stats.recentRides;
             final visibleRides =
                 sortRides(source, sort).take(_ridesListLimit).toList();
 
-            final header = Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-              child: Text(context.l10n.journey, style: display(context, 28)),
-            );
-
             if (stats.totalRides == 0) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  header,
-                  Expanded(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.insights_outlined,
-                                size: 56, color: context.palette.textTertiary),
-                            const SizedBox(height: 16),
-                            Text(context.l10n.noRidesYet,
-                                style: TextStyle(
-                                    color: context.palette.textSecondary, fontSize: 16)),
-                            const SizedBox(height: 8),
-                            Text(context.l10n.goRideStartJourney,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    color: context.palette.textTertiary, fontSize: 14)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
+              return _buildEmptyState(context);
             }
 
             final totalKm = stats.totalDistanceKm;
@@ -106,200 +85,49 @@ class StatsScreen extends ConsumerWidget {
             final kmIntoLevel = totalKm % _kmPerLevel;
             final ranks = _ranks(context.l10n);
             final rank = ranks[(level - 1).clamp(0, ranks.length - 1)];
-            final badges = computeBadges(stats);
-            final earnedCount = badges.where((b) => b.earned).length;
-            final badgeFamiliesProgress = computeBadgeProgress(stats);
-            final distanceSeries =
-                stats.chartRides.map((r) => r.distanceKm).toList();
-            final speedSeries =
-                stats.chartRides.map((r) => r.avgSpeedKmh).toList();
-            // Both charts plot the same rides, so they share one date axis.
-            final chartDates =
-                stats.chartRides.map((r) => r.startTime).toList();
 
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  header,
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
-                        AppDimensions.paddingMd, AppDimensions.paddingLg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Rider-wide totals, directly under "Your Journey" —
-                        // moved off the Record screen, which had them as the
-                        // *active bike's* figures. The journey is the rider's,
-                        // so these are across every bike in the garage.
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _StatChip(
-                                value: SpeedFormatter.distanceKm(
-                                    stats.totalDistanceKm * 1000),
-                                label: context.l10n.totalKm,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _StatChip(
-                                value: '${stats.totalRides}',
-                                label: context.l10n.ridesLower,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _StatChip(
-                                value: _daysSinceLastRide(stats.recentRides),
-                                label: context.l10n.lastRide,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Level / progress card
-                        EditorialCard(
-                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(context.l10n.level(level, rank),
-                                        style: display(context, 18, letterSpacing: 0)),
-                                  ),
-                                  Text(
-                                      '${kmIntoLevel.toStringAsFixed(0)}/${_kmPerLevel.toStringAsFixed(0)} km',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: context.palette.textSecondary)),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              EditorialProgress(kmIntoLevel / _kmPerLevel),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Distance / speed over time. Graphs sit above the
-                        // badges: they're the part of "your journey" that
-                        // changes every ride, whereas badges move rarely, and
-                        // burying the trend under a wall of icons made the
-                        // rarely-changing thing the loudest.
-                        EditorialLabel(context.l10n.distanceOverTime),
-                        const SizedBox(height: 10),
-                        EditorialCard(
-                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                          child: RideLineChart(
-                            values: distanceSeries,
-                            dates: chartDates,
-                            unit: 'km',
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        EditorialLabel(context.l10n.avgSpeedOverTime),
-                        const SizedBox(height: 10),
-                        EditorialCard(
-                          padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                          child: RideLineChart(
-                            values: speedSeries,
-                            color: context.palette.secondary,
-                            dates: chartDates,
-                            unit: 'km/h',
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Badges
-                        Row(
-                          children: [
-                            Expanded(child: EditorialLabel(context.l10n.badges)),
-                            Text(context.l10n.badgesEarnedCount(earnedCount, badges.length),
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: context.palette.textTertiary)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        BadgeGrid(families: badgeFamiliesProgress),
-                        const SizedBox(height: 24),
-
-                        // Headline stats. Total distance and total ride count
-                        // used to lead this block; they're now the chips at
-                        // the top of the page, and printing them twice on one
-                        // screen just made the page longer.
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _BigStat(
-                                value: stats.allTimeAvgSpeedKmh.toStringAsFixed(0),
-                                unit: 'km/h',
-                                label: context.l10n.avgSpeedLower,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _BigStat(
-                                value: stats.allTimeTopSpeedKmh.toStringAsFixed(0),
-                                unit: 'km/h',
-                                label: context.l10n.topSpeedLower,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _BigStat(
-                                value: stats.avgRidingScore.toStringAsFixed(0),
-                                label: context.l10n.score,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        EditorialLabel(
-                          sort == RideSort.recent ? context.l10n.recentRides : context.l10n.rides,
-                        ),
-                        const SizedBox(height: 10),
-                        // Sort chips. Ranking reads from stats.allRides (the
-                        // full history) and truncates AFTER sorting — sorting
-                        // the already-truncated recent list would show "your
-                        // fastest" while only ever considering your last ten.
-                        // Same widget the All rides page uses, over the same
-                        // provider, so the two views can't disagree.
-                        RideSortChips(
-                          sort: sort,
-                          onChanged: (option) =>
-                              ref.read(rideSortProvider.notifier).state = option,
-                        ),
-                        const SizedBox(height: 12),
-                        if (visibleRides.isEmpty)
-                          Text(context.l10n.noRidesYetDot,
-                              style: TextStyle(
-                                  fontSize: 13, color: context.palette.textSecondary))
-                        else
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: visibleRides.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
-                            itemBuilder: (_, i) =>
-                                _RecentRideRow(ride: visibleRides[i], sort: sort),
-                          ),
-                        const SizedBox(height: 14),
-                        // Always offered, even when every ride already fits
-                        // in the ten shown: the full page carries detail and
-                        // route maps this compact list deliberately doesn't.
-                        _AllRidesButton(
-                          total: source.length,
-                          showing: visibleRides.length,
-                        ),
-                      ],
+            return NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  SliverToBoxAdapter(
+                    child: _buildHeroAndQuickStats(
+                      context,
+                      stats: stats,
+                      level: level,
+                      rank: rank,
+                      kmIntoLevel: kmIntoLevel,
                     ),
                   ),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SliverTabBarDelegate(
+                      TabBar(
+                        controller: _tabController,
+                        indicatorColor: context.palette.primary,
+                        indicatorWeight: 3,
+                        labelColor: context.palette.textPrimary,
+                        unselectedLabelColor: context.palette.textSecondary,
+                        labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14),
+                        tabs: [
+                          // Using fallback strings since there's no l10n for analytics in the app
+                          const Tab(text: 'Analytics'),
+                          Tab(text: context.l10n.badges),
+                          const Tab(text: 'History'),
+                        ],
+                      ),
+                      context.palette.background,
+                    ),
+                  ),
+                ];
+              },
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildAnalyticsTab(context, stats),
+                  _buildBadgesTab(context, stats),
+                  _buildHistoryTab(
+                      context, visibleRides, sort, source.length),
                 ],
               ),
             );
@@ -308,36 +136,363 @@ class StatsScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
+          child: Text(context.l10n.journey, style: display(context, 28)),
+        ),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.insights_outlined,
+                      size: 56, color: context.palette.textTertiary),
+                  const SizedBox(height: 16),
+                  Text(context.l10n.noRidesYet,
+                      style: TextStyle(
+                          color: context.palette.textSecondary,
+                          fontSize: 16)),
+                  const SizedBox(height: 8),
+                  Text(context.l10n.goRideStartJourney,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: context.palette.textTertiary, fontSize: 14)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeroAndQuickStats(
+    BuildContext context, {
+    required dynamic stats,
+    required int level,
+    required String rank,
+    required double kmIntoLevel,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(context.l10n.journey, style: display(context, 28)),
+            ],
+          ),
+        ),
+        // Hero Progress
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 140,
+                      height: 140,
+                      child: CircularProgressIndicator(
+                        value: kmIntoLevel / _kmPerLevel,
+                        strokeWidth: 8,
+                        backgroundColor: context.palette.border,
+                        color: context.palette.primary,
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('LEVEL $level',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                                color: context.palette.primary)),
+                        const SizedBox(height: 4),
+                        Text(stats.avgRidingScore.toStringAsFixed(0),
+                            style: display(context, 36)),
+                        Text(context.l10n.score,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: context.palette.textSecondary)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(rank, style: display(context, 20)),
+                const SizedBox(height: 4),
+                Text(
+                    '${kmIntoLevel.toStringAsFixed(0)} / ${_kmPerLevel.toStringAsFixed(0)} km',
+                    style: TextStyle(
+                        fontSize: 13, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+        ),
+        // Quick Stats Grid
+        Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 2.2,
+            children: [
+              _QuickStatCard(
+                value: '${stats.totalRides}',
+                label: context.l10n.ridesLower,
+              ),
+              _QuickStatCard(
+                value: _daysSinceLastRide(stats.recentRides),
+                label: context.l10n.lastRide,
+              ),
+              _QuickStatCard(
+                value: stats.allTimeTopSpeedKmh.toStringAsFixed(0),
+                unit: 'km/h',
+                label: context.l10n.topSpeedLower,
+              ),
+              _QuickStatCard(
+                value: stats.allTimeAvgSpeedKmh.toStringAsFixed(0),
+                unit: 'km/h',
+                label: context.l10n.avgSpeedLower,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildAnalyticsTab(BuildContext context, dynamic stats) {
+    final distanceSeries = stats.chartRides
+        .map<double>((r) => (r.distanceKm as num).toDouble())
+        .toList();
+    final speedSeries = stats.chartRides
+        .map<double>((r) => (r.avgSpeedKmh as num).toDouble())
+        .toList();
+    final chartDates = stats.chartRides
+        .map<DateTime>((r) => r.startTime as DateTime)
+        .toList();
+
+    return ListView(
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            EditorialLabel(_showDistanceChart
+                ? context.l10n.distanceOverTime
+                : context.l10n.avgSpeedOverTime),
+            Row(
+              children: [
+                _ToggleButton(
+                  label: 'Dist',
+                  isActive: _showDistanceChart,
+                  onTap: () => setState(() => _showDistanceChart = true),
+                ),
+                const SizedBox(width: 4),
+                _ToggleButton(
+                  label: 'Speed',
+                  isActive: !_showDistanceChart,
+                  onTap: () => setState(() => _showDistanceChart = false),
+                ),
+              ],
+            )
+          ],
+        ),
+        const SizedBox(height: 12),
+        EditorialCard(
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          child: _showDistanceChart
+              ? RideLineChart(
+                  values: distanceSeries,
+                  dates: chartDates,
+                  unit: 'km',
+                )
+              : RideLineChart(
+                  values: speedSeries,
+                  color: context.palette.secondary,
+                  dates: chartDates,
+                  unit: 'km/h',
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBadgesTab(BuildContext context, dynamic stats) {
+    final badges = computeBadges(stats);
+    final earnedCount = badges.where((b) => b.earned).length;
+    final badgeFamiliesProgress = computeBadgeProgress(stats);
+
+    return ListView(
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      children: [
+        Row(
+          children: [
+            Expanded(child: EditorialLabel(context.l10n.badges)),
+            Text(context.l10n.badgesEarnedCount(earnedCount, badges.length),
+                style: TextStyle(
+                    fontSize: 11, color: context.palette.textTertiary)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        BadgeGrid(families: badgeFamiliesProgress),
+      ],
+    );
+  }
+
+  Widget _buildHistoryTab(BuildContext context, List<RideEntity> visibleRides,
+      RideSort sort, int totalRides) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppDimensions.paddingMd, 16, AppDimensions.paddingMd, 12),
+            child: RideSortChips(
+              sort: sort,
+              onChanged: (option) =>
+                  ref.read(rideSortProvider.notifier).state = option,
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+          sliver: visibleRides.isEmpty
+              ? SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Text(context.l10n.noRidesYetDot,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: context.palette.textSecondary)),
+                  ),
+                )
+              : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      if (i == visibleRides.length) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 14, bottom: 24),
+                          child: _AllRidesButton(
+                            total: totalRides,
+                            showing: visibleRides.length,
+                          ),
+                        );
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: AllRidesRow(ride: visibleRides[i], sort: sort),
+                      );
+                    },
+                    childCount: visibleRides.length + 1,
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
 }
 
-/// Whole days since the most recent ride. [rides] is newest-first, as
-/// [RiderStatsSummary.recentRides] always is.
 String _daysSinceLastRide(List<RideEntity> rides) {
   if (rides.isEmpty) return '—';
   final days = DateTime.now().difference(rides.first.startTime).inDays;
   return '${days < 0 ? 0 : days}d';
 }
 
-/// Compact figure chip. Same shape as the ones that used to sit on the
-/// Record screen, so the move reads as a move rather than a redesign.
-class _StatChip extends StatelessWidget {
+class _QuickStatCard extends StatelessWidget {
   final String value;
+  final String? unit;
   final String label;
-  const _StatChip({required this.value, required this.label});
+  const _QuickStatCard({required this.value, this.unit, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return EditorialCard(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: display(context, 20)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: display(context, 22)),
+              if (unit != null) ...[
+                const SizedBox(width: 4),
+                Text(unit!,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ]
+            ],
+          ),
           const SizedBox(height: 2),
           Text(label,
-              style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
+              style: TextStyle(
+                  fontSize: 11, color: context.palette.textSecondary)),
         ],
+      ),
+    );
+  }
+}
+
+class _ToggleButton extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _ToggleButton({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? context.palette.surfaceVariant : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            color: isActive
+                ? context.palette.textPrimary
+                : context.palette.textSecondary,
+          ),
+        ),
       ),
     );
   }
@@ -355,84 +510,48 @@ class _AllRidesButton extends StatelessWidget {
       onTap: () => context.push('/rides/all'),
       child: Row(
         children: [
-          Icon(Icons.list_alt_outlined, size: 18, color: context.palette.primary),
+          Icon(Icons.list_alt_outlined,
+              size: 18, color: context.palette.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(context.l10n.allRides,
-                style: display(context, 14, letterSpacing: 0, color: context.palette.primary)),
+                style: display(context, 14,
+                    letterSpacing: 0, color: context.palette.primary)),
           ),
           Text(context.l10n.shown(showing, total),
-              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
+              style: TextStyle(
+                  fontSize: 12, color: context.palette.textTertiary)),
           const SizedBox(width: 6),
-          Icon(Icons.chevron_right, size: 18, color: context.palette.textTertiary),
+          Icon(Icons.chevron_right,
+              size: 18, color: context.palette.textTertiary),
         ],
       ),
     );
   }
 }
 
-class _BigStat extends StatelessWidget {
-  final String value;
-  final String? unit;
-  final String label;
-  const _BigStat({required this.value, this.unit, required this.label});
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+  final Color _backgroundColor;
+
+  _SliverTabBarDelegate(this._tabBar, this._backgroundColor);
 
   @override
-  Widget build(BuildContext context) {
-    return EditorialCard(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-      child: StatCell(value: value, unit: unit, label: label, valueSize: 22),
-    );
-  }
-}
-
-class _RecentRideRow extends StatelessWidget {
-  final RideEntity ride;
-
-  /// The active ordering, so the trailing figure shows what the list is
-  /// actually ranked by. Sorting by distance while every row still showed
-  /// km/h would look like the sort had silently failed.
-  final RideSort sort;
-
-  const _RecentRideRow({required this.ride, required this.sort});
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context) {
-    return EditorialCard(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      onTap: () => context.push('/ride/summary/${ride.id}'),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_formatDate(ride.startTime), style: display(context, 14, letterSpacing: 0)),
-                const SizedBox(height: 4),
-                Text(
-                  '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
-                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          // Recency has no figure of its own — the date on the left already
-          // is the sort key — so it keeps showing top speed, as before.
-          Text(
-            sort.trailingValue(ride) ??
-                '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-            style: display(context, 14, letterSpacing: 0, color: context.palette.primary),
-          ),
-        ],
-      ),
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: _backgroundColor,
+      child: _tabBar,
     );
   }
 
-  String _formatDate(DateTime dt) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return false;
   }
 }
