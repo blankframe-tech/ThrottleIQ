@@ -69,22 +69,38 @@
                     android:maxLines="1"
                     android:ellipsize="end" />
 
-                <TextView
-                    android:id="@+id/widget_maintenance_flag"
+                <!-- Status chip: a tintable rounded image behind the label so
+                     the provider can recolor it (primary for DUE, danger for
+                     overdue) with setColorFilter and keep the 2dp corners. -->
+                <FrameLayout
+                    android:id="@+id/widget_maintenance_flag_chip"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/widget_chip_due"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="1dp"
-                    android:paddingBottom="1dp"
-                    android:text="@string/widget_maintenance_due_flag"
-                    android:textColor="@color/widget_on_primary"
-                    android:textSize="8sp"
-                    android:textStyle="bold"
-                    android:fontFamily="monospace"
-                    android:letterSpacing="0.10"
-                    android:maxLines="1" />
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/widget_maintenance_flag_bg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/widget_chip_due"
+                        android:scaleType="fitXY"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:id="@+id/widget_maintenance_flag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5dp"
+                        android:paddingRight="5dp"
+                        android:paddingTop="1dp"
+                        android:paddingBottom="1dp"
+                        android:text="@string/widget_maintenance_due_flag"
+                        android:textColor="@color/widget_on_primary"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.10"
+                        android:maxLines="1" />
+                </FrameLayout>
             </LinearLayout>
 
             <TextView

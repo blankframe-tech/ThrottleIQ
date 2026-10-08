@@ -49,20 +49,29 @@
             android:maxLines="1"
             android:ellipsize="end" />
 
-        <LinearLayout
+        <!-- Rounded action block: a tintable image behind the label, so
+             WidgetTheme can recolor it with setColorFilter and keep the 2dp
+             corners (setBackgroundColor would square them off). -->
+        <FrameLayout
             android:id="@+id/widget_cta_block"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/widget_button_primary">
+            android:layout_marginTop="8dp">
+
+            <ImageView
+                android:id="@+id/widget_cta_bg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/widget_button_primary"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
 
             <TextView
                 android:id="@+id/widget_cta_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:text="@string/widget_start_ride_cta"
                 android:textColor="@color/widget_on_primary"
                 android:textSize="13sp"
@@ -71,6 +80,6 @@
                 android:letterSpacing="0.10"
                 android:maxLines="1"
                 android:ellipsize="end" />
-        </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 </FrameLayout>

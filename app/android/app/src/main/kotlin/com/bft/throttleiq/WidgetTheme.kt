@@ -62,8 +62,12 @@ internal fun RemoteViews.applyPanelTheme(theme: WidgetTheme) {
     setTextColor(R.id.widget_title, theme.textMuted)
 }
 
-/** The solid call-to-action block on the two launcher widgets. */
+/**
+ * The solid call-to-action block on the two launcher widgets. Tinted through
+ * the rounded `widget_cta_bg` image (not `setBackgroundColor` on the block,
+ * which would replace the 2dp-cornered shape with a square fill).
+ */
 internal fun RemoteViews.applyCtaTheme(theme: WidgetTheme) {
-    setInt(R.id.widget_cta_block, "setBackgroundColor", theme.primary)
+    setInt(R.id.widget_cta_bg, "setColorFilter", theme.primary)
     setTextColor(R.id.widget_cta_text, theme.onPrimary)
 }

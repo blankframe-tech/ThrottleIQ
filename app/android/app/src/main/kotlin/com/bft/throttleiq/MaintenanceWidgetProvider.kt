@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.net.Uri
+import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -53,24 +54,26 @@ class MaintenanceWidgetProvider : HomeWidgetProvider() {
                 setTextColor(R.id.widget_maintenance_summary, theme.textPrimary)
                 setTextColor(R.id.widget_maintenance_bike, theme.textMuted)
 
-                // Plain color fills (not the drawable swap this used to do) so
-                // the accent and chip follow the app theme; danger stays red.
+                // The accent bar is square, so a plain color fill is fine. The
+                // chip is tinted through its rounded background image so it
+                // keeps its 2dp corners; danger stays red when overdue.
                 val accent = if (overdue && hasData) theme.danger else theme.primary
                 setInt(R.id.widget_maintenance_accent, "setBackgroundColor", accent)
                 when {
                     overdue && hasData -> {
-                        setInt(R.id.widget_maintenance_flag, "setBackgroundColor", theme.danger)
+                        setViewVisibility(R.id.widget_maintenance_flag_bg, View.VISIBLE)
+                        setInt(R.id.widget_maintenance_flag_bg, "setColorFilter", theme.danger)
                         setTextColor(R.id.widget_maintenance_flag, Color.WHITE)
                     }
                     hasData -> {
-                        setInt(R.id.widget_maintenance_flag, "setBackgroundColor", theme.primary)
+                        setViewVisibility(R.id.widget_maintenance_flag_bg, View.VISIBLE)
+                        setInt(R.id.widget_maintenance_flag_bg, "setColorFilter", theme.primary)
                         setTextColor(R.id.widget_maintenance_flag, theme.onPrimary)
                     }
-                    else -> setInt(
-                        R.id.widget_maintenance_flag,
-                        "setBackgroundColor",
-                        Color.TRANSPARENT
-                    )
+                    // No data: blank label and no chip fill. (A transparent
+                    // color filter would leave the lime drawable showing, so
+                    // the image is hidden instead.)
+                    else -> setViewVisibility(R.id.widget_maintenance_flag_bg, View.GONE)
                 }
 
                 setOnClickPendingIntent(
