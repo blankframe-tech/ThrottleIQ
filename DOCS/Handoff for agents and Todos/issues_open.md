@@ -1961,10 +1961,15 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 `functions` `tsc` build OK, `flutter build apk --debug` OK. Nothing deployed; nothing checked on a device;
 `integration_test/e2e_test.dart` and `ui_tour_test.dart` not run (no simulator).
 
-- **102.1 Deploy for badge rarity:** `firebase deploy --only functions,firestore:rules`, then force-run
-  `recomputeBadgeStatsDaily` once. Until then the % is hidden. `totalRiders` counts all accounts (including
+- **102.1 Badge rarity backend:** `throttleiqfb` is on the **Spark** plan, so Cloud Functions can't deploy
+  (2026-10-09 deploy failed: Blaze required). Founder chose to stay on Spark; being reworked to rules-guarded
+  client counters on `stats/badges` (no functions). Also: the standalone `/usr/local/bin/firebase` binary's
+  bundled npm 8 crashes in predeploy (`reading 'stdin'`); use `npx firebase-tools@15` instead. `totalRiders` counts all accounts (including
   riders with no rides), and clients can still self-award `earnedBadges` docs (existing rules gap), which skews counts.
-- **102.2 QR deep links need blankframe.tech:** the site must serve `/.well-known/assetlinks.json`,
+- **102.2 (DONE 2026-10-09)** blankframe.tech (GitHub Pages, repo `blankframe-tech/landing-page`, commit `824920e`) now
+  serves `/.well-known/assetlinks.json` (verified via Google's Digital Asset Links API), `/throttle-iq/install/`,
+  and a root `404.html` that routes `/ThrottleIQ/install` and `/ThrottleIQ/u/<uid>` in any casing. QR links
+  now use `www.blankframe.tech` (the bare domain 301s, which can't verify). Old notes: the site must serve `/.well-known/assetlinks.json`,
   `/.well-known/apple-app-site-association` (application/json, no redirect) and `/ThrottleIQ/u/*` (copy from
   `public/` or proxy to Firebase Hosting). Add Play App Signing SHA-256 to `assetlinks.json` if used. Then `firebase deploy --only hosting`.
   **iOS Universal Links are off (2026-10-09):** team `NJ4675FFUX` is a personal team, which Apple never allows
@@ -1973,12 +1978,12 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 - **102.3 QR gaps:** no deferred deep link (after installing, the rider must re-scan); a well-formed uid for a
   non-existent rider still writes a harmless follow doc (rules make missing and private look the same); QR
   buttons only on `/profile`, not the Garage tab header; the saved QR PNG keeps the colors of first render.
-- **102.4 Widgets:** theme-following widgets unverified on device; Android button/DUE chip lost 2dp rounded
-  corners; widgets don't follow the shape vibe.
+- **102.4 Widgets:** theme-following widgets unverified on device; widgets don't follow the shape vibe.
+  (Rounded button/DUE chip corners restored 2026-10-09, commit `1806399`.)
 - **102.5 Analytics not built:** lean angle / peak g (not computed live — `DualLeanArcGauge`/`GForceFrictionCircle`
   are unused and the recorder never writes lean prefs), fuel/cost (not tracked), elevation gain (needs every ride point).
 - **102.6 Tour:** card tour + "Show me" rather than real-widget coach marks; no floating banner on `/profile`.
   `.agents/skills/onboarding-guardian/SKILL.md` was updated to accept the v4 step list.
-- **102.7 Bangla review:** new keys for themes, analytics, badge rarity, follow-QR and tour v4 are machine-drafted;
+- **102.7 Bangla review — deferred to November 2026 (founder, 2026-10-09):** new keys for themes, analytics, badge rarity, follow-QR and tour v4 are machine-drafted;
   listed in `app/lib/l10n/bn_pending_review.txt`.
 - **102.8 Diff noise:** a `dart format` run may have reflowed `all_rides_screen.dart` and `badge_grid.dart` beyond their real edits.
