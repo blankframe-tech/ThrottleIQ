@@ -28,7 +28,7 @@ dependencies:
   # group-ride dots, chat typing) over one WebSocket; Firestore stays the
   # source of truth. See DOCS/For Devs and Contributors/architecture/realtime-database.md.
   firebase_database: ^11.3.10
-  google_sign_in: ^6.1.0
+  google_sign_in: ^7.2.0
 
   # Maps & Location
   flutter_map: ^7.0.2
