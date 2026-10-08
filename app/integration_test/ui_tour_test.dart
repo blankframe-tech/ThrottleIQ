@@ -72,7 +72,8 @@ int shot = 0;
 String section = '';
 
 GoRouter get router => c.read(routerProvider);
-String get location => router.routerDelegate.currentConfiguration.uri.toString();
+String get location =>
+    router.routerDelegate.currentConfiguration.uri.toString();
 
 void log(String m) => debugPrint('[tour] $m');
 
@@ -87,7 +88,10 @@ Future<void> wait([int ms = 900]) async {
   }
 }
 
-String _slug(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-|-$'), '');
+String _slug(String s) => s
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+    .replaceAll(RegExp(r'^-|-$'), '');
 
 /// Asks the host for a screenshot and blocks until it has been written.
 Future<void> snap(String name, {int settleMs = 1100}) async {
@@ -95,10 +99,13 @@ Future<void> snap(String name, {int settleMs = 1100}) async {
   await settleLoading();
   shot++;
   seq++;
-  final rel = '$comboDir/${shot.toString().padLeft(3, '0')}__${_slug(section)}__${_slug(name)}.png';
+  final rel =
+      '$comboDir/${shot.toString().padLeft(3, '0')}__${_slug(section)}__${_slug(name)}.png';
   if (_device) {
-    final bytes = await IntegrationTestWidgetsFlutterBinding.instance.takeScreenshot(rel);
-    final out = File('${tourDir.path}/shots/$rel')..parent.createSync(recursive: true);
+    final bytes =
+        await IntegrationTestWidgetsFlutterBinding.instance.takeScreenshot(rel);
+    final out = File('${tourDir.path}/shots/$rel')
+      ..parent.createSync(recursive: true);
     await out.writeAsBytes(bytes);
     log('snap $rel ($location)');
     if (_dumpTexts) _dump(rel);
@@ -106,7 +113,8 @@ Future<void> snap(String name, {int settleMs = 1100}) async {
   }
   final ack = File('${tourDir.path}/ack_$seq');
   await File('${tourDir.path}/req_$seq.tmp').writeAsString(rel);
-  await File('${tourDir.path}/req_$seq.tmp').rename('${tourDir.path}/req_$seq.txt');
+  await File('${tourDir.path}/req_$seq.tmp')
+      .rename('${tourDir.path}/req_$seq.txt');
   final deadline = DateTime.now().add(const Duration(seconds: 30));
   while (!ack.existsSync()) {
     if (DateTime.now().isAfter(deadline)) {
@@ -126,8 +134,11 @@ void _dump(String rel) {
     final s = w.data ?? w.textSpan?.toPlainText();
     if (s != null && s.trim().isNotEmpty) texts.add(s.replaceAll('\n', ' '));
   }
-  final icons = ev(find.byType(Icon)).map((e) => (e.widget as Icon).icon?.codePoint.toRadixString(16)).toList();
-  textLog?.writeln('=== $rel  @ $location\n  ${texts.join(' | ')}\n  icons: ${icons.length}');
+  final icons = ev(find.byType(Icon))
+      .map((e) => (e.widget as Icon).icon?.codePoint.toRadixString(16))
+      .toList();
+  textLog?.writeln(
+      '=== $rel  @ $location\n  ${texts.join(' | ')}\n  icons: ${icons.length}');
 }
 
 Finder _hittable(Finder f) => f.hitTestable();
@@ -149,7 +160,8 @@ bool has(Finder f) => ev(f).isNotEmpty;
 Future<void> settleLoading({int maxMs = 9000}) async {
   final end = DateTime.now().add(Duration(milliseconds: maxMs));
   while (DateTime.now().isBefore(end)) {
-    final spinners = ev(find.byType(CircularProgressIndicator).hitTestable()).length +
+    final spinners = ev(find.byType(CircularProgressIndicator).hitTestable())
+            .length +
         ev(find.byType(LinearProgressIndicator).hitTestable())
             .where((e) => (e.widget as LinearProgressIndicator).value == null)
             .length;
@@ -161,7 +173,8 @@ Future<void> settleLoading({int maxMs = 9000}) async {
 /// Taps the first on-screen widget showing exactly [text]. Returns false
 /// (and logs) instead of failing when it is not there — a missing optional
 /// control must never abort a 28-combo run.
-Future<bool> tapText(String text, {bool contains = false, int index = 0, int after = 900}) async {
+Future<bool> tapText(String text,
+    {bool contains = false, int index = 0, int after = 900}) async {
   final f = _hittable(contains ? find.textContaining(text) : find.text(text));
   final n = ev(f).length;
   if (n <= index) {
@@ -180,7 +193,8 @@ Future<bool> tapTextVisible(String text, {int after = 900}) async {
   for (var i = 0; i < 12 && !has(f); i++) {
     final s = _mainScrollable();
     if (s == null || s.position.pixels >= s.position.maxScrollExtent - 4) break;
-    s.position.jumpTo((s.position.pixels + s.position.viewportDimension * 0.6).clamp(0.0, s.position.maxScrollExtent));
+    s.position.jumpTo((s.position.pixels + s.position.viewportDimension * 0.6)
+        .clamp(0.0, s.position.maxScrollExtent));
     await wait(300);
   }
   if (!has(f)) {
@@ -193,9 +207,12 @@ Future<bool> tapTextVisible(String text, {int after = 900}) async {
 }
 
 /// Snapshots a bottom sheet / dialog opened by [open], then closes it.
-Future<void> snapOverlay(String name, Future<bool> Function() open, {int settleMs = 1100}) async {
+Future<void> snapOverlay(String name, Future<bool> Function() open,
+    {int settleMs = 1100}) async {
   if (!await open()) return;
-  if (has(find.byType(BottomSheet)) || has(find.byType(Dialog)) || has(find.byType(AlertDialog))) {
+  if (has(find.byType(BottomSheet)) ||
+      has(find.byType(Dialog)) ||
+      has(find.byType(AlertDialog))) {
     await snap(name, settleMs: settleMs);
     await back();
   }
@@ -280,8 +297,10 @@ Future<void> snapScroll(String name, {int maxPages = 4}) async {
     if (s == null) return;
     final p = s.position;
     if (p.pixels >= p.maxScrollExtent - 4) return;
-    final target = (p.pixels + p.viewportDimension * 0.8).clamp(0.0, p.maxScrollExtent);
-    await p.animateTo(target, duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
+    final target =
+        (p.pixels + p.viewportDimension * 0.8).clamp(0.0, p.maxScrollExtent);
+    await p.animateTo(target,
+        duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
     await snap('$name (cont. $i)', settleMs: 700);
   }
 }
@@ -305,7 +324,9 @@ Future<void> step(String name, Future<void> Function() body) async {
     log('!! step "$name" failed: $e\n$st');
     // Close anything left open.
     for (var i = 0; i < 3; i++) {
-      if (!has(find.byType(BottomSheet)) && !has(find.byType(Dialog)) && !has(find.byType(AlertDialog))) {
+      if (!has(find.byType(BottomSheet)) &&
+          !has(find.byType(Dialog)) &&
+          !has(find.byType(AlertDialog))) {
         break;
       }
       await back();
@@ -324,7 +345,8 @@ class Combo {
 List<Combo> allCombos() => [
       for (final color in AppColorMode.values)
         for (final vibe in [AppShapeVibe.curvy, AppShapeVibe.boxy])
-          for (final b in [Brightness.light, Brightness.dark]) Combo(color, vibe, b),
+          for (final b in [Brightness.light, Brightness.dark])
+            Combo(color, vibe, b),
     ];
 
 Future<void> applyCombo(Combo combo) async {
@@ -340,7 +362,8 @@ Future<void> applyCombo(Combo combo) async {
     FlutterError.onError = (details) {
       final message = details.exceptionAsString();
       if (message.contains('overflowed')) {
-        debugPrint('[tour] OVERFLOW ${message.split('\n').first} @ $section/$shot');
+        debugPrint(
+            '[tour] OVERFLOW ${message.split('\n').first} @ $section/$shot');
         return;
       }
       previous?.call(details);
@@ -371,11 +394,13 @@ final data = TourData();
 
 Future<void> loadData() async {
   data.uid = FirebaseAuth.instance.currentUser!.uid;
-  final bikes = await safe('bikes', () => c.read(garageProvider.future).timeout(const Duration(seconds: 20)));
+  final bikes = await safe('bikes',
+      () => c.read(garageProvider.future).timeout(const Duration(seconds: 20)));
   if (bikes != null && bikes.isNotEmpty) {
     data.bikeId = bikes.first.id;
     for (final b in bikes) {
-      final rides = await safe('rides', () => c.read(rideHistoryProvider(b.id).future));
+      final rides =
+          await safe('rides', () => c.read(rideHistoryProvider(b.id).future));
       if (rides != null && rides.isNotEmpty) {
         data.bikeId = b.id;
         data.rideId = rides.first.id;
@@ -391,12 +416,17 @@ Future<void> loadData() async {
     return c.read(rideFeedNotifierProvider).rides;
   });
   if (feed != null && feed.isNotEmpty) {
-    final other = feed.firstWhere((r) => r.userId != data.uid, orElse: () => feed.first);
+    final other =
+        feed.firstWhere((r) => r.userId != data.uid, orElse: () => feed.first);
     data.sharedRideId = other.id;
     data.sharedRideExtra = other;
     if (other.userId != data.uid) data.otherUid = other.userId;
   }
-  final forums = await safe('forums', () => c.read(customForumsProvider.future).timeout(const Duration(seconds: 20)));
+  final forums = await safe(
+      'forums',
+      () => c
+          .read(customForumsProvider.future)
+          .timeout(const Duration(seconds: 20)));
   if (forums != null) {
     for (final f in forums) {
       // forumPostsProvider is autoDispose and paged now: keep it alive for
@@ -407,30 +437,50 @@ Future<void> loadData() async {
       if (posts != null && posts.isNotEmpty) {
         data.forumId = f.id;
         data.forumPostId = posts.first.id;
-        data.otherUid ??= posts.first.userId == data.uid ? null : posts.first.userId;
+        data.otherUid ??=
+            posts.first.userId == data.uid ? null : posts.first.userId;
         break;
       }
       data.forumId ??= f.id;
     }
   }
-  final mine = await safe('routes', () => c.read(myRoutesProvider.future).timeout(const Duration(seconds: 20)));
+  final mine = await safe(
+      'routes',
+      () =>
+          c.read(myRoutesProvider.future).timeout(const Duration(seconds: 20)));
   if (mine != null && mine.isNotEmpty) {
     data.routeId = mine.first.id;
   } else {
-    final pub =
-        await safe('publicRoutes', () => c.read(publicRoutesProvider.future).timeout(const Duration(seconds: 20)));
+    final pub = await safe(
+        'publicRoutes',
+        () => c
+            .read(publicRoutesProvider.future)
+            .timeout(const Duration(seconds: 20)));
     if (pub != null && pub.isNotEmpty) {
       data.routeId = pub.first.id;
       data.routeOwner = pub.first.userId;
     }
   }
-  final places =
-      await safe('places', () => c.read(nearbyPlacesProvider(placesDefaultRadiusKm).future).timeout(const Duration(seconds: 25)));
+  final places = await safe(
+      'places',
+      () => c
+          .read(nearbyPlacesProvider(placesDefaultRadiusKm).future)
+          .timeout(const Duration(seconds: 25)));
   if (places != null && places.isNotEmpty) data.placeId = places.first.id;
-  final myPlaces = await safe('myPlaces', () => c.read(myPlacesProvider.future).timeout(const Duration(seconds: 20)));
-  if (myPlaces != null && myPlaces.isNotEmpty) data.myPlaceId = myPlaces.first.id;
-  final chats = await safe('chats',
-      () => c.read(chatRepositoryProvider).watchUserChats(data.uid).first.timeout(const Duration(seconds: 20)));
+  final myPlaces = await safe(
+      'myPlaces',
+      () =>
+          c.read(myPlacesProvider.future).timeout(const Duration(seconds: 20)));
+  if (myPlaces != null && myPlaces.isNotEmpty) {
+    data.myPlaceId = myPlaces.first.id;
+  }
+  final chats = await safe(
+      'chats',
+      () => c
+          .read(chatRepositoryProvider)
+          .watchUserChats(data.uid)
+          .first
+          .timeout(const Duration(seconds: 20)));
   if (chats != null && chats.isNotEmpty) data.chatId = chats.first.id;
   log('data: uid=${data.uid} bike=${data.bikeId} ride=${data.rideId} shared=${data.sharedRideId} other=${data.otherUid} '
       'forum=${data.forumId}/${data.forumPostId} route=${data.routeId} place=${data.placeId} myPlace=${data.myPlaceId} chat=${data.chatId}');
@@ -468,12 +518,15 @@ Future<void> tourAuth() async {
     await snap('Sign in - filled');
     // Language-independent: in Bangla mode the button text is not "Sign In", and
     // failing to sign in leaves every later screenshot on the login screen.
-    await tapText(_tourLocale == 'bn' ? AppLocalizationsBn().signIn : 'Sign In', after: 300);
+    await tapText(_tourLocale == 'bn' ? AppLocalizationsBn().signIn : 'Sign In',
+        after: 300);
     final deadline = DateTime.now().add(const Duration(seconds: 30));
     while (!location.startsWith('/home') && DateTime.now().isBefore(deadline)) {
       await wait(300);
     }
-    if (!location.startsWith('/home')) throw StateError('login did not land on /home ($location)');
+    if (!location.startsWith('/home')) {
+      throw StateError('login did not land on /home ($location)');
+    }
   });
 }
 
@@ -485,7 +538,8 @@ Future<void> tourOnboarding() async {
     for (var i = 0; i < kOnboardingSlideCount; i++) {
       await snap('Step ${i + 1}');
       if (i < kOnboardingSlideCount - 1) {
-        await t.tap(find.byKey(const ValueKey('tour-next')).hitTestable(), warnIfMissed: false);
+        await t.tap(find.byKey(const ValueKey('tour-next')).hitTestable(),
+            warnIfMissed: false);
         await wait(900);
       }
     }
@@ -500,7 +554,8 @@ Future<void> tourOnboarding() async {
       await t.tap(showMe, warnIfMissed: false);
       await wait(1800);
       await snap('Show me with tour banner');
-      final backToTour = find.byKey(const ValueKey('tour-banner-back')).hitTestable();
+      final backToTour =
+          find.byKey(const ValueKey('tour-banner-back')).hitTestable();
       if (has(backToTour)) {
         await t.tap(backToTour, warnIfMissed: false);
         await wait(900);
@@ -520,7 +575,9 @@ Future<void> tourRecord() async {
   });
   await step('Record', () async {
     // Bike picker sheet (tap the active-bike card's switch affordance).
-    if (await tapIcon(Icons.swap_horiz) || await tapIcon(Icons.unfold_more) || await tapIcon(Icons.expand_more)) {
+    if (await tapIcon(Icons.swap_horiz) ||
+        await tapIcon(Icons.unfold_more) ||
+        await tapIcon(Icons.expand_more)) {
       if (has(find.byType(BottomSheet))) {
         await snap('Choose bike sheet');
         await back();
@@ -538,18 +595,22 @@ Future<void> tourRecord() async {
     await wait(600);
     await go('/ride/active', after: 5000);
     await snapScroll('Active ride', maxPages: 2);
-    await safe('pause', () => c.read(rideRecordingProvider.notifier).pauseRide());
+    await safe(
+        'pause', () => c.read(rideRecordingProvider.notifier).pauseRide());
     await wait(800);
     await snap('Ride paused');
-    await safe('resume', () => c.read(rideRecordingProvider.notifier).resumeRide());
+    await safe(
+        'resume', () => c.read(rideRecordingProvider.notifier).resumeRide());
     await wait(600);
-    if (await tapText('Discard', contains: true) || await tapTooltip('Discard ride')) {
+    if (await tapText('Discard', contains: true) ||
+        await tapTooltip('Discard ride')) {
       if (has(find.byType(AlertDialog))) await snap('Discard ride dialog');
       if (!await tapText('Discard')) await back();
     }
     // Always leave with no ride in progress.
     if (c.read(rideRecordingProvider).status != RecordingStatus.idle) {
-      await safe('cancel', () => c.read(rideRecordingProvider.notifier).cancelRide());
+      await safe(
+          'cancel', () => c.read(rideRecordingProvider.notifier).cancelRide());
     }
     await go('/home/record');
   });
@@ -580,7 +641,8 @@ Future<void> tourSocial() async {
   });
   await step('Shared ride', () async {
     if (data.sharedRideId == null) return;
-    await push('/rides/shared/${data.sharedRideId}', extra: data.sharedRideExtra, after: 3000);
+    await push('/rides/shared/${data.sharedRideId}',
+        extra: data.sharedRideExtra, after: 3000);
     await snapScroll('Shared ride detail', maxPages: 4);
     await back();
   });
@@ -593,7 +655,9 @@ Future<void> tourSocial() async {
   await step('Chats', () async {
     await push('/chats', after: 2000);
     await snap('Chats');
-    if (await tapIcon(Icons.edit_outlined) || await tapIcon(Icons.add) || await tapIcon(Icons.add_comment_outlined)) {
+    if (await tapIcon(Icons.edit_outlined) ||
+        await tapIcon(Icons.add) ||
+        await tapIcon(Icons.add_comment_outlined)) {
       if (has(find.byType(BottomSheet))) {
         await snap('New chat sheet');
         await back();
@@ -612,7 +676,8 @@ Future<void> tourSocial() async {
     await snapScroll('Forum', maxPages: 2);
     await snapOverlay('New post sheet', () => tapText('New post', after: 1200));
     if (data.forumPostId != null) {
-      await push('/forums/${data.forumId}/post/${data.forumPostId}', after: 2200);
+      await push('/forums/${data.forumId}/post/${data.forumPostId}',
+          after: 2200);
       await snap('Forum post');
       await back();
     }
@@ -632,12 +697,14 @@ Future<void> tourPlaces() async {
   await step('Places', () async {
     await go('/home/places', after: 3500);
     await snap('Places map');
-    final garages = find.byKey(const ValueKey('places-chip-garage')).hitTestable();
+    final garages =
+        find.byKey(const ValueKey('places-chip-garage')).hitTestable();
     if (ev(garages).isNotEmpty) {
       await t.tap(garages, warnIfMissed: false);
       await wait(2200);
       await snap('Places filtered');
-      await t.tap(find.byKey(const ValueKey('places-chip-all')).hitTestable(), warnIfMissed: false);
+      await t.tap(find.byKey(const ValueKey('places-chip-all')).hitTestable(),
+          warnIfMissed: false);
       await wait(600);
     }
     final listToggle = find.byIcon(Icons.view_list_outlined).hitTestable();
@@ -654,12 +721,15 @@ Future<void> tourPlaces() async {
       await snap(tab == Icons.route ? 'Places routes' : 'Places saved');
     }
     final placesSegment = find.byIcon(Icons.place_outlined).hitTestable();
-    if (ev(placesSegment).isNotEmpty) await t.tap(placesSegment.first, warnIfMissed: false);
+    if (ev(placesSegment).isNotEmpty) {
+      await t.tap(placesSegment.first, warnIfMissed: false);
+    }
   });
   await step('Place detail', () async {
     if (data.placeId == null) {
       // The list on screen has loaded by now even if the up-front lookup timed out.
-      final loaded = c.read(nearbyPlacesProvider(placesDefaultRadiusKm)).valueOrNull;
+      final loaded =
+          c.read(nearbyPlacesProvider(placesDefaultRadiusKm)).valueOrNull;
       if (loaded != null && loaded.isNotEmpty) data.placeId = loaded.first.id;
     }
     if (data.placeId == null) return;
@@ -679,7 +749,8 @@ Future<void> tourPlaces() async {
     for (var i = 1; i < ev(tabs).length; i++) {
       await t.tap(find.byType(Tab).at(i), warnIfMissed: false);
       await wait(2000);
-      await snap('Routes tab ${t.widget<Tab>(find.byType(Tab).at(i)).text ?? i}');
+      await snap(
+          'Routes tab ${t.widget<Tab>(find.byType(Tab).at(i)).text ?? i}');
     }
     if (data.routeId != null) {
       final q = data.routeOwner == null ? '' : '?owner=${data.routeOwner}';
@@ -701,12 +772,15 @@ Future<void> tourStats() async {
     final st = _mainScrollable();
     if (st != null) st.position.jumpTo(0);
     await wait(400);
-    await snapOverlay('Badge details sheet', () => tapTextVisible('First ride', after: 1200));
+    await snapOverlay(
+        'Badge details sheet', () => tapTextVisible('First ride', after: 1200));
   });
   await step('Rides & stats', () async {
     await push('/rides/all', after: 2000);
     await snapScroll('All rides', maxPages: 2);
-    if (await tapText('TOP SPEED', after: 1500)) await snap('All rides - by top speed');
+    if (await tapText('TOP SPEED', after: 1500)) {
+      await snap('All rides - by top speed');
+    }
     await back();
   });
   await step('Ride summary', () async {
@@ -730,7 +804,8 @@ Future<void> tourProfile() async {
     final pg = _mainScrollable();
     if (pg != null) pg.position.jumpTo(0);
     await wait(400);
-    await snapOverlay('Profile menu', () => tapText('View profile', after: 1200));
+    await snapOverlay(
+        'Profile menu', () => tapText('View profile', after: 1200));
   });
   await step('Bike', () async {
     if (data.bikeId == null) return;
@@ -748,7 +823,8 @@ Future<void> tourProfile() async {
     final ms = _mainScrollable();
     if (ms != null) ms.position.jumpTo(0);
     await wait(400);
-    await snapOverlay('Odometer sync sheet', () => tapText('Sync Odo', after: 1200));
+    await snapOverlay(
+        'Odometer sync sheet', () => tapText('Sync Odo', after: 1200));
     await go('/home/maintenance/configure?bikeId=${data.bikeId}', after: 2000);
     await snapScroll('Maintenance schedule', maxPages: 3);
     await go('/home/maintenance/add?bikeId=${data.bikeId}', after: 1800);
@@ -774,15 +850,19 @@ Future<void> tourProfile() async {
     final ss = _mainScrollable();
     if (ss != null) ss.position.jumpTo(0);
     await wait(500);
-    final dropdown = find.byWidgetPredicate((w) => w is DropdownButtonFormField<AppColorMode>).hitTestable();
+    final dropdown = find
+        .byWidgetPredicate((w) => w is DropdownButtonFormField<AppColorMode>)
+        .hitTestable();
     if (has(dropdown)) {
       await t.tap(dropdown.first, warnIfMissed: false);
       await wait(1000);
       await snap('Color picker');
       // Close by re-picking the current color, so the theme doesn't change.
       final current = c.read(appearanceProvider).colorMode;
-      final item =
-          find.byWidgetPredicate((w) => w is DropdownMenuItem<AppColorMode> && w.value == current).hitTestable();
+      final item = find
+          .byWidgetPredicate(
+              (w) => w is DropdownMenuItem<AppColorMode> && w.value == current)
+          .hitTestable();
       if (has(item)) {
         await t.tap(item.last, warnIfMissed: false);
       } else {
@@ -790,8 +870,10 @@ Future<void> tourProfile() async {
       }
       await wait(800);
     }
-    await snapOverlay('Add emergency contact', () => tapTextVisible('Add', after: 1000));
-    await snapOverlay('Bug report sheet', () => tapTextVisible('Send Bug Report', after: 1200));
+    await snapOverlay(
+        'Add emergency contact', () => tapTextVisible('Add', after: 1000));
+    await snapOverlay('Bug report sheet',
+        () => tapTextVisible('Send Bug Report', after: 1200));
     await back();
     await push('/safe-qr', after: 2000);
     await snap('Safe QR');
@@ -838,14 +920,19 @@ void main() {
     File('${tourDir.path}/ready').writeAsStringSync('1');
     if (_dumpTexts) textLog = File('${tourDir.path}/texts.log').openWrite();
 
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
     // Rendering glitches (overflow stripes etc.) must not abort the tour;
     // they are logged, and the tour keeps going.
     final originalOnError = FlutterError.onError;
     FlutterError.onError = (d) {
-      final frames =
-          d.stack.toString().split('\n').where((l) => l.contains('package:throttleiq')).take(6).join('\n    ');
+      final frames = d.stack
+          .toString()
+          .split('\n')
+          .where((l) => l.contains('package:throttleiq'))
+          .take(6)
+          .join('\n    ');
       log('flutter error: ${d.exceptionAsString().split('\n').first}\n    $frames');
     };
 
@@ -857,7 +944,8 @@ void main() {
       // Make sure we know who we are signed in as before looking up data.
       if (FirebaseAuth.instance.currentUser?.email != _email) {
         await FirebaseAuth.instance.signOut();
-        await FirebaseAuth.instance.signInWithEmailAndPassword(email: _email, password: _password);
+        await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: _email, password: _password);
         await wait(3000);
       }
       await go('/home/record', after: 4000);
@@ -871,7 +959,8 @@ void main() {
       }
 
       // Leave the simulator signed in on the default look.
-      await applyCombo(const Combo(AppColorMode.commute, AppShapeVibe.curvy, Brightness.light));
+      await applyCombo(const Combo(
+          AppColorMode.commute, AppShapeVibe.curvy, Brightness.light));
       await textLog?.flush();
       await textLog?.close();
     } catch (e, st) {

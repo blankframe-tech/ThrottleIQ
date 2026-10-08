@@ -28,31 +28,39 @@ void main() {
   _systemBrightnessTests();
 
   group('AppearanceNotifier', () {
-    test('defaults to Commute/Curvy/Light and resolves its palette immediately', () async {
+    test('defaults to Commute/Curvy/Light and resolves its palette immediately',
+        () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
+      expect(
+          container.read(appearanceProvider), AppAppearance.defaultAppearance);
       expect(_palette(container).primary, AppColorPalette.commuteLight.primary);
-      expect(_palette(container).background, AppColorPalette.commuteLight.background);
+      expect(_palette(container).background,
+          AppColorPalette.commuteLight.background);
 
       await pumpEventQueue();
     });
 
-    test('setColorMode(sport) flips the provider state and its palette, and persists it', () async {
+    test(
+        'setColorMode(sport) flips the provider state and its palette, and persists it',
+        () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.sport);
+      await container
+          .read(appearanceProvider.notifier)
+          .setColorMode(AppColorMode.sport);
 
       expect(container.read(appearanceProvider).colorMode, AppColorMode.sport);
       // Brightness/vibe are untouched by a color-only change.
       expect(container.read(appearanceProvider).brightness, Brightness.light);
       expect(_palette(container).primary, AppColorPalette.sportLight.primary);
-      expect(_palette(container).background, AppColorPalette.sportLight.background);
+      expect(_palette(container).background,
+          AppColorPalette.sportLight.background);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('color_mode'), 'sport');
@@ -70,24 +78,31 @@ void main() {
           .read(appearanceProvider.notifier)
           .setBrightnessMode(AppBrightnessMode.dark);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.commute);
+      expect(
+          container.read(appearanceProvider).colorMode, AppColorMode.commute);
       expect(container.read(appearanceProvider).brightness, Brightness.dark);
-      expect(_palette(container).background, AppColorPalette.commuteDark.background);
+      expect(_palette(container).background,
+          AppColorPalette.commuteDark.background);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('brightness'), 'dark');
     });
 
-    test('setShapeVibe(boxy) flips shape only, resolves its shape profile, and persists it', () async {
+    test(
+        'setShapeVibe(boxy) flips shape only, resolves its shape profile, and persists it',
+        () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
       // Curvy is the default now, so boxy is the one that's a real transition.
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+      await container
+          .read(appearanceProvider.notifier)
+          .setShapeVibe(AppShapeVibe.boxy);
 
-      expect(container.read(appearanceProvider).colorMode, AppColorMode.commute);
+      expect(
+          container.read(appearanceProvider).colorMode, AppColorMode.commute);
       expect(container.read(appearanceProvider).shapeVibe, AppShapeVibe.boxy);
       expect(_shape(container), same(AppShapeProfile.boxy));
 
@@ -102,8 +117,12 @@ void main() {
       // All three set to values other than the default, so every axis's
       // persistence is actually exercised rather than one falling back to
       // an un-set key that happens to match the default anyway.
-      await writer.read(appearanceProvider.notifier).setColorMode(AppColorMode.adv);
-      await writer.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+      await writer
+          .read(appearanceProvider.notifier)
+          .setColorMode(AppColorMode.adv);
+      await writer
+          .read(appearanceProvider.notifier)
+          .setShapeVibe(AppShapeVibe.boxy);
       await writer
           .read(appearanceProvider.notifier)
           .setBrightnessMode(AppBrightnessMode.dark);
@@ -120,7 +139,8 @@ void main() {
       expect(restored.brightness, Brightness.dark);
     });
 
-    test('every color mode persists under its enum name and restores', () async {
+    test('every color mode persists under its enum name and restores',
+        () async {
       for (final mode in AppColorMode.values) {
         SharedPreferences.setMockInitialValues({});
         final writer = ProviderContainer();
@@ -140,12 +160,15 @@ void main() {
         final reader = ProviderContainer();
         reader.read(appearanceProvider);
         await pumpEventQueue();
-        expect(reader.read(appearanceProvider).colorMode, mode, reason: '$mode');
+        expect(reader.read(appearanceProvider).colorMode, mode,
+            reason: '$mode');
         reader.dispose();
       }
     });
 
-    test('an unrecognised persisted color_mode falls back to the default color, other explicit axes stand', () async {
+    test(
+        'an unrecognised persisted color_mode falls back to the default color, other explicit axes stand',
+        () async {
       // e.g. a mode removed since it was written (positiveVibes/genesis/
       // cuteAnalyst), or prefs carried back to an older build. Only the bad
       // axis falls back to the default — shape_vibe/brightness were
@@ -215,7 +238,8 @@ void main() {
       };
 
       for (final entry in cases.entries) {
-        test('"${entry.key}" migrates to ${entry.value.colorMode}/'
+        test(
+            '"${entry.key}" migrates to ${entry.value.colorMode}/'
             '${entry.value.shapeVibe}/${entry.value.brightness}', () async {
           SharedPreferences.setMockInitialValues({'theme_style': entry.key});
           final container = ProviderContainer();
@@ -276,19 +300,26 @@ void main() {
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.race);
+      await container
+          .read(appearanceProvider.notifier)
+          .setColorMode(AppColorMode.race);
       expect(_palette(container).monoDisplay, isTrue);
       expect(_palette(container).border, AppColorPalette.raceLight.ink);
 
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+      await container
+          .read(appearanceProvider.notifier)
+          .setShapeVibe(AppShapeVibe.boxy);
       expect(_palette(container).monoDisplay, isTrue);
       expect(_shape(container).radiusXl, AppShapeProfile.boxy.radiusXl);
 
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.sport);
+      await container
+          .read(appearanceProvider.notifier)
+          .setColorMode(AppColorMode.sport);
       expect(_palette(container).monoDisplay, isFalse);
     });
 
-    test('an appearance resolves its shape profile alongside its palette', () async {
+    test('an appearance resolves its shape profile alongside its palette',
+        () async {
       // AppTheme.build resolves color, shape and type from one appearance on
       // purpose.
       SharedPreferences.setMockInitialValues({});
@@ -296,29 +327,38 @@ void main() {
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
+      expect(
+          container.read(appearanceProvider), AppAppearance.defaultAppearance);
       expect(_shape(container), same(AppShapeProfile.curvy));
 
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+      await container
+          .read(appearanceProvider.notifier)
+          .setShapeVibe(AppShapeVibe.boxy);
       expect(_shape(container), same(AppShapeProfile.boxy));
       expect(_shape(container).radiusMd, AppShapeProfile.boxy.radiusMd);
 
       // ...and switching back must take the rounded corners with it.
-      await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+      await container
+          .read(appearanceProvider.notifier)
+          .setShapeVibe(AppShapeVibe.curvy);
       expect(_shape(container), same(AppShapeProfile.curvy));
       expect(_shape(container).radiusMd, AppShapeProfile.curvy.radiusMd);
     });
 
-    test('setColorMode is a no-op when already on the requested mode', () async {
+    test('setColorMode is a no-op when already on the requested mode',
+        () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
       await pumpEventQueue();
 
       // Commute is the default now, so requesting it again is the no-op case.
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.commute);
+      await container
+          .read(appearanceProvider.notifier)
+          .setColorMode(AppColorMode.commute);
 
-      expect(container.read(appearanceProvider), AppAppearance.defaultAppearance);
+      expect(
+          container.read(appearanceProvider), AppAppearance.defaultAppearance);
       final prefs = await SharedPreferences.getInstance();
       // Never persisted anything, since setColorMode returned early.
       expect(prefs.getString('color_mode'), isNull);

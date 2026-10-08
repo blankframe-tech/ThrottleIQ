@@ -13,7 +13,8 @@ import '../../../../l10n/app_localizations.dart';
 ///
 /// A `switch` with no `default`, so adding a mode without naming it is a
 /// compile error rather than a blank tile in the picker.
-String colorModeLabel(AppLocalizations l10n, AppColorMode mode) => switch (mode) {
+String colorModeLabel(AppLocalizations l10n, AppColorMode mode) =>
+    switch (mode) {
       AppColorMode.sport => l10n.themeSportLabel,
       AppColorMode.rain => l10n.themeRainLabel,
       AppColorMode.race => l10n.themeRaceLabel,
@@ -58,8 +59,7 @@ class ColorModeSegmentedPicker extends ConsumerWidget {
           selected: appearance.colorMode == mode,
           shapeVibe: appearance.shapeVibe,
           brightness: appearance.brightness,
-          onTap: () =>
-              ref.read(appearanceProvider.notifier).setColorMode(mode),
+          onTap: () => ref.read(appearanceProvider.notifier).setColorMode(mode),
         );
 
     return Container(
@@ -146,9 +146,8 @@ class _ColorModeSegmentOption extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: selected
-                          ? onSelected
-                          : context.palette.textPrimary,
+                      color:
+                          selected ? onSelected : context.palette.textPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

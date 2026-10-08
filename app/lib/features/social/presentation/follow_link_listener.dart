@@ -55,7 +55,8 @@ class FollowLinkListener {
     _ref.listen(authStateProvider, (_, __) => unawaited(_drain()));
 
     try {
-      _pendingUid = await _ref.read(followLinkStoreProvider).readPendingFollow();
+      _pendingUid =
+          await _ref.read(followLinkStoreProvider).readPendingFollow();
     } catch (e) {
       debugPrint('[follow-link] pending read failed: $e');
     }
@@ -85,7 +86,8 @@ class FollowLinkListener {
       debugPrint('[follow-link] pending save failed: $e');
     }
     if (_ref.read(currentUserProvider) == null) {
-      _showMessage(resolveL10n(_ref.read(appLocaleProvider)).followLinkSignInFirst);
+      _showMessage(
+          resolveL10n(_ref.read(appLocaleProvider)).followLinkSignInFirst);
     }
     await _drain();
   }

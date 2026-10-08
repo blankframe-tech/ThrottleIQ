@@ -6,7 +6,7 @@ set -euo pipefail
 #
 # Pipeline:
 #   1. Pre-flight QA & Guardian checks
-#   2. Commit & Push to origin/master
+#   2. Commit & Push to origin (current branch)
 #   3. Build and launch release build on connected iPhone
 #   4. Build Android APK & AAB
 #   5. Create GitHub Release with tag and attach APK & AAB

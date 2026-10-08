@@ -25,6 +25,9 @@ jobs:
         working-directory: app
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Full history so the format check can diff against the push/PR base.
+          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           # Keep in step with the version used locally (`flutter --version`).
@@ -53,6 +56,30 @@ jobs:
           count=$(grep -rn "catch (_)" app/lib | wc -l)
           echo "bare catch (_): $count (max 67)"
           test "$count" -le 67
+      # Formatting is checked on changed Dart files only, so a stray
+      # whole-folder `dart format` shows up as a failing diff instead of noise.
+      - name: Format check (changed Dart files)
+        if: ${{ !cancelled() }}
+        working-directory: .
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "No usable base commit; skipping."; exit 0
+          fi
+          files=$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD -- 'app/*.dart' \
+            | grep -vE '(\.g\.dart|l10n/app_localizations.*\.dart)$' || true)
+          [ -z "$files" ] && { echo "No Dart changes."; exit 0; }
+          echo "$files" | xargs dart format --output=none --set-exit-if-changed
+      # Team NJ4675FFUX is a personal Apple team: paid-only entitlements
+      # (Associated Domains, push, iCloud, Sign in with Apple) break every
+      # iPhone build. See .agents/skills/deploy/SKILL.md.
+      - name: Guard against paid-only iOS entitlements
+        if: ${{ !cancelled() }}
+        working-directory: .
+        run: |
+          ! grep -nE '<key>(com\.apple\.developer\.(associated-domains|icloud[^<]*|applesignin|usernotifications[^<]*)|aps-environment)</key>' \
+            app/ios/*/*.entitlements
 
   rules:
     runs-on: ubuntu-24.04

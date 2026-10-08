@@ -77,6 +77,8 @@ __pycache__/
 *.py[cod]
 # one-off patch/scratch scripts dropped in the repo root
 /*.py
+# Local one-off patch scripts, moved out of the repo root (2026-10-09).
+/scripts/archive/*.py
 website_demo/assets/posters/fonts/
 
 # Firebase

@@ -49,7 +49,8 @@ void main() {
     }
 
     test('keeps the uid case-sensitive', () {
-      expect(parseFollowLink('https://blankframe.tech/ThrottleIQ/u/AbC'), 'AbC');
+      expect(
+          parseFollowLink('https://blankframe.tech/ThrottleIQ/u/AbC'), 'AbC');
     });
 
     test('uids with - and _ (emulator / custom auth)', () {
@@ -86,8 +87,7 @@ void main() {
 
   group('precheckFollowLink', () {
     test('unparsed link is invalid, whatever else holds', () {
-      expect(
-          precheckFollowLink(targetUid: null, myUid: 'me', following: {}),
+      expect(precheckFollowLink(targetUid: null, myUid: 'me', following: {}),
           FollowLinkOutcome.invalid);
       expect(precheckFollowLink(targetUid: null, myUid: null, following: {}),
           FollowLinkOutcome.invalid);

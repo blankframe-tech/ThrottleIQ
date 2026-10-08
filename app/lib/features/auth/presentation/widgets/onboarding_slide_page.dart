@@ -63,7 +63,8 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
     final start = (index * 0.08).clamp(0.0, 0.5);
     final curve = CurvedAnimation(
       parent: _entrance,
-      curve: Interval(start, math.min(1, start + 0.6), curve: Curves.easeOutCubic),
+      curve:
+          Interval(start, math.min(1, start + 0.6), curve: Curves.easeOutCubic),
     );
     return FadeTransition(
       opacity: curve,
@@ -83,9 +84,8 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
 
     return LayoutBuilder(builder: (context, constraints) {
       final compact = constraints.maxHeight < kTourCompactHeight;
-      final previewHeight = compact
-          ? 170.0
-          : (constraints.maxHeight * 0.4).clamp(200.0, 260.0);
+      final previewHeight =
+          compact ? 170.0 : (constraints.maxHeight * 0.4).clamp(200.0, 260.0);
 
       return SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
@@ -181,8 +181,7 @@ class _PointerTile extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(shape.radiusSm),
+                          borderRadius: BorderRadius.circular(shape.radiusSm),
                           border: Border.all(color: palette.textSecondary),
                         ),
                         child: Text(
@@ -217,7 +216,8 @@ class _PointerTile extends StatelessWidget {
 }
 
 class _NumberBadge extends StatelessWidget {
-  const _NumberBadge({required this.number, required this.accent, this.size = 26});
+  const _NumberBadge(
+      {required this.number, required this.accent, this.size = 26});
 
   final int number;
   final Color accent;
@@ -232,7 +232,8 @@ class _NumberBadge extends StatelessWidget {
       decoration: BoxDecoration(
         // Tinted fill over the surface, number in body ink: readable whatever
         // the accent's own luminance is.
-        color: Color.alphaBlend(accent.withValues(alpha: 0.16), palette.surface),
+        color:
+            Color.alphaBlend(accent.withValues(alpha: 0.16), palette.surface),
         shape: BoxShape.circle,
         border: Border.all(color: accent, width: 1.5),
       ),
@@ -326,7 +327,8 @@ class _TourSpotlightPreviewState extends State<TourSpotlightPreview>
                       gradient: RadialGradient(
                         radius: 0.9,
                         colors: [
-                          accent.withValues(alpha: palette.isDark ? 0.18 : 0.12),
+                          accent.withValues(
+                              alpha: palette.isDark ? 0.18 : 0.12),
                           palette.surface.withValues(alpha: 0),
                         ],
                       ),
@@ -640,8 +642,9 @@ class TourProgressHeader extends StatelessWidget {
     final palette = context.palette;
     final shape = context.shape;
     final l10n = context.l10n;
-    final duration =
-        _reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 320);
+    final duration = _reduceMotion(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 320);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -728,8 +731,9 @@ class TourControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final duration =
-        _reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 220);
+    final duration = _reduceMotion(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 220);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,

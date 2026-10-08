@@ -200,10 +200,8 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           unawaited(_reconcileDetectedRides());
           // Archived bikes older than three months are deleted for good. No
           // scheduled functions on Spark, so this is where it happens.
-          unawaited(ref
-              .read(bikeArchiveServiceProvider)
-              .purgeExpired(uid)
-              .then((n) {
+          unawaited(
+              ref.read(bikeArchiveServiceProvider).purgeExpired(uid).then((n) {
             if (n > 0) ref.invalidate(garageProvider);
           }));
         } else {

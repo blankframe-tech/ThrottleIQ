@@ -134,7 +134,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         await ref.read(garageProvider.notifier).addBike(
               brand: _brandCtrl.text.trim(),
               model: _modelCtrl.text.trim(),
-              year: parseLocalizedInt(_yearCtrl.text, min: 1900, max: DateTime.now().year + 1),
+              year: parseLocalizedInt(_yearCtrl.text,
+                  min: 1900, max: DateTime.now().year + 1),
               cc: parseLocalizedInt(_ccCtrl.text, min: 1, max: 3000),
             );
         if (mounted) {
@@ -146,8 +147,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(context.l10n.errorWithDetail(e))));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.errorWithDetail(e))));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -158,9 +159,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // ─── Tour navigation ────────────────────────────────────────────────────────
 
-  Duration get _pageDuration => (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
-      ? const Duration(milliseconds: 1)
-      : const Duration(milliseconds: 380);
+  Duration get _pageDuration =>
+      (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+          ? const Duration(milliseconds: 1)
+          : const Duration(milliseconds: 380);
 
   Future<void> _skipTour() async {
     if (!widget.demoMode) {
@@ -253,7 +255,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     EditProfileScreen.showBioPromptSheet(context);
   }
 
-
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -291,7 +292,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 // ── Heading ───────────────────────────────────────────────
                 Text(
-                  _step == 0 ? context.l10n.whatShouldWeCall : context.l10n.addFirstBike,
+                  _step == 0
+                      ? context.l10n.whatShouldWeCall
+                      : context.l10n.addFirstBike,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -306,7 +309,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ? context.l10n.nameHandleSoCommunity
                       : context.l10n.throttleiqTracksRidesMaintenance,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary, height: 1.4),
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: context.palette.textSecondary,
+                      height: 1.4),
                 ),
                 const SizedBox(height: 32),
 
@@ -327,7 +333,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: context.palette.primary),
                         )
-                      : Text(_step == 0 ? context.l10n.continueAction : context.l10n.addBikeTakeTour),
+                      : Text(_step == 0
+                          ? context.l10n.continueAction
+                          : context.l10n.addBikeTakeTour),
                 ),
 
                 const SizedBox(height: 12),
@@ -370,7 +378,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             labelText: context.l10n.fullName,
             hintText: context.l10n.eGRahimHossain,
           ),
-          validator: (v) => v == null || v.isEmpty ? context.l10n.nameRequired : null,
+          validator: (v) =>
+              v == null || v.isEmpty ? context.l10n.nameRequired : null,
         ),
         const SizedBox(height: 12),
         TextFormField(
@@ -416,7 +425,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _yearCtrl,
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: InputDecoration(labelText: context.l10n.year, hintText: '2023'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.year, hintText: '2023'),
               ),
             ),
             const SizedBox(width: 12),
@@ -425,7 +435,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _ccCtrl,
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: InputDecoration(labelText: context.l10n.engineCc, hintText: '150'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.engineCc, hintText: '150'),
               ),
             ),
           ],
@@ -496,7 +507,11 @@ class _SetupProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final steps = [context.l10n.yourInfo, context.l10n.yourBike, context.l10n.featureTour];
+    final steps = [
+      context.l10n.yourInfo,
+      context.l10n.yourBike,
+      context.l10n.featureTour
+    ];
     return Row(
       children: List.generate(steps.length, (i) {
         final isDone = i < currentStep;
@@ -535,7 +550,8 @@ class _SetupProgressBar extends StatelessWidget {
                 child: isDone
                     ? Icon(Icons.check,
                         size: 14,
-                        color: AppTheme.primaryButtonForeground(context.palette))
+                        color:
+                            AppTheme.primaryButtonForeground(context.palette))
                     : Center(
                         child: Text(
                           '${i + 1}',
@@ -554,7 +570,9 @@ class _SetupProgressBar extends StatelessWidget {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: i < currentStep ? context.palette.primary : context.palette.border,
+                    color: i < currentStep
+                        ? context.palette.primary
+                        : context.palette.border,
                   ),
                 ),
             ],

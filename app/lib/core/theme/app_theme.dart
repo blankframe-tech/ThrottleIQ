@@ -40,7 +40,9 @@ class AppTheme {
 
   static ThemeData build(AppAppearance appearance) {
     final isDark = appearance.brightness == Brightness.dark;
-    final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
+    final base = isDark
+        ? ThemeData.dark(useMaterial3: true)
+        : ThemeData.light(useMaterial3: true);
 
     final palette =
         AppColorPalette.forMode(appearance.colorMode, appearance.brightness);
@@ -121,7 +123,8 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle:
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         titleTextStyle: GoogleFonts.ibmPlexMono(
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -142,8 +145,7 @@ class AppTheme {
         filled: true,
         fillColor: palette.surface,
         contentPadding: EdgeInsets.symmetric(
-            horizontal: shape.fieldPaddingH,
-            vertical: shape.fieldPaddingV),
+            horizontal: shape.fieldPaddingH, vertical: shape.fieldPaddingV),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(shape.radiusMd),
           borderSide: BorderSide(color: palette.border),
@@ -191,8 +193,7 @@ class AppTheme {
           foregroundColor: palette.textPrimary,
           minimumSize: Size.fromHeight(shape.controlHeight),
           side: BorderSide(
-              color: palette.textPrimary,
-              width: shape.emphasisOutlineWidth),
+              color: palette.textPrimary, width: shape.emphasisOutlineWidth),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(shape.radiusMd),
           ),

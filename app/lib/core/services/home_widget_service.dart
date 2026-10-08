@@ -286,8 +286,8 @@ class NextServiceDue {
 NextServiceDue? nextServiceDue(List<CheckForecast> forecasts) {
   final f = upNext(forecasts);
   if (f == null) return null;
-  final byTime = f.daysLeft != null &&
-      (f.kmLeft == null || f.trigger == DueTrigger.time);
+  final byTime =
+      f.daysLeft != null && (f.kmLeft == null || f.trigger == DueTrigger.time);
   return NextServiceDue(
     serviceType: f.serviceType,
     label: (f.customLabel != null && f.customLabel!.trim().isNotEmpty)
@@ -539,8 +539,11 @@ class HomeWidgetService {
         daysUntilDue: daysUntilDue,
       );
       await Future.wait([
-        _save(kWidgetKeyBikeName,
-            bikeName.trim().isEmpty ? kWidgetPlaceholderValue : bikeName.trim()),
+        _save(
+            kWidgetKeyBikeName,
+            bikeName.trim().isEmpty
+                ? kWidgetPlaceholderValue
+                : bikeName.trim()),
         _save(kWidgetKeyServiceLabel, nextServiceLabel),
         _save(kWidgetKeyServiceSummary, summary),
         _save(kWidgetKeyKmUntilDue, formatKm(kmUntilDue.abs())),
@@ -625,11 +628,9 @@ class HomeWidgetService {
     await _update(
         androidName: androidMaintenanceWidget, iOSName: iosMaintenanceWidget);
     await _update(
-        androidName: androidAutoTrackingWidget,
-        iOSName: iosAutoTrackingWidget);
+        androidName: androidAutoTrackingWidget, iOSName: iosAutoTrackingWidget);
     await _update(
-        androidName: androidApexHunterWidget,
-        iOSName: iosApexHunterWidget);
+        androidName: androidApexHunterWidget, iOSName: iosApexHunterWidget);
   }
 
   /// Reads the offline-first local database (the same tables the Stats hub and

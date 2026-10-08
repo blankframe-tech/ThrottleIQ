@@ -48,7 +48,8 @@ class _MyFollowQrScreenState extends ConsumerState<MyFollowQrScreen> {
     return file;
   }
 
-  Future<void> _run(Future<void> Function(String uid, String link) action) async {
+  Future<void> _run(
+      Future<void> Function(String uid, String link) action) async {
     final uid = ref.read(currentUserProvider)?.uid;
     final link = ref.read(myFollowLinkProvider).valueOrNull;
     if (_busy || uid == null || link == null) return;
@@ -134,7 +135,8 @@ class _MyFollowQrScreenState extends ConsumerState<MyFollowQrScreen> {
               Text(
                 l10n.myQrIntro,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 13, color: context.palette.textSecondary),
               ),
               const SizedBox(height: 24),
               Center(
@@ -181,7 +183,8 @@ class _MyFollowQrScreenState extends ConsumerState<MyFollowQrScreen> {
               SelectableText(
                 link,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 24),
               Row(
@@ -207,7 +210,8 @@ class _MyFollowQrScreenState extends ConsumerState<MyFollowQrScreen> {
               const SizedBox(height: 12),
               TextButton.icon(
                 onPressed: () => context.pushReplacement('/profile/scan'),
-                icon: Icon(Icons.qr_code_scanner, color: context.palette.primary),
+                icon:
+                    Icon(Icons.qr_code_scanner, color: context.palette.primary),
                 label: Text(l10n.scanQrAction,
                     style: TextStyle(color: context.palette.primary)),
               ),

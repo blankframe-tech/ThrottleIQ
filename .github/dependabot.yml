@@ -1,14 +1,28 @@
 version: 2
+# Minor/patch updates only, a few PRs at a time. Major bumps (e.g. typescript,
+# firebase-admin, flutter_timezone) need a deliberate migration, so do them by hand.
 updates:
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "pub"
     directory: "/app"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

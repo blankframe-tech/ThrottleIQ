@@ -44,7 +44,8 @@ void main() {
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     for (final mode in AppColorMode.values) {
-      expect(find.text(colorModeLabel(l10n, mode)), findsWidgets, reason: '$mode');
+      expect(find.text(colorModeLabel(l10n, mode)), findsWidgets,
+          reason: '$mode');
       expect(find.text(colorModeDescription(l10n, mode)), findsWidgets,
           reason: '$mode');
     }
@@ -114,7 +115,8 @@ void main() {
     expect(pitch, greaterThanOrEqualTo(48.0));
   });
 
-  testWidgets('each row previews its own palette, at the currently active brightness',
+  testWidgets(
+      'each row previews its own palette, at the currently active brightness',
       (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -126,12 +128,14 @@ void main() {
 
     final backgrounds = tester
         .widgetList<ColorModeSwatch>(find.byType(ColorModeSwatch))
-        .map((s) => AppColorPalette.forMode(s.mode, s.brightness).background.toARGB32())
+        .map((s) =>
+            AppColorPalette.forMode(s.mode, s.brightness).background.toARGB32())
         .toSet();
     expect(
       backgrounds.length,
       AppColorMode.values
-          .map((m) => AppColorPalette.forMode(m, Brightness.dark).background.toARGB32())
+          .map((m) =>
+              AppColorPalette.forMode(m, Brightness.dark).background.toARGB32())
           .toSet()
           .length,
     );
@@ -141,7 +145,9 @@ void main() {
       (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.curvy);
+    await container
+        .read(appearanceProvider.notifier)
+        .setShapeVibe(AppShapeVibe.curvy);
     await tester.pumpWidget(harness(container));
     await tester.pumpAndSettle();
 
@@ -182,7 +188,8 @@ void main() {
         ),
       );
 
-  testWidgets('ColorModeSegmentedPicker shows all seven ride modes and switches on tap',
+  testWidgets(
+      'ColorModeSegmentedPicker shows all seven ride modes and switches on tap',
       (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -196,7 +203,11 @@ void main() {
       expect(find.text(colorModeDescription(l10n, mode)), findsOneWidget);
     }
 
-    for (final mode in [AppColorMode.race, AppColorMode.city, AppColorMode.rain]) {
+    for (final mode in [
+      AppColorMode.race,
+      AppColorMode.city,
+      AppColorMode.rain
+    ]) {
       await tester.tap(find.text(colorModeLabel(l10n, mode)));
       await tester.pumpAndSettle();
       expect(container.read(appearanceProvider).colorMode, mode);

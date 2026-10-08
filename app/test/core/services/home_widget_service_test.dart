@@ -10,7 +10,8 @@ import 'package:throttleiq/features/maintenance/domain/calculators/maintenance_f
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 
-MaintenanceEntity _log(ServiceType type, double odometerKm) => MaintenanceEntity(
+MaintenanceEntity _log(ServiceType type, double odometerKm) =>
+    MaintenanceEntity(
       id: '$type-$odometerKm',
       bikeId: 'bike-1',
       serviceType: type,
@@ -63,7 +64,8 @@ void main() {
       expect(formatKm(1000000000), '1,000,000,000 km');
     });
 
-    test('negative and non-finite inputs never render NaN on a home screen', () {
+    test('negative and non-finite inputs never render NaN on a home screen',
+        () {
       expect(formatKm(-1), '0 km');
       expect(formatKm(-9999), '0 km');
       expect(formatKm(double.nan), '0 km');
@@ -183,10 +185,13 @@ void main() {
 
     test('sums only the rolling last 7 days', () {
       final rides = [
-        _ride(startTime: now.subtract(const Duration(days: 1)), distanceM: 40000),
-        _ride(startTime: now.subtract(const Duration(days: 6)), distanceM: 15500),
+        _ride(
+            startTime: now.subtract(const Duration(days: 1)), distanceM: 40000),
+        _ride(
+            startTime: now.subtract(const Duration(days: 6)), distanceM: 15500),
         // Older than the window — excluded.
-        _ride(startTime: now.subtract(const Duration(days: 8)), distanceM: 90000),
+        _ride(
+            startTime: now.subtract(const Duration(days: 8)), distanceM: 90000),
       ];
       expect(weeklyDistanceKm(rides, now: now), closeTo(55.5, 1e-9));
     });
@@ -196,7 +201,10 @@ void main() {
     final now = DateTime(2026, 10, 6);
     MaintenanceConfigEntity cfg(ServiceType t, double km, [int? days]) =>
         MaintenanceConfigEntity(
-            bikeId: 'bike-1', serviceType: t, intervalKm: km, intervalDays: days);
+            bikeId: 'bike-1',
+            serviceType: t,
+            intervalKm: km,
+            intervalDays: days);
     List<CheckForecast> forecast(double odo, List<MaintenanceEntity> logs,
             List<MaintenanceConfigEntity> configs) =>
         forecastChecks(
@@ -381,16 +389,14 @@ void main() {
 
     test('rejects a foreign scheme, even with a matching host', () {
       expect(
-        HomeWidgetService.isAutoTrackingUri(
-            Uri.parse('https://autotracking')),
+        HomeWidgetService.isAutoTrackingUri(Uri.parse('https://autotracking')),
         isFalse,
       );
     });
 
     test('the advertised URI constant is the one that matches', () {
       expect(
-        HomeWidgetService.isAutoTrackingUri(
-            HomeWidgetService.autoTrackingUri),
+        HomeWidgetService.isAutoTrackingUri(HomeWidgetService.autoTrackingUri),
         isTrue,
       );
     });
@@ -399,8 +405,7 @@ void main() {
   group('HomeWidgetService.isApexHunterUri', () {
     test('matches the apex hunter URI', () {
       expect(
-        HomeWidgetService.isApexHunterUri(
-            Uri.parse('throttleiq://apexhunter')),
+        HomeWidgetService.isApexHunterUri(Uri.parse('throttleiq://apexhunter')),
         isTrue,
       );
     });
@@ -421,13 +426,11 @@ void main() {
     test('rejects null or non-matching URIs', () {
       expect(HomeWidgetService.isApexHunterUri(null), isFalse);
       expect(
-        HomeWidgetService.isApexHunterUri(
-            Uri.parse('throttleiq://startride')),
+        HomeWidgetService.isApexHunterUri(Uri.parse('throttleiq://startride')),
         isFalse,
       );
       expect(
-        HomeWidgetService.isApexHunterUri(
-            Uri.parse('https://apexhunter')),
+        HomeWidgetService.isApexHunterUri(Uri.parse('https://apexhunter')),
         isFalse,
       );
     });
@@ -492,13 +495,17 @@ void main() {
   });
 
   group('homeWidgetServiceProvider & refreshWithData', () {
-    test('homeWidgetServiceProvider provides the HomeWidgetService instance', () {
+    test('homeWidgetServiceProvider provides the HomeWidgetService instance',
+        () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      expect(container.read(homeWidgetServiceProvider), same(HomeWidgetService.instance));
+      expect(container.read(homeWidgetServiceProvider),
+          same(HomeWidgetService.instance));
     });
 
-    test('refreshWithData runs safely without throwing when widgets are unplaced', () async {
+    test(
+        'refreshWithData runs safely without throwing when widgets are unplaced',
+        () async {
       final service = HomeWidgetService();
       await service.refreshWithData(rides: [], bikes: []);
     });
@@ -549,24 +556,31 @@ void main() {
       expect(widgetColorHex(const Color(0xCC020A15)), '#CC020A15');
     });
 
-    test('carries every themed role from the palette, plus brightness and mode', () {
+    test('carries every themed role from the palette, plus brightness and mode',
+        () {
       const palette = AppColorPalette.commuteLight;
       final data = widgetThemeData(palette, colorMode: AppColorMode.commute);
-      expect(data[kWidgetKeyThemeBackground], widgetColorHex(palette.background));
+      expect(
+          data[kWidgetKeyThemeBackground], widgetColorHex(palette.background));
       expect(data[kWidgetKeyThemeSurface], widgetColorHex(palette.surface));
       expect(data[kWidgetKeyThemeBorder], widgetColorHex(palette.border));
       expect(data[kWidgetKeyThemeInk], widgetColorHex(palette.textPrimary));
       expect(data[kWidgetKeyThemePrimary], widgetColorHex(palette.primary));
       expect(data[kWidgetKeyThemeAccent], widgetColorHex(palette.secondary));
-      expect(data[kWidgetKeyThemeTextPrimary], widgetColorHex(palette.textPrimary));
-      expect(data[kWidgetKeyThemeTextMuted], widgetColorHex(palette.textSecondary));
-      expect(data[kWidgetKeyThemeTextTertiary], widgetColorHex(palette.textTertiary));
+      expect(data[kWidgetKeyThemeTextPrimary],
+          widgetColorHex(palette.textPrimary));
+      expect(data[kWidgetKeyThemeTextMuted],
+          widgetColorHex(palette.textSecondary));
+      expect(data[kWidgetKeyThemeTextTertiary],
+          widgetColorHex(palette.textTertiary));
       expect(data[kWidgetKeyThemeDanger], widgetColorHex(palette.danger));
       expect(data[kWidgetKeyThemeIsDark], isFalse);
       expect(data[kWidgetKeyThemeMode], 'commute');
     });
 
-    test('on-primary matches the app\'s filled-button ink (dark on Race mustard)', () {
+    test(
+        'on-primary matches the app\'s filled-button ink (dark on Race mustard)',
+        () {
       for (final mode in AppColorMode.values) {
         for (final brightness in Brightness.values) {
           final palette = AppColorPalette.forMode(mode, brightness);
@@ -575,7 +589,8 @@ void main() {
               reason: '$mode/$brightness');
         }
       }
-      expect(widgetThemeData(AppColorPalette.raceLight)[kWidgetKeyThemeOnPrimary],
+      expect(
+          widgetThemeData(AppColorPalette.raceLight)[kWidgetKeyThemeOnPrimary],
           '#FF1A1A1A');
     });
 
@@ -597,20 +612,25 @@ void main() {
     });
 
     test('mode is omitted when unknown', () {
-      expect(widgetThemeData(AppColorPalette.sportDark)
-          .containsKey(kWidgetKeyThemeMode), isFalse);
+      expect(
+          widgetThemeData(AppColorPalette.sportDark)
+              .containsKey(kWidgetKeyThemeMode),
+          isFalse);
       expect(widgetThemeData(AppColorPalette.sportDark)[kWidgetKeyThemeIsDark],
           isTrue);
     });
   });
 
   group('HomeWidgetService.publishTheme', () {
-    test('is no-op safe with no platform plugin, and remembers the theme', () async {
+    test('is no-op safe with no platform plugin, and remembers the theme',
+        () async {
       final service = HomeWidgetService();
       await service.publishTheme(AppColorPalette.rainDark,
           colorMode: AppColorMode.rain);
-      expect(service.publishedThemeData,
-          widgetThemeData(AppColorPalette.rainDark, colorMode: AppColorMode.rain));
+      expect(
+          service.publishedThemeData,
+          widgetThemeData(AppColorPalette.rainDark,
+              colorMode: AppColorMode.rain));
     });
   });
 
@@ -633,7 +653,9 @@ void main() {
       expect(fake.published.last.$1,
           same(AppColorPalette.forMode(initial.colorMode, initial.brightness)));
 
-      await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.race);
+      await container
+          .read(appearanceProvider.notifier)
+          .setColorMode(AppColorMode.race);
       expect(fake.published.last.$1, same(AppColorPalette.raceLight));
       expect(fake.published.last.$2, AppColorMode.race);
 

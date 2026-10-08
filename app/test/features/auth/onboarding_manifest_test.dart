@@ -61,7 +61,8 @@ void main() {
     });
 
     test('every bottom-nav tab is spotlit by at least one step', () {
-      final tabs = onboardingSlides(AppLocalizationsEn()).map((s) => s.tab).toSet();
+      final tabs =
+          onboardingSlides(AppLocalizationsEn()).map((s) => s.tab).toSet();
       expect(tabs, TourTab.values.toSet());
     });
 
@@ -71,7 +72,8 @@ void main() {
         final route = slide.showMeRoute;
         if (route == null) continue;
         expect(router.contains("path: '$route'"), isTrue,
-            reason: '${slide.featureKey} points at $route, which no GoRoute serves');
+            reason:
+                '${slide.featureKey} points at $route, which no GoRoute serves');
       }
     });
 
@@ -98,8 +100,10 @@ void main() {
               .firstWhere((s) => s.featureKey == 'ride_cockpit')
               .pointers;
       final en = AppLocalizationsEn();
-      expect(cockpit(false).map((p) => p.title), isNot(contains(en.tourCockpitJamTitle)));
-      final jam = cockpit(true).singleWhere((p) => p.title == en.tourCockpitJamTitle);
+      expect(cockpit(false).map((p) => p.title),
+          isNot(contains(en.tourCockpitJamTitle)));
+      final jam =
+          cockpit(true).singleWhere((p) => p.title == en.tourCockpitJamTitle);
       expect(jam.isBeta, isTrue);
       // No other callout anywhere claims to be beta.
       final betas = onboardingSlides(en, showJamLabelling: true)

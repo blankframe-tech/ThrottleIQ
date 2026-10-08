@@ -112,7 +112,8 @@ class CloudRepository {
   Future<void> uploadRides(String uid, List<Map<String, dynamic>> rides) async {
     if (rides.isEmpty) return;
 
-    final collection = _firestore.collection('users').doc(uid).collection('rides');
+    final collection =
+        _firestore.collection('users').doc(uid).collection('rides');
     Map<String, dynamic> payload(Map<String, dynamic> ride) => {
           ...ridePayload(ride),
           'syncedAt': FieldValue.serverTimestamp(),
@@ -143,7 +144,8 @@ class CloudRepository {
         await collection.doc(ride['id']).set(payload(ride));
         await _rideDao.updateSyncedStatus(ride['id'], true);
       } catch (e) {
-        debugPrint('[CloudRepository] ride upload rejected for ${ride['id']}: $e');
+        debugPrint(
+            '[CloudRepository] ride upload rejected for ${ride['id']}: $e');
       }
     }
   }
@@ -244,7 +246,8 @@ class CloudRepository {
       bikesToUpload.add(bike);
     }
 
-    final bikesCollection = _firestore.collection('users').doc(uid).collection('bikes');
+    final bikesCollection =
+        _firestore.collection('users').doc(uid).collection('bikes');
     Map<String, dynamic> payload(Map<String, dynamic> bike) => {
           ...bikePayload(bike),
           'syncedAt': FieldValue.serverTimestamp(),
@@ -271,7 +274,8 @@ class CloudRepository {
         await bikesCollection.doc(bike['id']).set(payload(bike));
         await _updateBikeSyncedStatus(bike['id'] as String, true);
       } catch (e) {
-        debugPrint('[CloudRepository] bike upload rejected for ${bike['id']}: $e');
+        debugPrint(
+            '[CloudRepository] bike upload rejected for ${bike['id']}: $e');
       }
     }
   }
@@ -280,7 +284,8 @@ class CloudRepository {
   ///
   /// Same batch-then-per-item-retry shape as [uploadRides]: one bad log must
   /// not strand every other log in the batch un-synced forever.
-  Future<void> uploadMaintenance(String uid, List<Map<String, dynamic>> logs) async {
+  Future<void> uploadMaintenance(
+      String uid, List<Map<String, dynamic>> logs) async {
     if (logs.isEmpty) return;
 
     final maintenanceCollection =
@@ -311,7 +316,8 @@ class CloudRepository {
         await maintenanceCollection.doc(log['id']).set(payload(log));
         await _updateMaintenanceSyncedStatus(log['id'], true);
       } catch (e) {
-        debugPrint('[CloudRepository] maintenance upload rejected for ${log['id']}: $e');
+        debugPrint(
+            '[CloudRepository] maintenance upload rejected for ${log['id']}: $e');
       }
     }
   }
@@ -488,10 +494,12 @@ class CloudRepository {
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
       try {
-        await db.insert('maintenance_logs', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('maintenance_logs', data,
+            conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
       } catch (e) {
-        debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
+        debugPrint(
+            '[CloudRepository] maintenance download skipped for ${doc.id}: $e');
         firstFailed = earlierFailure(firstFailed, doc.data());
       }
     }
@@ -520,7 +528,8 @@ class CloudRepository {
   /// Returns true if anything was written locally.
   Future<bool> downloadMaintenanceSettings(String uid) async {
     var pulledAny = false;
-    for (final bikeId in await MaintenanceSettingsSync.bikesMissingSettings(uid)) {
+    for (final bikeId
+        in await MaintenanceSettingsSync.bikesMissingSettings(uid)) {
       final key = '$uid/$bikeId';
       if (_settingsChecked.contains(key)) continue;
       try {
@@ -555,8 +564,9 @@ class CloudRepository {
   /// skips deleted bikes.
   Future<PullResult> downloadRides(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
-    final localIds =
-        (await db.query('rides', columns: ['id'])).map((r) => r['id'] as String).toSet();
+    final localIds = (await db.query('rides', columns: ['id']))
+        .map((r) => r['id'] as String)
+        .toSet();
     // Cloud documents are inserted verbatim, so a field written by a NEWER
     // app version than this one is an `INSERT` into a column that doesn't
     // exist here — which used to throw and silently skip the ride. Every
@@ -694,17 +704,16 @@ class CloudRepository {
     // ordering would place '10' before '2' and scramble the trail.
     final docs = snap.docs.toList()
       ..sort((a, b) {
-        final ai = (a.data()['index'] as num?)?.toInt() ??
-            int.tryParse(a.id) ??
-            0;
-        final bi = (b.data()['index'] as num?)?.toInt() ??
-            int.tryParse(b.id) ??
-            0;
+        final ai =
+            (a.data()['index'] as num?)?.toInt() ?? int.tryParse(a.id) ?? 0;
+        final bi =
+            (b.data()['index'] as num?)?.toInt() ?? int.tryParse(b.id) ?? 0;
         return ai.compareTo(bi);
       });
 
     final rows = flattenTrack([
-      for (final doc in docs) (doc.data()['points'] as List<dynamic>? ?? const []),
+      for (final doc in docs)
+        (doc.data()['points'] as List<dynamic>? ?? const []),
     ]);
     if (rows.isEmpty) return false;
 
@@ -715,7 +724,8 @@ class CloudRepository {
   }
 
   /// Store user profile data in Firestore
-  Future<void> updateUserProfile(String uid, {required String displayName, String? photoUrl}) async {
+  Future<void> updateUserProfile(String uid,
+      {required String displayName, String? photoUrl}) async {
     await _firestore.collection('users').doc(uid).set(
       {
         'displayName': displayName,
@@ -738,7 +748,8 @@ class CloudRepository {
   /// grows. Read-only: the write side lives in
   /// `ride_recording_provider.dart`'s `_publishSegmentBaselines`, alongside
   /// this app's other fire-and-forget post-ride writes.
-  Future<List<double>> fetchRoadSpeedSamples(String segmentId, {int limit = 200}) async {
+  Future<List<double>> fetchRoadSpeedSamples(String segmentId,
+      {int limit = 200}) async {
     final snapshot = await _firestore
         .collection('roadSpeedSamples')
         .doc(segmentId)
@@ -764,7 +775,8 @@ class CloudRepository {
   }
 
   /// Update maintenance log synced status in local database
-  Future<void> _updateMaintenanceSyncedStatus(String maintenanceId, bool synced) async {
+  Future<void> _updateMaintenanceSyncedStatus(
+      String maintenanceId, bool synced) async {
     final db = await DatabaseHelper.instance.database;
     await db.update(
       'maintenance_logs',

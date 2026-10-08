@@ -65,7 +65,8 @@ const kNoBikeRecordingError = 'Please add a bike before recording a ride.';
 /// [RideRecordingState.error] when starting a ride threw part-way (§90.C9) —
 /// a database or platform failure rather than a permission problem. Same
 /// pattern as [kNoBikeRecordingError]: localized by `recordingErrorText`.
-const kStartFailedRecordingError = 'Could not start the ride. Please try again.';
+const kStartFailedRecordingError =
+    'Could not start the ride. Please try again.';
 
 class RideRecordingState {
   final RecordingStatus status;
@@ -458,7 +459,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _skipNextDistanceDelta = false;
       _nextFixStartsSegment = false;
 
-      unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideStarted, param: AnalyticsParam.source, value: userInitiated ? 'manual' : 'auto'));
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideStarted,
+          param: AnalyticsParam.source,
+          value: userInitiated ? 'manual' : 'auto'));
       state = state.copyWith(
         status: RecordingStatus.active,
         ride: ride,
@@ -685,8 +688,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       prev: prevPoint == null
           ? null
           : prevFixOf(prevPoint.speedMs,
-              acceleration: prevPoint.acceleration,
-              clamped: _lastFixClamped),
+              acceleration: prevPoint.acceleration, clamped: _lastFixClamped),
       rawDistanceM: rawDist,
       deltaTSeconds: deltaT,
       accuracyM: pos.accuracy,

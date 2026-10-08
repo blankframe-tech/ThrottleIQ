@@ -13,7 +13,7 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
    - Verify/bump version in `app/pubspec.yaml` (e.g. `1.0.0-beta.2.x+y`).
    - Derive the tag name (e.g. `beta-v2.x`).
    - Commit any new/uncommitted work: `chore(release): bump version to <version> ...`.
-   - Push to remote `origin/master`.
+   - Push to remote `origin/main`.
 
 3. **Deploy Release to Connected iPhone**
    - Detect connected iOS device via `flutter devices` (e.g., Abraar’s iPhone `00008120-001E5D190A85A01E`).

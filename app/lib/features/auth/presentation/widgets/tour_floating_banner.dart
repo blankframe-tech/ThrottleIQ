@@ -81,7 +81,8 @@ class TourFloatingBanner extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(14, 6, 2, 4),
                 child: Row(
                   children: [
-                    Icon(Icons.explore_outlined, color: palette.onInk, size: 20),
+                    Icon(Icons.explore_outlined,
+                        color: palette.onInk, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -115,7 +116,8 @@ class TourFloatingBanner extends ConsumerWidget {
                     ),
                     IconButton(
                       tooltip: l10n.closeGuide,
-                      icon: Icon(Icons.close, size: 20, color: palette.onInkMuted),
+                      icon: Icon(Icons.close,
+                          size: 20, color: palette.onInkMuted),
                       constraints:
                           const BoxConstraints.tightFor(width: 48, height: 48),
                       onPressed: () {

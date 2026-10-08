@@ -31,8 +31,8 @@ void main() {
         child: Consumer(builder: (context, ref, _) {
           final appearance = ref.watch(appearanceProvider);
           return MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             // Deliberately no `key: ValueKey(appearance)`.
             theme: themeFor(appearance),
             themeAnimationDuration: Duration.zero,
@@ -53,8 +53,11 @@ void main() {
     final before = tester.widget<Container>(find.byKey(_Probe.swatch)).color;
     expect(before, AppColorPalette.commuteLight.primary);
 
-    final container = ProviderScope.containerOf(tester.element(find.byType(_Probe)));
-    await container.read(appearanceProvider.notifier).setColorMode(AppColorMode.sport);
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(_Probe)));
+    await container
+        .read(appearanceProvider.notifier)
+        .setColorMode(AppColorMode.sport);
     await tester.pumpAndSettle();
 
     // Re-themed everywhere it reads a token...
@@ -75,8 +78,11 @@ void main() {
     expect(tester.widget<Text>(find.byKey(_Probe.radius)).data,
         '${AppShapeProfile.curvy.radiusMd}');
 
-    final container = ProviderScope.containerOf(tester.element(find.byType(_Probe)));
-    await container.read(appearanceProvider.notifier).setShapeVibe(AppShapeVibe.boxy);
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(_Probe)));
+    await container
+        .read(appearanceProvider.notifier)
+        .setShapeVibe(AppShapeVibe.boxy);
     await tester.pumpAndSettle();
 
     expect(tester.widget<Text>(find.byKey(_Probe.radius)).data,
@@ -90,7 +96,8 @@ void main() {
     await tester.pumpAndSettle();
     final probe = tester.state<_ProbeState>(find.byType(_Probe));
 
-    final container = ProviderScope.containerOf(tester.element(find.byType(_Probe)));
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(_Probe)));
     await container
         .read(appearanceProvider.notifier)
         .setBrightnessMode(AppBrightnessMode.dark);
@@ -101,12 +108,14 @@ void main() {
     expect(tester.state<_ProbeState>(find.byType(_Probe)), same(probe));
   });
 
-  testWidgets('a tree with no registered tokens falls back to the default appearance',
+  testWidgets(
+      'a tree with no registered tokens falls back to the default appearance',
       (tester) async {
     // A bare MaterialApp — what most widget tests pump — has no extensions.
     await tester.pumpWidget(const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,home: _Probe()));
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: _Probe()));
 
     expect(tester.widget<Container>(find.byKey(_Probe.swatch)).color,
         AppColorPalette.calmingLight.primary);
@@ -138,7 +147,10 @@ class _ProbeState extends State<_Probe> {
   @override
   Widget build(BuildContext context) => Column(children: [
         Container(
-            key: _Probe.swatch, width: 10, height: 10, color: context.palette.primary),
+            key: _Probe.swatch,
+            width: 10,
+            height: 10,
+            color: context.palette.primary),
         Text('${context.shape.radiusMd}', key: _Probe.radius),
       ]);
 }

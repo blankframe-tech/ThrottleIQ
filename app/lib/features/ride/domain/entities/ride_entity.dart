@@ -97,7 +97,8 @@ class RideEntity extends Equatable {
     final duration = durationSeconds;
     final moving = movingSeconds;
     if (duration == null || moving == null) return null;
-    return jam_time.jamSeconds(durationSeconds: duration, movingSeconds: moving);
+    return jam_time.jamSeconds(
+        durationSeconds: duration, movingSeconds: moving);
   }
 
   RideEntity copyWith({

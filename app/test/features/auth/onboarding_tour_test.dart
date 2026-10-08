@@ -107,11 +107,14 @@ void main() {
     await _settle(tester);
 
     final slides = onboardingSlides(_en);
-    expect(find.text(_en.tourStepCounter(1, kOnboardingSlideCount)), findsWidgets);
+    expect(
+        find.text(_en.tourStepCounter(1, kOnboardingSlideCount)), findsWidgets);
     expect(find.text(slides.first.title), findsOneWidget);
     // Nowhere to go back to on step 1.
     expect(
-        tester.widget<OutlinedButton>(find.byKey(const ValueKey('tour-back'))).onPressed,
+        tester
+            .widget<OutlinedButton>(find.byKey(const ValueKey('tour-back')))
+            .onPressed,
         isNull);
 
     for (var i = 1; i < kOnboardingSlideCount; i++) {
@@ -144,7 +147,8 @@ void main() {
     await _tap(tester, 'tour-show-me');
     expect(find.text('screen:/home/record'), findsOneWidget);
     expect(find.byKey(const ValueKey('tour-banner')), findsOneWidget);
-    expect(find.text(_en.tourStepCounter(1, kOnboardingSlideCount)), findsOneWidget);
+    expect(find.text(_en.tourStepCounter(1, kOnboardingSlideCount)),
+        findsOneWidget);
 
     // Back to tour: same step.
     await _tap(tester, 'tour-banner-back');
@@ -155,7 +159,8 @@ void main() {
     await _tap(tester, 'tour-show-me');
     await _tap(tester, 'tour-banner-next');
     expect(find.text(onboardingSlides(_en)[1].title), findsOneWidget);
-    expect(find.text(_en.tourStepCounter(2, kOnboardingSlideCount)), findsWidgets);
+    expect(
+        find.text(_en.tourStepCounter(2, kOnboardingSlideCount)), findsWidgets);
   });
 
   testWidgets('beta riders see the jam-labelling callout on the cockpit step',
@@ -226,9 +231,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     // Mid-transition: both pages are built.
-    expect(find.byType(OnboardingSlidePage, skipOffstage: false), findsNWidgets(2));
+    expect(find.byType(OnboardingSlidePage, skipOffstage: false),
+        findsNWidgets(2));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text(_en.tourStepCounter(2, kOnboardingSlideCount)), findsWidgets);
+    expect(
+        find.text(_en.tourStepCounter(2, kOnboardingSlideCount)), findsWidgets);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });

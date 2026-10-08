@@ -29,11 +29,20 @@ void main() {
 
   test('writes every summary column the ride summary reads', () {
     final stats = build();
-    expect(stats.keys, containsAll(<String>[
-      'end_time', 'distance_m', 'avg_speed_ms', 'max_speed_ms', 'duration_s',
-      'moving_s', 'hard_brake_count', 'rapid_accel_count', 'high_jerk_count',
-      'overspeed_count',
-    ]));
+    expect(
+        stats.keys,
+        containsAll(<String>[
+          'end_time',
+          'distance_m',
+          'avg_speed_ms',
+          'max_speed_ms',
+          'duration_s',
+          'moving_s',
+          'hard_brake_count',
+          'rapid_accel_count',
+          'high_jerk_count',
+          'overspeed_count',
+        ]));
     expect(stats.containsKey('status'), isFalse,
         reason: 'callers choose the status (completed vs crash)');
     expect(stats['distance_m'], 6000);

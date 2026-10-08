@@ -286,8 +286,8 @@ class DatabaseHelper {
       // bike's fuel price & mileage. All NULL on existing rows: "not set",
       // which the ride-cost calculator treats as "leave this item out".
       await db.execute(_createBikeMaintenanceConfigsSql);
-      await _addColumnIfMissing(db, 'bike_maintenance_configs',
-          'typical_cost', 'typical_cost REAL');
+      await _addColumnIfMissing(
+          db, 'bike_maintenance_configs', 'typical_cost', 'typical_cost REAL');
       await db.execute(_createBikeRunningCostsSql);
     }
     if (oldVersion < 19 && newVersion >= 19) {
@@ -318,14 +318,16 @@ class DatabaseHelper {
     }
     if (oldVersion < 23 && newVersion >= 23) {
       // E-bike toggle and connection feature.
-      await _addColumnIfMissing(db, 'bikes', 'is_ebike', 'is_ebike INTEGER NOT NULL DEFAULT 0');
+      await _addColumnIfMissing(
+          db, 'bikes', 'is_ebike', 'is_ebike INTEGER NOT NULL DEFAULT 0');
     }
     if (oldVersion < 24 && newVersion >= 24) {
       // When a bike was archived. Archived bikes are permanently deleted three
       // months after this (BikeArchiveService.purgeExpired). Bikes archived
       // before this column existed start their clock at the upgrade.
       await _addColumnIfMissing(db, 'bikes', 'archived_at', 'archived_at TEXT');
-      await db.update('bikes', {'archived_at': DateTime.now().toIso8601String()},
+      await db.update(
+          'bikes', {'archived_at': DateTime.now().toIso8601String()},
           where: 'archived = 1 AND archived_at IS NULL');
     }
     if (oldVersion < 25 && newVersion >= 25) {
@@ -403,8 +405,7 @@ class DatabaseHelper {
     // hand, so they're marked the rider's own: picking a template or oil
     // grade later never silently overwrites them. They do gain the time
     // limit their type defaults to — km-only was the gap being fixed.
-    await db.execute(
-        "UPDATE bike_maintenance_configs SET source = 'user' "
+    await db.execute("UPDATE bike_maintenance_configs SET source = 'user' "
         "WHERE interval_days IS NULL");
     await db.execute('''
       UPDATE bike_maintenance_configs SET interval_days = CASE service_type
@@ -934,8 +935,8 @@ class DatabaseHelper {
             where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
-      await txn.delete('deleted_rides',
-          where: 'user_id = ?', whereArgs: [userId]);
+      await txn
+          .delete('deleted_rides', where: 'user_id = ?', whereArgs: [userId]);
 
       final bikes = await txn.query('bikes',
           where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
@@ -952,15 +953,16 @@ class DatabaseHelper {
           'precheck_issues',
           'detection_odometer_credits',
         ]) {
-          await txn.delete(table,
-              where: 'bike_id = ?', whereArgs: [bike['id']]);
+          await txn
+              .delete(table, where: 'bike_id = ?', whereArgs: [bike['id']]);
         }
       }
       await txn.delete('deleted_maintenance_logs',
           where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);
-      await txn.delete('saved_places', where: 'user_id = ?', whereArgs: [userId]);
+      await txn
+          .delete('saved_places', where: 'user_id = ?', whereArgs: [userId]);
 
       // v15 gave auto_detections an owner. Only rows stamped with this uid
       // go; unowned legacy rows are left alone for the reason given above.

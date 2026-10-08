@@ -31,8 +31,10 @@ void main() {
     }
   }
 
-  test('commuteLight (Calming) keeps the old sage as the non-text highlight', () {
+  test('commuteLight (Calming) keeps the old sage as the non-text highlight',
+      () {
     expect(AppColorPalette.commuteLight.primary, const Color(0xFF537D5C));
-    expect(AppColorPalette.commuteLight.primaryHighlight, const Color(0xFF84A98B));
+    expect(
+        AppColorPalette.commuteLight.primaryHighlight, const Color(0xFF84A98B));
   });
 }

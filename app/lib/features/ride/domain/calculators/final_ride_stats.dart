@@ -38,7 +38,8 @@ Map<String, dynamic> buildFinalRideStats({
   // Physical invariant: maximum speed can never be less than average speed.
   // If max speed was unrecorded (e.g. zero GPS Doppler speed) but the vehicle moved,
   // ensure max speed is at least the average speed.
-  if (effectiveMax < derivedAvg && derivedAvg <= SensorConstants.maxPlausibleSpeedMs) {
+  if (effectiveMax < derivedAvg &&
+      derivedAvg <= SensorConstants.maxPlausibleSpeedMs) {
     effectiveMax = derivedAvg;
   }
 

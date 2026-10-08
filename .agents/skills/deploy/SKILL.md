@@ -17,6 +17,17 @@ Standardized runbook for deploying ThrottleIQ.
 - Android release keystore located at repo root (`throttleiq-release.keystore`).
 - `gh` CLI authenticated.
 
+## Apple account constraints
+Team `NJ4675FFUX` is a **personal** Apple team. Personal teams can never sign paid-only
+capabilities: Associated Domains (Universal Links), Push Notifications, iCloud, Sign in with
+Apple, and similar. Adding one to `app/ios/Runner/Runner.entitlements` breaks every iPhone build
+("Personal development teams ... do not support"). Before merging any entitlements change, prove it signs:
+```bash
+cd app/ios && xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release \
+  -destination 'id=00008120-001E5D190A85A01E' -allowProvisioningUpdates build
+```
+App Groups is allowed and already in use (`group.com.bft.throttleiq`).
+
 ## Execution via Script
 ```bash
 bash scripts/deploy.sh
@@ -33,7 +44,7 @@ bash scripts/deploy.sh
    ```bash
    git add -A
    git commit -m "chore(release): bump version to <version>"
-   git push origin master
+   git push origin main
    ```
 
 3. **Deploy to connected iPhone**:

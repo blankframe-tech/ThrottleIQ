@@ -267,8 +267,10 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
       final mode = _decodeBrightnessMode(rawBrightness) ??
           AppAppearance.defaultAppearance.brightnessMode;
       resolved = AppAppearance(
-        colorMode: _decodeColorMode(rawColorMode) ?? AppAppearance.defaultAppearance.colorMode,
-        shapeVibe: _decodeShapeVibe(rawShapeVibe) ?? AppAppearance.defaultAppearance.shapeVibe,
+        colorMode: _decodeColorMode(rawColorMode) ??
+            AppAppearance.defaultAppearance.colorMode,
+        shapeVibe: _decodeShapeVibe(rawShapeVibe) ??
+            AppAppearance.defaultAppearance.shapeVibe,
         brightnessMode: mode,
         brightness: _resolveBrightness(mode),
       );

@@ -1,7 +1,8 @@
 #!/bin/sh
 # Stop hook: if UI-affecting app code changed, ask Claude to run the E2E
 # integration test (app/integration_test/e2e_test.dart) before stopping.
-# Skips itself when no UI file changed, or when stop_hook_active is set (no loops).
+# Skips itself when no UI file changed, when the same file list + device state
+# was already reported (stamp in .git/claude-e2e-last), or when stop_hook_active is set.
 input=$(cat)
 if printf '%s' "$input" | grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
   printf '{}'; exit 0
@@ -17,6 +18,12 @@ ui=$(printf '%s\n' "$changed" | grep -E '^app/lib/(features/[^/]+/presentation/|
 if [ -z "$ui" ]; then printf '{}'; exit 0; fi
 
 device=$(xcrun simctl list devices booted 2>/dev/null | grep -Eo '\([0-9A-F-]{36}\)' | head -1 | tr -d '()')
+
+# Report each (file list, device) state once, not on every stop.
+stamp_file="$(git rev-parse --git-dir 2>/dev/null)/claude-e2e-last"
+stamp=$(printf '%s|%s' "$ui" "$device" | shasum | cut -d' ' -f1)
+if [ -f "$stamp_file" ] && [ "$(cat "$stamp_file")" = "$stamp" ]; then printf '{}'; exit 0; fi
+printf '%s' "$stamp" > "$stamp_file"
 if [ -n "$device" ]; then
   how="A simulator is booted ($device). From app/, run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_test.dart -d $device. Report pass or fail. Do not hide a failure."
 else

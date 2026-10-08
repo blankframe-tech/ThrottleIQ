@@ -77,7 +77,8 @@ final _forumSearchProvider = FutureProvider.autoDispose
     .family<List<ForumEntity>, String>((ref, query) async {
   final q = query.trim();
   if (q.isEmpty) return const [];
-  return filterForumsByName(await ref.watch(_forumSearchIndexProvider.future), q);
+  return filterForumsByName(
+      await ref.watch(_forumSearchIndexProvider.future), q);
 });
 
 /// Profiles of everyone the signed-in rider follows — the People tab's
@@ -142,8 +143,8 @@ class _SocialScreenState extends State<SocialScreen> {
               tooltip: context.l10n.searchRidersForums,
               icon: Icon(Icons.search,
                   color: context.palette.textSecondary, size: 24),
-              onPressed: () =>
-                  showSearch(context: context, delegate: _SocialSearchDelegate()),
+              onPressed: () => showSearch(
+                  context: context, delegate: _SocialSearchDelegate()),
             ),
             Consumer(
               builder: (_, ref, __) => NotificationBellButton(
@@ -156,8 +157,10 @@ class _SocialScreenState extends State<SocialScreen> {
             unselectedLabelColor: context.palette.textSecondary,
             indicatorColor: context.palette.primary,
             indicatorSize: TabBarIndicatorSize.label,
-            labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            labelStyle:
+                const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            unselectedLabelStyle:
+                const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             dividerColor: context.palette.border,
             tabs: [
               Tab(text: context.l10n.navRidesLabel),
@@ -173,8 +176,8 @@ class _SocialScreenState extends State<SocialScreen> {
             // The Hubs lens's search shortcut opens this same AppBar search
             // rather than carrying a second, forum-only search box.
             ForumsHomeScreen(
-              onOpenSearch: () =>
-                  showSearch(context: context, delegate: _SocialSearchDelegate()),
+              onOpenSearch: () => showSearch(
+                  context: context, delegate: _SocialSearchDelegate()),
             ),
           ],
         ),

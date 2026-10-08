@@ -50,10 +50,12 @@ void main() {
   }
 
   group('AppTypography.display', () {
-    testWidgets('carries the Bengali fallback on every color mode, mono or proportional',
+    testWidgets(
+        'carries the Bengali fallback on every color mode, mono or proportional',
         (tester) async {
       for (final mode in AppColorMode.values) {
-        final style = await resolve(tester,
+        final style = await resolve(
+            tester,
             AppColorPalette.forMode(mode, Brightness.dark),
             (c) => AppTypography.display(c, 20));
         expect(style.fontFamilyFallback,
@@ -62,24 +64,28 @@ void main() {
       }
     });
 
-    testWidgets('sets Race in a monospace face and every other mode in Space Grotesk',
+    testWidgets(
+        'sets Race in a monospace face and every other mode in Space Grotesk',
         (tester) async {
       for (final mode in AppColorMode.values) {
-        final style = await resolve(tester,
+        final style = await resolve(
+            tester,
             AppColorPalette.forMode(mode, Brightness.light),
             (c) => AppTypography.display(c, 20));
         final isMono = style.fontFamily!.contains('IBMPlexMono');
         expect(isMono, mode == AppColorMode.race, reason: '$mode');
         if (!isMono) {
-          expect(style.fontFamily!.contains('SpaceGrotesk'), isTrue, reason: '$mode');
+          expect(style.fontFamily!.contains('SpaceGrotesk'), isTrue,
+              reason: '$mode');
         }
       }
     });
 
-    testWidgets('defaults its color to the palette\'s primary text', (tester) async {
+    testWidgets('defaults its color to the palette\'s primary text',
+        (tester) async {
       const palette = AppColorPalette.carbonMonoDark;
-      final style = await resolve(
-          tester, palette, (c) => AppTypography.display(c, 20));
+      final style =
+          await resolve(tester, palette, (c) => AppTypography.display(c, 20));
       expect(style.color, palette.textPrimary);
     });
   });

@@ -55,7 +55,9 @@ void main() {
         // Anything that isn't the known font-asset gripe is a real failure
         // and must not be silently eaten.
         if (!error.toString().contains('google_fonts') &&
-            !error.toString().contains('was not found in the application assets')) {
+            !error
+                .toString()
+                .contains('was not found in the application assets')) {
           throw error;
         }
       },
@@ -84,13 +86,16 @@ void main() {
       }
     });
 
-    test('isDark agrees with both the requested brightness and the palette\'s own background luminance', () {
+    test(
+        'isDark agrees with both the requested brightness and the palette\'s own background luminance',
+        () {
       // isDark drives ThemeData.brightness, the ColorScheme variant, the
       // status-bar icon color and which app mark is shown. A palette that
       // lies about it renders black system icons on a black bar.
       for (final (mode, brightness) in allCombos) {
         final p = AppColorPalette.forMode(mode, brightness);
-        expect(p.isDark, brightness == Brightness.dark, reason: '$mode/$brightness');
+        expect(p.isDark, brightness == Brightness.dark,
+            reason: '$mode/$brightness');
         expect(p.isDark, p.background.computeLuminance() < 0.5,
             reason: '$mode/$brightness declares isDark=${p.isDark} but its '
                 'background luminance is ${p.background.computeLuminance()}');
@@ -112,7 +117,8 @@ void main() {
       }
     });
 
-    test('the light/dark companions clear AA contrast for UI components (3:1)', () {
+    test('the light/dark companions clear AA contrast for UI components (3:1)',
+        () {
       final companions = {
         'sportLight': AppColorPalette.sportLight,
         'rainLight': AppColorPalette.rainLight,
@@ -132,7 +138,8 @@ void main() {
       });
     });
 
-    test('secondary is a distinct accent from primary, in every combination', () {
+    test('secondary is a distinct accent from primary, in every combination',
+        () {
       for (final (mode, brightness) in allCombos) {
         final p = AppColorPalette.forMode(mode, brightness);
         expect(p.secondary.toARGB32(), isNot(p.primary.toARGB32()),
@@ -213,7 +220,8 @@ void main() {
   });
 
   group('appearance tokens travel on the theme', () {
-    test('AppTheme.build registers the palette and shape for that appearance', () {
+    test('AppTheme.build registers the palette and shape for that appearance',
+        () {
       // This is what `context.palette` / `context.shape` resolve through, so
       // it is the contract every widget depends on: the theme carries exactly
       // the tokens for the appearance it was built from — nothing left over
@@ -232,7 +240,9 @@ void main() {
       }
     });
 
-    test('the palette cross-fades colors and flips its flags at the halfway point', () {
+    test(
+        'the palette cross-fades colors and flips its flags at the halfway point',
+        () {
       const a = AppColorPalette.sportDark;
       const b = AppColorPalette.commuteLight;
       expect(a.lerp(b, 0).primary, a.primary);
@@ -254,7 +264,8 @@ void main() {
     });
 
     test('copyWith overrides only what it is given', () {
-      final p = AppColorPalette.commuteLight.copyWith(primary: const Color(0xFF123456));
+      final p = AppColorPalette.commuteLight
+          .copyWith(primary: const Color(0xFF123456));
       expect(p.primary, const Color(0xFF123456));
       expect(p.background, AppColorPalette.commuteLight.background);
       expect(p.monoDisplay, AppColorPalette.commuteLight.monoDisplay);
@@ -268,7 +279,9 @@ void main() {
     test('brightness follows the requested Brightness, not the color mode', () {
       for (final (mode, brightness) in allCombos) {
         final appearance = AppAppearance(
-            colorMode: mode, shapeVibe: AppShapeVibe.boxy, brightness: brightness);
+            colorMode: mode,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: brightness);
         final theme = themeFor(appearance);
         expect(theme.brightness, brightness, reason: '$mode/$brightness');
       }
@@ -277,7 +290,9 @@ void main() {
     test('the card radius is the requested vibe\'s, not a shared constant', () {
       double cardRadius(AppShapeVibe vibe) {
         final appearance = AppAppearance(
-            colorMode: AppColorMode.sport, shapeVibe: vibe, brightness: Brightness.dark);
+            colorMode: AppColorMode.sport,
+            shapeVibe: vibe,
+            brightness: Brightness.dark);
         final shape = themeFor(appearance).cardTheme.shape;
         return ((shape! as RoundedRectangleBorder).borderRadius as BorderRadius)
             .topLeft
@@ -285,22 +300,28 @@ void main() {
       }
 
       for (final vibe in AppShapeVibe.values) {
-        expect(cardRadius(vibe), AppShapeProfile.forVibe(vibe).radiusXl, reason: '$vibe');
+        expect(cardRadius(vibe), AppShapeProfile.forVibe(vibe).radiusXl,
+            reason: '$vibe');
       }
     });
 
-    test('Race (Retro) takes its shape from the vibe, like every other mode', () {
+    test('Race (Retro) takes its shape from the vibe, like every other mode',
+        () {
       for (final vibe in AppShapeVibe.values) {
         final appearance = AppAppearance(
-            colorMode: AppColorMode.race, shapeVibe: vibe, brightness: Brightness.light);
-        final card = themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
+            colorMode: AppColorMode.race,
+            shapeVibe: vibe,
+            brightness: Brightness.light);
+        final card =
+            themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
         expect((card.borderRadius as BorderRadius).topLeft.x,
             AppShapeProfile.forVibe(vibe).radiusXl,
             reason: '$vibe');
       }
     });
 
-    test('only Race (Retro) is monospace, regardless of vibe or brightness', () {
+    test('only Race (Retro) is monospace, regardless of vibe or brightness',
+        () {
       for (final mode in AppColorMode.values) {
         for (final vibe in AppShapeVibe.values) {
           for (final brightness in Brightness.values) {
@@ -320,8 +341,10 @@ void main() {
       // theme needs the bundled fallback appended or Bangla text silently
       // drops to whatever face the platform substitutes.
       for (final (mode, brightness) in allCombos) {
-        final appearance =
-            AppAppearance(colorMode: mode, shapeVibe: AppShapeVibe.boxy, brightness: brightness);
+        final appearance = AppAppearance(
+            colorMode: mode,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: brightness);
         final textTheme = themeFor(appearance).textTheme;
         for (final textStyle in [
           textTheme.displayLarge,
@@ -353,13 +376,11 @@ void main() {
           contains(AppTypography.bengaliFallback.single));
       expect(
           theme.elevatedButtonTheme.style?.textStyle
-              ?.resolve(const {})
-              ?.fontFamilyFallback,
+              ?.resolve(const {})?.fontFamilyFallback,
           contains(AppTypography.bengaliFallback.single));
       expect(
           theme.outlinedButtonTheme.style?.textStyle
-              ?.resolve(const {})
-              ?.fontFamilyFallback,
+              ?.resolve(const {})?.fontFamilyFallback,
           contains(AppTypography.bengaliFallback.single));
       expect(theme.snackBarTheme.contentTextStyle?.fontFamilyFallback,
           contains(AppTypography.bengaliFallback.single));
@@ -367,7 +388,9 @@ void main() {
   });
 
   group('Sport mode (Lime Carbon)', () {
-    test('sportDark uses high-contrast pitch carbon background with electric lime', () {
+    test(
+        'sportDark uses high-contrast pitch carbon background with electric lime',
+        () {
       expect(AppColorPalette.sportDark.background, const Color(0xFF0D0D0D));
       expect(AppColorPalette.sportDark.primary, const Color(0xFFC8FF3D));
       expect(AppColorPalette.sportDark.secondary, const Color(0xFFD633FF));
@@ -417,18 +440,41 @@ void main() {
   group('ride-mode names', () {
     test('each mode resolves to the palette family it was named for', () {
       const families = {
-        AppColorMode.sport: (AppColorPalette.carbonMonoDark, AppColorPalette.carbonMonoLight),
-        AppColorMode.rain: (AppColorPalette.nocturneDark, AppColorPalette.nocturneLight),
-        AppColorMode.race: (AppColorPalette.retroDark, AppColorPalette.retroLight),
-        AppColorMode.commute: (AppColorPalette.calmingDark, AppColorPalette.calmingLight),
-        AppColorMode.tour: (AppColorPalette.trailSocialDark, AppColorPalette.trailSocialLight),
-        AppColorMode.adv: (AppColorPalette.analystBlueDark, AppColorPalette.analystBlueLight),
-        AppColorMode.city: (AppColorPalette.editorialDark, AppColorPalette.editorialLight),
+        AppColorMode.sport: (
+          AppColorPalette.carbonMonoDark,
+          AppColorPalette.carbonMonoLight
+        ),
+        AppColorMode.rain: (
+          AppColorPalette.nocturneDark,
+          AppColorPalette.nocturneLight
+        ),
+        AppColorMode.race: (
+          AppColorPalette.retroDark,
+          AppColorPalette.retroLight
+        ),
+        AppColorMode.commute: (
+          AppColorPalette.calmingDark,
+          AppColorPalette.calmingLight
+        ),
+        AppColorMode.tour: (
+          AppColorPalette.trailSocialDark,
+          AppColorPalette.trailSocialLight
+        ),
+        AppColorMode.adv: (
+          AppColorPalette.analystBlueDark,
+          AppColorPalette.analystBlueLight
+        ),
+        AppColorMode.city: (
+          AppColorPalette.editorialDark,
+          AppColorPalette.editorialLight
+        ),
       };
       expect(families.keys.toSet(), AppColorMode.values.toSet());
       families.forEach((mode, pair) {
-        expect(AppColorPalette.forMode(mode, Brightness.dark), same(pair.$1), reason: '$mode');
-        expect(AppColorPalette.forMode(mode, Brightness.light), same(pair.$2), reason: '$mode');
+        expect(AppColorPalette.forMode(mode, Brightness.dark), same(pair.$1),
+            reason: '$mode');
+        expect(AppColorPalette.forMode(mode, Brightness.light), same(pair.$2),
+            reason: '$mode');
       });
     });
 
