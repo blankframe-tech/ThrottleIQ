@@ -13,6 +13,7 @@ import '../../../maintenance/domain/entities/fuel_log.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_l10n.dart';
+import '../analytics_chart_registry.dart';
 import '../widgets/analytics_chart_view.dart';
 import '../../../../core/utils/error_reporter.dart';
 
@@ -50,27 +51,14 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
 
   DateTime get _now => widget.now ?? DateTime.now();
 
+  ChartInput get _input =>
+      ChartInput(rides: widget.rides, fuelLogs: widget.fuelLogs);
+
   @override
   void initState() {
     super.initState();
-    // The shortest range that has something to show; per-ride trend charts
-    // need two rides to draw a line.
-    final chart = widget.chart;
-    final need = isPerRideChart(chart) || isFuelSegmentChart(chart) ? 2 : 1;
-    bool hasData(AnalyticsRange r) {
-      if (!isFuelChart(chart)) {
-        return ridesInRange(widget.rides, r, _now).length >= need;
-      }
-      final series = buildFuelSeries(chart, widget.fuelLogs,
-          now: _now, window: rangeWindow(r, _now));
-      return series.where((p) => p.value > 0).length >= need;
-    }
-
-    _range = [
-      AnalyticsRange.days30,
-      AnalyticsRange.days90,
-      AnalyticsRange.year,
-    ].firstWhere(hasData, orElse: () => AnalyticsRange.all);
+    // The shortest range that has something to show.
+    _range = widget.chart.defaultRange(_input, now: _now);
   }
 
   String _bikeName(String id) =>
@@ -80,37 +68,15 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final chart = widget.chart;
-    final now = _now;
-    final window = rangeWindow(_range, now);
-    final fuel = isFuelChart(chart);
-    final current = ridesInWindow(widget.rides, window);
-    final previous =
-        ridesInWindow(widget.rides, previousRangeWindow(_range, now));
-    final List<AnalyticsPoint> series;
-    final double? trend;
-    final List<AnalyticsInsight> insights;
-    final int count;
-    if (fuel) {
-      final logs = widget.fuelLogs;
-      final previousWindow = previousRangeWindow(_range, now);
-      series = buildFuelSeries(chart, logs, now: now, window: window);
-      trend = previousWindow == null
-          ? null
-          : trendPercent(fuelPeriodAggregate(chart, logs, window),
-              fuelPeriodAggregate(chart, logs, previousWindow));
-      insights = buildFuelInsights(chart, logs, series, trend: trend);
-      count = fuelLogsInWindow(logs, window).length;
-    } else {
-      series = buildSeries(chart, current, now: now, window: window);
-      trend = trendPercent(
-          periodAggregate(chart, current), periodAggregate(chart, previous));
-      insights = buildInsights(chart, current, series, now: now, trend: trend);
-      count = current.length;
-    }
+    final spec = chartPresentationOf(chart);
+    final detail = chart.detail(_input, _range, now: _now);
+    final series = detail.series;
+    final trend = detail.trend;
     final summary = MetricSummary.of(series.map((p) => p.value));
-    final table = buildChartTable(l10n, chart, series, bikeName: _bikeName);
-    final unit = chartUnit(l10n, chart);
-    final title = chartTitle(l10n, chart);
+    final table = spec.buildTable(l10n, series, bikeName: _bikeName);
+    final unit = spec.unit(l10n);
+    final title = spec.title(l10n);
+    final stackLabels = spec.stackLabels?.call(l10n);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -122,13 +88,15 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 12),
+          AppDimensions.paddingMd,
+          8,
+          AppDimensions.paddingMd,
+          12,
+        ),
         child: FilledButton.icon(
           key: _downloadKey,
           // Colours come from the active theme's FilledButton/ColorScheme.
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(46),
-          ),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
           onPressed: _exporting || table.csvRows.isEmpty
               ? null
               : () => _export(title, table),
@@ -136,7 +104,8 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.download_outlined, size: 18),
           label: Text(l10n.analyticsDownloadData),
         ),
@@ -145,7 +114,11 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-                AppDimensions.paddingMd, 4, AppDimensions.paddingMd, 0),
+              AppDimensions.paddingMd,
+              4,
+              AppDimensions.paddingMd,
+              0,
+            ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _RangeSelector(
@@ -162,24 +135,26 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
                     detailed: true,
                   ),
                 ),
-                if (chart == AnalyticsChart.movingVsStopped) ...[
+                if (stackLabels != null) ...[
                   const SizedBox(height: 8),
-                  _Legend(items: [
-                    (chartColor(context, chart), l10n.analyticsColMoving),
-                    (
-                      context.palette.warning.withValues(alpha: 0.55),
-                      l10n.analyticsColStopped
-                    ),
-                  ]),
+                  _Legend(
+                    items: [
+                      (spec.colorOf(context), stackLabels.$1),
+                      (
+                        context.palette.warning.withValues(alpha: 0.55),
+                        stackLabels.$2,
+                      ),
+                    ],
+                  ),
                 ],
                 const SizedBox(height: 12),
                 _SummaryGrid(
                   chart: chart,
+                  higherIsBetter: spec.higherIsBetter,
                   summary: summary,
                   unit: unit,
-                  rideCount: count,
-                  countLabel:
-                      fuel ? l10n.analyticsColFillUps : l10n.analyticsColRides,
+                  rideCount: detail.count,
+                  countLabel: spec.countLabel(l10n),
                   trend: trend,
                 ),
                 const SizedBox(height: 12),
@@ -190,19 +165,28 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.lightbulb_outline,
-                          size: 18, color: context.palette.attention),
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 18,
+                        color: context.palette.attention,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          insights
-                              .map((i) => insightText(l10n, chart, i,
-                                  bikeName: _bikeName))
+                          detail.insights
+                              .map(
+                                (i) => spec.insightText(
+                                  l10n,
+                                  i,
+                                  bikeName: _bikeName,
+                                ),
+                              )
                               .join(' '),
                           style: TextStyle(
-                              fontSize: 13,
-                              height: 1.35,
-                              color: context.palette.textPrimary),
+                            fontSize: 13,
+                            height: 1.35,
+                            color: context.palette.textPrimary,
+                          ),
                         ),
                       ),
                     ],
@@ -218,18 +202,22 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-                AppDimensions.paddingMd, 0, AppDimensions.paddingMd, 16),
+              AppDimensions.paddingMd,
+              0,
+              AppDimensions.paddingMd,
+              16,
+            ),
             sliver: table.displayRows.isEmpty
                 ? SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(
-                          fuel
-                              ? l10n.fuelChartEmptyHint
-                              : l10n.insightNotEnoughData,
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: context.palette.textTertiary)),
+                        spec.emptyDataText(l10n),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.palette.textTertiary,
+                        ),
+                      ),
                     ),
                   )
                 : SliverList(
@@ -270,8 +258,9 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
       );
     } catch (e, st) {
       reportNonFatal(e, st, reason: 'analytics CSV export');
-      messenger
-          .showSnackBar(SnackBar(content: Text(l10n.analyticsExportFailed)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.analyticsExportFailed)),
+      );
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -332,6 +321,7 @@ class _RangeSelector extends StatelessWidget {
 
 class _SummaryGrid extends StatelessWidget {
   final AnalyticsChart chart;
+  final bool? higherIsBetter;
   final MetricSummary summary;
   final String unit;
   final int rideCount;
@@ -340,6 +330,7 @@ class _SummaryGrid extends StatelessWidget {
 
   const _SummaryGrid({
     required this.chart,
+    required this.higherIsBetter,
     required this.summary,
     required this.unit,
     required this.rideCount,
@@ -353,9 +344,8 @@ class _SummaryGrid extends StatelessWidget {
     String v(double x) => summary.isEmpty ? '—' : formatWithUnit(x, unit);
     // A total of averages (speeds, scores, shares, km/L) means nothing, so
     // those show the ride (or fill-up) count in its place.
-    final meanMetric = aggregationFor(chart) == Aggregation.mean &&
-        (isPerRideChart(chart) || isFuelSegmentChart(chart));
-    final better = higherIsBetter(chart);
+    final meanMetric = chart.aggregation == Aggregation.mean;
+    final better = higherIsBetter;
     Color trendColor = context.palette.textPrimary;
     if (trend != null && better != null && trend!.abs() >= 3) {
       final good = (trend! > 0) == better;
@@ -376,41 +366,53 @@ class _SummaryGrid extends StatelessWidget {
         trendColor,
       ),
     ];
-    return LayoutBuilder(builder: (context, c) {
-      const gap = 8.0;
-      final w = (c.maxWidth - gap * 2) / 3;
-      return Wrap(
-        spacing: gap,
-        runSpacing: gap,
-        children: [
-          for (final cell in cells)
-            SizedBox(
-              width: cell.$1 == l10n.analyticsTrend ? w * 2 + gap : w,
-              child: EditorialCard(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(cell.$2,
+    return LayoutBuilder(
+      builder: (context, c) {
+        const gap = 8.0;
+        final w = (c.maxWidth - gap * 2) / 3;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final cell in cells)
+              SizedBox(
+                width: cell.$1 == l10n.analyticsTrend ? w * 2 + gap : w,
+                child: EditorialCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cell.$2,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: display(context, 15,
-                            color: cell.$3 ?? context.palette.textPrimary)),
-                    const SizedBox(height: 2),
-                    Text(cell.$1,
+                        style: display(
+                          context,
+                          15,
+                          color: cell.$3 ?? context.palette.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        cell.$1,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 11,
-                            color: context.palette.textSecondary)),
-                  ],
+                          fontSize: 11,
+                          color: context.palette.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -424,18 +426,27 @@ class _Legend extends StatelessWidget {
       spacing: 14,
       children: [
         for (final (color, label) in items)
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                  color: color, borderRadius: BorderRadius.circular(3)),
-            ),
-            const SizedBox(width: 5),
-            Text(label,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
                 style: TextStyle(
-                    fontSize: 11, color: context.palette.textSecondary)),
-          ]),
+                  fontSize: 11,
+                  color: context.palette.textSecondary,
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

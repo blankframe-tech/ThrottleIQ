@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
+import 'package:throttleiq/features/stats/domain/charts/cornering_elevation_charts.dart';
 import 'package:throttleiq/features/stats/domain/ride_analytics.dart';
 import 'package:throttleiq/features/stats/presentation/analytics_chart_l10n.dart';
+import 'package:throttleiq/features/stats/presentation/analytics_chart_registry.dart';
 import 'package:throttleiq/l10n/app_localizations_en.dart';
 
 /// The schema v26 charts: max lean, peak g and elevation gain per ride.
@@ -35,58 +37,78 @@ void main() {
   final now = DateTime(2026, 10, 9, 15);
   final rides = [
     // Out of order on purpose; one legacy ride with nothing.
-    _ride('c', DateTime(2026, 10, 3),
-        lean: 31, latG: 0.6, accelG: 0.3, brakeG: 0.7, gain: 0, loss: 0),
+    _ride(
+      'c',
+      DateTime(2026, 10, 3),
+      lean: 31,
+      latG: 0.6,
+      accelG: 0.3,
+      brakeG: 0.7,
+      gain: 0,
+      loss: 0,
+    ),
     _ride('legacy', DateTime(2026, 10, 1)),
-    _ride('a', DateTime(2026, 10, 2),
-        lean: 22, latG: 0.4, accelG: null, brakeG: 0.5, gain: 120, loss: 80),
+    _ride(
+      'a',
+      DateTime(2026, 10, 2),
+      lean: 22,
+      latG: 0.4,
+      accelG: null,
+      brakeG: 0.5,
+      gain: 120,
+      loss: 80,
+    ),
     // Elevation backfilled, but no lean (recorded before v26).
     _ride('b', DateTime(2026, 10, 2, 18), gain: 40, loss: 45),
   ];
 
   test('all three are per-ride charts', () {
     for (final c in [
-      AnalyticsChart.maxLean,
-      AnalyticsChart.peakG,
-      AnalyticsChart.elevationGain,
+      CorneringElevationCharts.maxLean,
+      CorneringElevationCharts.peakG,
+      CorneringElevationCharts.elevationGain,
     ]) {
-      expect(isPerRideChart(c), isTrue, reason: c.name);
+      expect(c, isA<PerRideChart>(), reason: c.name);
     }
-    expect(aggregationFor(AnalyticsChart.maxLean), Aggregation.mean);
-    expect(aggregationFor(AnalyticsChart.peakG), Aggregation.mean);
-    expect(aggregationFor(AnalyticsChart.elevationGain), Aggregation.sum);
+    expect(CorneringElevationCharts.maxLean.aggregation, Aggregation.mean);
+    expect(CorneringElevationCharts.peakG.aggregation, Aggregation.mean);
+    expect(CorneringElevationCharts.elevationGain.aggregation, Aggregation.sum);
   });
 
   test('max lean: chronological, NULL legacy rides skipped', () {
-    final s = perRideSeries(AnalyticsChart.maxLean, rides);
+    final s = CorneringElevationCharts.maxLean.perRideSeries(rides);
     expect(s.map((p) => p.key), ['a', 'c']);
     expect(s.map((p) => p.value), [22, 31]);
-    expect(periodAggregate(AnalyticsChart.maxLean, rides), 26.5);
-    final i = buildInsights(AnalyticsChart.maxLean, rides, s, now: now);
-    expect(i.single.kind, InsightKind.peakLean);
+    expect(CorneringElevationCharts.maxLean.periodAggregate(rides), 26.5);
+    final i = CorneringElevationCharts.maxLean.insights(rides, s, now: now);
+    expect(i.single.kind, peakLeanInsight);
     expect(i.single.value, 31);
     expect(i.single.date, DateTime(2026, 10, 3));
   });
 
   test('peak g: lateral value, accel/brake alongside', () {
-    final s = perRideSeries(AnalyticsChart.peakG, rides);
+    final s = CorneringElevationCharts.peakG.perRideSeries(rides);
     expect(s.map((p) => p.key), ['a', 'c']);
     expect(s.map((p) => p.value), [0.4, 0.6]);
     expect(s.map((p) => p.secondary), [null, 0.3]);
     expect(s.map((p) => p.tertiary), [0.5, 0.7]);
-    final i = buildInsights(AnalyticsChart.peakG, rides, s, now: now);
+    final i = CorneringElevationCharts.peakG.insights(rides, s, now: now);
     expect(i.single.kind, InsightKind.peakValue);
     expect(i.single.value, 0.6);
   });
 
   test('elevation: gain value, loss alongside; a flat 0 is kept', () {
-    final s = perRideSeries(AnalyticsChart.elevationGain, rides);
+    final s = CorneringElevationCharts.elevationGain.perRideSeries(rides);
     expect(s.map((p) => p.key), ['a', 'b', 'c']);
     expect(s.map((p) => p.value), [120, 40, 0]);
     expect(s.map((p) => p.secondary), [80, 45, 0]);
-    expect(periodAggregate(AnalyticsChart.elevationGain, rides), 160);
-    final i = buildInsights(AnalyticsChart.elevationGain, rides, s, now: now);
-    expect(i.single.kind, InsightKind.totalClimb);
+    expect(CorneringElevationCharts.elevationGain.periodAggregate(rides), 160);
+    final i = CorneringElevationCharts.elevationGain.insights(
+      rides,
+      s,
+      now: now,
+    );
+    expect(i.single.kind, totalClimbInsight);
     expect(i.single.value, 160);
     expect(i.single.value2, 3);
   });
@@ -94,12 +116,12 @@ void main() {
   test('an all-legacy history has no data for any of them', () {
     final legacy = [_ride('x', DateTime(2026, 10, 1))];
     for (final c in [
-      AnalyticsChart.maxLean,
-      AnalyticsChart.peakG,
-      AnalyticsChart.elevationGain,
+      CorneringElevationCharts.maxLean,
+      CorneringElevationCharts.peakG,
+      CorneringElevationCharts.elevationGain,
     ]) {
-      expect(perRideSeries(c, legacy), isEmpty, reason: c.name);
-      expect(periodAggregate(c, legacy), isNull, reason: c.name);
+      expect(c.perRideSeries(legacy), isEmpty, reason: c.name);
+      expect(c.periodAggregate(legacy), isNull, reason: c.name);
     }
   });
 
@@ -109,9 +131,11 @@ void main() {
     String bike(String id) => id;
 
     test('peak g has lateral, accel and brake columns', () {
-      final t = buildChartTable(l10n, AnalyticsChart.peakG,
-          perRideSeries(AnalyticsChart.peakG, rides),
-          bikeName: bike);
+      final t = chartPresentationOf(CorneringElevationCharts.peakG).buildTable(
+        l10n,
+        CorneringElevationCharts.peakG.perRideSeries(rides),
+        bikeName: bike,
+      );
       expect(t.headers, [
         'Date',
         'Cornering (g)',
@@ -123,38 +147,48 @@ void main() {
     });
 
     test('elevation has climb and descent columns', () {
-      final t = buildChartTable(l10n, AnalyticsChart.elevationGain,
-          perRideSeries(AnalyticsChart.elevationGain, rides),
-          bikeName: bike);
+      final t = chartPresentationOf(CorneringElevationCharts.elevationGain)
+          .buildTable(
+        l10n,
+        CorneringElevationCharts.elevationGain.perRideSeries(rides),
+        bikeName: bike,
+      );
       expect(t.headers, ['Date', 'Climb (m)', 'Descent (m)']);
       expect(t.csvRows.first, ['2026-10-02 00:00', '120', '80']);
     });
 
     test('max lean is one degree column', () {
-      final t = buildChartTable(l10n, AnalyticsChart.maxLean,
-          perRideSeries(AnalyticsChart.maxLean, rides),
-          bikeName: bike);
+      final t =
+          chartPresentationOf(CorneringElevationCharts.maxLean).buildTable(
+        l10n,
+        CorneringElevationCharts.maxLean.perRideSeries(rides),
+        bikeName: bike,
+      );
       expect(t.headers, ['Date', 'Max lean angle per ride (°)']);
       expect(t.csvRows.last, ['2026-10-03 00:00', '31']);
     });
 
     test('insights read naturally', () {
       expect(
-          insightText(
-              l10n,
-              AnalyticsChart.maxLean,
-              AnalyticsInsight(InsightKind.peakLean,
-                  value: 31, date: DateTime(2026, 10, 3)),
-              bikeName: bike),
-          startsWith('Your deepest lean was about 31° on 3 Oct.'));
+        chartPresentationOf(CorneringElevationCharts.maxLean).insightText(
+          l10n,
+          AnalyticsInsight(
+            peakLeanInsight,
+            value: 31,
+            date: DateTime(2026, 10, 3),
+          ),
+          bikeName: bike,
+        ),
+        startsWith('Your deepest lean was about 31° on 3 Oct.'),
+      );
       expect(
-          insightText(
-              l10n,
-              AnalyticsChart.elevationGain,
-              const AnalyticsInsight(InsightKind.totalClimb,
-                  value: 160, value2: 3),
-              bikeName: bike),
-          'You climbed 160 m in total across 3 rides.');
+        chartPresentationOf(CorneringElevationCharts.elevationGain).insightText(
+          l10n,
+          const AnalyticsInsight(totalClimbInsight, value: 160, value2: 3),
+          bikeName: bike,
+        ),
+        'You climbed 160 m in total across 3 rides.',
+      );
       expect(formatWithUnit(0.456, 'g'), '0.46 g');
     });
   });

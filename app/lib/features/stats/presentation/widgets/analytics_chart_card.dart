@@ -4,7 +4,7 @@ import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../domain/ride_analytics.dart';
-import '../analytics_chart_l10n.dart';
+import '../analytics_chart_registry.dart';
 import 'analytics_chart_view.dart';
 
 /// One compact chart on the Rides tab's analytics list: title, a small
@@ -27,7 +27,8 @@ class AnalyticsChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = chartTitle(context.l10n, chart);
+    final spec = chartPresentationOf(chart);
+    final title = spec.title(context.l10n);
     return Semantics(
       button: true,
       label: title,
@@ -40,8 +41,7 @@ class AnalyticsChartCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(chartIcon(chart),
-                    size: 15, color: chartColor(context, chart)),
+                Icon(spec.icon, size: 15, color: spec.colorOf(context)),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -49,18 +49,25 @@ class AnalyticsChartCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary,
+                    ),
                   ),
                 ),
-                Icon(Icons.chevron_right,
-                    size: 16, color: context.palette.textTertiary),
+                Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: context.palette.textTertiary,
+                ),
               ],
             ),
             const SizedBox(height: 8),
             AnalyticsChartView(
-                chart: chart, points: points, bikeName: bikeName),
+              chart: chart,
+              points: points,
+              bikeName: bikeName,
+            ),
             if (insight != null) ...[
               const SizedBox(height: 6),
               Text(
@@ -68,7 +75,9 @@ class AnalyticsChartCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 11, color: context.palette.textSecondary),
+                  fontSize: 11,
+                  color: context.palette.textSecondary,
+                ),
               ),
             ],
           ],
