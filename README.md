@@ -1,347 +1,91 @@
 # 🏍️ ThrottleIQ — Machine Memory for Motorcycles
 
-**ThrottleIQ** is a source-available motorcycle ride tracking and intelligence platform that captures every detail of your rides: speed, acceleration, braking, routes, and machine maintenance. Built for riders who care about performance, safety, and keeping their bikes running flawlessly.
+**ThrottleIQ** is an offline-first ride tracker, garage and rider community for motorcycles. It records every ride (speed, braking, cornering, elevation, route), remembers what each bike needs next, and connects riders with each other. Built in Bangladesh, in English and Bangla.
 
-![License](https://img.shields.io/badge/license-TSAL-blue) ![Dart](https://img.shields.io/badge/Dart-3.3+-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
+![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-Dart%203-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta, `1.0.0-beta.4.2.0+23`, tagged
-> [`beta-v4.2`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.2)
-> (2026-10-07; `app/pubspec.yaml` is already bumped to `1.0.0-beta.4.3.0+24`
-> for the next release, which is not tagged yet)
-> — a signed Android APK/AAB on the GitHub release, plus an earlier Play
-> Console internal-testing build; no
-> public Play Store/App Store listing yet. Core ride recording,
-> garage/maintenance, social (forums, feed, direct messaging, group rides),
-> POI directory and saved routes are all built and wired end-to-end. See
-> [`HANDOFF_Document.md`](DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md)
-> for the full current status and what's still unverified before launch.
-> App id is `com.bft.throttleiq`.
-
----
-
-## ✨ Features
-
-### 🛣️ Ride Recording (P0-P4 ✅)
-- **Background tracking**: Records continuously even when app is backgrounded or screen is locked (using foreground services + wakelock)
-- **Live stats**: Current speed, acceleration, jerk, altitude, distance
-- **Smart alerts**: Overspeed, rapid acceleration, hard braking, extended riding (fatigue after 90 min)
-- **Exact metrics**: Samples the accelerometer and gyroscope at 20 Hz alongside GPS fixes
-
-### 📊 Ride Analysis (P0-P4 ✅)
-- **Summary cards**: Max speed, distance, duration, hard braking count, rapid accel count, jerk count
-- **Idle segmentation**: Distinguishes moving vs stopped periods (speed < 1 m/s)
-- **GPS accuracy gating**: Filters poor-accuracy points (accuracy > 25m)
-- **Timestamp precision**: Uses device time, not wall-clock, for accurate motion derivatives
-
-### 🔐 Safety & Emergency (P6 — partly shipped)
+> **Status:** pre-launch beta `1.0.0-beta.4.5.0+26`, tagged
+> [`beta-v4.5`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.5).
+> Real riders are testing a signed Android build from GitHub Releases and a Play
+> Console internal-testing track. There is no public Play Store or App Store
+> listing yet. App id: `com.bft.throttleiq`.
+> Current state, open issues and the feature map:
+> [`HANDOFF_Document.md`](DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md).
 
 > ⚠️ **Crash detection and emergency alerting are NOT live.** Do not rely on
-> ThrottleIQ to detect a crash or to contact anyone on your behalf. The
-> detection pipeline is built but switched off
-> (`SensorConstants.impactDetectorLiveEnabled = false`) pending field
-> calibration, and the Cloud Function that would notify contacts has no SMS or
-> email provider wired up — nothing is sent. See `DOCS/Handoff for agents and
-> Todos/issues_open.md` §78.1 and §81.
-
-**Shipped:**
-- **Live share link**: Generate an unguessable token-based link; whoever you send it to sees your location, speed and battery in real time, and the link is revocable and expires after 24 h
-- **Emergency contacts**: Store your emergency contacts, and a SafeQR medical-info card a responder can read with any phone camera
-- **Crash logging**: A suspected impact is recorded against the ride for later review
-
-**Built but switched off (no release date):**
-- **Crash detection**: Accelerometer spike + jerk spike + speed drop within 2 s → 60-second countdown. Thresholds are uncalibrated; the live detector is disabled
-- **Contact alerting**: SMS/email dispatch and 15-minute escalation exist as a Cloud Function skeleton with no provider integration
-- **No automatic 911**: when alerting does ship it will be contacts-only, by design
-
-### 🏪 Rider Utilities (P7 🚀)
-- **POI Directory**: Fuel pumps, garages, spare-parts shops (verified by admin, user-contributed)
-- **Ratings & Reviews**: Leave feedback with photos on places you visit
-- **On-ride quick access**: During a ride, find nearest fuel pump with one tap
-- **Geohash queries**: Efficient map viewport search for nearby places
-
-### 👥 Social & Community (P8 🚀)
-- **Ride feed**: Share rides with friends; see their ride cards (distance, duration, max speed, route thumbnail)
-- **Privacy zones**: Auto-strips the start/end of the route within a 200-349 m radius (fixed per rider, so the home location isn't exposed)
-- **Saved routes**: Save a past ride as a reusable route; re-ride anytime
-- **Group rides**: Create a ride session, invite friends; see all members' live positions on a shared map
-- **Challenges**: Monthly distance/streak challenges with local badges (e.g., "500km in July")
-
-### 🌐 Cloud & Sync (P5 🚀)
-- **Offline-first SQLite**: All data stored locally; ride recording works 100% offline
-- **Automatic Firestore sync**: On app resume + every 5 min if online
-- **Data portability**: Export rides as JSON, CSV or GPX (import into other apps, mapping tools)
-- **Maintenance forecast**: what each bike needs next and roughly when — km or date, whichever comes first, per-model schedules, intervals adapted to traffic and road conditions, service visits with receipts, reminders, paperwork expiry and a PDF service record
-- **Profile sync**: Backup your bike fleet, maintenance logs and settings (schedule, papers), emergency contacts to cloud
+> ThrottleIQ to detect a crash or contact anyone for you. The detector is built
+> but switched off pending field calibration, and no SMS or email provider is
+> wired up. See `issues_open.md` §78.1 and §81.
 
 ---
 
-## 🚀 Quick Start
+## ✨ What it does
 
-### Install
+- **Ride recording**: background GPS plus 20 Hz accelerometer and gyroscope, with live speed, alerts for overspeed, hard braking and fatigue, and an idle/moving split. Works fully offline.
+- **Rides tab analytics**: score, per-ride and lifetime charts (basics, time, riding behaviour, cornering and elevation, activity patterns, per-bike, fuel), badges and streaks.
+- **Garage and maintenance**: multiple bikes, per-model service schedules, "what's due next" by km or date, service visits with receipts, paperwork expiry, PDF service record.
+- **Places and routes**: fuel, garage and spare-parts directory with reviews; saved routes; Dhaka-focused seed data.
+- **Social**: ride feed with privacy zones, forums, direct messages, group rides with live positions, challenges, QR follow.
+- **Safety (shipped parts)**: revocable 24 h live-share link, emergency contacts and a SafeQR medical card.
+- **Data**: JSON, CSV and GPX export; Firestore sync on resume and every 5 min; in-app account deletion.
+- **Bilingual**: full English and Bangla.
 
-1. **Clone the repo**:
-   ```bash
-   git clone https://github.com/blankframe-tech/ThrottleIQ.git
-   cd ThrottleIQ/app
-   ```
+## 📹 Indriyo — the hardware side
 
-2. **Install dependencies**:
-   ```bash
-   flutter pub get
-   ```
-
-3. **Set up Firebase** (see [`SETUP.md`](DOCS/For%20Devs%20and%20Contributors/guides/SETUP.md) for details):
-   - Create Firebase project at console.firebase.google.com
-   - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
-   - Place in `app/android/app/` and `app/ios/Runner/` respectively
-   - Set up a free Cloudinary account for photo uploads (Firebase Storage
-     isn't used — see `SETUP.md`)
-
-4. **Run**:
-   ```bash
-   flutter run
-   ```
-
-### Record Your First Ride
-
-1. Launch the app → **Record** tab
-2. Select your bike (or add one in **Garage**)
-3. **Press and hold** (or slide, depending on the skin) to start the ride → ride normally
-4. **Hold to end ride** when done
-5. View summary → **Save**
-
-Done! Ride is saved to local database and will auto-sync to cloud on next reconnect.
+**Indriyo** is a low-cost, safety-first dash cam built for motorcycles (a digital rearview mirror with ADAS). It pairs with ThrottleIQ. Experimental integration lives on the [`indriyo`](https://github.com/blankframe-tech/ThrottleIQ/tree/indriyo) branch. More at **[blankframe.tech/indriyo](https://blankframe.tech/indriyo)**.
 
 ---
+
+## 🚀 Quick start
+
+```bash
+git clone https://github.com/blankframe-tech/ThrottleIQ.git
+cd ThrottleIQ/app
+flutter pub get
+flutter run
+```
+
+You need your own Firebase project and Cloudinary account (photo uploads; Firebase Storage is not used). Full steps, Android signing and iOS certificates: [`SETUP.md`](DOCS/For%20Devs%20and%20Contributors/guides/SETUP.md).
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Flutter App (Mobile)                                   │
-│  ├─ Local SQLite (offline-first source of truth)       │
-│  ├─ State: Riverpod providers (ride recording, sync)   │
-│  └─ UI: Material 3 + Flutter Map                        │
-└──────────────────┬──────────────────────────────────────┘
-                   │ (auto-sync on resume + 5min intervals)
-                   │
-┌──────────────────▼──────────────────────────────────────┐
-│  Firebase + Cloudinary Backend                          │
-│  ├─ Firestore: user data, rides, bikes, POIs, reviews  │
-│  ├─ Cloudinary: photo uploads (not Firebase Storage —   │
-│  │   Storage needs Blaze plan; see guides/SETUP.md)     │
-│  ├─ Auth: email/password + Google sign-in              │
-│  └─ Cloud Functions: written, can't deploy on Spark    │
-│      (account cleanup, ride identity, chat moderation,  │
-│      crash-alert mock — see functions/README.md)        │
-└─────────────────────────────────────────────────────────┘
-```
+- **App**: Flutter, Riverpod, go_router, Material 3, flutter_map. Feature-first layout under `app/lib/features/`.
+- **Local**: SQLite is the source of truth. Recording never needs internet; unsynced rows upload incrementally.
+- **Cloud**: Firestore + Auth (email and Google) + Cloudinary. Cloud Functions (`functions/`) are written for account cleanup, ride identity and chat moderation; deploying them needs the Blaze plan.
+- Deeper write-up: [`arch.md`](arch.md).
 
-**Data Flow**:
-1. Rider records → GPS + sensor data flows to SQLite (local)
-2. Recording stops → data marked `synced=0`
-3. App resumes / 5min timer → SyncManager detects unsync'd records
-4. Upload to Firestore `/users/{uid}/rides`, `/bikes`, `/maintenance`
-5. Mark `synced=1` locally
-6. Repeat forever (incremental sync)
+## 🧪 Quality gate
 
-**Offline-Safe**:
-- Recording never needs internet (geolocator + sensors are local)
-- Sync is async, non-blocking (user can ride without cloud)
-- Queue retries on network reconnect
-
----
-
-## 🧪 Testing
-
-### Run All Tests
+One command runs everything (translations, format, CI checks, `flutter analyze`, all tests, and the Firestore rules and Functions tests when they changed):
 
 ```bash
-# All tests
-flutter test
-
-# Specific test file (from app/)
-flutter test test/calculators/motion_calculator_test.dart
-
-# Coverage report
-flutter test --coverage
+scripts/check.sh
 ```
 
-### Test Suite
+It runs once per commit, and git runs it before every push. CI calls the same script, so local and CI checks match. Currently 2100+ tests, with DAOs tested against real in-memory SQLite.
 
-**1547/1547 green** as of 2026-10-07, and `flutter analyze` reports no issues. See `HANDOFF_Document.md` for how the count grew. Pure-logic calculators (motion, crash
-detection, jerk/acceleration, privacy-zone clipping, rating aggregation) are
-fixture-tested against realistic data — real coordinates (Dhaka,
-Chattogram), sensor thresholds, known distances. DAOs run against real
-in-memory SQLite (`sqflite_common_ffi`), not mocks — a prior deadlock bug
-shipped specifically because map-based fakes couldn't see real transaction
-semantics (`issues_fixed.md` §7). Firestore rules have their own emulator
-suite (`scripts/test/rules/`): `npm run test:rules` from `scripts/`.
+## 🔒 Privacy
 
-**Example: Crash Detection**
-
-> Note: this suite is green, but it guards a code path that does **not** run on
-> a rider's phone — `SensorConstants.impactDetectorLiveEnabled` is `const
-> false` and the live recorder passes `detectCrash: false`. Treat it as a
-> specification for the disabled detector, not as evidence the feature works.
-
-```dart
-test('DOES fire on crash: accel spike + jerk spike + speed→0 in 2s', () {
-  detector.detect(accel: 0, jerk: 0, speedMs: 15.0); // baseline
-  detector.detect(accel: 10.0, jerk: 0, speedMs: 15.0); // impact
-  detector.detect(accel: 9.5, jerk: 12.0, speedMs: 14.5); // jerk
-  final alert = detector.detect(accel: -5.0, jerk: -8.0, speedMs: 0.5); // drop
-  
-  expect(alert, equals(RideAlert.crash));
-  expect(detector.lastCrashSignal!.hadHighAccelSpike, isTrue);
-  expect(detector.lastCrashSignal!.hadJerkSpike, isTrue);
-  expect(detector.lastCrashSignal!.hadSpeedDrop, isTrue);
-});
-```
-
----
-
-## 📦 Dependencies
-
-- **flutter_riverpod**: State management (providers, notifiers)
-- **geolocator**: GPS location + background tracking
-- **sensors_plus**: Accelerometer/gyroscope data
-- **sqflite**: Local SQLite database
-- **cloud_firestore**: Firestore cloud backend
-- **firebase_auth**, **google_sign_in**: User authentication
-- **firebase_crashlytics**: Crash reporting (added 2026-08-28)
-- **flutter_map**: Interactive map (ride polyline, POI)
-- **go_router**: Navigation (type-safe routing)
-- **connectivity_plus**: Detect online/offline state
-- **wakelock_plus**: Keep device awake during recording
-- **share_plus**: Share live ride link
-- **image_picker**: Select bike/POI photos
-- **path_provider**: Access Downloads folder (for exports)
-
-See [pubspec.yaml](app/pubspec.yaml) for full list + versions.
-
----
-
-## 🔒 Security & Privacy
-
-### Data Ownership
-- **Private data** (ride history, GPS tracks, bikes, maintenance, emergency
-  contacts) lives under `/users/{uid}/...`, owner-only per `firestore.rules`.
-  Anything you choose to share (feed rides, forum posts, reviews, live
-  sessions, group rides) lives in top-level collections with per-feature
-  visibility rules.
-- **Account deletion** is in-app (Settings → Delete Account). Cloud cleanup
-  runs in the `onUserAccountDeleted` Cloud Function (see `functions/README.md`).
-- **Deleted rides** are purged from cloud on user request
-- **No behavioural analytics or advertising SDK.** Firebase Crashlytics
-  (added 2026-08-28) collects crash diagnostics only — stack traces, device
-  model, app version — never usage tracking. See
-  `public/privacy.html` and `DOCS/General/store_listing/data_safety_and_permissions.md`.
-
-### Ride Sharing
-- **Privacy zones**: Auto-clips the start/end of shared rides within a 200-349 m radius, stable per rider (home location safe)
-- **Manual control**: User decides which rides to share
-- **Revocable**: User can unshare anytime (delete from Firestore)
-
-### Emergency Share
-- **Token-based**: Live location link uses unguessable random token (not signed-in required)
-- **TTL**: Links auto-expire after 24 hours
-- **User control**: Can disable/revoke at any time
-
-### Passwords & Secrets
-- **Never stored locally**: passwords are never stored by the app; sign-in tokens are kept by the Firebase Auth SDK in its own platform storage
-- **google-services.json** & **key.properties**: Gitignored (never committed)
-- **Firestore keys**: Restricted to this app's domain via Firebase Console
-
----
-
-## 🛠️ Troubleshooting
-
-### "Background recording stopped"
-- **Cause**: GPS permission denied or not requested
-- **Fix**: Go to phone Settings → ThrottleIQ → Location → "Allow Always"
-
-### Rides not syncing to cloud
-- **Cause**: No internet or Firestore rules blocking write
-- **Fix**: Check WiFi/cellular, then verify Firebase project & Firestore rules deployed
-
-### Crash detection never fires
-- **Cause**: It is switched off in every build —
-  `SensorConstants.impactDetectorLiveEnabled = false`, and the live recorder
-  passes `detectCrash: false`. This is deliberate: the thresholds are
-  uncalibrated and there is no alert delivery. Not a bug to work around
-- **Fix**: none available to a rider. See `issues_open.md` §78.1 / §81.1
-
-### iOS build fails
-- **Cause**: `GoogleService-Info.plist` missing or not in Xcode
-- **Fix**: Download from Firebase Console, add to `app/ios/Runner` in Xcode (Build Phases → Copy Bundle Resources)
-
----
+Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides clip the start and end inside a 200–349 m privacy zone. There is no ad or behavioural-analytics SDK; Crashlytics collects crash diagnostics only. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
 
 ## 📚 Documentation
 
-Everything lives in [`DOCS/`](DOCS/README.md). See that file for the full
-map. The essentials:
-
-- [`HANDOFF_Document.md`](DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md): current status,
-  the pre-launch to-do list, and the feature backlog. Start here.
-- [`features.md`](DOCS/Handoff%20for%20agents%20and%20Todos/features.md): what a signed-in user can
-  actually do today, screen by screen.
-- [`issues_open.md`](DOCS/Handoff%20for%20agents%20and%20Todos/issues_open.md) /
-  [`issues_fixed.md`](DOCS/Handoff%20for%20agents%20and%20Todos/issues_fixed.md):
-  unresolved issues, and the dated record of every resolved one, cited by
-  section number (`§N`) from everywhere else.
-- [`SETUP.md`](DOCS/For%20Devs%20and%20Contributors/guides/SETUP.md): Firebase setup, Cloudinary, Android
-  signing, iOS certificates.
-- [`assumptions.md`](DOCS/For%20Devs%20and%20Contributors/architecture/assumptions.md): non-obvious judgement calls
-  and why they were made.
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-
-1. **Create a feature branch**: `git checkout -b feat/my-feature`
-2. **Write tests first** (TDD): Failing test → implementation → pass
-3. **Keep commits clean**: One feature per commit, descriptive messages
-4. **No secrets**: Use `.env` or Firebase Console; never commit keys
-5. **Run tests before push**: `flutter test`
-6. **Follow Dart style**: `dart format .` before commit
-
----
-
-## 📄 License
-
-**ThrottleIQ Source-Available License (TSAL) v1.0** — See [LICENSE](LICENSE)
-
-In short: You can **view and audit** the source code, but cannot copy, fork, or build a competing app. All rights reserved.
-
----
+Everything is under [`DOCS/`](DOCS/README.md). Start with [`HANDOFF_Document.md`](DOCS/Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md), then [`features.md`](DOCS/Handoff%20for%20agents%20and%20Todos/features.md) and [`issues_open.md`](DOCS/Handoff%20for%20agents%20and%20Todos/issues_open.md).
 
 ## 🗺️ Roadmap
 
-- **Now**: Play Store + App Store submission (see `HANDOFF_Document.md`'s
-  "Play Store & App Store" section for the concrete step-by-step).
-- **Soon**: Crash detection going live at all — it needs field/drop calibration
-  of the thresholds before the flag can be flipped — and then crash-alert
-  SMS/email escalation (the Cloud Function exists but delivery is still a mock;
-  real sending needs Twilio/SendGrid and the Firebase Blaze billing plan. See `DOCS/For Devs and Contributors/architecture/backend_options.md`), turn-by-turn
-  route navigation tuning, full Bangla localization.
-- **Backlog**: lean-angle tracking, weekly riding reports, clubs & events,
-  a curvy-route planner with real routing. See `HANDOFF_Document.md`
-  Part 2 for the full, competitor-researched feature map.
+- **Now**: Play Store and App Store submission, growing the real-rider beta, marketing launch in Bangladesh.
+- **Next**: crash detection field calibration, then real alert delivery (needs an SMS/email provider and Blaze).
+- **Later**: lean-angle tracking, clubs and events, weekly reports, curvy-route planner, Indriyo hardware integration in the main app.
+
+## 🤝 Contributing
+
+Branch from `experimental`, keep commits focused, write tests for new logic, never commit secrets, and run `scripts/check.sh` before pushing.
+
+## 📄 License
+
+**ThrottleIQ Source-Available License (TSAL) v1.0** — see [LICENSE](LICENSE). You can view and audit the source, but not copy, fork or build a competing app.
 
 ---
 
-## 📞 Support & Feedback
-
-- **Report bugs**: tracked in `DOCS/Handoff for agents and Todos/issues_open.md`
-- **Feature requests / backlog**: `HANDOFF_Document.md` Part 2
-- **Privacy questions**: `public/privacy.html`
-
----
-
-**Built with ❤️ for riders. Safe travels! 🏍️**
-
-*Last updated: 2026-10-06*
+*Built for riders. Ride safe. 🏍️ · Last updated: 2026-10-09*

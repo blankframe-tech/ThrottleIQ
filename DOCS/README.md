@@ -65,12 +65,10 @@ can close (release, accounts, devices, decisions).
 
 | File | What it's for |
 |---|---|
-| [`optimizerplan.md`](Handoff%20for%20agents%20and%20Todos/optimizerplan.md) | 2026-09-03 prioritized performance/reliability plan (written at `1.0.0-beta.1+5`). Check each item against `issues_open.md` before acting on it. |
 | [`uiux_critique.md`](Handoff%20for%20agents%20and%20Todos/uiux_critique.md) | A screenshot-grounded UI/UX critique, ready to turn into an `issues_open.md` punch list. |
 | [`todo_now_antigravity.md`](Handoff%20for%20agents%20and%20Todos/todo_now_antigravity.md) | Trust & Safety / messaging task checklist from another agent's session. |
 | [`issues_solved.md`](Handoff%20for%20agents%20and%20Todos/issues_solved.md) | Per-claim resolutions of the Antigravity grill findings. Its code links are absolute `file:///` paths from the repo's old location and no longer open. |
 | `ANTIGRAVRITY_GRILL/` | The 2026-09-20 external critique (`codebase.md`, `other_gaps.md`, `UI_UX.md`, `bussness.md`) and its verification, `claude_sol.md`. Many of the critique's file paths are stale; `claude_sol.md` gives the corrected ones. |
-| `SKILLS/` | Third-party mobile-design skill files kept for reference (formerly `NEWORKS/`). Their internal links point at sibling files from their original package that were never copied here. |
 | `bugs/` | Local bug-report screenshots. Gitignored on purpose. |
 
 ## For devs and contributors
