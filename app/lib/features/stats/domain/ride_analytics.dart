@@ -6,8 +6,8 @@
 /// only turns these numbers into charts, labels and CSV cells.
 ///
 /// Only data the app actually records is used: the ride row's distance,
-/// speeds, duration, moving seconds, the three harsh-event counters, start
-/// time and bike. Metrics a ride doesn't carry (e.g. moving time on rides
+/// speeds, duration, moving seconds, the harsh-event counters, the schema v26
+/// lean/g/elevation figures, start time and bike. Metrics a ride doesn't carry (e.g. moving time on rides
 /// finalized before it was tracked) are skipped for that ride rather than
 /// guessed as zero.
 library;
@@ -28,6 +28,9 @@ enum AnalyticsChart {
   hardBraking,
   rapidAccel,
   overspeed,
+  maxLean,
+  peakG,
+  elevationGain,
   activityCalendar,
   hourOfDay,
   weekday,
@@ -57,12 +60,15 @@ extension AnalyticsRangeX on AnalyticsRange {
 ///
 /// [key] is stable and unique within a series: a ride id, an ISO day, a
 /// bucket number or a bike id. [secondary] carries the second stack of a
-/// two-part bar (stopped minutes in moving-vs-stopped).
+/// two-part bar (stopped minutes in moving-vs-stopped) or a companion figure
+/// (peak acceleration g beside lateral g, elevation loss beside gain);
+/// [tertiary] a third (peak braking g).
 class AnalyticsPoint {
   final String key;
   final DateTime? date;
   final double value;
   final double? secondary;
+  final double? tertiary;
 
   /// Hour (0–23) or ISO weekday (1 = Monday … 7 = Sunday) for bucketed
   /// charts; null otherwise.
@@ -73,6 +79,7 @@ class AnalyticsPoint {
     required this.value,
     this.date,
     this.secondary,
+    this.tertiary,
     this.bucket,
   });
 
@@ -168,6 +175,13 @@ double? perRideValue(AnalyticsChart chart, RideEntity r) {
     case AnalyticsChart.overspeed:
       // Null on rides recorded before it was counted (schema v25).
       return r.overspeedCount?.toDouble();
+    // Null on rides recorded before schema v26 (elevation: unless backfilled).
+    case AnalyticsChart.maxLean:
+      return r.maxLeanDeg;
+    case AnalyticsChart.peakG:
+      return r.peakLateralG;
+    case AnalyticsChart.elevationGain:
+      return r.elevationGainM;
     case AnalyticsChart.weeklyDistance:
     case AnalyticsChart.activityCalendar:
     case AnalyticsChart.hourOfDay:
@@ -188,7 +202,10 @@ bool isPerRideChart(AnalyticsChart c) => switch (c) {
       AnalyticsChart.ridingScore ||
       AnalyticsChart.hardBraking ||
       AnalyticsChart.rapidAccel ||
-      AnalyticsChart.overspeed =>
+      AnalyticsChart.overspeed ||
+      AnalyticsChart.maxLean ||
+      AnalyticsChart.peakG ||
+      AnalyticsChart.elevationGain =>
         true,
       _ => false,
     };
@@ -197,7 +214,9 @@ Aggregation aggregationFor(AnalyticsChart c) => switch (c) {
       AnalyticsChart.avgSpeed ||
       AnalyticsChart.topSpeed ||
       AnalyticsChart.movingVsStopped ||
-      AnalyticsChart.ridingScore =>
+      AnalyticsChart.ridingScore ||
+      AnalyticsChart.maxLean ||
+      AnalyticsChart.peakG =>
         Aggregation.mean,
       _ => Aggregation.sum,
     };
@@ -211,14 +230,25 @@ List<AnalyticsPoint> perRideSeries(
     final v = perRideValue(chart, r);
     if (v == null) continue;
     double? secondary;
+    double? tertiary;
     if (chart == AnalyticsChart.movingVsStopped) {
       // value = moving share; secondary = stopped minutes, so the table and
       // CSV can show both halves of the bar.
       final s = stoppedSeconds(r);
       secondary = s == null ? null : s / 60;
+    } else if (chart == AnalyticsChart.peakG) {
+      // value = lateral; the longitudinal peaks ride along for the table.
+      secondary = r.peakAccelG;
+      tertiary = r.peakBrakeG;
+    } else if (chart == AnalyticsChart.elevationGain) {
+      secondary = r.elevationLossM;
     }
     out.add(AnalyticsPoint(
-        key: r.id, date: r.startTime, value: v, secondary: secondary));
+        key: r.id,
+        date: r.startTime,
+        value: v,
+        secondary: secondary,
+        tertiary: tertiary));
   }
   return out;
 }
@@ -550,6 +580,8 @@ enum InsightKind {
   longestRide,
   cleanRides,
   stoppedShare,
+  peakLean,
+  totalClimb,
 }
 
 /// A plain-language observation about a series, as numbers; the
@@ -629,6 +661,15 @@ List<AnalyticsInsight> buildInsights(
         out.add(AnalyticsInsight(InsightKind.stoppedShare,
             value: stopped / dur * 100));
       }
+    case AnalyticsChart.maxLean:
+      // Worded as an estimate — see CorneringEstimator.
+      final peak = series.reduce((a, b) => b.value > a.value ? b : a);
+      out.add(AnalyticsInsight(InsightKind.peakLean,
+          value: peak.value, date: peak.date));
+    case AnalyticsChart.elevationGain:
+      final total = series.fold<double>(0, (s, p) => s + p.value);
+      out.add(AnalyticsInsight(InsightKind.totalClimb,
+          value: total, value2: series.length.toDouble()));
     default:
       final peak = series.reduce((a, b) => b.value > a.value ? b : a);
       out.add(AnalyticsInsight(InsightKind.peakValue,

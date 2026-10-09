@@ -173,8 +173,24 @@ class CloudRepository {
     // document shape it always had; a counted ride uploads it like the other
     // event counts.
     if (out['overspeed_count'] == null) out.remove('overspeed_count');
+    // And for the v26 cornering/g/elevation figures, each on its own: a
+    // ride can have elevation (backfilled) but no lean (never measured).
+    for (final key in rideV26PayloadKeys) {
+      if (out[key] == null) out.remove(key);
+    }
     return out;
   }
+
+  /// The schema v26 ride columns, dropped from the payload when NULL.
+  @visibleForTesting
+  static const rideV26PayloadKeys = [
+    'max_lean_deg',
+    'peak_lateral_g',
+    'peak_accel_g',
+    'peak_brake_g',
+    'elevation_gain_m',
+    'elevation_loss_m',
+  ];
 
   /// Drops keys with no matching column, so a document written by a newer
   /// build still lands (minus the fields this one can't store) rather than

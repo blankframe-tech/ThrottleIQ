@@ -24,6 +24,9 @@ String chartTitle(AppLocalizations l10n, AnalyticsChart c) => switch (c) {
       AnalyticsChart.hardBraking => l10n.chartHardBraking,
       AnalyticsChart.rapidAccel => l10n.chartRapidAccel,
       AnalyticsChart.overspeed => l10n.chartOverspeed,
+      AnalyticsChart.maxLean => l10n.chartMaxLean,
+      AnalyticsChart.peakG => l10n.chartPeakG,
+      AnalyticsChart.elevationGain => l10n.chartElevationGain,
       AnalyticsChart.activityCalendar => l10n.chartActivityCalendar,
       AnalyticsChart.hourOfDay => l10n.chartHourOfDay,
       AnalyticsChart.weekday => l10n.chartWeekday,
@@ -52,6 +55,9 @@ String chartUnit(AppLocalizations l10n, AnalyticsChart c) => switch (c) {
       AnalyticsChart.hourOfDay ||
       AnalyticsChart.weekday =>
         l10n.analyticsUnitRides,
+      AnalyticsChart.maxLean => '°',
+      AnalyticsChart.peakG => 'g',
+      AnalyticsChart.elevationGain => 'm',
     };
 
 /// Whether a rise is good news (true), bad news (false) or neither (null) —
@@ -83,6 +89,9 @@ Color chartColor(BuildContext context, AnalyticsChart c) {
     AnalyticsChart.jamTime => p.warning,
     AnalyticsChart.hardBraking || AnalyticsChart.overspeed => p.danger,
     AnalyticsChart.ridingScore || AnalyticsChart.movingVsStopped => p.success,
+    AnalyticsChart.maxLean => p.secondary,
+    AnalyticsChart.peakG => p.attention,
+    AnalyticsChart.elevationGain => p.success,
     _ => p.primary,
   };
 }
@@ -99,6 +108,9 @@ IconData chartIcon(AnalyticsChart c) => switch (c) {
       AnalyticsChart.hardBraking => Icons.warning_amber_outlined,
       AnalyticsChart.rapidAccel => Icons.trending_up,
       AnalyticsChart.overspeed => Icons.speed,
+      AnalyticsChart.maxLean => Icons.turn_slight_right,
+      AnalyticsChart.peakG => Icons.adjust,
+      AnalyticsChart.elevationGain => Icons.terrain_outlined,
       AnalyticsChart.activityCalendar => Icons.calendar_month_outlined,
       AnalyticsChart.hourOfDay => Icons.schedule_outlined,
       AnalyticsChart.weekday => Icons.view_week_outlined,
@@ -120,10 +132,17 @@ String formatAnalyticsNumber(double v) {
   return v.abs() >= 10 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 }
 
+/// Like [formatAnalyticsNumber], except g-forces keep two decimals — they
+/// live between 0 and 1.5, where one decimal hides the difference.
+String formatChartNumber(AnalyticsChart chart, double v) =>
+    chart == AnalyticsChart.peakG
+        ? v.toStringAsFixed(2)
+        : formatAnalyticsNumber(v);
+
 String formatWithUnit(double v, String unit) {
-  final n = formatAnalyticsNumber(v);
+  final n = unit == 'g' ? v.toStringAsFixed(2) : formatAnalyticsNumber(v);
   if (unit.isEmpty) return n;
-  if (unit == '%') return '$n%';
+  if (unit == '%' || unit == '°') return '$n$unit';
   return '$n $unit';
 }
 
@@ -179,6 +198,12 @@ String insightText(
           (i.value ?? 0).round(), (i.value2 ?? 0).round());
     case InsightKind.stoppedShare:
       return l10n.insightStoppedShare(pct(i.value));
+    case InsightKind.peakLean:
+      return l10n.insightPeakLean(
+          formatWithUnit(i.value ?? 0, '°'), shortDate(i.date!));
+    case InsightKind.totalClimb:
+      return l10n.insightTotalClimb(
+          formatWithUnit(i.value ?? 0, 'm'), (i.value2 ?? 0).round());
   }
 }
 
@@ -239,11 +264,61 @@ ChartTable buildChartTable(
         ],
       );
     }
+    if (chart == AnalyticsChart.peakG) {
+      String g(double? v) => v == null ? '—' : v.toStringAsFixed(2);
+      String csvG(double? v) => v == null ? '' : v.toStringAsFixed(3);
+      return ChartTable(
+        headers: [
+          l10n.analyticsColDate,
+          withUnit(l10n.analyticsColLateral, 'g'),
+          withUnit(l10n.analyticsColAccel, 'g'),
+          withUnit(l10n.analyticsColBrake, 'g'),
+        ],
+        displayRows: [
+          for (final p in points.reversed)
+            [longDate(p.date!), g(p.value), g(p.secondary), g(p.tertiary)],
+        ],
+        csvRows: [
+          for (final p in points)
+            [
+              _isoDateTime(p.date!),
+              csvG(p.value),
+              csvG(p.secondary),
+              csvG(p.tertiary),
+            ],
+        ],
+      );
+    }
+    if (chart == AnalyticsChart.elevationGain) {
+      return ChartTable(
+        headers: [
+          l10n.analyticsColDate,
+          withUnit(l10n.analyticsColClimb, 'm'),
+          withUnit(l10n.analyticsColDescent, 'm'),
+        ],
+        displayRows: [
+          for (final p in points.reversed)
+            [
+              longDate(p.date!),
+              formatAnalyticsNumber(p.value),
+              p.secondary == null ? '—' : formatAnalyticsNumber(p.secondary!),
+            ],
+        ],
+        csvRows: [
+          for (final p in points)
+            [
+              _isoDateTime(p.date!),
+              _csvNum(p.value),
+              p.secondary == null ? '' : _csvNum(p.secondary!),
+            ],
+        ],
+      );
+    }
     return ChartTable(
       headers: [l10n.analyticsColDate, valueHeader],
       displayRows: [
         for (final p in points.reversed)
-          [longDate(p.date!), formatAnalyticsNumber(p.value)],
+          [longDate(p.date!), formatChartNumber(chart, p.value)],
       ],
       csvRows: [
         for (final p in points) [_isoDateTime(p.date!), _csvNum(p.value)],

@@ -30,6 +30,12 @@ List<RideEntity> _rides() => [
           rapidAccelCount: i % 3,
           highJerkCount: i % 5,
           overspeedCount: i % 7 == 0 ? null : i % 3,
+          maxLeanDeg: i % 5 == 0 ? null : 12.0 + i % 9 * 3,
+          peakLateralG: i % 5 == 0 ? null : 0.2 + i % 9 * 0.05,
+          peakAccelG: i % 5 == 0 ? null : 0.15 + i % 4 * 0.05,
+          peakBrakeG: i % 5 == 0 ? null : 0.3 + i % 6 * 0.07,
+          elevationGainM: i % 4 == 0 ? null : (i % 6) * 25.0,
+          elevationLossM: i % 4 == 0 ? null : (i % 5) * 20.0,
           status: RideStatus.completed,
         ),
     ];

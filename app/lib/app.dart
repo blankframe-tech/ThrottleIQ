@@ -11,6 +11,8 @@ import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/maintenance/data/services/maintenance_alerts.dart';
 import 'features/ride/data/repositories/auto_ride_reconciler_service.dart';
+import 'features/ride/data/repositories/elevation_backfill.dart';
+import 'features/stats/presentation/providers/rider_stats_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -203,6 +205,11 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           unawaited(
               ref.read(bikeArchiveServiceProvider).purgeExpired(uid).then((n) {
             if (n > 0) ref.invalidate(garageProvider);
+          }));
+          // Elevation for rides recorded before schema v26, from their
+          // stored points. Once per app start, in small batches.
+          unawaited(ElevationBackfill.runOncePerStart().then((n) {
+            if (n > 0) ref.invalidate(riderStatsProvider);
           }));
         } else {
           sync.stopAutoSync();

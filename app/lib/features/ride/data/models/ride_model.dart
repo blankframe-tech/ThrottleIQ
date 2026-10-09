@@ -23,6 +23,14 @@ class RideModel {
         highJerkCount: m['high_jerk_count'] as int,
         // Null on rides finalized before schema v25: unknown, not zero.
         overspeedCount: (m['overspeed_count'] as num?)?.toInt(),
+        // Null on rides finalized before schema v26 (and elevation on rides
+        // the backfill couldn't measure): unknown, not zero.
+        maxLeanDeg: (m['max_lean_deg'] as num?)?.toDouble(),
+        peakLateralG: (m['peak_lateral_g'] as num?)?.toDouble(),
+        peakAccelG: (m['peak_accel_g'] as num?)?.toDouble(),
+        peakBrakeG: (m['peak_brake_g'] as num?)?.toDouble(),
+        elevationGainM: (m['elevation_gain_m'] as num?)?.toDouble(),
+        elevationLossM: (m['elevation_loss_m'] as num?)?.toDouble(),
         status: _statusFromString(m['status'] as String),
         mapSnapshotPath: m['map_snapshot_path'] as String?,
         // Null-tolerant rather than `as int`: rides written before schema v11
@@ -53,6 +61,12 @@ class RideModel {
         'rapid_accel_count': e.rapidAccelCount,
         'high_jerk_count': e.highJerkCount,
         'overspeed_count': e.overspeedCount,
+        'max_lean_deg': e.maxLeanDeg,
+        'peak_lateral_g': e.peakLateralG,
+        'peak_accel_g': e.peakAccelG,
+        'peak_brake_g': e.peakBrakeG,
+        'elevation_gain_m': e.elevationGainM,
+        'elevation_loss_m': e.elevationLossM,
         'status': e.status.name,
         'map_snapshot_path': e.mapSnapshotPath,
         'is_auto': e.isAuto ? 1 : 0,

@@ -588,6 +588,24 @@ class HomeWidgetService {
     } catch (e, s) {
       _log('publishApexHunter failed', e, s);
     }
+    await _rememberLean(maxLeanLeft, maxLeanRight);
+  }
+
+  /// Mirrors the lean peaks into the app's own SharedPreferences, which is
+  /// where [refreshFromLocalData] reads them back from. The widget store
+  /// written by `_save` (an app-group / `HomeWidgetPreferences` file) is not
+  /// the store `SharedPreferences.getInstance()` reads, so without this every
+  /// refresh after a ride republished 0° over the ride's real figures.
+  Future<void> _rememberLean(double left, double right) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(
+          kWidgetKeyMaxLeanLeftRaw, left.isFinite && left > 0 ? left : 0.0);
+      await prefs.setDouble(
+          kWidgetKeyMaxLeanRightRaw, right.isFinite && right > 0 ? right : 0.0);
+    } catch (e, s) {
+      _log('remember lean failed', e, s);
+    }
   }
 
   /// Resets all data widgets to their "nothing to show" state — used when
@@ -611,6 +629,8 @@ class HomeWidgetService {
         _save(kWidgetKeyLeanRating, 'STREET'),
         _save(kWidgetKeyLeanSymmetry, kWidgetPlaceholderValue),
       ]);
+      // A previous account's lean figures mustn't come back on next refresh.
+      await _rememberLean(0, 0);
       await refreshAllWidgets();
     } catch (e, s) {
       _log('publishPlaceholders failed', e, s);

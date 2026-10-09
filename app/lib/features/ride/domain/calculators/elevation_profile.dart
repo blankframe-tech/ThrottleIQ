@@ -52,3 +52,33 @@
   }
   return (gainM: gain, lossM: loss);
 }
+
+/// The elevation figure stored on a ride row (schema v26), or null when the
+/// altitude data can't support one.
+///
+/// Same estimate as [elevationGainLoss], with one difference: a ride with
+/// plenty of altitude samples whose total variation is inside the noise
+/// floor is stored as a measured `0 m / 0 m` (it was flat), not as unknown.
+/// [elevationGainLoss] returns null for both cases because its caller (the
+/// ride summary) hides the section either way; a stored column has to tell
+/// them apart, or the backfill would rescan every flat ride on every start.
+({double gainM, double lossM})? rideElevationGainLoss(
+  List<double?> altitudesM, {
+  int smoothingWindow = 5,
+  double minVariationM = 3.0,
+  double minPresentFraction = 0.5,
+}) {
+  final result = elevationGainLoss(
+    altitudesM,
+    smoothingWindow: smoothingWindow,
+    minVariationM: minVariationM,
+    minPresentFraction: minPresentFraction,
+  );
+  if (result != null) return result;
+  if (altitudesM.isEmpty) return null;
+  final present = altitudesM.whereType<double>().length;
+  if (present / altitudesM.length < minPresentFraction) return null;
+  if (present < smoothingWindow * 2) return null;
+  // Enough honest samples, just no climb worth reporting.
+  return (gainM: 0.0, lossM: 0.0);
+}

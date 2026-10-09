@@ -28,6 +28,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../profile/presentation/providers/speed_alert_provider.dart';
 import '../../data/models/ride_model.dart';
 import '../../domain/calculators/average_speed.dart';
+import '../../domain/calculators/cornering_estimator.dart';
+import '../../domain/calculators/elevation_profile.dart';
 import '../../domain/calculators/event_detector.dart';
 import '../../domain/calculators/final_ride_stats.dart';
 import '../../domain/calculators/fix_kinematics.dart';
@@ -235,6 +237,17 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   final _pointDao = RidePointDao();
   final _calculator = MotionCalculator();
   final _detector = EventDetector();
+
+  /// Lean angle and g-force from GPS kinematics — see [CorneringEstimator].
+  final _cornering = CorneringEstimator();
+
+  /// When the lean widget was last published mid-ride, and the peaks it was
+  /// given, so it's only rewritten when a peak grows and at most every
+  /// [_leanWidgetInterval].
+  DateTime? _leanWidgetAt;
+  double _leanWidgetLeft = 0;
+  double _leanWidgetRight = 0;
+  static const Duration _leanWidgetInterval = Duration(seconds: 10);
   final _cadencePolicy = RecordingCadencePolicy();
 
   // Helper coordinators
@@ -445,6 +458,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _activeStart = DateTime.now();
       _detector.reset();
       _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
+      _cornering.reset();
+      _leanWidgetAt = null;
+      _leanWidgetLeft = 0;
+      _leanWidgetRight = 0;
       _cadencePolicy.reset();
       _sensorCoordinator.reset();
       _activeAlertAt = null;
@@ -705,6 +722,15 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _speedSum += speedMs;
     _speedCount++;
 
+    // Never difference a heading across a pause.
+    if (segmentStart) _cornering.restartHistory();
+    _cornering.addFix(
+      time: timestamp,
+      speedMs: speedMs,
+      headingDeg: pos.heading.isFinite ? pos.heading : null,
+    );
+    _maybePublishLean(DateTime.now());
+
     if (_lastFixTime != null) {
       final gapMs = timestamp.difference(_lastFixTime!).inMilliseconds;
       if (gapMs > 0) {
@@ -834,6 +860,26 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       activeAlert: alertToShow,
       confidence: vehicleState?.confidence,
     );
+  }
+
+  /// Pushes the ride's left/right lean peaks to the lean home widget when one
+  /// has grown, at most every [_leanWidgetInterval] (or always, with
+  /// [force], at the end of a ride).
+  void _maybePublishLean(DateTime now, {bool force = false}) {
+    final peaks = _cornering.peaks;
+    final left = peaks.maxLeanLeftDeg ?? 0;
+    final right = peaks.maxLeanRightDeg ?? 0;
+    final grew = left > _leanWidgetLeft + 0.5 || right > _leanWidgetRight + 0.5;
+    if (!force && !grew) return;
+    final last = _leanWidgetAt;
+    if (!force && last != null && now.difference(last) < _leanWidgetInterval) {
+      return;
+    }
+    _leanWidgetAt = now;
+    _leanWidgetLeft = left;
+    _leanWidgetRight = right;
+    unawaited(HomeWidgetService.instance
+        .publishApexHunter(maxLeanLeft: left, maxLeanRight: right));
   }
 
   void _startTimer() {
@@ -1092,7 +1138,14 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       // §90.C8: finalize first, recovery marker last. The marker used to be
       // cleared before the row was finalized, so a kill in between left the
       // ride `active` forever — out of history, never synced, unrecoverable.
-      final finalStats = _buildFinalStats();
+      final finalStats = _buildFinalStats(
+        elevation: await _elevationFor(ride.id),
+      );
+      // Publish only if the ride measured any cornering, so a short ride
+      // through town doesn't wipe the last real ride's figures to 0°.
+      if (_cornering.peaks.maxLeanDeg != null) {
+        _maybePublishLean(DateTime.now(), force: true);
+      }
       await runStopSequence(
         finalize: () async {
           await _rideDao.finalizeRide(ride.id, finalStats);
@@ -1139,7 +1192,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
   /// The ride summary columns — see [buildFinalRideStats]. Shared by
   /// [stopRide] and [_onCrashDetected] (§69.O10).
-  Map<String, dynamic> _buildFinalStats() => buildFinalRideStats(
+  Map<String, dynamic> _buildFinalStats(
+          {({double gainM, double lossM})? elevation}) =>
+      buildFinalRideStats(
         endTime: DateTime.now(),
         distanceM: _totalDistance,
         maxSpeedMs: _maxSpeed,
@@ -1152,7 +1207,21 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         rapidAccelCount: _detector.rapidAccelCount,
         highJerkCount: _detector.highJerkCount,
         overspeedCount: _detector.overspeedCount,
+        corneringPeaks: _cornering.peaks,
+        elevation: elevation,
       );
+
+  /// Gain/loss from this ride's stored altitude samples — read after the
+  /// point buffer is flushed. Best effort: a failure leaves the columns NULL
+  /// for `ElevationBackfill` to fill on a later start.
+  Future<({double gainM, double lossM})?> _elevationFor(String rideId) async {
+    try {
+      return rideElevationGainLoss(await _pointDao.getAltitudesForRide(rideId));
+    } catch (e) {
+      debugPrint('[RideRecording] elevation failed: $e');
+      return null;
+    }
+  }
 
   Future<void> restoreInterruptedRide() async {
     if (state.status != RecordingStatus.idle) return;
@@ -1216,6 +1285,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _sensorCoordinator.reset();
     _detector.reset();
     _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
+    // The pre-restore peaks lived only in memory; the restored ride's lean
+    // and g figures cover what is ridden after the resume.
+    _cornering.reset();
+    _leanWidgetAt = null;
+    _leanWidgetLeft = 0;
+    _leanWidgetRight = 0;
     _cadencePolicy.reset();
 
     final last = fixes.last;
