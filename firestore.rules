@@ -196,6 +196,34 @@ service cloud.firestore {
     // A forum post's photos: at most 4, each a Cloudinary upload in the
     // author's own `forumPhotos/<uid>/` folder (ForumRepository.uploadPostPhoto),
     // so a post can't hotlink arbitrary hosts into every viewer's feed.
+    // A fuel fill-up document (FuelLogModel.toCloudPayload + syncedAt).
+    function optionalString(d, key, maxLen) {
+      return !(key in d) || (d[key] is string && d[key].size() <= maxLen);
+    }
+
+    function fuelLogValid(logId, d) {
+      return d.keys().hasOnly(['id', 'bike_id', 'filled_at', 'odometer_km',
+          'liters', 'total_cost', 'price_per_liter', 'full_tank', 'station',
+          'note', 'created_at', 'updated_at', 'syncedAt']) &&
+        d.keys().hasAll(['id', 'bike_id', 'filled_at', 'odometer_km',
+          'liters', 'total_cost', 'price_per_liter', 'full_tank',
+          'created_at', 'updated_at', 'syncedAt']) &&
+        d.id == logId &&
+        d.bike_id is string && d.bike_id.size() > 0 && d.bike_id.size() <= 128 &&
+        d.filled_at is string && d.filled_at.size() <= 40 &&
+        d.created_at is string && d.created_at.size() <= 40 &&
+        d.updated_at is string && d.updated_at.size() <= 40 &&
+        d.odometer_km is number && d.odometer_km >= 0 && d.odometer_km <= 2000000 &&
+        d.liters is number && d.liters > 0 && d.liters <= 1000 &&
+        d.total_cost is number && d.total_cost >= 0 && d.total_cost <= 10000000 &&
+        // Derived (total / litres), so no ceiling of its own.
+        d.price_per_liter is number && d.price_per_liter >= 0 &&
+        d.full_tank is bool &&
+        optionalString(d, 'station', 200) &&
+        optionalString(d, 'note', 1000) &&
+        d.syncedAt == request.time;
+    }
+
     function forumImageUrlValid(url, uid) {
       return url is string && url.size() <= 1000 &&
         url.matches('^https://res\\.cloudinary\\.com/vjvcigkt/image/upload/(.*/)?forumPhotos/' + uid + '/.+');
@@ -465,6 +493,18 @@ service cloud.firestore {
       // User maintenance logs subcollection
       match /maintenance/{maintenanceId} {
         allow read, write: if request.auth.uid == uid;
+      }
+
+      // Fuel fill-ups (schema v27). Owner-only like the maintenance logs
+      // above, plus the document shape FuelLogModel.toCloudPayload writes: a
+      // fixed key set, the doc id repeated in `id`, positive litres,
+      // non-negative money, a bounded odometer, `full_tank` a real bool and
+      // `syncedAt` the server time (other devices' incremental pull filters
+      // on it, so a client-chosen value could hide a fill-up from them).
+      match /fuelLogs/{logId} {
+        allow read, delete: if request.auth.uid == uid;
+        allow create, update: if request.auth.uid == uid &&
+          fuelLogValid(logId, request.resource.data);
       }
 
       // Emergency contacts subcollection

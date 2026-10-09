@@ -12,6 +12,8 @@ import '../services/cloudinary_upload_service.dart';
 import '../utils/bike_image_resolver.dart';
 import 'maintenance_settings_sync.dart';
 import '../database/daos/maintenance_dao.dart';
+import '../database/daos/fuel_log_dao.dart';
+import '../../features/maintenance/data/models/fuel_log_model.dart';
 import 'pull_watermark.dart';
 import 'ride_track_codec.dart';
 
@@ -336,6 +338,96 @@ class CloudRepository {
             '[CloudRepository] maintenance upload rejected for ${log['id']}: $e');
       }
     }
+  }
+
+  /// Uploads unsynced fuel fill-ups and marks them synced. Same
+  /// batch-then-per-item shape as [uploadMaintenance].
+  Future<void> uploadFuelLogs(
+      String uid, List<Map<String, dynamic>> logs) async {
+    if (logs.isEmpty) return;
+    final col = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection(FuelLogModel.collection);
+    final dao = FuelLogDao();
+    Map<String, dynamic> payload(Map<String, dynamic> log) => {
+          ...FuelLogModel.toCloudPayload(log),
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
+    try {
+      final batch = _firestore.batch();
+      for (final log in logs) {
+        batch.set(col.doc(log['id'] as String), payload(log));
+      }
+      await batch.commit();
+      for (final log in logs) {
+        await dao.markSynced(log['id'] as String);
+      }
+      return;
+    } catch (e) {
+      debugPrint('[CloudRepository] batched fuel upload failed '
+          '(${logs.length} logs), retrying individually: $e');
+    }
+    for (final log in logs) {
+      try {
+        await col.doc(log['id'] as String).set(payload(log));
+        await dao.markSynced(log['id'] as String);
+      } catch (e) {
+        debugPrint(
+            '[CloudRepository] fuel upload rejected for ${log['id']}: $e');
+      }
+    }
+  }
+
+  /// Pulls fuel fill-ups missing locally, skipping ones deleted here and ones
+  /// whose bike was deleted here. Same incremental contract as
+  /// [downloadMaintenance].
+  Future<PullResult> downloadFuelLogs(String uid, {DateTime? since}) async {
+    final db = await DatabaseHelper.instance.database;
+    final localIds = (await db.query('fuel_logs', columns: ['id']))
+        .map((r) => r['id'] as String)
+        .toSet();
+    final deletedIds = await FuelLogDao().deletedIds();
+    final deletedBikes = await _bikeDao.deletedIds();
+    final snap = await _sinceQuery(
+            _firestore
+                .collection('users')
+                .doc(uid)
+                .collection(FuelLogModel.collection),
+            since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
+
+    var pulledAny = false;
+    DateTime? firstFailed;
+    for (final doc in snap.docs) {
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
+      final row = FuelLogModel.fromCloud({...doc.data(), 'id': doc.id});
+      if (row == null || deletedBikes.contains(row['bike_id'])) continue;
+      try {
+        await db.insert('fuel_logs', row,
+            conflictAlgorithm: ConflictAlgorithm.replace);
+        pulledAny = true;
+      } catch (e) {
+        debugPrint('[CloudRepository] fuel download skipped for ${doc.id}: $e');
+        firstFailed = earlierFailure(firstFailed, doc.data());
+      }
+    }
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
+  }
+
+  /// Deletes a fill-up's remote copy. The caller marks the tombstone synced
+  /// only when this returns, so an offline delete retries.
+  Future<void> deleteFuelLogRemote(String uid, String logId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection(FuelLogModel.collection)
+        .doc(logId)
+        .delete();
   }
 
   /// Pulls bikes that exist in this rider's `users/{uid}/bikes` Firestore

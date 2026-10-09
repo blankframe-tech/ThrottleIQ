@@ -17,7 +17,9 @@ _Shape _shapeOf(AnalyticsChart c) => switch (c) {
       AnalyticsChart.topSpeed ||
       AnalyticsChart.ridingScore ||
       AnalyticsChart.maxLean ||
-      AnalyticsChart.peakG =>
+      AnalyticsChart.peakG ||
+      AnalyticsChart.fuelEfficiency ||
+      AnalyticsChart.fuelCostPerKm =>
         _Shape.line,
       AnalyticsChart.movingVsStopped => _Shape.stacked,
       AnalyticsChart.activityCalendar => _Shape.heatmap,
@@ -56,7 +58,8 @@ class AnalyticsChartView extends StatelessWidget {
       _Shape.heatmap => points.any((p) => p.value > 0),
       _Shape.bars
           when chart == AnalyticsChart.hourOfDay ||
-              chart == AnalyticsChart.weekday =>
+              chart == AnalyticsChart.weekday ||
+              isFuelMonthlyChart(chart) =>
         points.any((p) => p.value > 0),
       _ => points.isNotEmpty,
     };
@@ -65,7 +68,10 @@ class AnalyticsChartView extends StatelessWidget {
         height: _height,
         child: Center(
           child: Text(
-            context.l10n.notEnoughRidesYet,
+            isFuelChart(chart)
+                ? context.l10n.fuelChartEmptyHint
+                : context.l10n.notEnoughRidesYet,
+            textAlign: TextAlign.center,
             style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
           ),
         ),
@@ -90,6 +96,7 @@ class AnalyticsChartView extends StatelessWidget {
           ? p.bucket!.toString()
           : weekdayLabel(p.bucket!).substring(0, 1);
     }
+    if (p.date != null && isFuelMonthlyChart(chart)) return shortMonth(p.date!);
     return p.date == null ? '' : shortDate(p.date!);
   }
 
@@ -156,7 +163,11 @@ class AnalyticsChartView extends StatelessWidget {
         ? (chart == AnalyticsChart.hourOfDay
             ? hourLabel(p.bucket!)
             : weekdayLabel(p.bucket!))
-        : (p.date == null ? '' : shortDate(p.date!));
+        : (p.date == null
+            ? ''
+            : isFuelMonthlyChart(chart)
+                ? longMonth(p.date!)
+                : shortDate(p.date!));
     return '$head\n${formatWithUnit(p.value, unit)}';
   }
 

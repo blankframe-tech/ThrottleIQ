@@ -10,9 +10,15 @@
 /// lean/g/elevation figures, start time and bike. Metrics a ride doesn't carry (e.g. moving time on rides
 /// finalized before it was tracked) are skipped for that ride rather than
 /// guessed as zero.
+///
+/// The four fuel charts ([isFuelChart]) are the exception: they read the
+/// rider's logged fill-ups ([FuelLogEntity]) instead of rides — see the
+/// "Fuel charts" section at the end.
 library;
 
 import '../../../core/utils/riding_score.dart';
+import '../../maintenance/domain/calculators/fuel_economy.dart';
+import '../../maintenance/domain/entities/fuel_log.dart';
 import '../../ride/domain/entities/ride_entity.dart';
 
 /// Every chart on the analytics list, in display order.
@@ -36,6 +42,10 @@ enum AnalyticsChart {
   weekday,
   distanceByBike,
   longestRides,
+  fuelSpend,
+  fuelEfficiency,
+  fuelCostPerKm,
+  fuelLiters,
 }
 
 /// How a chart's points combine into one number when two periods are
@@ -188,6 +198,10 @@ double? perRideValue(AnalyticsChart chart, RideEntity r) {
     case AnalyticsChart.weekday:
     case AnalyticsChart.distanceByBike:
     case AnalyticsChart.longestRides:
+    case AnalyticsChart.fuelSpend:
+    case AnalyticsChart.fuelEfficiency:
+    case AnalyticsChart.fuelCostPerKm:
+    case AnalyticsChart.fuelLiters:
       return null;
   }
 }
@@ -216,7 +230,9 @@ Aggregation aggregationFor(AnalyticsChart c) => switch (c) {
       AnalyticsChart.movingVsStopped ||
       AnalyticsChart.ridingScore ||
       AnalyticsChart.maxLean ||
-      AnalyticsChart.peakG =>
+      AnalyticsChart.peakG ||
+      AnalyticsChart.fuelEfficiency ||
+      AnalyticsChart.fuelCostPerKm =>
         Aggregation.mean,
       _ => Aggregation.sum,
     };
@@ -541,7 +557,8 @@ List<AnalyticsPoint> buildPreviewSeries(
 /// values (sum or mean), calendar charts total their distance, and the
 /// bucketed/ranked charts compare ride counts or distance.
 double? periodAggregate(AnalyticsChart chart, List<RideEntity> rides) {
-  if (rides.isEmpty) return null;
+  // Fuel charts compare fill-ups, not rides: see [fuelPeriodAggregate].
+  if (rides.isEmpty || isFuelChart(chart)) return null;
   if (isPerRideChart(chart)) {
     final s = MetricSummary.of(perRideSeries(chart, rides).map((p) => p.value));
     if (s.isEmpty) return null;
@@ -582,6 +599,16 @@ enum InsightKind {
   stoppedShare,
   peakLean,
   totalClimb,
+
+  /// Fuel: the highest month ([AnalyticsInsight.value], month in `date`).
+  peakMonth,
+
+  /// Fuel: distance-weighted average over [AnalyticsInsight.value2]
+  /// full-tank stretches.
+  fuelAverage,
+
+  /// Fuel: fill-ups exist, but not two full-tank ones to measure between.
+  fuelNeedFullFills,
 }
 
 /// A plain-language observation about a series, as numbers; the
@@ -710,6 +737,224 @@ String toCsv(List<String> header, List<List<Object?>> rows) {
       ..write('\r\n');
   }
   return b.toString();
+}
+
+// ─── Fuel charts ───────────────────────────────────────────────────────────
+
+bool isFuelChart(AnalyticsChart c) => switch (c) {
+      AnalyticsChart.fuelSpend ||
+      AnalyticsChart.fuelEfficiency ||
+      AnalyticsChart.fuelCostPerKm ||
+      AnalyticsChart.fuelLiters =>
+        true,
+      _ => false,
+    };
+
+/// Spend and litres: one bar per calendar month.
+bool isFuelMonthlyChart(AnalyticsChart c) =>
+    c == AnalyticsChart.fuelSpend || c == AnalyticsChart.fuelLiters;
+
+/// km/L and ৳/km: one point per full-to-full stretch (see [fuelSegments]).
+bool isFuelSegmentChart(AnalyticsChart c) =>
+    c == AnalyticsChart.fuelEfficiency || c == AnalyticsChart.fuelCostPerKm;
+
+/// How many months the compact fuel cards show.
+const int previewMonthCount = 6;
+
+DateTime monthStartOf(DateTime t) => DateTime(t.year, t.month);
+
+String _isoMonth(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}';
+
+List<FuelLogEntity> fuelLogsInWindow(
+    List<FuelLogEntity> logs, ({DateTime start, DateTime end})? w) {
+  if (w == null) return logs;
+  return logs
+      .where((l) => !l.filledAt.isBefore(w.start) && l.filledAt.isBefore(w.end))
+      .toList();
+}
+
+bool _endsInWindow(FuelSegment s, ({DateTime start, DateTime end})? w) =>
+    w == null || (!s.end.isBefore(w.start) && s.end.isBefore(w.end));
+
+/// Total spend (or litres) per calendar month from [from]'s month to [to]'s,
+/// empty months included, oldest first. [AnalyticsPoint.secondary] is the
+/// month's fill-up count.
+List<AnalyticsPoint> fuelMonthly(
+  AnalyticsChart chart,
+  List<FuelLogEntity> logs, {
+  required DateTime from,
+  required DateTime to,
+}) {
+  final totals = <String, double>{};
+  final counts = <String, int>{};
+  for (final l in logs) {
+    final k = _isoMonth(l.filledAt);
+    totals[k] = (totals[k] ?? 0) +
+        (chart == AnalyticsChart.fuelSpend ? l.totalCost : l.liters);
+    counts[k] = (counts[k] ?? 0) + 1;
+  }
+  final last = monthStartOf(to);
+  final out = <AnalyticsPoint>[];
+  for (var m = monthStartOf(from);
+      !m.isAfter(last);
+      m = DateTime(m.year, m.month + 1)) {
+    final k = _isoMonth(m);
+    out.add(AnalyticsPoint(
+      key: k,
+      date: m,
+      value: totals[k] ?? 0,
+      secondary: (counts[k] ?? 0).toDouble(),
+    ));
+  }
+  return out;
+}
+
+/// km/L or ৳/km per full-to-full stretch, oldest first, for stretches that
+/// end inside [window]. Stretches are measured over every fill-up, so one
+/// that started before the window still counts. [AnalyticsPoint.secondary]
+/// is the stretch's distance in km.
+List<AnalyticsPoint> fuelSegmentSeries(
+  AnalyticsChart chart,
+  List<FuelLogEntity> logs, {
+  ({DateTime start, DateTime end})? window,
+}) {
+  return [
+    for (final s in fuelSegments(logs))
+      if (_endsInWindow(s, window))
+        AnalyticsPoint(
+          key: s.endLogId,
+          date: s.end,
+          value: chart == AnalyticsChart.fuelEfficiency
+              ? s.kmPerLiter
+              : s.costPerKm,
+          secondary: s.distanceKm,
+        ),
+  ];
+}
+
+/// The series a fuel chart plots over every fill-up in [logs], limited to
+/// [window] (the whole history when null, ending at [now]).
+List<AnalyticsPoint> buildFuelSeries(
+  AnalyticsChart chart,
+  List<FuelLogEntity> logs, {
+  required DateTime now,
+  ({DateTime start, DateTime end})? window,
+}) {
+  if (isFuelSegmentChart(chart)) {
+    return fuelSegmentSeries(chart, logs, window: window);
+  }
+  if (!isFuelMonthlyChart(chart) || logs.isEmpty) return const [];
+  if (window != null) {
+    return fuelMonthly(chart, fuelLogsInWindow(logs, window),
+        from: window.start, to: now);
+  }
+  final earliest =
+      logs.map((l) => l.filledAt).reduce((a, b) => a.isBefore(b) ? a : b);
+  return fuelMonthly(chart, logs, from: earliest, to: now);
+}
+
+/// The compact card's series: the last [previewMonthCount] months, or the
+/// last [previewRideCount] stretches. Empty with no fill-ups at all, so the
+/// card shows its "log fuel" hint.
+List<AnalyticsPoint> buildFuelPreviewSeries(
+  AnalyticsChart chart,
+  List<FuelLogEntity> logs, {
+  required DateTime now,
+}) {
+  if (logs.isEmpty) return const [];
+  if (isFuelSegmentChart(chart)) {
+    final s = fuelSegmentSeries(chart, logs);
+    return s.length > previewRideCount
+        ? s.sublist(s.length - previewRideCount)
+        : s;
+  }
+  final m = monthStartOf(now);
+  return fuelMonthly(chart, logs,
+      from: DateTime(m.year, m.month - (previewMonthCount - 1)), to: now);
+}
+
+/// The number two periods are compared on: total spend/litres for the
+/// monthly charts, distance-weighted km/L or ৳/km for the stretch charts.
+/// Null when [window] holds nothing to compare.
+double? fuelPeriodAggregate(
+  AnalyticsChart chart,
+  List<FuelLogEntity> logs,
+  ({DateTime start, DateTime end})? window,
+) {
+  if (isFuelMonthlyChart(chart)) {
+    final inWindow = fuelLogsInWindow(logs, window);
+    if (inWindow.isEmpty) return null;
+    return inWindow.fold<double>(
+        0,
+        (s, l) =>
+            s + (chart == AnalyticsChart.fuelSpend ? l.totalCost : l.liters));
+  }
+  var km = 0.0;
+  var liters = 0.0;
+  var cost = 0.0;
+  for (final s in fuelSegments(logs)) {
+    if (!_endsInWindow(s, window)) continue;
+    km += s.distanceKm;
+    liters += s.liters;
+    cost += s.cost;
+  }
+  if (km <= 0 || liters <= 0) return null;
+  return chart == AnalyticsChart.fuelEfficiency ? km / liters : cost / km;
+}
+
+/// Distance-weighted mean of a stretch series (whose secondary is the
+/// stretch distance): total km over total litres for km/L, total ৳ over
+/// total km for ৳/km.
+double? _weightedSegmentAverage(
+    AnalyticsChart chart, List<AnalyticsPoint> series) {
+  var km = 0.0;
+  var other = 0.0;
+  for (final p in series) {
+    final d = p.secondary ?? 0;
+    if (d <= 0 || p.value <= 0) continue;
+    km += d;
+    other += chart == AnalyticsChart.fuelEfficiency ? d / p.value : p.value * d;
+  }
+  if (km <= 0 || other <= 0) return null;
+  return chart == AnalyticsChart.fuelEfficiency ? km / other : other / km;
+}
+
+/// Up to two insights for a fuel chart: its shape (peak month, or the
+/// average over the stretches shown) and the trend vs [trend].
+List<AnalyticsInsight> buildFuelInsights(
+  AnalyticsChart chart,
+  List<FuelLogEntity> logs,
+  List<AnalyticsPoint> series, {
+  double? trend,
+}) {
+  if (logs.isEmpty) return const [AnalyticsInsight(InsightKind.notEnoughData)];
+  final out = <AnalyticsInsight>[];
+  if (isFuelSegmentChart(chart)) {
+    final avg = _weightedSegmentAverage(chart, series);
+    if (avg == null) {
+      out.add(const AnalyticsInsight(InsightKind.fuelNeedFullFills));
+    } else {
+      out.add(AnalyticsInsight(InsightKind.fuelAverage,
+          value: avg, value2: series.length.toDouble()));
+    }
+  } else if (series.every((p) => p.value <= 0)) {
+    out.add(const AnalyticsInsight(InsightKind.notEnoughData));
+  } else {
+    final peak = series.reduce((a, b) => b.value > a.value ? b : a);
+    out.add(AnalyticsInsight(InsightKind.peakMonth,
+        value: peak.value, date: peak.date));
+  }
+  if (trend != null) {
+    if (trend.abs() < flatTrendThresholdPercent) {
+      out.add(const AnalyticsInsight(InsightKind.trendFlat));
+    } else {
+      out.add(AnalyticsInsight(
+          trend > 0 ? InsightKind.trendUp : InsightKind.trendDown,
+          value: trend.abs()));
+    }
+  }
+  return out;
 }
 
 List<RideEntity> _chronological(List<RideEntity> rides) =>

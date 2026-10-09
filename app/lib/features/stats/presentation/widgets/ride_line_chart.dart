@@ -146,8 +146,8 @@ class RideLineChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       labels[i == 0 ? 0 : 1],
-                      style:
-                          TextStyle(fontSize: 10, color: context.palette.textTertiary),
+                      style: TextStyle(
+                          fontSize: 10, color: context.palette.textTertiary),
                     ),
                   );
                 },
@@ -197,8 +197,18 @@ class RideLineChart extends StatelessWidget {
 
   static String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]}';
   }

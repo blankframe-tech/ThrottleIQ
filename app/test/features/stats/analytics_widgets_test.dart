@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
 import 'package:throttleiq/features/garage/presentation/providers/garage_provider.dart';
+import 'package:throttleiq/features/maintenance/presentation/providers/fuel_provider.dart';
 import 'package:throttleiq/features/stats/presentation/providers/badge_sync_provider.dart';
 import 'package:throttleiq/features/stats/presentation/providers/rider_stats_provider.dart';
 import 'package:throttleiq/features/stats/presentation/screens/stats_screen.dart';
@@ -134,6 +135,7 @@ void main() {
             (ref) async => computeRiderStats(rides: rides, bikes: const [])),
         allBikesProvider.overrideWith((ref) async => const []),
         badgeSyncProvider.overrideWith((ref) async {}),
+        userFuelLogsProvider.overrideWith((ref) async => const []),
       ],
       child: _app(const StatsScreen()),
     ));

@@ -9,6 +9,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../maintenance/domain/entities/fuel_log.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_l10n.dart';
@@ -23,6 +24,9 @@ class AnalyticsDetailScreen extends StatefulWidget {
   final List<RideEntity> rides;
   final Map<String, String> bikeNames;
 
+  /// Every fill-up on the rider's bikes; only the fuel charts read it.
+  final List<FuelLogEntity> fuelLogs;
+
   /// Injectable clock for tests.
   final DateTime? now;
 
@@ -31,6 +35,7 @@ class AnalyticsDetailScreen extends StatefulWidget {
     required this.chart,
     required this.rides,
     this.bikeNames = const {},
+    this.fuelLogs = const [],
     this.now,
   });
 
@@ -50,15 +55,22 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
     super.initState();
     // The shortest range that has something to show; per-ride trend charts
     // need two rides to draw a line.
-    final need = isPerRideChart(widget.chart) ? 2 : 1;
+    final chart = widget.chart;
+    final need = isPerRideChart(chart) || isFuelSegmentChart(chart) ? 2 : 1;
+    bool hasData(AnalyticsRange r) {
+      if (!isFuelChart(chart)) {
+        return ridesInRange(widget.rides, r, _now).length >= need;
+      }
+      final series = buildFuelSeries(chart, widget.fuelLogs,
+          now: _now, window: rangeWindow(r, _now));
+      return series.where((p) => p.value > 0).length >= need;
+    }
+
     _range = [
       AnalyticsRange.days30,
       AnalyticsRange.days90,
       AnalyticsRange.year,
-    ].firstWhere(
-      (r) => ridesInRange(widget.rides, r, _now).length >= need,
-      orElse: () => AnalyticsRange.all,
-    );
+    ].firstWhere(hasData, orElse: () => AnalyticsRange.all);
   }
 
   String _bikeName(String id) =>
@@ -70,15 +82,32 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
     final chart = widget.chart;
     final now = _now;
     final window = rangeWindow(_range, now);
+    final fuel = isFuelChart(chart);
     final current = ridesInWindow(widget.rides, window);
     final previous =
         ridesInWindow(widget.rides, previousRangeWindow(_range, now));
-    final series = buildSeries(chart, current, now: now, window: window);
+    final List<AnalyticsPoint> series;
+    final double? trend;
+    final List<AnalyticsInsight> insights;
+    final int count;
+    if (fuel) {
+      final logs = widget.fuelLogs;
+      final previousWindow = previousRangeWindow(_range, now);
+      series = buildFuelSeries(chart, logs, now: now, window: window);
+      trend = previousWindow == null
+          ? null
+          : trendPercent(fuelPeriodAggregate(chart, logs, window),
+              fuelPeriodAggregate(chart, logs, previousWindow));
+      insights = buildFuelInsights(chart, logs, series, trend: trend);
+      count = fuelLogsInWindow(logs, window).length;
+    } else {
+      series = buildSeries(chart, current, now: now, window: window);
+      trend = trendPercent(
+          periodAggregate(chart, current), periodAggregate(chart, previous));
+      insights = buildInsights(chart, current, series, now: now, trend: trend);
+      count = current.length;
+    }
     final summary = MetricSummary.of(series.map((p) => p.value));
-    final trend = trendPercent(
-        periodAggregate(chart, current), periodAggregate(chart, previous));
-    final insights =
-        buildInsights(chart, current, series, now: now, trend: trend);
     final table = buildChartTable(l10n, chart, series, bikeName: _bikeName);
     final unit = chartUnit(l10n, chart);
     final title = chartTitle(l10n, chart);
@@ -148,7 +177,9 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
                   chart: chart,
                   summary: summary,
                   unit: unit,
-                  rideCount: current.length,
+                  rideCount: count,
+                  countLabel:
+                      fuel ? l10n.analyticsColFillUps : l10n.analyticsColRides,
                   trend: trend,
                 ),
                 const SizedBox(height: 12),
@@ -192,7 +223,10 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
                 ? SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(l10n.insightNotEnoughData,
+                      child: Text(
+                          fuel
+                              ? l10n.fuelChartEmptyHint
+                              : l10n.insightNotEnoughData,
                           style: TextStyle(
                               fontSize: 12,
                               color: context.palette.textTertiary)),
@@ -301,6 +335,7 @@ class _SummaryGrid extends StatelessWidget {
   final MetricSummary summary;
   final String unit;
   final int rideCount;
+  final String countLabel;
   final double? trend;
 
   const _SummaryGrid({
@@ -308,6 +343,7 @@ class _SummaryGrid extends StatelessWidget {
     required this.summary,
     required this.unit,
     required this.rideCount,
+    required this.countLabel,
     required this.trend,
   });
 
@@ -315,10 +351,10 @@ class _SummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     String v(double x) => summary.isEmpty ? '—' : formatWithUnit(x, unit);
-    // A total of averages (speeds, scores, shares) means nothing, so those
-    // show the ride count in its place.
-    final meanMetric =
-        aggregationFor(chart) == Aggregation.mean && isPerRideChart(chart);
+    // A total of averages (speeds, scores, shares, km/L) means nothing, so
+    // those show the ride (or fill-up) count in its place.
+    final meanMetric = aggregationFor(chart) == Aggregation.mean &&
+        (isPerRideChart(chart) || isFuelSegmentChart(chart));
     final better = higherIsBetter(chart);
     Color trendColor = context.palette.textPrimary;
     if (trend != null && better != null && trend!.abs() >= 3) {
@@ -330,7 +366,7 @@ class _SummaryGrid extends StatelessWidget {
       (l10n.analyticsMax, v(summary.max), null),
       (l10n.analyticsAvg, v(summary.avg), null),
       meanMetric
-          ? (l10n.analyticsColRides, '$rideCount', null)
+          ? (countLabel, '$rideCount', null)
           : (l10n.analyticsTotal, v(summary.total), null),
       (
         l10n.analyticsTrend,

@@ -63,7 +63,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,16 +86,16 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('bn'),
-    Locale('en'),
+    Locale('en')
   ];
 
   /// Label for the suggested users section.
@@ -2641,9 +2641,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick {minGroupRideFriends}–{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications.'**
   String pickRidersRideStarts(
-    Object minGroupRideFriends,
-    Object maxGroupRideFriends,
-  );
+      Object minGroupRideFriends, Object maxGroupRideFriends);
 
   /// HintText in group_ride_friend_picker.
   ///
@@ -5932,10 +5930,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{hardBrakeCount} hard brakes · {rapidAccelCount} rapid accel · {highJerkCount} jerks'**
   String hardBrakesRapidAccel(
-    Object hardBrakeCount,
-    Object rapidAccelCount,
-    Object highJerkCount,
-  );
+      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount);
 
   /// Text in stats_screen.
   ///
@@ -6020,10 +6015,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{family}, {earnedCount} of {badgesCount} earned'**
   String badgeFamilyEarned(
-    Object family,
-    Object earnedCount,
-    Object badgesCount,
-  );
+      Object family, Object earnedCount, Object badgesCount);
 
   /// Text in badge_grid.
   ///
@@ -6054,11 +6046,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{threshold} You\'re at {progress} of {threshold2} {unit}.'**
   String youreAt(
-    Object threshold,
-    Object progress,
-    Object threshold2,
-    Object unit,
-  );
+      Object threshold, Object progress, Object threshold2, Object unit);
 
   /// Text in ride_line_chart.
   ///
@@ -10787,6 +10775,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.'**
   String get tourProfileSafeQrBody;
+
+  /// Heading of the fuel card on bike detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get fuelTitle;
+
+  /// Title of the per-bike fuel fill-ups screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel log'**
+  String get fuelLogTitle;
+
+  /// Title/button for adding a fuel fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Log fill-up'**
+  String get fuelAddTitle;
+
+  /// Title of the fuel form when editing an existing fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit fill-up'**
+  String get fuelEditTitle;
+
+  /// Fuel form: litres field label (required).
+  ///
+  /// In en, this message translates to:
+  /// **'Litres *'**
+  String get fuelLitersLabel;
+
+  /// Fuel form: total amount paid field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Total paid'**
+  String get fuelTotalCostLabel;
+
+  /// Fuel form: price per litre field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Price per litre'**
+  String get fuelPricePerLiterLabel;
+
+  /// Fuel form: helper text under the money fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the total or the price per litre; the other is worked out.'**
+  String get fuelPriceHint;
+
+  /// Fuel form: switch label for a full-tank fill.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled to full'**
+  String get fuelFullTankLabel;
+
+  /// Fuel form: explains the full-tank switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed for km/L. Turn off for a partial top-up.'**
+  String get fuelFullTankHint;
+
+  /// Fuel form: filling station name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Station (optional)'**
+  String get fuelStationLabel;
+
+  /// Fuel form: save button.
+  ///
+  /// In en, this message translates to:
+  /// **'Save fill-up'**
+  String get fuelSave;
+
+  /// Snackbar after saving a new fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill-up saved'**
+  String get fuelSaved;
+
+  /// Snackbar after editing a fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill-up updated'**
+  String get fuelUpdated;
+
+  /// Snackbar when saving a fill-up fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the fill-up. Please try again.'**
+  String get fuelSaveFailed;
+
+  /// Confirm dialog title for deleting a fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this fill-up?'**
+  String get fuelDeleteTitle;
+
+  /// Confirm dialog body for deleting a fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be removed from this phone and your backup.'**
+  String get fuelDeleteBody;
+
+  /// Snackbar after deleting a fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill-up deleted'**
+  String get fuelDeleted;
+
+  /// Fuel form: validation when neither money field is filled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the total or the price per litre'**
+  String get fuelMoneyRequired;
+
+  /// Fuel form: odometer validation, reading would run backwards.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower than an earlier fill-up\'s odometer'**
+  String get fuelOdometerBelowEarlier;
+
+  /// Fuel form: odometer validation, reading is above a later fill.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher than a later fill-up\'s odometer'**
+  String get fuelOdometerAboveLater;
+
+  /// Fuel screen empty state title.
+  ///
+  /// In en, this message translates to:
+  /// **'No fill-ups logged yet'**
+  String get fuelEmptyTitle;
+
+  /// Fuel screen empty state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Log each fill-up to see your real km/L and fuel spend.'**
+  String get fuelEmptyBody;
+
+  /// Chip on a fill-up that did not fill the tank.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial'**
+  String get fuelPartial;
+
+  /// Fuel summary: average efficiency label.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg km/L'**
+  String get fuelAvgEfficiency;
+
+  /// Fuel summary: most recent efficiency label.
+  ///
+  /// In en, this message translates to:
+  /// **'Last km/L'**
+  String get fuelLastEfficiency;
+
+  /// Fuel summary: total amount spent label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel spend'**
+  String get fuelTotalSpent;
+
+  /// Fuel summary: total litres label.
+  ///
+  /// In en, this message translates to:
+  /// **'Litres'**
+  String get fuelTotalLiters;
+
+  /// Fuel summary: fuel cost per km label.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per km'**
+  String get fuelCostPerKm;
+
+  /// Fuel summary: average price per litre label.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg price/L'**
+  String get fuelAvgPrice;
+
+  /// Fuel summary: number of fill-ups logged.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 fill-up} other{{count} fill-ups}}'**
+  String fuelFillCount(int count);
+
+  /// Fuel summary: why efficiency is not shown yet.
+  ///
+  /// In en, this message translates to:
+  /// **'km/L shows up after two full-tank fill-ups.'**
+  String get fuelNeedTwoFull;
+
+  /// Bike detail fuel card: nothing logged yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No fill-ups yet. Log one to track km/L.'**
+  String get fuelCardNone;
+
+  /// Bike detail fuel card summary. {date} like '8 Oct'.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg {efficiency} km/L · last fill {date}'**
+  String fuelCardSummary(String efficiency, String date);
+
+  /// Bike detail fuel card when efficiency is not known yet. {date} like '8 Oct'.
+  ///
+  /// In en, this message translates to:
+  /// **'Last fill {date}'**
+  String fuelCardLastOnly(String date);
+
+  /// Archive dialog option: also delete the bike's fuel fill-ups.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel logs'**
+  String get archiveOptFuelLogs;
+
+  /// Archive dialog option hint for deleting fuel logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this bike\'s fill-up history.'**
+  String get archiveOptFuelLogsHint;
+
+  /// Analytics chart title: fuel money per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel spend per month'**
+  String get chartFuelSpend;
+
+  /// Analytics chart title: km per litre between full-tank fills.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel efficiency'**
+  String get chartFuelEfficiency;
+
+  /// Analytics chart title: fuel money per km.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel cost per km'**
+  String get chartFuelCostPerKm;
+
+  /// Analytics chart title: fuel litres per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Litres per month'**
+  String get chartFuelLiters;
+
+  /// Empty state on a fuel chart when no fill-ups are logged.
+  ///
+  /// In en, this message translates to:
+  /// **'Log fuel fill-ups to see this'**
+  String get fuelChartEmptyHint;
+
+  /// Table/CSV column header: calendar month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get analyticsColMonth;
+
+  /// Table/CSV column header and summary label: number of fuel fill-ups.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill-ups'**
+  String get analyticsColFillUps;
+
+  /// Table/CSV column header: distance covered.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get analyticsColDistance;
+
+  /// Insight: highest monthly value. {month} like 'Oct 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Your highest was {value} in {month}.'**
+  String insightPeakMonth(String value, String month);
+
+  /// Insight: average fuel efficiency or cost over measured stretches between full-tank fills.
+  ///
+  /// In en, this message translates to:
+  /// **'Average {value} over {count, plural, =1{1 full-tank stretch} other{{count} full-tank stretches}}.'**
+  String insightFuelAverage(String value, int count);
+
+  /// Insight on efficiency charts when fewer than two full-tank fills exist.
+  ///
+  /// In en, this message translates to:
+  /// **'Log two full-tank fill-ups to measure this.'**
+  String get insightFuelNeedFullFills;
 }
 
 class _AppLocalizationsDelegate
@@ -10816,9 +11092,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
-  );
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

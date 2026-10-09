@@ -1423,9 +1423,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pickRidersRideStarts(
-    Object minGroupRideFriends,
-    Object maxGroupRideFriends,
-  ) {
+      Object minGroupRideFriends, Object maxGroupRideFriends) {
     return 'Pick $minGroupRideFriends–$maxGroupRideFriends riders. Your ride starts recording right away; they join from their notifications.';
   }
 
@@ -3345,10 +3343,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String hardBrakesRapidAccel(
-    Object hardBrakeCount,
-    Object rapidAccelCount,
-    Object highJerkCount,
-  ) {
+      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
     return '$hardBrakeCount hard brakes · $rapidAccelCount rapid accel · $highJerkCount jerks';
   }
 
@@ -3399,10 +3394,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String badgeFamilyEarned(
-    Object family,
-    Object earnedCount,
-    Object badgesCount,
-  ) {
+      Object family, Object earnedCount, Object badgesCount) {
     return '$family, $earnedCount of $badgesCount earned';
   }
 
@@ -3427,11 +3419,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String youreAt(
-    Object threshold,
-    Object progress,
-    Object threshold2,
-    Object unit,
-  ) {
+      Object threshold, Object progress, Object threshold2, Object unit) {
     return '$threshold You\'re at $progress of $threshold2 $unit.';
   }
 
@@ -6300,4 +6288,177 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tourProfileSafeQrBody =>
       'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.';
+
+  @override
+  String get fuelTitle => 'Fuel';
+
+  @override
+  String get fuelLogTitle => 'Fuel log';
+
+  @override
+  String get fuelAddTitle => 'Log fill-up';
+
+  @override
+  String get fuelEditTitle => 'Edit fill-up';
+
+  @override
+  String get fuelLitersLabel => 'Litres *';
+
+  @override
+  String get fuelTotalCostLabel => 'Total paid';
+
+  @override
+  String get fuelPricePerLiterLabel => 'Price per litre';
+
+  @override
+  String get fuelPriceHint =>
+      'Enter the total or the price per litre; the other is worked out.';
+
+  @override
+  String get fuelFullTankLabel => 'Filled to full';
+
+  @override
+  String get fuelFullTankHint =>
+      'Needed for km/L. Turn off for a partial top-up.';
+
+  @override
+  String get fuelStationLabel => 'Station (optional)';
+
+  @override
+  String get fuelSave => 'Save fill-up';
+
+  @override
+  String get fuelSaved => 'Fill-up saved';
+
+  @override
+  String get fuelUpdated => 'Fill-up updated';
+
+  @override
+  String get fuelSaveFailed => 'Couldn\'t save the fill-up. Please try again.';
+
+  @override
+  String get fuelDeleteTitle => 'Delete this fill-up?';
+
+  @override
+  String get fuelDeleteBody =>
+      'It will be removed from this phone and your backup.';
+
+  @override
+  String get fuelDeleted => 'Fill-up deleted';
+
+  @override
+  String get fuelMoneyRequired => 'Enter the total or the price per litre';
+
+  @override
+  String get fuelOdometerBelowEarlier =>
+      'Lower than an earlier fill-up\'s odometer';
+
+  @override
+  String get fuelOdometerAboveLater =>
+      'Higher than a later fill-up\'s odometer';
+
+  @override
+  String get fuelEmptyTitle => 'No fill-ups logged yet';
+
+  @override
+  String get fuelEmptyBody =>
+      'Log each fill-up to see your real km/L and fuel spend.';
+
+  @override
+  String get fuelPartial => 'Partial';
+
+  @override
+  String get fuelAvgEfficiency => 'Avg km/L';
+
+  @override
+  String get fuelLastEfficiency => 'Last km/L';
+
+  @override
+  String get fuelTotalSpent => 'Fuel spend';
+
+  @override
+  String get fuelTotalLiters => 'Litres';
+
+  @override
+  String get fuelCostPerKm => 'Cost per km';
+
+  @override
+  String get fuelAvgPrice => 'Avg price/L';
+
+  @override
+  String fuelFillCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fill-ups',
+      one: '1 fill-up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fuelNeedTwoFull => 'km/L shows up after two full-tank fill-ups.';
+
+  @override
+  String get fuelCardNone => 'No fill-ups yet. Log one to track km/L.';
+
+  @override
+  String fuelCardSummary(String efficiency, String date) {
+    return 'Avg $efficiency km/L · last fill $date';
+  }
+
+  @override
+  String fuelCardLastOnly(String date) {
+    return 'Last fill $date';
+  }
+
+  @override
+  String get archiveOptFuelLogs => 'Fuel logs';
+
+  @override
+  String get archiveOptFuelLogsHint => 'Deletes this bike\'s fill-up history.';
+
+  @override
+  String get chartFuelSpend => 'Fuel spend per month';
+
+  @override
+  String get chartFuelEfficiency => 'Fuel efficiency';
+
+  @override
+  String get chartFuelCostPerKm => 'Fuel cost per km';
+
+  @override
+  String get chartFuelLiters => 'Litres per month';
+
+  @override
+  String get fuelChartEmptyHint => 'Log fuel fill-ups to see this';
+
+  @override
+  String get analyticsColMonth => 'Month';
+
+  @override
+  String get analyticsColFillUps => 'Fill-ups';
+
+  @override
+  String get analyticsColDistance => 'Distance';
+
+  @override
+  String insightPeakMonth(String value, String month) {
+    return 'Your highest was $value in $month.';
+  }
+
+  @override
+  String insightFuelAverage(String value, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count full-tank stretches',
+      one: '1 full-tank stretch',
+    );
+    return 'Average $value over $_temp0.';
+  }
+
+  @override
+  String get insightFuelNeedFullFills =>
+      'Log two full-tank fill-ups to measure this.';
 }

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/database/daos/bike_dao.dart';
+import '../../../core/database/daos/fuel_log_dao.dart';
 import '../../../core/database/daos/maintenance_dao.dart';
 import '../../../core/database/daos/ride_dao.dart';
 import '../../social/data/repositories/ride_share_repository.dart';
@@ -17,16 +18,19 @@ class ArchiveCleanup {
   final bool sharedRides;
   final bool miles;
   final bool serviceLogs;
+  final bool fuelLogs;
   final bool photos;
 
   const ArchiveCleanup({
     this.sharedRides = false,
     this.miles = false,
     this.serviceLogs = false,
+    this.fuelLogs = false,
     this.photos = false,
   });
 
-  bool get isEmpty => !sharedRides && !miles && !serviceLogs && !photos;
+  bool get isEmpty =>
+      !sharedRides && !miles && !serviceLogs && !fuelLogs && !photos;
 }
 
 /// Archiving a bike, exporting its data, and deleting it for good.
@@ -39,10 +43,12 @@ class BikeArchiveService {
     BikeDao? bikes,
     RideDao? rides,
     MaintenanceDao? maintenance,
+    FuelLogDao? fuel,
     Future<int> Function(String uid, String bikeId)? deleteSharedRides,
   })  : _bikes = bikes ?? BikeDao(),
         _rides = rides ?? RideDao(),
         _maintenance = maintenance ?? MaintenanceDao(),
+        _fuel = fuel ?? FuelLogDao(),
         _deleteSharedRides = deleteSharedRides ??
             ((uid, bikeId) =>
                 RideShareRepository().deleteSharedRidesForBike(uid, bikeId));
@@ -50,6 +56,7 @@ class BikeArchiveService {
   final BikeDao _bikes;
   final RideDao _rides;
   final MaintenanceDao _maintenance;
+  final FuelLogDao _fuel;
   final Future<int> Function(String uid, String bikeId) _deleteSharedRides;
 
   /// Archives [bike], first removing whatever [cleanup] asks for. The shared
@@ -63,6 +70,7 @@ class BikeArchiveService {
       bike.id,
       true,
       deleteServiceLogs: cleanup.serviceLogs,
+      deleteFuelLogs: cleanup.fuelLogs,
       deletePhotos: cleanup.photos,
       resetMiles: cleanup.miles,
     );
@@ -107,10 +115,11 @@ class BikeArchiveService {
     return purged;
   }
 
-  /// The bike, its rides and its service logs as JSON text.
+  /// The bike, its rides, its service logs and its fuel logs as JSON text.
   Future<String> exportJson(BikeEntity bike) async {
     final rides = await _rides.getAllForBike(bike.id);
     final logs = await _maintenance.getForBike(bike.id);
+    final fuel = await _fuel.getForBike(bike.id);
     return const JsonEncoder.withIndent('  ').convert({
       'exportedAt': DateTime.now().toIso8601String(),
       'bike': {
@@ -127,6 +136,7 @@ class BikeArchiveService {
       },
       'rides': rides,
       'serviceLogs': logs,
+      'fuelLogs': fuel,
     });
   }
 
@@ -135,8 +145,7 @@ class BikeArchiveService {
   Future<void> shareExport(BikeEntity bike) async {
     final json = await exportJson(bike);
     final dir = await getTemporaryDirectory();
-    final safeName =
-        bike.displayName.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
+    final safeName = bike.displayName.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
     final file = File('${dir.path}/throttleiq_$safeName.json');
     await file.writeAsString(json);
     await Share.shareXFiles([XFile(file.path, mimeType: 'application/json')]);
