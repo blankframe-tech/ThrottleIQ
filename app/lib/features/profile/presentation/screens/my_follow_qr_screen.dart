@@ -13,6 +13,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../social/presentation/providers/follow_link_providers.dart';
 import '../providers/profile_providers.dart';
+import '../../../../core/utils/error_reporter.dart';
 
 /// "My QR code": the signed-in rider's follow link as a QR. Another rider
 /// scans it — with ThrottleIQ's own scanner or their phone camera — and
@@ -79,7 +80,8 @@ class _MyFollowQrScreenState extends ConsumerState<MyFollowQrScreen> {
             subject: l10n.myQrTitle,
             sharePositionOrigin: origin,
           );
-        } catch (_) {
+        } catch (e, st) {
+          reportNonFatal(e, st, reason: 'follow QR share');
           _snack(l10n.myQrImageFailed);
         }
       });
@@ -94,7 +96,8 @@ class _MyFollowQrScreenState extends ConsumerState<MyFollowQrScreen> {
           }
           await Gal.putImage(file.path);
           _snack(l10n.myQrSaved);
-        } catch (_) {
+        } catch (e, st) {
+          reportNonFatal(e, st, reason: 'follow QR save');
           _snack(l10n.myQrImageFailed);
         }
       });

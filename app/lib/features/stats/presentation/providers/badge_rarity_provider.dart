@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/badge_rarity.dart';
@@ -27,11 +28,13 @@ final badgeOwnershipStatsProvider = FutureProvider<BadgeOwnershipStats?>((
     // Default source: server, falling back to the local cache when offline.
     final snap = await doc.get();
     return BadgeOwnershipStats.fromMap(snap.data());
-  } catch (_) {
+  } catch (e) {
+    debugPrint('[badge-rarity] server read failed, trying cache: $e');
     try {
       final cached = await doc.get(const GetOptions(source: Source.cache));
       return BadgeOwnershipStats.fromMap(cached.data());
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[badge-rarity] no cached stats: $e');
       return null;
     }
   }

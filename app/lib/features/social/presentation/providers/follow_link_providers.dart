@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
@@ -9,6 +10,7 @@ import '../../data/follow_link_store.dart';
 import '../../domain/utilities/follow_link.dart';
 import '../../domain/utilities/follow_link_outcome.dart';
 import 'follow_providers.dart';
+import '../../../../core/utils/error_reporter.dart';
 
 final followLinkStoreProvider =
     Provider<FollowLinkStore>((ref) => const FollowLinkStore());
@@ -75,7 +77,8 @@ class FollowLinkController {
         following = await _ref
             .read(followingUidsProvider.future)
             .timeout(const Duration(seconds: 5));
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[follow-link] following set unavailable: $e');
         // Unknown follow set: go ahead — re-following is an idempotent set().
       }
     }
@@ -99,7 +102,8 @@ class FollowLinkController {
           return const FollowLinkResult(FollowLinkOutcome.invalid);
         }
         name = profile.bestName;
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[follow-link] profile read skipped: $e');
         // Permission denied (a private/mutual-only profile — rules also deny
         // a doc that doesn't exist, so the two can't be told apart here) or
         // offline: follow anyway, without a name.
@@ -113,7 +117,8 @@ class FollowLinkController {
             follow: true,
             fallbackName: l10n.aRider,
           );
-    } catch (_) {
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'follow via link');
       return FollowLinkResult(FollowLinkOutcome.failed, targetName: name);
     }
     return FollowLinkResult(FollowLinkOutcome.followed, targetName: name);

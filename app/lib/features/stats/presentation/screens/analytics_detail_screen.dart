@@ -13,6 +13,7 @@ import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_l10n.dart';
 import '../widgets/analytics_chart_view.dart';
+import '../../../../core/utils/error_reporter.dart';
 
 /// Full-screen view of one analytics chart: a larger chart, a time range
 /// selector, summary stats with the trend vs the previous period, a
@@ -233,7 +234,8 @@ class _AnalyticsDetailScreenState extends State<AnalyticsDetailScreen> {
         subject: l10n.analyticsShareSubject(title),
         sharePositionOrigin: origin,
       );
-    } catch (_) {
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'analytics CSV export');
       messenger
           .showSnackBar(SnackBar(content: Text(l10n.analyticsExportFailed)));
     } finally {
