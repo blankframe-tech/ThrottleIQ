@@ -29,32 +29,22 @@ ThrottleIQ has four test layers. Know which layer is relevant to the change:
 
 ---
 
-## Step 1 — Static Analysis
+## Step 1 — The gate (analyze + full test suite, once)
 
 ```bash
-# Run from: f:\BlankFrameTechnologies\ThrottleIQ\app
-flutter analyze
+# Run from the repo root, once per change set
+scripts/check.sh
 ```
 
-**Pass criteria**: exit code 0, zero errors. Warnings are acceptable but must
-be documented in the QA report. The `build/` directory is already excluded in
-`analysis_options.yaml` — do not re-add it.
+It runs l10n generation, the changed-file format check, the CI guards,
+`flutter analyze`, the full `flutter test`, and the rules/functions suites when
+those changed, then prints one summary. While iterating, run only the focused
+test files instead (`flutter test test/path_test.dart` from `app/`).
 
-If analyze fails:
-- Fix all errors before proceeding.
-- Never suppress with `// ignore:` unless the lint is a false-positive from
-  a generated file; document any suppression in the report.
+**Pass criteria**: zero failures. Never suppress a lint with `// ignore:` unless
+it's a false positive from a generated file; document any suppression.
 
----
-
-## Step 2 — Full Unit + Database Test Suite
-
-```bash
-# Run from: f:\BlankFrameTechnologies\ThrottleIQ\app
-flutter test --reporter expanded
-```
-
-**Pass criteria**: all tests green, zero failures, zero timeouts.
+## Step 2 — If a test fails
 
 Key behaviours to watch for:
 - **Hanging tests** (no output for > 20 s) almost always mean a DAO is calling
@@ -67,7 +57,7 @@ If a test fails, do **not** delete or comment it out. Fix the code or the test.
 
 ---
 
-## Step 3 — Coverage Report (identify gaps)
+## Step 3 — Coverage Report (only when auditing gaps; it re-runs the suite)
 
 ```bash
 # Run from: f:\BlankFrameTechnologies\ThrottleIQ\app

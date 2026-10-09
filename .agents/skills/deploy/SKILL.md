@@ -34,11 +34,8 @@ bash scripts/deploy.sh
 ```
 
 ## Manual Execution Steps
-1. **QA Gate**:
-   ```bash
-   cd app && flutter analyze --no-fatal-infos
-   flutter test
-   ```
+1. **QA Gate**: `scripts/check.sh` (run after committing the version bump, so its pass stamp
+   matches the pushed commit and the pre-push hook doesn't run it again).
 
 2. **Commit & Push**:
    ```bash

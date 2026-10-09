@@ -35,51 +35,20 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      # Must stay clean: any issue, info-level lints included, fails the job.
-      - run: flutter analyze
-      # Run even when analyze fails, so a lint can't hide a test failure
-      # (that's how main went untested from 2026-09-30, §90.B1).
-      - run: flutter test
-        if: ${{ !cancelled() }}
-      # Raw `x['k'] as double` casts crash on an int from Firestore/JSON
-      # (grill 78, §1.3.4). Use asDouble/asDoubleOrNull from
-      # core/utils/num_cast.dart instead.
-      - name: Guard against raw `as double` casts
-        working-directory: .
-        run: '! grep -rnE "\] as double\b" app/lib'
-      # Ratchet (§90.B6): bare `catch (_)` swallows errors silently. The count
-      # may only go down. Lower the number when you remove some; prefer
-      # reportNonFatal (core/utils/error_reporter.dart) for handled errors.
-      - name: Ratchet bare catch (_) count
-        working-directory: .
-        run: |
-          count=$(grep -rn "catch (_)" app/lib | wc -l)
-          echo "bare catch (_): $count (max 67)"
-          test "$count" -le 67
-      # Formatting is checked on changed Dart files only, so a stray
-      # whole-folder `dart format` shows up as a failing diff instead of noise.
-      - name: Format check (changed Dart files)
-        if: ${{ !cancelled() }}
+      # Every app check (l10n, format, guards, analyze, test) lives in
+      # scripts/check.sh, the same gate run locally and before each push.
+      # It runs all checks and fails once at the end, so a lint can't hide a
+      # test failure (§90.B1). Rules and functions have their own jobs below.
+      - name: Quality gate (scripts/check.sh)
         working-directory: .
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            echo "No usable base commit; skipping."; exit 0
+          if [ -n "$BASE" ] && git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            bash scripts/check.sh --ci --base "$BASE"
+          else
+            bash scripts/check.sh --ci --base HEAD~1
           fi
-          files=$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD -- 'app/*.dart' \
-            | grep -vE '(\.g\.dart|l10n/app_localizations.*\.dart)$' || true)
-          [ -z "$files" ] && { echo "No Dart changes."; exit 0; }
-          echo "$files" | xargs dart format --output=none --set-exit-if-changed
-      # Team NJ4675FFUX is a personal Apple team: paid-only entitlements
-      # (Associated Domains, push, iCloud, Sign in with Apple) break every
-      # iPhone build. See .agents/skills/deploy/SKILL.md.
-      - name: Guard against paid-only iOS entitlements
-        if: ${{ !cancelled() }}
-        working-directory: .
-        run: |
-          ! grep -nE '<key>(com\.apple\.developer\.(associated-domains|icloud[^<]*|applesignin|usernotifications[^<]*)|aps-environment)</key>' \
-            app/ios/*/*.entitlements
 
   rules:
     runs-on: ubuntu-24.04

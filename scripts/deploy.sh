@@ -5,8 +5,8 @@ set -euo pipefail
 # ThrottleIQ End-to-End Deployment Script
 #
 # Pipeline:
-#   1. Pre-flight QA & Guardian checks
-#   2. Commit & Push to origin (current branch)
+#   1. Commit release changes
+#   2. Quality gate (scripts/check.sh) and push the current branch
 #   3. Build and launch release build on connected iPhone
 #   4. Build Android APK & AAB
 #   5. Create GitHub Release with tag and attach APK & AAB
@@ -94,32 +94,9 @@ if [ -z "$RELEASE_TAG" ]; then
 fi
 echo "🏷️ Target Release Tag: ${RELEASE_TAG}"
 
-# 2. QA Gate
-if [ "$SKIP_QA" = false ]; then
-  echo ""
-  echo "==> [1/5] Running Quality Gate (analyze + test)..."
-  cd "${APP_DIR}"
-  echo "--- Running static analysis ---"
-  flutter analyze --no-fatal-infos
-  echo "--- Running test suite ---"
-  flutter test
-  echo "--- Checking onboarding guardian compilation ---"
-  dart analyze \
-    lib/features/auth/presentation/screens/onboarding_manifest.dart \
-    lib/features/auth/presentation/screens/onboarding_tour_provider.dart \
-    lib/features/auth/presentation/screens/onboarding_screen.dart \
-    lib/features/auth/presentation/widgets/onboarding_slide_page.dart \
-    lib/features/profile/presentation/screens/edit_profile_screen.dart
-  cd "${REPO_ROOT}"
-  echo "✅ QA Gate Passed!"
-else
-  echo ""
-  echo "==> [1/5] QA Gate skipped (--skip-qa)"
-fi
-
-# 3. Commit & Push
+# 2. Commit (before the gate, so the gate stamps the exact commit pushed)
 echo ""
-echo "==> [2/5] Committing & Pushing to GitHub..."
+echo "==> [1/5] Committing release changes..."
 cd "${REPO_ROOT}"
 # Never auto-stage new files (issues §101.S9): a stray secret dropped in the
 # tree (.env.production, a .p12, a service-account key) would otherwise be
@@ -140,9 +117,21 @@ else
   echo "Working tree is clean."
 fi
 
+# 3. Quality gate: scripts/check.sh is the single gate (also run by CI and
+# the pre-push hook). It stamps the commit, so the push below doesn't re-run it.
+if [ "$SKIP_QA" = false ]; then
+  echo ""
+  echo "==> [2/5] Running quality gate (scripts/check.sh)..."
+  bash "${REPO_ROOT}/scripts/check.sh"
+  echo "✅ QA Gate Passed!"
+else
+  echo ""
+  echo "==> [2/5] QA Gate skipped (--skip-qa)"
+fi
+
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Pushing ${CURRENT_BRANCH} to origin..."
-git push origin "${CURRENT_BRANCH}"
+if [ "$SKIP_QA" = true ]; then git push --no-verify origin "${CURRENT_BRANCH}"; else git push origin "${CURRENT_BRANCH}"; fi
 echo "✅ Git push complete!"
 
 # Map tile provider (issues §78.16). The public OpenStreetMap tile server is not

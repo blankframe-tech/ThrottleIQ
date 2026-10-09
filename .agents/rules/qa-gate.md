@@ -6,17 +6,21 @@ trigger: always_on
 
 These rules apply to every coding task in this project without exception.
 
-## After every code change, you MUST:
+## The gate: `scripts/check.sh`, once per change set
 
-1. **Run static analysis** (`flutter analyze` from `app/`) and fix all errors
-   before marking work done. Zero errors is the only acceptable result.
+1. **While iterating, run only the focused tests** for the code you touched
+   (`flutter test test/path/to/file_test.dart` from `app/`).
 
-2. **Run the full test suite** (`flutter test` from `app/`) and confirm it is
-   green. Never delete or comment out a failing test to make the suite pass —
-   fix the code or the test.
+2. **When the change set is done** (before reporting back, committing, or after
+   the *last* merge of a batch), run `scripts/check.sh` from the repo root,
+   **once**. It runs l10n generation, the format check on changed files, the CI
+   guards, `flutter analyze`, the full `flutter test`, and the rules/functions
+   suites when those changed, then prints one pass/fail summary. Zero failures
+   is the only acceptable result; fix causes and re-run it once.
 
-3. **Run Firestore rules tests** (`npm run test:rules` from `scripts/`) whenever
-   `firestore.rules` or any Cloud Function in `functions/src/` was touched.
+3. Never delete or comment out a failing test to make the gate pass: fix the
+   code or the test. A pass is stamped per commit, so the pre-push hook and
+   `deploy.sh` don't re-run it for the same commit.
 
 4. **Add tests for new code.** Every new public method in a domain calculator,
    DAO, or service must have at least a happy-path test and one edge-case test.

@@ -5,8 +5,7 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
 ## Deployment Pipeline Steps
 
 1. **Pre-flight QA & Guardian Verification**
-   - Run static analysis: `flutter analyze --no-fatal-infos` (0 errors required).
-   - Run unit test suite: `flutter test` (all tests must pass).
+   - Run `scripts/check.sh` once (analyze, tests, guards, format; 0 failures required).
    - Run Onboarding Guardian audit: verify manifest slides against app routes and compile check.
 
 2. **Version Bump & Git Push**

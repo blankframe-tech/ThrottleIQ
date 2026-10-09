@@ -14,6 +14,7 @@ _Last updated: 2026-10-09 · Branch: `experimental`_
 
 - Stop hooks are idempotent: the docs hook skips when these handoff docs are newer than the code change; the E2E hook reports each changed-file/device state once (stamp in `.git/claude-e2e-last`).
 - `.agents/skills/*` are symlinked into `.claude/skills/` so Claude Code loads them; new root `CLAUDE.md` (pointers only) and `.agents/rules/parallel-agents.md` (one worktree per parallel agent).
+- New always-on rule `.agents/rules/efficiency-tools.md`: always use ponytail + caveman (`retro-guard.sh` UserPromptSubmit hook warns if missing); `retro-statusline.sh` shows `chat N% of 5h limit` and flags 60%+, after which Claude asks the user to type `/retro` (mattpocock-skills plugin, user-invocable only; installed in claude-hat, install for -work/-biz). Uncommitted at time of writing.
 - Deploy skill now records that team `NJ4675FFUX` is a personal Apple team (no Associated Domains, push, iCloud, Sign in with Apple); deploy docs say `main`, not `master`.
 - CI: format check on changed Dart files; guard against paid-only iOS entitlements. Session Dart files were formatted once to start green (pure formatting, plus braces on four `if`s in `ui_tour_test.dart`).
 - One-off `patch_*`/`fix_*`/`update_*` scripts moved to `scripts/archive/`. Dependabot limited to minor/patch, 3 open PRs per ecosystem; 13 PRs from the earlier config are still open.
