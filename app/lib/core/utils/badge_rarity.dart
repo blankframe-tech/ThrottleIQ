@@ -4,8 +4,9 @@ import 'riding_score.dart';
 
 /// Badge rarity: how many riders own a badge, and the tier that implies.
 ///
-/// The counts come from the `stats/badges` doc kept by
-/// functions/src/badge-stats.ts. Everything here is pure so the mapping and
+/// The counts come from the `stats/badges` doc, which the clients keep
+/// themselves (features/stats/data/badge_stats_counter.dart, guarded by
+/// firestore.rules). Everything here is pure so the mapping and
 /// the percentage are unit-tested without Firestore; the provider that reads
 /// the doc lives in features/stats/presentation/providers/.
 ///
@@ -34,9 +35,9 @@ BadgeRarity rarityForPercent(double percent) {
 /// Percent of riders owning a badge, or null when it can't be said honestly.
 ///
 /// Null when the total is unknown or zero, or the owner count is unknown.
-/// Owners are clamped into `0..totalRiders`: the server counts are updated
-/// incrementally and can briefly drift (a retried trigger, a rider deleted
-/// mid-recount), and "104% of riders" is never a true statement.
+/// Owners are clamped into `0..totalRiders`: the counts are bumped
+/// separately (a rider's badges can be counted before the rider is), and
+/// "104% of riders" is never a true statement.
 ///
 /// [ownedByViewer]: the viewer has this badge locally, so the true count is
 /// at least 1. A server count of 0 then just means their award hasn't synced
@@ -64,6 +65,11 @@ String formatOwnershipPercent(double percent) {
   return '${percent.round()}%';
 }
 
+/// Fewest counted riders before any ownership share is shown. Below this a
+/// single rider moves a share by 5+ points, and with three riders every
+/// badge nobody else has reads "Legendary"; the sheet shows "—" instead.
+const int minRidersForRarity = 20;
+
 /// The parsed `stats/badges` doc.
 class BadgeOwnershipStats {
   final int totalRiders;
@@ -75,10 +81,6 @@ class BadgeOwnershipStats {
   /// like being offline with nothing cached.
   static BadgeOwnershipStats? fromMap(Map<String, dynamic>? data) {
     if (data == null) return null;
-    // Until the first full recount, the doc holds only increments counted
-    // since deploy — totalRiders from 0 while owners include every badge
-    // re-synced since. Those ratios are wrong, so they aren't shown.
-    if (data['recomputedAt'] == null) return null;
     final total = data['totalRiders'];
     if (total is! num || total <= 0) return null;
     final raw = data['owners'];
@@ -91,17 +93,25 @@ class BadgeOwnershipStats {
     return BadgeOwnershipStats(totalRiders: total.toInt(), owners: owners);
   }
 
-  /// Percent of riders owning [badgeId]; see [ownershipPercent].
+  /// Whether enough riders are counted for a share to mean anything.
+  bool get hasEnoughRiders => totalRiders >= minRidersForRarity;
+
+  /// Percent of riders owning [badgeId]; see [ownershipPercent]. Null
+  /// below [minRidersForRarity] riders.
   ///
-  /// A badge id missing from `owners` is unknown, not zero: the recount
-  /// zero-fills every catalog id, so a missing key means a rung the server
-  /// catalog doesn't know about yet.
+  /// A badge id missing from `owners` counts as zero: the client-side
+  /// counters only create a key when the first rider's badge is counted
+  /// (BadgeStatsCounter). A viewer holding the badge still gets null there
+  /// (see [ownershipPercent]'s `ownedByViewer`), since their own award
+  /// evidently hasn't been counted yet.
   double? percentFor(String badgeId, {bool ownedByViewer = false}) =>
-      ownershipPercent(
-        owners: owners[badgeId],
-        totalRiders: totalRiders,
-        ownedByViewer: ownedByViewer,
-      );
+      !hasEnoughRiders
+          ? null
+          : ownershipPercent(
+              owners: owners[badgeId] ?? 0,
+              totalRiders: totalRiders,
+              ownedByViewer: ownedByViewer,
+            );
 }
 
 /// When each badge was first earned, replayed from the rider's own rides.

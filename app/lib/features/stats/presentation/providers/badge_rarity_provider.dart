@@ -5,7 +5,7 @@ import '../../../../core/utils/badge_rarity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'rider_stats_provider.dart';
 
-/// `stats/badges`, the aggregate kept by functions/src/badge-stats.ts.
+/// `stats/badges`, the aggregate the clients keep (BadgeStatsCounter).
 ///
 /// Read once per signed-in session and held (a plain, non-autoDispose
 /// provider), not listened to: every award by any rider rewrites this doc,
@@ -16,8 +16,9 @@ import 'rider_stats_provider.dart';
 /// Resolves to null — never throws — when signed out, offline with nothing
 /// cached, the doc doesn't exist yet, or it is malformed. The detail sheet
 /// then hides the figure and the rarity tier.
-final badgeOwnershipStatsProvider =
-    FutureProvider<BadgeOwnershipStats?>((ref) async {
+final badgeOwnershipStatsProvider = FutureProvider<BadgeOwnershipStats?>((
+  ref,
+) async {
   final uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return null;
 

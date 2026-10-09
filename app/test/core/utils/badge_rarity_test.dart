@@ -69,10 +69,14 @@ void main() {
     });
 
     test('withholds a zero count from a rider who owns the badge', () {
-      expect(ownershipPercent(owners: 0, totalRiders: 10, ownedByViewer: true),
-          isNull);
-      expect(ownershipPercent(owners: 1, totalRiders: 10, ownedByViewer: true),
-          10);
+      expect(
+        ownershipPercent(owners: 0, totalRiders: 10, ownedByViewer: true),
+        isNull,
+      );
+      expect(
+        ownershipPercent(owners: 1, totalRiders: 10, ownedByViewer: true),
+        10,
+      );
     });
   });
 
@@ -91,7 +95,6 @@ void main() {
     test('parses the stats/badges doc', () {
       final s = BadgeOwnershipStats.fromMap({
         'totalRiders': 400,
-        'recomputedAt': DateTime(2026),
         'owners': {'first_ride': 300, 'km_5000': 2, 'bad': 'x'},
       })!;
       expect(s.totalRiders, 400);
@@ -102,10 +105,21 @@ void main() {
       expect(s.owners.containsKey('bad'), isFalse);
     });
 
-    test('a badge missing from owners is unknown, not 0%', () {
-      final s = BadgeOwnershipStats.fromMap(
-          {'totalRiders': 10, 'owners': {}, 'recomputedAt': DateTime(2026)})!;
-      expect(s.percentFor('rides_250'), isNull);
+    test('no recomputedAt needed: the client counters never write one', () {
+      final s = BadgeOwnershipStats.fromMap({
+        'totalRiders': 40,
+        'owners': {'first_ride': 10},
+        'updatedAt': DateTime(2026),
+      })!;
+      expect(s.percentFor('first_ride'), 25);
+    });
+
+    test('a badge missing from owners is 0% once enough riders count', () {
+      final s = BadgeOwnershipStats.fromMap({'totalRiders': 50, 'owners': {}})!;
+      expect(s.percentFor('rides_250'), 0);
+      // ...unless the viewer holds it: then their own award isn't counted
+      // yet and the figure is known to be stale.
+      expect(s.percentFor('rides_250', ownedByViewer: true), isNull);
     });
 
     test('missing or malformed doc yields null', () {
@@ -115,13 +129,20 @@ void main() {
       expect(BadgeOwnershipStats.fromMap({'totalRiders': '12'}), isNull);
     });
 
-    test('ignored until the first full recount has run', () {
-      expect(
-          BadgeOwnershipStats.fromMap({
-            'totalRiders': 3,
-            'owners': {'first_ride': 40},
-          }),
-          isNull);
+    test('no share below the minimum sample of riders', () {
+      final small = BadgeOwnershipStats.fromMap({
+        'totalRiders': minRidersForRarity - 1,
+        'owners': {'first_ride': 1},
+      })!;
+      expect(small.hasEnoughRiders, isFalse);
+      expect(small.percentFor('first_ride'), isNull);
+
+      final enough = BadgeOwnershipStats.fromMap({
+        'totalRiders': minRidersForRarity,
+        'owners': {'first_ride': 1},
+      })!;
+      expect(enough.hasEnoughRiders, isTrue);
+      expect(enough.percentFor('first_ride'), 5);
     });
   });
 
