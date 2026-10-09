@@ -7,10 +7,12 @@ import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../database/daos/fuel_log_dao.dart';
 import '../database/daos/maintenance_dao.dart';
 import '../database/daos/outbox_dao.dart';
 import '../database/database_helper.dart';
 import 'maintenance_settings_sync.dart';
+import '../../features/maintenance/data/models/fuel_log_model.dart';
 import '../../features/social/data/repositories/ride_share_repository.dart';
 
 /// The operations that can be queued for later delivery.
@@ -36,6 +38,10 @@ class OutboxKind {
   /// costs) to `users/{uid}/private` — issues §88.2. The payload carries
   /// only ids; the delivery reads the current rows from SQLite.
   static const String maintenanceSettings = 'maintenance_settings';
+
+  /// Syncing one fuel fill-up to `users/{uid}/fuelLogs/{id}`. Payload
+  /// `{uid, log}`, where `log` is the local row (see FuelLogModel).
+  static const String fuelLog = 'fuel_log';
 }
 
 /// How long an attempt is given before we stop waiting on it.
@@ -347,6 +353,26 @@ class OutboxService {
     return entryId;
   }
 
+  /// Queues the upload of one fuel fill-up. Keyed by the fill-up, so an
+  /// edit made while offline replaces the queued copy instead of racing it.
+  Future<String> enqueueFuelLog({
+    required String uid,
+    required Map<String, dynamic> logData,
+    bool attemptNow = true,
+  }) async {
+    final entryId = FuelLogDao.outboxId(logData['id'].toString());
+    await _dao.enqueue(
+      id: entryId,
+      kind: OutboxKind.fuelLog,
+      payload: {'uid': uid, 'log': logData},
+    );
+    _changes.add(null);
+    if (attemptNow) {
+      unawaited(_attemptOne(entryId));
+    }
+    return entryId;
+  }
+
   /// Queues a backup of [bikeId]'s maintenance settings. Keyed by bike, so a
   /// burst of edits while offline collapses into one pending write — and
   /// since the delivery reads SQLite when it runs, that write carries the
@@ -427,6 +453,7 @@ class OutboxService {
               OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
               OutboxKind.maintenanceSettings =>
                 await _deliverMaintenanceSettings(entry),
+              OutboxKind.fuelLog => await _deliverFuelLog(entry),
               // An unrecognised kind is not going to start working later.
               _ => OutboxDeliveryResult.discarded,
             };
@@ -493,7 +520,8 @@ class OutboxService {
     // Photos first, and folded back into the payload as they land: Cloudinary
     // mints a new asset per call, so a retry that re-uploaded would leave the
     // earlier copies orphaned and burn the rider's quota.
-    final localPaths = (p['localPhotoPaths'] as List?)?.cast<String>() ?? const [];
+    final localPaths =
+        (p['localPhotoPaths'] as List?)?.cast<String>() ?? const [];
     final uploaded = <String>[
       ...?(p['uploadedPhotoUrls'] as List?)?.cast<String>(),
     ];
@@ -644,8 +672,8 @@ class OutboxService {
           // `syncedAt` (server-set) like every other upload to this
           // collection: other devices' incremental pull filters on it
           // (§90.C7), so a log without it would never reach them.
-          .set({...log, 'syncedAt': FieldValue.serverTimestamp()})
-          .timeout(kOutboxAttemptTimeout);
+          .set({...log, 'syncedAt': FieldValue.serverTimestamp()}).timeout(
+              kOutboxAttemptTimeout);
 
       try {
         final db = await DatabaseHelper.instance.database;
@@ -667,6 +695,41 @@ class OutboxService {
     }
   }
 
+  Future<OutboxDeliveryResult> _deliverFuelLog(OutboxEntry entry) async {
+    final uid = entry.payload['uid'] as String?;
+    final log = entry.payload['log'];
+    if (uid == null || log is! Map || log['id'] == null) {
+      return OutboxDeliveryResult.discarded;
+    }
+    final logId = log['id'].toString();
+    // Deleted before this delivery ran: uploading now would re-create it.
+    if (await FuelLogDao().isDeleted(logId)) {
+      return OutboxDeliveryResult.discarded;
+    }
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection(FuelLogModel.collection)
+          .doc(logId)
+          // `syncedAt` drives other devices' incremental pull (§90.C7).
+          .set({
+        ...FuelLogModel.toCloudPayload(Map<String, dynamic>.from(log)),
+        'syncedAt': FieldValue.serverTimestamp(),
+      }).timeout(kOutboxAttemptTimeout);
+      try {
+        await FuelLogDao().markSynced(logId);
+      } catch (e) {
+        debugPrint('[Outbox] local fuel sync status update skipped: $e');
+      }
+      return OutboxDeliveryResult.delivered;
+    } on TimeoutException {
+      return OutboxDeliveryResult.deferred;
+    } on SocketException {
+      return OutboxDeliveryResult.deferred;
+    }
+  }
+
   Future<OutboxDeliveryResult> _deliverMaintenanceSettings(
       OutboxEntry entry) async {
     final uid = entry.payload['uid'] as String?;
@@ -680,12 +743,10 @@ class OutboxService {
     if (payload == null) return OutboxDeliveryResult.delivered;
 
     try {
-      await MaintenanceSettingsSync.docRef(_firestore, uid, bikeId)
-          .set(
-            {...payload, 'updatedAt': FieldValue.serverTimestamp()},
-            SetOptions(merge: true),
-          )
-          .timeout(kOutboxAttemptTimeout);
+      await MaintenanceSettingsSync.docRef(_firestore, uid, bikeId).set(
+        {...payload, 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      ).timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
       return OutboxDeliveryResult.deferred;

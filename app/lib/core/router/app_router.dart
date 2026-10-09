@@ -18,6 +18,8 @@ import '../../features/maintenance/presentation/screens/maintenance_config_scree
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/maintenance/presentation/screens/check_detail_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_setup_screen.dart';
+import '../../features/maintenance/presentation/screens/fuel_screen.dart';
+import '../../features/maintenance/presentation/screens/add_fuel_log_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
@@ -325,6 +327,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                   initialServiceType: state.uri.queryParameters['serviceType'],
                   visitId: state.uri.queryParameters['visitId'],
                 ),
+              ),
+              GoRoute(
+                path: 'fuel',
+                builder: (_, state) => FuelScreen(
+                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (_, state) => AddFuelLogScreen(
+                      bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                      logId: state.uri.queryParameters['logId'],
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'check',

@@ -13,6 +13,7 @@ import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/badge_grid.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../maintenance/presentation/providers/fuel_provider.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_l10n.dart';
 import '../widgets/analytics_chart_card.dart';
@@ -290,6 +291,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
     final l10n = context.l10n;
     String bikeName(String id) => bikeNames[id] ?? l10n.analyticsUnknownBike;
     final now = DateTime.now();
+    final fuelLogs = ref.watch(userFuelLogsProvider).valueOrNull ?? const [];
 
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(
@@ -303,8 +305,13 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                   TextStyle(fontSize: 11, color: context.palette.textTertiary));
         }
         final chart = AnalyticsChart.values[i - 1];
-        final points = buildPreviewSeries(chart, rides, now: now);
-        final insights = buildInsights(chart, rides, points, now: now);
+        final fuel = isFuelChart(chart);
+        final points = fuel
+            ? buildFuelPreviewSeries(chart, fuelLogs, now: now)
+            : buildPreviewSeries(chart, rides, now: now);
+        final insights = fuel
+            ? buildFuelInsights(chart, fuelLogs, points)
+            : buildInsights(chart, rides, points, now: now);
         return AnalyticsChartCard(
           chart: chart,
           points: points,
@@ -316,6 +323,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                 chart: chart,
                 rides: rides,
                 bikeNames: bikeNames,
+                fuelLogs: fuelLogs,
               ),
             ),
           ),

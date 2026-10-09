@@ -6213,4 +6213,176 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get tourProfileSafeQrBody =>
       'সেটিংসে রক্তের গ্রুপ ও জরুরি যোগাযোগসহ একটি স্ক্যানযোগ্য কার্ড তৈরি করুন, যা উদ্ধারকারীদের কাজে আসবে।';
+
+  @override
+  String get fuelTitle => 'জ্বালানি';
+
+  @override
+  String get fuelLogTitle => 'জ্বালানির লগ';
+
+  @override
+  String get fuelAddTitle => 'ফিল-আপ লগ করুন';
+
+  @override
+  String get fuelEditTitle => 'ফিল-আপ এডিট করুন';
+
+  @override
+  String get fuelLitersLabel => 'লিটার *';
+
+  @override
+  String get fuelTotalCostLabel => 'মোট দাম';
+
+  @override
+  String get fuelPricePerLiterLabel => 'প্রতি লিটারের দাম';
+
+  @override
+  String get fuelPriceHint =>
+      'মোট দাম অথবা প্রতি লিটারের দাম দিন; অন্যটি নিজে থেকে হিসাব হবে।';
+
+  @override
+  String get fuelFullTankLabel => 'ট্যাংক ফুল করা হয়েছে';
+
+  @override
+  String get fuelFullTankHint =>
+      'km/L হিসাবের জন্য দরকার। আংশিক ভরলে বন্ধ রাখুন।';
+
+  @override
+  String get fuelStationLabel => 'পাম্প (ঐচ্ছিক)';
+
+  @override
+  String get fuelSave => 'ফিল-আপ সেভ করুন';
+
+  @override
+  String get fuelSaved => 'ফিল-আপ সেভ হয়েছে';
+
+  @override
+  String get fuelUpdated => 'ফিল-আপ আপডেট হয়েছে';
+
+  @override
+  String get fuelSaveFailed => 'ফিল-আপ সেভ করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get fuelDeleteTitle => 'এই ফিল-আপটি মুছবেন?';
+
+  @override
+  String get fuelDeleteBody => 'এটি এই ফোন ও আপনার ব্যাকআপ থেকে মুছে যাবে।';
+
+  @override
+  String get fuelDeleted => 'ফিল-আপ মুছে ফেলা হয়েছে';
+
+  @override
+  String get fuelMoneyRequired => 'মোট দাম অথবা প্রতি লিটারের দাম দিন';
+
+  @override
+  String get fuelOdometerBelowEarlier =>
+      'আগের একটি ফিল-আপের ওডোমিটারের চেয়ে কম';
+
+  @override
+  String get fuelOdometerAboveLater =>
+      'পরের একটি ফিল-আপের ওডোমিটারের চেয়ে বেশি';
+
+  @override
+  String get fuelEmptyTitle => 'এখনো কোনো ফিল-আপ লগ করা হয়নি';
+
+  @override
+  String get fuelEmptyBody =>
+      'প্রতিবার তেল নেওয়ার পর লগ করুন, আসল km/L ও জ্বালানি খরচ দেখতে পাবেন।';
+
+  @override
+  String get fuelPartial => 'আংশিক';
+
+  @override
+  String get fuelAvgEfficiency => 'গড় km/L';
+
+  @override
+  String get fuelLastEfficiency => 'শেষ km/L';
+
+  @override
+  String get fuelTotalSpent => 'জ্বালানি খরচ';
+
+  @override
+  String get fuelTotalLiters => 'লিটার';
+
+  @override
+  String get fuelCostPerKm => 'প্রতি কিমি খরচ';
+
+  @override
+  String get fuelAvgPrice => 'গড় দাম/লিটার';
+
+  @override
+  String fuelFillCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি ফিল-আপ',
+      one: '1টি ফিল-আপ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fuelNeedTwoFull => 'দুইবার ফুল ট্যাংক করার পর km/L দেখা যাবে।';
+
+  @override
+  String get fuelCardNone => 'এখনো কোনো ফিল-আপ নেই। km/L দেখতে একটি লগ করুন।';
+
+  @override
+  String fuelCardSummary(String efficiency, String date) {
+    return 'গড় $efficiency km/L · শেষ ফিল $date';
+  }
+
+  @override
+  String fuelCardLastOnly(String date) {
+    return 'শেষ ফিল $date';
+  }
+
+  @override
+  String get archiveOptFuelLogs => 'জ্বালানির লগ';
+
+  @override
+  String get archiveOptFuelLogsHint => 'এই বাইকের ফিল-আপের ইতিহাস মুছে দেয়।';
+
+  @override
+  String get chartFuelSpend => 'মাসিক জ্বালানি খরচ';
+
+  @override
+  String get chartFuelEfficiency => 'জ্বালানি দক্ষতা';
+
+  @override
+  String get chartFuelCostPerKm => 'প্রতি কিমি জ্বালানি খরচ';
+
+  @override
+  String get chartFuelLiters => 'মাসিক লিটার';
+
+  @override
+  String get fuelChartEmptyHint => 'এটি দেখতে জ্বালানির ফিল-আপ লগ করুন';
+
+  @override
+  String get analyticsColMonth => 'মাস';
+
+  @override
+  String get analyticsColFillUps => 'ফিল-আপ';
+
+  @override
+  String get analyticsColDistance => 'দূরত্ব';
+
+  @override
+  String insightPeakMonth(String value, String month) {
+    return 'সবচেয়ে বেশি ছিল $month-এ $value।';
+  }
+
+  @override
+  String insightFuelAverage(String value, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি ফুল-ট্যাংক পর্বে',
+      one: '1টি ফুল-ট্যাংক পর্বে',
+    );
+    return 'গড় $value, $_temp0।';
+  }
+
+  @override
+  String get insightFuelNeedFullFills =>
+      'এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।';
 }

@@ -82,12 +82,14 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.two_wheeler, size: 56, color: context.palette.textTertiary),
+                Icon(Icons.two_wheeler,
+                    size: 56, color: context.palette.textTertiary),
                 const SizedBox(height: 16),
                 Text(context.l10n.noActiveBike, style: display(context, 20)),
                 const SizedBox(height: 8),
                 Text(context.l10n.addMotorcycleGarageTrack,
-                    style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                    style: TextStyle(
+                        color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
           ),
@@ -96,9 +98,11 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     }
 
     final imperial = ref.watch(maintenanceImperialProvider);
-    final profile = ref.watch(maintenanceProfileProvider(activeBike.id)).valueOrNull;
+    final profile =
+        ref.watch(maintenanceProfileProvider(activeBike.id)).valueOrNull;
     final customized =
-        ref.watch(isMaintenanceCustomizedProvider(activeBike.id)).valueOrNull ?? true;
+        ref.watch(isMaintenanceCustomizedProvider(activeBike.id)).valueOrNull ??
+            true;
     // Riders who customised checks before setup existed are not sent back
     // through it; the setup card is for bikes with neither.
     final needsSetup = profile?.onboardedAt == null && !customized;
@@ -116,8 +120,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 12,
-              AppDimensions.paddingMd, 96),
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 96),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -131,7 +135,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               const SizedBox(height: 18),
               ForecastStrip(
                 bikeId: activeBike.id,
-                forecasts: ref.watch(maintenanceForecastProvider(activeBike.id)),
+                forecasts:
+                    ref.watch(maintenanceForecastProvider(activeBike.id)),
               ),
               const SizedBox(height: 14),
               _buildChecks(activeBike, imperial),
@@ -141,6 +146,27 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               _buildHistory(activeBike, imperial),
               const SizedBox(height: 24),
               MoneyCard(bikeId: activeBike.id, imperial: imperial),
+              const SizedBox(height: 12),
+              EditorialCard(
+                key: const Key('maintenanceFuelLink'),
+                radius: context.shape.radiusLg,
+                padding: const EdgeInsets.all(14),
+                onTap: () => context
+                    .push('/home/maintenance/fuel?bikeId=${activeBike.id}'),
+                child: Row(
+                  children: [
+                    Icon(Icons.local_gas_station_outlined,
+                        color: context.palette.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(context.l10n.fuelLogTitle,
+                          style: display(context, 16, letterSpacing: 0)),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               PaperworkCard(bikeId: activeBike.id),
               const SizedBox(height: 28),
@@ -216,8 +242,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
         .toList();
     final comingKeys = comingUp.map((f) => f.key).toSet();
     final allGood = forecasts
-        .where((f) =>
-            f.status == ReminderStatus.ok && !comingKeys.contains(f.key))
+        .where(
+            (f) => f.status == ReminderStatus.ok && !comingKeys.contains(f.key))
         .toList();
     final unknown =
         forecasts.where((f) => f.status == ReminderStatus.unknown).toList();
@@ -227,7 +253,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Center(
           child: Text(l10n.noChecksTrackedYet,
-              style: TextStyle(color: context.palette.textTertiary, fontSize: 13)),
+              style:
+                  TextStyle(color: context.palette.textTertiary, fontSize: 13)),
         ),
       );
     }
@@ -377,8 +404,10 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(context.l10n.switchAction,
-                style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
-            Icon(Icons.arrow_drop_down, size: 16, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 11, color: context.palette.textSecondary)),
+            Icon(Icons.arrow_drop_down,
+                size: 16, color: context.palette.textSecondary),
           ],
         ),
       ),
@@ -455,8 +484,8 @@ class _SetupCard extends StatelessWidget {
       radius: context.shape.radiusLg,
       padding: const EdgeInsets.all(14),
       borderColor: context.palette.primary,
-      onTap: () => context.push(
-          '/home/maintenance/setup?bikeId=${bike.id}&firstTime=true'),
+      onTap: () => context
+          .push('/home/maintenance/setup?bikeId=${bike.id}&firstTime=true'),
       child: Row(
         children: [
           Icon(Icons.auto_fix_high, color: context.palette.primary),
@@ -465,7 +494,8 @@ class _SetupCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.setupCardTitle, style: display(context, 16, letterSpacing: 0)),
+                Text(l10n.setupCardTitle,
+                    style: display(context, 16, letterSpacing: 0)),
                 const SizedBox(height: 2),
                 Text(l10n.setupCardBody,
                     style: TextStyle(

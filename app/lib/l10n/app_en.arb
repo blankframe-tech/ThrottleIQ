@@ -8597,5 +8597,231 @@
   "tourProfileSafeQrBody": "In Settings, set up a scannable card with your blood group and emergency contacts for first responders.",
   "@tourProfileSafeQrBody": {
     "description": "Feature tour, profile step: explains SafeQR."
+  },
+  "fuelTitle": "Fuel",
+  "@fuelTitle": {
+    "description": "Heading of the fuel card on bike detail."
+  },
+  "fuelLogTitle": "Fuel log",
+  "@fuelLogTitle": {
+    "description": "Title of the per-bike fuel fill-ups screen."
+  },
+  "fuelAddTitle": "Log fill-up",
+  "@fuelAddTitle": {
+    "description": "Title/button for adding a fuel fill-up."
+  },
+  "fuelEditTitle": "Edit fill-up",
+  "@fuelEditTitle": {
+    "description": "Title of the fuel form when editing an existing fill-up."
+  },
+  "fuelLitersLabel": "Litres *",
+  "@fuelLitersLabel": {
+    "description": "Fuel form: litres field label (required)."
+  },
+  "fuelTotalCostLabel": "Total paid",
+  "@fuelTotalCostLabel": {
+    "description": "Fuel form: total amount paid field label."
+  },
+  "fuelPricePerLiterLabel": "Price per litre",
+  "@fuelPricePerLiterLabel": {
+    "description": "Fuel form: price per litre field label."
+  },
+  "fuelPriceHint": "Enter the total or the price per litre; the other is worked out.",
+  "@fuelPriceHint": {
+    "description": "Fuel form: helper text under the money fields."
+  },
+  "fuelFullTankLabel": "Filled to full",
+  "@fuelFullTankLabel": {
+    "description": "Fuel form: switch label for a full-tank fill."
+  },
+  "fuelFullTankHint": "Needed for km/L. Turn off for a partial top-up.",
+  "@fuelFullTankHint": {
+    "description": "Fuel form: explains the full-tank switch."
+  },
+  "fuelStationLabel": "Station (optional)",
+  "@fuelStationLabel": {
+    "description": "Fuel form: filling station name field."
+  },
+  "fuelSave": "Save fill-up",
+  "@fuelSave": {
+    "description": "Fuel form: save button."
+  },
+  "fuelSaved": "Fill-up saved",
+  "@fuelSaved": {
+    "description": "Snackbar after saving a new fill-up."
+  },
+  "fuelUpdated": "Fill-up updated",
+  "@fuelUpdated": {
+    "description": "Snackbar after editing a fill-up."
+  },
+  "fuelSaveFailed": "Couldn't save the fill-up. Please try again.",
+  "@fuelSaveFailed": {
+    "description": "Snackbar when saving a fill-up fails."
+  },
+  "fuelDeleteTitle": "Delete this fill-up?",
+  "@fuelDeleteTitle": {
+    "description": "Confirm dialog title for deleting a fill-up."
+  },
+  "fuelDeleteBody": "It will be removed from this phone and your backup.",
+  "@fuelDeleteBody": {
+    "description": "Confirm dialog body for deleting a fill-up."
+  },
+  "fuelDeleted": "Fill-up deleted",
+  "@fuelDeleted": {
+    "description": "Snackbar after deleting a fill-up."
+  },
+  "fuelMoneyRequired": "Enter the total or the price per litre",
+  "@fuelMoneyRequired": {
+    "description": "Fuel form: validation when neither money field is filled."
+  },
+  "fuelOdometerBelowEarlier": "Lower than an earlier fill-up's odometer",
+  "@fuelOdometerBelowEarlier": {
+    "description": "Fuel form: odometer validation, reading would run backwards."
+  },
+  "fuelOdometerAboveLater": "Higher than a later fill-up's odometer",
+  "@fuelOdometerAboveLater": {
+    "description": "Fuel form: odometer validation, reading is above a later fill."
+  },
+  "fuelEmptyTitle": "No fill-ups logged yet",
+  "@fuelEmptyTitle": {
+    "description": "Fuel screen empty state title."
+  },
+  "fuelEmptyBody": "Log each fill-up to see your real km/L and fuel spend.",
+  "@fuelEmptyBody": {
+    "description": "Fuel screen empty state body."
+  },
+  "fuelPartial": "Partial",
+  "@fuelPartial": {
+    "description": "Chip on a fill-up that did not fill the tank."
+  },
+  "fuelAvgEfficiency": "Avg km/L",
+  "@fuelAvgEfficiency": {
+    "description": "Fuel summary: average efficiency label."
+  },
+  "fuelLastEfficiency": "Last km/L",
+  "@fuelLastEfficiency": {
+    "description": "Fuel summary: most recent efficiency label."
+  },
+  "fuelTotalSpent": "Fuel spend",
+  "@fuelTotalSpent": {
+    "description": "Fuel summary: total amount spent label."
+  },
+  "fuelTotalLiters": "Litres",
+  "@fuelTotalLiters": {
+    "description": "Fuel summary: total litres label."
+  },
+  "fuelCostPerKm": "Cost per km",
+  "@fuelCostPerKm": {
+    "description": "Fuel summary: fuel cost per km label."
+  },
+  "fuelAvgPrice": "Avg price/L",
+  "@fuelAvgPrice": {
+    "description": "Fuel summary: average price per litre label."
+  },
+  "fuelFillCount": "{count, plural, =1{1 fill-up} other{{count} fill-ups}}",
+  "@fuelFillCount": {
+    "description": "Fuel summary: number of fill-ups logged.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fuelNeedTwoFull": "km/L shows up after two full-tank fill-ups.",
+  "@fuelNeedTwoFull": {
+    "description": "Fuel summary: why efficiency is not shown yet."
+  },
+  "fuelCardNone": "No fill-ups yet. Log one to track km/L.",
+  "@fuelCardNone": {
+    "description": "Bike detail fuel card: nothing logged yet."
+  },
+  "fuelCardSummary": "Avg {efficiency} km/L · last fill {date}",
+  "@fuelCardSummary": {
+    "description": "Bike detail fuel card summary. {date} like '8 Oct'.",
+    "placeholders": {
+      "efficiency": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "fuelCardLastOnly": "Last fill {date}",
+  "@fuelCardLastOnly": {
+    "description": "Bike detail fuel card when efficiency is not known yet. {date} like '8 Oct'.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveOptFuelLogs": "Fuel logs",
+  "@archiveOptFuelLogs": {
+    "description": "Archive dialog option: also delete the bike's fuel fill-ups."
+  },
+  "archiveOptFuelLogsHint": "Deletes this bike's fill-up history.",
+  "@archiveOptFuelLogsHint": {
+    "description": "Archive dialog option hint for deleting fuel logs."
+  },
+  "chartFuelSpend": "Fuel spend per month",
+  "@chartFuelSpend": {
+    "description": "Analytics chart title: fuel money per month."
+  },
+  "chartFuelEfficiency": "Fuel efficiency",
+  "@chartFuelEfficiency": {
+    "description": "Analytics chart title: km per litre between full-tank fills."
+  },
+  "chartFuelCostPerKm": "Fuel cost per km",
+  "@chartFuelCostPerKm": {
+    "description": "Analytics chart title: fuel money per km."
+  },
+  "chartFuelLiters": "Litres per month",
+  "@chartFuelLiters": {
+    "description": "Analytics chart title: fuel litres per month."
+  },
+  "fuelChartEmptyHint": "Log fuel fill-ups to see this",
+  "@fuelChartEmptyHint": {
+    "description": "Empty state on a fuel chart when no fill-ups are logged."
+  },
+  "analyticsColMonth": "Month",
+  "@analyticsColMonth": {
+    "description": "Table/CSV column header: calendar month."
+  },
+  "analyticsColFillUps": "Fill-ups",
+  "@analyticsColFillUps": {
+    "description": "Table/CSV column header and summary label: number of fuel fill-ups."
+  },
+  "analyticsColDistance": "Distance",
+  "@analyticsColDistance": {
+    "description": "Table/CSV column header: distance covered."
+  },
+  "insightPeakMonth": "Your highest was {value} in {month}.",
+  "@insightPeakMonth": {
+    "description": "Insight: highest monthly value. {month} like 'Oct 2026'.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "insightFuelAverage": "Average {value} over {count, plural, =1{1 full-tank stretch} other{{count} full-tank stretches}}.",
+  "@insightFuelAverage": {
+    "description": "Insight: average fuel efficiency or cost over measured stretches between full-tank fills.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "insightFuelNeedFullFills": "Log two full-tank fill-ups to measure this.",
+  "@insightFuelNeedFullFills": {
+    "description": "Insight on efficiency charts when fewer than two full-tank fills exist."
   }
 }

@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 25;
+  static const int schemaVersion = 27;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -337,7 +337,56 @@ class DatabaseHelper {
       await _addColumnIfMissing(
           db, 'rides', 'overspeed_count', 'overspeed_count INTEGER');
     }
+    // v26 belongs to a separate change (ride columns). This step does not
+    // depend on it: it only creates new tables, IF NOT EXISTS, so a re-run
+    // or a v25 → v27 jump are both fine. Gated on newVersion like v15–v25 so
+    // upgradeSchemaForTesting(db, from, to) stops at `to`.
+    if (oldVersion < 27 && newVersion >= 27) {
+      // Fuel fill-ups and their tombstones. New tables, nothing to backfill:
+      // every install starts with no fill-ups logged.
+      await db.execute(_createFuelLogsSql);
+      await db.execute(_createFuelLogsIndexSql);
+      await db.execute(_createDeletedFuelLogsSql);
+    }
   }
+
+  /// Fuel fill-ups (schema v27) — see FuelLogEntity. Money in ৳, volume in
+  /// litres, distance in km. Both `total_cost` and `price_per_liter` are
+  /// stored; the form derives whichever the rider didn't type. No user_id:
+  /// ownership is via the bike, like `maintenance_logs`.
+  static const String _createFuelLogsSql = '''
+    CREATE TABLE IF NOT EXISTS fuel_logs (
+      id TEXT PRIMARY KEY,
+      bike_id TEXT NOT NULL,
+      filled_at TEXT NOT NULL,
+      odometer_km REAL NOT NULL,
+      liters REAL NOT NULL,
+      total_cost REAL NOT NULL,
+      price_per_liter REAL NOT NULL,
+      full_tank INTEGER NOT NULL DEFAULT 1,
+      station TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
+
+  static const String _createFuelLogsIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_fuel_logs_bike_filled
+      ON fuel_logs(bike_id, filled_at)
+  ''';
+
+  /// Fill-ups deleted on this device. Same lifecycle as
+  /// `deleted_maintenance_logs`.
+  static const String _createDeletedFuelLogsSql = '''
+    CREATE TABLE IF NOT EXISTS deleted_fuel_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      deleted_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
 
   /// Places a rider bookmarked from the Places hub (schema v21).
   ///
@@ -884,6 +933,9 @@ class DatabaseHelper {
     await db.execute(_createAutoFixesIndexSql);
     await db.execute(_createAutoDetectionsIndexSql);
     await db.execute(_createSavedPlacesSql);
+    await db.execute(_createFuelLogsSql);
+    await db.execute(_createFuelLogsIndexSql);
+    await db.execute(_createDeletedFuelLogsSql);
   }
 
   /// Completely deletes all local database rows associated with [userId].
@@ -947,6 +999,8 @@ class DatabaseHelper {
             where: 'bike_id = ?', whereArgs: [bike['id']]);
         await txn.delete('maintenance_logs',
             where: 'bike_id = ?', whereArgs: [bike['id']]);
+        await txn
+            .delete('fuel_logs', where: 'bike_id = ?', whereArgs: [bike['id']]);
         for (final table in const [
           'bike_maintenance_profiles',
           'bike_paperwork',
@@ -958,6 +1012,8 @@ class DatabaseHelper {
         }
       }
       await txn.delete('deleted_maintenance_logs',
+          where: 'user_id = ?', whereArgs: [userId]);
+      await txn.delete('deleted_fuel_logs',
           where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('bikes', where: 'user_id = ?', whereArgs: [userId]);
       await txn.delete('user_profiles', where: 'uid = ?', whereArgs: [userId]);

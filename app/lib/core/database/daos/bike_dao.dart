@@ -4,7 +4,8 @@ import '../database_helper.dart';
 class BikeDao {
   Future<void> insert(Map<String, dynamic> bike) async {
     final db = await DatabaseHelper.instance.database;
-    await db.insert('bikes', bike, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('bikes', bike,
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// The rider's bikes. Archived bikes are left out unless [includeArchived]
@@ -39,16 +40,17 @@ class BikeDao {
   /// garage, in the same transaction. `synced = 0` so the flag reaches the
   /// cloud copy.
   ///
-  /// [deleteServiceLogs], [deletePhotos] and [resetMiles] only apply when
-  /// archiving, and run in the same transaction so a half-cleaned bike can't
-  /// be left behind. Service logs go with tombstones so the cloud copies are
-  /// removed too (§94.2); photos means the bike picture and the service
-  /// receipts; miles means the bike's own distance and ride counters (the rides
-  /// themselves stay in history).
+  /// [deleteServiceLogs], [deleteFuelLogs], [deletePhotos] and [resetMiles]
+  /// only apply when archiving, and run in the same transaction so a
+  /// half-cleaned bike can't be left behind. Service and fuel logs go with
+  /// tombstones so the cloud copies are removed too (§94.2); photos means the
+  /// bike picture and the service receipts; miles means the bike's own
+  /// distance and ride counters (the rides themselves stay in history).
   Future<void> setArchived(
     String id,
     bool archived, {
     bool deleteServiceLogs = false,
+    bool deleteFuelLogs = false,
     bool deletePhotos = false,
     bool resetMiles = false,
   }) async {
@@ -78,8 +80,8 @@ class BikeDao {
         final now = DateTime.now().toIso8601String();
         for (final log in logs) {
           final logId = log['id'] as String;
-          await txn.delete('maintenance_logs',
-              where: 'id = ?', whereArgs: [logId]);
+          await txn
+              .delete('maintenance_logs', where: 'id = ?', whereArgs: [logId]);
           await txn.delete('outbox',
               where: 'id = ?', whereArgs: ['maintenance:$logId']);
           await txn.insert(
@@ -94,8 +96,12 @@ class BikeDao {
           );
         }
       } else if (archived && deletePhotos) {
-        await txn.update('maintenance_logs', {'receipt_path': null, 'synced': 0},
+        await txn.update(
+            'maintenance_logs', {'receipt_path': null, 'synced': 0},
             where: 'bike_id = ? AND receipt_path IS NOT NULL', whereArgs: [id]);
+      }
+      if (archived && deleteFuelLogs) {
+        await _tombstoneFuelLogs(txn, id, rows.first['user_id'] as String?);
       }
       if (archived && wasActive) {
         final next = await txn.query('bikes',
@@ -135,7 +141,7 @@ class BikeDao {
   }
 
   /// Deletes a bike and everything hanging off it: its rides, those rides'
-  /// GPS points, and its maintenance logs. Only for the explicit "delete bike
+  /// GPS points, its maintenance logs and its fuel logs. Only for the explicit "delete bike
   /// and all its rides" action — the default is [setArchived].
   ///
   /// Every statement runs on `txn`, deliberately. The previous version called
@@ -153,6 +159,12 @@ class BikeDao {
   Future<void> delete(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
+      final owner = await txn.query('bikes',
+          columns: ['user_id'], where: 'id = ?', whereArgs: [id]);
+      // Fuel logs are tombstoned rather than just dropped, so SyncManager
+      // removes their cloud copies too and a full pull can't restore them.
+      await _tombstoneFuelLogs(
+          txn, id, owner.isEmpty ? null : owner.first['user_id'] as String?);
       final rides = await txn.query(
         'rides',
         columns: ['id'],
@@ -160,11 +172,14 @@ class BikeDao {
         whereArgs: [id],
       );
       for (final ride in rides) {
-        await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('ride_points',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
-      await txn.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
-      await txn.delete('bike_maintenance_configs', where: 'bike_id = ?', whereArgs: [id]);
+      await txn
+          .delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [id]);
+      await txn.delete('bike_maintenance_configs',
+          where: 'bike_id = ?', whereArgs: [id]);
       for (final table in const [
         'bike_maintenance_profiles',
         'bike_paperwork',
@@ -173,7 +188,8 @@ class BikeDao {
       ]) {
         await txn.delete(table, where: 'bike_id = ?', whereArgs: [id]);
       }
-      await txn.delete('bike_running_costs', where: 'bike_id = ?', whereArgs: [id]);
+      await txn
+          .delete('bike_running_costs', where: 'bike_id = ?', whereArgs: [id]);
       await txn.delete('bikes', where: 'id = ?', whereArgs: [id]);
 
       // Tombstone, written in the SAME transaction as the delete so the two
@@ -193,6 +209,26 @@ class BikeDao {
     });
   }
 
+  /// Deletes every fill-up of [bikeId] on [txn], dropping queued uploads and
+  /// writing tombstones. Raw statements on the caller's transaction on
+  /// purpose — calling FuelLogDao here would deadlock (see [delete]).
+  static Future<void> _tombstoneFuelLogs(
+      Transaction txn, String bikeId, String? userId) async {
+    final logs = await txn.query('fuel_logs',
+        columns: ['id'], where: 'bike_id = ?', whereArgs: [bikeId]);
+    final now = DateTime.now().toIso8601String();
+    for (final log in logs) {
+      final logId = log['id'] as String;
+      await txn.delete('fuel_logs', where: 'id = ?', whereArgs: [logId]);
+      await txn.delete('outbox', where: 'id = ?', whereArgs: ['fuel:$logId']);
+      await txn.insert(
+        'deleted_fuel_logs',
+        {'id': logId, 'user_id': userId, 'deleted_at': now, 'synced': 0},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
   /// Ids this device has deleted. The download path must skip these.
   Future<Set<String>> deletedIds() async {
     final db = await DatabaseHelper.instance.database;
@@ -203,8 +239,8 @@ class BikeDao {
   /// Tombstones whose remote copy still needs deleting.
   Future<List<String>> pendingRemoteDeletions() async {
     final db = await DatabaseHelper.instance.database;
-    final rows = await db.query('deleted_bikes',
-        columns: ['id'], where: 'synced = 0');
+    final rows =
+        await db.query('deleted_bikes', columns: ['id'], where: 'synced = 0');
     return rows.map((r) => r['id'] as String).toList();
   }
 
@@ -219,8 +255,10 @@ class BikeDao {
   Future<void> setActive(String id, String userId) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
-      await txn.update('bikes', {'is_active': 0}, where: 'user_id = ?', whereArgs: [userId]);
-      await txn.update('bikes', {'is_active': 1}, where: 'id = ?', whereArgs: [id]);
+      await txn.update('bikes', {'is_active': 0},
+          where: 'user_id = ?', whereArgs: [userId]);
+      await txn.update('bikes', {'is_active': 1},
+          where: 'id = ?', whereArgs: [id]);
     });
   }
 
@@ -302,7 +340,8 @@ class BikeDao {
   /// Returns bikes for [userId] whose `image_path` is a local file path
   /// (i.e. not null and not a remote http/https URL) so they can be uploaded
   /// to the cloud.
-  Future<List<Map<String, dynamic>>> getBikesWithLocalImages(String userId) async {
+  Future<List<Map<String, dynamic>>> getBikesWithLocalImages(
+      String userId) async {
     final db = await DatabaseHelper.instance.database;
     return db.query(
       'bikes',
@@ -312,4 +351,3 @@ class BikeDao {
     );
   }
 }
-

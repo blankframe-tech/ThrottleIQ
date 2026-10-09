@@ -29,7 +29,14 @@ String chartTitle(AppLocalizations l10n, AnalyticsChart c) => switch (c) {
       AnalyticsChart.weekday => l10n.chartWeekday,
       AnalyticsChart.distanceByBike => l10n.chartDistanceByBike,
       AnalyticsChart.longestRides => l10n.chartLongestRides,
+      AnalyticsChart.fuelSpend => l10n.chartFuelSpend,
+      AnalyticsChart.fuelEfficiency => l10n.chartFuelEfficiency,
+      AnalyticsChart.fuelCostPerKm => l10n.chartFuelCostPerKm,
+      AnalyticsChart.fuelLiters => l10n.chartFuelLiters,
     };
+
+/// The app's currency symbol. Amounts are written `৳1,200`, rates `৳2.6/km`.
+const String kCurrencySymbol = '৳';
 
 /// Unit of the plotted value; empty for a unitless score.
 String chartUnit(AppLocalizations l10n, AnalyticsChart c) => switch (c) {
@@ -52,6 +59,10 @@ String chartUnit(AppLocalizations l10n, AnalyticsChart c) => switch (c) {
       AnalyticsChart.hourOfDay ||
       AnalyticsChart.weekday =>
         l10n.analyticsUnitRides,
+      AnalyticsChart.fuelSpend => kCurrencySymbol,
+      AnalyticsChart.fuelEfficiency => 'km/L',
+      AnalyticsChart.fuelCostPerKm => '$kCurrencySymbol/km',
+      AnalyticsChart.fuelLiters => 'L',
     };
 
 /// Whether a rise is good news (true), bad news (false) or neither (null) —
@@ -60,8 +71,11 @@ bool? higherIsBetter(AnalyticsChart c) => switch (c) {
       AnalyticsChart.hardBraking ||
       AnalyticsChart.rapidAccel ||
       AnalyticsChart.overspeed ||
-      AnalyticsChart.jamTime =>
+      AnalyticsChart.jamTime ||
+      AnalyticsChart.fuelSpend ||
+      AnalyticsChart.fuelCostPerKm =>
         false,
+      AnalyticsChart.fuelEfficiency ||
       AnalyticsChart.ridingScore ||
       AnalyticsChart.distancePerRide ||
       AnalyticsChart.weeklyDistance ||
@@ -82,7 +96,12 @@ Color chartColor(BuildContext context, AnalyticsChart c) {
     AnalyticsChart.topSpeed || AnalyticsChart.rapidAccel => p.attention,
     AnalyticsChart.jamTime => p.warning,
     AnalyticsChart.hardBraking || AnalyticsChart.overspeed => p.danger,
-    AnalyticsChart.ridingScore || AnalyticsChart.movingVsStopped => p.success,
+    AnalyticsChart.ridingScore ||
+    AnalyticsChart.movingVsStopped ||
+    AnalyticsChart.fuelEfficiency =>
+      p.success,
+    AnalyticsChart.fuelSpend || AnalyticsChart.fuelCostPerKm => p.attention,
+    AnalyticsChart.fuelLiters => p.secondary,
     _ => p.primary,
   };
 }
@@ -104,6 +123,10 @@ IconData chartIcon(AnalyticsChart c) => switch (c) {
       AnalyticsChart.weekday => Icons.view_week_outlined,
       AnalyticsChart.distanceByBike => Icons.two_wheeler_outlined,
       AnalyticsChart.longestRides => Icons.emoji_events_outlined,
+      AnalyticsChart.fuelSpend => Icons.payments_outlined,
+      AnalyticsChart.fuelEfficiency => Icons.local_gas_station_outlined,
+      AnalyticsChart.fuelCostPerKm => Icons.price_change_outlined,
+      AnalyticsChart.fuelLiters => Icons.water_drop_outlined,
     };
 
 String rangeLabel(AppLocalizations l10n, AnalyticsRange r) => switch (r) {
@@ -124,12 +147,23 @@ String formatWithUnit(double v, String unit) {
   final n = formatAnalyticsNumber(v);
   if (unit.isEmpty) return n;
   if (unit == '%') return '$n%';
+  // Currency leads: ৳1200, ৳2.6/km.
+  if (unit.startsWith(kCurrencySymbol)) {
+    return '$kCurrencySymbol$n${unit.substring(kCurrencySymbol.length)}';
+  }
   return '$n $unit';
 }
 
 String shortDate(DateTime d) => DateFormat('d MMM', kNumericLocale).format(d);
 String longDate(DateTime d) => DateFormat('d MMM y', kNumericLocale).format(d);
+
+/// "Oct" — a month bar's axis label.
+String shortMonth(DateTime d) => DateFormat('MMM', kNumericLocale).format(d);
+
+/// "Oct 2026" — a month in tooltips, tables and insights.
+String longMonth(DateTime d) => DateFormat('MMM y', kNumericLocale).format(d);
 String _isoDate(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+String _isoMonth(DateTime d) => DateFormat('yyyy-MM').format(d);
 String _isoDateTime(DateTime d) => DateFormat('yyyy-MM-dd HH:mm').format(d);
 
 String hourLabel(int h) => '${h.toString().padLeft(2, '0')}:00';
@@ -149,7 +183,17 @@ String insightText(
   String pct(double? v) => (v ?? 0).toStringAsFixed(0);
   switch (i.kind) {
     case InsightKind.notEnoughData:
-      return l10n.insightNotEnoughData;
+      return isFuelChart(chart)
+          ? l10n.fuelChartEmptyHint
+          : l10n.insightNotEnoughData;
+    case InsightKind.peakMonth:
+      return l10n.insightPeakMonth(
+          formatWithUnit(i.value ?? 0, unit), longMonth(i.date!));
+    case InsightKind.fuelAverage:
+      return l10n.insightFuelAverage(
+          formatWithUnit(i.value ?? 0, unit), (i.value2 ?? 0).round());
+    case InsightKind.fuelNeedFullFills:
+      return l10n.insightFuelNeedFullFills;
     case InsightKind.trendUp:
       return l10n.insightTrendUp(pct(i.value));
     case InsightKind.trendDown:
@@ -209,6 +253,57 @@ ChartTable buildChartTable(
   String withUnit(String h, String u) => u.isEmpty ? h : '$h ($u)';
   final valueHeader = withUnit(chartTitle(l10n, chart), unit);
   final kmHeader = withUnit(l10n.analyticsTotal, 'km');
+
+  if (isFuelMonthlyChart(chart)) {
+    // Months with a fill-up only; the empty ones are just gaps in the bars.
+    final filled = points.where((p) => (p.secondary ?? 0) > 0).toList();
+    return ChartTable(
+      headers: [l10n.analyticsColMonth, valueHeader, l10n.analyticsColFillUps],
+      displayRows: [
+        for (final p in filled.reversed)
+          [
+            longMonth(p.date!),
+            formatAnalyticsNumber(p.value),
+            (p.secondary ?? 0).toStringAsFixed(0),
+          ],
+      ],
+      csvRows: [
+        for (final p in filled)
+          [
+            _isoMonth(p.date!),
+            _csvNum(p.value),
+            (p.secondary ?? 0).toStringAsFixed(0),
+          ],
+      ],
+    );
+  }
+  if (isFuelSegmentChart(chart)) {
+    // One row per closing full-tank fill-up.
+    return ChartTable(
+      headers: [
+        l10n.analyticsColDate,
+        valueHeader,
+        withUnit(l10n.analyticsColDistance, 'km'),
+      ],
+      displayRows: [
+        for (final p in points.reversed)
+          [
+            longDate(p.date!),
+            p.value.toStringAsFixed(
+                chart == AnalyticsChart.fuelEfficiency ? 1 : 2),
+            formatAnalyticsNumber(p.secondary ?? 0),
+          ],
+      ],
+      csvRows: [
+        for (final p in points)
+          [
+            _isoDateTime(p.date!),
+            p.value.toStringAsFixed(3),
+            _csvNum(p.secondary ?? 0),
+          ],
+      ],
+    );
+  }
 
   if (isPerRideChart(chart)) {
     if (chart == AnalyticsChart.movingVsStopped) {

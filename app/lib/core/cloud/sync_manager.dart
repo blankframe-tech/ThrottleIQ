@@ -9,8 +9,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
 import '../database/daos/maintenance_dao.dart';
+import '../database/daos/fuel_log_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
+import '../../features/maintenance/presentation/providers/fuel_provider.dart';
 import '../../features/maintenance/presentation/providers/maintenance_provider.dart';
 import '../../features/ride/presentation/providers/ride_recording_provider.dart';
 import '../../features/stats/presentation/providers/rider_stats_provider.dart';
@@ -108,7 +110,8 @@ class SyncManager {
 
   /// Initialize connectivity listener
   void _initConnectivityListener() {
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((results) {
       if (_hasNetwork(results)) {
         // Internet is back - reset failure counter and sync, at most once
         // per [connectivityThrottle]: immediately if the last pass was long
@@ -316,7 +319,8 @@ class SyncManager {
         pulledBikes = await _pull(
           uid,
           'bikes',
-          () => _hasRows('SELECT 1 FROM bikes WHERE user_id = ? LIMIT 1', [uid]),
+          () =>
+              _hasRows('SELECT 1 FROM bikes WHERE user_id = ? LIMIT 1', [uid]),
           ({DateTime? since}) =>
               _cloudRepository.downloadBikes(uid, since: since),
         );
@@ -332,6 +336,20 @@ class SyncManager {
           ({DateTime? since}) =>
               _cloudRepository.downloadMaintenance(uid, since: since),
         );
+        if (await _pull(
+          uid,
+          'fuelLogs',
+          () => _hasRows('''
+            SELECT 1 FROM fuel_logs
+            INNER JOIN bikes ON bikes.id = fuel_logs.bike_id
+            WHERE bikes.user_id = ? LIMIT 1
+          ''', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadFuelLogs(uid, since: since),
+        )) {
+          _ref?.invalidate(fuelLogsProvider);
+          _ref?.invalidate(userFuelLogsProvider);
+        }
         // After downloadBikes: a settings row needs its bike to exist.
         if (await _cloudRepository.downloadMaintenanceSettings(uid)) {
           _ref?.invalidate(maintenanceConfigProvider);
@@ -346,7 +364,8 @@ class SyncManager {
         pulledRides = await _pull(
           uid,
           'rides',
-          () => _hasRows('SELECT 1 FROM rides WHERE user_id = ? LIMIT 1', [uid]),
+          () =>
+              _hasRows('SELECT 1 FROM rides WHERE user_id = ? LIMIT 1', [uid]),
           ({DateTime? since}) =>
               _cloudRepository.downloadRides(uid, since: since),
         );
@@ -394,7 +413,8 @@ class SyncManager {
         'bikes',
         where: 'synced = ? AND user_id = ?',
         whereArgs: [0, uid],
-      )).toList();
+      ))
+          .toList();
 
       final existingBikeIds =
           unsyncedBikes.map((b) => b['id'] as String).toSet();
@@ -413,6 +433,8 @@ class SyncManager {
         INNER JOIN bikes ON bikes.id = maintenance_logs.bike_id
         WHERE maintenance_logs.synced = 0 AND bikes.user_id = ?
       ''', [uid]);
+
+      final unsyncedFuel = await FuelLogDao().unsyncedForUser(uid);
 
       // Push deletions BEFORE uploads. A bike deleted locally still has its
       // rides in the local DB removed, but the remote copies linger — and the
@@ -455,6 +477,16 @@ class SyncManager {
         }
       }
 
+      // And fuel fill-ups deleted here, including a deleted bike's.
+      for (final logId in await FuelLogDao().pendingRemoteDeletions(uid)) {
+        try {
+          await _cloudRepository.deleteFuelLogRemote(uid, logId);
+          await FuelLogDao().markDeletionSynced(logId);
+        } catch (e) {
+          debugPrint('[SyncManager] remote fuel delete failed for $logId: $e');
+        }
+      }
+
       // Upload to Firestore
       if (unsyncedRides.isNotEmpty) {
         await _cloudRepository.uploadRides(uid, unsyncedRides);
@@ -473,6 +505,10 @@ class SyncManager {
 
       if (unsyncedMaintenance.isNotEmpty) {
         await _cloudRepository.uploadMaintenance(uid, unsyncedMaintenance);
+      }
+
+      if (unsyncedFuel.isNotEmpty) {
+        await _cloudRepository.uploadFuelLogs(uid, unsyncedFuel);
       }
 
       _status = SyncStatus.success;
@@ -504,7 +540,8 @@ class SyncManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (prefs.getBool(key) ?? false) return;
-      for (final bikeId in await MaintenanceSettingsSync.bikesWithSettings(uid)) {
+      for (final bikeId
+          in await MaintenanceSettingsSync.bikesWithSettings(uid)) {
         await _outbox.enqueueMaintenanceSettings(
           uid: uid,
           bikeId: bikeId,
@@ -563,7 +600,8 @@ final syncManagerProvider = Provider<SyncManager>((ref) {
 });
 
 /// Riverpod provider for sync status
-final syncStatusProvider = StateNotifierProvider<SyncStatusNotifier, SyncStatus>((ref) {
+final syncStatusProvider =
+    StateNotifierProvider<SyncStatusNotifier, SyncStatus>((ref) {
   final syncManager = ref.watch(syncManagerProvider);
   return SyncStatusNotifier(syncManager);
 });

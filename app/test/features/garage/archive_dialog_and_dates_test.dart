@@ -65,12 +65,22 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('archive-opt-logs')));
-    await tester.tap(find.byKey(const Key('archive-opt-photos')));
+    // The options scroll inside the dialog; bring each into view first.
+    for (final key in const [
+      'archive-opt-logs',
+      'archive-opt-fuel',
+      'archive-opt-photos',
+    ]) {
+      await tester.ensureVisible(find.byKey(Key(key)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(Key(key)));
+      await tester.pump();
+    }
     await tester.tap(find.byKey(const Key('bike-archive')));
     await tester.pumpAndSettle();
 
     expect(result!.serviceLogs, isTrue);
+    expect(result!.fuelLogs, isTrue);
     expect(result!.photos, isTrue);
     expect(result!.sharedRides, isFalse);
     expect(result!.miles, isFalse);
@@ -90,7 +100,8 @@ void main() {
     expect(long, '8 Oct 2026');
   });
 
-  testWidgets('bottom-nav label is Garage in English and Bangla', (tester) async {
+  testWidgets('bottom-nav label is Garage in English and Bangla',
+      (tester) async {
     late AppLocalizations en, bn;
     await tester.pumpWidget(_app(
       const Locale('en'),

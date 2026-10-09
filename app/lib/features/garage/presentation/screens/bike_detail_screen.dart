@@ -11,6 +11,9 @@ import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../maintenance/presentation/providers/fuel_provider.dart';
+import '../../../maintenance/presentation/widgets/forecast_text.dart'
+    show shortDate;
 import '../../../maintenance/presentation/widgets/next_due_line.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -32,7 +35,9 @@ class BikeDetailScreen extends ConsumerWidget {
 
     if (bike == null) {
       return Scaffold(
-        body: Center(child: Text(context.l10n.bikeNotFound, style: TextStyle(color: context.palette.textSecondary))),
+        body: Center(
+            child: Text(context.l10n.bikeNotFound,
+                style: TextStyle(color: context.palette.textSecondary))),
       );
     }
 
@@ -133,9 +138,16 @@ class BikeDetailScreen extends ConsumerWidget {
                     icon: Icons.speed_outlined,
                   ),
                 if (bike.cc != null)
-                  StatCard(label: context.l10n.engine, value: '${bike.cc}', unit: 'cc', icon: Icons.settings),
+                  StatCard(
+                      label: context.l10n.engine,
+                      value: '${bike.cc}',
+                      unit: 'cc',
+                      icon: Icons.settings),
                 if (bike.year != null)
-                  StatCard(label: context.l10n.year, value: '${bike.year}', icon: Icons.calendar_today_outlined),
+                  StatCard(
+                      label: context.l10n.year,
+                      value: '${bike.year}',
+                      icon: Icons.calendar_today_outlined),
               ],
             ),
             const SizedBox(height: 16),
@@ -152,7 +164,8 @@ class BikeDetailScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.forum_outlined),
-                    label: Text(context.l10n.discussThisBike, overflow: TextOverflow.ellipsis),
+                    label: Text(context.l10n.discussThisBike,
+                        overflow: TextOverflow.ellipsis),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -165,21 +178,29 @@ class BikeDetailScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.help_outline),
-                    label: Text(context.l10n.askOwners, overflow: TextOverflow.ellipsis),
+                    label: Text(context.l10n.askOwners,
+                        overflow: TextOverflow.ellipsis),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             _ServiceCard(bikeId: bikeId),
+            const SizedBox(height: 12),
+            _FuelCard(bikeId: bikeId),
             const SizedBox(height: 24),
 
             // Ride history
             Text(context.l10n.rideHistory,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: context.palette.textPrimary)),
             const SizedBox(height: 12),
             ridesAsync.when(
-              loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+              loading: () => Center(
+                  child: CircularProgressIndicator(
+                      color: context.palette.primary)),
               error: (e, _) => ErrorView(
                 error: e,
                 onRetry: () => ref.invalidate(rideHistoryProvider(bikeId)),
@@ -190,7 +211,8 @@ class BikeDetailScreen extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text(context.l10n.noRidesYetThis,
-                          style: TextStyle(color: context.palette.textTertiary)),
+                          style:
+                              TextStyle(color: context.palette.textTertiary)),
                     ),
                   );
                 }
@@ -205,7 +227,8 @@ class BikeDetailScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(AppDimensions.paddingMd),
                       decoration: BoxDecoration(
                         color: context.palette.surface,
-                        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                        borderRadius:
+                            BorderRadius.circular(context.shape.radiusMd),
                         border: Border.all(color: context.palette.border),
                       ),
                       child: InkWell(
@@ -227,7 +250,8 @@ class BikeDetailScreen extends ConsumerWidget {
                                   Text(
                                     '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
                                     style: TextStyle(
-                                        fontSize: 13, color: context.palette.textSecondary),
+                                        fontSize: 13,
+                                        color: context.palette.textSecondary),
                                   ),
                                 ],
                               ),
@@ -253,9 +277,11 @@ class BikeDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openForum(BuildContext context, BikeEntity bike, {bool compose = false}) async {
+  Future<void> _openForum(BuildContext context, BikeEntity bike,
+      {bool compose = false}) async {
     try {
-      final forum = await ForumRepository().getOrCreateForum(brand: bike.brand, model: bike.model);
+      final forum = await ForumRepository()
+          .getOrCreateForum(brand: bike.brand, model: bike.model);
       if (!context.mounted) return;
       context.push('/forums/${forum.id}${compose ? '?compose=1' : ''}');
     } catch (e) {
@@ -290,7 +316,9 @@ class BikeDetailScreen extends ConsumerWidget {
     if (cleanup == null || !context.mounted) return;
 
     try {
-      await ref.read(garageProvider.notifier).archiveBike(bike, cleanup: cleanup);
+      await ref
+          .read(garageProvider.notifier)
+          .archiveBike(bike, cleanup: cleanup);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -369,8 +397,20 @@ class BikeDetailScreen extends ConsumerWidget {
   }
 
   String _formatDate(DateTime dt) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 }
@@ -390,6 +430,7 @@ class _ArchiveBikeDialogState extends State<ArchiveBikeDialog> {
   bool _sharedRides = false;
   bool _miles = false;
   bool _serviceLogs = false;
+  bool _fuelLogs = false;
   bool _photos = false;
 
   Widget _option(String key, String title, String hint, bool value,
@@ -426,17 +467,35 @@ class _ArchiveBikeDialogState extends State<ArchiveBikeDialog> {
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: context.palette.textPrimary)),
-            _option('archive-opt-shared', l10n.archiveOptSharedRides,
-                l10n.archiveOptSharedRidesHint, _sharedRides,
+            _option(
+                'archive-opt-shared',
+                l10n.archiveOptSharedRides,
+                l10n.archiveOptSharedRidesHint,
+                _sharedRides,
                 (v) => setState(() => _sharedRides = v)),
-            _option('archive-opt-miles', l10n.archiveOptMiles,
-                l10n.archiveOptMilesHint, _miles,
+            _option(
+                'archive-opt-miles',
+                l10n.archiveOptMiles,
+                l10n.archiveOptMilesHint,
+                _miles,
                 (v) => setState(() => _miles = v)),
-            _option('archive-opt-logs', l10n.archiveOptServiceLogs,
-                l10n.archiveOptServiceLogsHint, _serviceLogs,
+            _option(
+                'archive-opt-logs',
+                l10n.archiveOptServiceLogs,
+                l10n.archiveOptServiceLogsHint,
+                _serviceLogs,
                 (v) => setState(() => _serviceLogs = v)),
-            _option('archive-opt-photos', l10n.archiveOptPhotos,
-                l10n.archiveOptPhotosHint, _photos,
+            _option(
+                'archive-opt-fuel',
+                l10n.archiveOptFuelLogs,
+                l10n.archiveOptFuelLogsHint,
+                _fuelLogs,
+                (v) => setState(() => _fuelLogs = v)),
+            _option(
+                'archive-opt-photos',
+                l10n.archiveOptPhotos,
+                l10n.archiveOptPhotosHint,
+                _photos,
                 (v) => setState(() => _photos = v)),
           ],
         ),
@@ -453,6 +512,7 @@ class _ArchiveBikeDialogState extends State<ArchiveBikeDialog> {
               sharedRides: _sharedRides,
               miles: _miles,
               serviceLogs: _serviceLogs,
+              fuelLogs: _fuelLogs,
               photos: _photos,
             ),
           ),
@@ -549,8 +609,7 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-              context.l10n.deleteBikeConfirmBody(rides, expected),
+          Text(context.l10n.deleteBikeConfirmBody(rides, expected),
               style: TextStyle(color: context.palette.textSecondary)),
           const SizedBox(height: 12),
           TextField(
@@ -571,7 +630,9 @@ class _TypeToDeleteBikeDialogState extends State<TypeToDeleteBikeDialog> {
           onPressed: _matches ? () => Navigator.pop(context, true) : null,
           child: Text(context.l10n.delete,
               style: TextStyle(
-                  color: _matches ? context.palette.danger : context.palette.textTertiary)),
+                  color: _matches
+                      ? context.palette.danger
+                      : context.palette.textTertiary)),
         ),
       ],
     );
@@ -600,7 +661,8 @@ class _ServiceCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.build_outlined, size: 20, color: context.palette.primary),
+              Icon(Icons.build_outlined,
+                  size: 20, color: context.palette.primary),
               const SizedBox(width: 8),
               Text(context.l10n.serviceMaintenance,
                   style: TextStyle(
@@ -626,6 +688,78 @@ class _ServiceCard extends ConsumerWidget {
                     context.push('/home/maintenance?bikeId=$bikeId'),
                 icon: const Icon(Icons.arrow_forward, size: 18),
                 label: Text(context.l10n.viewAll),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fuel summary for one bike: average km/L and the last fill-up, with a way
+/// to log one and into the full fuel log.
+class _FuelCard extends ConsumerWidget {
+  final String bikeId;
+  const _FuelCard({required this.bikeId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final logs = ref.watch(fuelLogsProvider(bikeId)).valueOrNull;
+    final summary = ref.watch(fuelSummaryProvider(bikeId));
+    final last = logs?.firstOrNull;
+    final String line;
+    if (last == null) {
+      line = l10n.fuelCardNone;
+    } else if (summary?.avgKmPerLiter != null) {
+      line = l10n.fuelCardSummary(summary!.avgKmPerLiter!.toStringAsFixed(1),
+          shortDate(context, last.filledAt));
+    } else {
+      line = l10n.fuelCardLastOnly(shortDate(context, last.filledAt));
+    }
+    return Container(
+      key: const Key('bikeFuelCard'),
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.local_gas_station_outlined,
+                  size: 20, color: context.palette.primary),
+              const SizedBox(width: 8),
+              Text(l10n.fuelTitle,
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(line,
+              style: TextStyle(
+                  fontSize: 14, color: context.palette.textSecondary)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                onPressed: () =>
+                    context.push('/home/maintenance/fuel/add?bikeId=$bikeId'),
+                child: Text(l10n.fuelAddTitle),
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                onPressed: () =>
+                    context.push('/home/maintenance/fuel?bikeId=$bikeId'),
+                icon: const Icon(Icons.arrow_forward, size: 18),
+                label: Text(l10n.viewAll),
               ),
             ],
           ),
