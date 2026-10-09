@@ -1,5 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
+import 'package:throttleiq/features/stats/domain/charts/activity_pattern_charts.dart';
+import 'package:throttleiq/features/stats/domain/charts/bike_charts.dart';
+import 'package:throttleiq/features/stats/domain/charts/ride_basics_charts.dart';
+import 'package:throttleiq/features/stats/domain/charts/riding_behaviour_charts.dart';
+import 'package:throttleiq/features/stats/domain/charts/time_charts.dart';
 import 'package:throttleiq/features/stats/domain/ride_analytics.dart';
 
 RideEntity _ride(
@@ -60,7 +65,7 @@ void main() {
         _ride('b', DateTime(2026, 10, 2), km: 20),
         _ride('a', DateTime(2026, 10, 1), km: 5),
       ];
-      final s = perRideSeries(AnalyticsChart.distancePerRide, rides);
+      final s = RideBasicsCharts.distancePerRide.perRideSeries(rides);
       expect(s.map((p) => p.key), ['a', 'b']);
       expect(s.map((p) => p.value), [5, 20]);
     });
@@ -70,26 +75,26 @@ void main() {
         _ride('legacy', DateTime(2026, 10, 1), moving: null),
         _ride('new', DateTime(2026, 10, 2), duration: 600, moving: 450),
       ];
-      final jam = perRideSeries(AnalyticsChart.jamTime, rides);
+      final jam = TimeCharts.jamTime.perRideSeries(rides);
       expect(jam.single.key, 'new');
       expect(jam.single.value, closeTo(2.5, 1e-9)); // 150 s
-      final share = perRideSeries(AnalyticsChart.movingVsStopped, rides);
+      final share = TimeCharts.movingVsStopped.perRideSeries(rides);
       expect(share.single.value, closeTo(75, 1e-9));
       expect(share.single.secondary, closeTo(2.5, 1e-9));
     });
 
     test('speed charts skip rides with no recorded speed', () {
       final rides = [_ride('x', DateTime(2026, 10, 1), avgKmh: null)];
-      expect(perRideSeries(AnalyticsChart.avgSpeed, rides), isEmpty);
+      expect(RideBasicsCharts.avgSpeed.perRideSeries(rides), isEmpty);
     });
 
     test('score uses the shared riding score', () {
       final r = _ride('x', DateTime(2026, 10, 1), brakes: 2, accel: 1, jerk: 3);
       // 100 - (2*5 + 1*3 + 3*1) = 84
-      expect(perRideValue(AnalyticsChart.ridingScore, r), 84);
-      expect(perRideValue(AnalyticsChart.hardBraking, r), 2);
-      expect(perRideValue(AnalyticsChart.rapidAccel, r), 1);
-      expect(perRideValue(AnalyticsChart.rideDuration, r), 20);
+      expect(RidingBehaviourCharts.ridingScore.value(r), 84);
+      expect(RidingBehaviourCharts.hardBraking.value(r), 2);
+      expect(RidingBehaviourCharts.rapidAccel.value(r), 1);
+      expect(RideBasicsCharts.rideDuration.value(r), 20);
     });
 
     test('moving share clamps when moving exceeds duration', () {
@@ -106,20 +111,20 @@ void main() {
         _ride('clean', DateTime(2026, 10, 2), overspeed: 0),
         _ride('fast', DateTime(2026, 10, 3), overspeed: 3),
       ];
-      final s = perRideSeries(AnalyticsChart.overspeed, rides);
+      final s = RidingBehaviourCharts.overspeed.perRideSeries(rides);
       expect(s.map((p) => p.key), ['clean', 'fast']);
       expect(s.map((p) => p.value), [0, 3]);
-      expect(periodAggregate(AnalyticsChart.overspeed, rides), 3);
-      final i = buildInsights(AnalyticsChart.overspeed, rides, s, now: now);
-      expect(i.single.kind, InsightKind.cleanRides);
+      expect(RidingBehaviourCharts.overspeed.periodAggregate(rides), 3);
+      final i = RidingBehaviourCharts.overspeed.insights(rides, s, now: now);
+      expect(i.single.kind, cleanRidesInsight);
       expect(i.single.value, 1);
       expect(i.single.value2, 2);
     });
 
     test('all-legacy history has no overspeed data', () {
       final rides = [_ride('legacy', DateTime(2026, 10, 1))];
-      expect(perRideSeries(AnalyticsChart.overspeed, rides), isEmpty);
-      expect(periodAggregate(AnalyticsChart.overspeed, rides), isNull);
+      expect(RidingBehaviourCharts.overspeed.perRideSeries(rides), isEmpty);
+      expect(RidingBehaviourCharts.overspeed.periodAggregate(rides), isNull);
     });
   });
 
@@ -153,8 +158,11 @@ void main() {
         _ride('a', DateTime(2026, 10, 7, 8), km: 3),
         _ride('b', DateTime(2026, 10, 7, 18), km: 4),
       ];
-      final d = dailyDistance(rides,
-          from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 8));
+      final d = dailyDistance(
+        rides,
+        from: DateTime(2026, 10, 6),
+        to: DateTime(2026, 10, 8),
+      );
       expect(d.map((p) => p.value), [0, 7, 0]);
       expect(d[1].secondary, 2);
     });
@@ -233,8 +241,9 @@ void main() {
         _ride('old', DateTime(2026, 9, 1)),
         _ride('in', DateTime(2026, 10, 4)),
       ];
-      expect(ridesInRange(rides, AnalyticsRange.days7, now).map((r) => r.id),
-          ['in']);
+      expect(ridesInRange(rides, AnalyticsRange.days7, now).map((r) => r.id), [
+        'in',
+      ]);
       expect(ridesInRange(rides, AnalyticsRange.all, now).length, 2);
     });
 
@@ -251,23 +260,34 @@ void main() {
         _ride('a', DateTime(2026, 10, 1), km: 10, avgKmh: 20),
         _ride('b', DateTime(2026, 10, 2), km: 30, avgKmh: 40),
       ];
-      expect(periodAggregate(AnalyticsChart.distancePerRide, rides), 40);
+      expect(RideBasicsCharts.distancePerRide.periodAggregate(rides), 40);
       expect(
-          periodAggregate(AnalyticsChart.avgSpeed, rides), closeTo(30, 1e-9));
-      expect(periodAggregate(AnalyticsChart.hourOfDay, rides), 2);
-      expect(periodAggregate(AnalyticsChart.longestRides, rides), 30);
-      expect(periodAggregate(AnalyticsChart.distancePerRide, const []), isNull);
+        RideBasicsCharts.avgSpeed.periodAggregate(rides),
+        closeTo(30, 1e-9),
+      );
+      expect(ActivityPatternCharts.hourOfDay.periodAggregate(rides), 2);
+      expect(BikeCharts.longestRides.periodAggregate(rides), 30);
+      expect(
+        RideBasicsCharts.distancePerRide.periodAggregate(const []),
+        isNull,
+      );
     });
 
     test('buildSeries bounds calendar charts by the window', () {
       final rides = [_ride('a', DateTime(2026, 10, 8))];
       final w = rangeWindow(AnalyticsRange.days7, now);
-      final days = buildSeries(AnalyticsChart.activityCalendar, rides,
-          now: now, window: w);
+      final days = ActivityPatternCharts.activityCalendar.series(
+        rides,
+        now: now,
+        window: w,
+      );
       expect(days.length, 7);
       expect(days.last.date, DateTime(2026, 10, 9));
-      final weeks = buildSeries(AnalyticsChart.weeklyDistance, rides,
-          now: now, window: rangeWindow(AnalyticsRange.days30, now));
+      final weeks = RideBasicsCharts.weeklyDistance.series(
+        rides,
+        now: now,
+        window: rangeWindow(AnalyticsRange.days30, now),
+      );
       expect(weeks.last.date, DateTime(2026, 10, 5));
       expect(weeks.first.date, weekStartOf(DateTime(2026, 9, 10)));
     });
@@ -279,8 +299,7 @@ void main() {
         for (var i = 0; i < 30; i++)
           _ride('r$i', DateTime(2026, 9, 1).add(Duration(days: i)), km: i + 1),
       ];
-      final s =
-          buildPreviewSeries(AnalyticsChart.distancePerRide, rides, now: now);
+      final s = RideBasicsCharts.distancePerRide.previewSeries(rides, now: now);
       expect(s.length, previewRideCount);
       expect(s.first.key, 'r10');
       expect(s.last.key, 'r29');
@@ -288,11 +307,15 @@ void main() {
 
     test('calendar charts cover the last 12 weeks', () {
       final rides = [_ride('a', DateTime(2026, 10, 8))];
-      final weeks =
-          buildPreviewSeries(AnalyticsChart.weeklyDistance, rides, now: now);
+      final weeks = RideBasicsCharts.weeklyDistance.previewSeries(
+        rides,
+        now: now,
+      );
       expect(weeks.length, previewWeekCount);
-      final days =
-          buildPreviewSeries(AnalyticsChart.activityCalendar, rides, now: now);
+      final days = ActivityPatternCharts.activityCalendar.previewSeries(
+        rides,
+        now: now,
+      );
       expect(days.first.date!.weekday, DateTime.monday);
       expect(days.last.date, DateTime(2026, 10, 9));
       expect(days.length, 7 * 11 + 5); // 11 full weeks + Mon..Fri
@@ -301,9 +324,11 @@ void main() {
 
   group('buildInsights', () {
     test('no data', () {
-      final i = buildInsights(
-          AnalyticsChart.distancePerRide, const [], const [],
-          now: now);
+      final i = RideBasicsCharts.distancePerRide.insights(
+        const [],
+        const [],
+        now: now,
+      );
       expect(i.single.kind, InsightKind.notEnoughData);
     });
 
@@ -312,16 +337,24 @@ void main() {
         _ride('a', DateTime(2026, 10, 1), km: 10),
         _ride('b', DateTime(2026, 10, 2), km: 30),
       ];
-      final s = perRideSeries(AnalyticsChart.distancePerRide, rides);
-      final i = buildInsights(AnalyticsChart.distancePerRide, rides, s,
-          now: now, trend: -20);
+      final s = RideBasicsCharts.distancePerRide.perRideSeries(rides);
+      final i = RideBasicsCharts.distancePerRide.insights(
+        rides,
+        s,
+        now: now,
+        trend: -20,
+      );
       expect(i[0].kind, InsightKind.peakValue);
       expect(i[0].value, 30);
       expect(i[0].date, DateTime(2026, 10, 2));
       expect(i[1].kind, InsightKind.trendDown);
       expect(i[1].value, 20);
-      final flat = buildInsights(AnalyticsChart.distancePerRide, rides, s,
-          now: now, trend: 1);
+      final flat = RideBasicsCharts.distancePerRide.insights(
+        rides,
+        s,
+        now: now,
+        trend: 1,
+      );
       expect(flat[1].kind, InsightKind.trendFlat);
     });
 
@@ -330,9 +363,9 @@ void main() {
         _ride('a', DateTime(2026, 10, 1), brakes: 0),
         _ride('b', DateTime(2026, 10, 2), brakes: 3),
       ];
-      final s = perRideSeries(AnalyticsChart.hardBraking, rides);
-      final i = buildInsights(AnalyticsChart.hardBraking, rides, s, now: now);
-      expect(i.single.kind, InsightKind.cleanRides);
+      final s = RidingBehaviourCharts.hardBraking.perRideSeries(rides);
+      final i = RidingBehaviourCharts.hardBraking.insights(rides, s, now: now);
+      expect(i.single.kind, cleanRidesInsight);
       expect(i.single.value, 1);
       expect(i.single.value2, 2);
     });
@@ -342,9 +375,9 @@ void main() {
         _ride('a', DateTime(2026, 10, 1), duration: 1000, moving: 750),
         _ride('b', DateTime(2026, 10, 2), duration: 1000, moving: 1000),
       ];
-      final s = perRideSeries(AnalyticsChart.jamTime, rides);
-      final i = buildInsights(AnalyticsChart.jamTime, rides, s, now: now);
-      expect(i.single.kind, InsightKind.stoppedShare);
+      final s = TimeCharts.jamTime.perRideSeries(rides);
+      final i = TimeCharts.jamTime.insights(rides, s, now: now);
+      expect(i.single.kind, stoppedShareInsight);
       expect(i.single.value, closeTo(12.5, 1e-9));
     });
 
@@ -354,20 +387,26 @@ void main() {
         _ride('b', DateTime(2026, 10, 9, 18), km: 10, bike: 'y'),
         _ride('c', DateTime(2026, 10, 9, 7), km: 10, bike: 'x'),
       ];
-      final hour = buildInsights(
-          AnalyticsChart.hourOfDay, rides, ridesByHour(rides),
-          now: now);
-      expect(hour.single.kind, InsightKind.peakHour);
+      final hour = ActivityPatternCharts.hourOfDay.insights(
+        rides,
+        ridesByHour(rides),
+        now: now,
+      );
+      expect(hour.single.kind, peakHourInsight);
       expect(hour.single.value, 18);
-      final bike = buildInsights(
-          AnalyticsChart.distanceByBike, rides, distanceByBike(rides),
-          now: now);
+      final bike = BikeCharts.distanceByBike.insights(
+        rides,
+        distanceByBike(rides),
+        now: now,
+      );
       expect(bike.single.key, 'x');
       expect(bike.single.value, closeTo(80, 1e-9));
-      final streak = buildInsights(AnalyticsChart.activityCalendar, rides,
-          dailyDistance(rides, from: DateTime(2026, 10, 8), to: now),
-          now: now);
-      expect(streak.single.kind, InsightKind.streak);
+      final streak = ActivityPatternCharts.activityCalendar.insights(
+        rides,
+        dailyDistance(rides, from: DateTime(2026, 10, 8), to: now),
+        now: now,
+      );
+      expect(streak.single.kind, streakInsight);
       expect(streak.single.value, 2);
     });
   });

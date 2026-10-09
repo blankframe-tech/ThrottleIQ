@@ -7,29 +7,10 @@ import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_l10n.dart';
+import '../analytics_chart_registry.dart';
 
-/// How a chart is drawn.
-enum _Shape { line, bars, stacked, heatmap, ranked }
-
-_Shape _shapeOf(AnalyticsChart c) => switch (c) {
-      AnalyticsChart.distancePerRide ||
-      AnalyticsChart.avgSpeed ||
-      AnalyticsChart.topSpeed ||
-      AnalyticsChart.ridingScore ||
-      AnalyticsChart.maxLean ||
-      AnalyticsChart.peakG ||
-      AnalyticsChart.fuelEfficiency ||
-      AnalyticsChart.fuelCostPerKm =>
-        _Shape.line,
-      AnalyticsChart.movingVsStopped => _Shape.stacked,
-      AnalyticsChart.activityCalendar => _Shape.heatmap,
-      AnalyticsChart.distanceByBike ||
-      AnalyticsChart.longestRides =>
-        _Shape.ranked,
-      _ => _Shape.bars,
-    };
-
-/// Draws one [AnalyticsChart] from its series.
+/// Draws one [AnalyticsChart] from its series, as its registered
+/// [ChartPresentation] describes.
 ///
 /// [detailed] is the large version in the detail view: taller, with a value
 /// axis, more x labels and touch tooltips. The compact version on the list
@@ -50,66 +31,39 @@ class AnalyticsChartView extends StatelessWidget {
 
   double get _height => detailed ? 240 : 92;
 
+  ChartPresentation get _spec => chartPresentationOf(chart);
+
   @override
   Widget build(BuildContext context) {
-    final shape = _shapeOf(chart);
-    final hasData = switch (shape) {
-      _Shape.line => points.length >= 2,
-      _Shape.heatmap => points.any((p) => p.value > 0),
-      _Shape.bars
-          when chart == AnalyticsChart.hourOfDay ||
-              chart == AnalyticsChart.weekday ||
-              isFuelMonthlyChart(chart) =>
-        points.any((p) => p.value > 0),
-      _ => points.isNotEmpty,
-    };
-    if (!hasData) {
+    final spec = _spec;
+    if (!spec.hasData(points)) {
       return SizedBox(
         height: _height,
         child: Center(
           child: Text(
-            isFuelChart(chart)
-                ? context.l10n.fuelChartEmptyHint
-                : context.l10n.notEnoughRidesYet,
+            spec.emptyChartText(context.l10n),
             textAlign: TextAlign.center,
             style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
           ),
         ),
       );
     }
-    return switch (shape) {
-      _Shape.line => _line(context),
-      _Shape.bars => _bars(context, stacked: false),
-      _Shape.stacked => _bars(context, stacked: true),
-      _Shape.heatmap => _heatmap(context),
-      _Shape.ranked => _ranked(context),
+    return switch (spec.shape) {
+      ChartShape.line => _line(context),
+      ChartShape.bars => _bars(context, stacked: false),
+      ChartShape.stacked => _bars(context, stacked: true),
+      ChartShape.heatmap => _heatmap(context),
+      ChartShape.ranked => _ranked(context),
     };
   }
 
   TextStyle _axisStyle(BuildContext context) => TextStyle(
-      fontSize: detailed ? 10 : 9, color: context.palette.textTertiary);
-
-  String _xLabel(int i) {
-    final p = points[i];
-    if (p.bucket != null) {
-      return chart == AnalyticsChart.hourOfDay
-          ? p.bucket!.toString()
-          : weekdayLabel(p.bucket!).substring(0, 1);
-    }
-    if (p.date != null && isFuelMonthlyChart(chart)) return shortMonth(p.date!);
-    return p.date == null ? '' : shortDate(p.date!);
-  }
+        fontSize: detailed ? 10 : 9,
+        color: context.palette.textTertiary,
+      );
 
   /// Indices that get an x label.
-  Set<int> _labelledIndices() {
-    final n = points.length;
-    if (chart == AnalyticsChart.hourOfDay) {
-      return detailed ? {0, 3, 6, 9, 12, 15, 18, 21} : {0, 6, 12, 18};
-    }
-    if (chart == AnalyticsChart.weekday) return {for (var i = 0; i < n; i++) i};
-    if (n <= 1) return {0};
-    return detailed ? {0, (n - 1) ~/ 2, n - 1} : {0, n - 1};
-  }
+  Set<int> _labelledIndices() => _spec.labelledIndices(points.length, detailed);
 
   FlTitlesData _titles(BuildContext context, double maxY) {
     final labelled = _labelledIndices();
@@ -125,8 +79,11 @@ class AnalyticsChartView extends StatelessWidget {
             if (v > meta.max + 1e-9) return const SizedBox.shrink();
             return Padding(
               padding: const EdgeInsets.only(right: 4),
-              child: Text(formatChartNumber(chart, v),
-                  textAlign: TextAlign.right, style: _axisStyle(context)),
+              child: Text(
+                _spec.formatValue(v),
+                textAlign: TextAlign.right,
+                style: _axisStyle(context),
+              ),
             );
           },
         ),
@@ -148,7 +105,10 @@ class AnalyticsChartView extends StatelessWidget {
               axisSide: meta.axisSide,
               space: 4,
               fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
-              child: Text(_xLabel(i), style: _axisStyle(context)),
+              child: Text(
+                _spec.axisLabel(points[i]),
+                style: _axisStyle(context),
+              ),
             );
           },
         ),
@@ -158,27 +118,17 @@ class AnalyticsChartView extends StatelessWidget {
 
   String _tooltip(BuildContext context, int i) {
     final p = points[i];
-    final unit = chartUnit(context.l10n, chart);
-    final head = p.bucket != null
-        ? (chart == AnalyticsChart.hourOfDay
-            ? hourLabel(p.bucket!)
-            : weekdayLabel(p.bucket!))
-        : (p.date == null
-            ? ''
-            : isFuelMonthlyChart(chart)
-                ? longMonth(p.date!)
-                : shortDate(p.date!));
-    return '$head\n${formatWithUnit(p.value, unit)}';
+    final unit = _spec.unit(context.l10n);
+    return '${_spec.pointLabel(p)}\n${formatWithUnit(p.value, unit)}';
   }
 
   Widget _line(BuildContext context) {
-    final color = chartColor(context, chart);
+    final color = _spec.colorOf(context);
     final values = points.map((p) => p.value).toList();
     final maxV = values.reduce(math.max);
     final minV = values.reduce(math.min);
     var pad = (maxV - minV) * 0.15;
-    // g-forces span 0–1.5: a whole-unit floor would flatten the line.
-    final minPad = chart == AnalyticsChart.peakG ? 0.05 : 1.0;
+    final minPad = _spec.lineMinPad;
     if (pad < minPad) pad = minPad;
     final minY = math.max(0.0, minV - pad);
     final maxY = maxV + pad;
@@ -212,9 +162,10 @@ class AnalyticsChartView extends StatelessWidget {
                   LineTooltipItem(
                     _tooltip(context, s.x.round()),
                     TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary,
+                    ),
                   ),
               ],
             ),
@@ -240,8 +191,10 @@ class AnalyticsChartView extends StatelessWidget {
                   strokeColor: context.palette.surface,
                 ),
               ),
-              belowBarData:
-                  BarAreaData(show: true, color: color.withValues(alpha: 0.12)),
+              belowBarData: BarAreaData(
+                show: true,
+                color: color.withValues(alpha: 0.12),
+              ),
             ),
           ],
         ),
@@ -250,65 +203,77 @@ class AnalyticsChartView extends StatelessWidget {
   }
 
   Widget _bars(BuildContext context, {required bool stacked}) {
-    final color = chartColor(context, chart);
+    final color = _spec.colorOf(context);
     final rest = context.palette.warning;
     final maxV = stacked ? 100.0 : points.map((p) => p.value).reduce(math.max);
     final maxY = maxV <= 0 ? 1.0 : maxV * (stacked ? 1 : 1.1);
     return SizedBox(
       height: _height,
-      child: LayoutBuilder(builder: (context, c) {
-        final usable = c.maxWidth - (detailed ? 38 : 0);
-        final width =
-            (usable / points.length * 0.62).clamp(2.0, detailed ? 22.0 : 14.0);
-        return BarChart(
-          BarChartData(
-            maxY: maxY,
-            minY: 0,
-            alignment: BarChartAlignment.spaceAround,
-            gridData: FlGridData(
-              show: detailed,
-              drawVerticalLine: false,
-              horizontalInterval: maxY / 4,
-              getDrawingHorizontalLine: (_) =>
-                  FlLine(color: context.palette.border, strokeWidth: 0.5),
-            ),
-            borderData: FlBorderData(show: false),
-            titlesData: _titles(context, maxY),
-            barTouchData: BarTouchData(
-              enabled: detailed,
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) => context.palette.surfaceVariant,
-                getTooltipItem: (group, gi, rod, ri) => BarTooltipItem(
-                  _tooltip(context, gi),
-                  TextStyle(
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final usable = c.maxWidth - (detailed ? 38 : 0);
+          final width = (usable / points.length * 0.62).clamp(
+            2.0,
+            detailed ? 22.0 : 14.0,
+          );
+          return BarChart(
+            BarChartData(
+              maxY: maxY,
+              minY: 0,
+              alignment: BarChartAlignment.spaceAround,
+              gridData: FlGridData(
+                show: detailed,
+                drawVerticalLine: false,
+                horizontalInterval: maxY / 4,
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: context.palette.border, strokeWidth: 0.5),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: _titles(context, maxY),
+              barTouchData: BarTouchData(
+                enabled: detailed,
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => context.palette.surfaceVariant,
+                  getTooltipItem: (group, gi, rod, ri) => BarTooltipItem(
+                    _tooltip(context, gi),
+                    TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: context.palette.textPrimary),
+                      color: context.palette.textPrimary,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            barGroups: [
-              for (var i = 0; i < points.length; i++)
-                BarChartGroupData(x: i, barRods: [
-                  BarChartRodData(
-                    toY: stacked ? 100 : points[i].value,
-                    width: width,
-                    color: stacked ? null : color,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(width / 3)),
-                    rodStackItems: stacked
-                        ? [
-                            BarChartRodStackItem(0, points[i].value, color),
-                            BarChartRodStackItem(points[i].value, 100,
-                                rest.withValues(alpha: 0.55)),
-                          ]
-                        : const [],
+              barGroups: [
+                for (var i = 0; i < points.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: stacked ? 100 : points[i].value,
+                        width: width,
+                        color: stacked ? null : color,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(width / 3),
+                        ),
+                        rodStackItems: stacked
+                            ? [
+                                BarChartRodStackItem(0, points[i].value, color),
+                                BarChartRodStackItem(
+                                  points[i].value,
+                                  100,
+                                  rest.withValues(alpha: 0.55),
+                                ),
+                              ]
+                            : const [],
+                      ),
+                    ],
                   ),
-                ]),
-            ],
-          ),
-        );
-      }),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -324,74 +289,84 @@ class AnalyticsChartView extends StatelessWidget {
     ];
     final weeks = (cells.length / 7).ceil();
     final maxV = days.map((p) => p.value).fold<double>(0, math.max);
-    final color = chartColor(context, chart);
+    final color = _spec.colorOf(context);
     final gap = detailed ? 3.0 : 2.0;
-    return LayoutBuilder(builder: (context, c) {
-      final labelW = detailed ? 16.0 : 0.0;
-      final size = math.min(
-        (c.maxWidth - labelW - gap * (weeks - 1)) / weeks,
-        detailed ? 18.0 : (_height - gap * 6) / 7,
-      );
-      Widget cell(AnalyticsPoint? p) {
-        Color fill;
-        if (p == null) {
-          fill = Colors.transparent;
-        } else if (p.value <= 0) {
-          fill = context.palette.border;
-        } else {
-          final t = maxV <= 0 ? 1.0 : (p.value / maxV);
-          fill = color.withValues(alpha: 0.3 + 0.7 * t);
-        }
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-              color: fill, borderRadius: BorderRadius.circular(size / 4)),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final labelW = detailed ? 16.0 : 0.0;
+        final size = math.min(
+          (c.maxWidth - labelW - gap * (weeks - 1)) / weeks,
+          detailed ? 18.0 : (_height - gap * 6) / 7,
         );
-      }
+        Widget cell(AnalyticsPoint? p) {
+          Color fill;
+          if (p == null) {
+            fill = Colors.transparent;
+          } else if (p.value <= 0) {
+            fill = context.palette.border;
+          } else {
+            final t = maxV <= 0 ? 1.0 : (p.value / maxV);
+            fill = color.withValues(alpha: 0.3 + 0.7 * t);
+          }
+          return Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(size / 4),
+            ),
+          );
+        }
 
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (detailed)
-            SizedBox(
-              width: labelW,
-              child: Column(children: [
-                for (var d = 1; d <= 7; d++)
-                  SizedBox(
-                    height: size + (d < 7 ? gap : 0),
-                    child: d.isOdd
-                        ? Text(weekdayLabel(d).substring(0, 1),
-                            style: _axisStyle(context))
-                        : null,
-                  ),
-              ]),
-            ),
-          for (var w = 0; w < weeks; w++)
-            Padding(
-              padding: EdgeInsets.only(right: w < weeks - 1 ? gap : 0),
-              child: Column(children: [
-                for (var d = 0; d < 7; d++)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: d < 6 ? gap : 0),
-                    child: cell(
-                        w * 7 + d < cells.length ? cells[w * 7 + d] : null),
-                  ),
-              ]),
-            ),
-        ],
-      );
-    });
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (detailed)
+              SizedBox(
+                width: labelW,
+                child: Column(
+                  children: [
+                    for (var d = 1; d <= 7; d++)
+                      SizedBox(
+                        height: size + (d < 7 ? gap : 0),
+                        child: d.isOdd
+                            ? Text(
+                                weekdayLabel(d).substring(0, 1),
+                                style: _axisStyle(context),
+                              )
+                            : null,
+                      ),
+                  ],
+                ),
+              ),
+            for (var w = 0; w < weeks; w++)
+              Padding(
+                padding: EdgeInsets.only(right: w < weeks - 1 ? gap : 0),
+                child: Column(
+                  children: [
+                    for (var d = 0; d < 7; d++)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: d < 6 ? gap : 0),
+                        child: cell(
+                          w * 7 + d < cells.length ? cells[w * 7 + d] : null,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _ranked(BuildContext context) {
-    final color = chartColor(context, chart);
+    final color = _spec.colorOf(context);
     final rows = detailed ? points : points.take(3).toList();
     final maxV = rows.map((p) => p.value).fold<double>(0, math.max);
-    String label(AnalyticsPoint p) => chart == AnalyticsChart.distanceByBike
-        ? bikeName(p.key)
-        : (p.date == null ? '' : longDate(p.date!));
+    final unit = _spec.unit(context.l10n);
+    String label(AnalyticsPoint p) => _spec.rankLabel(p, bikeName);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -402,12 +377,15 @@ class AnalyticsChartView extends StatelessWidget {
               children: [
                 SizedBox(
                   width: detailed ? 120 : 96,
-                  child: Text(label(p),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: detailed ? 12 : 11,
-                          color: context.palette.textSecondary)),
+                  child: Text(
+                    label(p),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: detailed ? 12 : 11,
+                      color: context.palette.textSecondary,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: ClipRRect(
@@ -422,12 +400,15 @@ class AnalyticsChartView extends StatelessWidget {
                 ),
                 SizedBox(
                   width: 58,
-                  child: Text(formatWithUnit(p.value, 'km'),
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                          fontSize: detailed ? 12 : 11,
-                          fontWeight: FontWeight.w600,
-                          color: context.palette.textPrimary)),
+                  child: Text(
+                    formatWithUnit(p.value, unit),
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: detailed ? 12 : 11,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary,
+                    ),
+                  ),
                 ),
               ],
             ),

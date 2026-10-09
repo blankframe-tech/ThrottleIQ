@@ -8,6 +8,8 @@ import 'package:throttleiq/features/stats/presentation/providers/badge_sync_prov
 import 'package:throttleiq/features/stats/presentation/providers/rider_stats_provider.dart';
 import 'package:throttleiq/features/stats/presentation/screens/stats_screen.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
+import 'package:throttleiq/features/stats/domain/analytics_chart_registry.dart';
+import 'package:throttleiq/features/stats/domain/charts/ride_basics_charts.dart';
 import 'package:throttleiq/features/stats/domain/ride_analytics.dart';
 import 'package:throttleiq/features/stats/presentation/screens/analytics_detail_screen.dart';
 import 'package:throttleiq/features/stats/presentation/widgets/analytics_chart_card.dart';
@@ -54,21 +56,26 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final rides = _rides();
-    for (final chart in AnalyticsChart.values) {
-      await t.pumpWidget(_app(Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: AnalyticsChartCard(
-              chart: chart,
-              points: buildPreviewSeries(chart, rides, now: _now),
-              bikeName: (id) => 'Bike $id',
-              insight: 'insight',
-              onTap: () {},
+    for (final chart in analyticsCharts) {
+      await t.pumpWidget(
+        _app(
+          Scaffold(
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: AnalyticsChartCard(
+                  chart: chart,
+                  points:
+                      chart.preview(ChartInput(rides: rides), now: _now).points,
+                  bikeName: (id) => 'Bike $id',
+                  insight: 'insight',
+                  onTap: () {},
+                ),
+              ),
             ),
           ),
         ),
-      )));
+      );
       await t.pump();
       expect(t.takeException(), isNull, reason: chart.name);
     }
@@ -82,17 +89,19 @@ void main() {
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);
       final rides = _rides();
-      for (final chart in AnalyticsChart.values) {
-        await t.pumpWidget(_app(
-          AnalyticsDetailScreen(
-            key: ValueKey(chart),
-            chart: chart,
-            rides: rides,
-            bikeNames: const {'b1': 'Honda CB Hornet', 'b2': 'Yamaha FZ'},
-            now: _now,
+      for (final chart in analyticsCharts) {
+        await t.pumpWidget(
+          _app(
+            AnalyticsDetailScreen(
+              key: ValueKey(chart),
+              chart: chart,
+              rides: rides,
+              bikeNames: const {'b1': 'Honda CB Hornet', 'b2': 'Yamaha FZ'},
+              now: _now,
+            ),
+            locale: locale,
           ),
-          locale: locale,
-        ));
+        );
         await t.pump();
         expect(t.takeException(), isNull, reason: chart.name);
         final l10n = await AppLocalizations.delegate.load(locale);
@@ -111,11 +120,15 @@ void main() {
     t.view.physicalSize = const Size(360, 1600);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
-    await t.pumpWidget(_app(AnalyticsDetailScreen(
-      chart: AnalyticsChart.distancePerRide,
-      rides: const [],
-      now: _now,
-    )));
+    await t.pumpWidget(
+      _app(
+        AnalyticsDetailScreen(
+          chart: RideBasicsCharts.distancePerRide,
+          rides: const [],
+          now: _now,
+        ),
+      ),
+    );
     await t.pump();
     expect(t.takeException(), isNull);
     expect(find.text('Not enough rides in this period yet.'), findsWidgets);
@@ -129,16 +142,19 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final rides = _rides();
-    await t.pumpWidget(ProviderScope(
-      overrides: [
-        riderStatsProvider.overrideWith(
-            (ref) async => computeRiderStats(rides: rides, bikes: const [])),
-        allBikesProvider.overrideWith((ref) async => const []),
-        badgeSyncProvider.overrideWith((ref) async {}),
-        userFuelLogsProvider.overrideWith((ref) async => const []),
-      ],
-      child: _app(const StatsScreen()),
-    ));
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: [
+          riderStatsProvider.overrideWith(
+            (ref) async => computeRiderStats(rides: rides, bikes: const []),
+          ),
+          allBikesProvider.overrideWith((ref) async => const []),
+          badgeSyncProvider.overrideWith((ref) async {}),
+          userFuelLogsProvider.overrideWith((ref) async => const []),
+        ],
+        child: _app(const StatsScreen()),
+      ),
+    );
     await t.pump();
     await t.pump();
     expect(t.takeException(), isNull);
@@ -147,8 +163,11 @@ void main() {
     final firstCard = find.byType(AnalyticsChartCard).first;
     expect(firstCard, findsOneWidget);
     final top = t.getTopLeft(firstCard).dy;
-    expect(top, lessThan(800 - bottomNavHeight - 100),
-        reason: 'first chart should start well above the fold');
+    expect(
+      top,
+      lessThan(800 - bottomNavHeight - 100),
+      reason: 'first chart should start well above the fold',
+    );
     // The old Dist/Speed toggle is gone.
     expect(find.text('Dist'), findsNothing);
     expect(find.text('Speed'), findsNothing);
