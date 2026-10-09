@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 # Runs scripts/check.sh before a push, unless the commit being pushed already
-# passed it (stamp written by check.sh). Bypass in an emergency with
+# passed it, or only adds docs on top of a commit that did. Bypass in an emergency with
 # `git push --no-verify`.
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
-STAMP="$(git rev-parse --git-dir)/throttleiq-check-passed"
 ZERO=0000000000000000000000000000000000000000
 
 while read -r _local_ref local_sha _remote_ref _remote_sha; do
   [ "$local_sha" = "$ZERO" ] && continue                     # branch deletion
-  [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$local_sha" ] && continue
+  "$ROOT/scripts/check.sh" --covers "$local_sha" && continue   # already passed
   if [ "$local_sha" != "$(git rev-parse HEAD)" ]; then
     echo "pre-push: ${local_sha:0:7} is not checked out, so it can't be checked."
     echo "          Check it out and run scripts/check.sh, or push with --no-verify."

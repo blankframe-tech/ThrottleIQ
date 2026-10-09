@@ -9,6 +9,7 @@
 #   --ci          CI mode: no pass stamp; rules and functions are left to
 #                 their own CI jobs.
 #   --force       run even if this exact commit already passed.
+#   --covers <sha> exit 0 if an earlier pass covers <sha> (used by pre-push).
 #
 # Runs every check even after a failure and prints one summary, so a lint
 # can't hide a test failure. On a clean tree, a pass is stamped in
@@ -20,8 +21,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 BASE=""; CI=false; FORCE=false
+COVERS=""
 while [ $# -gt 0 ]; do
   case "$1" in
+    --covers) COVERS="$2"; shift 2 ;;
     --base) BASE="$2"; shift 2 ;;
     --ci) CI=true; shift ;;
     --force) FORCE=true; shift ;;
@@ -37,7 +40,19 @@ STAMP="$(git rev-parse --git-dir)/throttleiq-check-passed"
 HEAD_SHA="$(git rev-parse HEAD)"
 clean() { [ -z "$(git status --porcelain)" ]; }
 
-if [ "$CI" = false ] && [ "$FORCE" = false ] && clean && [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$HEAD_SHA" ]; then
+# A pass covers <sha> if <sha> is the stamped commit, or descends from it
+# through docs-only changes (DOCS/, *.md), which no check here reads.
+stamp_covers() {
+  local sha="$1" passed
+  [ -f "$STAMP" ] || return 1
+  passed="$(cat "$STAMP")"
+  [ "$passed" = "$sha" ] && return 0
+  git merge-base --is-ancestor "$passed" "$sha" 2>/dev/null || return 1
+  [ -z "$(git diff --name-only "$passed" "$sha" | grep -vE '^DOCS/|\.md$')" ]
+}
+if [ -n "$COVERS" ]; then stamp_covers "$COVERS"; exit $?; fi
+
+if [ "$CI" = false ] && [ "$FORCE" = false ] && clean && stamp_covers "$HEAD_SHA"; then
   echo "check: ${HEAD_SHA:0:7} already passed (use --force to re-run)."
   exit 0
 fi

@@ -2,7 +2,13 @@
 
 _Last updated: 2026-10-09 · Branch: `experimental`_
 
-## 2026-10-09 (latest): telemetry, fuel log, Spark badge counters, website — `experimental`, not pushed
+## 2026-10-09 (latest): one quality gate + per-family analytics charts — `experimental`, not pushed
+
+- **`scripts/check.sh` is the only gate.** It runs l10n, a format check on changed files, the CI guards (`as double`, bare-catch ratchet at 66, paid-only entitlements), `flutter analyze`, the full `flutter test`, and the rules/functions suites when those changed. Every check runs and it reports one summary. A passing clean commit is stamped (`.git/throttleiq-check-passed`); a re-run, or a later docs-only commit, returns at once.
+- **Automatic:** `.githooks/pre-push` runs the gate unless the pushed commit is already covered. `core.hooksPath` is set by `check.sh` itself and by a Claude SessionStart hook. CI's flutter job calls `check.sh --ci`. `deploy.sh` now commits, gates, then pushes. The QA rule says: focused tests while iterating, the gate once per change set or after the last merge.
+- **Analytics charts split per family:** `stats/domain/charts/*_charts.dart` + `stats/presentation/charts/*_presentation.dart`, listed in `analytics_chart_registry.dart` (one per layer). Adding a family = 2 new files + 1 line per registry; the shared files no longer switch on chart ids. `test/features/stats/chart_registry_structure_test.dart` fails if a shared file names a specific chart. Behaviour unchanged; gate passed (2131 tests).
+
+## 2026-10-09: telemetry, fuel log, Spark badge counters, website — `experimental`, not pushed
 
 - Merged four worktree branches: lean/g/elevation (schema v26), fuel log (v27), Spark-only badge counters, rounded widget chips. Details in `features.md` (telemetry / fuel / Spark-badges section).
 - Fixed CI on `main`: four raw `as double` casts in the analytics code, and this session's bare `catch (_)` (ratchet back to 66).
