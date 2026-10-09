@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 25;
+  static const int schemaVersion = 26;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -337,7 +337,31 @@ class DatabaseHelper {
       await _addColumnIfMissing(
           db, 'rides', 'overspeed_count', 'overspeed_count INTEGER');
     }
+    // `newVersion` gate as on v15+: upgradeSchemaForTesting(db, from, to)
+    // must stop at `to`, and the older migration tests build no `rides`.
+    if (oldVersion < 26 && newVersion >= 26) {
+      // Per-ride cornering/g-force peaks and elevation gain/loss. Nullable
+      // with no default, like v25's overspeed_count: existing rides were
+      // never measured, and NULL ("unknown") keeps them out of the charts.
+      // Elevation is backfilled later from stored points where possible
+      // (ElevationBackfill); lean and g can't be, the raw fixes aren't kept
+      // at the rate the estimator needs.
+      for (final col in _rideV26Columns) {
+        await _addColumnIfMissing(db, 'rides', col[0], col[1]);
+      }
+    }
   }
+
+  /// The v26 ride columns, shared by the upgrade step and nothing else (the
+  /// fresh-install DDL lists them inline with the rest of `rides`).
+  static const List<List<String>> _rideV26Columns = [
+    ['max_lean_deg', 'max_lean_deg REAL'],
+    ['peak_lateral_g', 'peak_lateral_g REAL'],
+    ['peak_accel_g', 'peak_accel_g REAL'],
+    ['peak_brake_g', 'peak_brake_g REAL'],
+    ['elevation_gain_m', 'elevation_gain_m REAL'],
+    ['elevation_loss_m', 'elevation_loss_m REAL'],
+  ];
 
   /// Places a rider bookmarked from the Places hub (schema v21).
   ///
@@ -775,6 +799,12 @@ class DatabaseHelper {
         rapid_accel_count INTEGER NOT NULL DEFAULT 0,
         high_jerk_count INTEGER NOT NULL DEFAULT 0,
         overspeed_count INTEGER,
+        max_lean_deg REAL,
+        peak_lateral_g REAL,
+        peak_accel_g REAL,
+        peak_brake_g REAL,
+        elevation_gain_m REAL,
+        elevation_loss_m REAL,
         status TEXT NOT NULL DEFAULT 'active',
         map_snapshot_path TEXT,
         is_auto INTEGER NOT NULL DEFAULT 0,

@@ -1,5 +1,6 @@
 import '../../../../core/constants/sensor_constants.dart';
 import 'average_speed.dart';
+import 'cornering_estimator.dart';
 
 /// The `rides` summary columns for a finished ride, from the recorder's
 /// in-memory running totals.
@@ -21,6 +22,8 @@ Map<String, dynamic> buildFinalRideStats({
   required int rapidAccelCount,
   required int highJerkCount,
   required int overspeedCount,
+  CorneringPeaks? corneringPeaks,
+  ({double gainM, double lossM})? elevation,
 }) {
   var effectiveMax = maxSpeedMs;
   if (effectiveMax > SensorConstants.maxPlausibleSpeedMs) {
@@ -62,5 +65,15 @@ Map<String, dynamic> buildFinalRideStats({
     'rapid_accel_count': rapidAccelCount,
     'high_jerk_count': highJerkCount,
     'overspeed_count': overspeedCount,
+    // Schema v26. Null peaks mean the estimator never saw a usable stretch
+    // (a ride that never got above walking pace); null elevation means the
+    // altitude data couldn't support a figure, or the caller (the crash
+    // path) didn't read the points — the backfill picks that up later.
+    'max_lean_deg': corneringPeaks?.maxLeanDeg,
+    'peak_lateral_g': corneringPeaks?.peakLateralG,
+    'peak_accel_g': corneringPeaks?.peakAccelG,
+    'peak_brake_g': corneringPeaks?.peakBrakeG,
+    if (elevation != null) 'elevation_gain_m': elevation.gainM,
+    if (elevation != null) 'elevation_loss_m': elevation.lossM,
   };
 }

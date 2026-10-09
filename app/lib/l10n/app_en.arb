@@ -4801,6 +4801,18 @@
   "@chartOverspeed": {
     "description": "Analytics chart title: overspeed episodes (alerts) per ride."
   },
+  "chartMaxLean": "Max lean angle per ride",
+  "@chartMaxLean": {
+    "description": "Analytics chart title: deepest estimated lean angle (degrees) per ride."
+  },
+  "chartPeakG": "Peak cornering g per ride",
+  "@chartPeakG": {
+    "description": "Analytics chart title: highest sustained lateral (cornering) g-force per ride."
+  },
+  "chartElevationGain": "Elevation gain per ride",
+  "@chartElevationGain": {
+    "description": "Analytics chart title: metres climbed per ride."
+  },
   "chartActivityCalendar": "Riding days",
   "@chartActivityCalendar": {
     "description": "Analytics chart title: calendar heatmap of days ridden."
@@ -4921,6 +4933,26 @@
   "analyticsColStopped": "Stopped",
   "@analyticsColStopped": {
     "description": "Table/CSV column header and legend: stopped time."
+  },
+  "analyticsColLateral": "Cornering",
+  "@analyticsColLateral": {
+    "description": "Table/CSV column header: peak lateral (cornering) g-force."
+  },
+  "analyticsColAccel": "Acceleration",
+  "@analyticsColAccel": {
+    "description": "Table/CSV column header: peak forward acceleration g-force."
+  },
+  "analyticsColBrake": "Braking",
+  "@analyticsColBrake": {
+    "description": "Table/CSV column header: peak braking (deceleration) g-force."
+  },
+  "analyticsColClimb": "Climb",
+  "@analyticsColClimb": {
+    "description": "Table/CSV column header: metres climbed in a ride."
+  },
+  "analyticsColDescent": "Descent",
+  "@analyticsColDescent": {
+    "description": "Table/CSV column header: metres descended in a ride."
   },
   "analyticsUnitMin": "min",
   "@analyticsUnitMin": {
@@ -5061,6 +5093,30 @@
     "placeholders": {
       "percent": {
         "type": "String"
+      }
+    }
+  },
+  "insightPeakLean": "Your deepest lean was about {value} on {date}. Estimated from GPS, so treat it as a guide.",
+  "@insightPeakLean": {
+    "description": "Insight: deepest estimated lean angle and the date. {value} like '34°', {date} like '8 Oct'. The angle is estimated from GPS, not measured.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "insightTotalClimb": "You climbed {value} in total across {count, plural, =1{1 ride} other{{count} rides}}.",
+  "@insightTotalClimb": {
+    "description": "Insight: total metres climbed over the rides in range. {value} like '1240 m'.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
       }
     }
   },

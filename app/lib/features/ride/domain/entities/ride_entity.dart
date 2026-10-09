@@ -32,6 +32,27 @@ class RideEntity extends Equatable {
   /// Overspeed episodes during the ride (schema v25). Null on rides recorded
   /// before it was tracked — "unknown", not "none" — so charts skip them.
   final int? overspeedCount;
+
+  /// Peak sustained lean angle in degrees, either side (schema v26). An
+  /// estimate from GPS kinematics — see `cornering_estimator.dart`. Null on
+  /// rides recorded before it was tracked.
+  final double? maxLeanDeg;
+
+  /// Peak sustained lateral (cornering) acceleration in g (schema v26).
+  final double? peakLateralG;
+
+  /// Peak sustained forward acceleration in g (schema v26).
+  final double? peakAccelG;
+
+  /// Peak sustained deceleration in g, as a positive number (schema v26).
+  final double? peakBrakeG;
+
+  /// Metres climbed / descended over the ride, from the stored altitude
+  /// samples (schema v26) — see `elevation_profile.dart`. Null when the ride
+  /// predates the column and has no points to backfill from, or its
+  /// altitude data was too sparse to trust.
+  final double? elevationGainM;
+  final double? elevationLossM;
   final RideStatus status;
   final String? mapSnapshotPath;
 
@@ -71,6 +92,12 @@ class RideEntity extends Equatable {
     this.rapidAccelCount = 0,
     this.highJerkCount = 0,
     this.overspeedCount,
+    this.maxLeanDeg,
+    this.peakLateralG,
+    this.peakAccelG,
+    this.peakBrakeG,
+    this.elevationGainM,
+    this.elevationLossM,
     this.status = RideStatus.active,
     this.mapSnapshotPath,
     this.isAuto = false,
@@ -111,6 +138,12 @@ class RideEntity extends Equatable {
     int? rapidAccelCount,
     int? highJerkCount,
     int? overspeedCount,
+    double? maxLeanDeg,
+    double? peakLateralG,
+    double? peakAccelG,
+    double? peakBrakeG,
+    double? elevationGainM,
+    double? elevationLossM,
     RideStatus? status,
     DateTime? endTime,
     String? mapSnapshotPath,
@@ -135,6 +168,12 @@ class RideEntity extends Equatable {
       rapidAccelCount: rapidAccelCount ?? this.rapidAccelCount,
       highJerkCount: highJerkCount ?? this.highJerkCount,
       overspeedCount: overspeedCount ?? this.overspeedCount,
+      maxLeanDeg: maxLeanDeg ?? this.maxLeanDeg,
+      peakLateralG: peakLateralG ?? this.peakLateralG,
+      peakAccelG: peakAccelG ?? this.peakAccelG,
+      peakBrakeG: peakBrakeG ?? this.peakBrakeG,
+      elevationGainM: elevationGainM ?? this.elevationGainM,
+      elevationLossM: elevationLossM ?? this.elevationLossM,
       status: status ?? this.status,
       mapSnapshotPath: mapSnapshotPath ?? this.mapSnapshotPath,
       isAuto: isAuto ?? this.isAuto,

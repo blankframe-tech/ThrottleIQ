@@ -15,7 +15,9 @@ _Shape _shapeOf(AnalyticsChart c) => switch (c) {
       AnalyticsChart.distancePerRide ||
       AnalyticsChart.avgSpeed ||
       AnalyticsChart.topSpeed ||
-      AnalyticsChart.ridingScore =>
+      AnalyticsChart.ridingScore ||
+      AnalyticsChart.maxLean ||
+      AnalyticsChart.peakG =>
         _Shape.line,
       AnalyticsChart.movingVsStopped => _Shape.stacked,
       AnalyticsChart.activityCalendar => _Shape.heatmap,
@@ -116,7 +118,7 @@ class AnalyticsChartView extends StatelessWidget {
             if (v > meta.max + 1e-9) return const SizedBox.shrink();
             return Padding(
               padding: const EdgeInsets.only(right: 4),
-              child: Text(formatAnalyticsNumber(v),
+              child: Text(formatChartNumber(chart, v),
                   textAlign: TextAlign.right, style: _axisStyle(context)),
             );
           },
@@ -164,7 +166,9 @@ class AnalyticsChartView extends StatelessWidget {
     final maxV = values.reduce(math.max);
     final minV = values.reduce(math.min);
     var pad = (maxV - minV) * 0.15;
-    if (pad < 1) pad = 1;
+    // g-forces span 0–1.5: a whole-unit floor would flatten the line.
+    final minPad = chart == AnalyticsChart.peakG ? 0.05 : 1.0;
+    if (pad < minPad) pad = minPad;
     final minY = math.max(0.0, minV - pad);
     final maxY = maxV + pad;
     var peak = 0;

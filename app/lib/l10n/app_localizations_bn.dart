@@ -1424,7 +1424,9 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String pickRidersRideStarts(
-      Object minGroupRideFriends, Object maxGroupRideFriends) {
+    Object minGroupRideFriends,
+    Object maxGroupRideFriends,
+  ) {
     return '$minGroupRideFriends–$maxGroupRideFriends জন রাইডার বেছে নিন। আপনার রাইড সাথে সাথেই রেকর্ড শুরু করবে; তারা নোটিফিকেশন থেকে যোগ দেবে।';
   }
 
@@ -3329,7 +3331,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String hardBrakesRapidAccel(
-      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
+    Object hardBrakeCount,
+    Object rapidAccelCount,
+    Object highJerkCount,
+  ) {
     return '$hardBrakeCountটি হার্ড ব্রেক · $rapidAccelCountটি র‍্যাপিড এক্সেল · $highJerkCountটি ঝাঁকুনি';
   }
 
@@ -3380,7 +3385,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String badgeFamilyEarned(
-      Object family, Object earnedCount, Object badgesCount) {
+    Object family,
+    Object earnedCount,
+    Object badgesCount,
+  ) {
     return '$family, $badgesCountটির মধ্যে $earnedCountটি অর্জিত';
   }
 
@@ -3405,7 +3413,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String youreAt(
-      Object threshold, Object progress, Object threshold2, Object unit) {
+    Object threshold,
+    Object progress,
+    Object threshold2,
+    Object unit,
+  ) {
     return '$threshold আপনি $threshold2 $unit-এর মধ্যে $progress-এ আছেন।';
   }
 
@@ -3455,6 +3467,15 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get chartOverspeed => 'প্রতি রাইডে ওভারস্পিড সতর্কতা';
+
+  @override
+  String get chartMaxLean => 'প্রতি রাইডে সর্বোচ্চ লিন অ্যাঙ্গেল';
+
+  @override
+  String get chartPeakG => 'প্রতি রাইডে বাঁকে সর্বোচ্চ g';
+
+  @override
+  String get chartElevationGain => 'প্রতি রাইডে উচ্চতা বৃদ্ধি';
 
   @override
   String get chartActivityCalendar => 'রাইডের দিনগুলো';
@@ -3546,6 +3567,21 @@ class AppLocalizationsBn extends AppLocalizations {
   String get analyticsColStopped => 'থেমে থাকা';
 
   @override
+  String get analyticsColLateral => 'বাঁক';
+
+  @override
+  String get analyticsColAccel => 'অ্যাক্সিলারেশন';
+
+  @override
+  String get analyticsColBrake => 'ব্রেকিং';
+
+  @override
+  String get analyticsColClimb => 'চড়াই';
+
+  @override
+  String get analyticsColDescent => 'উতরাই';
+
+  @override
   String get analyticsUnitMin => 'মিনিট';
 
   @override
@@ -3619,6 +3655,22 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String insightStoppedShare(String percent) {
     return 'রাইডের সময়ের $percent% আপনি থেমে ছিলেন।';
+  }
+
+  @override
+  String insightPeakLean(String value, String date) {
+    return 'আপনার সবচেয়ে বেশি লিন ছিল প্রায় $value, $date তারিখে। এটি GPS থেকে আনুমানিক হিসাব, তাই নির্দেশিকা হিসেবে দেখুন।';
+  }
+
+  @override
+  String insightTotalClimb(String value, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি রাইডে',
+      one: '1টি রাইডে',
+    );
+    return '$_temp0 আপনি মোট $value উপরে উঠেছেন।';
   }
 
   @override

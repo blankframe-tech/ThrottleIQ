@@ -1488,6 +1488,16 @@ insightStreakRecordOnly
 insightLongestRide
 insightCleanRides
 insightStoppedShare
+chartMaxLean
+chartPeakG
+chartElevationGain
+analyticsColLateral
+analyticsColAccel
+analyticsColBrake
+analyticsColClimb
+analyticsColDescent
+insightPeakLean
+insightTotalClimb
 # batch: follow-qr
 myQrTitle
 myQrIntro

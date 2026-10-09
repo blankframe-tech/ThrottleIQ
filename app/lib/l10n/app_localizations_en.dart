@@ -1423,7 +1423,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pickRidersRideStarts(
-      Object minGroupRideFriends, Object maxGroupRideFriends) {
+    Object minGroupRideFriends,
+    Object maxGroupRideFriends,
+  ) {
     return 'Pick $minGroupRideFriends–$maxGroupRideFriends riders. Your ride starts recording right away; they join from their notifications.';
   }
 
@@ -3343,7 +3345,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String hardBrakesRapidAccel(
-      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
+    Object hardBrakeCount,
+    Object rapidAccelCount,
+    Object highJerkCount,
+  ) {
     return '$hardBrakeCount hard brakes · $rapidAccelCount rapid accel · $highJerkCount jerks';
   }
 
@@ -3394,7 +3399,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String badgeFamilyEarned(
-      Object family, Object earnedCount, Object badgesCount) {
+    Object family,
+    Object earnedCount,
+    Object badgesCount,
+  ) {
     return '$family, $earnedCount of $badgesCount earned';
   }
 
@@ -3419,7 +3427,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String youreAt(
-      Object threshold, Object progress, Object threshold2, Object unit) {
+    Object threshold,
+    Object progress,
+    Object threshold2,
+    Object unit,
+  ) {
     return '$threshold You\'re at $progress of $threshold2 $unit.';
   }
 
@@ -3469,6 +3481,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartOverspeed => 'Overspeed alerts per ride';
+
+  @override
+  String get chartMaxLean => 'Max lean angle per ride';
+
+  @override
+  String get chartPeakG => 'Peak cornering g per ride';
+
+  @override
+  String get chartElevationGain => 'Elevation gain per ride';
 
   @override
   String get chartActivityCalendar => 'Riding days';
@@ -3560,6 +3581,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyticsColStopped => 'Stopped';
 
   @override
+  String get analyticsColLateral => 'Cornering';
+
+  @override
+  String get analyticsColAccel => 'Acceleration';
+
+  @override
+  String get analyticsColBrake => 'Braking';
+
+  @override
+  String get analyticsColClimb => 'Climb';
+
+  @override
+  String get analyticsColDescent => 'Descent';
+
+  @override
   String get analyticsUnitMin => 'min';
 
   @override
@@ -3633,6 +3669,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String insightStoppedShare(String percent) {
     return 'You spent $percent% of your riding time stopped.';
+  }
+
+  @override
+  String insightPeakLean(String value, String date) {
+    return 'Your deepest lean was about $value on $date. Estimated from GPS, so treat it as a guide.';
+  }
+
+  @override
+  String insightTotalClimb(String value, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rides',
+      one: '1 ride',
+    );
+    return 'You climbed $value in total across $_temp0.';
   }
 
   @override
