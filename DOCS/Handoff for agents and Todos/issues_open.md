@@ -1962,8 +1962,8 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 `integration_test/e2e_test.dart` and `ui_tour_test.dart` not run (no simulator).
 
 - **102.1 Badge rarity backend:** `throttleiqfb` is on the **Spark** plan, so Cloud Functions can't deploy
-  (2026-10-09 deploy failed: Blaze required). Founder chose to stay on Spark; being reworked to rules-guarded
-  client counters on `stats/badges` (no functions). Also: the standalone `/usr/local/bin/firebase` binary's
+  (2026-10-09 deploy failed: Blaze required). Founder chose to stay on Spark; reworked to rules-guarded client
+  counters on `stats/badges` (no functions). **Needs `firestore:rules` deploy** (also carries the fuelLogs rules). Also: the standalone `/usr/local/bin/firebase` binary's
   bundled npm 8 crashes in predeploy (`reading 'stdin'`); use `npx firebase-tools@15` instead. `totalRiders` counts all accounts (including
   riders with no rides), and clients can still self-award `earnedBadges` docs (existing rules gap), which skews counts.
 - **102.2 (DONE 2026-10-09)** blankframe.tech (GitHub Pages, repo `blankframe-tech/landing-page`, commit `824920e`) now
@@ -1980,8 +1980,10 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
   buttons only on `/profile`, not the Garage tab header; the saved QR PNG keeps the colors of first render.
 - **102.4 Widgets:** theme-following widgets unverified on device; widgets don't follow the shape vibe.
   (Rounded button/DUE chip corners restored 2026-10-09, commit `1806399`.)
-- **102.5 Analytics not built:** lean angle / peak g (not computed live — `DualLeanArcGauge`/`GForceFrictionCircle`
-  are unused and the recorder never writes lean prefs), fuel/cost (not tracked), elevation gain (needs every ride point).
+- **102.5 (DONE 2026-10-09)** Lean, g, elevation and fuel charts built (schema v26/v27). Remaining: lean/g are GPS
+  estimates; legacy rides get elevation only; the bike odometer isn't advanced by a higher fill-up reading; fuel
+  units (L, km/L) untranslated; no tour slide for fuel; `stats/badges` counters never decrement and can be
+  inflated by throwaway accounts or self-awarded badges.
 - **102.6 Tour:** card tour + "Show me" rather than real-widget coach marks; no floating banner on `/profile`.
   `.agents/skills/onboarding-guardian/SKILL.md` was updated to accept the v4 step list.
 - **102.7 Bangla review — deferred to November 2026 (founder, 2026-10-09):** new keys for themes, analytics, badge rarity, follow-QR and tour v4 are machine-drafted;

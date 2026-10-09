@@ -718,6 +718,26 @@ Nothing below is visible until an RTDB instance exists and the app is built with
   rides & badges, garage, maintenance, places, social, profile/QR), progress bar, mini bottom-nav preview,
   "Show me" with a restyled floating banner whose Next returns to the tour. Old mockups file deleted.
 
+## Changes from the telemetry / fuel / Spark-badges pass (2026-10-09, on `experimental`, not pushed, not checked on a device)
+
+- **Schema v26 — per-ride lean, g and elevation:** `rides.max_lean_deg`, `peak_lateral_g`, `peak_accel_g`,
+  `peak_brake_g`, `elevation_gain_m`, `elevation_loss_m` (NULL for legacy). Lean/g come from GPS kinematics
+  (`ride/domain/calculators/cornering_estimator.dart`: a_lat = v·ω, lean = atan(a_lat/g), ≥15 km/h, 3-sample hold,
+  clamped) — an estimate, roughly ±3–5° on long sweepers, under-reads tight/short turns. Elevation is computed
+  once at ride stop; `ElevationBackfill` fills legacy rides from stored points once per app start. The home
+  lean widget now gets real values. New Rides charts: max lean, peak g, elevation gain.
+- **Schema v27 — fuel log:** `fuel_logs` + `deleted_fuel_logs`, synced to `users/{uid}/fuelLogs/{id}` via the
+  outbox. Fuel card on bike detail and "Fuel log" on the maintenance page (`/home/maintenance/fuel`,
+  `/home/maintenance/fuel/add?bikeId=&logId=`). km/L between full-tank fills (partials summed). Archive dialog
+  has a "Fuel logs" option; bike delete/purge and account deletion clear fill-ups. Rides charts: fuel spend per
+  month, km/L trend, cost per km, litres per month.
+- **Badge % on Spark (no Cloud Functions):** clients increment `stats/badges` in the same batch that creates a
+  rider profile or an earnedBadges doc, stamped with a one-way marker (`users/{uid}.badgeStatsCountedAt`,
+  `earnedBadges/{id}.countedAt`); rules allow exactly +1 per marker. Existing riders/badges self-count once on
+  app start. The % shows "—" until `totalRiders` ≥ 20. `functions/src/badge-stats.ts` is kept unexported (Blaze alternative).
+- **Widgets:** themed button and DUE chip keep their 2dp rounded corners again.
+- **Follow QR:** links now use `www.blankframe.tech` (served by the landing-page repo's 404 router).
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).

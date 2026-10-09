@@ -2,7 +2,15 @@
 
 _Last updated: 2026-10-09 · Branch: `experimental`_
 
-## 2026-10-09 (latest): agent environment cleanup — commit `bc5bb51` on `experimental`, not pushed
+## 2026-10-09 (latest): telemetry, fuel log, Spark badge counters, website — `experimental`, not pushed
+
+- Merged four worktree branches: lean/g/elevation (schema v26), fuel log (v27), Spark-only badge counters, rounded widget chips. Details in `features.md` (telemetry / fuel / Spark-badges section).
+- Fixed CI on `main`: four raw `as double` casts in the analytics code, and this session's bare `catch (_)` (ratchet back to 66).
+- blankframe.tech (GitHub Pages, `blankframe-tech/landing-page` `824920e`): install page, 404 router for `/ThrottleIQ/install` and `/ThrottleIQ/u/<uid>`, `assetlinks.json` (Google-verified).
+- Firebase: project is on **Spark** — Cloud Functions can't deploy. Hosting deployed. `firestore:rules` NOT yet deployed (needed for badge counters and fuel sync). Use `npx firebase-tools@15`; the standalone binary's npm crashes in predeploy.
+- QA: analyze clean, `flutter test` 2118/2118, rules emulator 274/274, functions 12/12, debug APK builds. Not run: device, E2E.
+
+## 2026-10-09: agent environment cleanup — commit `bc5bb51` on `experimental`, not pushed
 
 - Stop hooks are idempotent: the docs hook skips when these handoff docs are newer than the code change; the E2E hook reports each changed-file/device state once (stamp in `.git/claude-e2e-last`).
 - `.agents/skills/*` are symlinked into `.claude/skills/` so Claude Code loads them; new root `CLAUDE.md` (pointers only) and `.agents/rules/parallel-agents.md` (one worktree per parallel agent).
