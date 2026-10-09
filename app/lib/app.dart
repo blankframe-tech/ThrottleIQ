@@ -21,6 +21,7 @@ import 'features/poi_directory/presentation/providers/places_provider.dart';
 import 'features/ride/presentation/providers/auto_tracking_provider.dart';
 import 'features/ride/presentation/providers/ride_recording_provider.dart';
 import 'features/social/presentation/providers/group_ride_providers.dart';
+import 'features/stats/presentation/providers/badge_sync_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/widgets/keyboard_dismiss_wrapper.dart';
 import 'shared/widgets/root_messenger.dart';
@@ -58,7 +59,8 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
     // maintenance alert that launched the app opens its bike's page.
     MaintenanceAlerts.instance.scheduleEvaluate();
     WidgetsBinding.instance.addPostFrameCallback(
-        (_) => NotificationService.instance.handleMaintenanceLaunchTap());
+      (_) => NotificationService.instance.handleMaintenanceLaunchTap(),
+    );
     // Tapping the home-screen "Start ride" widget should land on Record, not
     // just wherever the app happened to be. Registered here rather than in
     // main() because it needs the router, and once (not per rebuild) because
@@ -181,11 +183,15 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // end, or discard; see
           // RideRecordingNotifier.restoreInterruptedRide. Only meaningful
           // once signed in, since it touches the per-user local ride DB.
-          unawaited(ref
-              .read(rideRecordingProvider.notifier)
-              .restoreInterruptedRide()
-              .catchError((Object e) =>
-                  debugPrint('[app] restoreInterruptedRide failed: $e')));
+          unawaited(
+            ref
+                .read(rideRecordingProvider.notifier)
+                .restoreInterruptedRide()
+                .catchError(
+                  (Object e) =>
+                      debugPrint('[app] restoreInterruptedRide failed: $e'),
+                ),
+          );
           // Auto-tracking is per-rider: it needs a uid to attribute detected
           // rides to, and reconciling before sign-in would have nothing to
           // attach them to. Both no-op unless the rider has opted in.
@@ -193,33 +199,46 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // The owner is saved before the service starts so its very first
           // detection is stamped with this rider (grill §1.4.2).
           final uid = next.valueOrNull!.uid;
-          unawaited(AutoTrackingService.setOwner(uid)
-              .then((_) => AutoTrackingService.instance.start())
-              .catchError((Object e) {
-            debugPrint('[app] auto-tracking start failed: $e');
-            return false;
-          }));
+          unawaited(
+            AutoTrackingService.setOwner(uid)
+                .then((_) => AutoTrackingService.instance.start())
+                .catchError((Object e) {
+              debugPrint('[app] auto-tracking start failed: $e');
+              return false;
+            }),
+          );
           unawaited(_reconcileDetectedRides());
+          // One-time self-count into stats/badges for riders and badges
+          // from before the client-side counters (BadgeStatsCounter). A
+          // no-op once done; never throws.
+          unawaited(ref.read(badgeStatsCounterProvider).selfCount(uid));
           // Archived bikes older than three months are deleted for good. No
           // scheduled functions on Spark, so this is where it happens.
           unawaited(
-              ref.read(bikeArchiveServiceProvider).purgeExpired(uid).then((n) {
-            if (n > 0) ref.invalidate(garageProvider);
-          }));
+            ref.read(bikeArchiveServiceProvider).purgeExpired(uid).then((n) {
+              if (n > 0) ref.invalidate(garageProvider);
+            }),
+          );
           // Elevation for rides recorded before schema v26, from their
           // stored points. Once per app start, in small batches.
-          unawaited(ElevationBackfill.runOncePerStart().then((n) {
-            if (n > 0) ref.invalidate(riderStatsProvider);
-          }));
+          unawaited(
+            ElevationBackfill.runOncePerStart().then((n) {
+              if (n > 0) ref.invalidate(riderStatsProvider);
+            }),
+          );
         } else {
           sync.stopAutoSync();
           // Stop first, then forget the owner, so nothing detected in between
           // can be stamped with the rider who just signed out.
-          unawaited(AutoTrackingService.instance
-              .stop()
-              .then((_) => AutoTrackingService.setOwner(null))
-              .catchError((Object e) =>
-                  debugPrint('[app] auto-tracking stop failed: $e')));
+          unawaited(
+            AutoTrackingService.instance
+                .stop()
+                .then((_) => AutoTrackingService.setOwner(null))
+                .catchError(
+                  (Object e) =>
+                      debugPrint('[app] auto-tracking stop failed: $e'),
+                ),
+          );
         }
       });
 
@@ -298,14 +317,11 @@ class AppInitErrorScreen extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: const [Locale('en'), Locale('bn')],
-      builder: (context, child) => KeyboardDismissWrapper(
-        child: child ?? const SizedBox.shrink(),
-      ),
+      builder: (context, child) =>
+          KeyboardDismissWrapper(child: child ?? const SizedBox.shrink()),
       home: Builder(
         builder: (ctx) => Scaffold(
-          body: Center(
-            child: Text(ctx.l10n.errorWithDetail(error)),
-          ),
+          body: Center(child: Text(ctx.l10n.errorWithDetail(error))),
         ),
       ),
     );

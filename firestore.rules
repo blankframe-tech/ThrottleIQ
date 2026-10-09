@@ -425,8 +425,13 @@ service cloud.firestore {
          usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid)) &&
         (!('publicStats' in request.resource.data) ||
          publicStatsValid(resource == null ? null : resource.data, request.resource.data.publicStats)) &&
-        profileFieldsValid(resource == null ? {} : resource.data, request.resource.data);
-      allow delete: if request.auth.uid == uid;
+        profileFieldsValid(resource == null ? {} : resource.data, request.resource.data) &&
+        badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data);
+      // A profile already counted in stats/badges.totalRiders can't be
+      // deleted by its owner: delete-and-recreate would count them again.
+      // Account deletion removes it with the Admin SDK.
+      allow delete: if request.auth.uid == uid &&
+        resource.data.get('badgeStatsCountedAt', null) == null;
 
       // User rides subcollection
       match /rides/{rideId} {
@@ -541,8 +546,22 @@ service cloud.firestore {
       // per-user record of what's been earned, owner-only like the other
       // subcollections above, laying the groundwork for a future
       // partner-discount lookup.
+      //
+      // Still owner-only. `countedAt` is the one-way marker that pays for an
+      // `owners.<id>` bump in stats/badges (see badgeStatsWriteValid), so it
+      // can only appear together with that bump and never changes after.
+      // The owner can't delete a badge doc either: delete-and-recreate would
+      // count the same badge again. Account deletion uses the Admin SDK.
+      // Ids are not limited to the milestone catalog here because challenge
+      // badges (ChallengeRepository.earnBadge) share the collection; only
+      // catalog ids can ever be counted (badgeCountedNow).
       match /earnedBadges/{badgeId} {
-        allow read, write: if request.auth.uid == uid;
+        allow read: if request.auth.uid == uid;
+        allow create, update: if request.auth.uid == uid &&
+          request.resource.data.get('badgeId', badgeId) == badgeId &&
+          earnedBadgeCountValid(badgeId,
+            resource == null ? {} : resource.data, request.resource.data);
+        allow delete: if false;
       }
 
       // In-app notifications (e.g. "so-and-so followed you") — the one
@@ -1860,15 +1879,127 @@ service cloud.firestore {
       }
     }
 
-    // Aggregate badge ownership (`stats/badges`: totalRiders + per-badge
-    // owner counts), maintained only by functions/src/badge-stats.ts via the
-    // Admin SDK, which bypasses rules. Any signed-in rider may read it for
-    // the "X% of riders own this badge" figure; no client may write it, or
-    // a rider could make any badge look Legendary. Holds counts only, no
-    // per-rider data.
+    // ---- Badge ownership counters (`stats/badges`) -------------------------
+    //
+    // The project is on the Spark plan, so no Cloud Function keeps this
+    // aggregate. Clients bump it themselves (BadgeStatsCounter,
+    // app/lib/features/stats/data/badge_stats_counter.dart), and every bump
+    // must pay for itself with a one-way marker written in the SAME batch:
+    //
+    //   totalRiders +1  <=> users/{me}.badgeStatsCountedAt: absent -> set
+    //   owners.<id> +1  <=> users/{me}/earnedBadges/<id>.countedAt:
+    //                       absent -> set (a new doc, or an older doc
+    //                       that was never counted)
+    //
+    // Both markers must equal request.time and can't change or be removed
+    // afterwards, and the owner can't delete a marked doc, so each rider
+    // counts once and each (rider, badge) pair counts once. Sign-up, a fresh
+    // award and the one-time backfill of older riders and badges all go
+    // through these two transitions.
+    //
+    // A badge bump names its badge in `lastCountedBadge`. Rules can't pull
+    // the one changed key out of a map diff, so the write carries the id
+    // (same pattern as `lastCommentId` above) and the rule checks it is the
+    // only owners key that moved.
+
+    // The milestone catalog: `badgeDefs` in app/lib/core/utils/badges.dart.
+    // app/test/features/stats/badge_catalog_parity_test.dart keeps them in
+    // lockstep.
+    function milestoneBadgeIds() {
+      return [
+        'first_ride', 'rides_10', 'rides_25', 'rides_50', 'rides_100', 'rides_250',
+        'km_100', 'km_500', 'km_1000', 'km_2500', 'km_5000',
+        'long_ride_50', 'long_ride_100', 'long_ride_200', 'long_ride_400', 'long_ride_800',
+        'saddle_1h', 'saddle_2h', 'saddle_4h', 'saddle_8h',
+        'ton_up', 'speed_140', 'speed_demon',
+        'night_1', 'night_5', 'night_25', 'night_50',
+        'early_1', 'early_5', 'early_25',
+        'streak_3', 'streak_7', 'streak_14', 'streak_30',
+        'smooth_80', 'smooth_operator', 'smooth_95', 'smooth_98'
+      ];
+    }
+
+    function badgeStatsPath() {
+      return /databases/$(database)/documents/stats/badges;
+    }
+
+    // A numeric field of stats/badges as of the start of this commit (0 when
+    // the doc or field doesn't exist yet). [key] may be a path list.
+    function badgeStatsBefore(key) {
+      return exists(badgeStatsPath()) ? get(badgeStatsPath()).data.get(key, 0) : 0;
+    }
+
+    // users/{uid}.badgeStatsCountedAt: unchanged, or set now (from absent)
+    // together with totalRiders +1.
+    function badgeStatsFlagValid(before, after) {
+      return keeps(before, after, 'badgeStatsCountedAt') ||
+        (before.get('badgeStatsCountedAt', null) == null &&
+         after.get('badgeStatsCountedAt', null) == request.time &&
+         existsAfter(badgeStatsPath()) &&
+         getAfter(badgeStatsPath()).data.get('totalRiders', 0) ==
+           badgeStatsBefore('totalRiders') + 1);
+    }
+
+    // earnedBadges/{badgeId}.countedAt: unchanged, or set now (from absent)
+    // together with owners.<badgeId> +1.
+    function earnedBadgeCountValid(badgeId, before, after) {
+      return keeps(before, after, 'countedAt') ||
+        (before.get('countedAt', null) == null &&
+         after.get('countedAt', null) == request.time &&
+         existsAfter(badgeStatsPath()) &&
+         getAfter(badgeStatsPath()).data.get(['owners', badgeId], 0) ==
+           badgeStatsBefore(['owners', badgeId]) + 1);
+    }
+
+    // Whether the marker field on [docPath] goes absent -> request.time in
+    // this commit. exists()/get() see the state at the START of the commit,
+    // existsAfter()/getAfter() the state once the whole batch lands.
+    function markedNow(docPath, field) {
+      return (!exists(docPath) || get(docPath).data.get(field, null) == null) &&
+        existsAfter(docPath) &&
+        getAfter(docPath).data.get(field, null) == request.time;
+    }
+
+    // totalRiders +1, paid for by this rider's flag going absent -> set.
+    function riderCountedNow(before, after, changed) {
+      return changed.hasOnly(['totalRiders', 'updatedAt']) &&
+        after.totalRiders == before.get('totalRiders', 0) + 1 &&
+        markedNow(/databases/$(database)/documents/users/$(request.auth.uid),
+                  'badgeStatsCountedAt');
+    }
+
+    // owners.<id> +1 for one catalog id, paid for by this rider's
+    // earnedBadges/<id> going uncounted -> counted.
+    function badgeCountedNow(before, after, changed) {
+      let id = after.get('lastCountedBadge', '');
+      let beforeOwners = before.get('owners', {});
+      return changed.hasOnly(['owners', 'lastCountedBadge', 'updatedAt']) &&
+        id in milestoneBadgeIds() &&
+        after.owners.diff(beforeOwners).affectedKeys().hasOnly([id]) &&
+        after.owners[id] == beforeOwners.get(id, 0) + 1 &&
+        markedNow(
+          /databases/$(database)/documents/users/$(request.auth.uid)/earnedBadges/$(id),
+          'countedAt');
+    }
+
+    function badgeStatsWriteValid(before, after) {
+      let changed = after.diff(before).affectedKeys();
+      return after.keys().hasOnly(
+          ['totalRiders', 'owners', 'lastCountedBadge', 'updatedAt', 'recomputedAt']) &&
+        after.updatedAt == request.time &&
+        (riderCountedNow(before, after, changed) ||
+         badgeCountedNow(before, after, changed));
+    }
+
+    // Any signed-in rider may read it for the "X% of riders own this badge"
+    // figure; it holds counts only, no per-rider data. A write is exactly one
+    // of the two +1 transitions above. Never deleted by a client.
     match /stats/{docId} {
       allow read: if request.auth != null && docId == 'badges';
-      allow write: if false;
+      allow create, update: if request.auth != null && docId == 'badges' &&
+        badgeStatsWriteValid(resource == null ? {} : resource.data,
+                             request.resource.data);
+      allow delete: if false;
     }
 
     // Deny all other access

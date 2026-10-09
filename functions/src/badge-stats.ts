@@ -1,4 +1,14 @@
 /**
+ * BLAZE-PLAN ALTERNATIVE, NOT DEPLOYED. index.ts does not export this
+ * module. On the Spark plan the app maintains `stats/badges` itself
+ * (app/lib/features/stats/data/badge_stats_counter.dart), and
+ * firestore.rules only accepts paired +1 writes for it. To switch to this
+ * module after moving to Blaze: export it from index.ts, stop the client
+ * counters (or the triggers below will count every badge a second time),
+ * and run recomputeBadgeStatsDaily once by hand. Note the recount writes
+ * no `lastCountedBadge`/markers, and the app no longer gates on
+ * `recomputedAt`; it hides the figure below a minimum rider count instead.
+ *
  * Aggregate badge ownership for the app's "X% of riders own this badge"
  * figure and the rarity tier derived from it.
  *

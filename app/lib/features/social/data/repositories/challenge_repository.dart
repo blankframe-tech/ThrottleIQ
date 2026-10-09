@@ -4,8 +4,7 @@ import '../../domain/entities/challenge_entity.dart';
 import '../models/challenge_model.dart';
 
 class ChallengeRepository {
-  static final ChallengeRepository _instance =
-      ChallengeRepository._internal();
+  static final ChallengeRepository _instance = ChallengeRepository._internal();
 
   factory ChallengeRepository() => _instance;
 
@@ -24,17 +23,16 @@ class ChallengeRepository {
         .get();
 
     return querySnapshot.docs
-        .map((doc) =>
-            ChallengeModel.fromFirestore(doc.data(), doc.id).toEntity())
+        .map(
+          (doc) => ChallengeModel.fromFirestore(doc.data(), doc.id).toEntity(),
+        )
         .toList();
   }
 
   /// Gets a specific challenge by ID.
   Future<ChallengeEntity?> getChallenge(String challengeId) async {
-    final doc = await _firestore
-        .collection('challenges')
-        .doc(challengeId)
-        .get();
+    final doc =
+        await _firestore.collection('challenges').doc(challengeId).get();
 
     if (!doc.exists) return null;
 
@@ -52,8 +50,9 @@ class ChallengeRepository {
         .get();
 
     return querySnapshot.docs
-        .map((doc) =>
-            UserChallengeProgressModel.fromFirestore(doc.data(), doc.id))
+        .map(
+          (doc) => UserChallengeProgressModel.fromFirestore(doc.data(), doc.id),
+        )
         .toList();
   }
 
@@ -116,11 +115,13 @@ class ChallengeRepository {
         .doc(userId)
         .collection('earnedBadges')
         .doc(badgeId)
+        // Merge: a plain set would drop `countedAt` from a doc already
+        // counted in stats/badges, which firestore.rules rejects.
         .set({
       'badgeId': badgeId,
       'challengeId': challengeId,
       'earnedAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
 
     // Also update challenge progress
     await _firestore
@@ -128,31 +129,12 @@ class ChallengeRepository {
         .doc(userId)
         .collection('challengeProgress')
         .doc(challengeId)
-        .update({
-      'badgeEarned': true,
-    });
+        .update({'badgeEarned': true});
   }
 
-  /// Records a standalone milestone badge (e.g. "500 km", "Ton-up") — not
-  /// tied to a time-boxed challenge doc, so unlike [earnBadge] this doesn't
-  /// touch challengeProgress (there is no challenge backing these; the
-  /// Rider Stats screen recomputes earned/not-earned locally and calls this
-  /// as a fire-and-forget sync). Lays the groundwork for a future
-  /// partner-discount lookup keyed off this same earnedBadges collection.
-  Future<void> earnMilestoneBadge({
-    required String userId,
-    required String badgeId,
-  }) async {
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('earnedBadges')
-        .doc(badgeId)
-        .set({
-      'badgeId': badgeId,
-      'earnedAt': FieldValue.serverTimestamp(),
-    });
-  }
+  // Standalone milestone badges ("500 km", "Ton-up") are written by
+  // BadgeStatsCounter.recordEarnedBadge (features/stats/data), which counts
+  // them into stats/badges in the same batch.
 
   /// Gets all earned badges for a user.
   Future<List<Map<String, dynamic>>> getEarnedBadges(String userId) async {
@@ -200,8 +182,11 @@ class ChallengeRepository {
   Future<void> seedMonthlyChallenges() async {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 1)
-        .subtract(const Duration(days: 1));
+    final endOfMonth = DateTime(
+      now.year,
+      now.month + 1,
+      1,
+    ).subtract(const Duration(days: 1));
 
     // Check if challenges for this month already exist
     final existing = await _firestore

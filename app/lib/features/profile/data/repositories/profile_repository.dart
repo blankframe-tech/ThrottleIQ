@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../../core/utils/photo_url_policy.dart';
 import '../../../garage/data/models/bike_model.dart';
+import '../../../stats/data/badge_stats_counter.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
@@ -40,7 +41,10 @@ class ProfileRepository {
 
   Stream<UserProfileEntity?> watchProfile(String uid) {
     return _users.doc(uid).snapshots().map(
-        (doc) => doc.exists ? UserProfileModel.fromFirestore(doc.data()!, uid) : null);
+          (doc) => doc.exists
+              ? UserProfileModel.fromFirestore(doc.data()!, uid)
+              : null,
+        );
   }
 
   /// Idempotently seeds the profile doc from the FirebaseAuth user. Safe to
@@ -57,12 +61,19 @@ class ProfileRepository {
   /// `user.email` is that same value. `photoUrl` is only seeded when it is on
   /// an allow-listed host (§90.D10), so an unexpected avatar host can't fail
   /// the whole profile write.
+  ///
+  /// First creation also adds the rider to `stats/badges.totalRiders`, in
+  /// the same batch as the profile write (BadgeStatsCounter). Only when the
+  /// server confirmed the doc is missing: a cache miss offline could be a
+  /// profile that already exists. If that batch is rejected (rules not
+  /// deployed yet), the profile is written alone and the app-start
+  /// self-count registers the rider later.
   Future<void> ensureProfile(User user) async {
     final ref = _users.doc(user.uid);
     final snap = await ref.get();
     final existing = snap.data() ?? const {};
     final authPhoto = user.photoURL;
-    await ref.set({
+    final fields = <String, Object?>{
       'displayName': user.displayName ?? existing['displayName'] ?? '',
       if (authPhoto != null &&
           existing['photoUrl'] == null &&
@@ -79,7 +90,18 @@ class ProfileRepository {
         'createdAt': FieldValue.serverTimestamp(),
       },
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    if (!snap.exists && !snap.metadata.isFromCache) {
+      try {
+        await BadgeStatsCounter(firestore: _firestore).commit(
+          BadgeStatsBatches.riderRegistration(user.uid, profileFields: fields),
+        );
+        return;
+      } on FirebaseException catch (e) {
+        if (e.code != 'permission-denied') rethrow;
+      }
+    }
+    await ref.set(fields, SetOptions(merge: true));
   }
 
   /// Updates the caller's own profile fields (never the counters).
@@ -103,7 +125,10 @@ class ProfileRepository {
 
   /// Claims a unique @username for [uid]. Throws [UsernameTakenException] if
   /// another rider already holds it. Releases the rider's previous handle.
-  Future<void> setUsername({required String uid, required String username}) async {
+  Future<void> setUsername({
+    required String uid,
+    required String username,
+  }) async {
     final handle = username.trim().toLowerCase();
     if (!RegExp(r'^[a-z0-9_]{3,20}$').hasMatch(handle)) {
       throw const InvalidUsernameException();
@@ -121,14 +146,13 @@ class ProfileRepository {
 
       txn.set(newRef, {'uid': uid});
       txn.set(
-        userRef,
-        {
-          'username': username.trim(),
-          'usernameLower': handle,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+          userRef,
+          {
+            'username': username.trim(),
+            'usernameLower': handle,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
       if (prev != null && prev != handle) {
         txn.delete(_usernames.doc(prev));
       }
@@ -159,7 +183,9 @@ class ProfileRepository {
   Future<String?> claimUsernameWithFallback(String uid, String base) async {
     final rnd = Random();
     for (var attempt = 0; attempt < 8; attempt++) {
-      final candidate = attempt == 0 ? base : '${base.substring(0, base.length.clamp(0, 16))}${rnd.nextInt(9000) + 100}';
+      final candidate = attempt == 0
+          ? base
+          : '${base.substring(0, base.length.clamp(0, 16))}${rnd.nextInt(9000) + 100}';
       try {
         await setUsername(uid: uid, username: candidate);
         return candidate;
@@ -199,7 +225,10 @@ class ProfileRepository {
   /// 'public' (default — any signed-in rider), 'mutual' (only riders who
   /// follow each other), or 'private' (owner only). Enforced by
   /// firestore.rules, not just the client UI.
-  Future<void> setVisibility({required String uid, required String visibility}) async {
+  Future<void> setVisibility({
+    required String uid,
+    required String visibility,
+  }) async {
     assert(['public', 'mutual', 'private'].contains(visibility));
     await _users.doc(uid).set({
       'visibility': visibility,
@@ -268,8 +297,10 @@ class ProfileRepository {
   }
 
   /// Prefix search on @username (case-insensitive). Empty query → [].
-  Future<List<UserProfileEntity>> searchByUsername(String query,
-      {int limit = 20}) async {
+  Future<List<UserProfileEntity>> searchByUsername(
+    String query, {
+    int limit = 20,
+  }) async {
     final q = query.trim().toLowerCase().replaceAll('@', '');
     if (q.isEmpty) return [];
     // `visibility == 'public'` is required by firestore.rules for any list
@@ -311,8 +342,10 @@ class ProfileRepository {
   }
 
   /// Exact-match search by email.
-  Future<List<UserProfileEntity>> searchByEmail(String email,
-      {int limit = 10}) async {
+  Future<List<UserProfileEntity>> searchByEmail(
+    String email, {
+    int limit = 10,
+  }) async {
     final e = email.trim().toLowerCase();
     if (e.isEmpty) return [];
     final snap = await _users

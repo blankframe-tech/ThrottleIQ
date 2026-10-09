@@ -34,8 +34,9 @@ Future<void> showBadgeDetailSheet(
     backgroundColor: context.palette.surface,
     isScrollControlled: true,
     shape: RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(context.shape.radiusXl),
+      ),
     ),
     builder: (_) => BadgeDetailSheet(progress: progress, badge: badge),
   );
@@ -86,8 +87,11 @@ class BadgeDetailSheet extends ConsumerWidget {
   final BadgeFamilyProgress progress;
   final EarnedBadge badge;
 
-  const BadgeDetailSheet(
-      {super.key, required this.progress, required this.badge});
+  const BadgeDetailSheet({
+    super.key,
+    required this.progress,
+    required this.badge,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,8 +102,10 @@ class BadgeDetailSheet extends ConsumerWidget {
     final earned = badge.earned;
 
     final statsAsync = ref.watch(badgeOwnershipStatsProvider);
-    final percent =
-        statsAsync.valueOrNull?.percentFor(def.id, ownedByViewer: earned);
+    final percent = statsAsync.valueOrNull?.percentFor(
+      def.id,
+      ownedByViewer: earned,
+    );
     final rarity = percent == null ? null : rarityForPercent(percent);
     final earnedAt =
         earned ? ref.watch(badgeEarnedDatesProvider)[def.id] : null;
@@ -110,10 +116,11 @@ class BadgeDetailSheet extends ConsumerWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd,
-            AppDimensions.paddingMd,
-            AppDimensions.paddingMd,
-            AppDimensions.paddingLg),
+          AppDimensions.paddingMd,
+          AppDimensions.paddingMd,
+          AppDimensions.paddingMd,
+          AppDimensions.paddingLg,
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -145,9 +152,11 @@ class BadgeDetailSheet extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(name,
-                  textAlign: TextAlign.center,
-                  style: display(context, 24, letterSpacing: 0)),
+              Text(
+                name,
+                textAlign: TextAlign.center,
+                style: display(context, 24, letterSpacing: 0),
+              ),
               const SizedBox(height: 10),
               _StatusLine(earned: earned, earnedAt: earnedAt),
               const SizedBox(height: 20),
@@ -165,7 +174,10 @@ class BadgeDetailSheet extends ConsumerWidget {
                 child: Text(
                   family.localizedRequirementFor(l, def.threshold),
                   style: TextStyle(
-                      fontSize: 14, height: 1.4, color: p.textPrimary),
+                    fontSize: 14,
+                    height: 1.4,
+                    color: p.textPrimary,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -184,7 +196,8 @@ class BadgeDetailSheet extends ConsumerWidget {
                           ? l.badgeShareTextRarity(
                               name,
                               rarity.localizedLabel(l),
-                              formatOwnershipPercent(percent))
+                              formatOwnershipPercent(percent),
+                            )
                           : l.badgeShareText(name),
                     ),
                     icon: const Icon(Icons.ios_share, size: 18),
@@ -216,7 +229,8 @@ class _StatusLine extends StatelessWidget {
         : earnedAt == null
             ? l.badgeEarnedStatus
             : l.badgeEarnedOn(
-                DateFormat('d MMM y', kNumericLocale).format(earnedAt!));
+                DateFormat('d MMM y', kNumericLocale).format(earnedAt!),
+              );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -227,12 +241,20 @@ class _StatusLine extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(earned ? Icons.verified_outlined : Icons.lock_outline,
-              size: 14, color: color),
+          Icon(
+            earned ? Icons.verified_outlined : Icons.lock_outline,
+            size: 14,
+            color: color,
+          ),
           const SizedBox(width: 6),
-          Text(text,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -244,8 +266,11 @@ class _ProgressBlock extends StatelessWidget {
   final num threshold;
   final String unit;
 
-  const _ProgressBlock(
-      {required this.value, required this.threshold, required this.unit});
+  const _ProgressBlock({
+    required this.value,
+    required this.threshold,
+    required this.unit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -264,16 +289,22 @@ class _ProgressBlock extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  l.badgeProgressFraction(formatBadgeValue(value),
-                      formatBadgeValue(threshold), unit),
+                  l.badgeProgressFraction(
+                    formatBadgeValue(value),
+                    formatBadgeValue(threshold),
+                    unit,
+                  ),
                   style: display(context, 16, letterSpacing: 0),
                 ),
               ),
-              Text('${(fraction * 100).floor()}%',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: p.primary)),
+              Text(
+                '${(fraction * 100).floor()}%',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: p.primary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -312,11 +343,14 @@ class _Section extends StatelessWidget {
             child,
             if (footer != null) ...[
               const SizedBox(height: 6),
-              Text(footer!,
-                  style: TextStyle(
-                      fontSize: 12,
-                      height: 1.35,
-                      color: context.palette.textSecondary)),
+              Text(
+                footer!,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.35,
+                  color: context.palette.textSecondary,
+                ),
+              ),
             ],
           ],
         ),
@@ -330,8 +364,11 @@ class _RarityBlock extends StatelessWidget {
   final double? percent;
   final BadgeRarity? rarity;
 
-  const _RarityBlock(
-      {required this.loading, required this.percent, required this.rarity});
+  const _RarityBlock({
+    required this.loading,
+    required this.percent,
+    required this.rarity,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -353,13 +390,16 @@ class _RarityBlock extends StatelessWidget {
                 Expanded(child: EditorialLabel(l.badgeRarityLabel)),
                 if (known)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.14),
                       border: Border.all(color: accent),
-                      borderRadius:
-                          BorderRadius.circular(context.shape.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        context.shape.radiusFull,
+                      ),
                     ),
                     child: Text(
                       rarity!.localizedLabel(l).toUpperCase(),
@@ -383,7 +423,9 @@ class _RarityBlock extends StatelessWidget {
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: p.textTertiary),
+                      strokeWidth: 2,
+                      color: p.textTertiary,
+                    ),
                   ),
                 ),
               )
@@ -394,11 +436,14 @@ class _RarityBlock extends StatelessWidget {
               )
             else ...[
               // Never a made-up number: offline with nothing cached, or the
-              // aggregate doesn't exist yet.
+              // aggregate doesn't exist yet, or fewer than
+              // minRidersForRarity riders are counted.
               Text('—', style: display(context, 16, letterSpacing: 0)),
               const SizedBox(height: 4),
-              Text(l.badgeOwnershipUnknown,
-                  style: TextStyle(fontSize: 12, color: p.textTertiary)),
+              Text(
+                l.badgeOwnershipUnknown,
+                style: TextStyle(fontSize: 12, color: p.textTertiary),
+              ),
             ],
           ],
         ),
@@ -506,8 +551,9 @@ class _BadgeArtState extends State<BadgeArt> with TickerProviderStateMixin {
         animation: Listenable.merge([_celebrate, _spin]),
         builder: (context, _) {
           final t = _celebrate.value;
-          final pop =
-              Curves.elasticOut.transform(const Interval(0, 0.75).transform(t));
+          final pop = Curves.elasticOut.transform(
+            const Interval(0, 0.75).transform(t),
+          );
           final scale = earned ? 0.6 + 0.4 * pop : 1.0;
           // Glow flares on arrival, then settles to a steady halo.
           final flare = earned ? math.sin(math.pi * t.clamp(0.0, 1.0)) : 0.0;
@@ -520,12 +566,7 @@ class _BadgeArtState extends State<BadgeArt> with TickerProviderStateMixin {
                   size: Size(size * 1.5, size * 1.25),
                   painter: _SparkBurstPainter(
                     progress: const Interval(0.05, 0.9).transform(t),
-                    colors: [
-                      glow!,
-                      p.primary,
-                      p.secondary,
-                      p.attention,
-                    ],
+                    colors: [glow!, p.primary, p.secondary, p.attention],
                   ),
                 ),
               Transform.scale(
@@ -539,8 +580,9 @@ class _BadgeArtState extends State<BadgeArt> with TickerProviderStateMixin {
                         ? null
                         : [
                             BoxShadow(
-                              color:
-                                  glow.withValues(alpha: 0.28 + 0.27 * flare),
+                              color: glow.withValues(
+                                alpha: 0.28 + 0.27 * flare,
+                              ),
                               blurRadius: 18 + 22 * flare,
                               spreadRadius: 1 + 4 * flare,
                             ),
@@ -563,7 +605,8 @@ class _BadgeArtState extends State<BadgeArt> with TickerProviderStateMixin {
                             color: earned
                                 ? Color.alphaBlend(
                                     (glow ?? p.primary).withValues(alpha: 0.14),
-                                    p.surface)
+                                    p.surface,
+                                  )
                                 : p.surfaceVariant,
                           ),
                           child: Stack(
@@ -587,9 +630,11 @@ class _BadgeArtState extends State<BadgeArt> with TickerProviderStateMixin {
                                       color: p.surface,
                                       border: Border.all(color: p.border),
                                     ),
-                                    child: Icon(Icons.lock_outline,
-                                        size: size * 0.13,
-                                        color: p.textSecondary),
+                                    child: Icon(
+                                      Icons.lock_outline,
+                                      size: size * 0.13,
+                                      color: p.textSecondary,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -634,7 +679,10 @@ class _SparkBurstPainter extends CustomPainter {
       final pos = center + Offset(math.cos(angle) * r, math.sin(angle) * r);
       paint.color = colors[i % colors.length].withValues(alpha: fade);
       canvas.drawCircle(
-          pos, (i % 3 == 0 ? 3.2 : 2.2) * (1 - 0.4 * eased), paint);
+        pos,
+        (i % 3 == 0 ? 3.2 : 2.2) * (1 - 0.4 * eased),
+        paint,
+      );
     }
   }
 

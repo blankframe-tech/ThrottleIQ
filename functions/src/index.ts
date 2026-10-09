@@ -18,4 +18,9 @@ export * from './crash-notifications';
 export * from './ride-identity';
 export * from './chat-moderation';
 export * from './account-deletion';
-export * from './badge-stats';
+// './badge-stats' is deliberately NOT exported. The project is on the Spark
+// plan, where Cloud Functions can't be deployed, so the app keeps
+// `stats/badges` itself (app/lib/features/stats/data/badge_stats_counter.dart,
+// guarded by firestore.rules). badge-stats.ts is the Blaze-plan alternative;
+// see its header before re-exporting it, since running both would double
+// count.
