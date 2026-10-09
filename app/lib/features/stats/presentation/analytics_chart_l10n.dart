@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/i18n/numeric_locale.dart';
 import '../../../core/theme/app_theme_context.dart';
+import '../../../core/utils/num_cast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/ride_analytics.dart';
 
@@ -250,16 +251,16 @@ ChartTable buildChartTable(
           for (final r in rows.reversed)
             [
               longDate(r[0] as DateTime),
-              formatWithUnit(r[1] as double, '%'),
-              r[2] == null ? '—' : formatAnalyticsNumber(r[2] as double),
+              formatWithUnit(asDouble(r[1]), '%'),
+              r[2] == null ? '—' : formatAnalyticsNumber(asDouble(r[2])),
             ],
         ],
         csvRows: [
           for (final r in rows)
             [
               _isoDateTime(r[0] as DateTime),
-              _csvNum(r[1] as double),
-              r[2] == null ? '' : _csvNum(r[2] as double),
+              _csvNum(asDouble(r[1])),
+              r[2] == null ? '' : _csvNum(asDouble(r[2])),
             ],
         ],
       );
