@@ -40,17 +40,10 @@ the two files it meant.
 
 ## Start here if you are picking up the active work
 
-[`BIGGG_JOBB.md`](old/BIGGG_JOBB.md) — the 2026-09-21 handoff: current state, the
-four verification gates, the founder's settled decisions, the ordered work
-queue, and a **traps** section of failures actually hit (do not run
-`dart format` across `lib/`; section numbers collide; `--force` would drop
-live indexes). Read it before `HANDOFF_Document.md` if you are here to write
-code rather than to check status.
-
-[`DEBT_FIX_PLAN.md`](old/DEBT_FIX_PLAN.md) — the ordered plan for the known debt (silent
-catches, injectable I/O, screen tests, accessibility, onboarding mockups, blocking,
-Cloudinary), and [`needs_attention.md`](needs_attention.md) — what only the founder
-can close (release, accounts, devices, decisions).
+Read [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md) (newest entry on top), then
+[`needs_attention.md`](needs_attention.md) for what only the founder can close
+(release, accounts, devices, decisions). The old 2026-09-21 handoff
+(`BIGGG_JOBB.md`) and debt plan (`DEBT_FIX_PLAN.md`) are superseded and now live in [`old/`](old).
 
 ## Living docs, kept up to date every session
 
@@ -61,15 +54,20 @@ can close (release, accounts, devices, decisions).
 | [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) | The dated, numbered record of every resolved issue (§1–§88): root causes, fixes, verification. Other docs cite it by section (`§N`), so the numbers are stable. The latest full-repo reviews are §69 and §83. |
 | [`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) | What a signed-in user can actually do today, organized by the bottom-nav tabs. Update it whenever screens or flows change. |
 
-## Working notes (dated snapshots, not kept current)
+## Working notes
 
 | File | What it's for |
 |---|---|
-| [`uiux_critique.md`](old/uiux_critique.md) | A screenshot-grounded UI/UX critique, ready to turn into an `issues_open.md` punch list. |
-| [`todo_now_antigravity.md`](Handoff%20for%20agents%20and%20Todos/todo_now_antigravity.md) | Trust & Safety / messaging task checklist from another agent's session. |
-| [`issues_solved.md`](old/issues_solved.md) | Per-claim resolutions of the Antigravity grill findings. Its code links are absolute `file:///` paths from the repo's old location and no longer open. |
-| `old/ANTIGRAVRITY_GRILL/` | The 2026-09-20 external critique (`codebase.md`, `other_gaps.md`, `UI_UX.md`, `bussness.md`) and its verification, `claude_sol.md`. Many of the critique's file paths are stale; `claude_sol.md` gives the corrected ones. |
+| [`todo_now_antigravity.md`](Handoff%20for%20agents%20and%20Todos/todo_now_antigravity.md) | Trust & Safety / messaging task checklist from another agent's session (all done). |
 | `bugs/` | Local bug-report screenshots. Gitignored on purpose. |
+
+## Stale, kept for history: [`old/`](old)
+
+Moved out of the live tree on 2026-10-13; see [`old/README.md`](old/README.md). It holds the Antigravity
+grill (`ANTIGRAVRITY_GRILL/`, `issues_solved.md`), `uiux_critique.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`,
+`archives/` (the abandoned `flutter_background_geolocation` experiment, early logo concepts),
+`scripts-archive/` (one-off patch scripts) and the Windows `setup-android.*` helpers. Older entries in
+`issues_fixed.md` and `issues_open.md` still cite these by their former paths.
 
 ## For devs and contributors
 
@@ -80,7 +78,6 @@ can close (release, accounts, devices, decisions).
 | [`architecture/assumptions.md`](For%20Devs%20and%20Contributors/architecture/assumptions.md) | Every non-obvious judgement call made without asking, and why. |
 | [`architecture/auto_tracking_plan.md`](For%20Devs%20and%20Contributors/architecture/auto_tracking_plan.md) | Background auto-tracking design decisions and implementation status. |
 | [`architecture/backend_options.md`](For%20Devs%20and%20Contributors/architecture/backend_options.md) | Blaze billing vs. a surgical workaround vs. leaving Firebase, with a cost estimate. |
-| [`archives/`](old/archives) | Abandoned approaches kept for reference (the `flutter_background_geolocation` experiment, early logo concepts). |
 
 Package-level READMEs live next to the code: `app/README.md`,
 `app/lib/**/README.md`, `app/test/**/README.md`, `functions/README.md`,
