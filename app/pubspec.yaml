@@ -49,7 +49,7 @@ dependencies:
   path: ^1.9.0
 
   # Networking
-  dio: ^5.4.3
+  dio: ^5.11.1
   connectivity_plus: ^6.0.3
 
   # tel: and geo: links (e.g. Directions and Call on a place's detail
