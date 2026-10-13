@@ -3,24 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/numeric_locale.dart';
-import '../../../../core/utils/badges.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/presentation/providers/follow_providers.dart';
-import '../../../social/presentation/providers/notification_providers.dart';
+import '../../../social/presentation/widgets/follow_button.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/profile_load_error_view.dart';
 import '../../../chat/presentation/providers/chat_providers.dart';
 
-/// A rider's profile: avatar, bio, follow button, total km/rides, earned
-/// badges and (permission allowing) their garage. Reached by tapping a
+/// A rider's profile: avatar, bio, follow button, total km/rides and
+/// (permission allowing) their garage. Badges are not listed here — they live
+/// on the Rides (stats) tab's Badges view. Reached by tapping a
 /// rider's name/avatar in "Find riders" search results or on a forum post —
 /// and, with [uid] omitted, it's the signed-in rider's OWN profile view,
 /// reached from the garage header menu ('/profile').
@@ -38,6 +41,7 @@ import '../../../chat/presentation/providers/chat_providers.dart';
 /// rather than a raw error. The garage section is gated separately by
 /// [canSeeBikes] / [UserProfileEntity.bikesVisibility].
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   /// The rider to show. Null → the signed-in rider's own profile.
@@ -52,11 +56,11 @@ class UserProfileScreen extends ConsumerWidget {
 
     if (targetUid == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Profile')),
+        backgroundColor: context.palette.background,
+        appBar: AppBar(title: Text(context.l10n.navProfileLabel)),
         body: Center(
-          child: Text('Sign in to view your profile',
-              style: TextStyle(color: AppColors.textSecondary)),
+          child: Text(context.l10n.signViewProfile,
+              style: TextStyle(color: context.palette.textSecondary)),
         ),
       );
     }
@@ -64,26 +68,46 @@ class UserProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileProvider(targetUid));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(context.l10n.navProfileLabel),
         actions: [
           if (isMe)
             TextButton.icon(
               onPressed: () => context.push('/profile/edit'),
-              icon: Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
-              label: Text('Edit', style: TextStyle(color: AppColors.primary)),
+              icon: Icon(Icons.edit_outlined,
+                  size: 18, color: context.palette.primary),
+              label: Text(context.l10n.edit,
+                  style: TextStyle(color: context.palette.primary)),
             )
           else
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppColors.textPrimary),
+              icon: Icon(Icons.more_vert, color: context.palette.textPrimary),
               onSelected: (value) async {
                 if (value == 'block' && myUid != null) {
-                  await ref.read(profileRepositoryProvider).blockUser(myUid, targetUid);
+                  // blockUser also drops the follow edges both ways, so a
+                  // blocked rider stops seeing followers/mutual posts
+                  // (issues §90.A11). It used to be unguarded: a failed
+                  // write threw out of this callback with no feedback.
+                  try {
+                    await ref
+                        .read(profileRepositoryProvider)
+                        .blockUser(myUid, targetUid);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(context.l10n.couldntBlockRider(
+                              mapFirestoreError(e, context.l10n))),
+                        ),
+                      );
+                    }
+                    return;
+                  }
                   ref.invalidate(blockedUsersProvider);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('User blocked')),
+                      SnackBar(content: Text(context.l10n.userBlocked)),
                     );
                     context.pop();
                   }
@@ -97,42 +121,33 @@ class UserProfileScreen extends ConsumerWidget {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'report',
-                  child: Text('Report User'),
+                  child: Text(context.l10n.reportUser),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'block',
-                  child: Text('Block User'),
+                  child: Text(context.l10n.blockUser),
                 ),
               ],
             ),
         ],
       ),
       body: profileAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lock_outline, size: 48, color: AppColors.textTertiary),
-                SizedBox(height: 12),
-                Text('This profile is private',
-                    style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
-              ],
-            ),
-          ),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ProfileLoadErrorView(
+          failure: classifyProfileError(e),
+          onRetry: () => ref.invalidate(profileProvider(targetUid)),
         ),
         data: (profile) {
           if (profile == null) {
             return Center(
               child: Text(
                   isMe
-                      ? 'Tap Edit to finish setting up your profile'
-                      : 'Rider not found',
-                  style: TextStyle(color: AppColors.textSecondary)),
+                      ? context.l10n.tapEditFinishSetting
+                      : context.l10n.riderNotFound,
+                  style: TextStyle(color: context.palette.textSecondary)),
             );
           }
           return _ProfileBody(profile: profile, isMe: isMe, myUid: myUid);
@@ -146,14 +161,15 @@ class _ProfileBody extends ConsumerWidget {
   final UserProfileEntity profile;
   final bool isMe;
   final String? myUid;
-  const _ProfileBody({required this.profile, required this.isMe, required this.myUid});
+  const _ProfileBody(
+      {required this.profile, required this.isMe, required this.myUid});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final followerCount = ref.watch(followerCountProvider(profile.uid));
     final followingCount = ref.watch(followingCountProvider(profile.uid));
-    final isFollowingAsync = isMe ? null : ref.watch(isFollowingProvider(profile.uid));
-    final earnedBadges = badgeDefs.where((b) => profile.badgeIds.contains(b.id)).toList();
+    final isFollowingAsync =
+        isMe ? null : ref.watch(isFollowingProvider(profile.uid));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -163,30 +179,42 @@ class _ProfileBody extends ConsumerWidget {
           Center(
             child: Column(
               children: [
-                UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 44),
+                UserAvatar(
+                    photoUrl: profile.photoUrl,
+                    name: profile.bestName,
+                    radius: 44),
                 const SizedBox(height: 12),
                 Text(profile.bestName,
                     style: TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.textPrimary)),
                 if (profile.username != null)
                   Text('@${profile.username}',
-                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 14, color: context.palette.textSecondary)),
                 // bestName above already prefers the nickname, so only show
                 // the real name separately when it isn't what's on top.
                 if (profile.displayName.trim().isNotEmpty &&
                     profile.displayName.trim() != profile.bestName)
                   Text(profile.displayName.trim(),
-                      style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.palette.textTertiary)),
                 if (profile.bio != null && profile.bio!.trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(profile.bio!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.palette.textSecondary)),
                 ],
                 if (profile.createdAt != null) ...[
                   const SizedBox(height: 8),
-                  Text('Riding with us since ${DateFormat.yMMMM(kNumericLocale).format(profile.createdAt!)}',
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                  Text(
+                      context.l10n.ridingWithUsSince(
+                          DateFormat.yMMMM(kNumericLocale)
+                              .format(profile.createdAt!)),
+                      style: TextStyle(
+                          fontSize: 12, color: context.palette.textTertiary)),
                 ],
               ],
             ),
@@ -195,42 +223,44 @@ class _ProfileBody extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _CountStat(label: 'followers', value: followerCount),
+              _CountStat(
+                  label: context.l10n.followersLabel, value: followerCount),
               const SizedBox(width: 28),
-              _CountStat(label: 'following', value: followingCount),
+              _CountStat(
+                  label: context.l10n.followingLabel, value: followingCount),
             ],
           ),
+          if (isMe) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/profile/qr'),
+                    icon: const Icon(Icons.qr_code_2, size: 18),
+                    label: Text(context.l10n.myQrTitle),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/profile/scan'),
+                    icon: const Icon(Icons.qr_code_scanner, size: 18),
+                    label: Text(context.l10n.scanQrAction),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (!isMe && myUid != null && isFollowingAsync != null) ...[
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: isFollowingAsync.when(
-                    loading: () => const SizedBox(height: 40),
-                    error: (_, __) => const SizedBox.shrink(),
-                    data: (isFollowing) => ElevatedButton(
-                      onPressed: () {
-                        final repo = ref.read(followRepositoryProvider);
-                        if (isFollowing) {
-                          repo.unfollow(myUid!, profile.uid);
-                        } else {
-                          repo.follow(myUid!, profile.uid);
-                          final me = ref.read(myProfileProvider).valueOrNull;
-                          ref.read(notificationRepositoryProvider).notifyFollow(
-                                toUid: profile.uid,
-                                fromUid: myUid!,
-                                fromName: me?.bestName ?? 'A rider',
-                                fromPhotoUrl: me?.photoUrl,
-                              );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isFollowing ? AppColors.surfaceVariant : AppColors.primary,
-                        foregroundColor: isFollowing ? AppColors.textPrimary : Colors.white,
-                      ),
-                      child: Text(isFollowing ? 'Following' : 'Follow'),
-                    ),
+                  child: FollowButton(
+                    targetUid: profile.uid,
+                    variant: FollowButtonVariant.prominent,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -238,21 +268,31 @@ class _ProfileBody extends ConsumerWidget {
                   child: OutlinedButton(
                     onPressed: () async {
                       try {
-                        final chatId = await ref.read(chatRepositoryProvider).getOrCreateChat(myUid!, profile.uid);
+                        final chatId = await ref
+                            .read(chatRepositoryProvider)
+                            .getOrCreateChat(myUid!, profile.uid);
                         if (context.mounted) {
                           context.push('/chats/$chatId', extra: profile);
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(mapFirestoreError(e, context.l10n)),
+                              action: SnackBarAction(
+                                label: context.l10n.report,
+                                onPressed: () => BugReportSheet.show(context),
+                              ),
+                            ),
+                          );
                         }
                       }
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary),
+                      foregroundColor: context.palette.primary,
+                      side: BorderSide(color: context.palette.primary),
                     ),
-                    child: const Text('Message'),
+                    child: Text(context.l10n.message),
                   ),
                 ),
               ],
@@ -263,37 +303,19 @@ class _ProfileBody extends ConsumerWidget {
             children: [
               Expanded(
                 child: _StatCard(
-                  value: SpeedFormatter.distanceKm(profile.totalDistanceKm * 1000),
-                  label: 'total distance',
+                  value:
+                      SpeedFormatter.distanceKm(profile.totalDistanceKm * 1000),
+                  label: context.l10n.totalDistanceLower,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _StatCard(value: '${profile.totalRides}', label: 'rides logged'),
+                child: _StatCard(
+                    value: '${profile.totalRides}',
+                    label: context.l10n.ridesLogged),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Text('Badges',
-              style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          const SizedBox(height: 12),
-          earnedBadges.isEmpty
-              ? Text('No badges earned yet',
-                  style: TextStyle(fontSize: 13, color: AppColors.textTertiary))
-              : Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final b in earnedBadges)
-                      Chip(
-                        avatar: Icon(Icons.military_tech, size: 16, color: AppColors.primary),
-                        label: Text(b.name),
-                        backgroundColor: AppColors.surface,
-                        side: BorderSide(color: AppColors.border),
-                      ),
-                  ],
-                ),
           // The garage. Hidden outright — no placeholder, nothing to probe —
           // when this viewer isn't allowed to see it. The same decision is
           // re-made server-side in firestore.rules; this is the cosmetic half.
@@ -338,32 +360,39 @@ class _GarageSection extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: Text(isMe ? 'My garage' : 'Garage',
+              child: Text(
+                  isMe ? context.l10n.myGarageLower : context.l10n.garage,
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
             ),
             if (isMe)
               Row(
                 children: [
-                  Icon(Icons.visibility_outlined, size: 14, color: AppColors.textTertiary),
+                  Icon(Icons.visibility_outlined,
+                      size: 14, color: context.palette.textTertiary),
                   const SizedBox(width: 4),
-                  Text(bikesVisibilityLabel(profile.bikesVisibility),
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                  Text(
+                      bikesVisibilityLabel(
+                          profile.bikesVisibility, context.l10n),
+                      style: TextStyle(
+                          fontSize: 12, color: context.palette.textTertiary)),
                 ],
               ),
           ],
         ),
         if (isMe) ...[
           const SizedBox(height: 2),
-          Text('Who can see my bikes — change this under Edit',
-              style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+          Text(context.l10n.whoCanSeeBikesChangeUnderEdit,
+              style:
+                  TextStyle(fontSize: 11, color: context.palette.textTertiary)),
         ],
         const SizedBox(height: 12),
         if (bikes.isEmpty)
-          Text('No bikes yet',
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary))
+          Text(context.l10n.noBikesYet,
+              style:
+                  TextStyle(fontSize: 13, color: context.palette.textTertiary))
         else
           for (final bike in bikes)
             Padding(
@@ -371,13 +400,14 @@ class _GarageSection extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(AppDimensions.paddingMd),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.two_wheeler, size: 20, color: AppColors.primary),
+                    Icon(Icons.two_wheeler,
+                        size: 20, color: context.palette.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -387,13 +417,15 @@ class _GarageSection extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           Text(
                             [
                               if (bike.cc != null) '${bike.cc}cc',
                               SpeedFormatter.distanceKm(bike.totalDistanceM),
                             ].join(' · '),
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: context.palette.textSecondary),
                           ),
                         ],
                       ),
@@ -418,8 +450,12 @@ class _CountStat extends ConsumerWidget {
       children: [
         Text(value.valueOrNull?.toString() ?? '—',
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textPrimary)),
+        Text(label,
+            style:
+                TextStyle(fontSize: 12, color: context.palette.textSecondary)),
       ],
     );
   }
@@ -435,17 +471,21 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         children: [
           Text(value,
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12, color: context.palette.textSecondary)),
         ],
       ),
     );

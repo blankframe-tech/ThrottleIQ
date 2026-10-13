@@ -2,26 +2,55 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
+import 'package:flutter/foundation.dart'
+    show VoidCallback, debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
+import '../database/daos/maintenance_dao.dart';
+import '../database/daos/fuel_log_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
+import '../../features/maintenance/presentation/providers/fuel_provider.dart';
+import '../../features/maintenance/presentation/providers/maintenance_provider.dart';
 import '../../features/ride/presentation/providers/ride_recording_provider.dart';
 import '../../features/stats/presentation/providers/rider_stats_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
+import 'maintenance_settings_sync.dart';
 import 'outbox_service.dart';
+import 'pull_watermark.dart';
 
 /// Represents the sync status of the app
 enum SyncStatus { idle, syncing, success, failure }
 
 /// Manages automatic sync of local data to Firestore
 class SyncManager {
-  SyncManager([this._ref, OutboxService? outbox])
-      : _outbox = outbox ?? OutboxService.instance {
+  // issues §62.13: `outbox` is always passed explicitly in
+  // production (see the `syncManagerProvider` below) — this default only
+  // matters for a bare `SyncManager()`/`SyncManager(ref: ref)` construction
+  // (ad-hoc tests). It used to fall back to a static `OutboxService.instance`
+  // singleton, a second, never-drained OutboxService with its own DAO and
+  // its own `_changes` StreamController that's never disposed — a latent
+  // trap for any future caller that hit this path. A fresh instance per
+  // construction is no worse for the (currently nonexistent) callers of the
+  // bare constructor and removes the trap entirely.
+  //
+  // [connectivity] and [auth] default to the live plugins; tests inject
+  // fakes (issues §101.C2) so the sync guard can be exercised without
+  // Firebase or a platform channel.
+  SyncManager({
+    Ref? ref,
+    OutboxService? outbox,
+    Connectivity? connectivity,
+    FirebaseAuth? auth,
+  })  : _ref = ref,
+        _outbox = outbox ?? OutboxService(),
+        _connectivity = connectivity ?? Connectivity(),
+        _auth = auth ?? FirebaseAuth.instance {
     _initConnectivityListener();
+    _initAuthListener();
   }
 
   /// Nullable: only needed to invalidate providers after a download pulls
@@ -29,10 +58,12 @@ class SyncManager {
   /// live UI refresh can omit it.
   final Ref? _ref;
 
-  final CloudRepository _cloudRepository = CloudRepository();
+  // Late so constructing a SyncManager doesn't touch FirebaseFirestore
+  // (CloudRepository grabs the instance eagerly).
+  late final CloudRepository _cloudRepository = CloudRepository();
   final OutboxService _outbox;
-  final Connectivity _connectivity = Connectivity();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Connectivity _connectivity;
+  final FirebaseAuth _auth;
 
   Timer? _autoSyncTimer;
   bool _autoSyncEnabled = false;
@@ -40,6 +71,17 @@ class SyncManager {
   bool _isSyncing = false;
   SyncStatus _status = SyncStatus.idle;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  StreamSubscription<User?>? _authSubscription;
+  String? _lastUid;
+
+  /// When the last sync pass started — the connectivity throttle's clock.
+  DateTime? _lastSyncStartedAt;
+  Timer? _connectivityTimer;
+
+  /// Minimum spacing between connectivity-triggered syncs (§90.C7). A
+  /// flapping connection (lift, tunnel, weak cell edge) used to fire a full
+  /// sync on every transition.
+  static const connectivityThrottle = Duration(seconds: 30);
 
   final List<VoidCallback> _listeners = [];
 
@@ -60,15 +102,114 @@ class SyncManager {
     }
   }
 
+  /// Any transport other than `none` can carry traffic. Checking only
+  /// mobile/wifi treated a rider on ethernet or a VPN-only result as offline
+  /// forever: no sync, and every cycle counted as a failure.
+  static bool _hasNetwork(List<ConnectivityResult> results) =>
+      results.any((r) => r != ConnectivityResult.none);
+
   /// Initialize connectivity listener
   void _initConnectivityListener() {
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
-      if (results.contains(ConnectivityResult.mobile) || results.contains(ConnectivityResult.wifi)) {
-        // Internet is back - reset failure counter and sync immediately
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((results) {
+      if (_hasNetwork(results)) {
+        // Internet is back - reset failure counter and sync, at most once
+        // per [connectivityThrottle]: immediately if the last pass was long
+        // enough ago, otherwise once the window has passed.
         _consecutiveFailures = 0;
-        _performSync();
+        final delay = connectivitySyncDelay(
+          lastSyncStartedAt: _lastSyncStartedAt,
+          now: DateTime.now(),
+        );
+        _connectivityTimer?.cancel();
+        if (delay == Duration.zero) {
+          _performSync();
+        } else {
+          _connectivityTimer = Timer(delay, _performSync);
+        }
       }
     });
+  }
+
+  /// How long a connectivity-triggered sync should wait (§90.C7): zero if
+  /// the last pass started at least [window] ago, otherwise the remainder.
+  @visibleForTesting
+  static Duration connectivitySyncDelay({
+    required DateTime? lastSyncStartedAt,
+    required DateTime now,
+    Duration window = connectivityThrottle,
+  }) {
+    if (lastSyncStartedAt == null) return Duration.zero;
+    final since = now.difference(lastSyncStartedAt);
+    if (since >= window || since.isNegative) return Duration.zero;
+    return window - since;
+  }
+
+  /// "Full pull once per sign-in" (§90.C7): signing out forgets that
+  /// rider's pull marks, so their next sign-in starts with a full pull.
+  void _initAuthListener() {
+    _authSubscription = _auth.authStateChanges().listen((user) {
+      final previous = _lastUid;
+      _lastUid = user?.uid;
+      if (previous != null && previous != user?.uid) {
+        unawaited(PullWatermark.clear(previous));
+      }
+    });
+  }
+
+  /// Whether a ride is being recorded (or sits paused). Downloads are skipped
+  /// meanwhile (§90.C7): they compete with the recorder for the main isolate
+  /// and the radio, and nothing in them is needed mid-ride.
+  bool get _isRecording {
+    final status = _ref?.read(rideRecordingProvider).status;
+    return status == RecordingStatus.starting ||
+        status == RecordingStatus.active ||
+        status == RecordingStatus.paused;
+  }
+
+  /// One incremental-or-full download of [collection] — see [PullWatermark].
+  Future<bool> _pull(
+    String uid,
+    String collection,
+    Future<bool> Function() hasLocalRows,
+    Future<PullResult> Function({DateTime? since}) download,
+  ) async {
+    final mark = await PullWatermark.read(uid, collection);
+    final since = PullWatermark.queryFloor(
+      watermark: mark,
+      hasLocalRows: mark == null ? false : await hasLocalRows(),
+    );
+    final result = await download(since: since);
+    await PullWatermark.write(
+      uid,
+      collection,
+      PullWatermark.advance(
+        current: since == null ? null : mark,
+        seen: result.maxSyncedAt,
+        wasFullPull: since == null,
+      ),
+    );
+    return result.pulledAny;
+  }
+
+  /// One full maintenance pull after upgrading to schema v20. Builds before
+  /// v20 skipped visit logs they couldn't store but still moved their pull
+  /// mark past them, so those logs would never arrive otherwise (§95).
+  Future<void> _resetMaintenanceMarkOnceForV20(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final flag = 'maintenance_pull_reset_v20_$uid';
+      if (prefs.getBool(flag) == true) return;
+      await prefs.remove(PullWatermark.key(uid, 'maintenance'));
+      await prefs.setBool(flag, true);
+    } catch (e) {
+      debugPrint('[SyncManager] maintenance mark reset skipped: $e');
+    }
+  }
+
+  static Future<bool> _hasRows(String sql, List<Object?> args) async {
+    final db = await DatabaseHelper.instance.database;
+    return (await db.rawQuery(sql, args)).isNotEmpty;
   }
 
   /// Start automatic sync with 5-minute interval or adaptive backoff on failure
@@ -111,22 +252,13 @@ class SyncManager {
     if (_isSyncing) return;
     if (_auth.currentUser == null) return;
 
-    // Check connectivity first
-    final connectivityResult = await _connectivity.checkConnectivity();
-    final hasInternet = connectivityResult.contains(ConnectivityResult.mobile) ||
-        connectivityResult.contains(ConnectivityResult.wifi);
-
-    if (!hasInternet) {
-      _status = SyncStatus.failure;
-      _consecutiveFailures++;
-      _notifyListeners();
-      _scheduleNextAutoSync();
-      return;
-    }
-
+    // Claimed BEFORE the first await. Set after the connectivity check (as it
+    // used to be), two triggers landing together — startAutoSync() and the
+    // connectivity listener's initial event, say — both passed the guard
+    // above and ran two full sync passes concurrently.
     _isSyncing = true;
-    _status = SyncStatus.syncing;
-    _notifyListeners();
+    _lastSyncStartedAt = DateTime.now();
+    _connectivityTimer?.cancel();
 
     // Anything the rider already committed to while offline goes FIRST, ahead
     // of the bulk ride/bike sync below. Two reasons: these are explicit
@@ -135,10 +267,41 @@ class SyncManager {
     // freshly-restored connection that a share would otherwise sit behind it.
     // Failures inside drain() are recorded per-entry and never thrown, so this
     // cannot abort the sync that follows.
-    await _outbox.drain();
-
     try {
-      final uid = _auth.currentUser!.uid;
+      // Connectivity check inside the try (issues §101.C2): connectivity_plus
+      // can throw a PlatformException here, and outside the try that left
+      // `_isSyncing` stuck at true for the rest of the session. The
+      // `finally` below now clears the flag, notifies and reschedules for
+      // the no-network branch too.
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (!_hasNetwork(connectivityResult)) {
+        _status = SyncStatus.failure;
+        _consecutiveFailures++;
+        return;
+      }
+
+      _status = SyncStatus.syncing;
+      _notifyListeners();
+
+      // Inside the try so an unexpected throw (e.g. the outbox table itself
+      // failing to open) still reaches the `finally` below. Outside it, the
+      // throw escaped with `_isSyncing` stuck at true, and every later
+      // `_performSync` returned immediately for the rest of the session.
+      await _outbox.drain();
+
+      // issues §62.13/14: `_auth.currentUser` was checked once at
+      // entry (line ~121) then force-unwrapped here, two `await`s later (the
+      // connectivity check, and `_outbox.drain()` above). A rider signing
+      // out in that window used to throw here, land in the generic `catch`
+      // below, and get recorded as a sync *failure* (incrementing
+      // `_consecutiveFailures` and scheduling backoff) — the correct
+      // behavior is "skip silently, signed out," not a failed sync.
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        _status = SyncStatus.idle;
+        return;
+      }
+      final uid = currentUser.uid;
       final db = await DatabaseHelper.instance.database;
 
       // Pull down anything that exists in the cloud but not locally yet —
@@ -146,9 +309,67 @@ class SyncManager {
       // install, reinstall). Runs before the upload pass below so a bike
       // just pulled down can't immediately re-upload as if it were a local
       // edit. See CloudRepository.downloadBikes's doc comment.
-      final pulledBikes = await _cloudRepository.downloadBikes(uid);
-      await _cloudRepository.downloadMaintenance(uid);
-      final pulledRides = await _cloudRepository.downloadRides(uid);
+      //
+      // Incremental after the first pull since sign-in, and skipped while a
+      // ride is being recorded — §90.C7.
+      final skipDownloads = _isRecording;
+      var pulledBikes = false;
+      var pulledRides = false;
+      if (!skipDownloads) {
+        pulledBikes = await _pull(
+          uid,
+          'bikes',
+          () =>
+              _hasRows('SELECT 1 FROM bikes WHERE user_id = ? LIMIT 1', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadBikes(uid, since: since),
+        );
+        await _resetMaintenanceMarkOnceForV20(uid);
+        await _pull(
+          uid,
+          'maintenance',
+          () => _hasRows('''
+            SELECT 1 FROM maintenance_logs
+            INNER JOIN bikes ON bikes.id = maintenance_logs.bike_id
+            WHERE bikes.user_id = ? LIMIT 1
+          ''', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadMaintenance(uid, since: since),
+        );
+        if (await _pull(
+          uid,
+          'fuelLogs',
+          () => _hasRows('''
+            SELECT 1 FROM fuel_logs
+            INNER JOIN bikes ON bikes.id = fuel_logs.bike_id
+            WHERE bikes.user_id = ? LIMIT 1
+          ''', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadFuelLogs(uid, since: since),
+        )) {
+          _ref?.invalidate(fuelLogsProvider);
+          _ref?.invalidate(userFuelLogsProvider);
+        }
+        // After downloadBikes: a settings row needs its bike to exist.
+        if (await _cloudRepository.downloadMaintenanceSettings(uid)) {
+          _ref?.invalidate(maintenanceConfigProvider);
+          _ref?.invalidate(isMaintenanceCustomizedProvider);
+          _ref?.invalidate(bikeRunningCostProvider);
+          _ref?.invalidate(maintenanceProfileProvider);
+          _ref?.invalidate(paperworkProvider);
+        }
+      }
+      await _backfillMaintenanceSettings(uid);
+      if (!skipDownloads) {
+        pulledRides = await _pull(
+          uid,
+          'rides',
+          () =>
+              _hasRows('SELECT 1 FROM rides WHERE user_id = ? LIMIT 1', [uid]),
+          ({DateTime? since}) =>
+              _cloudRepository.downloadRides(uid, since: since),
+        );
+      }
       if (pulledBikes) _ref?.invalidate(garageProvider);
       // Rides that just landed in the local table are invisible until the
       // providers that read that table are rebuilt. riderStatsProvider watches
@@ -159,7 +380,7 @@ class SyncManager {
       // was restarted. That is the "phone says 43 rides / 119 km, second
       // device says 20 / 26" report: both devices held identical rows, the
       // second one was just showing a pre-download snapshot of them
-      // (docs/Issues.md §28). Invalidate on the download's own return value
+      // (issues §28). Invalidate on the download's own return value
       // rather than piggybacking on pulledBikes, which is false in exactly
       // the case that matters.
       if (pulledRides) {
@@ -176,7 +397,7 @@ class SyncManager {
       // completed) but pure garbage in the cloud, and a ride still being
       // recorded would sync a half-written row.
       //
-      // docs/Issues.md §33.1: scoped to `uid` (the CURRENTLY signed-in
+      // issues §33.1: scoped to `uid` (the CURRENTLY signed-in
       // rider), same as the bikes/maintenance queries below. Without this, a
       // rider who recorded offline and signed out before it synced would
       // have their still-unsynced rows uploaded under whichever account
@@ -186,11 +407,23 @@ class SyncManager {
       final unsyncedRides = await RideDao().getUnsynced(uid);
 
       // Fetch unsynced bikes — scoped to `uid` for the same reason.
-      final unsyncedBikes = await db.query(
+      // Also include any bikes whose photos are still stored as local files so
+      // their images get uploaded to Cloudinary.
+      final unsyncedBikes = (await db.query(
         'bikes',
         where: 'synced = ? AND user_id = ?',
         whereArgs: [0, uid],
-      );
+      ))
+          .toList();
+
+      final existingBikeIds =
+          unsyncedBikes.map((b) => b['id'] as String).toSet();
+      final bikesWithLocalImages = await BikeDao().getBikesWithLocalImages(uid);
+      for (final bike in bikesWithLocalImages) {
+        if (!existingBikeIds.contains(bike['id'] as String)) {
+          unsyncedBikes.add(bike);
+        }
+      }
 
       // Fetch unsynced maintenance logs. `maintenance_logs` has no `user_id`
       // column of its own — ownership is via `bike_id` — so scoping to `uid`
@@ -200,6 +433,8 @@ class SyncManager {
         INNER JOIN bikes ON bikes.id = maintenance_logs.bike_id
         WHERE maintenance_logs.synced = 0 AND bikes.user_id = ?
       ''', [uid]);
+
+      final unsyncedFuel = await FuelLogDao().unsyncedForUser(uid);
 
       // Push deletions BEFORE uploads. A bike deleted locally still has its
       // rides in the local DB removed, but the remote copies linger — and the
@@ -218,25 +453,51 @@ class SyncManager {
         }
       }
 
+      // Same for rides deleted on this device (§90.C10) — a discarded crash
+      // ride, uploaded the moment crash detection fired, would otherwise
+      // sit in the cloud and come back on every new device.
+      for (final rideId in await RideDao().pendingRemoteDeletions(uid)) {
+        try {
+          await _cloudRepository.deleteRideRemote(uid, rideId);
+          await RideDao().markDeletionSynced(rideId);
+        } catch (e) {
+          debugPrint('[SyncManager] remote ride delete failed for $rideId: $e');
+        }
+      }
+
+      // And maintenance logs deleted here (§94.2): without this the
+      // download above restored every deleted log on the next full pull.
+      for (final logId in await MaintenanceDao().pendingRemoteDeletions(uid)) {
+        try {
+          await _cloudRepository.deleteMaintenanceRemote(uid, logId);
+          await MaintenanceDao().markDeletionSynced(logId);
+        } catch (e) {
+          debugPrint(
+              '[SyncManager] remote maintenance delete failed for $logId: $e');
+        }
+      }
+
+      // And fuel fill-ups deleted here, including a deleted bike's.
+      for (final logId in await FuelLogDao().pendingRemoteDeletions(uid)) {
+        try {
+          await _cloudRepository.deleteFuelLogRemote(uid, logId);
+          await FuelLogDao().markDeletionSynced(logId);
+        } catch (e) {
+          debugPrint('[SyncManager] remote fuel delete failed for $logId: $e');
+        }
+      }
+
       // Upload to Firestore
       if (unsyncedRides.isNotEmpty) {
         await _cloudRepository.uploadRides(uid, unsyncedRides);
-
-        // Then each ride's GPS trail, strictly after the ride doc exists so a
-        // track can never point at a missing parent. A trail failure is
-        // logged and skipped rather than aborting the whole sync — the ride
-        // metadata is already safely up, and losing a polyline is far less
-        // bad than leaving the rest of the queue unsynced.
-        for (final ride in unsyncedRides) {
-          final rideId = ride['id'] as String?;
-          if (rideId == null) continue;
-          try {
-            await _cloudRepository.uploadRideTrack(uid, rideId);
-          } catch (e) {
-            debugPrint('[SyncManager] track upload failed for $rideId: $e');
-          }
-        }
       }
+
+      // Then GPS trails, strictly after the ride docs exist so a track can
+      // never point at a missing parent. Driven by `track_synced`, not by
+      // `unsyncedRides`: looping over the rides just uploaded meant a trail
+      // that failed once was never tried again, because by the next cycle
+      // its ride was already `synced = 1` (grill §1.3.2).
+      await syncPendingTracks(uid, RideDao(), _cloudRepository.uploadRideTrack);
 
       if (unsyncedBikes.isNotEmpty) {
         await _cloudRepository.uploadBikes(uid, unsyncedBikes);
@@ -244,6 +505,10 @@ class SyncManager {
 
       if (unsyncedMaintenance.isNotEmpty) {
         await _cloudRepository.uploadMaintenance(uid, unsyncedMaintenance);
+      }
+
+      if (unsyncedFuel.isNotEmpty) {
+        await _cloudRepository.uploadFuelLogs(uid, unsyncedFuel);
       }
 
       _status = SyncStatus.success;
@@ -264,26 +529,79 @@ class SyncManager {
     }
   }
 
+  /// One-time upload of maintenance settings saved before they synced
+  /// (issues §88.2) — until then, only a fresh save queued an upload, so a
+  /// rider who set everything up once and never touched it again would
+  /// still lose it on reinstall. Runs after the settings download, so on a
+  /// new device it only ever re-uploads what was just restored. The flag is
+  /// set only once every bike is queued; a failure retries next cycle.
+  Future<void> _backfillMaintenanceSettings(String uid) async {
+    final key = 'maintenance_settings_backfilled_$uid';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(key) ?? false) return;
+      for (final bikeId
+          in await MaintenanceSettingsSync.bikesWithSettings(uid)) {
+        await _outbox.enqueueMaintenanceSettings(
+          uid: uid,
+          bikeId: bikeId,
+          attemptNow: false,
+        );
+      }
+      await prefs.setBool(key, true);
+    } catch (e) {
+      debugPrint('[SyncManager] maintenance settings backfill skipped: $e');
+    }
+  }
+
   /// Manual sync trigger
   Future<void> sync() => _performSync();
+
+  /// Uploads the GPS trail of every ride whose metadata is synced but whose
+  /// trail isn't, marking each one `track_synced` only once its upload
+  /// returns. A failure is logged and left at 0 for the next cycle rather
+  /// than aborting the sync — the ride metadata is already safely up, and one
+  /// bad trail must not hold the others back. Returns how many uploaded.
+  @visibleForTesting
+  static Future<int> syncPendingTracks(
+    String uid,
+    RideDao rideDao,
+    Future<void> Function(String uid, String rideId) uploadTrack,
+  ) async {
+    var uploaded = 0;
+    for (final ride in await rideDao.getTrackUnsynced(uid)) {
+      final rideId = ride['id'] as String;
+      try {
+        await uploadTrack(uid, rideId);
+        await rideDao.markTrackSynced(rideId);
+        uploaded++;
+      } catch (e) {
+        debugPrint('[SyncManager] track upload failed for $rideId: $e');
+      }
+    }
+    return uploaded;
+  }
 
   /// Cleanup resources
   void dispose() {
     stopAutoSync();
+    _connectivityTimer?.cancel();
     _connectivitySubscription.cancel();
+    _authSubscription?.cancel();
   }
 }
 
 /// Riverpod provider for SyncManager
 final syncManagerProvider = Provider<SyncManager>((ref) {
   final outbox = ref.watch(outboxServiceProvider);
-  final syncManager = SyncManager(ref, outbox);
+  final syncManager = SyncManager(ref: ref, outbox: outbox);
   ref.onDispose(() => syncManager.dispose());
   return syncManager;
 });
 
 /// Riverpod provider for sync status
-final syncStatusProvider = StateNotifierProvider<SyncStatusNotifier, SyncStatus>((ref) {
+final syncStatusProvider =
+    StateNotifierProvider<SyncStatusNotifier, SyncStatus>((ref) {
   final syncManager = ref.watch(syncManagerProvider);
   return SyncStatusNotifier(syncManager);
 });

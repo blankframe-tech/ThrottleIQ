@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
+import '../../domain/entities/service_visit.dart';
 import '../providers/maintenance_provider.dart';
-import '../widgets/odometer_sync_sheet.dart';
+import '../widgets/forecast_strip.dart';
+import '../widgets/maintenance_check_row.dart';
+import '../widgets/maintenance_format.dart';
+import '../widgets/maintenance_log_tile.dart';
+import '../widgets/maintenance_settings_section.dart';
+import '../widgets/money_card.dart';
+import '../widgets/paperwork_card.dart';
+import '../widgets/precheck_sheet.dart';
+import '../widgets/up_next_card.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
-const double _kmToMi = 0.621371;
-
-String _distLabel(double km, bool imperial) {
-  final value = imperial ? km * _kmToMi : km;
-  return '${value.toStringAsFixed(0)} ${imperial ? 'mi' : 'km'}';
-}
-
-enum _FilterTab { all, attention, ok }
-
+/// Maintenance home for one bike — a forecast, not a checklist. Top to
+/// bottom: what's next (hero), what's coming (60-day strip), every check
+/// grouped by urgency, the weekly quick check, history as visits, money,
+/// paperwork, and settings last. "Log a visit" stays on screen throughout.
 class MaintenanceScreen extends ConsumerStatefulWidget {
   final String? bikeId;
   const MaintenanceScreen({super.key, this.bikeId});
@@ -28,15 +35,34 @@ class MaintenanceScreen extends ConsumerStatefulWidget {
 }
 
 class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
-  bool _imperial = false;
-  _FilterTab _currentFilter = _FilterTab.all;
   String? _selectedBikeId;
+  bool _showAllGood = false;
+  bool _showUnknown = false;
+  int _historyShown = 5;
 
   @override
   void initState() {
     super.initState();
     _selectedBikeId = widget.bikeId;
   }
+
+  /// A notification tap (or garage link) for another bike while this page
+  /// is already open arrives as a new [widget.bikeId] on the same state.
+  @override
+  void didUpdateWidget(MaintenanceScreen old) {
+    super.didUpdateWidget(old);
+    if (widget.bikeId != null && widget.bikeId != old.bikeId) {
+      _selectedBikeId = widget.bikeId;
+    }
+  }
+
+  /// Back-only app bar when this screen was pushed (from bike detail or the
+  /// garage card) rather than opened as the Maintenance tab — there was no
+  /// way back otherwise short of the system gesture (grill §3.2.3).
+  /// Untitled because the body's own header already says "Maintenance".
+  PreferredSizeWidget? _backBar(BuildContext context) => context.canPop()
+      ? AppBar(backgroundColor: context.palette.background, toolbarHeight: 48)
+      : null;
 
   @override
   Widget build(BuildContext context) {
@@ -49,18 +75,21 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
     if (activeBike == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
+        appBar: _backBar(context),
         body: SafeArea(
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.two_wheeler, size: 56, color: AppColors.textTertiary),
+                Icon(Icons.two_wheeler,
+                    size: 56, color: context.palette.textTertiary),
                 const SizedBox(height: 16),
-                Text('No active bike', style: display(20)),
+                Text(context.l10n.noActiveBike, style: display(context, 20)),
                 const SizedBox(height: 8),
-                Text('Add a motorcycle to your garage to track maintenance.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text(context.l10n.addMotorcycleGarageTrack,
+                    style: TextStyle(
+                        color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
           ),
@@ -68,296 +97,80 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
       );
     }
 
-    final reminders = ref.watch(maintenanceRemindersProvider(activeBike.id));
-    final logsAsync = ref.watch(maintenanceProvider(activeBike.id));
-    final isCustomizedAsync =
-        ref.watch(isMaintenanceCustomizedProvider(activeBike.id));
-    final hasCustomized = isCustomizedAsync.valueOrNull ?? true;
-
-    final overdueCount =
-        reminders.where((r) => r.status == ReminderStatus.overdue).length;
-    final dueSoonCount =
-        reminders.where((r) => r.status == ReminderStatus.dueSoon).length;
-    final okCount =
-        reminders.where((r) => r.status == ReminderStatus.ok).length;
-    final attentionCount = overdueCount + dueSoonCount;
-
-    final filteredReminders = switch (_currentFilter) {
-      _FilterTab.all => reminders,
-      _FilterTab.attention =>
-        reminders.where((r) => r.status != ReminderStatus.ok).toList(),
-      _FilterTab.ok =>
-        reminders.where((r) => r.status == ReminderStatus.ok).toList(),
-    };
+    final imperial = ref.watch(maintenanceImperialProvider);
+    final profile =
+        ref.watch(maintenanceProfileProvider(activeBike.id)).valueOrNull;
+    final customized =
+        ref.watch(isMaintenanceCustomizedProvider(activeBike.id)).valueOrNull ??
+            true;
+    // Riders who customised checks before setup existed are not sent back
+    // through it; the setup card is for bikes with neither.
+    final needsSetup = profile?.onboardedAt == null && !customized;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
+      appBar: _backBar(context),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('logVisitFab'),
+        onPressed: () =>
+            context.push('/home/maintenance/add?bikeId=${activeBike.id}'),
+        icon: const Icon(Icons.add),
+        label: Text(context.l10n.logVisitTitle,
+            style: const TextStyle(fontWeight: FontWeight.w700)),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 12,
-              AppDimensions.paddingMd, AppDimensions.paddingLg),
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 96),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Bike Switcher & Units
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text('Maintenance', style: display(26)),
-                            if (bikes.length > 1) ...[
-                              const SizedBox(width: 8),
-                              _buildBikeDropdown(bikes, activeBike),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            if (activeBike.colorValue != null) ...[
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: Color(activeBike.colorValue!),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Text(
-                              activeBike.displayName,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary),
-                            ),
-                            Text(
-                              ' · ${_distLabel(activeBike.currentOdometerKm, _imperial)}',
-                              style: TextStyle(
-                                  fontSize: 14, color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  _UnitToggle(
-                    imperial: _imperial,
-                    onChanged: (v) => setState(() => _imperial = v),
-                  ),
-                ],
+              _buildHeader(bikes, activeBike, imperial),
+              const SizedBox(height: 14),
+              if (needsSetup) ...[
+                _SetupCard(bike: activeBike),
+                const SizedBox(height: 18),
+              ],
+              UpNextCard(bikeId: activeBike.id, imperial: imperial),
+              const SizedBox(height: 18),
+              ForecastStrip(
+                bikeId: activeBike.id,
+                forecasts:
+                    ref.watch(maintenanceForecastProvider(activeBike.id)),
               ),
               const SizedBox(height: 14),
-
-              // Action Bar: Odo Sync, Configure, Log Service
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => OdometerSyncSheet.show(context, activeBike),
-                      icon: const Icon(Icons.speed, size: 16),
-                      label: const Text('Sync Odo',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push(
-                          '/home/maintenance/configure?bikeId=${activeBike.id}'),
-                      icon: const Icon(Icons.tune, size: 16),
-                      label: const Text('Customize',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.go(
-                          '/home/maintenance/add?bikeId=${activeBike.id}'),
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Log',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Unconfigured Prompt Banner
-              if (!hasCustomized) ...[
-                _buildUnconfiguredBanner(activeBike),
-                const SizedBox(height: 16),
-              ],
-
-              // Health Status Overview Card
-              _buildHealthOverviewCard(
-                  overdueCount, dueSoonCount, okCount, reminders.length),
-              const SizedBox(height: 18),
-
-              // Tracked Checks Section Header & Filter Tabs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const EditorialLabel('Tracked checks'),
-                  Text(
-                    '${reminders.length} monitored',
-                    style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Filter Chips
-              if (reminders.isNotEmpty) ...[
-                Row(
+              _buildChecks(activeBike, imperial),
+              const SizedBox(height: 20),
+              PrecheckCard(bikeId: activeBike.id),
+              const SizedBox(height: 24),
+              _buildHistory(activeBike, imperial),
+              const SizedBox(height: 24),
+              MoneyCard(bikeId: activeBike.id, imperial: imperial),
+              const SizedBox(height: 12),
+              EditorialCard(
+                key: const Key('maintenanceFuelLink'),
+                radius: context.shape.radiusLg,
+                padding: const EdgeInsets.all(14),
+                onTap: () => context
+                    .push('/home/maintenance/fuel?bikeId=${activeBike.id}'),
+                child: Row(
                   children: [
-                    _FilterChip(
-                      label: 'All (${reminders.length})',
-                      active: _currentFilter == _FilterTab.all,
-                      onTap: () => setState(() => _currentFilter = _FilterTab.all),
+                    Icon(Icons.local_gas_station_outlined,
+                        color: context.palette.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(context.l10n.fuelLogTitle,
+                          style: display(context, 16, letterSpacing: 0)),
                     ),
-                    const SizedBox(width: 6),
-                    if (attentionCount > 0) ...[
-                      _FilterChip(
-                        label: 'Attention ($attentionCount)',
-                        active: _currentFilter == _FilterTab.attention,
-                        tone: PillTone.overdue,
-                        onTap: () => setState(
-                            () => _currentFilter = _FilterTab.attention),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                    _FilterChip(
-                      label: 'OK ($okCount)',
-                      active: _currentFilter == _FilterTab.ok,
-                      tone: PillTone.ok,
-                      onTap: () => setState(() => _currentFilter = _FilterTab.ok),
-                    ),
+                    Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary),
                   ],
                 ),
-                const SizedBox(height: 10),
-              ],
-
-              // Checks List
-              if (filteredReminders.isEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: Text(
-                      reminders.isEmpty
-                          ? 'No checks tracked yet. Tap "Customize" above to select checks.'
-                          : 'No checks matching this filter.',
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                for (var i = 0; i < filteredReminders.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 8),
-                  _CheckRow(
-                    reminder: filteredReminders[i],
-                    imperial: _imperial,
-                    bikeId: activeBike.id,
-                  ),
-                ],
-              ],
+              ),
               const SizedBox(height: 24),
-
-              // Service History Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const EditorialLabel('Service history'),
-                  logsAsync.maybeWhen(
-                    data: (logs) {
-                      final totalCost = logs.fold<double>(
-                          0.0, (sum, item) => sum + (item.cost ?? 0.0));
-                      if (totalCost > 0) {
-                        return Text(
-                          'Total: ৳${totalCost.toStringAsFixed(0)}',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              logsAsync.when(
-                loading: () => Center(
-                    child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, _) =>
-                    Text('$e', style: TextStyle(color: AppColors.danger)),
-                data: (logs) {
-                  if (logs.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Icon(Icons.history,
-                                color: AppColors.textTertiary, size: 36),
-                            const SizedBox(height: 8),
-                            Text('No service records logged yet.',
-                                style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 13)),
-                            const SizedBox(height: 4),
-                            Text(
-                              'When you service your bike, log it here to reset intervals.',
-                              style: TextStyle(
-                                  color: AppColors.textTertiary, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: logs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => _LogTile(
-                      log: logs[i],
-                      imperial: _imperial,
-                    ),
-                  );
-                },
-              ),
+              PaperworkCard(bikeId: activeBike.id),
+              const SizedBox(height: 28),
+              MaintenanceSettingsSection(bike: activeBike),
             ],
           ),
         ),
@@ -365,22 +178,236 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     );
   }
 
+  Widget _buildHeader(
+      List<BikeEntity> bikes, BikeEntity activeBike, bool imperial) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(context.l10n.maintenance, style: display(context, 26)),
+            if (bikes.length > 1) ...[
+              const SizedBox(width: 8),
+              _buildBikeDropdown(bikes, activeBike),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            if (activeBike.colorValue != null) ...[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: Color(activeBike.colorValue!),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Flexible(
+              child: Text(
+                activeBike.displayName,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: context.palette.textPrimary),
+              ),
+            ),
+            Text(
+              ' · ${distLabelLong(activeBike.currentOdometerKm, imperial)}',
+              style:
+                  TextStyle(fontSize: 14, color: context.palette.textSecondary),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChecks(BikeEntity bike, bool imperial) {
+    final l10n = context.l10n;
+    final forecasts = ref.watch(maintenanceForecastProvider(bike.id));
+    final issues =
+        ref.watch(precheckIssuesProvider(bike.id)).valueOrNull ?? const [];
+    final now = DateTime.now();
+
+    final attention = forecasts.where((f) => f.needsAttention).toList();
+    final comingUp = forecasts
+        .where((f) =>
+            f.status == ReminderStatus.ok &&
+            (f.daysUntilDue(now) ?? 9999) <= ForecastStrip.horizonDays)
+        .toList();
+    final comingKeys = comingUp.map((f) => f.key).toSet();
+    final allGood = forecasts
+        .where(
+            (f) => f.status == ReminderStatus.ok && !comingKeys.contains(f.key))
+        .toList();
+    final unknown =
+        forecasts.where((f) => f.status == ReminderStatus.unknown).toList();
+
+    if (forecasts.isEmpty && issues.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: Text(l10n.noChecksTrackedYet,
+              style:
+                  TextStyle(color: context.palette.textTertiary, fontSize: 13)),
+        ),
+      );
+    }
+
+    Widget rows(List<CheckForecast> list) => Column(
+          children: [
+            for (var i = 0; i < list.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              MaintenanceCheckRow(
+                  forecast: list[i], imperial: imperial, bikeId: bike.id),
+            ],
+          ],
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (attention.isNotEmpty || issues.isNotEmpty) ...[
+          _GroupHeader(
+              label: l10n.groupNeedsAttention(attention.length + issues.length),
+              color: context.palette.danger),
+          for (final issue in issues) ...[
+            PrecheckIssueRow(issue: issue),
+            const SizedBox(height: 8),
+          ],
+          rows(attention),
+          const SizedBox(height: 18),
+        ],
+        if (comingUp.isNotEmpty) ...[
+          _GroupHeader(label: l10n.groupComingUp(comingUp.length)),
+          rows(comingUp),
+          const SizedBox(height: 18),
+        ],
+        if (allGood.isNotEmpty) ...[
+          _GroupHeader(
+            label: l10n.groupAllGood(allGood.length),
+            color: context.palette.success,
+            expanded: _showAllGood,
+            onTap: () => setState(() => _showAllGood = !_showAllGood),
+          ),
+          if (_showAllGood) rows(allGood),
+          const SizedBox(height: 10),
+        ],
+        if (unknown.isNotEmpty) ...[
+          _GroupHeader(
+            label: l10n.groupUnknown(unknown.length),
+            expanded: _showUnknown,
+            onTap: () => setState(() => _showUnknown = !_showUnknown),
+          ),
+          if (_showUnknown) rows(unknown),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildHistory(BikeEntity activeBike, bool imperial) {
+    final logsAsync = ref.watch(maintenanceProvider(activeBike.id));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            EditorialLabel(context.l10n.serviceHistory),
+            logsAsync.maybeWhen(
+              data: (logs) {
+                final totalCost = totalSpend(logs);
+                if (totalCost <= 0) return const SizedBox.shrink();
+                return Text(
+                  context.l10n.total(groupThousands(totalCost)),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textSecondary),
+                );
+              },
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        logsAsync.when(
+          loading: () => Center(
+              child: CircularProgressIndicator(color: context.palette.primary)),
+          error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () => ref.invalidate(maintenanceProvider(activeBike.id)),
+          ),
+          data: (logs) {
+            final visits = groupVisits(logs);
+            if (visits.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.history,
+                          color: context.palette.textTertiary, size: 36),
+                      const SizedBox(height: 8),
+                      Text(context.l10n.noServiceRecordsLogged,
+                          style: TextStyle(
+                              color: context.palette.textSecondary,
+                              fontSize: 13)),
+                      const SizedBox(height: 4),
+                      Text(
+                        context.l10n.whenServiceBikeLog,
+                        style: TextStyle(
+                            color: context.palette.textTertiary, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            final shown = visits.take(_historyShown).toList();
+            return Column(
+              children: [
+                for (var i = 0; i < shown.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 10),
+                  VisitTile(visit: shown[i], imperial: imperial),
+                ],
+                if (visits.length > shown.length)
+                  TextButton(
+                    onPressed: () => setState(() => _historyShown += 10),
+                    child: Text(context.l10n
+                        .showMoreVisits(visits.length - shown.length)),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildBikeDropdown(List<BikeEntity> bikes, BikeEntity activeBike) {
     return PopupMenuButton<String>(
-      tooltip: 'Switch bike',
-      color: AppColors.surfaceVariant,
+      tooltip: context.l10n.switchBike,
+      color: context.palette.surfaceVariant,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
+          border: Border.all(color: context.palette.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Switch',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-            Icon(Icons.arrow_drop_down, size: 16, color: AppColors.textSecondary),
+            Text(context.l10n.switchAction,
+                style: TextStyle(
+                    fontSize: 11, color: context.palette.textSecondary)),
+            Icon(Icons.arrow_drop_down,
+                size: 16, color: context.palette.textSecondary),
           ],
         ),
       ),
@@ -413,508 +440,72 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
           .toList(),
     );
   }
+}
 
-  Widget _buildUnconfiguredBanner(BikeEntity bike) {
-    return EditorialCard(
-      radius: AppDimensions.radiusLg,
-      padding: const EdgeInsets.all(12),
-      borderColor: AppColors.primary.withValues(alpha: 0.4),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.tune, color: AppColors.primary, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Customize Tracked Items', style: display(13)),
-                const SizedBox(height: 2),
-                Text(
-                  'Choose which checks and intervals matter for ${bike.displayName}.',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 6),
-          ElevatedButton(
-            onPressed: () => context
-                .push('/home/maintenance/configure?bikeId=${bike.id}'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-            ),
-            child: const Text('Setup'),
-          ),
-        ],
+class _GroupHeader extends StatelessWidget {
+  final String label;
+  final Color? color;
+  final bool? expanded;
+  final VoidCallback? onTap;
+  const _GroupHeader(
+      {required this.label, this.color, this.expanded, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8, top: 2),
+        child: Row(
+          children: [
+            EditorialLabel(label, color: color),
+            const Spacer(),
+            if (expanded != null)
+              Icon(expanded! ? Icons.expand_less : Icons.expand_more,
+                  size: 18, color: context.palette.textTertiary),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildHealthOverviewCard(
-      int overdue, int dueSoon, int ok, int total) {
-    if (total == 0) return const SizedBox.shrink();
+/// Shown until the bike has been through setup: one question (when was the
+/// oil last changed?) turns every guessed due date into a real one.
+class _SetupCard extends StatelessWidget {
+  final BikeEntity bike;
+  const _SetupCard({required this.bike});
 
-    final Color statusColor;
-    final String statusTitle;
-    final String statusSubtitle;
-    final IconData statusIcon;
-
-    if (overdue > 0) {
-      statusColor = AppColors.danger;
-      statusTitle = '$overdue ${overdue == 1 ? 'Service Overdue' : 'Services Overdue'}';
-      statusSubtitle = 'Immediate maintenance attention recommended';
-      statusIcon = Icons.warning_amber_rounded;
-    } else if (dueSoon > 0) {
-      statusColor = AppColors.attention;
-      statusTitle = '$dueSoon ${dueSoon == 1 ? 'Service Due Soon' : 'Services Due Soon'}';
-      statusSubtitle = 'Upcoming scheduled maintenance';
-      statusIcon = Icons.schedule;
-    } else {
-      statusColor = AppColors.success;
-      statusTitle = 'All Systems Nominal';
-      statusSubtitle = 'All $total tracked components in good health';
-      statusIcon = Icons.verified_outlined;
-    }
-
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return EditorialCard(
-      radius: AppDimensions.radiusLg,
+      key: const Key('maintenanceSetupCard'),
+      radius: context.shape.radiusLg,
       padding: const EdgeInsets.all(14),
-      borderColor: statusColor.withValues(alpha: 0.3),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(statusIcon, color: statusColor, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(statusTitle,
-                        style: display(15, letterSpacing: 0)),
-                    const SizedBox(height: 2),
-                    Text(statusSubtitle,
-                        style: TextStyle(
-                            fontSize: 11, color: AppColors.textSecondary)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Health Distribution Bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: Row(
-              children: [
-                if (overdue > 0)
-                  Expanded(
-                    flex: overdue,
-                    child: Container(height: 6, color: AppColors.danger),
-                  ),
-                if (dueSoon > 0)
-                  Expanded(
-                    flex: dueSoon,
-                    child: Container(height: 6, color: AppColors.attention),
-                  ),
-                if (ok > 0)
-                  Expanded(
-                    flex: ok,
-                    child: Container(height: 6, color: AppColors.success),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _metricPill('Overdue', overdue, AppColors.danger),
-              _metricPill('Due Soon', dueSoon, AppColors.attention),
-              _metricPill('Good', ok, AppColors.success),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _metricPill(String label, int count, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          '$count $label',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: count > 0 ? AppColors.textSecondary : AppColors.textTertiary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final PillTone? tone;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.active,
-    this.tone,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = active
-        ? (tone == PillTone.overdue
-            ? AppColors.danger.withValues(alpha: 0.2)
-            : (tone == PillTone.ok
-                ? AppColors.success.withValues(alpha: 0.2)
-                : AppColors.ink))
-        : Colors.transparent;
-
-    final textColor = active
-        ? (tone == PillTone.overdue
-            ? AppColors.danger
-            : (tone == PillTone.ok
-                ? AppColors.success
-                : AppColors.onInk))
-        : AppColors.textTertiary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-          border: Border.all(
-            color: active ? Colors.transparent : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: textColor,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _UnitToggle extends StatelessWidget {
-  final bool imperial;
-  final ValueChanged<bool> onChanged;
-  const _UnitToggle({required this.imperial, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _UnitSegment(label: 'km', active: !imperial, onTap: () => onChanged(false)),
-          _UnitSegment(label: 'mi', active: imperial, onTap: () => onChanged(true)),
-        ],
-      ),
-    );
-  }
-}
-
-class _UnitSegment extends StatelessWidget {
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _UnitSegment({required this.label, required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? AppColors.ink : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-            color: active ? AppColors.onInk : AppColors.textTertiary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CheckRow extends StatelessWidget {
-  final MaintenanceReminder reminder;
-  final bool imperial;
-  final String bikeId;
-
-  const _CheckRow({
-    required this.reminder,
-    required this.imperial,
-    required this.bikeId,
-  });
-
-  IconData _iconForService(ServiceType type) {
-    switch (type) {
-      case ServiceType.oilChange:
-      case ServiceType.oilFilter:
-        return Icons.opacity;
-      case ServiceType.airFilter:
-        return Icons.air;
-      case ServiceType.chain:
-      case ServiceType.chainTension:
-        return Icons.link;
-      case ServiceType.tire:
-        return Icons.tire_repair;
-      case ServiceType.frontDiscPads:
-      case ServiceType.rearDrumPads:
-      case ServiceType.brakeFluid:
-      case ServiceType.brakeRotors:
-        return Icons.disc_full;
-      case ServiceType.sparkPlug:
-        return Icons.electric_bolt;
-      case ServiceType.battery:
-        return Icons.battery_charging_full;
-      case ServiceType.radiatorCoolant:
-        return Icons.water_drop;
-      case ServiceType.clutchCable:
-      case ServiceType.throttleCables:
-        return Icons.tune;
-      case ServiceType.valveClearance:
-        return Icons.build;
-      case ServiceType.suspension:
-      case ServiceType.forkSeals:
-        return Icons.vertical_align_center;
-      case ServiceType.wheelBearings:
-      case ServiceType.driveBelt:
-        return Icons.album;
-      case ServiceType.custom:
-        return Icons.handyman;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final (tone, barColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (PillTone.overdue, AppColors.danger, 'Overdue'),
-      ReminderStatus.dueSoon => (PillTone.dueSoon, AppColors.attention, 'Due soon'),
-      ReminderStatus.ok => (PillTone.ok, AppColors.success, 'OK'),
-    };
-    final isOverdue = reminder.status == ReminderStatus.overdue;
-    final progress = reminder.kmLimit > 0
-        ? (reminder.kmSinceService / reminder.kmLimit).clamp(0.0, 1.0)
-        : 0.0;
-    final kmLeft = reminder.kmLimit - reminder.kmSinceService;
-    final rightText = kmLeft >= 0
-        ? '${_distLabel(kmLeft, imperial)} left'
-        : '${_distLabel(-kmLeft, imperial)} over';
-
-    return EditorialCard(
-      radius: AppDimensions.radiusLg,
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-      borderColor: isOverdue ? AppColors.danger : AppColors.border,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                _iconForService(reminder.serviceType),
-                size: 18,
-                color: barColor,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(reminder.serviceType.label,
-                    style: display(15, letterSpacing: 0)),
-              ),
-              EditorialPill(label, tone: tone, filled: isOverdue),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Every ${_distLabel(reminder.kmLimit, imperial)}',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              Text(rightText,
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isOverdue ? FontWeight.w700 : FontWeight.normal,
-                      color: isOverdue ? AppColors.danger : AppColors.textSecondary)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          EditorialProgress(progress, color: barColor, height: 5),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                reminder.lastServiceDate != null
-                    ? 'Last done: ${_formatDate(reminder.lastServiceDate!)}'
-                    : 'No previous service recorded',
-                style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
-              ),
-              GestureDetector(
-                onTap: () => context.go(
-                    '/home/maintenance/add?bikeId=$bikeId&serviceType=${reminder.serviceType.name}'),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add, size: 12, color: AppColors.primary),
-                      const SizedBox(width: 2),
-                      Text('Log',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime dt) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-  }
-}
-
-class _LogTile extends ConsumerWidget {
-  final MaintenanceEntity log;
-  final bool imperial;
-  const _LogTile({required this.log, required this.imperial});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return EditorialCard(
-      radius: AppDimensions.radiusLg,
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      borderColor: context.palette.primary,
+      onTap: () => context
+          .push('/home/maintenance/setup?bikeId=${bike.id}&firstTime=true'),
       child: Row(
         children: [
+          Icon(Icons.auto_fix_high, color: context.palette.primary),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(log.displayLabel, style: display(14, letterSpacing: 0)),
-                const SizedBox(height: 4),
-                Text(
-                  '${_formatDate(log.date)} · ${_distLabel(log.odometerKm, imperial)}'
-                  '${log.cost != null ? ' · ৳${log.cost!.toStringAsFixed(0)}' : ''}',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-                if (log.notes != null && log.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(log.notes!,
-                      style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
-                ],
+                Text(l10n.setupCardTitle,
+                    style: display(context, 16, letterSpacing: 0)),
+                const SizedBox(height: 2),
+                Text(l10n.setupCardBody,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.textTertiary, size: 18),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: AppColors.surface,
-                  title: Text('Delete Log', style: display(16)),
-                  content: Text(
-                    'Are you sure you want to delete this ${log.displayLabel} record?',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text('Cancel',
-                          style: TextStyle(color: AppColors.textTertiary)),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.danger),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm == true) {
-                ref
-                    .read(maintenanceProvider(log.bikeId).notifier)
-                    .deleteLog(log.id);
-              }
-            },
-          ),
+          Icon(Icons.chevron_right, color: context.palette.textTertiary),
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 }

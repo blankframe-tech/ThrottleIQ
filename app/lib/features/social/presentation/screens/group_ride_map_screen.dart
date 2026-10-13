@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_session/audio_session.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,29 +13,28 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/realtime/realtime_connection_manager.dart';
+import '../../../../core/realtime/realtime_health.dart';
+import '../../../../core/realtime/realtime_location.dart';
+import '../../../../core/realtime/realtime_location_publisher.dart';
+import '../../../../core/realtime/realtime_providers.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../ride/presentation/widgets/recording_gate.dart';
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_members.dart';
+import '../../domain/utilities/group_ride_positions.dart';
+import '../../data/repositories/group_ride_live_channel.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
-
-/// How often this device publishes its own position to the group.
-///
-/// Slower than the ride recorder's own GPS cadence on purpose: the recorder
-/// keeps a 3 m-resolution trace for the ride file, whereas the group map only
-/// needs "roughly where is everyone", and every publish is a Firestore write
-/// billed against all group members' listeners.
-const Duration kGroupRideBroadcastInterval = Duration(seconds: 5);
-
-/// Past this age a member's position is shown as stale rather than current.
-/// Two broadcast intervals plus slack — long enough that one dropped write
-/// doesn't flag a rider who is fine, short enough that a rider who has lost
-/// signal for half a minute stops being rendered as live.
-const Duration kGroupRideStaleAfter = Duration(seconds: 30);
+import '../widgets/share_group_ride_code_sheet.dart';
+import '../../../../shared/widgets/app_tile_layer.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../domain/utilities/group_ride_broadcast_gate.dart';
 
 /// The shared live map for a group ride: every member as a differently
 /// coloured marker, updating as they move.
@@ -68,6 +66,11 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
   Timer? _broadcastTimer;
 
+  /// What this device last published, for the movement/heartbeat gate
+  /// ([shouldBroadcastPosition]).
+  LatLng? _lastSentPosition;
+  DateTime? _lastSentAt;
+
   /// Repaints the roster so "last seen 12s ago" keeps counting up even when
   /// nothing is arriving. Without it a group that all lost signal at once
   /// would sit frozen on whatever age it had when the last snapshot landed —
@@ -78,6 +81,28 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   StreamSubscription<Map<String, Map<String, dynamic>>>? _locationsSub;
 
   Map<String, Map<String, dynamic>> _locations = const {};
+
+  // -- Realtime Database channel (moving dots) ----------------------------
+  //
+  // Firestore `memberLocations` above stays subscribed and published (on a
+  // 2-minute heartbeat while RTDB is healthy): riders on older builds only
+  // read it, and it's the fallback if the socket dies. Each marker shows
+  // whichever of the two is fresher — see freshestMemberPosition.
+
+  RealtimeLease? _rtLease;
+  StreamSubscription<Map<String, RealtimeLocation>>? _rtSub;
+  RealtimeLocationPublisher? _rtPublisher;
+  Timer? _rtTimer;
+  Map<String, RealtimeLocation> _rtLocations = const {};
+
+  /// Only true once RTDB `meta.creatorId` matched Firestore's creator —
+  /// see [isGroupRideChannelTrusted].
+  bool _rtTrusted = false;
+
+  /// Seq gap / reorder counts for the RTDB stream, logged on dispose — the
+  /// on-device evidence that the channel delivered what it should.
+  final RealtimeDeliveryStats _rtStats = RealtimeDeliveryStats();
+
   String? _locationError;
   bool _hasLocationPermission = false;
   bool _leaving = false;
@@ -129,11 +154,24 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Future<void> _bootstrap() async {
     if (widget.autoStartRide) {
       final notifier = ref.read(rideRecordingProvider.notifier);
-      // startRide() no-ops unless status is idle, so an already-recording
-      // rider who opens a group ride keeps their ride instead of getting a
-      // second one.
-      await notifier.startRide();
+      // Same gate the Record screen's start controls pass through — this
+      // path used to skip it, and a start refused for want of location
+      // permission failed silently, leaving the rider on a group map with
+      // no ride recording and no idea why.
+      final proceed = await ensureLocationDisclosure(context);
       if (!mounted) return;
+      if (proceed) {
+        // startRide() no-ops unless status is idle, so an already-recording
+        // rider who opens a group ride keeps their ride instead of getting a
+        // second one.
+        await notifier.startRide();
+        if (!mounted) return;
+        final result = ref.read(rideRecordingProvider);
+        if (result.status != RecordingStatus.active &&
+            result.status != RecordingStatus.paused) {
+          showRecordingBlockedSnackBar(context, result);
+        }
+      }
     }
 
     await _ensureLocationPermission();
@@ -149,9 +187,11 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       },
       onError: (Object e) {
         if (!mounted) return;
-        setState(() => _locationError = 'Live positions unavailable: $e');
+        setState(() => _locationError = context.l10n.livePositionsUnavailable(e));
       },
     );
+
+    unawaited(_startRealtime());
 
     // Publish once immediately so the rest of the group sees this rider
     // without waiting a full interval, then keep it ticking.
@@ -164,6 +204,117 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       if (!mounted) return;
       setState(() {});
     });
+
+    // The creator's open map keeps the ride "live" (lastActiveAt) even when
+    // they aren't recording — see isGroupRideLive. Only the creator may
+    // write the parent document, so nobody else tries.
+    unawaited(_heartbeatIfCreator());
+    _heartbeatTimer = Timer.periodic(
+      kGroupRideHeartbeatInterval,
+      (_) => _heartbeatIfCreator(),
+    );
+  }
+
+  Timer? _heartbeatTimer;
+
+  /// Opens the RTDB channel for this ride: subscribes to everyone's dots and
+  /// starts publishing this rider's own every [kGroupRideRealtimeInterval]
+  /// (gated by movement). Does nothing — leaving Firestore to carry
+  /// everything — when RTDB isn't configured or its `meta` doesn't match the
+  /// ride's real creator.
+  Future<void> _startRealtime() async {
+    final live = ref.read(groupRideLiveChannelProvider);
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (!live.isEnabled || uid == null) return;
+
+    _rtLease = ref.read(realtimeServicesProvider).acquire('group-ride-map');
+    final ride = await ref
+        .read(groupRideRepositoryProvider)
+        .getGroupRide(widget.groupRideId)
+        .catchError((Object _) => null);
+    final realtimeCreator =
+        ride == null ? null : await live.creatorOf(widget.groupRideId);
+    if (!mounted) return;
+    if (ride == null ||
+        !isGroupRideChannelTrusted(
+          realtimeCreatorId: realtimeCreator,
+          firestoreCreatorId: ride.creatorId,
+        )) {
+      debugPrint('[GroupRideMap] realtime channel not trusted for '
+          '${widget.groupRideId} (rtdb creator: $realtimeCreator) — '
+          'Firestore only');
+      _rtLease?.release();
+      _rtLease = null;
+      return;
+    }
+
+    setState(() => _rtTrusted = true);
+    _rtSub = live.watchLocations(widget.groupRideId).listen(
+      (locations) {
+        for (final entry in locations.entries) {
+          _rtStats.observe(entry.key, entry.value.seq);
+        }
+        if (!mounted) return;
+        setState(() => _rtLocations = locations);
+      },
+      onError: (Object e) {
+        // Permission denied (kicked) or the node vanished: fall back to
+        // Firestore positions rather than freezing the dots.
+        debugPrint('[GroupRideMap] realtime locations error: $e');
+        if (!mounted) return;
+        setState(() {
+          _rtTrusted = false;
+          _rtLocations = const {};
+        });
+      },
+    );
+    _rtPublisher = live.publisherFor(widget.groupRideId, uid);
+    _rtTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      // The recorder's hot fix only — polling Geolocator every second for a
+      // rider who isn't recording would burn the battery. They still get
+      // published on the 20 s Firestore tick (see _broadcastPosition).
+      final ride = ref.read(rideRecordingProvider);
+      final position = ride.currentPosition;
+      if (position == null) return;
+      _offerRealtime(position, speedMs: ride.currentSpeedMs);
+    });
+  }
+
+  void _offerRealtime(LatLng position, {double? speedMs}) {
+    _rtPublisher?.offer(LocationSample(
+      lat: position.latitude,
+      lng: position.longitude,
+      speedMs: speedMs,
+    ));
+  }
+
+  /// Whether RTDB is the thing carrying this rider's position right now.
+  bool get _realtimeCarriesPosition =>
+      _rtTrusted &&
+      _rtPublisher != null &&
+      ref.read(realtimeServicesProvider).transportNow() ==
+          RealtimeTransport.realtime;
+
+  Future<void> _heartbeatIfCreator() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    final ride = ref.read(groupRideProvider(widget.groupRideId)).valueOrNull;
+    if (uid == null || ride == null) return;
+    if (ride.creatorId != uid || ride.status != GroupRideStatus.active) return;
+    try {
+      await ref.read(groupRideRepositoryProvider).heartbeat(widget.groupRideId);
+    } catch (_) {/* next beat is minutes away; cutoff is hours */}
+  }
+
+  /// Back to the ride cockpit (speed, distance, End). Pops when the map was
+  /// pushed from it; otherwise (the map was the start-flow's destination via
+  /// `go`) replaces the route — the group map stays reachable from the
+  /// cockpit's "Group talk" pill.
+  void _openRideStats() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/ride/active');
+    }
   }
 
   Future<void> _ensureLocationPermission() async {
@@ -181,14 +332,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         // else move, they just don't appear on the group's maps.
         _locationError = granted
             ? null
-            : 'Location permission is off — the group can\'t see you. '
-                'You can still see them.';
+            : context.l10n.locationPermissionOffGroup;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _hasLocationPermission = false;
-        _locationError = 'Location unavailable: $e';
+        _locationError = context.l10n.locationUnavailable(e);
       });
     }
   }
@@ -220,6 +370,24 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
     final position = await _resolvePosition();
     if (!mounted || position == null) return;
+    _offerRealtime(position);
+
+    // Parked or crawling: skip the write unless the heartbeat is due
+    // (issues §90.A2) — every publish is billed against every member's
+    // listener. While RTDB carries the moving dot, Firestore drops to the
+    // heartbeat alone: it's then only for older builds and the fallback.
+    final now = DateTime.now();
+    if (!shouldBroadcastPosition(
+      current: position,
+      now: now,
+      lastSent: _lastSentPosition,
+      lastSentAt: _lastSentAt,
+      minMoveMeters: _realtimeCarriesPosition
+          ? double.infinity
+          : kGroupRideMinMoveMeters,
+    )) {
+      return;
+    }
 
     try {
       await ref.read(groupRideRepositoryProvider).updateMemberLocation(
@@ -228,10 +396,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             lat: position.latitude,
             lng: position.longitude,
           );
+      _lastSentPosition = position;
+      _lastSentAt = now;
     } catch (_) {
       // A single dropped publish is not worth a visible error — the next tick
-      // is five seconds away, and the staleness badge already tells the group
-      // this rider has gone quiet.
+      // retries (the gate stays open since nothing was recorded as sent), and
+      // the staleness badge already tells the group this rider has gone
+      // quiet.
     }
   }
 
@@ -242,19 +413,18 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave group ride?'),
-        content: const Text(
-          'The others stop seeing your position. Your own ride recording '
-          'keeps running — end it from the ride screen.',
+        title: Text(dialogContext.l10n.leaveGroupRide),
+        content: Text(
+          dialogContext.l10n.othersStopSeeingPosition,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Stay'),
+            child: Text(dialogContext.l10n.stay),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('Leave', style: TextStyle(color: AppColors.danger)),
+            child: Text(dialogContext.l10n.leave, style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -266,6 +436,11 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     // tick could re-create the location document we're about to delete.
     _broadcastTimer?.cancel();
     _broadcastTimer = null;
+    _rtTimer?.cancel();
+    _rtTimer = null;
+    // No remove here: leaveGroupRide clears the RTDB dot (or the whole ride,
+    // for the creator) after the Firestore write.
+    unawaited(_rtPublisher?.stop(remove: false));
 
     try {
       await ref.read(groupRideRepositoryProvider).leaveGroupRide(
@@ -277,7 +452,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       setState(() => _leaving = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text("Couldn't leave: $e")));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.couldntLeave(e))));
       return;
     }
     if (!mounted) return;
@@ -339,10 +514,28 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       await session.setActive(true);
       await _voicePlayer.setUrl(note.audioUrl);
       await _voicePlayer.play();
+      // play() normally completes when the clip does, but only if the player
+      // wasn't already `playing`. Belt and braces: also wait for the clip to
+      // actually finish, capped just past the rules' 60 s voice-note ceiling
+      // so a stalled stream can't wedge the queue.
+      if (_voicePlayer.processingState != ProcessingState.completed &&
+          _voicePlayer.processingState != ProcessingState.idle) {
+        await _voicePlayer.processingStateStream
+            .firstWhere((s) => s == ProcessingState.completed || s == ProcessingState.idle)
+            .timeout(const Duration(seconds: 70));
+      }
     } catch (_) {
       // A clip that fails to load/play is skipped rather than stalling the
       // rest of the queue — one bad URL must not silence the whole group.
     } finally {
+      // §78.10: after a clip completes just_audio leaves `playing == true`,
+      // and play() on an already-playing player returns immediately. Without
+      // this stop(), every clip after the first returned at once and the
+      // next setUrl() cut it off. stop() resets `playing` so the next clip's
+      // play() waits for it to finish.
+      try {
+        await _voicePlayer.stop();
+      } catch (_) {}
       await _deactivateVoiceAudioSession();
       if (mounted) {
         setState(() {
@@ -389,7 +582,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     if (!mounted) return;
     if (!status.isGranted) {
       setState(() => _voiceNoteError =
-          'Microphone access is off — you can still hear the group.');
+          context.l10n.microphoneAccessOffCan);
       return;
     }
 
@@ -425,7 +618,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     } catch (e) {
       await _deactivateVoiceAudioSession();
       if (!mounted) return;
-      setState(() => _voiceNoteError = "Couldn't start recording: $e");
+      setState(() => _voiceNoteError = context.l10n.couldntStartRecording(e));
     }
   }
 
@@ -465,7 +658,10 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     try {
       final url = await _uploadService.uploadAudio(
         file,
-        folder: 'voiceNotes/${widget.groupRideId}',
+        // `<kind>/<uid>/...`: the Cloudinary ledger rule and the account-
+        // deletion sweep only accept assets in the uploader's own folder
+        // (issues §90.D2).
+        folder: 'voiceNotes/$uid/${widget.groupRideId}',
       );
       final senderName = (user?.displayName ?? '').trim().isEmpty
           ? 'Rider'
@@ -480,7 +676,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
           );
     } catch (e) {
       if (mounted) {
-        setState(() => _voiceNoteError = "Couldn't send voice note: $e");
+        setState(() => _voiceNoteError = context.l10n.couldntSendVoiceNote(e));
       }
     } finally {
       unawaited(file.delete().catchError((_) => file));
@@ -492,7 +688,19 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   void dispose() {
     _broadcastTimer?.cancel();
     _staleTicker?.cancel();
+    _heartbeatTimer?.cancel();
     _locationsSub?.cancel();
+    _rtTimer?.cancel();
+    _rtSub?.cancel();
+    // The rider is still on the ride (they may just be back on the cockpit),
+    // so their dot stays and simply ages, as the Firestore one always has.
+    unawaited(_rtPublisher?.stop(remove: false));
+    _rtLease?.release();
+    if (_rtTrusted) {
+      debugPrint('[GroupRideMap] realtime delivery: $_rtStats; '
+          'published ${_rtPublisher?.writesIssued ?? 0} '
+          '(${_rtPublisher?.writesFailed ?? 0} failed)');
+    }
     // Best-effort: if the rider navigates away mid-hold there is nobody left
     // to send the clip to anyway, so the recording is simply abandoned
     // rather than raced to finish.
@@ -519,35 +727,32 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
     return [
       for (var i = 0; i < ordered.length; i++)
-        _MemberView(
-          member: ordered[i],
-          color: colorForMember(ordered[i].userId, i),
-          isMe: ordered[i].userId == myUid,
-          position: _positionFor(ordered[i]),
-          lastUpdate: _lastUpdateFor(ordered[i]),
-        ),
+        _memberView(ordered[i], i, myUid),
     ];
   }
 
-  LatLng? _positionFor(GroupRideMember member) {
-    final live = _locations[member.userId];
-    final lat = (live?['lat'] as num?)?.toDouble() ?? member.currentLat;
-    final lng = (live?['lng'] as num?)?.toDouble() ?? member.currentLng;
-    // A member who has never published anything has no coordinates at all.
-    // Returning null (rather than defaulting to 0,0) is what keeps them off
-    // the map instead of pinned in the Gulf of Guinea.
-    if (lat == null || lng == null) return null;
-    return LatLng(lat, lng);
+  _MemberView _memberView(GroupRideMember member, int index, String? myUid) {
+    final freshest = _freshestFor(member);
+    return _MemberView(
+      member: member,
+      color: colorForMember(member.userId, index),
+      isMe: member.userId == myUid,
+      position: freshest?.position,
+      lastUpdate: freshest?.updatedAt,
+    );
   }
 
-  DateTime? _lastUpdateFor(GroupRideMember member) {
-    final raw = _locations[member.userId]?['timestamp'];
-    // serverTimestamp() reads back null on the writing device until the
-    // server round-trip lands, so fall back to whatever the roster carries.
-    if (raw is Timestamp) return raw.toDate();
-    if (raw is DateTime) return raw;
-    return member.lastLocationUpdate;
-  }
+  /// A member who has never published anything has no position at all —
+  /// null (rather than 0,0) is what keeps them off the map instead of pinned
+  /// in the Gulf of Guinea.
+  MemberPosition? _freshestFor(GroupRideMember member) =>
+      freshestMemberPosition(
+        realtime: _rtTrusted ? _rtLocations[member.userId] : null,
+        firestore: _locations[member.userId],
+        rosterLat: member.currentLat,
+        rosterLng: member.currentLng,
+        rosterUpdatedAt: member.lastLocationUpdate,
+      );
 
   void _fitToMembers(List<_MemberView> members) {
     final points = [
@@ -578,7 +783,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Widget build(BuildContext context) {
     final rideAsync = ref.watch(groupRideProvider(widget.groupRideId));
     final rosterAsync = ref.watch(groupRideMembersProvider(widget.groupRideId));
+    // Only for the AppBar's share action below — the body still switches on
+    // rideAsync directly so loading/error states render as before.
+    final rideForActions = rideAsync.valueOrNull;
     final myUid = ref.watch(currentUserProvider)?.uid;
+    final recording = ref.watch(rideRecordingProvider.select((s) =>
+        s.status == RecordingStatus.active ||
+        s.status == RecordingStatus.paused));
 
     // Side effect only — the roster/map above never renders voice notes
     // directly, this just feeds the playback queue. Riverpod dedupes
@@ -593,24 +804,55 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Group ride'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: Text(context.l10n.groupRide)),
+            if (ref.watch(groupRideLiveChannelProvider).isEnabled) ...[
+              const SizedBox(width: 8),
+              _TransportBadge(
+                live: _rtTrusted &&
+                    (ref.watch(realtimeHealthProvider).valueOrNull?.isRealtime ??
+                        false),
+              ),
+            ],
+          ],
+        ),
         actions: [
+          if (recording)
+            IconButton(
+              tooltip: context.l10n.groupRideRideStats,
+              onPressed: _openRideStats,
+              icon: const Icon(Icons.speed),
+            ),
+          if (rideForActions != null &&
+              rideForActions.status == GroupRideStatus.active &&
+              rideForActions.joinCode.isNotEmpty)
+            IconButton(
+              tooltip: context.l10n.shareRideCodeButtonTooltip,
+              onPressed: () => ShareGroupRideCodeSheet.show(
+                context,
+                code: rideForActions.joinCode,
+                rideName: rideForActions.name,
+              ),
+              icon: const Icon(Icons.ios_share),
+            ),
           TextButton(
             onPressed: _leaving ? null : _leave,
-            child: Text('Leave', style: TextStyle(color: AppColors.danger)),
+            child: Text(context.l10n.leave, style: TextStyle(color: context.palette.danger)),
           ),
         ],
       ),
       body: rideAsync.when(
         loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => _ErrorState(message: '$e'),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => _ErrorState(message: mapFirestoreError(e, context.l10n)),
         data: (ride) {
           if (ride == null) {
-            return const _ErrorState(
-              message: 'This group ride no longer exists.',
+            return _ErrorState(
+              message: context.l10n.thisGroupRideNo,
             );
           }
 
@@ -658,9 +900,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                       child: FloatingActionButton.small(
                         heroTag: 'group-ride-fit',
                         onPressed: () => _fitToMembers(members),
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: context.palette.surface,
                         child: Icon(Icons.center_focus_strong,
-                            color: AppColors.textPrimary),
+                            color: context.palette.textPrimary),
                       ),
                     ),
                   ],
@@ -681,19 +923,19 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Widget _buildVoiceNoteBar() {
     final busy = _isSendingVoiceNote;
     final label = _isRecordingVoiceNote
-        ? 'Recording — release to send'
+        ? context.l10n.recordingReleaseSend
         : busy
             ? 'Sending…'
             : _isPlayingVoiceNote
-                ? 'Playing ${_playingVoiceNoteSender ?? 'voice note'}…'
-                : 'Hold to talk';
-    final accent = _isRecordingVoiceNote ? AppColors.danger : AppColors.primary;
+                ? context.l10n.playing(_playingVoiceNoteSender ?? 'voice note')
+                : context.l10n.holdTalk;
+    final accent = _isRecordingVoiceNote ? context.palette.danger : context.palette.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: context.palette.surface,
+        border: Border(top: BorderSide(color: context.palette.border)),
       ),
       child: SafeArea(
         top: false,
@@ -710,7 +952,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                    borderRadius: BorderRadius.circular(context.shape.radiusLg),
                     border: Border.all(color: accent),
                   ),
                   child: Row(
@@ -743,13 +985,13 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             IconButton(
               onPressed: _toggleVoiceNotesMuted,
               tooltip: _voiceNotesMuted
-                  ? 'Unmute voice notes'
-                  : 'Mute voice notes',
+                  ? context.l10n.unmuteVoiceNotes
+                  : context.l10n.muteVoiceNotes,
               icon: Icon(
                 _voiceNotesMuted ? Icons.volume_off : Icons.volume_up,
                 color: _voiceNotesMuted
-                    ? AppColors.textTertiary
-                    : AppColors.textPrimary,
+                    ? context.palette.textTertiary
+                    : context.palette.textPrimary,
               ),
             ),
           ],
@@ -774,10 +1016,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         initialZoom: 14,
       ),
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.bft.throttleiq',
-        ),
+        const AppTileLayer(),
         MarkerLayer(
           markers: [
             for (final m in members)
@@ -923,8 +1162,8 @@ class _MemberList extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Text(
-            'Nobody is on this ride yet.',
-            style: TextStyle(color: AppColors.textSecondary),
+            context.l10n.nobodyThisRideYet,
+            style: TextStyle(color: context.palette.textSecondary),
           ),
         ),
       );
@@ -935,18 +1174,18 @@ class _MemberList extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: context.palette.surface,
+        border: Border(top: BorderSide(color: context.palette.border)),
       ),
       child: ListView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         children: [
           Text(
-            'Riding — ${joined.length}',
+            context.l10n.ridingJoined(joined.length),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
@@ -955,11 +1194,11 @@ class _MemberList extends StatelessWidget {
           if (pending.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              'Invited — ${pending.length} waiting',
+              context.l10n.invitedWaiting(pending.length),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
                 letterSpacing: 0.5,
               ),
             ),
@@ -979,7 +1218,7 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = view.isPending
-        ? 'Hasn\'t joined yet'
+        ? context.l10n.hasntJoinedYet
         : view.isDeclined
             ? 'Declined'
             : view.lastSeenLabel;
@@ -1010,12 +1249,12 @@ class _MemberRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              view.isMe ? '${view.member.userName} (you)' : view.member.userName,
+              view.isMe ? context.l10n.you(view.member.userName) : view.member.userName,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.palette.textPrimary,
               ),
             ),
           ),
@@ -1024,9 +1263,42 @@ class _MemberRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: (!view.isPending && !view.isDeclined && view.isStale)
-                  ? AppColors.attention
-                  : AppColors.textTertiary,
+                  ? context.palette.attention
+                  : context.palette.textTertiary,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Live" while dots arrive over the realtime channel, "Delayed" while the
+/// map is on the slower Firestore fallback — so a rider can tell a quiet
+/// group from a degraded connection.
+class _TransportBadge extends StatelessWidget {
+  final bool live;
+  const _TransportBadge({required this.live});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = live ? context.palette.primary : context.palette.attention;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, size: 8, color: color),
+          const SizedBox(width: 4),
+          Text(
+            live
+                ? context.l10n.groupRideRealtimeLive
+                : context.l10n.groupRideRealtimeDelayed,
+            style: TextStyle(fontSize: 11, color: context.palette.textPrimary),
           ),
         ],
       ),
@@ -1043,15 +1315,15 @@ class _Banner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: AppColors.attention.withValues(alpha: 0.14),
+      color: context.palette.attention.withValues(alpha: 0.14),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: 18, color: AppColors.attention),
+          Icon(Icons.info_outline, size: 18, color: context.palette.attention),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 12, color: context.palette.textPrimary),
             ),
           ),
         ],
@@ -1070,13 +1342,13 @@ class _NoPositionsHint extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 24),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          border: Border.all(color: AppColors.border),
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(context.shape.radiusMd),
+          border: Border.all(color: context.palette.border),
         ),
         child: Text(
-          'Waiting for the first position…',
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          context.l10n.waitingFirstPosition,
+          style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
         ),
       ),
     );
@@ -1095,12 +1367,12 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            Icon(Icons.error_outline, size: 48, color: context.palette.danger),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.palette.textSecondary),
             ),
           ],
         ),

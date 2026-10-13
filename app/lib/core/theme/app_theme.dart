@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_dimensions.dart';
+import 'app_shape_profile.dart';
 import 'app_theme_style.dart';
 import 'app_typography.dart';
 import 'theme_style_provider.dart';
@@ -10,31 +9,49 @@ import 'theme_style_provider.dart';
 class AppTheme {
   AppTheme._();
 
-  /// Builds the [ThemeData] for the given [AppAppearance]. Reads current
-  /// values off [AppColors] and [AppDimensions], both of which must already
-  /// have had the matching [AppColorPalette] and [AppShapeProfile] applied
-  /// (see `theme_style_provider.dart`). Display/heading type uses IBM Plex
-  /// Mono; body uses IBM Plex Sans.
+  /// Builds the [ThemeData] for the given [AppAppearance]. Resolves the
+  /// matching [AppColorPalette] and [AppShapeProfile] and registers both as
+  /// [ThemeData.extensions], which is how every widget reads them
+  /// (`context.palette` / `context.shape`, see `app_theme_context.dart`).
+  /// Display/heading type uses IBM Plex Mono; body uses IBM Plex Sans.
   ///
   /// Shape is per-appearance, not shared: Curvy gets rounded corners and
   /// roomier controls, Boxy keeps the sharp instrument-panel edges — see
   /// [AppShapeProfile.forVibe]. Nothing about the layout hierarchy changes
   /// with the appearance, only how the same widgets are drawn.
   ///
-  /// Retro remains the one color mode that is more than shape and color: it
+  /// Race (the Retro palette) remains the one color mode that is more than
+  /// shape and color: it
   /// drops body type to monospace regardless of which shape/brightness it's
-  /// paired with, which is the only style branch left in this method. See
+  /// paired with, and its mustard accent always takes dark ink text rather
+  /// than the white/surface foreground every other mode's primary button
+  /// gets — matching the "Retro (Rawblock)" deck direction, where the accent
+  /// fill is light enough that white text would fail contrast. See
   /// [AppColorPalette.retroLight]/[AppColorPalette.retroDark].
+  /// Text/icon color drawn on a filled `primary` button for [palette].
+  /// Pulled out of [build] so the WCAG contrast test can check every
+  /// palette against exactly what the button renders. Race/Retro is told
+  /// apart by its palette flag ([AppColorPalette.monoDisplay], which only the
+  /// Retro palettes set), so callers that only hold a palette get it right.
+  static Color primaryButtonForeground(AppColorPalette palette) =>
+      palette.monoDisplay
+          ? const Color(0xFF1A1A1A)
+          : (palette.isDark ? palette.surface : Colors.white);
+
   static ThemeData build(AppAppearance appearance) {
     final isDark = appearance.brightness == Brightness.dark;
-    final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
+    final base = isDark
+        ? ThemeData.dark(useMaterial3: true)
+        : ThemeData.light(useMaterial3: true);
 
-    final isMonoColorMode = appearance.colorMode == AppColorMode.retro;
+    final palette =
+        AppColorPalette.forMode(appearance.colorMode, appearance.brightness);
+    final shape = AppShapeProfile.forVibe(appearance.shapeVibe);
 
-    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Retro, where a
-    // proportional body face would break the illusion the rest of the
-    // direction is building.
-    final bodyText = isMonoColorMode
+    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Race (Retro),
+    // where a proportional body face would break the illusion the rest of
+    // the direction is building.
+    final bodyText = palette.monoDisplay
         ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
         : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText
@@ -61,8 +78,8 @@ class AppTheme {
               textStyle: bodyText.titleLarge, fontWeight: FontWeight.w600),
         )
         .apply(
-          bodyColor: AppColors.textPrimary,
-          displayColor: AppColors.textPrimary,
+          bodyColor: palette.textPrimary,
+          displayColor: palette.textPrimary,
           // Bengali fallback for every named style in the theme — see
           // AppTypography.bengaliFallback and pubspec.yaml. This is what
           // covers plain `Text(...)` widgets that take their style from
@@ -74,93 +91,94 @@ class AppTheme {
         );
 
     return base.copyWith(
-      scaffoldBackgroundColor: AppColors.background,
+      extensions: <ThemeExtension<dynamic>>[palette, shape],
+      scaffoldBackgroundColor: palette.background,
       colorScheme: isDark
           ? ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: AppColors.surface,
-              secondary: AppColors.secondary,
+              primary: palette.primary,
+              onPrimary: palette.surface,
+              secondary: palette.secondary,
               onSecondary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
-              error: AppColors.danger,
+              surface: palette.surface,
+              onSurface: palette.textPrimary,
+              error: palette.danger,
               onError: Colors.white,
-              outline: AppColors.border,
+              outline: palette.border,
             )
           : ColorScheme.light(
-              primary: AppColors.primary,
+              primary: palette.primary,
               onPrimary: Colors.white,
-              secondary: AppColors.secondary,
+              secondary: palette.secondary,
               onSecondary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
-              error: AppColors.danger,
+              surface: palette.surface,
+              onSurface: palette.textPrimary,
+              error: palette.danger,
               onError: Colors.white,
-              outline: AppColors.border,
+              outline: palette.border,
             ),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: palette.background,
+        foregroundColor: palette.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle:
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         titleTextStyle: GoogleFonts.ibmPlexMono(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ).copyWith(fontFamilyFallback: AppTypography.bengaliFallback),
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: palette.textPrimary),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: palette.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          side: BorderSide(color: AppColors.border, width: AppDimensions.outlineWidth),
+          borderRadius: BorderRadius.circular(shape.radiusXl),
+          side: BorderSide(color: palette.border, width: shape.outlineWidth),
         ),
         margin: EdgeInsets.zero,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: palette.surface,
         contentPadding: EdgeInsets.symmetric(
-            horizontal: AppDimensions.fieldPaddingH,
-            vertical: AppDimensions.fieldPaddingV),
+            horizontal: shape.fieldPaddingH, vertical: shape.fieldPaddingV),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(shape.radiusMd),
+          borderSide: BorderSide(color: palette.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(shape.radiusMd),
+          borderSide: BorderSide(color: palette.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderRadius: BorderRadius.circular(shape.radiusMd),
+          borderSide: BorderSide(color: palette.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: BorderSide(color: AppColors.danger),
+          borderRadius: BorderRadius.circular(shape.radiusMd),
+          borderSide: BorderSide(color: palette.danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: BorderSide(color: AppColors.danger, width: 2),
+          borderRadius: BorderRadius.circular(shape.radiusMd),
+          borderSide: BorderSide(color: palette.danger, width: 2),
         ),
-        hintStyle: TextStyle(color: AppColors.textTertiary),
-        labelStyle: TextStyle(color: AppColors.textSecondary),
+        hintStyle: TextStyle(color: palette.textTertiary),
+        labelStyle: TextStyle(color: palette.textSecondary),
       ),
       // Primary action = accent pop (lime on Carbon Mono, blue on Editorial,
       // and whatever the selected skin's `primary` is).
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: isDark ? AppColors.surface : Colors.white,
+          backgroundColor: palette.primary,
+          foregroundColor: primaryButtonForeground(palette),
           elevation: 0,
-          minimumSize: Size.fromHeight(AppDimensions.controlHeight),
+          minimumSize: Size.fromHeight(shape.controlHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(shape.radiusMd),
           ),
           textStyle: GoogleFonts.ibmPlexMono(
             fontSize: 16,
@@ -172,13 +190,12 @@ class AppTheme {
       // Secondary action = neutral outline.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          minimumSize: Size.fromHeight(AppDimensions.controlHeight),
+          foregroundColor: palette.textPrimary,
+          minimumSize: Size.fromHeight(shape.controlHeight),
           side: BorderSide(
-              color: AppColors.textPrimary,
-              width: AppDimensions.emphasisOutlineWidth),
+              color: palette.textPrimary, width: shape.emphasisOutlineWidth),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(shape.radiusMd),
           ),
           textStyle: GoogleFonts.ibmPlexMono(
             fontSize: 16,
@@ -189,28 +206,28 @@ class AppTheme {
       ),
       // Links = accent pop.
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+        style: TextButton.styleFrom(foregroundColor: palette.primary),
       ),
       dividerTheme: DividerThemeData(
-        color: AppColors.border,
+        color: palette.border,
         thickness: 1,
         space: 0,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textTertiary,
+        backgroundColor: palette.surface,
+        selectedItemColor: palette.primary,
+        unselectedItemColor: palette.textTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
       // Ink snackbar for contrast against either palette.
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.ink,
-        contentTextStyle: GoogleFonts.ibmPlexSans(color: AppColors.onInk)
+        backgroundColor: palette.ink,
+        contentTextStyle: GoogleFonts.ibmPlexSans(color: palette.onInk)
             .copyWith(fontFamilyFallback: AppTypography.bengaliFallback),
-        actionTextColor: AppColors.primaryHighlight,
+        actionTextColor: palette.primaryHighlight,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(shape.radiusMd),
         ),
         behavior: SnackBarBehavior.floating,
       ),

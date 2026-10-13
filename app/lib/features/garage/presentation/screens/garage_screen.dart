@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -13,6 +13,9 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../maintenance/presentation/widgets/next_due_line.dart';
 
 /// The Profile tab's root screen (route `/home/profile`).
 ///
@@ -29,7 +32,7 @@ class GarageScreen extends ConsumerWidget {
     final bikesAsync = ref.watch(garageProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -48,7 +51,7 @@ class GarageScreen extends ConsumerWidget {
                   IconButton(
                     onPressed: () => context.push('/settings'),
                     icon: const Icon(Icons.settings_outlined),
-                    tooltip: 'Settings',
+                    tooltip: context.l10n.settingsTitle,
                   ),
                 ],
               ),
@@ -56,28 +59,34 @@ class GarageScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-              child: Text('Your Bikes', style: display(22)),
+              child: Text(context.l10n.yourBikesTitle, style: display(context, 22)),
             ),
             Expanded(
               child: bikesAsync.when(
                 loading: () => Center(
-                    child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, _) => Center(
-                    child: Text('Error: $e',
-                        style: TextStyle(color: AppColors.danger))),
+                    child: CircularProgressIndicator(color: context.palette.primary)),
+                error: (e, _) => ErrorView(
+                  error: e,
+                  onRetry: () => ref.invalidate(garageProvider),
+                ),
                 data: (bikes) {
-                  if (bikes.isEmpty) return const _EmptyGarage();
+                  final archived = ref.watch(archivedBikesProvider);
+                  if (bikes.isEmpty && archived.isEmpty) {
+                    return const _EmptyGarage();
+                  }
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
                         AppDimensions.paddingMd, AppDimensions.paddingLg),
-                    itemCount: bikes.length + 1,
+                    itemCount: bikes.length + 1 + (archived.isEmpty ? 0 : 1),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => i < bikes.length
                         ? _BikeCard(bike: bikes[i])
-                        : DashedAddButton(
-                            label: 'Add a bike',
-                            onTap: () => context.go('/home/profile/add'),
-                          ),
+                        : i == bikes.length
+                            ? DashedAddButton(
+                                label: context.l10n.addABike,
+                                onTap: () => context.go('/home/profile/add'),
+                              )
+                            : _ArchivedBikesSection(bikes: archived),
                   );
                 },
               ),
@@ -99,7 +108,7 @@ class _ProfileSummary extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final profile = ref.watch(myProfileProvider).valueOrNull;
-    final name = profile?.bestName ?? user?.displayName ?? 'Rider';
+    final name = profile?.bestName ?? user?.displayName ?? context.l10n.riderFallbackName;
 
     return GestureDetector(
       onTap: () => _showMenu(context),
@@ -118,11 +127,11 @@ class _ProfileSummary extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(name,
-                    style: display(18, letterSpacing: 0),
+                    style: display(context, 18, letterSpacing: 0),
                     overflow: TextOverflow.ellipsis),
-                Text('View profile',
+                Text(context.l10n.viewProfile,
                     style:
-                        TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        TextStyle(fontSize: 12, color: context.palette.textSecondary)),
               ],
             ),
           ),
@@ -144,26 +153,26 @@ class _ProfileSummary extends ConsumerWidget {
   Future<void> _showMenu(BuildContext context) async {
     final destination = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.person_outline, color: AppColors.primary),
-              title: const Text('Profile'),
+              leading: Icon(Icons.person_outline, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.navProfileLabel),
               // The read-only profile view, not the edit form — editing is an
               // action inside it now.
               onTap: () => Navigator.pop(sheetContext, '/profile'),
             ),
             ListTile(
-              leading: Icon(Icons.place_outlined, color: AppColors.primary),
-              title: const Text('My Places'),
+              leading: Icon(Icons.place_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.myPlaces),
               onTap: () => Navigator.pop(sheetContext, '/places/mine'),
             ),
             ListTile(
-              leading: Icon(Icons.ios_share, color: AppColors.primary),
-              title: const Text('My Shared Rides'),
+              leading: Icon(Icons.ios_share, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.mySharedRides),
               onTap: () => Navigator.pop(sheetContext, '/rides/mine'),
             ),
           ],
@@ -185,15 +194,15 @@ class _EmptyGarage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.garage_outlined, size: 56, color: AppColors.textTertiary),
+            Icon(Icons.garage_outlined, size: 56, color: context.palette.textTertiary),
             const SizedBox(height: 16),
-            Text('No bikes yet', style: display(20)),
+            Text(context.l10n.noBikesYet, style: display(context, 20)),
             const SizedBox(height: 6),
-            Text('Add your first bike to get started',
-                style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+            Text(context.l10n.addFirstBikeGet,
+                style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
             const SizedBox(height: 20),
             DashedAddButton(
-              label: 'Add a bike',
+              label: context.l10n.addABike,
               onTap: () => context.go('/home/profile/add'),
             ),
           ],
@@ -212,7 +221,7 @@ class _BikeCard extends ConsumerWidget {
     return EditorialCard(
       padding: EdgeInsets.zero,
       onTap: () => context.go('/home/profile/${bike.id}'),
-      borderColor: bike.isActive ? AppColors.primary : AppColors.border,
+      borderColor: bike.isActive ? context.palette.primary : context.palette.border,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -226,13 +235,13 @@ class _BikeCard extends ConsumerWidget {
                 height: 116,
                 iconSize: 44,
                 borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(AppDimensions.radiusXl)),
+                    top: Radius.circular(context.shape.radiusXl)),
               ),
               if (bike.isActive)
-                const Positioned(
+                Positioned(
                   top: 12,
                   right: 12,
-                  child: EditorialPill('Active', tone: PillTone.accent),
+                  child: EditorialPill(context.l10n.activePill, tone: PillTone.accent),
                 ),
             ],
           ),
@@ -244,42 +253,42 @@ class _BikeCard extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(bike.displayName, style: display(18, letterSpacing: 0)),
+                      child: Text(bike.displayName, style: display(context, 18, letterSpacing: 0)),
                     ),
                     if (!bike.isActive)
                       TextButton(
                         onPressed: () =>
                             ref.read(garageProvider.notifier).setActiveBike(bike.id),
                         style: TextButton.styleFrom(
-                            foregroundColor: AppColors.textSecondary,
+                            foregroundColor: context.palette.textSecondary,
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(60, 32)),
-                        child: const Text('Set active', style: TextStyle(fontSize: 12)),
+                        child: Text(context.l10n.setActive, style: const TextStyle(fontSize: 12)),
                       ),
                   ],
                 ),
                 if (bike.cc != null)
                   Text('${bike.cc}cc',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                 const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
                       child: StatCell(
                         value: SpeedFormatter.distanceKm(bike.totalDistanceM),
-                        label: 'total',
+                        label: context.l10n.totalLower,
                         valueSize: 18,
                       ),
                     ),
                     Expanded(
-                      child: StatCell(value: '${bike.rideCount}', label: 'rides', valueSize: 18),
+                      child: StatCell(value: '${bike.rideCount}', label: context.l10n.ridesLower, valueSize: 18),
                     ),
                     Expanded(
                       child: StatCell(
                         value: bike.lastRideAt != null
                             ? '${DateTime.now().difference(bike.lastRideAt!).inDays}d'
                             : '—',
-                        label: 'last ride',
+                        label: context.l10n.lastRide,
                         valueSize: 18,
                       ),
                     ),
@@ -288,30 +297,30 @@ class _BikeCard extends ConsumerWidget {
                 const SizedBox(height: 14),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                // behavior: opaque is required here — this GestureDetector is
-                // nested inside the whole card's own onTap (navigates to bike
-                // detail, above). Without it, a plain GestureDetector only
-                // hit-tests the painted pixels of its child (the Text/Icon
-                // glyphs), not the full row — Row defaults to
-                // MainAxisSize.max, so it stretches the width of the card,
-                // but most of that width is empty space the child doesn't
-                // paint into. A tap landing in that empty space fell through
-                // to the outer card's onTap instead, silently sending riders
-                // to bike detail instead of maintenance — reported as
-                // "maintenance page is lost, I can't find it anywhere,"
-                // because the row LOOKED like a full-width tappable link but
-                // usually wasn't. opaque makes the whole row a real hit
-                // target regardless of what's painted there.
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => context.go('/home/maintenance?bikeId=${bike.id}'),
-                  child: Row(
+                // A real button with a full-width, 48 dp target rather than a
+                // ~28 dp text row nested in the card's own onTap: a tap
+                // anywhere on it goes to maintenance, never falls through to
+                // bike detail (grill §3.2.2). Pushed rather than
+                // go()-ed so the Maintenance screen's back bar returns here.
+                TextButton.icon(
+                  onPressed: () =>
+                      context.push('/home/maintenance?bikeId=${bike.id}'),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    alignment: Alignment.centerLeft,
+                    padding: EdgeInsets.zero,
+                    foregroundColor: context.palette.primary,
+                  ),
+                  icon: const Icon(Icons.build_outlined, size: 18),
+                  label: Row(
                     children: [
-                      Text('Tap for maintenance',
-                          style: display(14,
-                              letterSpacing: 0, color: AppColors.primary)),
-                      const SizedBox(width: 6),
-                      Icon(Icons.arrow_forward, size: 16, color: AppColors.primary),
+                      Text(context.l10n.maintenance,
+                          style: display(context, 14,
+                              letterSpacing: 0, color: context.palette.primary)),
+                      const SizedBox(width: 10),
+                      // This bike's next job, so a multi-bike rider sees
+                      // every bike's without switching on the page.
+                      Expanded(child: NextDueLine(bikeId: bike.id)),
                     ],
                   ),
                 ),
@@ -319,6 +328,51 @@ class _BikeCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bikes the rider archived: out of the garage and every picker, but with
+/// their rides still in history and stats. Collapsed by default — these are
+/// bikes the rider chose to put away.
+class _ArchivedBikesSection extends ConsumerWidget {
+  final List<BikeEntity> bikes;
+  const _ArchivedBikesSection({required this.bikes});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return EditorialCard(
+      padding: EdgeInsets.zero,
+      child: Theme(
+        // ExpansionTile draws its own dividers when expanded; inside a card
+        // with its own border they read as stray lines.
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: const Key('archived-bikes-section'),
+          leading: Icon(Icons.inventory_2_outlined, color: context.palette.textSecondary),
+          title: Text(context.l10n.archivedBikes(bikes.length),
+              style: display(context, 16, letterSpacing: 0)),
+          children: [
+            for (final bike in bikes)
+              ListTile(
+                title: Text(bike.displayName),
+                subtitle: Text(
+                    [
+                      context.l10n.ridesAndDistance(bike.rideCount, SpeedFormatter.distanceKm(bike.totalDistanceM)),
+                      if (bike.daysUntilPurge() != null)
+                        context.l10n.archivedPurgesIn(bike.daysUntilPurge()!),
+                    ].join(' · '),
+                    style: TextStyle(color: context.palette.textSecondary)),
+                onTap: () => context.go('/home/profile/${bike.id}'),
+                trailing: TextButton(
+                  onPressed: () =>
+                      ref.read(garageProvider.notifier).unarchiveBike(bike.id),
+                  child: Text(context.l10n.unarchive),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

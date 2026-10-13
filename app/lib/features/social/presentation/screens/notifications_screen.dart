@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../providers/group_ride_providers.dart';
 import '../providers/notification_providers.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -39,25 +41,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final notificationsAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Notifications')),
+      backgroundColor: context.palette.background,
+      appBar: AppBar(title: Text(context.l10n.notifications)),
       body: notificationsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(notificationsProvider),
+        ),
         data: (notifications) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _markAllReadOnce(notifications));
 
           if (notifications.isEmpty) {
             return Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.notifications_none, size: 64, color: AppColors.textTertiary),
-                    SizedBox(height: 16),
-                    Text('No notifications yet',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    Icon(Icons.notifications_none, size: 64, color: context.palette.textTertiary),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.noNotificationsYet,
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
               ),
@@ -95,6 +100,8 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
         return '${notification.fromName} started following you';
       case NotificationType.groupRideInvite:
         return '${notification.fromName} invited you to ride together';
+      case NotificationType.groupRideJoined:
+        return '${notification.fromName} joined your ride';
     }
   }
 
@@ -130,11 +137,30 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
       setState(() => _accepting = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text("Couldn't join the ride: $e")));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.couldntJoinRide(e))));
       return;
     }
     if (!mounted) return;
     setState(() => _accepting = false);
+
+    // Best-effort: tells the inviter their friend actually showed up, same
+    // "written from the joining rider's device" model as joining by code
+    // (join_group_ride_by_code_sheet.dart). notifyGroupRideInvite's `fromUid`
+    // is always the ride's creator — inviteUsers is creator-only — so the
+    // invite notification we're accepting already tells us who to notify back.
+    try {
+      await ref.read(notificationRepositoryProvider).notifyGroupRideJoined(
+            toUid: notification.fromUid,
+            fromUid: user.uid,
+            fromName: (user.displayName ?? '').trim().isEmpty
+                ? 'Rider'
+                : user.displayName!.trim(),
+            groupRideId: groupRideId,
+            fromPhotoUrl: user.photoURL,
+          );
+    } catch (_) {/* creator just won't find out until they open the ride */}
+
+    if (!mounted) return;
     context.push('/group-ride/$groupRideId');
   }
 
@@ -143,22 +169,26 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
       _acceptGroupRideInvite();
       return;
     }
+    if (notification.isViewableGroupRideJoined) {
+      context.push('/group-ride/${notification.groupRideId}');
+      return;
+    }
     context.push('/profile/${notification.fromUid}');
   }
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: notification.read ? AppColors.surface : AppColors.primary.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      color: notification.read ? context.palette.surface : context.palette.primary.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(context.shape.radiusMd),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         onTap: _accepting ? null : _onTap,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(context.shape.radiusMd),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             children: [
@@ -170,13 +200,15 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                   children: [
                     Text(_label(),
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                            fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
                     const SizedBox(height: 2),
                     Text(
                         notification.isActionableGroupRideInvite
-                            ? '${_relativeTime()} · tap to join'
-                            : _relativeTime(),
-                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                            ? context.l10n.tapJoin(_relativeTime())
+                            : notification.isViewableGroupRideJoined
+                                ? context.l10n.tapView(_relativeTime())
+                                : _relativeTime(),
+                        style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                   ],
                 ),
               ),
@@ -185,15 +217,16 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primary),
+                      strokeWidth: 2, color: context.palette.primary),
                 )
-              else if (notification.isActionableGroupRideInvite)
-                Icon(Icons.groups_outlined, size: 20, color: AppColors.primary),
+              else if (notification.isActionableGroupRideInvite ||
+                  notification.isViewableGroupRideJoined)
+                Icon(Icons.groups_outlined, size: 20, color: context.palette.primary),
               if (!notification.read)
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: context.palette.primary, shape: BoxShape.circle),
                 ),
             ],
           ),

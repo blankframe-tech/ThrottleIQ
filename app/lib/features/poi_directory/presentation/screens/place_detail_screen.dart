@@ -1,28 +1,31 @@
-import 'dart:async';
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/review_entity.dart';
 import '../../domain/place_directions.dart';
 import '../providers/places_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../domain/place_tags.dart';
+import '../place_category_l10n.dart';
+import '../place_tag_l10n.dart';
+import '../widgets/place_card.dart';
+import '../widgets/place_launch_actions.dart';
+import '../widgets/place_rating_badges.dart';
 
 /// Place info header + reviews list + "Add your review" (star picker + text).
 ///
-/// Submitting a review writes the new review doc, then recomputes the
-/// place's ratingSum/ratingCount (`ReviewRepository.addReviewAndUpdatePlaceRating`)
-/// — see that method's doc comment for why those are two sequential writes
-/// rather than one atomic transaction (the places/{placeId} security rule
-/// needs the review to already exist to authorize the rating bump).
+/// Submitting a review writes the new review doc and recomputes the
+/// place's ratingSum/ratingCount in one transaction
+/// (`ReviewRepository.addReviewAndUpdatePlaceRating`) — the places/{placeId}
+/// security rule only allows the bump in the same commit that creates the
+/// rider's review (issues §101.S1).
 class PlaceDetailScreen extends ConsumerStatefulWidget {
   final String placeId;
   const PlaceDetailScreen({super.key, required this.placeId});
@@ -64,7 +67,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
       if (existingReviewId != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("You've already reviewed this place.")),
+            SnackBar(content: Text(context.l10n.youveAlreadyReviewedThis)),
           );
         }
         return;
@@ -91,7 +94,7 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not submit review: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSubmitReview(e))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -103,16 +106,24 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
     final placeAsync = ref.watch(placeDetailProvider(widget.placeId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(placeAsync.valueOrNull?.name ?? 'Place')),
+      backgroundColor: context.palette.background,
+      appBar: AppBar(
+        title: Text(placeAsync.valueOrNull?.name ?? context.l10n.place),
+        actions: [
+          if (placeAsync.valueOrNull != null)
+            PlaceSaveButton(place: placeAsync.valueOrNull!, iconOnly: true),
+        ],
+      ),
       body: placeAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(placeDetailProvider(widget.placeId)),
+        ),
         data: (place) {
           if (place == null) {
             return Center(
-              child: Text('Place not found', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(context.l10n.placeNotFound, style: TextStyle(color: context.palette.textSecondary)),
             );
           }
           return _PlaceDetailBody(
@@ -154,23 +165,51 @@ class _PlaceDetailBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       children: [
+        // §97.4: Added a photo banner to PlaceDetailScreen. We display the first photo in the
+        // place.photoUrls array if available, clipped with a border radius for aesthetic appeal.
+        if (place.photoUrls.isNotEmpty) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              place.photoUrls.first,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              // issues §101.P6: decode at the banner's width, not the
+              // photo's full upload resolution.
+              cacheWidth: (MediaQuery.sizeOf(context).width *
+                      MediaQuery.devicePixelRatioOf(context))
+                  .round(),
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: ColoredBox(color: context.palette.surfaceVariant),
+                    ),
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         _PlaceHeader(place: place),
         const SizedBox(height: 24),
         Text(
-          'Add your review',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          context.l10n.addReview,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 8),
         Row(
           children: [
             for (int i = 1; i <= 5; i++)
               IconButton(
+                tooltip: context.l10n.rateThisPlace,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: () => onStarsChanged(i),
                 icon: Icon(
                   i <= selectedStars ? Icons.star : Icons.star_border,
-                  color: AppColors.warning,
+                  color: context.palette.warning,
                 ),
               ),
           ],
@@ -179,8 +218,8 @@ class _PlaceDetailBody extends ConsumerWidget {
         TextField(
           controller: reviewController,
           maxLines: 3,
-          style: TextStyle(color: AppColors.textPrimary),
-          decoration: const InputDecoration(hintText: 'Share your experience...'),
+          style: TextStyle(color: context.palette.textPrimary),
+          decoration: InputDecoration(hintText: context.l10n.shareExperience),
         ),
         const SizedBox(height: 12),
         ValueListenableBuilder<TextEditingValue>(
@@ -196,24 +235,27 @@ class _PlaceDetailBody extends ConsumerWidget {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Submit review'),
+                  : Text(context.l10n.submitReview),
             );
           },
         ),
         const SizedBox(height: 24),
         Text(
-          'Reviews',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          context.l10n.reviews,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
         reviewsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => Text('$e', style: TextStyle(color: AppColors.danger)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+          error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () => ref.invalidate(reviewsForPlaceProvider(place.id)),
+          ),
           data: (reviews) {
             if (reviews.isEmpty) {
               return Text(
-                'No reviews yet — be the first!',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                context.l10n.noReviewsYetBe,
+                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               );
             }
             return Column(
@@ -248,7 +290,7 @@ class _PlaceHeader extends StatelessWidget {
                 height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: context.palette.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),
@@ -261,38 +303,40 @@ class _PlaceHeader extends StatelessWidget {
                     Text(
                       place.name,
                       style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          fontSize: 17, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
                     ),
-                    Text(place.category.displayName,
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    Text(place.category.localizedName(context.l10n),
+                        style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.star, size: 16, color: AppColors.warning),
-                      const SizedBox(width: 2),
-                      Text(
-                        place.ratingCount == 0 ? '—' : place.averageRating.toStringAsFixed(1),
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '${place.ratingCount} review${place.ratingCount == 1 ? '' : 's'}',
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+              if (place.verified)
+                Tooltip(
+                  message: context.l10n.placesVerifiedOnlyHint,
+                  child: Icon(Icons.verified, size: 20, color: context.palette.success),
+                ),
             ],
           ),
+          const SizedBox(height: 10),
+          PlaceRatingBadges(place: place),
+          if (place.tags.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final tag in PlaceTag.values)
+                  if (place.tags.contains(tag))
+                    Chip(
+                      visualDensity: VisualDensity.compact,
+                      label: Text('${tag.icon} ${tag.localizedName(context.l10n)}',
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
-          Container(height: 1, color: AppColors.border),
+          Container(height: 1, color: context.palette.border),
           const SizedBox(height: 12),
           // Address is optional on submission (and absent on Overpass imports
           // with no addr:* tags), so an empty one is normal — skip the row
@@ -301,11 +345,11 @@ class _PlaceHeader extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.location_on_outlined, size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(place.address,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                 ),
               ],
             ),
@@ -313,9 +357,9 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.phone_outlined, size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.phone!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text(place.phone!, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ],
@@ -323,10 +367,87 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.access_time, size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.hours!, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text(place.hours!, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               ],
+            ),
+          ],
+          if (!place.category.isSafetyPoint) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: context.palette.border),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.map_outlined, size: 13, color: context.palette.textSecondary),
+                            const SizedBox(width: 4),
+                            Text('Google Maps',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.palette.textSecondary)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          place.hasGoogleRating
+                              ? '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})'
+                              : context.l10n.n0NotGoogle,
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: context.palette.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: context.palette.border,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.two_wheeler, size: 13, color: context.palette.primary),
+                            const SizedBox(width: 4),
+                            Text('ThrottleIQ',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.palette.textSecondary)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          place.hasThrottleIqRating
+                              ? '★ ${place.averageRating.toStringAsFixed(1)} (${place.ratingCount})'
+                              : context.l10n.n00Reviews,
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: context.palette.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           const SizedBox(height: 14),
@@ -341,77 +462,11 @@ class _PlaceHeader extends StatelessWidget {
 ///
 /// Directions is the primary action — for a petrol pump or a garage, getting
 /// there is the whole reason the rider opened this screen, so it's a filled
-/// button at full width rather than an icon in the app bar.
+/// button at full width rather than an icon in the app bar. The launch logic
+/// is shared with the hub's cards (see [PlaceLaunchActions]).
 class _PlaceActions extends ConsumerWidget {
   final PlaceEntity place;
   const _PlaceActions({required this.place});
-
-  /// Opens the rider's maps app at driving directions to this place.
-  ///
-  /// `LaunchMode.externalApplication` matters: the default mode can open the
-  /// link in an in-app webview on Android, which produces a *map of the route*
-  /// with no live guidance — the opposite of what "Directions" promises. This
-  /// forces the real Google Maps app (or the browser if it isn't installed).
-  ///
-  /// On iOS, if that fails outright we retry with Apple Maps, which is always
-  /// present. A failure on either is reported rather than swallowed: a button
-  /// that silently does nothing is worse than one that says why.
-  Future<void> _openDirections(BuildContext context, WidgetRef ref) async {
-    // Started *before* handing off to the external app, not after: once
-    // launchUrl backgrounds ThrottleIQ, there is no foreground window left for
-    // a location-permission prompt to appear in. Silently no-ops (see
-    // RideRecordingNotifier.startRide) if a ride is already active/paused, if
-    // there's no bike, or if permission is missing — a rider who only wanted
-    // directions should never see an error from the ride the tap also
-    // started.
-    unawaited(ref.read(rideRecordingProvider.notifier).startRide());
-
-    final google = googleMapsDirectionsUri(
-      latitude: place.latitude,
-      longitude: place.longitude,
-    );
-
-    var launched = false;
-    try {
-      launched = await launchUrl(google, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      launched = false;
-    }
-
-    if (!launched && Platform.isIOS) {
-      final apple = appleMapsDirectionsUri(
-        latitude: place.latitude,
-        longitude: place.longitude,
-        label: place.name,
-      );
-      try {
-        launched =
-            await launchUrl(apple, mode: LaunchMode.externalApplication);
-      } catch (_) {
-        launched = false;
-      }
-    }
-
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't open a maps app for directions")),
-      );
-    }
-  }
-
-  Future<void> _call(BuildContext context, Uri uri) async {
-    var launched = false;
-    try {
-      launched = await launchUrl(uri);
-    } catch (_) {
-      launched = false;
-    }
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't open the dialler")),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -423,17 +478,23 @@ class _PlaceActions extends ConsumerWidget {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => _openDirections(context, ref),
+            onPressed: () => PlaceLaunchActions.openDirections(context, ref, place),
             icon: const Icon(Icons.directions, size: 18),
-            label: const Text('Directions'),
+            label: Text(context.l10n.directions),
           ),
         ),
         if (tel != null) ...[
           const SizedBox(width: 8),
           OutlinedButton.icon(
-            onPressed: () => _call(context, tel),
+            onPressed: () => PlaceLaunchActions.call(context, tel),
+            // The theme's minimumSize is Size.fromHeight (infinite width),
+            // which inside a Row with no Expanded fails layout and blanks
+            // the whole screen for any place that has a phone number.
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size(0, context.shape.controlHeight),
+            ),
             icon: const Icon(Icons.phone, size: 18),
-            label: const Text('Call'),
+            label: Text(context.l10n.call),
           ),
         ],
       ],
@@ -460,25 +521,25 @@ class _ReviewTile extends StatelessWidget {
                   (i) => Icon(
                     i < review.stars ? Icons.star : Icons.star_border,
                     size: 14,
-                    color: AppColors.warning,
+                    color: context.palette.warning,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                isOwn ? 'You' : 'Rider',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                isOwn ? context.l10n.youLabel : context.l10n.riderFallbackName,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
               ),
               const Spacer(),
               Text(
                 '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
-                style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
               ),
             ],
           ),
           if (review.text.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(review.text, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            Text(review.text, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
           ],
         ],
       ),

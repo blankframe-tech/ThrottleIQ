@@ -1,15 +1,20 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:sqflite/sqflite.dart';
 
 import '../database/database_helper.dart';
 import '../database/daos/bike_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../database/daos/ride_point_dao.dart';
+import '../services/cloudinary_upload_service.dart';
+import '../utils/bike_image_resolver.dart';
+import 'maintenance_settings_sync.dart';
+import '../database/daos/maintenance_dao.dart';
+import '../database/daos/fuel_log_dao.dart';
+import '../../features/maintenance/data/models/fuel_log_model.dart';
+import 'pull_watermark.dart';
 import 'ride_track_codec.dart';
 
 class CloudRepository {
@@ -23,6 +28,15 @@ class CloudRepository {
   late final RideDao _rideDao = RideDao();
   late final RidePointDao _pointDao = RidePointDao();
   late final BikeDao _bikeDao = BikeDao();
+  CloudinaryUploadService? _uploadService;
+
+  CloudinaryUploadService get _cloudinaryUploadService =>
+      _uploadService ??= CloudinaryUploadService();
+
+  @visibleForTesting
+  void setCloudinaryUploadServiceForTesting(CloudinaryUploadService? service) {
+    _uploadService = service;
+  }
 
   /// Deletes a bike's remote copy, and the rides hanging off it.
   ///
@@ -34,6 +48,13 @@ class CloudRepository {
   /// Best-effort by design — the caller marks the tombstone synced only when
   /// this returns without throwing, so an offline delete is simply retried on
   /// the next sync while the local tombstone keeps the bike gone meanwhile.
+  ///
+  /// Only reached by an explicit "delete bike and all its rides" — the
+  /// default is now archiving, which deletes nothing. Each ride's `track`
+  /// chunks go too (Firestore never deletes a subcollection with its parent,
+  /// so they used to be orphaned), and the deletes are committed in chunks
+  /// because a single batch fails outright past 500 writes — which a bike
+  /// with a long history reached easily once track chunks are counted.
   Future<void> deleteBikeRemote(String uid, String bikeId) async {
     final userDoc = _firestore.collection('users').doc(uid);
 
@@ -42,12 +63,39 @@ class CloudRepository {
         .where('bike_id', isEqualTo: bikeId)
         .get();
 
-    final batch = _firestore.batch();
+    // Children before parents, and the bike last: if a later chunk fails,
+    // the retry re-queries by bike_id and still finds the rides it missed.
+    final refs = <DocumentReference>[];
     for (final ride in rides.docs) {
-      batch.delete(ride.reference);
+      final track = await ride.reference.collection('track').get();
+      refs.addAll(track.docs.map((d) => d.reference));
     }
-    batch.delete(userDoc.collection('bikes').doc(bikeId));
-    await batch.commit();
+    refs.addAll(rides.docs.map((d) => d.reference));
+    // Its maintenance settings backup (issues §88.2) — otherwise orphaned.
+    refs.add(MaintenanceSettingsSync.docRef(_firestore, uid, bikeId));
+    refs.add(userDoc.collection('bikes').doc(bikeId));
+    await _deleteInChunks(refs);
+  }
+
+  /// Firestore caps a batch at 500 writes; 400 leaves headroom.
+  static const deleteChunkSize = 400;
+
+  /// Splits [refs] into batches of at most [deleteChunkSize], in order.
+  /// Pulled out so the chunking itself is testable without Firestore.
+  @visibleForTesting
+  static List<List<T>> chunkForDelete<T>(List<T> refs) => [
+        for (var i = 0; i < refs.length; i += deleteChunkSize)
+          refs.sublist(i, (i + deleteChunkSize).clamp(0, refs.length)),
+      ];
+
+  Future<void> _deleteInChunks(List<DocumentReference> refs) async {
+    for (final chunk in chunkForDelete(refs)) {
+      final batch = _firestore.batch();
+      for (final ref in chunk) {
+        batch.delete(ref);
+      }
+      await batch.commit();
+    }
   }
 
   /// Upload unsynced rides to Firestore and mark them as synced.
@@ -66,9 +114,10 @@ class CloudRepository {
   Future<void> uploadRides(String uid, List<Map<String, dynamic>> rides) async {
     if (rides.isEmpty) return;
 
-    final collection = _firestore.collection('users').doc(uid).collection('rides');
+    final collection =
+        _firestore.collection('users').doc(uid).collection('rides');
     Map<String, dynamic> payload(Map<String, dynamic> ride) => {
-          ...ride,
+          ...ridePayload(ride),
           'syncedAt': FieldValue.serverTimestamp(),
         };
 
@@ -97,45 +146,288 @@ class CloudRepository {
         await collection.doc(ride['id']).set(payload(ride));
         await _rideDao.updateSyncedStatus(ride['id'], true);
       } catch (e) {
-        debugPrint('[CloudRepository] ride upload rejected for ${ride['id']}: $e');
+        debugPrint(
+            '[CloudRepository] ride upload rejected for ${ride['id']}: $e');
       }
     }
   }
 
-  /// Upload unsynced bikes to Firestore and mark them as synced
-  Future<void> uploadBikes(String uid, List<Map<String, dynamic>> bikes) async {
-    final batch = _firestore.batch();
-    for (final bike in bikes) {
-      final docRef = _firestore.collection('users').doc(uid).collection('bikes').doc(bike['id']);
-      batch.set(docRef, {
-        ...bike,
-        'syncedAt': FieldValue.serverTimestamp(),
-      });
+  /// A local ride row as it should be written to Firestore.
+  ///
+  /// `track_synced` is this device's own bookkeeping (has *my* copy of the
+  /// trail gone up?) and means nothing to another device. It's also a column
+  /// older app versions don't have, and [downloadRides] inserts cloud fields
+  /// verbatim, so shipping it would make every new ride fail to download on
+  /// a device that hasn't updated yet.
+  /// `route_id`/`route_name` are only sent when the ride actually followed a
+  /// saved route (schema v17, issues §78.21). An ordinary ride's document
+  /// therefore looks exactly as it did before those columns existed, so a
+  /// device still on an older build keeps downloading it — the same rule
+  /// [bikePayload] applies to `archived`, and for the same reason.
+  @visibleForTesting
+  static Map<String, dynamic> ridePayload(Map<String, dynamic> ride) {
+    final out = Map<String, dynamic>.from(ride)..remove('track_synced');
+    if (out['route_id'] == null) {
+      out.remove('route_id');
+      out.remove('route_name');
     }
-    await batch.commit();
+    // Same rule for the v25 overspeed count: a legacy ride (NULL) keeps the
+    // document shape it always had; a counted ride uploads it like the other
+    // event counts.
+    if (out['overspeed_count'] == null) out.remove('overspeed_count');
+    // And for the v26 cornering/g/elevation figures, each on its own: a
+    // ride can have elevation (backfilled) but no lean (never measured).
+    for (final key in rideV26PayloadKeys) {
+      if (out[key] == null) out.remove(key);
+    }
+    return out;
+  }
 
-    // Mark all bikes as synced in local DB
-    for (final bike in bikes) {
-      await _updateBikeSyncedStatus(bike['id'], true);
+  /// The schema v26 ride columns, dropped from the payload when NULL.
+  @visibleForTesting
+  static const rideV26PayloadKeys = [
+    'max_lean_deg',
+    'peak_lateral_g',
+    'peak_accel_g',
+    'peak_brake_g',
+    'elevation_gain_m',
+    'elevation_loss_m',
+  ];
+
+  /// Drops keys with no matching column, so a document written by a newer
+  /// build still lands (minus the fields this one can't store) rather than
+  /// being skipped whole. See [downloadRides].
+  @visibleForTesting
+  static Map<String, dynamic> knownRideColumnsOnly(
+          Map<String, dynamic> data, Set<String> columns) =>
+      {
+        for (final entry in data.entries)
+          if (columns.contains(entry.key)) entry.key: entry.value,
+      };
+
+  /// A local bike row as it should be written to Firestore.
+  ///
+  /// `archived` is only sent when set. A not-archived bike looks exactly as it
+  /// did before the column existed, so a device on an older app version — whose
+  /// [downloadBikes] inserts cloud fields verbatim into a table without that
+  /// column — keeps downloading it. `set` replaces the whole doc, so unarchiving
+  /// removes the field, which reads back as 0.
+  @visibleForTesting
+  static Map<String, dynamic> bikePayload(Map<String, dynamic> bike) {
+    final out = Map<String, dynamic>.from(bike);
+    if (out['archived'] != 1) out.remove('archived');
+    // Same rule for the archive clock: only sent for an archived bike.
+    if (out['archived'] != 1 || out['archived_at'] == null) {
+      out.remove('archived_at');
+    }
+    return out;
+  }
+
+  /// Upload unsynced bikes to Firestore and mark them as synced.
+  ///
+  /// If a bike has a local photo, it is uploaded to Cloudinary first so the
+  /// photo survives app rebuilds and multi-device logins.
+  ///
+  /// Same batch-then-per-item-retry shape as [uploadRides] (see its comment):
+  /// one bike Firestore rejects must not strand every other bike in the
+  /// batch un-synced forever.
+  Future<void> uploadBikes(String uid, List<Map<String, dynamic>> bikes) async {
+    if (bikes.isEmpty) return;
+
+    final bikesToUpload = <Map<String, dynamic>>[];
+    for (final rawBike in bikes) {
+      final bike = Map<String, dynamic>.from(rawBike);
+      final imagePath = bike['image_path'] as String?;
+      if (imagePath != null &&
+          imagePath.isNotEmpty &&
+          !BikeImageResolver.isRemoteUrl(imagePath)) {
+        final resolved = BikeImageResolver.resolvePathSync(imagePath);
+        if (resolved != null && File(resolved).existsSync()) {
+          try {
+            final cloudUrl = await _cloudinaryUploadService.upload(
+              File(resolved),
+              folder: 'bikes/$uid',
+            );
+            bike['image_path'] = cloudUrl;
+            await _bikeDao.updateImagePath(bike['id'] as String, cloudUrl);
+          } catch (e) {
+            debugPrint(
+                '[CloudRepository] bike image upload to Cloudinary failed: $e');
+            // Keep local path in local DB, but avoid pushing a useless local path to Firestore.
+            bike['image_path'] = null;
+          }
+        } else {
+          // File does not exist locally, avoid pushing dead local path to Firestore.
+          bike['image_path'] = null;
+        }
+      }
+      bikesToUpload.add(bike);
+    }
+
+    final bikesCollection =
+        _firestore.collection('users').doc(uid).collection('bikes');
+    Map<String, dynamic> payload(Map<String, dynamic> bike) => {
+          ...bikePayload(bike),
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
+
+    try {
+      final batch = _firestore.batch();
+      for (final bike in bikesToUpload) {
+        batch.set(bikesCollection.doc(bike['id']), payload(bike));
+      }
+      await batch.commit();
+      for (final bike in bikes) {
+        await _updateBikeSyncedStatus(bike['id'], true);
+      }
+      return;
+    } catch (e) {
+      debugPrint(
+          '[CloudRepository] batched bike upload failed (${bikesToUpload.length} bikes), '
+          'retrying individually: $e');
+    }
+
+    for (final bike in bikesToUpload) {
+      try {
+        await bikesCollection.doc(bike['id']).set(payload(bike));
+        await _updateBikeSyncedStatus(bike['id'] as String, true);
+      } catch (e) {
+        debugPrint(
+            '[CloudRepository] bike upload rejected for ${bike['id']}: $e');
+      }
     }
   }
 
-  /// Upload unsynced maintenance logs to Firestore and mark them as synced
-  Future<void> uploadMaintenance(String uid, List<Map<String, dynamic>> logs) async {
-    final batch = _firestore.batch();
-    for (final log in logs) {
-      final docRef = _firestore.collection('users').doc(uid).collection('maintenance').doc(log['id']);
-      batch.set(docRef, {
-        ...log,
-        'syncedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    await batch.commit();
+  /// Upload unsynced maintenance logs to Firestore and mark them as synced.
+  ///
+  /// Same batch-then-per-item-retry shape as [uploadRides]: one bad log must
+  /// not strand every other log in the batch un-synced forever.
+  Future<void> uploadMaintenance(
+      String uid, List<Map<String, dynamic>> logs) async {
+    if (logs.isEmpty) return;
 
-    // Mark all maintenance logs as synced in local DB
-    for (final log in logs) {
-      await _updateMaintenanceSyncedStatus(log['id'], true);
+    final maintenanceCollection =
+        _firestore.collection('users').doc(uid).collection('maintenance');
+    Map<String, dynamic> payload(Map<String, dynamic> log) => {
+          ...log,
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
+
+    try {
+      final batch = _firestore.batch();
+      for (final log in logs) {
+        batch.set(maintenanceCollection.doc(log['id']), payload(log));
+      }
+      await batch.commit();
+      for (final log in logs) {
+        await _updateMaintenanceSyncedStatus(log['id'], true);
+      }
+      return;
+    } catch (e) {
+      debugPrint(
+          '[CloudRepository] batched maintenance upload failed (${logs.length} logs), '
+          'retrying individually: $e');
     }
+
+    for (final log in logs) {
+      try {
+        await maintenanceCollection.doc(log['id']).set(payload(log));
+        await _updateMaintenanceSyncedStatus(log['id'], true);
+      } catch (e) {
+        debugPrint(
+            '[CloudRepository] maintenance upload rejected for ${log['id']}: $e');
+      }
+    }
+  }
+
+  /// Uploads unsynced fuel fill-ups and marks them synced. Same
+  /// batch-then-per-item shape as [uploadMaintenance].
+  Future<void> uploadFuelLogs(
+      String uid, List<Map<String, dynamic>> logs) async {
+    if (logs.isEmpty) return;
+    final col = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection(FuelLogModel.collection);
+    final dao = FuelLogDao();
+    Map<String, dynamic> payload(Map<String, dynamic> log) => {
+          ...FuelLogModel.toCloudPayload(log),
+          'syncedAt': FieldValue.serverTimestamp(),
+        };
+    try {
+      final batch = _firestore.batch();
+      for (final log in logs) {
+        batch.set(col.doc(log['id'] as String), payload(log));
+      }
+      await batch.commit();
+      for (final log in logs) {
+        await dao.markSynced(log['id'] as String);
+      }
+      return;
+    } catch (e) {
+      debugPrint('[CloudRepository] batched fuel upload failed '
+          '(${logs.length} logs), retrying individually: $e');
+    }
+    for (final log in logs) {
+      try {
+        await col.doc(log['id'] as String).set(payload(log));
+        await dao.markSynced(log['id'] as String);
+      } catch (e) {
+        debugPrint(
+            '[CloudRepository] fuel upload rejected for ${log['id']}: $e');
+      }
+    }
+  }
+
+  /// Pulls fuel fill-ups missing locally, skipping ones deleted here and ones
+  /// whose bike was deleted here. Same incremental contract as
+  /// [downloadMaintenance].
+  Future<PullResult> downloadFuelLogs(String uid, {DateTime? since}) async {
+    final db = await DatabaseHelper.instance.database;
+    final localIds = (await db.query('fuel_logs', columns: ['id']))
+        .map((r) => r['id'] as String)
+        .toSet();
+    final deletedIds = await FuelLogDao().deletedIds();
+    final deletedBikes = await _bikeDao.deletedIds();
+    final snap = await _sinceQuery(
+            _firestore
+                .collection('users')
+                .doc(uid)
+                .collection(FuelLogModel.collection),
+            since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
+
+    var pulledAny = false;
+    DateTime? firstFailed;
+    for (final doc in snap.docs) {
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
+      final row = FuelLogModel.fromCloud({...doc.data(), 'id': doc.id});
+      if (row == null || deletedBikes.contains(row['bike_id'])) continue;
+      try {
+        await db.insert('fuel_logs', row,
+            conflictAlgorithm: ConflictAlgorithm.replace);
+        pulledAny = true;
+      } catch (e) {
+        debugPrint('[CloudRepository] fuel download skipped for ${doc.id}: $e');
+        firstFailed = earlierFailure(firstFailed, doc.data());
+      }
+    }
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
+  }
+
+  /// Deletes a fill-up's remote copy. The caller marks the tombstone synced
+  /// only when this returns, so an offline delete retries.
+  Future<void> deleteFuelLogRemote(String uid, String logId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection(FuelLogModel.collection)
+        .doc(logId)
+        .delete();
   }
 
   /// Pulls bikes that exist in this rider's `users/{uid}/bikes` Firestore
@@ -154,9 +446,12 @@ class CloudRepository {
   /// stale cloud copy of the same id (ids are client-generated UUIDs, never
   /// reused across devices for different bikes).
   ///
-  /// Returns true if any new bikes were pulled down (so the caller knows to
-  /// invalidate garageProvider).
-  Future<bool> downloadBikes(String uid) async {
+  /// Returns whether any new bikes were pulled down (so the caller knows to
+  /// invalidate garageProvider) and the newest `syncedAt` seen.
+  ///
+  /// [since] makes it incremental (§90.C7): only documents whose server-set
+  /// `syncedAt` is newer are read. Null is a full pull — see [PullWatermark].
+  Future<PullResult> downloadBikes(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
     final localIds = (await db.query('bikes', columns: ['id']))
         .map((r) => r['id'] as String)
@@ -166,61 +461,198 @@ class CloudRepository {
     // tombstones this loop faithfully re-created every bike the rider had
     // just removed — which is precisely how the delete appeared not to work.
     final deletedIds = await _bikeDao.deletedIds();
-    final snap = await _firestore.collection('users').doc(uid).collection('bikes').get();
+    // Same newer-schema guard as downloadRides (issues §101.C3): bikes were
+    // inserted verbatim, so a field from a newer app version threw.
+    final bikeColumns = (await db.rawQuery('PRAGMA table_info(bikes)'))
+        .map((row) => row['name'] as String)
+        .toSet();
+    final snap = await _sinceQuery(
+            _firestore.collection('users').doc(uid).collection('bikes'), since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     final hasLocalActive = localIds.isNotEmpty &&
         (await db.query('bikes', where: 'is_active = 1', limit: 1)).isNotEmpty;
     var pulledAnyActive = false;
     var pulledAny = false;
+    DateTime? firstFailed;
 
     for (final doc in snap.docs) {
       if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
-      final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
-      // A local file path from a *different* device is meaningless here —
-      // rather than let the UI try (and fail) to load a nonexistent file.
-      data['image_path'] = null;
-      // Never let a downloaded bike silently become "the" active bike
-      // alongside (or instead of) one already active locally; if nothing is
-      // active locally yet, let exactly the first pulled-down bike take it.
-      final wasActive = data['is_active'] == 1;
-      data['is_active'] =
-          (wasActive && !hasLocalActive && !pulledAnyActive) ? 1 : 0;
-      data['synced'] = 1;
+      final data = sanitizeDownloadedBikeData(
+        doc.data(),
+        hasLocalActive: hasLocalActive,
+        pulledAnyActive: pulledAnyActive,
+      );
       try {
-        await db.insert('bikes', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('bikes', knownRideColumnsOnly(data, bikeColumns),
+            conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
       } catch (e) {
         // Same per-doc isolation as downloadRides, and it matters more here:
         // this runs first in the sync cycle, so an unguarded throw took the
         // ride and maintenance downloads down with it.
         debugPrint('[CloudRepository] bike download skipped for ${doc.id}: $e');
+        firstFailed = earlierFailure(firstFailed, doc.data());
         continue;
       }
       if (data['is_active'] == 1) pulledAnyActive = true;
     }
-    return pulledAny;
+    // A bike that failed must be fetched again next cycle (issues §101.C3).
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
+  }
+
+  /// [collection] filtered to `syncedAt > since`, or unfiltered when [since]
+  /// is null. A single-field range filter: served by Firestore's automatic
+  /// index, no composite index needed.
+  Query<Map<String, dynamic>> _sinceQuery(
+          CollectionReference<Map<String, dynamic>> collection,
+          DateTime? since) =>
+      since == null
+          ? collection
+          : collection.where('syncedAt',
+              isGreaterThan: Timestamp.fromDate(since));
+
+  /// The newest `syncedAt` among [docs], or null if none carries one.
+  @visibleForTesting
+  static DateTime? newestSyncedAt(Iterable<Map<String, dynamic>> docs) {
+    DateTime? newest;
+    for (final d in docs) {
+      final v = d['syncedAt'];
+      final t = v is Timestamp ? v.toDate() : (v is DateTime ? v : null);
+      if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+    }
+    return newest;
+  }
+
+  /// The pull watermark to save after a download pass: [maxSyncedAt] when
+  /// every doc landed, otherwise just short of the earliest failed doc's
+  /// `syncedAt` ([firstFailed]), so the next incremental query
+  /// (`syncedAt > mark - overlap`) asks for it again. Without this, one
+  /// failed insert was skipped until the next full pull (issues §101.C3).
+  @visibleForTesting
+  static DateTime? markShortOfFailures(
+          DateTime? maxSyncedAt, DateTime? firstFailed) =>
+      firstFailed == null
+          ? maxSyncedAt
+          : firstFailed.subtract(const Duration(milliseconds: 1));
+
+  /// [current] or the `syncedAt` of [failedDoc], whichever is earlier.
+  static DateTime? earlierFailure(
+      DateTime? current, Map<String, dynamic> failedDoc) {
+    final at = newestSyncedAt([failedDoc]);
+    if (at != null && (current == null || at.isBefore(current))) return at;
+    return current;
+  }
+
+  /// Sanitizes downloaded bike document data before inserting it into local SQLite.
+  /// Remote URLs (e.g. Cloudinary) are preserved so bike images sync across devices.
+  /// Stale local file paths from another device or platform are nulled out.
+  @visibleForTesting
+  static Map<String, dynamic> sanitizeDownloadedBikeData(
+    Map<String, dynamic> docData, {
+    required bool hasLocalActive,
+    required bool pulledAnyActive,
+  }) {
+    final data = Map<String, dynamic>.from(docData)..remove('syncedAt');
+    // A remote URL (Cloudinary) is valid on any device.
+    // A local file path from a different device is meaningless here.
+    final remoteImagePath = data['image_path'] as String?;
+    if (remoteImagePath != null &&
+        BikeImageResolver.isRemoteUrl(remoteImagePath)) {
+      data['image_path'] = remoteImagePath;
+    } else {
+      data['image_path'] = null;
+    }
+    // Never let a downloaded bike silently become "the" active bike
+    // alongside (or instead of) one already active locally; if nothing is
+    // active locally yet, let exactly the first pulled-down bike take it.
+    final wasActive = data['is_active'] == 1;
+    data['is_active'] =
+        (wasActive && !hasLocalActive && !pulledAnyActive) ? 1 : 0;
+    data['synced'] = 1;
+    return data;
   }
 
   /// Same "pull anything missing locally" shape as [downloadBikes], for
   /// maintenance logs.
-  Future<bool> downloadMaintenance(String uid) async {
+  ///
+  /// [since]: incremental, as for [downloadBikes].
+  Future<PullResult> downloadMaintenance(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
     final localIds = (await db.query('maintenance_logs', columns: ['id']))
         .map((r) => r['id'] as String)
         .toSet();
-    final snap =
-        await _firestore.collection('users').doc(uid).collection('maintenance').get();
+    // Logs deleted on this device must stay deleted (§94.2) — "missing
+    // locally" is exactly what a deleted log looks like.
+    final deletedIds = await MaintenanceDao().deletedIds();
+    final snap = await _sinceQuery(
+            _firestore.collection('users').doc(uid).collection('maintenance'),
+            since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     var pulledAny = false;
+    DateTime? firstFailed;
     for (final doc in snap.docs) {
-      if (localIds.contains(doc.id)) continue;
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
       try {
-        await db.insert('maintenance_logs', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('maintenance_logs', data,
+            conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
       } catch (e) {
-        debugPrint('[CloudRepository] maintenance download skipped for ${doc.id}: $e');
+        debugPrint(
+            '[CloudRepository] maintenance download skipped for ${doc.id}: $e');
+        firstFailed = earlierFailure(firstFailed, doc.data());
+      }
+    }
+    // A log this build couldn't store (e.g. one written by a newer schema)
+    // must be fetched again later, so the watermark stops short of it.
+    // Without this, an older build skipped a v20 visit log and then never
+    // pulled it even after upgrading (§95).
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
+  }
+
+  /// `uid/bikeId` pairs whose cloud settings doc was already checked this
+  /// session. A bike the rider never customised has no doc and would stay
+  /// "missing settings" forever, so without this every sync cycle would
+  /// spend a read on it.
+  final Set<String> _settingsChecked = {};
+
+  /// Restores maintenance settings (tracked checks + running costs) for
+  /// owned bikes that have none locally — the reinstall / new-device case
+  /// (issues §88.2). Only fills empty tables, never overwrites a local row;
+  /// see [MaintenanceSettingsSync]. Must run after [downloadBikes], since a
+  /// settings row can't exist without its bike.
+  ///
+  /// Returns true if anything was written locally.
+  Future<bool> downloadMaintenanceSettings(String uid) async {
+    var pulledAny = false;
+    for (final bikeId
+        in await MaintenanceSettingsSync.bikesMissingSettings(uid)) {
+      final key = '$uid/$bikeId';
+      if (_settingsChecked.contains(key)) continue;
+      try {
+        final snap =
+            await MaintenanceSettingsSync.docRef(_firestore, uid, bikeId).get();
+        final data = snap.data();
+        if (data != null &&
+            await MaintenanceSettingsSync.applyDownloaded(bikeId, data)) {
+          pulledAny = true;
+        }
+        _settingsChecked.add(key);
+      } catch (e) {
+        // Left unmarked, so the next cycle tries again.
+        debugPrint(
+            '[CloudRepository] maintenance settings download skipped for $bikeId: $e');
       }
     }
     return pulledAny;
@@ -234,19 +666,48 @@ class CloudRepository {
   /// Fixing that is a real gap but a materially bigger one (GPS trails are
   /// much larger payloads) — flagged here rather than silently left
   /// unaddressed.
-  Future<bool> downloadRides(String uid) async {
+  ///
+  /// [since]: incremental, as for [downloadBikes]. Rides this device deleted
+  /// (`deleted_rides`, §90.C10) are skipped, the same way [downloadBikes]
+  /// skips deleted bikes.
+  Future<PullResult> downloadRides(String uid, {DateTime? since}) async {
     final db = await DatabaseHelper.instance.database;
-    final localIds =
-        (await db.query('rides', columns: ['id'])).map((r) => r['id'] as String).toSet();
-    final snap = await _firestore.collection('users').doc(uid).collection('rides').get();
+    final localIds = (await db.query('rides', columns: ['id']))
+        .map((r) => r['id'] as String)
+        .toSet();
+    // Cloud documents are inserted verbatim, so a field written by a NEWER
+    // app version than this one is an `INSERT` into a column that doesn't
+    // exist here — which used to throw and silently skip the ride. Every
+    // column added to `rides` since has needed its own bespoke guard on the
+    // upload side; filtering to the columns this build actually has closes
+    // the class instead of the instance.
+    final rideColumns = (await db.rawQuery('PRAGMA table_info(rides)'))
+        .map((row) => row['name'] as String)
+        .toSet();
+    final deletedIds = await _rideDao.deletedIds();
+    // Rides of a bike this device deleted can never insert (FK) and will be
+    // removed remotely by deleteBikeRemote, so they must not pin the
+    // watermark (issues §101.C3).
+    final deletedBikeIds = await _bikeDao.deletedIds();
+    final snap = await _sinceQuery(
+            _firestore.collection('users').doc(uid).collection('rides'), since)
+        .get();
+    final maxSyncedAt = newestSyncedAt(snap.docs.map((d) => d.data()));
 
     var pulledAny = false;
+    DateTime? firstFailed;
     for (final doc in snap.docs) {
-      if (localIds.contains(doc.id)) continue;
+      if (localIds.contains(doc.id) || deletedIds.contains(doc.id)) continue;
       final data = Map<String, dynamic>.from(doc.data())..remove('syncedAt');
       data['synced'] = 1;
+      // Whatever trail this ride has is already in the cloud — it came from
+      // there. Left at the column default (0), the track pass would go on to
+      // "upload" a trail this device doesn't hold; harmless (no local points
+      // means nothing is written) but a wasted read per downloaded ride.
+      data['track_synced'] = 1;
       try {
-        await db.insert('rides', data, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('rides', knownRideColumnsOnly(data, rideColumns),
+            conflictAlgorithm: ConflictAlgorithm.replace);
         pulledAny = true;
       } catch (e) {
         // Per-doc, deliberately. `rides.bike_id` is a FOREIGN KEY and
@@ -257,9 +718,40 @@ class CloudRepository {
         // skipped — and since Firestore returns docs in id order, the same
         // arbitrary subset landed every cycle and the count never moved.
         debugPrint('[CloudRepository] ride download skipped for ${doc.id}: $e');
+        if (!deletedBikeIds.contains(data['bike_id'])) {
+          firstFailed = earlierFailure(firstFailed, doc.data());
+        }
       }
     }
-    return pulledAny;
+    // A failed ride is asked for again next cycle (issues §101.C3).
+    return (
+      pulledAny: pulledAny,
+      maxSyncedAt: markShortOfFailures(maxSyncedAt, firstFailed),
+    );
+  }
+
+  /// Deletes a maintenance log's remote copy (§94.2). The caller marks the
+  /// tombstone synced only when this returns, so an offline delete retries.
+  Future<void> deleteMaintenanceRemote(String uid, String logId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('maintenance')
+        .doc(logId)
+        .delete();
+  }
+
+  /// Deletes a ride's remote copy and its `track` chunks (§90.C10). Same
+  /// best-effort contract as [deleteBikeRemote]: the caller marks the
+  /// tombstone synced only when this returns, so an offline delete retries.
+  Future<void> deleteRideRemote(String uid, String rideId) async {
+    final rideRef =
+        _firestore.collection('users').doc(uid).collection('rides').doc(rideId);
+    final track = await rideRef.collection('track').get();
+    await _deleteInChunks([
+      ...track.docs.map((d) => d.reference),
+      rideRef,
+    ]);
   }
 
   /// Uploads a ride's GPS trail as chunked `track` documents.
@@ -320,17 +812,16 @@ class CloudRepository {
     // ordering would place '10' before '2' and scramble the trail.
     final docs = snap.docs.toList()
       ..sort((a, b) {
-        final ai = (a.data()['index'] as num?)?.toInt() ??
-            int.tryParse(a.id) ??
-            0;
-        final bi = (b.data()['index'] as num?)?.toInt() ??
-            int.tryParse(b.id) ??
-            0;
+        final ai =
+            (a.data()['index'] as num?)?.toInt() ?? int.tryParse(a.id) ?? 0;
+        final bi =
+            (b.data()['index'] as num?)?.toInt() ?? int.tryParse(b.id) ?? 0;
         return ai.compareTo(bi);
       });
 
     final rows = flattenTrack([
-      for (final doc in docs) (doc.data()['points'] as List<dynamic>? ?? const []),
+      for (final doc in docs)
+        (doc.data()['points'] as List<dynamic>? ?? const []),
     ]);
     if (rows.isEmpty) return false;
 
@@ -341,7 +832,8 @@ class CloudRepository {
   }
 
   /// Store user profile data in Firestore
-  Future<void> updateUserProfile(String uid, {required String displayName, String? photoUrl}) async {
+  Future<void> updateUserProfile(String uid,
+      {required String displayName, String? photoUrl}) async {
     await _firestore.collection('users').doc(uid).set(
       {
         'displayName': displayName,
@@ -364,7 +856,8 @@ class CloudRepository {
   /// grows. Read-only: the write side lives in
   /// `ride_recording_provider.dart`'s `_publishSegmentBaselines`, alongside
   /// this app's other fire-and-forget post-ride writes.
-  Future<List<double>> fetchRoadSpeedSamples(String segmentId, {int limit = 200}) async {
+  Future<List<double>> fetchRoadSpeedSamples(String segmentId,
+      {int limit = 200}) async {
     final snapshot = await _firestore
         .collection('roadSpeedSamples')
         .doc(segmentId)
@@ -376,75 +869,6 @@ class CloudRepository {
         .map((d) => (d.data()['speedKmh'] as num?)?.toDouble())
         .whereType<double>()
         .toList();
-  }
-
-  /// Export ride data as JSON file to Downloads folder
-  Future<File> exportToJSON(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) async {
-    final directory = await getDownloadsDirectory();
-    if (directory == null) throw Exception('Downloads directory not available');
-
-    final rideId = ride['id'] as String;
-    final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
-    final file = File('${directory.path}/$fileName');
-
-    final jsonData = {
-      'ride': ride,
-      'points': ridePoints,
-      'exportedAt': DateTime.now().toIso8601String(),
-    };
-
-    await file.writeAsString(jsonEncode(jsonData), flush: true);
-    return file;
-  }
-
-  /// Export ride polyline as GPX file to Downloads folder
-  Future<File> exportToGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) async {
-    final directory = await getDownloadsDirectory();
-    if (directory == null) throw Exception('Downloads directory not available');
-
-    final rideId = ride['id'] as String;
-    final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
-    final file = File('${directory.path}/$fileName');
-
-    final gpxContent = _generateGPX(ride, ridePoints);
-    await file.writeAsString(gpxContent, flush: true);
-    return file;
-  }
-
-  /// Generate GPX XML string from ride data
-  String _generateGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
-    final startTime = ride['startTime'] as String;
-    final distanceKm = (ride['distanceM'] as num) / 1000;
-
-    final buffer = StringBuffer();
-    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
-    buffer.writeln('<gpx version="1.1" creator="ThrottleIQ" xmlns="http://www.topografix.com/GPX/1/1">');
-    buffer.writeln('  <metadata>');
-    buffer.writeln('    <name>Motorcycle Ride</name>');
-    buffer.writeln('    <time>${startTime}</time>');
-    buffer.writeln('    <bounds minlat="0" minlon="0" maxlat="0" maxlon="0" />');
-    buffer.writeln('  </metadata>');
-    buffer.writeln('  <trk>');
-    buffer.writeln('    <name>Ride Track</name>');
-    buffer.writeln('    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
-    buffer.writeln('    <trkseg>');
-
-    for (final point in ridePoints) {
-      final lat = point['lat'] as num;
-      final lng = point['lng'] as num;
-      final timestamp = point['timestamp'] as String;
-      final elevation = point['altitudeM'] as num?;
-
-      buffer.write('      <trkpt lat="$lat" lon="$lng">');
-      if (elevation != null) buffer.write('<ele>$elevation</ele>');
-      buffer.writeln('<time>$timestamp</time></trkpt>');
-    }
-
-    buffer.writeln('    </trkseg>');
-    buffer.writeln('  </trk>');
-    buffer.writeln('</gpx>');
-
-    return buffer.toString();
   }
 
   /// Update bike synced status in local database
@@ -459,7 +883,8 @@ class CloudRepository {
   }
 
   /// Update maintenance log synced status in local database
-  Future<void> _updateMaintenanceSyncedStatus(String maintenanceId, bool synced) async {
+  Future<void> _updateMaintenanceSyncedStatus(
+      String maintenanceId, bool synced) async {
     final db = await DatabaseHelper.instance.database;
     await db.update(
       'maintenance_logs',

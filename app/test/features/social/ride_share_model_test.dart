@@ -5,9 +5,9 @@ import 'package:throttleiq/features/social/data/models/ride_share_model.dart';
 void main() {
   group('RideShareModel', () {
     final polyline = [
-      LatLng(40.7128, -74.0060),
-      LatLng(40.7200, -74.0100),
-      LatLng(40.7300, -74.0150),
+      const LatLng(40.7128, -74.0060),
+      const LatLng(40.7200, -74.0100),
+      const LatLng(40.7300, -74.0150),
     ];
 
     final model = RideShareModel(
@@ -32,7 +32,7 @@ void main() {
       expect(firestoreData['id'], 'ride1');
       expect(firestoreData['userId'], 'user1');
       expect(firestoreData['distanceKm'], 50.0);
-      expect(firestoreData['polyline'], isA<List>());
+      expect(firestoreData['polyline'], isA<List>()); // ignore: strict_raw_type // TODO(audit-101): fix strict mode typing
       expect(firestoreData['polyline'].length, 3);
     });
 
@@ -62,7 +62,7 @@ void main() {
           {'lat': 40.7300, 'lng': -74.0150},
         ],
         'mapSnapshotUrl': null,
-        'likes': 5,
+        'upvotes': 5,
         'comments': 2,
         'createdAt': DateTime(2024, 1, 15, 12, 0),
         'audience': 'public',
@@ -76,7 +76,7 @@ void main() {
       expect(restored.userId, 'user1');
       expect(restored.distanceKm, 50.0);
       expect(restored.polyline.length, 3);
-      expect(restored.likes, 5);
+      expect(restored.upvotes, 5);
     });
 
     test('converts to entity', () {
@@ -166,6 +166,44 @@ void main() {
     test('writes a null caption when there is none', () {
       expect(model.toFirestore()['caption'], isNull);
       expect(model.toEntity().caption, isNull);
+    });
+
+    test('round-trips riding-score event counts through Firestore', () {
+      final scored = RideShareModel(
+        id: 'ride8',
+        userId: 'user1',
+        userName: 'John Doe',
+        userPhotoUrl: 'http://example.com/photo.jpg',
+        bikeId: 'bike1',
+        bikeName: 'My Harley',
+        bikeType: 'Cruiser',
+        rideDate: DateTime(2024, 1, 15),
+        distanceKm: 50.0,
+        durationSeconds: 3600,
+        maxSpeedKmh: 100.0,
+        polyline: polyline,
+        createdAt: DateTime(2024, 1, 15, 12, 0),
+        hardBrakeCount: 2,
+        rapidAccelCount: 1,
+        highJerkCount: 4,
+      );
+
+      final firestoreData = scored.toFirestore();
+      expect(firestoreData['hardBrakeCount'], 2);
+      expect(firestoreData['rapidAccelCount'], 1);
+      expect(firestoreData['highJerkCount'], 4);
+
+      final restored = RideShareModel.fromFirestore(firestoreData, 'ride8');
+      expect(restored.hardBrakeCount, 2);
+      expect(restored.rapidAccelCount, 1);
+      expect(restored.highJerkCount, 4);
+      expect(restored.toEntity().ridingScore, 100 - (2 * 5) - (1 * 3) - (4 * 1));
+    });
+
+    test('a ride shared before riding-score sharing has no score', () {
+      final restored = RideShareModel.fromFirestore(model.toFirestore(), 'ride1');
+      expect(restored.hardBrakeCount, isNull);
+      expect(restored.toEntity().ridingScore, isNull);
     });
 
     test('tolerates docs shared before captions existed', () {
@@ -313,7 +351,6 @@ void main() {
       final restored = RideShareModel.fromFirestore(minimalData, 'ride1');
 
       expect(restored.mapSnapshotUrl, null);
-      expect(restored.likes, 0);
       expect(restored.comments, 0);
       expect(restored.audience, 'public');
     });

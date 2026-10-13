@@ -7,116 +7,144 @@
     must look deliberate the moment it is dropped on the home screen, before
     the app has ever run. The Kotlin provider overwrites them once data exists.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_ride_stats_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:background="@drawable/widget_background">
+    android:layout_height="match_parent">
+
+    <!-- Panel chrome as two tintable images (border, then fill inset by
+         1dp) so WidgetTheme can recolor it with setColorFilter; a
+         RemoteViews background drawable cannot be recolored. -->
+    <ImageView
+        android:id="@+id/widget_bg_border"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/widget_panel_border"
+        android:scaleType="fitXY"
+        android:contentDescription="@null" />
 
     <ImageView
-        android:layout_width="3dp"
+        android:id="@+id/widget_bg_fill"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/widget_accent_bar"
+        android:layout_margin="1dp"
+        android:src="@drawable/widget_panel_fill"
+        android:scaleType="fitXY"
         android:contentDescription="@null" />
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_stats_title"
-            android:textColor="@color/widget_text_secondary"
-            android:textSize="9sp"
-            android:fontFamily="monospace"
-            android:letterSpacing="0.18"
-            android:maxLines="1"
-            android:ellipsize="end" />
+        <ImageView
+            android:id="@+id/widget_accent_bar"
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/widget_accent_bar"
+            android:contentDescription="@null" />
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_stats_title"
+                android:textColor="@color/widget_text_secondary"
+                android:textSize="9sp"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.18"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_stats_this_week"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textSize="9sp"
-                    android:fontFamily="monospace"
-                    android:letterSpacing="0.12"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/widget_stats_weekly_value"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/widget_placeholder_value"
-                    android:textColor="@color/widget_primary"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:fontFamily="monospace"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                    <TextView
+                        android:id="@+id/widget_label_1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widget_stats_this_week"
+                        android:textColor="@color/widget_text_tertiary"
+                        android:textSize="9sp"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.12"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/widget_stats_weekly_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/widget_placeholder_value"
+                        android:textColor="@color/widget_primary"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/widget_label_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widget_stats_all_time"
+                        android:textColor="@color/widget_text_tertiary"
+                        android:textSize="9sp"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.12"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/widget_stats_total_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/widget_placeholder_value"
+                        android:textColor="@color/widget_text_primary"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_stats_all_time"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textSize="9sp"
-                    android:fontFamily="monospace"
-                    android:letterSpacing="0.12"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
-
-                <TextView
-                    android:id="@+id/widget_stats_total_value"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/widget_placeholder_value"
-                    android:textColor="@color/widget_text_primary"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:fontFamily="monospace"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/widget_stats_rides"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_placeholder_no_data"
+                android:textColor="@color/widget_text_secondary"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:maxLines="1"
+                android:ellipsize="end" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/widget_stats_rides"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_no_data"
-            android:textColor="@color/widget_text_secondary"
-            android:textSize="11sp"
-            android:fontFamily="monospace"
-            android:maxLines="1"
-            android:ellipsize="end" />
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

@@ -87,4 +87,41 @@ void main() {
     expect(message, contains('permission-denied'));
     expect(message, contains('কন্টাক্ট'));
   });
+
+  // issues §101.P7: the picker error used to splice in the raw exception
+  // ("PlatformException(camera_access_denied, ...)").
+  testWidgets('couldNotOpenCamera is plain text in both languages',
+      (tester) async {
+    for (final locale in supportedLocales) {
+      final l10n = await localizationsFor(tester, locale);
+      final message = l10n.couldNotOpenCamera;
+      expect(message, isNotEmpty);
+      expect(message, isNot(contains('Exception')));
+      expect(message, isNot(contains('{')));
+    }
+  });
+
+  // issues §101.A4: error snackbars must never splice in a raw exception.
+  testWidgets('G5 error messages are placeholder-free and localized',
+      (tester) async {
+    for (final locale in supportedLocales) {
+      final l10n = await localizationsFor(tester, locale);
+      for (final m in [
+        l10n.signOutFailed,
+        l10n.deleteAccountFailed,
+        l10n.deleteAccountOffline,
+        l10n.reauthFailed,
+        l10n.reauthWrongPassword,
+        l10n.couldNotSendReport,
+      ]) {
+        expect(m, isNotEmpty);
+        expect(m, isNot(contains('{')));
+        expect(m, isNot(contains('Exception')));
+      }
+    }
+    final bn = await localizationsFor(tester, const Locale('bn'));
+    expect(bn.signOutFailed, isNot(contains('Failed')));
+    // §101.A4 social title: SocialScreen renders navSocialLabel.
+    expect(bn.navSocialLabel, 'সোশ্যাল');
+  });
 }

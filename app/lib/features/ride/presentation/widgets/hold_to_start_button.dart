@@ -2,8 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Circular press-and-hold start control — the rounded skins' counterpart to
 /// the Record screen's slide-to-start track (see [StartControlStyle]).
@@ -108,7 +109,11 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
   /// that is about to replace it.
   void _release() {
     if (_ctrl.status == AnimationStatus.completed) return;
-    if (_ctrl.value > 0) _ctrl.reverse();
+    // Unconditional: a release in the same frame as the press leaves the value
+    // at 0 with the controller still running forward, and a `value > 0` guard
+    // would let that quick tap carry on to completion and start a ride (issues
+    // §78.26). `HoldToEndButton` has the same guard for the same reason.
+    _ctrl.reverse();
   }
 
   void _reset() {
@@ -133,16 +138,16 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
     // primary (the color every other action already uses), on a dark one it's
     // the near-black instrument-panel ink with a lime arc.
     final faceColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
-        : AppColors.textTertiary;
-    final arcColor = isLightPalette ? AppColors.primaryDark : AppColors.primary;
+        ? (isLightPalette ? context.palette.primary : context.palette.ink)
+        : context.palette.textTertiary;
+    final arcColor = isLightPalette ? context.palette.primaryDark : context.palette.primary;
 
     return Semantics(
       button: true,
       enabled: enabled,
       // Spelled out for screen readers: a hold gesture is invisible to
       // TalkBack/VoiceOver, and "start ride" alone would suggest a tap.
-      label: 'Start ride. Press and hold.',
+      label: context.l10n.startRidePressHold,
       onTap: enabled ? widget.onStart : null,
       // Listener, not GestureDetector: a tap recognizer doesn't report the
       // press until it wins the gesture arena, which for a lone tap means
@@ -168,7 +173,7 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
                   progress: t,
                   faceColor: faceColor,
                   arcColor: arcColor,
-                  trackColor: AppColors.textTertiary.withValues(alpha: 0.25),
+                  trackColor: context.palette.textTertiary.withValues(alpha: 0.25),
                 ),
                 child: Center(
                   child: widget.busy
@@ -177,7 +182,7 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
                           width: 26,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: AppColors.onInk,
+                            color: context.palette.onInk,
                           ),
                         )
                       : _Label(progress: t, enabled: enabled),
@@ -212,13 +217,13 @@ class _Label extends StatelessWidget {
           Icon(
             committed ? Icons.play_arrow_rounded : Icons.two_wheeler,
             size: committed ? 34 : 28,
-            color: AppColors.onInk,
+            color: context.palette.onInk,
           ),
           const SizedBox(height: 4),
           Text(
-            committed ? 'GO' : 'HOLD',
-            style: display(committed ? 20 : 16,
-                color: AppColors.onInk, letterSpacing: 1.5),
+            committed ? context.l10n.goCaps : context.l10n.holdCaps,
+            style: display(context, committed ? 20 : 16,
+                color: context.palette.onInk, letterSpacing: 1.5),
           ),
         ],
       ),

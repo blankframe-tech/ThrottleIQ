@@ -26,7 +26,7 @@ const int thumbnailPointBudget = 80;
 /// ever runs for rides the rider has actually scrolled to.
 final ridePolylineProvider =
     FutureProvider.family<List<LatLng>, String>((ref, rideId) async {
-  final rows = await RidePointDao().getForRide(rideId);
+  final rows = await RidePointDao().getLatLngForRide(rideId);
   final points = <LatLng>[
     for (final r in rows)
       if (r['lat'] is num && r['lng'] is num)

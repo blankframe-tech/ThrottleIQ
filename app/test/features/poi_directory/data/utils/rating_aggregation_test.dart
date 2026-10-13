@@ -462,8 +462,12 @@ void main() {
         final reviews2 = [reviews1[2], reviews1[0], reviews1[1]];
 
         double sum1 = 0, sum2 = 0;
-        for (final r in reviews1) sum1 += r.stars;
-        for (final r in reviews2) sum2 += r.stars;
+        for (final r in reviews1) {
+          sum1 += r.stars;
+        }
+        for (final r in reviews2) {
+          sum2 += r.stars;
+        }
 
         final avg1 = sum1 / reviews1.length;
         final avg2 = sum2 / reviews2.length;

@@ -1,32 +1,33 @@
-import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_colors.dart';
-import '../../../../core/constants/motorcycle_quotes.dart';
+import '../../../../core/i18n/greetings_l10n.dart';
 import '../../../../core/theme/app_shape_profile.dart';
-import '../../../../core/utils/greetings.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../shared/widgets/notification_bell_button.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/presentation/providers/notification_providers.dart';
 import '../../../social/presentation/widgets/ride_mode_selector.dart';
 import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
+import '../widgets/recording_gate.dart';
 import '../widgets/hold_to_start_button.dart';
 import '../widgets/rider_stat_strip.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
 /// cached for the container's lifetime, so this stays fixed across rebuilds
 /// within one app open — e.g. RecordScreen re-rendering while a ride's
 /// speed/distance update — but is different again next cold start) rather
 /// than "Your ride, smarter." always being the same line.
-final dashboardQuoteProvider = Provider<(String, String)>((ref) {
-  return motorcycleQuotes[Random().nextInt(motorcycleQuotes.length)];
-});
+final dashboardQuoteIndexProvider = Provider<int>((ref) => pickQuoteIndex());
 
 class RecordScreen extends ConsumerStatefulWidget {
   const RecordScreen({super.key});
@@ -44,31 +45,55 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
   /// screen rebuilds on every provider tick (unread count, ride status,
   /// active bike) and a greeting that reshuffles on each of those would be
   /// visually noisy.
-  late final Greeting _greeting;
+  late final GreetingPick _greetingPick;
 
   @override
   void initState() {
     super.initState();
     _name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
-    _greeting = greetingDetailFor(DateTime.now(), name: _name);
+    _greetingPick = pickGreeting(DateTime.now());
+    // One-shot: this screen can be *built* while a ride is already running
+    // (cold start onto Record, or a restored interrupted ride), and a
+    // `ref.listen` only fires on a change, never on the current value.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _redirectIfRiding());
+  }
+
+  /// Sends the rider to the active-ride cockpit if a ride is under way.
+  ///
+  /// This used to live in `build()` behind an `addPostFrameCallback`, which
+  /// re-queued a navigation on every rebuild — and this screen rebuilds for
+  /// reasons that have nothing to do with recording (unread count, active
+  /// bike, appearance change). §83.11.
+  void _redirectIfRiding() {
+    if (!mounted) return;
+    final status = ref.read(rideRecordingProvider).status;
+    if (status == RecordingStatus.active || status == RecordingStatus.paused) {
+      context.go('/ride/active');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Navigation is a reaction to a status *change*, not something computed
+    // during build. Registering it here is the Riverpod-idiomatic spot —
+    // `ref.listen` in build is deduped across rebuilds, so this subscribes
+    // once, not once per frame.
+    ref.listen<RecordingStatus>(
+      rideRecordingProvider.select((s) => s.status),
+      (_, next) {
+        if (next == RecordingStatus.active || next == RecordingStatus.paused) {
+          _redirectIfRiding();
+        }
+      },
+    );
+
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
-    final quote = ref.watch(dashboardQuoteProvider);
+    final quote = resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
+    final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
     final accent = activeBike != null && bikeHasPhoto(activeBike)
         ? bikeAccentColor(activeBike)
         : null;
-
-    // If actively recording, push to active ride screen
-    if (rideState.status == RecordingStatus.active ||
-        rideState.status == RecordingStatus.paused) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.go('/ride/active');
-      });
-    }
 
     // The screen reads top-to-bottom as one instrument panel: what you're
     // riding, what you've done on it, who you're riding with, and the throttle
@@ -82,7 +107,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     // never scrolled off, and never in a different spot depending on whether
     // an error card happens to be showing above it.
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: DecoratedBox(
         // A faint wash of the active bike's own color, so the screen you
         // start a ride from reads as *that bike's* dashboard rather than a
@@ -96,7 +121,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                   radius: 1.3,
                   colors: [
                     accent.withValues(alpha: 0.18),
-                    AppColors.background,
+                    context.palette.background,
                   ],
                   stops: const [0, 0.65],
                 )
@@ -112,12 +137,17 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Settings and Notifications used to live here as icon
-                      // buttons; both moved to the Profile tab's header, next to
-                      // the rest of the account-level chrome (see
-                      // GarageScreen) — this screen has no title bar of its
-                      // own, and the hero below is the header.
-                      const SizedBox(height: 4),
+                      // Settings lives on the Profile tab's header (see
+                      // GarageScreen). The notification bell is back here as
+                      // well, since an unread badge only on the Profile tab
+                      // went unseen (grill §3.2.6). This screen has no
+                      // title bar of its own, and the hero below is the header.
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: NotificationBellButton(
+                            unreadCount:
+                                ref.watch(unreadNotificationCountProvider)),
+                      ),
 
                       // 1. Hero — the bike, at full width, wearing the greeting.
                       // The casual line carries the rider's name when the picked
@@ -127,10 +157,10 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                         BikePickerCard(
                           activeBike: activeBike,
                           overlineText:
-                              _greeting.usesName ? null : _greeting.line,
-                          titleText: _greeting.usesName
-                              ? _greeting.line
-                              : (_name ?? 'Rider'),
+                              greeting.usesName ? null : greeting.line,
+                          titleText: greeting.usesName
+                              ? greeting.line
+                              : (_name ?? context.l10n.riderFallbackName),
                           accentColor: accent,
                         )
                       else
@@ -150,13 +180,13 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                         const SizedBox(height: 16),
                         EditorialCard(
                           padding: const EdgeInsets.all(12),
-                          borderColor: AppColors.danger,
+                          borderColor: context.palette.danger,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(rideState.error!,
+                              Text(recordingErrorText(context.l10n, rideState),
                                   style: TextStyle(
-                                      color: AppColors.danger, fontSize: 13),
+                                      color: context.palette.danger, fontSize: 13),
                                   textAlign: TextAlign.center),
                               if (rideState.blockKind !=
                                   RecordingBlockKind.none) ...[
@@ -170,11 +200,23 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                                     rideState.blockKind ==
                                             RecordingBlockKind
                                                 .locationServicesOff
-                                        ? 'Turn on Location'
-                                        : 'Open App Settings',
+                                        ? context.l10n.turnOnLocation
+                                        : context.l10n.openAppSettings,
                                   ),
                                 ),
                               ],
+                              const SizedBox(height: 4),
+                              TextButton.icon(
+                                onPressed: () => BugReportSheet.show(context),
+                                icon: const Icon(Icons.bug_report_outlined,
+                                    size: 14),
+                                label: Text(context.l10n.reportProblem),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: context.palette.textTertiary,
+                                  textStyle: const TextStyle(fontSize: 12),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -196,7 +238,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                     // ring on the rounded ones. See StartControlStyle for why
                     // this is the one place a skin swaps a widget rather than
                     // just restyling it.
-                    if (AppDimensions.shape.startControl ==
+                    if (context.shape.startControl ==
                         StartControlStyle.holdRing)
                       _HoldToStartControl(enabled: activeBike != null)
                     else
@@ -213,7 +255,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       style: TextStyle(
                           fontSize: 12,
                           height: 1.35,
-                          color: AppColors.textTertiary),
+                          color: context.palette.textTertiary),
                     ),
                   ],
                 ),
@@ -235,93 +277,28 @@ class _NoBikeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return EditorialCard(
       padding: const EdgeInsets.all(AppDimensions.paddingLg),
-      borderColor: AppColors.attention,
+      borderColor: context.palette.attention,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.two_wheeler, size: 40, color: AppColors.attention),
+          Icon(Icons.two_wheeler, size: 40, color: context.palette.attention),
           const SizedBox(height: 12),
-          Text('No bike yet', style: display(22)),
+          Text(context.l10n.noBikeYet, style: display(context, 22)),
           const SizedBox(height: 4),
           Text(
-            'Add the bike you ride and ThrottleIQ can start tracking it.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            context.l10n.addBikeRideThrottleiq,
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => context.go('/home/profile/add'),
-            child: const Text('Add a bike'),
+            child: Text(context.l10n.addABike),
           ),
         ],
       ),
     );
   }
-}
-
-/// Shown once, right before the OS location prompts, whenever the rider
-/// hasn't already granted "Allow all the time" — this is the in-app
-/// disclosure Play's background-location policy requires be distinct from
-/// the system dialog. Returns false (and shows nothing further) if the rider
-/// backs out here rather than proceeding to the OS prompts.
-Future<bool> _ensureLocationDisclosure(BuildContext context) async {
-  if (await Geolocator.checkPermission() == LocationPermission.always) {
-    return true;
-  }
-  if (!context.mounted) return false;
-  final proceed = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Background location'),
-      content: const Text(
-        'ThrottleIQ records your route, speed, and distance using your '
-        'location while a ride is active — including while your phone is '
-        "locked or in a pocket, so the ride isn't cut short. The next "
-        'screen will ask for "Allow all the time" location access. '
-        'Location is only used to record your ride, and tracking stops the '
-        'moment you end it.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Not now'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('Continue'),
-        ),
-      ],
-    ),
-  );
-  return proceed ?? false;
-}
-
-/// Puts the blocked-recording reason (GPS off / no permission) in front of
-/// the rider immediately, as a SnackBar with a one-tap fix — the persistent
-/// card above the start control says the same thing, but it can sit below
-/// the fold behind the hero/stat-strip/friends cards, so a rider who just
-/// slid the bar and got nothing back would otherwise have to scroll up to
-/// find out why.
-void _showBlockedSnackBar(BuildContext context, RideRecordingState state) {
-  if (state.error == null) return;
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(SnackBar(
-    content: Text(state.error!),
-    duration: const Duration(seconds: 6),
-    action: switch (state.blockKind) {
-      RecordingBlockKind.locationServicesOff => SnackBarAction(
-          label: 'TURN ON',
-          onPressed: () => Geolocator.openLocationSettings(),
-        ),
-      RecordingBlockKind.permissionDenied => SnackBarAction(
-          label: 'SETTINGS',
-          onPressed: () => Geolocator.openAppSettings(),
-        ),
-      RecordingBlockKind.none => null,
-    },
-  ));
 }
 
 /// Riverpod wrapper around [HoldToStartButton] — the rounded skins' start
@@ -340,7 +317,7 @@ class _HoldToStartControl extends ConsumerWidget {
       enabled: enabled,
       busy: status == RecordingStatus.starting,
       onStart: () async {
-        if (!await _ensureLocationDisclosure(context)) return;
+        if (!await ensureLocationDisclosure(context)) return;
         if (!context.mounted) return;
         await ref.read(rideRecordingProvider.notifier).startRide();
         if (!context.mounted) return;
@@ -353,7 +330,7 @@ class _HoldToStartControl extends ConsumerWidget {
         if (result.status == RecordingStatus.active) {
           context.go('/ride/active');
         } else {
-          _showBlockedSnackBar(context, result);
+          showRecordingBlockedSnackBar(context, result);
         }
       },
     );
@@ -414,7 +391,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   void _onPanCancel() => _ctrl.animateTo(0.0, curve: Curves.easeOut);
 
   void _triggerStart() async {
-    if (!await _ensureLocationDisclosure(context)) {
+    if (!await ensureLocationDisclosure(context)) {
       _ctrl.animateTo(0.0, curve: Curves.easeOut);
       return;
     }
@@ -430,7 +407,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
       // try again. rideState.error (rendered below this widget) explains why,
       // echoed as a SnackBar since that card can be scrolled out of view.
       _ctrl.animateTo(0.0, curve: Curves.easeOut);
-      _showBlockedSnackBar(context, result);
+      showRecordingBlockedSnackBar(context, result);
     }
   }
 
@@ -446,7 +423,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
         ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
     final enabled = widget.enabled && !isStarting;
 
-    // The track was hard-coded to `AppColors.ink` (near-black in both
+    // The track was hard-coded to `context.palette.ink` (near-black in both
     // palettes). On Carbon Mono that's right — a black slab with a lime fill
     // reads as instrument panel against the dark background. On Editorial it
     // was the one black control on a cream page where every other action
@@ -458,13 +435,13 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     // ThemeData, Carbon Mono a dark one (see AppTheme.build).
     final isLightPalette = Theme.of(context).brightness == Brightness.light;
     final trackColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
-        : AppColors.textTertiary;
+        ? (isLightPalette ? context.palette.primary : context.palette.ink)
+        : context.palette.textTertiary;
     final fillColor =
-        isLightPalette ? AppColors.primaryDark : AppColors.primary;
+        isLightPalette ? context.palette.primaryDark : context.palette.primary;
     final thumbIconColor = enabled
-        ? (isLightPalette ? AppColors.primary : AppColors.ink)
-        : AppColors.textTertiary;
+        ? (isLightPalette ? context.palette.primary : context.palette.ink)
+        : context.palette.textTertiary;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -476,7 +453,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
           onPanEnd: enabled ? _onPanEnd : null,
           onPanCancel: enabled ? _onPanCancel : null,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            borderRadius: BorderRadius.circular(context.shape.radiusLg),
             child: SizedBox(
               height: _trackHeight,
               width: double.infinity,
@@ -501,9 +478,9 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                                     color: Colors.white, strokeWidth: 2.5))
                             : Opacity(
                                 opacity: (1 - fraction * 2).clamp(0.0, 1.0),
-                                child: Text('Slide to start ride',
-                                    style: display(16,
-                                        color: AppColors.onInk,
+                                child: Text(context.l10n.slideStartRide,
+                                    style: display(context, 16,
+                                        color: context.palette.onInk,
                                         letterSpacing: 0.2)),
                               ),
                       ),
@@ -514,7 +491,7 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
                           width: _thumbSize,
                           height: _thumbSize,
                           decoration: BoxDecoration(
-                            color: AppColors.onInk,
+                            color: context.palette.onInk,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(Icons.arrow_forward,
@@ -532,3 +509,5 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     );
   }
 }
+
+

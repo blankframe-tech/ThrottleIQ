@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import 'package:uuid/uuid.dart';
+import '../../domain/catalog/schedule_templates.dart';
 import '../../domain/entities/maintenance_entity.dart';
+import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
+import '../widgets/edit_maintenance_check_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/parse_localized_number.dart';
+import '../service_type_l10n.dart';
 
 class MaintenanceConfigScreen extends ConsumerStatefulWidget {
   final String bikeId;
@@ -35,33 +42,23 @@ class _MaintenanceConfigScreenState
   }
 
   void _initItems() {
-    final asyncConfigs = ref.read(maintenanceConfigProvider(widget.bikeId));
-    final configs = asyncConfigs.valueOrNull;
-    if (configs != null && configs.isNotEmpty) {
-      setState(() {
-        _items = configs.map((c) => c.copyWith()).toList();
+    final configs =
+        ref.read(maintenanceConfigProvider(widget.bikeId)).valueOrNull;
+    if (configs == null) {
+      // Still loading: try again next frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _initItems();
       });
-    } else {
-      // Fallback: build full catalog
-      setState(() {
-        _items = ServiceType.values
-            .where((t) => t != ServiceType.custom)
-            .map((t) => MaintenanceConfigEntity(
-                  bikeId: widget.bikeId,
-                  serviceType: t,
-                  intervalKm: t.defaultIntervalKm,
-                  isEnabled: t.isRecommendedDefault,
-                ))
-            .toList();
-      });
+      return;
     }
+    setState(() => _items = configs.map((c) => c.copyWith()).toList());
   }
 
-  void _toggleItem(ServiceType type) {
+  void _toggleItem(String key) {
     if (_items == null) return;
     setState(() {
       _items = _items!.map((item) {
-        if (item.serviceType == type) {
+        if (item.key == key) {
           return item.copyWith(isEnabled: !item.isEnabled);
         }
         return item;
@@ -69,12 +66,52 @@ class _MaintenanceConfigScreenState
     });
   }
 
+  /// The bike's schedule template's default set.
   void _selectRecommended() {
     if (_items == null) return;
+    final bike = ref
+        .read(garageProvider)
+        .valueOrNull
+        ?.where((b) => b.id == widget.bikeId)
+        .firstOrNull;
+    final template =
+        ref.read(maintenanceProfileProvider(widget.bikeId)).valueOrNull?.template ??
+            (bike == null
+                ? templateById(null)
+                : suggestTemplate(
+                    brand: bike.brand, model: bike.model, cc: bike.cc));
     setState(() {
       _items = _items!.map((item) {
-        return item.copyWith(isEnabled: item.serviceType.isRecommendedDefault);
+        if (item.isCustom) return item;
+        return item.copyWith(
+            isEnabled: template.enabledByDefault.contains(item.serviceType));
       }).toList();
+    });
+  }
+
+  Future<void> _addCustom() async {
+    final result = await showDialog<_CustomCheckInput>(
+      context: context,
+      builder: (_) => const _CustomCheckDialog(),
+    );
+    if (result == null || !mounted) return;
+    final name = result.name;
+    final km = result.km;
+    final days = result.days;
+    if (name.isEmpty || (km <= 0 && (days ?? 0) <= 0)) return;
+    setState(() {
+      _items = [
+        ..._items!,
+        MaintenanceConfigEntity(
+          bikeId: widget.bikeId,
+          serviceType: ServiceType.custom,
+          customId: const Uuid().v4(),
+          customLabel: name,
+          intervalKm: km,
+          intervalDays: (days ?? 0) > 0 ? days : null,
+          source: IntervalSource.user,
+        ),
+      ];
     });
   }
 
@@ -92,69 +129,17 @@ class _MaintenanceConfigScreenState
     });
   }
 
-  Future<void> _editInterval(MaintenanceConfigEntity item) async {
-    final ctrl = TextEditingController(text: item.intervalKm.toStringAsFixed(0));
-    final result = await showDialog<double>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Set ${item.serviceType.label} Interval', style: display(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter the recommended service interval in kilometers according to your motorcycle manual.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'Service Interval (km)',
-                suffixText: 'km',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              children: [1000, 1500, 3000, 5000, 10000, 15000].map((preset) {
-                return ActionChip(
-                  label: Text('${preset.toString()} km',
-                      style: const TextStyle(fontSize: 11)),
-                  onPressed: () => ctrl.text = preset.toString(),
-                  backgroundColor: AppColors.surfaceVariant,
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textTertiary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final val = double.tryParse(ctrl.text.trim());
-              if (val != null && val > 0) {
-                Navigator.of(ctx).pop(val);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+  Future<void> _editItem(MaintenanceConfigEntity item) async {
+    final updated = await EditMaintenanceCheckSheet.show(
+      context,
+      config: item,
+      persistImmediately: false,
     );
-
-    if (result != null && mounted) {
+    if (updated != null && mounted) {
       setState(() {
         _items = _items!.map((c) {
-          if (c.serviceType == item.serviceType) {
-            return c.copyWith(intervalKm: result);
+          if (c.key == item.key) {
+            return updated;
           }
           return c;
         }).toList();
@@ -172,7 +157,11 @@ class _MaintenanceConfigScreenState
 
     if (!mounted) return;
 
-    if (widget.isFirstTime) {
+    // First-time setup is now opened on top of wherever the rider was (the
+    // "Bike added" SnackBar or bike detail), so it pops back there too
+    // instead of go()-ing to the Maintenance tab and dropping the stack.
+    // go() stays only as the fallback for a deep link with nothing beneath.
+    if (widget.isFirstTime && !context.canPop()) {
       context.go('/home/maintenance?bikeId=${widget.bikeId}');
     } else {
       context.pop();
@@ -181,6 +170,8 @@ class _MaintenanceConfigScreenState
 
   IconData _iconForService(ServiceType type) {
     switch (type) {
+      case ServiceType.fuel:
+        return Icons.local_gas_station;
       case ServiceType.oilChange:
       case ServiceType.oilFilter:
         return Icons.opacity;
@@ -222,25 +213,25 @@ class _MaintenanceConfigScreenState
   Widget build(BuildContext context) {
     final bikes = ref.watch(garageProvider).valueOrNull ?? [];
     final bike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
-    final bikeName = bike?.displayName ?? 'Your Motorcycle';
+    final bikeName = bike?.displayName ?? context.l10n.yourMotorcycle;
 
     final items = _items;
     final enabledCount = items?.where((i) => i.isEnabled).length ?? 0;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(widget.isFirstTime ? 'Setup Maintenance' : 'Edit Tracked Checks'),
+        title: Text(widget.isFirstTime ? context.l10n.setupMaintenance : context.l10n.editTrackedChecks),
         actions: [
           if (widget.isFirstTime)
             TextButton(
               onPressed: _saving ? null : _saveAndContinue,
-              child: Text('Skip', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(context.l10n.skip, style: TextStyle(color: context.palette.textSecondary)),
             ),
         ],
       ),
       body: items == null
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: context.palette.primary))
           : Column(
               children: [
                 Expanded(
@@ -251,9 +242,9 @@ class _MaintenanceConfigScreenState
                       children: [
                         // Header prompt card
                         EditorialCard(
-                          radius: AppDimensions.radiusLg,
+                          radius: context.shape.radiusLg,
                           padding: const EdgeInsets.all(16),
-                          borderColor: AppColors.primary.withValues(alpha: 0.3),
+                          borderColor: context.palette.primary.withValues(alpha: 0.3),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -262,27 +253,27 @@ class _MaintenanceConfigScreenState
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.15),
+                                      color: context.palette.primary.withValues(alpha: 0.15),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(Icons.two_wheeler,
-                                        color: AppColors.primary, size: 20),
+                                        color: context.palette.primary, size: 20),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'What would you like to track for $bikeName?',
-                                      style: display(15),
+                                      context.l10n.whatWouldLikeTrack(bikeName),
+                                      style: display(context, 15),
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due.',
+                                context.l10n.selectComponentsWantThrottleiq,
                                 style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.textSecondary,
                                     height: 1.4),
                               ),
                             ],
@@ -296,21 +287,21 @@ class _MaintenanceConfigScreenState
                             TextButton.icon(
                               onPressed: _selectRecommended,
                               icon: const Icon(Icons.recommend, size: 16),
-                              label: const Text('Recommended',
-                                  style: TextStyle(fontSize: 12)),
+                              label: Text(context.l10n.recommended,
+                                  style: const TextStyle(fontSize: 12)),
                             ),
                             const Spacer(),
                             TextButton(
                               onPressed: _selectAll,
-                              child: const Text('Select All',
-                                  style: TextStyle(fontSize: 12)),
+                              child: Text(context.l10n.selectAll,
+                                  style: const TextStyle(fontSize: 12)),
                             ),
                             TextButton(
                               onPressed: _clearAll,
-                              child: Text('Clear',
+                              child: Text(context.l10n.clear,
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textTertiary)),
+                                      color: context.palette.textTertiary)),
                             ),
                           ],
                         ),
@@ -321,6 +312,17 @@ class _MaintenanceConfigScreenState
                           _buildCategorySection(category, items),
                           const SizedBox(height: 16),
                         ],
+                        EditorialLabel(context.l10n.customChecksSection),
+                        const SizedBox(height: 8),
+                        for (final item in items.where((i) => i.isCustom)) ...[
+                          _buildCheckTile(item),
+                          const SizedBox(height: 6),
+                        ],
+                        DashedAddButton(
+                          label: context.l10n.addCustomCheck,
+                          onTap: _addCustom,
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -330,8 +332,8 @@ class _MaintenanceConfigScreenState
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.border)),
+                    color: context.palette.surface,
+                    border: Border(top: BorderSide(color: context.palette.border)),
                   ),
                   child: SafeArea(
                     child: SizedBox(
@@ -347,8 +349,8 @@ class _MaintenanceConfigScreenState
                               )
                             : Text(
                                 enabledCount > 0
-                                    ? 'Track $enabledCount Checks'
-                                    : 'Save Preferences',
+                                    ? context.l10n.trackChecks(enabledCount)
+                                    : context.l10n.savePreferences,
                                 style: const TextStyle(fontWeight: FontWeight.w700),
                               ),
                       ),
@@ -362,8 +364,9 @@ class _MaintenanceConfigScreenState
 
   Widget _buildCategorySection(
       MaintenanceCategory category, List<MaintenanceConfigEntity> allItems) {
-    final categoryItems =
-        allItems.where((i) => i.serviceType.category == category).toList();
+    final categoryItems = allItems
+        .where((i) => !i.isCustom && i.serviceType.category == category)
+        .toList();
     if (categoryItems.isEmpty) return const SizedBox.shrink();
 
     final activeInCategory = categoryItems.where((i) => i.isEnabled).length;
@@ -374,10 +377,10 @@ class _MaintenanceConfigScreenState
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            EditorialLabel(category.label),
+            EditorialLabel(category.localizedLabel(context.l10n)),
             Text(
-              '$activeInCategory of ${categoryItems.length} active',
-              style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+              context.l10n.activeInCategory(activeInCategory, categoryItems.length),
+              style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
             ),
           ],
         ),
@@ -390,39 +393,92 @@ class _MaintenanceConfigScreenState
     );
   }
 
+  /// The interval pill that opens the edit sheet. issues §101.R9: it is
+  /// ~24dp tall inside a row whose own tap toggles the item, so a near miss
+  /// flipped the toggle. The hit box is 48dp; the pill looks the same.
+  Widget _buildEditPill(MaintenanceConfigEntity item, bool isEnabled) {
+    return Semantics(
+      button: true,
+      label: context.l10n.editInterval,
+      child: GestureDetector(
+        key: ValueKey('maint-config-edit-${item.key}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _editItem(item),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                border: Border.all(color: context.palette.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    [
+                      if (item.intervalKm > 0)
+                        '${item.intervalKm.toStringAsFixed(0)} km',
+                      if (item.intervalDays != null)
+                        context.l10n.daysShort(item.intervalDays!),
+                    ].join(' · '),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isEnabled
+                          ? context.palette.textSecondary
+                          : context.palette.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Icon(Icons.edit_outlined,
+                      size: 11, color: context.palette.textTertiary),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCheckTile(MaintenanceConfigEntity item) {
     final isEnabled = item.isEnabled;
 
     return Container(
       decoration: BoxDecoration(
         color: isEnabled
-            ? AppColors.surfaceVariant
-            : AppColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ? context.palette.surfaceVariant
+            : context.palette.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         border: Border.all(
           color: isEnabled
-              ? AppColors.primary.withValues(alpha: 0.4)
-              : AppColors.border,
+              ? context.palette.primary.withValues(alpha: 0.4)
+              : context.palette.border,
         ),
       ),
       child: InkWell(
-        onTap: () => _toggleItem(item.serviceType),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        onTap: () => _toggleItem(item.key),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
               Checkbox(
                 value: isEnabled,
-                onChanged: (_) => _toggleItem(item.serviceType),
-                activeColor: AppColors.primary,
+                onChanged: (_) => _toggleItem(item.key),
+                activeColor: context.palette.primary,
                 visualDensity: VisualDensity.compact,
               ),
               const SizedBox(width: 4),
               Icon(
                 _iconForService(item.serviceType),
                 size: 20,
-                color: isEnabled ? AppColors.primary : AppColors.textTertiary,
+                color: isEnabled ? context.palette.primary : context.palette.textTertiary,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -430,63 +486,130 @@ class _MaintenanceConfigScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.serviceType.label,
+                      configLabel(item, context.l10n),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: isEnabled ? FontWeight.w600 : FontWeight.w500,
                         color: isEnabled
-                            ? AppColors.textPrimary
-                            : AppColors.textTertiary,
+                            ? context.palette.textPrimary
+                            : context.palette.textTertiary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      item.serviceType.description,
+                      item.serviceType.localizedDescription(context.l10n),
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textTertiary,
+                        color: context.palette.textTertiary,
                         height: 1.2,
                       ),
                     ),
+                    if (item.notes != null &&
+                        item.notes!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.notes,
+                              size: 11, color: context.palette.primary),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              item.notes!.trim(),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                                color: context.palette.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _editInterval(item),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusFull),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${item.intervalKm.toStringAsFixed(0)} km',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isEnabled
-                              ? AppColors.textSecondary
-                              : AppColors.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Icon(Icons.edit_outlined,
-                          size: 11, color: AppColors.textTertiary),
-                    ],
-                  ),
-                ),
-              ),
+              _buildEditPill(item, isEnabled),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// What the "add custom check" dialog hands back.
+typedef _CustomCheckInput = ({String name, double km, int? days});
+
+/// Owns its text controllers so they are disposed with the dialog's state,
+/// after the exit animation, not the moment `showDialog` resolves while the
+/// TextFields are still attached (issues §101.R10). Scrolls so the three
+/// fields stay reachable with the keyboard open on a small screen.
+class _CustomCheckDialog extends StatefulWidget {
+  const _CustomCheckDialog();
+
+  @override
+  State<_CustomCheckDialog> createState() => _CustomCheckDialogState();
+}
+
+class _CustomCheckDialogState extends State<_CustomCheckDialog> {
+  final _nameCtrl = TextEditingController();
+  final _kmCtrl = TextEditingController();
+  final _daysCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _kmCtrl.dispose();
+    _daysCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.addCustomCheck),
+      scrollable: true,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameCtrl,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+                labelText: l10n.customCheckName, hintText: l10n.eGRadiatorFlush),
+          ),
+          TextField(
+            controller: _kmCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+                labelText: l10n.intervalDistanceKm,
+                suffixText: l10n.distanceStatLabel),
+          ),
+          TextField(
+            controller: _daysCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+                labelText: l10n.intervalDaysLabel, suffixText: l10n.daysUnit),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancelAction)),
+        ElevatedButton(
+            onPressed: () => Navigator.of(context).pop((
+                  name: _nameCtrl.text.trim(),
+                  km: parseLocalizedNumber(_kmCtrl.text.trim(), min: 0) ?? 0,
+                  days: parseLocalizedInt(_daysCtrl.text.trim(), min: 0),
+                )),
+            child: Text(l10n.addAction)),
+      ],
     );
   }
 }

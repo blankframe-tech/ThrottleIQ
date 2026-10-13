@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/database/daos/auto_detection_dao.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../domain/calculators/auto_ride_reconciler.dart';
+import '../../domain/calculators/daily_ride_summary.dart';
+import '../providers/daily_ride_summary_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
-class AutoDetectionHistorySheet extends StatefulWidget {
+/// Auto-tracking's history, one row per day.
+///
+/// This used to list every background detection ("Ride recorded" /
+/// "Discarded: too short"). In Dhaka traffic one commute came out as several
+/// detections, so the list read as five rides where there was one. It now
+/// shows the per-day summary instead — rides counted once per journey,
+/// recorded and not-recorded together — and individual detections are no
+/// longer surfaced anywhere. Their raw data is still kept locally.
+class AutoDetectionHistorySheet extends ConsumerWidget {
   const AutoDetectionHistorySheet({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -19,26 +30,14 @@ class AutoDetectionHistorySheet extends StatefulWidget {
   }
 
   @override
-  State<AutoDetectionHistorySheet> createState() => _AutoDetectionHistorySheetState();
-}
-
-class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
-  late Future<List<Map<String, dynamic>>> _outcomesFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _outcomesFuture = AutoDetectionDao().recentOutcomes(limit: 50);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final days = ref.watch(recentDailyRideSummariesProvider);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       constraints: BoxConstraints(
@@ -52,7 +51,7 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: context.palette.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -65,20 +64,21 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l10n.recentDetectionsTitle,
+                        l10n.dailySummariesTitle,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        l10n.recentDetectionsSubtitle,
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        l10n.dailySummariesSubtitle,
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
+                  tooltip: context.l10n.close,
                   icon: const Icon(Icons.close, size: 20),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -87,93 +87,42 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
           ),
           const Divider(height: 1),
           Flexible(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _outcomesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                final outcomes = snapshot.data ?? [];
-                if (outcomes.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.history, size: 40, color: AppColors.textTertiary),
-                          const SizedBox(height: 12),
-                          Text(
-                            l10n.recentDetectionsEmpty,
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final dateFormat = DateFormat('MMM d, h:mm a');
-
+            child: days.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (_, __) => _empty(context, l10n),
+              data: (list) {
+                if (list.isEmpty) return _empty(context, l10n);
+                final dateFormat = DateFormat('EEE, d MMM', kNumericLocale);
                 return ListView.separated(
                   shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: outcomes.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16),
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, indent: 16, endIndent: 16),
                   itemBuilder: (context, index) {
-                    final item = outcomes[index];
-                    final isReconciled = item['status'] == AutoDetectionStatus.reconciled;
-                    final reason = item['discard_reason'] as String?;
-                    final startedAtStr = item['started_at'] as String?;
-                    final startedAt = startedAtStr != null
-                        ? DateTime.tryParse(startedAtStr)
-                        : null;
-
+                    final day = list[index];
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                       leading: CircleAvatar(
                         radius: 18,
-                        backgroundColor: isReconciled
-                            ? AppColors.primary.withValues(alpha: 0.15)
-                            : AppColors.attention.withValues(alpha: 0.15),
-                        child: Icon(
-                          isReconciled ? Icons.check : Icons.info_outline,
-                          size: 18,
-                          color: isReconciled ? AppColors.primary : AppColors.attention,
-                        ),
+                        backgroundColor:
+                            context.palette.primary.withValues(alpha: 0.15),
+                        child: Icon(Icons.motorcycle,
+                            size: 18, color: context.palette.primary),
                       ),
                       title: Text(
-                        isReconciled ? 'Ride Recorded' : _humanizeReason(l10n, reason),
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        '${dateFormat.format(day.day)} · '
+                        '${l10n.autoSummaryRides(day.rideCount)}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14),
                       ),
-                      subtitle: Text(
-                        startedAt != null ? dateFormat.format(startedAt) : 'Unknown date',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isReconciled
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : AppColors.border.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          isReconciled ? 'SAVED' : 'DISCARDED',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: isReconciled ? AppColors.primary : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
+                      subtitle: DailySummaryDetails(summary: day),
                     );
                   },
                 );
@@ -186,18 +135,55 @@ class _AutoDetectionHistorySheetState extends State<AutoDetectionHistorySheet> {
     );
   }
 
-  String _humanizeReason(AppLocalizations l10n, String? reason) {
-    switch (reason) {
-      case ReconcileRejection.tooShortDistance:
-        return l10n.rejectionTooShort;
-      case ReconcileRejection.tooSlow:
-        return l10n.rejectionTooSlow;
-      case ReconcileRejection.tooFewFixes:
-        return l10n.rejectionTooFewFixes;
-      case ReconcileRejection.noMovement:
-        return l10n.rejectionNoMovement;
-      default:
-        return 'Brief trip not classified as ride';
-    }
+  Widget _empty(BuildContext context, AppLocalizations l10n) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.history, size: 40, color: context.palette.textTertiary),
+            const SizedBox(height: 12),
+            Text(
+              l10n.dailySummariesEmpty,
+              style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The stats lines of one [DailyRideSummary]: distance, ride time and jam
+/// time, plus how many rides weren't recorded. Shared by the history sheet
+/// and the "Today" row of the auto-tracking tile.
+class DailySummaryDetails extends StatelessWidget {
+  const DailySummaryDetails({super.key, required this.summary});
+
+  final DailyRideSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final style = TextStyle(fontSize: 12, color: context.palette.textSecondary);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.autoSummaryStats(
+            (summary.distanceM / 1000).toStringAsFixed(1),
+            summary.rideSeconds ~/ 60,
+            summary.jamSeconds ~/ 60,
+          ),
+          style: style,
+        ),
+        if (summary.detectedRideCount > 0)
+          Text(l10n.autoSummaryNotRecorded(summary.detectedRideCount),
+              style: style),
+      ],
+    );
   }
 }

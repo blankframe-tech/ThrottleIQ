@@ -54,5 +54,23 @@ void main() {
         isNull,
       );
     });
+
+    test(
+      'regression: /auth/register is treated like /auth/login by the redirect '
+      '— a signed-out user hitting it stays put, and a signed-in user is sent '
+      'home. Guards against the route existing in computeAuthRedirect\'s '
+      'startsWith("/auth") branch but never being registered in the GoRouter '
+      'routes list (the "no routes for location: /auth/register" bug).',
+      () {
+        expect(
+          computeAuthRedirect(isAuth: false, isOnboarding: true, loc: '/auth/register'),
+          isNull,
+        );
+        expect(
+          computeAuthRedirect(isAuth: true, isOnboarding: false, loc: '/auth/register'),
+          '/home/record',
+        );
+      },
+    );
   });
 }

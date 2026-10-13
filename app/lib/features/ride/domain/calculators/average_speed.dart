@@ -70,3 +70,45 @@ int movingSeconds(
       thresholdMs: thresholdMs, maxGapSeconds: maxGapSeconds);
   return (ms / 1000).round();
 }
+
+/// Moving milliseconds to credit for the gap between two consecutive live
+/// fixes, as the recorder sees them.
+///
+/// Short gaps (a normal fix interval, ≤ 3 s) count whole when the fix that
+/// ends them is moving — the same rule as [movingMilliseconds]. Longer gaps
+/// used to follow that rule too, so a rider parked at a light who pulled
+/// away as the next fix landed was credited the whole wait (up to
+/// [maxGapSeconds]) as moving time (§78.11). Now a longer gap counts whole
+/// only when *both* ends are moving; otherwise only the part the distance
+/// covered at the mean of the two end speeds explains.
+///
+/// Gaps beyond [maxGapSeconds] (tunnel, suspended app) keep their original
+/// treatment: credited only if the distance covered implies real travel.
+int movingMsForGap({
+  required int gapMs,
+  required double prevSpeedMs,
+  required double speedMs,
+  required double distanceM,
+  double thresholdMs = SensorConstants.movingSpeedThresholdMs,
+  int maxGapSeconds = 60,
+}) {
+  if (gapMs <= 0) return 0;
+  final moving = speedMs >= thresholdMs;
+
+  if (gapMs <= 3000) return moving ? gapMs : 0;
+
+  if (gapMs <= maxGapSeconds * 1000) {
+    if (moving && prevSpeedMs >= thresholdMs) return gapMs;
+    final avg = (prevSpeedMs + speedMs) / 2;
+    if (avg <= 0 || distanceM <= 0) return 0;
+    return (distanceM / avg * 1000).round().clamp(0, gapMs);
+  }
+
+  if (distanceM > 50.0) {
+    final gapSeconds = gapMs / 1000.0;
+    if (distanceM / gapSeconds >= thresholdMs) return gapMs;
+    final estimatedSeconds = (distanceM / 5.0).clamp(1.0, gapSeconds);
+    return (estimatedSeconds * 1000).round();
+  }
+  return 0;
+}

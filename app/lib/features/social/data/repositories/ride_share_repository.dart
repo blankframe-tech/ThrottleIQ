@@ -10,10 +10,13 @@ import '../../domain/entities/shared_ride_entity.dart';
 import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
+import '../../domain/utilities/privacy_zone_salt.dart';
+
+/// Comments fetched per page by [RideShareRepository.getComments].
+const int kRideCommentsPageSize = 30;
 
 class RideShareRepository {
-  static final RideShareRepository _instance =
-      RideShareRepository._internal();
+  static final RideShareRepository _instance = RideShareRepository._internal();
 
   factory RideShareRepository() => _instance;
 
@@ -22,6 +25,7 @@ class RideShareRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CloudinaryUploadService _uploadService = CloudinaryUploadService();
   final FollowRepository _followRepository = FollowRepository();
+  final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
 
   /// Uploads a rider-taken ride/bike photo (via Cloudinary — see
   /// [CloudinaryUploadService]) and returns its public URL.
@@ -58,14 +62,21 @@ class RideShareRepository {
     List<String> photoUrls = const [],
     String? routeId,
     String? caption,
+    int? hardBrakeCount,
+    int? rapidAccelCount,
+    int? highJerkCount,
   }) async {
-    // Apply privacy-zone clipping (strips ~200 m off each end to hide
+    // Apply privacy-zone clipping (drops every point within the rider's
+    // 200-350 m jittered radius of either end, to hide
     // home/work). On a short or near-home ride the clip can consume the whole
     // track — that must NOT block sharing (this was the "share throws an
     // error" bug). Instead we share with NO route line at all, which is the
     // privacy-safe outcome anyway: the ride still posts, the feed card just
     // shows stats without a map trace.
-    final clippedPolyline = PrivacyZoneClipper.clipPolyline(polyline);
+    final clippedPolyline = PrivacyZoneClipper.clipPolyline(
+      polyline,
+      seed: await _privacySalt.forUid(userId),
+    );
 
     final allowedUserIds = switch (audience) {
       'followers' => await _followRepository.getFollowers(userId),
@@ -87,9 +98,7 @@ class RideShareRepository {
       maxSpeedKmh: maxSpeedKmh,
       polyline: clippedPolyline,
       mapSnapshotUrl: mapSnapshotUrl,
-      likes: 0,
       comments: 0,
-      isLikedByCurrentUser: false,
       createdAt: DateTime.now(),
       audience: audience,
       allowedUserIds: allowedUserIds,
@@ -99,6 +108,9 @@ class RideShareRepository {
       // future caller skips the composer.
       photoUrls: normalizeRidePhotoUrls(photoUrls),
       caption: caption,
+      hardBrakeCount: hardBrakeCount,
+      rapidAccelCount: rapidAccelCount,
+      highJerkCount: highJerkCount,
     );
 
     final docRef = _firestore.collection('rides').doc(rideId);
@@ -107,7 +119,6 @@ class RideShareRepository {
     final data = sharedRide.toFirestore();
     if (existing.exists) {
       // Don't wipe engagement accumulated since the ride was first shared.
-      data.remove('likes');
       data.remove('comments');
       data.remove('upvotes');
       data.remove('downvotes');
@@ -115,6 +126,33 @@ class RideShareRepository {
     await docRef.set(data, SetOptions(merge: true));
 
     return rideId;
+  }
+
+  /// Patches a previously shared ride's bike name/type after the rider
+  /// corrects which bike the ride was actually on (see `ChangeBikeControl`
+  /// and `RideAttribution.confirm`). The share is a denormalized snapshot
+  /// taken at share time — without this, a bike correction would silently
+  /// stop at the local ride row, leaving an already-posted card showing the
+  /// wrong bike forever.
+  ///
+  /// `update()` throwing `not-found` just means this ride was never shared,
+  /// which is the common case, not an error worth surfacing to the rider.
+  Future<void> updateSharedRideBikeInfo(
+    String rideId, {
+    required String bikeId,
+    required String bikeName,
+    required String bikeType,
+  }) async {
+    try {
+      await _firestore.collection('rides').doc(rideId).update({
+        'bikeId': bikeId,
+        'bikeName': bikeName,
+        'bikeType': bikeType,
+      });
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found') return;
+      rethrow;
+    }
   }
 
   /// Gets a shared ride by ID.
@@ -132,14 +170,92 @@ class RideShareRepository {
 
   /// Public rides (for discovery). Lines up with the `audience == 'public'`
   /// clause of `rideVisibleTo()` in firestore.rules.
-  Future<List<SharedRideEntity>> getPublicRides({int limit = 20}) async {
-    final snap = await _firestore
+  /// [before] is a cursor: pass the `createdAt` of the oldest ride already
+  /// shown to get the next page. Without it the feed was capped at one page
+  /// forever — three 20-document queries merged client-side, no cursor, no
+  /// "load more", so the social half of the app simply ended at ~60 posts
+  /// (issues §83.20).
+  Future<List<SharedRideEntity>> getPublicRides({
+    int limit = 20,
+    DateTime? before,
+    bool hydrateVotes = true,
+  }) async {
+    var q = _firestore
         .collection('rides')
         .where('audience', isEqualTo: 'public')
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return _hydrate(_toEntities(snap));
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    final entities = _toEntities(await q.limit(limit).get());
+    if (!hydrateVotes) return entities;
+    return _hydrate(entities);
+  }
+
+  /// Public rides authored by [uids] — the real backing query for the
+  /// "Following" chip, as one result list PER `whereIn` chunk.
+  ///
+  /// That chip used to filter the already-fetched 20-ride public page against
+  /// the follow graph on the client, which meant a rider following 30 people
+  /// whose posts weren't in the 20 most recent public rides saw an EMPTY
+  /// "Following" feed while those 30 people were actively posting (§83.20).
+  ///
+  /// `whereIn` caps at 30 values, so the follow list is chunked; each chunk
+  /// is returned as its own list because each is an independently paged feed
+  /// source (`mergeFeedSources` judges "full page" per source). Each chunk
+  /// carries `audience == 'public'`, which is what lets firestore.rules'
+  /// `rideVisibleTo` prove the query without any per-author lookup — see
+  /// [getSharedToMe] for the same constraint spelled out. Served by the
+  /// (userId, audience, createdAt) composite index.
+  Future<List<List<SharedRideEntity>>> getPublicRidesByAuthorChunks(
+    List<List<String>> authorChunks, {
+    int limit = 20,
+    DateTime? before,
+  }) async {
+    final snaps = await Future.wait([
+      for (final chunk in authorChunks)
+        if (chunk.isNotEmpty)
+          () {
+            var q = _firestore
+                .collection('rides')
+                .where('userId', whereIn: chunk)
+                .where('audience', isEqualTo: 'public')
+                .orderBy('createdAt', descending: true);
+            if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+            return q.limit(limit).get();
+          }(),
+    ]);
+    return [for (final snap in snaps) _toEntities(snap)];
+  }
+
+  /// One followed author's `followers` (and, when they follow back,
+  /// `mutual`) rides — the live follow-graph query (issues §88.1).
+  ///
+  /// Rules allow a follower to see 'followers' posts and a mutual follower to
+  /// see 'mutual' posts, but ONLY when the query pins a single author via
+  /// `userId == author`: a `whereIn` across authors can't be proven against
+  /// `rideVisibleTo`'s exists() clauses. So this stays one query per author,
+  /// but — unlike the old fan-out, which also re-fetched the author's PUBLIC
+  /// rides here at the full page limit (up to 20 reads × every followed
+  /// author, issues §90.A1) — it asks only for restricted audiences with a
+  /// small limit (`kRestrictedPerAuthorLimit`). Public rides come from
+  /// [getPublicRidesByAuthorChunks].
+  ///
+  /// [audiences] must be `['followers']` or `['followers', 'mutual']` (see
+  /// `restrictedAudiencesFor`) — never `public`, and never `mutual` for an
+  /// author who doesn't follow the viewer back, or the rules reject the
+  /// whole query.
+  Future<List<SharedRideEntity>> getRestrictedRidesByAuthor(
+    String author, {
+    required List<String> audiences,
+    int limit = 5,
+    DateTime? before,
+  }) async {
+    var q = _firestore
+        .collection('rides')
+        .where('userId', isEqualTo: author)
+        .where('audience', whereIn: audiences)
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    return _toEntities(await q.limit(limit).get());
   }
 
   /// Rides materialized as visible to the signed-in rider (followers/mutual
@@ -156,81 +272,82 @@ class RideShareRepository {
   /// write-time invariant, not something the query itself asserts). Adding
   /// the explicit audience filter here makes the query prove what the rule
   /// needs, matching firestore.indexes.json's composite index.
-  Future<List<SharedRideEntity>> getSharedToMe(String uid, {int limit = 20}) async {
-    final snap = await _firestore
+  Future<List<SharedRideEntity>> getSharedToMe(
+    String uid, {
+    int limit = 20,
+    DateTime? before,
+    bool hydrateVotes = true,
+  }) async {
+    var q = _firestore
         .collection('rides')
         .where('allowedUserIds', arrayContains: uid)
-        .where('audience', whereIn: ['followers', 'mutual'])
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return _hydrate(_toEntities(snap));
+        .where('audience', whereIn: ['followers', 'mutual']).orderBy(
+            'createdAt',
+            descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    final entities = _toEntities(await q.limit(limit).get());
+    if (!hydrateVotes) return entities;
+    return _hydrate(entities);
   }
 
   /// The signed-in rider's own shared rides, regardless of audience. Lines
   /// up with the `userId == me` (always-visible-to-owner) clause.
-  Future<List<SharedRideEntity>> getMyRides(String uid, {int limit = 20}) async {
-    final snap = await _firestore
+  Future<List<SharedRideEntity>> getMyRides(
+    String uid, {
+    int limit = 20,
+    DateTime? before,
+    bool hydrateVotes = true,
+  }) async {
+    var q = _firestore
         .collection('rides')
         .where('userId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return _hydrate(_toEntities(snap));
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    final entities = _toEntities(await q.limit(limit).get());
+    if (!hydrateVotes) return entities;
+    return _hydrate(entities);
   }
 
   List<SharedRideEntity> _toEntities(QuerySnapshot<Map<String, dynamic>> snap) {
     return snap.docs
-        .map((doc) => RideShareModel.fromFirestore(doc.data(), doc.id).toEntity())
+        .map((doc) =>
+            RideShareModel.fromFirestore(doc.data(), doc.id).toEntity())
         .toList();
   }
 
-  /// Hydrates the signed-in rider's like/vote state onto each ride —
-  /// entity-only fields never stored on the ride doc itself.
-  Future<List<SharedRideEntity>> _hydrate(List<SharedRideEntity> entities) async {
+  /// Hydrates the signed-in rider's vote state onto each ride — an
+  /// entity-only field never stored on the ride doc itself.
+  ///
+  /// One `get()` per ride. That is a real cost (issues §83.20): the feed fans
+  /// out to four queries whose results overlap heavily, so hydrating inside
+  /// each query meant the same ride's vote was fetched up to four times per
+  /// page. The `hydrateVotes: false` flag lets the feed opt out and call
+  /// [hydrateVotesFor] ONCE on the
+  /// merged, de-duplicated page instead — see `RideFeedNotifier._fetchPage`.
+  ///
+  /// Reducing it below one-read-per-ride needs a `collectionGroup('votes')`
+  /// query, which in turn needs a `uid` field on each vote document (the uid
+  /// is currently only the document id, which a collection-group query can't
+  /// filter on), a collection-group read rule, and a backfill of existing
+  /// vote docs. Left for a pass that can run and verify that migration.
+  Future<List<SharedRideEntity>> _hydrate(
+      List<SharedRideEntity> entities) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null || entities.isEmpty) return entities;
-
-    final likedFlags = await Future.wait(entities.map((ride) => _firestore
-        .collection('rides')
-        .doc(ride.id)
-        .collection('likes')
-        .doc(currentUserId)
-        .get()
-        .then((doc) => doc.exists)));
 
     final votes = await Future.wait(
         entities.map((ride) => getMyVote(ride.id, currentUserId)));
 
     return [
       for (var i = 0; i < entities.length; i++)
-        entities[i].copyWith(isLikedByCurrentUser: likedFlags[i], myVote: votes[i]),
+        entities[i].copyWith(myVote: votes[i]),
     ];
   }
 
-  /// Likes or unlikes a ride. Idempotent: checks the like doc's existence
-  /// inside a transaction so re-liking/re-unliking never double-counts.
-  Future<void> toggleLike(String rideId, String userId, bool like) async {
-    final docRef = _firestore.collection('rides').doc(rideId);
-    final likeRef = docRef.collection('likes').doc(userId);
-
-    await _firestore.runTransaction((transaction) async {
-      final likeDoc = await transaction.get(likeRef);
-      final alreadyLiked = likeDoc.exists;
-      if (alreadyLiked == like) return; // Already in the desired state.
-
-      if (like) {
-        transaction.set(likeRef, {
-          'userId': userId,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-        transaction.update(docRef, {'likes': FieldValue.increment(1)});
-      } else {
-        transaction.delete(likeRef);
-        transaction.update(docRef, {'likes': FieldValue.increment(-1)});
-      }
-    });
-  }
+  /// Public entry point for the merged-page hydration described on [_hydrate].
+  Future<List<SharedRideEntity>> hydrateVotesFor(
+          List<SharedRideEntity> rides) =>
+      _hydrate(rides);
 
   /// The signed-in rider's own vote on a ride, if any (1 upvote / -1
   /// downvote), read from `votes/{uid}`.
@@ -309,7 +426,7 @@ class RideShareRepository {
     // Both writes go in ONE transaction, and the bump carries the new
     // comment's id, so firestore.rules can require that the `comments` tally
     // only moves when a matching comment doc is actually created in the same
-    // commit (docs/Issues.md §24.7). Two separate calls, as this used to do,
+    // commit (issues §24.7). Two separate calls, as this used to do,
     // gave the rule nothing to check the bump against.
     await _firestore.runTransaction((transaction) async {
       transaction.set(commentRef, comment);
@@ -322,49 +439,73 @@ class RideShareRepository {
     return commentRef.id;
   }
 
-  /// Gets comments for a ride.
-  Future<List<RideCommentEntity>> getComments(String rideId) async {
-    final querySnapshot = await _firestore
+  /// Gets the newest [limit] comments for a ride, newest first.
+  ///
+  /// Bounded (issues §90.A8): this used to read every comment on every
+  /// expand of a feed card. [before] pages further back from the
+  /// `createdAt` of the oldest comment already shown.
+  Future<List<RideCommentEntity>> getComments(
+    String rideId, {
+    int limit = kRideCommentsPageSize,
+    DateTime? before,
+  }) async {
+    var q = _firestore
         .collection('rides')
         .doc(rideId)
         .collection('comments')
-        .orderBy('createdAt', descending: true)
-        .get();
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    final querySnapshot = await q.limit(limit).get();
 
-    return querySnapshot.docs
-        .map((doc) {
-          final data = doc.data();
-          return RideCommentEntity(
-            id: doc.id,
-            rideId: rideId,
-            userId: data['userId'],
-            userName: data['userName'],
-            userPhotoUrl: data['userPhotoUrl'],
-            text: data['text'],
-            createdAt: (data['createdAt'] as Timestamp).toDate(),
-            updatedAt: data['updatedAt'] != null
-                ? (data['updatedAt'] as Timestamp).toDate()
-                : null,
-          );
-        })
-        .toList();
+    return querySnapshot.docs.map((doc) {
+      final data = doc.data();
+      return RideCommentEntity(
+        id: doc.id,
+        rideId: rideId,
+        userId: data['userId'],
+        userName: data['userName'],
+        userPhotoUrl: data['userPhotoUrl'],
+        text: data['text'],
+        createdAt: (data['createdAt'] as Timestamp).toDate(),
+        updatedAt: data['updatedAt'] != null
+            ? (data['updatedAt'] as Timestamp).toDate()
+            : null,
+      );
+    }).toList();
+  }
+
+  /// Deletes every ride [uid] has shared from [bikeId], with their comments
+  /// and votes. Used when a bike's shared rides are removed on archive or
+  /// purge. Returns how many were deleted.
+  Future<int> deleteSharedRidesForBike(String uid, String bikeId) async {
+    final snap = await _firestore
+        .collection('rides')
+        .where('userId', isEqualTo: uid)
+        .where('bikeId', isEqualTo: bikeId)
+        .get();
+    for (final doc in snap.docs) {
+      await deleteSharedRide(doc.id);
+    }
+    return snap.docs.length;
   }
 
   /// Deletes a shared ride.
   Future<void> deleteSharedRide(String rideId) async {
     final docRef = _firestore.collection('rides').doc(rideId);
 
-    // Delete all comments and likes
-    final comments =
-        await docRef.collection('comments').get();
-    for (final comment in comments.docs) {
-      await comment.reference.delete();
-    }
-
-    final likes = await docRef.collection('likes').get();
-    for (final like in likes.docs) {
-      await like.reference.delete();
-    }
+    // Fetch both subcollections concurrently, then fire every delete at
+    // once rather than awaiting them one at a time — a popular ride with
+    // many comments/votes used to stall proportionally to that count.
+    final commentsFuture = docRef.collection('comments').get();
+    // `likes` is a retired engagement model (issues_fixed.md §81); legacy
+    // docs are still swept up here so a delete leaves nothing behind.
+    final likesFuture = docRef.collection('likes').get();
+    final comments = await commentsFuture;
+    final likes = await likesFuture;
+    await Future.wait([
+      for (final comment in comments.docs) comment.reference.delete(),
+      for (final like in likes.docs) like.reference.delete(),
+    ]);
 
     // Delete the ride
     await docRef.delete();

@@ -3,7 +3,9 @@ package com.bft.throttleiq
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.net.Uri
+import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -13,8 +15,8 @@ import es.antonborri.home_widget.HomeWidgetProvider
  *
  * The summary line arrives fully composed from Dart
  * (`formatNextServiceSummary`), so this only decides colour: the left accent
- * bar and the status chip flip from lime to danger red when overdue, which is
- * the part a rider reads without reading.
+ * bar and the status chip flip from the theme's primary to danger red when
+ * overdue, which is the part a rider reads without reading.
  */
 class MaintenanceWidgetProvider : HomeWidgetProvider() {
 
@@ -41,42 +43,37 @@ class MaintenanceWidgetProvider : HomeWidgetProvider() {
             else -> context.getString(R.string.widget_maintenance_due_flag)
         }
 
+        val theme = WidgetTheme.from(context, widgetData)
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_maintenance).apply {
                 setTextViewText(R.id.widget_maintenance_summary, summary)
                 setTextViewText(R.id.widget_maintenance_bike, bike)
                 setTextViewText(R.id.widget_maintenance_flag, flagText)
 
-                if (overdue && hasData) {
-                    setInt(
-                        R.id.widget_maintenance_accent,
-                        "setBackgroundResource",
-                        R.drawable.widget_accent_bar_danger
-                    )
-                    setInt(
-                        R.id.widget_maintenance_flag,
-                        "setBackgroundResource",
-                        R.drawable.widget_chip_overdue
-                    )
-                    setTextColor(
-                        R.id.widget_maintenance_flag,
-                        context.getColor(R.color.widget_text_primary)
-                    )
-                } else {
-                    setInt(
-                        R.id.widget_maintenance_accent,
-                        "setBackgroundResource",
-                        R.drawable.widget_accent_bar
-                    )
-                    setInt(
-                        R.id.widget_maintenance_flag,
-                        "setBackgroundResource",
-                        if (hasData) R.drawable.widget_chip_due else 0
-                    )
-                    setTextColor(
-                        R.id.widget_maintenance_flag,
-                        context.getColor(R.color.widget_on_primary)
-                    )
+                applyPanelTheme(theme)
+                setTextColor(R.id.widget_maintenance_summary, theme.textPrimary)
+                setTextColor(R.id.widget_maintenance_bike, theme.textMuted)
+
+                // The accent bar is square, so a plain color fill is fine. The
+                // chip is tinted through its rounded background image so it
+                // keeps its 2dp corners; danger stays red when overdue.
+                val accent = if (overdue && hasData) theme.danger else theme.primary
+                setInt(R.id.widget_maintenance_accent, "setBackgroundColor", accent)
+                when {
+                    overdue && hasData -> {
+                        setViewVisibility(R.id.widget_maintenance_flag_bg, View.VISIBLE)
+                        setInt(R.id.widget_maintenance_flag_bg, "setColorFilter", theme.danger)
+                        setTextColor(R.id.widget_maintenance_flag, Color.WHITE)
+                    }
+                    hasData -> {
+                        setViewVisibility(R.id.widget_maintenance_flag_bg, View.VISIBLE)
+                        setInt(R.id.widget_maintenance_flag_bg, "setColorFilter", theme.primary)
+                        setTextColor(R.id.widget_maintenance_flag, theme.onPrimary)
+                    }
+                    // No data: blank label and no chip fill. (A transparent
+                    // color filter would leave the lime drawable showing, so
+                    // the image is hidden instead.)
+                    else -> setViewVisibility(R.id.widget_maintenance_flag_bg, View.GONE)
                 }
 
                 setOnClickPendingIntent(

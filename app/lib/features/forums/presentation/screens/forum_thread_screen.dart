@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -13,47 +17,69 @@ import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/error_reporter.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../domain/forum_author_bike.dart';
+import '../widgets/forum_post_badges.dart';
+import '../widgets/forum_post_images.dart';
 
 /// Post list for a single forum, with a "New post" FAB.
-class ForumThreadScreen extends ConsumerWidget {
+///
+/// [compose] opens the new-post sheet as soon as the screen appears ("Ask
+/// owners", "Start a discussion", "Share to forum"), pre-filled with
+/// [attachment] when one is being shared.
+class ForumThreadScreen extends ConsumerStatefulWidget {
   final String forumId;
-  const ForumThreadScreen({super.key, required this.forumId});
+  final bool compose;
+  final ForumAttachment? attachment;
+  const ForumThreadScreen({
+    super.key,
+    required this.forumId,
+    this.compose = false,
+    this.attachment,
+  });
 
-  Future<void> _toggleFollow(BuildContext context, WidgetRef ref, bool isFollowing) async {
-    final uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
-    if (isFollowing) {
-      await ForumRepository().unfollowForum(forumId, uid);
-    } else {
-      await ForumRepository().followForum(forumId, uid);
+  @override
+  ConsumerState<ForumThreadScreen> createState() => _ForumThreadScreenState();
+}
+
+class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
+  String get forumId => widget.forumId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.compose) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showNewPostSheet(context, ref, attachment: widget.attachment);
+      });
     }
-    if (!context.mounted) return;
-    ref.invalidate(forumFollowingProvider(forumId));
-    ref.invalidate(forumsForGarageProvider);
   }
 
-  void _showNewPostSheet(BuildContext context, WidgetRef ref) {
+  void _showNewPostSheet(BuildContext context, WidgetRef ref, {ForumAttachment? attachment}) {
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.radiusLg)),
+            top: Radius.circular(context.shape.radiusLg)),
       ),
-      builder: (_) => _NewPostSheet(forumId: forumId),
+      builder: (_) => _NewPostSheet(forumId: forumId, initialAttachment: attachment),
     ).then((posted) {
       // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
       // which inserts the new post into forumPostsNotifierProvider directly
-      // instead (docs/Issues.md §54).
-      if (posted == true) {
+      // instead (issues §54).
+      if (posted == true && mounted) {
         ref.invalidate(forumsForGarageProvider);
+        ref.invalidate(forumsPulseFeedProvider);
       }
     });
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final forumAsync = ref.watch(forumByIdProvider(forumId));
     final postsAsync = ref.watch(forumPostsProvider(forumId));
     final followingAsync = ref.watch(forumFollowingProvider(forumId));
@@ -64,26 +90,26 @@ class ForumThreadScreen extends ConsumerWidget {
         canManageMaintainers(forum: forum, uid: user?.uid, email: user?.email);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(forumAsync.valueOrNull?.displayName ?? 'Forum'),
+        title: Text(forumAsync.valueOrNull?.displayName ?? context.l10n.forum),
         actions: [
           IconButton(
             icon: Icon(isFollowing ? Icons.notifications_active : Icons.notifications_none),
-            tooltip: isFollowing ? 'Unfollow' : 'Follow',
-            onPressed: () => _toggleFollow(context, ref, isFollowing),
+            tooltip: isFollowing ? context.l10n.unfollow : context.l10n.follow,
+            onPressed: () => setForumFollowing(context, ref, forumId, follow: !isFollowing),
           ),
           if (showMaintainers)
             IconButton(
               icon: const Icon(Icons.manage_accounts_outlined),
-              tooltip: 'Manage maintainers',
+              tooltip: context.l10n.manageMaintainers,
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
-                backgroundColor: AppColors.surface,
+                backgroundColor: context.palette.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(AppDimensions.radiusLg)),
+                      top: Radius.circular(context.shape.radiusLg)),
                 ),
                 builder: (_) => _MaintainersSheet(forumId: forumId),
               ),
@@ -92,12 +118,12 @@ class ForumThreadScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNewPostSheet(context, ref),
-        backgroundColor: AppColors.primary,
+        backgroundColor: context.palette.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New post', style: TextStyle(color: Colors.white)),
+        label: Text(context.l10n.newPost, style: const TextStyle(color: Colors.white)),
       ),
       body: postsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) =>
             ErrorView(error: e, onRetry: () => ref.invalidate(forumPostsProvider(forumId))),
         data: (_) {
@@ -105,17 +131,17 @@ class ForumThreadScreen extends ConsumerWidget {
           if (posts.isEmpty) {
             return Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.forum_outlined, size: 64, color: AppColors.textTertiary),
-                    SizedBox(height: 16),
-                    Text('No posts yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                    SizedBox(height: 8),
-                    Text('Be the first to ask a question or share something.',
+                    Icon(Icons.forum_outlined, size: 64, color: context.palette.textTertiary),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.noPostsYet, style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    Text(context.l10n.beFirstAskQuestion,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textTertiary, fontSize: 14)),
+                        style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
                   ],
                 ),
               ),
@@ -123,13 +149,43 @@ class ForumThreadScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () => ref.refresh(forumPostsProvider(forumId).future),
-            color: AppColors.primary,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(AppDimensions.paddingMd),
-              itemCount: posts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => _PostCard(forumId: forumId, post: posts[i]),
-            ),
+            color: context.palette.primary,
+            child: Builder(builder: (context) {
+              final notifier = ref.read(forumPostsNotifierProvider(forumId).notifier);
+              final showMore = notifier.hasMore;
+              return ListView.separated(
+                padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                itemCount: posts.length + (showMore ? 1 : 0),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, i) {
+                  if (i == posts.length) {
+                    // Older posts load on request (issues §90.A8) — the
+                    // thread used to read every post up front.
+                    return Center(
+                      child: notifier.isLoadingMore
+                          ? Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: CircularProgressIndicator(color: context.palette.primary),
+                            )
+                          : OutlinedButton(
+                              onPressed: () async {
+                                try {
+                                  await notifier.loadMore();
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+                                  );
+                                }
+                              },
+                              child: Text(context.l10n.loadMore),
+                            ),
+                    );
+                  }
+                  return _PostCard(forumId: forumId, post: posts[i]);
+                },
+              );
+            }),
           );
         },
       ),
@@ -161,7 +217,8 @@ class ForumThreadScreen extends ConsumerWidget {
 /// widget is actually gone for good, not merely "popped."
 class _NewPostSheet extends ConsumerStatefulWidget {
   final String forumId;
-  const _NewPostSheet({required this.forumId});
+  final ForumAttachment? initialAttachment;
+  const _NewPostSheet({required this.forumId, this.initialAttachment});
 
   @override
   ConsumerState<_NewPostSheet> createState() => _NewPostSheetState();
@@ -171,8 +228,18 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
   bool _submitting = false;
+  // A shared maintenance visit is usually a "here's what I did" write-up,
+  // so it starts as a DIY guide; the rider can still change it.
+  late ForumPostType _postType =
+      widget.initialAttachment?.kind == ForumAttachmentKind.maintenance
+          ? ForumPostType.diyGuide
+          : ForumPostType.general;
+  late ForumAttachment? _attachment = widget.initialAttachment;
+  bool _attachBike = true;
+  // Local paths of photos picked for the post; uploaded on submit.
+  final List<String> _photoPaths = [];
   // Only set once the rider has tried to submit — an empty field isn't an
-  // error until then (docs/Issues.md §54: submitting blank/title-only used
+  // error until then (issues §54: submitting blank/title-only used
   // to just silently do nothing, with no inline error, shake, or disabled
   // button to say the tap even registered).
   bool _titleError = false;
@@ -183,6 +250,58 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
     _titleController.dispose();
     _bodyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    if (_photoPaths.length >= kForumPostMaxImages) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: context.palette.surface,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.takeAPhoto,
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.chooseFromGallery,
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    try {
+      final picker = ImagePicker();
+      final remaining = kForumPostMaxImages - _photoPaths.length;
+      final List<XFile> picked;
+      if (source == ImageSource.gallery && remaining > 1) {
+        picked = await picker.pickMultiImage(
+            imageQuality: 80, maxWidth: 2048, maxHeight: 2048, limit: remaining);
+      } else {
+        final one = await picker.pickImage(
+            source: source, imageQuality: 80, maxWidth: 2048, maxHeight: 2048);
+        picked = [if (one != null) one];
+      }
+      if (picked.isEmpty || !mounted) return;
+      setState(() {
+        _photoPaths.addAll(picked.take(remaining).map((x) => x.path));
+      });
+    } catch (e, st) {
+      // issues §101.P7: log the raw exception; riders get plain text.
+      reportNonFatal(e, st, reason: 'image picker');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.couldNotOpenCamera)),
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -199,15 +318,47 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
+    final bike = _attachBike ? ref.read(activeBikeProvider) : null;
+    final authorBike = bike == null ? null : authorBikeLabel(bike);
+
     setState(() => _submitting = true);
-    final postId = await ForumRepository().createPost(
-      forumId: widget.forumId,
-      userId: user.uid,
-      userName: user.displayName ?? 'Rider',
-      userPhotoUrl: user.photoURL ?? '',
-      title: title,
-      body: body,
-    );
+    final String postId;
+    final List<String> imageUrls;
+    try {
+      final repo = ForumRepository();
+      try {
+        imageUrls = [
+          for (final path in _photoPaths) await repo.uploadPostPhoto(user.uid, File(path)),
+        ];
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.forumPhotoUploadFailed(e.toString()))),
+        );
+        return;
+      }
+      postId = await repo.createPost(
+        forumId: widget.forumId,
+        userId: user.uid,
+        userName: user.displayName ?? 'Rider',
+        userPhotoUrl: user.photoURL ?? '',
+        title: title,
+        body: body,
+        postType: _postType,
+        authorBike: authorBike,
+        attachment: _attachment,
+        imageUrls: imageUrls,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+      );
+      return;
+    }
+    if (!mounted) return;
     ref.read(forumPostsNotifierProvider(widget.forumId).notifier).addPost(
           ForumPostEntity(
             id: postId,
@@ -218,13 +369,18 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
             title: title,
             body: body,
             createdAt: DateTime.now(),
+            postType: _postType,
+            authorBike: authorBike,
+            attachment: _attachment,
+            imageUrls: imageUrls,
           ),
         );
-    if (mounted) Navigator.pop(context, true);
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bike = ref.watch(activeBikeProvider);
     return Padding(
       padding: EdgeInsets.only(
         left: AppDimensions.paddingMd,
@@ -232,51 +388,123 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         top: AppDimensions.paddingMd,
         bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
-      child: Column(
+      child: SingleChildScrollView(
+       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'New post',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            context.l10n.newPost,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            context.l10n.forumPostTypeLabel,
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              for (final type in [
+                ForumPostType.general,
+                ForumPostType.troubleshoot,
+                ForumPostType.diyGuide,
+                ForumPostType.gearReview,
+              ])
+                ChoiceChip(
+                  key: Key('post_type_${type.name}'),
+                  avatar: Icon(forumPostTypeIcon(type), size: 16),
+                  label: Text(forumPostTypeLabel(context.l10n, type)),
+                  selected: _postType == type,
+                  onSelected: (_) => setState(() => _postType = type),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _titleController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             onChanged: (_) {
               if (_titleError) setState(() => _titleError = false);
             },
             decoration: InputDecoration(
-              hintText: 'Title',
-              errorText: _titleError ? 'Title is required' : null,
+              hintText: context.l10n.title,
+              errorText: _titleError ? context.l10n.titleRequired : null,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _bodyController,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             maxLines: 4,
             onChanged: (_) {
               if (_bodyError) setState(() => _bodyError = false);
             },
             decoration: InputDecoration(
-              hintText: "What's going on?",
-              errorText: _bodyError ? 'Say something before posting' : null,
+              hintText: context.l10n.whatsGoing,
+              errorText: _bodyError ? context.l10n.saySomethingBeforePosting : null,
             ),
           ),
-          const SizedBox(height: 16),
+          if (_attachment != null) ...[
+            const SizedBox(height: 12),
+            ForumAttachmentCard(
+              attachment: _attachment!,
+              viewerIsAuthor: true,
+              authorName: '',
+              onRemove: () => setState(() => _attachment = null),
+            ),
+          ],
+          const SizedBox(height: 12),
+          if (_photoPaths.isNotEmpty) ...[
+            ForumPickedPhotos(
+              paths: _photoPaths,
+              onRemove: (i) => setState(() => _photoPaths.removeAt(i)),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('post_add_photo'),
+              onPressed: _submitting || _photoPaths.length >= kForumPostMaxImages
+                  ? null
+                  : _pickPhoto,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(context.l10n.forumAddPhotos(_photoPaths.length, kForumPostMaxImages)),
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (bike != null)
+            SwitchListTile(
+              key: const Key('post_attach_bike'),
+              contentPadding: EdgeInsets.zero,
+              value: _attachBike,
+              onChanged: (v) => setState(() => _attachBike = v),
+              title: Text(context.l10n.forumAttachMyBike,
+                  style: TextStyle(fontSize: 14, color: context.palette.textPrimary)),
+              subtitle: Text(authorBikeLabel(bike),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+            )
+          else
+            Text(
+              context.l10n.forumNoBikeToAttach,
+              style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+            ),
+          const SizedBox(height: 12),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: context.palette.primary),
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : const Text('Post', style: TextStyle(color: Colors.white)),
+                : Text(context.l10n.post, style: const TextStyle(color: Colors.white)),
           ),
         ],
+       ),
       ),
     );
   }
@@ -293,7 +521,7 @@ class _PostCard extends ConsumerWidget {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't record your vote — check your connection and try again.")),
+        SnackBar(content: Text(context.l10n.couldntRecordVoteCheck)),
       );
     }
   }
@@ -302,20 +530,20 @@ class _PostCard extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Delete post?', style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: ctx.palette.surface,
+        title: Text(ctx.l10n.deletePostQuestion, style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
-          'This removes the post and its replies from the forum. It cannot be undone.',
-          style: TextStyle(color: AppColors.textSecondary),
+          ctx.l10n.thisRemovesPostIts,
+          style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(ctx.l10n.cancelAction, style: TextStyle(color: ctx.palette.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -334,7 +562,7 @@ class _PostCard extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete: $e')),
+        SnackBar(content: Text(context.l10n.couldNotDelete(e))),
       );
     }
   }
@@ -377,23 +605,34 @@ class _PostCard extends ConsumerWidget {
                   children: [
                     UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
                     const SizedBox(width: 8),
-                    Text(post.userName,
-                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(post.userName,
+                            style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
+                        if (post.authorBike != null)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 200),
+                            child: AuthorBikeBadge(bike: post.authorBike!),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
               const Spacer(),
+              ForumPostTypeTag(post: post),
               if (canDelete)
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  tooltip: 'Delete post',
+                  tooltip: context.l10n.deletePost,
                   onPressed: () => _confirmDelete(context, ref),
-                  icon: Icon(Icons.delete_outline, size: 18, color: AppColors.textTertiary),
+                  icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textTertiary),
                 )
               else
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: AppColors.textTertiary, size: 18),
+                  icon: Icon(Icons.more_vert, color: context.palette.textTertiary, size: 18),
                   padding: EdgeInsets.zero,
                   onSelected: (value) {
                     if (value == 'report') {
@@ -406,9 +645,9 @@ class _PostCard extends ConsumerWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'report',
-                      child: Text('Report Post'),
+                      child: Text(context.l10n.reportPost),
                     ),
                   ],
                 ),
@@ -419,14 +658,14 @@ class _PostCard extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.subdirectory_arrow_right, size: 14, color: AppColors.textTertiary),
+                Icon(Icons.subdirectory_arrow_right, size: 14, color: context.palette.textTertiary),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
-                    'from ${mergedFrom.displayName}',
+                    context.l10n.fromUser(mergedFrom.displayName),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 11, color: AppColors.textTertiary, fontStyle: FontStyle.italic),
+                        fontSize: 11, color: context.palette.textTertiary, fontStyle: FontStyle.italic),
                   ),
                 ),
               ],
@@ -435,39 +674,53 @@ class _PostCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             post.title,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
             post.body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+          if (post.imageUrls.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ForumPostImages(urls: post.imageUrls, compact: true),
+          ],
+          if (post.attachment != null) ...[
+            const SizedBox(height: 8),
+            ForumAttachmentCard(
+              attachment: post.attachment!,
+              viewerIsAuthor: post.userId == user?.uid,
+              authorName: post.userName,
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [
               IconButton(
+                tooltip: context.l10n.upvote,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, 1),
                 icon: Icon(Icons.arrow_upward,
-                    color: post.myVote == 1 ? AppColors.primary : AppColors.textSecondary, size: 18),
+                    color: post.myVote == 1 ? context.palette.primary : context.palette.textSecondary, size: 18),
               ),
               Text('${post.netScore}',
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               IconButton(
+                tooltip: context.l10n.downvote,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, -1),
                 icon: Icon(Icons.arrow_downward,
-                    color: post.myVote == -1 ? AppColors.danger : AppColors.textSecondary, size: 18),
+                    color: post.myVote == -1 ? context.palette.danger : context.palette.textSecondary, size: 18),
               ),
               const Spacer(),
-              Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.chat_bubble_outline, size: 16, color: context.palette.textSecondary),
               const SizedBox(width: 4),
-              Text('${post.replyCount}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('${post.replyCount}', style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
             ],
           ),
         ],
@@ -511,7 +764,7 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not update maintainers: $e')),
+        SnackBar(content: Text(context.l10n.couldNotUpdateMaintainers(e))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -542,20 +795,20 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Maintainers',
+            context.l10n.maintainers,
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
-            'Maintainers can delete posts and replies in this forum.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            context.l10n.maintainersCanDeletePosts,
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           if (maintainers.isEmpty)
             Text(
-              'No maintainers yet.',
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+              context.l10n.noMaintainersYet,
+              style: TextStyle(fontSize: 13, color: context.palette.textTertiary),
             )
           else
             for (final uid in maintainers)
@@ -563,24 +816,24 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline, size: 18, color: AppColors.textSecondary),
+                    Icon(Icons.person_outline, size: 18, color: context.palette.textSecondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         uid,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 13, color: context.palette.textPrimary),
                       ),
                     ),
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      tooltip: 'Remove',
+                      tooltip: context.l10n.remove,
                       onPressed: _busy
                           ? null
                           : () => _run(() =>
                               ForumRepository().removeMaintainer(widget.forumId, uid)),
-                      icon: Icon(Icons.close, size: 18, color: AppColors.danger),
+                      icon: Icon(Icons.close, size: 18, color: context.palette.danger),
                     ),
                   ],
                 ),
@@ -591,18 +844,19 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
               Expanded(
                 child: TextField(
                   controller: _uidCtrl,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Add by rider UID',
-                    hintStyle: TextStyle(color: AppColors.textTertiary),
+                    hintText: context.l10n.addByRiderUid,
+                    hintStyle: TextStyle(color: context.palette.textTertiary),
                   ),
                   onSubmitted: (_) => _add(),
                 ),
               ),
               const SizedBox(width: 8),
               IconButton(
+                tooltip: context.l10n.newPost,
                 onPressed: _busy ? null : _add,
-                icon: Icon(Icons.add, color: AppColors.primary),
+                icon: Icon(Icons.add, color: context.palette.primary),
               ),
             ],
           ),

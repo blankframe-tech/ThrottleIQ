@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -56,10 +56,10 @@ class BikePickerCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final picked = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
         borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
+            BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -73,7 +73,7 @@ class BikePickerCard extends ConsumerWidget {
                 children: [
                   Expanded(
                       child: Text(l10n.bikePickerSheetTitle,
-                          style: display(16, letterSpacing: 0))),
+                          style: display(sheetContext, 16, letterSpacing: 0))),
                 ],
               ),
             ),
@@ -88,7 +88,7 @@ class BikePickerCard extends ConsumerWidget {
                   bike: bike,
                   subtitle: l10n.rideCountLabel(bike.rideCount),
                   trailing: bike.id == activeBike.id
-                      ? Icon(Icons.check, size: 18, color: AppColors.primary)
+                      ? Icon(Icons.check, size: 18, color: sheetContext.palette.primary)
                       : null,
                 ),
               ),
@@ -113,19 +113,19 @@ class BikePickerCard extends ConsumerWidget {
     // keeps the legibility contract (opaque enough at the bottom for text)
     // while still reading as "this bike's color" at a glance.
     final scrimBase = accent != null
-        ? Color.lerp(AppColors.ink, accent, 0.35)!
-        : AppColors.ink;
+        ? Color.lerp(context.palette.ink, accent, 0.35)!
+        : context.palette.ink;
 
     return GestureDetector(
       onTap: canSwitch ? () => _pickBike(context, ref, bikes) : null,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        borderRadius: BorderRadius.circular(context.shape.radiusXl),
         child: Container(
           height: _height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            borderRadius: BorderRadius.circular(context.shape.radiusXl),
             border: Border.all(
-              color: accent?.withValues(alpha: 0.7) ?? AppColors.border,
+              color: accent?.withValues(alpha: 0.7) ?? context.palette.border,
               width: accent != null ? 1.5 : 1,
             ),
           ),
@@ -136,7 +136,7 @@ class BikePickerCard extends ConsumerWidget {
                 imagePath: activeBike.imagePath,
                 borderRadius: BorderRadius.zero,
                 iconSize: 64,
-                iconColor: AppColors.textTertiary,
+                iconColor: context.palette.textTertiary,
               ),
               // Scrim. The photo is the rider's own, so it can be anything
               // from a bright daylight shot to a night one — text laid
@@ -170,7 +170,7 @@ class BikePickerCard extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.onInk.withValues(alpha: 0.8)),
+                            color: context.palette.onInk.withValues(alpha: 0.8)),
                       ),
                       const SizedBox(height: 2),
                     ],
@@ -180,7 +180,7 @@ class BikePickerCard extends ConsumerWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style:
-                            display(24, color: AppColors.onInk, height: 1.15),
+                            display(context, 24, color: context.palette.onInk, height: 1.15),
                       ),
                     const SizedBox(height: 10),
                     Row(
@@ -194,7 +194,7 @@ class BikePickerCard extends ConsumerWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1,
-                              color: AppColors.onInk,
+                              color: context.palette.onInk,
                             ),
                           ),
                         ),
@@ -210,13 +210,13 @@ class BikePickerCard extends ConsumerWidget {
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1,
                                   color:
-                                      AppColors.onInk.withValues(alpha: 0.85),
+                                      context.palette.onInk.withValues(alpha: 0.85),
                                 ),
                               ),
                               Icon(Icons.expand_more,
                                   size: 18,
                                   color:
-                                      AppColors.onInk.withValues(alpha: 0.85)),
+                                      context.palette.onInk.withValues(alpha: 0.85)),
                             ],
                           ),
                         ],
@@ -258,7 +258,7 @@ class BikeRow extends StatelessWidget {
           width: 44,
           height: 44,
           iconSize: 24,
-          iconColor: AppColors.textPrimary,
+          iconColor: context.palette.textPrimary,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -269,13 +269,13 @@ class BikeRow extends StatelessWidget {
               Text(bike.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: display(16, letterSpacing: 0)),
+                  style: display(context, 16, letterSpacing: 0)),
               const SizedBox(height: 2),
               Text(subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style:
-                      TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      TextStyle(fontSize: 12, color: context.palette.textSecondary)),
             ],
           ),
         ),

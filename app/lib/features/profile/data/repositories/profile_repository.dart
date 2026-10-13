@@ -5,7 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
+import '../../../../core/utils/photo_url_policy.dart';
 import '../../../garage/data/models/bike_model.dart';
+import '../../../stats/data/badge_stats_counter.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
@@ -39,32 +41,67 @@ class ProfileRepository {
 
   Stream<UserProfileEntity?> watchProfile(String uid) {
     return _users.doc(uid).snapshots().map(
-        (doc) => doc.exists ? UserProfileModel.fromFirestore(doc.data()!, uid) : null);
+          (doc) => doc.exists
+              ? UserProfileModel.fromFirestore(doc.data()!, uid)
+              : null,
+        );
   }
 
   /// Idempotently seeds the profile doc from the FirebaseAuth user. Safe to
   /// call on every login / onboarding — uses merge so it never clobbers
   /// nickname/bio/username the rider set later, and only fills the counters on
   /// first creation.
+  ///
+  /// Also stamps `visibility: 'public'` on a doc that has none: rider search
+  /// and suggestions only list profiles whose `visibility == 'public'`
+  /// (firestore.rules, issues §90.A4), and a legacy doc without the field
+  /// would otherwise never show up in search again.
+  ///
+  /// `email`/`emailLower` must equal the signed-in token's email (§90.D6) —
+  /// `user.email` is that same value. `photoUrl` is only seeded when it is on
+  /// an allow-listed host (§90.D10), so an unexpected avatar host can't fail
+  /// the whole profile write.
+  ///
+  /// First creation also adds the rider to `stats/badges.totalRiders`, in
+  /// the same batch as the profile write (BadgeStatsCounter). Only when the
+  /// server confirmed the doc is missing: a cache miss offline could be a
+  /// profile that already exists. If that batch is rejected (rules not
+  /// deployed yet), the profile is written alone and the app-start
+  /// self-count registers the rider later.
   Future<void> ensureProfile(User user) async {
     final ref = _users.doc(user.uid);
     final snap = await ref.get();
     final existing = snap.data() ?? const {};
-    await ref.set({
+    final authPhoto = user.photoURL;
+    final fields = <String, Object?>{
       'displayName': user.displayName ?? existing['displayName'] ?? '',
-      if (user.photoURL != null && existing['photoUrl'] == null)
-        'photoUrl': user.photoURL,
+      if (authPhoto != null &&
+          existing['photoUrl'] == null &&
+          isAllowedPhotoUrl(authPhoto))
+        'photoUrl': authPhoto,
       if (user.email != null) ...{
         'email': user.email,
         'emailLower': user.email!.toLowerCase(),
       },
+      if (existing['visibility'] == null) 'visibility': 'public',
       if (!snap.exists) ...{
         'followerCount': 0,
         'followingCount': 0,
         'createdAt': FieldValue.serverTimestamp(),
       },
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    if (!snap.exists && !snap.metadata.isFromCache) {
+      try {
+        await BadgeStatsCounter(firestore: _firestore).commit(
+          BadgeStatsBatches.riderRegistration(user.uid, profileFields: fields),
+        );
+        return;
+      } on FirebaseException catch (e) {
+        if (e.code != 'permission-denied') rethrow;
+      }
+    }
+    await ref.set(fields, SetOptions(merge: true));
   }
 
   /// Updates the caller's own profile fields (never the counters).
@@ -88,7 +125,10 @@ class ProfileRepository {
 
   /// Claims a unique @username for [uid]. Throws [UsernameTakenException] if
   /// another rider already holds it. Releases the rider's previous handle.
-  Future<void> setUsername({required String uid, required String username}) async {
+  Future<void> setUsername({
+    required String uid,
+    required String username,
+  }) async {
     final handle = username.trim().toLowerCase();
     if (!RegExp(r'^[a-z0-9_]{3,20}$').hasMatch(handle)) {
       throw const InvalidUsernameException();
@@ -106,14 +146,13 @@ class ProfileRepository {
 
       txn.set(newRef, {'uid': uid});
       txn.set(
-        userRef,
-        {
-          'username': username.trim(),
-          'usernameLower': handle,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+          userRef,
+          {
+            'username': username.trim(),
+            'usernameLower': handle,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
       if (prev != null && prev != handle) {
         txn.delete(_usernames.doc(prev));
       }
@@ -144,7 +183,9 @@ class ProfileRepository {
   Future<String?> claimUsernameWithFallback(String uid, String base) async {
     final rnd = Random();
     for (var attempt = 0; attempt < 8; attempt++) {
-      final candidate = attempt == 0 ? base : '${base.substring(0, base.length.clamp(0, 16))}${rnd.nextInt(9000) + 100}';
+      final candidate = attempt == 0
+          ? base
+          : '${base.substring(0, base.length.clamp(0, 16))}${rnd.nextInt(9000) + 100}';
       try {
         await setUsername(uid: uid, username: candidate);
         return candidate;
@@ -184,7 +225,10 @@ class ProfileRepository {
   /// 'public' (default — any signed-in rider), 'mutual' (only riders who
   /// follow each other), or 'private' (owner only). Enforced by
   /// firestore.rules, not just the client UI.
-  Future<void> setVisibility({required String uid, required String visibility}) async {
+  Future<void> setVisibility({
+    required String uid,
+    required String visibility,
+  }) async {
     assert(['public', 'mutual', 'private'].contains(visibility));
     await _users.doc(uid).set({
       'visibility': visibility,
@@ -234,7 +278,10 @@ class ProfileRepository {
       data['created_at'] ??= DateTime.now().toIso8601String();
       // One malformed cloud doc must not blank out the whole garage.
       try {
-        bikes.add(BikeModel.fromMap(data));
+        final bike = BikeModel.fromMap(data);
+        // Archived bikes are out of the rider's own garage; they shouldn't
+        // be on show in it to anyone else either.
+        if (!bike.isArchived) bikes.add(bike);
       } catch (_) {
         continue;
       }
@@ -250,11 +297,17 @@ class ProfileRepository {
   }
 
   /// Prefix search on @username (case-insensitive). Empty query → [].
-  Future<List<UserProfileEntity>> searchByUsername(String query,
-      {int limit = 20}) async {
+  Future<List<UserProfileEntity>> searchByUsername(
+    String query, {
+    int limit = 20,
+  }) async {
     final q = query.trim().toLowerCase().replaceAll('@', '');
     if (q.isEmpty) return [];
+    // `visibility == 'public'` is required by firestore.rules for any list
+    // query on users (issues §90.A4/§90.D9) — mutual/private riders are only
+    // reachable through a link to their profile, never through search.
     final snap = await _users
+        .where('visibility', isEqualTo: 'public')
         .where('usernameLower', isGreaterThanOrEqualTo: q)
         .where('usernameLower', isLessThan: q + String.fromCharCode(0xf8ff))
         .limit(limit)
@@ -264,25 +317,71 @@ class ProfileRepository {
         .toList();
   }
 
-  /// Exact-match search by email.
-  Future<List<UserProfileEntity>> searchByEmail(String email,
-      {int limit = 10}) async {
-    final e = email.trim().toLowerCase();
-    if (e.isEmpty) return [];
-    final snap =
-        await _users.where('emailLower', isEqualTo: e).limit(limit).get();
+  /// Recently joined riders with a public profile, for suggestions and All
+  /// People. Public-only by rule (issues §90.A4) — needs the composite index
+  /// (visibility ASC, createdAt DESC) in firestore.indexes.json.
+  ///
+  /// [createdBefore] is a page cursor: pass the last returned profile's
+  /// `createdAt` to fetch the next page instead of re-reading the first one
+  /// with a bigger limit. Profiles sharing that exact timestamp may be
+  /// skipped — harmless for a browse list.
+  Future<List<UserProfileEntity>> getRecentUsers({
+    int limit = 50,
+    DateTime? createdBefore,
+  }) async {
+    Query<Map<String, dynamic>> q = _users
+        .where('visibility', isEqualTo: 'public')
+        .orderBy('createdAt', descending: true);
+    if (createdBefore != null) {
+      q = q.startAfter([Timestamp.fromDate(createdBefore)]);
+    }
+    final snap = await q.limit(limit).get();
     return snap.docs
         .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
         .toList();
   }
 
-  /// Blocks a user by adding their uid to the current user's blocks subcollection.
+  /// Exact-match search by email.
+  Future<List<UserProfileEntity>> searchByEmail(
+    String email, {
+    int limit = 10,
+  }) async {
+    final e = email.trim().toLowerCase();
+    if (e.isEmpty) return [];
+    final snap = await _users
+        .where('visibility', isEqualTo: 'public')
+        .where('emailLower', isEqualTo: e)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
+        .toList();
+  }
+
+  /// Blocks a user: writes `users/{me}/blocks/{them}` and, in the same
+  /// transaction, drops the follow edges in both directions.
+  ///
+  /// Their edge (`follows/{them}_{me}`) is the one that matters: since
+  /// §88.1 a followers/mutual post is visible to whoever holds a live follow
+  /// edge, so leaving it let a blocked rider keep reading those posts
+  /// (issues §90.A11). firestore.rules lets the followee delete an edge
+  /// pointing at them for exactly this. Mine (`follows/{me}_{them}`) goes
+  /// too, the way blocking works everywhere else. Each edge is read first
+  /// and only deleted if present — a delete of a missing doc has no
+  /// `resource` for the rule to check and would fail the whole block.
   Future<void> blockUser(String currentUserId, String blockedUserId) async {
-    await _users
-        .doc(currentUserId)
-        .collection('blocks')
-        .doc(blockedUserId)
-        .set({'blockedAt': FieldValue.serverTimestamp()});
+    final follows = _firestore.collection('follows');
+    final theirEdge = follows.doc('${blockedUserId}_$currentUserId');
+    final myEdge = follows.doc('${currentUserId}_$blockedUserId');
+    final blockRef =
+        _users.doc(currentUserId).collection('blocks').doc(blockedUserId);
+    await _firestore.runTransaction((txn) async {
+      final theirs = await txn.get(theirEdge);
+      final mine = await txn.get(myEdge);
+      txn.set(blockRef, {'blockedAt': FieldValue.serverTimestamp()});
+      if (theirs.exists) txn.delete(theirEdge);
+      if (mine.exists) txn.delete(myEdge);
+    });
   }
 
   /// Unblocks a user by removing their uid from the current user's blocks subcollection.
@@ -294,34 +393,33 @@ class ProfileRepository {
         .delete();
   }
 
+  /// Whether [otherUserId] has blocked [currentUserId]. Reads the single
+  /// `users/{other}/blocks/{me}` doc, which firestore.rules lets the blocked
+  /// rider `get` (never list) so the chat room can explain why sending is
+  /// off instead of failing with a permission error.
+  Future<bool> isBlockedBy(String otherUserId, String currentUserId) async {
+    final snap = await _users
+        .doc(otherUserId)
+        .collection('blocks')
+        .doc(currentUserId)
+        .get();
+    return snap.exists;
+  }
+
   /// Fetches the list of user IDs that the current user has blocked.
   Future<List<String>> getBlockedUserIds(String currentUserId) async {
     final snap = await _users.doc(currentUserId).collection('blocks').get();
     return snap.docs.map((doc) => doc.id).toList();
   }
 
-  /// Completely deletes the user's account data from Firestore.
-  ///
-  /// Required by Apple App Store Review Guideline 5.1.1(v).
-  /// Releases the claimed username handle so it can be reclaimed,
-  /// removes the `livePointers/{uid}` document, and deletes `users/{uid}`.
-  Future<void> deleteUserAccount(String uid) async {
-    final profile = await getProfile(uid);
-    if (profile?.username != null) {
-      final handleLower = profile!.username!.toLowerCase();
-      try {
-        await _usernames.doc(handleLower).delete();
-      } catch (_) {
-        // Non-fatal if handle was already deleted or missing
-      }
-    }
-    try {
-      await _firestore.collection('livePointers').doc(uid).delete();
-    } catch (_) {
-      // Non-fatal if pointer did not exist
-    }
-    await _users.doc(uid).delete();
-  }
+  // Account deletion's Firestore cleanup (release the username handle,
+  // delete livePointers/{uid} and users/{uid}) used to live here, called
+  // from the client before deleting the Firebase Auth account. Removed:
+  // issues §62 moved it server-side, to
+  // functions/src/account-deletion.ts's onUserAccountDeleted trigger, since
+  // it has to run with Admin privileges once the Auth account is actually
+  // gone, not from a client that's about to lose its own auth token trying
+  // to write these same documents. See AuthNotifier.deleteAccount().
 }
 
 class UsernameTakenException implements Exception {

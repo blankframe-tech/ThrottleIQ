@@ -1,17 +1,26 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_catalog.dart';
 import '../../../../core/constants/bike_colors.dart';
+import '../../../../core/services/cloudinary_upload_service.dart';
+import '../../../../core/utils/bike_image_resolver.dart';
 import '../../../../core/utils/image_crop_io.dart';
 import '../../../../shared/screens/image_crop_screen.dart';
 import '../../../../shared/widgets/brand_model_field.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/garage_provider.dart';
 import '../../domain/entities/bike_entity.dart';
+import '../../../../core/utils/parse_localized_number.dart';
+import '../../../../core/utils/error_reporter.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 class AddEditBikeScreen extends ConsumerStatefulWidget {
   final String? bikeId;
@@ -32,6 +41,11 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   int? _colorValue;
   bool _loading = false;
   BikeEntity? _existingBike;
+  bool _isEbike = false;
+
+  /// What the odometer field was prefilled with, so an untouched field keeps
+  /// the stored baseline instead of re-deriving it from a rounded number.
+  String? _odoPrefill;
 
   @override
   void initState() {
@@ -41,17 +55,30 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     }
   }
 
-  void _loadBike() {
-    final bikes = ref.read(garageProvider).valueOrNull ?? [];
+  Future<void> _loadBike() async {
+    final List<BikeEntity> bikes;
+    try {
+      bikes = await ref.read(garageProvider.future);
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'AddEditBike: garage load failed');
+      return;
+    }
+    if (!mounted) return;
     _existingBike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
     if (_existingBike != null) {
       _brandCtrl.text = _existingBike!.brand;
       _modelCtrl.text = _existingBike!.model;
       _yearCtrl.text = _existingBike!.year?.toString() ?? '';
       _ccCtrl.text = _existingBike!.cc?.toString() ?? '';
-      _odometerCtrl.text = _existingBike!.odometerKm?.toString() ?? '';
+      // The field shows what the dashboard shows (baseline + tracked km);
+      // _submit converts it back to a baseline (issues §101.R1).
+      _odoPrefill = _existingBike!.odometerKm != null
+          ? _existingBike!.currentOdometerKm.toStringAsFixed(0)
+          : '';
+      _odometerCtrl.text = _odoPrefill!;
       _imagePath = _existingBike!.imagePath;
       _colorValue = _existingBike!.colorValue;
+      _isEbike = _existingBike!.isEbike;
       setState(() {});
     }
   }
@@ -75,7 +102,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final cropped = await ImageCropScreen.open(
       context,
       sourcePath: xfile.path,
-      title: 'Crop bike photo',
+      title: context.l10n.cropBikePhoto,
     );
     if (!mounted) return;
     if (cropped != null) {
@@ -100,49 +127,162 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final path = _imagePath;
     if (path == null) return;
 
+    String localSource = path;
+    if (BikeImageResolver.isRemoteUrl(path)) {
+      try {
+        final file = await DefaultCacheManager().getSingleFile(path);
+        localSource = file.path;
+      } catch (_) {
+        return;
+      }
+    } else {
+      final resolved = BikeImageResolver.resolvePathSync(path);
+      if (resolved != null) {
+        localSource = resolved;
+      }
+    }
+
+    if (!mounted) return;
     final cropped = await ImageCropScreen.open(
       context,
-      sourcePath: path,
-      title: 'Crop bike photo',
+      sourcePath: localSource,
+      title: context.l10n.cropBikePhoto,
     );
     if (cropped == null || !mounted) return;
     setState(() => _imagePath = cropped);
+  }
+
+
+  Future<void> _connectEbike() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.palette.surface,
+        title: Text('Connecting to E-Bike', style: TextStyle(color: context.palette.textPrimary)),
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text('Scanning for bluetooth signal...', style: TextStyle(color: context.palette.textSecondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.palette.surface,
+        title: Text('Connected!', style: TextStyle(color: context.palette.textPrimary)),
+        content: Text(
+            'Battery: 85%\nLocation: Shared\nStatus: Online',
+            style: TextStyle(color: context.palette.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('Done', style: TextStyle(color: context.palette.primary)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
-    if (_existingBike != null) {
+    String? savedImagePath = _imagePath;
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (savedImagePath != null &&
+        !BikeImageResolver.isRemoteUrl(savedImagePath) &&
+        uid != null) {
+      final resolved = BikeImageResolver.resolvePathSync(savedImagePath);
+      if (resolved != null && File(resolved).existsSync()) {
+        try {
+          final cloudUrl = await CloudinaryUploadService()
+              .upload(File(resolved), folder: 'bikes/$uid')
+              .timeout(const Duration(seconds: 8));
+          savedImagePath = cloudUrl;
+        } catch (_) {
+          // Offline or timeout: continue with local path; SyncManager will upload later.
+        }
+      }
+    }
+
+    // Branch on the route, not on whether the garage had loaded: editing
+    // while it was still loading used to fall into addBike and duplicate
+    // the bike (issues §101.R1).
+    if (widget.bikeId != null) {
+      if (_existingBike == null) {
+        final bikes = await ref.read(garageProvider.future);
+        _existingBike = bikes.where((b) => b.id == widget.bikeId).firstOrNull;
+      }
+      final existing = _existingBike;
+      if (existing == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
+      final text = _odometerCtrl.text.trim();
+      final enteredOdo = parseLocalizedNumber(text);
+      final unchanged = text == _odoPrefill?.trim();
+      final newBaseline = unchanged || enteredOdo == null
+          ? existing.odometerKm
+          : (enteredOdo - existing.totalDistanceKm).clamp(0.0, double.infinity);
       await ref.read(garageProvider.notifier).updateBike(
-            _existingBike!.copyWith(
+            existing.copyWith(
               brand: _brandCtrl.text.trim(),
               model: _modelCtrl.text.trim(),
-              year: int.tryParse(_yearCtrl.text),
-              cc: int.tryParse(_ccCtrl.text),
-              imagePath: _imagePath,
-              odometerKm: double.tryParse(_odometerCtrl.text),
+              year: parseLocalizedInt(_yearCtrl.text),
+              cc: parseLocalizedInt(_ccCtrl.text),
+              imagePath: savedImagePath,
+              odometerKm: newBaseline,
+              clearOdometer: text.isEmpty,
               colorValue: _colorValue,
+        isEbike: _isEbike,
               clearColor: _colorValue == null,
             ),
           );
       if (mounted) context.pop();
     } else {
+      final enteredOdo = parseLocalizedNumber(_odometerCtrl.text);
       final newBikeId = await ref.read(garageProvider.notifier).addBike(
             brand: _brandCtrl.text.trim(),
             model: _modelCtrl.text.trim(),
-            year: int.tryParse(_yearCtrl.text),
-            cc: int.tryParse(_ccCtrl.text),
-            imagePath: _imagePath,
-            odometerKm: double.tryParse(_odometerCtrl.text),
+            year: parseLocalizedInt(_yearCtrl.text),
+            cc: parseLocalizedInt(_ccCtrl.text),
+            imagePath: savedImagePath,
+            odometerKm: enteredOdo,
             colorValue: _colorValue,
+        isEbike: _isEbike,
           );
+      if (newBikeId != null) AnalyticsService.instance.log(AnalyticsEvent.bikeAdded);
       if (mounted) {
+        // Back to the garage with an offer, rather than straight into the
+        // maintenance setup (which then redirected a second time on save —
+        // grill §3.2.4). Maintenance already works on default
+        // intervals, so setting them up is optional, not a required step.
+        // Router and messenger are captured before the pop unmounts us.
+        final router = GoRouter.of(context);
+        final messenger = ScaffoldMessenger.of(context);
+        final l10n = context.l10n;
+        context.pop();
         if (newBikeId != null) {
-          context.pushReplacement(
-              '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true');
-        } else {
-          context.pop();
+          messenger.showSnackBar(SnackBar(
+            content: Text(l10n.bikeAdded),
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: l10n.setServiceIntervals,
+              onPressed: () => router.push(
+                  '/home/maintenance/configure?bikeId=$newBikeId&isFirstTime=true'),
+            ),
+          ));
         }
       }
     }
@@ -163,9 +303,9 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     final isEdit = widget.bikeId != null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Bike' : 'Add Bike'),
+        title: Text(isEdit ? context.l10n.editBike : context.l10n.addBike),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -182,13 +322,18 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusLg),
-                      border: Border.all(color: AppColors.border),
+                          BorderRadius.circular(context.shape.radiusLg),
+                      border: Border.all(color: context.palette.border),
                       image: _imagePath != null
                           ? DecorationImage(
-                              image: FileImage(File(_imagePath!)),
+                              image: BikeImageResolver.isRemoteUrl(_imagePath)
+                                  ? CachedNetworkImageProvider(_imagePath!)
+                                  : FileImage(File(
+                                      BikeImageResolver.resolvePathSync(
+                                              _imagePath) ??
+                                          _imagePath!)) as ImageProvider,
                               fit: BoxFit.cover)
                           : null,
                     ),
@@ -197,12 +342,12 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo_outlined,
-                                  color: AppColors.textSecondary, size: 28),
-                              SizedBox(height: 6),
-                              Text('Add Photo',
+                                  color: context.palette.textSecondary, size: 28),
+                              const SizedBox(height: 6),
+                              Text(context.l10n.addPhoto,
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textSecondary)),
+                                      color: context.palette.textSecondary)),
                             ],
                           )
                         : null,
@@ -220,13 +365,13 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     TextButton.icon(
                       onPressed: _cropCurrent,
                       icon: const Icon(Icons.crop, size: 18),
-                      label: const Text('Crop'),
+                      label: Text(context.l10n.crop),
                     ),
                     const SizedBox(width: 8),
                     TextButton.icon(
                       onPressed: _pickImage,
                       icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: const Text('Replace'),
+                      label: Text(context.l10n.replace),
                     ),
                   ],
                 ),
@@ -234,14 +379,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               const SizedBox(height: 24),
               BrandModelAutocompleteField(
                 controller: _brandCtrl,
-                labelText: 'Brand *',
+                labelText: context.l10n.brand,
                 hintText: 'Yamaha',
                 optionsBuilder: (_) => bikeCatalogBrands,
               ),
               const SizedBox(height: 12),
               BrandModelAutocompleteField(
                 controller: _modelCtrl,
-                labelText: 'Model *',
+                labelText: context.l10n.model,
                 hintText: 'MT-15',
                 optionsBuilder: (_) => modelsForBrand(_brandCtrl.text),
               ),
@@ -252,9 +397,17 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: TextFormField(
                       controller: _yearCtrl,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: AppColors.textPrimary),
-                      decoration: const InputDecoration(
-                          labelText: 'Year', hintText: '2023'),
+                      style: TextStyle(color: context.palette.textPrimary),
+                      decoration: InputDecoration(
+                          labelText: context.l10n.year, hintText: '2023'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        final y = parseLocalizedInt(v);
+                        if (y == null || y < 1900 || y > DateTime.now().year + 1) {
+                          return context.l10n.invalidNumber;
+                        }
+                        return null;
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -262,9 +415,17 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     child: TextFormField(
                       controller: _ccCtrl,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: AppColors.textPrimary),
-                      decoration: const InputDecoration(
-                          labelText: 'Engine CC', hintText: '155'),
+                      style: TextStyle(color: context.palette.textPrimary),
+                      decoration: InputDecoration(
+                          labelText: context.l10n.engineCc, hintText: '155'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        final c = parseLocalizedInt(v);
+                        if (c == null || c <= 0 || c > 3000) {
+                          return context.l10n.invalidNumber;
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -274,14 +435,54 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                 controller: _odometerCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                    labelText: 'Odometer reading (km)', hintText: '12000'),
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                    labelText: context.l10n.odometerReadingKm, hintText: '12000'),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final o = parseLocalizedNumber(v, min: 0, max: 2000000);
+                  if (o == null) return context.l10n.invalidNumber;
+                  // On edit the field is the dashboard reading, which can't
+                  // be below the km GPS already tracked (0.5 km slack for
+                  // the rounded prefill).
+                  final tracked = _existingBike?.totalDistanceKm ?? 0;
+                  if (widget.bikeId != null && o + 0.5 < tracked) {
+                    return context.l10n.invalidNumber;
+                  }
+                  return null;
+                },
               ),
+
+              const SizedBox(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('This is an E-Bike', style: TextStyle(color: context.palette.textPrimary)),
+                value: _isEbike,
+                onChanged: (val) {
+                  setState(() => _isEbike = val);
+                },
+                activeTrackColor: context.palette.primary,
+              ),
+              if (_isEbike)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _connectEbike,
+                      icon: const Icon(Icons.bluetooth_connected, size: 18),
+                      label: const Text('Connect E-Bike'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.palette.primary,
+                        side: BorderSide(color: context.palette.primary),
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
-              Text('Bike color',
+              Text(context.l10n.bikeColor,
                   style:
-                      TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               _ColorSwatchPicker(
                 selected: _colorValue,
@@ -296,7 +497,7 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : Text(isEdit ? 'Save Changes' : 'Add Bike'),
+                    : Text(isEdit ? context.l10n.saveChanges : context.l10n.addBike),
               ),
             ],
           ),
@@ -343,24 +544,35 @@ class _SwatchTile extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
+  /// `#RRGGBB`, the swatch's screen-reader label (no per-colour strings).
+  String get _hexLabel =>
+      '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _ColorSwatchPicker._size,
-        height: _ColorSwatchPicker._size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? AppColors.textPrimary : Colors.transparent,
-            width: 2.5,
+    // issues §101.R9: a button with a selected state, not an unlabeled tap.
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      inMutuallyExclusiveGroup: true,
+      label: _hexLabel,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: _ColorSwatchPicker._size,
+          height: _ColorSwatchPicker._size,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? context.palette.textPrimary : Colors.transparent,
+              width: 2.5,
+            ),
           ),
+          child: isSelected
+              ? const Icon(Icons.check, color: Colors.white, size: 18)
+              : null,
         ),
-        child: isSelected
-            ? const Icon(Icons.check, color: Colors.white, size: 18)
-            : null,
       ),
     );
   }
@@ -374,21 +586,29 @@ class _AutoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _ColorSwatchPicker._size,
-        height: _ColorSwatchPicker._size,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? AppColors.textPrimary : AppColors.border,
-            width: isSelected ? 2.5 : 1,
+    // issues §101.R9. No "Auto" string exists yet, so the tile is announced
+    // with the section's "Bike color" label; selected means "not picked".
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      inMutuallyExclusiveGroup: true,
+      label: context.l10n.bikeColor,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: _ColorSwatchPicker._size,
+          height: _ColorSwatchPicker._size,
+          decoration: BoxDecoration(
+            color: context.palette.surface,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? context.palette.textPrimary : context.palette.border,
+              width: isSelected ? 2.5 : 1,
+            ),
           ),
+          child:
+              Icon(Icons.auto_awesome, size: 16, color: context.palette.textSecondary),
         ),
-        child:
-            Icon(Icons.auto_awesome, size: 16, color: AppColors.textSecondary),
       ),
     );
   }

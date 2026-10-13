@@ -4,14 +4,63 @@ service cloud.firestore {
     // Whether the requester may see a shared-ride document, given its data.
     // Used by the ride read rule, the like/comment counter-bump rule, and the
     // likes/comments subcollection reads so the three stay in lockstep.
-    // Public → anyone authed; followers/mutual → only uids materialized into
-    // allowedUserIds at share time; always the author.
+    // Public → anyone authed; always the author; followers/mutual → judged
+    // against the LIVE follow graph (issues §88.1): 'followers' needs the
+    // requester → author edge, 'mutual' needs both edges. The exists() paths
+    // are built from ride.userId, so a list query can only satisfy them when
+    // it pins `userId ==` a single author (the rules engine substitutes the
+    // query's equality value for resource.data.userId) — the feed issues one
+    // such query per followed author. A whereIn on userId can't be proven.
+    //
+    // The legacy share-time snapshot (`allowedUserIds`, written by every
+    // client before §88.1 and still written for their sake) stays as an
+    // alternative grant, so old clients' `allowedUserIds array-contains me`
+    // feed query keeps working unchanged.
+    //
+    // §90.D8 / §90.A11: the live-graph branches also require that the author
+    // has NOT blocked the viewer. Blocking used to leave the blocked rider's
+    // follow edge in place, so they kept reading every followers/mutual post.
+    // The check sits only on the live-graph branches because those are the
+    // only ones whose list queries pin `userId ==` (so the blocks/ path is
+    // provable); adding it to the public or legacy-allowlist branches would
+    // make the public feed and old clients' allowlist query unprovable.
     function rideVisibleTo(ride) {
       return request.auth != null && (
         request.auth.uid == ride.userId ||
         ride.audience == 'public' ||
         (ride.audience in ['followers', 'mutual'] &&
-          request.auth.uid in ride.allowedUserIds));
+          request.auth.uid in ride.get('allowedUserIds', [])) ||
+        (ride.audience == 'followers' &&
+          exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + ride.userId)) &&
+          !exists(/databases/$(database)/documents/users/$(ride.userId)/blocks/$(request.auth.uid))) ||
+        (ride.audience == 'mutual' &&
+          exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + ride.userId)) &&
+          exists(/databases/$(database)/documents/follows/$(ride.userId + '_' + request.auth.uid)) &&
+          !exists(/databases/$(database)/documents/users/$(ride.userId)/blocks/$(request.auth.uid))));
+    }
+
+    // §33.4's photo-URL allow-list, shared by every field a viewer's device
+    // fetches automatically (§90.D10): null/empty, or a URL on a host this
+    // app actually serves avatars/media from — Cloudinary under this
+    // project's cloud name, or Google's account-picture hosts (lh3–lh6) for
+    // Google sign-in. Anything else is a tracking beacon that leaks every
+    // viewer's IP to whoever chose the URL.
+    function photoUrlAllowed(url) {
+      return url == null || url == '' ||
+        (url is string && url.size() <= 1000 &&
+         url.matches('^https://(res\\.cloudinary\\.com/vjvcigkt/|lh[3-6]\\.googleusercontent\\.com/).*'));
+    }
+
+    // A display name denormalized onto content: a non-empty string of at
+    // most 100 characters (§90.D10). Matching it against the author's real
+    // profile is deliberately not attempted — see the notifications note.
+    function nameValid(name) {
+      return name is string && name.size() > 0 && name.size() <= 100;
+    }
+
+    // Optional variant for fields legacy clients may send empty.
+    function optionalNameValid(name) {
+      return name == null || (name is string && name.size() <= 100);
     }
 
     // Whether the requester may read a users/{uid} profile doc, given its
@@ -66,7 +115,7 @@ service cloud.firestore {
     // check is only cosmetic (it hides buttons); this is what actually stops
     // a non-admin from deleting other riders' content.
     //
-    // docs/Issues.md §24.9: prefers the `admin` custom claim
+    // issues §24.9: prefers the `admin` custom claim
     // (request.auth.token.admin) — set via scripts/set_admin_claim.js, which
     // only this project's own service-account credentials can run — over the
     // email-string comparison this used to be exclusively. A custom claim can
@@ -83,7 +132,7 @@ service cloud.firestore {
     // rule that calls this, including through the `||` chains in
     // canModerateForum() and the clauses that use it, denying writes that
     // should have been allowed on their other branch. Caught by the rules
-    // tests in scripts/test/rules/ (docs/Issues.md §24.11).
+    // tests in scripts/test/rules/ (issues §24.11).
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.get('admin', false) == true ||
@@ -93,12 +142,12 @@ service cloud.firestore {
 
     // Ties an engagement-counter bump to the SAME transaction
     // creating/deleting the per-user doc it's supposed to represent —
-    // docs/Issues.md §24.7. Before this, a tally like `likes` or
-    // `upvotes`/`downvotes` could move by exactly ±1 per REQUEST, but
+    // issues §24.7. Before this, a tally like `upvotes`/`downvotes`
+    // could move by exactly ±1 per REQUEST, but
     // nothing capped the number of requests: a client could loop the same
     // update and drive any tally to an arbitrary value, since the rule never
-    // looked at the votes/likes subcollection at all. Every real caller
-    // (RideShareRepository.toggleLike/.vote, ForumRepository.votePost)
+    // looked at the votes subcollection at all. Every real caller
+    // (RideShareRepository.vote, ForumRepository.votePost)
     // already writes the counter bump and the per-user doc in the SAME
     // Firestore transaction, so `existsAfter()`/`getAfter()` — which see the
     // state once the WHOLE transaction commits, unlike `exists()`/`get()`,
@@ -110,8 +159,7 @@ service cloud.firestore {
     // after the first successful call the "before" state has already
     // changed.
     //
-    // `likeBumpValid` covers the simple create/delete-only shape (rides'
-    // `likes`, a boolean-ish per-user doc). `voteBumpValid` covers the
+    // `voteBumpValid` covers the
     // three-state shape (`votes/{uid}` → {value: 1 | -1} or absent) shared by
     // rides' upvotes/downvotes and forum posts' upvotes/downvotes: it reads
     // the vote doc's value before and after (0 standing for "no vote"), and
@@ -119,12 +167,6 @@ service cloud.firestore {
     // before→after transition implies — covering a fresh vote, a toggle-off,
     // and a flip (down→up or up→down) as the same one formula rather than
     // three separate cases.
-    function likeBumpValid(likeDocPath, delta) {
-      return delta == 1
-        ? (!exists(likeDocPath) && existsAfter(likeDocPath))
-        : (delta == -1 && exists(likeDocPath) && !existsAfter(likeDocPath));
-    }
-
     // Whether `docPath` is being created by `uid` in THIS commit — the shape
     // behind the comment/reply counter bumps. Unlike likes/votes, whose doc id
     // is the caller's uid and so can be reconstructed inside the rule, a
@@ -149,12 +191,150 @@ service cloud.firestore {
       return exists(docPath) && !existsAfter(docPath);
     }
 
+    // A forum post's shared ride / maintenance card (ForumAttachment.toMap):
+    // a fixed key set, a known kind, and caps matching the client's.
+    // A forum post's photos: at most 4, each a Cloudinary upload in the
+    // author's own `forumPhotos/<uid>/` folder (ForumRepository.uploadPostPhoto),
+    // so a post can't hotlink arbitrary hosts into every viewer's feed.
+    // A fuel fill-up document (FuelLogModel.toCloudPayload + syncedAt).
+    function optionalString(d, key, maxLen) {
+      return !(key in d) || (d[key] is string && d[key].size() <= maxLen);
+    }
+
+    function fuelLogValid(logId, d) {
+      return d.keys().hasOnly(['id', 'bike_id', 'filled_at', 'odometer_km',
+          'liters', 'total_cost', 'price_per_liter', 'full_tank', 'station',
+          'note', 'created_at', 'updated_at', 'syncedAt']) &&
+        d.keys().hasAll(['id', 'bike_id', 'filled_at', 'odometer_km',
+          'liters', 'total_cost', 'price_per_liter', 'full_tank',
+          'created_at', 'updated_at', 'syncedAt']) &&
+        d.id == logId &&
+        d.bike_id is string && d.bike_id.size() > 0 && d.bike_id.size() <= 128 &&
+        d.filled_at is string && d.filled_at.size() <= 40 &&
+        d.created_at is string && d.created_at.size() <= 40 &&
+        d.updated_at is string && d.updated_at.size() <= 40 &&
+        d.odometer_km is number && d.odometer_km >= 0 && d.odometer_km <= 2000000 &&
+        d.liters is number && d.liters > 0 && d.liters <= 1000 &&
+        d.total_cost is number && d.total_cost >= 0 && d.total_cost <= 10000000 &&
+        // Derived (total / litres), so no ceiling of its own.
+        d.price_per_liter is number && d.price_per_liter >= 0 &&
+        d.full_tank is bool &&
+        optionalString(d, 'station', 200) &&
+        optionalString(d, 'note', 1000) &&
+        d.syncedAt == request.time;
+    }
+
+    function forumImageUrlValid(url, uid) {
+      return url is string && url.size() <= 1000 &&
+        url.matches('^https://res\\.cloudinary\\.com/vjvcigkt/image/upload/(.*/)?forumPhotos/' + uid + '/.+');
+    }
+
+    function forumImagesValid(urls, uid) {
+      return urls is list && urls.size() >= 1 && urls.size() <= 4 &&
+        forumImageUrlValid(urls[0], uid) &&
+        (urls.size() < 2 || forumImageUrlValid(urls[1], uid)) &&
+        (urls.size() < 3 || forumImageUrlValid(urls[2], uid)) &&
+        (urls.size() < 4 || forumImageUrlValid(urls[3], uid));
+    }
+
+    function forumAttachmentValid(a) {
+      return a is map &&
+        a.keys().hasOnly(['kind', 'refId', 'title', 'subtitle', 'bikeId']) &&
+        a.keys().hasAll(['kind', 'refId', 'title', 'subtitle']) &&
+        a.kind in ['ride', 'maintenance'] &&
+        a.refId is string && a.refId.size() > 0 && a.refId.size() <= 128 &&
+        a.title is string && a.title.size() <= 80 &&
+        a.subtitle is string && a.subtitle.size() <= 160 &&
+        (a.get('bikeId', null) == null || (a.bikeId is string && a.bikeId.size() <= 128));
+    }
+
     function voteBumpValid(voteDocPath, upvotesBefore, upvotesAfter, downvotesBefore, downvotesAfter) {
       let before = exists(voteDocPath) ? get(voteDocPath).data.value : 0;
       let after = existsAfter(voteDocPath) ? getAfter(voteDocPath).data.value : 0;
       return before != after &&
         (upvotesAfter - upvotesBefore) == (after == 1 ? 1 : 0) - (before == 1 ? 1 : 0) &&
         (downvotesAfter - downvotesBefore) == (after == -1 ? 1 : 0) - (before == -1 ? 1 : 0);
+    }
+
+    // The riding-score event counts (optional — null/absent on a ride shared
+    // before score-sharing existed, which the client treats as "no badge"
+    // rather than a fabricated perfect score). Where present each must be a
+    // non-negative integer and — since these are self-reported the same way
+    // distance/speed are — bounded the same generous way: no more than one
+    // event per second of the ride, which no real ride gets close to but
+    // stops a client claiming e.g. -50 hard brakes to always show a 100.
+    //
+    // `get(key, default)` only falls back to the default when the key is
+    // ABSENT — RideShareModel.toMap() writes these keys with an explicit
+    // null when the counts are unknown (e.g. an outbox share enqueued before
+    // this field existed), and `null is int` is false, so each count must
+    // accept null explicitly or those shares are rejected outright.
+    function scoreCountPlausible(count, durationSeconds) {
+      return count == null ||
+        (count is int && count >= 0 && count <= durationSeconds);
+    }
+
+    function ridingScoreCountsPlausible(data) {
+      return scoreCountPlausible(data.get('hardBrakeCount', null), data.durationSeconds) &&
+        scoreCountPlausible(data.get('rapidAccelCount', null), data.durationSeconds) &&
+        scoreCountPlausible(data.get('highJerkCount', null), data.durationSeconds);
+    }
+
+    // issues §62.1: a shared ride's own `allow update` (below) used to
+    // only pin `userId` immutable — every other field, including the stats
+    // shown on the social feed and any leaderboard built on them, was
+    // unbounded for the ride's own author. This is the backstop: independent
+    // of whatever the client computed, `distanceKm`/`durationSeconds` must be
+    // non-negative and within a generous single-ride ceiling (3000 km / 7
+    // days — far beyond anything a real continuous ride could be, but chosen
+    // wide specifically to avoid rejecting a real, if extreme, ride), and
+    // `maxSpeedKmh` must both stay under a generous physical ceiling (260
+    // km/h — above SensorConstants.maxPlausibleSpeedMs's 252 km/h client-side
+    // clamp, so a legitimately-clamped value is never rejected here) and
+    // never fall below the ride's own implied average speed (the same
+    // invariant `RideEntity.maxSpeedKmh`/`SharedRideEntity.maxSpeedKmh`
+    // enforce client-side — see issues §62.8 for why that can't be
+    // trusted alone). A half-km/h epsilon absorbs floating-point rounding.
+    function rideStatsPlausible(data) {
+      let avgSpeedKmh = (data.distanceKm / data.durationSeconds) * 3600;
+      return data.distanceKm is number && data.distanceKm >= 0 && data.distanceKm <= 3000 &&
+        data.durationSeconds is number && data.durationSeconds > 0 && data.durationSeconds <= 604800 &&
+        data.maxSpeedKmh is number && data.maxSpeedKmh >= 0 && data.maxSpeedKmh <= 260 &&
+        data.maxSpeedKmh >= avgSpeedKmh - 0.5 &&
+        ridingScoreCountsPlausible(data);
+    }
+
+    // issues §62.2: `users/{uid}.publicStats` (shown on the public
+    // profile) and its `badgeIds` used to be entirely client-authored with no
+    // server validation at all. RidePersistenceCoordinator.updatePublicStats
+    // recomputes the rider's FULL lifetime total from local data on every
+    // ride finalize (not an incremental delta), so this can't require a
+    // small per-write delta the way the ride-share bump counters do without
+    // false-rejecting a legitimate large recompute (e.g. after a reinstall
+    // restores years of ride history). Instead this bounds the two things
+    // that make a self-reported stat actually dangerous: it can only ever
+    // move up (never erase a real total, never un-earn a badge) and it can
+    // never exceed a ceiling no real rider could plausibly reach, which is
+    // enough to stop the concrete forgery this was written against (setting
+    // totalDistanceKm to an arbitrary six-figure number, or badgeIds to every
+    // badge in the catalog with zero rides behind it). It intentionally does
+    // NOT re-derive the totals from the rides subcollection server-side —
+    // that would close the gap completely, but needs the badge-criteria
+    // logic in core/utils/badges.dart ported to a Cloud Function and
+    // verified end-to-end against a live project, which this pass couldn't
+    // do safely without deploy/device access. Tracked as deferred in
+    // issues §62.
+    function publicStatsValid(existingProfile, incomingStats) {
+      let oldStats = existingProfile != null ? existingProfile.get('publicStats', {}) : {};
+      let oldKm = oldStats.get('totalDistanceKm', 0);
+      let oldRides = oldStats.get('totalRides', 0);
+      let oldBadges = oldStats.get('badgeIds', []);
+      return incomingStats.totalDistanceKm is number &&
+        incomingStats.totalDistanceKm >= oldKm && incomingStats.totalDistanceKm <= 500000 &&
+        incomingStats.totalRides is int &&
+        incomingStats.totalRides >= oldRides && incomingStats.totalRides <= 100000 &&
+        incomingStats.badgeIds is list && incomingStats.badgeIds.size() <= 200 &&
+        incomingStats.badgeIds.hasAll(oldBadges);
     }
 
     // Whether `handle` is claimed by `uid` in usernames/{handle}, evaluated
@@ -172,6 +352,38 @@ service cloud.firestore {
     function usernameClaimedBy(handle, uid) {
       return existsAfter(/databases/$(database)/documents/usernames/$(handle)) &&
         getAfter(/databases/$(database)/documents/usernames/$(handle)).data.uid == uid;
+    }
+
+    // Whether `field` keeps its stored value (absent before and after counts
+    // as kept). Every check in profileFieldsValid is "unchanged, or valid",
+    // so an unrelated merge write (setVisibility, updatePublicStats) never
+    // trips over a legacy value written before the check existed.
+    function keeps(before, after, field) {
+      return after.get(field, null) == before.get(field, null);
+    }
+
+    // The free-form identity fields on users/{uid}.
+    //
+    // §90.D6: `email`/`emailLower` feed find-by-email, the chat picker and the
+    // group-ride friend picker, so a client-chosen value was impersonation:
+    // set a victim's email and receive their friends' invites and locations.
+    // A NEW value must now be the caller's own verified-by-Auth token email
+    // (lowercased for emailLower). Removing the field is always allowed.
+    //
+    // §90.D10: a changed photoUrl must pass the §33.4 allow-list, and a
+    // changed displayName/nickname is capped at 100 characters. `visibility`
+    // must be one of the three tiers, since the list rule keys off it.
+    function profileFieldsValid(before, after) {
+      let tokenEmail = request.auth.token.get('email', null);
+      return (keeps(before, after, 'email') || !('email' in after) ||
+          (tokenEmail != null && after.email == tokenEmail)) &&
+        (keeps(before, after, 'emailLower') || !('emailLower' in after) ||
+          (tokenEmail != null && after.emailLower == tokenEmail.lower())) &&
+        (keeps(before, after, 'photoUrl') || photoUrlAllowed(after.get('photoUrl', null))) &&
+        (keeps(before, after, 'displayName') || optionalNameValid(after.get('displayName', null))) &&
+        (keeps(before, after, 'nickname') || optionalNameValid(after.get('nickname', null))) &&
+        (keeps(before, after, 'visibility') ||
+          after.get('visibility', null) in ['public', 'mutual', 'private']);
     }
 
     // Whether the requester may moderate (delete other people's content in)
@@ -201,10 +413,21 @@ service cloud.firestore {
     // Gated by profileVisibleTo since a rider can now set `visibility` to
     // 'mutual' or 'private' (see EditProfileScreen) — defaults to the
     // pre-existing fully-open behavior for anyone who never touches it.
+    //
+    // §90.A4/§90.D9: `get` and `list` are split. A single `read` let a list
+    // query (rider search, "recent riders") through — the emulator confirmed
+    // an unfiltered `orderBy('createdAt')` returned 'private' profiles along
+    // with their email. A list is now only provable when the query itself
+    // filters `visibility == 'public'`, so search/suggestions can never
+    // surface a mutual/private profile. Legacy docs with no `visibility` field
+    // drop out of search until ProfileRepository.ensureProfile stamps
+    // 'public' on the rider's next sign-in (or a backfill runs) — single-doc
+    // gets still treat a missing field as public, as before.
     match /users/{uid} {
-      allow read: if profileVisibleTo(uid, resource.data);
+      allow get: if profileVisibleTo(uid, resource.data);
+      allow list: if request.auth != null && resource.data.visibility == 'public';
 
-      // Owner-only, PLUS docs/Issues.md §24.5: a usernameLower change must be
+      // Owner-only, PLUS issues §24.5: a usernameLower change must be
       // backed by a real claim in usernames/{handle}. This rule used to be a
       // bare `request.auth.uid == uid` with no field validation at all.
       // ProfileRepository.setUsername() claims usernames/{handle} in a
@@ -227,8 +450,16 @@ service cloud.firestore {
         (!('usernameLower' in request.resource.data) ||
          (resource != null &&
           resource.data.get('usernameLower', null) == request.resource.data.usernameLower) ||
-         usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid));
-      allow delete: if request.auth.uid == uid;
+         usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid)) &&
+        (!('publicStats' in request.resource.data) ||
+         publicStatsValid(resource == null ? null : resource.data, request.resource.data.publicStats)) &&
+        profileFieldsValid(resource == null ? {} : resource.data, request.resource.data) &&
+        badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data);
+      // A profile already counted in stats/badges.totalRiders can't be
+      // deleted by its owner: delete-and-recreate would count them again.
+      // Account deletion removes it with the Admin SDK.
+      allow delete: if request.auth.uid == uid &&
+        resource.data.get('badgeStatsCountedAt', null) == null;
 
       // User rides subcollection
       match /rides/{rideId} {
@@ -240,6 +471,13 @@ service cloud.firestore {
         // the app holds, and sharing a ride publishes a privacy-clipped copy
         // onto the shared_rides doc instead of exposing this.
         match /track/{chunkId} {
+          allow read, write: if request.auth.uid == uid;
+        }
+
+        // Beta jam labels ("I'm in a jam" / "Jam released"), written only by
+        // internal testers gated in the app (beta_testers.dart). Owner-only
+        // like the track they're analysed against.
+        match /jamLabels/{labelId} {
           allow read, write: if request.auth.uid == uid;
         }
       }
@@ -257,9 +495,68 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == uid;
       }
 
+      // Fuel fill-ups (schema v27). Owner-only like the maintenance logs
+      // above, plus the document shape FuelLogModel.toCloudPayload writes: a
+      // fixed key set, the doc id repeated in `id`, positive litres,
+      // non-negative money, a bounded odometer, `full_tank` a real bool and
+      // `syncedAt` the server time (other devices' incremental pull filters
+      // on it, so a client-chosen value could hide a fill-up from them).
+      match /fuelLogs/{logId} {
+        allow read, delete: if request.auth.uid == uid;
+        allow create, update: if request.auth.uid == uid &&
+          fuelLogValid(logId, request.resource.data);
+      }
+
       // Emergency contacts subcollection
       match /emergencyContacts/{contactId} {
         allow read, write: if request.auth.uid == uid;
+      }
+
+      // Owner-only private settings. Currently holds `zoneSalt`, the random
+      // per-rider value PrivacyZoneClipper jitters its hidden radius with.
+      //
+      // It MUST NOT be readable by anyone else: the whole reason it exists is
+      // that the previous seed was derived from the uid, which every viewer of
+      // a shared ride already has, so the "you can't triangulate my home"
+      // property was never real (issues §83.17). A salt a viewer can read is
+      // exactly as useless as a salt a viewer can compute.
+      //
+      // Note this sits under users/{uid}, whose *profile document* is publicly
+      // readable — a subcollection does NOT inherit the parent document's
+      // read rule, so this is genuinely private.
+      match /private/{docId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+
+      // Ledger of Cloudinary uploads (public_id + resource type), written by
+      // CloudinaryUploadService on every upload so that account deletion has a
+      // manifest of media to destroy — an unsigned upload preset can't
+      // authorise a destroy, so the sweep has to run server-side from this
+      // (issues §83.15, functions/src/account-deletion.ts).
+      //
+      // Create-only for the rider: they add rows by uploading and may read
+      // their own, but must not edit or delete one — a row the rider could
+      // remove is a row that lets them hide media from their own deletion
+      // sweep. The Admin SDK bypasses these rules, so the sweep still reads
+      // and the recursiveDelete still cleans up.
+      //
+      // §90.D2: a row may only name an asset in one of the rider's OWN
+      // folders — `<kind>/<uid>/...` (CloudinaryUploadService callers:
+      // avatars/, bikes/, rideShares/, places/, voiceNotes/). Public IDs are
+      // visible in every media URL, so without this a rider could list a
+      // victim's avatar here, delete their own account, and have the sweep
+      // destroy the victim's media. account-deletion.ts repeats the same
+      // check before every destroy, so rows written before this rule are
+      // covered too.
+      match /cloudinaryAssets/{assetId} {
+        allow read: if request.auth.uid == uid;
+        allow create: if request.auth.uid == uid &&
+          request.resource.data.publicId is string &&
+          request.resource.data.publicId.size() <= 512 &&
+          request.resource.data.publicId.matches('^[A-Za-z_]+/' + uid + '/.+') &&
+          !request.resource.data.publicId.matches('.*[.][.].*') &&
+          request.resource.data.get('resourceType', 'image') in ['image', 'video', 'raw'];
+        allow update, delete: if false;
       }
 
       // Saved routes. Unlike the owner-only subcollections around it, a route
@@ -289,8 +586,22 @@ service cloud.firestore {
       // per-user record of what's been earned, owner-only like the other
       // subcollections above, laying the groundwork for a future
       // partner-discount lookup.
+      //
+      // Still owner-only. `countedAt` is the one-way marker that pays for an
+      // `owners.<id>` bump in stats/badges (see badgeStatsWriteValid), so it
+      // can only appear together with that bump and never changes after.
+      // The owner can't delete a badge doc either: delete-and-recreate would
+      // count the same badge again. Account deletion uses the Admin SDK.
+      // Ids are not limited to the milestone catalog here because challenge
+      // badges (ChallengeRepository.earnBadge) share the collection; only
+      // catalog ids can ever be counted (badgeCountedNow).
       match /earnedBadges/{badgeId} {
-        allow read, write: if request.auth.uid == uid;
+        allow read: if request.auth.uid == uid;
+        allow create, update: if request.auth.uid == uid &&
+          request.resource.data.get('badgeId', badgeId) == badgeId &&
+          earnedBadgeCountValid(badgeId,
+            resource == null ? {} : resource.data, request.resource.data);
+        allow delete: if false;
       }
 
       // In-app notifications (e.g. "so-and-so followed you") — the one
@@ -300,7 +611,7 @@ service cloud.firestore {
       // Bounded so a rider can only ever write a notification claiming to
       // be from themselves, never spoof another uid as the source. Reads/
       // updates (marking read)/deletes stay owner-only.
-      // docs/Issues.md §33.4: `fromUid == request.auth.uid` alone bounded WHO
+      // issues §33.4: `fromUid == request.auth.uid` alone bounded WHO
       // a notification could claim to be from, but nothing bounded the
       // `{uid}` it landed in (any signed-in rider could target any victim)
       // or the free-text content — `fromName`/`fromPhotoUrl`/`type` were
@@ -311,7 +622,7 @@ service cloud.firestore {
       // an unauthenticated tracking beacon with no relationship to the
       // victim required at all.
       //
-      // `type` is now restricted to the two kinds the app actually writes
+      // `type` is now restricted to the kinds the app actually writes
       // (NotificationType in app_notification_entity.dart), and
       // `fromPhotoUrl` — the concrete tracking-pixel vector — must be null/
       // absent/empty or a URL on a domain this app actually serves avatars
@@ -327,28 +638,53 @@ service cloud.firestore {
       // this app already carries (captions, forum posts) — not the
       // unconditional device-fetch/beacon vector this fix closes.
       match /notifications/{notificationId} {
+        function notificationShapeValid(data) {
+          return data.fromUid == request.auth.uid &&
+            data.get('type', '') in
+              ['follow', 'groupRideInvite', 'groupRideJoined'] &&
+            data.get('fromName', '') is string &&
+            data.get('fromName', '').size() > 0 &&
+            data.get('fromName', '').size() <= 100 &&
+            photoUrlAllowed(data.get('fromPhotoUrl', null)) &&
+            // Both group-ride kinds are deep links to a specific ride — the
+            // notifications screen taps straight through to it — so both
+            // need a real groupRideId, same as groupRideInvite required.
+            (!(data.get('type', '') in
+               ['groupRideInvite', 'groupRideJoined']) ||
+             (data.get('groupRideId', '') is string &&
+              data.get('groupRideId', '') != ''));
+        }
         allow read, update, delete: if request.auth.uid == uid;
         allow create: if request.auth != null &&
-          request.resource.data.fromUid == request.auth.uid &&
-          request.resource.data.get('type', '') in ['follow', 'groupRideInvite'] &&
-          request.resource.data.get('fromName', '') is string &&
-          request.resource.data.get('fromName', '').size() > 0 &&
-          request.resource.data.get('fromName', '').size() <= 100 &&
-          (!('fromPhotoUrl' in request.resource.data) ||
-           request.resource.data.fromPhotoUrl == null ||
-           request.resource.data.fromPhotoUrl == '' ||
-           (request.resource.data.fromPhotoUrl is string &&
-            request.resource.data.fromPhotoUrl.matches(
-              '^https://(res\\.cloudinary\\.com/vjvcigkt/|lh3\\.googleusercontent\\.com/).*'))) &&
-          (request.resource.data.get('type', '') != 'groupRideInvite' ||
-           (request.resource.data.get('groupRideId', '') is string &&
-            request.resource.data.get('groupRideId', '') != ''));
+          notificationShapeValid(request.resource.data);
+        // §90.A9: a follow notification lives at the deterministic id
+        // `follow_{fromUid}` (NotificationRepository.notifyFollow `set`s it),
+        // so re-following rewrites one row instead of stacking new ones. A
+        // `set` on an existing doc is an update; the sender may make it only
+        // on their own follow row, and only with the same validated shape.
+        allow update: if request.auth != null &&
+          notificationId == 'follow_' + request.auth.uid &&
+          resource.data.fromUid == request.auth.uid &&
+          request.resource.data.get('type', '') == 'follow' &&
+          notificationShapeValid(request.resource.data);
       }
 
       // Blocked users subcollection
       match /blocks/{blockedUid} {
         allow read, write: if request.auth.uid == uid;
+        // §78 chat UX: the blocked rider may fetch the ONE doc naming them
+        // (never list the collection), so the chat room can show "You can't
+        // message this rider" up front. The messages create rule below
+        // already reveals the same fact by rejecting their sends.
+        allow get: if request.auth != null && request.auth.uid == blockedUid;
       }
+    }
+
+    // liveSessions/{token}.expiresAt bound — see the write rules there.
+    function liveSessionExpiryValid(data) {
+      return !('expiresAt' in data) ||
+        (data.expiresAt is timestamp &&
+         data.expiresAt <= request.time + duration.value(48, 'h'));
     }
 
     // Live sessions - readable by anyone with token (capability-based access)
@@ -370,7 +706,7 @@ service cloud.firestore {
       // collection and dropping `list` breaks no existing flow.
       //
       // `shareable == true` is required IN ADDITION to knowing the token —
-      // docs/Issues.md §24.1. The premise this rule used to rely on ("a rider
+      // issues §24.1. The premise this rule used to rely on ("a rider
       // only appears here because they published a shareable live session in
       // the first place") was false: the client called
       // `_startLiveSessionPublishing()` unconditionally from `startRide()`,
@@ -384,7 +720,7 @@ service cloud.firestore {
       // means any legacy doc written before this field existed reads as
       // NOT shareable — fail closed, not open.
       //
-      // docs/Issues.md §33.2: ALSO requires `expiresAt` to be in the future.
+      // issues §33.2: ALSO requires `expiresAt` to be in the future.
       // The client (public/live-viewer.html) enforced the 24h TTL only in
       // its own JS — nothing stopped a caller from skipping the page
       // entirely and reading the doc straight off the Firestore REST API
@@ -395,9 +731,31 @@ service cloud.firestore {
       allow get: if resource.data.get('shareable', false) == true &&
         resource.data.get('expiresAt', request.time) > request.time;
 
-      // Only the ride owner (uid) can write
-      allow create: if request.auth.uid == request.resource.data.uid;
-      allow update: if request.auth.uid == resource.data.uid;
+      // Only the ride owner (uid) can write.
+      //
+      // issues §101.S3: update used to check only the stored uid, so the
+      // owner could rewrite `uid` (handing the doc to another rider) or push
+      // `expiresAt` out indefinitely, which defeats the 24h TTL on the get
+      // rule above. `uid` is now pinned on both create and update, and
+      // `expiresAt` (when present) may be at most 48h out — the client
+      // (live_session_coordinator.dart) writes now+24h on every publish,
+      // and the extra 24h is slack for a rider whose phone clock runs fast.
+      // The status/teardown updates (live_session_coordinator.dart,
+      // outbox_service.dart) never touch either field, so the stored values
+      // carry through request.resource and pass unchanged.
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.uid &&
+        liveSessionExpiryValid(request.resource.data);
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.uid &&
+        request.resource.data.uid == resource.data.uid &&
+        liveSessionExpiryValid(request.resource.data);
+      // The rider's "Stop sharing now" (live_session_coordinator.dart
+      // `stopSharingNow`) deletes the session outright rather than waiting
+      // for ride end or the 24h `expiresAt` — §78.7. Owner only; a viewer
+      // holding the link can read it but never revoke someone else's share.
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.uid;
     }
 
     // Crash notifications - the client only ever CREATEs one (see
@@ -408,18 +766,60 @@ service cloud.firestore {
     // which is not subject to these rules at all — so the client never
     // legitimately needs update/delete here.
     //
-    // docs/Issues.md §33.18: this used to be a bare `allow write`, which also
+    // issues §33.18: this used to be a bare `allow write`, which also
     // covers update — a rider could freely rewrite their own doc's `status`
     // after creation (e.g. straight to 'acknowledged'), which could suppress
     // the escalation this collection exists to drive once real delivery
     // ships (currently mocked — Cloud Functions can't deploy on this
-    // project's billing plan, docs/Issues.md §24). Scoping to `create` only,
+    // project's billing plan, issues §24). Scoping to `create` only,
     // with the shape the client actually writes, closes that off; no
     // `allow update`/`allow delete` is granted at all.
+    // The document id IS the rideId (see CrashCoordinator). That makes the
+    // write idempotent — the crash sequence can be retried, or driven twice,
+    // without creating a second alert and a second function invocation for the
+    // same ride, which `.add()` did (issues §83.19).
+    //
+    // It does NOT stop deliberate abuse, and shouldn't be read as doing so: a
+    // client is free to invent an id and send `rideId` to match it. Rules
+    // cannot bound request volume. The real control is Firebase App Check,
+    // which is not enabled on this project yet — tracked in issues §83.19.
+    //
+    // Requiring the ride to exist under users/{uid}/rides was considered and
+    // rejected: recording is offline-first, so a crash can fire before the
+    // ride has ever reached Firestore, and the rule would then reject the one
+    // write that matters most.
+    //
+    // Only `create` is exposed: the Cloud Function moves the doc through its
+    // later states with Admin privileges, and a client that could rewrite
+    // `status` could mark its own alert `acknowledged` and silence the
+    // escalation sweep.
+    //
+    // issues §101.S3: the payload is also pinned to exactly what
+    // CrashCoordinator writes — {uid, rideId, timestamp (ISO string),
+    // lastLat, lastLng, status} — and the coordinates must be real numbers in
+    // range or null (no GPS fix yet). functions/src/crash-notifications.ts
+    // interpolates lastLat/lastLng into the maps link it sends by SMS/email,
+    // so a string there would land verbatim in an emergency contact's
+    // message. Null coordinates MUST keep passing: a crash before the first
+    // fix still has to alert.
     match /crashNotifications/{documentId} {
       allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.uid &&
-        request.resource.data.get('status', '') == 'pending';
+        request.resource.data.get('rideId', '') == documentId &&
+        request.resource.data.get('status', '') == 'pending' &&
+        request.resource.data.keys().hasOnly([
+          'uid', 'rideId', 'timestamp', 'lastLat', 'lastLng', 'status'
+        ]) &&
+        (request.resource.data.get('lastLat', null) == null ||
+         (request.resource.data.lastLat is number &&
+          request.resource.data.lastLat >= -90 &&
+          request.resource.data.lastLat <= 90)) &&
+        (request.resource.data.get('lastLng', null) == null ||
+         (request.resource.data.lastLng is number &&
+          request.resource.data.lastLng >= -180 &&
+          request.resource.data.lastLng <= 180)) &&
+        (!('timestamp' in request.resource.data) ||
+         request.resource.data.timestamp is string);
       allow read: if request.auth != null && request.auth.uid == resource.data.uid;
     }
 
@@ -444,20 +844,47 @@ service cloud.firestore {
       // attempted. Guard it explicitly: a nonexistent doc has no data to
       // protect, so it's always safe to let the read through.
       allow read: if resource == null || rideVisibleTo(resource.data);
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // issues §62.1: a fresh share must start with zeroed
+      // engagement counters (an attacker could otherwise launch a share
+      // pre-loaded with fabricated upvotes), a recognized `audience`, an
+      // empty `allowedUserIds` for a public share (the array only means
+      // anything for followers/mutual — see rideVisibleTo), and
+      // plausible stats (rideStatsPlausible).
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.audience in ['public', 'followers', 'mutual'] &&
+        (request.resource.data.audience != 'public' ||
+         request.resource.data.get('allowedUserIds', []) == []) &&
+        request.resource.data.get('comments', 0) == 0 &&
+        request.resource.data.get('upvotes', 0) == 0 &&
+        request.resource.data.get('downvotes', 0) == 0 &&
+        rideStatsPlausible(request.resource.data);
       // Owner can update/delete the ride freely, but may not reassign
-      // authorship (userId is immutable on this branch).
+      // authorship (userId is immutable on this branch), and — same fix as
+      // create, issues §62.1 — may not use this branch to touch the
+      // engagement counters (those move only through the bump-validated
+      // branch below, regardless of who's writing), set an unrecognized
+      // audience, pad allowedUserIds on a public share, or push
+      // distance/duration/speed outside plausible bounds. This is what an
+      // "edit an existing share" call (RideShareRepository.shareRide on an
+      // existing doc) actually looks like: it always resends the full
+      // stats/audience shape but omits the counter fields entirely, so a
+      // merge write naturally leaves them unchanged and satisfies this.
       allow update: if request.auth != null && resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == resource.data.userId;
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.audience in ['public', 'followers', 'mutual'] &&
+        (request.resource.data.audience != 'public' ||
+         request.resource.data.get('allowedUserIds', []) == []) &&
+        request.resource.data.get('comments', 0) == resource.data.get('comments', 0) &&
+        request.resource.data.get('upvotes', 0) == resource.data.get('upvotes', 0) &&
+        request.resource.data.get('downvotes', 0) == resource.data.get('downvotes', 0) &&
+        rideStatsPlausible(request.resource.data);
       // Any authenticated user who can see the ride may bump the engagement
       // counters, but cannot touch any other field or set an arbitrary value.
-      // Three disjoint shapes:
-      //   - likes: ±1 (legacy heart; kept for back-compat), tied to the
-      //     caller's own likes/{uid} doc being created/deleted in the same
-      //     transaction (docs/Issues.md §24.7 — see likeBumpValid above).
+      // Two disjoint shapes (three until 2026-09-21 — `likes` was the third;
+      // see the note on the likes subcollection below for what remains):
       //   - comments: +1, now tied to the comment doc named by the bump's own
       //     `lastCommentId` being created by the caller in the same
-      //     transaction (docs/Issues.md §24.7 — see newDocBy above).
+      //     transaction (issues §24.7 — see newDocBy above).
       //     addComment() was made transactional to close this; a client that
       //     loops the bump with no comment posted, or that points it at a
       //     comment that already existed, now fails.
@@ -469,11 +896,7 @@ service cloud.firestore {
       //     deliberately not stored, so there is no orderable score field to
       //     spoof.
       allow update: if request.auth != null && rideVisibleTo(resource.data) &&
-        ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) &&
-          likeBumpValid(
-            /databases/$(database)/documents/rides/$(rideId)/likes/$(request.auth.uid),
-            request.resource.data.likes - resource.data.likes)) ||
-         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'lastCommentId']) &&
+        ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'lastCommentId']) &&
           request.resource.data.comments == resource.data.comments + 1 &&
           request.resource.data.get('lastCommentId', '') is string &&
           request.resource.data.get('lastCommentId', '') != '' &&
@@ -487,20 +910,78 @@ service cloud.firestore {
             resource.data.downvotes, request.resource.data.downvotes)));
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
+      // Legacy hearts. The tally clauses that used to guard `rides.likes`
+      // were dropped 2026-09-21 (issues §80): votes are the only engagement
+      // model, no shipped build writes a like, and production holds zero like
+      // documents after the §79 cleanup.
+      //
+      // This subcollection rule deliberately stays. `deleteSharedRide` still
+      // LISTS `rides/{id}/likes` to sweep up stragglers before deleting a
+      // share, and a list against a path with no matching rule is denied even
+      // when it would return nothing — removing this would turn every
+      // share-delete into permission-denied. It can go one release after the
+      // app stops sweeping, in that order (issues §78.27: ship the app before
+      // the rules).
       match /likes/{userId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
-        allow write: if request.auth != null && request.auth.uid == userId;
+        // issues §101.S3: no shipped build writes a like any more, so new
+        // like docs are closed (they used to accept any shape, on any ride,
+        // visible or not). read + delete stay exactly as they were — the
+        // deleteSharedRide sweep needs both.
+        allow create, update: if false;
+        // The ride's owner may sweep other riders' legacy likes too, or
+        // deleteSharedRide fails on the first one it isn't the author of.
+        allow delete: if request.auth != null && (request.auth.uid == userId ||
+          get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid);
       }
       // One vote doc per user: { value: 1 | -1 }.
+      //
+      // issues §101.S3: create/update also require that the voter can see
+      // the ride (a stranger could otherwise plant vote docs on a
+      // followers/mutual share) and that the doc is exactly
+      // RideShareRepository.vote's `{value}`. Delete stays owner-only with
+      // no visibility check, so a rider can still clear their vote after
+      // the author narrows the audience.
       match /votes/{userId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
-        allow write: if request.auth != null && request.auth.uid == userId &&
-          (request.method == 'delete' ||
-           request.resource.data.value == 1 || request.resource.data.value == -1);
+        allow create, update: if request.auth != null && request.auth.uid == userId &&
+          rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data) &&
+          request.resource.data.keys().hasOnly(['value']) &&
+          (request.resource.data.value == 1 || request.resource.data.value == -1);
+        allow delete: if request.auth != null && request.auth.uid == userId;
       }
+      // §90.D1: comments used to be create + read only, so the first comment
+      // on a share made it undeletable (deleteSharedRide removes comments
+      // before the ride and the delete hit the deny-all), and `create`
+      // checked only `userId` — a stranger could plant a comment of any size
+      // and shape on a followers/mutual ride they can't even see.
+      //
+      // create: the caller must be able to see the parent ride, may send only
+      // the keys RideShareRepository.addComment writes, with 1–2000
+      // characters of text, a capped name and an allow-listed photo
+      // (§90.D10), and a server timestamp.
+      // delete: the comment's author, or the ride's owner.
       match /comments/{commentId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        allow create: if request.auth != null &&
+          request.resource.data.userId == request.auth.uid &&
+          exists(/databases/$(database)/documents/rides/$(rideId)) &&
+          rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data) &&
+          request.resource.data.keys().hasOnly([
+            'id', 'rideId', 'userId', 'userName', 'userPhotoUrl', 'text',
+            'createdAt', 'updatedAt'
+          ]) &&
+          request.resource.data.get('rideId', rideId) == rideId &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() > 0 &&
+          request.resource.data.text.size() <= 2000 &&
+          optionalNameValid(request.resource.data.get('userName', null)) &&
+          photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
+          request.resource.data.get('updatedAt', null) == null &&
+          request.resource.data.createdAt == request.time;
+        allow delete: if request.auth != null &&
+          (resource.data.userId == request.auth.uid ||
+           get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid);
       }
     }
 
@@ -533,7 +1014,7 @@ service cloud.firestore {
       // ever incrementing/decrementing by exactly one.
       // Every forum — not just rider-created ('custom') ones — must stamp its
       // creator as the caller and seed the maintainer list with exactly that
-      // same uid, or omit both fields entirely. docs/Issues.md §24.4: this
+      // same uid, or omit both fields entirely. issues §24.4: this
       // constraint used to apply ONLY when type == 'custom', so for any other
       // type (e.g. 'bikeModel') createdBy/maintainerIds were unconstrained.
       // Forum ids are deterministic slugs (bikeForumSlug/generalForumSlug),
@@ -550,24 +1031,38 @@ service cloud.firestore {
         request.resource.data.postCount == 0 &&
         (!('createdBy' in request.resource.data) || request.resource.data.createdBy == request.auth.uid) &&
         (!('maintainerIds' in request.resource.data) || request.resource.data.maintainerIds == [request.auth.uid]);
+      // §90.D11: both counters are now bound to the doc they count, the same
+      // existsAfter idiom as the comment/reply/vote counters (§24.7). Before,
+      // the comment here claimed the forum_follows rule gated followerCount,
+      // but nothing tied the two together — any rider could loop ±1 bumps.
       allow update: if request.auth != null &&
-        // followerCount moves by exactly ±1 via followForum/unfollowForum
-        // (gated separately by the forum_follows/{followId} write rule
-        // below, so this only fires alongside a legitimate follow doc
-        // create/delete)...
+        // followerCount +1 only while the caller's own forum_follows doc is
+        // created in the same commit, -1 only while it is deleted
+        // (followForum/unfollowForum transactions). The follow id is
+        // deterministic, so no marker field is needed.
         ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']) &&
-          (request.resource.data.followerCount == resource.data.followerCount + 1 ||
-           request.resource.data.followerCount == resource.data.followerCount - 1)) ||
-         // ...or postCount moves by exactly ±1: +1 via createPost, -1 via a
-         // moderator's deletePost. The -1 direction is restricted to people
-         // who may actually moderate, so a rider can't decrement the counter
-         // without deleting anything.
-         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['postCount']) &&
-          (request.resource.data.postCount == resource.data.postCount + 1 ||
-           (request.resource.data.postCount == resource.data.postCount - 1 &&
-            (isAdmin() ||
-             resource.data.get('createdBy', '') == request.auth.uid ||
-             request.auth.uid in resource.data.get('maintainerIds', []))))) ||
+          ((request.resource.data.followerCount == resource.data.get('followerCount', 0) + 1 &&
+            !exists(/databases/$(database)/documents/forum_follows/$(request.auth.uid + '_' + forumId)) &&
+            existsAfter(/databases/$(database)/documents/forum_follows/$(request.auth.uid + '_' + forumId))) ||
+           (request.resource.data.followerCount == resource.data.get('followerCount', 0) - 1 &&
+            docRemoved(/databases/$(database)/documents/forum_follows/$(request.auth.uid + '_' + forumId))))) ||
+         // ...or postCount moves by exactly ±1, carrying the post's id in
+         // `lastPostId`: +1 only while the caller creates that post in the
+         // same commit (createPost), -1 only while that post is deleted in
+         // the same commit (deletePost). Who may delete a post is decided by
+         // the post's own delete rule, which runs in the same batch — so a
+         // rider deleting their own post now gets the decrement too (§90.D5),
+         // and nobody gets one without a post actually going away.
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['postCount', 'lastPostId']) &&
+          request.resource.data.get('lastPostId', '') is string &&
+          request.resource.data.get('lastPostId', '') != '' &&
+          ((request.resource.data.postCount == resource.data.get('postCount', 0) + 1 &&
+            newDocBy(
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(request.resource.data.lastPostId),
+              request.auth.uid)) ||
+           (request.resource.data.postCount == resource.data.get('postCount', 0) - 1 &&
+            docRemoved(
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(request.resource.data.lastPostId))))) ||
          // ...or the creator/admin edits the maintainer list. Deliberately
          // narrower than moderation: a maintainer can delete posts but must
          // not be able to appoint peers or remove the creator who appointed
@@ -577,12 +1072,47 @@ service cloud.firestore {
 
       match /posts/{postId} {
         allow read: if request.auth != null;
+        // §90.D10: only the keys createPost writes, a capped byline and an
+        // allow-listed avatar URL (the byline photo is fetched by every
+        // viewer's device — the §33.4 beacon).
+        // Pit Wall fields (all optional, so pre-redesign clients still pass):
+        // `postType` from the fixed set, a post always starts unsolved with
+        // no accepted reply, a capped `authorBike` byline, and an
+        // `attachment` snapshot card (forumAttachmentValid), and up to four
+        // own-folder Cloudinary `imageUrls` (forumImagesValid).
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
           request.resource.data.replyCount == 0 &&
-          request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0;
+          request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0 &&
+          request.resource.data.keys().hasOnly([
+            'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
+            'createdAt', 'replyCount', 'upvotes', 'downvotes',
+            'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls'
+          ]) &&
+          (request.resource.data.get('imageUrls', null) == null ||
+           forumImagesValid(request.resource.data.imageUrls, request.auth.uid)) &&
+          request.resource.data.get('postType', 'general') in
+            ['troubleshoot', 'diyGuide', 'gearReview', 'general'] &&
+          request.resource.data.get('isSolved', false) == false &&
+          (request.resource.data.get('authorBike', null) == null ||
+           (request.resource.data.authorBike is string &&
+            request.resource.data.authorBike.size() <= 80)) &&
+          (request.resource.data.get('attachment', null) == null ||
+           forumAttachmentValid(request.resource.data.attachment)) &&
+          optionalNameValid(request.resource.data.get('userName', null)) &&
+          photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
+          // §101.S3: typed, size-capped title/body and a server timestamp
+          // (createPost writes FieldValue.serverTimestamp()). The composer
+          // has no maxLength, so the caps are deliberately generous; it does
+          // refuse an empty title or body.
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 300 &&
+          request.resource.data.body is string &&
+          request.resource.data.body.size() <= 20000 &&
+          request.resource.data.createdAt == request.time;
         // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
         // the reply doc named by `lastReplyId` being created in the same
-        // transaction (docs/Issues.md §24.7 — addReply() was made
+        // transaction (issues §24.7 — addReply() was made
         // transactional to allow this, mirroring addComment() on rides); a
         // deleteReply -1; or a votePost bounded upvotes/downvotes change tied
         // to the caller's own votes/{uid} doc via voteBumpValid (same fix and
@@ -607,7 +1137,7 @@ service cloud.firestore {
            // canModerateForum(forumId)`, which was wrong: `resource` here is
            // the POST, so it checked the POST's author, not the reply's. A
            // rider deleting their own reply on someone else's post had the
-           // whole batch denied (docs/Issues.md §24.11).
+           // whole batch denied (issues §24.11).
            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'lastReplyId']) &&
             request.resource.data.replyCount == resource.data.replyCount - 1 &&
             request.resource.data.get('lastReplyId', '') is string &&
@@ -618,7 +1148,20 @@ service cloud.firestore {
             voteBumpValid(
               /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/votes/$(request.auth.uid),
               resource.data.upvotes, request.resource.data.upvotes,
-              resource.data.downvotes, request.resource.data.downvotes)));
+              resource.data.downvotes, request.resource.data.downvotes)) ||
+           // ForumRepository.setPostSolution: only the post's author, only
+           // on a troubleshoot post, only these two fields. An accepted
+           // reply must exist on THIS post and implies solved; clearing it
+           // is always allowed (forum_solution.dart's toggles).
+           (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['isSolved', 'solutionReplyId']) &&
+            resource.data.userId == request.auth.uid &&
+            resource.data.get('postType', 'general') == 'troubleshoot' &&
+            request.resource.data.isSolved is bool &&
+            (request.resource.data.get('solutionReplyId', null) == null ||
+             (request.resource.data.solutionReplyId is string &&
+              request.resource.data.isSolved == true &&
+              exists(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/replies/$(request.resource.data.solutionReplyId))))));
 
         // A rider may always remove their own post; removing someone else's
         // requires admin/creator/maintainer. The client shows the trash icon
@@ -633,16 +1176,30 @@ service cloud.firestore {
         // One vote doc per user: { value: 1 | -1 }. No rideVisibleTo-style
         // gate needed — forum posts have no audience tiers, they're readable
         // by any authed rider same as the post itself.
+        // §101.S3: exactly ForumRepository.votePost's `{value}`, nothing else.
         match /votes/{userId} {
           allow read: if request.auth != null;
-          allow write: if request.auth != null && request.auth.uid == userId &&
-            (request.method == 'delete' ||
-             request.resource.data.value == 1 || request.resource.data.value == -1);
+          allow create, update: if request.auth != null && request.auth.uid == userId &&
+            request.resource.data.keys().hasOnly(['value']) &&
+            (request.resource.data.value == 1 || request.resource.data.value == -1);
+          allow delete: if request.auth != null && request.auth.uid == userId;
         }
 
         match /replies/{replyId} {
           allow read: if request.auth != null;
-          allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+          // §90.D10: same key allow-list / byline / avatar checks as posts.
+          allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+            request.resource.data.keys().hasOnly([
+              'postId', 'forumId', 'userId', 'userName', 'userPhotoUrl', 'body', 'createdAt'
+            ]) &&
+            optionalNameValid(request.resource.data.get('userName', null)) &&
+            photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
+            // §101.S3: same body cap as posts; the reply box refuses an
+            // empty (trimmed) body, and addReply stamps a server timestamp.
+            request.resource.data.body is string &&
+            request.resource.data.body.size() > 0 &&
+            request.resource.data.body.size() <= 20000 &&
+            request.resource.data.createdAt == request.time;
           // Same ownership-or-moderator shape as the post delete above.
           allow delete: if request.auth != null &&
             (resource.data.userId == request.auth.uid || canModerateForum(forumId));
@@ -672,7 +1229,7 @@ service cloud.firestore {
     // Standalone top-level collection: `places/{placeId}`. There is
     // deliberately NO nested `places/{placeId}/reviews` block here — the
     // draft this was adapted from (app/firestore_rules_poi_directory.txt,
-    // deleted per docs/Issues.md §33.14: it was inert, unreferenced by
+    // deleted per issues §33.14: it was inert, unreferenced by
     // firebase.json, and materially weaker than these rules) assumed that
     // shape, but ReviewRepository actually reads/writes a
     // standalone top-level `reviews` collection filtered by `placeId` (see
@@ -695,11 +1252,21 @@ service cloud.firestore {
       // yet verified, with a fresh (zero) rating aggregate — enforce that
       // shape so a client can't spoof authorship or seed a fake rating
       // history for a brand-new place.
+      //
+      // `tags` (Places hub rider tags — 24/7, 95 octane, EFI diagnostics…) is
+      // optional, and absent on every place written before it existed; when
+      // present it must be a short list of short strings (PlaceTag.maxPerPlace
+      // in place_tags.dart), so nobody can hang an arbitrarily large payload
+      // off a public place doc.
       allow create: if request.auth != null &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.verified == false &&
         request.resource.data.ratingSum == 0 &&
-        request.resource.data.ratingCount == 0;
+        request.resource.data.ratingCount == 0 &&
+        (!('tags' in request.resource.data) ||
+          (request.resource.data.tags is list &&
+           request.resource.data.tags.size() <= 12 &&
+           request.resource.data.tags.toSet().size() == request.resource.data.tags.size()));
 
       // No screen built in this phase calls updatePlace() /
       // updateVerification() / deletePlace() on PlaceRepository — they
@@ -708,52 +1275,35 @@ service cloud.firestore {
       // ... so scope the rule to exactly what addReply does") we don't
       // grant a broad owner-edit or admin-verify rule for features that
       // aren't built yet. The only update path this phase's UI actually
-      // exercises is PlaceDetailScreen's review-submission flow, which
-      // writes a new reviews/{reviewId} doc and then bumps this place's
-      // ratingSum/ratingCount (ReviewRepository.addReviewAndUpdatePlaceRating
-      // — see that method's doc comment for why those two writes are no
-      // longer a single atomic transaction). Since updatePlaceRating() sets
-      // *absolute* totals (not a FieldValue.increment), a broad "owner can
-      // update ratingSum/ratingCount" rule would let anyone set an
-      // arbitrary rating — instead, bound the transition precisely, the
-      // same way the rides.likes / forums.followerCount ±1-delta rules
-      // above do: ratingCount must move by exactly +1 (one review at a
-      // time) and ratingSum may only grow by between 1 and 5 (a single new
-      // review's star value).
+      // exercises is PlaceDetailScreen's review-submission flow
+      // (ReviewRepository.addReviewAndUpdatePlaceRating), which creates
+      // reviews/{uid}_{placeId} and bumps this place's ratingSum/ratingCount
+      // in ONE transaction. Since the bump sets *absolute* totals (not a
+      // FieldValue.increment), the transition is bounded precisely:
+      // ratingCount moves by exactly +1 and ratingSum by 1..5.
       //
-      // That alone still isn't enough: without more, any authenticated
-      // user could call this update directly with no review ever having
-      // been written (the fabricated-rating vulnerability this rule used
-      // to have). Reviews are keyed deterministically as `{uid}_{placeId}`
-      // (see reviews/{reviewId} below) specifically so this rule can
-      // require a real, matching review to exist before allowing the bump,
-      // and that its star value is exactly what's being added — so this
-      // update can never fabricate a rating for a place the caller hasn't
-      // actually reviewed, nor apply a delta other than their own review's
-      // real star count.
+      // issues §101.S1: the bump is also tied to the caller's own review
+      // being CREATED in the same commit — it must not exist before this
+      // write (`exists`) and must exist after it (`existsAfter`), and the
+      // delta must equal that review's stars (`getAfter`). Reviews are keyed
+      // deterministically as `{uid}_{placeId}` and have no update/delete
+      // rule, so each rider gets exactly one review per place and therefore
+      // exactly one bump. The old rule only required the review to exist
+      // already, which let a rider replay their single review's +stars as
+      // many times as they liked; the client used to write the review first
+      // and bump in a second request precisely because of that rule shape.
       //
-      // Known residual limitation (not fully closed by rules alone): this
-      // does NOT stop a user from calling this update multiple times and
-      // replaying their *own* single real review's delta repeatedly, since
-      // there is deliberately no mutable per-review "already applied"
-      // marker here — flipping such a marker would need to happen in the
-      // same commit as this write (to stay attacker-proof against a client
-      // simply skipping a separate "mark applied" call), which runs into
-      // the same get()-visibility-within-a-transaction question flagged on
-      // addReviewAndUpdatePlaceRating's doc comment. Fully closing that
-      // would need either a live-verified same-transaction get() design or
-      // a trusted server-side (Cloud Function) aggregate update — out of
-      // scope here. This rule still fully closes the original
-      // zero-reviews fabrication case: the bump is impossible without at
-      // least one real, matching review, and is bounded to that review's
-      // actual star value.
+      // Rollout (§78.27): an app build still on the old two-step flow saves
+      // the review but gets permission-denied on the bump, so ship the
+      // single-transaction client before deploying this rule.
       allow update: if request.auth != null &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingSum', 'ratingCount']) &&
         request.resource.data.ratingCount == resource.data.ratingCount + 1 &&
         request.resource.data.ratingSum >= resource.data.ratingSum + 1 &&
         request.resource.data.ratingSum <= resource.data.ratingSum + 5 &&
-        exists(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
-        get(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)).data.stars
+        !exists(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
+        existsAfter(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)) &&
+        getAfter(/databases/$(database)/documents/reviews/$(request.auth.uid + '_' + placeId)).data.stars
           == request.resource.data.ratingSum - resource.data.ratingSum;
     }
 
@@ -774,8 +1324,8 @@ service cloud.firestore {
       // collection (see comment below), so that second write falls
       // through to the deny-all catch-all and is rejected outright. It
       // also lets the places/{placeId} rating-update rule above key off
-      // this exact id via exists()/get() to require a real review backing
-      // any rating-aggregate bump.
+      // this exact id via exists()/existsAfter()/getAfter() to require the
+      // caller's review to be created in the same commit as the bump.
       //
       // reviewId must match the authenticated user's uid + the place being
       // reviewed — the same way forum_follows's create rule pins followId
@@ -808,7 +1358,7 @@ service cloud.firestore {
     // someone else's handle.
     //
     // `get`, deliberately NOT `read` — same reasoning as `liveSessions`
-    // below (docs/Issues.md §3): `read` = `get` + `list`, and a `list` grant
+    // below (issues §3): `read` = `get` + `list`, and a `list` grant
     // here would let anyone enumerate every handle→uid pair. `allow get: if
     // true` (no auth required) rather than gating on `request.auth != null`
     // because the permanent share link (`/r/{username}`) is resolved by
@@ -816,11 +1366,23 @@ service cloud.firestore {
     // shareable link is that the person opening it doesn't need the app.
     // Every real caller does a keyed `.doc(handle)` lookup (ProfileRepository,
     // live-viewer.html), so nothing legitimately lists this collection.
+    //
+    // issues §101.S3: the handle itself must match the format
+    // ProfileRepository.setUsername enforces (`^[a-z0-9_]{3,20}$`, already
+    // lowercased), and the doc must be exactly its `{uid}` — otherwise a
+    // client could reserve uppercase/emoji/overlong ids that the app can
+    // never resolve, or hang arbitrary data off a world-readable doc.
+    // Admin scripts (create_review_account.js, seed_qa_test_riders.js) use
+    // the Admin SDK and are unaffected.
     match /usernames/{handle} {
       allow get: if true;
       allow create: if request.auth != null &&
+        handle.matches('^[a-z0-9_]{3,20}$') &&
+        request.resource.data.keys().hasOnly(['uid']) &&
         request.resource.data.uid == request.auth.uid;
       allow update: if request.auth != null &&
+        handle.matches('^[a-z0-9_]{3,20}$') &&
+        request.resource.data.keys().hasOnly(['uid']) &&
         resource.data.uid == request.auth.uid &&
         request.resource.data.uid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
@@ -857,7 +1419,12 @@ service cloud.firestore {
       allow create: if request.auth != null &&
         request.resource.data.followerUid == request.auth.uid &&
         edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid);
-      allow delete: if request.auth != null && resource.data.followerUid == request.auth.uid;
+      // The follower may unfollow; the FOLLOWEE may also remove an edge
+      // pointing at them (§90.D8/§90.A11) — blocking someone drops their
+      // follow, so they stop qualifying for followers/mutual posts.
+      allow delete: if request.auth != null &&
+        (resource.data.followerUid == request.auth.uid ||
+         resource.data.followeeUid == request.auth.uid);
     }
 
     // ------------------------------------------------------------------
@@ -879,24 +1446,36 @@ service cloud.firestore {
       }
 
       // Also readable by `get` (never `list`, so nobody can enumerate rides)
-      // to any signed-in rider once the ride is active — the same
-      // unguessable-token trust model as the /live/{token} and /r/{username}
-      // live-share links elsewhere in this file: the only way to learn a
-      // specific groupRideId without already being on the ride is resolving
-      // a shared join code through groupRideJoinCodes below, and that code is
-      // exactly as hard to guess as those tokens. This is what lets the
-      // "confirm join" screen preview a ride (name, creator, headcount)
-      // before the rider commits.
+      // to any signed-in rider once the ride is active — a bearer-token
+      // model like the /live/{token} link: the only way to learn a specific
+      // groupRideId without already being on the ride is resolving a shared
+      // join code through groupRideJoinCodes below. That code is NOT as
+      // strong as a live token (§90.D4): 6 characters from a 31-symbol
+      // alphabet is ~2^30, against ~2^190 for a 32-character live token, and
+      // codes don't expire. What makes that acceptable is that a code only
+      // works while the ride is `active` (clause 4 below), lookups are
+      // one-at-a-time `get`s, and a kicked rider is in `bannedIds` and can't
+      // come back through it. This is what lets the "confirm join" screen
+      // preview a ride (name, creator, headcount) before the rider commits.
       allow get: if inGroupRide() ||
         (request.auth != null && resource.data.status == 'active');
 
-      // `list` is granted ONLY in the shape getUserGroupRides queries — a
-      // list rule must be provable from the query's own filters.
-      // getUpcomingGroupRides (status + startTime) is deliberately NOT
-      // satisfiable: no screen calls it, and opening it would expose every
-      // rider's group rides.
+      // `list` is granted ONLY in the shapes getUserGroupRides and
+      // watchActiveGroupRidesForUser query — a list rule must be provable
+      // from the query's own filters. getUpcomingGroupRides (status +
+      // startTime) is deliberately NOT satisfiable: no screen calls it, and
+      // opening it would expose every rider's group rides.
+      //
+      // The second disjunct is the Social feed's "Riding Now" strip: it
+      // queries `memberIds array-contains request.auth.uid` (never an
+      // unfiltered scan), so this is provable the same way the creatorId
+      // clause already was, and reveals nothing beyond "rides I'm already a
+      // member of" — no new exposure versus the per-document `get` rule
+      // above, which already lets any member read their own rides one at a
+      // time.
       allow list: if request.auth != null &&
-        resource.data.creatorId == request.auth.uid;
+        (resource.data.creatorId == request.auth.uid ||
+         request.auth.uid in resource.data.get('memberIds', []));
 
       // A ride is always created by its creator with themselves as the only
       // joined member — nobody conjures a ride they aren't on, or seeds one
@@ -912,9 +1491,29 @@ service cloud.firestore {
 
       allow update: if request.auth != null && (
         // 1. The creator: status changes, removing a member, ending the ride.
-        //    May never reassign authorship.
+        //    May never reassign authorship. issues §62 (architecture
+        //    notes): this clause is the same "unbounded owner branch"
+        //    pattern as the shared-ride one fixed in §62.1, but group-ride
+        //    fields aren't part of any public leaderboard, and memberIds/
+        //    invitedIds are legitimately written from here too (kicking a
+        //    member, inviteUsers' arrayUnion) in ways a field-level lock
+        //    would need care not to break without a live device to verify
+        //    against — so only `status` is bounded here for now; the
+        //    broader lockdown is deferred, tracked in issues §62.
+        //
+        //    §90.D3: memberIds may only SHRINK here (kicking). Adding a uid
+        //    used to be allowed too, which let a creator put any rider "on"
+        //    a live group ride; their app then showed it as their ride and
+        //    opening the map started broadcasting their location with no
+        //    consent step. Additions now only happen through the invite-
+        //    accept (2) and join-by-code (4) clauses, where the rider adds
+        //    themselves. Inviting (invitedIds) stays with the creator.
+        //    `bannedIds` (kick list, §90.D4) is creator-written here.
         (resource.data.creatorId == request.auth.uid &&
-         request.resource.data.creatorId == resource.data.creatorId) ||
+         request.resource.data.creatorId == resource.data.creatorId &&
+         request.resource.data.get('status', 'planned') in ['planned', 'active', 'completed'] &&
+         request.resource.data.get('memberIds', [])
+           .hasOnly(resource.data.get('memberIds', []))) ||
 
         // 2. An invited rider accepting or declining. The roster is no longer
         //    here — it lives in the members subcollection below, where a
@@ -923,7 +1522,7 @@ service cloud.firestore {
         //    themselves to memberIds, remove exactly themselves from
         //    invitedIds.
         //
-        //    docs/Issues.md §24.6: invitedIds' new value must be EXACTLY the
+        //    issues §24.6: invitedIds' new value must be EXACTLY the
         //    old list with the caller removed — not just "caller isn't in
         //    it anymore". The previous `!(auth.uid in new invitedIds)` check
         //    bounded only whether the caller stayed out, not what else
@@ -973,8 +1572,12 @@ service cloud.firestore {
         //    "nearby" is a client-side courtesy prompt only — the actual
         //    security boundary is the same unguessable-code model as the
         //    `allow get` carve-out above, not a location check.
+        //    §90.D4: not if the creator kicked them (removeMember writes
+        //    their uid to `bannedIds`) — a kick used to last only until the
+        //    kicked rider re-entered the code.
         (resource.data.status == 'active' &&
          !(request.auth.uid in resource.data.get('memberIds', [])) &&
+         !(request.auth.uid in resource.data.get('bannedIds', [])) &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['memberIds']) &&
          request.auth.uid in request.resource.data.get('memberIds', []) &&
@@ -1006,19 +1609,23 @@ service cloud.firestore {
         function ride() {
           return get(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
         }
+        function writeRide() {
+          let doc = get(/databases/$(database)/documents/groupRides/$(groupRideId));
+          return doc != null ? doc.data : getAfter(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
+        }
         allow read: if request.auth != null && (
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
           request.auth.uid in ride().get('invitedIds', []));
         allow write: if request.auth != null && (
-          request.auth.uid == ride().creatorId ||
+          request.auth.uid == writeRide().creatorId ||
           // Anyone else writes ONLY their own entry, and only while on the
           // ride or holding an open invitation. An accepting invitee is still
           // in invitedIds at the instant they write: rules evaluate against
           // the committed document, not the pending transaction.
           (request.auth.uid == memberUid && (
-            request.auth.uid in ride().get('memberIds', []) ||
-            request.auth.uid in ride().get('invitedIds', []) ||
+            request.auth.uid in writeRide().get('memberIds', []) ||
+            request.auth.uid in writeRide().get('invitedIds', []) ||
             // Joining via code (joinByCode): the sibling write to memberIds
             // on the parent (clause 4 above) is validated independently and
             // hasn't committed yet when this rule evaluates `ride()`, so it
@@ -1029,7 +1636,8 @@ service cloud.firestore {
             // memberIds — cosmetic only, since every real privilege
             // (locations, voice notes) is gated on memberIds/invitedIds on
             // the parent, never on this subcollection's mere existence.
-            ride().status == 'active')));
+            (writeRide().status == 'active' &&
+             !(request.auth.uid in writeRide().get('bannedIds', []))))));
       }
 
       // Invitation markers, one per invited rider at `invitations/{uid}`.
@@ -1079,15 +1687,24 @@ service cloud.firestore {
             'durationMs', 'createdAt'
           ]) &&
           request.resource.data.senderId is string &&
-          request.resource.data.senderName is string &&
+          nameValid(request.resource.data.senderName) &&
+          photoUrlAllowed(request.resource.data.get('senderPhotoUrl', null)) &&
           request.resource.data.audioUrl is string &&
-          request.resource.data.audioUrl.matches('https://res[.]cloudinary[.]com/.*') &&
+          request.resource.data.audioUrl.matches('https://res[.]cloudinary[.]com/vjvcigkt/.*') &&
           request.resource.data.durationMs is int &&
           request.resource.data.durationMs >= 800 &&
           request.resource.data.durationMs <= 60000 &&
           request.resource.data.createdAt == request.time;
 
-        allow update, delete: if false;
+        // Clips are immutable, but the ride's creator must be able to delete
+        // them: GroupRideRepository.deleteGroupRide() deletes every
+        // subcollection doc before the ride itself. With delete pinned to
+        // `false`, deleting any ride that had even one voice note failed with
+        // permission-denied AFTER members/invitations were already gone,
+        // leaving a half-deleted ride behind.
+        allow update: if false;
+        allow delete: if request.auth != null &&
+          request.auth.uid == ride().creatorId;
       }
 
       // Live positions, one document per rider at `memberLocations/{uid}`.
@@ -1124,17 +1741,21 @@ service cloud.firestore {
       allow get: if request.auth != null;
       allow list: if false;
       // Written once, by createGroupRide, in the same batch as the ride
-      // itself; never changes afterward. Not tied to the ride's creatorId
-      // here — the ride document doesn't exist yet elsewhere in the same
-      // batch for a rule's `get()` to check against — so this only pins the
-      // shape, not the linkage. Low-severity accepted gap: a signed-in rider
-      // could squat an unused code with a bogus groupRideId, which at worst
-      // makes joinByCode resolve to "no such ride" for whoever tries that
-      // exact code next — it grants no read/write access to anything real.
+      // itself; never changes afterward.
+      //
+      // issues §101.S3: the mapping is tied to that ride with getAfter(),
+      // which sees the sibling groupRides/{id} write in the same batch: the
+      // ride must exist once the batch lands, be created by the caller, and
+      // carry this exact `joinCode` (GroupRideModel.toFirestore writes it).
+      // A standalone code doc pointing at a missing ride or someone else's
+      // ride — the old "squat a code" gap — is denied.
       allow create: if request.auth != null &&
         request.resource.data.keys().hasOnly(['groupRideId', 'createdAt']) &&
         request.resource.data.groupRideId is string &&
-        request.resource.data.createdAt == request.time;
+        request.resource.data.createdAt == request.time &&
+        existsAfter(/databases/$(database)/documents/groupRides/$(request.resource.data.groupRideId)) &&
+        getAfter(/databases/$(database)/documents/groupRides/$(request.resource.data.groupRideId)).data.get('creatorId', '') == request.auth.uid &&
+        getAfter(/databases/$(database)/documents/groupRides/$(request.resource.data.groupRideId)).data.get('joinCode', '') == code;
       allow update, delete: if false;
     }
 
@@ -1176,26 +1797,117 @@ service cloud.firestore {
     match /reports/{reportId} {
       // Admins can read/update/delete (update for status changes)
       allow read, update, delete: if isAdmin();
-      // Any authenticated user can create a report, but only if they correctly stamp themselves as the reporter
-      allow create: if request.auth != null && request.resource.data.reporterId == request.auth.uid;
+      // Any authenticated user can create a report, but only if they correctly
+      // stamp themselves as the reporter, target a real (non-empty) id, and
+      // leave it in the 'pending' state a real report always starts in —
+      // issues §62.5: this used to validate only reporterId, so a
+      // client could create a report already stamped 'actioned' (skipping
+      // review entirely) against an arbitrary reportedId. The automated
+      // moderation function (chat-moderation.ts) writes via the Admin SDK,
+      // which bypasses rules entirely, so it's unaffected by this.
+      //
+      // issues §101.S3: also pinned to ReportModel.toFirestore's exact keys,
+      // the four contentType values the app's report entry points use, size
+      // caps on every free-text field, and a server timestamp. No dedupe —
+      // that would need a deterministic report id (a client change).
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasOnly([
+          'reporterId', 'reportedId', 'contentType', 'contentId', 'reason',
+          'additionalDetails', 'createdAt', 'status'
+        ]) &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.reportedId is string &&
+        request.resource.data.reportedId.size() > 0 &&
+        request.resource.data.reportedId.size() <= 128 &&
+        request.resource.data.contentType in ['post', 'chat', 'ride', 'user'] &&
+        request.resource.data.contentId is string &&
+        request.resource.data.contentId.size() <= 200 &&
+        request.resource.data.reason is string &&
+        request.resource.data.reason.size() <= 100 &&
+        (!('additionalDetails' in request.resource.data) ||
+         (request.resource.data.additionalDetails is string &&
+          request.resource.data.additionalDetails.size() <= 2000)) &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.get('status', 'pending') == 'pending';
     }
 
     // Direct Messaging (Chats)
     match /chats/{chatId} {
-      // User can read/write a chat if they are a participant.
-      // We check if their UID is in the participants array.
-      allow read, update: if request.auth != null && request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.participants &&
-        request.resource.data.participants.size() == 2;
-      
+      // User can read a chat if they are a participant.
+      // §78.14: ChatRepository.getOrCreateChat reads the deterministic DM id
+      // (`<uidA>_<uidB>`, sorted) before and inside the create transaction,
+      // i.e. while it may not exist yet. A missing doc has no `resource`, so
+      // that read is allowed only when the caller's own uid is one of the
+      // two id halves: you can probe whether YOUR chat with someone exists,
+      // never whether two other riders have one.
+      allow read: if request.auth != null && (
+        (resource == null && request.auth.uid in chatId.split('_')) ||
+        (resource != null && request.auth.uid in resource.data.participants));
+      // issues §62.4: update used to allow a participant to rewrite
+      // ANY field, including `participants` itself — silently adding a third
+      // uid to a 1:1 DM and handing them the whole conversation without the
+      // other party's consent. The only real update
+      // (ChatRepository.sendMessage's batch) only ever touches
+      // `lastMessage`/`updatedAt`, so restricting to exactly those two keeps
+      // `participants` immutable as a side effect of the allow-list, not a
+      // separate check that could itself be gamed.
+      //
+      // issues §101.S3: the VALUES are pinned too, to exactly what that
+      // batch writes — lastMessage is {senderId, text, createdAt} with the
+      // caller as sender (no spoofing the other rider as the author of the
+      // inbox preview), text capped like a message, and both timestamps
+      // server-stamped.
+      allow update: if request.auth != null && request.auth.uid in resource.data.participants &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'updatedAt']) &&
+        request.resource.data.lastMessage is map &&
+        request.resource.data.lastMessage.keys().hasOnly(['senderId', 'text', 'createdAt']) &&
+        request.resource.data.lastMessage.get('senderId', '') == request.auth.uid &&
+        request.resource.data.lastMessage.get('text', null) is string &&
+        request.resource.data.lastMessage.text.size() <= 5000 &&
+        request.resource.data.lastMessage.get('createdAt', null) == request.time &&
+        request.resource.data.updatedAt == request.time;
+      // §78.14: new chats must live at the deterministic DM id with
+      // `participants` stored sorted, so the doc id alone names the pair and
+      // two concurrent "Message" taps can't create two rooms. Only
+      // `participants`/`updatedAt` may be set at create (lastMessage arrives
+      // via the update path above). Legacy random-id chats already exist and
+      // keep working through read/update; only creating new ones that way is
+      // closed. Messages' block check below indexes participants[0]/[1]
+      // directly, which is fine because every chat is a 2-person DM.
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasOnly(['participants', 'updatedAt']) &&
+        request.resource.data.participants is list &&
+        request.resource.data.participants.size() == 2 &&
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants[0] < request.resource.data.participants[1] &&
+        chatId == request.resource.data.participants[0] + '_' + request.resource.data.participants[1];
+
       match /messages/{messageId} {
-        // Can read/update (e.g. for read receipts/hiding) if they are a participant of the parent chat
-        allow read, update: if request.auth != null && 
+        // Can read if a participant of the parent chat.
+        allow read: if request.auth != null &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        
+
+        // No client update at all: the only one (markMessagesAsRead's
+        // `isRead` flip) was removed (§90.A12), so messages are immutable to
+        // clients. Nobody can rewrite another rider's text or flip a
+        // moderation-hidden `isToxic` back (issues §62.4); chat-moderation.ts
+        // writes via the Admin SDK and is unaffected.
+
         // Can create if they are a participant of the parent chat AND the sender is correctly attributed.
         // We also check that the sender is not in the recipient's blocks subcollection.
-        allow create: if request.auth != null && 
+        //
+        // issues §101.S3: exactly ChatRepository.sendMessage's shape —
+        // {senderId, text, createdAt, isRead:false} — so a sender can't
+        // preset `isToxic` or any other moderation field; non-empty text
+        // capped at 5000 characters (the room trims and refuses empty
+        // sends); a server timestamp.
+        allow create: if request.auth != null &&
+          request.resource.data.keys().hasOnly(['senderId', 'text', 'createdAt', 'isRead']) &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() > 0 &&
+          request.resource.data.text.size() <= 5000 &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.get('isRead', false) == false &&
           request.resource.data.senderId == request.auth.uid &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
           // Determine the recipient ID (the other participant)
@@ -1205,6 +1917,129 @@ service cloud.firestore {
           !(exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/chats/$(chatId)).data.participants[0])/blocks/$(request.auth.uid))) &&
           !(exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/chats/$(chatId)).data.participants[1])/blocks/$(request.auth.uid)));
       }
+    }
+
+    // ---- Badge ownership counters (`stats/badges`) -------------------------
+    //
+    // The project is on the Spark plan, so no Cloud Function keeps this
+    // aggregate. Clients bump it themselves (BadgeStatsCounter,
+    // app/lib/features/stats/data/badge_stats_counter.dart), and every bump
+    // must pay for itself with a one-way marker written in the SAME batch:
+    //
+    //   totalRiders +1  <=> users/{me}.badgeStatsCountedAt: absent -> set
+    //   owners.<id> +1  <=> users/{me}/earnedBadges/<id>.countedAt:
+    //                       absent -> set (a new doc, or an older doc
+    //                       that was never counted)
+    //
+    // Both markers must equal request.time and can't change or be removed
+    // afterwards, and the owner can't delete a marked doc, so each rider
+    // counts once and each (rider, badge) pair counts once. Sign-up, a fresh
+    // award and the one-time backfill of older riders and badges all go
+    // through these two transitions.
+    //
+    // A badge bump names its badge in `lastCountedBadge`. Rules can't pull
+    // the one changed key out of a map diff, so the write carries the id
+    // (same pattern as `lastCommentId` above) and the rule checks it is the
+    // only owners key that moved.
+
+    // The milestone catalog: `badgeDefs` in app/lib/core/utils/badges.dart.
+    // app/test/features/stats/badge_catalog_parity_test.dart keeps them in
+    // lockstep.
+    function milestoneBadgeIds() {
+      return [
+        'first_ride', 'rides_10', 'rides_25', 'rides_50', 'rides_100', 'rides_250',
+        'km_100', 'km_500', 'km_1000', 'km_2500', 'km_5000',
+        'long_ride_50', 'long_ride_100', 'long_ride_200', 'long_ride_400', 'long_ride_800',
+        'saddle_1h', 'saddle_2h', 'saddle_4h', 'saddle_8h',
+        'ton_up', 'speed_140', 'speed_demon',
+        'night_1', 'night_5', 'night_25', 'night_50',
+        'early_1', 'early_5', 'early_25',
+        'streak_3', 'streak_7', 'streak_14', 'streak_30',
+        'smooth_80', 'smooth_operator', 'smooth_95', 'smooth_98'
+      ];
+    }
+
+    function badgeStatsPath() {
+      return /databases/$(database)/documents/stats/badges;
+    }
+
+    // A numeric field of stats/badges as of the start of this commit (0 when
+    // the doc or field doesn't exist yet). [key] may be a path list.
+    function badgeStatsBefore(key) {
+      return exists(badgeStatsPath()) ? get(badgeStatsPath()).data.get(key, 0) : 0;
+    }
+
+    // users/{uid}.badgeStatsCountedAt: unchanged, or set now (from absent)
+    // together with totalRiders +1.
+    function badgeStatsFlagValid(before, after) {
+      return keeps(before, after, 'badgeStatsCountedAt') ||
+        (before.get('badgeStatsCountedAt', null) == null &&
+         after.get('badgeStatsCountedAt', null) == request.time &&
+         existsAfter(badgeStatsPath()) &&
+         getAfter(badgeStatsPath()).data.get('totalRiders', 0) ==
+           badgeStatsBefore('totalRiders') + 1);
+    }
+
+    // earnedBadges/{badgeId}.countedAt: unchanged, or set now (from absent)
+    // together with owners.<badgeId> +1.
+    function earnedBadgeCountValid(badgeId, before, after) {
+      return keeps(before, after, 'countedAt') ||
+        (before.get('countedAt', null) == null &&
+         after.get('countedAt', null) == request.time &&
+         existsAfter(badgeStatsPath()) &&
+         getAfter(badgeStatsPath()).data.get(['owners', badgeId], 0) ==
+           badgeStatsBefore(['owners', badgeId]) + 1);
+    }
+
+    // Whether the marker field on [docPath] goes absent -> request.time in
+    // this commit. exists()/get() see the state at the START of the commit,
+    // existsAfter()/getAfter() the state once the whole batch lands.
+    function markedNow(docPath, field) {
+      return (!exists(docPath) || get(docPath).data.get(field, null) == null) &&
+        existsAfter(docPath) &&
+        getAfter(docPath).data.get(field, null) == request.time;
+    }
+
+    // totalRiders +1, paid for by this rider's flag going absent -> set.
+    function riderCountedNow(before, after, changed) {
+      return changed.hasOnly(['totalRiders', 'updatedAt']) &&
+        after.totalRiders == before.get('totalRiders', 0) + 1 &&
+        markedNow(/databases/$(database)/documents/users/$(request.auth.uid),
+                  'badgeStatsCountedAt');
+    }
+
+    // owners.<id> +1 for one catalog id, paid for by this rider's
+    // earnedBadges/<id> going uncounted -> counted.
+    function badgeCountedNow(before, after, changed) {
+      let id = after.get('lastCountedBadge', '');
+      let beforeOwners = before.get('owners', {});
+      return changed.hasOnly(['owners', 'lastCountedBadge', 'updatedAt']) &&
+        id in milestoneBadgeIds() &&
+        after.owners.diff(beforeOwners).affectedKeys().hasOnly([id]) &&
+        after.owners[id] == beforeOwners.get(id, 0) + 1 &&
+        markedNow(
+          /databases/$(database)/documents/users/$(request.auth.uid)/earnedBadges/$(id),
+          'countedAt');
+    }
+
+    function badgeStatsWriteValid(before, after) {
+      let changed = after.diff(before).affectedKeys();
+      return after.keys().hasOnly(
+          ['totalRiders', 'owners', 'lastCountedBadge', 'updatedAt', 'recomputedAt']) &&
+        after.updatedAt == request.time &&
+        (riderCountedNow(before, after, changed) ||
+         badgeCountedNow(before, after, changed));
+    }
+
+    // Any signed-in rider may read it for the "X% of riders own this badge"
+    // figure; it holds counts only, no per-rider data. A write is exactly one
+    // of the two +1 transitions above. Never deleted by a client.
+    match /stats/{docId} {
+      allow read: if request.auth != null && docId == 'badges';
+      allow create, update: if request.auth != null && docId == 'badges' &&
+        badgeStatsWriteValid(resource == null ? {} : resource.data,
+                             request.resource.data);
+      allow delete: if false;
     }
 
     // Deny all other access

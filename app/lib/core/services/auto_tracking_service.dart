@@ -10,6 +10,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../features/ride/data/repositories/daily_ride_summary_repository.dart';
+import '../constants/ride_prefs_keys.dart';
 import '../database/daos/auto_detection_dao.dart';
 
 const _serviceId = 1000;
@@ -42,6 +44,12 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   Timer? _stillnessTimer;
   var _moving = false;
 
+  /// When the manual-recording marker was last checked from the fix path.
+  /// Throttled: fixes arrive every couple of seconds at speed, and a prefs
+  /// `reload()` per fix is wasted work for a rule that tolerates seconds.
+  DateTime? _lastManualCheck;
+  static const _manualCheckInterval = Duration(seconds: 15);
+
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     // Plugins are not registered automatically in every background-isolate
@@ -51,8 +59,8 @@ class _AutoTrackingTaskHandler extends TaskHandler {
     // preserved here out of caution even though flutter_foreground_task's own
     // FlutterEngine is expected to register plugins itself.
     DartPluginRegistrant.ensureInitialized();
-    _activitySub =
-        ar.FlutterActivityRecognition.instance.activityStream.listen(_onActivity);
+    _activitySub = ar.FlutterActivityRecognition.instance.activityStream
+        .listen(_onActivity);
   }
 
   /// A ride-shaped activity report from the platform classifier.
@@ -83,7 +91,7 @@ class _AutoTrackingTaskHandler extends TaskHandler {
       // traffic specifically: a long signal or a level crossing routinely
       // exceeds two minutes, and splitting one commute into three "rides" is
       // worse than a slightly late stop.
-      _stillnessTimer = Timer(const Duration(minutes: 5), () {
+      _stillnessTimer = Timer(AutoTrackingService.stillnessTimeout, () {
         _stillnessTimer = null;
         _moving = false;
         unawaited(_positionSub?.cancel());
@@ -108,15 +116,32 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   /// behaviour, but it does mean a rider who starts riding one minute before
   /// their window closes keeps getting tracked past it.
   Future<void> _maybeBegin() async {
-    if (!await _withinScheduleWindow()) {
+    // Guarded (issues §101.C7): `_moving` is already true when this runs, so
+    // an unhandled throw (prefs reload, SQLite in beginDetection) left it
+    // stuck and every later vehicle report was ignored — the whole trip
+    // lost. Clearing it lets the next IN_VEHICLE report retry.
+    try {
+      if (!await _withinScheduleWindow()) {
+        _moving = false;
+        return;
+      }
+      final opened = await AutoTrackingService.beginDetection(
+        _dao,
+        AutoTriggerSource.activityRecognition,
+        userId: await AutoTrackingService.readOwner(),
+      );
+      if (!opened) {
+        // A manual ride is being recorded (§90.C3). Not moving as far as
+        // this handler is concerned, so the next vehicle report after that
+        // ride ends gets a fresh chance to open a detection.
+        _moving = false;
+        return;
+      }
+      _startPositionStream();
+    } catch (e) {
       _moving = false;
-      return;
+      debugPrint('[auto-tracking] begin detection failed: $e');
     }
-    await AutoTrackingService.beginDetection(
-      _dao,
-      AutoTriggerSource.activityRecognition,
-    );
-    _startPositionStream();
   }
 
   Future<bool> _withinScheduleWindow() async {
@@ -144,24 +169,89 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   /// foreground-service request from geolocator would be redundant at best
   /// and a duplicate notification at worst.
   void _startPositionStream() {
-    const settings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 20,
-    );
+    final settings = Platform.isIOS
+        ? AppleSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 20,
+            activityType: ActivityType.automotiveNavigation,
+            pauseLocationUpdatesAutomatically: false,
+            showBackgroundLocationIndicator: true,
+            allowBackgroundLocationUpdates: true,
+          )
+        : const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 20,
+          );
     _positionSub =
         Geolocator.getPositionStream(locationSettings: settings).listen(
-      (position) => unawaited(AutoTrackingService.recordFix(_dao, position)),
-      onError: (Object error) => debugPrint('[auto-tracking] position error $error'),
+      (position) =>
+          unawaited(AutoTrackingService.guardedFix(() => _onFix(position))),
+      onError: (Object error) =>
+          debugPrint('[auto-tracking] position error $error'),
     );
+  }
+
+  Future<void> _onFix(Position position) async {
+    final now = DateTime.now();
+    if (_lastManualCheck == null ||
+        now.difference(_lastManualCheck!) >= _manualCheckInterval) {
+      _lastManualCheck = now;
+      if (await AutoTrackingService.isManualRecordingActive()) {
+        await _suspendForManualRide();
+        return;
+      }
+    }
+    await AutoTrackingService.recordFix(_dao, position);
+  }
+
+  /// The rider started recording by hand while a detection was open (the
+  /// common shape: auto-tracking notices the bike moving, then the rider
+  /// opens the app and taps Start). Before this, `beginDetection` only gated
+  /// *opening* a detection, so an already-open one kept collecting fixes for
+  /// the whole manual ride — a duplicate journey in the background.
+  ///
+  /// Closes the detection where it is (the stretch before Start is real,
+  /// unrecorded riding; the daily summary folds it into the manual ride it
+  /// touches) and turns GPS off. The next vehicle report after the manual
+  /// ride ends opens a fresh detection.
+  Future<void> _suspendForManualRide() async {
+    _stillnessTimer?.cancel();
+    _stillnessTimer = null;
+    _moving = false;
+    final sub = _positionSub;
+    _positionSub = null;
+    await sub?.cancel();
+    await AutoTrackingService.endDetection(_dao);
   }
 
   @override
   void onRepeatEvent(DateTime timestamp) {
-    // Nothing to poll: activity and location both arrive as pushed stream
-    // events, not on a timer. The repeat event exists only because
-    // ForegroundTaskOptions.eventAction requires *some* action; kept as a
-    // no-op rather than removed so the intent (this is a deliberate choice,
-    // not an oversight) is visible to the next person reading this file.
+    // Activity and location both arrive as pushed stream events; nothing here
+    // polls a sensor. The once-a-minute tick (which
+    // ForegroundTaskOptions.eventAction requires anyway) is used only for
+    // two cheap checks.
+    unawaited(_onTick());
+  }
+
+  Future<void> _onTick() async {
+    try {
+      // Backstop for the throttled check in [_onFix]: a manual ride that
+      // started while the bike sits still produces no fixes to check on.
+      if (_positionSub != null &&
+          await AutoTrackingService.isManualRecordingActive()) {
+        await _suspendForManualRide();
+      }
+      // End-of-day summary notification, once per day after 9pm. Silent on
+      // a day with no rides; see DailyRideSummaryRepository.
+      final uid = await AutoTrackingService.readOwner();
+      if (uid != null) {
+        await DailyRideSummaryRepository().showEndOfDayIfDue(uid);
+        // Retention (issues §93.2): once a day, drop old summarized fixes.
+        await DailyRideSummaryRepository().purgeOldFixesIfDue();
+      }
+    } catch (e) {
+      debugPrint('[auto-tracking] tick failed: $e');
+    }
   }
 
   @override
@@ -185,9 +275,9 @@ class _AutoTrackingTaskHandler extends TaskHandler {
 ///
 /// This is the free-tier stand-in for `flutter_background_geolocation`,
 /// adopted 2026-08-28 to avoid the licence purchase while the product is
-/// pre-revenue (see `docs/HANDOFF_Document.md`'s backlog for the paid
+/// pre-revenue (see `HANDOFF_Document.md`'s backlog for the paid
 /// plugin's pros/cons, and
-/// `docs/archives/flutter_background_geolocation-2026-08-28/` for its old
+/// `DOCS/old/archives/flutter_background_geolocation-2026-08-28/` for its old
 /// implementation, kept in case the paid plugin is worth revisiting later).
 /// It combines three free (MIT) pieces instead of one paid one:
 ///
@@ -223,6 +313,22 @@ class AutoTrackingService {
   static const _uuid = Uuid();
   static const _prefsEnabled = 'auto_tracking_enabled';
   static const _prefsCurrentDetection = 'auto_tracking_current_detection';
+
+  /// Non-vehicle activity this long ends a detection. See
+  /// `_AutoTrackingTaskHandler._onActivity` for why five minutes.
+  static const stillnessTimeout = Duration(minutes: 5);
+
+  /// Whether the auto-tracking foreground service is running, i.e. whether
+  /// anything can still be appending to a `recording` detection (§90.C2).
+  /// Errs on "running" when the platform can't say: the caller then falls
+  /// back to the staleness rule rather than closing a possibly-live ride.
+  static Future<bool> isServiceRunning() async {
+    try {
+      return await FlutterForegroundTask.isRunningService;
+    } catch (_) {
+      return true;
+    }
+  }
 
   // Package-visible (not private) so the task-handler isolate above can read
   // the same keys without a second copy of the string literals drifting out
@@ -371,6 +477,37 @@ class AutoTrackingService {
     }
   }
 
+  /// Key under which the signed-in rider's uid is handed to the task-handler
+  /// isolate, which has no FirebaseAuth of its own.
+  static const ownerKey = 'uid';
+
+  /// Records which rider new detections belong to (grill §1.4.2), or
+  /// clears it on sign-out ([uid] null). Called from `app.dart`'s auth
+  /// listener, so it's current before [start] runs and gone once the rider
+  /// signs out — a detection opened with no owner is never attributed to
+  /// whoever signs in next.
+  ///
+  /// `FlutterForegroundTask.saveData` rather than SharedPreferences: it is
+  /// the plugin's own channel for exactly this, readable from the handler.
+  static Future<void> setOwner(String? uid) async {
+    if (uid == null) {
+      await FlutterForegroundTask.removeData(key: ownerKey);
+    } else {
+      await FlutterForegroundTask.saveData(key: ownerKey, value: uid);
+    }
+  }
+
+  static Future<String?> readOwner() async {
+    try {
+      return await FlutterForegroundTask.getData<String>(key: ownerKey);
+    } catch (e) {
+      // An unreadable owner must not cost the rider the detection; it's
+      // recorded unowned and handled by AutoDetectionDao.claimUnowned.
+      debugPrint('[auto-tracking] owner read failed: $e');
+      return null;
+    }
+  }
+
   /// No-op: unlike the paid plugin's native OS scheduler, this
   /// implementation reads the active-hours window fresh out of
   /// `SharedPreferences` at the moment each candidate trip starts (see
@@ -383,25 +520,50 @@ class AutoTrackingService {
 
   // ── Shared work, callable from the task-handler isolate or this one ────
 
-  /// Opens a detection, unless one is already open.
+  /// Opens a detection, unless one is already open — or a manual ride is
+  /// being recorded, in which case nothing is opened and this returns false.
   ///
   /// The id is held in `SharedPreferences` rather than in a field because the
   /// task-handler isolate and this one cannot see each other's memory.
-  static Future<void> beginDetection(
+  ///
+  /// §90.C3: the manual recorder's recovery marker (`active_ride_id`) is set
+  /// for exactly as long as a ride is being recorded (or sits paused,
+  /// restored after a kill). Detecting the same journey in the background
+  /// produced a second, `is_auto` copy of it with the distance counted twice.
+  /// The reconciler also rejects overlap; this just avoids collecting the
+  /// fixes in the first place.
+  static Future<bool> beginDetection(
     AutoDetectionDao dao,
-    String triggerSource,
-  ) async {
+    String triggerSource, {
+    String? userId,
+  }) async {
+    if (await isManualRecordingActive()) return false;
+    final prefs = await SharedPreferences.getInstance();
+
     final existing = await dao.currentRecording();
-    if (existing != null) return;
+    if (existing != null) return true;
 
     final id = _uuid.v4();
     await dao.insertDetection(
       id: id,
       startedAt: DateTime.now(),
       triggerSource: triggerSource,
+      userId: userId,
     );
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsCurrentDetection, id);
+    return true;
+  }
+
+  /// Whether a manual ride is being recorded right now — active *or* paused
+  /// (including one restored paused after a kill). The source of truth is the
+  /// recorder's recovery marker (`RidePrefsKeys.activeRideId`), which
+  /// `RideRecordingNotifier.startRide` sets once the ride is live and the
+  /// stop/discard paths clear last. Readable from either isolate.
+  static Future<bool> isManualRecordingActive() async {
+    final prefs = await SharedPreferences.getInstance();
+    // This isolate's cached copy can miss the UI isolate's write.
+    await prefs.reload();
+    return prefs.getString(RidePrefsKeys.activeRideId) != null;
   }
 
   static Future<void> endDetection(AutoDetectionDao dao) async {
@@ -410,6 +572,18 @@ class AutoTrackingService {
     await dao.closeDetection(current['id'] as String, DateTime.now());
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsCurrentDetection);
+  }
+
+  /// Runs one position-fix handler, logging instead of throwing (issues
+  /// §101.C7). One bad fix (a SQLite append failing, say) used to surface
+  /// as an uncaught async error in the foreground-task isolate, untagged.
+  @visibleForTesting
+  static Future<void> guardedFix(Future<void> Function() handle) async {
+    try {
+      await handle();
+    } catch (e) {
+      debugPrint('[auto-tracking] fix failed: $e');
+    }
   }
 
   /// Appends a fix to the open detection.
@@ -427,7 +601,8 @@ class AutoTrackingService {
       timestamp: position.timestamp,
       lat: position.latitude,
       lng: position.longitude,
-      speedMs: position.speed < 0 ? 0 : position.speed,
+      speedMs:
+          (!position.speed.isFinite || position.speed < 0) ? 0 : position.speed,
       accuracyM: position.accuracy,
       altitudeM: position.altitude,
       headingDeg: position.heading < 0 ? null : position.heading,

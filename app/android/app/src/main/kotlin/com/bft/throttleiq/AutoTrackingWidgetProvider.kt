@@ -27,8 +27,11 @@ class AutoTrackingWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
+        val theme = WidgetTheme.from(context, widgetData)
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_auto_tracking).apply {
+                applyPanelTheme(theme)
+                applyCtaTheme(theme)
                 val pendingIntent = HomeWidgetLaunchIntent.getActivity(
                     context,
                     MainActivity::class.java,

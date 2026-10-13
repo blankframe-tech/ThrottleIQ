@@ -13,7 +13,7 @@ import 'package:throttleiq/l10n/app_localizations.dart';
 /// Tested on its own rather than through `RecordScreen`, which reads
 /// `FirebaseAuth.instance` in `initState` and can't be pumped without a live
 /// Firebase app — same reason the bike picker and the skin picker are their
-/// own widgets (`Issues.md` §15).
+/// own widgets (issues §15).
 RideEntity ride(DateTime startTime, {String id = 'r1'}) => RideEntity(
       id: id,
       userId: 'u1',

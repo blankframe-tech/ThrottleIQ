@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,6 +12,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../../domain/entities/forum_post_entity.dart';
+import '../../domain/forum_directory.dart';
+import '../../domain/forum_pulse.dart';
 
 final _forumRepository = ForumRepository();
 
@@ -186,24 +190,93 @@ final forumByIdProvider = FutureProvider.family<ForumEntity?, String>((ref, foru
   return _forumRepository.getForum(forumId);
 });
 
-final forumPostsProvider = FutureProvider.family<List<ForumPostEntity>, String>((ref, forumId) {
-  return _forumRepository.getPosts(forumId);
+/// The first page of a forum's posts plus the source forums behind it (the
+/// forum itself and, for a brand forum, its model forums — see
+/// [ForumRepository.postSourceForumIds]).
+class ForumPostsFirstPage {
+  const ForumPostsFirstPage({required this.sourceIds, required this.page});
+  final List<String> sourceIds;
+  final ForumPostsPage page;
+}
+
+/// autoDispose (issues §90.A8): this was a session-long cache, so a thread
+/// re-opened later showed whatever was fetched the first time. Leaving the
+/// thread now drops it; pull-to-refresh re-fetches the first page.
+final forumPostsProvider = FutureProvider.autoDispose
+    .family<ForumPostsFirstPage, String>((ref, forumId) async {
+  final sourceIds = await _forumRepository.postSourceForumIds(forumId);
+  final page = await _forumRepository.getPostsPage(sourceIds);
+  return ForumPostsFirstPage(sourceIds: sourceIds, page: page);
 });
 
 /// Holds a forum's post list locally so votes can be toggled optimistically
-/// without waiting on a Firestore round-trip. Seeded from
-/// [forumPostsProvider] once it resolves — mirrors RideFeedNotifier.
-final forumPostsNotifierProvider = StateNotifierProvider.family<ForumPostsNotifier,
-    List<ForumPostEntity>, String>((ref, forumId) {
-  final posts = ref.watch(forumPostsProvider(forumId)).valueOrNull ?? [];
-  return ForumPostsNotifier(ref, posts);
+/// without waiting on a Firestore round-trip, and appends older pages
+/// ([ForumPostsNotifier.loadMore]). Seeded from [forumPostsProvider] once it
+/// resolves — mirrors RideFeedNotifier.
+final forumPostsNotifierProvider = StateNotifierProvider.autoDispose.family<
+    ForumPostsNotifier, List<ForumPostEntity>, String>((ref, forumId) {
+  final first = ref.watch(forumPostsProvider(forumId)).valueOrNull;
+  return ForumPostsNotifier(
+    ref,
+    first?.page.posts ?? const [],
+    sourceIds: first?.sourceIds ?? const [],
+    cursor: first?.page.cursor,
+    hasMore: first?.page.hasMore ?? false,
+  );
 });
 
 class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
-  ForumPostsNotifier(this._ref, List<ForumPostEntity> initial) : super(initial);
+  ForumPostsNotifier(
+    this._ref,
+    List<ForumPostEntity> initial, {
+    List<String> sourceIds = const [],
+    DateTime? cursor,
+    bool hasMore = false,
+    this.pageSize = kForumPostsPageSize,
+  })  : _sourceIds = sourceIds,
+        _cursor = cursor,
+        _hasMore = hasMore,
+        super(initial);
 
   final Ref _ref;
-  final _repo = ForumRepository();
+  late final _repo = ForumRepository();
+
+  /// Posts read per source forum per page — a thread's 25, or Pulse's
+  /// smaller [kPulsePerSourceLimit].
+  final int pageSize;
+
+  final List<String> _sourceIds;
+  DateTime? _cursor;
+  bool _hasMore;
+  bool _loadingMore = false;
+
+  /// Whether an older page may exist (some source returned a full page).
+  bool get hasMore => _hasMore && _sourceIds.isNotEmpty;
+
+  bool get isLoadingMore => _loadingMore;
+
+  /// Appends the next older page. No-op while one is in flight or once the
+  /// sources are exhausted. Throws on failure so the UI can say so.
+  Future<void> loadMore() async {
+    if (_loadingMore || !hasMore) return;
+    _loadingMore = true;
+    state = List.of(state); // repaint the footer spinner
+    try {
+      final page =
+          await _repo.getPostsPage(_sourceIds, limit: pageSize, before: _cursor);
+      if (!mounted) return;
+      final seen = {for (final p in state) p.id};
+      _cursor = page.cursor ?? _cursor;
+      _hasMore = page.hasMore;
+      _loadingMore = false;
+      state = [...state, ...page.posts.where((p) => !seen.contains(p.id))];
+    } catch (_) {
+      if (!mounted) rethrow;
+      _loadingMore = false;
+      state = List.of(state);
+      rethrow;
+    }
+  }
 
   /// Casts/changes/clears a vote (1 upvote, -1 downvote). Tapping the same
   /// arrow again clears it, mirroring RideFeedNotifier.vote.
@@ -252,7 +325,7 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
   }
 
   /// Prepends a just-created post to the local list so the thread shows it
-  /// immediately (docs/Issues.md §54).
+  /// immediately (issues §54).
   ///
   /// Deliberately NOT a `ref.invalidate(forumPostsProvider(forumId))` +
   /// refetch: `createPost` writes `createdAt: FieldValue.serverTimestamp()`,
@@ -286,6 +359,16 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
         if (p.id != postId) p,
     ];
   }
+
+  /// Replaces a post with an updated copy (e.g. its solved state changed on
+  /// the detail screen) without a refetch. No-op if it isn't in this list.
+  void patchPost(ForumPostEntity updated) {
+    if (!state.any((p) => p.id == updated.id)) return;
+    state = [
+      for (final p in state)
+        if (p.id == updated.id) updated.copyWith(myVote: p.myVote) else p,
+    ];
+  }
 }
 
 /// Whether the current user follows the given forum. False (not an error)
@@ -294,4 +377,149 @@ final forumFollowingProvider = FutureProvider.family<bool, String>((ref, forumId
   final uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return false;
   return _forumRepository.isFollowing(forumId, uid);
+});
+
+/// Follows or unfollows [forumId] for the signed-in rider and refreshes
+/// everything that reads follow state. No-op when signed out; skips the
+/// refresh if [context] unmounted during the write (a disposed widget's
+/// ref can't be used).
+Future<void> setForumFollowing(
+  BuildContext context,
+  WidgetRef ref,
+  String forumId, {
+  required bool follow,
+}) async {
+  final uid = ref.read(currentUserProvider)?.uid;
+  if (uid == null) return;
+  if (follow) {
+    await _forumRepository.followForum(forumId, uid);
+  } else {
+    await _forumRepository.unfollowForum(forumId, uid);
+  }
+  if (!context.mounted) return;
+  ref.invalidate(forumFollowingProvider(forumId));
+  ref.invalidate(pulseSourcesProvider);
+  ref.invalidate(forumsForGarageProvider);
+}
+
+/// Keeps an autoDispose provider's value for [ttl] after its last listener
+/// goes, so flipping between tabs doesn't re-read Firestore every time —
+/// the same TTL shape as the Social search's forum index (issues §90.A7).
+void _keepFor(Ref ref, Duration ttl) {
+  final link = ref.keepAlive();
+  final timer = Timer(ttl, link.close);
+  ref.onDispose(timer.cancel);
+}
+
+/// How long Pulse's source list and directory stats are reused.
+const Duration kForumsHubTtl = Duration(minutes: 10);
+
+/// How long Pulse's first page is reused before a revisit re-reads it.
+const Duration kPulseFirstPageTtl = Duration(minutes: 2);
+
+/// The forums Pulse reads from, with display names for the origin chips.
+class PulseSources {
+  const PulseSources({
+    required this.forumIds,
+    required this.names,
+    required this.garageForumIds,
+  });
+
+  final List<String> forumIds;
+  final Map<String, String> names;
+  final Set<String> garageForumIds;
+
+  static const empty = PulseSources(forumIds: [], names: {}, garageForumIds: {});
+}
+
+/// Garage forums (from the SharedPreferences-cached
+/// [forumsForGarageProvider] — zero reads when the garage is unchanged) plus
+/// followed forums (one follow query, and one `documentId in` query for the
+/// names of those not already known), capped by [pulseSourceForumIds].
+final pulseSourcesProvider = FutureProvider.autoDispose<PulseSources>((ref) async {
+  final garage = await ref.watch(forumsForGarageProvider.future);
+  final uid = ref.watch(currentUserProvider)?.uid;
+  final followedIds =
+      uid == null ? const <String>[] : await _forumRepository.getFollowedForumIds(uid);
+  final ids = pulseSourceForumIds(
+    garageForumIds: [for (final f in garage) f.id],
+    followedForumIds: followedIds,
+  );
+  final names = {for (final f in garage) f.id: f.displayName};
+  final unknown = [for (final id in ids) if (!names.containsKey(id)) id];
+  for (final f in await _forumRepository.getForumsByIds(unknown)) {
+    names[f.id] = f.displayName;
+  }
+  _keepFor(ref, kForumsHubTtl);
+  return PulseSources(
+    forumIds: ids,
+    names: names,
+    garageForumIds: {for (final f in garage) f.id},
+  );
+});
+
+/// Pulse's first page plus the sources behind it.
+class PulseFirstPage {
+  const PulseFirstPage({required this.sources, required this.page});
+  final PulseSources sources;
+  final ForumPostsPage page;
+}
+
+/// The Pulse feed's first page: at most [kPulsePerSourceLimit] posts from
+/// each of at most [kPulseMaxSources] forums, merged hole-free by
+/// `mergeForumPostPages`. Older pages load via [pulseFeedNotifierProvider].
+final forumsPulseFeedProvider = FutureProvider.autoDispose<PulseFirstPage>((ref) async {
+  final sources = await ref.watch(pulseSourcesProvider.future);
+  if (sources.forumIds.isEmpty) {
+    return const PulseFirstPage(
+      sources: PulseSources.empty,
+      page: ForumPostsPage(posts: [], cursor: null, hasMore: false),
+    );
+  }
+  final page = await _forumRepository.getPostsPage(
+    sources.forumIds,
+    limit: kPulsePerSourceLimit,
+  );
+  _keepFor(ref, kPulseFirstPageTtl);
+  return PulseFirstPage(sources: sources, page: page);
+});
+
+/// Pulse's post list, held locally for optimistic votes and paging — the
+/// same [ForumPostsNotifier] a thread uses, at Pulse's page size.
+final pulseFeedNotifierProvider =
+    StateNotifierProvider.autoDispose<ForumPostsNotifier, List<ForumPostEntity>>((ref) {
+  final first = ref.watch(forumsPulseFeedProvider).valueOrNull;
+  return ForumPostsNotifier(
+    ref,
+    first?.page.posts ?? const [],
+    sourceIds: first?.sources.forumIds ?? const [],
+    cursor: first?.page.cursor,
+    hasMore: first?.page.hasMore ?? false,
+    pageSize: kPulsePerSourceLimit,
+  );
+});
+
+/// Stats (followers, posts) for the fixed directory forums — brand paddocks
+/// and topic boards — keyed by forum id. One bounded `documentId in` query
+/// for ~17 ids, reused for [kForumsHubTtl]. A board with no doc yet is
+/// missing from the map and shows no stats.
+final directoryForumStatsProvider =
+    FutureProvider.autoDispose<Map<String, ForumEntity>>((ref) async {
+  final forums = await _forumRepository.getForumsByIds(directoryForumIds());
+  _keepFor(ref, kForumsHubTtl);
+  return {for (final f in forums) f.id: f};
+});
+
+/// Aggregate rider/post counts for each brand paddock — the brand forum plus
+/// its model forums ([aggregateBrandPaddockStats]). One capped `brand
+/// whereIn` query, reused for [kForumsHubTtl]. A forum's `brand` is whatever
+/// its first rider typed, so the query also asks for the lower- and
+/// upper-case spellings (9 brands × 3 stays under whereIn's 30).
+final brandPaddockStatsProvider =
+    FutureProvider.autoDispose<Map<String, BrandPaddockStats>>((ref) async {
+  final forums = await _forumRepository.getForumsForBrands([
+    for (final p in kBrandPaddocks) ...[p.brand, p.brand.toLowerCase(), p.brand.toUpperCase()],
+  ]);
+  _keepFor(ref, kForumsHubTtl);
+  return aggregateBrandPaddockStats(forums);
 });

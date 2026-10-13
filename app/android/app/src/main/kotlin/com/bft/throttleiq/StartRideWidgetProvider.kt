@@ -24,8 +24,11 @@ class StartRideWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
+        val theme = WidgetTheme.from(context, widgetData)
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_start_ride).apply {
+                applyPanelTheme(theme)
+                applyCtaTheme(theme)
                 val pendingIntent = HomeWidgetLaunchIntent.getActivity(
                     context,
                     MainActivity::class.java,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
+import '../../features/auth/presentation/widgets/tour_floating_banner.dart';
 import '../../l10n/app_localizations.dart';
 
 /// The bottom-nav destinations, in display order — a location's index in this
@@ -62,11 +63,21 @@ class AppShell extends StatelessWidget {
     final idx = _currentIndex(context);
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      body: child,
+      body: Stack(
+        children: [
+          child,
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: TourFloatingBanner(),
+          ),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          color: context.palette.surface,
+          border: Border(top: BorderSide(color: context.palette.border, width: 1)),
         ),
         child: BottomNavigationBar(
           currentIndex: idx,
@@ -74,8 +85,8 @@ class AppShell extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textTertiary,
+          selectedItemColor: context.palette.primary,
+          unselectedItemColor: context.palette.textTertiary,
           selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
@@ -83,7 +94,7 @@ class AppShell extends StatelessWidget {
             BottomNavigationBarItem(icon: const Icon(Icons.place_outlined), activeIcon: const Icon(Icons.place), label: l10n.navPlacesLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
             BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: l10n.navProfileLabel),
+            BottomNavigationBarItem(icon: const Icon(Icons.two_wheeler_outlined), activeIcon: const Icon(Icons.two_wheeler), label: l10n.navGarageLabel),
           ],
         ),
       ),

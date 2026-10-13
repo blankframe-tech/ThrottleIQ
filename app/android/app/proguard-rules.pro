@@ -22,11 +22,11 @@
 -keep class ** extends ChangeNotifier { *; }
 
 # --- Added while diagnosing a release-only launch crash (2026-07-25) ---
-# Minification is currently OFF in build.gradle.kts because this crash was
-# never root-caused with an actual device stack trace. These rules are added
-# so that whoever re-enables isMinifyEnabled has a real starting point instead
-# of the previous partial ruleset (which had nothing for the plugins below,
-# several of which use reflection/native bridging and are common R8 victims).
+# Minification (isMinifyEnabled) and isShrinkResources have been ON since
+# 2026-08-28 (see the release block in build.gradle.kts). The rules below were
+# the starting point for re-enabling them: the previous partial ruleset had
+# nothing for these plugins, several of which use reflection/native bridging
+# and are common R8 victims.
 # Get a real crash log (adb logcat, search "FATAL EXCEPTION") before trusting
 # this list is complete — it's a reasonable starting point, not a guarantee.
 

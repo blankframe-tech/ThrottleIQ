@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 // Prefixed: the calculator function shares its name with the [jamSeconds]
 // getter below, which would otherwise resolve to itself recursively.
+import '../../../../core/utils/ride_speed_invariant.dart';
 import '../calculators/jam_time.dart' as jam_time;
 import 'bike_attribution.dart';
 
@@ -27,6 +28,31 @@ class RideEntity extends Equatable {
   final int hardBrakeCount;
   final int rapidAccelCount;
   final int highJerkCount;
+
+  /// Overspeed episodes during the ride (schema v25). Null on rides recorded
+  /// before it was tracked — "unknown", not "none" — so charts skip them.
+  final int? overspeedCount;
+
+  /// Peak sustained lean angle in degrees, either side (schema v26). An
+  /// estimate from GPS kinematics — see `cornering_estimator.dart`. Null on
+  /// rides recorded before it was tracked.
+  final double? maxLeanDeg;
+
+  /// Peak sustained lateral (cornering) acceleration in g (schema v26).
+  final double? peakLateralG;
+
+  /// Peak sustained forward acceleration in g (schema v26).
+  final double? peakAccelG;
+
+  /// Peak sustained deceleration in g, as a positive number (schema v26).
+  final double? peakBrakeG;
+
+  /// Metres climbed / descended over the ride, from the stored altitude
+  /// samples (schema v26) — see `elevation_profile.dart`. Null when the ride
+  /// predates the column and has no points to backfill from, or its
+  /// altitude data was too sparse to trust.
+  final double? elevationGainM;
+  final double? elevationLossM;
   final RideStatus status;
   final String? mapSnapshotPath;
 
@@ -39,6 +65,17 @@ class RideEntity extends Equatable {
 
   /// How much to trust [bikeId] — see [BikeAttributionConfidence].
   final BikeAttributionConfidence bikeConfidence;
+
+  /// The saved route the rider was following when this ride was recorded, or
+  /// null for an ordinary ride (issues §78.21).
+  ///
+  /// [routeName] is stored alongside the id rather than looked up, for three
+  /// reasons: a *discovered* route lives under another rider's uid, so the id
+  /// alone can't find it; the route may be renamed or deleted afterwards, and
+  /// history should still say what was ridden that day; and a ride row is read
+  /// in list views where a per-row Firestore fetch would be absurd.
+  final String? routeId;
+  final String? routeName;
 
   const RideEntity({
     required this.id,
@@ -54,15 +91,30 @@ class RideEntity extends Equatable {
     this.hardBrakeCount = 0,
     this.rapidAccelCount = 0,
     this.highJerkCount = 0,
+    this.overspeedCount,
+    this.maxLeanDeg,
+    this.peakLateralG,
+    this.peakAccelG,
+    this.peakBrakeG,
+    this.elevationGainM,
+    this.elevationLossM,
     this.status = RideStatus.active,
     this.mapSnapshotPath,
     this.isAuto = false,
     this.bikeConfidence = BikeAttributionConfidence.high,
+    this.routeId,
+    this.routeName,
   });
+
+  /// True when this ride was recorded while following a saved route.
+  bool get followedRoute => routeId != null;
 
   double get distanceKm => distanceM / 1000;
   double get avgSpeedKmh => (avgSpeedMs ?? 0) * 3.6;
-  double get maxSpeedKmh => (maxSpeedMs ?? 0) * 3.6;
+  double get maxSpeedKmh => RideSpeedInvariant.reconcile(
+        avgSpeedKmh: avgSpeedKmh,
+        rawMaxSpeedKmh: (maxSpeedMs ?? 0) * 3.6,
+      );
 
   /// Seconds of this ride spent stopped in traffic while still recording —
   /// see jam_time.dart. Null rather than a guessed zero when either input is
@@ -72,7 +124,8 @@ class RideEntity extends Equatable {
     final duration = durationSeconds;
     final moving = movingSeconds;
     if (duration == null || moving == null) return null;
-    return jam_time.jamSeconds(durationSeconds: duration, movingSeconds: moving);
+    return jam_time.jamSeconds(
+        durationSeconds: duration, movingSeconds: moving);
   }
 
   RideEntity copyWith({
@@ -84,12 +137,21 @@ class RideEntity extends Equatable {
     int? hardBrakeCount,
     int? rapidAccelCount,
     int? highJerkCount,
+    int? overspeedCount,
+    double? maxLeanDeg,
+    double? peakLateralG,
+    double? peakAccelG,
+    double? peakBrakeG,
+    double? elevationGainM,
+    double? elevationLossM,
     RideStatus? status,
     DateTime? endTime,
     String? mapSnapshotPath,
     bool? isAuto,
     BikeAttributionConfidence? bikeConfidence,
     String? bikeId,
+    String? routeId,
+    String? routeName,
   }) {
     return RideEntity(
       id: id,
@@ -105,14 +167,23 @@ class RideEntity extends Equatable {
       hardBrakeCount: hardBrakeCount ?? this.hardBrakeCount,
       rapidAccelCount: rapidAccelCount ?? this.rapidAccelCount,
       highJerkCount: highJerkCount ?? this.highJerkCount,
+      overspeedCount: overspeedCount ?? this.overspeedCount,
+      maxLeanDeg: maxLeanDeg ?? this.maxLeanDeg,
+      peakLateralG: peakLateralG ?? this.peakLateralG,
+      peakAccelG: peakAccelG ?? this.peakAccelG,
+      peakBrakeG: peakBrakeG ?? this.peakBrakeG,
+      elevationGainM: elevationGainM ?? this.elevationGainM,
+      elevationLossM: elevationLossM ?? this.elevationLossM,
       status: status ?? this.status,
       mapSnapshotPath: mapSnapshotPath ?? this.mapSnapshotPath,
       isAuto: isAuto ?? this.isAuto,
       bikeConfidence: bikeConfidence ?? this.bikeConfidence,
+      routeId: routeId ?? this.routeId,
+      routeName: routeName ?? this.routeName,
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, userId, bikeId, startTime, status, isAuto, bikeConfidence];
+      [id, userId, bikeId, startTime, status, isAuto, bikeConfidence, routeId];
 }

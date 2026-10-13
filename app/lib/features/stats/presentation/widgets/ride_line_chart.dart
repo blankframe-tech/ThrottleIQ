@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Minimal single-series sparkline for the Rides tab.
 ///
@@ -31,24 +32,31 @@ class RideLineChart extends StatelessWidget {
   /// Unit suffix for the peak label, e.g. 'km'.
   final String? unit;
 
+  /// Explicit `[start, end]` x-axis labels, overriding [dates]. For a series
+  /// that isn't chronological at all (e.g. a value-over-route-progress
+  /// profile), where "date" has no meaning but the series still has a
+  /// meaningful start and end to label.
+  final List<String>? xLabels;
+
   const RideLineChart({
     super.key,
     required this.values,
     this.color,
     this.dates,
     this.unit,
+    this.xLabels,
   });
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppColors.primary;
+    final effectiveColor = color ?? context.palette.primary;
     if (values.length < 2) {
       return SizedBox(
         height: 120,
         child: Center(
           child: Text(
-            'Not enough rides yet',
-            style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
+            context.l10n.notEnoughRidesYet,
+            style: TextStyle(color: context.palette.textTertiary, fontSize: 13),
           ),
         ),
       );
@@ -138,8 +146,8 @@ class RideLineChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       labels[i == 0 ? 0 : 1],
-                      style:
-                          TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                      style: TextStyle(
+                          fontSize: 10, color: context.palette.textTertiary),
                     ),
                   );
                 },
@@ -162,7 +170,7 @@ class RideLineChart extends StatelessWidget {
                   radius: 3.5,
                   color: effectiveColor,
                   strokeWidth: 2,
-                  strokeColor: AppColors.surface,
+                  strokeColor: context.palette.surface,
                 ),
               ),
               belowBarData: BarAreaData(
@@ -178,6 +186,8 @@ class RideLineChart extends StatelessWidget {
 
   /// `[start, end]` labels for the x-axis.
   List<String> _xLabels() {
+    final explicit = xLabels;
+    if (explicit != null && explicit.length == 2) return explicit;
     final d = dates;
     if (d != null && d.length == values.length) {
       return [_formatDate(d.first), _formatDate(d.last)];
@@ -187,8 +197,18 @@ class RideLineChart extends StatelessWidget {
 
   static String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]}';
   }

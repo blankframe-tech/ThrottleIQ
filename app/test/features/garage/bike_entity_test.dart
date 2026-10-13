@@ -28,5 +28,11 @@ void main() {
       expect(updated.odometerKm, 5000);
       expect(updated.currentOdometerKm, 5050.0);
     });
+
+    test('copyWith(clearOdometer) drops the baseline; default keeps it', () {
+      final withBaseline = base.copyWith(odometerKm: 5000);
+      expect(withBaseline.copyWith(clearOdometer: true).odometerKm, isNull);
+      expect(withBaseline.copyWith().odometerKm, 5000);
+    });
   });
 }

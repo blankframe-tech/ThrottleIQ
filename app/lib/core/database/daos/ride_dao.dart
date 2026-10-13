@@ -1,6 +1,18 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:sqflite/sqflite.dart';
+import '../../constants/sensor_constants.dart';
 import '../database_helper.dart';
+
+/// Matches a ride that has finished recording and belongs in the rider's
+/// history. `crash` is a finished ride too — it ended because crash detection
+/// fired — and leaving it out (the old `status = 'completed'` filter) meant a
+/// crash ride never synced and never appeared in any list. See
+/// issues §69.O10 / grill §1.2.2.
+///
+/// Literal rather than bound parameters so it composes into the existing
+/// `where:` strings without shifting every call site's `whereArgs`.
+const _finishedStatusSql = "status IN ('completed', 'crash')";
 
 class RideDao {
   Future<void> insert(Map<String, dynamic> ride) async {
@@ -11,8 +23,8 @@ class RideDao {
   Future<List<Map<String, dynamic>>> getAllForUser(String userId) async {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query('rides',
-        where: 'user_id = ? AND status = ?',
-        whereArgs: [userId, 'completed'],
+        where: 'user_id = ? AND $_finishedStatusSql',
+        whereArgs: [userId],
         orderBy: 'start_time DESC');
     return _sanitizeAndHealRides(db, rows);
   }
@@ -20,8 +32,8 @@ class RideDao {
   Future<List<Map<String, dynamic>>> getAllForBike(String bikeId) async {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query('rides',
-        where: 'bike_id = ? AND status = ?',
-        whereArgs: [bikeId, 'completed'],
+        where: 'bike_id = ? AND $_finishedStatusSql',
+        whereArgs: [bikeId],
         orderBy: 'start_time DESC');
     return _sanitizeAndHealRides(db, rows);
   }
@@ -32,6 +44,23 @@ class RideDao {
     if (rows.isEmpty) return null;
     final healed = _sanitizeAndHealRides(db, rows);
     return healed.first;
+  }
+
+  /// The id of [userId]'s most recently completed ride, or null if they have
+  /// none. The sole input to "which ride is still eligible for the
+  /// change-bike correction" — only the ride you just finished, never an
+  /// older one further back in history.
+  Future<String?> getMostRecentCompletedId(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query(
+      'rides',
+      columns: ['id'],
+      where: 'user_id = ? AND status = ?',
+      whereArgs: [userId, 'completed'],
+      orderBy: 'start_time DESC',
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first['id'] as String;
   }
 
   List<Map<String, dynamic>> _sanitizeAndHealRides(
@@ -45,20 +74,80 @@ class RideDao {
       final distanceM = (row['distance_m'] as num?)?.toDouble() ?? 0.0;
       final durationS = row['duration_s'] as int?;
 
-      if (avgSpeed != null && maxSpeed != null && maxSpeed > 0 && avgSpeed > maxSpeed) {
-        final healedAvg = (durationS != null && durationS > 0)
-            ? (distanceM / durationS).clamp(0.0, maxSpeed)
-            : maxSpeed;
+      var healedAvg = avgSpeed;
+      var healedMax = maxSpeed;
+      var modified = false;
+
+      // 1. Heal corrupted massive max speeds (> 70 m/s ~ 252 km/h)
+      if (healedMax != null && healedMax > SensorConstants.maxPlausibleSpeedMs) {
+        final plausibleFallback = (healedAvg != null &&
+                healedAvg > 0 &&
+                healedAvg <= SensorConstants.maxPlausibleSpeedMs)
+            ? (healedAvg * 1.5).clamp(healedAvg, SensorConstants.maxPlausibleSpeedMs)
+            : SensorConstants.maxPlausibleSpeedMs;
+        healedMax = plausibleFallback;
+        modified = true;
+      }
+
+      // 2. Heal missing / zero max speed for moving rides (distance > 0)
+      final overallSpeed =
+          (durationS != null && durationS > 0) ? (distanceM / durationS) : 0.0;
+      if ((healedMax == null || healedMax <= 0) && distanceM > 0) {
+        if (healedAvg != null && healedAvg > 0) {
+          healedMax = healedAvg;
+        } else if (overallSpeed > 0) {
+          healedMax = overallSpeed.clamp(0.0, SensorConstants.maxPlausibleSpeedMs);
+        }
+        if (healedMax != null && healedMax > 0) {
+          modified = true;
+        }
+      }
+
+      // 3. Heal avg_speed > max_speed (physical impossibility)
+      if (healedAvg != null &&
+          healedMax != null &&
+          healedMax > 0 &&
+          healedAvg > healedMax) {
+        final fallbackAvg = (durationS != null && durationS > 0)
+            ? (distanceM / durationS).clamp(0.0, healedMax)
+            : healedMax;
+        healedAvg = fallbackAvg;
+        modified = true;
+      }
+
+      // 4. Physical invariant: top speed can never be less than average speed
+      if (healedAvg != null &&
+          healedMax != null &&
+          healedAvg > 0 &&
+          healedMax < healedAvg) {
+        healedMax = healedAvg;
+        modified = true;
+      }
+
+      if (modified) {
         final copy = Map<String, dynamic>.from(row);
-        copy['avg_speed_ms'] = healedAvg;
+        if (healedAvg != null) copy['avg_speed_ms'] = healedAvg;
+        if (healedMax != null) copy['max_speed_ms'] = healedMax;
         result.add(copy);
 
+        final updates = <String, dynamic>{};
+        if (healedAvg != null) updates['avg_speed_ms'] = healedAvg;
+        if (healedMax != null) updates['max_speed_ms'] = healedMax;
+
+        // issues §62 (core services): a self-heal write fired from a
+        // read path has no caller to report failure to, but it must not
+        // vanish silently either — a transient sqflite error (locked DB,
+        // disk full) here used to be dropped into an unobserved microtask
+        // with no error handler at all.
         unawaited(db.update(
           'rides',
-          {'avg_speed_ms': healedAvg},
+          updates,
           where: 'id = ?',
           whereArgs: [row['id']],
-        ));
+        ).catchError((Object e) {
+          debugPrint('[RideDao] self-heal write failed for ride ${row['id']}: $e');
+          return 0;
+        }));
       } else {
         result.add(row);
       }
@@ -76,36 +165,63 @@ class RideDao {
   /// pass a `status` (crash detection writing `'crash'`, a dismissed false
   /// positive writing `'active'`) must have it win.
   ///
-  /// docs/Issues.md §33.3: this used to spread `data` first and hardcode
+  /// issues §33.3: this used to spread `data` first and hardcode
   /// `'status': 'completed'` after it, so the literal always overrode
   /// whatever status the caller asked for — `status: 'crash'` was silently
   /// rewritten to `'completed'` the instant it was written, and a dismissed
   /// crash's `status: 'active'` never stuck either. `status: 'crash'` was
   /// never actually persisted anywhere.
+  ///
+  /// Also resets `track_synced`: finalizing is the last point the trail can
+  /// change, so whatever copy of it reached the cloud before (a resumed ride,
+  /// a crash that was dismissed and re-finalized) is now stale.
   Future<void> finalizeRide(String id, Map<String, dynamic> data) async {
     final db = await DatabaseHelper.instance.database;
     await db.update(
       'rides',
-      {'status': 'completed', ...data, 'synced': 0},
+      {'status': 'completed', ...data, 'synced': 0, 'track_synced': 0},
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  /// docs/Issues.md §33.1: scoped to [userId] — this feeds directly into
+  /// issues §33.1: scoped to [userId] — this feeds directly into
   /// SyncManager's upload pass, and an unscoped query would happily hand
   /// another rider's still-unsynced rides to whichever account is currently
   /// signed in on this device.
+  ///
+  /// Includes `crash` rides (§69.O10): a crash ride is the one whose record
+  /// matters most, and it used to be the one that never left the phone.
   Future<List<Map<String, dynamic>>> getUnsynced(String userId) async {
     final db = await DatabaseHelper.instance.database;
     return db.query('rides',
-        where: 'user_id = ? AND synced = 0 AND status = ?',
-        whereArgs: [userId, 'completed']);
+        where: 'user_id = ? AND synced = 0 AND $_finishedStatusSql',
+        whereArgs: [userId]);
   }
 
   Future<void> markSynced(String id) async {
     final db = await DatabaseHelper.instance.database;
     await db.update('rides', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Rides whose metadata is in the cloud but whose GPS trail isn't yet.
+  ///
+  /// Separate from [getUnsynced] because the two uploads fail independently:
+  /// `synced` flips as soon as the ride doc lands, and a trail upload that
+  /// failed afterwards used to be forgotten for good. See grill §1.3.2.
+  Future<List<Map<String, dynamic>>> getTrackUnsynced(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query('rides',
+        columns: ['id'],
+        where: 'user_id = ? AND synced = 1 AND track_synced = 0 '
+            'AND $_finishedStatusSql',
+        whereArgs: [userId]);
+  }
+
+  Future<void> markTrackSynced(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('rides', {'track_synced': 1},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> updateSyncedStatus(String id, bool synced) async {
@@ -162,10 +278,10 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     return db.query(
       'rides',
-      where: 'user_id = ? AND status = ? AND start_time >= ? AND start_time < ?',
+      where: 'user_id = ? AND $_finishedStatusSql '
+          'AND start_time >= ? AND start_time < ?',
       whereArgs: [
         userId,
-        'completed',
         from.toIso8601String(),
         to.toIso8601String(),
       ],
@@ -179,6 +295,79 @@ class RideDao {
       await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
     });
+  }
+
+  /// Deletes a ride locally AND records a tombstone, in one transaction
+  /// (§90.C10). Use this for any ride that may already be in Firestore — a
+  /// crash ride is uploaded the moment crash detection fires — or
+  /// [CloudRepository.downloadRides] pulls it straight back on the next
+  /// sync. SyncManager deletes the remote copy and flips `synced` to 1.
+  Future<void> deleteWithTombstone(String id, {String? userId}) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
+      await txn.insert(
+        'deleted_rides',
+        {
+          'id': id,
+          'user_id': userId,
+          'deleted_at': DateTime.now().toIso8601String(),
+          'synced': 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  /// Ride ids this device has deleted. The download path must skip these.
+  Future<Set<String>> deletedIds() async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('deleted_rides', columns: ['id']);
+    return rows.map((r) => r['id'] as String).toSet();
+  }
+
+  /// [userId]'s ride tombstones whose remote copy still needs deleting.
+  /// Unowned rows are included: they can only have come from this device.
+  Future<List<String>> pendingRemoteDeletions(String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('deleted_rides',
+        columns: ['id'],
+        where: 'synced = 0 AND (user_id = ? OR user_id IS NULL)',
+        whereArgs: [userId]);
+    return rows.map((r) => r['id'] as String).toList();
+  }
+
+  /// Marks a ride tombstone's remote delete as done. The row is kept so a
+  /// second device's copy can't reintroduce the ride.
+  Future<void> markDeletionSynced(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('deleted_rides', {'synced': 1},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Every ride of [userId]'s, finished or still recording, as a time window
+  /// — what an auto-detection must not overlap (§90.C3). A ride with no
+  /// `end_time` yet (being recorded right now) is open-ended.
+  Future<List<({String id, DateTime start, DateTime? end})>> rideWindows(
+      String userId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('rides',
+        columns: ['id', 'start_time', 'end_time'],
+        where: 'user_id = ?',
+        whereArgs: [userId]);
+    final out = <({String id, DateTime start, DateTime? end})>[];
+    for (final r in rows) {
+      final start = DateTime.tryParse(r['start_time'] as String? ?? '');
+      if (start == null) continue;
+      final endRaw = r['end_time'] as String?;
+      out.add((
+        id: r['id'] as String,
+        start: start,
+        end: endRaw == null ? null : DateTime.tryParse(endRaw),
+      ));
+    }
+    return out;
   }
 
   Future<void> deleteForBike(String bikeId) async {

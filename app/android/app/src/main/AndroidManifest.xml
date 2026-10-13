@@ -33,6 +33,14 @@
     <!-- Voice notes ("Ride with friends" push-to-talk). -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- "Scan QR" on the profile (mobile_scanner): reads another rider's
+         follow QR. Optional hardware so camera-less devices still install. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- "Save image" of the rider's follow QR (gal). Only Android 9 and below
+         need a permission to write to the gallery. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -75,6 +83,13 @@
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         tools:replace="android:label">
+        <!-- Analytics is usage counting only (issues §83.27): no advertising ID,
+             no ad personalization, no ad storage — whatever the runtime toggle says. -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_storage" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_user_data" android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -92,6 +107,42 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Follow links are handled by app_links in Dart
+                 (follow_link_listener.dart). Flutter's built-in deep linking
+                 would otherwise hand /ThrottleIQ/u/<uid> to go_router as a
+                 route, which doesn't exist. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <!-- Follow links (App Links): https://www.blankframe.tech/ThrottleIQ/u/<uid>
+                 opens the app directly; the site serves /.well-known/assetlinks.json.
+                 Only www. is listed: the bare domain 301-redirects, so it can never
+                 verify, and on Android 11 and older one failing host fails them all.
+                 Both path casings, since a hand-typed link may lowercase it.
+                 throttleiqfb.web.app/u/<uid> is the Firebase Hosting mirror. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="www.blankframe.tech" />
+                <data android:pathPrefix="/ThrottleIQ/u/" />
+                <data android:pathPrefix="/throttleiq/u/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="throttleiqfb.web.app" />
+                <data android:pathPrefix="/u/" />
+            </intent-filter>
+            <!-- Custom-scheme fallback, throttleiq://u/<uid>: what the web
+                 fallback page launches when App Links aren't verified. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="throttleiq" android:host="u" />
+            </intent-filter>
         </activity>
 
         <!-- Background GPS during a ride is handled by geolocator's own
@@ -108,7 +159,7 @@
              detector (auto_tracking_service.dart), replacing the paid
              flutter_background_geolocation plugin as of 2026-08-28 — see
              that file's doc comment and
-             docs/archives/flutter_background_geolocation-2026-08-28/. Unlike
+             DOCS/old/archives/flutter_background_geolocation-2026-08-28/. Unlike
              the plugin this replaces, this one does NOT merge its own
              service declaration in automatically; it must be declared here,
              with the exact name below (per the library's own install
@@ -120,15 +171,6 @@
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="location"
             android:exported="false" />
-
-        <!-- Firebase Messaging -->
-        <service
-            android:name="com.google.firebase.messaging.FirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
 
         <!-- Home-screen App Widgets.
              Must be exported: the launcher process sends APPWIDGET_UPDATE
@@ -181,6 +223,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/auto_tracking_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ApexHunterWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_apex_hunter_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/apex_hunter_widget_info" />
         </receiver>
 
         <meta-data

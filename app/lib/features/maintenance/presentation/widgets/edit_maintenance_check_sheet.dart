@@ -1,0 +1,707 @@
+import '../../../../core/utils/parse_localized_number.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/widgets/editorial.dart';
+import '../../domain/entities/maintenance_entity.dart';
+import '../providers/maintenance_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../maintenance_l10n.dart';
+import '../service_type_l10n.dart';
+
+IconData iconForServiceType(ServiceType type) {
+  switch (type) {
+    case ServiceType.fuel:
+      return Icons.local_gas_station;
+    case ServiceType.oilChange:
+    case ServiceType.oilFilter:
+      return Icons.opacity;
+    case ServiceType.airFilter:
+      return Icons.air;
+    case ServiceType.chain:
+    case ServiceType.chainTension:
+      return Icons.link;
+    case ServiceType.tire:
+      return Icons.tire_repair;
+    case ServiceType.frontDiscPads:
+    case ServiceType.rearDrumPads:
+    case ServiceType.brakeFluid:
+    case ServiceType.brakeRotors:
+      return Icons.disc_full;
+    case ServiceType.sparkPlug:
+      return Icons.electric_bolt;
+    case ServiceType.battery:
+      return Icons.battery_charging_full;
+    case ServiceType.radiatorCoolant:
+      return Icons.water_drop;
+    case ServiceType.clutchCable:
+    case ServiceType.throttleCables:
+      return Icons.tune;
+    case ServiceType.valveClearance:
+      return Icons.build;
+    case ServiceType.suspension:
+    case ServiceType.forkSeals:
+      return Icons.vertical_align_center;
+    case ServiceType.wheelBearings:
+    case ServiceType.driveBelt:
+      return Icons.album;
+    case ServiceType.custom:
+      return Icons.handyman;
+  }
+}
+
+String extraInfoHintForServiceType(ServiceType type) {
+  switch (type) {
+    case ServiceType.fuel:
+      return 'e.g. Octane 95, Shell V-Power, 14L tank capacity';
+    case ServiceType.oilChange:
+      return 'e.g. Motul 7100 10W-40 Synthetic (1.2L)';
+    case ServiceType.oilFilter:
+      return 'e.g. K&N KN-204-1, OEM 16097-0008';
+    case ServiceType.tire:
+      return 'e.g. Front: 110/70 R17 (DOT 2423), Rear: 140/70 R17 (DOT 3023)';
+    case ServiceType.chain:
+      return 'e.g. DID 520 X-Ring (114 links), Motul chain paste';
+    case ServiceType.chainTension:
+      return 'e.g. 25-30 mm slack on side stand';
+    case ServiceType.brakeFluid:
+      return 'e.g. Motul DOT 5.1 / DOT 4 hydraulic fluid';
+    case ServiceType.frontDiscPads:
+      return 'e.g. Brembo Sintered 07BB38SA';
+    case ServiceType.rearDrumPads:
+      return 'e.g. Nissin OEM Rear Pads / Shoes';
+    case ServiceType.sparkPlug:
+      return 'e.g. NGK CPR8EA-9, 0.8-0.9mm gap';
+    case ServiceType.battery:
+      return 'e.g. Yuasa YTX9-BS 12V 8Ah AGM';
+    case ServiceType.radiatorCoolant:
+      return 'e.g. Motul Motocool Expert 50:50 Premix';
+    case ServiceType.airFilter:
+      return 'e.g. BMC / K&N washable air filter element';
+    default:
+      return 'e.g. Brand, specs, part numbers, manufacture dates, notes...';
+  }
+}
+
+List<int> presetIntervalsForServiceType(ServiceType type) {
+  switch (type) {
+    case ServiceType.fuel:
+      return [200, 250, 300, 350, 400];
+    case ServiceType.chain:
+      return [400, 500, 600, 800, 1000];
+    case ServiceType.chainTension:
+      return [500, 1000, 1500, 2000];
+    case ServiceType.oilChange:
+      return [1000, 1500, 2000, 2500, 3000, 5000];
+    case ServiceType.tire:
+      return [2000, 3000, 5000, 8000];
+    case ServiceType.battery:
+      return [3000, 5000, 6000, 10000];
+    case ServiceType.airFilter:
+      return [4000, 6000, 8000, 12000];
+    case ServiceType.sparkPlug:
+      return [6000, 8000, 10000, 15000];
+    case ServiceType.frontDiscPads:
+    case ServiceType.rearDrumPads:
+      return [8000, 10000, 12000, 15000];
+    default:
+      return [1000, 1500, 3000, 5000, 10000, 15000];
+  }
+}
+
+/// Time-limit quick picks, in days.
+const List<int> kPresetIntervalDays = [30, 90, 180, 365, 730];
+
+class EditMaintenanceCheckSheet extends ConsumerStatefulWidget {
+  final MaintenanceConfigEntity config;
+  final bool persistImmediately;
+
+  const EditMaintenanceCheckSheet({
+    super.key,
+    required this.config,
+    this.persistImmediately = true,
+  });
+
+  static Future<MaintenanceConfigEntity?> show(
+    BuildContext context, {
+    required MaintenanceConfigEntity config,
+    bool persistImmediately = true,
+  }) {
+    return showModalBottomSheet<MaintenanceConfigEntity>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => EditMaintenanceCheckSheet(
+        config: config,
+        persistImmediately: persistImmediately,
+      ),
+    );
+  }
+
+  @override
+  ConsumerState<EditMaintenanceCheckSheet> createState() =>
+      _EditMaintenanceCheckSheetState();
+}
+
+class _EditMaintenanceCheckSheetState
+    extends ConsumerState<EditMaintenanceCheckSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _intervalCtrl;
+  late final TextEditingController _daysCtrl;
+  late final TextEditingController _warnKmCtrl;
+  late final TextEditingController _warnDaysCtrl;
+  late final TextEditingController _labelCtrl;
+  late final TextEditingController _notesCtrl;
+  late final TextEditingController _costCtrl;
+  late bool _isEnabled;
+  bool _saving = false;
+  bool _showAdvance = false;
+
+  static String _num(num? v) => v == null || v == 0 ? '' : v.toStringAsFixed(0);
+
+  @override
+  void initState() {
+    super.initState();
+    final c = widget.config;
+    _intervalCtrl = TextEditingController(text: _num(c.intervalKm));
+    _daysCtrl = TextEditingController(text: _num(c.intervalDays));
+    _warnKmCtrl = TextEditingController(text: _num(c.warnKm));
+    _warnDaysCtrl = TextEditingController(text: _num(c.warnDays));
+    _labelCtrl = TextEditingController(text: c.customLabel ?? '');
+    _showAdvance = c.warnKm != null || c.warnDays != null;
+    _notesCtrl = TextEditingController(text: widget.config.notes ?? '');
+    final cost = widget.config.typicalCost;
+    _costCtrl = TextEditingController(
+      text: cost == null
+          ? ''
+          : cost.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), ''),
+    );
+    _isEnabled = widget.config.isEnabled;
+  }
+
+  @override
+  void dispose() {
+    _intervalCtrl.dispose();
+    _daysCtrl.dispose();
+    _warnKmCtrl.dispose();
+    _warnDaysCtrl.dispose();
+    _labelCtrl.dispose();
+    _notesCtrl.dispose();
+    _costCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    final c = widget.config;
+    final intervalVal = parseLocalizedNumber(_intervalCtrl.text.trim()) ?? 0;
+    final daysVal = parseLocalizedInt(_daysCtrl.text.trim());
+    final days = (daysVal != null && daysVal > 0) ? daysVal : null;
+    if (intervalVal <= 0 && days == null) return;
+    final warnKm = parseLocalizedNumber(_warnKmCtrl.text.trim());
+    final warnDays = parseLocalizedInt(_warnDaysCtrl.text.trim());
+
+    final trimmedNotes = _notesCtrl.text.trim();
+    final costVal = parseLocalizedNumber(_costCtrl.text.trim());
+    final hasCost = costVal != null && costVal > 0;
+    // Editing an interval makes it the rider's own: a later template or oil
+    // grade change won't overwrite it.
+    final intervalChanged =
+        intervalVal != c.intervalKm || days != c.intervalDays;
+    final updated = MaintenanceConfigEntity(
+      bikeId: c.bikeId,
+      serviceType: c.serviceType,
+      intervalKm: intervalVal,
+      intervalDays: days,
+      isEnabled: _isEnabled,
+      notes: trimmedNotes.isNotEmpty ? trimmedNotes : null,
+      typicalCost: hasCost ? costVal : null,
+      warnKm: (warnKm != null && warnKm > 0) ? warnKm : null,
+      warnDays: (warnDays != null && warnDays > 0) ? warnDays : null,
+      baselineKm: c.baselineKm,
+      baselineDate: c.baselineDate,
+      source: intervalChanged ? IntervalSource.user : c.source,
+      customId: c.customId,
+      customLabel: c.isCustom && _labelCtrl.text.trim().isNotEmpty
+          ? _labelCtrl.text.trim()
+          : c.customLabel,
+    );
+
+    if (widget.persistImmediately) {
+      setState(() => _saving = true);
+      await ref
+          .read(maintenanceConfigProvider(widget.config.bikeId).notifier)
+          .updateSingleConfig(updated);
+      if (!mounted) return;
+    }
+
+    Navigator.of(context).pop(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final type = widget.config.serviceType;
+    final icon = iconForServiceType(type);
+    final presets = presetIntervalsForServiceType(type);
+    final hint = extraInfoHintForServiceType(type);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(context.shape.radiusXl),
+        ),
+        border: Border(
+          top: BorderSide(color: context.palette.border, width: 1),
+        ),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        AppDimensions.paddingMd,
+        14,
+        AppDimensions.paddingMd,
+        bottomInset + AppDimensions.paddingMd,
+      ),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: context.palette.textTertiary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Header with Service Icon & Title
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: context.palette.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: context.palette.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(configLabel(widget.config, context.l10n),
+                            style: display(context, 18)),
+                        const SizedBox(height: 2),
+                        Text(
+                          type.localizedDescription(context.l10n),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.palette.textSecondary,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Enable / Disable Tracking Row
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: context.palette.surfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.trackDashboard,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          context.l10n.calculateWearMonitorInterval,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.palette.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Switch.adaptive(
+                      value: _isEnabled,
+                      onChanged: (v) => setState(() => _isEnabled = v),
+                      activeTrackColor: context.palette.primary,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              if (widget.config.isCustom) ...[
+                TextFormField(
+                  controller: _labelCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(color: context.palette.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.customCheckName,
+                    filled: true,
+                    fillColor: context.palette.surfaceVariant,
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? context.l10n.nameService
+                      : null,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Service Interval
+              EditorialLabel(context.l10n.serviceInterval),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.intervalWhicheverFirst,
+                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                key: const Key('intervalKmField'),
+                controller: _intervalCtrl,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                  labelText: context.l10n.intervalDistanceKm,
+                  suffixText: context.l10n.distanceStatLabel,
+                  prefixIcon: const Icon(Icons.speed, size: 20),
+                  filled: true,
+                  fillColor: context.palette.surfaceVariant,
+                ),
+                validator: (v) {
+                  final n = parseLocalizedNumber((v ?? '').trim());
+                  final d = parseLocalizedInt(_daysCtrl.text.trim());
+                  final hasDays = d != null && d > 0;
+                  if ((v == null || v.trim().isEmpty) && !hasDays) {
+                    return context.l10n.intervalNeedKmOrDays;
+                  }
+                  if (v != null && v.trim().isNotEmpty && (n == null || n < 0)) {
+                    return context.l10n.enterPositiveNumber;
+                  }
+                  if ((n ?? 0) <= 0 && !hasDays) {
+                    return context.l10n.intervalNeedKmOrDays;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+
+              // Preset Interval Quick Chips
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: presets.map((km) {
+                  final matches =
+                      _intervalCtrl.text.trim() == km.toString();
+                  return ActionChip(
+                    label: Text(
+                      '$km km',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight:
+                            matches ? FontWeight.w700 : FontWeight.normal,
+                        color: matches
+                            ? context.palette.primary
+                            : context.palette.textSecondary,
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _intervalCtrl.text = km.toString();
+                      });
+                    },
+                    backgroundColor: matches
+                        ? context.palette.primary.withValues(alpha: 0.15)
+                        : context.palette.surfaceVariant,
+                    side: BorderSide(
+                      color: matches ? context.palette.primary : context.palette.border,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                key: const Key('intervalDaysField'),
+                controller: _daysCtrl,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                  labelText: context.l10n.intervalDaysLabel,
+                  suffixText: context.l10n.daysUnit,
+                  prefixIcon: const Icon(Icons.event, size: 20),
+                  filled: true,
+                  fillColor: context.palette.surfaceVariant,
+                ),
+                onChanged: (_) => setState(() {}),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final n = parseLocalizedInt(v.trim());
+                  if (n == null || n < 0) return context.l10n.enterPositiveNumber;
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final d in kPresetIntervalDays)
+                    ActionChip(
+                      label: Text(
+                        context.l10n.daysShort(d),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _daysCtrl.text.trim() == '$d'
+                              ? FontWeight.w700
+                              : FontWeight.normal,
+                          color: _daysCtrl.text.trim() == '$d'
+                              ? context.palette.primary
+                              : context.palette.textSecondary,
+                        ),
+                      ),
+                      onPressed: () => setState(() => _daysCtrl.text = '$d'),
+                      backgroundColor: _daysCtrl.text.trim() == '$d'
+                          ? context.palette.primary.withValues(alpha: 0.15)
+                          : context.palette.surfaceVariant,
+                      side: BorderSide(
+                        color: _daysCtrl.text.trim() == '$d'
+                            ? context.palette.primary
+                            : context.palette.border,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => setState(() => _showAdvance = !_showAdvance),
+                child: Row(
+                  children: [
+                    Icon(
+                        _showAdvance ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: context.palette.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(context.l10n.advanceWarning,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textSecondary)),
+                  ],
+                ),
+              ),
+              if (_showAdvance) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _warnKmCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: context.palette.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.warnKmBefore,
+                          suffixText: context.l10n.distanceStatLabel,
+                          filled: true,
+                          fillColor: context.palette.surfaceVariant,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _warnDaysCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: context.palette.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.warnDaysBefore,
+                          suffixText: context.l10n.daysUnit,
+                          filled: true,
+                          fillColor: context.palette.surfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(context.l10n.advanceWarningHelper,
+                    style: TextStyle(
+                        fontSize: 11, color: context.palette.textTertiary)),
+              ],
+              const SizedBox(height: 18),
+
+              // Specifications & Extra Info Text
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  EditorialLabel(context.l10n.specificationsExtraInfo),
+                  Text(
+                    context.l10n.optionalText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.palette.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _notesCtrl,
+                maxLines: 2,
+                textCapitalization: TextCapitalization.sentences,
+                style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: context.l10n.specsOilGradeTyre,
+                  hintText: hint,
+                  alignLabelWithHint: true,
+                  filled: true,
+                  fillColor: context.palette.surfaceVariant,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(bottom: 24),
+                    child: Icon(Icons.edit_note, size: 22),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                context.l10n.visibleMaintenanceCardQuick,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: context.palette.textTertiary,
+                ),
+              ),
+
+              // Typical cost per service — feeds the ride-cost estimate.
+              // Not for fuel, which is priced by litre in Running costs.
+              if (type != ServiceType.fuel) ...[
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    EditorialLabel(context.l10n.maintTypicalCost),
+                    Text(
+                      context.l10n.optionalText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.palette.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  key: const Key('typicalCostField'),
+                  controller: _costCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(color: context.palette.textPrimary),
+                  decoration: InputDecoration(
+                    prefixText: '৳ ',
+                    filled: true,
+                    fillColor: context.palette.surfaceVariant,
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    final n = parseLocalizedNumber(v.trim());
+                    if (n == null || n < 0) {
+                      return context.l10n.enterPositiveNumber;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  context.l10n.maintTypicalCostHelper,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: context.palette.textTertiary,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+
+              // Action Buttons: Cancel and Save
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: context.palette.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(context.shape.radiusMd),
+                        ),
+                      ),
+                      child: Text(
+                        context.l10n.cancelAction,
+                        style: TextStyle(
+                          color: context.palette.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saving ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(context.shape.radiusMd),
+                        ),
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              context.l10n.safeQrSaveAction,
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

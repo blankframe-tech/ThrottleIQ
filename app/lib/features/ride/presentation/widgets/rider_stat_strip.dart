@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -61,7 +61,7 @@ class _Divider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Container(width: 1, height: 28, color: AppColors.border);
+      Container(width: 1, height: 28, color: context.palette.border);
 }
 
 class _Stat extends StatelessWidget {
@@ -75,7 +75,7 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: display(22, letterSpacing: -1)),
+          Text(value, style: display(context, 22, letterSpacing: -1)),
           const SizedBox(height: 2),
           Text(
             label.toUpperCase(),
@@ -85,7 +85,7 @@ class _Stat extends StatelessWidget {
               fontSize: 10,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.8,
-              color: AppColors.textTertiary,
+              color: context.palette.textTertiary,
             ),
           ),
         ],

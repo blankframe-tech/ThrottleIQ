@@ -29,6 +29,31 @@ object WidgetKeys {
     const val KM_UNTIL_DUE = "ti_km_until_due"
     const val KM_UNTIL_DUE_RAW = "ti_km_until_due_raw"
     const val OVERDUE = "ti_overdue"
+
+    // Apex Hunter (Lean Angle)
+    const val MAX_LEAN_LEFT = "ti_max_lean_left"
+    const val MAX_LEAN_LEFT_RAW = "ti_max_lean_left_raw"
+    const val MAX_LEAN_RIGHT = "ti_max_lean_right"
+    const val MAX_LEAN_RIGHT_RAW = "ti_max_lean_right_raw"
+    const val LEAN_RATING = "ti_lean_rating"
+    const val LEAN_SYMMETRY = "ti_lean_symmetry"
+    const val APEX_UPDATED_AT = "ti_apex_updated_at"
+
+    // Theme — `#AARRGGBB` strings from `widgetThemeData` in Dart; read by
+    // [WidgetTheme], which falls back to res/values/colors.xml when absent.
+    const val THEME_BACKGROUND = "ti_theme_background"
+    const val THEME_SURFACE = "ti_theme_surface"
+    const val THEME_BORDER = "ti_theme_border"
+    const val THEME_INK = "ti_theme_ink"
+    const val THEME_PRIMARY = "ti_theme_primary"
+    const val THEME_ON_PRIMARY = "ti_theme_on_primary"
+    const val THEME_ACCENT = "ti_theme_accent"
+    const val THEME_TEXT_PRIMARY = "ti_theme_text_primary"
+    const val THEME_TEXT_MUTED = "ti_theme_text_muted"
+    const val THEME_TEXT_TERTIARY = "ti_theme_text_tertiary"
+    const val THEME_DANGER = "ti_theme_danger"
+    const val THEME_IS_DARK = "ti_theme_is_dark"
+    const val THEME_MODE = "ti_theme_mode"
 }
 
 /**
@@ -44,3 +69,6 @@ const val START_RIDE_URI = "throttleiq://startride"
 
 /** Deep link carried by the Start Auto-Tracking widget's launch intent. */
 const val AUTO_TRACKING_URI = "throttleiq://autotracking"
+
+/** Deep link carried by the Apex Hunter widget's launch intent. */
+const val APEX_HUNTER_URI = "throttleiq://apexhunter"

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/badges.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../badge_l10n.dart';
+import 'badge_detail_sheet.dart';
 
 /// The Rides tab's badge shelf.
 ///
@@ -28,7 +31,12 @@ class BadgeGrid extends StatelessWidget {
         for (final family in families)
           _BadgeFamilyTile(
             progress: family,
-            onTap: () => showBadgeLadderSheet(context, family),
+            // A one-rung family ("First ride") has no ladder worth a sheet
+            // of its own; go straight to the badge.
+            onTap: () => family.badges.length == 1
+                ? showBadgeDetailSheet(context,
+                    progress: family, badge: family.badges.single)
+                : showBadgeLadderSheet(context, family),
           ),
       ],
     );
@@ -43,11 +51,11 @@ Future<void> showBadgeLadderSheet(
 ) {
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.palette.surface,
     isScrollControlled: true,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
     ),
     builder: (_) => _BadgeLadderSheet(progress: progress),
   );
@@ -62,16 +70,19 @@ class _BadgeFamilyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final earned = progress.earnedCount > 0;
-    final color = earned ? AppColors.primary : AppColors.textTertiary;
+    final color =
+        earned ? context.palette.primary : context.palette.textTertiary;
     final tier = progress.highestTier;
 
     return Semantics(
       button: true,
-      label: '${progress.family.name}, '
-          '${progress.earnedCount} of ${progress.badges.length} earned',
+      label: context.l10n.badgeFamilyEarned(
+          progress.family.localizedName(context.l10n),
+          progress.earnedCount,
+          progress.badges.length),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
         child: SizedBox(
           width: 78,
           child: Column(
@@ -81,12 +92,13 @@ class _BadgeFamilyTile extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: earned
-                      ? AppColors.primary.withValues(alpha: 0.12)
+                      ? context.palette.primary.withValues(alpha: 0.12)
                       : Colors.transparent,
-                  borderRadius:
-                      BorderRadius.circular(AppDimensions.radiusLg),
+                  borderRadius: BorderRadius.circular(context.shape.radiusLg),
                   border: Border.all(
-                    color: earned ? AppColors.primary : AppColors.border,
+                    color: earned
+                        ? context.palette.primary
+                        : context.palette.border,
                     width: 1.2,
                   ),
                 ),
@@ -94,7 +106,7 @@ class _BadgeFamilyTile extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                progress.family.name,
+                progress.family.localizedName(context.l10n),
                 maxLines: 2,
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
@@ -103,8 +115,8 @@ class _BadgeFamilyTile extends StatelessWidget {
                   height: 1.2,
                   fontWeight: FontWeight.w600,
                   color: earned
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? context.palette.textPrimary
+                      : context.palette.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
@@ -112,16 +124,20 @@ class _BadgeFamilyTile extends StatelessWidget {
                 // Single-rung families ("First ride") have no ladder to
                 // report progress along, so they just say earned or not.
                 progress.badges.length == 1
-                    ? (earned ? 'Earned' : 'Locked')
+                    ? (earned
+                        ? context.l10n.badgeEarnedStatus
+                        : context.l10n.badgeLockedStatus)
                     : (tier == null
                         ? '0/${progress.badges.length}'
-                        : '${tier.label} · ${progress.earnedCount}/${progress.badges.length}'),
+                        : '${tier.localizedLabel(context.l10n)} · ${progress.earnedCount}/${progress.badges.length}'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 9,
                   letterSpacing: 0.2,
-                  color: earned ? AppColors.primary : AppColors.textTertiary,
+                  color: earned
+                      ? context.palette.primary
+                      : context.palette.textTertiary,
                 ),
               ),
             ],
@@ -144,8 +160,10 @@ class _BadgeLadderSheet extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
-            AppDimensions.paddingMd, AppDimensions.paddingMd,
+        padding: const EdgeInsets.fromLTRB(
+            AppDimensions.paddingMd,
+            AppDimensions.paddingMd,
+            AppDimensions.paddingMd,
             AppDimensions.paddingLg),
         child: SingleChildScrollView(
           child: Column(
@@ -157,9 +175,9 @@ class _BadgeLadderSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.palette.border,
                     borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusFull),
+                        BorderRadius.circular(context.shape.radiusFull),
                   ),
                 ),
               ),
@@ -169,28 +187,29 @@ class _BadgeLadderSheet extends StatelessWidget {
                   Icon(family.icon,
                       size: 26,
                       color: progress.earnedCount > 0
-                          ? AppColors.primary
-                          : AppColors.textTertiary),
+                          ? context.palette.primary
+                          : context.palette.textTertiary),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(family.name,
-                        style: display(20, letterSpacing: 0)),
+                    child: Text(family.localizedName(context.l10n),
+                        style: display(context, 20, letterSpacing: 0)),
                   ),
                   Text('${progress.earnedCount}/${progress.badges.length}',
                       style: TextStyle(
-                          fontSize: 13, color: AppColors.textSecondary)),
+                          fontSize: 13, color: context.palette.textSecondary)),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(family.about,
+              Text(family.localizedAbout(context.l10n),
                   style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
-                      color: AppColors.textSecondary)),
+                      color: context.palette.textSecondary)),
               const SizedBox(height: 14),
               Text(
-                'You: ${formatBadgeValue(progress.value)} ${family.unit}',
-                style: display(15, letterSpacing: 0),
+                context.l10n.youProgress(formatBadgeValue(progress.value),
+                    family.localizedUnit(context.l10n)),
+                style: display(context, 15, letterSpacing: 0),
               ),
               if (next != null) ...[
                 const SizedBox(height: 8),
@@ -201,19 +220,21 @@ class _BadgeLadderSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Next: ${next.def.name} — '
-                  '${formatBadgeValue(next.def.threshold - progress.value)} '
-                  '${family.unit} to go',
-                  style:
-                      TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                  context.l10n.nextGo(
+                      next.def.localizedName(context.l10n),
+                      formatBadgeValue(next.def.threshold - progress.value),
+                      family.localizedUnit(context.l10n)),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textTertiary),
                 ),
               ] else ...[
                 const SizedBox(height: 8),
-                Text('Every tier earned. Nothing left to chase here.',
-                    style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                Text(context.l10n.everyTierEarnedNothing,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.primary)),
               ],
               const SizedBox(height: 18),
-              const EditorialLabel('Tiers'),
+              EditorialLabel(context.l10n.tiersLabel),
               const SizedBox(height: 10),
               for (final badge in progress.badges) ...[
                 _LadderRow(progress: progress, badge: badge),
@@ -237,58 +258,78 @@ class _LadderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final family = progress.family;
     final earned = badge.earned;
-    final color = earned ? AppColors.primary : AppColors.textTertiary;
+    final color =
+        earned ? context.palette.primary : context.palette.textTertiary;
 
-    return EditorialCard(
-      padding: const EdgeInsets.all(12),
-      borderColor: earned ? AppColors.primary : AppColors.border,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(earned ? family.icon : Icons.lock_outline, size: 22, color: color),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return Semantics(
+      button: true,
+      hint: context.l10n.badgeViewDetails,
+      child: InkWell(
+        onTap: () =>
+            showBadgeDetailSheet(context, progress: progress, badge: badge),
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
+        child: EditorialCard(
+          padding: const EdgeInsets.all(12),
+          borderColor:
+              earned ? context.palette.primary : context.palette.border,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(earned ? family.icon : Icons.lock_outline,
+                  size: 22, color: color),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(badge.def.name,
-                          style: display(14, letterSpacing: 0)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(badge.def.localizedName(context.l10n),
+                              style: display(context, 14, letterSpacing: 0)),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          badge.def.tier
+                              .localizedLabel(context.l10n)
+                              .toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: color,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 4),
                     Text(
-                      badge.def.tier.label.toUpperCase(),
+                      // Earned rungs explain what the badge *is*; locked ones
+                      // explain what to do about it, with the gap spelled out so
+                      // "how far off am I" never needs mental arithmetic.
+                      earned
+                          ? context.l10n.earnedThreshold(
+                              family.localizedRequirementFor(
+                                  context.l10n, badge.def.threshold))
+                          : context.l10n.youreAt(
+                              family.localizedRequirementFor(
+                                  context.l10n, badge.def.threshold),
+                              formatBadgeValue(progress.value),
+                              formatBadgeValue(badge.def.threshold),
+                              family.localizedUnit(context.l10n)),
                       style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                        color: color,
-                      ),
+                          fontSize: 12,
+                          height: 1.35,
+                          color: context.palette.textSecondary),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  // Earned rungs explain what the badge *is*; locked ones
-                  // explain what to do about it, with the gap spelled out so
-                  // "how far off am I" never needs mental arithmetic.
-                  earned
-                      ? 'Earned. ${family.requirementFor(badge.def.threshold)}'
-                      : '${family.requirementFor(badge.def.threshold)} '
-                          "You're at ${formatBadgeValue(progress.value)} "
-                          'of ${formatBadgeValue(badge.def.threshold)} '
-                          '${family.unit}.',
-                  style: TextStyle(
-                      fontSize: 12,
-                      height: 1.35,
-                      color: AppColors.textSecondary),
-                ),
-              ],
-            ),
+              ),
+              Icon(Icons.chevron_right,
+                  size: 18, color: context.palette.textTertiary),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

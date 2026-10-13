@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThrottleIQ — Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101014;
+    --bg-alt:#17171d;
+    --card:#1c1c24;
+    --card-border:#2a2a34;
+    --cyan:#00e5ff;
+    --amber:#ff9800;
+    --green:#42b558;
+    --red:#d84f2a;
+    --text:#f5f6f8;
+    --text-dim:#a0a0ac;
+    --text-faint:#6b6b78;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    overflow:hidden;
+  }
+  .bn{font-family:'Hind Siliguri','Inter',sans-serif;}
+  h1,h2,h3,.disp{font-family:'Space Grotesk','Inter',sans-serif;}
+
+  #deck{
+    position:relative;
+    width:100vw;height:100vh;
+  }
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    flex-direction:column;
+    padding:clamp(24px,5vw,72px) clamp(24px,7vw,110px);
+    background:
+      radial-gradient(circle at 85% 10%, rgba(0,229,255,0.09), transparent 45%),
+      radial-gradient(circle at 10% 90%, rgba(255,152,0,0.07), transparent 40%),
+      var(--bg);
+    overflow-y:auto;
+  }
+  .slide.active{display:flex;}
+  .kicker{
+    text-transform:uppercase;
+    letter-spacing:0.18em;
+    font-size:clamp(11px,1vw,13px);
+    color:var(--cyan);
+    font-weight:600;
+    margin:0 0 10px 0;
+  }
+  .slide h1{
+    font-size:clamp(28px,4.2vw,56px);
+    line-height:1.08;
+    margin:0 0 14px 0;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .slide h2.section-title{
+    font-size:clamp(24px,3.4vw,42px);
+    line-height:1.12;
+    margin:0 0 6px 0;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    font-size:clamp(14px,1.4vw,19px);
+    color:var(--text-dim);
+    max-width:850px;
+    line-height:1.5;
+    margin:0 0 clamp(16px,2.4vw,32px) 0;
+  }
+  .divider{
+    height:3px;width:56px;border-radius:2px;
+    background:linear-gradient(90deg,var(--cyan),var(--amber));
+    margin:0 0 20px 0;
+  }
+  .body-area{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;}
+
+  /* grids / cards */
+  .grid{display:grid;gap:clamp(10px,1.4vw,18px);}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:clamp(14px,1.8vw,22px);
+  }
+  .card h3{
+    font-size:clamp(14px,1.3vw,18px);
+    margin:0 0 8px 0;
+    font-weight:600;
+    display:flex;align-items:center;gap:10px;
+  }
+  .card p{
+    font-size:clamp(12.5px,1.05vw,15px);
+    color:var(--text-dim);
+    line-height:1.5;
+    margin:0;
+  }
+  .icon-badge{
+    width:34px;height:34px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px;flex-shrink:0;
+  }
+  .ic-cyan{background:rgba(0,229,255,0.14);color:var(--cyan);}
+  .ic-amber{background:rgba(255,152,0,0.14);color:var(--amber);}
+  .ic-green{background:rgba(66,181,88,0.14);color:var(--green);}
+  .ic-red{background:rgba(216,79,42,0.14);color:var(--red);}
+
+  ul.list{margin:0;padding:0;list-style:none;}
+  ul.list li{
+    position:relative;padding-left:22px;margin-bottom:10px;
+    font-size:clamp(13px,1.15vw,16.5px);
+    color:var(--text);line-height:1.5;
+  }
+  ul.list li::before{
+    content:'';position:absolute;left:0;top:8px;
+    width:8px;height:8px;border-radius:2px;
+    background:var(--cyan);
+  }
+  ul.list.amber li::before{background:var(--amber);}
+  ul.list li b{color:var(--text);}
+  ul.list li .dim{color:var(--text-dim);}
+
+  .stat{
+    text-align:center;
+  }
+  .stat .num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(28px,3.6vw,46px);
+    font-weight:700;
+    color:var(--cyan);
+    line-height:1;
+  }
+  .stat .label{
+    font-size:clamp(11px,0.95vw,13.5px);
+    color:var(--text-dim);
+    margin-top:8px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+
+  table.cmp{
+    width:100%;border-collapse:collapse;
+    font-size:clamp(11px,0.95vw,14px);
+  }
+  table.cmp th,table.cmp td{
+    padding:10px 12px;text-align:left;
+    border-bottom:1px solid var(--card-border);
+  }
+  table.cmp th{
+    color:var(--text-dim);font-weight:600;
+    text-transform:uppercase;letter-spacing:0.04em;font-size:0.82em;
+  }
+  table.cmp td.hero-col{color:var(--cyan);font-weight:600;}
+  table.cmp tr:last-child td{border-bottom:none;}
+
+  .pill{
+    display:inline-block;padding:4px 12px;border-radius:999px;
+    font-size:clamp(11px,0.9vw,13px);font-weight:600;
+    background:rgba(0,229,255,0.12);color:var(--cyan);
+    border:1px solid rgba(0,229,255,0.3);
+  }
+
+  .flow{display:flex;align-items:stretch;gap:clamp(8px,1.5vw,20px);}
+  .flow .fbox{flex:1;}
+  .flow .arrow{display:flex;align-items:center;color:var(--text-faint);font-size:22px;}
+
+  .logo-wrap{width:clamp(84px,10vw,140px);height:clamp(84px,10vw,140px);margin-bottom:20px;}
+  .logo-wrap svg{width:100%;height:100%;display:block;}
+
+  footer.foot{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:12px;color:var(--text-faint);
+    padding-top:14px;margin-top:auto;
+    border-top:1px solid var(--card-border);
+  }
+
+  /* nav chrome */
+  #progress{
+    position:fixed;top:0;left:0;height:3px;
+    background:linear-gradient(90deg,var(--cyan),var(--amber));
+    z-index:50;transition:width .25s ease;
+  }
+  #controls{
+    position:fixed;bottom:18px;right:22px;
+    display:flex;align-items:center;gap:12px;
+    z-index:50;font-size:13px;color:var(--text-dim);
+    font-family:'Inter',sans-serif;
+  }
+  #controls button{
+    width:38px;height:38px;border-radius:10px;
+    background:var(--card);border:1px solid var(--card-border);
+    color:var(--text);font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #controls button:hover{border-color:var(--cyan);color:var(--cyan);}
+  #counter{min-width:52px;text-align:center;font-variant-numeric:tabular-nums;}
+  #dots{
+    position:fixed;bottom:18px;left:22px;display:flex;gap:6px;z-index:50;
+  }
+  #dots span{
+    width:6px;height:6px;border-radius:50%;background:var(--card-border);
+    transition:background .2s;
+  }
+  #dots span.on{background:var(--cyan);}
+
+  @media (max-width:720px){
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr 1fr;}
+    .flow{flex-direction:column;}
+    .flow .arrow{transform:rotate(90deg);justify-content:center;}
+    #dots{display:none;}
+  }
+  @media (max-width:480px){
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+  }
+
+  @media print{
+    body{overflow:visible;}
+    #controls,#dots,#progress{display:none;}
+    #deck{position:static;width:auto;height:auto;}
+    .slide{
+      display:flex!important;
+      position:static;
+      width:100vw;height:100vh;
+      page-break-after:always;
+      overflow:hidden;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress" style="width:0%"></div>
+<div id="deck"></div>
+<div id="dots"></div>
+<div id="controls">
+  <button id="prevBtn" aria-label="Previous slide">‹</button>
+  <span id="counter">1 / 12</span>
+  <button id="nextBtn" aria-label="Next slide">›</button>
+</div>
+
+<script>
+const LOGO = `<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="28%" stop-color="#A5F3FC" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#06B6D4" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0891B2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="beam" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#67E8F9" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="#131317"/>
+  <path d="M 285.74,793.65 A 352.00,352.00 0 0 1 573.12,177.35" fill="none" stroke="#4A80E8" stroke-width="76.0" stroke-linecap="round"/>
+  <path d="M 573.12,177.35 A 352.00,352.00 0 0 1 860.57,475.01" fill="none" stroke="#42B558" stroke-width="76.0" stroke-linecap="round"/>
+  <circle cx="860.57" cy="475.01" r="38.0" fill="#DE6032"/>
+  <path d="M 860.57,475.01 A 352.00,352.00 0 0 1 738.26,793.65" fill="none" stroke="#D84F2A" stroke-width="76.0" stroke-linecap="round"/>
+  <line x1="299.64" y1="736.36" x2="226.56" y2="809.44" stroke="rgba(255,255,255,0.26)" stroke-width="13.0" stroke-linecap="round"/>
+  <line x1="724.36" y1="736.36" x2="797.44" y2="809.44" stroke="rgba(255,255,255,0.26)" stroke-width="13.0" stroke-linecap="round"/>
+  <path d="M 535.13,495.52 L 804.68,333.56 L 817.56,354.99 L 548.01,516.95 Z" fill="#FFFFFF"/>
+  <circle cx="512.00" cy="524.00" r="46.0" fill="#FFFFFF"/>
+  <circle cx="512.00" cy="524.00" r="34.5" fill="#131317"/>
+  <line x1="811.12" y1="344.27" x2="875.52" y2="295.97" stroke="#B0C4DE" stroke-width="7.5" stroke-linecap="round" opacity="0.88"/>
+  <line x1="811.12" y1="344.27" x2="867.47" y2="386.82" stroke="#B0C4DE" stroke-width="7.5" stroke-linecap="round" opacity="0.88"/>
+  <line x1="811.12" y1="344.27" x2="773.17" y2="389.12" stroke="#B0C4DE" stroke-width="7.5" stroke-linecap="round" opacity="0.88"/>
+  <circle cx="875.52" cy="295.97" r="21.3" fill="#42B558"/>
+  <circle cx="867.47" cy="386.82" r="19.0" fill="#FFFFFF"/>
+  <circle cx="773.17" cy="389.12" r="19.0" fill="#4A80E8"/>
+  <circle cx="811.12" cy="344.27" r="31.0" fill="#FFFFFF"/>
+  <circle cx="811.12" cy="344.27" r="112.7" fill="url(#halo)"/>
+  <g transform="translate(811.12, 344.27)">
+    <polygon points="-138.0,0 0,-14.9 138.0,0 0,14.9" fill="url(#beam)"/>
+    <polygon points="0,-138.0 -14.9,0 0,138.0 14.9,0" fill="url(#beam)"/>
+    <g transform="rotate(45)">
+      <polygon points="-82.8,0 0,-8.6 82.8,0 0,8.6" fill="url(#beam)" opacity="0.85"/>
+      <polygon points="0,-82.8 -8.6,0 0,82.8 8.6,0" fill="url(#beam)" opacity="0.85"/>
+    </g>
+  </g>
+  <circle cx="811.12" cy="344.27" r="18.6" fill="#FFFFFF"/>
+</svg>`;
+
+const FOOT = (n)=>`<footer class="foot"><span>ThrottleIQ · Blankframe Technologies</span><span>Dhaka, Bangladesh</span></footer>`;
+
+const slides = [
+
+// 1 — TITLE
+`<div class="body-area" style="justify-content:center;align-items:flex-start;">
+  <div class="logo-wrap">${LOGO}</div>
+  <div class="kicker">Machine Memory for Motorcycles</div>
+  <h1 style="font-size:clamp(36px,6vw,76px);">ThrottleIQ</h1>
+  <p class="bn" style="font-size:clamp(15px,1.6vw,22px);color:var(--text-dim);margin:0 0 22px 0;">রাইডের ডিজিটাল ব্ল্যাকবক্স ও সুরক্ষাকবচ</p>
+  <div class="divider"></div>
+  <p class="subtitle">The smartphone-native safety, telematics, and community platform built for Bangladesh's 4.5&nbsp;million&nbsp;motorcycles — and the riders who depend on them every day.</p>
+</div>
+${FOOT()}`,
+
+// 2 — THE PROBLEM
+`<div class="kicker">The Problem</div>
+<h2 class="section-title">Bangladesh's roads move on two wheels — with almost no safety net</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-2">
+    <div class="card"><h3><span class="icon-badge ic-red">⚠</span>Unwitnessed crashes</h3><p>Two-wheelers account for over <b style="color:var(--text)">40% of road fatalities</b> in Bangladesh. A solo rider who crashes on a highway or rural corridor often goes unassisted through the critical <b style="color:var(--text)">Golden Hour</b>.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">📟</span>Zero digital telematics</h3><p>Unlike cars with onboard computers, an estimated <b style="color:var(--text)">99% of motorcycles</b> here have no diagnostics, telemetry, or crash awareness of any kind.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-cyan">🛠</span>Maintenance by memory</h3><p>Most riders track oil changes, chain slack, and brake wear by guesswork — leading to preventable breakdowns, wasted fuel, and steep resale losses.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">🌐</span>Foreign apps don't fit</h3><p>Global apps cost $60–80/year, freeze the moment signal drops on a highway, ignore the local mechanic ecosystem, and offer no Bangla localization.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 3 — INTRODUCING
+`<div class="kicker">The Solution</div>
+<h2 class="section-title">ThrottleIQ turns any smartphone into a motorcycle's black box</h2>
+<p class="subtitle">No hardware to buy, no wiring into the bike — just sensors already in the rider's pocket, working whether or not the network is.</p>
+<div class="body-area">
+  <div class="grid grid-4">
+    <div class="card"><h3><span class="icon-badge ic-red">🛡</span>Detect</h3><p>Sensor-fusion crash detection tuned to real road conditions — not a generic tilt sensor.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">📡</span>Protect</h3><p>Automated emergency broadcast reaches family in seconds, no app install required on their end.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-cyan">🧠</span>Remember</h3><p>Every kilometre ridden feeds real maintenance reminders — oil, chain, brakes, tires.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">🤝</span>Connect</h3><p>A bilingual community of riders, clubs, and verified local garages, built around real routes.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 4 — HOW IT WORKS
+`<div class="kicker">How It Works</div>
+<h2 class="section-title">Offline-first by design, not as an afterthought</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="flow">
+    <div class="fbox card">
+      <h3><span class="icon-badge ic-cyan">📱</span>On the bike</h3>
+      <p>GPS + accelerometer + gyroscope sampled 20×/second. A live sensor-fusion engine reads deceleration curves and impact spikes in real time, filtering out potholes and speed breakers.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="fbox card">
+      <h3><span class="icon-badge ic-amber">💾</span>On the phone</h3>
+      <p>Every point is written straight to a local database first. Nothing waits on a network connection — a ride recorded in a dead zone is a ride that is never lost.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="fbox card">
+      <h3><span class="icon-badge ic-green">☁</span>In the cloud</h3>
+      <p>The moment signal returns, everything syncs automatically — rides, crash alerts, maintenance logs — with zero rider effort and no re-entered data.</p>
+    </div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 5 — FEATURES
+`<div class="kicker">What's Actually Built</div>
+<h2 class="section-title">A working app, not a concept</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-4">
+    <div class="card"><h3><span class="icon-badge ic-red">🚨</span>Crash Detection</h3><p>60-second cancellable alarm before anything is sent — false alarms cost a tap, not trust.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">🔗</span>Emergency Link</h3><p>An unguessable live-location link opens in any browser — no app required by whoever receives it.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-cyan">🗺</span>Offline Ride Tracking</h3><p>Full route, speed, and event logging with zero cellular connectivity required.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">🔧</span>Predictive Maintenance</h3><p>Service intervals tracked against real kilometres ridden — not a guess or a calendar date.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-cyan">📍</span>Garage &amp; Fuel Directory</h3><p>Crowdsourced, rider-verified local mechanics, parts shops, and fuel stations — bilingual.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">👥</span>Rider Community</h3><p>Social feed, forums, group rides with live shared maps, and club leaderboards.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">🏅</span>Ranks &amp; Badges</h3><p>Distance-based rider ranks, streaks, and tiered badges that reward consistent, safe riding.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-red">📈</span>Route Safety Insight</h3><p>Speed-colored routes and private "faster than usual here" alerts, built from anonymized road data.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 6 — FIT FOR BANGLADESH
+`<div class="kicker">Built for Bangladesh</div>
+<h2 class="section-title">Not a global app with Bangla text pasted on top</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <ul class="list">
+    <li><b>Bilingual by design</b> <span class="dim">— English and Bangla throughout the entire app, not a bolted-on translation layer.</span></li>
+    <li><b>Offline-first for real highways</b> <span class="dim">— built for the signal gaps on national highways and rural corridors, not just city center Wi-Fi.</span></li>
+    <li><b>Zero hardware cost</b> <span class="dim">— runs on the budget Android phones riders already carry, no OBD dongle, no bike wiring, no warranty risk.</span></li>
+    <li><b>Calibrated for local roads</b> <span class="dim">— crash detection tuned to filter Dhaka-style potholes and speed breakers instead of false-alarming on them.</span></li>
+    <li><b>A local ecosystem, not generic pins</b> <span class="dim">— verified mechanics, parts shops, and fuel stations that riders here actually use.</span></li>
+    <li><b>Priced for the market</b> <span class="dim">— a free core tier, not the $60–80/year Western apps charge for far less.</span></li>
+  </ul>
+</div>
+${FOOT()}`,
+
+// 7 — SAFER ROADS
+`<div class="kicker">Safer Roads</div>
+<h2 class="section-title">Closing the Golden Hour gap</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-2">
+    <div class="card"><h3><span class="icon-badge ic-red">⏱</span>Help starts before someone asks</h3><p>Automated detection + broadcast means family finds out in seconds, not hours — without the rider needing to be conscious to make a call.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">✅</span>Alarms riders trust</h3><p>A crash signature tuned to real road conditions means the alarm fires for real impacts — not every pothole — so it never gets ignored out of habit.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-cyan">🩺</span>No install needed to help</h3><p>The emergency link and SafeQR medical card open in a plain browser — a family member or a stranger who stops to help doesn't need the app.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">📊</span>Data that makes roads legible</h3><p>Anonymized, opt-in speed data slowly builds a picture of where and when Bangladesh's roads get risky — useful to a rider today, useful to safety planning tomorrow.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 8 — COMMUNITY BENEFITS
+`<div class="kicker">Community Benefits</div>
+<h2 class="section-title">Everyone in the ecosystem gets something</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-2">
+    <div class="card"><h3><span class="icon-badge ic-cyan">🏍</span>Riders &amp; clubs</h3><p>Group rides with live shared maps, club leaderboards, and a social feed built around real routes — not a generic fitness-app timeline.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">🔩</span>Local mechanics &amp; shops</h3><p>Free visibility through a verified SafeSpot listing, in exchange for referring riders — a growth channel that costs a garage nothing to join.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">📦</span>Gig &amp; delivery riders</h3><p>A safety net for the riders logistics and food-delivery platforms depend on every single day, with no extra hardware for the platform to manage.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-red">👪</span>Families</h3><p>Peace of mind through opt-in live-location sharing and emergency links that need nothing installed on the family's phone to work.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 9 — BUSINESS VALUE
+`<div class="kicker">Business Value</div>
+<h2 class="section-title">A large, underserved market with a clear path to revenue</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-3" style="margin-bottom:18px;">
+    <div class="card stat"><div class="num">4.5M+</div><div class="label">Registered motorcycles (TAM)</div></div>
+    <div class="card stat"><div class="num">1.2M+</div><div class="label">Smartphone commuters &amp; gig riders (SAM)</div></div>
+    <div class="card stat"><div class="num">৳1,500Cr+</div><div class="label">Annual ecosystem spend (fuel, parts, service)</div></div>
+  </div>
+  <div class="grid grid-3">
+    <div class="card"><h3><span class="icon-badge ic-cyan">🆓</span>Freemium Core</h3><p>Unlimited offline tracking and maintenance reminders, free forever — the acquisition engine.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-amber">⭐</span>Pro Subscription</h3><p>Automated emergency dispatch, cloud backup, and advanced telemetry for a small monthly fee.</p></div>
+    <div class="card"><h3><span class="icon-badge ic-green">🏢</span>B2B Fleet SaaS</h3><p>Per-bike safety dashboards for courier and delivery fleets — priced per bike, per month.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 10 — COMPETITIVE EDGE
+`<div class="kicker">Why ThrottleIQ Wins</div>
+<h2 class="section-title">Global apps and hardware trackers weren't built for this market</h2>
+<div class="divider"></div>
+<div class="body-area">
+<table class="cmp">
+<tr><th>Dimension</th><th>Fitness Apps</th><th>Western Moto Apps</th><th>Hardware Trackers</th><th>ThrottleIQ</th></tr>
+<tr><td>Crash detection</td><td>None</td><td>Fails without 4G</td><td>Basic tilt only</td><td class="hero-col">Impact + speed-drop signature</td></tr>
+<tr><td>Emergency link</td><td>Paywalled</td><td>Recipient needs the app</td><td>Raw SMS coordinates</td><td class="hero-col">Opens in any browser</td></tr>
+<tr><td>Offline resilience</td><td>Loses data</td><td>Freezes on weak signal</td><td>Needs a live SIM</td><td class="hero-col">100% offline-first</td></tr>
+<tr><td>Maintenance tracking</td><td>None</td><td>Manual calendar</td><td>None</td><td class="hero-col">Automatic, km-based</td></tr>
+<tr><td>Hardware cost</td><td>None</td><td>None</td><td>৳3,500–8,000+</td><td class="hero-col">Zero — uses phone sensors</td></tr>
+<tr><td>Localization</td><td>English only</td><td>English only</td><td>None</td><td class="hero-col">Bangla + local directory</td></tr>
+<tr><td>Price</td><td>$80/yr</td><td>$60/yr</td><td>৳500/mo recharge</td><td class="hero-col">Free core + ৳99/mo Pro</td></tr>
+</table>
+</div>
+${FOOT()}`,
+
+// 11 — TRACTION
+`<div class="kicker">Traction Today</div>
+<h2 class="section-title">This isn't a pitch for an idea — it's already running</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-4">
+    <div class="card stat"><div class="num">Beta</div><div class="label">v1.0.0-beta.2.8, Play Console internal track</div></div>
+    <div class="card stat"><div class="num">300+</div><div class="label">Automated test files across the app</div></div>
+    <div class="card stat"><div class="num">0</div><div class="label">External capital raised to date</div></div>
+    <div class="card stat"><div class="num">8+</div><div class="label">Core feature areas already shipped</div></div>
+  </div>
+  <p class="subtitle" style="margin-top:22px;">Crash detection, offline sync, predictive maintenance, the rider community, the garage directory, and gamification are built, tested, and running today — not roadmap items.</p>
+</div>
+${FOOT()}`,
+
+// 12 — VISION / ROADMAP
+`<div class="kicker">Where This Goes</div>
+<h2 class="section-title">From grassroots trust to a national safety layer</h2>
+<div class="divider"></div>
+<div class="body-area">
+  <div class="grid grid-3">
+    <div class="card"><span class="pill">Phase 1</span><h3 style="margin-top:12px;">Grassroots seeding</h3><p>Onboard riding clubs and touring communities, grow trust rider by rider, garage by garage.</p></div>
+    <div class="card"><span class="pill">Phase 2</span><h3 style="margin-top:12px;">Fleet safety pilots</h3><p>Bring courier and delivery platforms onto fleet dashboards, driver risk scores, and maintenance audit logs.</p></div>
+    <div class="card"><span class="pill">Phase 3</span><h3 style="margin-top:12px;">Marketplace &amp; insurance</h3><p>Verified garage marketplace and usage-based insurance partnerships built on real telematics data.</p></div>
+  </div>
+</div>
+${FOOT()}`,
+
+// 13 — CLOSING
+`<div class="body-area" style="justify-content:center;">
+  <div class="logo-wrap" style="width:72px;height:72px;">${LOGO}</div>
+  <h1 style="font-size:clamp(30px,5vw,58px);">Built in Bangladesh, for Bangladesh's roads.</h1>
+  <p class="subtitle">ThrottleIQ · Blankframe Technologies (com.bft.throttleiq)<br>Dhaka, Bangladesh</p>
+  <div class="divider"></div>
+  <p class="subtitle" style="font-size:clamp(16px,1.6vw,22px);color:var(--text);">Thank you — questions welcome.</p>
+</div>
+${FOOT()}`
+];
+
+const deck = document.getElementById('deck');
+slides.forEach((html,i)=>{
+  const d = document.createElement('div');
+  d.className = 'slide' + (i===0?' active':'');
+  d.innerHTML = html;
+  deck.appendChild(d);
+});
+
+const dotsEl = document.getElementById('dots');
+slides.forEach((_,i)=>{
+  const s = document.createElement('span');
+  if(i===0) s.className='on';
+  dotsEl.appendChild(s);
+});
+
+let current = 0;
+const total = slides.length;
+const slideEls = document.querySelectorAll('.slide');
+const dotEls = document.querySelectorAll('#dots span');
+const counter = document.getElementById('counter');
+const progress = document.getElementById('progress');
+
+function render(){
+  slideEls.forEach((el,i)=>el.classList.toggle('active', i===current));
+  dotEls.forEach((el,i)=>el.classList.toggle('on', i===current));
+  counter.textContent = (current+1) + ' / ' + total;
+  progress.style.width = ((current+1)/total*100) + '%';
+}
+function go(n){
+  current = Math.max(0, Math.min(total-1, n));
+  render();
+}
+
+document.getElementById('prevBtn').addEventListener('click', ()=>go(current-1));
+document.getElementById('nextBtn').addEventListener('click', ()=>go(current+1));
+
+window.addEventListener('keydown', (e)=>{
+  if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); go(current+1); }
+  if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); go(current-1); }
+  if(e.key==='Home') go(0);
+  if(e.key==='End') go(total-1);
+});
+
+let touchX = null;
+window.addEventListener('touchstart', (e)=>{ touchX = e.touches[0].clientX; });
+window.addEventListener('touchend', (e)=>{
+  if(touchX===null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(Math.abs(dx) > 50){ dx < 0 ? go(current+1) : go(current-1); }
+  touchX = null;
+});
+
+render();
+</script>
+</body>
+</html>

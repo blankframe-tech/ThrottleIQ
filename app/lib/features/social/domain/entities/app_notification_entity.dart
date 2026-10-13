@@ -5,6 +5,13 @@ enum NotificationType {
   /// .groupRideId] so tapping the row can accept the invite and open the
   /// shared live map.
   groupRideInvite,
+
+  /// "X joined your ride" — fired at the ride's creator when someone joins,
+  /// either by [NotificationType.groupRideInvite] acceptance or a shared join
+  /// code. Carries [AppNotificationEntity.groupRideId] so tapping the row
+  /// opens the shared live map; unlike [groupRideInvite] there is no accept
+  /// step, just a view.
+  groupRideJoined,
 }
 
 /// An in-app notification (currently just "so-and-so followed you" — the
@@ -45,5 +52,12 @@ class AppNotificationEntity {
   /// a tappable "join the ride" affordance that would open nothing.
   bool get isActionableGroupRideInvite =>
       type == NotificationType.groupRideInvite &&
+      (groupRideId != null && groupRideId!.isNotEmpty);
+
+  /// True only when this "so-and-so joined" row can actually open a ride —
+  /// same reasoning as [isActionableGroupRideInvite]: a blank/missing id must
+  /// not render a tappable affordance that opens nothing.
+  bool get isViewableGroupRideJoined =>
+      type == NotificationType.groupRideJoined &&
       (groupRideId != null && groupRideId!.isNotEmpty);
 }

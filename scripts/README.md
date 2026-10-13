@@ -8,10 +8,15 @@ Flutter app build and are not deployed with the Cloud Functions.
 |---|---|---|
 | [`reset_beta_data.js`](#-reset_beta_datajs--read-this-first) | Wipes **all** rider data and Auth accounts | **No** |
 | [`seed_dhaka_places.js`](#seed_dhaka_placesjs--seed-the-dhaka-places-directory) | Creates place documents for Dhaka's petrol pumps, garages and parts sellers, from OpenStreetMap | Yes — one query deletes the batch |
+| [`seed_ai_cameras.js`](#seed_ai_camerasjs--seed-dhaka-ai-traffic-enforcement-cameras) | Populates the `places` collection with Dhaka's 30+ DMP AI traffic enforcement cameras | Yes — one query deletes `createdBy == 'system:dmp-ai-camera-seed'` |
+| [`seed_police_checkposts.js`](#seed_police_checkpostsjs--seed-frequent-police-checkposts) | Populates the `places` collection with Dhaka's 30 frequent police checkpost & citation hotspots | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed'` |
+| [`seed_police_checkposts_v2.js`](#seed_police_checkposts_v2js--seed-additional-police-checkposts) | Populates the `places` collection with 25 additional DMP police checkposts across outer/corridor zones | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v2'` |
+| [`seed_police_checkposts_v3.js`](#seed_police_checkposts_v3js--seed-crowdsourced-police-checkposts) | Populates the `places` collection with 35 crowdsourced checkposts from Facebook Traffic groups & Waze | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v3'` |
+| [`update_places_google_ratings.js`](#update_places_google_ratingsjs--enrich-places-with-google-maps-ratings) | Enriches commercial places (fuel, garage, parts) with Google Maps ratings (`x`) alongside ThrottleIQ ratings (`y`) | Yes — re-running updates fields |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 
-All four share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
+All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
 be re-run. The [Setup](#setup) section below applies to all of them.
 
@@ -25,7 +30,7 @@ npm test
 ## Security-rules tests
 
 `test/rules/firestore_rules.test.js` exercises `firestore.rules` against the
-Firestore emulator — the engagement-counter clauses (`docs/Issues.md` §24.7)
+Firestore emulator — the engagement-counter clauses (`issues_fixed.md` §24.7)
 and the moderation helpers (§24.11). **Run this before any
 `firebase deploy --only firestore:rules`.**
 
@@ -41,6 +46,9 @@ Two things worth knowing about how this is wired:
   Studio's bundled JBR (`/Applications/Android Studio.app/Contents/jbr/…`),
   the same runtime the `keytool` workaround in `HANDOFF_Document.md` uses. If
   Android Studio isn't installed, set `JAVA_HOME` to any JDK 17+ instead.
+  CI (`.github/workflows/ci.yml`) runs `npm run test:rules:ci` instead, the
+  same command without the hardcoded `JAVA_HOME`; it installs a JDK with
+  `actions/setup-java` first.
 - **These tests live in `test/rules/`, not `test/`, on purpose.** `npm test`'s
   glob is `test/*.test.js` and is deliberately non-recursive, so the
   pure-function tests above stay fast and emulator-free.
@@ -49,6 +57,43 @@ The runner also passes `$npm_node_execpath` explicitly rather than saying
 `node`: `firebase emulators:exec` runs its script with the Firebase standalone
 binary shadowing `node` on PATH, which otherwise tries to resolve `--test` as a
 module path and fails.
+
+## Realtime Database tests
+
+Contract and rationale: `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
+
+```bash
+cd scripts
+npm run test:rtdb        # Mac: JAVA_HOME -> Homebrew openjdk@21
+npm run test:rtdb:ci     # same, JAVA_HOME from the environment (CI)
+```
+
+Runs, against the RTDB emulator (port 9000):
+
+- `test/rtdb/rtdb_rules.test.js` — `database.rules.json`, allow + deny for
+  `live_shares`, `group_rides`, `chat_presence`.
+- `test/rtdb/rtdb_delivery.test.js` — two real SDK clients, each on its own
+  WebSocket: ordered gap-free `seq` delivery with a p95 latency bound,
+  `.info/connected` across `goOffline()`/`goOnline()`, `onDisconnect()`
+  cleanup, offline-queued writes, and permission errors surfacing to a
+  refused listener. Also pins one non-obvious behaviour the viewer relies
+  on: deleting a `live_shares` node **cancels** an attached viewer's listen
+  with `permission_denied` rather than delivering `null`.
+- `test/live_viewer_core.test.js` — the pure merge/staleness/seq logic in
+  `public/live-viewer-core.js` (no emulator needed; also picked up by
+  `npm test`).
+
+`verify_realtime.js` is the production smoke test: an admin writer streams
+1 Hz updates to a throwaway `/live_shares/{token}` and an unauthenticated
+client reads them back through the rules, then reports loss, ordering and
+p50/p95 latency and deletes the node.
+
+```bash
+npm run verify:realtime:emulator                                   # emulator
+node verify_realtime.js --url=https://<instance>.firebasedatabase.app  # prod (ADC)
+```
+
+It refuses to run without `--emulator` or an explicit `--url`.
 
 ---
 
@@ -532,8 +577,11 @@ scripted use). Each account:
 
 - signs up with Firebase Auth at `<handle>@qa-seed.invalid` (`.invalid` is the
   IANA-reserved TLD for exactly this — RFC 2606 — so it can never collide with
-  a real rider's email), password `QaSeed!2026`, and the custom claim
-  `{ qaSeed: true }`
+  a real rider's email), its own randomly-generated password (issues_fixed.md
+  §62.10 — no more shared hardcoded password; the passwords for accounts
+  created by a real run are written to a local, gitignored
+  `qa_seed_passwords.<timestamp>.json`, never printed to stdout/CI logs), and
+  the custom claim `{ qaSeed: true }`
 - gets a `users/{uid}` profile + claimed `usernames/{handle}`, one bike in
   `users/{uid}/bikes`, and 4-8 backdated rides in `users/{uid}/rides`
 - shares 1-2 of those rides to the public `rides` feed
@@ -595,63 +643,60 @@ Requires the confirmation phrase `DELETE QA SEED DATA`, same as
 irreversible, but scoped only to the tagged QA batch — it cannot touch real
 rider data.
 
-## Live roster (seeded 2026-08-27)
+## Live roster (reseeded 2026-09-19)
 
-**Stale as of 2026-08-29 — `qa_seed_catalog.js`/`seed_qa_test_riders.js` were
-updated after this batch went live** (all-male rider names, Banglish forum
-post copy, and a bike catalog restricted above 150cc to CFMoto/Royal Enfield
-only — see git history on those two files). The table below is what's
-*actually in `throttleiqfb` right now*: the old mixed-gender names, the old
-English post copy, and the old catalog (which included KTM/Kawasaki/other
-150-400cc entries above 150cc). It will only match the current script output
-after someone runs `cleanup_qa_test_riders.js` followed by a fresh
-`seed_qa_test_riders.js --yes-i-really-mean-it` — both of which write
-publicly-visible changes to a live project other beta testers are using, so
-that reseed needs its own explicit go-ahead; it was not run as part of this
-update. Regenerate this table after that reseed.
-
-The 30 accounts actually created in `throttleiqfb`, pulled from Firestore
-after the run — see [Running it for real](#running-it-for-real) above for
-how to reproduce this listing (`qa_seed_catalog.allSeedableForumIds()` plus a
-`qaSeed == true` query per forum/user).
+The previous 2026-08-27 batch (mixed-gender names, English forum posts, a
+catalog with KTM/Kawasaki/other >150cc entries) was deleted via
+`cleanup_qa_test_riders.js --yes-i-really-mean-it` and replaced with a fresh
+`seed_qa_test_riders.js --yes-i-really-mean-it` run against the then-current
+script (all-male rider names, Banglish forum post copy, a bike catalog
+restricted above 150cc to CFMoto/Royal Enfield only — §55/§69.13 in
+`issues_fixed.md`). The table below is what's *actually in `throttleiqfb`
+right now*, pulled from Firestore after the run — see
+[Running it for real](#running-it-for-real) above for how to reproduce this
+listing (`qa_seed_catalog.allSeedableForumIds()` plus a `qaSeed == true`
+query per forum/user).
 
 | Handle | Name | Bike | City |
 |---|---|---|---|
 | tanvir01 | Tanvir Ahmed | Honda CB Shine 125 | Dhaka |
-| nusrat02 | Nusrat Jahan | Bajaj Discover 125 | Chattogram |
+| mizanur02 | Mizanur Rahman | Bajaj Discover 125 | Chattogram |
 | rakibul03 | Rakibul Islam | TVS Metro Plus 100 | Sylhet |
-| farhana04 | Farhana Akter | Hero Splendor Plus | Rajshahi |
+| shafiqul04 | Shafiqul Islam | Hero Splendor Plus | Rajshahi |
 | shakil05 | Shakil Hasan | Yamaha Saluto 125 | Cox's Bazar |
-| mitu06 | Mitu Rahman | Suzuki Hayate EP | Bogura |
+| golam06 | Golam Mostofa | Suzuki Hayate EP | Bogura |
 | imran07 | Imran Hossain | Runner Turbo 100 | Cumilla |
-| sadia08 | Sadia Islam | Lifan KP100 | Khulna |
+| rashedul08 | Rashedul Karim | Lifan KP100 | Khulna |
 | kamrul09 | Kamrul Hasan | Walton Fizor 125 | Rangpur |
-| rumana10 | Rumana Akter | Bajaj CT 100 | Mymensingh |
+| faisal10 | Faisal Ahmed | Bajaj CT 100 | Mymensingh |
 | mahmudul11 | Mahmudul Hasan | Yamaha FZS-Fi V3 | Dhaka |
-| sabrina12 | Sabrina Yasmin | Honda CB150R Streetfire | Chattogram |
-| arif13 | Arif Hossain | Suzuki Gixxer 155 | Sylhet |
-| tania14 | Tania Sultana | Bajaj Pulsar NS160 | Rajshahi |
-| nayeem15 | Nayeem Chowdhury | TVS Apache RTR 160 4V | Cox's Bazar |
-| jannatul16 | Jannatul Ferdous | Yamaha MT-15 | Bogura |
-| habibur17 | Habibur Rahman | Honda X-Blade 160 | Cumilla |
-| shirin18 | Shirin Akter | Bajaj Pulsar 150 | Khulna |
-| rezaul19 | Rezaul Karim | TVS Apache RTR 165RP | Rangpur |
-| mahfuza20 | Mahfuza Begum | Suzuki Gixxer SF 155 | Mymensingh |
-| sohel21 | Sohel Rana | Yamaha R15 V4 | Dhaka |
-| nasrin22 | Nasrin Sultana | Suzuki GSX-R150 | Chattogram |
-| anisur23 | Anisur Rahman | KTM Duke 250 | Sylhet |
-| farzana24 | Farzana Haque | Honda CBR250RR | Rajshahi |
-| jubayer25 | Jubayer Ahmed | Kawasaki Ninja 300 | Cox's Bazar |
-| sultana26 | Sultana Razia | Royal Enfield Classic 350 | Bogura |
-| emon27 | Emon Khan | Royal Enfield Himalayan 411 | Cumilla |
-| rukhsana28 | Rukhsana Parvin | Yamaha YZF-R3 | Khulna |
-| riyad29 | Riyad Hossain | KTM RC 390 | Rangpur |
-| moushumi30 | Moushumi Akter | Kawasaki Z400 | Mymensingh |
+| zahidul12 | Zahidul Islam | Suzuki GSX-R150 | Chattogram |
+| arif13 | Arif Hossain | Honda CB150R Streetfire | Sylhet |
+| aminul14 | Aminul Haque | Bajaj Pulsar 150 | Rajshahi |
+| nayeem15 | Nayeem Chowdhury | CF Moto SR 250 | Cox's Bazar |
+| shamsul16 | Shamsul Alam | CF Moto SR 250 | Bogura |
+| habibur17 | Habibur Rahman | CF Moto SR 300 | Cumilla |
+| delwar18 | Delwar Hossain | CF Moto SR 300 | Khulna |
+| rezaul19 | Rezaul Karim | CF Moto CF Light 230 Dual | Rangpur |
+| nazmul20 | Nazmul Hasan | CF Moto CF Light 230 Dual | Mymensingh |
+| sohel21 | Sohel Rana | Royal Enfield Classic 350 | Dhaka |
+| iqbal22 | Iqbal Hossain | Royal Enfield Classic 350 | Chattogram |
+| anisur23 | Anisur Rahman | Royal Enfield Bullet 350 | Sylhet |
+| ashraful24 | Ashraful Islam | Royal Enfield Bullet 350 | Rajshahi |
+| jubayer25 | Jubayer Ahmed | Royal Enfield Meteor 350 | Cox's Bazar |
+| rafiqul26 | Rafiqul Islam | Royal Enfield Meteor 350 | Bogura |
+| emon27 | Emon Khan | Royal Enfield Hunter 350 | Cumilla |
+| monirul28 | Monirul Islam | Royal Enfield Hunter 350 | Khulna |
+| riyad29 | Riyad Hossain | Royal Enfield Himalayan 411 | Rangpur |
+| shariful30 | Shariful Islam | Royal Enfield Himalayan 411 | Mymensingh |
 
-**Where their posts are** — 60 posts across 34 forums: one post per rider in
-their own bike's model forum (30 forums, e.g. `forums/honda__cb_shine_125`),
-plus general topic forums — **Road Trips** (5 posts), **Maintenance** (11),
-**Mileage Talk** (8), **Mods & Accessories** (6).
+**Where their posts are** — 60 posts across 26 forums: one post per rider in
+their own bike's model forum (21 distinct model forums — several riders now
+share a forum, since the catalog only has 9 distinct bikes above 150cc:
+CFMoto SR 250/SR 300/CF Light 230 Dual and Royal Enfield Classic 350/Bullet
+350/Meteor 350/Hunter 350/Himalayan 411, 2 posts each), plus general topic
+forums — **Road Trips** (4 posts), **Maintenance** (11), **Mileage Talk**
+(9), **Mods & Accessories** (6).
 
 ## Syntax check
 

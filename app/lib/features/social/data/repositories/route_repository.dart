@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/route_entity.dart';
 import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/route_model.dart';
+import '../../domain/utilities/privacy_zone_salt.dart';
 
 class RouteRepository {
   static final RouteRepository _instance = RouteRepository._internal();
@@ -13,6 +15,7 @@ class RouteRepository {
   RouteRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
 
   /// Saves a new route from a completed ride.
   ///
@@ -21,7 +24,7 @@ class RouteRepository {
   /// save screen makes for that state, so a personal route deliberately keeps
   /// its real endpoints. Privacy-zone clipping happens in [setPublic], at the
   /// moment a route actually becomes readable by anyone else — see that
-  /// method's doc comment (docs/Issues.md §24.3).
+  /// method's doc comment (issues §24.3).
   Future<String> saveRoute({
     required String userId,
     required String name,
@@ -30,7 +33,8 @@ class RouteRepository {
     required List<LatLng> polyline,
     String? mapSnapshotUrl,
   }) async {
-    final routeRef = _firestore.collection('users').doc(userId).collection('routes').doc();
+    final routeRef =
+        _firestore.collection('users').doc(userId).collection('routes').doc();
 
     final route = RouteModel(
       id: routeRef.id,
@@ -78,8 +82,7 @@ class RouteRepository {
         .get();
 
     return querySnapshot.docs
-        .map((doc) =>
-            RouteModel.fromFirestore(doc.data(), doc.id).toEntity())
+        .map((doc) => RouteModel.fromFirestore(doc.data(), doc.id).toEntity())
         .toList();
   }
 
@@ -131,7 +134,7 @@ class RouteRepository {
   /// (owner-only). [makePublic] is the one-way shorthand kept for callers that
   /// only ever publish.
   ///
-  /// Going public permanently clips the stored polyline (docs/Issues.md
+  /// Going public permanently clips the stored polyline (the issues log
   /// §24.3) — strips ~200m off each end, same as
   /// [RideShareRepository.shareRide] does for shared rides. Route *sharing*
   /// always did this; route *publishing* stored the raw trail verbatim, so
@@ -146,8 +149,11 @@ class RouteRepository {
   /// without a line to draw. Turning a route private does NOT need a read
   /// first — it never touches the polyline.
   Future<void> setPublic(String userId, String routeId, bool isPublic) async {
-    final docRef =
-        _firestore.collection('users').doc(userId).collection('routes').doc(routeId);
+    final docRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('routes')
+        .doc(routeId);
 
     if (!isPublic) {
       await docRef.update({'isPublic': false});
@@ -159,25 +165,54 @@ class RouteRepository {
     final rawPolyline = data == null
         ? const <LatLng>[]
         : RouteModel.fromFirestore(data, routeId).polyline;
-    final clipped = PrivacyZoneClipper.clipPolyline(rawPolyline);
+    final clipped = PrivacyZoneClipper.clipPolyline(
+      rawPolyline,
+      seed: await _privacySalt.forUid(userId),
+    );
 
     await docRef.update({
       'isPublic': true,
-      'polyline':
-          clipped.map((point) => {'lat': point.latitude, 'lng': point.longitude}).toList(),
+      'polyline': clipped
+          .map((point) => {'lat': point.latitude, 'lng': point.longitude})
+          .toList(),
     });
   }
 
-  /// Updates the times ridden counter.
+  /// Records that [userId] has just finished riding their own route
+  /// [routeId] (issues §85).
+  ///
+  /// This existed from the start and was never called from anywhere, so
+  /// `timesRidden` sat at the 1 [saveRoute] writes and "ridden 1×" was the
+  /// same on every route forever. The caller is `ActiveRideScreen._stopRide`,
+  /// on *completion* — not on start, which would count routes a rider opened
+  /// and abandoned.
+  ///
+  /// `FieldValue.increment` rather than read-modify-write, so two phones
+  /// finishing the same route at once both count. Ownership needs no branch:
+  /// `users/{uid}/routes/{id}` is owner-only write in `firestore.rules` and
+  /// the document does not exist under anyone else's uid, so following a
+  /// *discovered* route fails and is swallowed. The data model is the check.
+  ///
+  /// Best-effort, and deliberately **not** put through the outbox. Each
+  /// outboxed operation costs a new op type in the dispatcher and the DAO, and
+  /// this is a cosmetic counter on a route list — losing a bump because the
+  /// rider ended a ride in a basement is not worth that. If it ever becomes
+  /// load-bearing (ranking Discover by it, say), this is the line that moves.
   Future<void> incrementTimesRidden(String userId, String routeId) async {
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('routes')
-        .doc(routeId)
-        .update({
-      'timesRidden': FieldValue.increment(1),
-    });
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('routes')
+          .doc(routeId)
+          .update({
+        'timesRidden': FieldValue.increment(1),
+      });
+    } catch (e) {
+      // Not-found (a discovered route), permission-denied, or plain offline.
+      // None of these should surface to a rider who just finished a ride.
+      debugPrint('[RouteRepository] timesRidden bump skipped for $routeId: $e');
+    }
   }
 
   /// Deletes a route.

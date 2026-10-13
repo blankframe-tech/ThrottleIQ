@@ -2,11 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/map_location_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -16,9 +17,16 @@ import '../../data/utils/geohash_utils.dart';
 import '../../data/utils/image_compression_utils.dart';
 import '../../domain/entities/place_entity.dart';
 import '../providers/places_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/error_reporter.dart';
+import '../../domain/place_tags.dart';
+import '../place_category_l10n.dart';
+import '../place_tag_l10n.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
-/// real fix is available yet.
+/// real fix is available yet. Only ever the map's *initial camera* — never a
+/// saved location (grill §3.5.3): a place saved here without a real
+/// fix or a deliberate pin used to land in central Dhaka.
 const _fallbackCenter = LatLng(23.8103, 90.4125);
 
 /// "Add a place" form — the location defaults to the rider's current GPS fix
@@ -38,6 +46,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   final _phoneCtrl = TextEditingController();
   final _hoursCtrl = TextEditingController();
   PlaceCategory _selectedCategory = PlaceCategory.fuel;
+
+  /// Rider tags for the place. Only tags valid for [_selectedCategory] are
+  /// offered, and switching category drops any that no longer apply.
+  final Set<PlaceTag> _tags = {};
   bool _submitting = false;
   LatLng? _pickedLocation;
 
@@ -47,6 +59,26 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   /// True while the "use the pin's location" reverse-geocode is in flight.
   bool _lookingUpAddress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed the pick from the rider's GPS fix as soon as there is one, so the
+    // common case ("add the place I'm standing at") needs no panning. Never
+    // overwrites a pin the rider has already moved.
+    ref.listenManual<AsyncValue<Position>>(currentPositionProvider, (_, next) {
+      final pos = next.valueOrNull;
+      if (pos != null && _pickedLocation == null) {
+        _pickedLocation = LatLng(pos.latitude, pos.longitude);
+      }
+    }, fireImmediately: true);
+  }
+
+  void _showPickLocationHint() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.pickLocationMapFirst)),
+    );
+  }
 
   @override
   void dispose() {
@@ -63,21 +95,21 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   Future<void> _pickPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.photo_camera_outlined, color: AppColors.primary),
-              title: Text('Take a photo',
-                  style: TextStyle(color: AppColors.textPrimary)),
+              leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.takeAPhoto,
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: Icon(Icons.photo_library_outlined, color: AppColors.primary),
-              title: Text('Choose from gallery',
-                  style: TextStyle(color: AppColors.textPrimary)),
+              leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
+              title: Text(sheetContext.l10n.chooseFromGallery,
+                  style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
           ],
@@ -91,10 +123,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           await ImagePicker().pickImage(source: source, imageQuality: 80);
       if (xfile == null || !mounted) return;
       setState(() => _photoPath = xfile.path);
-    } catch (e) {
+    } catch (e, st) {
+      // issues §101.P7: log the raw exception; riders get plain text.
+      reportNonFatal(e, st, reason: 'image picker');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open the camera or gallery: $e')),
+        SnackBar(content: Text(context.l10n.couldNotOpenCamera)),
       );
     }
   }
@@ -105,7 +139,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   /// [NominatimService].
   Future<void> _fillAddressFromPin() async {
     if (_lookingUpAddress) return;
-    final location = _pickedLocation ?? _fallbackCenter;
+    final location = _pickedLocation;
+    if (location == null) return _showPickLocationHint();
 
     setState(() => _lookingUpAddress = true);
     try {
@@ -116,9 +151,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       if (!mounted) return;
       if (suggestion == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                "Couldn't look that spot up — just describe it yourself."),
+                context.l10n.couldntLookThatSpot),
           ),
         );
         return;
@@ -138,7 +173,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
 
-    final location = _pickedLocation ?? _fallbackCenter;
+    final location = _pickedLocation;
+    if (location == null) return _showPickLocationHint();
 
     setState(() => _submitting = true);
     try {
@@ -156,8 +192,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Photo didn't upload — saving the place without it."),
+              SnackBar(
+                content: Text(context.l10n.photoDidntUploadSaving),
               ),
             );
           }
@@ -181,6 +217,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         photoUrls: photoUrls,
         createdBy: uid,
         createdAt: DateTime.now(),
+        tags: {
+          for (final tag in _tags)
+            if (tag.categories.contains(_selectedCategory)) tag,
+        },
       );
 
       await PlaceRepository().addPlace(place);
@@ -206,7 +246,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not add place: $e')),
+        SnackBar(content: Text(context.l10n.couldNotAddPlace(e))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -219,27 +259,27 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     if (_photoPath == null) {
       return InkWell(
         onTap: _submitting ? null : _pickPhoto,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        borderRadius: BorderRadius.circular(context.shape.radiusXl),
         child: Container(
           height: 96,
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusXl),
+            border: Border.all(color: context.palette.border),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_a_photo_outlined, size: 22, color: AppColors.textSecondary),
+              Icon(Icons.add_a_photo_outlined, size: 22, color: context.palette.textSecondary),
               const SizedBox(height: 6),
               Text(
-                'Add a photo (optional)',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                context.l10n.addPhotoOptional,
+                style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
               ),
               const SizedBox(height: 2),
               Text(
-                'A shopfront picture makes this place easy to spot',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                context.l10n.shopfrontPictureMakesThis,
+                style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -248,7 +288,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(context.shape.radiusXl),
       child: Stack(
         children: [
           Image.file(
@@ -261,10 +301,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
             // an exception box into the middle of the form.
             errorBuilder: (_, __, ___) => Container(
               height: 160,
-              color: AppColors.surface,
+              color: context.palette.surface,
               alignment: Alignment.center,
-              child: Text("Couldn't load that photo",
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              child: Text(context.l10n.couldntLoadThatPhoto,
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
             ),
           ),
           Positioned(
@@ -274,13 +314,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               children: [
                 _photoAction(
                   icon: Icons.edit,
-                  tooltip: 'Replace photo',
+                  tooltip: context.l10n.replacePhoto,
                   onTap: _submitting ? null : _pickPhoto,
                 ),
                 const SizedBox(width: 8),
                 _photoAction(
                   icon: Icons.close,
-                  tooltip: 'Remove photo',
+                  tooltip: context.l10n.removePhoto,
                   onTap: _submitting ? null : () => setState(() => _photoPath = null),
                 ),
               ],
@@ -321,8 +361,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         : _fallbackCenter;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Add Place')),
+      backgroundColor: context.palette.background,
+      appBar: AppBar(title: Text(context.l10n.addPlace)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Form(
@@ -330,7 +370,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Location', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text(context.l10n.location, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               MapLocationPicker(
                 // Keyed by center so the map remounts (and re-centers) once
@@ -339,10 +379,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 // reactive to prop changes on an already-mounted map.
                 key: ValueKey(initialCenter),
                 initialCenter: initialCenter,
-                onLocationChanged: (latLng) => _pickedLocation = latLng,
+                // The picker also reports its initial camera, which with no
+                // GPS fix is the Dhaka fallback — that isn't a pick.
+                onLocationChanged: (latLng) {
+                  if (latLng != _fallbackCenter) _pickedLocation = latLng;
+                },
               ),
               const SizedBox(height: 20),
-              Text('Category', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text(context.l10n.category, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -350,13 +394,16 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 children: PlaceCategory.values.map((category) {
                   final selected = category == _selectedCategory;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = category),
+                    onTap: () => setState(() {
+                      _selectedCategory = category;
+                      _tags.removeWhere((t) => !t.categories.contains(category));
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                        border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                        color: selected ? context.palette.primary.withValues(alpha: 0.15) : context.palette.surface,
+                        borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                        border: Border.all(color: selected ? context.palette.primary : context.palette.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -364,10 +411,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                           Text(category.icon, style: const TextStyle(fontSize: 13)),
                           const SizedBox(width: 6),
                           Text(
-                            category.displayName,
+                            category.localizedName(context.l10n),
                             style: TextStyle(
                               fontSize: 13,
-                              color: selected ? AppColors.primary : AppColors.textSecondary,
+                              color: selected ? context.palette.primary : context.palette.textSecondary,
                               fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                             ),
                           ),
@@ -377,30 +424,49 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   );
                 }).toList(),
               ),
+              if (PlaceTag.forCategory(_selectedCategory).isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Text(context.l10n.addPlaceFeaturesLabel,
+                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.addPlaceFeaturesHint,
+                    style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final tag in PlaceTag.forCategory(_selectedCategory))
+                      FilterChip(
+                        label: Text('${tag.icon} ${tag.localizedName(context.l10n)}'),
+                        selected: _tags.contains(tag),
+                        onSelected: (on) => setState(() => on ? _tags.add(tag) : _tags.remove(tag)),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Name *', hintText: 'e.g. Rahman Motors'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(labelText: context.l10n.nameStar, hintText: context.l10n.eGRahmanMotors),
+                validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredField : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.palette.textPrimary),
                 maxLines: 2,
                 minLines: 1,
                 // No validator: the pin already says exactly where this is.
                 // An address here is a convenience for the next rider, not a
                 // requirement — demanding one just made people type junk.
                 decoration: InputDecoration(
-                  labelText: 'Address (optional)',
-                  hintText: 'e.g. Beside Omuk School, Mirpur 10',
+                  labelText: context.l10n.addressOptional,
+                  hintText: context.l10n.eGBesideOmuk,
                   helperMaxLines: 3,
-                  helperText: 'Write it the way you\'d tell a friend — landmarks, '
-                      'not a formal street address. "Beside Omuk School" or '
-                      '"just after the Mirpur 10 circle" helps far more here.',
-                  helperStyle: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  helperText: context.l10n.writeItWayYoud,
+                  helperStyle: TextStyle(fontSize: 11, color: context.palette.textSecondary),
                 ),
               ),
               Align(
@@ -415,7 +481,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                         )
                       : const Icon(Icons.my_location, size: 16),
                   label: Text(
-                    _lookingUpAddress ? 'Looking up…' : "Use the pin's area",
+                    _lookingUpAddress ? context.l10n.lookingUp : context.l10n.usePinsArea,
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -426,16 +492,16 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Phone (optional)', hintText: '+880...'),
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(labelText: context.l10n.phoneOptional, hintText: '+880...'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _hoursCtrl,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Hours (optional)',
-                  hintText: 'e.g. 9am - 9pm, or 24/7',
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                  labelText: context.l10n.hoursOptional,
+                  hintText: context.l10n.eG9am9pm,
                 ),
               ),
               const SizedBox(height: 24),
@@ -447,7 +513,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Add Place'),
+                    : Text(context.l10n.addPlace),
               ),
             ],
           ),

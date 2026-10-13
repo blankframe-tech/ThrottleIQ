@@ -1,0 +1,1 @@
+{ "name": "docs-sync-band", "version": "0.1.0", "description": "Shows a band when code changed but the Handoff docs did not, in place of a Stop hook that blocks every stop.", "types": "./types/index.d.ts" }

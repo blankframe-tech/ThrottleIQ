@@ -1,22 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_catalog.dart';
 import '../../../../shared/widgets/brand_model_field.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
+import '../../../profile/presentation/screens/edit_profile_screen.dart';
 import '../providers/auth_provider.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import 'onboarding_manifest.dart';
+import 'onboarding_tour_provider.dart';
+import '../widgets/onboarding_slide_page.dart';
+import '../widgets/tour_floating_banner.dart';
+import '../../../ride/presentation/providers/jam_label_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/parse_localized_number.dart';
 
+/// Multi-step onboarding flow for new ThrottleIQ users.
+///
+/// ## Step structure
+///
+///   Step 0  — Name + @username (functional: persisted to Firebase Auth)
+///   Step 1  — Add first bike (functional: persisted to SQLite + Firestore)
+///   Steps 2+ — Feature-tour slides (informational, from [onboardingSlides])
+///
+/// ## Auto-updating
+/// The tour slides are driven by [kOnboardingManifestVersion] and
+/// [onboardingSlides] in `onboarding_manifest.dart`. Bumping the version
+/// constant causes existing users who already completed the old tour to see
+/// the new slides automatically on next launch.
+///
+/// ## Router contract
+/// The router redirects any authenticated user with `displayName == null`
+/// to `/auth/onboarding` (covering Steps 0–1). After Step 1 the display name
+/// is set, so the redirect no longer fires; the screen self-manages Steps 2+
+/// using [onboardingTourCompleteProvider] / [markOnboardingTourComplete].
 class OnboardingScreen extends ConsumerStatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({
+    super.key,
+    this.demoMode = false,
+    this.initialSlide = 0,
+  });
+
+  final bool demoMode;
+  final int initialSlide;
 
   @override
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
+  // ─── Functional step controllers ───────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _usernameCtrl = TextEditingController();
@@ -26,11 +62,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _ccCtrl = TextEditingController();
   bool _loading = false;
   String? _usernameError;
-  int _step = 0; // 0 = name, 1 = bike
+
+  /// 0 = name/username form, 1 = add-bike form, 2+ = tour slide (index 2 → slide 0).
+  int _step = 0;
+
+  // ─── Tour PageView ──────────────────────────────────────────────────────────
+  late final PageController _pageCtrl;
+
+  /// Current tour slide index (0-based within [onboardingSlides]).
+  int _tourSlide = 0;
 
   @override
   void initState() {
     super.initState();
+    _step = widget.demoMode ? 2 : 0;
+    _tourSlide = widget.initialSlide.clamp(0, kOnboardingSlideCount - 1);
+    _pageCtrl = PageController(initialPage: _tourSlide);
     final email = ref.read(currentUserProvider)?.email;
     if (email != null) {
       _usernameCtrl.text = ProfileRepository().suggestUsernameBase(email);
@@ -39,6 +86,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   void dispose() {
+    _pageCtrl.dispose();
     _nameCtrl.dispose();
     _usernameCtrl.dispose();
     _brandCtrl.dispose();
@@ -47,6 +95,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _ccCtrl.dispose();
     super.dispose();
   }
+
+  // ─── Functional step logic ──────────────────────────────────────────────────
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -57,23 +107,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     try {
       if (_step == 0) {
-        // Step 1: Save name + claim @handle (prefilled from email, but
-        // editable — "offer them to create username" per spec — while
-        // AuthNotifier._ensureUsername covers anyone who skips this screen
-        // entirely, so every rider ends up with one regardless).
+        // Step 0: claim @handle + set display name
         final notifier = ref.read(authNotifierProvider.notifier);
         try {
           await notifier.claimUsername(_usernameCtrl.text.trim());
         } on UsernameTakenException {
           setState(() {
             _loading = false;
-            _usernameError = 'That username is taken — try another.';
+            _usernameError = context.l10n.thatUsernameTakenTry;
           });
           return;
-        } on InvalidUsernameException catch (e) {
+        } on InvalidUsernameException {
           setState(() {
             _loading = false;
-            _usernameError = e.toString();
+            _usernameError = context.l10n.usernameRuleError;
           });
           return;
         }
@@ -82,39 +129,144 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _step = 1;
           _loading = false;
         });
-      } else {
-        // Step 2: Add first bike
+      } else if (_step == 1) {
+        // Step 1: add first bike → then start the tour
         await ref.read(garageProvider.notifier).addBike(
               brand: _brandCtrl.text.trim(),
               model: _modelCtrl.text.trim(),
-              year: int.tryParse(_yearCtrl.text),
-              cc: int.tryParse(_ccCtrl.text),
+              year: parseLocalizedInt(_yearCtrl.text,
+                  min: 1900, max: DateTime.now().year + 1),
+              cc: parseLocalizedInt(_ccCtrl.text, min: 1, max: 3000),
             );
-
         if (mounted) {
-          context.go('/home/record');
+          setState(() {
+            _step = 2; // enter tour
+            _tourSlide = 0;
+          });
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.errorWithDetail(e))));
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _previous() {
-    setState(() => _step = 0);
+  void _previous() => setState(() => _step = 0);
+
+  // ─── Tour navigation ────────────────────────────────────────────────────────
+
+  Duration get _pageDuration =>
+      (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+          ? const Duration(milliseconds: 1)
+          : const Duration(milliseconds: 380);
+
+  Future<void> _skipTour() async {
+    if (!widget.demoMode) {
+      await markOnboardingTourComplete();
+    }
+    if (!mounted) return;
+    ref.read(activeTourGuideProvider.notifier).state = null;
+    if (widget.demoMode && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else if (widget.demoMode) {
+      context.go('/settings');
+    } else {
+      context.go('/home/record');
+    }
   }
+
+  void _goToSlide(int index) {
+    if (!_pageCtrl.hasClients) return;
+    _pageCtrl.animateToPage(
+      index.clamp(0, kOnboardingSlideCount - 1),
+      duration: _pageDuration,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _backTour() {
+    if (_tourSlide > 0) _goToSlide(_tourSlide - 1);
+  }
+
+  Future<void> _advanceTour() async {
+    if (_tourSlide < kOnboardingSlideCount - 1) {
+      _goToSlide(_tourSlide + 1);
+    } else {
+      // Last slide — finish tour
+      await _finishTour(navigateTo: '/home/record');
+    }
+  }
+
+  /// "Show me" CTA: opens the target route so the rider can inspect it live,
+  /// but DOES NOT mark the tour complete. Sets [activeTourGuideProvider] so a
+  /// [TourFloatingBanner] on the destination offers "Back to tour" / "Next";
+  /// the banner pops back here with [kTourResultNext] for "Next".
+  Future<void> _showMeFor(OnboardingSlide slide, int slideIndex) async {
+    final route = slide.showMeRoute;
+    if (route == null) return;
+
+    ref.read(activeTourGuideProvider.notifier).state = TourGuideState(
+      currentSlideIndex: slideIndex,
+      totalSlides: kOnboardingSlideCount,
+      featureKey: slide.featureKey,
+      title: slide.title,
+      showMeRoute: route,
+    );
+
+    final result = await context.push<Object?>(route);
+
+    if (!mounted) return;
+    ref.read(activeTourGuideProvider.notifier).state = null;
+    if (_pageCtrl.hasClients && _pageCtrl.page?.round() != _tourSlide) {
+      _pageCtrl.jumpToPage(_tourSlide);
+    }
+    if (result == kTourResultNext) await _advanceTour();
+  }
+
+  Future<void> _finishTour({required String navigateTo}) async {
+    if (!widget.demoMode) {
+      await markOnboardingTourComplete();
+    }
+    if (!mounted) return;
+    ref.read(activeTourGuideProvider.notifier).state = null;
+
+    if (widget.demoMode) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        context.go('/settings');
+      }
+      return;
+    }
+
+    // First run ends on the Profile step: prompt for a bio once the rider
+    // lands on the home screen.
+    final router = GoRouter.of(context);
+    router.go(navigateTo);
+
+    // Small delay so the destination screen finishes mounting before the
+    // bottom sheet opens on top of it.
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    EditProfileScreen.showBioPromptSheet(context);
+  }
+
+  // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    // Tour phase: drive the PageView.
+    if (_step >= 2) {
+      return _buildTour();
+    }
+
+    // Functional phase: name or bike form.
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
@@ -124,122 +276,309 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
+
+                // ── Progress indicator (step 0 / step 1) ──────────────────
+                _SetupProgressBar(currentStep: _step),
+
+                const SizedBox(height: 32),
+
+                // ── Icon ─────────────────────────────────────────────────
                 Icon(
-                  _step == 0 ? Icons.person : Icons.two_wheeler,
+                  _step == 0 ? Icons.person_outline : Icons.two_wheeler,
                   size: 64,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+
+                // ── Heading ───────────────────────────────────────────────
                 Text(
-                  _step == 0 ? "What's your name?" : "Let's add your first bike",
+                  _step == 0
+                      ? context.l10n.whatShouldWeCall
+                      : context.l10n.addFirstBike,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: context.palette.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _step == 0
-                      ? 'So we can personalize your experience'
-                      : 'We use this to track rides and maintenance per bike',
+                      ? context.l10n.nameHandleSoCommunity
+                      : context.l10n.throttleiqTracksRidesMaintenance,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: context.palette.textSecondary,
+                      height: 1.4),
                 ),
-                const SizedBox(height: 36),
-                if (_step == 0) ...[
-                  TextFormField(
-                    controller: _nameCtrl,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name *',
-                      hintText: 'John Doe',
-                    ),
-                    validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _usernameCtrl,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      labelText: 'Username *',
-                      prefixText: '@',
-                      hintText: 'yourhandle',
-                      errorText: _usernameError,
-                      helperText: 'Your public handle — you can change this later.',
-                    ),
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: (v) {
-                      final value = v?.trim() ?? '';
-                      if (!RegExp(r'^[a-zA-Z0-9_]{3,20}$').hasMatch(value)) {
-                        return '3-20 characters: letters, numbers, underscore';
-                      }
-                      return null;
-                    },
-                  ),
-                ] else ...[
-                  BrandModelAutocompleteField(
-                    controller: _brandCtrl,
-                    labelText: 'Brand *',
-                    hintText: 'Yamaha, Honda, Bajaj...',
-                    optionsBuilder: (_) => bikeCatalogBrands,
-                  ),
-                  const SizedBox(height: 12),
-                  BrandModelAutocompleteField(
-                    controller: _modelCtrl,
-                    labelText: 'Model *',
-                    hintText: 'FZ-S, CB300R, Pulsar...',
-                    optionsBuilder: (_) => modelsForBrand(_brandCtrl.text),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _yearCtrl,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(color: AppColors.textPrimary),
-                          decoration: const InputDecoration(labelText: 'Year', hintText: '2023'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _ccCtrl,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(color: AppColors.textPrimary),
-                          decoration:
-                              const InputDecoration(labelText: 'Engine CC', hintText: '150'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
                 const SizedBox(height: 32),
+
+                // ── Form fields ───────────────────────────────────────────
+                if (_step == 0) ..._nameFields() else ..._bikeFields(),
+
+                const SizedBox(height: 32),
+
+                // ── Primary CTA ───────────────────────────────────────────
                 ElevatedButton(
                   onPressed: _loading ? null : _submit,
                   child: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_step == 0 ? 'Continue' : 'Get Started'),
+                          // The button is disabled while loading, so the
+                          // spinner sits on the disabled fill, not on primary.
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: context.palette.primary),
+                        )
+                      : Text(_step == 0
+                          ? context.l10n.continueAction
+                          : context.l10n.addBikeTakeTour),
                 ),
+
                 const SizedBox(height: 12),
+
                 if (_step > 0)
                   TextButton(
                     onPressed: _loading ? null : _previous,
-                    child: Text('Back',
-                        style: TextStyle(color: AppColors.textTertiary)),
+                    child: Text(context.l10n.backArrow,
+                        style: TextStyle(color: context.palette.textTertiary)),
                   ),
-                TextButton(
-                  onPressed: () => context.go('/home/record'),
-                  child: Text('Skip for now',
-                      style: TextStyle(color: AppColors.textTertiary)),
-                ),
+
+                // Skip links
+                if (_step == 1)
+                  TextButton(
+                    onPressed: () async {
+                      // Skip bike + entire tour
+                      await markOnboardingTourComplete();
+                      if (!context.mounted) return;
+                      context.go('/home/record');
+                    },
+                    child: Text(context.l10n.skipNow,
+                        style: TextStyle(color: context.palette.textTertiary)),
+                  ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // ─── Form field helpers ─────────────────────────────────────────────────────
+
+  List<Widget> _nameFields() => [
+        TextFormField(
+          controller: _nameCtrl,
+          style: TextStyle(color: context.palette.textPrimary),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: context.l10n.fullName,
+            hintText: context.l10n.eGRahimHossain,
+          ),
+          validator: (v) =>
+              v == null || v.isEmpty ? context.l10n.nameRequired : null,
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _usernameCtrl,
+          style: TextStyle(color: context.palette.textPrimary),
+          decoration: InputDecoration(
+            labelText: context.l10n.username,
+            prefixText: '@',
+            hintText: 'yourhandle',
+            errorText: _usernameError,
+            helperText: context.l10n.lettersNumbersUnderscore3,
+          ),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (v) {
+            final value = v?.trim() ?? '';
+            if (!RegExp(r'^[a-zA-Z0-9_]{3,20}$').hasMatch(value)) {
+              return context.l10n.n320CharactersLetters;
+            }
+            return null;
+          },
+        ),
+      ];
+
+  List<Widget> _bikeFields() => [
+        BrandModelAutocompleteField(
+          controller: _brandCtrl,
+          labelText: context.l10n.brand,
+          hintText: 'Yamaha, Honda, Bajaj…',
+          optionsBuilder: (_) => bikeCatalogBrands,
+        ),
+        const SizedBox(height: 12),
+        BrandModelAutocompleteField(
+          controller: _modelCtrl,
+          labelText: context.l10n.model,
+          hintText: 'FZ-S, CB300R, Pulsar…',
+          optionsBuilder: (_) => modelsForBrand(_brandCtrl.text),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _yearCtrl,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                    labelText: context.l10n.year, hintText: '2023'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _ccCtrl,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                    labelText: context.l10n.engineCc, hintText: '150'),
+              ),
+            ),
+          ],
+        ),
+      ];
+
+  // ─── Tour builder ───────────────────────────────────────────────────────────
+
+  Widget _buildTour() {
+    final slides = onboardingSlides(
+      context.l10n,
+      showJamLabelling: ref.watch(canLabelJamsProvider),
+    );
+    final slide = slides[_tourSlide];
+    final accent = slide.accent.resolve(context.palette);
+
+    return Scaffold(
+      backgroundColor: context.palette.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+              child: TourProgressHeader(
+                current: _tourSlide,
+                total: kOnboardingSlideCount,
+                accent: accent,
+                demoMode: widget.demoMode,
+                onSkip: _skipTour,
+              ),
+            ),
+            Expanded(
+              child: PageView.builder(
+                key: const ValueKey('tour-pages'),
+                controller: _pageCtrl,
+                onPageChanged: (i) => setState(() => _tourSlide = i),
+                itemCount: kOnboardingSlideCount,
+                itemBuilder: (context, i) => OnboardingSlidePage(
+                  key: ValueKey(slides[i].featureKey),
+                  slide: slides[i],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: TourControls(
+                isFirst: _tourSlide == 0,
+                isLast: _tourSlide == kOnboardingSlideCount - 1,
+                onBack: _backTour,
+                onNext: _advanceTour,
+                onShowMe: slide.showMeRoute == null
+                    ? null
+                    : () => _showMeFor(slide, _tourSlide),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Step progress bar widget ─────────────────────────────────────────────────
+
+class _SetupProgressBar extends StatelessWidget {
+  const _SetupProgressBar({required this.currentStep});
+  final int currentStep;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = [
+      context.l10n.yourInfo,
+      context.l10n.yourBike,
+      context.l10n.featureTour
+    ];
+    return Row(
+      children: List.generate(steps.length, (i) {
+        final isDone = i < currentStep;
+        final isActive = i == currentStep;
+        return Expanded(
+          child: Row(
+            children: [
+              // Connector line (not before first)
+              if (i > 0)
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: isDone || isActive
+                        ? context.palette.primary
+                        : context.palette.border,
+                  ),
+                ),
+              // Dot
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDone
+                      ? context.palette.primary
+                      : isActive
+                          ? context.palette.primary.withValues(alpha: 0.15)
+                          : context.palette.surface,
+                  border: Border.all(
+                    color: isActive || isDone
+                        ? context.palette.primary
+                        : context.palette.border,
+                    width: 2,
+                  ),
+                ),
+                child: isDone
+                    ? Icon(Icons.check,
+                        size: 14,
+                        color:
+                            AppTheme.primaryButtonForeground(context.palette))
+                    : Center(
+                        child: Text(
+                          '${i + 1}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isActive
+                                ? context.palette.primary
+                                : context.palette.textTertiary,
+                          ),
+                        ),
+                      ),
+              ),
+              // After last dot: trailing line to balance layout
+              if (i < steps.length - 1)
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: i < currentStep
+                        ? context.palette.primary
+                        : context.palette.border,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

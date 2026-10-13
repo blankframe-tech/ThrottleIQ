@@ -2,12 +2,17 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../database/daos/fuel_log_dao.dart';
+import '../database/daos/maintenance_dao.dart';
 import '../database/daos/outbox_dao.dart';
 import '../database/database_helper.dart';
+import 'maintenance_settings_sync.dart';
+import '../../features/maintenance/data/models/fuel_log_model.dart';
 import '../../features/social/data/repositories/ride_share_repository.dart';
 
 /// The operations that can be queued for later delivery.
@@ -28,6 +33,15 @@ class OutboxKind {
 
   /// Syncing a maintenance log entry to the rider's Firestore subcollection.
   static const String maintenanceLog = 'maintenance_log';
+
+  /// Backing up one bike's maintenance settings (tracked checks + running
+  /// costs) to `users/{uid}/private` — issues §88.2. The payload carries
+  /// only ids; the delivery reads the current rows from SQLite.
+  static const String maintenanceSettings = 'maintenance_settings';
+
+  /// Syncing one fuel fill-up to `users/{uid}/fuelLogs/{id}`. Payload
+  /// `{uid, log}`, where `log` is the local row (see FuelLogModel).
+  static const String fuelLog = 'fuel_log';
 }
 
 /// How long an attempt is given before we stop waiting on it.
@@ -57,6 +71,66 @@ Duration outboxBackoff(int attempts) {
   final exponent = attempts > 10 ? 10 : attempts;
   final scaled = base * (1 << exponent).toDouble();
   return scaled > cap ? cap : scaled;
+}
+
+/// After this many rejections that retrying can't fix, an entry is retired
+/// to [OutboxStatus.dead] — §69.O4. Not 1: a `permission-denied` can be a
+/// token that hasn't refreshed yet, or rules that are mid-deploy.
+const int kOutboxMaxPermanentFailures = 3;
+
+/// After this many failed attempts of any kind, an entry is retired too.
+/// With [outboxBackoff] capped at 30 minutes that is several hours of
+/// genuinely trying — past that, something is wrong that the rider should
+/// see rather than the queue silently retrying every half hour forever.
+const int kOutboxMaxAttempts = 20;
+
+/// Firestore error codes a retry will not change: the server looked at the
+/// write and said no. Everything else (`unavailable`, `deadline-exceeded`,
+/// `aborted`, a socket error, a Cloudinary hiccup…) is transient.
+const Set<String> kOutboxPermanentErrorCodes = {
+  'permission-denied',
+  'invalid-argument',
+  'not-found',
+  'failed-precondition',
+};
+
+/// Whether [error] is a rejection that retrying won't fix. See
+/// [kOutboxPermanentErrorCodes].
+bool isPermanentOutboxError(Object error) =>
+    error is FirebaseException &&
+    kOutboxPermanentErrorCodes.contains(error.code);
+
+/// The uid a queued entry belongs to, or null if its payload doesn't say.
+/// Every real payload carries one of these two keys (see [OutboxKind]).
+String? outboxEntryOwner(OutboxEntry entry) {
+  final owner = entry.payload['userId'] ?? entry.payload['uid'];
+  return owner is String ? owner : null;
+}
+
+/// Outbox id of a live-share teardown: one per session (§90.C4), so a second
+/// ride's teardown can't overwrite a first one still waiting to be delivered.
+String liveTeardownEntryId(String uid, String? token) =>
+    'live-teardown:$uid:${token ?? 'none'}';
+
+/// Whether a live-share teardown may clear `livePointers/{uid}` (§90.C4).
+///
+/// - No pointer, or one already cleared: nothing to do.
+/// - The teardown names a session: clear only if the pointer still names
+///   that same session — any other token belongs to a newer share.
+/// - The teardown names no session (the ride was never shared in the process
+///   that ended it — e.g. a restored ride): clear only a pointer last written
+///   before the teardown was queued, i.e. one that can't belong to a share
+///   started since.
+bool shouldClearLivePointer({
+  required bool pointerExists,
+  required String? pointerToken,
+  required DateTime? pointerUpdatedAt,
+  required String? entryToken,
+  required DateTime entryCreatedAt,
+}) {
+  if (!pointerExists || pointerToken == null) return false;
+  if (entryToken != null) return pointerToken == entryToken;
+  return pointerUpdatedAt != null && pointerUpdatedAt.isBefore(entryCreatedAt);
 }
 
 /// Outcome of trying to deliver one queued operation.
@@ -92,18 +166,52 @@ class OutboxService {
     OutboxDao? dao,
     RideShareRepository? shareRepository,
     FirebaseFirestore? firestore,
+    String? Function()? currentUid,
+    Future<OutboxDeliveryResult> Function(OutboxEntry entry)? deliverOverride,
   })  : _dao = dao ?? OutboxDao(),
-        _shareRepository = shareRepository ?? RideShareRepository(),
-        _firestore = firestore ?? FirebaseFirestore.instance;
-
-  /// Deprecated backwards-compatibility accessor. Prefer reading [outboxServiceProvider].
-  static final OutboxService instance = OutboxService();
+        _explicitShareRepository = shareRepository,
+        _explicitFirestore = firestore,
+        _currentUid =
+            currentUid ?? (() => FirebaseAuth.instance.currentUser?.uid),
+        _deliverOverride = deliverOverride;
 
   final OutboxDao _dao;
-  final RideShareRepository _shareRepository;
-  final FirebaseFirestore _firestore;
 
-  bool _draining = false;
+  /// Who is signed in right now. Injected so tests can switch accounts
+  /// without a live FirebaseAuth.
+  final String? Function() _currentUid;
+
+  /// Test-only: replaces the per-kind handlers, so the retry/dead-letter
+  /// policy in [_deliver] can be exercised without Firestore.
+  final Future<OutboxDeliveryResult> Function(OutboxEntry entry)?
+      _deliverOverride;
+  RideShareRepository? _explicitShareRepository;
+  FirebaseFirestore? _explicitFirestore;
+
+  RideShareRepository get _shareRepository =>
+      _explicitShareRepository ??= RideShareRepository();
+  FirebaseFirestore get _firestore =>
+      _explicitFirestore ??= FirebaseFirestore.instance;
+
+  /// Serializes every delivery attempt — [drain] and [_attemptOne] alike —
+  /// so two never run concurrently. issues §62.7: [_attemptOne] (run
+  /// synchronously from `enqueueShareRide` et al.) used to be unguarded
+  /// while a boolean `_draining` flag protected only [drain] from itself. A
+  /// rider tapping "share ride" the instant a timer-triggered `drain()` was
+  /// already running could get both calling `_deliverShareRide` on the same
+  /// entry at once — double-uploading a photo to Cloudinary and racing on
+  /// `_dao.updatePayload` (last write wins, so one photo URL could vanish).
+  /// Chaining every call onto this future serializes them regardless of
+  /// which method they came in through; each link swallows its own error so
+  /// one failed attempt doesn't wedge the chain for the next caller, while
+  /// the original error still propagates to whoever awaited that attempt.
+  Future<void> _queue = Future<void>.value();
+
+  Future<T> _serialized<T>(Future<T> Function() action) {
+    final result = _queue.then((_) => action());
+    _queue = result.then((_) {}, onError: (_) {});
+    return result;
+  }
 
   /// Fires whenever the queue's depth may have changed, so a UI badge can
   /// refresh without polling.
@@ -113,6 +221,24 @@ class OutboxService {
   Future<int> pendingCount() => _dao.pendingCount();
   Future<int> pendingShareCount() =>
       _dao.pendingCountOfKind(OutboxKind.shareRide);
+
+  /// Entries the queue gave up on — Settings → Sync issues.
+  Future<List<OutboxEntry>> deadEntries() => _dao.dead();
+  Future<int> deadCount() => _dao.deadCount();
+
+  /// The rider's "Retry" on a dead entry: back in line with fresh counters,
+  /// and one attempt straight away. Returns true if that attempt delivered.
+  Future<bool> retryDead(String id) async {
+    await _dao.revive(id);
+    _changes.add(null);
+    return await _attemptOne(id) == OutboxDeliveryResult.delivered;
+  }
+
+  /// The rider's "Discard" on a dead entry. The intent is gone for good.
+  Future<void> discard(String id) async {
+    await _serialized(() => _dao.delete(id));
+    _changes.add(null);
+  }
 
   /// Queues a ride share and, unless [attemptNow] is false, tries to deliver
   /// it straight away.
@@ -139,6 +265,9 @@ class OutboxService {
     List<String> uploadedPhotoUrls = const [],
     String? routeId,
     String? caption,
+    int? hardBrakeCount,
+    int? rapidAccelCount,
+    int? highJerkCount,
     bool attemptNow = true,
   }) async {
     await _dao.enqueue(
@@ -155,6 +284,7 @@ class OutboxService {
         'rideDate': rideDate.toIso8601String(),
         'distanceKm': distanceKm,
         'durationSeconds': durationSeconds,
+        'maxSpeedKmh': maxSpeedKmh,
         // Flat array of coordinates [lat, lng, lat, lng, ...] reduces outbox
         // JSON row size significantly and eliminates nested list allocations.
         'polyline': [
@@ -165,6 +295,9 @@ class OutboxService {
         'uploadedPhotoUrls': uploadedPhotoUrls,
         'routeId': routeId,
         'caption': caption,
+        'hardBrakeCount': hardBrakeCount,
+        'rapidAccelCount': rapidAccelCount,
+        'highJerkCount': highJerkCount,
       },
     );
     _changes.add(null);
@@ -175,23 +308,28 @@ class OutboxService {
   /// Queues the end-of-ride live-share teardown.
   ///
   /// [token] may be null when the ride was never shared live; in that case only
-  /// the pointer clear is queued. Both writes are idempotent, which is what
-  /// makes it safe for this to race with Firestore's own offline replay of the
-  /// same writes.
+  /// a (guarded) pointer clear is queued. Both writes are idempotent, which is
+  /// what makes it safe for this to race with Firestore's own offline replay
+  /// of the same writes.
+  ///
+  /// Keyed per session (§90.C4). The key used to be per rider, with
+  /// replace-on-conflict, so two rides ended offline left only the second's
+  /// teardown — the first session was never revoked and stayed publicly
+  /// readable until its 24 h expiry.
   Future<bool> enqueueLiveSessionTeardown({
     required String uid,
     required String? token,
     bool attemptNow = true,
   }) async {
+    final entryId = liveTeardownEntryId(uid, token);
     await _dao.enqueue(
-      id: 'live-teardown:$uid',
+      id: entryId,
       kind: OutboxKind.liveSessionTeardown,
       payload: {'uid': uid, 'token': token},
     );
     _changes.add(null);
     if (!attemptNow) return false;
-    return await _attemptOne('live-teardown:$uid') ==
-        OutboxDeliveryResult.delivered;
+    return await _attemptOne(entryId) == OutboxDeliveryResult.delivered;
   }
 
   Future<String> enqueueMaintenanceLog({
@@ -215,46 +353,116 @@ class OutboxService {
     return entryId;
   }
 
-  Future<OutboxDeliveryResult> _attemptOne(String id) async {
-    final entries = await _dao.all();
-    final entry = entries.where((e) => e.id == id).firstOrNull;
-    if (entry == null) return OutboxDeliveryResult.delivered;
-    return _deliver(entry);
+  /// Queues the upload of one fuel fill-up. Keyed by the fill-up, so an
+  /// edit made while offline replaces the queued copy instead of racing it.
+  Future<String> enqueueFuelLog({
+    required String uid,
+    required Map<String, dynamic> logData,
+    bool attemptNow = true,
+  }) async {
+    final entryId = FuelLogDao.outboxId(logData['id'].toString());
+    await _dao.enqueue(
+      id: entryId,
+      kind: OutboxKind.fuelLog,
+      payload: {'uid': uid, 'log': logData},
+    );
+    _changes.add(null);
+    if (attemptNow) {
+      unawaited(_attemptOne(entryId));
+    }
+    return entryId;
+  }
+
+  /// Queues a backup of [bikeId]'s maintenance settings. Keyed by bike, so a
+  /// burst of edits while offline collapses into one pending write — and
+  /// since the delivery reads SQLite when it runs, that write carries the
+  /// latest state rather than whichever edit was queued first.
+  Future<String> enqueueMaintenanceSettings({
+    required String uid,
+    required String bikeId,
+    bool attemptNow = true,
+  }) async {
+    final entryId = 'maintenance-settings:$bikeId';
+    await _dao.enqueue(
+      id: entryId,
+      kind: OutboxKind.maintenanceSettings,
+      payload: {'uid': uid, 'bikeId': bikeId},
+    );
+    _changes.add(null);
+    if (attemptNow) {
+      unawaited(_attemptOne(entryId));
+    }
+    return entryId;
+  }
+
+  Future<OutboxDeliveryResult> _attemptOne(String id) {
+    return _serialized(() async {
+      final entries = await _dao.all();
+      final entry = entries.where((e) => e.id == id).firstOrNull;
+      if (entry == null) return OutboxDeliveryResult.delivered;
+      // Same rule as [drain] (§69.O4), which this immediate path used to skip:
+      // never deliver another account's write under the signed-in rider's
+      // credentials. It stays queued, uncounted, until its owner signs back in.
+      final owner = outboxEntryOwner(entry);
+      if (owner != null && owner != _currentUid()) {
+        return OutboxDeliveryResult.deferred;
+      }
+      return _deliver(entry);
+    });
   }
 
   /// Replays every entry whose backoff has elapsed.
   ///
-  /// Reentrancy-guarded: [SyncManager] calls this from a periodic timer, from
-  /// its connectivity listener and on login, and those can easily overlap.
-  Future<void> drain() async {
-    if (_draining) return;
-    _draining = true;
-    try {
-      final due = await _dao.due();
-      for (final entry in due) {
-        await _deliver(entry);
+  /// Reentrancy-guarded via [_serialized]: [SyncManager] calls this from a
+  /// periodic timer, from its connectivity listener and on login, and those
+  /// can easily overlap — and it must also never run concurrently with a
+  /// caller-triggered [_attemptOne] (see [_serialized]'s doc comment).
+  ///
+  /// Only the signed-in rider's own entries are replayed — §69.O4. On a
+  /// shared phone, account A's queued share used to be attempted under B's
+  /// credentials: rules reject it (it names A), so it failed forever, or —
+  /// for a write the rules didn't pin to the author — landed as B. Another
+  /// account's rows are left exactly as they are (no attempt counted) until
+  /// that account signs back in. An entry with no owner in its payload is
+  /// still attempted: its handler rejects it as malformed.
+  Future<void> drain() {
+    return _serialized(() async {
+      try {
+        final due = await _dao.due();
+        final uid = _currentUid();
+        for (final entry in due) {
+          final owner = outboxEntryOwner(entry);
+          if (owner != null && owner != uid) continue;
+          await _deliver(entry);
+        }
+      } finally {
+        _changes.add(null);
       }
-    } finally {
-      _draining = false;
-      _changes.add(null);
-    }
+    });
   }
 
   Future<OutboxDeliveryResult> _deliver(OutboxEntry entry) async {
     try {
-      final handled = switch (entry.kind) {
-        OutboxKind.shareRide => await _deliverShareRide(entry),
-        OutboxKind.liveSessionTeardown => await _deliverLiveTeardown(entry),
-        OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
-        // An unrecognised kind is not going to start working later.
-        _ => OutboxDeliveryResult.discarded,
-      };
+      final override = _deliverOverride;
+      final handled = override != null
+          ? await override(entry)
+          : switch (entry.kind) {
+              OutboxKind.shareRide => await _deliverShareRide(entry),
+              OutboxKind.liveSessionTeardown =>
+                await _deliverLiveTeardown(entry),
+              OutboxKind.maintenanceLog => await _deliverMaintenanceLog(entry),
+              OutboxKind.maintenanceSettings =>
+                await _deliverMaintenanceSettings(entry),
+              OutboxKind.fuelLog => await _deliverFuelLog(entry),
+              // An unrecognised kind is not going to start working later.
+              _ => OutboxDeliveryResult.discarded,
+            };
 
       if (handled == OutboxDeliveryResult.deferred) {
-        await _dao.recordFailure(
-          id: entry.id,
+        await _recordFailure(
+          entry,
           error: 'not delivered (offline or timed out)',
-          nextAttemptAt: DateTime.now().add(outboxBackoff(entry.attempts)),
+          permanent: false,
         );
       } else {
         await _dao.delete(entry.id);
@@ -264,17 +472,43 @@ class OutboxService {
     } catch (e) {
       // A thrown error is different from a timeout: the request reached
       // something that rejected it. Still retried — a permissions error can
-      // resolve once rules are deployed or a token refreshes — but recorded so
-      // it is visible rather than silent.
+      // resolve once rules are deployed or a token refreshes — but only up
+      // to [kOutboxMaxPermanentFailures] times for a rejection retrying
+      // can't fix, after which the entry is parked for the rider (§69.O4)
+      // instead of retried every 30 minutes for the life of the install.
       debugPrint('[Outbox] ${entry.kind} ${entry.id} failed: $e');
-      await _dao.recordFailure(
-        id: entry.id,
+      await _recordFailure(
+        entry,
         error: e.toString(),
-        nextAttemptAt: DateTime.now().add(outboxBackoff(entry.attempts)),
+        permanent: isPermanentOutboxError(e),
       );
       _changes.add(null);
       return OutboxDeliveryResult.deferred;
     }
+  }
+
+  /// Records one failed attempt, retiring the entry to [OutboxStatus.dead]
+  /// once it has hit either give-up threshold.
+  Future<void> _recordFailure(
+    OutboxEntry entry, {
+    required String error,
+    required bool permanent,
+  }) async {
+    final attempts = entry.attempts + 1;
+    final permanentFailures = entry.permanentFailures + (permanent ? 1 : 0);
+    final dead = permanentFailures >= kOutboxMaxPermanentFailures ||
+        attempts >= kOutboxMaxAttempts;
+    if (dead) {
+      debugPrint('[Outbox] ${entry.kind} ${entry.id} gave up after '
+          '$attempts attempts ($permanentFailures permanent)');
+    }
+    await _dao.recordFailure(
+      id: entry.id,
+      error: error,
+      nextAttemptAt: DateTime.now().add(outboxBackoff(entry.attempts)),
+      permanent: permanent,
+      dead: dead,
+    );
   }
 
   Future<OutboxDeliveryResult> _deliverShareRide(OutboxEntry entry) async {
@@ -286,7 +520,8 @@ class OutboxService {
     // Photos first, and folded back into the payload as they land: Cloudinary
     // mints a new asset per call, so a retry that re-uploaded would leave the
     // earlier copies orphaned and burn the rider's quota.
-    final localPaths = (p['localPhotoPaths'] as List?)?.cast<String>() ?? const [];
+    final localPaths =
+        (p['localPhotoPaths'] as List?)?.cast<String>() ?? const [];
     final uploaded = <String>[
       ...?(p['uploadedPhotoUrls'] as List?)?.cast<String>(),
     ];
@@ -315,6 +550,13 @@ class OutboxService {
     }
 
     final polyline = decodePolylinePayload(p['polyline']);
+    final dist = (p['distanceKm'] as num?)?.toDouble() ?? 0;
+    final dur = (p['durationSeconds'] as num?)?.toInt() ?? 0;
+    var maxSpd = (p['maxSpeedKmh'] as num?)?.toDouble() ?? 0;
+    final avgSpd = dur > 0 ? (dist / dur) * 3600 : 0.0;
+    if (dist > 0 && (maxSpd <= 0 || maxSpd < avgSpd)) {
+      maxSpd = avgSpd;
+    }
 
     try {
       await _shareRepository
@@ -328,15 +570,18 @@ class OutboxService {
             bikeType: p['bikeType'] as String? ?? 'Motorcycle',
             rideDate: DateTime.tryParse(p['rideDate'] as String? ?? '') ??
                 entry.createdAt,
-            distanceKm: (p['distanceKm'] as num?)?.toDouble() ?? 0,
-            durationSeconds: (p['durationSeconds'] as num?)?.toInt() ?? 0,
-            maxSpeedKmh: (p['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
+            distanceKm: dist,
+            durationSeconds: dur,
+            maxSpeedKmh: maxSpd,
             polyline: polyline,
             mapSnapshotUrl: null,
             audience: p['audience'] as String? ?? 'public',
             photoUrls: uploaded,
             routeId: p['routeId'] as String?,
             caption: p['caption'] as String?,
+            hardBrakeCount: (p['hardBrakeCount'] as num?)?.toInt(),
+            rapidAccelCount: (p['rapidAccelCount'] as num?)?.toInt(),
+            highJerkCount: (p['highJerkCount'] as num?)?.toInt(),
           )
           .timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
@@ -352,26 +597,56 @@ class OutboxService {
 
     try {
       if (token != null) {
-        await _firestore.collection('liveSessions').doc(token).update({
-          'status': 'completed',
-          'active': false,
-          'updatedAt': DateTime.now().toIso8601String(),
-        }).timeout(kOutboxAttemptTimeout);
+        try {
+          // `shareable: false` is what actually revokes the link — §78.7.
+          // The `get` rule keys on it (plus `expiresAt`), not on `active`,
+          // so without it an ended ride's last position stayed publicly
+          // readable by anyone holding the link for the rest of the 24h TTL.
+          await _firestore.collection('liveSessions').doc(token).update({
+            'status': 'completed',
+            'active': false,
+            'shareable': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }).timeout(kOutboxAttemptTimeout);
+        } on FirebaseException catch (e) {
+          // The session doc is already gone (the rider tapped "Stop sharing
+          // now", or it was never written) — nothing left to revoke, but
+          // the pointer below still needs clearing, so carry on rather than
+          // returning early as this used to.
+          if (e.code != 'not-found') rethrow;
+        }
       }
-      await _firestore.collection('livePointers').doc(uid).set({
-        'uid': uid,
-        'token': null,
-        'active': false,
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      // §90.C4: only clear the pointer if it still points at THIS session.
+      // A stale teardown delivered after the rider started (and shared) the
+      // next ride used to null the new pointer, killing `/r/{username}` for
+      // the rest of that ride. Read-and-write in one transaction so a
+      // concurrent re-share can't slip in between. The pointer may not exist
+      // at all (sharing never turned on, or the public link is off) — then
+      // there is nothing to clear.
+      final pointerRef = _firestore.collection('livePointers').doc(uid);
+      await _firestore.runTransaction((tx) async {
+        final snap = await tx.get(pointerRef);
+        final data = snap.data();
+        final updatedAt = data?['updatedAt'];
+        if (!shouldClearLivePointer(
+          pointerExists: snap.exists,
+          pointerToken: data?['token'] as String?,
+          pointerUpdatedAt: updatedAt is Timestamp ? updatedAt.toDate() : null,
+          entryToken: token,
+          entryCreatedAt: entry.createdAt,
+        )) {
+          return;
+        }
+        tx.set(pointerRef, {
+          'uid': uid,
+          'token': null,
+          'active': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }).timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
       return OutboxDeliveryResult.deferred;
-    } on FirebaseException catch (e) {
-      // The session doc is already gone (or was never written) — there is
-      // nothing left to tear down, so this is success, not a retry.
-      if (e.code == 'not-found') return OutboxDeliveryResult.delivered;
-      rethrow;
     }
   }
 
@@ -383,14 +658,22 @@ class OutboxService {
     }
 
     final logId = log['id'].toString();
+    // Deleted before this delivery ran: uploading it now would re-create a
+    // log the rider removed (§94.2).
+    if (await MaintenanceDao().isDeleted(logId)) {
+      return OutboxDeliveryResult.discarded;
+    }
     try {
       await _firestore
           .collection('users')
           .doc(uid)
           .collection('maintenance')
           .doc(logId)
-          .set(log)
-          .timeout(kOutboxAttemptTimeout);
+          // `syncedAt` (server-set) like every other upload to this
+          // collection: other devices' incremental pull filters on it
+          // (§90.C7), so a log without it would never reach them.
+          .set({...log, 'syncedAt': FieldValue.serverTimestamp()}).timeout(
+              kOutboxAttemptTimeout);
 
       try {
         final db = await DatabaseHelper.instance.database;
@@ -404,6 +687,66 @@ class OutboxService {
         debugPrint('[Outbox] local maintenance sync status update skipped: $e');
       }
 
+      return OutboxDeliveryResult.delivered;
+    } on TimeoutException {
+      return OutboxDeliveryResult.deferred;
+    } on SocketException {
+      return OutboxDeliveryResult.deferred;
+    }
+  }
+
+  Future<OutboxDeliveryResult> _deliverFuelLog(OutboxEntry entry) async {
+    final uid = entry.payload['uid'] as String?;
+    final log = entry.payload['log'];
+    if (uid == null || log is! Map || log['id'] == null) {
+      return OutboxDeliveryResult.discarded;
+    }
+    final logId = log['id'].toString();
+    // Deleted before this delivery ran: uploading now would re-create it.
+    if (await FuelLogDao().isDeleted(logId)) {
+      return OutboxDeliveryResult.discarded;
+    }
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection(FuelLogModel.collection)
+          .doc(logId)
+          // `syncedAt` drives other devices' incremental pull (§90.C7).
+          .set({
+        ...FuelLogModel.toCloudPayload(Map<String, dynamic>.from(log)),
+        'syncedAt': FieldValue.serverTimestamp(),
+      }).timeout(kOutboxAttemptTimeout);
+      try {
+        await FuelLogDao().markSynced(logId);
+      } catch (e) {
+        debugPrint('[Outbox] local fuel sync status update skipped: $e');
+      }
+      return OutboxDeliveryResult.delivered;
+    } on TimeoutException {
+      return OutboxDeliveryResult.deferred;
+    } on SocketException {
+      return OutboxDeliveryResult.deferred;
+    }
+  }
+
+  Future<OutboxDeliveryResult> _deliverMaintenanceSettings(
+      OutboxEntry entry) async {
+    final uid = entry.payload['uid'] as String?;
+    final bikeId = entry.payload['bikeId'] as String?;
+    if (uid == null || bikeId == null) return OutboxDeliveryResult.discarded;
+
+    final payload = await MaintenanceSettingsSync.buildPayload(bikeId);
+    // The bike (and with it its settings) is gone locally — deleting a bike
+    // removes the cloud doc too (CloudRepository.deleteBikeRemote), so there
+    // is nothing left to back up.
+    if (payload == null) return OutboxDeliveryResult.delivered;
+
+    try {
+      await MaintenanceSettingsSync.docRef(_firestore, uid, bikeId).set(
+        {...payload, 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      ).timeout(kOutboxAttemptTimeout);
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
       return OutboxDeliveryResult.deferred;

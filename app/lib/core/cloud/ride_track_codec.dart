@@ -21,7 +21,7 @@
 ///    `FSTUserDataReader parseData:`. That is an Objective-C exception, NOT a
 ///    Dart one, so it cannot be caught by `try`/`catch` around the write: it
 ///    aborts the process. This shipped that way on 2026-08-01 and crashed the
-///    app on the first sync after a ride (see `Issues.md` §11). **Do not
+///    app on the first sync after a ride (see issues §11). **Do not
 ///    reintroduce nesting here** — a flat array is not a style choice.
 /// 2. Firestore stores map keys verbatim in every element, so a list of maps
 ///    would repeat 'lat'/'lng'/'timestamp' once per point — tens of thousands

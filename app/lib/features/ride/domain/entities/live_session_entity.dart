@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/num_cast.dart';
+
 enum LiveSessionStatus { riding, paused, crash, completed }
 
 class LiveSessionEntity extends Equatable {
@@ -16,7 +18,7 @@ class LiveSessionEntity extends Equatable {
   final DateTime updatedAt;
   final DateTime expiresAt;
 
-  /// Explicit opt-in marker — docs/Issues.md §24.1. `_publishLiveSession`
+  /// Explicit opt-in marker — issues §24.1. `_publishLiveSession`
   /// only ever runs after the rider has actively turned sharing on, so this
   /// is always `true` for a doc this app writes. It exists as a
   /// belt-and-suspenders field the Firestore rule also checks
@@ -100,8 +102,8 @@ class LiveSessionEntity extends Equatable {
       uid: data['uid'] as String,
       rideId: data['rideId'] as String,
       active: data['active'] as bool,
-      lastLat: data['lastLat'] as double?,
-      lastLng: data['lastLng'] as double?,
+      lastLat: asDoubleOrNull(data['lastLat']),
+      lastLng: asDoubleOrNull(data['lastLng']),
       speedMs: (data['speedMs'] as num?)?.toDouble() ?? 0,
       batteryPct: data['batteryPct'] as int? ?? 100,
       status: LiveSessionStatus.values.firstWhere(

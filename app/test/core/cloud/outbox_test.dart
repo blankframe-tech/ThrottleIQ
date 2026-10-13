@@ -9,7 +9,7 @@ import 'package:throttleiq/core/database/daos/outbox_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
 
 /// Covers the offline write queue behind "end a ride / share a ride with no
-/// connection" (docs/Issues.md §25).
+/// connection" (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §25).
 ///
 /// The DAO half runs against a REAL in-memory SQLite, same reasoning as
 /// `bike_dao_delete_test.dart`: the queue's whole job is to still be there
@@ -82,6 +82,89 @@ void main() {
       expect(entries.single.payload['distanceKm'], 12.5);
       expect((entries.single.payload['polyline'] as List).first, [23.8, 90.4]);
       expect(entries.single.attempts, 0);
+    });
+
+    test('enqueueShareRide persists maxSpeedKmh and all fields in payload', () async {
+      final service = OutboxService(dao: dao);
+      final enqueued = await service.enqueueShareRide(
+        rideId: 'ride-test-1',
+        userId: 'user-1',
+        userName: 'Zulfikar',
+        userPhotoUrl: 'https://example.com/photo.jpg',
+        bikeId: 'bike-1',
+        bikeName: 'Honda CBR',
+        bikeType: '160cc',
+        rideDate: DateTime.parse('2026-09-09T10:00:00Z'),
+        distanceKm: 4.0,
+        durationSeconds: 956,
+        maxSpeedKmh: 48.5,
+        polyline: const [],
+        audience: 'public',
+        attemptNow: false,
+      );
+
+      expect(enqueued, isFalse);
+      final entries = await dao.all();
+      expect(entries, hasLength(1));
+      final payload = entries.single.payload;
+      expect(payload['rideId'], 'ride-test-1');
+      expect(payload['distanceKm'], 4.0);
+      expect(payload['durationSeconds'], 956);
+      expect(payload['maxSpeedKmh'], 48.5);
+    });
+
+    group('the immediate attempt is scoped to the signed-in rider (§78.29)', () {
+      Future<bool> share(OutboxService service, {required String owner}) =>
+          service.enqueueShareRide(
+            rideId: 'ride-scope-1',
+            userId: owner,
+            userName: 'A',
+            userPhotoUrl: '',
+            bikeId: 'bike-1',
+            bikeName: 'Honda CBR',
+            bikeType: '160cc',
+            rideDate: DateTime.parse('2026-09-09T10:00:00Z'),
+            distanceKm: 1,
+            durationSeconds: 60,
+            maxSpeedKmh: 30,
+            polyline: const [],
+            audience: 'public',
+          );
+
+      test("another account's queued write is not attempted, and stays queued", () async {
+        final attempted = <String>[];
+        final service = OutboxService(
+          dao: dao,
+          currentUid: () => 'rider-B',
+          deliverOverride: (e) async {
+            attempted.add(e.id);
+            return OutboxDeliveryResult.delivered;
+          },
+        );
+
+        final delivered = await share(service, owner: 'rider-A');
+
+        expect(delivered, isFalse);
+        expect(attempted, isEmpty, reason: 'must not run under rider-B credentials');
+        expect(await dao.all(), hasLength(1), reason: 'left for rider-A to sign back in');
+      });
+
+      test("the signed-in rider's own write is still attempted immediately", () async {
+        final attempted = <String>[];
+        final service = OutboxService(
+          dao: dao,
+          currentUid: () => 'rider-A',
+          deliverOverride: (e) async {
+            attempted.add(e.id);
+            return OutboxDeliveryResult.delivered;
+          },
+        );
+
+        final delivered = await share(service, owner: 'rider-A');
+
+        expect(delivered, isTrue);
+        expect(attempted, hasLength(1));
+      });
     });
 
     test('maintenance log outbox intent enqueues and round-trips correctly', () async {

@@ -20,6 +20,11 @@ class SensorValidator {
       yawRateRadS.isFinite &&
       yawRateRadS.abs() <= SensorConstants.maxPlausibleYawRateRadS;
 
+  bool isPlausibleSpeed(double speedMs) =>
+      speedMs.isFinite &&
+      speedMs >= 0.0 &&
+      speedMs <= SensorConstants.maxPlausibleSpeedMs;
+
   bool isFreshTimestamp(DateTime timestamp, DateTime? previous) =>
       previous == null || timestamp.isAfter(previous);
 }

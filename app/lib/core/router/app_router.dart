@@ -16,16 +16,24 @@ import '../../features/social/presentation/screens/ride_share_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_config_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
+import '../../features/maintenance/presentation/screens/check_detail_screen.dart';
+import '../../features/maintenance/presentation/screens/maintenance_setup_screen.dart';
+import '../../features/maintenance/presentation/screens/fuel_screen.dart';
+import '../../features/maintenance/presentation/screens/add_fuel_log_screen.dart';
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/blocked_users_screen.dart';
+import '../../features/profile/presentation/screens/sync_issues_screen.dart';
 import '../../features/profile/presentation/screens/safe_qr_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart';
+import '../../features/profile/presentation/screens/my_follow_qr_screen.dart';
+import '../../features/social/presentation/screens/scan_follow_qr_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../features/social/presentation/screens/group_ride_map_screen.dart';
+import '../../features/forums/domain/entities/forum_post_entity.dart';
 import '../../features/forums/presentation/screens/create_forum_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
@@ -44,6 +52,8 @@ import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
 import '../../features/social/presentation/screens/shared_ride_detail_screen.dart';
 import '../../features/social/domain/entities/shared_ride_entity.dart';
+import '../../features/social/presentation/screens/all_people_screen.dart';
+import '../analytics/analytics_service.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
 /// emits, without rebuilding [routerProvider] itself — rebuilding would
@@ -75,7 +85,7 @@ String? computeAuthRedirect({
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: _AuthRefreshNotifier(ref),
     redirect: (context, state) {
@@ -91,10 +101,23 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/auth/register', builder: (_, __) => const RegisterScreen()),
-      GoRoute(path: '/auth/onboarding', builder: (_, __) => const OnboardingScreen()),
+      GoRoute(
+          path: '/auth/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: '/auth/onboarding',
+        builder: (_, state) {
+          final isDemo = state.uri.queryParameters['demo'] == '1';
+          final slideParam =
+              int.tryParse(state.uri.queryParameters['slide'] ?? '');
+          return OnboardingScreen(
+            demoMode: isDemo,
+            initialSlide: slideParam ?? 0,
+          );
+        },
+      ),
       // Full-screen ride routes (no shell)
-      GoRoute(path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
+      GoRoute(
+          path: '/ride/active', builder: (_, __) => const ActiveRideScreen()),
       // Group ride live map. Full-screen like /ride/active — it must NOT go
       // inside the ShellRoute. `?start=1` is set by the "Ride with friends"
       // flow; the destination screen starts the recording rather than the
@@ -108,38 +131,65 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
-      GoRoute(path: '/blocked-users', builder: (_, __) => const BlockedUsersScreen()),
+      GoRoute(
+          path: '/blocked-users',
+          builder: (_, __) => const BlockedUsersScreen()),
+      GoRoute(
+          path: '/sync-issues', builder: (_, __) => const SyncIssuesScreen()),
       GoRoute(path: '/safe-qr', builder: (_, __) => const SafeQrScreen()),
-      GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+      GoRoute(
+          path: '/notifications',
+          builder: (_, __) => const NotificationsScreen()),
       // The rider's OWN profile, read-only. Same screen as '/profile/:uid'
       // with the uid omitted — it resolves to the signed-in rider and adds an
       // "Edit" action. Both literals must precede '/profile/:uid' below.
       GoRoute(path: '/profile', builder: (_, __) => const UserProfileScreen()),
-      GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
+      GoRoute(
+          path: '/profile/edit', builder: (_, __) => const EditProfileScreen()),
+      // The rider's own follow QR, and the scanner that reads someone else's.
+      // Literals, so they too must precede '/profile/:uid'.
+      GoRoute(
+          path: '/profile/qr', builder: (_, __) => const MyFollowQrScreen()),
+      GoRoute(
+          path: '/profile/scan',
+          builder: (_, __) => const ScanFollowQrScreen()),
       // Must come after the literal '/profile/edit' above — go_router tries
       // routes in listed order, so the exact-match route wins for that one
       // path and every other uid falls through to this param route.
       GoRoute(
         path: '/profile/:uid',
-        builder: (_, state) => UserProfileScreen(uid: state.pathParameters['uid']!),
+        builder: (_, state) =>
+            UserProfileScreen(uid: state.pathParameters['uid']!),
       ),
       GoRoute(
         path: '/ride/summary/:rideId',
-        builder: (_, state) => RideSummaryScreen(rideId: state.pathParameters['rideId']!),
+        builder: (_, state) =>
+            RideSummaryScreen(rideId: state.pathParameters['rideId']!),
       ),
       GoRoute(
         path: '/ride/share/:rideId',
-        builder: (_, state) => RideShareScreen(rideId: state.pathParameters['rideId']!),
+        builder: (_, state) =>
+            RideShareScreen(rideId: state.pathParameters['rideId']!),
       ),
       // Forum routes (full-screen, no shell — same treatment as ride/summary).
       // '/forums/create' MUST stay above '/forums/:forumId': go_router tries
       // routes in listed order, so the param route would otherwise swallow
       // 'create' and try to open a forum whose slug is literally "create"
       // (same ordering hazard as '/profile/edit' vs '/profile/:uid' above).
-      GoRoute(path: '/forums/create', builder: (_, __) => const CreateForumScreen()),
+      GoRoute(
+          path: '/forums/create',
+          builder: (_, __) => const CreateForumScreen()),
       GoRoute(
         path: '/forums/:forumId',
-        builder: (_, state) => ForumThreadScreen(forumId: state.pathParameters['forumId']!),
+        // `?compose=1` opens the new-post sheet on arrival ("Ask owners",
+        // "Share to forum"); `extra` may carry the ForumAttachment to share.
+        builder: (_, state) => ForumThreadScreen(
+          forumId: state.pathParameters['forumId']!,
+          compose: state.uri.queryParameters['compose'] == '1',
+          attachment: state.extra is ForumAttachment
+              ? state.extra as ForumAttachment
+              : null,
+        ),
         routes: [
           GoRoute(
             path: 'post/:postId',
@@ -153,8 +203,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       // "My places" — reached from the garage header's user menu, not the
       // Places tab, so it gets the same full-screen no-shell treatment as
       // /profile/edit rather than living under /home/places.
-      GoRoute(path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
-      GoRoute(path: '/rides/mine', builder: (_, __) => const MySharedRidesScreen()),
+      GoRoute(
+          path: '/places/mine', builder: (_, __) => const MyPlacesListScreen()),
+      GoRoute(
+          path: '/rides/mine', builder: (_, __) => const MySharedRidesScreen()),
+      GoRoute(path: '/people/all', builder: (_, __) => const AllPeopleScreen()),
       // Opened from the Stats "All rides" button, on top of the current
       // screen — same full-screen no-shell treatment as /ride/summary.
       GoRoute(path: '/rides/all', builder: (_, __) => const AllRidesScreen()),
@@ -162,7 +215,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/rides/shared/:rideId',
         builder: (_, state) => SharedRideDetailScreen(
           rideId: state.pathParameters['rideId']!,
-          initialRide: state.extra is SharedRideEntity ? state.extra as SharedRideEntity : null,
+          initialRide: state.extra is SharedRideEntity
+              ? state.extra as SharedRideEntity
+              : null,
         ),
       ),
       // Saved routes. '/routes' and '/routes/save/:rideId' are both listed
@@ -174,7 +229,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chats/:chatId',
         builder: (_, state) => ChatRoomScreen(
           chatId: state.pathParameters['chatId']!,
-          otherUser: state.extra is UserProfileEntity ? state.extra as UserProfileEntity : null,
+          otherUser: state.extra is UserProfileEntity
+              ? state.extra as UserProfileEntity
+              : null,
         ),
       ),
       GoRoute(
@@ -207,9 +264,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),
         routes: [
-          GoRoute(path: '/home/social', builder: (_, __) => const SocialScreen()),
+          // `?tab=people` opens on the People tab (who you follow) — where a
+          // follow from a scanned/opened follow link lands.
+          GoRoute(
+            path: '/home/social',
+            builder: (_, state) => SocialScreen(
+              // Keyed on the tab so re-opening /home/social?tab=people while
+              // already on Social actually switches tabs (DefaultTabController
+              // only reads initialIndex once per State).
+              key: ValueKey('social-${state.uri.queryParameters['tab']}'),
+              initialTab: state.uri.queryParameters['tab'] == 'people'
+                  ? SocialScreen.peopleTab
+                  : 0,
+            ),
+          ),
           GoRoute(path: '/home/stats', builder: (_, __) => const StatsScreen()),
-          GoRoute(path: '/home/record', builder: (_, __) => const RecordScreen()),
+          GoRoute(
+              path: '/home/record', builder: (_, __) => const RecordScreen()),
           GoRoute(
             path: '/home/places',
             builder: (_, __) => const PlacesListScreen(),
@@ -217,8 +288,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(path: 'add', builder: (_, __) => const AddPlaceScreen()),
               GoRoute(
                 path: ':placeId',
-                builder: (_, state) =>
-                    PlaceDetailScreen(placeId: state.pathParameters['placeId']!),
+                builder: (_, state) => PlaceDetailScreen(
+                    placeId: state.pathParameters['placeId']!),
               ),
             ],
           ),
@@ -230,10 +301,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'configure',
-                builder: (_, state) => MaintenanceConfigScreen(
+                // A new bike's first visit here is setup now (schedule,
+                // roads, last oil change), not the bare checks list.
+                builder: (_, state) =>
+                    state.uri.queryParameters['isFirstTime'] == 'true'
+                        ? MaintenanceSetupScreen(
+                            bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                            firstTime: true,
+                          )
+                        : MaintenanceConfigScreen(
+                            bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                          ),
+              ),
+              GoRoute(
+                path: 'setup',
+                builder: (_, state) => MaintenanceSetupScreen(
                   bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                  isFirstTime:
-                      state.uri.queryParameters['isFirstTime'] == 'true',
+                  firstTime: state.uri.queryParameters['firstTime'] == 'true',
                 ),
               ),
               GoRoute(
@@ -241,6 +325,29 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => AddMaintenanceLogScreen(
                   bikeId: state.uri.queryParameters['bikeId'] ?? '',
                   initialServiceType: state.uri.queryParameters['serviceType'],
+                  visitId: state.uri.queryParameters['visitId'],
+                ),
+              ),
+              GoRoute(
+                path: 'fuel',
+                builder: (_, state) => FuelScreen(
+                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (_, state) => AddFuelLogScreen(
+                      bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                      logId: state.uri.queryParameters['logId'],
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'check',
+                builder: (_, state) => CheckDetailScreen(
+                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                  checkKey: state.uri.queryParameters['key'] ?? '',
                 ),
               ),
             ],
@@ -254,7 +361,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/home/profile',
             builder: (_, __) => const GarageScreen(),
             routes: [
-              GoRoute(path: 'add', builder: (_, __) => const AddEditBikeScreen()),
+              GoRoute(
+                  path: 'add', builder: (_, __) => const AddEditBikeScreen()),
               GoRoute(
                 path: ':bikeId',
                 builder: (_, state) =>
@@ -274,4 +382,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Screen views for usage counting (issues §83.27). `fullPath` is the route
+  // *pattern* (`/ride/summary/:rideId`), so no ride, bike or user id ever
+  // reaches analytics. A no-op in debug and for riders who opted out.
+  void logScreen() {
+    final path = router.routerDelegate.currentConfiguration.fullPath;
+    if (path.isNotEmpty) AnalyticsService.instance.logScreen(path);
+  }
+
+  router.routerDelegate.addListener(logScreen);
+  ref.onDispose(() => router.routerDelegate.removeListener(logScreen));
+  return router;
 });

@@ -6,9 +6,12 @@ Contains core application infrastructure, services, theme definitions, and utili
 
 This directory contains the following submodules:
 
+- **[analytics](./analytics)**: Privacy-limited analytics (screen views + a closed list of funnel events).
 - **[cloud](./cloud)**: Components and logic related to cloud.
 - **[constants](./constants)**: Components and logic related to constants.
 - **[database](./database)**: Components and logic related to database.
+- **[i18n](./i18n)**: Localization helpers (`context.l10n`, `resolveL10n`, locale provider, numeric locale).
+- **[realtime](./realtime)**: Firebase Realtime Database seam for high-frequency movement (live-share 1 Hz, group-ride dots, chat typing): store, socket leases, health monitor/fallback policy, throttled publisher. See `DOCS/For Devs and Contributors/architecture/realtime-database.md`.
 - **[router](./router)**: Components and logic related to router.
 - **[services](./services)**: Contains external service integrations (e.g., APIs, platform channels, device sensors).
 - **[theme](./theme)**: Components and logic related to theme.

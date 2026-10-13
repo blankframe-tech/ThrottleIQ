@@ -8,7 +8,7 @@
  * `outDir`), and nothing re-exported `crash-notifications.ts`'s functions
  * from anywhere `firebase deploy --only functions` would look. In practice
  * this meant NOTHING in `functions/` could have deployed as-is — found
- * while fixing docs/Issues.md §24.8 and worth closing in the same pass,
+ * while fixing issues §24.8 and worth closing in the same pass,
  * since a PII fix in a function that can't deploy doesn't do anything.
  *
  * Re-export every trigger from every module here; this is the only file
@@ -17,3 +17,10 @@
 export * from './crash-notifications';
 export * from './ride-identity';
 export * from './chat-moderation';
+export * from './account-deletion';
+// './badge-stats' is deliberately NOT exported. The project is on the Spark
+// plan, where Cloud Functions can't be deployed, so the app keeps
+// `stats/badges` itself (app/lib/features/stats/data/badge_stats_counter.dart,
+// guarded by firestore.rules). badge-stats.ts is the Blaze-plan alternative;
+// see its header before re-exporting it, since running both would double
+// count.

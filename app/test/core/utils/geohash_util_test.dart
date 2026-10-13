@@ -99,10 +99,10 @@ void main() {
         final e = neighbors[2];
         final w = neighbors[6];
 
-        expect(GeohashUtil.getNeighbors(n)[4], gh, reason: 'n(${gh}) then s');
-        expect(GeohashUtil.getNeighbors(s)[0], gh, reason: 's(${gh}) then n');
-        expect(GeohashUtil.getNeighbors(e)[6], gh, reason: 'e(${gh}) then w');
-        expect(GeohashUtil.getNeighbors(w)[2], gh, reason: 'w(${gh}) then e');
+        expect(GeohashUtil.getNeighbors(n)[4], gh, reason: 'n($gh) then s');
+        expect(GeohashUtil.getNeighbors(s)[0], gh, reason: 's($gh) then n');
+        expect(GeohashUtil.getNeighbors(e)[6], gh, reason: 'e($gh) then w');
+        expect(GeohashUtil.getNeighbors(w)[2], gh, reason: 'w($gh) then e');
       }
     });
 

@@ -6,6 +6,13 @@ class SensorConstants {
   static const double rapidAccelThreshold = 4.0; // m/s²
   static const double highJerkThreshold = 10.0; // m/s³
 
+  // Hysteresis re-arm levels for the edge-triggered brake/accel counters
+  // (§78.3). An event is counted once when the filtered IMU signal crosses
+  // the threshold above, and can't count again until the signal has come
+  // back past these — so one long brake is one event, not one per sample.
+  static const double hardBrakingRearmThreshold = -2.0; // m/s²
+  static const double rapidAccelRearmThreshold = 2.0; // m/s²
+
   // Overspeed defaults and limits (km/h and m/s)
   static const double minOverspeedKmh = 60.0;
   static const double maxOverspeedKmh = 140.0;
@@ -22,14 +29,59 @@ class SensorConstants {
   // number in ride_recording_provider.dart's _onPosition)
   static const double maxGpsAccuracyM = 25.0;
 
-  // Crash detection threshold: peak acceleration spike (>8g threshold)
+  // Crash detection threshold for the legacy GPS-derived path in
+  // EventDetector.detect. GPS speed deltas can never reach this on a live
+  // ride (speeds above maxPlausibleSpeedMs are rejected), which is why the
+  // live path no longer uses it — see ImpactDetector (§78.1). Kept for the
+  // AutoRideReconciler replay, which only records "crash suspected".
   static const double crashAccelThreshold = 80.0; // m/s² (~8.2g)
+
+  // ImpactDetector (§78.1) — raw-IMU crash detection.
+  //
+  // UNCALIBRATED. 4 g is a provisional starting point, not a measured value:
+  // it has not been validated against real rides, drop tests, or the range
+  // of budget-phone accelerometers (some saturate at 4-8 g, which is why
+  // ImpactDetector also treats a run of samples pinned at the ride's max as
+  // a spike). Re-tune from field data before any safety claim.
+  static const double impactThreshold = 39.0; // m/s² (~4 g)
+
+  // A run of samples pinned near the ride's max only counts as a saturated
+  // spike above this floor, so a phone at rest (all samples ≈ 0 = the max)
+  // doesn't look saturated. Also uncalibrated.
+  static const double impactSaturationFloorMs2 = 19.6; // ~2 g
+
+  // Master switch for live crash alerts from ImpactDetector. OFF until the
+  // founder decides how crash alerts are delivered (see grill §2.1:
+  // escalation is still a mock) and the thresholds above are field-
+  // validated. While false, the ride recorder builds no ImpactDetector
+  // pipeline and live rides behave exactly as before, except that the
+  // unreachable GPS crash branch is no longer called either. Tests force it
+  // on via SensorFusionCoordinator(impactDetectionEnabled: true).
+  static const bool impactDetectorLiveEnabled = false;
 
   // Sensor validation ceilings — reject obviously-broken samples (NaN,
   // sensor glitches/clipping), not legitimate high-g crash spikes
-  // (event_detector.dart's crash threshold is 80.0 m/s²)
+  // (ImpactDetector's spike threshold is impactThreshold)
   static const double maxPlausibleAccelMs2 = 300.0;
   static const double maxPlausibleYawRateRadS = 34.9; // ~2000°/s
+  static const double maxPlausibleSpeedMs = 70.0; // ~252 km/h; reject GPS spikes & jumps
+  static const double maxPhysicalAccelMs2 = 12.0; // ~1.2g; maximum physically plausible motorcycle acceleration
+
+  // Auto-tracking daily summary: two background-detected segments whose gap
+  // (last fix of one → first fix of the next) is at most this long are
+  // counted as ONE ride, the gap counted as jam time. See
+  // daily_ride_summary.dart.
+  //
+  // Why 20 minutes. The background detector already bridges anything under
+  // its 5-minute stillness timeout (AutoTrackingService.stillnessTimeout), so
+  // the splits this exists to heal are stops of 5+ minutes. Dhaka jams at the
+  // big junctions (Farmgate, Mohakhali, Banglamotor, the level crossings)
+  // routinely run 10–15 minutes stationary; 20 minutes covers that with
+  // headroom. Much longer starts swallowing genuine stops — a lunch break,
+  // a shop visit, dropping someone at school — and "one commute counted as
+  // five rides" is the bug, "a 15-minute errand folded into the trip" is the
+  // lesser, accepted error.
+  static const Duration autoRideMergeGap = Duration(minutes: 20);
 
   // Motion classification
   static const double movingSpeedThresholdMs = 1.0; // matches existing periodType cutoff
@@ -39,7 +91,7 @@ class SensorConstants {
   // of Android GPS chipsets) report Position.speed as near-zero even while
   // genuinely moving. When the raw field reads below this floor, the recorder
   // falls back to a haversine distance/time-derived speed for that fix
-  // instead of recording the ride as stationary (docs/Issues.md §49). Reuses
+  // instead of recording the ride as stationary (issues §49). Reuses
   // movingSpeedThresholdMs's cutoff — the same value already used to decide
   // "is this fix idle or moving" everywhere else.
   static const double unreliableSpeedFallbackThresholdMs = movingSpeedThresholdMs;
@@ -65,22 +117,8 @@ class SensorConstants {
   static const int minConfidenceToThinRecording = 70;
   static const Duration minPersistIntervalOnSteadyStretches = Duration(seconds: 5);
 
-  // Maintenance thresholds (km)
-  static const double oilChangeMinKm = 1000;
-  static const double oilChangeMaxKm = 1500;
-  static const double airFilterMinKm = 8000;
-  static const double airFilterMaxKm = 10000;
-  static const double chainLubeMinKm = 500;
-  static const double chainLubeMaxKm = 700;
-  static const double tireCheckMinKm = 5000;
-  static const double tireCheckMaxKm = 8000;
-
-  // Brakes get reminders alongside the original four because they're the
-  // safety-critical ones. The rest of the expanded ServiceType list is
-  // loggable but deliberately not reminded on — see _reminderTypes in
-  // maintenance_provider.dart for why.
-  static const double brakeFluidMinKm = 18000;
-  static const double brakeFluidMaxKm = 20000;
-  static const double discPadsMinKm = 12000;
-  static const double discPadsMaxKm = 15000;
+  // Maintenance intervals live with the maintenance feature: per-type
+  // defaults in maintenance_entity.dart, per-model schedules in
+  // schedule_templates.dart. (A second copy here used to drive the
+  // home-screen widget and disagreed with the app — issues §94.1.)
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/app_typography.dart';
 
@@ -11,8 +11,9 @@ import '../../core/theme/app_typography.dart';
 
 /// Display text for headings and big numbers, in whichever face the current
 /// skin uses — see [AppTypography.display]. Kept as a bare top-level function
-/// because a few hundred call sites already read `display(18)`.
+/// because dozens of call sites already read `display(context, 18)`.
 TextStyle display(
+  BuildContext context,
   double size, {
   FontWeight weight = FontWeight.w700,
   Color? color,
@@ -20,6 +21,7 @@ TextStyle display(
   double? height,
 }) =>
     AppTypography.display(
+      context,
       size,
       weight: weight,
       color: color,
@@ -41,7 +43,7 @@ class EditorialLabel extends StatelessWidget {
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 1.2,
-        color: color ?? AppColors.textTertiary,
+        color: color ?? context.palette.textTertiary,
       ),
     );
   }
@@ -56,7 +58,7 @@ class EditorialCard extends StatelessWidget {
   final Color? borderColor;
 
   /// Corner radius, or null to follow the active skin's card radius. Nullable
-  /// rather than defaulted because `AppDimensions.radiusXl` is per-skin now
+  /// rather than defaulted because `context.shape.radiusXl` is per-skin now
   /// (see [AppShapeProfile]) and so can't be a `const` default value.
   final double? radius;
 
@@ -72,9 +74,9 @@ class EditorialCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final r = radius ?? AppDimensions.radiusXl;
+    final r = radius ?? context.shape.radiusXl;
     return Material(
-      color: color ?? AppColors.surface,
+      color: color ?? context.palette.surface,
       borderRadius: BorderRadius.circular(r),
       child: InkWell(
         onTap: onTap,
@@ -83,7 +85,7 @@ class EditorialCard extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(r),
-            border: Border.all(color: borderColor ?? AppColors.border),
+            border: Border.all(color: borderColor ?? context.palette.border),
           ),
           child: child,
         ),
@@ -112,8 +114,8 @@ class InkPanel extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(radius ?? AppDimensions.radiusXl),
+        color: context.palette.ink,
+        borderRadius: BorderRadius.circular(radius ?? context.shape.radiusXl),
       ),
       child: child,
     );
@@ -133,10 +135,10 @@ class InkIconTile extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        color: context.palette.ink,
+        borderRadius: BorderRadius.circular(context.shape.radiusLg),
       ),
-      child: Icon(icon, color: AppColors.onInk, size: iconSize),
+      child: Icon(icon, color: context.palette.onInk, size: iconSize),
     );
   }
 }
@@ -157,42 +159,42 @@ class EditorialPill extends StatelessWidget {
     late Color line;
     switch (tone) {
       case PillTone.accent:
-        fg = filled ? Colors.white : AppColors.primary;
-        bg = filled ? AppColors.primary : Colors.transparent;
-        line = AppColors.primary;
+        fg = filled ? Colors.white : context.palette.primary;
+        bg = filled ? context.palette.primary : Colors.transparent;
+        line = context.palette.primary;
         break;
       case PillTone.attention:
       case PillTone.dueSoon:
-        fg = filled ? Colors.white : AppColors.attention;
-        bg = filled ? AppColors.attention : Colors.transparent;
-        line = AppColors.attention;
+        fg = filled ? Colors.white : context.palette.attention;
+        bg = filled ? context.palette.attention : Colors.transparent;
+        line = context.palette.attention;
         break;
       case PillTone.overdue:
-        fg = filled ? Colors.white : AppColors.danger;
-        bg = filled ? AppColors.danger : Colors.transparent;
-        line = AppColors.danger;
+        fg = filled ? Colors.white : context.palette.danger;
+        bg = filled ? context.palette.danger : Colors.transparent;
+        line = context.palette.danger;
         break;
       case PillTone.ok:
-        fg = AppColors.success;
+        fg = context.palette.success;
         bg = Colors.transparent;
-        line = AppColors.success;
+        line = context.palette.success;
         break;
       case PillTone.onInk:
-        fg = AppColors.ink;
-        bg = AppColors.onInk;
-        line = AppColors.onInk;
+        fg = context.palette.ink;
+        bg = context.palette.onInk;
+        line = context.palette.onInk;
         break;
       case PillTone.neutral:
-        fg = AppColors.textSecondary;
+        fg = context.palette.textSecondary;
         bg = Colors.transparent;
-        line = AppColors.border;
+        line = context.palette.border;
         break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+        borderRadius: BorderRadius.circular(context.shape.radiusFull),
         border: filled && tone != PillTone.ok && tone != PillTone.neutral
             ? null
             : Border.all(color: line, width: 1.2),
@@ -238,20 +240,20 @@ class StatCell extends StatelessWidget {
           textAlign: align == CrossAxisAlignment.center ? TextAlign.center : TextAlign.start,
           text: TextSpan(
             text: value,
-            style: display(valueSize, color: valueColor ?? AppColors.textPrimary),
+            style: display(context, valueSize, color: valueColor ?? context.palette.textPrimary),
             children: [
               if (unit != null)
                 TextSpan(
                   text: ' $unit',
-                  style: display(valueSize * 0.5,
-                      weight: FontWeight.w500, color: AppColors.textSecondary),
+                  style: display(context, valueSize * 0.5,
+                      weight: FontWeight.w500, color: context.palette.textSecondary),
                 ),
             ],
           ),
         ),
         const SizedBox(height: 2),
         Text(label,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
       ],
     );
   }
@@ -271,16 +273,16 @@ class DashedAddButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.6)),
+          borderRadius: BorderRadius.circular(context.shape.radiusLg),
+          border: Border.all(color: context.palette.primary.withValues(alpha: 0.6)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, size: 18, color: AppColors.primary),
+            Icon(Icons.add, size: 18, color: context.palette.primary),
             const SizedBox(width: 8),
             Text(label,
-                style: display(14, letterSpacing: 0, color: AppColors.primary)),
+                style: display(context, 14, letterSpacing: 0, color: context.palette.primary)),
           ],
         ),
       ),
@@ -298,12 +300,12 @@ class EditorialProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+      borderRadius: BorderRadius.circular(context.shape.radiusFull),
       child: LinearProgressIndicator(
         value: value.clamp(0.0, 1.0),
         minHeight: height,
-        backgroundColor: AppColors.border,
-        valueColor: AlwaysStoppedAnimation(color ?? AppColors.primary),
+        backgroundColor: context.palette.border,
+        valueColor: AlwaysStoppedAnimation(color ?? context.palette.primary),
       ),
     );
   }

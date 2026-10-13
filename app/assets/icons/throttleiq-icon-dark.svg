@@ -1,36 +1,66 @@
-<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#12161B"/>
-      <stop offset="100%" stop-color="#0B0D10"/>
-    </linearGradient>
+    
+    <radialGradient id="supernova_inapp_halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="28%" stop-color="#A5F3FC" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#06B6D4" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0891B2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="supernova_inapp_beam" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#67E8F9" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+    </radialGradient>
+    
   </defs>
 
-  <circle cx="256" cy="256" r="246" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="#131317"/>
 
-  <circle cx="256" cy="256" r="230" fill="none" stroke="#F8FAFC" stroke-width="5"/>
-  <circle cx="256" cy="256" r="195" fill="none" stroke="#F8FAFC" stroke-width="2" opacity="0.4"/>
-  <!-- "THROTTLE IQ" set by hand along the r=150 arc: textPath renders
-       invisibly on both rsvg-convert and flutter_svg here, so each glyph is
-       placed and rotated individually instead. -->
-  <g font-family="Manrope, sans-serif" font-weight="800" font-size="27" fill="#F8FAFC" text-anchor="middle">
-    <text x="126" y="181" transform="rotate(-60 126 181)">T</text>
-    <text x="145" y="156" transform="rotate(-48 145 156)">H</text>
-    <text x="168" y="135" transform="rotate(-36 168 135)">R</text>
-    <text x="195" y="119" transform="rotate(-24 195 119)">O</text>
-    <text x="225" y="109" transform="rotate(-12 225 109)">T</text>
-    <text x="256" y="106">T</text>
-    <text x="287" y="109" transform="rotate(12 287 109)">L</text>
-    <text x="317" y="119" transform="rotate(24 317 119)">E</text>
-    <text x="368" y="156" transform="rotate(48 368 156)">I</text>
-    <text x="386" y="181" transform="rotate(60 386 181)">Q</text>
-  </g>
+  <!-- Speedometer Arc -->
+  <path d="M 142.87,396.82 A 176.00,176.00 0 0 1 286.56,88.67" fill="none" stroke="#4A80E8" stroke-width="38.0" stroke-linecap="round"/>
+  <path d="M 286.56,88.67 A 176.00,176.00 0 0 1 430.29,237.51" fill="none" stroke="#42B558" stroke-width="38.0" stroke-linecap="round"/>
+  <circle cx="430.29" cy="237.51" r="19.0" fill="#DE6032"/>
+  <path d="M 430.29,237.51 A 176.00,176.00 0 0 1 369.13,396.82" fill="none" stroke="#D84F2A" stroke-width="38.0" stroke-linecap="round"/>
 
-  <circle cx="112" cy="330" r="4" fill="#FF6A00"/>
-  <circle cx="400" cy="330" r="4" fill="#FF6A00"/>
+  <!-- Instrument Ticks -->
+  <line x1="149.82" y1="368.18" x2="113.28" y2="404.72" stroke="rgba(255, 255, 255, 0.26)" stroke-width="6.5" stroke-linecap="round"/>
+  <line x1="362.18" y1="368.18" x2="398.72" y2="404.72" stroke="rgba(255, 255, 255, 0.26)" stroke-width="6.5" stroke-linecap="round"/>
 
-  <circle cx="144" cy="339" r="55" fill="none" stroke="#F8FAFC" stroke-width="8"/>
-  <circle cx="368" cy="339" r="55" fill="none" stroke="#F8FAFC" stroke-width="8"/>
-  <polyline points="105,318 170,308 209,245 261,230 294,271 368,308" fill="none" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="261" cy="230" r="9" fill="#FF6A00"/>
+  <!-- Needle & Hub -->
+  <path d="M 267.57,247.76 L 402.34,166.78 L 408.78,177.49 L 274.01,258.47 Z" fill="#FFFFFF"/>
+  <circle cx="256.00" cy="262.00" r="23.0" fill="#FFFFFF"/>
+  <circle cx="256.00" cy="262.00" r="17.2" fill="#131317"/>
+
+  <!-- Satellite Spoke Connectors -->
+  <line x1="405.56" y1="172.14" x2="437.76" y2="147.99" stroke="#B0C4DE" stroke-width="3.8" stroke-linecap="round" opacity="0.88"/>
+  <line x1="405.56" y1="172.14" x2="433.73" y2="193.41" stroke="#B0C4DE" stroke-width="3.8" stroke-linecap="round" opacity="0.88"/>
+  <line x1="405.56" y1="172.14" x2="386.58" y2="194.56" stroke="#B0C4DE" stroke-width="3.8" stroke-linecap="round" opacity="0.88"/>
+
+  <!-- Satellite Nodes -->
+  <circle cx="437.76" cy="147.99" r="10.6" fill="#42B558"/>
+  <circle cx="433.73" cy="193.41" r="9.5" fill="#FFFFFF"/>
+  <circle cx="386.58" cy="194.56" r="9.5" fill="#4A80E8"/>
+
+  <!-- Main Crown Bulb -->
+  <circle cx="405.56" cy="172.14" r="15.5" fill="#FFFFFF"/>
+
+  <!-- Supernova Flare Layer -->
+  
+    <!-- Supernova Aura -->
+    <circle cx="405.56" cy="172.14" r="56.3" fill="url(#supernova_inapp_halo)"/>
+    
+    <!-- 8-point Supernova Starburst -->
+    <g transform="translate(405.56, 172.14)">
+      <polygon points="-69.0,0 0,-7.5 69.0,0 0,7.5" fill="url(#supernova_inapp_beam)"/>
+      <polygon points="0,-69.0 -7.5,0 0,69.0 7.5,0" fill="url(#supernova_inapp_beam)"/>
+      <g transform="rotate(45)">
+        <polygon points="-41.4,0 0,-4.3 41.4,0 0,4.3" fill="url(#supernova_inapp_beam)" opacity="0.85"/>
+        <polygon points="0,-41.4 -4.3,0 0,41.4 4.3,0" fill="url(#supernova_inapp_beam)" opacity="0.85"/>
+      </g>
+    </g>
+    
+
+  <!-- Luminous Core -->
+  <circle cx="405.56" cy="172.14" r="9.3" fill="#FFFFFF"/>
 </svg>

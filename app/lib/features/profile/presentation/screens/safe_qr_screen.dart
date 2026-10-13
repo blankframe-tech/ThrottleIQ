@@ -1,15 +1,24 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:io';
+import 'dart:ui' as ui;
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/medical_info_entity.dart';
 import '../../domain/safe_qr_payload.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../providers/medical_info_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import '../utils/safe_qr_sticker.dart';
 
 /// SafeQR — a scannable medical-info card for first responders, built and
 /// read entirely on-device (`safe_qr_payload.dart`, `medical_info_provider
@@ -27,6 +36,11 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
   late final TextEditingController _allergiesCtrl;
   late final TextEditingController _conditionsCtrl;
   late final TextEditingController _medicationsCtrl;
+
+  /// Wraps the white QR card so it can be rendered to a PNG for export.
+  final GlobalKey _qrKey = GlobalKey();
+  final GlobalKey _shareButtonKey = GlobalKey();
+  bool _exporting = false;
 
   @override
   void initState() {
@@ -62,6 +76,84 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
       ..showSnackBar(SnackBar(content: Text(l10n.safeQrSavedMessage)));
   }
 
+  /// Renders the QR card to a PNG and hands it to the system share sheet,
+  /// which also offers Save to Photos/Files (grill §3.5.4). The
+  /// in-app card is useless to a first responder when the phone is locked;
+  /// an exported image can be a lock-screen wallpaper or a helmet sticker.
+  Future<void> _shareQrImage() async {
+    if (_exporting) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _exporting = true);
+    try {
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) throw StateError('QR card not laid out');
+      // 4x keeps modules crisp when the image is printed at sticker size.
+      final image = await boundary.toImage(pixelRatio: 4);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (bytes == null) throw StateError('PNG encode failed');
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/throttleiq_safeqr.png');
+      await file.writeAsBytes(bytes.buffer.asUint8List(), flush: true);
+      if (!mounted) return;
+
+      // Anchors the iOS/iPad share popover — see active_ride_screen.dart.
+      Rect? origin;
+      final box =
+          _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize) {
+        origin = box.localToGlobal(Offset.zero) & box.size;
+      }
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png')],
+        subject: l10n.safeQrTitle,
+        sharePositionOrigin: origin,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.safeQrShareImageFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  /// Opens the system print dialog with a sticker sheet: the same QR at a fixed
+  /// physical size, repeated, for a helmet or bike where no phone is needed.
+  Future<void> _printSticker(String payload) async {
+    if (_exporting) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _exporting = true);
+    try {
+      // The PDF built-in faces have no Bengali glyphs (Helvetica warns and would
+      // print blanks), so the bundled Noto Sans Bengali is the base face for
+      // everything — it carries Latin too, so English prints correctly as well.
+      final bengali = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/NotoSansBengali-Variable.ttf'));
+      final bytes = await buildSafeQrStickerPdf(
+        payload: payload,
+        title: l10n.safeQrStickerTitle,
+        caption: l10n.safeQrStickerCaption,
+        baseFont: bengali,
+      );
+      await Printing.layoutPdf(
+        name: 'throttleiq_safeqr',
+        onLayout: (_) async => bytes,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.safeQrPrintFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -92,42 +184,71 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(l10n.safeQrTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
             l10n.safeQrIntro,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 20),
           Center(
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: hasContent
-                  ? QrImageView(
-                      data: payload,
-                      size: 200,
-                      backgroundColor: Colors.white,
-                    )
-                  : SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: Center(
-                        child: Text(
-                          l10n.safeQrEmptyStateHint,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.black45),
+            child: RepaintBoundary(
+              key: _qrKey,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(context.shape.radiusLg),
+                  border: Border.all(color: context.palette.border),
+                ),
+                child: hasContent
+                    ? QrImageView(
+                        data: payload,
+                        size: 200,
+                        backgroundColor: Colors.white,
+                      )
+                    : SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: Center(
+                          child: Text(
+                            l10n.safeQrEmptyStateHint,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.black45),
+                          ),
                         ),
                       ),
-                    ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: OutlinedButton.icon(
+              key: _shareButtonKey,
+              onPressed: hasContent && !_exporting ? _shareQrImage : null,
+              // Theme minimumSize is full-width; this sits centred.
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+              icon: _exporting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.ios_share, size: 18),
+              label: Text(l10n.safeQrShareImageAction),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: OutlinedButton.icon(
+              onPressed:
+                  hasContent && !_exporting ? () => _printSticker(payload) : null,
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+              icon: const Icon(Icons.print_outlined, size: 18),
+              label: Text(l10n.safeQrPrintAction),
             ),
           ),
           const SizedBox(height: 24),
@@ -135,11 +256,11 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           TextField(
             controller: _bloodGroupCtrl,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
               labelText: l10n.safeQrBloodGroupField,
               hintText: l10n.safeQrBloodGroupHint,
@@ -150,7 +271,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           TextField(
             controller: _allergiesCtrl,
             maxLines: 2,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.safeQrAllergiesField),
             onChanged: (_) => setState(() {}),
           ),
@@ -158,7 +279,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           TextField(
             controller: _conditionsCtrl,
             maxLines: 2,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.safeQrConditionsField),
             onChanged: (_) => setState(() {}),
           ),
@@ -166,9 +287,8 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           TextField(
             controller: _medicationsCtrl,
             maxLines: 2,
-            style: TextStyle(color: AppColors.textPrimary),
-            decoration:
-                InputDecoration(labelText: l10n.safeQrMedicationsField),
+            style: TextStyle(color: context.palette.textPrimary),
+            decoration: InputDecoration(labelText: l10n.safeQrMedicationsField),
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 16),
@@ -176,7 +296,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
             firstContact != null
                 ? l10n.safeQrContactIncludedNote(firstContact.name)
                 : l10n.safeQrNoContactNote,
-            style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -190,7 +310,7 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           Text(
             l10n.safeQrLocalOnlyDisclaimer,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
           ),
         ],
       ),

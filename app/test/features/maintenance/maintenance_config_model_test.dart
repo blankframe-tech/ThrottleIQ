@@ -36,5 +36,59 @@ void main() {
       final reconstructed = MaintenanceConfigModel.fromMap(map);
       expect(reconstructed.isEnabled, isFalse);
     });
+
+    test('serializes and deserializes notes correctly', () {
+      const entity = MaintenanceConfigEntity(
+        bikeId: 'bike-abc',
+        serviceType: ServiceType.fuel,
+        intervalKm: 300,
+        isEnabled: true,
+        notes: 'Octane 95, 12L Tank Capacity',
+      );
+
+      final map = MaintenanceConfigModel.toMap(entity);
+      expect(map['notes'], 'Octane 95, 12L Tank Capacity');
+
+      final reconstructed = MaintenanceConfigModel.fromMap(map);
+      expect(reconstructed.notes, 'Octane 95, 12L Tank Capacity');
+      expect(reconstructed, equals(entity));
+    });
+
+    test('trims whitespace and treats empty notes as null', () {
+      const withSpaces = MaintenanceConfigEntity(
+        bikeId: 'bike-abc',
+        serviceType: ServiceType.oilChange,
+        intervalKm: 2500,
+        isEnabled: true,
+        notes: '   Motul 7100 10W-40   ',
+      );
+      expect(MaintenanceConfigModel.toMap(withSpaces)['notes'], 'Motul 7100 10W-40');
+
+      const blank = MaintenanceConfigEntity(
+        bikeId: 'bike-abc',
+        serviceType: ServiceType.chain,
+        intervalKm: 500,
+        isEnabled: true,
+        notes: '     ',
+      );
+      expect(MaintenanceConfigModel.toMap(blank)['notes'], isNull);
+    });
+
+    test('round-trips typical cost; non-positive is stored as null', () {
+      const entity = MaintenanceConfigEntity(
+        bikeId: 'bike-abc',
+        serviceType: ServiceType.chain,
+        intervalKm: 600,
+        typicalCost: 150,
+      );
+      final map = MaintenanceConfigModel.toMap(entity);
+      expect(map['typical_cost'], 150.0);
+      expect(MaintenanceConfigModel.fromMap(map), equals(entity));
+
+      final zero = MaintenanceConfigModel.toMap(
+          entity.copyWith(typicalCost: 0));
+      expect(zero['typical_cost'], isNull);
+      expect(entity.copyWith(clearTypicalCost: true).typicalCost, isNull);
+    });
   });
 }

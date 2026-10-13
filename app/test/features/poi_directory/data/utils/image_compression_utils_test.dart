@@ -23,28 +23,28 @@ void main() {
   group('File Size Validation', () {
     test('file size calculation converts bytes to MB correctly', () {
       const bytes = 1 * 1024 * 1024; // 1 MB
-      final mb = bytes / (1024 * 1024);
+      const mb = bytes / (1024 * 1024);
 
       expect(mb, equals(1.0));
     });
 
     test('2MB file equals 2097152 bytes', () {
       const mb = 2.0;
-      final bytes = mb * 1024 * 1024;
+      const bytes = mb * 1024 * 1024;
 
       expect(bytes, equals(2097152));
     });
 
     test('file size validation logic', () {
       const fileSize = 1.5 * 1024 * 1024; // 1.5 MB
-      final isValid = fileSize <= ImageCompressionUtils.maxFileSizeBytes;
+      const isValid = fileSize <= ImageCompressionUtils.maxFileSizeBytes;
 
       expect(isValid, isTrue);
     });
 
     test('oversized file fails validation', () {
       const fileSize = 3 * 1024 * 1024; // 3 MB
-      final isValid = fileSize <= ImageCompressionUtils.maxFileSizeBytes;
+      const isValid = fileSize <= ImageCompressionUtils.maxFileSizeBytes;
 
       expect(isValid, isFalse);
     });

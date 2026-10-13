@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
+import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../../core/utils/slugify.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../../domain/entities/forum_post_entity.dart';
@@ -35,14 +39,109 @@ List<ForumEntity> modelForumsToMergeInto(String brand, List<ForumEntity> candida
       .toList();
 }
 
+/// In-memory forum-name search over an already-fetched [forums] list — see
+/// [ForumRepository.searchForums] for the ranking rules. Pure, so the Social
+/// search can run it per keystroke against a cached list at zero reads.
+List<ForumEntity> filterForumsByName(
+  List<ForumEntity> forums,
+  String query, {
+  int limit = 20,
+}) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return [];
+  final matches = forums
+      .where((forum) => forum.displayName.toLowerCase().contains(q))
+      .toList()
+    ..sort((a, b) {
+      final aPrefix = a.displayName.toLowerCase().startsWith(q);
+      final bPrefix = b.displayName.toLowerCase().startsWith(q);
+      if (aPrefix != bPrefix) return aPrefix ? -1 : 1;
+      final byFollowers = b.followerCount.compareTo(a.followerCount);
+      if (byFollowers != 0) return byFollowers;
+      return a.displayName.compareTo(b.displayName);
+    });
+  return matches.take(limit).toList();
+}
+
+/// Posts fetched per page per source forum in a forum thread.
+const int kForumPostsPageSize = 25;
+
+/// One page of a forum's post list.
+class ForumPostsPage {
+  const ForumPostsPage({
+    required this.posts,
+    required this.cursor,
+    required this.hasMore,
+  });
+
+  /// Newest first.
+  final List<ForumPostEntity> posts;
+
+  /// The `createdAt` the next page starts after, or null when empty.
+  final DateTime? cursor;
+
+  /// True while at least one source forum returned a full page.
+  final bool hasMore;
+}
+
+/// Merges one page from each source forum without leaving holes — the same
+/// k-way "horizon" merge the Social feed uses (`mergeFeedSources`): a source
+/// that returned a full page may have more posts just older than its last
+/// one, so nothing older than the newest such horizon is shown yet; it is
+/// re-fetched (and de-duplicated by id) on the next page.
+ForumPostsPage mergeForumPostPages(
+  List<List<ForumPostEntity>> sources, {
+  required int limit,
+}) {
+  final byId = <String, ForumPostEntity>{};
+  DateTime? horizon;
+  for (final source in sources) {
+    for (final p in source) {
+      byId[p.id] = p;
+    }
+    if (source.isNotEmpty && source.length >= limit) {
+      final oldest = source
+          .map((p) => p.createdAt)
+          .reduce((a, b) => a.isBefore(b) ? a : b);
+      if (horizon == null || oldest.isAfter(horizon)) horizon = oldest;
+    }
+  }
+  final all = byId.values.toList()
+    ..sort((a, b) {
+      final c = b.createdAt.compareTo(a.createdAt);
+      return c != 0 ? c : a.id.compareTo(b.id);
+    });
+  if (horizon == null) {
+    return ForumPostsPage(
+      posts: all,
+      cursor: all.isEmpty ? null : all.last.createdAt,
+      hasMore: false,
+    );
+  }
+  final cut = horizon;
+  return ForumPostsPage(
+    posts: [
+      for (final p in all)
+        if (!p.createdAt.isBefore(cut)) p,
+    ],
+    cursor: cut,
+    hasMore: true,
+  );
+}
+
 class ForumRepository {
-  static final ForumRepository _instance = ForumRepository._internal();
+  static ForumRepository _instance = ForumRepository._internal();
+
+  @visibleForTesting
+  static set instanceForTest(ForumRepository mock) => _instance = mock;
 
   factory ForumRepository() => _instance;
 
   ForumRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  late final CloudinaryUploadService _uploadService = CloudinaryUploadService();
 
   CollectionReference<Map<String, dynamic>> get _forums =>
       _firestore.collection('forums');
@@ -208,33 +307,33 @@ class ForumRepository {
   /// Prefix matches rank above mid-string ones ("roy" should surface "Royal
   /// Enfield" before "Vintage Royals"), then by follower count, then by name
   /// so the order is total and can't reshuffle between identical searches.
+  ///
+  /// Each call re-reads [scanLimit] forums. Interactive search should load
+  /// [getForumsForSearch] once and run [filterForumsByName] per keystroke
+  /// instead (issues §90.A7) — see the Social screen's forum search index.
   Future<List<ForumEntity>> searchForums(
     String query, {
     int scanLimit = 200,
     int limit = 20,
   }) async {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return [];
+    if (query.trim().isEmpty) return [];
+    return filterForumsByName(
+      await getForumsForSearch(scanLimit: scanLimit),
+      query,
+      limit: limit,
+    );
+  }
 
+  /// The [scanLimit] most-followed forums — the corpus [searchForums]
+  /// filters. Exposed so a caller can cache it across keystrokes.
+  Future<List<ForumEntity>> getForumsForSearch({int scanLimit = 200}) async {
     final snapshot = await _forums
         .orderBy('followerCount', descending: true)
         .limit(scanLimit)
         .get();
-
-    final matches = snapshot.docs
+    return snapshot.docs
         .map((doc) => ForumModel.fromFirestore(doc).toEntity())
-        .where((forum) => forum.displayName.toLowerCase().contains(q))
-        .toList()
-      ..sort((a, b) {
-        final aPrefix = a.displayName.toLowerCase().startsWith(q);
-        final bPrefix = b.displayName.toLowerCase().startsWith(q);
-        if (aPrefix != bPrefix) return aPrefix ? -1 : 1;
-        final byFollowers = b.followerCount.compareTo(a.followerCount);
-        if (byFollowers != 0) return byFollowers;
-        return a.displayName.compareTo(b.displayName);
-      });
-
-    return matches.take(limit).toList();
+        .toList();
   }
 
   /// Grants [uid] moderation rights on a custom forum. `arrayUnion` keeps
@@ -261,10 +360,18 @@ class ForumRepository {
   /// reads them once the parent post is gone (every query path goes
   /// through the post doc), so this is acceptable for beta. A Cloud
   /// Function triggered on post deletion should reap them later.
+  ///
+  /// The decrement carries the post's id in `lastPostId` so firestore.rules
+  /// can tie the -1 to that post actually being deleted in this same batch
+  /// (issues §90.D5/§90.D11). The rule used to allow -1 only for moderators,
+  /// so a rider deleting their OWN post had the whole batch refused.
   Future<void> deletePost({required String forumId, required String postId}) async {
     final batch = _firestore.batch();
     batch.delete(_forums.doc(forumId).collection('posts').doc(postId));
-    batch.update(_forums.doc(forumId), {'postCount': FieldValue.increment(-1)});
+    batch.update(_forums.doc(forumId), {
+      'postCount': FieldValue.increment(-1),
+      'lastPostId': postId,
+    });
     await batch.commit();
   }
 
@@ -277,7 +384,7 @@ class ForumRepository {
     final postRef = _forums.doc(forumId).collection('posts').doc(postId);
     // A batch is one atomic commit, same as a transaction as far as the rules
     // are concerned, so `lastReplyId` lets firestore.rules tie this -1 to the
-    // reply actually being deleted here (docs/Issues.md §24.7/§24.11).
+    // reply actually being deleted here (issues §24.7/§24.11).
     final batch = _firestore.batch();
     batch.delete(postRef.collection('replies').doc(replyId));
     batch.update(postRef, {
@@ -296,7 +403,7 @@ class ForumRepository {
 
   /// Follows a forum. Idempotent: checks the follow doc's existence inside a
   /// transaction so re-following never double-counts `followerCount` (same
-  /// bug class as Phase 2's original `toggleLike`, fixed here up front).
+  /// bug class as the old ride-share `toggleLike`, fixed here up front).
   Future<void> followForum(String forumId, String userId) async {
     final followRef = _forumFollows.doc('${userId}_$forumId');
     final forumRef = _forums.doc(forumId);
@@ -333,23 +440,62 @@ class ForumRepository {
     return doc.exists;
   }
 
-  /// Forums the given user follows.
-  Future<List<ForumEntity>> getFollowedForums(String userId) async {
+  /// Ids of the forums [userId] follows — the follow docs only, no forum doc
+  /// reads (Pulse needs ids to page posts, not each forum's metadata).
+  Future<List<String>> getFollowedForumIds(String userId) async {
     final follows = await _forumFollows.where('userId', isEqualTo: userId).get();
-    final forumIds = follows.docs
+    return follows.docs
         .map((d) => d.data()['forumId'] as String?)
         .whereType<String>()
         .toList();
-    if (forumIds.isEmpty) return [];
+  }
 
-    final docs = await Future.wait(forumIds.map((id) => _forums.doc(id).get()));
-    return docs
-        .where((d) => d.exists)
-        .map((d) => ForumModel.fromFirestore(d).toEntity())
-        .toList();
+  /// The forums among [ids] that exist, in one `documentId in [...]` query
+  /// per 30 ids (Firestore's `in` cap) — a document-id lookup, so it needs no
+  /// composite index. Ids with no forum doc yet are simply absent.
+  Future<List<ForumEntity>> getForumsByIds(List<String> ids) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return const [];
+    final chunks = [
+      for (var i = 0; i < unique.length; i += 30)
+        unique.sublist(i, i + 30 > unique.length ? unique.length : i + 30),
+    ];
+    final snaps = await Future.wait(chunks.map(
+        (chunk) => _forums.where(FieldPath.documentId, whereIn: chunk).get()));
+    return [
+      for (final snap in snaps)
+        for (final doc in snap.docs) ForumModel.fromFirestore(doc).toEntity(),
+    ];
+  }
+
+  /// Forums the given user follows.
+  Future<List<ForumEntity>> getFollowedForums(String userId) async {
+    return getForumsByIds(await getFollowedForumIds(userId));
+  }
+
+  /// Uploads a photo for a forum post (Cloudinary, like place and ride
+  /// photos) and returns its public URL for [ForumPostEntity.imageUrls].
+  /// Foldered per author, since the post has no id until [createPost] runs
+  /// and the account-deletion sweep matches `<kind>/<uid>/` folders.
+  Future<String> uploadPostPhoto(String uid, File file) {
+    return _uploadService.upload(file, folder: 'forumPhotos/$uid');
+  }
+
+  /// Every forum whose `brand` is one of [brands] — the brand docs and the
+  /// model forums under them — for the brand paddocks' aggregate counts.
+  /// One single-field `whereIn` query (auto-indexed), capped at [limit].
+  Future<List<ForumEntity>> getForumsForBrands(List<String> brands, {int limit = 300}) async {
+    final unique = brands.where((b) => b.trim().isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return const [];
+    final snap = await _forums.where('brand', whereIn: unique.take(30).toList()).limit(limit).get();
+    return snap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
   }
 
   /// Creates a post in a forum and bumps its `postCount`.
+  ///
+  /// [postType], [authorBike] and [attachment] are the Pit Wall fields
+  /// (post tag, byline bike badge, shared ride/maintenance card). A new post
+  /// always starts unsolved; only [setPostSolution] moves that.
   Future<String> createPost({
     required String forumId,
     required String userId,
@@ -357,30 +503,62 @@ class ForumRepository {
     required String userPhotoUrl,
     required String title,
     required String body,
+    ForumPostType postType = ForumPostType.general,
+    String? authorBike,
+    ForumAttachment? attachment,
+    List<String> imageUrls = const [],
   }) async {
     final postRef = _forums.doc(forumId).collection('posts').doc();
 
-    await postRef.set({
-      'forumId': forumId,
-      'userId': userId,
-      'userName': userName,
-      'userPhotoUrl': userPhotoUrl,
-      'title': title,
-      'body': body,
+    // One atomic batch, and the bump names the new post in `lastPostId`, so
+    // firestore.rules can require that `postCount` only moves when that post
+    // is created by the caller in the same commit (issues §90.D11). Two
+    // separate writes, as this used to do, also left the count short by one
+    // whenever the second write failed.
+    final batch = _firestore.batch();
+    batch.set(postRef, {
+      ...newForumPostFields(
+        forumId: forumId,
+        userId: userId,
+        userName: userName,
+        userPhotoUrl: userPhotoUrl,
+        title: title,
+        body: body,
+        postType: postType,
+        authorBike: authorBike,
+        attachment: attachment,
+        imageUrls: imageUrls,
+      ),
       'createdAt': FieldValue.serverTimestamp(),
-      'replyCount': 0,
-      'upvotes': 0,
-      'downvotes': 0,
     });
-    await _forums.doc(forumId).update({'postCount': FieldValue.increment(1)});
+    batch.update(_forums.doc(forumId), {
+      'postCount': FieldValue.increment(1),
+      'lastPostId': postRef.id,
+    });
+    await batch.commit();
 
     return postRef.id;
   }
 
-  /// Posts for a forum, newest first.
-  ///
-  /// For a [ForumType.brand] forum, this also merges in posts from every
-  /// [ForumType.bikeModel] forum under that brand — so a post made in
+  /// Sets a troubleshooting post's solved state (see `forum_solution.dart`
+  /// for the toggles). firestore.rules lets only the post's author write
+  /// these two fields, only on a `troubleshoot` post, and only with a
+  /// [solutionReplyId] that names an existing reply of that post.
+  Future<void> setPostSolution({
+    required String forumId,
+    required String postId,
+    required bool isSolved,
+    String? solutionReplyId,
+  }) async {
+    await _forums.doc(forumId).collection('posts').doc(postId).update({
+      'isSolved': isSolved,
+      'solutionReplyId': solutionReplyId,
+    });
+  }
+
+  /// The forums whose posts make up [forumId]'s post list: itself, plus —
+  /// for a [ForumType.brand] forum — every [ForumType.bikeModel] forum under
+  /// that brand, so a post made in
   /// "Honda CB Shine 125" also shows up when viewing "Honda", tagged with
   /// its own model forum in the UI (`_PostCard`'s origin badge). This is a
   /// read-time merge, not a write-time copy: a merged post still lives only
@@ -398,28 +576,54 @@ class ForumRepository {
   /// way buries what a rider actually came to read. Merging model → brand
   /// doesn't have that problem: the brand forum is the broad one, so a
   /// specific post surfacing there is additive, not noise.
-  Future<List<ForumPostEntity>> getPosts(String forumId) async {
+  ///
+  /// Paged (issues §90.A8): this used to read EVERY post of the forum and of
+  /// every merged model forum, plus one vote read per post, on every open.
+  /// Now [postSourceForumIds] resolves which forums feed the list (once per
+  /// list, not per page) and [getPostsPage] reads [limit] posts per source
+  /// from a cursor, merging them without holes ([mergeForumPostPages]).
+  Future<List<String>> postSourceForumIds(String forumId) async {
     final forumDoc = await _forums.doc(forumId).get();
     final forum = forumDoc.exists ? ForumModel.fromFirestore(forumDoc).toEntity() : null;
-
-    final posts = await _postsIn(forumId);
-    if (forum != null && forum.type == ForumType.brand) {
-      posts.addAll(await _postsFromModelForums(forum.brand));
-      posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    }
-    return _hydrateVotes(posts);
+    if (forum == null || forum.type != ForumType.brand) return [forumId];
+    final modelForums = await _modelForumsUnder(forum.brand);
+    return [forumId, for (final f in modelForums) if (f.id != forumId) f.id];
   }
 
-  Future<List<ForumPostEntity>> _postsIn(String forumId) async {
-    final snapshot = await _forums
+  /// One page of posts across [forumIds] (see [postSourceForumIds]), newest
+  /// first, with the signed-in rider's votes hydrated for that page only.
+  /// [before] is the previous page's [ForumPostsPage.cursor].
+  Future<ForumPostsPage> getPostsPage(
+    List<String> forumIds, {
+    int limit = kForumPostsPageSize,
+    DateTime? before,
+  }) async {
+    final perForum = await Future.wait(
+        forumIds.map((id) => _postsIn(id, limit: limit, before: before)));
+    final page = mergeForumPostPages(perForum, limit: limit);
+    return ForumPostsPage(
+      posts: await _hydrateVotes(page.posts),
+      cursor: page.cursor,
+      hasMore: page.hasMore,
+    );
+  }
+
+  Future<List<ForumPostEntity>> _postsIn(
+    String forumId, {
+    required int limit,
+    DateTime? before,
+  }) async {
+    var q = _forums
         .doc(forumId)
         .collection('posts')
-        .orderBy('createdAt', descending: true)
-        .get();
+        .orderBy('createdAt', descending: true);
+    if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
+    final snapshot = await q.limit(limit).get();
     return snapshot.docs.map((doc) => ForumPostModel.fromFirestore(doc).toEntity()).toList();
   }
 
-  /// The posts to merge into a brand forum — see [getPosts]'s doc comment.
+  /// The model forums whose posts merge into a brand forum — see the
+  /// brand-merge notes on [postSourceForumIds].
   ///
   /// `brand`-equality is a plain single-field query, which Firestore always
   /// auto-indexes — deliberately not a compound `where('type', ...)
@@ -431,17 +635,12 @@ class ForumRepository {
   /// `collectionGroup('posts').where('qaSeed', '==', true)` query failed
   /// outright with `FAILED_PRECONDITION` because this project has no
   /// composite index for it — not worth risking here too.
-  Future<List<ForumPostEntity>> _postsFromModelForums(String brand) async {
+  Future<List<ForumEntity>> _modelForumsUnder(String brand) async {
     if (brand.trim().isEmpty) return const [];
-
     final candidatesSnap = await _forums.where('brand', isEqualTo: brand).get();
     final candidates =
         candidatesSnap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
-    final modelForums = modelForumsToMergeInto(brand, candidates);
-    if (modelForums.isEmpty) return const [];
-
-    final perForum = await Future.wait(modelForums.map((f) => _postsIn(f.id)));
-    return perForum.expand((posts) => posts).toList();
+    return modelForumsToMergeInto(brand, candidates);
   }
 
   Future<ForumPostEntity?> getPost({
@@ -457,7 +656,7 @@ class ForumRepository {
 
   /// Hydrates the signed-in rider's vote state onto each post — entity-only,
   /// never stored on the post doc itself (mirrors
-  /// RideShareRepository._hydrate's isLikedByCurrentUser/myVote pattern).
+  /// RideShareRepository._hydrate's myVote pattern).
   ///
   /// Reads each vote from the post's OWN `forumId`, not a shared one for the
   /// whole list — required since [getPosts] can now return posts merged in
@@ -533,7 +732,7 @@ class ForumRepository {
 
     // One transaction, and the bump carries the new reply's id, so
     // firestore.rules can tie the `replyCount` +1 to a reply doc actually
-    // being created in the same commit (docs/Issues.md §24.7). Mirrors
+    // being created in the same commit (issues §24.7). Mirrors
     // RideShareRepository.addComment().
     await _firestore.runTransaction((transaction) async {
       transaction.set(replyRef, {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/hold_to_start_button.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
-/// The rounded skins' start control (docs/features.md — Record screen).
+/// The rounded skins' start control (features.md — Record screen).
 ///
 /// The property under test is the one the control exists for: a ride must not
 /// start by accident. Everything here is about *when* onStart fires, not what
@@ -18,12 +19,35 @@ import 'package:throttleiq/features/ride/presentation/widgets/hold_to_start_butt
 ///   indeterminate, permanently-running animation, so settling never happens
 ///   and the test times out rather than failing usefully.
 Widget _host(Widget child) =>
-    MaterialApp(home: Scaffold(body: Center(child: child)));
+    MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,home: Scaffold(body: Center(child: child)));
 
 const _hold = Duration(milliseconds: 500);
 
 void main() {
   group('HoldToStartButton', () {
+    testWidgets(
+        'a press and release in the same frame never starts a ride (§78.26)',
+        (tester) async {
+      var starts = 0;
+      await tester.pumpWidget(_host(HoldToStartButton(
+        onStart: () => starts++,
+        holdDuration: _hold,
+      )));
+
+      // Down and up with no frame between them: the controller has been told
+      // to run forward but is still at value 0. Releasing must still cancel it.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(HoldToStartButton)),
+      );
+      await gesture.up();
+      await tester.pump(); // first frame after the gesture
+      await tester.pump(const Duration(milliseconds: 700)); // well past _hold
+
+      expect(starts, 0, reason: 'a same-frame tap must not complete the hold');
+    });
+
     testWidgets('fires once the hold completes', (tester) async {
       var starts = 0;
       await tester.pumpWidget(_host(HoldToStartButton(

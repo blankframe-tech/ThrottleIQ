@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+import '../i18n/l10n_lookup.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Local notifications: crash escalation, ride-confirmation prompts, and the
 /// weekly digest.
@@ -32,12 +34,22 @@ class NotificationService {
   static const crashChannelId = 'throttleiq_crash';
   static const ridesChannelId = 'throttleiq_rides';
   static const digestChannelId = 'throttleiq_digest';
+  static const maintenanceChannelId = 'throttleiq_maintenance';
 
   // ── Notification ids ──────────────────────────────────────────────────
   // Fixed ids so a second delivery replaces the first rather than stacking.
   static const crashNotificationId = 9001;
   static const confirmPromptId = 9002;
   static const weeklyDigestId = 9003;
+
+  /// Maintenance and paperwork alerts take ids in
+  /// [maintenanceIdBase, maintenanceIdBase + maintenanceIdSpan) — see
+  /// `MaintenanceAlerts.notificationIdFor`.
+  static const maintenanceIdBase = 9100;
+  static const maintenanceIdSpan = 800;
+
+  /// Payload prefix of a maintenance alert: `maint:<bikeId>`.
+  static const maintenancePayloadPrefix = 'maint:';
 
   // ── Action ids ────────────────────────────────────────────────────────
   static const actionImOk = 'crash_im_ok';
@@ -55,17 +67,26 @@ class NotificationService {
   /// [rideId] is carried in the notification payload.
   void Function(String rideId)? onConfirmRideTapped;
 
+  /// Invoked when the rider taps a maintenance or paperwork alert.
+  void Function(String bikeId)? onMaintenanceTapped;
+
   Future<void> init() async {
     if (_initialised) return;
     _initialised = true;
 
     tzdata.initializeTimeZones();
+    // A device whose zone can't be read or isn't in the tz database still
+    // gets notifications. It used to fall back silently to UTC, which put
+    // the 9 pm daily summary at 03:00 in Bangladesh (issues §101.C8); now
+    // the device's UTC offset picks a fixed-offset zone instead.
+    String? zoneName;
     try {
-      tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
-    } catch (_) {
-      // A device with an unrecognised zone name still gets notifications, just
-      // scheduled against UTC. Failing startup over this would be absurd.
+      zoneName = await FlutterTimezone.getLocalTimezone();
+    } catch (e) {
+      debugPrint('[notifications] local timezone unavailable: $e');
     }
+    tz.setLocalLocation(
+        resolveLocalLocation(zoneName, DateTime.now().timeZoneOffset));
 
     await _plugin.initialize(
       const InitializationSettings(
@@ -83,35 +104,41 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onResponse,
     );
 
-    await _createAndroidChannels();
+    await _createAndroidChannels(await savedL10n());
   }
 
-  Future<void> _createAndroidChannels() async {
+  Future<void> _createAndroidChannels(AppLocalizations l10n) async {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android == null) return;
 
-    await android.createNotificationChannel(const AndroidNotificationChannel(
+    await android.createNotificationChannel(AndroidNotificationChannel(
       crashChannelId,
-      'Crash alerts',
-      description:
-          'Shown when ThrottleIQ thinks you may have crashed. Do not disable.',
+      l10n.notifChannelCrash,
+      description: l10n.notifChannelCrashDesc,
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
     ));
 
-    await android.createNotificationChannel(const AndroidNotificationChannel(
+    await android.createNotificationChannel(AndroidNotificationChannel(
       ridesChannelId,
-      'Ride confirmations',
-      description: 'Asks which bike an automatically-detected ride was on.',
+      l10n.notifChannelRides,
+      description: l10n.notifChannelRidesDesc,
       importance: Importance.defaultImportance,
     ));
 
-    await android.createNotificationChannel(const AndroidNotificationChannel(
+    await android.createNotificationChannel(AndroidNotificationChannel(
+      maintenanceChannelId,
+      l10n.notifChannelMaintenance,
+      description: l10n.notifChannelMaintenanceDesc,
+      importance: Importance.defaultImportance,
+    ));
+
+    await android.createNotificationChannel(AndroidNotificationChannel(
       digestChannelId,
-      'Weekly digest',
-      description: 'Your weekly riding summary.',
+      l10n.notifChannelDigest,
+      description: l10n.notifChannelDigestDesc,
       importance: Importance.low,
       playSound: false,
     ));
@@ -158,15 +185,15 @@ class NotificationService {
   /// silently let it run — the rider has to answer it.
   Future<void> showCrashAlert({required int secondsRemaining}) async {
     await init();
+    final l10n = await savedL10n();
     await _plugin.show(
       crashNotificationId,
-      'Crash detected',
-      'Contacting your emergency contacts in ${secondsRemaining}s unless you '
-          'tap "I\'m OK".',
+      l10n.notifCrashTitle,
+      l10n.notifCrashBody(secondsRemaining),
       NotificationDetails(
         android: AndroidNotificationDetails(
           crashChannelId,
-          'Crash alerts',
+          l10n.notifChannelCrash,
           importance: Importance.max,
           priority: Priority.max,
           category: AndroidNotificationCategory.alarm,
@@ -175,10 +202,10 @@ class NotificationService {
           autoCancel: false,
           playSound: true,
           enableVibration: true,
-          actions: const [
+          actions: [
             AndroidNotificationAction(
               actionImOk,
-              "I'm OK",
+              l10n.notifImOk,
               showsUserInterface: true,
               cancelNotification: true,
             ),
@@ -211,32 +238,38 @@ class NotificationService {
     required double distanceKm,
   }) async {
     await init();
+    final l10n = await savedL10n();
     await _plugin.show(
       confirmPromptId,
-      'Ride detected — ${distanceKm.toStringAsFixed(1)} km',
-      'We logged this to $bikeLabel. Tap to confirm or change.',
-      const NotificationDetails(
+      l10n.notifRideDetectedTitle(distanceKm.toStringAsFixed(1)),
+      l10n.notifRideDetectedBody(bikeLabel),
+      NotificationDetails(
         android: AndroidNotificationDetails(
           ridesChannelId,
-          'Ride confirmations',
+          l10n.notifChannelRides,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
           actions: [
             AndroidNotificationAction(
               actionConfirmRide,
-              'Confirm',
+              l10n.notifConfirm,
               showsUserInterface: true,
               cancelNotification: true,
             ),
           ],
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       payload: rideId,
     );
   }
 
   /// The day-end update: what you rode today.
+  ///
+  /// [rideCount] counts manual rides and the ones auto-tracking caught that
+  /// the rider forgot to record ([notRecordedCount] of them), with jam-split
+  /// fragments already merged — see `daily_ride_summary.dart`. Callable from
+  /// the auto-tracking task-handler isolate as well as the UI one.
   ///
   /// Silent on days with no rides — a tracker that pings you to say nothing
   /// happened is the "daily nag" `hooked_throttleiq.md` warns against, and it
@@ -245,32 +278,33 @@ class NotificationService {
   Future<void> showDailySummary({
     required int rideCount,
     required double distanceKm,
-    required int unconfirmedCount,
+    required int rideMinutes,
+    required int notRecordedCount,
   }) async {
     if (rideCount == 0) return;
     await init();
 
-    final body = StringBuffer()
-      ..write('$rideCount ride${rideCount == 1 ? '' : 's'}, ')
-      ..write('${distanceKm.toStringAsFixed(1)} km');
-    if (unconfirmedCount > 0) {
-      body.write(' · $unconfirmedCount need'
-          '${unconfirmedCount == 1 ? 's' : ''} a bike confirmed');
+    final l10n = await savedL10n();
+    final body = StringBuffer(
+        l10n.notifDigestSummary(rideCount, distanceKm.toStringAsFixed(1)));
+    body.write(l10n.notifDigestRideTime(rideMinutes));
+    if (notRecordedCount > 0) {
+      body.write(l10n.notifDigestNotRecorded(notRecordedCount));
     }
 
     await _plugin.show(
       weeklyDigestId,
-      'Today on the road',
+      l10n.notifDigestTitle,
       body.toString(),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           digestChannelId,
-          'Weekly digest',
+          l10n.notifChannelDigest,
           importance: Importance.low,
           priority: Priority.low,
           playSound: false,
         ),
-        iOS: DarwinNotificationDetails(presentSound: false),
+        iOS: const DarwinNotificationDetails(presentSound: false),
       ),
     );
   }
@@ -286,20 +320,21 @@ class NotificationService {
   /// silent if there's nothing to say.
   Future<void> scheduleDailySummary({int hour = 21, int minute = 0}) async {
     await init();
+    final l10n = await savedL10n();
     await _plugin.zonedSchedule(
       weeklyDigestId,
-      'Today on the road',
-      'Tap to see your day.',
-      _nextInstanceOf(hour, minute),
-      const NotificationDetails(
+      l10n.notifDigestTitle,
+      l10n.notifDigestTap,
+      nextInstanceOf(tz.TZDateTime.now(tz.local), hour, minute),
+      NotificationDetails(
         android: AndroidNotificationDetails(
           digestChannelId,
-          'Weekly digest',
+          l10n.notifChannelDigest,
           importance: Importance.low,
           priority: Priority.low,
           playSound: false,
         ),
-        iOS: DarwinNotificationDetails(presentSound: false),
+        iOS: const DarwinNotificationDetails(presentSound: false),
       ),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
@@ -310,14 +345,126 @@ class NotificationService {
 
   Future<void> cancelDailySummary() => _plugin.cancel(weeklyDigestId);
 
-  tz.TZDateTime _nextInstanceOf(int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
+  NotificationDetails _maintenanceDetails(AppLocalizations l10n) =>
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          maintenanceChannelId,
+          l10n.notifChannelMaintenance,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      );
+
+  /// A maintenance or paperwork alert, now. [id] is stable per item so a
+  /// later alert for the same item replaces this one.
+  Future<void> showMaintenanceAlert({
+    required int id,
+    required String title,
+    required String body,
+    required String bikeId,
+  }) async {
+    await init();
+    final l10n = await savedL10n();
+    await _plugin.show(id, title, body, _maintenanceDetails(l10n),
+        payload: '$maintenancePayloadPrefix$bikeId');
+  }
+
+  /// The same alert, scheduled for [at] — for limits set by the calendar
+  /// (brake fluid age, tax token expiry) that fall due whether or not the
+  /// app is opened.
+  Future<void> scheduleMaintenanceAlert({
+    required int id,
+    required DateTime at,
+    required String title,
+    required String body,
+    required String bikeId,
+  }) async {
+    await init();
+    final l10n = await savedL10n();
+    await _plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(at, tz.local),
+      _maintenanceDetails(l10n),
+      payload: '$maintenancePayloadPrefix$bikeId',
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancel(int id) => _plugin.cancel(id);
+
+  /// Routes a maintenance alert that cold-started the app. A tap on a
+  /// notification while the app was killed never reaches
+  /// `onDidReceiveNotificationResponse`; it's only available here. Call once
+  /// the tap callbacks are registered.
+  Future<void> handleMaintenanceLaunchTap() async {
+    try {
+      await init();
+      final details = await _plugin.getNotificationAppLaunchDetails();
+      final payload = details?.notificationResponse?.payload;
+      if (details?.didNotificationLaunchApp != true || payload == null) return;
+      if (payload.startsWith(maintenancePayloadPrefix)) {
+        onMaintenanceTapped
+            ?.call(payload.substring(maintenancePayloadPrefix.length));
+      }
+    } catch (e) {
+      debugPrint('[notifications] launch details unavailable: $e');
+    }
+  }
+
+  /// The next [hour]:[minute] on the wall clock of [now]'s zone. Tomorrow
+  /// is built from the calendar date rather than by adding 24 hours, so a
+  /// DST change overnight doesn't shift it to 20:00 or 22:00 (issues
+  /// §101.C9).
+  @visibleForTesting
+  static tz.TZDateTime nextInstanceOf(tz.TZDateTime now, int hour, int minute) {
+    final location = now.location;
     var scheduled =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+        tz.TZDateTime(location, now.year, now.month, now.day, hour, minute);
     if (!scheduled.isAfter(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
+      scheduled = tz.TZDateTime(
+          location, now.year, now.month, now.day + 1, hour, minute);
     }
     return scheduled;
+  }
+
+  /// The zone to schedule against. [name] is what the device reported; if
+  /// it's missing or unknown, a whole-hour [deviceOffset] maps to the
+  /// matching `Etc/GMT` zone (the tz database inverts the sign, so +6 h is
+  /// `Etc/GMT-6`). Failing that: Asia/Dhaka for +6 h, otherwise UTC.
+  /// Never throws.
+  @visibleForTesting
+  static tz.Location resolveLocalLocation(String? name, Duration deviceOffset) {
+    if (name != null && name.isNotEmpty) {
+      try {
+        return tz.getLocation(name);
+      } catch (e) {
+        debugPrint('[notifications] unknown timezone "$name": $e');
+      }
+    }
+    if (deviceOffset.inMinutes % 60 == 0) {
+      final hours = deviceOffset.inHours;
+      final etc = hours == 0
+          ? 'Etc/GMT'
+          : (hours > 0 ? 'Etc/GMT-$hours' : 'Etc/GMT+${-hours}');
+      try {
+        return tz.getLocation(etc);
+      } catch (e) {
+        debugPrint('[notifications] no fixed-offset zone $etc: $e');
+      }
+    }
+    if (deviceOffset == const Duration(hours: 6)) {
+      try {
+        return tz.getLocation('Asia/Dhaka');
+      } catch (e) {
+        debugPrint('[notifications] Asia/Dhaka unavailable: $e');
+      }
+    }
+    return tz.UTC;
   }
 
   void _onResponse(NotificationResponse response) {
@@ -338,6 +485,9 @@ class NotificationService {
     if (payload == null || payload.isEmpty) return;
     if (payload == actionImOk) {
       onCrashDismissed?.call();
+    } else if (payload.startsWith(maintenancePayloadPrefix)) {
+      onMaintenanceTapped
+          ?.call(payload.substring(maintenancePayloadPrefix.length));
     } else {
       onConfirmRideTapped?.call(payload);
     }

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/group_ride_repository.dart';
@@ -11,6 +10,7 @@ import '../providers/group_ride_providers.dart';
 import '../providers/notification_providers.dart';
 import 'group_ride_friend_picker.dart';
 import 'join_group_ride_by_code_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Explicit Solo/Group choice on the Record screen, sitting where the plain
 /// "Ride with friends" button used to — an up-front choice is more
@@ -49,7 +49,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
     setState(() => _busy = true);
 
     final inviterName = (user.displayName ?? '').trim().isEmpty
-        ? 'A rider'
+        ? context.l10n.aRider
         : user.displayName!.trim();
 
     final invitees = [
@@ -67,7 +67,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
         creatorId: user.uid,
         creatorName: inviterName,
         creatorPhotoUrl: user.photoURL ?? '',
-        name: "$inviterName's group ride",
+        name: context.l10n.inviterGroupRide(inviterName),
         startTime: DateTime.now(),
         // The ride is live the moment it's created — this isn't a scheduled
         // "planned" meet-up, the creator's recording starts immediately.
@@ -110,7 +110,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text("Couldn't start the group ride: $e")),
+          SnackBar(content: Text(context.l10n.couldntStartGroupRide(e))),
         );
     }
   }
@@ -128,15 +128,29 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final liveGroupRide = ref.watch(currentLiveGroupRideProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // A rider already on a live group ride (joined by code or invite, or
+        // back here after leaving the map) gets a direct way back to the
+        // group map and push-to-talk, rather than having to find the Social
+        // tab's Riding Now card.
+        if (liveGroupRide != null) ...[
+          _LiveGroupRideBanner(
+            title: l10n.groupRideLiveBannerTitle,
+            rideName: liveGroupRide.name,
+            actionLabel: l10n.groupRideLiveBannerAction,
+            onOpen: () => context.push('/group-ride/${liveGroupRide.id}'),
+          ),
+          const SizedBox(height: 10),
+        ],
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusMd),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             children: [
@@ -172,7 +186,7 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.primary),
+                              strokeWidth: 2, color: context.palette.primary),
                         )
                       : const Icon(Icons.person_add_outlined, size: 18),
                   label: Text(l10n.rideModeInviteFriendsAction,
@@ -219,19 +233,19 @@ class _ModeSegment extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      borderRadius: BorderRadius.circular(context.shape.radiusSm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
                 size: 18,
-                color: selected ? AppColors.surface : AppColors.textPrimary),
+                color: selected ? context.palette.surface : context.palette.textPrimary),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -240,12 +254,85 @@ class _ModeSegment extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: selected ? AppColors.surface : AppColors.textPrimary,
+                  color: selected ? context.palette.surface : context.palette.textPrimary,
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+class _LiveGroupRideBanner extends StatelessWidget {
+  const _LiveGroupRideBanner({
+    required this.title,
+    required this.rideName,
+    required this.actionLabel,
+    required this.onOpen,
+  });
+
+  final String title;
+  final String rideName;
+  final String actionLabel;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = context.palette.primary;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: primary),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.groups, color: primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: context.palette.textPrimary,
+                  ),
+                ),
+                Text(
+                  rideName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.palette.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FilledButton.icon(
+              onPressed: onOpen,
+              icon: const Icon(Icons.mic, size: 18),
+              label: Text(actionLabel, overflow: TextOverflow.ellipsis),
+              style: FilledButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: context.palette.surface,
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

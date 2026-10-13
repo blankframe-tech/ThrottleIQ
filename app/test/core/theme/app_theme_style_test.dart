@@ -55,7 +55,9 @@ void main() {
         // Anything that isn't the known font-asset gripe is a real failure
         // and must not be silently eaten.
         if (!error.toString().contains('google_fonts') &&
-            !error.toString().contains('was not found in the application assets')) {
+            !error
+                .toString()
+                .contains('was not found in the application assets')) {
           throw error;
         }
       },
@@ -84,13 +86,16 @@ void main() {
       }
     });
 
-    test('isDark agrees with both the requested brightness and the palette\'s own background luminance', () {
+    test(
+        'isDark agrees with both the requested brightness and the palette\'s own background luminance',
+        () {
       // isDark drives ThemeData.brightness, the ColorScheme variant, the
       // status-bar icon color and which app mark is shown. A palette that
       // lies about it renders black system icons on a black bar.
       for (final (mode, brightness) in allCombos) {
         final p = AppColorPalette.forMode(mode, brightness);
-        expect(p.isDark, brightness == Brightness.dark, reason: '$mode/$brightness');
+        expect(p.isDark, brightness == Brightness.dark,
+            reason: '$mode/$brightness');
         expect(p.isDark, p.background.computeLuminance() < 0.5,
             reason: '$mode/$brightness declares isDark=${p.isDark} but its '
                 'background luminance is ${p.background.computeLuminance()}');
@@ -112,26 +117,18 @@ void main() {
       }
     });
 
-    test('the newly-authored light/dark companions clear AA contrast for UI components (3:1)', () {
-      // 3:1 is WCAG AA's bar for large text/UI components (icons, button
-      // fills, chart lines) — what `primary` is actually used for, as
-      // opposed to 4.5:1's small-body-text bar. Scoped to the SIX new
-      // companion palettes this change authored (carbonMonoLight,
-      // editorialDark, nocturneLight, trailSocialLight, calmingDark,
-      // analystBlueLight — Retro has no accent hue to check), each
-      // deliberately darkened/lightened for this — not asserted against the
-      // four original, unmodified light/dark palettes, some of which
-      // (Editorial's blue at ~4.0:1, Calming's sage at ~2.4:1) already
-      // shipped below this bar and are out of scope for this change to fix.
-      final newCompanions = {
-        'carbonMonoLight': AppColorPalette.carbonMonoLight,
-        'editorialDark': AppColorPalette.editorialDark,
-        'nocturneLight': AppColorPalette.nocturneLight,
-        'trailSocialLight': AppColorPalette.trailSocialLight,
-        'calmingDark': AppColorPalette.calmingDark,
-        'analystBlueLight': AppColorPalette.analystBlueLight,
+    test('the light/dark companions clear AA contrast for UI components (3:1)',
+        () {
+      final companions = {
+        'sportLight': AppColorPalette.sportLight,
+        'rainLight': AppColorPalette.rainLight,
+        'raceDark': AppColorPalette.raceDark,
+        'commuteDark': AppColorPalette.commuteDark,
+        'tourLight': AppColorPalette.tourLight,
+        'advLight': AppColorPalette.advLight,
+        'cityDark': AppColorPalette.cityDark,
       };
-      newCompanions.forEach((name, p) {
+      companions.forEach((name, p) {
         final bg = p.background.computeLuminance();
         final fg = p.primary.computeLuminance();
         final contrast = (max(bg, fg) + 0.05) / (min(bg, fg) + 0.05);
@@ -141,13 +138,9 @@ void main() {
       });
     });
 
-    test('secondary is a distinct accent from primary, in every combination', () {
-      // Several directions specify only one true accent; the rest derive a
-      // second one. A combination where the two collapse to the same value
-      // silently flattens every UI that uses them to distinguish two things.
-      // Retro is exempt by design — see the dedicated Retro group below.
+    test('secondary is a distinct accent from primary, in every combination',
+        () {
       for (final (mode, brightness) in allCombos) {
-        if (mode == AppColorMode.retro) continue;
         final p = AppColorPalette.forMode(mode, brightness);
         expect(p.secondary.toARGB32(), isNot(p.primary.toARGB32()),
             reason: '$mode/$brightness');
@@ -195,12 +188,12 @@ void main() {
       expect(AppShapeProfile.boxy.controlHeight, 52);
     });
 
-    test('the default appearance is Calming, Curvy, Light', () {
+    test('the default appearance is Commute, Curvy, Light', () {
       // The fallback for an unknown persisted preference, and what every new
       // install/account starts on. If it ever resolves to another
       // combination, every rider who never touched Settings gets a silent
       // restyle.
-      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.calming);
+      expect(AppAppearance.defaultAppearance.colorMode, AppColorMode.commute);
       expect(AppAppearance.defaultAppearance.shapeVibe, AppShapeVibe.curvy);
       expect(AppAppearance.defaultAppearance.brightness, Brightness.light);
       expect(AppShapeProfile.forVibe(AppAppearance.defaultAppearance.shapeVibe),
@@ -226,27 +219,59 @@ void main() {
     });
   });
 
-  group('AppDimensions, the shape facade', () {
-    tearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
-
-    test('apply() swaps every radius at once', () {
-      AppDimensions.apply(AppShapeProfile.curvy);
-      expect(AppDimensions.radiusSm, AppShapeProfile.curvy.radiusSm);
-      expect(AppDimensions.radiusMd, AppShapeProfile.curvy.radiusMd);
-      expect(AppDimensions.radiusLg, AppShapeProfile.curvy.radiusLg);
-      expect(AppDimensions.radiusXl, AppShapeProfile.curvy.radiusXl);
-      expect(AppDimensions.radiusFull, AppShapeProfile.curvy.radiusFull);
-      expect(AppDimensions.shape, same(AppShapeProfile.curvy));
+  group('appearance tokens travel on the theme', () {
+    test('AppTheme.build registers the palette and shape for that appearance',
+        () {
+      // This is what `context.palette` / `context.shape` resolve through, so
+      // it is the contract every widget depends on: the theme carries exactly
+      // the tokens for the appearance it was built from — nothing left over
+      // from whatever was built before it.
+      for (final (mode, brightness) in allCombos) {
+        for (final vibe in AppShapeVibe.values) {
+          final theme = themeFor(AppAppearance(
+              colorMode: mode, shapeVibe: vibe, brightness: brightness));
+          expect(theme.extension<AppColorPalette>(),
+              same(AppColorPalette.forMode(mode, brightness)),
+              reason: '$mode/$brightness');
+          expect(theme.extension<AppShapeProfile>(),
+              same(AppShapeProfile.forVibe(vibe)),
+              reason: '$vibe');
+        }
+      }
     });
 
-    test('apply() swaps rule weights and control metrics too', () {
-      AppDimensions.apply(AppShapeProfile.curvy);
-      expect(AppDimensions.outlineWidth, 1);
-      expect(AppDimensions.controlHeight, AppShapeProfile.curvy.controlHeight);
-      expect(AppDimensions.fieldPaddingH, AppShapeProfile.curvy.fieldPaddingH);
-      expect(AppDimensions.fieldPaddingV, AppShapeProfile.curvy.fieldPaddingV);
-      AppDimensions.apply(AppShapeProfile.boxy);
-      expect(AppDimensions.controlHeight, AppShapeProfile.boxy.controlHeight);
+    test(
+        'the palette cross-fades colors and flips its flags at the halfway point',
+        () {
+      const a = AppColorPalette.sportDark;
+      const b = AppColorPalette.commuteLight;
+      expect(a.lerp(b, 0).primary, a.primary);
+      expect(a.lerp(b, 0).background, a.background);
+      expect(a.lerp(b, 1).primary, b.primary);
+      expect(a.lerp(b, 0.5).primary, Color.lerp(a.primary, b.primary, 0.5));
+      expect(a.lerp(b, 0.49).isDark, isTrue);
+      expect(a.lerp(b, 0.5).isDark, isFalse);
+    });
+
+    test('the shape profile does not tween — radiusFull is 999 on Curvy', () {
+      // Interpolating boxy -> curvy would sweep every pill through absurd
+      // radii mid-animation, so the whole profile flips at the halfway point.
+      const boxy = AppShapeProfile.boxy;
+      const curvy = AppShapeProfile.curvy;
+      expect(boxy.lerp(curvy, 0.49), same(boxy));
+      expect(boxy.lerp(curvy, 0.5), same(curvy));
+      expect(boxy.lerp(null, 1), same(boxy));
+    });
+
+    test('copyWith overrides only what it is given', () {
+      final p = AppColorPalette.commuteLight
+          .copyWith(primary: const Color(0xFF123456));
+      expect(p.primary, const Color(0xFF123456));
+      expect(p.background, AppColorPalette.commuteLight.background);
+      expect(p.monoDisplay, AppColorPalette.commuteLight.monoDisplay);
+      final s = AppShapeProfile.boxy.copyWith(radiusMd: 9);
+      expect(s.radiusMd, 9);
+      expect(s.radiusSm, AppShapeProfile.boxy.radiusSm);
     });
   });
 
@@ -254,23 +279,20 @@ void main() {
     test('brightness follows the requested Brightness, not the color mode', () {
       for (final (mode, brightness) in allCombos) {
         final appearance = AppAppearance(
-            colorMode: mode, shapeVibe: AppShapeVibe.boxy, brightness: brightness);
+            colorMode: mode,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: brightness);
         final theme = themeFor(appearance);
         expect(theme.brightness, brightness, reason: '$mode/$brightness');
       }
     });
 
-    test('the card radius is the applied vibe\'s, not a shared constant', () {
-      // AppTheme.build reads AppDimensions, which is a facade over whichever
-      // AppShapeProfile was last applied — so the theme's shape follows the
-      // *applied* profile, not an argument to build(). Applying it first is
-      // what a real appearance switch does (see
-      // AppearanceNotifier._applyTokens); getting that wrong is how a rider
-      // ends up with the previous vibe's corners.
+    test('the card radius is the requested vibe\'s, not a shared constant', () {
       double cardRadius(AppShapeVibe vibe) {
-        AppDimensions.apply(AppShapeProfile.forVibe(vibe));
         final appearance = AppAppearance(
-            colorMode: AppColorMode.carbonMono, shapeVibe: vibe, brightness: Brightness.dark);
+            colorMode: AppColorMode.sport,
+            shapeVibe: vibe,
+            brightness: Brightness.dark);
         final shape = themeFor(appearance).cardTheme.shape;
         return ((shape! as RoundedRectangleBorder).borderRadius as BorderRadius)
             .topLeft
@@ -278,38 +300,39 @@ void main() {
       }
 
       for (final vibe in AppShapeVibe.values) {
-        expect(cardRadius(vibe), AppShapeProfile.forVibe(vibe).radiusXl, reason: '$vibe');
+        expect(cardRadius(vibe), AppShapeProfile.forVibe(vibe).radiusXl,
+            reason: '$vibe');
       }
-      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
-    test('Retro respects the applied vibe like every other color mode', () {
-      // Retro's identity is now entirely in its palette (monochrome, an
-      // ink-strength border, monospace type) — NOT in a fixed shape. Boxy
-      // Retro and Curvy Retro must differ in corner radius exactly the way
-      // any other color mode's two vibes would.
+    test('Race (Retro) takes its shape from the vibe, like every other mode',
+        () {
       for (final vibe in AppShapeVibe.values) {
-        AppDimensions.apply(AppShapeProfile.forVibe(vibe));
         final appearance = AppAppearance(
-            colorMode: AppColorMode.retro, shapeVibe: vibe, brightness: Brightness.light);
-        final card = themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
+            colorMode: AppColorMode.race,
+            shapeVibe: vibe,
+            brightness: Brightness.light);
+        final card =
+            themeFor(appearance).cardTheme.shape! as RoundedRectangleBorder;
         expect((card.borderRadius as BorderRadius).topLeft.x,
             AppShapeProfile.forVibe(vibe).radiusXl,
             reason: '$vibe');
       }
-      addTearDown(() => AppDimensions.apply(AppShapeProfile.boxy));
     });
 
-    test('Retro is monospace regardless of vibe or brightness', () {
-      for (final vibe in AppShapeVibe.values) {
-        for (final brightness in Brightness.values) {
-          final appearance =
-              AppAppearance(colorMode: AppColorMode.retro, shapeVibe: vibe, brightness: brightness);
-          AppTypography.applyStyle(appearance.colorMode);
-          expect(AppTypography.isMono, isTrue, reason: '$vibe/$brightness');
+    test('only Race (Retro) is monospace, regardless of vibe or brightness',
+        () {
+      for (final mode in AppColorMode.values) {
+        for (final vibe in AppShapeVibe.values) {
+          for (final brightness in Brightness.values) {
+            final palette = themeFor(AppAppearance(
+                    colorMode: mode, shapeVibe: vibe, brightness: brightness))
+                .extension<AppColorPalette>()!;
+            expect(palette.monoDisplay, mode == AppColorMode.race,
+                reason: '$mode/$vibe/$brightness');
+          }
         }
       }
-      addTearDown(() => AppTypography.applyStyle(AppColorMode.carbonMono));
     });
 
     test('every named text style carries the Bengali fallback', () {
@@ -318,8 +341,10 @@ void main() {
       // theme needs the bundled fallback appended or Bangla text silently
       // drops to whatever face the platform substitutes.
       for (final (mode, brightness) in allCombos) {
-        final appearance =
-            AppAppearance(colorMode: mode, shapeVibe: AppShapeVibe.boxy, brightness: brightness);
+        final appearance = AppAppearance(
+            colorMode: mode,
+            shapeVibe: AppShapeVibe.boxy,
+            brightness: brightness);
         final textTheme = themeFor(appearance).textTheme;
         for (final textStyle in [
           textTheme.displayLarge,
@@ -351,89 +376,114 @@ void main() {
           contains(AppTypography.bengaliFallback.single));
       expect(
           theme.elevatedButtonTheme.style?.textStyle
-              ?.resolve(const {})
-              ?.fontFamilyFallback,
+              ?.resolve(const {})?.fontFamilyFallback,
           contains(AppTypography.bengaliFallback.single));
       expect(
           theme.outlinedButtonTheme.style?.textStyle
-              ?.resolve(const {})
-              ?.fontFamilyFallback,
+              ?.resolve(const {})?.fontFamilyFallback,
           contains(AppTypography.bengaliFallback.single));
       expect(theme.snackBarTheme.contentTextStyle?.fontFamilyFallback,
           contains(AppTypography.bengaliFallback.single));
     });
   });
 
-  group('Retro, the black-and-white terminal color mode', () {
-    void checkMonochrome(AppColorPalette retro, String label) {
-      // The direction is "no chroma anywhere". A token that drifts back to a
-      // hue (a copy-pasted red danger, say) is the failure this catches, and
-      // it is invisible in review because a slightly-red near-black still
-      // reads as black in a diff.
-      final tokens = <String, Color>{
-        'background': retro.background,
-        'surface': retro.surface,
-        'border': retro.border,
-        'surfaceVariant': retro.surfaceVariant,
-        'ink': retro.ink,
-        'onInk': retro.onInk,
-        'onInkMuted': retro.onInkMuted,
-        'primary': retro.primary,
-        'primaryHighlight': retro.primaryHighlight,
-        'primaryDark': retro.primaryDark,
-        'secondary': retro.secondary,
-        'secondaryLight': retro.secondaryLight,
-        'attention': retro.attention,
-        'success': retro.success,
-        'warning': retro.warning,
-        'danger': retro.danger,
-        'textPrimary': retro.textPrimary,
-        'textSecondary': retro.textSecondary,
-        'textTertiary': retro.textTertiary,
-        'shimmerBase': retro.shimmerBase,
-        'shimmerHighlight': retro.shimmerHighlight,
-      };
-
-      tokens.forEach((name, color) {
-        final channels = [color.r, color.g, color.b];
-        final spread = channels.reduce(max) - channels.reduce(min);
-        // Paper white/near-black isn't pure #FFF/#000 and carries a trace of
-        // warmth, so a few percent of channel spread is the design. A real
-        // hue is an order of magnitude away.
-        expect(spread, lessThan(0.05),
-            reason: '$label.$name is not neutral: $color (channel spread $spread)');
-      });
-    }
-
-    test('retroLight is strictly monochrome', () =>
-        checkMonochrome(AppColorPalette.retroLight, 'retroLight'));
-    test('retroDark is strictly monochrome', () =>
-        checkMonochrome(AppColorPalette.retroDark, 'retroDark'));
-
-    test('severity is encoded in value, since it cannot be in hue', () {
-      // danger louder than warning louder than success — see the palette's
-      // note on the grey ramp standing in for red/amber/green. retroDark
-      // inverts the DIRECTION (danger is the brightest mark on black, not
-      // the darkest), so each palette is checked against its own polarity.
-      final light = AppColorPalette.retroLight;
-      expect(light.danger.computeLuminance(), lessThan(light.warning.computeLuminance()));
-      expect(light.warning.computeLuminance(), lessThan(light.success.computeLuminance()));
-
-      final dark = AppColorPalette.retroDark;
-      expect(dark.danger.computeLuminance(), greaterThan(dark.warning.computeLuminance()));
-      expect(dark.warning.computeLuminance(), greaterThan(dark.success.computeLuminance()));
+  group('Sport mode (Lime Carbon)', () {
+    test(
+        'sportDark uses high-contrast pitch carbon background with electric lime',
+        () {
+      expect(AppColorPalette.sportDark.background, const Color(0xFF0D0D0D));
+      expect(AppColorPalette.sportDark.primary, const Color(0xFFC8FF3D));
+      expect(AppColorPalette.sportDark.secondary, const Color(0xFFD633FF));
+      expect(AppColorPalette.sportDark.isDark, isTrue);
     });
 
-    test('keeps a full-strength rule rather than a hairline tint', () {
-      // The heavy rule is the direction; softening it to a tint of the
-      // background would leave a bland theme. Both palettes' border matches
-      // their own `ink` exactly — retroLight's is black-on-white, retroDark's
-      // inverts `ink` itself to be the pale tone, so the rule is still the
-      // boldest mark available either way. See the palette's doc comment.
-      expect(AppColorPalette.retroLight.border.toARGB32(),
-          AppColorPalette.retroLight.ink.toARGB32());
-      expect(AppColorPalette.retroDark.border.toARGB32(),
-          AppColorPalette.retroDark.ink.toARGB32());
+    test('sportLight uses technical daylight background with deep olive', () {
+      expect(AppColorPalette.sportLight.background, const Color(0xFFF7F8F4));
+      expect(AppColorPalette.sportLight.primary, const Color(0xFF5C7A1E));
+      expect(AppColorPalette.sportLight.secondary, const Color(0xFFA82BC0));
+      expect(AppColorPalette.sportLight.isDark, isFalse);
+    });
+  });
+
+  group('Adv mode (Analyst Blue)', () {
+    test('advDark uses midnight navy with cyan telemetry', () {
+      expect(AppColorPalette.advDark.background, const Color(0xFF0B1C2C));
+      expect(AppColorPalette.advDark.primary, const Color(0xFF25C0E6));
+      expect(AppColorPalette.advDark.secondary, const Color(0xFFF3906D));
+      expect(AppColorPalette.advDark.isDark, isTrue);
+    });
+
+    test('advLight uses glacier ice background with console cyan', () {
+      expect(AppColorPalette.advLight.background, const Color(0xFFF2F7FA));
+      expect(AppColorPalette.advLight.primary, const Color(0xFF0A7F9E));
+      expect(AppColorPalette.advLight.secondary, const Color(0xFFC15A38));
+      expect(AppColorPalette.advLight.isDark, isFalse);
+    });
+  });
+
+  group('Commute mode (Calming)', () {
+    test('commuteLight uses warm cream with sage green', () {
+      expect(AppColorPalette.commuteLight.background, const Color(0xFFF8F5EF));
+      expect(AppColorPalette.commuteLight.primary, const Color(0xFF537D5C));
+      expect(AppColorPalette.commuteLight.secondary, const Color(0xFFBD8D65));
+      expect(AppColorPalette.commuteLight.isDark, isFalse);
+    });
+
+    test('commuteDark uses warm charcoal with soft sage', () {
+      expect(AppColorPalette.commuteDark.background, const Color(0xFF17170F));
+      expect(AppColorPalette.commuteDark.primary, const Color(0xFFA8C7AD));
+      expect(AppColorPalette.commuteDark.secondary, const Color(0xFFDBB597));
+      expect(AppColorPalette.commuteDark.isDark, isTrue);
+    });
+  });
+
+  group('ride-mode names', () {
+    test('each mode resolves to the palette family it was named for', () {
+      const families = {
+        AppColorMode.sport: (
+          AppColorPalette.carbonMonoDark,
+          AppColorPalette.carbonMonoLight
+        ),
+        AppColorMode.rain: (
+          AppColorPalette.nocturneDark,
+          AppColorPalette.nocturneLight
+        ),
+        AppColorMode.race: (
+          AppColorPalette.retroDark,
+          AppColorPalette.retroLight
+        ),
+        AppColorMode.commute: (
+          AppColorPalette.calmingDark,
+          AppColorPalette.calmingLight
+        ),
+        AppColorMode.tour: (
+          AppColorPalette.trailSocialDark,
+          AppColorPalette.trailSocialLight
+        ),
+        AppColorMode.adv: (
+          AppColorPalette.analystBlueDark,
+          AppColorPalette.analystBlueLight
+        ),
+        AppColorMode.city: (
+          AppColorPalette.editorialDark,
+          AppColorPalette.editorialLight
+        ),
+      };
+      expect(families.keys.toSet(), AppColorMode.values.toSet());
+      families.forEach((mode, pair) {
+        expect(AppColorPalette.forMode(mode, Brightness.dark), same(pair.$1),
+            reason: '$mode');
+        expect(AppColorPalette.forMode(mode, Brightness.light), same(pair.$2),
+            reason: '$mode');
+      });
+    });
+
+    test('all seven modes are distinct palettes', () {
+      final backgrounds = {
+        for (final mode in AppColorMode.values)
+          AppColorPalette.forMode(mode, Brightness.dark).background.toARGB32(),
+      };
+      expect(backgrounds.length, 7);
     });
   });
 }

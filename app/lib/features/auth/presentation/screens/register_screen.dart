@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -47,7 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final err = ref.read(authNotifierProvider).error;
     if (err != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapFirebaseAuthError(err))),
+        SnackBar(content: Text(mapFirebaseAuthError(err, context.l10n))),
       );
     }
   }
@@ -57,10 +58,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final loading = ref.watch(authNotifierProvider).isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Create Account'),
+        title: Text(context.l10n.createAccount),
         leading: IconButton(
+          tooltip: context.l10n.back,
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/auth/login'),
         ),
@@ -75,24 +77,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               children: [
                 const SizedBox(height: 16),
                 Text(
-                  'Join ThrottleIQ',
+                  context.l10n.joinThrottleiq,
                   style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      fontSize: 24, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Track every ride, remember every mile',
-                  style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+                  context.l10n.trackEveryRideRemember,
+                  style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  style: TextStyle(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(labelText: 'Email', hintText: 'rider@example.com'),
+                  style: TextStyle(color: context.palette.textPrimary),
+                  decoration: InputDecoration(labelText: context.l10n.email, hintText: 'rider@example.com'),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email required';
-                    if (!v.contains('@')) return 'Invalid email';
+                    if (v == null || v.isEmpty) return context.l10n.emailRequired;
+                    if (!v.contains('@')) return context.l10n.invalidEmail;
                     return null;
                   },
                 ),
@@ -100,18 +102,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _passCtrl,
                   obscureText: _obscure,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: context.palette.textPrimary),
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: '6+ characters',
+                    labelText: context.l10n.password,
+                    hintText: context.l10n.n6Characters,
                     suffixIcon: IconButton(
+                      tooltip: context.l10n.showPassword,
                       icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                          color: AppColors.textSecondary, size: 20),
+                          color: context.palette.textSecondary, size: 20),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6) return 'Min 6 characters';
+                    if (v == null || v.length < 6) return context.l10n.min6Characters;
                     return null;
                   },
                 ),
@@ -119,10 +122,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _confirmCtrl,
                   obscureText: true,
-                  style: TextStyle(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(labelText: 'Confirm Password'),
+                  style: TextStyle(color: context.palette.textPrimary),
+                  decoration: InputDecoration(labelText: context.l10n.confirmPassword),
                   validator: (v) {
-                    if (v != _passCtrl.text) return 'Passwords do not match';
+                    if (v != _passCtrl.text) return context.l10n.passwordsDoNotMatch;
                     return null;
                   },
                 ),
@@ -133,28 +136,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ? const SizedBox(
                           height: 20, width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Create Account'),
+                      : Text(context.l10n.createAccount),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: AppColors.textSecondary)),
+                    Expanded(child: Divider(color: context.palette.textSecondary)),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(context.l10n.orDivider,
+                          style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
                     ),
-                    Expanded(child: Divider(color: AppColors.textSecondary)),
+                    Expanded(child: Divider(color: context.palette.textSecondary)),
                   ],
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: loading ? null : _googleSignUp,
                   icon: const Icon(Icons.g_mobiledata, size: 28),
-                  label: const Text('Sign up with Google'),
+                  label: Text(context.l10n.signUpWithGoogle),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: BorderSide(color: AppColors.textPrimary, width: 1.5),
+                    foregroundColor: context.palette.textPrimary,
+                    side: BorderSide(color: context.palette.textPrimary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -162,11 +165,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Already have an account? ',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                    Text(context.l10n.alreadyHaveAccount,
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/login'),
-                      child: const Text('Sign In'),
+                      child: Text(context.l10n.signIn),
                     ),
                   ],
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/profile/domain/bike_visibility.dart';
+import 'package:throttleiq/l10n/app_localizations_en.dart';
 
 void main() {
   group('canSeeBikes', () {
@@ -178,14 +179,16 @@ void main() {
   });
 
   group('bikesVisibilityLabel', () {
+    final en = AppLocalizationsEn();
+
     test('labels each known tier', () {
-      expect(bikesVisibilityLabel(kBikesVisibilityPublic), 'Everyone');
-      expect(bikesVisibilityLabel(kBikesVisibilityFollowers), 'My followers');
-      expect(bikesVisibilityLabel(kBikesVisibilityPrivate), 'Only me');
+      expect(bikesVisibilityLabel(kBikesVisibilityPublic, en), 'Everyone');
+      expect(bikesVisibilityLabel(kBikesVisibilityFollowers, en), 'My followers');
+      expect(bikesVisibilityLabel(kBikesVisibilityPrivate, en), 'Only me');
     });
 
     test('an unknown value labels as the default tier', () {
-      expect(bikesVisibilityLabel('nonsense'), 'Everyone');
+      expect(bikesVisibilityLabel('nonsense', en), 'Everyone');
     });
   });
 }

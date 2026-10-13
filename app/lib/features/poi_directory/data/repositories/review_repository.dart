@@ -132,41 +132,26 @@ class ReviewRepository {
         .toList();
   }
 
-  /// Adds a review, then updates the place's aggregate rating.
+  /// Adds a review and bumps the place's aggregate rating in ONE
+  /// transaction.
   ///
-  /// This used to do both writes inside a single Firestore [Transaction].
-  /// It no longer does, and that's deliberate: the `places/{placeId}`
-  /// security rule now requires
-  /// `exists(reviews/{uid}_{placeId})` (and a matching `stars` value) to
-  /// authorize the rating bump, so that an attacker can't call that update
-  /// directly with no real review behind it. Firestore evaluates
-  /// `get()`/`exists()` calls made during security-rules evaluation of a
-  /// transaction's writes against the database state as of the *start* of
-  /// that transaction — they do not see the effects of sibling writes
-  /// still in flight within that same transaction/batch. If the review
-  /// `set()` and the place `update()` were still both queued on the same
-  /// [Transaction], the rating-update write's `exists()` check would never
-  /// see the review being created alongside it, and every legitimate
-  /// review submission would fail its own security rule.
+  /// Both writes have to land in the same commit: the `places/{placeId}`
+  /// security rule only allows the ratingSum/ratingCount bump when the
+  /// caller's `reviews/{uid}_{placeId}` doc did not exist before this write
+  /// and does exist after it (`exists()` / `existsAfter()` / `getAfter()`),
+  /// with the delta equal to that review's stars (issues §101.S1). That is
+  /// what stops a rider replaying their one review's +stars on the place
+  /// over and over, which the old review-first-then-bump flow allowed.
   ///
-  /// So: the review doc is written first, as its own request (still safely
-  /// idempotent against "one review per user per place" — see [addReview]'s
-  /// doc comment) — and only once that's genuinely committed does the
-  /// rating-bump transaction run, by which point `exists()` correctly sees
-  /// it. The new rating totals are computed from a fresh in-transaction
-  /// read of the place doc (not from a caller-supplied snapshot), so two
-  /// concurrent submissions for the same place still can't race on a stale
-  /// aggregate — Firestore automatically retries that transaction against
-  /// the latest server value if it detects contention.
+  /// A second submission by the same rider targets the same deterministic
+  /// review id, so Firestore evaluates it as an update — reviews have no
+  /// update rule, so the whole transaction is denied and neither the review
+  /// nor the rating moves.
   ///
-  /// Trade-off versus the old single-transaction version: if the rating
-  /// transaction below fails after the review above already committed
-  /// (e.g. the place doc was deleted concurrently), the review is left
-  /// without a matching rating bump rather than neither write landing at
-  /// all. That's a display-only staleness (the review itself, the source
-  /// of truth, is unaffected) rather than a security concern, and is the
-  /// accepted cost of the security rule being able to verify the review's
-  /// existence at all.
+  /// The new totals are computed from a fresh in-transaction read of the
+  /// place doc, so two riders reviewing the same place concurrently can't
+  /// race on a stale aggregate; Firestore retries the transaction on
+  /// contention.
   Future<String> addReviewAndUpdatePlaceRating({
     required ReviewEntity review,
   }) async {
@@ -177,8 +162,6 @@ class ReviewRepository {
     // PlaceRepository) so this stays self-contained.
     final placeRef = _firestore.collection('places').doc(review.placeId);
 
-    await reviewRef.set(ReviewModel.fromEntity(review).toFirestore());
-
     await _firestore.runTransaction((transaction) async {
       final placeSnapshot = await transaction.get(placeRef);
       if (!placeSnapshot.exists) {
@@ -188,6 +171,7 @@ class ReviewRepository {
       final currentRatingSum = (data['ratingSum'] as num?)?.toDouble() ?? 0.0;
       final currentRatingCount = (data['ratingCount'] as num?)?.toInt() ?? 0;
 
+      transaction.set(reviewRef, ReviewModel.fromEntity(review).toFirestore());
       transaction.update(placeRef, {
         'ratingSum': currentRatingSum + review.stars,
         'ratingCount': currentRatingCount + 1,

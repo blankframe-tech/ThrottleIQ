@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:image/image.dart' as img;
 
 class ImageCompressionUtils {
@@ -10,7 +11,7 @@ class ImageCompressionUtils {
   /// phone camera's default JPEG output, but bounds worst-case decoded
   /// memory to ~200MB instead of whatever a crafted file's header claims).
   ///
-  /// docs/Issues.md §33.11: `img.decodeImage` fully decodes into an
+  /// issues §33.11: `img.decodeImage` fully decodes into an
   /// uncompressed bitmap with no size check beforehand. A small file whose
   /// header declares huge pixel dimensions (a decompression bomb) could
   /// decode to gigabytes of raw RGBA and crash the app. Checking the header
@@ -72,7 +73,7 @@ class ImageCompressionUtils {
 
       return compressedFile;
     } catch (e) {
-      print('Error compressing image: $e');
+      debugPrint('Error compressing image: $e');
       return null;
     }
   }
@@ -119,7 +120,7 @@ class ImageCompressionUtils {
         'height': image.height,
       };
     } catch (e) {
-      print('Error getting image dimensions: $e');
+      debugPrint('Error getting image dimensions: $e');
       return null;
     }
   }
@@ -157,7 +158,7 @@ class ImageCompressionUtils {
 
       return Uint8List.fromList(compressed);
     } catch (e) {
-      print('Error compressing image from bytes: $e');
+      debugPrint('Error compressing image from bytes: $e');
       return null;
     }
   }

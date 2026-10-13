@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../providers/ride_feed_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 const _audienceLabels = {
   'public': 'Public',
@@ -24,16 +26,15 @@ class MySharedRidesScreen extends ConsumerWidget {
   Future<void> _delete(BuildContext context, WidgetRef ref, String rideId) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete shared ride?'),
-        content: const Text('This removes it from the feed for everyone. '
-            'Your local ride history is unaffected.'),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
+        title: Text(ctx.l10n.deleteSharedRide),
+        content: Text(ctx.l10n.thisRemovesItFrom),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(ctx.l10n.cancelAction)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -48,24 +49,26 @@ class MySharedRidesScreen extends ConsumerWidget {
     final ridesAsync = ref.watch(myRidesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('My Shared Rides')),
+      backgroundColor: context.palette.background,
+      appBar: AppBar(title: Text(context.l10n.mySharedRides)),
       body: ridesAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(myRidesProvider),
+        ),
         data: (rides) {
           if (rides.isEmpty) {
             return Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.ios_share, size: 64, color: AppColors.textTertiary),
-                    SizedBox(height: 16),
-                    Text("You haven't shared any rides yet",
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    Icon(Icons.ios_share, size: 64, color: context.palette.textTertiary),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.haventSharedAnyRides,
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
               ),
@@ -73,7 +76,7 @@ class MySharedRidesScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () => ref.refresh(myRidesProvider.future),
-            color: AppColors.primary,
+            color: context.palette.primary,
             child: ListView.separated(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
               itemCount: rides.length,
@@ -88,7 +91,7 @@ class MySharedRidesScreen extends ConsumerWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(ride.bikeName, style: display(16, letterSpacing: 0)),
+                            child: Text(ride.bikeName, style: display(context, 16, letterSpacing: 0)),
                           ),
                           EditorialPill(
                             _audienceLabels[ride.audience] ?? ride.audience,
@@ -96,8 +99,9 @@ class MySharedRidesScreen extends ConsumerWidget {
                             filled: false,
                           ),
                           IconButton(
+                            tooltip: context.l10n.delete,
                             icon: Icon(Icons.delete_outline,
-                                color: AppColors.textTertiary, size: 18),
+                                color: context.palette.textTertiary, size: 18),
                             onPressed: () => _delete(context, ref, ride.id),
                           ),
                         ],
@@ -105,26 +109,21 @@ class MySharedRidesScreen extends ConsumerWidget {
                       Text(
                         '${_formatDate(ride.rideDate)} · ${ride.distanceKm.toStringAsFixed(1)} km · '
                         '${SpeedFormatter.durationFromSeconds(ride.durationSeconds)}',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.favorite_border, size: 14, color: AppColors.textTertiary),
-                          const SizedBox(width: 4),
-                          Text('${ride.likes}',
-                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
-                          const SizedBox(width: 12),
                           Icon(Icons.mode_comment_outlined,
-                              size: 14, color: AppColors.textTertiary),
+                              size: 14, color: context.palette.textTertiary),
                           const SizedBox(width: 4),
                           Text('${ride.comments}',
-                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                           const SizedBox(width: 12),
-                          Icon(Icons.arrow_upward, size: 14, color: AppColors.textTertiary),
+                          Icon(Icons.arrow_upward, size: 14, color: context.palette.textTertiary),
                           const SizedBox(width: 4),
                           Text('${ride.netScore}',
-                              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                         ],
                       ),
                     ],

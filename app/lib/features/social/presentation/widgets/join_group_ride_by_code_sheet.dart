@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/group_ride_repository.dart';
 import '../../domain/utilities/group_ride_join_code.dart';
 import '../providers/group_ride_providers.dart';
+import '../providers/notification_providers.dart';
 
 /// Modal sheet for the code half of "Ride with friends" — the door in for a
 /// rider nobody has invited yet, e.g. someone met at a fuel stop mid-ride.
@@ -24,7 +25,7 @@ class JoinGroupRideByCodeSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       builder: (_) => const JoinGroupRideByCodeSheet(),
     );
   }
@@ -62,23 +63,42 @@ class _JoinGroupRideByCodeSheetState
       _error = null;
     });
 
+    final userName = (user.displayName ?? '').trim().isEmpty
+        ? 'Rider'
+        : user.displayName!.trim();
+
     try {
-      final groupRideId =
-          await ref.read(groupRideRepositoryProvider).joinByCode(
-                code: code,
-                userId: user.uid,
-                userName: (user.displayName ?? '').trim().isEmpty
-                    ? 'Rider'
-                    : user.displayName!.trim(),
-                userPhotoUrl: user.photoURL ?? '',
-              );
+      final result = await ref.read(groupRideRepositoryProvider).joinByCode(
+            code: code,
+            userId: user.uid,
+            userName: userName,
+            userPhotoUrl: user.photoURL ?? '',
+          );
       if (!mounted) return;
-      Navigator.of(context).pop(groupRideId);
+      // Best-effort, same reasoning as ride_mode_selector.dart's invite
+      // notifications: a failed write here must not turn a successful join
+      // into a failure shown to the joining rider.
+      try {
+        await ref.read(notificationRepositoryProvider).notifyGroupRideJoined(
+              toUid: result.creatorId,
+              fromUid: user.uid,
+              fromName: userName,
+              groupRideId: result.groupRideId,
+              fromPhotoUrl: user.photoURL,
+            );
+      } catch (_) {/* creator just won't find out until they open the ride */}
+      if (!mounted) return;
+      Navigator.of(context).pop(result.groupRideId);
     } on GroupRideJoinException catch (e) {
       if (!mounted) return;
       setState(() {
         _joining = false;
-        _error = e.message;
+        _error = switch (e.kind) {
+          GroupRideJoinFailure.badCode => l10n.joinRideBadCode,
+          GroupRideJoinFailure.alreadyEnded => l10n.joinRideAlreadyEnded,
+          GroupRideJoinFailure.full => l10n.joinRideFull,
+          GroupRideJoinFailure.removed => l10n.joinRideRemoved,
+        };
       });
     } catch (e) {
       if (!mounted) return;
@@ -108,13 +128,13 @@ class _JoinGroupRideByCodeSheetState
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: context.palette.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             l10n.joinRideByCodeSubtitle,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -123,7 +143,7 @@ class _JoinGroupRideByCodeSheetState
             textCapitalization: TextCapitalization.characters,
             maxLength: kJoinCodeLength + 2, // tolerate a stray space or two
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.palette.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               letterSpacing: 4,
@@ -148,7 +168,7 @@ class _JoinGroupRideByCodeSheetState
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.surface),
+                          strokeWidth: 2, color: context.palette.surface),
                     )
                   : Text(l10n.joinRideAction),
             ),

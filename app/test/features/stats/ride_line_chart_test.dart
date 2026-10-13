@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/stats/presentation/widgets/ride_line_chart.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 
 Widget _host(Widget child) => MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Center(child: SizedBox(width: 360, child: child)),
       ),

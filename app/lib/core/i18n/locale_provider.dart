@@ -74,3 +74,11 @@ final localeProvider =
 final appLocaleProvider = Provider<Locale?>(
   (ref) => ref.watch(localeProvider).toLocale,
 );
+
+/// The saved language as a [Locale] (`null` = follow the phone), read straight
+/// from preferences for code that has neither a `ref` nor a `BuildContext` —
+/// a notification, say. See `l10n_lookup.dart`.
+Future<Locale?> readSavedLocale() async {
+  final prefs = await SharedPreferences.getInstance();
+  return AppLocale._fromPrefs(prefs.getString(_prefsKey)).toLocale;
+}

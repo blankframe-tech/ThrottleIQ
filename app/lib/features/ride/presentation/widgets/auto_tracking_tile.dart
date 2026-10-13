@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
+import '../providers/daily_ride_summary_provider.dart';
 import 'auto_detection_history_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
 
 /// Settings control for automatic ride detection.
 ///
@@ -13,7 +15,8 @@ import 'auto_detection_history_sheet.dart';
 /// technical, sceptical audience and "uses some battery" reads as evasion;
 /// naming the number is what makes the ask credible. It is also honest — the
 /// idle cost really is a few percent a day, because detection runs on platform
-/// activity recognition and never polls GPS. See docs/AUTO_TRACKING_PLAN.md.
+/// activity recognition and never polls GPS. See auto_tracking_plan.md
+/// (`DOCS/For Devs and Contributors/architecture/`).
 class AutoTrackingTile extends ConsumerWidget {
   const AutoTrackingTile({super.key});
 
@@ -27,14 +30,16 @@ class AutoTrackingTile extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SwitchListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SwitchListTile(
             value: isEnabled,
             onChanged: enabled.isLoading
                 ? null
@@ -44,7 +49,7 @@ class AutoTrackingTile extends ConsumerWidget {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(l10n.autoTrackingTileSubtitle),
-            secondary: Icon(Icons.motorcycle, color: AppColors.primary),
+            secondary: Icon(Icons.motorcycle, color: context.palette.primary),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           ),
           if (isIos && isEnabled)
@@ -53,21 +58,21 @@ class AutoTrackingTile extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.attention.withValues(alpha: 0.12),
+                  color: context.palette.attention.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.attention.withValues(alpha: 0.3)),
+                  border: Border.all(color: context.palette.attention.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, size: 16, color: AppColors.attention),
+                    Icon(Icons.info_outline, size: 16, color: context.palette.attention),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         l10n.iosAutoTrackingAdvisory,
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textPrimary,
+                          color: context.palette.textPrimary,
                           height: 1.3,
                         ),
                       ),
@@ -76,6 +81,7 @@ class AutoTrackingTile extends ConsumerWidget {
                 ),
               ),
             ),
+          if (isEnabled) const _TodaySummaryRow(),
           const Divider(height: 1),
           InkWell(
             onTap: () => AutoDetectionHistorySheet.show(context),
@@ -84,23 +90,24 @@ class AutoTrackingTile extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  Icon(Icons.history, size: 18, color: AppColors.textSecondary),
+                  Icon(Icons.history, size: 18, color: context.palette.textSecondary),
                   const SizedBox(width: 8),
                   Text(
-                    l10n.recentDetectionsTitle,
+                    l10n.dailySummariesTitle,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.chevron_right, size: 18, color: AppColors.textTertiary),
+                  Icon(Icons.chevron_right, size: 18, color: context.palette.textTertiary),
                 ],
               ),
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -142,6 +149,58 @@ class AutoTrackingTile extends ConsumerWidget {
   }
 }
 
+/// Today's ride summary, under the switch while auto-tracking is on.
+///
+/// Replaces surfacing each auto-detected ride: the day's count covers manual
+/// rides and the ones the rider didn't record, with jam-split fragments
+/// merged (see `daily_ride_summary.dart`).
+class _TodaySummaryRow extends ConsumerWidget {
+  const _TodaySummaryRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summary = ref.watch(dailyRideSummaryProvider).valueOrNull;
+    if (summary == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.today, size: 18, color: context.palette.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.autoSummaryTodayTitle} · '
+                      '${l10n.autoSummaryRides(summary.rideCount)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary,
+                      ),
+                    ),
+                    if (!summary.isEmpty) ...[
+                      const SizedBox(height: 2),
+                      DailySummaryDetails(summary: summary),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// "Only watch during these hours" control, shown directly under
 /// [AutoTrackingTile] and only while auto-tracking is actually on — picking
 /// a window for a feature that's off has nothing to attach to yet.
@@ -166,24 +225,24 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
-      child: Column(
-        children: [
-          SwitchListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            SwitchListTile(
             value: schedule.enabled,
             onChanged: (value) =>
                 ref.read(autoTrackingScheduleProvider.notifier).setEnabled(value),
-            title: const Text('Active hours',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            title: Text(context.l10n.activeHours,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(schedule.enabled
-                ? 'Only watching for rides between '
-                    '${_formatMinutes(schedule.startMinutes)} and '
-                    '${_formatMinutes(schedule.endMinutes)}.'
-                : 'Watching for rides all day.'),
-            secondary: Icon(Icons.schedule, color: AppColors.primary),
+                ? context.l10n.onlyWatchingRidesBetween(_formatMinutes(schedule.startMinutes), _formatMinutes(schedule.endMinutes))
+                : context.l10n.watchingRidesAllDay),
+            secondary: Icon(Icons.schedule, color: context.palette.primary),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           ),
@@ -195,7 +254,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _TimeField(
-                      label: 'From',
+                      label: context.l10n.fromLabel,
                       minutes: schedule.startMinutes,
                       onPicked: (picked) => _updateWindow(
                           context, ref, start: picked, end: schedule.endMinutes),
@@ -204,7 +263,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _TimeField(
-                      label: 'Until',
+                      label: context.l10n.untilLabel,
                       minutes: schedule.endMinutes,
                       onPicked: (picked) => _updateWindow(
                           context, ref,
@@ -217,6 +276,7 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
           ],
         ],
       ),
+      ),
     );
   }
 
@@ -227,8 +287,8 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
     required int end,
   }) async {
     if (start >= end) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('The start time must be before the end time.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.startTimeMustBe),
       ));
       return;
     }
@@ -265,7 +325,7 @@ class _TimeField extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(label,
-              style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+              style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
           Text(AutoTrackingScheduleTile._formatMinutes(minutes)),
         ],
       ),

@@ -1,17 +1,23 @@
+import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/foundation.dart' show VoidCallback, visibleForTesting;
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/sensor_constants.dart';
 import '../database/daos/bike_dao.dart';
-import '../database/daos/maintenance_dao.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_theme_style.dart';
+import '../theme/theme_style_provider.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/data/models/bike_model.dart';
 import '../../features/garage/domain/entities/bike_entity.dart';
-import '../../features/maintenance/data/models/maintenance_model.dart';
+import '../../features/maintenance/data/repositories/maintenance_forecast_repository.dart';
+import '../../features/maintenance/domain/calculators/maintenance_forecast.dart';
 import '../../features/maintenance/domain/entities/maintenance_entity.dart';
 import '../../features/ride/data/models/ride_model.dart';
 import '../../features/ride/domain/entities/ride_entity.dart';
@@ -20,14 +26,31 @@ final homeWidgetServiceProvider = Provider<HomeWidgetService>((ref) {
   return HomeWidgetService.instance;
 });
 
+/// Keeps the home-screen widgets in the app's color theme: publishes the
+/// active palette now and again on every appearance change (color mode,
+/// brightness — including an OS flip while on "System"). Watched once from
+/// the app root so it lives as long as the app does.
+final homeWidgetThemeSyncProvider = Provider<void>((ref) {
+  final service = ref.watch(homeWidgetServiceProvider);
+  ref.listen<AppAppearance>(
+    appearanceProvider,
+    (_, appearance) => service.publishTheme(
+      AppColorPalette.forMode(appearance.colorMode, appearance.brightness),
+      colorMode: appearance.colorMode,
+    ),
+    fireImmediately: true,
+  );
+});
+
 // ---------------------------------------------------------------------------
 // SharedPreferences / UserDefaults keys.
 //
 // These are the contract between Dart and the native widget code. The Android
 // providers (StartRideWidgetProvider / RideStatsWidgetProvider /
-// MaintenanceWidgetProvider) and the iOS WidgetKit bundle
-// (ios/ThrottleIQWidget/ThrottleIQWidget.swift) read these exact strings, so
-// renaming one here silently blanks a widget. Change both sides together.
+// MaintenanceWidgetProvider / AutoTrackingWidgetProvider / ApexHunterWidgetProvider)
+// and the iOS WidgetKit bundle (ios/ThrottleIQWidget/ThrottleIQWidget.swift) read
+// these exact strings, so renaming one here silently blanks a widget. Change
+// both sides together.
 //
 // Every "display" key holds a fully-formatted, ready-to-render string so the
 // native layouts stay dumb (no number formatting in Kotlin or Swift). The
@@ -52,6 +75,33 @@ const String kWidgetKeyKmUntilDue = 'ti_km_until_due';
 const String kWidgetKeyKmUntilDueRaw = 'ti_km_until_due_raw';
 const String kWidgetKeyOverdue = 'ti_overdue';
 const String kWidgetKeyMaintenanceUpdatedAt = 'ti_maintenance_updated_at';
+
+/// Apex Hunter (cornering telemetry) widget keys.
+const String kWidgetKeyMaxLeanLeft = 'ti_max_lean_left';
+const String kWidgetKeyMaxLeanLeftRaw = 'ti_max_lean_left_raw';
+const String kWidgetKeyMaxLeanRight = 'ti_max_lean_right';
+const String kWidgetKeyMaxLeanRightRaw = 'ti_max_lean_right_raw';
+const String kWidgetKeyLeanRating = 'ti_lean_rating';
+const String kWidgetKeyLeanSymmetry = 'ti_lean_symmetry';
+const String kWidgetKeyApexUpdatedAt = 'ti_apex_updated_at';
+
+/// Theme keys: the active palette as `#AARRGGBB` hex strings, plus whether it
+/// is a dark palette and which color mode it came from. Native widgets read
+/// these at render time and fall back to their built-in Carbon Mono colors
+/// when a key is missing (widget placed before the app ever ran).
+const String kWidgetKeyThemeBackground = 'ti_theme_background';
+const String kWidgetKeyThemeSurface = 'ti_theme_surface';
+const String kWidgetKeyThemeBorder = 'ti_theme_border';
+const String kWidgetKeyThemeInk = 'ti_theme_ink';
+const String kWidgetKeyThemePrimary = 'ti_theme_primary';
+const String kWidgetKeyThemeOnPrimary = 'ti_theme_on_primary';
+const String kWidgetKeyThemeAccent = 'ti_theme_accent';
+const String kWidgetKeyThemeTextPrimary = 'ti_theme_text_primary';
+const String kWidgetKeyThemeTextMuted = 'ti_theme_text_muted';
+const String kWidgetKeyThemeTextTertiary = 'ti_theme_text_tertiary';
+const String kWidgetKeyThemeDanger = 'ti_theme_danger';
+const String kWidgetKeyThemeIsDark = 'ti_theme_is_dark';
+const String kWidgetKeyThemeMode = 'ti_theme_mode';
 
 /// Shown by both platforms before the app has ever published anything. Native
 /// code has its own copy of these as a defensive default; keeping them here
@@ -93,7 +143,8 @@ String formatRideCount(int count) {
 /// The one-line "what's next" sentence on the maintenance widget.
 ///
 /// [kmUntilDue] is signed distance-to-limit as computed by
-/// [computeNextService]; when [overdue] is true the caller may pass either the
+/// [nextServiceDue]; when [daysUntilDue] is given the sentence is in days
+/// instead (a time-driven check). When [overdue] is true the caller may pass either the
 /// negative remainder or its magnitude, so this normalises with `abs()` and
 /// lets [overdue] — not the sign — decide the wording. `kmUntilDue <= 0`
 /// without [overdue] means "at the limit but not past the hard threshold",
@@ -102,8 +153,16 @@ String formatNextServiceSummary({
   required String serviceLabel,
   required double kmUntilDue,
   required bool overdue,
+  int? daysUntilDue,
 }) {
   final label = serviceLabel.trim().isEmpty ? 'Service' : serviceLabel.trim();
+  if (daysUntilDue != null) {
+    final d = daysUntilDue.abs();
+    final days = '$d ${d == 1 ? 'day' : 'days'}';
+    if (overdue) return '$label overdue by $days';
+    if (daysUntilDue <= 0) return '$label due now';
+    return '$label in $days';
+  }
   if (overdue) return '$label overdue by ${formatKm(kmUntilDue.abs())}';
   if (kmUntilDue.isNaN || kmUntilDue <= 0) return '$label due now';
   return '$label in ${formatKm(kmUntilDue)}';
@@ -119,6 +178,70 @@ String _withThousandsSeparator(int value) {
   return buffer.toString();
 }
 
+/// Renders a lean angle: `'42°'`, `'0°'`. Non-finite or negative collapses to `'0°'`.
+String formatLeanAngle(double deg) {
+  if (deg.isNaN || deg.isInfinite || deg < 0) return '0°';
+  return '${deg.round()}°';
+}
+
+/// Computes cornering balance symmetry percentage: e.g. `'95%'`.
+/// Clamped to 0..100. Returns '100%' if both are 0.
+String calculateLeanSymmetry(double left, double right) {
+  final l = left.isNaN || left.isInfinite || left < 0 ? 0.0 : left;
+  final r = right.isNaN || right.isInfinite || right < 0 ? 0.0 : right;
+  if (l == 0 && r == 0) return '100%';
+  final maxVal = math.max(l, r);
+  final minVal = math.min(l, r);
+  if (maxVal == 0) return '100%';
+  final ratio = (minVal / maxVal) * 100;
+  return '${ratio.clamp(0, 100).round()}%';
+}
+
+/// Resolves lean rating label:
+/// >= 42° -> 'KNEE DOWN'
+/// >= 32° -> 'SPORT'
+/// >= 20° -> 'CANYON'
+/// else -> 'STREET'
+String resolveLeanRating(double maxDeg) {
+  if (maxDeg.isNaN || maxDeg.isInfinite || maxDeg < 0) return 'STREET';
+  if (maxDeg >= 42) return 'KNEE DOWN';
+  if (maxDeg >= 32) return 'SPORT';
+  if (maxDeg >= 20) return 'CANYON';
+  return 'STREET';
+}
+
+/// `#AARRGGBB`, upper-case — the one color format both `Color.parseColor`
+/// (Android) and the Swift widget's hex parser read.
+String widgetColorHex(Color color) =>
+    '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+
+/// The theme payload published for the native widgets: [palette]'s colors as
+/// hex strings keyed by the `kWidgetKeyTheme*` constants, plus brightness and
+/// (when known) the color mode's persisted name.
+///
+/// "ink" is the palette's text-primary color (what the widgets draw their
+/// main figures in) — not [AppColorPalette.ink], which is a fill token whose
+/// role flips between palettes. "on primary" is exactly what a filled primary
+/// button uses, so Race's mustard gets dark text like it does in the app.
+Map<String, Object> widgetThemeData(AppColorPalette palette,
+        {AppColorMode? colorMode}) =>
+    {
+      kWidgetKeyThemeBackground: widgetColorHex(palette.background),
+      kWidgetKeyThemeSurface: widgetColorHex(palette.surface),
+      kWidgetKeyThemeBorder: widgetColorHex(palette.border),
+      kWidgetKeyThemeInk: widgetColorHex(palette.textPrimary),
+      kWidgetKeyThemePrimary: widgetColorHex(palette.primary),
+      kWidgetKeyThemeOnPrimary:
+          widgetColorHex(AppTheme.primaryButtonForeground(palette)),
+      kWidgetKeyThemeAccent: widgetColorHex(palette.secondary),
+      kWidgetKeyThemeTextPrimary: widgetColorHex(palette.textPrimary),
+      kWidgetKeyThemeTextMuted: widgetColorHex(palette.textSecondary),
+      kWidgetKeyThemeTextTertiary: widgetColorHex(palette.textTertiary),
+      kWidgetKeyThemeDanger: widgetColorHex(palette.danger),
+      kWidgetKeyThemeIsDark: palette.isDark,
+      if (colorMode != null) kWidgetKeyThemeMode: colorMode.name,
+    };
+
 /// Kilometres ridden in the rolling 7 days ending at [now] (defaults to
 /// wall-clock now). Rolling rather than calendar-week so the widget never
 /// resets to zero mid-Monday-morning commute.
@@ -132,84 +255,49 @@ double weeklyDistanceKm(List<RideEntity> rides, {DateTime? now}) {
 /// The single service the maintenance widget should nag about.
 class NextServiceDue {
   final ServiceType serviceType;
+  final String label;
 
-  /// Distance left before the hard limit. Negative once past it.
-  final double kmUntilDue;
+  /// Distance left before the limit, negative once past it; null for a
+  /// check tracked by time alone.
+  final double? kmUntilDue;
+
+  /// Days left before the time limit, negative once past it; null for a
+  /// km-only check.
+  final int? daysUntilDue;
+
+  /// The time limit comes first, so the widget should talk in days.
+  final bool byTime;
   final bool overdue;
 
   const NextServiceDue({
     required this.serviceType,
-    required this.kmUntilDue,
+    required this.label,
+    this.kmUntilDue,
+    this.daysUntilDue,
+    this.byTime = false,
     required this.overdue,
   });
-
-  String get label => serviceType.label;
 }
 
-/// Which reminder-eligible services the widget considers. Mirrors the
-/// maintenance feature's own reminder list — the expanded [ServiceType] enum
-/// is log-only for the rest, and a widget that nagged about valve clearance
-/// would be noise.
-const List<ServiceType> kWidgetReminderTypes = [
-  ServiceType.oilChange,
-  ServiceType.airFilter,
-  ServiceType.chain,
-  ServiceType.tire,
-  ServiceType.brakeFluid,
-  ServiceType.frontDiscPads,
-];
-
-/// Picks the most urgent service for a bike: the one with the least distance
-/// left before its limit. Overdue items always beat not-yet-due ones, and
-/// among several overdue items the *most* overdue wins.
-///
-/// Returns null only when there is nothing to say at all (no eligible types),
-/// never for "no logs" — a bike with no oil change on record is exactly the
-/// bike that most needs the reminder, measured from 0 km.
-NextServiceDue? computeNextService({
-  required double currentOdometerKm,
-  required List<MaintenanceEntity> logs,
-}) {
-  NextServiceDue? best;
-  for (final type in kWidgetReminderTypes) {
-    final limitKm = _limitKmFor(type);
-    if (!limitKm.isFinite) continue;
-
-    final typeLogs = logs.where((l) => l.serviceType == type).toList()
-      ..sort((a, b) => b.odometerKm.compareTo(a.odometerKm));
-    final lastKm = typeLogs.isEmpty ? 0.0 : typeLogs.first.odometerKm;
-    final kmSince = currentOdometerKm - lastKm;
-    final kmUntilDue = limitKm - kmSince;
-
-    final candidate = NextServiceDue(
-      serviceType: type,
-      kmUntilDue: kmUntilDue,
-      overdue: kmSince >= limitKm,
-    );
-    if (best == null || candidate.kmUntilDue < best.kmUntilDue) {
-      best = candidate;
-    }
-  }
-  return best;
-}
-
-double _limitKmFor(ServiceType type) {
-  switch (type) {
-    case ServiceType.oilChange:
-      return SensorConstants.oilChangeMaxKm;
-    case ServiceType.airFilter:
-      return SensorConstants.airFilterMaxKm;
-    case ServiceType.chain:
-      return SensorConstants.chainLubeMaxKm;
-    case ServiceType.tire:
-      return SensorConstants.tireCheckMaxKm;
-    case ServiceType.brakeFluid:
-      return SensorConstants.brakeFluidMaxKm;
-    case ServiceType.frontDiscPads:
-      return SensorConstants.discPadsMaxKm;
-    default:
-      return double.infinity;
-  }
+/// The widget's headline, from the same forecast the maintenance page uses
+/// (issues §94.1: it used to keep its own 6-type km table and ignore the
+/// rider's intervals and enabled checks). Null when nothing is tracked or
+/// known yet.
+NextServiceDue? nextServiceDue(List<CheckForecast> forecasts) {
+  final f = upNext(forecasts);
+  if (f == null) return null;
+  final byTime =
+      f.daysLeft != null && (f.kmLeft == null || f.trigger == DueTrigger.time);
+  return NextServiceDue(
+    serviceType: f.serviceType,
+    label: (f.customLabel != null && f.customLabel!.trim().isNotEmpty)
+        ? f.customLabel!.trim()
+        : f.serviceType.label,
+    kmUntilDue: f.kmLeft,
+    daysUntilDue: f.daysLeft,
+    byTime: byTime,
+    overdue: f.status == ReminderStatus.overdue,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -228,14 +316,14 @@ class HomeWidgetService {
   HomeWidgetService({
     RideDao? rideDao,
     BikeDao? bikeDao,
-    MaintenanceDao? maintenanceDao,
+    MaintenanceForecastRepository? forecasts,
   })  : _rideDao = rideDao ?? RideDao(),
         _bikeDao = bikeDao ?? BikeDao(),
-        _maintenanceDao = maintenanceDao ?? MaintenanceDao();
+        _forecasts = forecasts ?? MaintenanceForecastRepository();
 
   final RideDao _rideDao;
   final BikeDao _bikeDao;
-  final MaintenanceDao _maintenanceDao;
+  final MaintenanceForecastRepository _forecasts;
 
   static final HomeWidgetService instance = HomeWidgetService();
 
@@ -249,14 +337,56 @@ class HomeWidgetService {
   static const String androidRideStatsWidget = 'RideStatsWidgetProvider';
   static const String androidMaintenanceWidget = 'MaintenanceWidgetProvider';
   static const String androidAutoTrackingWidget = 'AutoTrackingWidgetProvider';
+  static const String androidApexHunterWidget = 'ApexHunterWidgetProvider';
   static const String iosStartRideWidget = 'ThrottleIQStartRideWidget';
   static const String iosRideStatsWidget = 'ThrottleIQRideStatsWidget';
   static const String iosMaintenanceWidget = 'ThrottleIQMaintenanceWidget';
   static const String iosAutoTrackingWidget = 'ThrottleIQAutoTrackingWidget';
+  static const String iosApexHunterWidget = 'ThrottleIQApexHunterWidget';
 
   static const String _androidPackage = 'com.bft.throttleiq';
 
   bool _appGroupSet = false;
+
+  /// The last theme handed to [publishTheme], re-saved on every full refresh
+  /// so the widgets never render a refreshed panel in a stale theme.
+  Map<String, Object>? _themeData;
+
+  /// Publishes [palette] as the widgets' color theme and re-renders every
+  /// widget. Called by [homeWidgetThemeSyncProvider] on each appearance
+  /// change. No-op safe, like everything else here.
+  Future<void> publishTheme(AppColorPalette palette,
+      {AppColorMode? colorMode}) async {
+    final data = widgetThemeData(palette, colorMode: colorMode);
+    if (_mapEquals(data, _themeData)) return;
+    _themeData = data;
+    try {
+      await _saveTheme();
+      await refreshAllWidgets();
+    } catch (e, s) {
+      _log('publishTheme failed', e, s);
+    }
+  }
+
+  /// The theme most recently published, for tests.
+  @visibleForTesting
+  Map<String, Object>? get publishedThemeData => _themeData;
+
+  Future<void> _saveTheme() async {
+    final data = _themeData;
+    if (data == null) return;
+    await Future.wait([
+      for (final e in data.entries) _save(e.key, e.value),
+    ]);
+  }
+
+  static bool _mapEquals(Map<String, Object> a, Map<String, Object>? b) {
+    if (b == null || a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
 
   /// Call once on app start. Safe to call again.
   Future<void> initialize() async {
@@ -282,6 +412,9 @@ class HomeWidgetService {
   /// The URI the "Start Auto-Tracking" widget launches the app with.
   static final Uri autoTrackingUri = Uri.parse('throttleiq://autotracking');
 
+  /// The URI the "Apex Hunter" widget launches the app with.
+  static final Uri apexHunterUri = Uri.parse('throttleiq://apexhunter');
+
   /// Whether [uri] is the widget's start-ride request.
   ///
   /// Compares scheme + host rather than the whole string: Android and iOS
@@ -294,6 +427,10 @@ class HomeWidgetService {
   static bool isAutoTrackingUri(Uri? uri) =>
       uri != null && uri.scheme == 'throttleiq' && uri.host == 'autotracking';
 
+  /// Whether [uri] is the widget's apex hunter request.
+  static bool isApexHunterUri(Uri? uri) =>
+      uri != null && uri.scheme == 'throttleiq' && uri.host == 'apexhunter';
+
   /// Fires [onStartRide] when the app is opened from the start-ride widget —
   /// both for a cold launch and for a tap while the app is already alive.
   ///
@@ -301,13 +438,11 @@ class HomeWidgetService {
   /// URI at all, i.e. a normal icon tap) is a silent no-op rather than an
   /// error on every start.
   Future<void> registerStartRideHandler(VoidCallback onStartRide) async {
+    _onStartRide = onStartRide;
     try {
       final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
       if (isStartRideUri(launched)) onStartRide();
-
-      HomeWidget.widgetClicked.listen((uri) {
-        if (isStartRideUri(uri)) onStartRide();
-      });
+      _listenForClicks();
     } catch (e, s) {
       _log('registerStartRideHandler failed', e, s);
     }
@@ -318,16 +453,51 @@ class HomeWidgetService {
   /// [registerStartRideHandler], and the same no-op-on-failure contract.
   Future<void> registerAutoTrackingHandler(
       VoidCallback onStartAutoTracking) async {
+    _onAutoTracking = onStartAutoTracking;
     try {
       final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
       if (isAutoTrackingUri(launched)) onStartAutoTracking();
-
-      HomeWidget.widgetClicked.listen((uri) {
-        if (isAutoTrackingUri(uri)) onStartAutoTracking();
-      });
+      _listenForClicks();
     } catch (e, s) {
       _log('registerAutoTrackingHandler failed', e, s);
     }
+  }
+
+  VoidCallback? _onStartRide;
+  VoidCallback? _onAutoTracking;
+
+  /// The one live-tap subscription, shared by every handler (issues
+  /// §101.C9). Each `HomeWidget.widgetClicked` call is a fresh
+  /// `receiveBroadcastStream()` on the same EventChannel, and a second
+  /// listen replaces the first's platform handler — so the auto-tracking
+  /// listener used to silently cut off live Start-ride taps.
+  StreamSubscription<Uri?>? _clickSub;
+
+  void _listenForClicks() {
+    _clickSub ??= HomeWidget.widgetClicked.listen(
+      dispatchWidgetUri,
+      onError: (Object e, StackTrace s) => _log('widgetClicked error', e, s),
+    );
+  }
+
+  /// Routes a widget launch URI to the handler registered for it.
+  @visibleForTesting
+  void dispatchWidgetUri(Uri? uri) {
+    if (isStartRideUri(uri)) {
+      _onStartRide?.call();
+    } else if (isAutoTrackingUri(uri)) {
+      _onAutoTracking?.call();
+    }
+  }
+
+  /// Sets the handlers without touching the platform channel.
+  @visibleForTesting
+  void setHandlersForTesting({
+    VoidCallback? onStartRide,
+    VoidCallback? onAutoTracking,
+  }) {
+    _onStartRide = onStartRide;
+    _onAutoTracking = onAutoTracking;
   }
 
   Future<void> publishRideStats({
@@ -359,16 +529,21 @@ class HomeWidgetService {
     required String nextServiceLabel,
     required double kmUntilDue,
     required bool overdue,
+    int? daysUntilDue,
   }) async {
     try {
       final summary = formatNextServiceSummary(
         serviceLabel: nextServiceLabel,
         kmUntilDue: kmUntilDue,
         overdue: overdue,
+        daysUntilDue: daysUntilDue,
       );
       await Future.wait([
-        _save(kWidgetKeyBikeName,
-            bikeName.trim().isEmpty ? kWidgetPlaceholderValue : bikeName.trim()),
+        _save(
+            kWidgetKeyBikeName,
+            bikeName.trim().isEmpty
+                ? kWidgetPlaceholderValue
+                : bikeName.trim()),
         _save(kWidgetKeyServiceLabel, nextServiceLabel),
         _save(kWidgetKeyServiceSummary, summary),
         _save(kWidgetKeyKmUntilDue, formatKm(kmUntilDue.abs())),
@@ -385,7 +560,55 @@ class HomeWidgetService {
     }
   }
 
-  /// Resets both data widgets to their "nothing to show" state — used when
+  Future<void> publishApexHunter({
+    required double maxLeanLeft,
+    required double maxLeanRight,
+  }) async {
+    try {
+      final maxLeft = maxLeanLeft.isNaN || maxLeanLeft < 0 ? 0.0 : maxLeanLeft;
+      final maxRight =
+          maxLeanRight.isNaN || maxLeanRight < 0 ? 0.0 : maxLeanRight;
+      final maxAngle = math.max(maxLeft, maxRight);
+      final rating = resolveLeanRating(maxAngle);
+      final symmetry = calculateLeanSymmetry(maxLeft, maxRight);
+
+      await Future.wait([
+        _save(kWidgetKeyMaxLeanLeft, formatLeanAngle(maxLeft)),
+        _save(kWidgetKeyMaxLeanLeftRaw, maxLeft),
+        _save(kWidgetKeyMaxLeanRight, formatLeanAngle(maxRight)),
+        _save(kWidgetKeyMaxLeanRightRaw, maxRight),
+        _save(kWidgetKeyLeanRating, rating),
+        _save(kWidgetKeyLeanSymmetry, symmetry),
+        _save(kWidgetKeyApexUpdatedAt, DateTime.now().toIso8601String()),
+      ]);
+      await _update(
+        androidName: androidApexHunterWidget,
+        iOSName: iosApexHunterWidget,
+      );
+    } catch (e, s) {
+      _log('publishApexHunter failed', e, s);
+    }
+    await _rememberLean(maxLeanLeft, maxLeanRight);
+  }
+
+  /// Mirrors the lean peaks into the app's own SharedPreferences, which is
+  /// where [refreshFromLocalData] reads them back from. The widget store
+  /// written by `_save` (an app-group / `HomeWidgetPreferences` file) is not
+  /// the store `SharedPreferences.getInstance()` reads, so without this every
+  /// refresh after a ride republished 0° over the ride's real figures.
+  Future<void> _rememberLean(double left, double right) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(
+          kWidgetKeyMaxLeanLeftRaw, left.isFinite && left > 0 ? left : 0.0);
+      await prefs.setDouble(
+          kWidgetKeyMaxLeanRightRaw, right.isFinite && right > 0 ? right : 0.0);
+    } catch (e, s) {
+      _log('remember lean failed', e, s);
+    }
+  }
+
+  /// Resets all data widgets to their "nothing to show" state — used when
   /// signed out or when the rider has no bikes, so a previous account's
   /// numbers don't linger on the home screen.
   Future<void> publishPlaceholders() async {
@@ -399,15 +622,25 @@ class HomeWidgetService {
         _save(kWidgetKeyServiceSummary, kWidgetPlaceholderNoService),
         _save(kWidgetKeyKmUntilDue, kWidgetPlaceholderValue),
         _save(kWidgetKeyOverdue, false),
+        _save(kWidgetKeyMaxLeanLeft, kWidgetPlaceholderValue),
+        _save(kWidgetKeyMaxLeanLeftRaw, 0.0),
+        _save(kWidgetKeyMaxLeanRight, kWidgetPlaceholderValue),
+        _save(kWidgetKeyMaxLeanRightRaw, 0.0),
+        _save(kWidgetKeyLeanRating, 'STREET'),
+        _save(kWidgetKeyLeanSymmetry, kWidgetPlaceholderValue),
       ]);
+      // A previous account's lean figures mustn't come back on next refresh.
+      await _rememberLean(0, 0);
       await refreshAllWidgets();
     } catch (e, s) {
       _log('publishPlaceholders failed', e, s);
     }
   }
 
-  /// Re-renders all four widgets from whatever is already stored.
+  /// Re-renders all five widgets from whatever is already stored (re-saving
+  /// the current theme first, so every update carries it).
   Future<void> refreshAllWidgets() async {
+    await _saveTheme();
     await _update(
         androidName: androidStartRideWidget, iOSName: iosStartRideWidget);
     await _update(
@@ -415,17 +648,19 @@ class HomeWidgetService {
     await _update(
         androidName: androidMaintenanceWidget, iOSName: iosMaintenanceWidget);
     await _update(
-        androidName: androidAutoTrackingWidget,
-        iOSName: iosAutoTrackingWidget);
+        androidName: androidAutoTrackingWidget, iOSName: iosAutoTrackingWidget);
+    await _update(
+        androidName: androidApexHunterWidget, iOSName: iosApexHunterWidget);
   }
 
   /// Reads the offline-first local database (the same tables the Stats hub and
-  /// Maintenance screen read) and republishes both data widgets.
+  /// Maintenance screen read) and republishes all data widgets.
   ///
   /// Signed out, or DB not yet created on a fresh install, publishes
   /// placeholders instead of leaving the widget blank.
   Future<void> refreshFromLocalData() async {
     try {
+      await _saveTheme();
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) {
         await publishPlaceholders();
@@ -441,29 +676,22 @@ class HomeWidgetService {
         rideCount: rides.length,
       );
 
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final leanLeft = prefs.getDouble(kWidgetKeyMaxLeanLeftRaw) ?? 0.0;
+        final leanRight = prefs.getDouble(kWidgetKeyMaxLeanRightRaw) ?? 0.0;
+        await publishApexHunter(maxLeanLeft: leanLeft, maxLeanRight: leanRight);
+      } catch (e, s) {
+        _log('publishApexHunter in refreshFromLocalData failed', e, s);
+      }
+
       final bikeRows = await _bikeDao.getAllForUser(uid);
       final bikes = bikeRows.map(BikeModel.fromMap).toList();
       if (bikes.isEmpty) {
         await publishMaintenanceEmpty();
         return;
       }
-      final bike = _preferredBike(bikes);
-      final logRows = await _maintenanceDao.getForBike(bike.id);
-      final logs = logRows.map(MaintenanceModel.fromMap).toList();
-      final next = computeNextService(
-        currentOdometerKm: bike.currentOdometerKm,
-        logs: logs,
-      );
-      if (next == null) {
-        await publishMaintenanceEmpty();
-        return;
-      }
-      await publishMaintenance(
-        bikeName: bike.displayName,
-        nextServiceLabel: next.label,
-        kmUntilDue: next.kmUntilDue,
-        overdue: next.overdue,
-      );
+      await _publishMaintenanceFor(_preferredBike(bikes));
     } catch (e, s) {
       _log('refreshFromLocalData failed', e, s);
     }
@@ -474,42 +702,45 @@ class HomeWidgetService {
   Future<void> refreshWithData({
     required List<RideEntity> rides,
     required List<BikeEntity> bikes,
-    List<MaintenanceEntity>? maintenanceLogs,
+    double maxLeanLeft = 0.0,
+    double maxLeanRight = 0.0,
   }) async {
     try {
+      await _saveTheme();
       final totalKm = rides.fold<double>(0, (sum, r) => sum + r.distanceKm);
       await publishRideStats(
         weeklyKm: weeklyDistanceKm(rides),
         totalKm: totalKm,
         rideCount: rides.length,
       );
+      await publishApexHunter(
+        maxLeanLeft: maxLeanLeft,
+        maxLeanRight: maxLeanRight,
+      );
 
       if (bikes.isEmpty) {
         await publishMaintenanceEmpty();
         return;
       }
-      final bike = _preferredBike(bikes);
-      final logs = maintenanceLogs ??
-          (await _maintenanceDao.getForBike(bike.id))
-              .map(MaintenanceModel.fromMap)
-              .toList();
-      final next = computeNextService(
-        currentOdometerKm: bike.currentOdometerKm,
-        logs: logs,
-      );
-      if (next == null) {
-        await publishMaintenanceEmpty();
-        return;
-      }
-      await publishMaintenance(
-        bikeName: bike.displayName,
-        nextServiceLabel: next.label,
-        kmUntilDue: next.kmUntilDue,
-        overdue: next.overdue,
-      );
+      await _publishMaintenanceFor(_preferredBike(bikes));
     } catch (e, s) {
       _log('refreshWithData failed', e, s);
     }
+  }
+
+  Future<void> _publishMaintenanceFor(BikeEntity bike) async {
+    final next = nextServiceDue(await _forecasts.forecastFor(bike));
+    if (next == null) {
+      await publishMaintenanceEmpty();
+      return;
+    }
+    await publishMaintenance(
+      bikeName: bike.displayName,
+      nextServiceLabel: next.label,
+      kmUntilDue: next.kmUntilDue ?? 0,
+      overdue: next.overdue,
+      daysUntilDue: next.byTime ? next.daysUntilDue : null,
+    );
   }
 
   /// Maintenance widget with nothing to report yet.

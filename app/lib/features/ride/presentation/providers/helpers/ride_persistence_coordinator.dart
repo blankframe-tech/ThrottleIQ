@@ -4,11 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
+import 'package:throttleiq/core/constants/ride_prefs_keys.dart';
 import 'package:throttleiq/core/database/daos/bike_dao.dart';
 import 'package:throttleiq/core/database/daos/ride_dao.dart';
 import 'package:throttleiq/core/database/daos/ride_point_dao.dart';
 import 'package:throttleiq/core/services/weather_service.dart';
 import 'package:throttleiq/core/utils/badges.dart';
+import 'package:throttleiq/core/utils/num_cast.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
 import 'package:throttleiq/features/garage/data/models/bike_model.dart';
 import 'package:throttleiq/features/profile/data/repositories/profile_repository.dart';
@@ -37,7 +39,7 @@ class RidePersistenceCoordinator {
   final WeatherService _weatherService;
   final FirebaseFirestore _firestore;
 
-  static const String _prefsRideId = 'active_ride_id';
+  static const String _prefsRideId = RidePrefsKeys.activeRideId;
   static const String _prefsStartTime = 'ride_start_time';
   static const String _prefsElapsedS = 'ride_elapsed_s';
 
@@ -144,16 +146,16 @@ class RidePersistenceCoordinator {
     final segments = averageSpeedPerSegment([
       for (final r in rows)
         (
-          lat: r['lat'] as double,
-          lng: r['lng'] as double,
+          lat: asDouble(r['lat']),
+          lng: asDouble(r['lng']),
           speedMs: (r['speed_ms'] as num).toDouble()
         ),
     ]);
     if (segments.isEmpty) return;
 
     final weather = await _weatherService.fetchForRide(
-      lat: rows.first['lat'] as double,
-      lng: rows.first['lng'] as double,
+      lat: asDouble(rows.first['lat']),
+      lng: asDouble(rows.first['lng']),
       at: startTime,
     );
 

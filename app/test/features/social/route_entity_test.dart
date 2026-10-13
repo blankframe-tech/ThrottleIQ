@@ -5,9 +5,9 @@ import 'package:throttleiq/features/social/domain/entities/route_entity.dart';
 void main() {
   group('RouteEntity', () {
     final polyline = [
-      LatLng(40.7128, -74.0060),
-      LatLng(40.7200, -74.0100),
-      LatLng(40.7300, -74.0150),
+      const LatLng(40.7128, -74.0060),
+      const LatLng(40.7200, -74.0100),
+      const LatLng(40.7300, -74.0150),
     ];
 
     final route = RouteEntity(

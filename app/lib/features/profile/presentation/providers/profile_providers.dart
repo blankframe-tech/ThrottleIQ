@@ -9,8 +9,13 @@ final profileRepositoryProvider =
     Provider<ProfileRepository>((ref) => ProfileRepository());
 
 /// Live profile for an arbitrary uid.
+///
+/// autoDispose: this is watched once per chat-list row, blocked-users row
+/// and profile screen. Without it every uid's Firestore listener opened
+/// during the session stayed open until sign-out. Every caller `watch`es,
+/// so the stream lives exactly as long as something is showing it.
 final profileProvider =
-    StreamProvider.family<UserProfileEntity?, String>((ref, uid) {
+    StreamProvider.autoDispose.family<UserProfileEntity?, String>((ref, uid) {
   return ref.watch(profileRepositoryProvider).watchProfile(uid);
 });
 

@@ -45,10 +45,10 @@ void main() {
     });
 
     test('nearby locations share geohash prefix', () {
-      final lat1 = 23.8103;
-      final lng1 = 90.4125;
-      final lat2 = 23.8110; // Very close
-      final lng2 = 90.4130;
+      const lat1 = 23.8103;
+      const lng1 = 90.4125;
+      const lat2 = 23.8110; // Very close
+      const lng2 = 90.4130;
 
       final hash1 = GeohashUtils.encode(lat1, lng1, precision: 6);
       final hash2 = GeohashUtils.encode(lat2, lng2, precision: 6);

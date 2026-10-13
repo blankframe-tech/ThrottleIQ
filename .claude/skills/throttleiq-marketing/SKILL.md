@@ -37,7 +37,7 @@ work against them instead of re-deriving strategy from scratch:
   business model and differentiation claims.
 
 If a task conflicts with these docs (e.g. implies a feature that isn't
-built, or promises something `hooked_throttleiq.md`/`Issues.md` flags as not
+built, or promises something `hooked_throttleiq.md`/`issues_open.md` flags as not
 live), **fix the claim, don't ship the overclaim** — see the "no overclaim"
 rule below.
 
@@ -73,14 +73,14 @@ reuse and extend those, don't rewrite positioning from zero.
 Never write copy — especially for the anxious-family segment — implying:
 - Automatic crash notification without the rider first enabling live share
 - SMS/email crash-alert delivery (built in code, **not deployed** — blocked
-  on the Blaze billing plan per `docs/Issues.md`)
+  on the Blaze billing plan per `issues_open.md`)
 - Any feature, badge reward, or promotion mechanism that doesn't have a
   built claim/fulfilment path yet (e.g. the badge-tier physical-prize idea
   in `marketing.md` §6 — don't announce it publicly before shipping the
   claim flow)
 
 Before publishing any new claim, grep the codebase or check `Features.md` /
-`Issues.md` for whether it's actually live. If unverified, mark it as a
+`issues_open.md` for whether it's actually live. If unverified, mark it as a
 placeholder in the draft rather than guessing.
 
 ## Core frameworks to apply
@@ -168,7 +168,7 @@ retention problem rather than fix it.
 ## MUST DO / MUST NOT DO
 
 ### MUST DO
-- Check `docs/marketing/*.md` and `Features.md`/`Issues.md` before writing
+- Check `docs/marketing/*.md` and `Features.md`/`issues_open.md` before writing
   a new claim or campaign
 - Keep one asset per segment; write the positioning statement first, copy
   second
@@ -216,7 +216,7 @@ Overclaim check: [pass/fail against the no-overclaim rule]
 - Internal (authoritative): `docs/marketing/marketing.md`,
   `docs/marketing/pitch_and_marketing_materials.md`,
   `docs/marketing/hooked_throttleiq.md`,
-  `docs/marketing/business_critique.md`, `docs/Features.md`, `docs/Issues.md`
+  `docs/marketing/business_critique.md`, `docs/Features.md`, `issues_open.md`
 - ASO: [Appfigures ASO Guide 2026](https://appfigures.com/resources/guides/app-store-optimization),
   [Appfigures ASO Checklist 2026](https://appfigures.com/resources/guides/app-store-optimization-checklist),
   [Moburst ASO Guide 2026](https://www.moburst.com/blog/app-store-optimization-guide/)

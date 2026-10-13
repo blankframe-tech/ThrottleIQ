@@ -3,7 +3,7 @@ import 'package:throttleiq/features/forums/data/repositories/forum_repository.da
 import 'package:throttleiq/features/forums/domain/entities/forum_entity.dart';
 
 /// Which model forums get merged into a brand forum's post list — the pure
-/// filtering `ForumRepository.getPosts` runs on candidate forums fetched by
+/// filtering `ForumRepository.postSourceForumIds` runs on candidate forums fetched by
 /// `brand`. See that method's doc comment: a post made in "Honda CB Shine
 /// 125" should also surface when viewing "Honda", but nothing else should.
 ForumEntity forum(String id,

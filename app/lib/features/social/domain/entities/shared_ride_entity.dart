@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/riding_score.dart';
+import '../../../../core/utils/ride_speed_invariant.dart';
+
 /// How many rider-taken photos one shared ride may carry.
 ///
 /// The feed card shows the photos beside the route map (each gets half the
@@ -50,12 +53,10 @@ class SharedRideEntity extends Equatable {
   final DateTime rideDate;
   final double distanceKm;
   final int durationSeconds;
-  final double maxSpeedKmh;
+  final double _maxSpeedKmh;
   final List<LatLng> polyline;
   final String? mapSnapshotUrl;
-  final int likes;
   final int comments;
-  final bool isLikedByCurrentUser;
   final DateTime createdAt;
 
   /// Who can see this ride: `public` / `followers` / `mutual`. Followers/
@@ -84,9 +85,29 @@ class SharedRideEntity extends Equatable {
 
   /// The signed-in rider's own vote on this ride: 1, -1, or null (none).
   /// Entity-only — hydrated from the `votes/{uid}` subcollection at read
-  /// time, never stored on the ride doc itself (mirrors
-  /// [isLikedByCurrentUser]).
+  /// time, never stored on the ride doc itself.
   final int? myVote;
+
+  /// Event counts behind [ridingScore]. Null (all three together, never
+  /// individually) on a ride shared before this field existed — there's no
+  /// honest zero to default to, since "never recorded" and "recorded zero
+  /// hard brakes" mean different things and only the former should hide the
+  /// score badge rather than show a false 100.
+  final int? hardBrakeCount;
+  final int? rapidAccelCount;
+  final int? highJerkCount;
+
+  /// 0-100 riding score for this ride, or null when the counts behind it
+  /// weren't shared (see [hardBrakeCount]). Same formula as the private
+  /// per-ride summary — [computeRidingScore] — so a shared ride's badge
+  /// always matches what its rider saw right after finishing.
+  int? get ridingScore {
+    final brakes = hardBrakeCount;
+    final accel = rapidAccelCount;
+    final jerk = highJerkCount;
+    if (brakes == null || accel == null || jerk == null) return null;
+    return computeRidingScore(hardBrakes: brakes, rapidAccel: accel, highJerk: jerk);
+  }
 
   const SharedRideEntity({
     required this.id,
@@ -99,12 +120,10 @@ class SharedRideEntity extends Equatable {
     required this.rideDate,
     required this.distanceKm,
     required this.durationSeconds,
-    required this.maxSpeedKmh,
+    required double maxSpeedKmh,
     required this.polyline,
     this.mapSnapshotUrl,
-    this.likes = 0,
     this.comments = 0,
-    this.isLikedByCurrentUser = false,
     required this.createdAt,
     this.audience = 'public',
     this.allowedUserIds = const [],
@@ -114,7 +133,10 @@ class SharedRideEntity extends Equatable {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
-  });
+    this.hardBrakeCount,
+    this.rapidAccelCount,
+    this.highJerkCount,
+  }) : _maxSpeedKmh = maxSpeedKmh;
 
   /// The ride's lead photo — the first of [photoUrls], or null when it has
   /// none. Kept as the single-photo accessor so callers that only ever want
@@ -125,6 +147,18 @@ class SharedRideEntity extends Equatable {
   int get durationMinutes => durationSeconds ~/ 60;
   double get avgSpeedKmh =>
       durationSeconds > 0 ? (distanceKm / durationSeconds) * 3600 : 0;
+
+  /// Top speed achieved during the ride. Guaranteed to never be less than
+  /// [avgSpeedKmh] for moving rides to preserve physical reality even if
+  /// hardware fixes didn't report Doppler speed or legacy data omitted it,
+  /// and never above what's physically plausible for a motorcycle — see
+  /// [RideSpeedInvariant] (issues §62.8: this used to have no
+  /// ceiling at all).
+  double get maxSpeedKmh => RideSpeedInvariant.reconcile(
+        avgSpeedKmh: avgSpeedKmh,
+        rawMaxSpeedKmh: _maxSpeedKmh,
+      );
+
   int get netScore => upvotes - downvotes;
 
   /// Sentinel so [copyWith] can distinguish "leave myVote alone" from
@@ -133,9 +167,10 @@ class SharedRideEntity extends Equatable {
   static const _unset = Object();
 
   SharedRideEntity copyWith({
-    int? likes,
+    double? distanceKm,
+    int? durationSeconds,
+    double? maxSpeedKmh,
     int? comments,
-    bool? isLikedByCurrentUser,
     String? audience,
     List<String>? allowedUserIds,
     List<String>? photoUrls,
@@ -154,14 +189,12 @@ class SharedRideEntity extends Equatable {
       bikeName: bikeName,
       bikeType: bikeType,
       rideDate: rideDate,
-      distanceKm: distanceKm,
-      durationSeconds: durationSeconds,
-      maxSpeedKmh: maxSpeedKmh,
+      distanceKm: distanceKm ?? this.distanceKm,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      maxSpeedKmh: maxSpeedKmh ?? this.maxSpeedKmh,
       polyline: polyline ?? this.polyline,
       mapSnapshotUrl: mapSnapshotUrl,
-      likes: likes ?? this.likes,
       comments: comments ?? this.comments,
-      isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
       createdAt: createdAt,
       audience: audience ?? this.audience,
       allowedUserIds: allowedUserIds ?? this.allowedUserIds,
@@ -171,6 +204,9 @@ class SharedRideEntity extends Equatable {
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
       myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
+      hardBrakeCount: hardBrakeCount,
+      rapidAccelCount: rapidAccelCount,
+      highJerkCount: highJerkCount,
     );
   }
 
@@ -180,11 +216,18 @@ class SharedRideEntity extends Equatable {
         userId,
         rideDate,
         createdAt,
-        isLikedByCurrentUser,
+        distanceKm,
+        durationSeconds,
+        polyline,
+        audience,
+        comments,
         upvotes,
         downvotes,
         myVote,
         caption,
         photoUrls,
+        hardBrakeCount,
+        rapidAccelCount,
+        highJerkCount,
       ];
 }

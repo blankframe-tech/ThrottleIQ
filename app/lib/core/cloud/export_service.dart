@@ -1,19 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:throttleiq/core/utils/num_cast.dart';
 
-import '../database/daos/ride_point_dao.dart';
+import 'ride_track_loader.dart';
 
 /// Service for exporting ride data to various formats.
 ///
 /// Files are written to the app documents directory (Downloads is not
 /// accessible via path_provider on Android); callers surface them with the
 /// system share sheet (share_plus) so the user can save or send anywhere.
+///
+/// Points come through [RideTrackLoader], so a ride restored onto a new phone
+/// exports its cloud trail rather than an empty file.
 class ExportService {
-  final RidePointDao _ridePointDao = RidePointDao();
-
   Future<Directory> _exportDir() async {
     final docs = await getApplicationDocumentsDirectory();
     final dir = Directory('${docs.path}/exports');
@@ -31,7 +34,7 @@ class ExportService {
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
-      final points = await _ridePointDao.getForRide(rideId);
+      final points = await RideTrackLoader.load(rideId);
 
       final jsonData = {
         'ride': ride,
@@ -42,7 +45,52 @@ class ExportService {
       await file.writeAsString(jsonEncode(jsonData), flush: true);
       return file;
     } catch (e) {
-      print('Error exporting to JSON: $e');
+      debugPrint('Error exporting to JSON: $e');
+      return null;
+    }
+  }
+
+  /// Export full per-point telemetry to a CSV file — every raw column the
+  /// recorder captured (speed, acceleration, jerk, altitude, heading, GPS
+  /// accuracy, cornering flag), not just the polyline GPX carries or the
+  /// aggregate stats JSON carries. Meant for a rider who wants to drop a
+  /// ride into a spreadsheet, not just replay its route.
+  Future<File?> exportRideToCSV(Map<String, dynamic> ride) async {
+    try {
+      final directory = await _exportDir();
+
+      final rideId = ride['id'] as String;
+      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.csv';
+      final file = File('${directory.path}/$fileName');
+
+      final points = await RideTrackLoader.load(rideId);
+
+      final buffer = StringBuffer();
+      buffer.writeln('timestamp,lat,lng,speed_ms,speed_kmh,altitude_m,'
+          'acceleration,jerk,heading_deg,accuracy_m,is_cornering,period_type');
+      for (final p in points) {
+        final speedMs = (p['speed_ms'] as num?)?.toDouble();
+        final speedKmh = speedMs != null ? speedMs * 3.6 : null;
+        buffer.writeln([
+          p['timestamp'] ?? '',
+          p['lat'] ?? '',
+          p['lng'] ?? '',
+          speedMs?.toStringAsFixed(2) ?? '',
+          speedKmh?.toStringAsFixed(2) ?? '',
+          p['altitude_m'] ?? '',
+          p['acceleration'] ?? '',
+          p['jerk'] ?? '',
+          p['heading_deg'] ?? '',
+          p['accuracy_m'] ?? '',
+          p['is_cornering'] ?? '',
+          p['period_type'] ?? '',
+        ].join(','));
+      }
+
+      await file.writeAsString(buffer.toString(), flush: true);
+      return file;
+    } catch (e) {
+      debugPrint('Error exporting to CSV: $e');
       return null;
     }
   }
@@ -57,13 +105,13 @@ class ExportService {
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
-      final points = await _ridePointDao.getForRide(rideId);
+      final points = await RideTrackLoader.load(rideId);
 
       final gpxContent = _generateGPX(ride, points);
       await file.writeAsString(gpxContent, flush: true);
       return file;
     } catch (e) {
-      print('Error exporting to GPX: $e');
+      debugPrint('Error exporting to GPX: $e');
       return null;
     }
   }
@@ -82,8 +130,8 @@ class ExportService {
     buffer.writeln('    <time>$startTime</time>');
 
     if (ridePoints.isNotEmpty) {
-      final lats = ridePoints.map<double>((p) => p['lat'] as double).toList();
-      final lngs = ridePoints.map<double>((p) => p['lng'] as double).toList();
+      final lats = ridePoints.map<double>((p) => asDouble(p['lat'])).toList();
+      final lngs = ridePoints.map<double>((p) => asDouble(p['lng'])).toList();
 
       final minLat = lats.reduce((a, b) => a < b ? a : b);
       final maxLat = lats.reduce((a, b) => a > b ? a : b);

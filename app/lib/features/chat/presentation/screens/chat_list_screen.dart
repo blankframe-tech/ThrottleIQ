@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -18,9 +22,9 @@ class ChatListScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
       ),
       builder: (ctx) => const _NewChatSheet(),
     );
@@ -32,13 +36,13 @@ class ChatListScreen extends ConsumerWidget {
     final myUid = ref.watch(currentUserProvider)?.uid;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: const Text('Messages'),
+        title: Text(context.l10n.messages),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_comment_outlined),
-            tooltip: 'New message',
+            tooltip: context.l10n.newMessage,
             onPressed: () => _showNewChatModal(context, ref),
           ),
         ],
@@ -46,13 +50,22 @@ class ChatListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNewChatModal(context, ref),
         icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-        label: const Text('New Message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-        backgroundColor: AppColors.primary,
+        label: Text(context.l10n.newMessageTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        backgroundColor: context.palette.primary,
       ),
       body: chatsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: AppColors.danger))),
-        data: (chats) {
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
+          error: e,
+          showBugReport: true,
+          onRetry: () => ref.invalidate(userChatsProvider),
+        ),
+        data: (allChats) {
+          final chats = visibleChats(
+            allChats,
+            myUid: myUid,
+            blocked: ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{},
+          );
           if (chats.isEmpty) {
             return Center(
               child: Padding(
@@ -60,19 +73,19 @@ class ChatListScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textTertiary),
+                    Icon(Icons.chat_bubble_outline, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text('No messages yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    Text(context.l10n.noMessagesYet, style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => _showNewChatModal(context, ref),
                       icon: const Icon(Icons.send, size: 18),
-                      label: const Text('Start a Conversation'),
+                      label: Text(context.l10n.startConversation),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: context.palette.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusFull)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(context.shape.radiusFull)),
                       ),
                     ),
                   ],
@@ -84,44 +97,45 @@ class ChatListScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             itemCount: chats.length,
-            separatorBuilder: (_, __) => Divider(color: AppColors.border),
+            separatorBuilder: (_, __) => Divider(color: context.palette.border),
             itemBuilder: (context, index) {
               final chat = chats[index];
               final otherUserId = chat.participants.firstWhere((id) => id != myUid, orElse: () => '');
               if (otherUserId.isEmpty) return const SizedBox.shrink();
 
               final otherProfileAsync = ref.watch(profileProvider(otherUserId));
-              
-              return otherProfileAsync.when(
-                loading: () => const ListTile(title: Text('Loading...')),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (profile) {
-                  if (profile == null) return const SizedBox.shrink();
+              if (otherProfileAsync.isLoading && !otherProfileAsync.hasValue) {
+                return ListTile(title: Text(context.l10n.loading));
+              }
+              // A profile the rules won't let us read (private / mutual-only
+              // visibility) or that no longer exists used to hide the WHOLE
+              // conversation (issues §90.A12b). The chat itself is still
+              // readable, so show it under a placeholder name instead.
+              final profile = otherProfileAsync.valueOrNull;
+              final name = profile?.bestName ?? context.l10n.riderFallbackName;
 
-                  final lastMsg = chat.lastMessage;
-                  String subtitle = 'Say hi!';
+              final lastMsg = chat.lastMessage;
+              String subtitle = context.l10n.sayHi;
 
-                  if (lastMsg != null) {
-                    subtitle = lastMsg['text'] ?? '';
-                  }
+              if (lastMsg != null) {
+                subtitle = lastMsg['text'] ?? '';
+              }
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 24),
-                    title: Text(profile.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                    subtitle: Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    trailing: Text(
-                      DateFormat.MMMd().format(chat.updatedAt),
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
-                    ),
-                    onTap: () => context.push('/chats/${chat.id}', extra: profile),
-                  );
-                },
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: UserAvatar(photoUrl: profile?.photoUrl, name: name, radius: 24),
+                title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
+                subtitle: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.palette.textSecondary),
+                ),
+                trailing: Text(
+                  DateFormat('d MMM', kNumericLocale).format(chat.updatedAt),
+                  style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
+                ),
+                onTap: () => context.push('/chats/${chat.id}', extra: profile),
               );
             },
           );
@@ -179,7 +193,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = '$e';
+          _error = mapFirestoreError(e, context.l10n);
           _searching = false;
         });
       }
@@ -198,7 +212,9 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+        );
       }
     }
   }
@@ -222,18 +238,19 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             Row(
               children: [
                 Text(
-                  'New Message',
+                  context.l10n.newMessageTitle,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.palette.textPrimary,
                   ),
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: context.l10n.close,
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                 ),
               ],
             ),
@@ -241,16 +258,16 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             TextField(
               controller: _searchController,
               autofocus: true,
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: context.palette.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Search rider by @username or email...',
-                hintStyle: TextStyle(color: AppColors.textTertiary),
-                prefixIcon: Icon(Icons.search, color: AppColors.textTertiary),
+                hintText: context.l10n.searchRiderByUsername,
+                hintStyle: TextStyle(color: context.palette.textTertiary),
+                prefixIcon: Icon(Icons.search, color: context.palette.textTertiary),
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: context.palette.background,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  borderSide: BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  borderSide: BorderSide(color: context.palette.border),
                 ),
               ),
               onChanged: (val) => _performSearch(val),
@@ -259,30 +276,42 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             if (_searching)
               const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
             else if (_error != null)
-              Center(child: Text('Search failed: $_error', style: TextStyle(color: AppColors.danger)))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: context.palette.danger, fontSize: 13),
+                    ),
+                  ],
+                ),
+              )
             else if (_results.isEmpty && _searchController.text.isNotEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text('No riders found for "${_searchController.text}"',
-                      style: TextStyle(color: AppColors.textSecondary)),
+                  child: Text(context.l10n.noRidersFoundFor(_searchController.text),
+                      style: TextStyle(color: context.palette.textSecondary)),
                 ),
               )
             else
               Expanded(
                 child: ListView.separated(
                   itemCount: _results.length,
-                  separatorBuilder: (_, __) => Divider(color: AppColors.border, height: 1),
+                  separatorBuilder: (_, __) => Divider(color: context.palette.border, height: 1),
                   itemBuilder: (context, index) {
                     final rider = _results[index];
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
-                      title: Text(rider.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      title: Text(rider.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
                       subtitle: rider.username != null
-                          ? Text('@${rider.username}', style: TextStyle(color: AppColors.textSecondary, fontSize: 13))
+                          ? Text('@${rider.username}', style: TextStyle(color: context.palette.textSecondary, fontSize: 13))
                           : null,
-                      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textTertiary),
+                      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: context.palette.textTertiary),
                       onTap: () => _startChat(rider),
                     );
                   },

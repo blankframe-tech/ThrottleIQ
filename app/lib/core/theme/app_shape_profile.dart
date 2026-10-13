@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Which gesture the Record screen's start control uses.
 ///
 /// Not a cosmetic choice — the two are different widgets with different
@@ -26,11 +28,10 @@ enum AppShapeVibe { boxy, curvy }
 /// handful of control metrics that read as part of a vibe's silhouette.
 ///
 /// This is the second axis of a look, alongside [AppColorMode] (color) — see
-/// that enum's doc comment for how the two combine. Applied through
-/// [AppDimensions] the same way palettes are applied through [AppColors] — a
-/// static facade swapped in one place (see `theme_style_provider.dart`) so
-/// the ~96 existing `AppDimensions.radius*` call sites pick up the active
-/// vibe without any call-site churn.
+/// that enum's doc comment for how the two combine. Registered on
+/// [ThemeData.extensions] by `AppTheme.build`, next to [AppColorPalette], and
+/// read with `context.shape` (see `app_theme_context.dart`), so a widget that
+/// reads a radius in `build` is rebuilt when the rider switches vibe.
 ///
 /// What this deliberately does **not** contain: anything that would move,
 /// add, or remove a widget (with the one exception below). No vibe changes
@@ -44,7 +45,7 @@ enum AppShapeVibe { boxy, curvy }
 /// hard-edged full-width slab on an otherwise soft screen. Swapping it for a
 /// press-and-hold ring on Curvy is the same trade the radii make elsewhere,
 /// just at the scale where shape and interaction stop being separable.
-class AppShapeProfile {
+class AppShapeProfile extends ThemeExtension<AppShapeProfile> {
   /// Corner radii, smallest to largest. [radiusFull] is the "pill" token —
   /// used for chips, progress bars and badges, where Boxy wants a
   /// barely-softened rectangle and Curvy wants a true stadium.
@@ -87,6 +88,42 @@ class AppShapeProfile {
     required this.fieldPaddingV,
     this.startControl = StartControlStyle.slide,
   });
+
+  @override
+  AppShapeProfile copyWith({
+    double? radiusSm,
+    double? radiusMd,
+    double? radiusLg,
+    double? radiusXl,
+    double? radiusFull,
+    double? outlineWidth,
+    double? emphasisOutlineWidth,
+    double? controlHeight,
+    double? fieldPaddingH,
+    double? fieldPaddingV,
+    StartControlStyle? startControl,
+  }) =>
+      AppShapeProfile(
+        radiusSm: radiusSm ?? this.radiusSm,
+        radiusMd: radiusMd ?? this.radiusMd,
+        radiusLg: radiusLg ?? this.radiusLg,
+        radiusXl: radiusXl ?? this.radiusXl,
+        radiusFull: radiusFull ?? this.radiusFull,
+        outlineWidth: outlineWidth ?? this.outlineWidth,
+        emphasisOutlineWidth: emphasisOutlineWidth ?? this.emphasisOutlineWidth,
+        controlHeight: controlHeight ?? this.controlHeight,
+        fieldPaddingH: fieldPaddingH ?? this.fieldPaddingH,
+        fieldPaddingV: fieldPaddingV ?? this.fieldPaddingV,
+        startControl: startControl ?? this.startControl,
+      );
+
+  /// Shape does not tween: [radiusFull] is 999 on Curvy, so interpolating
+  /// boxy→curvy would sweep every pill through absurd radii mid-transition.
+  /// The whole profile flips at the halfway point of `MaterialApp`'s theme
+  /// animation while the colors cross-fade around it.
+  @override
+  AppShapeProfile lerp(ThemeExtension<AppShapeProfile>? other, double t) =>
+      other is AppShapeProfile && t >= 0.5 ? other : this;
 
   /// Sharp, near-zero-radius instrument-panel edges — the "like Nothing"
   /// vibe. Values kept verbatim from the app's original (and only, pre-vibe)

@@ -1,5 +1,7 @@
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/num_cast.dart';
+import '../../../../core/utils/ride_speed_invariant.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 
 /// Accepts a Firestore Timestamp (has toDate()), a DateTime, or an ISO
@@ -29,9 +31,7 @@ class RideShareModel {
   final double maxSpeedKmh;
   final List<LatLng> polyline;
   final String? mapSnapshotUrl;
-  final int likes;
   final int comments;
-  final bool isLikedByCurrentUser;
   final DateTime createdAt;
   final String audience;
   final List<String> allowedUserIds;
@@ -47,6 +47,12 @@ class RideShareModel {
   final int downvotes;
   final int? myVote;
 
+  /// See [SharedRideEntity.hardBrakeCount] — null (all three together) on a
+  /// ride shared before riding-score sharing existed.
+  final int? hardBrakeCount;
+  final int? rapidAccelCount;
+  final int? highJerkCount;
+
   RideShareModel({
     required this.id,
     required this.userId,
@@ -58,12 +64,10 @@ class RideShareModel {
     required this.rideDate,
     required this.distanceKm,
     required this.durationSeconds,
-    required this.maxSpeedKmh,
+    required double maxSpeedKmh,
     required this.polyline,
     this.mapSnapshotUrl,
-    this.likes = 0,
     this.comments = 0,
-    this.isLikedByCurrentUser = false,
     required this.createdAt,
     this.audience = 'public',
     this.allowedUserIds = const [],
@@ -73,7 +77,14 @@ class RideShareModel {
     this.upvotes = 0,
     this.downvotes = 0,
     this.myVote,
-  });
+    this.hardBrakeCount,
+    this.rapidAccelCount,
+    this.highJerkCount,
+  }) : maxSpeedKmh = RideSpeedInvariant.reconcileFromDistance(
+          distanceKm: distanceKm,
+          durationSeconds: durationSeconds,
+          rawMaxSpeedKmh: maxSpeedKmh,
+        );
 
   /// The lead photo, or null — also what gets written to the legacy
   /// `photoUrl` field.
@@ -96,7 +107,6 @@ class RideShareModel {
           .map((point) => {'lat': point.latitude, 'lng': point.longitude})
           .toList(),
       'mapSnapshotUrl': mapSnapshotUrl,
-      'likes': likes,
       'comments': comments,
       'createdAt': createdAt,
       'audience': audience,
@@ -112,6 +122,9 @@ class RideShareModel {
       'caption': caption,
       'upvotes': upvotes,
       'downvotes': downvotes,
+      'hardBrakeCount': hardBrakeCount,
+      'rapidAccelCount': rapidAccelCount,
+      'highJerkCount': highJerkCount,
     };
   }
 
@@ -123,8 +136,8 @@ class RideShareModel {
             ?.cast<Map<String, dynamic>>()
             .map(
               (point) => LatLng(
-                point['lat'] as double,
-                point['lng'] as double,
+                asDouble(point['lat']),
+                asDouble(point['lng']),
               ),
             )
             .toList() ??
@@ -141,10 +154,11 @@ class RideShareModel {
       rideDate: _parseDate(data['rideDate']),
       distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0,
       durationSeconds: (data['durationSeconds'] as num?)?.toInt() ?? 0,
+      // The constructor itself runs this through RideSpeedInvariant, so this
+      // just needs to hand it the raw stored value.
       maxSpeedKmh: (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
       polyline: polylineList,
       mapSnapshotUrl: data['mapSnapshotUrl'] as String?,
-      likes: (data['likes'] as num?)?.toInt() ?? 0,
       comments: (data['comments'] as num?)?.toInt() ?? 0,
       createdAt: _parseDate(data['createdAt']),
       audience: data['audience'] as String? ?? 'public',
@@ -164,6 +178,11 @@ class RideShareModel {
       caption: data['caption'] as String?,
       upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
       downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
+      // Absent on every ride shared before riding-score sharing existed —
+      // left null rather than defaulted to 0, see [SharedRideEntity.hardBrakeCount].
+      hardBrakeCount: (data['hardBrakeCount'] as num?)?.toInt(),
+      rapidAccelCount: (data['rapidAccelCount'] as num?)?.toInt(),
+      highJerkCount: (data['highJerkCount'] as num?)?.toInt(),
     );
   }
 
@@ -182,9 +201,7 @@ class RideShareModel {
       maxSpeedKmh: maxSpeedKmh,
       polyline: polyline,
       mapSnapshotUrl: mapSnapshotUrl,
-      likes: likes,
       comments: comments,
-      isLikedByCurrentUser: isLikedByCurrentUser,
       createdAt: createdAt,
       audience: audience,
       allowedUserIds: allowedUserIds,
@@ -194,6 +211,9 @@ class RideShareModel {
       upvotes: upvotes,
       downvotes: downvotes,
       myVote: myVote,
+      hardBrakeCount: hardBrakeCount,
+      rapidAccelCount: rapidAccelCount,
+      highJerkCount: highJerkCount,
     );
   }
 }

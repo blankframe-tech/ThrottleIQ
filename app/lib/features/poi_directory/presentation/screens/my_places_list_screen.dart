@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../providers/places_provider.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../place_category_l10n.dart';
 
 /// Places the signed-in rider added themselves — reached from the garage
 /// header's user menu (`garage_screen.dart`'s `_UserMenuButton`). Derived
@@ -19,23 +22,26 @@ class MyPlacesListScreen extends ConsumerWidget {
     final placesAsync = ref.watch(myPlacesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('My Places')),
+      backgroundColor: context.palette.background,
+      appBar: AppBar(title: Text(context.l10n.myPlaces)),
       body: placesAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, _) => Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(myPlacesProvider),
+        ),
         data: (places) {
           if (places.isEmpty) {
             return Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.paddingLg),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.place_outlined, size: 64, color: AppColors.textTertiary),
-                    SizedBox(height: 16),
-                    Text("You haven't added any places yet",
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    Icon(Icons.place_outlined, size: 64, color: context.palette.textTertiary),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.haventAddedAnyPlaces,
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
               ),
@@ -43,7 +49,7 @@ class MyPlacesListScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () => ref.refresh(myPlacesProvider.future),
-            color: AppColors.primary,
+            color: context.palette.primary,
             child: ListView.separated(
               padding: const EdgeInsets.all(AppDimensions.paddingMd),
               itemCount: places.length,
@@ -59,7 +65,7 @@ class MyPlacesListScreen extends ConsumerWidget {
                         height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: context.palette.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),
@@ -75,18 +81,18 @@ class MyPlacesListScreen extends ConsumerWidget {
                                 style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary)),
+                                    color: context.palette.textPrimary)),
                             const SizedBox(height: 2),
                             Text(
                               place.verified
-                                  ? '${place.category.displayName} · Verified'
-                                  : place.category.displayName,
-                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                  ? context.l10n.verified(place.category.localizedName(context.l10n))
+                                  : place.category.localizedName(context.l10n),
+                              style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right, color: AppColors.textTertiary),
+                      Icon(Icons.chevron_right, color: context.palette.textTertiary),
                     ],
                   ),
                 );

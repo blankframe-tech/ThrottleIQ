@@ -2,12 +2,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../data/models/bike_model.dart';
+import '../../data/bike_archive_service.dart';
 import '../../../../core/database/daos/bike_dao.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 final _dao = BikeDao();
+
+final bikeArchiveServiceProvider =
+    Provider<BikeArchiveService>((ref) => BikeArchiveService());
 const _uuid = Uuid();
 
+/// The rider's garage: every bike they still ride. Archived bikes are left
+/// out, so the garage list and every bike picker built on this hide them
+/// without each needing its own filter. Screens that must resolve a ride's
+/// bike whatever its state (stats, sharing) use [allBikesProvider].
 final garageProvider =
     AsyncNotifierProvider<GarageNotifier, List<BikeEntity>>(GarageNotifier.new);
 
@@ -28,6 +36,7 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     String? imagePath,
     double? odometerKm,
     int? colorValue,
+    bool isEbike = false,
   }) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return null;
@@ -41,12 +50,15 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
       imagePath: imagePath,
       odometerKm: odometerKm,
       colorValue: colorValue,
+      isEbike: isEbike,
       createdAt: DateTime.now(),
     );
     await _dao.insert(BikeModel.toMap(bike));
-    // If first bike, make it active
-    final current = state.valueOrNull ?? [];
-    if (current.isEmpty) {
+    // Decide from the database, not provider state: while the garage is
+    // loading (or errored) `state` is empty and would force the new bike
+    // active over the rider's real one (issues §101.R10).
+    final rows = await _dao.getAllForUser(uid);
+    if (!rows.any((r) => r['is_active'] == 1)) {
       await _dao.setActive(bike.id, uid);
     }
     ref.invalidateSelf();
@@ -55,16 +67,23 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
 
   /// Calibrates the bike's baseline odometer so `currentOdometerKm` matches
   /// the physical instrument cluster reading captured during sync.
-  Future<void> syncOdometer({
+  ///
+  /// Returns the odometer the bike actually shows afterwards. That is the
+  /// entered reading unless it is below the GPS-tracked total, in which case
+  /// the baseline is floored at 0 and the tracked total wins (§101.R7).
+  /// Null when the bike isn't found.
+  Future<double?> syncOdometer({
     required String bikeId,
     required double newOdometerKm,
   }) async {
     final bikes = state.valueOrNull ?? [];
     final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
-    if (bike == null) return;
-    final newBaseline = (newOdometerKm - bike.totalDistanceKm).clamp(0.0, double.infinity);
+    if (bike == null) return null;
+    final newBaseline =
+        (newOdometerKm - bike.totalDistanceKm).clamp(0.0, double.infinity);
     await _dao.updateOdometer(bikeId, newBaseline);
     ref.invalidateSelf();
+    return newBaseline + bike.totalDistanceKm;
   }
 
   Future<void> updateBike(BikeEntity bike) async {
@@ -72,8 +91,35 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     ref.invalidateSelf();
   }
 
+  /// Hard delete: the bike, its rides and their trails, here and (via the
+  /// tombstone) in the cloud. Only for the explicit "delete bike and all its
+  /// rides" action; [archiveBike] is the default.
   Future<void> deleteBike(String id) async {
     await _dao.delete(id);
+    ref.invalidateSelf();
+  }
+
+  /// Retires a bike. By default its rides, totals, service logs and photos
+  /// are kept; [cleanup] removes the parts the rider picked. The bike is
+  /// permanently deleted [kArchiveRetention] later (see [BikeArchiveService]).
+  Future<void> archiveBike(
+    BikeEntity bike, {
+    ArchiveCleanup cleanup = const ArchiveCleanup(),
+  }) async {
+    await ref.read(bikeArchiveServiceProvider).archive(bike, cleanup);
+    ref.invalidateSelf();
+    ref.invalidate(allBikesProvider);
+  }
+
+  /// "Delete now" for an archived bike: skips the rest of the retention.
+  Future<void> deleteArchivedNow(BikeEntity bike) async {
+    await ref.read(bikeArchiveServiceProvider).deleteNow(bike);
+    ref.invalidateSelf();
+    ref.invalidate(allBikesProvider);
+  }
+
+  Future<void> unarchiveBike(String id) async {
+    await _dao.setArchived(id, false);
     ref.invalidateSelf();
   }
 
@@ -92,4 +138,24 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
 final activeBikeProvider = Provider<BikeEntity?>((ref) {
   final bikes = ref.watch(garageProvider).valueOrNull ?? [];
   return bikes.where((b) => b.isActive).firstOrNull;
+});
+
+/// Every bike the rider has, archived ones included. For resolving a ride's
+/// bike (a ride on an archived bike is still a ride) and for totals that
+/// should not change just because a bike was retired.
+///
+/// Watches [garageProvider] only to rebuild whenever the garage changes —
+/// archive/unarchive/edit all invalidate it.
+final allBikesProvider = FutureProvider<List<BikeEntity>>((ref) async {
+  ref.watch(garageProvider);
+  final uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) return [];
+  final rows = await _dao.getAllForUser(uid, includeArchived: true);
+  return rows.map(BikeModel.fromMap).toList();
+});
+
+/// The "Archived bikes" section of the garage.
+final archivedBikesProvider = Provider<List<BikeEntity>>((ref) {
+  final bikes = ref.watch(allBikesProvider).valueOrNull ?? const [];
+  return bikes.where((b) => b.isArchived).toList();
 });

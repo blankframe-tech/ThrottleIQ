@@ -1,0 +1,80 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "live_shares": {
+      "$token": {
+        ".read": "$token.length >= 32 && data.child('expiresAt').val() > now",
+        ".write": "auth != null && $token.length >= 32 && ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('uid').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['uid', 'expiresAt'])",
+        "uid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        },
+        "expiresAt": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 86460000"
+        },
+        "location": {
+          ".validate": "newData.hasChildren(['lat', 'lng', 'ts', 'seq'])",
+          "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+          "lng": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+          "ts": { ".validate": "newData.val() === now" },
+          "seq": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "speedMs": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "headingDeg": { ".validate": "newData.isNumber()" },
+          "accuracyM": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "$other": { ".validate": false }
+        },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "group_rides": {
+      "$rideId": {
+        ".write": "auth != null && !newData.exists() && data.child('meta/creatorId').val() === auth.uid",
+        "meta": {
+          ".read": "auth != null",
+          ".write": "auth != null && !data.exists() && newData.child('creatorId').val() === auth.uid",
+          ".validate": "newData.hasChildren(['creatorId'])",
+          "creatorId": { ".validate": "newData.isString()" },
+          "$other": { ".validate": false }
+        },
+        "banned": {
+          "$uid": {
+            ".write": "auth != null && root.child('group_rides/' + $rideId + '/meta/creatorId').val() === auth.uid",
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "locations": {
+          ".read": "auth != null && root.child('group_rides/' + $rideId + '/meta').exists() && !root.child('group_rides/' + $rideId + '/banned/' + auth.uid).exists()",
+          "$uid": {
+            ".write": "auth != null && ((auth.uid === $uid && root.child('group_rides/' + $rideId + '/meta').exists() && !root.child('group_rides/' + $rideId + '/banned/' + auth.uid).exists()) || (!newData.exists() && root.child('group_rides/' + $rideId + '/meta/creatorId').val() === auth.uid))",
+            ".validate": "newData.hasChildren(['lat', 'lng', 'ts', 'seq'])",
+            "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+            "lng": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+            "ts": { ".validate": "newData.val() === now" },
+            "seq": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "speedMs": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "headingDeg": { ".validate": "newData.isNumber()" },
+            "accuracyM": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "chat_presence": {
+      "$chatId": {
+        ".read": "auth != null && ($chatId.beginsWith(auth.uid + '_') || $chatId.endsWith('_' + auth.uid))",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && ($chatId.beginsWith($uid + '_') || $chatId.endsWith('_' + $uid))",
+          ".validate": "newData.hasChildren(['typing', 'ts'])",
+          "typing": { ".validate": "newData.isBoolean()" },
+          "ts": { ".validate": "newData.val() === now" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

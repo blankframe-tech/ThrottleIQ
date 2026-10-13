@@ -1,0 +1,275 @@
+# ThrottleIQ Architecture (`arch.md`)
+
+*Last updated: October 2026*
+
+ThrottleIQ is an **offline-first motorcycle telemetry intelligence platform and vehicle state estimation engine**. Rather than merely logging raw GPS coordinates, ThrottleIQ treats a motorcycle ride as an evolving continuous state vector—fusing inertial measurement unit (IMU) telemetry with GPS fixes to classify dynamics, flag suspected high-g impacts, manage vehicle fleets, and provide offline geometric navigation.
+
+> ⚠️ **Crash detection is built but switched off in every build**
+> (`SensorConstants.impactDetectorLiveEnabled = false`), and emergency-contact
+> alerting is an unwired Cloud Function skeleton. Nothing in this document
+> should be read as a claim that a rider is protected in a crash. See
+> `DOCS/Handoff for agents and Todos/issues_open.md` §78.1 and §81.
+
+---
+
+## 1. Architectural Principles
+
+1. **Offline-First Source of Truth**:
+   - Local SQLite is the sole author of ride, bike, and maintenance state.
+   - Recording, crash detection, and local analytics work 100% offline without cellular or satellite internet access.
+2. **Deterministic Outbox & Cloud Non-Interference**:
+   - User actions (saving/sharing rides, logging maintenance) write to disk instantly.
+   - Cloud synchronization is completely decoupled from UI threads. Network timeouts (capped at 8 seconds) transition items to `deferred` state rather than failing or blocking interactions.
+3. **Layered Clean Architecture**:
+   - **Presentation Layer**: Flutter widgets, Material 3 UI, Riverpod state notifiers.
+   - **Domain Layer**: Pure mathematical domain calculators and entities with zero UI or database coupling.
+   - **Data Layer**: Repositories, DAOs (Data Access Objects), and SQLite database helpers.
+4. **Zero Cross-DAO Calls Inside Transactions**:
+   - To prevent SQLite transaction deadlocks, a DAO method executing inside a transaction boundary must never invoke another DAO.
+5. **Privacy by Design**:
+   - Automatic radius clipping (200-349 m, stable per rider) on the start and end of shared rides (obscuring homes and workplaces).
+   - Unguessable tokenized URLs with 24-hour TTL for emergency live sharing.
+
+---
+
+## 2. High-Level System Architecture
+
+```mermaid
+graph TD
+    subgraph HardwareSensors [Mobile Hardware & OS]
+        GPS[GPS Location Stream @ 1Hz]
+        IMU[Accelerometer & Gyroscope @ 20-50Hz]
+    end
+
+    subgraph DomainPipeline [Vehicle State Engine & Calculators]
+        SV[SensorValidator]
+        MC[MotionCalculator]
+        VSE[VehicleStateEstimator - Complementary Filter]
+        ED[EventDetector - Crash & Motion Rules]
+        RCP[RecordingCadencePolicy]
+    end
+
+    subgraph PresentationLayer [Presentation & State - Riverpod]
+        RRN[RideRecordingNotifier]
+        UI[Material 3 UI & FlutterMap]
+    end
+
+    subgraph StorageLayer [Local Persistence - Primary Source of Truth]
+        SQL[(SQLite Database)]
+        DAOs[DAOs: RideDao, BikeDao, OutboxDao]
+    end
+
+    subgraph SyncSubsystem [Outbox & Cloud Synchronizer]
+        OS[OutboxService]
+        SM[SyncManager]
+    end
+
+    subgraph RemoteCloud [Cloud Infrastructure]
+        FS[(Cloud Firestore)]
+        CD[Cloudinary Media Store]
+        FA[Firebase Auth]
+    end
+
+    GPS --> SV
+    IMU --> SV
+    SV --> MC
+    SV --> VSE
+    MC --> VSE
+    VSE --> ED
+    VSE --> RCP
+    RCP --> RRN
+    ED --> RRN
+    RRN --> UI
+    RRN --> DAOs
+    DAOs --> SQL
+    SQL --> OS
+    OS --> SM
+    SM --> FS
+    SM --> CD
+```
+
+---
+
+## 3. Directory Structure
+
+The project lives under [`app/lib/`](app/lib) following a modular, feature-oriented structure:
+
+```
+app/lib/
+├── app.dart                   # Root widget, lifecycle listener, theme & router setup
+├── main.dart                  # Foreground task port init, Crashlytics, Firebase bootstrap
+├── core/
+│   ├── analytics/             # Privacy-respecting funnel analytics
+│   ├── cloud/                 # Cloud sync, Outbox pattern, RideTrackCodec
+│   │   ├── cloud_repository.dart
+│   │   ├── export_service.dart
+│   │   ├── maintenance_settings_sync.dart
+│   │   ├── outbox_service.dart
+│   │   ├── ride_track_codec.dart
+│   │   ├── ride_track_loader.dart
+│   │   └── sync_manager.dart
+│   ├── database/              # SQLite helper & DAOs
+│   │   ├── daos/
+│   │   │   ├── auto_detection_dao.dart
+│   │   │   ├── bike_dao.dart
+│   │   │   ├── bike_running_cost_dao.dart
+│   │   │   ├── maintenance_config_dao.dart
+│   │   │   ├── maintenance_dao.dart
+│   │   │   ├── maintenance_profile_dao.dart
+│   │   │   ├── outbox_dao.dart
+│   │   │   ├── ride_dao.dart
+│   │   │   ├── ride_point_dao.dart
+│   │   │   └── user_profile_dao.dart
+│   │   └── database_helper.dart
+│   ├── constants/             # Sensor thresholds, bike catalog, bike colors, dimensions
+│   ├── i18n/                  # l10n context/lookup helpers, locale provider
+│   ├── services/              # Background tracking, notifications, home widgets, Cloudinary
+│   ├── router/                # GoRouter routing tree & auth redirects
+│   ├── theme/                 # 7-color family appearance engine (dark/light, boxy/curvy)
+│   └── utils/                 # Pure helpers: geo math, geohash, formatters, badges
+├── l10n/                      # ARB files + checked-in generated AppLocalizations
+├── shared/                    # AppShell, shared widgets and screens
+└── features/
+    ├── auth/                  # Login, registration, onboarding tour
+    ├── ride/                  # Safety-critical: sensor fusion, crash detection, recording
+    ├── garage/                # Bike management & market autocomplete
+    ├── maintenance/           # Forecast engine (km-or-time), schedule templates, service visits, alerts
+    ├── social/                # Feed, privacy-zone clipping, group rides & live location
+    ├── forums/                # Brand/model forums, thread/post moderation
+    ├── poi_directory/         # Fuel, garage, spare-parts locator with geohash search
+    ├── routes/                # Offline geometric turn-by-turn route navigation
+    ├── chat/                  # Direct rider-to-rider messaging
+    ├── moderation/            # Content reports (report sheet + repository)
+    ├── profile/               # User settings, privacy tiers, SafeQR medical card
+    └── stats/                 # Riding scores, badges, and aggregate statistics
+```
+
+---
+
+## 4. Telemetry Pipeline & Vehicle State Engine
+
+The core computational logic lives in pure domain calculators under [`app/lib/features/ride/domain/calculators/`](app/lib/features/ride/domain/calculators).
+
+### The 10-Layer Architecture
+1. **Sensor Collection**: Ingests GPS fixes via `geolocator` and accelerometer/gyroscope streams via `sensors_plus`.
+2. **Validation ([`SensorValidator`](app/lib/features/ride/domain/calculators/sensor_validator.dart))**: Filters out anomalies—rejects negative elapsed times, speed spikes exceeding physical bounds (>70 m/s), non-finite floats, and GPS accuracy circles $>25\,\text{m}$.
+3. **Time Synchronization**: Event-driven timestamping preserving device microsecond clocks across sensor types.
+4. **Sensor Fusion ([`VehicleStateEstimator`](app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart))**:
+   - Complementary filter blending GPS course over ground with integrated gyroscope $z$-axis (yaw rate).
+   - High-accuracy GPS updates ($\le 8\,\text{m}$) weight heading toward GPS ($70\%$), while degraded GPS leans on gyro dead-reckoning (GPS weight $30\%$).
+5. **Confidence Engine**: Dynamically calculates a $0-100$ heuristic score based on GPS horizontal dilution of precision and IMU jitter.
+6. **Motion Classification**: Derives instantaneous states (`isMoving`, `isStopped`, `isCornering`, `isBraking`, `isAccelerating`).
+7. **Event Detection ([`EventDetector`](app/lib/features/ride/domain/calculators/event_detector.dart))**:
+   - **Crash Detection Rule** (legacy GPS-derived path, now only used by the `AutoRideReconciler` replay; the live path is the raw-IMU `ImpactDetector` at a provisional, uncalibrated $39\,\text{m/s}^2 \approx 4g$):
+     $$\text{Accel Spike} > 80\,\text{m/s}^2 \;(\approx 8.2g) \;\land\; \text{Jerk} > 10\,\text{m/s}^3 \;\land\; \text{Speed Drop} \ge 2.0\,\text{m/s within } 2.0\,\text{s (to rest, or a proportional collapse)}$$
+   - Crash signals require confidence validation to avoid triggering on phone drops or tunnel GPS dropouts.
+   - Triggers an immediate maximum haptic pulse and initiates a **60-second cancellable countdown** on the UI.
+8. **Adaptive Recording ([`RecordingCadencePolicy`](app/lib/features/ride/domain/calculators/recording_cadence_policy.dart))**:
+   - Thins points stored to SQLite during steady cruising (saves disk space and write I/O) (at most one point every $5\,\text{s}$ once confidence clears a floor) while keeping every fix during dynamic maneuvering (braking, cornering, accelerating) or low confidence.
+9. **Map Matching**: (Deferred / roadmap).
+10. **Analytics**: Post-ride calculations of average speed (excluding extended idle periods $>60\,\text{s}$), lean estimates, jam duration, and safety scores.
+
+---
+
+## 5. Storage & Cloud Synchronization Architecture
+
+### Local Storage (SQLite)
+- Maintained by [`DatabaseHelper`](app/lib/core/database/database_helper.dart).
+- Migrations use `_addColumnIfMissing` to avoid `ALTER TABLE` lockouts and database recreation.
+- `ride_points` table stores full high-fidelity trajectories (`lat`, `lng`, `speed_ms`, `acceleration`, `jerk`, `heading_deg`, `confidence`, `imu_quality`, `is_cornering`).
+- **Adding a column to a synced table is a cross-version concern.** `CloudRepository.downloadRides` inserts cloud documents verbatim, so a field written by a newer build is an `INSERT` into a column an older one doesn't have — which throws and silently drops that ride. Two guards: the upload side omits a field when it is null (`ridePayload`, `bikePayload`), and since v17 the download side filters to the columns the local schema actually has (`knownRideColumnsOnly`). Maintenance logs have no such filter: a row a build can't store is skipped, and since v20 `downloadMaintenance` stops its pull watermark before that row so it is fetched again after the app updates. Deleted maintenance logs are tombstoned (`deleted_maintenance_logs`) like rides and bikes.
+
+### Outbox Pattern ([`OutboxService`](app/lib/core/cloud/outbox_service.dart))
+- Network writes are queued into the SQLite `outbox` table before the UI callback completes.
+- **Contract**: Once `enqueue()` returns, the operation is guaranteed to persist and eventually reach the cloud.
+- `kOutboxAttemptTimeout = Duration(seconds: 8)`: If Firestore does not acknowledge within 8 seconds, the write is treated as `deferred` rather than throwing, preventing UI freezes during offline usage.
+- Exponential backoff: $30\,\text{s} \to 1\,\text{m} \to 2\,\text{m} \dots \text{capped at } 30\,\text{m}$.
+
+### Cloud Sync Engine ([`SyncManager`](app/lib/core/cloud/sync_manager.dart))
+- Triggered on:
+  1. App resume (`AppLifecycleState.resumed`).
+  2. User authentication state changes.
+  3. Network connectivity restoration (`connectivity_plus`).
+  4. Scheduled 5-minute background interval.
+- **Sync Sequence**:
+  1. Drain Outbox queue (`_outbox.drain()`).
+  2. Download remote updates (Bikes, Maintenance, Maintenance settings, Rides) for multi-device parity.
+  3. Push local deletions first.
+  4. Upload unsynced local rows (`synced = 0`).
+
+### Firestore Track Chunking ([`RideTrackCodec`](app/lib/core/cloud/ride_track_codec.dart))
+- Long rides generate thousands of telemetry points. Writing one document per point exhausts read/write quotas; writing all points to one document breaches Firestore's 1 MiB limit.
+- **Chunking Strategy**: Points are grouped into 500-point chunks (`trackChunkSize`) and stored in subcollection documents `/users/{uid}/rides/{rideId}/track/{chunkIndex}` as one flat positional array with a stride of 5: `[lat, lng, tsMillis, speed, accel, lat, lng, …]`. Firestore rejects nested arrays, which is why it's flat. Heading/confidence/IMU fields stay local-only in `ride_points`.
+
+### Media Uploads
+- Direct-to-storage architecture using **Cloudinary** ([`CloudinaryUploadService`](app/lib/core/services/cloudinary_upload_service.dart)) via unsigned REST requests. Bypasses Firebase Storage to avoid Blaze billing lock-in while preserving free-tier quotas.
+
+### Server side (`functions/`)
+Cloud Functions only backstop what the client can't be trusted with or can't do after the fact. See `functions/README.md`:
+- `onUserAccountDeleted`: recursive cleanup of a deleted rider's cloud data.
+- `reconcileRideIdentity`: overwrites a shared ride's display name/photo from the profile doc (anti-impersonation).
+- `onMessageCreate`: keyword chat moderation (placeholder).
+- `onCrashNotification` / `escalateCrashAlert`: crash-alert fan-out and escalation. **Delivery is still a mock**; nothing is actually sent.
+
+---
+
+## 6. Background Processing & Auto-Tracking
+
+1. **Foreground Service**:
+   - Background tracking uses `flutter_foreground_task` and `geolocator`'s native foreground service notification to prevent Android OEM OS battery killers from terminating the recording isolate.
+2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](app/lib/core/services/auto_tracking_service.dart))**:
+   - Operates an isolated background entry point (`autoTrackingTaskCallback`).
+   - Listens for Activity Recognition transitions (e.g., `IN_VEHICLE` / `ON_BICYCLE`).
+   - Persists detected trip chunks to the `auto_detections` SQLite table.
+3. **Reconciliation ([`AutoRideReconcilerService`](app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart))**:
+   - On app foregrounding, re-evaluates pending detected rides using [`AutoRideReconciler`](app/lib/features/ride/domain/calculators/auto_ride_reconciler.dart).
+   - Prompts the rider to categorize the journey or links it to their primary motorcycle.
+
+---
+
+## 7. Navigation & Routing Architecture
+
+- Routing is implemented via `GoRouter` in [`app_router.dart`](app/lib/core/router/app_router.dart).
+- **Core Navigation Structure**:
+  - `ShellRoute` with [`AppShell`](app/lib/shared/widgets/app_shell.dart) hosts the 5 primary tabs:
+    - **Social** (`/home/social`): Feed, ride sharing, group rides.
+    - **Places** (`/home/places`): POI directory (garages, fuel, spare parts) with geohash queries.
+    - **Record** (`/home/record`): Live recording dashboard.
+    - **Stats** (`/home/stats`): Aggregated metrics, riding scores, badges.
+    - **Profile** (`/home/profile`): Garage fleet management, profile stats, settings.
+  - `/home/maintenance` (the maintenance forecast; sub-routes `add` = Log a visit, `setup`, `check` = part detail, `configure`) is also inside the shell but has no tab of its own; it highlights the Profile tab.
+  - **Full-Screen Workspaces**: High-focus screens exist outside the shell navigation bar:
+    - `/ride/active`: Minimal, high-contrast, gloved-hand friendly UI during riding.
+    - `/group-ride/:groupRideId`: Live peer map location sharing with push-to-talk audio notes.
+    - `/routes/:routeId/navigate`: the pre-flight for following a saved route — it starts the recording and hands over to `/ride/active`, rather than being a navigation screen of its own.
+- **Offline Geometric Turn-by-Turn**:
+  - Operates without commercial routing APIs (Mapbox, GraphHopper). Computes turn maneuvers purely from polyline vector bearings and signed angular differences (classified into slight, normal, sharp, U-turn), grouping micro-bends to eliminate instruction noise.
+- **Following a route *is* recording a ride** (2026-09-21, issues §78.21). The two core loops compose rather than running side by side:
+  - [`navigation_progress.dart`](app/lib/features/routes/domain/navigation_progress.dart) — pure progress/off-route/ETA/turn-advance maths, no Flutter and no I/O. A manoeuvre counts as done when the rider reaches it **or** has ridden past it along the line; proximity alone jams the banner on any corner taken wide.
+  - [`navigation_session_provider.dart`](app/lib/features/routes/presentation/providers/navigation_session_provider.dart) — holds route + manoeuvres + progress and owns **no GPS**. It `ref.listen`s to `rideRecordingProvider`, selected down to `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence, not at accelerometer cadence.
+  - **The dependency runs one way**: `routes` knows about the recorder; `RideRecordingNotifier` knows nothing about routes. Navigation stays out of the core loop, which is the part with no end-to-end test.
+  - The ride record carries `route_id`/`route_name` (added in schema **v17**; current schema is v20). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
+  - Guidance is drawn over the cockpit by `NavigationBanner`; there is no separate navigation screen to get out of sync with the recorder.
+
+---
+
+## 8. Quality Gate & Testing Discipline
+
+ThrottleIQ enforces strict verification rules governed by `.agents/rules/qa-gate.md`:
+
+1. **Static Analysis**: Zero errors and warnings via `flutter analyze`.
+2. **Real SQLite Testing (`sqflite_common_ffi`)**:
+   - **Never mock DAOs** in database tests. All database tests run against real in-memory SQLite instances (`databaseFactory.openDatabase(inMemoryDatabasePath)` wired in with `DatabaseHelper.overrideDatabaseForTesting` and `createSchemaForTesting`). Mocks hide transaction locking and deadlocks.
+3. **Pure Logic Verification**:
+   - All domain calculators (`MotionCalculator`, `VehicleStateEstimator`, `EventDetector`, `AutoRideReconciler`) maintain fixture-backed unit tests verifying mathematical edge cases.
+4. **Security Rules Unit Tests**:
+   - Firestore security rules are validated via the Firebase local emulator (`npm run test:rules` in `scripts/`).
+
+## 9. Cross-cutting UI infrastructure (added 2026-09-21)
+
+Read these before adding a screen; each replaced something that used to be a global.
+
+- **Design tokens ride on the theme, not on statics.** `AppColorPalette` and `AppShapeProfile` are `ThemeExtension`s registered by `AppTheme.build`; widgets read `context.palette` / `context.shape` (`core/theme/app_theme_context.dart`) **in `build`** (never `initState`, never cached in a field). `AppColors` and the `apply()` facades no longer exist, and `MaterialApp` is not keyed on the appearance — changing theme re-themes screens in place and keeps their state. In a dialog/sheet `builder:` use the builder's own context.
+- **Localization.** `context.l10n.key` (`core/i18n/l10n_context.dart`); ARBs in `app/lib/l10n/` (EN template + BN, Western digits, checked-in generated code, parity test). Code with no `BuildContext` uses `resolveL10n(locale)` / `savedL10n()` (`core/i18n/l10n_lookup.dart`) — a snapshot, not reactive. **Never localize data** (anything stored, sent to another rider, or compared against); domain enums keep English + persisted ids and are localized by id/kind in `presentation/` (`badge_l10n.dart`, `service_type_l10n.dart`, `turn_instruction_l10n.dart`, …). New Bangla keys go in `bn_pending_review.txt`.
+- **Analytics** (`core/analytics/analytics_service.dart`): screen views (route patterns) + a closed list of seven funnel events, one coarse parameter each, off in debug, rider opt-out in Settings. No code path can send an id, name, location or ride figure. `public/privacy.html` and the Data Safety notes must change with it.
+- **App Check** is activated at startup (`main.dart`), inert until enforced in the Firebase console; enforce only after a release containing it is what riders run.

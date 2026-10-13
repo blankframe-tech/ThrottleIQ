@@ -1,9 +1,13 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 // A basic set of toxic keywords for automated moderation demonstration.
 // In a production app, this would use Google Cloud Natural Language API or Perspective API.
+// Known-weak placeholder (issues §62.5): a handful of English
+// substrings catches nothing in Bangla/Banglish (this app's actual user
+// base) and nothing with trivial evasion. Replacing it with real NLP
+// moderation is tracked separately, not attempted here.
 const TOXIC_KEYWORDS = [
   "idiot",
   "stupid",
@@ -13,6 +17,10 @@ const TOXIC_KEYWORDS = [
   "ugly",
 ];
 
+const TOXIC_KEYWORD_PATTERNS = TOXIC_KEYWORDS.map(
+  (word) => new RegExp(`\\b${word}\\b`)
+);
+
 export const onMessageCreate = onDocumentCreated(
   "chats/{chatId}/messages/{messageId}",
   async (event) => {
@@ -20,10 +28,14 @@ export const onMessageCreate = onDocumentCreated(
     if (!snapshot) return;
 
     const messageData = snapshot.data();
-    const text = messageData.text?.toLowerCase() || "";
+    const originalText: string =
+      typeof messageData.text === "string" ? messageData.text : "";
+    const text = originalText.toLowerCase();
 
-    // Simple toxicity check
-    const isToxic = TOXIC_KEYWORDS.some((word) => text.includes(word));
+    // Whole-word match only. A plain substring check hid perfectly innocent
+    // messages: "whatever" contains "hate", "dumbbell" contains "dumb",
+    // "beef jerky" contains "jerk".
+    const isToxic = TOXIC_KEYWORD_PATTERNS.some((re) => re.test(text));
 
     if (isToxic) {
       logger.info(`Toxic message detected in chat ${event.params.chatId}, hiding message.`);
@@ -34,16 +46,35 @@ export const onMessageCreate = onDocumentCreated(
         text: "*** This message was hidden by automated moderation ***",
       });
 
-      // Optionally, we could create an automated report
-      await admin.firestore().collection("reports").add({
-        reporterId: "system",
-        reportedId: messageData.senderId,
-        contentType: "chat",
-        contentId: snapshot.ref.id,
-        reason: "Automated toxicity detection",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        status: "actioned",
-      });
+      // File an automated report for admin review. Status is 'pending', not
+      // 'actioned' (issues §62.5 — this used to auto-mark it
+      // 'actioned' even though nothing was actually reviewed, so downstream
+      // tooling that trusts `status` treated unverified content as
+      // resolved). This write goes through the Admin SDK, which bypasses
+      // firestore.rules entirely, but the semantics should still be honest:
+      // hiding the message is automated, closing the report isn't.
+      //
+      // issues §90.D12: the report now carries what a reviewer needs — the
+      // chat id (contentId alone can't locate a message nested under
+      // chats/{chatId}) and the original text, which the update above has
+      // just overwritten on the message itself. Reports are admin-only in
+      // firestore.rules. The id is deterministic, so a retried trigger
+      // rewrites one report instead of filing a duplicate.
+      await getFirestore()
+        .collection("reports")
+        .doc(`auto_chat_${event.params.chatId}_${event.params.messageId}`)
+        .set({
+          reporterId: "system",
+          reportedId: messageData.senderId ?? "",
+          contentType: "chat",
+          contentId: snapshot.ref.id,
+          chatId: event.params.chatId,
+          contentPath: snapshot.ref.path,
+          originalText: originalText.slice(0, 1000),
+          reason: "Automated toxicity detection",
+          createdAt: FieldValue.serverTimestamp(),
+          status: "pending",
+        });
     }
   }
 );

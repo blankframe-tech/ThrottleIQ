@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/utils/initials.dart';
 
 /// A rider's avatar: their photo when set, otherwise a GitHub-style circle
@@ -17,20 +17,32 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
-    return CircleAvatar(
+    
+    final fallback = CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-      backgroundImage: hasPhoto ? CachedNetworkImageProvider(photoUrl!) : null,
-      child: hasPhoto
-          ? null
-          : Text(
-              initialsFrom(name),
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-                fontSize: radius * 0.7,
-              ),
-            ),
+      backgroundColor: context.palette.primary.withValues(alpha: 0.15),
+      child: Text(
+        initialsFrom(name),
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: context.palette.primary,
+          fontSize: radius * 0.7,
+        ),
+      ),
+    );
+
+    if (!hasPhoto) {
+      return fallback;
+    }
+
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: photoUrl!,
+        width: radius * 2,
+        height: radius * 2,
+        fit: BoxFit.cover,
+        errorWidget: (context, url, error) => fallback,
+      ),
     );
   }
 }

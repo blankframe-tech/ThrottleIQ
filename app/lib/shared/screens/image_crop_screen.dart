@@ -3,11 +3,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme_context.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/crop_geometry.dart';
 import '../../core/utils/image_crop_io.dart';
 import '../widgets/editorial.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A themed, in-app photo cropper.
 ///
@@ -32,12 +33,13 @@ class ImageCropScreen extends StatefulWidget {
   const ImageCropScreen({
     super.key,
     required this.sourcePath,
-    this.title = 'Crop photo',
+    this.title,
     this.filePrefix = 'photo',
   });
 
   final String sourcePath;
-  final String title;
+  /// Null means the default, "Crop photo", in the rider's language.
+  final String? title;
 
   /// Filename stem for the written crop — just makes the app's documents
   /// directory readable when someone goes looking (`bike_photo_…jpg`).
@@ -48,7 +50,7 @@ class ImageCropScreen extends StatefulWidget {
   static Future<String?> open(
     BuildContext context, {
     required String sourcePath,
-    String title = 'Crop photo',
+    String? title,
     String filePrefix = 'photo',
   }) {
     return Navigator.of(context).push<String>(
@@ -63,13 +65,26 @@ class ImageCropScreen extends StatefulWidget {
     );
   }
 
+  /// [image] if the screen is still [mounted]; otherwise frees it and
+  /// returns null. A screen popped mid-decode never assigned the image to
+  /// `_preview`, so [dispose] never freed it and a full-resolution native
+  /// image leaked (issues §101.C9).
+  @visibleForTesting
+  static ui.Image? adoptOrDispose(ui.Image image, {required bool mounted}) {
+    if (mounted) return image;
+    image.dispose();
+    return null;
+  }
+
   @override
   State<ImageCropScreen> createState() => _ImageCropScreenState();
 }
 
 /// The aspect presets. `null` means unconstrained.
-const _presets = <({String label, double? ratio})>[
-  (label: 'Free', ratio: null),
+const _presets = <({String? label, double? ratio})>[
+  // A null label is the unconstrained preset, shown as "Free" (localized where
+  // it is built, since this list is const and has no context).
+  (label: null, ratio: null),
   (label: '1:1', ratio: 1),
   (label: '4:3', ratio: 4 / 3),
   (label: '16:9', ratio: 16 / 9),
@@ -102,12 +117,13 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   Future<void> _load() async {
     try {
       final bytes = await File(widget.sourcePath).readAsBytes();
-      final decoded = await decodeImageFromList(bytes);
-      if (!mounted) return;
+      final decoded = ImageCropScreen.adoptOrDispose(
+          await decodeImageFromList(bytes), mounted: mounted);
+      if (decoded == null) return;
       setState(() => _preview = decoded);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Could not open that photo.');
+      setState(() => _error = context.l10n.couldNotOpenThat);
     }
   }
 
@@ -175,7 +191,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = 'Could not save the cropped photo.';
+        _error = context.l10n.couldNotSaveCropped;
       });
     }
   }
@@ -183,14 +199,14 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: 'Cancel',
+          tooltip: context.l10n.cancelAction,
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
         ),
-        title: Text(widget.title),
+        title: Text(widget.title ?? context.l10n.cropPhoto),
         actions: [
           TextButton(
             onPressed: (_preview == null || _saving) ? null : _save,
@@ -199,9 +215,9 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.primary),
+                        strokeWidth: 2, color: context.palette.primary),
                   )
-                : const Text('Done'),
+                : Text(context.l10n.done),
           ),
         ],
       ),
@@ -212,7 +228,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
               child: Text(_error!,
-                  style: TextStyle(color: AppColors.danger, fontSize: 13),
+                  style: TextStyle(color: context.palette.danger, fontSize: 13),
                   textAlign: TextAlign.center),
             ),
           _buildControls(),
@@ -225,8 +241,8 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     if (_preview == null) {
       return Center(
         child: _error != null
-            ? Icon(Icons.broken_image_outlined, size: 48, color: AppColors.textTertiary)
-            : CircularProgressIndicator(color: AppColors.primary),
+            ? Icon(Icons.broken_image_outlined, size: 48, color: context.palette.textTertiary)
+            : CircularProgressIndicator(color: context.palette.primary),
       );
     }
 
@@ -264,9 +280,9 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
               quarterTurns: _quarterTurns,
               display: display,
               crop: crop,
-              scrim: AppColors.overlayDark,
-              frame: AppColors.primary,
-              grid: AppColors.onInk.withValues(alpha: 0.35),
+              scrim: context.palette.overlayDark,
+              frame: context.palette.primary,
+              grid: context.palette.onInk.withValues(alpha: 0.35),
             ),
           ),
         );
@@ -292,7 +308,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
             children: [
               for (final preset in _presets)
                 _RatioChip(
-                  label: preset.label,
+                  label: preset.label ?? context.l10n.free,
                   selected: _ratio == preset.ratio,
                   onTap: _preview == null ? null : () => _setRatio(preset.ratio),
                 ),
@@ -302,7 +318,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
           TextButton.icon(
             onPressed: _preview == null || _saving ? null : _rotate,
             icon: const Icon(Icons.rotate_90_degrees_ccw_outlined, size: 18),
-            label: const Text('Rotate'),
+            label: Text(context.l10n.rotate),
           ),
         ],
       ),
@@ -324,23 +340,22 @@ class _RatioChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusMd),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.border,
             width: 1.5,
           ),
         ),
         child: Text(
           label,
-          style: display(
-            13,
+          style: display(context, 13,
             letterSpacing: 0,
             color: selected
                 ? (Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.surface
+                    ? context.palette.surface
                     : Colors.white)
-                : AppColors.textPrimary,
+                : context.palette.textPrimary,
           ),
         ),
       ),

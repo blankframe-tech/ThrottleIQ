@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/entities/ride_entity.dart';
@@ -36,16 +36,16 @@ class BikeConfirmationCard extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(vertical: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+        border: Border.all(color: context.palette.primary.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.help_outline, size: 18, color: AppColors.primary),
+              Icon(Icons.help_outline, size: 18, color: context.palette.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -58,7 +58,7 @@ class BikeConfirmationCard extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             l10n.bikeConfirmationBody,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           Wrap(

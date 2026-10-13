@@ -119,9 +119,9 @@ placeholder.
 | `ti_ride_count_raw` | Int | `42` |
 | `ti_bike_name` | String | `Yamaha MT-07 (2021)` |
 | `ti_service_label` | String | `Oil Change` |
-| `ti_service_summary` | String | `Oil Change overdue by 240.0 km` |
+| `ti_service_summary` | String | `Oil Change overdue by 240.0 km`, or `Brake Fluid in 10 days` for a date-driven check |
 | `ti_km_until_due` | String | `240.0 km` |
-| `ti_km_until_due_raw` | Double | `-240.0` |
+| `ti_km_until_due_raw` | Double | `-240.0` (0 for a check tracked by date only) |
 | `ti_overdue` | Bool | `true` |
 
 The widget `kind` strings must equal the `iOS*Widget` constants in
@@ -140,3 +140,8 @@ The widget `kind` strings must equal the `iOS*Widget` constants in
   opens Settings instead of trying to flip the switch itself.
 - The Apple Developer account steps above (team assignment, App Group
   registration/verification).
+
+Since 2026-10-07 the maintenance values come from the same forecast as the
+in-app Maintenance page (`nextServiceDue` over `maintenance_forecast.dart`),
+so they follow the rider's own intervals and enabled checks. The keys did not
+change, so the Swift and Kotlin sides needed no update.

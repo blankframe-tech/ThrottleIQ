@@ -21,6 +21,8 @@ RideEntity _ride(
   int hardBrakeCount = 0,
   int rapidAccelCount = 0,
   int highJerkCount = 0,
+  int? movingSeconds,
+  int? durationSeconds,
 }) =>
     RideEntity(
       id: id,
@@ -33,6 +35,8 @@ RideEntity _ride(
       hardBrakeCount: hardBrakeCount,
       rapidAccelCount: rapidAccelCount,
       highJerkCount: highJerkCount,
+      movingSeconds: movingSeconds,
+      durationSeconds: durationSeconds,
     );
 
 void main() {
@@ -87,6 +91,34 @@ void main() {
       expect(stats.allTimeAvgSpeedKmh, (36 + 72) / 2);
       expect(stats.allTimeTopSpeedKmh, 108);
       expect(stats.avgRidingScore, (100 + 80) / 2);
+    });
+
+    test('average speed is weighted by moving time, not a mean of means', () {
+      final stats = computeRiderStats(
+        bikes: const [],
+        rides: [
+          _ride('short',
+              startTime: DateTime(2026, 1, 1),
+              avgSpeedMs: 10, // 36 km/h for 10 min
+              movingSeconds: 600),
+          _ride('long',
+              startTime: DateTime(2026, 1, 2),
+              avgSpeedMs: 20, // 72 km/h for 30 min
+              movingSeconds: 1800),
+        ],
+      );
+      expect(stats.allTimeAvgSpeedKmh, closeTo(63, 1e-9));
+    });
+
+    test('average speed falls back to the plain mean without durations', () {
+      final stats = computeRiderStats(
+        bikes: const [],
+        rides: [
+          _ride('a', startTime: DateTime(2026, 1, 1), avgSpeedMs: 10),
+          _ride('b', startTime: DateTime(2026, 1, 2), avgSpeedMs: 20),
+        ],
+      );
+      expect(stats.allTimeAvgSpeedKmh, closeTo(54, 1e-9));
     });
 
     test('recentRides is sorted most-recent-first regardless of input order, capped to the limit', () {

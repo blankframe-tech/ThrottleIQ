@@ -1,7 +1,7 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import '../../features/garage/domain/entities/bike_entity.dart';
+import '../utils/bike_image_resolver.dart';
 
 /// Preset paint colors offered in the bike color picker — the common liveries
 /// riders actually see on showroom floors, not an arbitrary wheel.
@@ -30,6 +30,7 @@ Color bikeAccentColor(BikeEntity bike) {
   return bikeColorPalette[bike.id.hashCode.abs() % bikeColorPalette.length];
 }
 
+
 /// Whether [bike] has an actual photo to show — not just a non-null path,
 /// since `imagePath` can point at a file the OS has since cleaned up (see
 /// `BikePhoto`'s doc). Tinting a screen to match a photo that isn't there
@@ -37,5 +38,7 @@ Color bikeAccentColor(BikeEntity bike) {
 /// callers should gate on this before using [bikeAccentColor].
 bool bikeHasPhoto(BikeEntity bike) {
   final path = bike.imagePath;
-  return path != null && path.isNotEmpty && File(path).existsSync();
+  if (path == null || path.isEmpty) return false;
+  if (BikeImageResolver.isRemoteUrl(path)) return true;
+  return BikeImageResolver.resolvePathSync(path) != null;
 }

@@ -7,5 +7,5 @@ Contains core business logic entities. These represent the fundamental data stru
 The following files are present in this directory:
 
 - `emergency_contact_entity.dart`: Domain entity model.
+- `medical_info_entity.dart`: Domain entity model.
 - `user_profile_entity.dart`: Domain entity model.
-

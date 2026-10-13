@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/database/database_helper.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
+import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
@@ -22,10 +26,21 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
-  AuthNotifier(this._auth) : super(const AsyncValue.data(null));
+  AuthNotifier(this._auth, {Future<void> Function()? beforeSignOut})
+      : _beforeSignOut = beforeSignOut,
+        super(const AsyncValue.data(null));
 
   final FirebaseAuth _auth;
-  final ProfileRepository _profiles = ProfileRepository();
+
+  /// Runs while the rider is still authenticated, before `_auth.signOut()`
+  /// (issues §101.A2): used to revoke an active live-share link, whose
+  /// teardown writes are rejected / skipped once the uid is gone.
+  final Future<void> Function()? _beforeSignOut;
+
+  /// Upper bound on [_beforeSignOut] so an offline phone can still sign out.
+  static const Duration beforeSignOutTimeout = Duration(seconds: 6);
+  // Lazy: constructing it touches Firestore, which unit tests don't have.
+  late final ProfileRepository _profiles = ProfileRepository();
 
   /// Best-effort seeding of the public `users/{uid}` profile doc from the auth
   /// user. Never allowed to fail a sign-in — the profile can be re-seeded on
@@ -61,6 +76,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       await _seedProfile();
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.logIn, param: AnalyticsParam.method, value: 'email'));
     });
   }
 
@@ -69,6 +85,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
       await _seedProfile();
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.signUp, param: AnalyticsParam.method, value: 'email'));
     });
   }
 
@@ -83,8 +100,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      await _auth.signInWithCredential(credential);
+      final cred = await _auth.signInWithCredential(credential);
       await _seedProfile();
+      unawaited(AnalyticsService.instance.log(
+          cred.additionalUserInfo?.isNewUser == true
+              ? AnalyticsEvent.signUp
+              : AnalyticsEvent.logIn,
+          param: AnalyticsParam.method,
+          value: 'google'));
     });
   }
 
@@ -113,7 +136,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   /// Signs out and, on a device someone else may sign into next, makes sure
   /// nothing of this rider's is left behind to leak into the next account.
   ///
-  /// docs/Issues.md §33.1/§33.10: this used to be a bare `_auth.signOut()`.
+  /// issues §33.1/§33.10: this used to be a bare `_auth.signOut()`.
   /// Two gaps that closed:
   ///   - `GoogleSignIn().signOut()` — without it, a later `signInWithGoogle()`
   ///     on the same device could silently reauthenticate the account that
@@ -129,6 +152,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   ///     that would destroy exactly the offline data durability the outbox/
   ///     local-first design exists for, on every ordinary sign-out.
   Future<void> signOut() async {
+    if (_auth.currentUser != null && _beforeSignOut != null) {
+      try {
+        await _beforeSignOut().timeout(beforeSignOutTimeout);
+      } on Exception catch (e) {
+        debugPrint('signOut: pre-sign-out cleanup failed: $e');
+      }
+    }
+
     await _auth.signOut();
     try {
       await GoogleSignIn().signOut();
@@ -136,45 +167,100 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.data(null);
   }
 
+  /// Re-proves the rider's identity so a sensitive operation such as
+  /// [deleteAccount] is accepted after `requires-recent-login`
+  /// (issues §101.A1). Uses the Google picker for Google accounts, otherwise
+  /// the email [password]. Returns false when the rider dismissed the Google
+  /// picker; throws [FirebaseAuthException] (e.g. `wrong-password`) on failure.
+  Future<bool> reauthenticate({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    final providers = user.providerData.map((p) => p.providerId).toList();
+    if (providers.contains('password')) {
+      final email = user.email;
+      if (email == null || password == null || password.isEmpty) {
+        throw FirebaseAuthException(code: 'missing-password');
+      }
+      await user.reauthenticateWithCredential(
+          EmailAuthProvider.credential(email: email, password: password));
+      return true;
+    }
+    if (providers.contains('google.com')) {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return false;
+      final googleAuth = await googleUser.authentication;
+      await user.reauthenticateWithCredential(GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      ));
+      return true;
+    }
+    throw FirebaseAuthException(code: 'requires-recent-login');
+  }
+
   /// Completely deletes the current rider's account:
-  /// 1. Remote Firestore document and username claim
+  /// 1. Firebase Auth account
   /// 2. Local SQLite database records (rides, bikes, maintenance, etc.)
-  /// 3. Firebase Auth account
-  /// 4. Google Sign-In session
+  /// 3. Google Sign-In session
+  ///
+  /// The Firestore profile document and username claim are cleaned up
+  /// separately, server-side — see `functions/src/account-deletion.ts`'s
+  /// `onUserAccountDeleted` trigger.
   ///
   /// Required by Apple App Store Review Guideline 5.1.1(v).
+  ///
+  /// issues §62 (follow-up audit): this used to delete the Firestore
+  /// profile and wipe every local record FIRST, and only attempt
+  /// `user.delete()` last — the one step most likely to fail
+  /// (`FirebaseAuthException` 'requires-recent-login' fires whenever the
+  /// session is more than ~5 minutes old, i.e. almost any real "delete my
+  /// account" tap). That failure was silently swallowed by
+  /// `AsyncValue.guard` (it captures the error into `state` but does not
+  /// rethrow), so callers awaiting this method saw no exception and reported
+  /// success — even though the rider's Firestore profile and local ride/
+  /// bike/maintenance history were already permanently gone. Deleting the
+  /// Auth account FIRST means a failure here (still possible, still surfaced
+  /// below) hasn't touched anything else yet; the local wipe only runs once
+  /// that's confirmed to have actually succeeded.
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user == null) return;
     final uid = user.uid;
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      // 1. Delete remote profile and handle
-      try {
-        await _profiles.deleteUserAccount(uid);
-      } catch (_) {
-        // Non-fatal if offline or already removed
-      }
+    final result = await AsyncValue.guard(() async {
+      // 1. Delete the Firebase Auth account. May throw
+      // FirebaseAuthException('requires-recent-login') — if it does,
+      // nothing below has run, so nothing has been destroyed.
+      await user.delete();
 
-      // 2. Wipe local SQLite data
+      // 2. Only reached once the Auth account is actually gone: wipe local
+      // SQLite data (no server auth dependency) and sign out of Google.
       try {
         await DatabaseHelper.instance.deleteUserData(uid);
       } catch (_) {
-        // Non-fatal
+        // Non-fatal — the account is gone either way.
       }
-
-      // 3. Delete Firebase Auth user (may throw FirebaseAuthException with 'requires-recent-login')
-      await user.delete();
-
-      // 4. Sign out external providers
       try {
         await GoogleSignIn().signOut();
       } catch (_) {}
     });
+    state = result;
+
+    // AsyncValue.guard captures a thrown error into `state` but does not
+    // rethrow it. Every caller (e.g. settings_screen.dart) awaits this
+    // method inside its own try/catch expecting a thrown exception on
+    // failure — without this rethrow, a failed deletion silently looked
+    // like success to the UI, which was the actual bug.
+    if (result.hasError) {
+      Error.throwWithStackTrace(result.error!, result.stackTrace!);
+    }
   }
 }
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
-  return AuthNotifier(ref.watch(firebaseAuthProvider));
+  return AuthNotifier(
+    ref.watch(firebaseAuthProvider),
+    beforeSignOut: () => ref.read(rideRecordingProvider.notifier).stopLiveSharing(),
+  );
 });

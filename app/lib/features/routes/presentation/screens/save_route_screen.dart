@@ -3,19 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/database/daos/ride_point_dao.dart';
+import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../social/data/repositories/route_repository.dart';
 import '../providers/route_providers.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 /// "Save this ride as a route" — reached from the end-of-ride share step.
 ///
-/// Re-derives the ride's trail from [RidePointDao] rather than having it
-/// threaded through the router, the same way RideShareScreen does.
+/// Re-derives the ride's trail via [RideTrackLoader] (local, else the cloud
+/// copy) rather than having it threaded through the router, the same way
+/// RideShareScreen does.
 class SaveRouteScreen extends ConsumerStatefulWidget {
   final String rideId;
   const SaveRouteScreen({super.key, required this.rideId});
@@ -48,11 +51,12 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
   }
 
   Future<void> _loadPolyline() async {
-    final points = await RidePointDao().getForRide(widget.rideId);
+    final points = await RideTrackLoader.load(widget.rideId);
     if (!mounted) return;
     setState(() {
       _polyline = points
-          .map((p) => LatLng(p['lat'] as double, p['lng'] as double))
+          .map((p) => LatLng(
+              (p['lat'] as num).toDouble(), (p['lng'] as num).toDouble()))
           .toList();
       _loadingTrail = false;
     });
@@ -77,7 +81,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
 
     if (_polyline.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This ride has no track to save as a route.')),
+        SnackBar(content: Text(context.l10n.thisRideHasNo)),
       );
       return;
     }
@@ -98,17 +102,18 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
       if (_isPublic) {
         await repo.setPublic(uid, routeId, true);
       }
+      AnalyticsService.instance.log(AnalyticsEvent.routeSaved);
       if (!mounted) return;
       ref.invalidate(myRoutesProvider);
       if (_isPublic) ref.invalidate(publicRoutesProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Route saved')),
+        SnackBar(content: Text(context.l10n.routeSaved)),
       );
       context.pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save route: $e')),
+        SnackBar(content: Text(context.l10n.couldNotSaveRoute(e))),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -118,10 +123,10 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('Save as route'),
+        backgroundColor: context.palette.background,
+        title: Text(context.l10n.saveAsRoute),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -134,7 +139,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                 SizedBox(
                   height: 180,
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                    child: CircularProgressIndicator(color: context.palette.primary),
                   ),
                 )
               else
@@ -142,32 +147,32 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               const SizedBox(height: 8),
               Text(
                 _loadingTrail
-                    ? 'Loading track…'
-                    : '${_distanceKm.toStringAsFixed(1)} km · ${_polyline.length} points',
-                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                    ? context.l10n.loadingTrack
+                    : context.l10n.kmPoints(_distanceKm.toStringAsFixed(1), _polyline.length),
+                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 24),
-              const EditorialLabel('Route name'),
+              EditorialLabel(context.l10n.routeName),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Dhaka – Mawa morning run',
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                  hintText: context.l10n.eGDhakaMawa,
                 ),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Give the route a name' : null,
+                    (v == null || v.trim().isEmpty) ? context.l10n.giveRouteName : null,
               ),
               const SizedBox(height: 20),
-              const EditorialLabel('Description (optional)'),
+              EditorialLabel(context.l10n.descriptionOptional),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _descCtrl,
                 maxLines: 3,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'Road surface, best time to ride, where to stop…',
+                style: TextStyle(color: context.palette.textPrimary),
+                decoration: InputDecoration(
+                  hintText: context.l10n.roadSurfaceBestTime,
                   alignLabelWithHint: true,
                 ),
               ),
@@ -175,24 +180,27 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(color: AppColors.border),
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
-                child: SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
+                child: Material(
+                  color: Colors.transparent,
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
                   value: _isPublic,
-                  activeThumbColor: AppColors.primary,
+                  activeThumbColor: context.palette.primary,
                   onChanged: (v) => setState(() => _isPublic = v),
                   title: Text(
-                    _isPublic ? 'Public' : 'Private',
-                    style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                    _isPublic ? context.l10n.audiencePublic : context.l10n.privateLabel,
+                    style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
                   ),
                   subtitle: Text(
                     _isPublic
-                        ? 'Any rider can find and ride this route'
-                        : 'Only you can see this route',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ? context.l10n.anyRiderCanFind
+                        : context.l10n.onlyCanSeeThis,
+                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  ),
                   ),
                 ),
               ),
@@ -206,7 +214,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Save route'),
+                    : Text(context.l10n.saveRoute),
               ),
             ],
           ),

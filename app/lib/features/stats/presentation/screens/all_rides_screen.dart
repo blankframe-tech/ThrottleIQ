@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -10,6 +10,9 @@ import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_sort.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/ride_route_thumbnail.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../ride_sort_l10n.dart';
 
 /// How many rides are revealed at a time.
 const int allRidesPageSize = 20;
@@ -73,24 +76,29 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.palette.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          tooltip: context.l10n.back,
+          icon: Icon(Icons.arrow_back, color: context.palette.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: Text('All rides', style: display(20, letterSpacing: 0)),
+        title: Text(context.l10n.allRides,
+            style: display(context, 20, letterSpacing: 0)),
       ),
       body: SafeArea(
         top: false,
         child: statsAsync.when(
           loading: () => Center(
-              child: CircularProgressIndicator(color: AppColors.primary)),
+              child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => Center(
-              child: Text('$e', style: TextStyle(color: AppColors.danger))),
+              child: ErrorView(
+            error: e,
+            onRetry: () => ref.invalidate(riderStatsProvider),
+          )),
           data: (stats) {
             // Same fallback as the Rides tab: an older cached summary has no
             // allRides, and an empty page would be a lie.
@@ -102,9 +110,9 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
 
             if (sorted.isEmpty) {
               return Center(
-                child: Text('No rides yet.',
+                child: Text(context.l10n.noRidesYetDot,
                     style: TextStyle(
-                        fontSize: 14, color: AppColors.textSecondary)),
+                        fontSize: 14, color: context.palette.textSecondary)),
               );
             }
 
@@ -124,19 +132,16 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                   padding: const EdgeInsets.fromLTRB(
                       AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 8),
                   child: Text(
-                    'Showing ${shown.length} of ${sorted.length}',
-                    style:
-                        TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                    context.l10n.showing(shown.length, sorted.length),
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textTertiary),
                   ),
                 ),
                 Expanded(
                   child: ListView.separated(
                     controller: _controller,
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimensions.paddingMd,
-                        0,
-                        AppDimensions.paddingMd,
-                        AppDimensions.paddingLg),
+                    padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
+                        0, AppDimensions.paddingMd, AppDimensions.paddingLg),
                     itemCount: shown.length + (hasMore ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
@@ -148,7 +153,8 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: AppColors.primary),
+                                  strokeWidth: 2,
+                                  color: context.palette.primary),
                             ),
                           ),
                         );
@@ -184,12 +190,20 @@ class RideSortChips extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final option = RideSort.values[i];
-          return GestureDetector(
-            onTap: () => onChanged(option),
-            child: EditorialPill(
-              option.label,
-              filled: option == sort,
-              tone: option == sort ? PillTone.accent : PillTone.neutral,
+          // issues §101.R9: announce the chip as a button and which sort
+          // is active.
+          return Semantics(
+            button: true,
+            selected: option == sort,
+            inMutuallyExclusiveGroup: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onChanged(option),
+              child: EditorialPill(
+                option.localizedLabel(context.l10n),
+                filled: option == sort,
+                tone: option == sort ? PillTone.accent : PillTone.neutral,
+              ),
             ),
           );
         },
@@ -209,91 +223,182 @@ class AllRidesRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final score = rideScoreOf(ride);
+    final isCrash = ride.status == RideStatus.crash;
+    final borderColor = isCrash
+        ? context.palette.danger
+        : context.palette.primary.withValues(alpha: 0.4);
+    final shadowColor = isCrash
+        ? context.palette.danger.withValues(alpha: 0.2)
+        : context.palette.primary.withValues(alpha: 0.15);
 
-    return EditorialCard(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+    return GestureDetector(
       onTap: () => context.push('/ride/summary/${ride.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(formatRideDate(ride.startTime),
-                        style: display(15, letterSpacing: 0)),
-                    const SizedBox(height: 2),
-                    Text(formatRideTime(ride.startTime),
-                        style: TextStyle(
-                            fontSize: 12, color: AppColors.textTertiary)),
-                  ],
-                ),
-              ),
-              // Whatever the list is ranked by, shown large — so the ordering
-              // visibly explains itself. Recency's key is the date above.
-              Text(
-                sort.trailingValue(ride) ??
-                    SpeedFormatter.distanceKm(ride.distanceM),
-                style: display(16, letterSpacing: 0, color: AppColors.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _Figure(
-                    label: 'distance',
-                    value: SpeedFormatter.distanceKm(ride.distanceM)),
-              ),
-              Expanded(
-                child: _Figure(
-                    label: 'duration',
-                    value: SpeedFormatter.durationFromSeconds(
-                        ride.durationSeconds ?? 0)),
-              ),
-              Expanded(
-                child: _Figure(
-                    label: 'avg',
-                    value: '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
-              ),
-              Expanded(
-                child: _Figure(
-                    label: 'top',
-                    value: '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              EditorialPill('Score $score',
-                  tone: score >= 90
-                      ? PillTone.ok
-                      : (score >= 70 ? PillTone.neutral : PillTone.attention),
-                  filled: false),
-              const SizedBox(width: 8),
-              if (ride.hardBrakeCount +
-                      ride.rapidAccelCount +
-                      ride.highJerkCount >
-                  0)
-                Expanded(
-                  child: Text(
-                    '${ride.hardBrakeCount} hard brakes · '
-                    '${ride.rapidAccelCount} rapid accel · '
-                    '${ride.highJerkCount} jerks',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 11, color: AppColors.textTertiary),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 10,
+              spreadRadius: 1,
+            )
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Hero Map Section
+            SizedBox(
+              height: 120,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  RideRouteThumbnail(rideId: ride.id, height: 120),
+                  // Gradient for text readability
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.6),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-            ],
-          ),
-          RideRouteThumbnail(rideId: ride.id),
-        ],
+                  // Date and Score Overlay
+                  Positioned(
+                    top: 12,
+                    left: 16,
+                    right: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(formatRideDate(ride.startTime),
+                                style: display(context, 16,
+                                    letterSpacing: 0, color: Colors.white)),
+                            const SizedBox(height: 2),
+                            Text(formatRideTime(ride.startTime),
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.white70)),
+                          ],
+                        ),
+                        // Circular Score Gauge
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: score >= 90
+                                  ? context.palette.success
+                                  : (score >= 70
+                                      ? Colors.white54
+                                      : context.palette.attention),
+                              width: 2,
+                            ),
+                            color: Colors.black54,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            score.toString(),
+                            style: display(context, 16, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Stats Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.distanceLower,
+                            value: SpeedFormatter.distanceKm(ride.distanceM)),
+                      ),
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.durationStatLabel,
+                            value: SpeedFormatter.durationFromSeconds(
+                                ride.durationSeconds ?? 0)),
+                      ),
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.avgSpeedStatLabel,
+                            value:
+                                '${ride.avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                      ),
+                      Expanded(
+                        child: _Figure(
+                            label: context.l10n.topLower,
+                            value:
+                                '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Pills and alerts
+                  Row(
+                    children: [
+                      if (isCrash) ...[
+                        Semantics(
+                          label: context.l10n.crashSuspectedBadge,
+                          child: EditorialPill(context.l10n.crashSuspectedBadge,
+                              tone: PillTone.overdue),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (ride.routeName != null) ...[
+                        EditorialPill(
+                            context.l10n.followedRoutePill(ride.routeName!),
+                            tone: PillTone.neutral,
+                            filled: false),
+                        const SizedBox(width: 8),
+                      ],
+                      if (ride.hardBrakeCount +
+                              ride.rapidAccelCount +
+                              ride.highJerkCount >
+                          0)
+                        Expanded(
+                          child: Text(
+                            context.l10n.hardBrakesRapidAccel(
+                                ride.hardBrakeCount,
+                                ride.rapidAccelCount,
+                                ride.highJerkCount),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: context.palette.textTertiary),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -312,18 +417,29 @@ class _Figure extends StatelessWidget {
         Text(value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: display(13, letterSpacing: 0)),
+            style: display(context, 13, letterSpacing: 0)),
         const SizedBox(height: 2),
         Text(label,
-            style: TextStyle(fontSize: 10, color: AppColors.textTertiary)),
+            style:
+                TextStyle(fontSize: 10, color: context.palette.textTertiary)),
       ],
     );
   }
 }
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 String formatRideDate(DateTime dt) =>

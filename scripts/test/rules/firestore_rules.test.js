@@ -38,6 +38,8 @@ const {
   updateDoc,
   deleteDoc,
   collection,
+  query,
+  where,
   increment,
   runTransaction,
   writeBatch,
@@ -137,7 +139,7 @@ test('comment bump succeeds when the comment is created in the same transaction'
   // Exactly the shape RideShareRepository.addComment() now writes.
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'nice ride', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'nice ride', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(1), lastCommentId: commentRef.id });
     })
   );
@@ -187,7 +189,7 @@ test('comment bump larger than +1 is denied even with a real comment', async () 
 
   await assertFails(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(50), lastCommentId: commentRef.id });
     })
   );
@@ -200,7 +202,7 @@ test('comment bump cannot smuggle another field along with it', async () => {
 
   await assertFails(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, {
         comments: increment(1),
         lastCommentId: commentRef.id,
@@ -217,7 +219,7 @@ test('a second bump reusing the first transaction id is denied', async () => {
 
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID });
+      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(1), lastCommentId: commentRef.id });
     })
   );
@@ -239,7 +241,10 @@ test('reply bump succeeds when the reply is created in the same transaction', as
 
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(replyRef, { userId: MALLORY, body: 'agreed', postId: POST_ID, forumId: FORUM_ID });
+      tx.set(replyRef, {
+        userId: MALLORY, body: 'agreed', postId: POST_ID, forumId: FORUM_ID,
+        createdAt: serverTimestamp(),
+      });
       tx.update(postRef, { replyCount: increment(1), lastReplyId: replyRef.id });
     })
   );
@@ -366,11 +371,17 @@ test('a rider can delete their own post', async () => {
 // Regression cover: the 2026-08-12 like/vote clauses must still behave.
 // ---------------------------------------------------------------------------
 
-test('like bump still succeeds alongside its own likes/{uid} doc', async () => {
+// `likes` was retired as an engagement model (issues §80/§81) and its rules
+// clauses were dropped 2026-09-21. These three pin what that means, because
+// "we deleted some rules" is exactly the change that quietly opens a door.
+
+test('the likes tally can no longer be bumped, even with its own doc', async () => {
   const db = dbFor(MALLORY);
   const rideRef = doc(db, 'rides', RIDE_ID);
 
-  await assertSucceeds(
+  // This used to be the supported shape. There is no longer any branch that
+  // permits `rides.likes` to move, so the whole transaction fails.
+  await assertFails(
     runTransaction(db, async (tx) => {
       tx.set(doc(rideRef, 'likes', MALLORY), { likedAt: 1 });
       tx.update(rideRef, { likes: increment(1) });
@@ -378,9 +389,29 @@ test('like bump still succeeds alongside its own likes/{uid} doc', async () => {
   );
 });
 
-test('like bump without the likes/{uid} doc is still denied', async () => {
+test('a bare likes bump is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(updateDoc(doc(db, 'rides', RIDE_ID), { likes: increment(1) }));
+});
+
+test('the likes subcollection is still reachable, so share deletes work', async () => {
+  // Deliberately kept: RideShareRepository.deleteSharedRide LISTS this
+  // subcollection to sweep up legacy documents before deleting a share, and
+  // a list against a path with no matching rule is denied even when it would
+  // return nothing. Dropping the match block would turn every share-delete
+  // into permission-denied.
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', RIDE_ID, 'likes', MALLORY), { likedAt: 1 });
+  });
+  const db = dbFor(MALLORY);
+  const rideRef = doc(db, 'rides', RIDE_ID);
+  await assertSucceeds(getDocs(collection(rideRef, 'likes')));
+  await assertSucceeds(deleteDoc(doc(rideRef, 'likes', MALLORY)));
+});
+
+test('a new like doc can no longer be created (§101.S3)', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(setDoc(doc(db, 'rides', RIDE_ID, 'likes', MALLORY), { likedAt: 1 }));
 });
 
 test('vote bump still succeeds alongside its own votes/{uid} doc', async () => {
@@ -495,6 +526,33 @@ test('a valid groupRideInvite notification with a groupRideId is allowed', async
   );
 });
 
+test('a valid groupRideJoined notification with a groupRideId is allowed', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(notificationRef(db), {
+      type: 'groupRideJoined',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: '',
+      groupRideId: 'ride-123',
+      read: false,
+    })
+  );
+});
+
+test('a groupRideJoined notification with no groupRideId is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(notificationRef(db), {
+      type: 'groupRideJoined',
+      fromUid: MALLORY,
+      fromName: 'Mallory',
+      fromPhotoUrl: '',
+      read: false,
+    })
+  );
+});
+
 test('a notification with an unknown type is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
@@ -553,7 +611,7 @@ test('a notification spoofing fromUid as someone else is still denied', async ()
 test('a rider can create their own pending crash notification', async () => {
   const db = dbFor(MALLORY);
   await assertSucceeds(
-    setDoc(doc(db, 'crashNotifications', 'crash-1'), {
+    setDoc(doc(db, 'crashNotifications', RIDE_ID), {
       uid: MALLORY,
       rideId: RIDE_ID,
       status: 'pending',
@@ -564,7 +622,7 @@ test('a rider can create their own pending crash notification', async () => {
 test('a crash notification created with a non-pending status is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
-    setDoc(doc(db, 'crashNotifications', 'crash-1'), {
+    setDoc(doc(db, 'crashNotifications', RIDE_ID), {
       uid: MALLORY,
       rideId: RIDE_ID,
       status: 'acknowledged',
@@ -572,10 +630,25 @@ test('a crash notification created with a non-pending status is denied', async (
   );
 });
 
+// §83.19: the document id must BE the rideId, which makes a retried crash
+// sequence idempotent instead of creating a second alert for the same ride.
+// This is NOT an abuse bound — a client can invent an id and match rideId to
+// it. Rules can't limit request volume; App Check is the control for that.
+test('a crash notification whose id is not the rideId is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(doc(db, 'crashNotifications', 'some-other-id'), {
+      uid: MALLORY,
+      rideId: RIDE_ID,
+      status: 'pending',
+    })
+  );
+});
+
 test('a rider cannot rewrite their own crash notification status after creation', async () => {
   // The exact §33.18 exploit: suppress the escalation by self-acknowledging.
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), 'crashNotifications', 'crash-1'), {
+    await setDoc(doc(ctx.firestore(), 'crashNotifications', RIDE_ID), {
       uid: MALLORY,
       rideId: RIDE_ID,
       status: 'pending',
@@ -583,7 +656,7 @@ test('a rider cannot rewrite their own crash notification status after creation'
   });
   const db = dbFor(MALLORY);
   await assertFails(
-    updateDoc(doc(db, 'crashNotifications', 'crash-1'), { status: 'acknowledged' })
+    updateDoc(doc(db, 'crashNotifications', RIDE_ID), { status: 'acknowledged' })
   );
 });
 
@@ -687,7 +760,7 @@ test('a voice note stamped with a client clock instead of serverTimestamp() is d
   );
 });
 
-test('a sent voice note cannot be updated or deleted by anyone, including its sender', async () => {
+test('a sent voice note cannot be updated by anyone, including its sender', async () => {
   let noteRef;
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     noteRef = doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes'));
@@ -696,7 +769,21 @@ test('a sent voice note cannot be updated or deleted by anyone, including its se
 
   const db = dbFor(ALICE);
   await assertFails(updateDoc(doc(db, noteRef.path), { durationMs: 5000 }));
-  await assertFails(deleteDoc(doc(db, noteRef.path)));
+});
+
+// GroupRideRepository.deleteGroupRide() deletes every voice note before the
+// ride doc; with delete pinned to false, deleting a ride with any clip failed
+// half-way through.
+test('only the ride creator can delete a voice note', async () => {
+  let noteRef;
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    noteRef = doc(collection(ctx.firestore(), 'groupRides', GROUP_RIDE_ID, 'voiceNotes'));
+    await setDoc(noteRef, voiceNoteData());
+  });
+
+  await assertFails(deleteDoc(doc(dbFor(MALLORY), noteRef.path)));
+  await assertFails(deleteDoc(doc(dbFor(STRANGER), noteRef.path)));
+  await assertSucceeds(deleteDoc(doc(dbFor(ALICE), noteRef.path)));
 });
 
 test('an invited-but-not-yet-joined rider can still read voice notes', async () => {
@@ -894,9 +981,11 @@ test('join codes cannot be listed/enumerated', async () => {
   await assertFails(getDocs(collection(db, 'groupRideJoinCodes')));
 });
 
-test('a signed-in rider can create a well-shaped join code mapping', async () => {
+test('a standalone join code mapping pointing at a missing ride is denied (§101.S3)', async () => {
+  // This used to succeed: the rule only pinned the shape, so any rider could
+  // squat an unused code with a bogus groupRideId.
   const db = dbFor(STRANGER);
-  await assertSucceeds(
+  await assertFails(
     setDoc(doc(db, 'groupRideJoinCodes', 'ZZ99ZZ'), {
       groupRideId: 'some-other-ride',
       createdAt: serverTimestamp(),
@@ -941,6 +1030,36 @@ test('a rider with no relationship to an ACTIVE ride can still get() it by id', 
   // a join code, before the rider has any membership relationship to it.
   const db = dbFor(STRANGER);
   await assertSucceeds(getDoc(doc(db, 'groupRides', GROUP_RIDE_ID)));
+});
+
+test('a member can list active group rides filtered to their own memberIds', async () => {
+  // The Social feed's "Riding Now" strip: watchActiveGroupRidesForUser.
+  const db = dbFor(ALICE);
+  const q = query(
+    collection(db, 'groupRides'),
+    where('memberIds', 'array-contains', ALICE),
+    where('status', '==', 'active')
+  );
+  const snap = await assertSucceeds(getDocs(q));
+  assert.equal(snap.size, 1);
+  assert.equal(snap.docs[0].id, GROUP_RIDE_ID);
+});
+
+test('a rider cannot list active group rides by someone else\'s memberIds', async () => {
+  // Mallory is merely invited, not a member — she can get() the ride directly
+  // (it's active) but may not query the collection filtered to Alice's uid.
+  const db = dbFor(MALLORY);
+  const q = query(
+    collection(db, 'groupRides'),
+    where('memberIds', 'array-contains', ALICE),
+    where('status', '==', 'active')
+  );
+  await assertFails(getDocs(q));
+});
+
+test('an unfiltered list of group rides is still denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(getDocs(collection(db, 'groupRides')));
 });
 
 test('a stranger cannot get() a ride that is not active', async () => {
@@ -1098,14 +1217,123 @@ test('a rider can delete their own livePointers/{uid} document', async () => {
   await assertSucceeds(deleteDoc(doc(db, 'livePointers', ALICE)));
 });
 
-test('a rider can create a chat between themselves and another rider', async () => {
+// §78.14: new chats live at the deterministic DM id `<uidA>_<uidB>` (sorted),
+// created in a transaction by ChatRepository.getOrCreateChat. The
+// `chat-alice-mallory` docs seeded below stand in for legacy random-id chats,
+// which must keep working for read/update/messages.
+const DM_ID = `${ALICE}_${MALLORY}`; // ALICE < MALLORY
+
+test('a rider can create a chat at the deterministic DM id', async () => {
   const db = dbFor(ALICE);
   await assertSucceeds(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('the getOrCreateChat transaction (read missing DM, then create) succeeds', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    runTransaction(db, async (tx) => {
+      const ref = doc(db, 'chats', DM_ID);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) {
+        tx.set(ref, { participants: [ALICE, MALLORY], updatedAt: serverTimestamp() });
+      }
+    })
+  );
+});
+
+test('creating a chat at a random (legacy-style) id is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
     setDoc(doc(db, 'chats', 'chat-alice-mallory'), {
       participants: [ALICE, MALLORY],
       updatedAt: serverTimestamp(),
     })
   );
+});
+
+test('creating a DM with participants out of sorted order is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [MALLORY, ALICE],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a stranger cannot create a DM between two other riders', async () => {
+  const db = dbFor(STRANGER);
+  await assertFails(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a DM created with an extra field (e.g. a forged lastMessage) is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: serverTimestamp(),
+      lastMessage: { senderId: MALLORY, text: 'forged' },
+    })
+  );
+});
+
+test('a rider cannot DM themselves', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'chats', `${ALICE}_${ALICE}`), {
+      participants: [ALICE, ALICE],
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a rider can probe their own not-yet-created DM, but not two other riders\'', async () => {
+  await assertSucceeds(getDoc(doc(dbFor(ALICE), 'chats', DM_ID)));
+  await assertFails(getDoc(doc(dbFor(STRANGER), 'chats', DM_ID)));
+});
+
+test('a stranger still cannot read an existing DM', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', DM_ID), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  await assertSucceeds(getDoc(doc(dbFor(MALLORY), 'chats', DM_ID)));
+  await assertFails(getDoc(doc(dbFor(STRANGER), 'chats', DM_ID)));
+});
+
+test('a blocked rider can get() the one block doc naming them, but not list or read others', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'users', MALLORY, 'blocks', ALICE), { blockedAt: new Date() });
+    await setDoc(doc(adminDb, 'users', MALLORY, 'blocks', STRANGER), { blockedAt: new Date() });
+  });
+  const alice = dbFor(ALICE);
+  await assertSucceeds(getDoc(doc(alice, 'users', MALLORY, 'blocks', ALICE)));
+  await assertFails(getDoc(doc(alice, 'users', MALLORY, 'blocks', STRANGER)));
+  await assertFails(getDocs(collection(alice, 'users', MALLORY, 'blocks')));
+  await assertFails(setDoc(doc(alice, 'users', MALLORY, 'blocks', ALICE), { blockedAt: new Date() }));
+});
+
+test('a legacy random-id chat is still readable by its participants', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory'), {
+      participants: [MALLORY, ALICE], // legacy docs were never sorted
+      updatedAt: new Date(),
+    });
+  });
+  await assertSucceeds(getDoc(doc(dbFor(ALICE), 'chats', 'chat-alice-mallory')));
 });
 
 test('a stranger cannot read a chat they are not participant of', async () => {
@@ -1158,6 +1386,280 @@ test('a blocked sender cannot send a message to the recipient', async () => {
       text: 'Trying to reach you...',
       createdAt: serverTimestamp(),
       isRead: false,
+    })
+  );
+});
+
+// docs/Issues.md §62.4: a chat participant used to be able to rewrite ANY
+// field on the chat doc or a message, including `participants` itself (an
+// unconsented third party added to a DM) or another rider's message text.
+test('a participant cannot add a third party to a 1:1 chat via update', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    updateDoc(doc(db, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY, STRANGER],
+    })
+  );
+});
+
+test('a participant CAN update lastMessage/updatedAt only', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    updateDoc(doc(db, 'chats', 'chat-alice-mallory'), {
+      lastMessage: { senderId: ALICE, text: 'hi', createdAt: serverTimestamp() },
+      updatedAt: serverTimestamp(),
+    })
+  );
+});
+
+test('a recipient can no longer update a message at all (isRead or text)', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory', 'messages', 'msg-3'), {
+      senderId: ALICE,
+      text: 'Hello Mallory!',
+      createdAt: new Date(),
+      isRead: false,
+    });
+  });
+  const mallory = dbFor(MALLORY);
+  // markMessagesAsRead was removed (§90.A12) and so was its update rule.
+  await assertFails(
+    updateDoc(doc(mallory, 'chats', 'chat-alice-mallory', 'messages', 'msg-3'), {
+      isRead: true,
+    })
+  );
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'chats', 'chat-alice-mallory', 'messages', 'msg-4'), {
+      senderId: ALICE,
+      text: 'Another one',
+      createdAt: new Date(),
+      isRead: false,
+    });
+  });
+  await assertFails(
+    updateDoc(doc(mallory, 'chats', 'chat-alice-mallory', 'messages', 'msg-4'), {
+      text: 'tampered',
+    })
+  );
+});
+
+test('the sender cannot mark their own message as read (undoing an isToxic hide)', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const adminDb = ctx.firestore();
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory'), {
+      participants: [ALICE, MALLORY],
+      updatedAt: new Date(),
+    });
+    await setDoc(doc(adminDb, 'chats', 'chat-alice-mallory', 'messages', 'msg-5'), {
+      senderId: ALICE,
+      text: '*** This message was hidden by automated moderation ***',
+      isToxic: true,
+      createdAt: new Date(),
+      isRead: false,
+    });
+  });
+  const alice = dbFor(ALICE);
+  await assertFails(
+    updateDoc(doc(alice, 'chats', 'chat-alice-mallory', 'messages', 'msg-5'), {
+      isToxic: false,
+      text: 'unhidden text',
+    })
+  );
+});
+
+// docs/Issues.md §62.1: the shared-ride owner's own create/update branch used
+// to accept any distance/speed/counter values with no plausibility check.
+function sharedRideData(overrides = {}) {
+  return {
+    userId: ALICE,
+    userName: 'Alice',
+    userPhotoUrl: '',
+    bikeId: 'bike-1',
+    bikeName: 'Bike',
+    bikeType: 'sport',
+    rideDate: new Date(),
+    distanceKm: 50,
+    durationSeconds: 3600,
+    maxSpeedKmh: 90,
+    polyline: [],
+    createdAt: new Date(),
+    audience: 'public',
+    allowedUserIds: [],
+    likes: 0,
+    comments: 0,
+    upvotes: 0,
+    downvotes: 0,
+    ...overrides,
+  };
+}
+
+test('sharing a ride with plausible stats succeeds', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(setDoc(doc(db, 'rides', 'ride-new-1'), sharedRideData()));
+});
+
+// Riding-score event counts: RideShareModel.toMap() writes them as explicit
+// nulls when unknown (e.g. an outbox share queued before score-sharing
+// existed). `data.get(key, default)` doesn't substitute for a present null,
+// so the rule has to accept null itself.
+test('sharing a ride with null riding-score counts succeeds', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(db, 'rides', 'ride-new-score-null'),
+      sharedRideData({ hardBrakeCount: null, rapidAccelCount: null, highJerkCount: null })
+    )
+  );
+});
+
+test('sharing a ride with plausible riding-score counts succeeds', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(db, 'rides', 'ride-new-score-ok'),
+      sharedRideData({ hardBrakeCount: 2, rapidAccelCount: 1, highJerkCount: 7 })
+    )
+  );
+});
+
+test('sharing a ride with negative riding-score counts is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(db, 'rides', 'ride-new-score-neg'),
+      sharedRideData({ hardBrakeCount: -50, rapidAccelCount: 0, highJerkCount: 0 })
+    )
+  );
+});
+
+test('sharing a ride with a fabricated 9999 km/h top speed is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'rides', 'ride-new-2'), sharedRideData({ maxSpeedKmh: 9999 }))
+  );
+});
+
+test('sharing a ride pre-loaded with fake upvotes is denied', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(doc(db, 'rides', 'ride-new-3'), sharedRideData({ upvotes: 50000 }))
+  );
+});
+
+test('the owner cannot inflate their own ride upvotes/maxSpeed via a plain update', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', 'ride-existing-1'), sharedRideData());
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    updateDoc(doc(db, 'rides', 'ride-existing-1'), { maxSpeedKmh: 500 })
+  );
+  await assertFails(
+    updateDoc(doc(db, 'rides', 'ride-existing-1'), { upvotes: 999 })
+  );
+});
+
+test('the owner CAN edit a caption on an existing share without touching stats', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'rides', 'ride-existing-2'), sharedRideData());
+  });
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(db, 'rides', 'ride-existing-2'), sharedRideData({ caption: 'great ride' }), { merge: true })
+  );
+});
+
+// docs/Issues.md §62.2: users/{uid}.publicStats used to accept any value with
+// no server-side validation at all.
+test('a rider cannot fabricate an absurd lifetime distance on their public stats', async () => {
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 999999, totalRides: 1, badgeIds: [] } },
+      { merge: true }
+    )
+  );
+});
+
+test('a rider CAN post a plausible first public-stats snapshot', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 120, totalRides: 3, badgeIds: ['first_ride'] } },
+      { merge: true }
+    )
+  );
+});
+
+test('public stats cannot go backwards or drop an already-earned badge', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', ALICE), {
+      publicStats: { totalDistanceKm: 500, totalRides: 10, badgeIds: ['first_ride', 'km_100'] },
+    });
+  });
+  const db = dbFor(ALICE);
+  await assertFails(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 100, totalRides: 10, badgeIds: ['first_ride', 'km_100'] } },
+      { merge: true }
+    )
+  );
+  await assertFails(
+    setDoc(
+      doc(db, 'users', ALICE),
+      { publicStats: { totalDistanceKm: 600, totalRides: 11, badgeIds: ['first_ride'] } },
+      { merge: true }
+    )
+  );
+});
+
+// docs/Issues.md §62.5: reports used to validate only reporterId, so a client
+// could fabricate a report already marked 'actioned' against anyone.
+test('a fabricated pre-actioned report is denied', async () => {
+  const db = dbFor(MALLORY);
+  await assertFails(
+    setDoc(doc(db, 'reports', 'report-1'), {
+      reporterId: MALLORY,
+      reportedId: ALICE,
+      contentType: 'chat',
+      contentId: 'msg-1',
+      reason: 'spam',
+      status: 'actioned',
+    })
+  );
+});
+
+test('a well-formed pending report from the real reporter succeeds', async () => {
+  const db = dbFor(MALLORY);
+  await assertSucceeds(
+    setDoc(doc(db, 'reports', 'report-2'), {
+      reporterId: MALLORY,
+      reportedId: ALICE,
+      contentType: 'chat',
+      contentId: 'msg-1',
+      reason: 'spam',
+      createdAt: serverTimestamp(),
+      status: 'pending',
     })
   );
 });

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -7,11 +8,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'firebase_options.dart';
 import 'app.dart';
+import 'core/analytics/analytics_service.dart';
 import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/utils/bike_image_resolver.dart';
+
+/// Turns on Firebase App Check (issues §83.19).
+///
+/// App Check attaches an attestation token to every Firestore/Auth/Storage
+/// request so the backend can tell the real app from a script using the public
+/// API key. It is the only control for request-*volume* abuse: Firestore rules
+/// cannot bound volume, which is why the crash-notification fix is idempotency
+/// only.
+///
+/// This is inert until **enforcement** is switched on in the Firebase console,
+/// and that switch must wait until a release containing this code is what riders
+/// actually run — enforcing earlier locks out every older build (the same
+/// ship-the-client-first rule as issues §78.27). Debug builds use the debug
+/// provider; its token is printed to the log and has to be registered in the
+/// console. A failure here must never stop the app from launching.
+Future<void> _activateAppCheck() async {
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider:
+          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      appleProvider: kDebugMode
+          ? AppleProvider.debug
+          : AppleProvider.appAttestWithDeviceCheckFallback,
+    );
+  } catch (e) {
+    debugPrint('App Check activation failed (non-fatal): $e');
+  }
+}
 
 void main() async {
   // Must run before anything else: this registers the port the auto-tracking
@@ -23,6 +55,9 @@ void main() async {
 
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    unawaited(getApplicationDocumentsDirectory().then((dir) {
+      BikeImageResolver.cachedDocumentsDirectoryPath = dir.path;
+    }).catchError((_) {}));
 
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -40,6 +75,8 @@ void main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      await _activateAppCheck();
+      await AnalyticsService.instance.init();
 
       // Debug builds report to a "debug" Crashlytics project bucket that
       // nobody watches and just adds noise while iterating locally — only
@@ -58,7 +95,7 @@ void main() async {
         return true;
       };
     } catch (e) {
-      print('Firebase initialization error: $e');
+      debugPrint('Firebase initialization error: $e');
     }
 
     // Home-screen widgets: fire-and-forget. Every call inside is no-op safe, so

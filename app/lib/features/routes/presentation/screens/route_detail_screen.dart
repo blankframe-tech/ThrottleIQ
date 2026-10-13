@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/ride_route_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -11,6 +11,9 @@ import '../../../social/data/repositories/route_repository.dart';
 import '../../domain/route_permissions.dart';
 import '../../domain/turn_instruction.dart';
 import '../providers/route_providers.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../turn_instruction_l10n.dart';
 
 /// One saved route: the line on a map, its stats, its turn list, and the
 /// entry point into navigation.
@@ -48,7 +51,7 @@ class RouteDetailScreen extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not update visibility: $e')),
+        SnackBar(content: Text(context.l10n.couldNotUpdateVisibility(e))),
       );
     }
   }
@@ -57,20 +60,20 @@ class RouteDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Delete route?', style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: ctx.palette.surface,
+        title: Text(ctx.l10n.deleteRouteQuestion, style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
-          'This removes the saved route. The ride it came from is untouched.',
-          style: TextStyle(color: AppColors.textSecondary),
+          ctx.l10n.thisRemovesSavedRoute,
+          style: TextStyle(color: ctx.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(ctx.l10n.cancelAction, style: TextStyle(color: ctx.palette.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -88,7 +91,7 @@ class RouteDetailScreen extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete: $e')),
+        SnackBar(content: Text(context.l10n.couldNotDelete(e))),
       );
     }
   }
@@ -104,15 +107,15 @@ class RouteDetailScreen extends ConsumerWidget {
     final canEdit = canEditRoute(viewerUid: viewerUid, ownerUid: owner);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: Text(routeAsync.valueOrNull?.name ?? 'Route'),
+        backgroundColor: context.palette.background,
+        title: Text(routeAsync.valueOrNull?.name ?? context.l10n.routeSectionLabel),
         // Same no-back-stack guard as RoutesListScreen — a deep link straight
         // to a route would otherwise render no back button at all.
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
+          tooltip: context.l10n.back,
           onPressed: () =>
               context.canPop() ? context.pop() : context.go('/routes'),
         ),
@@ -121,22 +124,25 @@ class RouteDetailScreen extends ConsumerWidget {
           // discovered route doesn't get a button that can only fail.
           if (routeAsync.valueOrNull != null && canEdit)
             IconButton(
-              icon: Icon(Icons.delete_outline, color: AppColors.textSecondary),
-              tooltip: 'Delete route',
+              icon: Icon(Icons.delete_outline, color: context.palette.textSecondary),
+              tooltip: context.l10n.deleteRouteTitle,
               onPressed: () => _delete(context, ref),
             ),
         ],
       ),
       body: routeAsync.when(
         loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) =>
-            Center(child: Text('$e', style: TextStyle(color: AppColors.danger))),
+            ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(routeByIdProvider(_lookup)),
+        ),
         data: (route) {
           if (route == null) {
             return Center(
-              child: Text('Route not found',
-                  style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(context.l10n.routeNotFound,
+                  style: TextStyle(color: context.palette.textSecondary)),
             );
           }
 
@@ -154,18 +160,18 @@ class RouteDetailScreen extends ConsumerWidget {
               Row(
                 children: [
                   _Stat(
-                    label: 'Distance',
+                    label: context.l10n.distanceLabel,
                     value: '${route.distanceKm.toStringAsFixed(1)} km',
                   ),
-                  _Stat(label: 'Turns', value: '${manoeuvres.length}'),
-                  _Stat(label: 'Ridden', value: '${route.timesRidden}×'),
+                  _Stat(label: context.l10n.turns, value: '${manoeuvres.length}'),
+                  _Stat(label: context.l10n.ridden, value: '${route.timesRidden}×'),
                 ],
               ),
               if (route.description != null && route.description!.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(
                   route.description!,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                 ),
               ],
               const SizedBox(height: 20),
@@ -178,27 +184,30 @@ class RouteDetailScreen extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    border: Border.all(color: AppColors.border),
+                    color: context.palette.surface,
+                    borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                    border: Border.all(color: context.palette.border),
                   ),
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: route.isPublic,
-                    activeThumbColor: AppColors.primary,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: route.isPublic,
+                    activeThumbColor: context.palette.primary,
                     onChanged: (v) => _setPublic(context, ref, v),
                     title: Text(
-                      route.isPublic ? 'Public' : 'Private',
+                      route.isPublic ? context.l10n.audiencePublic : context.l10n.privateLabel,
                       style:
-                          TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                          TextStyle(fontSize: 14, color: context.palette.textPrimary),
                     ),
                     subtitle: Text(
                       route.isPublic
-                          ? 'Any rider can find and ride this route'
-                          : 'Only you can see this route',
+                          ? context.l10n.anyRiderCanFind
+                          : context.l10n.onlyCanSeeThis,
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary),
+                          fontSize: 12, color: context.palette.textSecondary),
                     ),
+                  ),
                   ),
                 )
               else
@@ -214,20 +223,20 @@ class RouteDetailScreen extends ConsumerWidget {
                         : '/routes/$routeId/navigate'
                             '?owner=${Uri.encodeComponent(route.userId)}'),
                 icon: const Icon(Icons.navigation_outlined, size: 18),
-                label: const Text('Start navigation'),
+                label: Text(context.l10n.startNavigation),
               ),
               const SizedBox(height: 24),
               Text(
-                'Turn by turn',
+                context.l10n.turnByTurn,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary),
+                    color: context.palette.textPrimary),
               ),
               const SizedBox(height: 4),
               Text(
-                'Derived from the recorded track — distances are along the route.',
-                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                context.l10n.derivedFromRecordedTrack,
+                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 12),
               for (final turn in turns)
@@ -235,19 +244,19 @@ class RouteDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
                     children: [
-                      Icon(turnIcon(turn.kind), size: 20, color: AppColors.primary),
+                      Icon(turnIcon(turn.kind), size: 20, color: context.palette.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          turn.text,
+                          turn.localizedText(context.l10n),
                           style: TextStyle(
-                              fontSize: 14, color: AppColors.textPrimary),
+                              fontSize: 14, color: context.palette.textPrimary),
                         ),
                       ),
                       Text(
                         _distanceLabel(turn.distanceFromStartM),
                         style: TextStyle(
-                            fontSize: 12, color: AppColors.textTertiary),
+                            fontSize: 12, color: context.palette.textTertiary),
                       ),
                     ],
                   ),
@@ -309,13 +318,13 @@ class _SharedByBanner extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Row(
         children: [
-          Icon(Icons.public, size: 18, color: AppColors.textSecondary),
+          Icon(Icons.public, size: 18, color: context.palette.textSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -323,16 +332,16 @@ class _SharedByBanner extends ConsumerWidget {
               children: [
                 Text(
                   name == null || name.trim().isEmpty
-                      ? 'Shared by another rider'
-                      : 'Shared by $name',
+                      ? context.l10n.sharedByAnotherRider
+                      : context.l10n.sharedBy(name),
                   style:
-                      TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                      TextStyle(fontSize: 14, color: context.palette.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'You can ride it, but only its owner can change or delete it.',
+                  context.l10n.canRideItBut,
                   style:
-                      TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -358,10 +367,10 @@ class _Stat extends StatelessWidget {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 2),
           Text(label,
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
         ],
       ),
     );

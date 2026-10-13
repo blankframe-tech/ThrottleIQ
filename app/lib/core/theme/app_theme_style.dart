@@ -12,20 +12,35 @@ import 'package:flutter/material.dart';
 ///
 /// Enum member names are the persisted values (see `theme_style_provider.dart`)
 /// — renaming one silently resets riders who had it selected.
+///
+/// Named after riding modes rather than the palettes' design-deck names. The
+/// families behind them (and the names a pre-rename install may still have
+/// on disk, decoded in `theme_style_provider.dart`):
+///   - [sport]   → Carbon Mono  (lime/magenta instrument panel)
+///   - [rain]    → Nocturne     (deep indigo, lavender, teal)
+///   - [race]    → Retro        (mustard/rust 70s race-poster livery)
+///   - [commute] → Calming      (cream, sage, tan) — the default
+///   - [tour]    → Trail Social (kudos orange, sky blue)
+///   - [adv]     → Analyst Blue (navy console, cyan telemetry)
+///   - [city]    → Editorial    (warm paper, blue and orange)
 enum AppColorMode {
-  carbonMono,
-  editorial,
-  nocturne,
-  trailSocial,
-  calming,
-  retro,
-  analystBlue,
+  sport,
+  rain,
+  race,
+  commute,
+  tour,
+  adv,
+  city,
 }
 
-/// One immutable set of color tokens, matching the field names historically
-/// exposed by `AppColors` so any palette can be swapped in behind it without
-/// touching any of the ~565 call sites across the app.
-class AppColorPalette {
+/// One immutable set of color tokens.
+///
+/// Registered on [ThemeData.extensions] by `AppTheme.build` and read with
+/// `context.palette` (see `app_theme_context.dart`). Because it travels
+/// through the widget tree like any other theme value, a widget that reads it
+/// in `build` is rebuilt when the rider changes appearance — nothing has to
+/// be remounted, and no widget keeps stale colors.
+class AppColorPalette extends ThemeExtension<AppColorPalette> {
   final Color background;
   final Color surface;
   final Color border;
@@ -63,6 +78,22 @@ class AppColorPalette {
   /// handed around on its own still knows what it is.
   final bool isDark;
 
+  /// Whether surfaces in this palette should carry a hard, unblurred offset
+  /// shadow (`4px 4px 0 border`, no blur) instead of no shadow at all.
+  /// Defaulted to `false` so every existing palette needs no change — only
+  /// [retroLight]/[retroDark] opt in, matching the "Retro (Rawblock)" style
+  /// direction's `box-shadow:8px 8px 0 #1a1a1a`. See `AppCard`/`StatCard`,
+  /// the two shared surfaces that read this.
+  final bool hasHardShadow;
+
+  /// Whether display type (headings, big numbers) is set in a monospace face
+  /// instead of the shared proportional one. Only Retro opts in: its whole
+  /// identity is a terminal, and a proportional face on square corners and
+  /// hard rules reads as an unfinished theme. Independent of shape and
+  /// brightness — Retro is monospace whether it's Boxy or Curvy, dark or
+  /// light. See `AppTypography.display`.
+  final bool monoDisplay;
+
   const AppColorPalette({
     required this.background,
     required this.surface,
@@ -87,7 +118,101 @@ class AppColorPalette {
     required this.shimmerBase,
     required this.shimmerHighlight,
     required this.isDark,
+    this.hasHardShadow = false,
+    this.monoDisplay = false,
   });
+
+  @override
+  AppColorPalette copyWith({
+    Color? background,
+    Color? surface,
+    Color? border,
+    Color? surfaceVariant,
+    Color? ink,
+    Color? onInk,
+    Color? onInkMuted,
+    Color? primary,
+    Color? primaryHighlight,
+    Color? primaryDark,
+    Color? secondary,
+    Color? secondaryLight,
+    Color? attention,
+    Color? success,
+    Color? warning,
+    Color? danger,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textTertiary,
+    Color? overlayDark,
+    Color? shimmerBase,
+    Color? shimmerHighlight,
+    bool? isDark,
+    bool? hasHardShadow,
+    bool? monoDisplay,
+  }) =>
+      AppColorPalette(
+        background: background ?? this.background,
+        surface: surface ?? this.surface,
+        border: border ?? this.border,
+        surfaceVariant: surfaceVariant ?? this.surfaceVariant,
+        ink: ink ?? this.ink,
+        onInk: onInk ?? this.onInk,
+        onInkMuted: onInkMuted ?? this.onInkMuted,
+        primary: primary ?? this.primary,
+        primaryHighlight: primaryHighlight ?? this.primaryHighlight,
+        primaryDark: primaryDark ?? this.primaryDark,
+        secondary: secondary ?? this.secondary,
+        secondaryLight: secondaryLight ?? this.secondaryLight,
+        attention: attention ?? this.attention,
+        success: success ?? this.success,
+        warning: warning ?? this.warning,
+        danger: danger ?? this.danger,
+        textPrimary: textPrimary ?? this.textPrimary,
+        textSecondary: textSecondary ?? this.textSecondary,
+        textTertiary: textTertiary ?? this.textTertiary,
+        overlayDark: overlayDark ?? this.overlayDark,
+        shimmerBase: shimmerBase ?? this.shimmerBase,
+        shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
+        isDark: isDark ?? this.isDark,
+        hasHardShadow: hasHardShadow ?? this.hasHardShadow,
+        monoDisplay: monoDisplay ?? this.monoDisplay,
+      );
+
+  /// Colors cross-fade while `MaterialApp` animates a theme change; the three
+  /// flags are not interpolable, so they flip at the halfway point.
+  @override
+  AppColorPalette lerp(ThemeExtension<AppColorPalette>? other, double t) {
+    if (other is! AppColorPalette) return this;
+    Color c(Color a, Color b) => Color.lerp(a, b, t)!;
+    final flags = t < 0.5 ? this : other;
+    return AppColorPalette(
+      background: c(background, other.background),
+      surface: c(surface, other.surface),
+      border: c(border, other.border),
+      surfaceVariant: c(surfaceVariant, other.surfaceVariant),
+      ink: c(ink, other.ink),
+      onInk: c(onInk, other.onInk),
+      onInkMuted: c(onInkMuted, other.onInkMuted),
+      primary: c(primary, other.primary),
+      primaryHighlight: c(primaryHighlight, other.primaryHighlight),
+      primaryDark: c(primaryDark, other.primaryDark),
+      secondary: c(secondary, other.secondary),
+      secondaryLight: c(secondaryLight, other.secondaryLight),
+      attention: c(attention, other.attention),
+      success: c(success, other.success),
+      warning: c(warning, other.warning),
+      danger: c(danger, other.danger),
+      textPrimary: c(textPrimary, other.textPrimary),
+      textSecondary: c(textSecondary, other.textSecondary),
+      textTertiary: c(textTertiary, other.textTertiary),
+      overlayDark: c(overlayDark, other.overlayDark),
+      shimmerBase: c(shimmerBase, other.shimmerBase),
+      shimmerHighlight: c(shimmerHighlight, other.shimmerHighlight),
+      isDark: flags.isDark,
+      hasHardShadow: flags.hasHardShadow,
+      monoDisplay: flags.monoDisplay,
+    );
+  }
 
   // ── Carbon Mono ─────────────────────────────────────────────────────────
   // Dark instrument-panel base, lime primary, magenta secondary. The app's
@@ -333,9 +458,12 @@ class AppColorPalette {
     ink: Color(0xFF2B2823),
     onInk: Color(0xFFF8F5EF),
     onInkMuted: Color(0xFFB1ADA7),
-    primary: Color(0xFF84A98B),
-    primaryHighlight: Color(0xFFA8C7AD),
-    primaryDark: Color(0xFF537D5C),
+    // Darker sage so white button text clears WCAG AA (4.71:1). The old,
+    // lighter #84A98B only reached 2.62:1, so it now lives on as the
+    // non-text highlight fill. See test/core/theme/palette_contrast_test.dart.
+    primary: Color(0xFF537D5C),
+    primaryHighlight: Color(0xFF84A98B),
+    primaryDark: Color(0xFF3D5E45),
     secondary: Color(0xFFBD8D65),
     secondaryLight: Color(0xFFDBB597),
     attention: Color(0xFFB88255),
@@ -378,63 +506,71 @@ class AppColorPalette {
   );
 
   // ── Retro ───────────────────────────────────────────────────────────────
-  // The deck's old monochrome terminal: no chroma anywhere, severity encoded
-  // in value rather than hue (see the design note on `retroLight` — it
-  // applies identically, mirrored, to `retroDark`). The dark companion
-  // inverts which end is "ink": on paper, the boldest mark is black-on-white;
-  // on the terminal-dark companion, it's white-on-black, so `ink`/`onInk`
-  // swap roles rather than just darkening in place.
+  // "Retro (Rawblock)" from the style-direction deck: blocky 70s-poster
+  // energy — cream paper, thick black rules, hard offset shadows (no blur),
+  // mustard/rust accents, no rounded corners. Values are converted from the
+  // deck's OKLCH swatches (background `oklch(.95 .02 70)`, accent
+  // `oklch(.65 .15 55)`, alert `oklch(.55 .18 25)`). The dark companion keeps
+  // the same mustard/rust hues (lightened, like every other mode's dark
+  // variant) and inverts which end is "ink" — on paper the boldest mark is
+  // black-on-cream; on the dark companion it's cream-on-near-black — so
+  // `ink`/`onInk` swap roles rather than just darkening in place. Both opt
+  // into [hasHardShadow].
 
   static const AppColorPalette retroLight = AppColorPalette(
-    background: Color(0xFFFAFAF7),
+    background: Color(0xFFF8ECE0),
     surface: Color(0xFFFFFFFF),
-    border: Color(0xFF0A0A0A), // the hard rule, not a hairline tint
-    surfaceVariant: Color(0xFFEAEAE5),
-    ink: Color(0xFF0A0A0A),
-    onInk: Color(0xFFFAFAF7),
-    onInkMuted: Color(0xFF9A9A93),
-    primary: Color(0xFF0A0A0A), // the accent is ink; there is no accent hue
-    primaryHighlight: Color(0xFF3D3D39),
-    primaryDark: Color(0xFF000000),
-    secondary: Color(0xFF4A4A45),
-    secondaryLight: Color(0xFF7C7C75),
-    attention: Color(0xFF1F1F1C),
-    success: Color(0xFF5C5C56), // recedes
-    warning: Color(0xFF333330),
-    danger: Color(0xFF0A0A0A), // loudest mark on paper
-    textPrimary: Color(0xFF0A0A0A),
-    textSecondary: Color(0xFF56564F),
-    textTertiary: Color(0xFF86867E),
-    overlayDark: Color(0xCC0A0A0A),
-    shimmerBase: Color(0xFFE6E6E1),
-    shimmerHighlight: Color(0xFFF5F5F1),
+    border: Color(0xFF1A1A1A), // the hard rule, not a hairline tint
+    surfaceVariant: Color(0xFFEBDBC9),
+    ink: Color(0xFF1A1A1A),
+    onInk: Color(0xFFF8ECE0),
+    onInkMuted: Color(0xFF978D82),
+    primary: Color(0xFFD3721E), // mustard
+    primaryHighlight: Color(0xFFF7A062),
+    primaryDark: Color(0xFFA44100),
+    secondary: Color(0xFF534C44), // warm neutral, not a second accent hue
+    secondaryLight: Color(0xFF777068),
+    attention: Color(0xFFC53637), // rust
+    success: Color(0xFF518046), // olive, recedes
+    warning: Color(0xFFBB6802), // burnt amber
+    danger: Color(0xFFC53637), // rust — the deck's one alert color
+    textPrimary: Color(0xFF1A1A1A),
+    textSecondary: Color(0xFF534C44),
+    textTertiary: Color(0xFF978D82),
+    overlayDark: Color(0xCC1A1A1A),
+    shimmerBase: Color(0xFFEBDBC9),
+    shimmerHighlight: Color(0xFFF3E5D6),
     isDark: false,
+    hasHardShadow: true,
+    monoDisplay: true,
   );
 
   static const AppColorPalette retroDark = AppColorPalette(
-    background: Color(0xFF0A0A0A),
-    surface: Color(0xFF121212),
-    border: Color(0xFFFAFAF7), // the hard rule, inverted: matches `ink` exactly
-    surfaceVariant: Color(0xFF1C1C1A),
-    ink: Color(0xFFFAFAF7), // boldest fill is white-on-black here
-    onInk: Color(0xFF0A0A0A),
-    onInkMuted: Color(0xFF6B6B66),
-    primary: Color(0xFFFAFAF7), // the accent is onInk; still no accent hue
-    primaryHighlight: Color(0xFFC6C6C0),
-    primaryDark: Color(0xFFFFFFFF),
-    secondary: Color(0xFFB5B5AE),
-    secondaryLight: Color(0xFFD8D8D2),
-    attention: Color(0xFFE0E0DA),
-    success: Color(0xFF8A8A83), // recedes toward the background
-    warning: Color(0xFFC2C2BB),
-    danger: Color(0xFFFAFAF7), // loudest mark on black
-    textPrimary: Color(0xFFFAFAF7),
-    textSecondary: Color(0xFFA8A8A1),
-    textTertiary: Color(0xFF6E6E68),
-    overlayDark: Color(0xCC0A0A0A),
-    shimmerBase: Color(0xFF1C1C1A),
-    shimmerHighlight: Color(0xFF2A2A26),
+    background: Color(0xFF130C05),
+    surface: Color(0xFF1D1409),
+    border: Color(0xFFFCF4EB), // the hard rule, inverted: matches `ink` exactly
+    surfaceVariant: Color(0xFF2B1F11),
+    ink: Color(0xFFFCF4EB), // boldest fill is cream-on-near-black here
+    onInk: Color(0xFF130C05),
+    onInkMuted: Color(0xFF6B6157),
+    primary: Color(0xFFF7A062), // brighter mustard for contrast on dark
+    primaryHighlight: Color(0xFFFFBD8E),
+    primaryDark: Color(0xFFD3721E),
+    secondary: Color(0xFFA1968B),
+    secondaryLight: Color(0xFFB4ACA4),
+    attention: Color(0xFFEA6A64), // rust, lightened
+    success: Color(0xFF6FAA62),
+    warning: Color(0xFFE59B5B),
+    danger: Color(0xFFEA6A64),
+    textPrimary: Color(0xFFFCF4EB),
+    textSecondary: Color(0xFFA1968B),
+    textTertiary: Color(0xFF6B6157),
+    overlayDark: Color(0xCC0A0603),
+    shimmerBase: Color(0xFF2B1F11),
+    shimmerHighlight: Color(0xFF322618),
     isDark: true,
+    hasHardShadow: true,
+    monoDisplay: true,
   );
 
   // ── Analyst Blue ────────────────────────────────────────────────────────
@@ -492,24 +628,41 @@ class AppColorPalette {
     isDark: false,
   );
 
+  // ── Ride-mode aliases ───────────────────────────────────────────────────
+  // The names [forMode] resolves through, one pair per [AppColorMode].
+  static const AppColorPalette sportDark = carbonMonoDark;
+  static const AppColorPalette sportLight = carbonMonoLight;
+  static const AppColorPalette rainDark = nocturneDark;
+  static const AppColorPalette rainLight = nocturneLight;
+  static const AppColorPalette raceDark = retroDark;
+  static const AppColorPalette raceLight = retroLight;
+  static const AppColorPalette commuteDark = calmingDark;
+  static const AppColorPalette commuteLight = calmingLight;
+  static const AppColorPalette tourDark = trailSocialDark;
+  static const AppColorPalette tourLight = trailSocialLight;
+  static const AppColorPalette advDark = analystBlueDark;
+  static const AppColorPalette advLight = analystBlueLight;
+  static const AppColorPalette cityDark = editorialDark;
+  static const AppColorPalette cityLight = editorialLight;
+
   /// Exhaustive by design — a nested `switch` with no `default`, so adding a
   /// member to [AppColorMode] or to [Brightness] without a palette is a
-  /// compile error rather than a mode that silently renders as Carbon Mono.
+  /// compile error rather than a mode that silently renders as default.
   static AppColorPalette forMode(AppColorMode mode, Brightness brightness) =>
       switch ((mode, brightness)) {
-        (AppColorMode.carbonMono, Brightness.dark) => carbonMonoDark,
-        (AppColorMode.carbonMono, Brightness.light) => carbonMonoLight,
-        (AppColorMode.editorial, Brightness.dark) => editorialDark,
-        (AppColorMode.editorial, Brightness.light) => editorialLight,
-        (AppColorMode.nocturne, Brightness.dark) => nocturneDark,
-        (AppColorMode.nocturne, Brightness.light) => nocturneLight,
-        (AppColorMode.trailSocial, Brightness.dark) => trailSocialDark,
-        (AppColorMode.trailSocial, Brightness.light) => trailSocialLight,
-        (AppColorMode.calming, Brightness.dark) => calmingDark,
-        (AppColorMode.calming, Brightness.light) => calmingLight,
-        (AppColorMode.retro, Brightness.dark) => retroDark,
-        (AppColorMode.retro, Brightness.light) => retroLight,
-        (AppColorMode.analystBlue, Brightness.dark) => analystBlueDark,
-        (AppColorMode.analystBlue, Brightness.light) => analystBlueLight,
+        (AppColorMode.sport, Brightness.dark) => sportDark,
+        (AppColorMode.sport, Brightness.light) => sportLight,
+        (AppColorMode.rain, Brightness.dark) => rainDark,
+        (AppColorMode.rain, Brightness.light) => rainLight,
+        (AppColorMode.race, Brightness.dark) => raceDark,
+        (AppColorMode.race, Brightness.light) => raceLight,
+        (AppColorMode.commute, Brightness.dark) => commuteDark,
+        (AppColorMode.commute, Brightness.light) => commuteLight,
+        (AppColorMode.tour, Brightness.dark) => tourDark,
+        (AppColorMode.tour, Brightness.light) => tourLight,
+        (AppColorMode.adv, Brightness.dark) => advDark,
+        (AppColorMode.adv, Brightness.light) => advLight,
+        (AppColorMode.city, Brightness.dark) => cityDark,
+        (AppColorMode.city, Brightness.light) => cityLight,
       };
 }

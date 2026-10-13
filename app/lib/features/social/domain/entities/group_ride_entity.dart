@@ -102,6 +102,12 @@ class GroupRideEntity extends Equatable {
   /// code-join door existed.
   final String joinCode;
 
+  /// Heartbeat written by the creator's device while the ride is under way
+  /// (see `GroupRideRepository.heartbeat`). Null for rides created before the
+  /// field existed. Read by `isGroupRideLive` to tell a live ride from one
+  /// that was never closed out.
+  final DateTime? lastActiveAt;
+
   const GroupRideEntity({
     required this.id,
     required this.creatorId,
@@ -118,6 +124,7 @@ class GroupRideEntity extends Equatable {
     required this.createdAt,
     this.maxParticipants = 20,
     this.joinCode = '',
+    this.lastActiveAt,
   });
 
   int get joinedMembersCount =>
@@ -156,6 +163,10 @@ class GroupRideEntity extends Equatable {
       invitedIds: invitedIds ?? this.invitedIds,
       createdAt: createdAt,
       maxParticipants: maxParticipants,
+      // Both used to be dropped here, so `getGroupRide` (which copyWith's the
+      // roster in) silently lost the join code.
+      joinCode: joinCode,
+      lastActiveAt: lastActiveAt,
     );
   }
 

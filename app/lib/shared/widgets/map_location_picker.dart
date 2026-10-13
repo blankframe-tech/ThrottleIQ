@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimensions.dart';
+import '../../core/theme/app_theme_context.dart';
+import 'app_tile_layer.dart';
+import '../../core/i18n/l10n_context.dart';
 
 /// A "drop a pin" location picker: the map pans freely underneath a fixed
 /// center pin (the same interaction pattern Google/Uber use for pin-drop) —
@@ -30,7 +31,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(context.shape.radiusXl),
       child: SizedBox(
         height: widget.height,
         child: Stack(
@@ -43,19 +44,16 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 onPositionChanged: (camera, hasGesture) =>
                     widget.onLocationChanged(camera.center),
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.bft.throttleiq',
-                ),
+              children: const [
+                AppTileLayer(),
               ],
             ),
             // Fixed center pin — the map moves, this stays put. Offset up by
             // half its height so the pin's *tip* (not its center) marks the
             // picked point, matching how a real map pin reads.
             Padding(
-              padding: EdgeInsets.only(bottom: 32),
-              child: Icon(Icons.location_pin, size: 40, color: AppColors.primary),
+              padding: const EdgeInsets.only(bottom: 32),
+              child: Icon(Icons.location_pin, size: 40, color: context.palette.primary),
             ),
             IgnorePointer(
               child: Container(
@@ -66,10 +64,10 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                    borderRadius: BorderRadius.circular(context.shape.radiusFull),
                   ),
-                  child: const Text('Drag map to move pin',
-                      style: TextStyle(color: Colors.white, fontSize: 11)),
+                  child: Text(context.l10n.dragMapMovePin,
+                      style: const TextStyle(color: Colors.white, fontSize: 11)),
                 ),
               ),
             ),

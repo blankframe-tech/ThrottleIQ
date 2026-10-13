@@ -31,8 +31,16 @@ class RideStatsWidgetProvider : HomeWidgetProvider() {
         val total = widgetData.getStringOrNull(WidgetKeys.TOTAL_KM) ?: placeholder
         val rides = widgetData.getStringOrNull(WidgetKeys.RIDE_COUNT) ?: noData
 
+        val theme = WidgetTheme.from(context, widgetData)
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_ride_stats).apply {
+                applyPanelTheme(theme)
+                setInt(R.id.widget_accent_bar, "setBackgroundColor", theme.primary)
+                setTextColor(R.id.widget_label_1, theme.textTertiary)
+                setTextColor(R.id.widget_label_2, theme.textTertiary)
+                setTextColor(R.id.widget_stats_weekly_value, theme.primary)
+                setTextColor(R.id.widget_stats_total_value, theme.textPrimary)
+                setTextColor(R.id.widget_stats_rides, theme.textMuted)
                 setTextViewText(R.id.widget_stats_weekly_value, weekly)
                 setTextViewText(R.id.widget_stats_total_value, total)
                 setTextViewText(R.id.widget_stats_rides, rides)

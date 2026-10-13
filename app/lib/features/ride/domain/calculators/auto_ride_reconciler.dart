@@ -2,6 +2,7 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../entities/ride_point_entity.dart';
 import 'average_speed.dart';
 import 'event_detector.dart';
+import 'fix_kinematics.dart';
 import 'motion_calculator.dart';
 import 'recording_cadence_policy.dart';
 import 'vehicle_state_estimator.dart';
@@ -27,6 +28,11 @@ class ReconcileRejection {
   static const tooShortDuration = 'too_short_duration';
   static const tooSlow = 'too_slow';
   static const noMovement = 'no_movement';
+
+  /// Every fix fell inside (or between) rides already on record — the rider
+  /// was recording this journey by hand, or the detection was already
+  /// promoted once (§90.C3).
+  static const overlapsRide = 'overlaps_ride';
 }
 
 /// A detection rebuilt into everything a `rides` row and its `ride_points`
@@ -130,17 +136,43 @@ class AutoRideReconciler {
   static const double _accuracyGateM = SensorConstants.maxGpsAccuracyM;
 
   ReconcileOutcome reconcile(List<StagedFix> staged) {
-    // Same gate, same constant, same position in the pipeline as the live
-    // path: a bad fix must not reach the derivative chain.
-    final fixes = staged
-        .where((f) => (f.accuracyM ?? 0) <= _accuracyGateM)
-        .toList()
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-
+    final fixes = _usable(staged);
     if (fixes.length < minFixes) {
       return const ReconcileOutcome.rejected(ReconcileRejection.tooFewFixes);
     }
 
+    final ride = _replay(fixes);
+    final rejection = _reject(
+      distanceM: ride.distanceM,
+      durationSeconds: ride.durationSeconds,
+      maxSpeedMs: ride.maxSpeedMs,
+      movingSeconds: ride.movingSeconds,
+    );
+    if (rejection != null) return ReconcileOutcome.rejected(rejection);
+    return ReconcileOutcome.accepted(ride);
+  }
+
+  /// The same replay as [reconcile], with **no** "was this a ride" gate.
+  ///
+  /// For the daily summary (`daily_ride_summary.dart`): a detection split by
+  /// a Dhaka jam is a run of fragments, each of which may fail the gate on its
+  /// own (a 200 m crawl between two stops) while the merged journey passes
+  /// it. The summary measures every fragment here and applies the gate to the
+  /// merged ride instead. Null only when fewer than two usable fixes remain.
+  ReconciledRide? measure(List<StagedFix> staged) {
+    final fixes = _usable(staged);
+    if (fixes.length < 2) return null;
+    return _replay(fixes);
+  }
+
+  /// Same gate, same constant, same position in the pipeline as the live
+  /// path: a bad fix must not reach the derivative chain.
+  List<StagedFix> _usable(List<StagedFix> staged) => staged
+      .where((f) => (f.accuracyM ?? 0) <= _accuracyGateM)
+      .toList()
+    ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+  ReconciledRide _replay(List<StagedFix> fixes) {
     final calculator = MotionCalculator();
     final estimator = VehicleStateEstimator();
     final detector = EventDetector();
@@ -150,29 +182,54 @@ class AutoRideReconciler {
     var maxSpeedMs = 0.0;
     var crashSuspected = false;
     RidePointEntity? lastPoint;
+    var lastFixClamped = false;
     final points = <Map<String, Object?>>[];
 
-    for (final fix in fixes) {
-      final speedMs = fix.speedMs < 0 ? 0.0 : fix.speedMs;
-      if (speedMs > maxSpeedMs) maxSpeedMs = speedMs;
+    final samples = <SpeedSample>[];
 
-      double? accel;
-      double? jerk;
-      var distDelta = 0.0;
+    for (final fix in fixes) {
+      final rawSpeedMs =
+          (fix.speedMs.isFinite && fix.speedMs > 0) ? fix.speedMs : 0.0;
+      var rawDist = 0.0;
+      var deltaT = 0.0;
 
       if (lastPoint != null) {
+        deltaT = fix.timestamp.difference(lastPoint.timestamp).inMilliseconds / 1000.0;
         final result = calculator.calculate(
           prev: lastPoint,
-          currentSpeedMs: speedMs,
+          currentSpeedMs: rawSpeedMs,
           currentLat: fix.lat,
           currentLng: fix.lng,
           currentTime: fix.timestamp,
         );
-        accel = result.acceleration;
-        jerk = result.jerk;
-        distDelta = result.distanceDeltaM;
+        rawDist = result.distanceDeltaM;
       }
 
+      // Same rules as the live path, from the same function (§90.C12):
+      // implausible fixes add nothing, Doppler fixes have their distance
+      // capped. issues §62: a rejected sample's distance must not count.
+      final k = evaluateFix(
+        rawSpeedMs: rawSpeedMs,
+        prev: lastPoint == null
+            ? null
+            : prevFixOf(lastPoint.speedMs,
+                acceleration: lastPoint.acceleration,
+                clamped: lastFixClamped),
+        rawDistanceM: rawDist,
+        deltaTSeconds: deltaT,
+        accuracyM: fix.accuracyM ?? _accuracyGateM,
+      );
+      lastFixClamped = k.clamped;
+      final speedMs = k.speedMs;
+      final distDelta = k.distanceDeltaM;
+      final accel = k.acceleration;
+      final jerk = k.jerk;
+
+      if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > maxSpeedMs) {
+        maxSpeedMs = speedMs;
+      }
+
+      samples.add((time: fix.timestamp, speedMs: speedMs));
       distanceM += distDelta;
 
       estimator.addGpsSample(
@@ -247,30 +304,24 @@ class AutoRideReconciler {
       if (alert == RideAlert.crash) crashSuspected = true;
     }
 
-    final samples = <SpeedSample>[
-      for (final f in fixes)
-        (time: f.timestamp, speedMs: f.speedMs < 0 ? 0.0 : f.speedMs),
-    ];
     final moving = movingSeconds(samples);
     final duration =
         fixes.last.timestamp.difference(fixes.first.timestamp).inSeconds;
 
-    final rejection = _reject(
+    final avgSpeedMs = averageSpeedMs(
       distanceM: distanceM,
-      durationSeconds: duration,
-      maxSpeedMs: maxSpeedMs,
       movingSeconds: moving,
+      maxSpeedMs: maxSpeedMs > 0 ? maxSpeedMs : null,
     );
-    if (rejection != null) return ReconcileOutcome.rejected(rejection);
 
-    return ReconcileOutcome.accepted(ReconciledRide(
+    if (maxSpeedMs < avgSpeedMs && avgSpeedMs <= SensorConstants.maxPlausibleSpeedMs) {
+      maxSpeedMs = avgSpeedMs;
+    }
+
+    return ReconciledRide(
       distanceM: distanceM,
       maxSpeedMs: maxSpeedMs,
-      avgSpeedMs: averageSpeedMs(
-        distanceM: distanceM,
-        movingSeconds: moving,
-        maxSpeedMs: maxSpeedMs,
-      ),
+      avgSpeedMs: avgSpeedMs,
       movingSeconds: moving,
       durationSeconds: duration,
       hardBrakeCount: detector.hardBrakeCount,
@@ -278,7 +329,7 @@ class AutoRideReconciler {
       highJerkCount: detector.highJerkCount,
       points: points,
       crashSuspected: crashSuspected,
-    ));
+    );
   }
 
   /// The "was this actually a ride" gate.

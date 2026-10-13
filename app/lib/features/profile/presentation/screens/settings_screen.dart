@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/i18n/locale_provider.dart';
 import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../core/theme/theme_style_provider.dart';
@@ -13,6 +14,13 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../providers/speed_alert_provider.dart';
 import '../widgets/appearance_picker.dart';
+import 'sync_issues_screen.dart';
+import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
+import '../../../auth/presentation/widgets/tour_floating_banner.dart';
+import '../../../../shared/widgets/bug_report_sheet.dart';
+import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/services/public_live_link_setting.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -33,24 +41,26 @@ class SettingsScreen extends ConsumerWidget {
     final appLocale = ref.watch(localeProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(l10n.settingsTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Stack(
+        children: [
+          ListView(
+            padding: const EdgeInsets.all(16),
         children: [
           // ── Profile ────────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.palette.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.palette.border),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                  backgroundColor: context.palette.primary.withValues(alpha: 0.15),
                   child: Text(
                     (user?.displayName?.isNotEmpty == true
                             ? user!.displayName![0]
@@ -59,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary),
+                        color: context.palette.primary),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -71,11 +81,11 @@ class SettingsScreen extends ConsumerWidget {
                           style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary)),
+                              color: context.palette.textPrimary)),
                       const SizedBox(height: 2),
                       Text(user?.email ?? '',
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary)),
+                              fontSize: 13, color: context.palette.textSecondary)),
                     ],
                   ),
                 ),
@@ -95,20 +105,20 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           Text(l10n.vibeFieldLabel,
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary)),
+                  color: context.palette.textSecondary)),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
             ),
             child: Row(
               children: [
@@ -141,25 +151,43 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary)),
+                  color: context.palette.textSecondary)),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
             ),
+            // Three options, matching the Language row below: "System" is
+            // not the same as "Light" — it tracks the OS and flips with it
+            // (issues §83.9). Selection compares brightnessMode, not the
+            // resolved brightness, so System stays highlighted whichever way
+            // the OS currently leans.
             child: Row(
               children: [
                 Expanded(
                   child: _SegmentedOption(
-                    label: l10n.brightnessDarkLabel,
-                    description: l10n.brightnessDarkDescription,
-                    selected: appearance.brightness == Brightness.dark,
+                    label: l10n.brightnessSystemLabel,
+                    description: l10n.brightnessSystemDescription,
+                    selected:
+                        appearance.brightnessMode == AppBrightnessMode.system,
                     onTap: () => ref
                         .read(appearanceProvider.notifier)
-                        .setBrightness(Brightness.dark),
+                        .setBrightnessMode(AppBrightnessMode.system),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SegmentedOption(
+                    label: l10n.brightnessDarkLabel,
+                    description: l10n.brightnessDarkDescription,
+                    selected:
+                        appearance.brightnessMode == AppBrightnessMode.dark,
+                    onTap: () => ref
+                        .read(appearanceProvider.notifier)
+                        .setBrightnessMode(AppBrightnessMode.dark),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -167,17 +195,18 @@ class SettingsScreen extends ConsumerWidget {
                   child: _SegmentedOption(
                     label: l10n.brightnessLightLabel,
                     description: l10n.brightnessLightDescription,
-                    selected: appearance.brightness == Brightness.light,
+                    selected:
+                        appearance.brightnessMode == AppBrightnessMode.light,
                     onTap: () => ref
                         .read(appearanceProvider.notifier)
-                        .setBrightness(Brightness.light),
+                        .setBrightnessMode(AppBrightnessMode.light),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          const ColorModeDropdown(),
+          const ColorModeSegmentedPicker(),
           const SizedBox(height: 24),
 
           // ── Language ───────────────────────────────────────────────────
@@ -190,14 +219,14 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: context.palette.textPrimary)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: AppColors.border),
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
             ),
             child: Row(
               children: [
@@ -254,7 +283,7 @@ class SettingsScreen extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _showContactDialog(context, ref),
@@ -264,32 +293,60 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 4),
+          // A warning-colored banner, not fine print: until crash alerts
+          // actually send, having contacts here must not read as being
+          // protected (grill §3.6.3).
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.palette.warning.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.warning),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber_rounded, color: context.palette.warning, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.emergencyContactsNotAlertedBanner,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             l10n.emergencyContactsDescription,
-            style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
           ),
           const SizedBox(height: 12),
 
           contacts.when(
             loading: () => Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Center(
-                  child: CircularProgressIndicator(color: AppColors.primary)),
+                  child: CircularProgressIndicator(color: context.palette.primary)),
             ),
             error: (e, _) => Text(l10n.emergencyContactsLoadError('$e'),
-                style: TextStyle(color: AppColors.danger, fontSize: 13)),
+                style: TextStyle(color: context.palette.danger, fontSize: 13)),
             data: (list) => list.isEmpty
                 ? Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: context.palette.border),
                     ),
                     child: Center(
                       child: Text(l10n.emergencyContactsEmpty,
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary)),
+                              fontSize: 13, color: context.palette.textSecondary)),
                     ),
                   )
                 : Column(
@@ -300,14 +357,14 @@ class SettingsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: context.palette.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: context.palette.border),
                           ),
                           child: Row(
                             children: [
                               Icon(Icons.contact_emergency_outlined,
-                                  color: AppColors.primary, size: 20),
+                                  color: context.palette.primary, size: 20),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -317,24 +374,25 @@ class SettingsScreen extends ConsumerWidget {
                                         style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.textPrimary)),
+                                            color: context.palette.textPrimary)),
                                     Text(
                                         c.email == null
                                             ? c.phone
                                             : '${c.phone} · ${c.email}',
                                         style: TextStyle(
                                             fontSize: 12,
-                                            color: AppColors.textSecondary)),
+                                            color: context.palette.textSecondary)),
                                   ],
                                 ),
                               ),
                               IconButton(
+                                tooltip: context.l10n.delete,
                                 onPressed: () => ref
                                     .read(emergencyContactsNotifierProvider
                                         .notifier)
                                     .deleteContact(c.id),
                                 icon: Icon(Icons.delete_outline,
-                                    color: AppColors.textTertiary, size: 20),
+                                    color: context.palette.textTertiary, size: 20),
                               ),
                             ],
                           ),
@@ -350,7 +408,7 @@ class SettingsScreen extends ConsumerWidget {
           // fields plus a live QR preview, which doesn't fit this screen's
           // "one row per setting" shape. This tile is just the doorway.
           Material(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () => context.push('/safe-qr'),
@@ -360,12 +418,12 @@ class SettingsScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.qr_code_2_outlined,
-                        color: AppColors.primary, size: 22),
+                        color: context.palette.primary, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -375,17 +433,17 @@ class SettingsScreen extends ConsumerWidget {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
                           Text(l10n.safeQrSettingsSubtitle,
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
+                        color: context.palette.textTertiary, size: 20),
                   ],
                 ),
               ),
@@ -394,19 +452,24 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
+          // ── Sync issues (§69.O4) ───────────────────────────────────────
+          // Only shown while the outbox has given up on something, so the
+          // rider isn't handed a permanent "0 issues" row to wonder about.
+          const _SyncIssuesTile(),
+
           // ── Privacy & Safety ───────────────────────────────────────────
           Row(
             children: [
-              Text('Privacy & Safety',
+              Text(context.l10n.privacySafety,
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),
           Material(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () => context.push('/blocked-users'),
@@ -416,31 +479,126 @@ class SettingsScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.border),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.block, color: AppColors.primary, size: 22),
+                    Icon(Icons.block, color: context.palette.primary, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Blocked Users',
+                          Text(context.l10n.blockedUsers,
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary)),
+                                  color: context.palette.textPrimary)),
                           const SizedBox(height: 2),
-                          Text('Manage accounts you have blocked',
+                          Text(context.l10n.manageAccountsHaveBlocked,
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
+                        color: context.palette.textTertiary, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const _AnalyticsToggleTile(),
+          const SizedBox(height: 10),
+          const _PublicLiveLinkToggleTile(),
+          const SizedBox(height: 10),
+          Material(
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () async {
+                await resetOnboardingTour();
+                if (context.mounted) {
+                  context.push('/auth/onboarding?demo=1');
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.palette.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.play_circle_outline, color: context.palette.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(context.l10n.seeDemoFeatureTour,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.palette.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text(context.l10n.replayInteractiveFeatureGuides,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.palette.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+          // ── Bug Report ─────────────────────────────────────────────────
+          Material(
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => BugReportSheet.show(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.palette.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.bug_report_outlined,
+                        color: context.palette.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(context.l10n.sendBugReport,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.palette.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text(context.l10n.somethingBrokenLetTeam,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.palette.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary, size: 20),
                   ],
                 ),
               ),
@@ -452,15 +610,27 @@ class SettingsScreen extends ConsumerWidget {
           // ── Sign out ───────────────────────────────────────────────────
           OutlinedButton.icon(
             onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).signOut();
-              if (context.mounted) context.go('/auth/login');
+              try {
+                await ref.read(authNotifierProvider.notifier).signOut();
+                if (context.mounted) context.go('/auth/login');
+              } on Exception catch (e) {
+                debugPrint('signOut failed: $e');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(context.l10n.signOutFailed),
+                      backgroundColor: context.palette.danger,
+                    ),
+                  );
+                }
+              }
             },
             icon: const Icon(Icons.logout, size: 18),
             label: Text(l10n.signOutAction),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 48),
-              foregroundColor: AppColors.textSecondary,
-              side: BorderSide(color: AppColors.border),
+              foregroundColor: context.palette.textSecondary,
+              side: BorderSide(color: context.palette.border),
             ),
           ),
           const SizedBox(height: 12),
@@ -469,38 +639,46 @@ class SettingsScreen extends ConsumerWidget {
           TextButton.icon(
             onPressed: () => _confirmDeleteAccount(context, ref),
             icon: const Icon(Icons.delete_forever, size: 18),
-            label: const Text('Delete Account'),
+            label: Text(context.l10n.deleteAccount),
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 48),
-              foregroundColor: AppColors.danger,
+              foregroundColor: context.palette.danger,
             ),
           ),
         ],
       ),
-    );
+      const Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: TourFloatingBanner(),
+      ),
+    ],
+  ),
+);
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: dialogCtx.palette.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.border),
+          side: BorderSide(color: dialogCtx.palette.border),
         ),
         title: Text(
-          'Delete Account?',
+          dialogCtx.l10n.deleteAccountQuestion,
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: dialogCtx.palette.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
-          'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.',
+          dialogCtx.l10n.thisActionIrreversibleAll,
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: dialogCtx.palette.textSecondary,
             fontSize: 14,
             height: 1.4,
           ),
@@ -508,14 +686,14 @@ class SettingsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(dialogCtx.l10n.cancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogCtx).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.danger,
+              backgroundColor: dialogCtx.palette.danger,
             ),
-            child: const Text('Delete Permanently'),
+            child: Text(dialogCtx.l10n.deletePermanently),
           ),
         ],
       ),
@@ -523,31 +701,141 @@ class SettingsScreen extends ConsumerWidget {
 
     if (confirmed == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Deleting account...')),
+        SnackBar(content: Text(context.l10n.deletingAccount)),
       );
-      try {
-        await ref.read(authNotifierProvider.notifier).deleteAccount();
-        if (context.mounted) {
-          context.go('/auth/login');
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting account: $e'),
-              backgroundColor: AppColors.danger,
-            ),
-          );
-        }
-      }
+      await _deleteAccountWithReauth(context, ref);
     }
   }
 
-  void _showContactDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+  /// Deletes the account; on `requires-recent-login` asks the rider to
+  /// re-prove their identity (issues §101.A1) and retries exactly once.
+  /// Raw exception text is never shown (issues §101.A4).
+  Future<void> _deleteAccountWithReauth(BuildContext context, WidgetRef ref) async {
+    final auth = ref.read(authNotifierProvider.notifier);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final l10n = context.l10n;
+    final danger = context.palette.danger;
+    void fail(String message) =>
+        messenger.showSnackBar(SnackBar(content: Text(message), backgroundColor: danger));
+
+    String deleteFailure(Object e) {
+      debugPrint('deleteAccount failed: $e');
+      return e is firebase_auth.FirebaseAuthException && e.code == 'network-request-failed'
+          ? l10n.deleteAccountOffline
+          : l10n.deleteAccountFailed;
+    }
+
+    try {
+      try {
+        await auth.deleteAccount();
+      } on firebase_auth.FirebaseAuthException catch (e) {
+        if (e.code != 'requires-recent-login') rethrow;
+        if (!context.mounted) return;
+        final isPasswordUser = ref
+                .read(firebaseAuthProvider)
+                .currentUser
+                ?.providerData
+                .any((p) => p.providerId == 'password') ??
+            false;
+        String? password;
+        if (isPasswordUser) {
+          password = await _askPassword(context);
+          if (password == null) return; // cancelled — nothing was deleted
+        }
+        try {
+          if (!await auth.reauthenticate(password: password)) return;
+        } on firebase_auth.FirebaseAuthException catch (re) {
+          debugPrint('reauthenticate failed: ${re.code}');
+          fail(re.code == 'wrong-password' || re.code == 'invalid-credential'
+              ? l10n.reauthWrongPassword
+              : re.code == 'network-request-failed'
+                  ? l10n.deleteAccountOffline
+                  : l10n.reauthFailed);
+          return;
+        }
+        await auth.deleteAccount();
+      }
+      router.go('/auth/login');
+    } on Exception catch (e) {
+      fail(deleteFailure(e));
+    }
+  }
+
+  Future<String?> _askPassword(BuildContext context) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
+        title: Text(ctx.l10n.reauthRequiredTitle,
+            style: TextStyle(color: ctx.palette.textPrimary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(ctx.l10n.reauthRequiredBody,
+                style: TextStyle(color: ctx.palette.textSecondary)),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              autofocus: true,
+              decoration: InputDecoration(labelText: ctx.l10n.password),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancelAction),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            style: FilledButton.styleFrom(backgroundColor: ctx.palette.danger),
+            child: Text(ctx.l10n.deletePermanently),
+          ),
+        ],
+      ),
+    ).whenComplete(controller.dispose);
+  }
+
+  /// SharedPreferences flag: the "contacts aren't alerted yet" dialog has
+  /// been acknowledged once and never needs showing again.
+  static const _contactsAckKey = 'emergency_contacts_not_alerted_ack';
+
+  Future<void> _showContactDialog(BuildContext context, WidgetRef ref) async {
+    final wasEmpty =
+        ref.read(emergencyContactsNotifierProvider).valueOrNull?.isEmpty ?? true;
+    final added = await showDialog<bool>(
       context: context,
       builder: (_) => const _AddContactDialog(),
     );
+    if (added != true || !wasEmpty || !context.mounted) return;
+
+    // One-time acknowledgement on the rider's first contact — the moment
+    // they're most likely to assume that contact will now be told about a
+    // crash. See emergencyContactsNotAlertedBanner.
+    final prefs = await SharedPreferences.getInstance();
+    if ((prefs.getBool(_contactsAckKey) ?? false) || !context.mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: dialogContext.palette.surface,
+        icon: Icon(Icons.warning_amber_rounded, color: dialogContext.palette.warning, size: 32),
+        title: Text(l10n.emergencyContactsAckTitle,
+            style: TextStyle(color: dialogContext.palette.textPrimary, fontSize: 18)),
+        content: Text(l10n.emergencyContactsAckBody,
+            style: TextStyle(color: dialogContext.palette.textSecondary)),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.emergencyContactsAckAction),
+          ),
+        ],
+      ),
+    );
+    await prefs.setBool(_contactsAckKey, true);
   }
 }
 
@@ -590,34 +878,34 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
           phone: phone,
           email: email.isEmpty ? null : email,
         );
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       title: Text(l10n.addEmergencyContactTitle,
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
+          style: TextStyle(color: context.palette.textPrimary, fontSize: 18)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _nameCtrl,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.contactNameField),
           ),
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(labelText: l10n.contactPhoneField),
           ),
           TextField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.palette.textPrimary),
             decoration:
                 InputDecoration(labelText: l10n.contactEmailFieldOptional),
           ),
@@ -641,6 +929,62 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
 /// by the Language control (three segments) and by Appearance's Vibe and
 /// Brightness controls (two segments each) — Color has too many options for
 /// this shape and uses [ColorModeDropdown] instead.
+class _SyncIssuesTile extends ConsumerWidget {
+  const _SyncIssuesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(syncIssuesProvider).valueOrNull?.length ?? 0;
+    if (count == 0) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Material(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => context.push('/sync-issues'),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.palette.warning),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.sync_problem, color: context.palette.warning, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(context.l10n.syncIssues,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: context.palette.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                          count == 1
+                              ? context.l10n.n1UpdateCouldntBe
+                              : context.l10n.updatesCouldntBeSent(count),
+                          style: TextStyle(
+                              fontSize: 12, color: context.palette.textSecondary)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right,
+                    color: context.palette.textTertiary, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SegmentedOption extends StatelessWidget {
   const _SegmentedOption({
     required this.label,
@@ -658,12 +1002,12 @@ class _SegmentedOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      borderRadius: BorderRadius.circular(context.shape.radiusSm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          color: selected ? context.palette.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(context.shape.radiusSm),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,14 +1016,14 @@ class _SegmentedOption extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: selected ? AppColors.surface : AppColors.textPrimary)),
+                    color: selected ? context.palette.surface : context.palette.textPrimary)),
             const SizedBox(height: 2),
             Text(description,
                 style: TextStyle(
                     fontSize: 11,
                     color: selected
-                        ? AppColors.surface.withValues(alpha: 0.8)
-                        : AppColors.textTertiary)),
+                        ? context.palette.surface.withValues(alpha: 0.8)
+                        : context.palette.textTertiary)),
           ],
         ),
       ),
@@ -698,16 +1042,16 @@ class _OverspeedLimitTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(context.shape.radiusMd),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.speed, color: AppColors.primary, size: 22),
+              Icon(Icons.speed, color: context.palette.primary, size: 22),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -720,7 +1064,7 @@ class _OverspeedLimitTile extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       l10n.overspeedSettingSubtitle,
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -730,7 +1074,7 @@ class _OverspeedLimitTile extends ConsumerWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
               ),
             ],
@@ -738,9 +1082,9 @@ class _OverspeedLimitTile extends ConsumerWidget {
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.primary,
-              inactiveTrackColor: AppColors.primary.withValues(alpha: 0.2),
-              thumbColor: AppColors.primary,
+              activeTrackColor: context.palette.primary,
+              inactiveTrackColor: context.palette.primary.withValues(alpha: 0.2),
+              thumbColor: context.palette.primary,
             ),
             child: Slider(
               value: limit,
@@ -752,6 +1096,126 @@ class _OverspeedLimitTile extends ConsumerWidget {
                 ref.read(overspeedLimitProvider.notifier).setLimit(val);
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Settings → Privacy & Safety: whether a live share also publishes the
+/// permanent `/r/@handle` link (issues §90.D7). Off by default; persisted by
+/// [PublicLiveLinkSetting] and read by LiveSessionCoordinator on each share.
+class _PublicLiveLinkToggleTile extends ConsumerStatefulWidget {
+  const _PublicLiveLinkToggleTile();
+
+  @override
+  ConsumerState<_PublicLiveLinkToggleTile> createState() =>
+      _PublicLiveLinkToggleTileState();
+}
+
+class _PublicLiveLinkToggleTileState
+    extends ConsumerState<_PublicLiveLinkToggleTile> {
+  bool _enabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PublicLiveLinkSetting.isEnabled().then((v) {
+      if (mounted) setState(() => _enabled = v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.link, color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.l10n.publicLiveLinkTitle,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.publicLiveLinkDesc,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          Switch(
+            value: _enabled,
+            onChanged: (v) {
+              setState(() => _enabled = v);
+              PublicLiveLinkSetting.setEnabled(v,
+                  uid: ref.read(currentUserProvider)?.uid);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Settings → Privacy & Safety: the opt-out for anonymous usage statistics
+/// (issues §83.27). Applies immediately and persists.
+class _AnalyticsToggleTile extends StatefulWidget {
+  const _AnalyticsToggleTile();
+
+  @override
+  State<_AnalyticsToggleTile> createState() => _AnalyticsToggleTileState();
+}
+
+class _AnalyticsToggleTileState extends State<_AnalyticsToggleTile> {
+  bool _enabled = AnalyticsService.instance.enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.insights_outlined, color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.l10n.shareUsageStats,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.shareUsageStatsDesc,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          Switch(
+            value: _enabled,
+            onChanged: (v) {
+              setState(() => _enabled = v);
+              AnalyticsService.instance.setEnabled(v);
+            },
           ),
         ],
       ),

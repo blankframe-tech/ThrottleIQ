@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["NJ4675FFUX.com.bft.throttleiq"],
+        "appID": "NJ4675FFUX.com.bft.throttleiq",
+        "components": [
+          { "/": "/ThrottleIQ/u/*", "comment": "Follow link (canonical)" },
+          { "/": "/throttleiq/u/*", "comment": "Follow link (lowercase)" },
+          { "/": "/u/*", "comment": "Follow link (Firebase Hosting mirror)" }
+        ],
+        "paths": ["/ThrottleIQ/u/*", "/throttleiq/u/*", "/u/*"]
+      }
+    ]
+  }
+}

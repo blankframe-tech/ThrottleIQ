@@ -83,7 +83,8 @@ int rideScoreOf(RideEntity ride) => computeRidingScore(
 List<RideEntity> sortRides(List<RideEntity> rides, RideSort sort) {
   final out = [...rides];
 
-  int byRecency(RideEntity a, RideEntity b) => b.startTime.compareTo(a.startTime);
+  int byRecency(RideEntity a, RideEntity b) =>
+      b.startTime.compareTo(a.startTime);
 
   switch (sort) {
     case RideSort.recent:

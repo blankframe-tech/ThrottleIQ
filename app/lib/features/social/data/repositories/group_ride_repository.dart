@@ -3,18 +3,49 @@ import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_join_code.dart';
+import '../../domain/utilities/group_ride_liveness.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
+import 'group_ride_live_channel.dart';
 
 /// Thrown by [GroupRideRepository.joinByCode] with a message fit to show the
 /// rider verbatim — "wrong/expired code" and "ride is full" are both real,
 /// distinct outcomes a rider should be told apart from a generic failure.
+/// Why a join attempt was refused.
+///
+/// The UI localizes from this rather than from [GroupRideJoinException.message]
+/// — a repository has no `BuildContext` and can't produce Bangla. Same shape
+/// as `recordingErrorText` in `ride/presentation/widgets/recording_gate.dart`:
+/// the English text stays as a diagnostic, the enum is what the screen reads.
+enum GroupRideJoinFailure { badCode, alreadyEnded, full, removed }
+
 class GroupRideJoinException implements Exception {
+  final GroupRideJoinFailure kind;
+
+  /// English, for logs and `toString()`. Never shown to a rider — see [kind].
   final String message;
-  const GroupRideJoinException(this.message);
+
+  const GroupRideJoinException(this.kind, this.message);
 
   @override
   String toString() => message;
+}
+
+/// What [GroupRideRepository.joinByCode] hands back on success.
+///
+/// Carries [creatorId] alongside the [groupRideId] the caller already needed
+/// to navigate, so the join sheet can fire
+/// `NotificationRepository.notifyGroupRideJoined` at the ride's creator
+/// without a second read — [joinByCode] already has the ride entity in hand
+/// at the point it succeeds.
+class GroupRideJoinResult {
+  final String groupRideId;
+  final String creatorId;
+
+  const GroupRideJoinResult({
+    required this.groupRideId,
+    required this.creatorId,
+  });
 }
 
 /// One rider picked in the "Ride with friends" friend picker, carried into
@@ -43,6 +74,15 @@ class GroupRideRepository {
   GroupRideRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  /// The RTDB movement channel, attached by `groupRideRepositoryProvider`.
+  /// Null (and every call below a no-op) until then — the repository is a
+  /// singleton constructed long before providers exist. Every lifecycle
+  /// write here (create, leave, kick, end, delete) keeps the RTDB node in
+  /// step, best-effort, after the Firestore write that matters.
+  GroupRideLiveChannel? _live;
+
+  void attachLiveChannel(GroupRideLiveChannel channel) => _live = channel;
 
   DocumentReference<Map<String, dynamic>> _rideRef(String groupRideId) =>
       _firestore.collection('groupRides').doc(groupRideId);
@@ -133,7 +173,13 @@ class GroupRideRepository {
       'groupRideId': groupRideRef.id,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await batch.commit();
+    // The RTDB `meta` claim goes out alongside, not after: its rules are
+    // create-once with no way to check Firestore, so it has to land while
+    // nobody but the creator knows this ride id.
+    await Future.wait([
+      batch.commit(),
+      if (_live != null) _live!.claimRide(groupRideRef.id, creatorId),
+    ]);
 
     return groupRideRef.id;
   }
@@ -177,6 +223,26 @@ class GroupRideRepository {
       if (!doc.exists || data == null) return null;
       return GroupRideModel.fromFirestore(data, doc.id).toEntity();
     });
+  }
+
+  /// Live view of every **active** group ride the signed-in rider currently
+  /// belongs to — what powers the Social feed's "Riding Now" strip.
+  ///
+  /// `memberIds` array-contains [uid] is the same field `firestore.rules`
+  /// already checks per-document for `get`/roster access; the `list` rule for
+  /// this collection was extended to allow exactly this shape (array-contains
+  /// on the caller's own uid, `status == 'active'`), never an unfiltered
+  /// query — see the rules comment on `groupRides`' `allow list`.
+  Stream<List<GroupRideEntity>> watchActiveGroupRidesForUser(String uid) {
+    return _firestore
+        .collection('groupRides')
+        .where('memberIds', arrayContains: uid)
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) =>
+                GroupRideModel.fromFirestore(doc.data(), doc.id).toEntity())
+            .toList());
   }
 
   /// Gets a group ride by ID, roster included.
@@ -227,7 +293,7 @@ class GroupRideRepository {
   /// refusal (unknown code, ride not active, ride full, already joined)
   /// rather than a generic failure, since these are all real, distinguishable
   /// outcomes worth telling apart on the confirm screen.
-  Future<String> joinByCode({
+  Future<GroupRideJoinResult> joinByCode({
     required String code,
     required String userId,
     required String userName,
@@ -235,16 +301,21 @@ class GroupRideRepository {
   }) async {
     final ride = await findRideByJoinCode(code);
     if (ride == null) {
-      throw const GroupRideJoinException('That code doesn\'t match a ride.');
+      throw const GroupRideJoinException(
+          GroupRideJoinFailure.badCode, "That code doesn't match a ride.");
     }
-    if (ride.status != GroupRideStatus.active) {
-      throw const GroupRideJoinException('This ride has already ended.');
+    // Liveness, not just `status`: a ride nobody closed out (creator's app
+    // killed mid-ride) is still `active` on the server but long over.
+    if (!isGroupRideLive(ride, now: DateTime.now())) {
+      throw const GroupRideJoinException(
+          GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
     }
     if (ride.memberIds.contains(userId)) {
-      return ride.id;
+      return GroupRideJoinResult(groupRideId: ride.id, creatorId: ride.creatorId);
     }
     if (ride.memberIds.length >= ride.maxParticipants) {
-      throw const GroupRideJoinException('This ride is full.');
+      throw const GroupRideJoinException(
+          GroupRideJoinFailure.full, 'This ride is full.');
     }
 
     final rideRef = _rideRef(ride.id);
@@ -254,13 +325,22 @@ class GroupRideRepository {
       final rideSnap = await txn.get(rideRef);
       final data = rideSnap.data();
       if (!rideSnap.exists || data == null || data['status'] != 'active') {
-        throw const GroupRideJoinException('This ride has already ended.');
+        throw const GroupRideJoinException(
+          GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
       }
       final memberIds = (data['memberIds'] as List<dynamic>?) ?? const [];
       if (memberIds.contains(userId)) return;
+      // Kicked by the creator (removeMember): the rules would refuse the
+      // write anyway (§90.D4); saying so beats a bare permission error.
+      final bannedIds = (data['bannedIds'] as List<dynamic>?) ?? const [];
+      if (bannedIds.contains(userId)) {
+        throw const GroupRideJoinException(GroupRideJoinFailure.removed,
+            'The ride creator removed you from this ride.');
+      }
       final cap = (data['maxParticipants'] as num?)?.toInt() ?? 20;
       if (memberIds.length >= cap) {
-        throw const GroupRideJoinException('This ride is full.');
+        throw const GroupRideJoinException(
+          GroupRideJoinFailure.full, 'This ride is full.');
       }
 
       txn.update(rideRef, {
@@ -278,7 +358,7 @@ class GroupRideRepository {
       );
     });
 
-    return ride.id;
+    return GroupRideJoinResult(groupRideId: ride.id, creatorId: ride.creatorId);
   }
 
   /// Gets upcoming group rides.
@@ -558,16 +638,85 @@ class GroupRideRepository {
     });
   }
 
-  /// Live view of a group ride's voice notes, oldest first.
-  Stream<List<VoiceNoteEntity>> watchVoiceNotes(String groupRideId) {
+  /// Live view of a group ride's most recent [limit] voice notes, oldest
+  /// first.
+  ///
+  /// Bounded (issues §90.A8): the only consumer, the group map, plays just
+  /// the notes sent after it opened and marks everything older as seen, so
+  /// re-reading a long ride's whole voice history on every (re)open bought
+  /// nothing.
+  Stream<List<VoiceNoteEntity>> watchVoiceNotes(
+    String groupRideId, {
+    int limit = 20,
+  }) {
     return _rideRef(groupRideId)
         .collection('voiceNotes')
-        .orderBy('createdAt')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
-        .map((snapshot) => snapshot.docs
+        .map((snapshot) => snapshot.docs.reversed
             .map((doc) =>
                 VoiceNoteModel.fromDocument(doc.data(), doc.id).toEntity())
             .toList());
+  }
+
+  /// One-shot read of the rides [watchActiveGroupRidesForUser] streams —
+  /// same query shape, so the same `list` rule and index serve it.
+  Future<List<GroupRideEntity>> getActiveGroupRidesForUser(String uid) async {
+    final snapshot = await _firestore
+        .collection('groupRides')
+        .where('memberIds', arrayContains: uid)
+        .where('status', isEqualTo: 'active')
+        .get();
+    return snapshot.docs
+        .map((doc) =>
+            GroupRideModel.fromFirestore(doc.data(), doc.id).toEntity())
+        .toList();
+  }
+
+  /// Marks the ride as still under way (`lastActiveAt` → now).
+  ///
+  /// Creator-only: firestore.rules' update clause 1 lets the creator write
+  /// any field but `creatorId`; every other clause is pinned to the uid
+  /// arrays, so a member's heartbeat would be refused. The creator is the
+  /// right source anyway — the ride ends when they leave.
+  Future<void> heartbeat(String groupRideId) async {
+    await _rideRef(groupRideId)
+        .update({'lastActiveAt': FieldValue.serverTimestamp()});
+  }
+
+  /// Heartbeats every active ride [uid] created. Called periodically while
+  /// the creator is recording, so a ride stays "live" even while the creator
+  /// sits on the ride cockpit rather than the group map.
+  Future<void> heartbeatCreatedRides(String uid) async {
+    final rides = await getActiveGroupRidesForUser(uid);
+    await Future.wait([
+      for (final ride in rides)
+        if (ride.creatorId == uid) heartbeat(ride.id),
+    ]);
+  }
+
+  /// Closes out every active group ride [uid] is on, because [uid] just
+  /// finished (or discarded) their recording.
+  ///
+  /// Nothing used to do this. Ending a ride from the cockpit only stopped the
+  /// local recorder; the only code that ever set `status: completed` was the
+  /// group map's Leave button. So every normally-finished group ride stayed
+  /// `active` forever and kept matching the Social feed's "Riding Now" query.
+  ///
+  /// The creator's rides are ended outright (they're the ride's anchor —
+  /// same as [leaveGroupRide] does for them); on anyone else's ride [uid]
+  /// simply leaves, so the rest of the group keeps riding. Best-effort per
+  /// ride: one refused write must not stop the rest.
+  Future<void> finishGroupRidesForUser(String uid) async {
+    final rides = await getActiveGroupRidesForUser(uid);
+    await Future.wait([
+      for (final ride in rides)
+        (ride.creatorId == uid
+                ? endGroupRide(ride.id)
+                : leaveGroupRide(groupRideId: ride.id, userId: uid))
+            .catchError((Object _) {}),
+    ]);
   }
 
   /// Starts a group ride (changes status to active).
@@ -583,8 +732,16 @@ class GroupRideRepository {
     await _firestore
         .collection('groupRides')
         .doc(groupRideId)
-        .update({'status': 'completed'});
+        .update(_endedFields());
+    await _live?.removeRide(groupRideId);
   }
+
+  /// What ending a ride writes. `endedAt` is informational (nothing reads it
+  /// yet); `status` is what takes the ride out of every "active" query.
+  Map<String, dynamic> _endedFields() => {
+        'status': 'completed',
+        'endedAt': FieldValue.serverTimestamp(),
+      };
 
   /// A rider removing *themselves* from a ride they joined ("Leave").
   ///
@@ -601,6 +758,7 @@ class GroupRideRepository {
     required String userId,
   }) async {
     final rideRef = _rideRef(groupRideId);
+    var endedRide = false;
 
     await _firestore.runTransaction((txn) async {
       final snap = await txn.get(rideRef);
@@ -608,7 +766,8 @@ class GroupRideRepository {
       final data = snap.data() ?? <String, dynamic>{};
 
       if (data['creatorId'] == userId) {
-        txn.update(rideRef, {'status': 'completed'});
+        txn.update(rideRef, _endedFields());
+        endedRide = true;
         return;
       }
 
@@ -623,6 +782,9 @@ class GroupRideRepository {
     try {
       await rideRef.collection('memberLocations').doc(userId).delete();
     } catch (_) {/* nothing published yet, or already gone */}
+    await (endedRide
+        ? _live?.removeRide(groupRideId)
+        : _live?.removeLocation(groupRideId, userId));
   }
 
   /// The creator removing somebody else from a ride ("kick"). See
@@ -655,6 +817,10 @@ class GroupRideRepository {
         // may write locations.
         'memberIds': FieldValue.arrayRemove([userId]),
         'invitedIds': FieldValue.arrayRemove([userId]),
+        // A kick is final for this ride: firestore.rules refuses a
+        // join-by-code from anyone listed here (issues §90.D4). Without it
+        // the kicked rider could simply re-enter the code.
+        'bannedIds': FieldValue.arrayUnion([userId]),
         if (legacy != null) 'members': legacy,
       });
     });
@@ -662,25 +828,33 @@ class GroupRideRepository {
     try {
       await rideRef.collection('memberLocations').doc(userId).delete();
     } catch (_) {/* nothing published yet, or already gone */}
+    // RTDB can't see `bannedIds`, so the kick is mirrored there too.
+    await _live?.ban(groupRideId, userId);
   }
 
   /// Deletes a group ride and everything hanging off it.
   Future<void> deleteGroupRide(String groupRideId) async {
     final docRef = _rideRef(groupRideId);
 
-    for (final subcollection in [
+    // Fetch every subcollection concurrently, then fire every delete at
+    // once — sequential await-per-doc used to stall proportionally to
+    // member/invite/voice-note count.
+    const subcollections = [
       'memberLocations',
       'invitations',
       'members',
       'voiceNotes',
-    ]) {
-      final snapshot = await docRef.collection(subcollection).get();
-      for (final doc in snapshot.docs) {
-        await doc.reference.delete();
-      }
-    }
+    ];
+    final snapshots = await Future.wait(
+      subcollections.map((name) => docRef.collection(name).get()),
+    );
+    await Future.wait([
+      for (final snapshot in snapshots)
+        for (final doc in snapshot.docs) doc.reference.delete(),
+    ]);
 
     // Delete the group ride
     await docRef.delete();
+    await _live?.removeRide(groupRideId);
   }
 }

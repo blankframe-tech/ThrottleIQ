@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Install ThrottleIQ — Machine Memory for Motorcycles</title>
+<meta name="description" content="Install ThrottleIQ for Android or join the iOS early access list. Machine memory for motorcycles.">
+<link rel="icon" href="../assets/icon-dark.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #090B0E;
+    --surf: #13171E;
+    --surf-card: #181E27;
+    --line: #262F3D;
+    --line-active: #3B82F6;
+    --text: #F3F5F8;
+    --text-sec: #9BA6B5;
+    --text-mut: #687484;
+    --blue: #3B82F6;
+    --blue-glow: rgba(59, 130, 246, 0.25);
+    --orange: #FF6A00;
+    --orange-glow: rgba(255, 106, 0, 0.20);
+    --lime: #C8FF3D;
+    --lime-glow: rgba(200, 255, 61, 0.20);
+    --green: #22C55E;
+    --danger: #FA4D56;
+    --danger-bg: rgba(250, 77, 86, 0.12);
+    --warn: #EAB532;
+    --warn-bg: rgba(234, 181, 50, 0.12);
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15), transparent 60%),
+      radial-gradient(circle at 10% 30%, rgba(255, 106, 0, 0.08), transparent 45%);
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .wrap {
+    max-width: 540px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+    padding-top: 12px;
+  }
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #000;
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .brand-name {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #FFF, #B4C0D0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .brand-tagline {
+    font-size: 13px;
+    color: var(--text-mut);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* Campaign pill */
+  .campaign-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-sec);
+    margin-top: 14px;
+  }
+  .campaign-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 8px var(--lime);
+  }
+
+  /* OS Switcher Tabs */
+  .os-selector {
+    display: flex;
+    background: var(--surf);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 24px;
+  }
+  .os-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-sec);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .os-btn.active {
+    background: var(--surf-card);
+    color: #FFF;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .os-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+  .os-btn.active.android svg { color: var(--green); }
+  .os-btn.active.ios svg { color: #FFF; }
+
+  /* Section Containers */
+  .view-section {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeIn 0.25s ease-out;
+  }
+  .view-section.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Cards */
+  .card {
+    background: var(--surf);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-recommended {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.04) 0%, var(--surf) 100%);
+  }
+  .card-experimental {
+    border-color: rgba(250, 77, 86, 0.35);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-rec { background: rgba(34, 197, 94, 0.15); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.3); }
+  .badge-exp { background: var(--danger-bg); color: #FF7B82; border: 1px solid rgba(250, 77, 86, 0.3); }
+  .badge-soon { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+  .card-title {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 14px;
+    color: var(--text-sec);
+    line-height: 1.48;
+    margin-bottom: 16px;
+  }
+
+  /* Warning Box */
+  .warning-box {
+    background: var(--danger-bg);
+    border: 1px solid rgba(250, 77, 86, 0.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #FFA4A8;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .warning-box svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--danger);
+    margin-top: 1px;
+  }
+
+  /* Notice Box (Yellow) */
+  .notice-box {
+    background: var(--warn-bg);
+    border: 1px solid rgba(234, 181, 50, 0.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #F8D377;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .notice-box svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--warn);
+    margin-top: 1px;
+  }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: linear-gradient(135deg, #2563EB, #3B82F6);
+    color: #FFF;
+    box-shadow: 0 4px 16px var(--blue-glow);
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-whatsapp {
+    background: linear-gradient(135deg, #15803D, #22C55E);
+    color: #FFF;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.25);
+  }
+  .btn-whatsapp:hover { filter: brightness(1.1); }
+  .btn-ghost {
+    background: var(--surf-card);
+    border-color: var(--line);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: var(--text-sec); }
+
+  /* Input Form */
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .input-field {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .input-field:focus { border-color: var(--blue); }
+  .input-field::placeholder { color: var(--text-mut); }
+
+  /* Small helper / sublinks */
+  .sublink {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-mut);
+  }
+  .sublink a {
+    color: var(--text-sec);
+    text-decoration: underline;
+  }
+  .sublink a:hover { color: #FFF; }
+
+  /* Countdown ticker */
+  .countdown-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--warn);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  /* Success toast */
+  .toast {
+    display: none;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid var(--green);
+    color: #86EFAC;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: auto;
+    text-align: center;
+    padding-top: 36px;
+    font-size: 12px;
+    color: var(--text-mut);
+    line-height: 1.6;
+  }
+  footer a { color: var(--text-sec); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- Header -->
+  <header>
+    <div class="brand-logo">
+      <div class="logo-icon">
+        <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 38C11.5 28 17.5 19 25 14C32.5 9 40 8 44 8" stroke="#C8FF3D" stroke-width="4" stroke-linecap="round"/>
+          <path d="M24 24L36 12" stroke="#FF6A00" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="24" cy="24" r="5" fill="#FFF"/>
+        </svg>
+      </div>
+      <div class="brand-name">ThrottleIQ</div>
+    </div>
+    <div class="brand-tagline mono">MACHINE MEMORY FOR MOTORCYCLES</div>
+    
+    <div id="campaign-badge" class="campaign-pill" style="display:none;">
+      <span class="campaign-dot"></span>
+      <span id="campaign-text" class="mono">CAMPAIGN</span>
+    </div>
+  </header>
+
+  <!-- OS Tabs -->
+  <div class="os-selector">
+    <button id="tab-android" class="os-btn android active" onclick="selectOS('android')">
+      <svg viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0002s.4482-.9993.9993-.9993c.5511 0 .9993.4477.9993.9993s-.4482 1.0002-.9993 1.0002m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0002s.4482-.9993.9993-.9993c.5511 0 .9993.4477.9993.9993s-.4482 1.0002-.9993 1.0002m11.4045-6.02l1.9963-3.4578a.416.416 0 00-.1523-.5676.416.416 0 00-.5681.1523l-2.0223 3.503C15.5902 8.4117 13.8533 8.077 12 8.077c-1.8533 0-3.5902.3347-5.1315.8742L4.8462 5.4483a.4162.4162 0 00-.5681-.1523.4158.4158 0 00-.1523.5676l1.9963 3.4578C2.689 11.233.328 15.2104.05 19.8055h23.9c-.278-4.5951-2.639-8.5725-6.0705-10.4841"/></svg>
+      Android
+    </button>
+    <button id="tab-ios" class="os-btn ios" onclick="selectOS('ios')">
+      <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.64 1.35-.57.65-1.07 1.7-0.94 2.72 1.01.08 2.04-.47 2.66-1.22z"/></svg>
+      iOS (iPhone)
+    </button>
+  </div>
+
+  <!-- ANDROID SECTION -->
+  <div id="section-android" class="view-section active">
+
+    <!-- Option 1: Direct APK Download -->
+    <div class="card card-experimental">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Option 1: Download APK (Direct)</div>
+          <div class="mono" style="font-size:12px; color:var(--text-mut);">BUILD: LATEST GITHUB RELEASE TAG</div>
+        </div>
+        <span class="badge badge-exp">Experimental</span>
+      </div>
+      <div class="card-desc">
+        Install the signed release APK directly onto your Android device from our official GitHub repository.
+      </div>
+      
+      <div class="warning-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01"/></svg>
+        <div>
+          <strong>Important Note:</strong> Once downloaded, direct APKs will <strong>not auto-update</strong> and may break things soon as experimental features evolve. Recommended for testing.
+        </div>
+      </div>
+
+      <a id="btn-apk" href="https://github.com/blankframe-tech/ThrottleIQ/releases/latest/download/app-release.apk" class="btn btn-primary" onclick="trackDownload('apk')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Download Latest APK (Beta)
+      </a>
+      <div class="sublink">
+        <a href="https://github.com/blankframe-tech/ThrottleIQ/releases/latest" target="_blank" rel="noopener">View release notes on GitHub →</a>
+      </div>
+    </div>
+
+    <!-- Option 2: Google Play Store (14-day Closed Beta) -->
+    <div class="card card-recommended">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Option 2: Google Play Store</div>
+          <div id="play-countdown" class="countdown-strip mono">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span id="countdown-days">14 DAYS</span> TESTER VERIFICATION PHASE
+          </div>
+        </div>
+        <span class="badge badge-rec">Recommended</span>
+      </div>
+
+      <div id="play-invite-container">
+        <div class="card-desc">
+          Google Play requires 14 days of closed tester verification before public release. Paste your Play Store email below to get invited to the official test track:
+        </div>
+
+        <div class="notice-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+          <div>
+            Once added to the tester list, you get seamless <strong>automatic updates</strong> and direct crash reporting through Google Play Store.
+          </div>
+        </div>
+
+        <div class="input-group">
+          <input type="email" id="play-email" class="input-field" placeholder="Your Google Play email (e.g. rider@gmail.com)">
+          <button class="btn btn-whatsapp" onclick="sendPlayStoreWhatsApp()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 012.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 01-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.4-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.59.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.12-.23-.19-.48-.31z"/></svg>
+            Request Invite via WhatsApp
+          </button>
+        </div>
+
+        <div class="sublink">
+          <a href="javascript:void(0)" onclick="sendPlayStoreEmail()">Prefer email? Send request by email →</a>
+        </div>
+        <div class="sublink" style="margin-top:6px;">
+          <a href="https://play.google.com/store/apps/details?id=com.bft.throttleiq" target="_blank" rel="noopener">Already invited? Open Google Play directly →</a>
+        </div>
+      </div>
+
+      <!-- Direct Play Store container (visible after 14 days) -->
+      <div id="play-direct-container" style="display:none;">
+        <div class="card-desc">
+          ThrottleIQ is live on Google Play Store! Click below to download and receive automatic updates:
+        </div>
+        <a href="https://play.google.com/store/apps/details?id=com.bft.throttleiq" target="_blank" rel="noopener" class="btn btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a2.43 2.43 0 01-.61-.318c-.604-.442-1-1.157-1-2.003V4.135c0-.846.396-1.56 1-2.003.18-.132.39-.243.609-.318zm11.604 11.607l2.67 2.67-11.89 6.786 9.22-9.456zm0-2.842L5.993 1.123 17.883 7.91l-2.67 2.67zm1.42 1.421l3.52-2.008c1.13-.645 1.13-1.7 0-2.345l-3.52-2.008-2.67 2.67 2.67 2.691z"/></svg>
+          Open in Google Play Store
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- IOS SECTION -->
+  <div id="section-ios" class="view-section">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Apple App Store</div>
+          <div class="mono" style="font-size:12px; color:var(--blue);">IPHONE & APPLE WATCH</div>
+        </div>
+        <span class="badge badge-soon">Coming Soon</span>
+      </div>
+
+      <div class="card-desc">
+        ThrottleIQ for iOS is currently in development and closed TestFlight testing. Enter your email below to get early access the day it drops on the App Store:
+      </div>
+
+      <div class="notice-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+        <div>
+          iOS riders get the exact same offline-first ride recorder, crash alert signatures, and machine memory garage logs.
+        </div>
+      </div>
+
+      <div class="input-group">
+        <input type="email" id="ios-email" class="input-field" placeholder="Enter your email address">
+        <button class="btn btn-primary" onclick="submitIOSEarlyAccess()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Notify Me for Early Access
+        </button>
+      </div>
+
+      <div id="ios-toast" class="toast">
+        ✔ You're on the list! We'll email you the TestFlight / App Store invite.
+      </div>
+
+      <div class="sublink" style="margin-top:14px;">
+        <a href="https://wa.me/8801327045005?text=Hi%20Abrar!%20I'm%20an%20iPhone%20rider%20and%20I'd%20love%20to%20test%20the%20ThrottleIQ%20iOS%20TestFlight%20build." target="_blank" rel="noopener">Have TestFlight? Request direct beta access on WhatsApp →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div><strong>ThrottleIQ</strong> — Machine Memory for Motorcycles</div>
+    <div style="margin-top:4px;">Built with ❤️ in Dhaka for Bangladesh roads</div>
+    <div style="margin-top:8px;">
+      <a href="../privacy.html">Privacy Policy</a> · 
+      <a href="../index.html">Product Tour</a> · 
+      <a href="https://github.com/blankframe-tech/ThrottleIQ" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div style="margin-top:6px;" class="mono">BlankFrame Technologies · Dhaka, BD</div>
+  </footer>
+</div>
+
+<script>
+  // 1. Parse Campaign query param (?c=...)
+  const params = new URLSearchParams(window.location.search);
+  const campaign = params.get('c') || 'direct';
+
+  const CAMPAIGN_NAMES = {
+    family_safety: '🛡️ ফ্যামিলি সেফটি নেটওয়ার্ক',
+    bondhu_koi: '📻 কনভয় রাডার — বন্ধু তুমি কই?',
+    gentle_biker: '🕊️ ভদ্র রাইডার টেলমেট্রি ভেরিফিকেশন',
+    tour_fuel: '⛽ খাঁটি তেলের হাইওয়ে ডিরেক্টরি',
+    chapabaj_proof: '📊 চাপাবাজি বন্ধ — টেলমেট্রি প্রুফ',
+    biker_reunion: '☕ রাইডার রিইউনিয়ন ও ক্যাফে ফাইন্ডার',
+    ai_camera: '📸 এআই স্পিড ক্যামেরা রাডার',
+    cost_per_km: '💰 প্রতি কিমি আসল খরচের অডিট',
+    gixxer_benchmark: '🏍️ Suzuki Gixxer ওনার বেঞ্চমার্ক',
+    fzs_benchmark: '🏍️ Yamaha FZ-S ওনার বেঞ্চমার্ক',
+    r15_benchmark: '🏍️ Yamaha R15 স্পোর্টস টেলমেট্রি',
+    pulsar_benchmark: '🏍️ Bajaj Pulsar ওনার বেঞ্চমার্ক',
+    signal_jam: '⏱️ সিগন্যাল জ্যাম কাউন্টার',
+    pump_maint: '🔧 ফ্রি মেইনটেন্যান্স ট্র্যাকার',
+    garage_proof: '🛠️ গ্যারেজ সার্ভিস প্রুফ',
+    review_garage: '⭐ গ্যারেজ ও পাম্প রিভিউ',
+    street_blackbox: '🚨 অফলাইন ব্ল্যাকবক্স সেফটি',
+    community_crew: '👥 বাইকার ক্রু ও কমিউনিটি',
+    highway_telemetry: '⚡ হাইওয়ে টেলমেট্রি ও স্পিড',
+    privacy_shield: '🔒 প্রাইভেসি জোন শিল্ড',
+    resale_passport: '📋 ডিজিটাল বাইক পাসপোর্ট',
+    offline_deadzone: '📡 অফলাইন-ফার্স্ট ট্র্যাকার',
+    fatigue_alert: '☕ ফ্যাটিগ মনিটর ও রেস্ট অ্যালার্ট',
+    group_beacon: '📍 লাইভ গ্রুপ বিকন'
+  };
+  
+  if (campaign && campaign !== 'direct') {
+    const badge = document.getElementById('campaign-badge');
+    const text = document.getElementById('campaign-text');
+    badge.style.display = 'inline-flex';
+    text.textContent = CAMPAIGN_NAMES[campaign] || ('CAMP: ' + campaign.toUpperCase().replace(/_/g, ' '));
+  }
+
+
+  // 2. 14-Day Google Play testing timeline logic
+  // Testing start: 2026-09-06
+  const TEST_START = new Date('2026-09-06T00:00:00+06:00').getTime();
+  const TEST_DURATION_MS = 14 * 24 * 60 * 60 * 1000;
+  const TEST_END = TEST_START + TEST_DURATION_MS;
+  const now = Date.now();
+
+  if (now >= TEST_END) {
+    document.getElementById('play-invite-container').style.display = 'none';
+    document.getElementById('play-countdown').style.display = 'none';
+    document.getElementById('play-direct-container').style.display = 'block';
+  } else {
+    const daysLeft = Math.max(1, Math.ceil((TEST_END - now) / (1000 * 60 * 60 * 24)));
+    document.getElementById('countdown-days').textContent = daysLeft + (daysLeft === 1 ? ' DAY' : ' DAYS');
+  }
+
+  // 3. OS Detection
+  function detectOS() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    if (/android/i.test(ua)) {
+      return 'android';
+    }
+    if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      return 'ios';
+    }
+    return 'android'; // Default to Android in BD
+  }
+
+  function selectOS(os) {
+    document.getElementById('tab-android').classList.toggle('active', os === 'android');
+    document.getElementById('tab-ios').classList.toggle('active', os === 'ios');
+    document.getElementById('section-android').classList.toggle('active', os === 'android');
+    document.getElementById('section-ios').classList.toggle('active', os === 'ios');
+  }
+
+  // Initialize view based on detected OS
+  selectOS(detectOS());
+
+  // 4. Action Handlers
+  function sendPlayStoreWhatsApp() {
+    const emailInput = document.getElementById('play-email');
+    const email = emailInput.value.trim();
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid Google Play email address first.');
+      emailInput.focus();
+      return;
+    }
+    const msg = 'Hi Abrar! I want to join the ThrottleIQ Google Play closed beta tester list. My Google Play email is: ' + email + ' (Campaign: ' + campaign + ')';
+    const url = 'https://wa.me/8801327045005?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+  }
+
+  function sendPlayStoreEmail() {
+    const email = document.getElementById('play-email').value.trim() || '[Your Email]';
+    const subject = encodeURIComponent('ThrottleIQ Google Play Beta Tester Request');
+    const body = encodeURIComponent('Hi Abrar,\n\nI want to join the ThrottleIQ Google Play closed beta.\nGoogle Play Account Email: ' + email + '\nSource Campaign: ' + campaign + '\n\nThanks!');
+    window.location.href = 'mailto:hello@blankframe.tech?subject=' + subject + '&body=' + body;
+  }
+
+  function submitIOSEarlyAccess() {
+    const emailInput = document.getElementById('ios-email');
+    const email = emailInput.value.trim();
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address.');
+      emailInput.focus();
+      return;
+    }
+    // Save locally
+    try {
+      const saved = JSON.parse(localStorage.getItem('tiq_ios_early_access') || '[]');
+      saved.push({ email, date: new Date().toISOString(), campaign });
+      localStorage.setItem('tiq_ios_early_access', JSON.stringify(saved));
+    } catch(e){}
+
+    const toast = document.getElementById('ios-toast');
+    toast.style.display = 'block';
+    emailInput.value = '';
+  }
+
+  function trackDownload(type) {
+    console.log('Download initiated: ' + type + ' (campaign: ' + campaign + ')');
+  }
+</script>
+
+</body>
+</html>

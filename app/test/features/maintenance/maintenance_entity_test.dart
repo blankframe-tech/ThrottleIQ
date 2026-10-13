@@ -33,13 +33,20 @@ void main() {
       expect(ServiceTypeExt.fromString(''), ServiceType.custom);
     });
 
-    // These names are persisted in SQLite, so renaming one silently orphans
-    // every already-logged row. Pin the original four explicitly.
-    test('the pre-existing type names are unchanged', () {
+    test('the pre-existing type names are unchanged and fuel is pinned', () {
       expect(ServiceType.oilChange.name, 'oilChange');
       expect(ServiceType.airFilter.name, 'airFilter');
       expect(ServiceType.chain.name, 'chain');
       expect(ServiceType.tire.name, 'tire');
+      expect(ServiceType.fuel.name, 'fuel');
+    });
+
+    test('fuel service type is properly configured', () {
+      expect(ServiceType.fuel.label, 'Fuel');
+      expect(ServiceType.fuel.category, MaintenanceCategory.engine);
+      expect(ServiceType.fuel.defaultIntervalKm, 300.0);
+      expect(ServiceType.fuel.isRecommendedDefault, isTrue);
+      expect(_log(type: ServiceType.fuel).displayLabel, 'Fuel');
     });
 
     test('every type has a non-empty label', () {
@@ -111,21 +118,45 @@ void main() {
         serviceType: ServiceType.oilChange,
         intervalKm: 1500,
         isEnabled: true,
+        notes: 'Castrol Power1 10W-40',
       );
 
-      final modified = config.copyWith(intervalKm: 2000, isEnabled: false);
+      final modified = config.copyWith(
+        intervalKm: 2000,
+        isEnabled: false,
+        notes: 'Motul 7100 10W-40',
+      );
       expect(modified.intervalKm, 2000);
       expect(modified.isEnabled, false);
       expect(modified.bikeId, 'bike-1');
       expect(modified.serviceType, ServiceType.oilChange);
+      expect(modified.notes, 'Motul 7100 10W-40');
 
       const clone = MaintenanceConfigEntity(
         bikeId: 'bike-1',
         serviceType: ServiceType.oilChange,
         intervalKm: 1500,
         isEnabled: true,
+        notes: 'Castrol Power1 10W-40',
       );
       expect(config, equals(clone));
+    });
+  });
+
+  group('MaintenanceConfigEntity key', () {
+    test('built-in checks are keyed by type, custom checks by id', () {
+      const builtIn = MaintenanceConfigEntity(
+          bikeId: 'b', serviceType: ServiceType.tire, intervalKm: 1000);
+      const custom = MaintenanceConfigEntity(
+        bikeId: 'b',
+        serviceType: ServiceType.custom,
+        intervalKm: 5000,
+        customId: 'abc',
+        customLabel: 'Steering bearings',
+      );
+      expect(builtIn.key, 'tire');
+      expect(custom.key, 'custom:abc');
+      expect(custom.isCustom, isTrue);
     });
   });
 }

@@ -95,7 +95,7 @@ const COLLECTIONS = [
     name: 'rides',
     note:
       'Shared/public ride feed (top-level, NOT users/{uid}/rides). ' +
-      'Subcollections: likes, votes, comments.',
+      'Subcollections: votes, comments (plus legacy `likes`).',
   },
   { name: 'forums', note: 'Forum threads. Subcollections: posts -> (votes, replies).' },
   { name: 'forum_follows', note: 'Forum follow edges.' },

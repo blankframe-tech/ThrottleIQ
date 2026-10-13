@@ -17,6 +17,13 @@ class BikeModel {
             : null,
         odometerKm: (m['odometer_km'] as num?)?.toDouble(),
         colorValue: m['color_value'] as int?,
+        // Absent on cloud docs written before v15 and on any bike that was
+        // never archived (see CloudRepository.bikePayload).
+        isArchived: (m['archived'] as num?)?.toInt() == 1,
+        isEbike: (m['is_ebike'] as num?)?.toInt() == 1,
+        archivedAt: m['archived_at'] != null
+            ? DateTime.tryParse(m['archived_at'] as String)
+            : null,
         createdAt: DateTime.parse(m['created_at'] as String),
       );
 
@@ -34,6 +41,9 @@ class BikeModel {
         'last_ride_at': e.lastRideAt?.toIso8601String(),
         'odometer_km': e.odometerKm,
         'color_value': e.colorValue,
+        'archived': e.isArchived ? 1 : 0,
+        'is_ebike': e.isEbike ? 1 : 0,
+        'archived_at': e.archivedAt?.toIso8601String(),
         'synced': 0,
         'created_at': e.createdAt.toIso8601String(),
       };
