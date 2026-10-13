@@ -159,7 +159,7 @@
              detector (auto_tracking_service.dart), replacing the paid
              flutter_background_geolocation plugin as of 2026-08-28 — see
              that file's doc comment and
-             docs/archives/flutter_background_geolocation-2026-08-28/. Unlike
+             DOCS/old/archives/flutter_background_geolocation-2026-08-28/. Unlike
              the plugin this replaces, this one does NOT merge its own
              service declaration in automatically; it must be declared here,
              with the exact name below (per the library's own install

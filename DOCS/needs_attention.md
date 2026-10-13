@@ -56,7 +56,7 @@ auto-tracking daily summary. It has **not been tested on a device**. Device chec
 - [x] **Profile tab:** renamed to "Garage" — built, §102.
 - [x] **Dates in Bangla:** English-style dates in the Bangla font — built, §102.
 - [ ] **Blocking (§83.18) and Cloudinary uploads (§83.16):** how far to go on Spark — see
-      `DOCS/DEBT_FIX_PLAN.md` §6 and §7.
+      `DOCS/old/DEBT_FIX_PLAN.md` §6 and §7.
 - [ ] **Pitch Slide 9:** does the team on the slide exist? The deck still claims working crash
       detection. Off-limits to agents unless you ask.
 

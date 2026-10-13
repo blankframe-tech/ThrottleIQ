@@ -276,7 +276,7 @@ class _AutoTrackingTaskHandler extends TaskHandler {
 /// adopted 2026-08-28 to avoid the licence purchase while the product is
 /// pre-revenue (see `HANDOFF_Document.md`'s backlog for the paid
 /// plugin's pros/cons, and
-/// `DOCS/For Devs and Contributors/archives/flutter_background_geolocation-2026-08-28/` for its old
+/// `DOCS/old/archives/flutter_background_geolocation-2026-08-28/` for its old
 /// implementation, kept in case the paid plugin is worth revisiting later).
 /// It combines three free (MIT) pieces instead of one paid one:
 ///

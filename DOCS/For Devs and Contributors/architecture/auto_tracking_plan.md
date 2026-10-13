@@ -425,7 +425,7 @@ decision to stay on the free tier for roughly the next three months. Full
 writeup in `issues_fixed.md` §50; pros/cons for revisiting the paid plugin later
 are in `HANDOFF_Document.md`'s Feature Backlog, under "Automatic ride
 tracking"; the old implementation is archived at
-`DOCS/For Devs and Contributors/archives/flutter_background_geolocation-2026-08-28/`.
+`DOCS/old/archives/flutter_background_geolocation-2026-08-28/`.
 
 This does not change anything else in this document — Parts 0–5 above
 describe the detection/reconciliation architecture, which the swap left

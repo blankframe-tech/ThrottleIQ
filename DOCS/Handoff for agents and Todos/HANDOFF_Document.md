@@ -23,7 +23,7 @@ _Last updated: 2026-10-09 · Branch: `experimental`_
 - New always-on rule `.agents/rules/efficiency-tools.md`: always use ponytail + caveman (`retro-guard.sh` UserPromptSubmit hook warns if missing); `retro-statusline.sh` shows `chat N% of 5h limit` and flags 60%+, after which Claude asks the user to type `/retro` (mattpocock-skills plugin, user-invocable only; installed in claude-hat, install for -work/-biz). Uncommitted at time of writing.
 - Deploy skill now records that team `NJ4675FFUX` is a personal Apple team (no Associated Domains, push, iCloud, Sign in with Apple); deploy docs say `main`, not `master`.
 - CI: format check on changed Dart files; guard against paid-only iOS entitlements. Session Dart files were formatted once to start green (pure formatting, plus braces on four `if`s in `ui_tour_test.dart`).
-- One-off `patch_*`/`fix_*`/`update_*` scripts moved to `scripts/archive/`. Dependabot limited to minor/patch, 3 open PRs per ecosystem; 13 PRs from the earlier config are still open.
+- One-off `patch_*`/`fix_*`/`update_*` scripts moved to `DOCS/old/scripts-archive/`. Dependabot limited to minor/patch, 3 open PRs per ecosystem; 13 PRs from the earlier config are still open.
 
 ## 2026-10-09: themes, rides analytics, badge rarity, follow-QR, tour v4 — working tree on `experimental`, not committed
 
@@ -143,7 +143,7 @@ _Last updated: 2026-10-09 · Branch: `experimental`_
 ## 2026-10-07: maintenance redesign — committed `238d12b`, released as `beta-v4.1` (1.0.0-beta.4.1.0+22)
 
 - **Release `beta-v4.1`:** the AAB and APK are attached on GitHub. The iOS release build was installed on the founder's iPhone 15, but iOS refused to launch it until the developer profile is trusted on the device (Settings → General → VPN & Device Management). Nothing was tested on a device yet.
-- **Docs sweep (2026-10-07):** for the new version, test count, schema v20 and the maintenance redesign, these were updated: `README.md`, `arch.md`, `DOCS/needs_attention.md`, `DOCS/BIGGG_JOBB.md`, `DOCS/DEBT_FIX_PLAN.md`, the iOS widget README, the store listing and the press fact sheet. Pitch and gov-pitch submissions were left as written, since they are submitted documents.
+- **Docs sweep (2026-10-07):** for the new version, test count, schema v20 and the maintenance redesign, these were updated: `README.md`, `arch.md`, `DOCS/needs_attention.md`, `DOCS/old/BIGGG_JOBB.md`, `DOCS/DEBT_FIX_PLAN.md`, the iOS widget README, the store listing and the press fact sheet. Pitch and gov-pitch submissions were left as written, since they are submitted documents.
 
 The maintenance page is rebuilt as a forecast ("what does my bike need next, and
 when?") instead of a km checklist. The proposal it implements is the
@@ -387,7 +387,7 @@ the same command succeeded on the first attempt (Xcode build 65.1s,
 install+launch 7.6s). Lesson for next time: skip wireless for a release
 install on this device, go straight to USB.
 
-> **Picking up the work?** Read [`DOCS/BIGGG_JOBB.md`](../BIGGG_JOBB.md)
+> **Picking up the work?** Read [`DOCS/old/BIGGG_JOBB.md`](../old/BIGGG_JOBB.md)
 > first — it carries the ordered work queue, the verification gates and a
 > traps section. This document is the status record; that one is the plan.
 
