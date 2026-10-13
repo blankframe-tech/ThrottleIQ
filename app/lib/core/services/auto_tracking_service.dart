@@ -59,8 +59,8 @@ class _AutoTrackingTaskHandler extends TaskHandler {
     // preserved here out of caution even though flutter_foreground_task's own
     // FlutterEngine is expected to register plugins itself.
     DartPluginRegistrant.ensureInitialized();
-    _activitySub =
-        ar.FlutterActivityRecognition.instance.activityStream.listen(_onActivity);
+    _activitySub = ar.FlutterActivityRecognition.instance.activityStream
+        .listen(_onActivity);
   }
 
   /// A ride-shaped activity report from the platform classifier.
@@ -184,9 +184,10 @@ class _AutoTrackingTaskHandler extends TaskHandler {
           );
     _positionSub =
         Geolocator.getPositionStream(locationSettings: settings).listen(
-      (position) => unawaited(
-          AutoTrackingService.guardedFix(() => _onFix(position))),
-      onError: (Object error) => debugPrint('[auto-tracking] position error $error'),
+      (position) =>
+          unawaited(AutoTrackingService.guardedFix(() => _onFix(position))),
+      onError: (Object error) =>
+          debugPrint('[auto-tracking] position error $error'),
     );
   }
 
@@ -600,7 +601,8 @@ class AutoTrackingService {
       timestamp: position.timestamp,
       lat: position.latitude,
       lng: position.longitude,
-      speedMs: (!position.speed.isFinite || position.speed < 0) ? 0 : position.speed,
+      speedMs:
+          (!position.speed.isFinite || position.speed < 0) ? 0 : position.speed,
       accuracyM: position.accuracy,
       altitudeM: position.altitude,
       headingDeg: position.heading < 0 ? null : position.heading,
