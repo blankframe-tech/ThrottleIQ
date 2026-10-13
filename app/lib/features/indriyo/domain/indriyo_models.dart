@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum ThreatLevel {
   clear,
   monitoring,
-  warning,  // Amber: Vehicle in Blind Spot
+  warning, // Amber: Vehicle in Blind Spot
   critical, // Flashing Red: Collision Imminent (TTC < 1.8s)
 }
 

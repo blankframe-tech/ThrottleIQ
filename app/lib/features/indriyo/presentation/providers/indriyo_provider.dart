@@ -10,7 +10,8 @@ class IndriyoSettings {
 
   const IndriyoSettings({
     this.isHudVisible = false,
-    this.isSimulationMode = true, // Default to demo simulation so user can test immediately
+    this.isSimulationMode =
+        true, // Default to demo simulation so user can test immediately
     this.streamUrl = 'http://192.168.4.1:81/stream',
     this.audioAlertsEnabled = true,
   });

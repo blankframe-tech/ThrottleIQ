@@ -104,7 +104,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: borderColor,
-              width: threatState.highestThreat == ThreatLevel.critical ? 5 : 2.5,
+              width:
+                  threatState.highestThreat == ThreatLevel.critical ? 5 : 2.5,
             ),
             boxShadow: [
               if (threatState.highestThreat != ThreatLevel.clear)
@@ -157,7 +158,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -171,7 +173,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFF9D00),
                               borderRadius: BorderRadius.circular(4),
@@ -188,7 +191,9 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            settings.isSimulationMode ? 'DEMO SIMULATOR' : 'LIVE TAIL CAM',
+                            settings.isSimulationMode
+                                ? 'DEMO SIMULATOR'
+                                : 'LIVE TAIL CAM',
                             style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: 10,
@@ -218,7 +223,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                                 color: Colors.white.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close, size: 14, color: Colors.white),
+                              child: const Icon(Icons.close,
+                                  size: 14, color: Colors.white),
                             ),
                           ),
                         ],
@@ -232,7 +238,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
               if (threatState.criticalCollision && _flashController.value > 0.5)
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF2A4B),
                       borderRadius: BorderRadius.circular(8),
@@ -243,7 +250,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                        const Icon(Icons.warning_amber_rounded,
+                            color: Colors.white, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'COLLISION RISK! TTC ${threatState.minTtc.toStringAsFixed(1)}s',
@@ -265,7 +273,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   color: const Color(0xD906090E),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -275,9 +284,11 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                           Icon(
                             Icons.circle,
                             size: 8,
-                            color: threatState.highestThreat == ThreatLevel.critical
+                            color: threatState.highestThreat ==
+                                    ThreatLevel.critical
                                 ? const Color(0xFFFF2A4B)
-                                : (threatState.highestThreat == ThreatLevel.warning
+                                : (threatState.highestThreat ==
+                                        ThreatLevel.warning
                                     ? const Color(0xFFFF9D00)
                                     : const Color(0xFF30D158)),
                           ),
@@ -285,13 +296,16 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
                           Text(
                             threatState.highestThreat == ThreatLevel.critical
                                 ? 'CRITICAL EVASION ALERT'
-                                : (threatState.highestThreat == ThreatLevel.warning
+                                : (threatState.highestThreat ==
+                                        ThreatLevel.warning
                                     ? 'BLIND SPOT OCCUPIED'
                                     : 'MONITORING REAR CORRIDOR'),
                             style: TextStyle(
-                              color: threatState.highestThreat == ThreatLevel.critical
+                              color: threatState.highestThreat ==
+                                      ThreatLevel.critical
                                   ? const Color(0xFFFF2A4B)
-                                  : (threatState.highestThreat == ThreatLevel.warning
+                                  : (threatState.highestThreat ==
+                                          ThreatLevel.warning
                                       ? const Color(0xFFFF9D00)
                                       : const Color(0xFF30D158)),
                               fontSize: 10,
@@ -405,14 +419,17 @@ class _SimulatedRoadPainter extends CustomPainter {
     final centerX = size.width * 0.5;
 
     // Road lane boundary lines
-    canvas.drawLine(Offset(centerX, vanishY), Offset(size.width * 0.1, size.height), paint);
-    canvas.drawLine(Offset(centerX, vanishY), Offset(size.width * 0.9, size.height), paint);
+    canvas.drawLine(
+        Offset(centerX, vanishY), Offset(size.width * 0.1, size.height), paint);
+    canvas.drawLine(
+        Offset(centerX, vanishY), Offset(size.width * 0.9, size.height), paint);
 
     // Center dash line
     final dashPaint = Paint()
       ..color = const Color(0x44FFFFFF)
       ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(centerX, vanishY), Offset(centerX, size.height), dashPaint);
+    canvas.drawLine(
+        Offset(centerX, vanishY), Offset(centerX, size.height), dashPaint);
   }
 
   @override
