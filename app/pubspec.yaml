@@ -112,7 +112,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
 
   # Home-screen widgets (Android App Widget / iOS WidgetKit bridge)
-  home_widget: ^0.6.0
+  home_widget: ^0.10.0
 
   # Storage
   shared_preferences: ^2.2.3
