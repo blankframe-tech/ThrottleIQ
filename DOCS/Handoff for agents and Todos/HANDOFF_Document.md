@@ -1,8 +1,16 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-09 · Branch: `experimental`_
+_Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-09 (latest): one quality gate + per-family analytics charts — `experimental`, not pushed
+## 2026-10-13 (latest): dependabot merged, stale docs moved, branches synced — pushed
+
+- **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
+- **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.
+- **Docs:** stale material moved to `DOCS/old/` (see its README): `scripts/archive/`, `archives/`, `ANTIGRAVRITY_GRILL/`, `issues_solved.md`, `uiux_critique.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`, `setup-android.*`. Live links updated; historical logs keep the old paths. The 2026-09-21 triage order is now in `DOCS/old/DEBT_FIX_PLAN.md`.
+- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (superseded by `_v3`, still wired in `scripts/package.json`).
+- **Gate note:** `check.sh`'s format check compares against `origin/main`, so touching a Dart file also requires it to be `dart format`-clean (it caught `auto_tracking_service.dart`).
+
+## 2026-10-09: one quality gate + per-family analytics charts — `experimental`, not pushed
 
 - **`scripts/check.sh` is the only gate.** It runs l10n, a format check on changed files, the CI guards (`as double`, bare-catch ratchet at 66, paid-only entitlements), `flutter analyze`, the full `flutter test`, and the rules/functions suites when those changed. Every check runs and it reports one summary. A passing clean commit is stamped (`.git/throttleiq-check-passed`); a re-run, or a later docs-only commit, returns at once.
 - **Automatic:** `.githooks/pre-push` runs the gate unless the pushed commit is already covered. `core.hooksPath` is set by `check.sh` itself and by a Claude SessionStart hook. CI's flutter job calls `check.sh --ci`. `deploy.sh` now commits, gates, then pushes. The QA rule says: focused tests while iterating, the gate once per change set or after the last merge.
