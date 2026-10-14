@@ -1727,7 +1727,7 @@ abstract class AppLocalizations {
   /// Text in active_ride_screen.
   ///
   /// In en, this message translates to:
-  /// **'Are you OK? Your emergency contacts will be notified when the timer ends.'**
+  /// **'Are you OK? If you don\'t answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.'**
   String get okEmergencyContactsWill;
 
   /// Text in active_ride_screen.
@@ -7911,7 +7911,7 @@ abstract class AppLocalizations {
   /// Crash-alert notification body; {seconds} is the countdown.
   ///
   /// In en, this message translates to:
-  /// **'Contacting your emergency contacts in {seconds}s unless you tap \"I\'m OK\".'**
+  /// **'Tap \"I\'m OK\" within {seconds}s if you\'re fine. ThrottleIQ does not contact anyone for you.'**
   String notifCrashBody(int seconds);
 
   /// Action button on the crash alert.

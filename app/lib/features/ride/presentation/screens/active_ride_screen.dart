@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
@@ -55,10 +56,10 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
     // signal for the route: the underlying list is mutated in place by the
     // notifier and so is reference-stable, which a plain select() on
     // `polyline` would read as "unchanged" forever.
-    final version = ref.watch(
-        rideRecordingProvider.select((s) => s.polylineVersion));
-    final position = ref.watch(
-        rideRecordingProvider.select((s) => s.currentPosition));
+    final version =
+        ref.watch(rideRecordingProvider.select((s) => s.polylineVersion));
+    final position =
+        ref.watch(rideRecordingProvider.select((s) => s.currentPosition));
     final polyline = ref.read(rideRecordingProvider).polyline;
     final places = ref.watch(liveRidePlacesProvider);
     // The saved route being followed, when there is one (issues §78.21).
@@ -190,7 +191,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   @override
   void initState() {
     super.initState();
-    _alertCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _alertCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
     _alertColor = ColorTween(begin: Colors.transparent, end: Colors.transparent)
         .animate(_alertCtrl);
   }
@@ -242,7 +244,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
 
       // See _shareButtonKey's doc comment for why this is computed at all.
       Rect? origin;
-      final box = _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+      final box =
+          _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
       if (box != null && box.hasSize) {
         origin = box.localToGlobal(Offset.zero) & box.size;
       }
@@ -271,13 +274,16 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.share, color: sheetContext.palette.textPrimary),
-              title: Text(AppLocalizations.of(sheetContext).liveShareAgainAction,
+              leading:
+                  Icon(Icons.share, color: sheetContext.palette.textPrimary),
+              title: Text(
+                  AppLocalizations.of(sheetContext).liveShareAgainAction,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.pop(sheetContext, 'share'),
             ),
             ListTile(
-              leading: Icon(Icons.location_off, color: sheetContext.palette.danger),
+              leading:
+                  Icon(Icons.location_off, color: sheetContext.palette.danger),
               title: Text(AppLocalizations.of(sheetContext).liveShareStopAction,
                   style: TextStyle(color: sheetContext.palette.danger)),
               subtitle: Text(
@@ -338,9 +344,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   void _recordRouteRidden(RideEntity? ride) {
     final routeId = ride?.routeId;
     if (ride == null || routeId == null) return;
-    unawaited(RouteRepository()
-        .incrementTimesRidden(ride.userId, routeId)
-        .then((_) {
+    unawaited(
+        RouteRepository().incrementTimesRidden(ride.userId, routeId).then((_) {
       // The list and the detail screen both render the counter.
       ref.invalidate(myRoutesProvider);
       ref.invalidate(routeByIdProvider);
@@ -373,7 +378,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(ctx.l10n.discard, style: TextStyle(color: ctx.palette.danger)),
+            child: Text(ctx.l10n.discard,
+                style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -408,7 +414,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     if (rideState.status == RecordingStatus.idle ||
         rideState.status == RecordingStatus.completed) {
       if (!_endingRide) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/home/record'));
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => context.go('/home/record'));
       }
       return const SizedBox.shrink();
     }
@@ -424,8 +431,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final isPaused = rideState.status == RecordingStatus.paused;
     // A second narrow watch rather than a field on the record above: this
     // flips at most twice a ride, so rebuilding the frame for it is free.
-    final sharingLive = ref.watch(
-        rideRecordingProvider.select((s) => s.liveSessionToken != null));
+    final sharingLive = ref
+        .watch(rideRecordingProvider.select((s) => s.liveSessionToken != null));
 
     return Scaffold(
       body: Stack(
@@ -510,7 +517,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [context.palette.background, context.palette.background.withValues(alpha: 0)],
+                  colors: [
+                    context.palette.background,
+                    context.palette.background.withValues(alpha: 0)
+                  ],
                 ),
               ),
               child: Row(
@@ -572,7 +582,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [context.palette.background, context.palette.background.withValues(alpha: 0)],
+                  colors: [
+                    context.palette.background,
+                    context.palette.background.withValues(alpha: 0)
+                  ],
                 ),
               ),
               child: Column(
@@ -588,7 +601,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: context.palette.primary.withValues(alpha: 0.65),
+                                      color: context.palette.primary
+                                          .withValues(alpha: 0.65),
                                       blurRadius: 26,
                                       spreadRadius: 1,
                                     ),
@@ -601,13 +615,21 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                             onPressed: rideState.transitionPending
                                 ? null
                                 : isPaused
-                                    ? () => ref.read(rideRecordingProvider.notifier).resumeRide()
-                                    : () => ref.read(rideRecordingProvider.notifier).pauseRide(),
-                            icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                            label: Text(isPaused ? context.l10n.resume : context.l10n.pause),
+                                    ? () => ref
+                                        .read(rideRecordingProvider.notifier)
+                                        .resumeRide()
+                                    : () => ref
+                                        .read(rideRecordingProvider.notifier)
+                                        .pauseRide(),
+                            icon:
+                                Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                            label: Text(isPaused
+                                ? context.l10n.resume
+                                : context.l10n.pause),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(0, 52),
-                              backgroundColor: isPaused ? context.palette.surface : null,
+                              backgroundColor:
+                                  isPaused ? context.palette.surface : null,
                               foregroundColor: context.palette.primary,
                               side: BorderSide(color: context.palette.primary),
                             ),
@@ -635,10 +657,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   // it that keeps everything.
                   TextButton.icon(
                     onPressed: _cancelRide,
-                    icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textSecondary),
+                    icon: Icon(Icons.delete_outline,
+                        size: 18, color: context.palette.textSecondary),
                     label: Text(
                       context.l10n.discardRide,
-                      style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                          color: context.palette.textSecondary, fontSize: 13),
                     ),
                   ),
                 ],
@@ -665,8 +689,8 @@ class _JamLabelControl extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(canLabelJamsProvider)) return const SizedBox.shrink();
-    final active = ref.watch(
-        rideRecordingProvider.select((s) => s.status == RecordingStatus.active));
+    final active = ref.watch(rideRecordingProvider
+        .select((s) => s.status == RecordingStatus.active));
     final open = ref.watch(jamLabelProvider);
     if (!active && open == null) return const SizedBox.shrink();
 
@@ -697,7 +721,8 @@ class _JamLabelControl extends ConsumerWidget {
           label: Text('$label  ·  ${context.l10n.jamLabelBetaTag}'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(0, 48),
-            foregroundColor: open == null ? palette.textPrimary : palette.background,
+            foregroundColor:
+                open == null ? palette.textPrimary : palette.background,
             backgroundColor: open == null ? palette.surface : palette.warning,
             side: BorderSide(color: palette.warning),
           ),
@@ -737,66 +762,67 @@ class _SpeedPanel extends ConsumerWidget {
             : 0.0);
 
     return Positioned(
-    bottom: 160,
-    left: 0,
-    right: 0,
-    child: Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: context.palette.surface.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: context.palette.border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Real GPS fixes arrive in discrete steps (every few
-            // hundred ms to a couple seconds, depending on speed and
-            // signal — see _startLocationStream's tuning notes) so a
-            // plain Text here visibly jumps between values. Tweening
-            // toward each new reading instead of snapping to it
-            // makes the number feel continuous even though the
-            // underlying fixes aren't — reported as "speed updates
-            // feel slow," and tightening the GPS settings alone
-            // still leaves discrete jumps between real fixes.
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: speedKmh, end: speedKmh),
-              duration: const Duration(milliseconds: 450),
-              curve: Curves.easeOut,
-              builder: (context, value, child) => Text(
-                value.toStringAsFixed(0),
-                style: display(context, 64, weight: FontWeight.w700, letterSpacing: -3, height: 1),
+      bottom: 160,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: context.palette.surface.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.palette.border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Real GPS fixes arrive in discrete steps (every few
+              // hundred ms to a couple seconds, depending on speed and
+              // signal — see _startLocationStream's tuning notes) so a
+              // plain Text here visibly jumps between values. Tweening
+              // toward each new reading instead of snapping to it
+              // makes the number feel continuous even though the
+              // underlying fixes aren't — reported as "speed updates
+              // feel slow," and tightening the GPS settings alone
+              // still leaves discrete jumps between real fixes.
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: speedKmh, end: speedKmh),
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.easeOut,
+                builder: (context, value, child) => Text(
+                  value.toStringAsFixed(0),
+                  style: display(context, 64,
+                      weight: FontWeight.w700, letterSpacing: -3, height: 1),
+                ),
               ),
-            ),
-            Text('km/h', style: AppTypography.cockpitLabel(context)),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _RideStat(
-                    label: context.l10n.distanceLabel,
-                    value: SpeedFormatter.distanceKm(s.distanceM)),
-                const SizedBox(width: 24),
-                _RideStat(
-                    label: context.l10n.avgSpeed,
-                    value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
-                if (s.confidence > 0) ...[
+              Text('km/h', style: AppTypography.cockpitLabel(context)),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _RideStat(
+                      label: context.l10n.distanceLabel,
+                      value: SpeedFormatter.distanceKm(s.distanceM)),
                   const SizedBox(width: 24),
                   _RideStat(
-                      label: context.l10n.confidence,
-                      value: '${s.confidence}%'),
+                      label: context.l10n.avgSpeed,
+                      value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                  if (s.confidence > 0) ...[
+                    const SizedBox(width: 24),
+                    _RideStat(
+                        label: context.l10n.confidence,
+                        value: '${s.confidence}%'),
+                  ],
                 ],
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Sensor G-force indicator
-            _GForceBar(accelMs2: accel),
-          ],
+              ),
+              const SizedBox(height: 8),
+              // Sensor G-force indicator
+              _GForceBar(accelMs2: accel),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 
@@ -807,14 +833,22 @@ class _RideClock extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elapsed =
-        ref.watch(rideRecordingProvider.select((s) => s.elapsed));
+    final elapsed = ref.watch(rideRecordingProvider.select((s) => s.elapsed));
     return Text(
       SpeedFormatter.durationFromDuration(elapsed),
       style: AppTypography.cockpitValue(context),
     );
   }
 }
+
+/// Whether the crash takeover may show. Its copy describes a detector that
+/// is off in every build (CrtiQue_Oct14 B11), so it needs the same flag.
+@visibleForTesting
+bool showCrashOverlay({
+  required bool detected,
+  bool detectorOn = SensorConstants.impactDetectorLiveEnabled,
+}) =>
+    detectorOn && detected;
 
 /// Shows [_CrashOverlay] while a crash countdown is running, and nothing
 /// otherwise. Separate so the once-a-second countdown doesn't drag the rest
@@ -826,10 +860,13 @@ class _CrashOverlayGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final crash = ref.watch(rideRecordingProvider.select(
         (s) => (detected: s.crashDetected, countdown: s.crashCountdown)));
-    if (!crash.detected) return const SizedBox.shrink();
+    if (!showCrashOverlay(detected: crash.detected)) {
+      return const SizedBox.shrink();
+    }
     return _CrashOverlay(
       countdown: crash.countdown,
-      onImOk: () => ref.read(rideRecordingProvider.notifier).dismissCrashAlert(),
+      onImOk: () =>
+          ref.read(rideRecordingProvider.notifier).dismissCrashAlert(),
     );
   }
 }
@@ -857,11 +894,13 @@ class _RecoveredBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(context.l10n.rideKeptFromLast, style: display(context, 14, letterSpacing: 0)),
+                Text(context.l10n.rideKeptFromLast,
+                    style: display(context, 14, letterSpacing: 0)),
                 const SizedBox(height: 2),
                 Text(
                   context.l10n.resumeCarryDiscardIt,
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -873,8 +912,9 @@ class _RecoveredBanner extends StatelessWidget {
 }
 
 /// Full-screen "Are you OK?" takeover shown when crash detection fires.
-/// Counts down from 60; if it reaches 0 the provider notifies emergency
-/// contacts. The big I'M OK button dismisses and logs a false positive.
+/// Counts down from 60; if it reaches 0 the provider records a crash alert
+/// (delivery to contacts is not built). The big I'M OK button dismisses and
+/// logs a false positive.
 class _CrashOverlay extends StatelessWidget {
   final int countdown;
   final VoidCallback onImOk;
@@ -974,12 +1014,15 @@ class _GForceBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(context.l10n.brakeCaps, style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
+            Text(context.l10n.brakeCaps,
+                style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
             Text(
               '${gForce.abs().toStringAsFixed(2)}g',
-              style: AppTypography.cockpitValue(context, color: color, weight: FontWeight.w600),
+              style: AppTypography.cockpitValue(context,
+                  color: color, weight: FontWeight.w600),
             ),
-            Text(context.l10n.accelCaps, style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
+            Text(context.l10n.accelCaps,
+                style: AppTypography.cockpitLabel(context, letterSpacing: 0.5)),
           ],
         ),
         const SizedBox(height: 4),
@@ -993,7 +1036,8 @@ class _GForceBar extends StatelessWidget {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Container(width: 2, height: 6, color: context.palette.textTertiary),
+                  child: Container(
+                      width: 2, height: 6, color: context.palette.textTertiary),
                 ),
               ),
               // Fill from center
@@ -1001,7 +1045,9 @@ class _GForceBar extends StatelessWidget {
                 left: fraction < 0.5
                     ? fraction * MediaQuery.sizeOf(context).width * 0.4
                     : MediaQuery.sizeOf(context).width * 0.4 * 0.5,
-                width: (fraction - 0.5).abs() * MediaQuery.sizeOf(context).width * 0.4,
+                width: (fraction - 0.5).abs() *
+                    MediaQuery.sizeOf(context).width *
+                    0.4,
                 top: 0,
                 bottom: 0,
                 child: Container(color: color),
@@ -1041,9 +1087,18 @@ class _AlertBanner extends StatelessWidget {
     // the wrong thing to leave untranslated (issues §83.23).
     final l10n = AppLocalizations.of(context);
     final (message, color) = switch (alert) {
-      RideAlert.hardBraking => (l10n.rideAlertHardBraking, context.palette.danger),
-      RideAlert.rapidAccel => (l10n.rideAlertRapidAccel, context.palette.attention),
-      RideAlert.overspeed => (l10n.rideAlertOverspeed, context.palette.attention),
+      RideAlert.hardBraking => (
+          l10n.rideAlertHardBraking,
+          context.palette.danger
+        ),
+      RideAlert.rapidAccel => (
+          l10n.rideAlertRapidAccel,
+          context.palette.attention
+        ),
+      RideAlert.overspeed => (
+          l10n.rideAlertOverspeed,
+          context.palette.attention
+        ),
       RideAlert.fatigue => (l10n.rideAlertFatigue, context.palette.primary),
       _ => ('', context.palette.primary),
     };
@@ -1054,25 +1109,27 @@ class _AlertBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(99),
         border: Border.all(color: context.palette.border),
         boxShadow: [
-          BoxShadow(color: context.palette.ink.withValues(alpha: 0.06), blurRadius: 12),
+          BoxShadow(
+              color: context.palette.ink.withValues(alpha: 0.06),
+              blurRadius: 12),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 8, height: 8,
+          Container(
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 10),
           Flexible(
-            child: Text(message,
-                style: display(context, 14, letterSpacing: 0)),
+            child: Text(message, style: display(context, 14, letterSpacing: 0)),
           ),
         ],
       ),
     );
   }
 }
-
 
 /// Top-bar pill on the cockpit linking to the live group ride's map and
 /// push-to-talk. Renders nothing unless the rider is on a live group ride

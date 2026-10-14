@@ -897,7 +897,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get okEmergencyContactsWill =>
-      'আপনি কি ঠিক আছেন? টাইমার শেষ হলে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+      'আপনি কি ঠিক আছেন? টাইমার শেষ হওয়ার আগে উত্তর না দিলে রাইডটি সম্ভাব্য দুর্ঘটনা হিসেবে সেভ হবে। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।';
 
   @override
   String get seconds => 'সেকেন্ড';
@@ -4458,7 +4458,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String notifCrashBody(int seconds) {
-    return 'আপনি \"আমি ঠিক আছি\"-তে ট্যাপ না করলে $seconds সেকেন্ডের মধ্যে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+    return 'আপনি ঠিক থাকলে $seconds সেকেন্ডের মধ্যে \"আমি ঠিক আছি\"-তে ট্যাপ করুন। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।';
   }
 
   @override

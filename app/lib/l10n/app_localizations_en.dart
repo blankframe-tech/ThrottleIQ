@@ -895,7 +895,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get okEmergencyContactsWill =>
-      'Are you OK? Your emergency contacts will be notified when the timer ends.';
+      'Are you OK? If you don\'t answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.';
 
   @override
   String get seconds => 'seconds';
@@ -4478,7 +4478,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String notifCrashBody(int seconds) {
-    return 'Contacting your emergency contacts in ${seconds}s unless you tap \"I\'m OK\".';
+    return 'Tap \"I\'m OK\" within ${seconds}s if you\'re fine. ThrottleIQ does not contact anyone for you.';
   }
 
   @override

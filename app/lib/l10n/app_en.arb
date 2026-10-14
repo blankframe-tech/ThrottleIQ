@@ -1165,7 +1165,7 @@
   "@crashDetected": {
     "description": "Text in active_ride_screen."
   },
-  "okEmergencyContactsWill": "Are you OK? Your emergency contacts will be notified when the timer ends.",
+  "okEmergencyContactsWill": "Are you OK? If you don't answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.",
   "@okEmergencyContactsWill": {
     "description": "Text in active_ride_screen."
   },
@@ -6200,7 +6200,7 @@
   "@notifCrashTitle": {
     "description": "Crash-alert notification title."
   },
-  "notifCrashBody": "Contacting your emergency contacts in {seconds}s unless you tap \"I'm OK\".",
+  "notifCrashBody": "Tap \"I'm OK\" within {seconds}s if you're fine. ThrottleIQ does not contact anyone for you.",
   "@notifCrashBody": {
     "description": "Crash-alert notification body; {seconds} is the countdown.",
     "placeholders": {
