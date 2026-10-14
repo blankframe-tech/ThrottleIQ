@@ -8654,6 +8654,46 @@
   "@tourProfileSafeQrBody": {
     "description": "Feature tour, profile step: explains SafeQR."
   },
+  "tourForumsFindTitle": "Find your bike's forum",
+  "@tourForumsFindTitle": {
+    "description": "Feature tour, forums-only community step: finding a forum."
+  },
+  "tourForumsFindBody": "Brand and model hubs, plus forums other riders started. Search by bike or topic.",
+  "@tourForumsFindBody": {
+    "description": "Feature tour, forums-only community step: finding a forum."
+  },
+  "tourForumsAskTitle": "Ask and answer",
+  "@tourForumsAskTitle": {
+    "description": "Feature tour, forums-only community step: posting."
+  },
+  "tourForumsAskBody": "Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution.",
+  "@tourForumsAskBody": {
+    "description": "Feature tour, forums-only community step: posting."
+  },
+  "tourForumsBikeTitle": "Show your bike",
+  "@tourForumsBikeTitle": {
+    "description": "Feature tour, forums-only community step: attachments."
+  },
+  "tourForumsBikeBody": "Attach your bike or a maintenance log to a post, so others know exactly what you ride.",
+  "@tourForumsBikeBody": {
+    "description": "Feature tour, forums-only community step: attachments."
+  },
+  "tourGarageSubtitleNoTracking": "Every bike you own, each with its own odometer and service history.",
+  "@tourGarageSubtitleNoTracking": {
+    "description": "Feature tour, garage step subtitle when ride tracking is off (no rides)."
+  },
+  "tourGarageActiveBodyNoTracking": "Maintenance opens on the active bike. Switch it any time.",
+  "@tourGarageActiveBodyNoTracking": {
+    "description": "Feature tour, garage step, active bike, when ride tracking is off."
+  },
+  "tourGarageDetailBodyNoTracking": "Tap a bike to add a photo and edit its specs.",
+  "@tourGarageDetailBodyNoTracking": {
+    "description": "Feature tour, garage step, bike details, when ride tracking is off."
+  },
+  "tourProfileSubtitleNoSocial": "Your public page: stats and garage.",
+  "@tourProfileSubtitleNoSocial": {
+    "description": "Feature tour, profile step subtitle when the rider turned off follows (community Forums only or Off)."
+  },
   "fuelTitle": "Fuel",
   "@fuelTitle": {
     "description": "Heading of the fuel card on bike detail."

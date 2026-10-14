@@ -6290,6 +6290,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.';
 
   @override
+  String get tourForumsFindTitle => 'Find your bike\'s forum';
+
+  @override
+  String get tourForumsFindBody =>
+      'Brand and model hubs, plus forums other riders started. Search by bike or topic.';
+
+  @override
+  String get tourForumsAskTitle => 'Ask and answer';
+
+  @override
+  String get tourForumsAskBody =>
+      'Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution.';
+
+  @override
+  String get tourForumsBikeTitle => 'Show your bike';
+
+  @override
+  String get tourForumsBikeBody =>
+      'Attach your bike or a maintenance log to a post, so others know exactly what you ride.';
+
+  @override
+  String get tourGarageSubtitleNoTracking =>
+      'Every bike you own, each with its own odometer and service history.';
+
+  @override
+  String get tourGarageActiveBodyNoTracking =>
+      'Maintenance opens on the active bike. Switch it any time.';
+
+  @override
+  String get tourGarageDetailBodyNoTracking =>
+      'Tap a bike to add a photo and edit its specs.';
+
+  @override
+  String get tourProfileSubtitleNoSocial =>
+      'Your public page: stats and garage.';
+
+  @override
   String get fuelTitle => 'Fuel';
 
   @override

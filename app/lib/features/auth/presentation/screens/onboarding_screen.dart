@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -71,6 +72,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   /// Current tour slide index (0-based within [onboardingSlides]).
   int _tourSlide = 0;
+
+  /// Slides in this rider's tour: fewer than [kOnboardingSlideCount] when
+  /// they turned modules off in Settings → Your ThrottleIQ. Set by [_buildTour].
+  int _slideCount = kOnboardingSlideCount;
 
   @override
   void initState() {
@@ -182,7 +187,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _goToSlide(int index) {
     if (!_pageCtrl.hasClients) return;
     _pageCtrl.animateToPage(
-      index.clamp(0, kOnboardingSlideCount - 1),
+      index.clamp(0, _slideCount - 1),
       duration: _pageDuration,
       curve: Curves.easeOutCubic,
     );
@@ -193,7 +198,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _advanceTour() async {
-    if (_tourSlide < kOnboardingSlideCount - 1) {
+    if (_tourSlide < _slideCount - 1) {
       _goToSlide(_tourSlide + 1);
     } else {
       // Last slide — finish tour
@@ -211,7 +216,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     ref.read(activeTourGuideProvider.notifier).state = TourGuideState(
       currentSlideIndex: slideIndex,
-      totalSlides: kOnboardingSlideCount,
+      totalSlides: _slideCount,
       featureKey: slide.featureKey,
       title: slide.title,
       showMeRoute: route,
@@ -449,7 +454,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final slides = onboardingSlides(
       context.l10n,
       showJamLabelling: ref.watch(canLabelJamsProvider),
+      modules: ref.watch(appModulesProvider),
     );
+    // A module turned off on a "Show me" trip to Settings shrinks the list
+    // under the current page.
+    _slideCount = slides.length;
+    _tourSlide = _tourSlide.clamp(0, _slideCount - 1);
     final slide = slides[_tourSlide];
     final accent = slide.accent.resolve(context.palette);
 
@@ -462,7 +472,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
               child: TourProgressHeader(
                 current: _tourSlide,
-                total: kOnboardingSlideCount,
+                total: _slideCount,
                 accent: accent,
                 demoMode: widget.demoMode,
                 onSkip: _skipTour,
@@ -473,7 +483,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 key: const ValueKey('tour-pages'),
                 controller: _pageCtrl,
                 onPageChanged: (i) => setState(() => _tourSlide = i),
-                itemCount: kOnboardingSlideCount,
+                itemCount: _slideCount,
                 itemBuilder: (context, i) => OnboardingSlidePage(
                   key: ValueKey(slides[i].featureKey),
                   slide: slides[i],
@@ -484,7 +494,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: TourControls(
                 isFirst: _tourSlide == 0,
-                isLast: _tourSlide == kOnboardingSlideCount - 1,
+                isLast: _tourSlide == _slideCount - 1,
                 onBack: _backTour,
                 onNext: _advanceTour,
                 onShowMe: slide.showMeRoute == null

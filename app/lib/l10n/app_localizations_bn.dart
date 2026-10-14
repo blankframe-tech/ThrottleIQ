@@ -6255,6 +6255,43 @@ class AppLocalizationsBn extends AppLocalizations {
       'সেটিংসে রক্তের গ্রুপ ও জরুরি যোগাযোগসহ একটি স্ক্যানযোগ্য কার্ড তৈরি করুন, যা উদ্ধারকারীদের কাজে আসবে।';
 
   @override
+  String get tourForumsFindTitle => 'আপনার বাইকের ফোরাম খুঁজুন';
+
+  @override
+  String get tourForumsFindBody =>
+      'ব্র্যান্ড ও মডেলের হাব, আর অন্য রাইডারদের খোলা ফোরাম। বাইক বা বিষয় দিয়ে খুঁজুন।';
+
+  @override
+  String get tourForumsAskTitle => 'প্রশ্ন করুন, উত্তর দিন';
+
+  @override
+  String get tourForumsAskBody =>
+      'সমস্যা, DIY গাইড বা গিয়ার রিভিউ পোস্ট করুন। যে উত্তরে সমাধান হয়েছে, সেটি সমাধান হিসেবে চিহ্নিত হয়।';
+
+  @override
+  String get tourForumsBikeTitle => 'আপনার বাইক দেখান';
+
+  @override
+  String get tourForumsBikeBody =>
+      'পোস্টে আপনার বাইক বা রক্ষণাবেক্ষণ লগ যুক্ত করুন, যাতে সবাই জানে আপনি ঠিক কোন বাইক চালান।';
+
+  @override
+  String get tourGarageSubtitleNoTracking =>
+      'আপনার প্রতিটি বাইক, প্রত্যেকটির আলাদা ওডোমিটার ও সার্ভিস ইতিহাসসহ।';
+
+  @override
+  String get tourGarageActiveBodyNoTracking =>
+      'মেইনটেন্যান্স সক্রিয় বাইক দিয়ে খোলে। যেকোনো সময় বদলাতে পারবেন।';
+
+  @override
+  String get tourGarageDetailBodyNoTracking =>
+      'ছবি যোগ করতে ও স্পেসিফিকেশন বদলাতে বাইকে ট্যাপ করুন।';
+
+  @override
+  String get tourProfileSubtitleNoSocial =>
+      'আপনার পাবলিক পেজ: পরিসংখ্যান ও গ্যারেজ।';
+
+  @override
   String get fuelTitle => 'জ্বালানি';
 
   @override

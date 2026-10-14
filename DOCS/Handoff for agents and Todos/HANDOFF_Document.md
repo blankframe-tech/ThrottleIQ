@@ -20,7 +20,8 @@ _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indri
 
 - Merged to `main` by fast-forward; `modular-throttleiq` deleted locally and on origin. Gate green (2149 tests). With nothing turned off the app behaves as before.
 - Settings → **Your ThrottleIQ**: Community (Everything / Forums only / Off), Places & routes, Ride tracking. Details in `features.md` ("Your ThrottleIQ — app modules").
-- Not done: the feature tour still offers Social/Places/Record steps when those are off (Show me just lands on the home tab); forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
+- Feature tour follows the modules too (follow-up commit): steps for an off module are left out, the forums-only rider gets a Forums step, garage/profile/record steps drop callouts about off modules, and the tour's mini nav shows the rider's real tabs (Forums, Maintenance). `kOnboardingManifestVersion` not bumped: the all-on tour is unchanged.
+- Not done: forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
 
 ## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 

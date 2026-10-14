@@ -1714,3 +1714,14 @@ reportCrashBody
 reportCrashSaved
 crashResearchTitle
 crashResearchDesc
+# batch: feature tour for Your ThrottleIQ modules
+tourForumsFindTitle
+tourForumsFindBody
+tourForumsAskTitle
+tourForumsAskBody
+tourForumsBikeTitle
+tourForumsBikeBody
+tourGarageSubtitleNoTracking
+tourGarageActiveBodyNoTracking
+tourGarageDetailBodyNoTracking
+tourProfileSubtitleNoSocial

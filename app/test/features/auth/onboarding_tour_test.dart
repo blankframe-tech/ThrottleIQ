@@ -163,6 +163,30 @@ void main() {
         find.text(_en.tourStepCounter(2, kOnboardingSlideCount)), findsWidgets);
   });
 
+  testWidgets('a rider with ride tracking off gets a tour of only their app',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'module_ride_tracking': false});
+    await _setSize(tester, const Size(390, 844));
+    await tester.pumpWidget(_app());
+    await _settle(tester);
+
+    // Garage, Maintenance, Places, Social, Profile.
+    expect(find.text(_en.tourStepCounter(1, 5)), findsWidgets);
+    expect(find.text(_en.tourGarageTitle), findsOneWidget);
+    expect(find.text(_en.tourRecordTitle), findsNothing);
+    // The mini nav mirrors the rider's own: Maintenance in, Record and Rides out.
+    expect(find.text(_en.maintenance), findsWidgets);
+    expect(find.text(_en.navRecordLabel), findsNothing);
+    expect(find.text(_en.navRidesLabel), findsNothing);
+
+    await _tap(tester, 'tour-next');
+    expect(find.text(_en.tourMaintenanceTitle), findsOneWidget);
+    await _tap(tester, 'tour-show-me');
+    expect(find.text('screen:/home/maintenance'), findsOneWidget);
+    expect(find.text(_en.tourStepCounter(2, 5)), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('beta riders see the jam-labelling callout on the cockpit step',
       (tester) async {
     await _setSize(tester, const Size(390, 844));
