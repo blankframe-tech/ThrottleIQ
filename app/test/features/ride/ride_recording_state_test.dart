@@ -27,8 +27,17 @@ void main() {
     });
 
     test('an explicit error still wins over keepError', () {
-      final next = blocked.copyWith(error: 'Permission denied', keepError: true);
+      final next =
+          blocked.copyWith(error: 'Permission denied', keepError: true);
       expect(next.error, 'Permission denied');
+    });
+
+    test('imuAxisCalibrated defaults off and persists', () {
+      const s = RideRecordingState();
+      expect(s.imuAxisCalibrated, isFalse,
+          reason: 'the g readout stays hidden until the axis is known');
+      final calibrated = s.copyWith(imuAxisCalibrated: true);
+      expect(calibrated.copyWith(distanceM: 10).imuAxisCalibrated, isTrue);
     });
 
     test('every other field follows the usual null-means-keep rule', () {

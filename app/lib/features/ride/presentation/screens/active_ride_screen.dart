@@ -751,6 +751,7 @@ class _SpeedPanel extends ConsumerWidget {
           elapsed: s.elapsed,
           confidence: s.confidence,
           sensorAccelMs2: s.sensorAccelMs2,
+          imuAxisCalibrated: s.imuAxisCalibrated,
         )));
 
     final speedKmh = s.currentSpeedMs * 3.6;
@@ -815,9 +816,12 @@ class _SpeedPanel extends ConsumerWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 8),
-              // Sensor G-force indicator
-              _GForceBar(accelMs2: accel),
+              // Sensor G-force indicator, only once the IMU axis is known:
+              // before that a phone in a pocket reads its own jolts as g.
+              if (s.imuAxisCalibrated) ...[
+                const SizedBox(height: 8),
+                _GForceBar(accelMs2: accel),
+              ],
             ],
           ),
         ),

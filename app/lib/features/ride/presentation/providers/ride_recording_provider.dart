@@ -122,6 +122,11 @@ class RideRecordingState {
   /// (see [copyWith]).
   final RecordingBlockKind blockKind;
   final double sensorAccelMs2;
+
+  /// Whether [AccelAxisCalibrator] has found the bike's forward axis. Until
+  /// it has, [sensorAccelMs2] is the dominant axis at full magnitude (a
+  /// pocket jolt reads as braking), so the cockpit hides its g readout.
+  final bool imuAxisCalibrated;
   final bool crashDetected;
   final int crashCountdown; // Seconds remaining (60 to 0)
   final String? liveSessionToken;
@@ -157,6 +162,7 @@ class RideRecordingState {
     this.error,
     this.blockKind = RecordingBlockKind.none,
     this.sensorAccelMs2 = 0,
+    this.imuAxisCalibrated = false,
     this.crashDetected = false,
     this.crashCountdown = 60,
     this.liveSessionToken,
@@ -188,6 +194,7 @@ class RideRecordingState {
     bool keepError = false,
     RecordingBlockKind? blockKind,
     double? sensorAccelMs2,
+    bool? imuAxisCalibrated,
     bool? crashDetected,
     int? crashCountdown,
     String? liveSessionToken,
@@ -215,6 +222,7 @@ class RideRecordingState {
       blockKind:
           blockKind ?? (keepError ? this.blockKind : RecordingBlockKind.none),
       sensorAccelMs2: sensorAccelMs2 ?? this.sensorAccelMs2,
+      imuAxisCalibrated: imuAxisCalibrated ?? this.imuAxisCalibrated,
       crashDetected: crashDetected ?? this.crashDetected,
       crashCountdown: crashCountdown ?? this.crashCountdown,
       liveSessionToken: clearLiveSessionToken
@@ -637,7 +645,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       detector: _detector,
       onUiPush: (filteredAccel) {
         if (mounted) {
-          state = state.copyWith(sensorAccelMs2: filteredAccel);
+          state = state.copyWith(
+            sensorAccelMs2: filteredAccel,
+            imuAxisCalibrated: _sensorCoordinator.axisCalibrator.isCalibrated,
+          );
         }
       },
       onAlertTriggered: (alert) {
