@@ -24,21 +24,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get appearanceSection => 'অ্যাপের চেহারা';
 
   @override
-  String get vibeFieldLabel => 'ভাইব';
-
-  @override
-  String get vibeBoxyLabel => 'বক্সি';
-
-  @override
-  String get vibeBoxyDescription => 'ধারালো কোণ';
-
-  @override
-  String get vibeCurvyLabel => 'কার্ভি';
-
-  @override
-  String get vibeCurvyDescription => 'গোল কোণ';
-
-  @override
   String get brightnessFieldLabel => 'উজ্জ্বলতা';
 
   @override
@@ -58,51 +43,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get brightnessSystemDescription => 'ফোনের সেটিং অনুসরণ করুন';
-
-  @override
-  String get colorFieldLabel => 'রং';
-
-  @override
-  String get themeSportLabel => 'স্পোর্ট';
-
-  @override
-  String get themeSportDescription => 'লাইম আর ম্যাজেন্টা, কার্বন প্যানেল';
-
-  @override
-  String get themeRainLabel => 'রেইন';
-
-  @override
-  String get themeRainDescription => 'গাঢ় নীল সন্ধ্যা, বেগুনি আর টিল';
-
-  @override
-  String get themeRaceLabel => 'রেস';
-
-  @override
-  String get themeRaceDescription => 'রেস পোস্টার, সরিষা ও মরিচা রং';
-
-  @override
-  String get themeCommuteLabel => 'কমিউট';
-
-  @override
-  String get themeCommuteDescription => 'শান্ত ক্রিম, সবুজ আর বাদামি';
-
-  @override
-  String get themeTourLabel => 'ট্যুর';
-
-  @override
-  String get themeTourDescription => 'ঝলমলে কমলা আর আকাশি নীল';
-
-  @override
-  String get themeAdvLabel => 'এডিভি';
-
-  @override
-  String get themeAdvDescription => 'নেভি কনসোল, সায়ান মিটার';
-
-  @override
-  String get themeCityLabel => 'সিটি';
-
-  @override
-  String get themeCityDescription => 'কাগজের উষ্ণতা, নীল আর কমলা';
 
   @override
   String get languageSection => 'ভাষা';
@@ -948,9 +888,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsCaps => 'সেটিংস';
-
-  @override
-  String get slideStartRide => 'রাইড শুরু করতে স্লাইড করুন';
 
   @override
   String get close => 'বন্ধ করুন';
@@ -5954,11 +5891,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'একা চালান, অথবা গ্রুপ রাইড শুরু করে বন্ধুদের আমন্ত্রণ জানান বা জয়েন কোড শেয়ার করুন।';
 
   @override
-  String get tourRecordStartTitle => 'শুরু করতে চেপে ধরুন বা স্লাইড করুন';
+  String get tourRecordStartTitle => 'শুরু করতে চেপে ধরুন';
 
   @override
   String get tourRecordStartBody =>
-      'স্টার্ট রিং চেপে ধরুন (বক্সি স্টাইলে বারটি স্লাইড করুন), যাতে ভুল ছোঁয়ায় রাইড শুরু না হয়।';
+      'স্টার্ট রিং চেপে ধরুন, যাতে ভুল ছোঁয়ায় রাইড শুরু না হয়।';
 
   @override
   String get tourCockpitTitle => 'আপনার লাইভ ককপিট';

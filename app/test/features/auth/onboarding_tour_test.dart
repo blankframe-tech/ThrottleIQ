@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme.dart';
-import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:throttleiq/features/auth/presentation/screens/onboarding_manifest.dart';
@@ -180,26 +178,18 @@ void main() {
     expect(find.text(_en.jamLabelBetaTag), findsOneWidget);
   });
 
-  testWidgets('renders every step in every color mode, shape and brightness',
-      (tester) async {
+  testWidgets('renders every step in both themes', (tester) async {
     await _setSize(tester, const Size(390, 844));
-    for (final mode in AppColorMode.values) {
-      for (final vibe in AppShapeVibe.values) {
-        for (final brightness in Brightness.values) {
-          await tester.pumpWidget(_app(
-            appearance: AppAppearance(
-                colorMode: mode, shapeVibe: vibe, brightness: brightness),
-          ));
-          await _settle(tester);
-          for (var i = 1; i < kOnboardingSlideCount; i++) {
-            await _tap(tester, 'tour-next');
-          }
-          expect(tester.takeException(), isNull,
-              reason: '${mode.name}/${vibe.name}/${brightness.name}');
-          // Fresh tree per combination.
-          await tester.pumpWidget(const SizedBox());
-        }
+    for (final brightness in Brightness.values) {
+      await tester
+          .pumpWidget(_app(appearance: AppAppearance(brightness: brightness)));
+      await _settle(tester);
+      for (var i = 1; i < kOnboardingSlideCount; i++) {
+        await _tap(tester, 'tour-next');
       }
+      expect(tester.takeException(), isNull, reason: brightness.name);
+      // Fresh tree per theme.
+      await tester.pumpWidget(const SizedBox());
     }
   });
 

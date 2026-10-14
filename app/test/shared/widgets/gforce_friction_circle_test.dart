@@ -8,8 +8,8 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     theme: ThemeData.dark().copyWith(
       extensions: [
-        AppColorPalette.sportDark,
-        AppShapeProfile.forVibe(AppShapeVibe.boxy),
+        AppColorPalette.carbonMonoDark,
+        AppShapeProfile.curvy,
       ],
     ),
     home: Scaffold(body: Center(child: child)),
@@ -33,7 +33,9 @@ void main() {
       expect(find.text('TRACTION ENVELOPE'), findsOneWidget);
     });
 
-    testWidgets('renders combined lateral and longitudinal G values with custom subtitle', (tester) async {
+    testWidgets(
+        'renders combined lateral and longitudinal G values with custom subtitle',
+        (tester) async {
       await tester.pumpWidget(
         _wrap(
           const GForceFrictionCircle(

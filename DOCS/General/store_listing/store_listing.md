@@ -75,12 +75,8 @@ GPS route/track syncing across devices is now real (chunked `track` docs, `DOCS/
 
 Update this listing once the SMS/email escalation is actually wired up — that's a meaningful safety feature worth promoting once it's real.
 
-**Not yet added, worth considering:** the app now ships 7 selectable color
-families (Carbon Mono, Editorial, Nocturne, Trail Social, Calming, Retro,
-Analyst Blue) × 2 shape styles (boxy/curvy) × dark/light —
-`app/lib/core/theme/app_theme_style.dart` / `app_shape_profile.dart`. This
-isn't in the listing at all today and is a genuine differentiator (most
-ride-tracking apps don't offer this level of visual personalization) —
-holding off on adding a bullet for it here since it benefits from a real
-screenshot per look, which doesn't exist yet (see
-`docs/marketing/marketing_lead_notes/screenshot_shot_list.md`).
+**Themes (2026-10-14):** the app has one light theme (Calming: cream and
+sage) and one dark theme (Carbon Mono: carbon black and lime), plus "follow
+the phone". The 28 color/shape combinations were cut (`CrtiQue_Oct14.md`
+§14), so store screenshots need only these two looks, and the listing makes
+no personalization claim.

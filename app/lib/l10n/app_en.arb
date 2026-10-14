@@ -20,26 +20,6 @@
   "@appearanceSection": {
     "description": "Section header for the theme/appearance controls."
   },
-  "vibeFieldLabel": "Vibe",
-  "@vibeFieldLabel": {
-    "description": "Label above the Boxy/Curvy shape selector."
-  },
-  "vibeBoxyLabel": "Boxy",
-  "@vibeBoxyLabel": {
-    "description": "Name of the sharp-cornered shape vibe."
-  },
-  "vibeBoxyDescription": "Sharp corners",
-  "@vibeBoxyDescription": {
-    "description": "One-line description under the Boxy vibe option."
-  },
-  "vibeCurvyLabel": "Curvy",
-  "@vibeCurvyLabel": {
-    "description": "Name of the rounded-corner shape vibe."
-  },
-  "vibeCurvyDescription": "Rounded corners",
-  "@vibeCurvyDescription": {
-    "description": "One-line description under the Curvy vibe option."
-  },
   "brightnessFieldLabel": "Brightness",
   "@brightnessFieldLabel": {
     "description": "Label above the Dark/Light brightness selector."
@@ -67,66 +47,6 @@
   },
   "@brightnessLightDescription": {
     "description": "One-line description under the Light brightness option."
-  },
-  "colorFieldLabel": "Color",
-  "@colorFieldLabel": {
-    "description": "Label above the dropdown that picks the app's color mode."
-  },
-  "themeSportLabel": "Sport",
-  "@themeSportLabel": {
-    "description": "Name of the Sport color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeSportDescription": "Lime and magenta, carbon-black panel",
-  "@themeSportDescription": {
-    "description": "One-line description of the Sport color mode's hues, shown under its name in the picker."
-  },
-  "themeRainLabel": "Rain",
-  "@themeRainLabel": {
-    "description": "Name of the Rain color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeRainDescription": "Indigo dusk, lavender and teal",
-  "@themeRainDescription": {
-    "description": "One-line description of the Rain color mode's hues, shown under its name in the picker."
-  },
-  "themeRaceLabel": "Race",
-  "@themeRaceLabel": {
-    "description": "Name of the Race color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeRaceDescription": "Blocky race poster, mustard and rust",
-  "@themeRaceDescription": {
-    "description": "One-line description of the Race color mode's hues, shown under its name in the picker."
-  },
-  "themeCommuteLabel": "Commute",
-  "@themeCommuteLabel": {
-    "description": "Name of the Commute color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeCommuteDescription": "Calm cream, sage and tan",
-  "@themeCommuteDescription": {
-    "description": "One-line description of the Commute color mode's hues, shown under its name in the picker."
-  },
-  "themeTourLabel": "Tour",
-  "@themeTourLabel": {
-    "description": "Name of the Tour color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeTourDescription": "Punchy orange and sky blue",
-  "@themeTourDescription": {
-    "description": "One-line description of the Tour color mode's hues, shown under its name in the picker."
-  },
-  "themeAdvLabel": "ADV",
-  "@themeAdvLabel": {
-    "description": "Name of the ADV color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeAdvDescription": "Navy console, cyan telemetry",
-  "@themeAdvDescription": {
-    "description": "One-line description of the ADV color mode's hues, shown under its name in the picker."
-  },
-  "themeCityLabel": "City",
-  "@themeCityLabel": {
-    "description": "Name of the City color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeCityDescription": "Paper warmth, blue and orange",
-  "@themeCityDescription": {
-    "description": "One-line description of the City color mode's hues, shown under its name in the picker."
   },
   "languageSection": "Language",
   "@languageSection": {
@@ -1232,10 +1152,6 @@
   "settingsCaps": "SETTINGS",
   "@settingsCaps": {
     "description": "Label in record_screen."
-  },
-  "slideStartRide": "Slide to start ride",
-  "@slideStartRide": {
-    "description": "Text in record_screen."
   },
   "close": "Close",
   "@close": {
@@ -8285,13 +8201,13 @@
   "@tourRecordModeBody": {
     "description": "Feature tour, Record step: explains Solo/Group."
   },
-  "tourRecordStartTitle": "Hold or slide to start",
+  "tourRecordStartTitle": "Hold to start",
   "@tourRecordStartTitle": {
     "description": "Feature tour, Record step: callout about the start control."
   },
-  "tourRecordStartBody": "Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.",
+  "tourRecordStartBody": "Press and hold the start ring, so a stray tap never starts a ride.",
   "@tourRecordStartBody": {
-    "description": "Feature tour, Record step: explains hold-to-start / slide-to-start."
+    "description": "Feature tour, Record step: explains hold-to-start."
   },
   "tourCockpitTitle": "Your live cockpit",
   "@tourCockpitTitle": {

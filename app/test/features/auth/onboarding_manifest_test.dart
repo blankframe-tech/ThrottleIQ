@@ -112,20 +112,18 @@ void main() {
       expect(betas, hasLength(1));
     });
 
-    test('accent tokens stay visible on the surface in every color mode', () {
+    test('accent tokens stay visible on the surface in both themes', () {
       // Accents are only used for graphics (icons, rings, badges) — text sits
       // in textPrimary/textSecondary — so the bar is WCAG's 3:1 for non-text
-      // UI, checked on every palette the rider can pick.
+      // UI, checked on both palettes.
       final failures = <String>[];
-      for (final mode in AppColorMode.values) {
-        for (final brightness in Brightness.values) {
-          final palette = AppColorPalette.forMode(mode, brightness);
-          for (final accent in TourAccent.values) {
-            final ratio = _contrast(accent.resolve(palette), palette.surface);
-            if (ratio < 3) {
-              failures.add('${mode.name}/${brightness.name}/${accent.name}: '
-                  '${ratio.toStringAsFixed(2)}');
-            }
+      for (final brightness in Brightness.values) {
+        final palette = AppColorPalette.forBrightness(brightness);
+        for (final accent in TourAccent.values) {
+          final ratio = _contrast(accent.resolve(palette), palette.surface);
+          if (ratio < 3) {
+            failures.add('${brightness.name}/${accent.name}: '
+                '${ratio.toStringAsFixed(2)}');
           }
         }
       }
